@@ -238,6 +238,7 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     
     -- Draw text
     love.graphics.printf(chunks, x, y, limit, alignment)
+    love.graphics.setColor(1, 1, 1, 1)
     
     love.graphics.pop()
 end

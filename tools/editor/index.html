@@ -931,10 +931,13 @@
                     </select>
                 </div>
                 
-                <div id="cmd-fields-text" class="field-row-stacked">
-                    <label>Text Content:</label>
-                    <textarea id="cmd-input-text" class="win98-input" style="height: 60px; font-family: monospace; font-size: 11px;"></textarea>
-                </div>
+
+                    <div id="cmd-fields-text" class="form-group" style="display: none; flex-direction: column;">
+                        <label>Speaker Name (Leave empty for none):</label>
+                        <input type="text" id="cmd-input-speaker" class="form-control inset-bevel" placeholder="e.g. \eventName or Alicia" />
+                        <label style="margin-top: 4px;">Text Content:</label>
+                        <textarea id="cmd-input-text" class="form-control inset-bevel" rows="3"></textarea>
+                    </div>
 
                 <div id="cmd-fields-common-event" class="field-row-stacked" style="display: none;">
                     <label>Select Common Event:</label>
@@ -2133,6 +2136,7 @@
             activeCmdCallback = callback;
             document.getElementById('cmd-select-type').value = 'TEXT';
             document.getElementById('cmd-input-text').value = 'Hello!';
+            document.getElementById('cmd-input-speaker').value = '';
             toggleCmdTypeFields();
             document.getElementById('cmd-modal').classList.add('active');
         }
@@ -2142,6 +2146,7 @@
             document.getElementById('cmd-select-type').value = cmd.type;
             if (cmd.type === 'TEXT') {
                 document.getElementById('cmd-input-text').value = cmd.text || '';
+                document.getElementById('cmd-input-speaker').value = cmd.speaker || '';
             } else if (cmd.type === 'CALL_COMMON_EVENT') {
                 document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
             }
@@ -2169,6 +2174,7 @@
             let cmd = { type: type };
             if (type === 'TEXT') {
                 cmd.text = document.getElementById('cmd-input-text').value;
+                cmd.speaker = document.getElementById('cmd-input-speaker').value;
             } else if (type === 'CALL_COMMON_EVENT') {
                 cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
             }
@@ -2323,7 +2329,10 @@
                         line.style.fontFamily = 'monospace';
                         
                         let desc = '';
-                        if (cmd.type === 'TEXT') desc = `◆ Show Text: "${cmd.text}"`;
+                        if (cmd.type === 'TEXT') {
+                            const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
+                            desc = `◆ Show Text: "${speakerPrefix}${cmd.text}"`;
+                        }
                         else if (cmd.type === 'RECOVER_PARTY') desc = `◆ Recover Party`;
                         else if (cmd.type === 'DESCEND') desc = `◆ Descend Floor`;
                         else desc = `◆ Unknown (${cmd.type})`;

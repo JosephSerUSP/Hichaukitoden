@@ -52,7 +52,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: Welcome to the Weapon Shop! How can I help you?"
+            "text": "Welcome to the Weapon Shop! How can I help you?",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Weapon Shop"
@@ -75,7 +76,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
+            "text": "Welcome! Keep an eye on your summoner's MP, it depletes as you move.",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Laura"
@@ -112,7 +114,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: I have prepared some items for your journey. Check the database."
+            "text": "I have prepared some items for your journey. Check the database.",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Alicia"
@@ -126,7 +129,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: The drinks here are cheap. Feel free to rest."
+            "text": "The drinks here are cheap. Feel free to rest.",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Pub Owner"
@@ -140,7 +144,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: Welcome to the summoners auction house!"
+            "text": "Welcome to the summoners auction house!",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Auctioneer"

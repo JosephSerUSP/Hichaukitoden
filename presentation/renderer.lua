@@ -394,8 +394,13 @@ function renderer.drawDialogue(walker, selectIdx)
     ui.drawPanel(winX, ui.toPx(1), winW, ui.toPx(16))
     
     -- Speaker name
-    local speakerName = node.speaker or walker.graph.name or "???"
-    ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
+    local speakerName = node.speaker
+    if speakerName and speakerName ~= "" then
+        -- Parse \eventName if present
+        local rName = string.gsub(walker.eventName or "??", "%%", "%%%%")
+        speakerName = string.gsub(speakerName, "\\eventName", rName)
+        ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
+    end
     
     if node.type == "TEXT" then
         ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)

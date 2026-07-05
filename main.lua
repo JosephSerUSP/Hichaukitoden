@@ -351,6 +351,7 @@ local function runEventCommands(eventTitle, commands)
             nodes[nodeName] = {
                 type = "TEXT",
                 content = cmd.text,
+                speaker = cmd.speaker,
                 next = nextNode
             }
         elseif cmd.type == "CHOICE" then
