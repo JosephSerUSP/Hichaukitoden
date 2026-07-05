@@ -2,10 +2,67 @@ local config = require("engine.config")
 
 local ui = {}
 
+
+
+
+
+
 local iconset
 local iconSize = 12
 local windowskin
 local mainFont
+
+-- Parse string and replace \eventName and \c[x]
+local function parseRichText(text, defaultColor, eventName)
+    local result = text or ""
+    if eventName and eventName ~= "" then
+        result = string.gsub(result, "\\eventName", string.gsub(eventName, "%%", "%%%%"))
+    else
+        result = string.gsub(result, "\\eventName", "")
+    end
+
+    local chunks = {}
+    local currentPos = 1
+    local currentActiveColor = defaultColor
+
+    local palette = config.ui and config.ui.textPalette
+    if not palette then
+        palette = {
+            {1, 1, 1, 1},
+            {0.2, 0.6, 1, 1},
+            {1, 0.3, 0.3, 1},
+            {0.3, 0.8, 0.3, 1},
+            {0.3, 0.8, 0.8, 1},
+            {0.8, 0.3, 0.8, 1},
+            {1, 0.8, 0.2, 1},
+            {0.6, 0.6, 0.6, 1}
+        }
+    end
+
+    while true do
+        local startIdx, endIdx, code = string.find(result, "\\c%[(%d+)%]", currentPos)
+        if not startIdx then
+            local remainder = string.sub(result, currentPos)
+            if #remainder > 0 then
+                table.insert(chunks, currentActiveColor)
+                table.insert(chunks, remainder)
+            end
+            break
+        end
+        if startIdx > currentPos then
+            table.insert(chunks, currentActiveColor)
+            table.insert(chunks, string.sub(result, currentPos, startIdx - 1))
+        end
+        local colIdx = tonumber(code) + 1 -- 1-indexed in lua
+        if palette[colIdx] then
+            currentActiveColor = palette[colIdx]
+        else
+            currentActiveColor = defaultColor
+        end
+        currentPos = endIdx + 1
+    end
+    return chunks
+end
 
 function ui.setFont(fontName)
     local success, loadedFont
@@ -151,7 +208,7 @@ function ui.drawPanel(x, y, w, h, title)
 end
 
 -- Draw text with drop shadow (crisp monochrome)
-function ui.drawString(text, x, y, color, alignment, limit)
+function ui.drawString(text, x, y, color, alignment, limit, eventName)
     love.graphics.push("all")
     
     color = color or {1, 1, 1, 1}
@@ -161,13 +218,26 @@ function ui.drawString(text, x, y, color, alignment, limit)
     -- Set active font explicitly to ensure properties apply
     if mainFont then love.graphics.setFont(mainFont) end
     
+    local chunks = parseRichText(text, color, eventName)
+    if #chunks == 0 then
+        love.graphics.pop()
+        return
+    end
+
+    local shadowChunks = {}
+    for i, v in ipairs(chunks) do
+        if type(v) == "table" then
+            table.insert(shadowChunks, {0, 0, 0, 0.8})
+        else
+            table.insert(shadowChunks, v)
+        end
+    end
+
     -- Draw shadow (1px down, 1px right)
-    love.graphics.setColor(0, 0, 0, 0.8)
-    love.graphics.printf(text, x + 1, y + 1, limit, alignment)
+    love.graphics.printf(shadowChunks, x + 1, y + 1, limit, alignment)
     
     -- Draw text
-    love.graphics.setColor(color)
-    love.graphics.printf(text, x, y, limit, alignment)
+    love.graphics.printf(chunks, x, y, limit, alignment)
     
     love.graphics.pop()
 end

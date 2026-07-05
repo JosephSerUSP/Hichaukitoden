@@ -420,6 +420,7 @@ local function runEventCommands(eventTitle, commands)
     }
     
     activeWalker = director.GraphWalker.new(activeSession, graph)
+    activeWalker.eventName = eventTitle
     currentScene = "dialogue"
     handleDialogueAction()
 end

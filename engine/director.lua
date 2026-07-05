@@ -94,7 +94,9 @@ function director.startConversation(session, graphName)
     end
     local json = require("data.json")
     local graphData = json.decode(contents)
-    return GraphWalker.new(session, graphData)
+    local walker = GraphWalker.new(session, graphData)
+    walker.eventName = graphData.name
+    return walker
 end
 
 return director

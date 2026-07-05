@@ -40,7 +40,8 @@
             "type": "TEXT",
             "text": "The gate to the lower depths is sealed. Come back when you are prepared."
           }
-        ]
+        ],
+        "name": "Gate Guard"
       },
       {
         "id": 2,
@@ -51,9 +52,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Welcome to the Weapon Shop! How can I help you?"
+            "text": "\\eventName: Welcome to the Weapon Shop! How can I help you?"
           }
-        ]
+        ],
+        "name": "Weapon Shop"
       },
       {
         "id": 3,
@@ -61,7 +63,8 @@
         "y": 5,
         "sprite": "assets/sprites/NPC07.png",
         "trigger": "interact",
-        "scriptId": 4
+        "scriptId": 4,
+        "name": "NPC 3"
       },
       {
         "id": 4,
@@ -72,9 +75,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Laura: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
+            "text": "\\eventName: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
           }
-        ]
+        ],
+        "name": "Laura"
       },
       {
         "id": 5,
@@ -87,7 +91,8 @@
             "type": "TEXT",
             "text": "This abandoned house is now your home. It feels safe here."
           }
-        ]
+        ],
+        "name": "Sign"
       },
       {
         "id": 6,
@@ -95,7 +100,8 @@
         "y": 9,
         "sprite": "assets/sprites/NPC09.png",
         "trigger": "step",
-        "scriptId": 7
+        "scriptId": 7,
+        "name": "Trigger"
       },
       {
         "id": 7,
@@ -106,9 +112,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Alicia: I have prepared some items for your journey. Check the database."
+            "text": "\\eventName: I have prepared some items for your journey. Check the database."
           }
-        ]
+        ],
+        "name": "Alicia"
       },
       {
         "id": 8,
@@ -119,9 +126,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Pub: The drinks here are cheap. Feel free to rest."
+            "text": "\\eventName: The drinks here are cheap. Feel free to rest."
           }
-        ]
+        ],
+        "name": "Pub Owner"
       },
       {
         "id": 9,
@@ -132,9 +140,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Auctioneer: Welcome to the summoners auction house!"
+            "text": "\\eventName: Welcome to the summoners auction house!"
           }
-        ]
+        ],
+        "name": "Auctioneer"
       },
       {
         "id": 10,
@@ -147,7 +156,8 @@
             "type": "TEXT",
             "text": "The temple is quiet. You feel a sense of peace."
           }
-        ]
+        ],
+        "name": "Temple"
       }
     ],
     "treasures": [],
