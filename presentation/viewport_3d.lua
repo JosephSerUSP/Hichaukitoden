@@ -50,7 +50,12 @@ local wallQx, wallQy = 0, 0
 
 local npcSprites = {}
 
-local function getEventSprite(eventId)
+local function getEventSprite(ev)
+    if ev.sprite ~= nil and npcSprites[ev.sprite] then
+        return npcSprites[ev.sprite]
+    end
+
+    local eventId = ev.id or ""
     if eventId == "npc_gate_guard" then return npcSprites[0]
     elseif eventId == "npc_weapon_shop" then return npcSprites[1]
     elseif eventId == "npc_alicia" then return npcSprites[2]
@@ -289,7 +294,7 @@ function viewport_3d.draw(session)
     -- Add coordinate-based events (from maps.json events list)
     if session.currentMapData and session.currentMapData.events then
         for _, ev in ipairs(session.currentMapData.events) do
-            local img = getEventSprite(ev.id)
+            local img = getEventSprite(ev)
             if img then
                 table.insert(spritesToDraw, {
                     x = ev.x,
@@ -357,15 +362,15 @@ function viewport_3d.draw(session)
             local spriteHeight = math.abs(math.floor(140 / transformY))
             local spriteWidth = spriteHeight
             
-            local drawStartY = 70 - spriteHeight / 2
-            local drawStartX = spriteScreenX - spriteWidth / 2
+            local drawStartY = math.floor(70 - spriteHeight / 2)
+            local drawStartX = math.floor(spriteScreenX - spriteWidth / 2)
 
             local brightness = math.max(0.12, 1.0 / (1.0 + transformY * 0.35))
 
             -- Render stripe by stripe
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
                 if stripeX >= 0 and stripeX < 256 then
-                    if transformY < zBuffer[stripeX + 1] then
+                    if transformY < (zBuffer[stripeX + 1] or 0) then
                         local clipY = math.max(0, drawStartY)
                         local clipH = math.min(144, drawStartY + spriteHeight) - clipY
                         
