@@ -1,0 +1,1124 @@
+local loader = require("data.loader")
+local session = require("engine.session")
+local exploration = require("engine.exploration")
+local battleSystem = require("engine.battle")
+local director = require("engine.director")
+local renderer = require("presentation.renderer")
+local traits = require("engine.traits")
+local viewport_3d = require("presentation.viewport_3d")
+
+-- Game resolution dimensions
+local gameWidth, gameHeight = 256, 240
+local canvas
+local scale, scaleX, scaleY = 1, 1, 1
+
+-- Global Session and State Router
+local activeSession
+local currentScene = "title"
+
+-- Scene States Cache
+local townSelectedIdx = 1
+
+-- Battle State
+local activeBattle
+local battleCombatLog = {}
+local battleCombatState = "input" -- "input" or "log"
+local battleSelectedIndex = 1
+local battleSpellSelect = false
+local battleEventsQueue = {}
+local battleEventQueueIndex = 1
+
+-- Dialogue State
+local activeWalker
+local dialogueSelectIdx = 1
+
+-- Shop State
+local activeShopId = ""
+local shopItems = {}
+local shopSelectedIdx = 1
+
+-- Menu State
+local previousSceneBeforeMenu = "town"
+local menuSelectedIdx = 1
+local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
+local menuSubScene = "main"
+local menuSelectedSubIdx = 1
+local selectedItemIdToUse = nil
+local selectedCreatureIndex = 1
+local selectedSlotIndex = 1
+statusInspectMode = false
+statusInspectIdx = 1
+
+-- Interactive Battle Input variables
+local battleLivingMembers = {}
+local battleActiveMemberIndex = 1
+local battleCollectedActions = {}
+
+local server = require("engine.server")
+
+function love.load()
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    canvas = love.graphics.newCanvas(gameWidth, gameHeight)
+    love.resize(love.graphics.getWidth(), love.graphics.getHeight())
+    
+    -- Initialize database loader
+    loader.init()
+    
+    -- Initialize activeSession
+    activeSession = session.GameSession.new(loader)
+    activeSession:initializeStartingParty()
+    
+    -- Initialize renderer graphics
+    renderer.init(activeSession)
+    
+    -- Initialize 3D viewport textures
+    viewport_3d.init()
+    
+    -- Start developer server
+    server.start()
+end
+
+function love.update(dt)
+    renderer.update(dt)
+    server.update(dt)
+    if activeSession and activeSession.transitionTimer and activeSession.transitionTimer > 0 then
+        activeSession.transitionTimer = activeSession.transitionTimer - dt
+    end
+end
+
+function love.draw()
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 1)
+    love.graphics.setColor(1, 1, 1, 1) -- reset color at start of frame
+    
+    if currentScene == "title" then
+        renderer.drawTitle()
+    elseif currentScene == "town" then
+        renderer.drawTown(townSelectedIdx)
+    elseif currentScene == "map" then
+        renderer.drawMap()
+    elseif currentScene == "dialogue" then
+        renderer.drawDialogue(activeWalker, dialogueSelectIdx)
+    elseif currentScene == "battle" then
+        renderer.drawBattle(activeBattle, battleCombatLog, battleCombatState, battleSelectedIndex, battleSpellSelect, battleLivingMembers, battleActiveMemberIndex)
+    elseif currentScene == "shop" then
+        renderer.drawShop(activeShopId, shopSelectedIdx, shopItems)
+    elseif currentScene == "menu" then
+        if previousSceneBeforeMenu == "town" then
+            renderer.drawTown(townSelectedIdx)
+        else
+            renderer.drawMap()
+        end
+        if menuSubScene == "use_target" then
+            renderer.drawTargetSelector(menuSelectedSubIdx, activeSession)
+        elseif menuSubScene == "equip_passive" then
+            renderer.drawEquipMenu(activeSession.party[selectedCreatureIndex], menuSelectedSubIdx, activeSession)
+        elseif menuSubScene == "select_passive" then
+            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
+            renderer.drawSelectEquipMenu(menuSelectedSubIdx, activeSession, slotType, activeSession.party[selectedCreatureIndex], selectedSlotIndex)
+        else
+            renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
+        end
+    end
+    
+    if server.isActive() then
+        love.graphics.setColor(0.1, 0.4, 0.8, 0.8)
+        love.graphics.rectangle("fill", 216, 2, 38, 9)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print("DEV ON", 219, 3)
+    end
+    
+    love.graphics.setCanvas()
+    love.graphics.setColor(1, 1, 1, 1) -- reset color before drawing canvas to prevent dark tinting leak
+    love.graphics.draw(canvas, scaleX, scaleY, 0, scale, scale)
+end
+
+local handleDialogueAction -- forward declaration
+
+local function isSafeMap()
+    if activeSession and activeSession.currentMapData then
+        return activeSession.currentMapData.safe == true
+    end
+    return true
+end
+
+local function openShop(shopId)
+    activeShopId = shopId
+    shopItems = {}
+    shopSelectedIdx = 1
+    
+    local shopData = loader.shops[shopId]
+    if shopData and shopData.items then
+        for _, shopItem in ipairs(shopData.items) do
+            local allowed = true
+            if shopItem.condition then
+                local cond = shopItem.condition
+                if cond:match("^level:(%d+)") then
+                    local lvl = tonumber(cond:match("^level:(%d+)"))
+                    allowed = (activeSession.summoner.level >= lvl)
+                elseif cond:match("^flag:(.+)") then
+                    local flag = cond:match("^flag:(.+)")
+                    allowed = (activeSession.flags[flag] == true)
+                elseif cond:match("^gold:(%d+)") then
+                    local gold = tonumber(cond:match("^gold:(%d+)"))
+                    allowed = (activeSession.gold >= gold)
+                end
+            end
+            
+            if allowed then
+                local itemData = loader.getItem(shopItem.id)
+                if itemData then
+                    table.insert(shopItems, itemData)
+                end
+            end
+        end
+    end
+    currentScene = "shop"
+end
+
+handleDialogueAction = function()
+    local node = activeWalker:getCurrentNode()
+    if not node then return end
+    
+    if node.type == "ACTION" then
+        if node.action == "OPEN_SHOP" then
+            openShop(node.shopId)
+        elseif node.action == "OFFER_QUEST" then
+            activeSession.flags["quest:" .. node.questId .. ":active"] = true
+            activeWalker:goToNode(node.acceptNode or node.next)
+            handleDialogueAction()
+        elseif node.action == "COMPLETE_QUEST" then
+            activeSession.flags["quest:" .. node.questId .. ":active"] = nil
+            activeSession.flags["quest:" .. node.questId .. ":completed"] = true
+            if node.takeItem then
+                activeSession:addItem(node.takeItem, -1)
+            end
+            activeWalker:goToNode(node.completeNode or node.next)
+            handleDialogueAction()
+        else
+            activeWalker:advance()
+            handleDialogueAction()
+        end
+    end
+end
+
+-- Triggers a conversation graph
+local function triggerDialogue(graphName)
+    local walker = director.startConversation(activeSession, graphName)
+    if walker then
+        activeWalker = walker
+        dialogueSelectIdx = 1
+        currentScene = "dialogue"
+        handleDialogueAction()
+    end
+end
+
+local function triggerBattle()
+    local mapData = activeSession.currentMapData
+    local possibleEnemies = mapData.encounters
+    if not possibleEnemies or #possibleEnemies == 0 then return end
+    
+    local enemyList = {}
+    local numEnemies = math.random(1, 3)
+    
+    for i = 1, numEnemies do
+        local totalWeight = 0
+        for _, enemyOpt in ipairs(possibleEnemies) do
+            totalWeight = totalWeight + enemyOpt.weight
+        end
+        local roll = math.random(totalWeight)
+        local sum = 0
+        local enemyId = possibleEnemies[1].id
+        for _, enemyOpt in ipairs(possibleEnemies) do
+            sum = sum + enemyOpt.weight
+            if roll <= sum then
+                enemyId = enemyOpt.id
+                break
+            end
+        end
+        
+        local enemyData = loader.getActor(enemyId)
+        if enemyData then
+            local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
+            enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
+            table.insert(enemyList, enemyBattler)
+        end
+    end
+    
+    activeBattle = battleSystem.Battle.new(activeSession, enemyList)
+    battleCombatLog = { "A hostile group blocks your path!" }
+    battleEventsQueue = {}
+    battleEventQueueIndex = 1
+    battleCombatState = "input"
+    battleSelectedIndex = 1
+    battleSpellSelect = false
+    
+    battleLivingMembers = {}
+    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
+    for i = 1, 4 do
+        local c = activeSession.party[i]
+        if c and not c:isDead() then
+            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
+        end
+    end
+    battleActiveMemberIndex = 1
+    battleCollectedActions = {}
+    
+    currentScene = "battle"
+    renderer.initBattleAnims(enemyList)
+end
+
+-- Map a battler to screen coordinates on the battle scene
+local function getTargetCoords(target)
+    if activeBattle then
+        for idx, enemy in ipairs(activeBattle.enemies) do
+            if enemy == target then
+                local spacing = 220 / #activeBattle.enemies
+                local ex = 18 + (idx - 1) * spacing
+                return ex + 28, 60 -- Centered over the 56x56 enemy sprite
+            end
+        end
+        
+        local gridCoords = {
+            { x = 130 + 27, y = 146 + 10 },
+            { x = 192 + 27, y = 146 + 10 },
+            { x = 130 + 27, y = 185 + 10 },
+            { x = 192 + 27, y = 185 + 10 }
+        }
+        for idx, c in ipairs(activeSession.party) do
+            if c == target then
+                local slot = gridCoords[idx]
+                if slot then return slot.x, slot.y end
+            end
+        end
+        if target == activeSession.summoner then
+            return 50, 196 + 10
+        end
+    end
+    return 128, 70
+end
+
+-- Resolves combat rounds with dynamic state backup/restore for sequential action rendering
+local function resolveBattleRound()
+    local backups = {}
+    for _, b in ipairs(activeBattle:getAllActiveBattlers()) do
+        local stateCopy = {}
+        for _, st in ipairs(b.states) do
+            table.insert(stateCopy, { id = st.id, duration = st.duration, maxDuration = st.maxDuration })
+        end
+        backups[b] = {
+            hp = b.hp,
+            states = stateCopy
+        }
+    end
+    local mpBackup = activeSession.mp
+
+    local events = activeBattle:resolveRound(battleCollectedActions)
+
+    -- Restore backup states immediately so the UI can apply changes step-by-step
+    for b, bk in pairs(backups) do
+        b.hp = bk.hp
+        b.states = bk.states
+    end
+    activeSession.mp = mpBackup
+
+    return events
+end
+
+-- Advances the combat logs queue by one event and formats it
+local function advanceBattleLog()
+    if battleEventQueueIndex <= #battleEventsQueue then
+        local ev = battleEventsQueue[battleEventQueueIndex]
+        battleEventQueueIndex = battleEventQueueIndex + 1
+        
+        local desc = ""
+        local popupX, popupY = getTargetCoords(ev.target)
+        
+        if ev.type == "text" then
+            desc = ev.text
+        elseif ev.type == "action" then
+            desc = ev.actor.name .. " uses " .. ev.skill.name .. " on " .. ev.target.name .. "!"
+            if activeBattle then
+                for idx, enemy in ipairs(activeBattle.enemies) do
+                    if enemy == ev.actor then
+                        renderer.triggerActionFlash(idx, "action")
+                        break
+                    end
+                end
+            end
+        elseif ev.type == "damage" then
+            desc = "- " .. ev.target.name .. " takes " .. ev.value .. " damage."
+            renderer.addDamagePopup("-" .. ev.value, popupX, popupY, {1, 0.2, 0.2})
+            -- Apply damage sequentially
+            ev.target.hp = math.max(0, ev.target.hp - ev.value)
+            if activeBattle then
+                for idx, enemy in ipairs(activeBattle.enemies) do
+                    if enemy == ev.target then
+                        renderer.triggerActionFlash(idx, "damage")
+                        break
+                    end
+                end
+            end
+        elseif ev.type == "heal" then
+            desc = "- " .. ev.target.name .. " recovers " .. ev.value .. " HP."
+            renderer.addDamagePopup("+" .. ev.value, popupX, popupY, {0.2, 1, 0.2})
+            -- Apply heal sequentially
+            ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
+        elseif ev.type == "death" then
+            desc = "! " .. ev.target.name .. " has fallen!"
+            renderer.addDamagePopup("DEAD", popupX, popupY, {0.6, 0.6, 0.6})
+            -- Apply death state sequentially
+            ev.target:addState("dead")
+            ev.target.hp = 0
+            -- Trigger death animation if enemy
+            if activeBattle then
+                for idx, enemy in ipairs(activeBattle.enemies) do
+                    if enemy == ev.target then
+                        renderer.triggerDeathAnim(idx)
+                        break
+                    end
+                end
+            end
+        elseif ev.type == "state_add" then
+            desc = "- " .. ev.target.name .. " got " .. ev.state:upper() .. " status."
+            renderer.addDamagePopup(ev.state:upper(), popupX, popupY, {0.8, 0.4, 1.0})
+            -- Apply state add sequentially
+            ev.target:addState(ev.state)
+        elseif ev.type == "state_remove" then
+            desc = "- " .. ev.target.name .. "'s " .. ev.state:upper() .. " wore off."
+            -- Apply state removal sequentially
+            ev.target:removeState(ev.state)
+        elseif ev.type == "mp_drain" then
+            desc = "- " .. ev.actor.name .. " consumes " .. ev.value .. " MP."
+            -- Apply MP drain sequentially
+            activeSession.mp = math.max(0, activeSession.mp - ev.value)
+        elseif ev.type == "victory" then
+            desc = "Victory! All hostile forces vanquished."
+        elseif ev.type == "defeat" then
+            desc = "Defeat! The party has fallen in battle..."
+        elseif ev.type == "flee_success" then
+            desc = "Escaped successfully!"
+        end
+        
+        if desc ~= "" then
+            table.insert(battleCombatLog, desc)
+        else
+            advanceBattleLog() -- skip empty and try next
+        end
+    end
+end
+
+-- Action handling for key presses
+local function handleKeyPressed(key)
+    if key == "escape" then
+        if currentScene == "title" then
+            love.event.quit()
+        elseif currentScene == "town" or currentScene == "map" then
+            -- Open Main Menu instead of exiting!
+            previousSceneBeforeMenu = currentScene
+            menuSelectedIdx = 1
+            menuSubScene = "main"
+            renderer.resetMenuTimer()
+            currentScene = "menu"
+            return
+        elseif currentScene == "menu" then
+            if menuSubScene == "use_target" then
+                menuSubScene = "main"
+                menuActiveCol = 2
+            elseif menuActiveCol == 2 then
+                menuActiveCol = 1
+                menuSelectedSubIdx = 1
+            else
+                currentScene = previousSceneBeforeMenu
+            end
+            return
+        elseif currentScene == "dialogue" then
+            currentScene = isSafeMap() and "town" or "map"
+            return
+        end
+    end
+    
+    if currentScene == "title" then
+        if key == "return" or key == "space" then
+            currentScene = "town"
+            townSelectedIdx = 1
+        end
+        
+    elseif currentScene == "town" then
+        if key == "up" or key == "w" then
+            townSelectedIdx = (townSelectedIdx - 2) % 4 + 1
+        elseif key == "down" or key == "s" then
+            townSelectedIdx = townSelectedIdx % 4 + 1
+        elseif key == "return" or key == "space" then
+            if townSelectedIdx == 1 then
+                activeSession.dungeonFloor = 1
+                exploration.loadMap(activeSession, 2)
+                currentScene = "map"
+            elseif townSelectedIdx == 2 then
+                triggerDialogue("npc_weapon_shop")
+            elseif townSelectedIdx == 3 then
+                triggerDialogue("npc_alicia")
+            elseif townSelectedIdx == 4 then
+                activeSession.mp = activeSession.maxMp
+                for _, actor in ipairs(activeSession.party) do
+                    actor.hp = actor:getMaxHp(activeSession)
+                    actor:removeState("dead")
+                end
+                activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
+                activeSession.summoner:removeState("dead")
+                triggerDialogue("npc_drunkard")
+            end
+        end
+        
+    elseif currentScene == "map" then
+        local moved = false
+        if key == "up" or key == "w" then
+            moved = exploration.moveForward(activeSession)
+            if moved then
+                activeSession.transitionTimer = 0.15
+                activeSession.transitionDir = "forward"
+            end
+        elseif key == "down" or key == "s" then
+            moved = exploration.moveBackward(activeSession)
+            if moved then
+                activeSession.transitionTimer = 0.15
+                activeSession.transitionDir = "backward"
+            end
+        elseif key == "left" or key == "a" then
+            exploration.turnLeft(activeSession)
+            activeSession.transitionTimer = 0.15
+            activeSession.transitionDir = "turn_left"
+        elseif key == "right" or key == "d" then
+            exploration.turnRight(activeSession)
+            activeSession.transitionTimer = 0.15
+            activeSession.transitionDir = "turn_right"
+        elseif key == "q" then
+            moved = exploration.strafeLeft(activeSession)
+            if moved then
+                activeSession.transitionTimer = 0.15
+                activeSession.transitionDir = "strafe_left"
+            end
+        elseif key == "e" then
+            moved = exploration.strafeRight(activeSession)
+            if moved then
+                activeSession.transitionTimer = 0.15
+                activeSession.transitionDir = "strafe_right"
+            end
+        elseif key == "space" or key == "return" then
+            local frontTile, tx, ty = exploration.getFrontTile(activeSession)
+            if frontTile == "S" then
+                currentScene = "town"
+                townSelectedIdx = 1
+            elseif frontTile == "E" then
+                activeSession.dungeonFloor = activeSession.dungeonFloor + 1
+                if activeSession.dungeonFloor > 5 then
+                    activeSession.dungeonFloor = 5
+                end
+                exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
+            elseif frontTile == "R" then
+                activeSession.mp = activeSession.maxMp
+                for _, c in ipairs(activeSession.party) do
+                    c.hp = c:getMaxHp(activeSession)
+                end
+                activeSession.mapGrid[ty][tx] = "."
+                triggerDialogue("npc_drunkard")
+            elseif frontTile == "T" then
+                local possibleTreasures = activeSession.currentMapData.treasures or { "hp_tonic" }
+                local loot = possibleTreasures[math.random(#possibleTreasures)]
+                local item = loader.getItem(loot)
+                activeSession:addItem(loot, 1)
+                activeSession.mapGrid[ty][tx] = "."
+                
+                local lootGraph = {
+                    initialNode = "start",
+                    name = "Treasure Chest",
+                    nodes = {
+                        start = {
+                            type = "TEXT",
+                            content = "You opened the chest and found a " .. (item and item.name or loot) .. "!",
+                            next = nil
+                        }
+                    }
+                }
+                activeWalker = director.GraphWalker.new(activeSession, lootGraph)
+                currentScene = "dialogue"
+            elseif frontTile == "U" then
+                local recruits = activeSession.currentMapData.recruits or { "pixie" }
+                local recId = recruits[math.random(#recruits)]
+                local actorData = loader.getActor(recId)
+                if actorData then
+                    local newBattler = session.Battler.new(actorData, activeSession.dungeonFloor)
+                    newBattler.hp = newBattler:getMaxHp(activeSession)
+                    table.insert(activeSession.party, newBattler)
+                    activeSession.mapGrid[ty][tx] = "."
+                    
+                    local recruitGraph = {
+                        initialNode = "start",
+                        name = "Recruit",
+                        portrait = recId,
+                        nodes = {
+                            start = {
+                                type = "TEXT",
+                                content = actorData.name .. " joined the party!",
+                                next = nil
+                            }
+                        }
+                    }
+                    activeWalker = director.GraphWalker.new(activeSession, recruitGraph)
+                    currentScene = "dialogue"
+                end
+            end
+        end
+        
+        if moved and not isSafeMap() then
+            if math.random() < 0.10 then
+                triggerBattle()
+            end
+        end
+        
+    elseif currentScene == "dialogue" then
+        local node = activeWalker:getCurrentNode()
+        if node then
+            if node.type == "TEXT" then
+                if key == "space" or key == "return" then
+                    activeWalker:advance()
+                    dialogueSelectIdx = 1
+                    handleDialogueAction()
+                    if not activeWalker:getCurrentNode() then
+                        currentScene = isSafeMap() and "town" or "map"
+                    end
+                end
+            elseif node.type == "CHOICE" then
+                if key == "up" or key == "w" then
+                    dialogueSelectIdx = (dialogueSelectIdx - 2) % #node.options + 1
+                elseif key == "down" or key == "s" then
+                    dialogueSelectIdx = dialogueSelectIdx % #node.options + 1
+                elseif key == "space" or key == "return" then
+                    activeWalker:selectChoice(dialogueSelectIdx)
+                    dialogueSelectIdx = 1
+                    handleDialogueAction()
+                    if not activeWalker:getCurrentNode() then
+                        currentScene = isSafeMap() and "town" or "map"
+                    end
+                end
+            end
+        end
+        
+    elseif currentScene == "menu" then
+        if menuSubScene == "main" then
+            if key == "up" or key == "w" then
+                menuSelectedIdx = (menuSelectedIdx - 2) % 4 + 1
+            elseif key == "down" or key == "s" then
+                menuSelectedIdx = menuSelectedIdx % 4 + 1
+            elseif key == "space" or key == "return" then
+                if menuSelectedIdx == 1 then -- ITEMS
+                    menuSubScene = "items_list"
+                    menuSelectedSubIdx = 1
+                elseif menuSelectedIdx == 2 or menuSelectedIdx == 3 then -- STATUS or EQUIP
+                    menuSubScene = "party_select"
+                    menuSelectedSubIdx = 1
+                elseif menuSelectedIdx == 4 then -- EXIT
+                    menuSubScene = "exit_confirm"
+                    menuSelectedSubIdx = 2 -- Default to NO
+                end
+            end
+            
+        elseif menuSubScene == "party_select" then
+            -- 2x2 grid navigation inputs for selecting creatures in the party
+            if key == "up" or key == "w" then
+                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
+            elseif key == "down" or key == "s" then
+                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
+            elseif key == "left" or key == "a" then
+                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
+                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
+                end
+            elseif key == "right" or key == "d" then
+                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
+                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
+                end
+            elseif key == "escape" then
+                menuSubScene = "main"
+                menuSelectedSubIdx = 1
+            elseif key == "space" or key == "return" then
+                if activeSession.party[menuSelectedSubIdx] then
+                    selectedCreatureIndex = menuSelectedSubIdx
+                    if menuSelectedIdx == 2 then
+                        menuSubScene = "status_detail"
+                        statusInspectMode = false
+                        statusInspectIdx = 1
+                    else
+                        menuSubScene = "equip_passive"
+                        menuSelectedSubIdx = 1
+                    end
+                end
+            end
+            
+        elseif menuSubScene == "items_list" then
+            local items = {}
+            for itemId, qty in pairs(activeSession.inventory) do
+                local item = loader.getItem(itemId)
+                if item then table.insert(items, { item = item, qty = qty }) end
+            end
+            
+            if key == "up" or key == "w" then
+                if #items > 0 then
+                    menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #items + 1
+                end
+            elseif key == "down" or key == "s" then
+                if #items > 0 then
+                    menuSelectedSubIdx = menuSelectedSubIdx % #items + 1
+                end
+            elseif key == "escape" then
+                menuSubScene = "main"
+                menuSelectedSubIdx = 1
+            elseif key == "space" or key == "return" then
+                local selectedEntry = items[menuSelectedSubIdx]
+                if selectedEntry then
+                    selectedItemIdToUse = selectedEntry.item.id
+                    if selectedItemIdToUse == "elixir_of_insight" then
+                        -- Instantly use on the whole party
+                        for _, c in ipairs(activeSession.party) do
+                            c:gainExp(15, activeSession)
+                        end
+                        activeSession:addItem("elixir_of_insight", -1)
+                        selectedItemIdToUse = nil
+                    else
+                        menuSubScene = "use_target"
+                        menuSelectedSubIdx = 1
+                    end
+                end
+            end
+            
+        elseif menuSubScene == "use_target" then
+            -- 2x2 grid navigation inputs for item target selection
+            if key == "up" or key == "w" then
+                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
+            elseif key == "down" or key == "s" then
+                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
+            elseif key == "left" or key == "a" then
+                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
+                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
+                end
+            elseif key == "right" or key == "d" then
+                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
+                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
+                end
+            elseif key == "escape" then
+                menuSubScene = "items_list"
+                menuSelectedSubIdx = 1
+                selectedItemIdToUse = nil
+            elseif key == "space" or key == "return" then
+                local target = activeSession.party[menuSelectedSubIdx]
+                if target and selectedItemIdToUse then
+                    if selectedItemIdToUse == "hp_tonic" then
+                        target.hp = target:getMaxHp(activeSession)
+                        activeSession:addItem("hp_tonic", -1)
+                    elseif selectedItemIdToUse == "sigil_ink" then
+                        target.paramPlus.maxHp = target.paramPlus.maxHp + 2
+                        target.hp = math.min(target:getMaxHp(activeSession), target.hp + 2)
+                        activeSession:addItem("sigil_ink", -1)
+                    elseif selectedItemIdToUse == "whispered_lessons" then
+                        target:gainExp(6, activeSession)
+                        activeSession:addItem("whispered_lessons", -1)
+                    end
+                    menuSubScene = "items_list"
+                    menuSelectedSubIdx = 1
+                    selectedItemIdToUse = nil
+                end
+            end
+            
+        elseif menuSubScene == "equip_passive" then
+            if key == "up" or key == "w" then
+                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % 3 + 1
+            elseif key == "down" or key == "s" then
+                menuSelectedSubIdx = menuSelectedSubIdx % 3 + 1
+            elseif key == "escape" then
+                menuSubScene = "party_select"
+                menuSelectedSubIdx = selectedCreatureIndex
+            elseif key == "space" or key == "return" then
+                selectedSlotIndex = menuSelectedSubIdx
+                menuSubScene = "select_passive"
+                menuSelectedSubIdx = 1
+            end
+            
+        elseif menuSubScene == "select_passive" then
+            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
+            local list = {}
+            table.insert(list, { id = "empty", name = "[ UNEQUIP ]", description = "Unequip current gear." })
+            for itemId, qty in pairs(activeSession.inventory) do
+                local item = loader.getItem(itemId)
+                if item and item.type == "equipment" and item.equipType == slotType then
+                    table.insert(list, item)
+                end
+            end
+            
+            if key == "up" or key == "w" then
+                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #list + 1
+            elseif key == "down" or key == "s" then
+                menuSelectedSubIdx = menuSelectedSubIdx % #list + 1
+            elseif key == "escape" then
+                menuSubScene = "equip_passive"
+                menuSelectedSubIdx = selectedSlotIndex
+            elseif key == "space" or key == "return" then
+                local choice = list[menuSelectedSubIdx]
+                local targetCreature = activeSession.party[selectedCreatureIndex]
+                if targetCreature and choice then
+                    local prevItem = targetCreature.equipment[selectedSlotIndex]
+                    if choice.id == "empty" then
+                        if prevItem then
+                            activeSession:addItem(prevItem.id, 1)
+                        end
+                        targetCreature.equipment[selectedSlotIndex] = nil
+                    else
+                        if prevItem then
+                            activeSession:addItem(prevItem.id, 1)
+                        end
+                        targetCreature.equipment[selectedSlotIndex] = choice
+                        activeSession:addItem(choice.id, -1)
+                    end
+                end
+                menuSubScene = "equip_passive"
+                menuSelectedSubIdx = selectedSlotIndex
+            end
+            
+        elseif menuSubScene == "status_detail" then
+            local c = activeSession.party[selectedCreatureIndex]
+            local numPassives = c and #(c.actorData.passives or {}) or 0
+            local numSkills = c and #(c.actorData.skills or {}) or 0
+            local totalTraits = numPassives + numSkills
+            
+            if statusInspectMode then
+                if key == "escape" or key == "space" or key == "return" then
+                    statusInspectMode = false
+                elseif key == "up" or key == "w" then
+                    if totalTraits > 0 then
+                        statusInspectIdx = (statusInspectIdx - 2) % totalTraits + 1
+                    end
+                elseif key == "down" or key == "s" then
+                    if totalTraits > 0 then
+                        statusInspectIdx = statusInspectIdx % totalTraits + 1
+                    end
+                end
+            else
+                if key == "escape" then
+                    menuSubScene = "party_select"
+                    menuSelectedSubIdx = selectedCreatureIndex
+                elseif key == "space" or key == "return" or key == "tab" then
+                    if totalTraits > 0 then
+                        statusInspectMode = true
+                        statusInspectIdx = 1
+                    end
+                elseif key == "left" or key == "a" or key == "up" or key == "w" then
+                    local nextIdx = selectedCreatureIndex
+                    repeat
+                        nextIdx = (nextIdx - 2) % 4 + 1
+                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
+                    selectedCreatureIndex = nextIdx
+                elseif key == "right" or key == "d" or key == "down" or key == "s" then
+                    local nextIdx = selectedCreatureIndex
+                    repeat
+                        nextIdx = nextIdx % 4 + 1
+                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
+                    selectedCreatureIndex = nextIdx
+                end
+            end
+            
+        elseif menuSubScene == "exit_confirm" then
+            if key == "up" or key == "w" or key == "down" or key == "s" then
+                menuSelectedSubIdx = menuSelectedSubIdx == 1 and 2 or 1
+            elseif key == "escape" then
+                menuSubScene = "main"
+                menuSelectedSubIdx = 1
+            elseif key == "space" or key == "return" then
+                if menuSelectedSubIdx == 1 then
+                    love.event.quit()
+                else
+                    menuSubScene = "main"
+                    menuSelectedSubIdx = 1
+                end
+            end
+        end
+        
+    elseif currentScene == "battle" then
+        if battleCombatState == "input" then
+            local memberInfo = battleLivingMembers[battleActiveMemberIndex]
+            if not memberInfo then
+                battleCombatState = "log"
+                return
+            end
+            
+            local isSummoner = (memberInfo.type == "summoner")
+            
+            if battleSpellSelect then
+                -- Get skills/spells list
+                local options = {}
+                if isSummoner then
+                    options = { {id = "soothingMote", mp = 5}, {id = "divineFavor", mp = 8}, {id = "holySmite", mp = 15} }
+                else
+                    for _, skId in ipairs(memberInfo.actor.skills or {}) do
+                        local sk = loader.getSkill(skId)
+                        if sk then table.insert(options, sk) end
+                    end
+                end
+                
+                if key == "up" or key == "w" then
+                    if #options > 0 then
+                        battleSelectedIndex = (battleSelectedIndex - 2) % #options + 1
+                    end
+                elseif key == "down" or key == "s" then
+                    if #options > 0 then
+                        battleSelectedIndex = battleSelectedIndex % #options + 1
+                    end
+                elseif key == "escape" then
+                    battleSpellSelect = false
+                    battleSelectedIndex = 2 -- Back to Spell/Skill option
+                elseif key == "space" or key == "return" then
+                    local choice = options[battleSelectedIndex]
+                    if choice then
+                        local allowed = true
+                        if isSummoner then
+                            allowed = (activeSession.mp >= choice.mp)
+                        end
+                        
+                        if allowed then
+                            local spell = loader.getSkill(choice.id)
+                            local target = activeSession.summoner
+                            if spell and (spell.target == "enemy-any" or spell.target == "enemy") then
+                                -- Target first living enemy
+                                for _, e in ipairs(activeBattle.enemies) do
+                                    if not e:isDead() then target = e break end
+                                end
+                            else
+                                -- Heal target lowest HP ally
+                                local lowestHp = 9999
+                                for _, c in ipairs(activeSession.party) do
+                                    if not c:isDead() and c.hp < lowestHp then
+                                        lowestHp = c.hp
+                                        target = c
+                                    end
+                                end
+                            end
+                            
+                            battleCollectedActions[memberInfo.index] = {
+                                type = isSummoner and "spell" or "skill",
+                                id = choice.id,
+                                target = target
+                            }
+                            
+                            -- Move to next member
+                            battleActiveMemberIndex = battleActiveMemberIndex + 1
+                            battleSelectedIndex = 1
+                            battleSpellSelect = false
+                            
+                            -- If all actions collected, resolve round!
+                            if battleActiveMemberIndex > #battleLivingMembers then
+                                local events = resolveBattleRound()
+                                battleEventsQueue = events
+                                battleEventQueueIndex = 1
+                                battleCombatLog = {}
+                                advanceBattleLog()
+                                battleCombatState = "log"
+                            end
+                        else
+                            -- Not enough MP error popup/log
+                            battleEventsQueue = { { type = "text", text = "Not enough MP!" } }
+                            battleEventQueueIndex = 1
+                            battleCombatLog = {}
+                            advanceBattleLog()
+                            battleCombatState = "log"
+                        end
+                    end
+                end
+            else
+                -- Main commands: Attack (1), Spell/Skill (2), Item/Defend (3), Flee (4)
+                if key == "up" or key == "w" then
+                    battleSelectedIndex = (battleSelectedIndex - 2) % 4 + 1
+                elseif key == "down" or key == "s" then
+                    battleSelectedIndex = battleSelectedIndex % 4 + 1
+                elseif key == "space" or key == "return" then
+                    if battleSelectedIndex == 1 then
+                        -- Attack
+                        local target = activeBattle.enemies[1]
+                        for _, e in ipairs(activeBattle.enemies) do
+                            if not e:isDead() then target = e break end
+                        end
+                        
+                        battleCollectedActions[memberInfo.index] = {
+                            type = "attack",
+                            target = target
+                        }
+                        
+                        battleActiveMemberIndex = battleActiveMemberIndex + 1
+                        battleSelectedIndex = 1
+                        
+                        if battleActiveMemberIndex > #battleLivingMembers then
+                            local events = resolveBattleRound()
+                            battleEventsQueue = events
+                            battleEventQueueIndex = 1
+                            battleCombatLog = {}
+                            advanceBattleLog()
+                            battleCombatState = "log"
+                        end
+                    elseif battleSelectedIndex == 2 then
+                        -- Spell/Skill selection submenu
+                        battleSpellSelect = true
+                        battleSelectedIndex = 1
+                    elseif battleSelectedIndex == 3 then
+                        -- Item (Summoner) or Defend (Monster)
+                        if isSummoner then
+                            if activeSession:hasItem("hp_tonic", 1) then
+                                local target = activeSession.summoner
+                                local lowestHp = 9999
+                                for _, c in ipairs(activeSession.party) do
+                                    if not c:isDead() and c.hp < lowestHp then
+                                        lowestHp = c.hp
+                                        target = c
+                                    end
+                                end
+                                
+                                battleCollectedActions[memberInfo.index] = {
+                                    type = "item",
+                                    id = "hp_tonic",
+                                    target = target
+                                }
+                                
+                                battleActiveMemberIndex = battleActiveMemberIndex + 1
+                                battleSelectedIndex = 1
+                                
+                                if battleActiveMemberIndex > #battleLivingMembers then
+                                    local events = resolveBattleRound()
+                                    battleEventsQueue = events
+                                    battleEventQueueIndex = 1
+                                    battleCombatLog = {}
+                                    advanceBattleLog()
+                                    battleCombatState = "log"
+                                end
+                            else
+                                battleEventsQueue = { { type = "text", text = "No HP Tonics left!" } }
+                                battleEventQueueIndex = 1
+                                battleCombatLog = {}
+                                advanceBattleLog()
+                                battleCombatState = "log"
+                            end
+                        else
+                            -- Monster Defend action
+                            battleCollectedActions[memberInfo.index] = {
+                                type = "defend"
+                            }
+                            battleActiveMemberIndex = battleActiveMemberIndex + 1
+                            battleSelectedIndex = 1
+                            
+                            if battleActiveMemberIndex > #battleLivingMembers then
+                                local events = resolveBattleRound()
+                                battleEventsQueue = events
+                                battleEventQueueIndex = 1
+                                battleCombatLog = {}
+                                advanceBattleLog()
+                                battleCombatState = "log"
+                            end
+                        end
+                    elseif battleSelectedIndex == 4 then
+                        -- Flee
+                        battleCollectedActions[memberInfo.index] = {
+                            type = "flee"
+                        }
+                        battleActiveMemberIndex = battleActiveMemberIndex + 1
+                        battleSelectedIndex = 1
+                        
+                        if battleActiveMemberIndex > #battleLivingMembers then
+                            local events = resolveBattleRound()
+                            battleEventsQueue = events
+                            battleEventQueueIndex = 1
+                            battleCombatLog = {}
+                            advanceBattleLog()
+                            battleCombatState = "log"
+                        end
+                    end
+                end
+            end
+            
+        elseif battleCombatState == "log" then
+            if key == "space" or key == "return" then
+                if battleEventQueueIndex <= #battleEventsQueue then
+                    advanceBattleLog()
+                else
+                    if activeBattle:isVictory() then
+                        local goldGain = math.random(10, 30)
+                        activeSession.gold = activeSession.gold + goldGain
+                        
+                        -- Apply passive mending / trick heal if present on survivors
+                        for _, c in ipairs(activeSession.party) do
+                            if not c:isDead() then
+                                c:gainExp(5, activeSession)
+                                local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", activeSession)
+                                if regenVal > 0 then
+                                    c.hp = math.min(c:getMaxHp(activeSession), c.hp + regenVal)
+                                end
+                            end
+                        end
+                        
+                        currentScene = "map"
+                    elseif activeBattle:isDefeat() then
+                        currentScene = "title"
+                        activeSession = session.GameSession.new(loader)
+                        activeSession:initializeStartingParty()
+                        renderer.init(activeSession)
+                    else
+                        local escaped = false
+                        for _, line in ipairs(battleCombatLog) do
+                            if line == "Escaped successfully!" then escaped = true break end
+                        end
+                        if escaped then
+                            currentScene = "map"
+                        else
+                            -- Rebuild living members list for the next round
+                            battleLivingMembers = {}
+                            table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
+                            for i = 1, 4 do
+                                local c = activeSession.party[i]
+                                if c and not c:isDead() then
+                                    table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
+                                end
+                            end
+                            
+                            battleActiveMemberIndex = 1
+                            battleCollectedActions = {}
+                            battleCombatState = "input"
+                            battleSelectedIndex = 1
+                            battleSpellSelect = false
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function love.keypressed(key)
+    if key == "f9" then
+        if server.isActive() then
+            server.stop()
+            print("Developer server stopped.")
+        else
+            server.start()
+        end
+        return
+    end
+    
+    local oldScene = currentScene
+    local oldSub = menuSubScene
+    
+    handleKeyPressed(key)
+    
+    if currentScene ~= oldScene or menuSubScene ~= oldSub then
+        renderer.resetMenuTimer()
+    end
+end
+
+function love.resize(w, h)
+    scale = math.min(w / gameWidth, h / gameHeight)
+    scale = math.max(1, math.floor(scale))
+    scaleX = math.floor((w - gameWidth * scale) / 2)
+    scaleY = math.floor((h - gameHeight * scale) / 2)
+end

@@ -1,0 +1,145 @@
+local socket = require("socket")
+local json = require("data.json")
+
+local server = {}
+local tcpListener = nil
+local active = false
+
+function server.start()
+    tcpListener = socket.bind("127.0.0.1", 8080)
+    if tcpListener then
+        tcpListener:settimeout(0)
+        active = true
+        print("Developer server running on http://127.0.0.1:8080/")
+    else
+        print("Failed to bind developer server to port 8080")
+    end
+end
+
+function server.stop()
+    if tcpListener then
+        tcpListener:close()
+        tcpListener = nil
+    end
+    active = false
+end
+
+function server.isActive()
+    return active
+end
+
+local function sendResponse(client, status, contentType, body)
+    local headers = {
+        "HTTP/1.1 " .. status,
+        "Content-Type: " .. contentType,
+        "Access-Control-Allow-Origin: *",
+        "Access-Control-Allow-Methods: GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers: Content-Type",
+        "Content-Length: " .. tostring(#body),
+        "Connection: close",
+        "",
+        body
+    }
+    client:send(table.concat(headers, "\r\n"))
+    client:close()
+end
+
+function server.update(dt)
+    if not active or not tcpListener then return end
+    
+    local client = tcpListener:accept()
+    if client then
+        client:settimeout(0.01)
+        local line, err = client:receive()
+        if line then
+            local method, path = line:match("^(%S+)%s+(%S+)%s+HTTP/")
+            if method then
+                if method == "OPTIONS" then
+                    sendResponse(client, "200 OK", "text/plain", "")
+                elseif method == "GET" and path == "/data" then
+                    local function getFileContents(fpath)
+                        local contents = love.filesystem.read(fpath)
+                        return contents and json.decode(contents) or nil
+                    end
+                    
+                    local data = {
+                        actors = getFileContents("data/actors.json"),
+                        elements = getFileContents("data/elements.json"),
+                        events = getFileContents("data/events.json"),
+                        items = getFileContents("data/items.json"),
+                        maps = getFileContents("data/maps.json"),
+                        quests = getFileContents("data/quests.json"),
+                        shops = getFileContents("data/shops.json"),
+                        sounds = getFileContents("data/sounds.json"),
+                        terms = getFileContents("data/terms.json"),
+                        themes = getFileContents("data/themes.json"),
+                        system = getFileContents("data/system.json")
+                    }
+                    
+                    local responseBody = json.encode(data)
+                    sendResponse(client, "200 OK", "application/json", responseBody)
+                    
+                elseif method == "POST" and path == "/save" then
+                    local contentLength = 0
+                    while true do
+                        local headerLine = client:receive()
+                        if not headerLine or headerLine == "" then break end
+                        local len = headerLine:match("[Cc]ontent%-[Ll]ength:%s*(%d+)")
+                        if len then contentLength = tonumber(len) end
+                    end
+                    
+                    local body = ""
+                    if contentLength > 0 then
+                        body = client:receive(contentLength)
+                    end
+                    
+                    local success = false
+                    local statusMsg = "Failed to parse save data."
+                    
+                    if body and body ~= "" then
+                        local payload = json.decode(body)
+                        if payload then
+                            local function saveFile(fpath, tbl)
+                                if tbl then
+                                    local encoded = json.encode(tbl)
+                                    love.filesystem.write(fpath, encoded)
+                                end
+                            end
+                            
+                            saveFile("data/actors.json", payload.actors)
+                            saveFile("data/items.json", payload.items)
+                            saveFile("data/maps.json", payload.maps)
+                            saveFile("data/shops.json", payload.shops)
+                            saveFile("data/system.json", payload.system)
+                            
+                            -- Reload loader caches
+                            local loader = require("data.loader")
+                            loader.init()
+                            
+                            -- Hot-reload active UI font
+                            local ui = require("presentation.ui")
+                            if payload.system and payload.system.activeFont then
+                                ui.setFont(payload.system.activeFont)
+                            end
+                            
+                            success = true
+                            statusMsg = "Saved and hot-reloaded successfully!"
+                        end
+                    end
+                    
+                    local statusText = success and "200 OK" or "400 Bad Request"
+                    local responseJson = json.encode({ success = success, message = statusMsg })
+                    sendResponse(client, statusText, "application/json", responseJson)
+                else
+                    sendResponse(client, "404 Not Found", "text/plain", "Not Found")
+                end
+            else
+                client:close()
+            end
+        else
+            client:close()
+        end
+    end
+end
+
+return server

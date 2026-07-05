@@ -1,0 +1,8 @@
+{
+  "Light": { "strong": ["Dark"], "weak": ["Bone"] },
+  "Dark":  { "strong": ["Light"], "weak": ["Light"] },
+  "Bone":  { "strong": ["Light"], "weak": ["Earth"] },
+  "Wind":  { "strong": ["Water"], "weak": ["Earth"] },
+  "Earth": { "strong": ["Wind"], "weak": ["Water"] },
+  "Water": { "strong": ["Earth"], "weak": ["Wind"] }
+}

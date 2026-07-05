@@ -1,0 +1,59 @@
+{
+  "id": "npc_dungeon_merchant",
+  "name": "Wandering Merchant",
+  "layout": "visual_novel",
+  "portrait": "NPC_Dungeon_Merchant",
+  "initialNode": "root_router",
+  "nodes": {
+    "root_router": {
+      "type": "ROUTER",
+      "condition": "flag:dungeon_merchant_met",
+      "trueNode": "default_text",
+      "falseNode": "intro_text"
+    },
+    "intro_text": {
+      "type": "TEXT",
+      "content": "Oh— a living one. Don’t startle me like that. Here. I sell necessities. Not hope. Hope’s extra.",
+      "next": "intro_choices"
+    },
+    "intro_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Show me what you have", "target": "open_shop", "setFlag": "dungeon_merchant_met" },
+        { "label": "Any advice?", "target": "advice_text", "setFlag": "dungeon_merchant_met" },
+        { "label": "No thanks", "action": "close", "setFlag": "dungeon_merchant_met" }
+      ]
+    },
+    "default_text": {
+      "type": "TEXT",
+      "content": "A friendly face in the dark. Care for supplies? It gets expensive the deeper you go. That’s the point.",
+      "next": "default_choices"
+    },
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Show me what you have", "target": "open_shop" },
+        { "label": "Any advice?", "target": "advice_text" },
+        { "label": "No thanks", "action": "close" }
+      ]
+    },
+    "open_shop": {
+      "type": "ACTION",
+      "action": "OPEN_SHOP",
+      "shopId": "dungeon_merchant",
+      "next": "default_choices"
+    },
+    "advice_text": {
+      "type": "TEXT",
+      "content": "Advice? Keep one summon slot empty. The dungeon loves to tempt you when you’re at your limit. And never ‘push one more room’ when your MP is low. That’s how you become a story.",
+      "next": "advice_choices"
+    },
+    "advice_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Back", "target": "default_text" },
+        { "label": "Close", "action": "close" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,183 @@
+[
+  {
+    "title": "Town of Stillnight",
+    "intro": "A quiet settlement on the edge of the void.",
+    "depth": 0,
+    "safe": true,
+    "music": "town1",
+    "image": "TownAlencar.png",
+    "layout": [
+      "#########G#########",
+      "#########.#########",
+      "#.......#.#.......#",
+      "#.###.........###.#",
+      "#.###.........###.#",
+      "#.#W#.........#U#.#",
+      "#.................#",
+      "#.###.........#L#.#",
+      "#.##H...#.#...###.#",
+      "#.###S...R....A##.#",
+      "#.###...#.#...###.#",
+      "#.................#",
+      "#########....#P#..#",
+      "#########....###..#",
+      "########T....###..#",
+      "#########....###..#",
+      "#########....###..#",
+      "#.................#",
+      "#############.#####"
+    ],
+    "events": [
+      { "id": "npc_gate_guard", "x": 9, "y": 0 },
+      { "id": "npc_weapon_shop", "x": 3, "y": 5 },
+      { "id": "recruit", "x": 15, "y": 5 },
+      { "id": "npc_laura", "x": 15, "y": 7 },
+      { "id": "loc_abandoned_house", "x": 4, "y": 8 },
+      { "id": "recovery", "x": 9, "y": 9 },
+      { "id": "npc_alicia", "x": 14, "y": 9 },
+      { "id": "loc_pub", "x": 14, "y": 12 },
+      { "id": "npc_auction", "x": 10, "y": 13 },
+      { "id": "loc_temple", "x": 8, "y": 14 }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": []
+  },
+  {
+    "title": "Floor 1: Entry Hall",
+    "intro": "You cross the threshold into the dark.",
+    "depth": 1,
+    "music": "dungeon1",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "stairs", "count": 1 },
+      { "id": "recovery", "chance": 0.3 },
+      { "id": "enemy", "min": 2, "max": 3 },
+      { "id": "recruit", "chance": 0.5 },
+      { "id": "treasure", "count": 1 },
+      {
+          "id": "enemy",
+          "count": 1,
+          "behavior": "chase",
+          "symbol": "!",
+          "cssClass": "text-danger",
+          "encounters": [
+              { "id": "imp", "weight": 10 }
+          ]
+      }
+    ],
+    "treasures": ["potion", "antidote"],
+    "encounters": [
+      { "id": "pixie", "weight": 5 },
+      { "id": "skeleton", "weight": 5 },
+      { "id": "imp", "weight": 3 }
+    ],
+    "recruits": ["pixie", "skeleton", "imp", "wisp", "bat","candle"]
+  },
+  {
+    "title": "Floor 2: Chasm Crossing",
+    "intro": "Wind howls across a broken bridge.",
+    "depth": 2,
+    "music": "dungeon1",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "stairs", "count": 1 },
+      { "id": "recovery", "chance": 0.3 },
+      { "id": "enemy", "min": 3, "max": 4 },
+      { "id": "shrine_music_box", "chance": 0.3 },
+      { "id": "shrine", "chance": 0.5 },
+      { "id": "npc_dungeon_merchant", "chance": 0.5 },
+      { "id": "recruit", "chance": 0.6 },
+      { "id": "trap", "min": 1, "max": 2 },
+      { "id": "treasure", "chance": 0.5 }
+    ],
+    "treasures": ["hi_potion", "iron_sword", "glittering_teardrop"],
+    "encounters": [
+      { "id": "skeleton", "weight": 8 },
+      { "id": "imp", "weight": 5 },
+      { "id": "wisp", "weight": 4 },
+      { "id": "ooze", "weight": 3 }
+    ],
+    "recruits": ["skeleton", "imp", "ooze", "golem","candle","flauros"]
+  },
+  {
+    "title": "Floor 3: Rusted Choir",
+    "intro": "Broken bells sway above a dry pit.",
+    "depth": 3,
+    "music": "emotional1_bitSad",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "stairs", "count": 1 },
+      { "id": "recovery", "chance": 0.3 },
+      { "id": "enemy", "min": 4, "max": 6 },
+      { "id": "shrine", "chance": 0.5 },
+      { "id": "recruit", "chance": 0.7 }
+    ],
+    "encounters": [
+      { "id": "golem", "weight": 6 },
+      { "id": "demon", "weight": 4 },
+      { "id": "angel", "weight": 3 }
+    ],
+    "recruits": ["golem", "demon", "angel", "larva","flauros"]
+  },
+  {
+    "title": "Floor 4: Cryptic Vault",
+    "intro": "Relic pedestals gleam with unnatural light.",
+    "depth": 4,
+    "music": "event9_magical",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "stairs", "count": 1 },
+      { "id": "recovery", "chance": 0.2 },
+      { "id": "enemy", "min": 5, "max": 7 },
+      { "id": "shrine", "chance": 0.5 },
+      { "id": "npc_dungeon_merchant", "chance": 0.5 },
+      { "id": "recruit", "chance": 0.5 },
+      { "id": "npc_daphne", "count": 1 }
+    ],
+    "treasures": ["shattered_blade"],
+    "encounters": [
+      { "id": "demon", "weight": 8 },
+      { "id": "highPixie", "weight": 4 },
+      { "id": "ghoul", "weight": 4 }
+    ],
+    "recruits": ["demon", "angel", "golem","flauros"]
+  },
+  {
+    "title": "Floor 5: Blood Chapel",
+    "intro": "Walls whisper of ancient oaths.",
+    "depth": 5,
+    "music": "dungeon1",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "stairs", "count": 1 },
+      { "id": "recovery", "chance": 0.2 },
+      { "id": "enemy", "min": 5, "max": 8 },
+      { "id": "shrine", "chance": 0.4 },
+      { "id": "recruit", "chance": 0.4 }
+    ],
+    "treasures": ["untarnished_signet"],
+    "encounters": [
+      { "id": "crimsonLord", "weight": 2 },
+      { "id": "demon", "weight": 8 },
+      { "id": "highPixie", "weight": 5 }
+    ],
+    "recruits": ["demon", "angel"]
+  },
+  {
+    "title": "Floor 6: Stillnight Sanctum",
+    "intro": "A presence fills the air. The Eternal Warden awaits.",
+    "depth": 6,
+    "music": "event4_darkJester",
+    "image": "DungeonFloors1.png",
+    "events": [
+      { "id": "recovery", "count": 1 },
+      { "id": "enemy", "min": 1, "max": 1 }
+    ],
+    "encounters": [
+      { "id": "crimsonLord", "weight": 10 },
+      { "id": "demon", "weight": 5 }
+    ],
+    "recruits": []
+  }
+]

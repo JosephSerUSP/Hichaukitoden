@@ -1,0 +1,95 @@
+{
+  "id": "npc_daphne",
+  "name": "Daphne",
+  "layout": "visual_novel",
+  "portrait": "NPC_Daphne",
+  "initialNode": "root_router",
+  "nodes": {
+    "root_router": {
+      "type": "ROUTER",
+      "condition": "flag:daphne_first_met",
+      "trueNode": "default_text",
+      "falseNode": "intro_text"
+    },
+    "intro_text": {
+      "type": "TEXT",
+      "content": "…You’re late.",
+      "next": "intro_choices"
+    },
+    "intro_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Who are you?", "target": "intro_who_text", "setFlag": "daphne_first_met" },
+        { "label": "Late for what?", "target": "intro_late_for_text", "setFlag": "daphne_first_met" },
+        { "label": "Leave", "action": "close", "setFlag": "daphne_first_met" }
+      ]
+    },
+    "intro_who_text": {
+      "type": "TEXT",
+      "content": "Daphne. I’m the part of the dungeon that learned to speak politely.",
+      "next": "intro_who_choices"
+    },
+    "intro_who_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "That’s not an answer.", "target": "intro_not_answer_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "intro_not_answer_text": {
+      "type": "TEXT",
+      "content": "It is. You’re just not used to answers that don’t comfort you.",
+      "next": "intro_not_answer_choices"
+    },
+    "intro_not_answer_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "…", "target": "default_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "intro_late_for_text": {
+      "type": "TEXT",
+      "content": "For the version of you that doesn’t come back.",
+      "next": "intro_late_for_choices"
+    },
+    "intro_late_for_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "…", "target": "default_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "default_text": {
+      "type": "TEXT",
+      "content": "…Don’t waste steps. Don’t waste summons. Don’t waste yourself.",
+      "next": "default_choices"
+    },
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Ask about the dungeon", "target": "talk_dungeon_text" },
+        { "label": "Ask about the town", "target": "talk_town_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "talk_dungeon_text": {
+      "type": "TEXT",
+      "content": "It doesn’t want you dead. It wants you *convinced*. There’s a difference. Dead things don’t pray. Convinced things do.",
+      "next": "talk_dungeon_choices"
+    },
+    "talk_dungeon_choices": {
+      "type": "CHOICE",
+      "options": [ { "label": "Back", "target": "default_text" } ]
+    },
+    "talk_town_text": {
+      "type": "TEXT",
+      "content": "A town is just a room with too many mirrors. Everyone here is looking for the angle that makes them forgivable.",
+      "next": "talk_town_choices"
+    },
+    "talk_town_choices": {
+      "type": "CHOICE",
+      "options": [ { "label": "Back", "target": "default_text" } ]
+    }
+  }
+}

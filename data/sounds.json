@@ -1,0 +1,74 @@
+{
+  "HEAL": [
+    { "type": "sine", "frequency": 523.25, "duration": 100, "start": 0, "volume": 0.1 },
+    { "type": "sine", "frequency": 659.25, "duration": 100, "start": 80, "volume": 0.1 },
+    { "type": "sine", "frequency": 783.99, "duration": 200, "start": 160, "volume": 0.1 }
+  ],
+  "STAIRS": [
+    { "type": "square", "frequency": 220, "duration": 100, "start": 0, "volume": 0.1 },
+    { "type": "square", "frequency": 110, "duration": 150, "start": 80, "volume": 0.15 }
+  ],
+  "ITEM_GET": [
+    { "type": "triangle", "frequency": 1046.50, "duration": 80, "start": 0, "volume": 0.1 },
+    { "type": "triangle", "frequency": 1318.51, "duration": 80, "start": 80, "volume": 0.1 },
+    { "type": "triangle", "frequency": 1567.98, "duration": 200, "start": 160, "volume": 0.1 }
+  ],
+  "DAMAGE": [
+    { "type": "sawtooth", "frequency": 150, "duration": 100, "start": 0, "volume": 0.2 },
+    { "type": "sawtooth", "frequency": 100, "duration": 100, "start": 20, "volume": 0.2 }
+  ],
+  "VICTORY": [
+    { "type": "square", "frequency": 523.25, "duration": 120, "start": 0, "volume": 0.1 },
+    { "type": "square", "frequency": 523.25, "duration": 120, "start": 120, "volume": 0.1 },
+    { "type": "square", "frequency": 523.25, "duration": 120, "start": 240, "volume": 0.1 },
+    { "type": "square", "frequency": 659.25, "duration": 400, "start": 360, "volume": 0.1 },
+    { "type": "square", "frequency": 523.25, "duration": 120, "start": 600, "volume": 0.1 },
+    { "type": "square", "frequency": 659.25, "duration": 600, "start": 720, "volume": 0.1 }
+  ],
+  "LEVEL_UP": [
+    { "type": "triangle", "frequency": 440, "duration": 100, "start": 0, "volume": 0.1 },
+    { "type": "triangle", "frequency": 554, "duration": 100, "start": 80, "volume": 0.1 },
+    { "type": "triangle", "frequency": 659, "duration": 100, "start": 160, "volume": 0.1 },
+    { "type": "triangle", "frequency": 880, "duration": 400, "start": 240, "volume": 0.1 }
+  ],
+  "SHOP_BUY": [
+    { "type": "square", "frequency": 600, "duration": 80, "start": 0, "volume": 0.1 },
+    { "type": "square", "frequency": 800, "duration": 80, "start": 60, "volume": 0.1 }
+  ],
+  "SHOP_SELL": [
+    { "type": "square", "frequency": 600, "duration": 80, "start": 0, "volume": 0.1 },
+    { "type": "square", "frequency": 400, "duration": 80, "start": 60, "volume": 0.1 }
+  ],
+  "EQUIP": [
+    { "type": "sine", "frequency": 800, "duration": 50, "start": 0, "volume": 0.1 },
+    { "type": "sine", "frequency": 1000, "duration": 50, "start": 40, "volume": 0.1 }
+  ],
+  "UI_HOVER": [
+    { "type": "sine", "frequency": 440, "duration": 20, "start": 0, "volume": 0.05 }
+  ],
+  "UI_SELECT": [
+    { "type": "square", "frequency": 400, "duration": 50, "start": 0, "volume": 0.1 }
+  ],
+  "UI_CANCEL": [
+    { "type": "square", "frequency": 300, "duration": 80, "start": 0, "volume": 0.1 }
+  ],
+  "UI_ERROR": [
+    { "type": "sawtooth", "frequency": 180, "duration": 150, "start": 0, "volume": 0.2 },
+    { "type": "sawtooth", "frequency": 160, "duration": 150, "start": 50, "volume": 0.2 }
+  ],
+  "BATTLE_START": [
+    { "type": "sawtooth", "frequency": 220, "duration": 200, "start": 0, "volume": 0.15 },
+    { "type": "sawtooth", "frequency": 110, "duration": 400, "start": 100, "volume": 0.2 },
+    { "type": "square", "frequency": 440, "duration": 100, "start": 300, "volume": 0.1 }
+  ],
+  "GAME_OVER": [
+    { "type": "sawtooth", "frequency": 100, "duration": 800, "start": 0, "volume": 0.2 },
+    { "type": "sawtooth", "frequency": 90, "duration": 800, "start": 100, "volume": 0.2 },
+    { "type": "sawtooth", "frequency": 80, "duration": 800, "start": 200, "volume": 0.2 }
+  ],
+  "ESCAPE": [
+    { "type": "square", "frequency": 600, "duration": 100, "start": 0, "volume": 0.1 },
+    { "type": "square", "frequency": 800, "duration": 100, "start": 80, "volume": 0.1 },
+    { "type": "square", "frequency": 1200, "duration": 200, "start": 160, "volume": 0.1 }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "npc_auction",
+  "name": "Auctioneer",
+  "layout": "visual_novel",
+  "portrait": "NPC_Auctioneer",
+  "initialNode": "default_text",
+  "nodes": {
+    "default_text": {
+      "type": "TEXT",
+      "content": "Rare finds! Highest bidder takes all! …Well. Fixed price for now. But the *spirit* is the same. Spend like you’re trying to forget something.",
+      "next": "default_choices"
+    },
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Browse", "target": "open_shop" },
+        { "label": "Ask what’s ‘unidentified’ mean", "target": "talk_unid_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "open_shop": {
+      "type": "ACTION",
+      "action": "OPEN_SHOP",
+      "shopId": "auction_house",
+      "next": "default_choices"
+    },
+    "talk_unid_text": {
+      "type": "TEXT",
+      "content": "It means you pay first and ask questions later. Just like love. Just like the dungeon. Now— are you brave, or are you smart?",
+      "next": "talk_unid_choices"
+    },
+    "talk_unid_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Browse", "target": "open_shop" },
+        { "label": "Back", "target": "default_text" }
+      ]
+    }
+  }
+}

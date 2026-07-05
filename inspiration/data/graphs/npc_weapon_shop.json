@@ -1,0 +1,134 @@
+{
+  "id": "npc_weapon_shop",
+  "name": "Weaponsmith",
+  "layout": "visual_novel",
+  "portrait": "NPC_Weapon_Shop",
+  "initialNode": "router_start",
+  "nodes": {
+    "router_start": {
+      "type": "ROUTER",
+      "branches": [
+        { "condition": "questStatus:shattered_blade_recovery:active, hasItem:shattered_blade", "target": "quest_turnin_text" },
+        { "condition": "questStatus:shattered_blade_recovery:active", "target": "quest_reminder_text" },
+        { "condition": "flag:shattered_blade_reforged", "target": "greeting_respect" },
+        { "default": true, "target": "default_text" }
+      ]
+    },
+
+    "default_text": {
+      "type": "TEXT",
+      "content": "Blades, hammers, axes. If it kills, I sell it. If it breaks, I fix it. If you break, that’s on you.",
+      "next": "default_choices"
+    },
+    "greeting_respect": {
+      "type": "TEXT",
+      "content": "Good to see you alive. The forge is hot, and the steel is singing today. Need anything?",
+      "next": "default_choices"
+    },
+
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Buy Weapons", "target": "open_shop" },
+        { "label": "Ask about the dungeon", "target": "talk_dungeon_text" },
+        { "label": "Ask about equipment", "target": "tutorial_router" },
+        { "label": "Found anything interesting?", "target": "quest_offer_router" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+
+    "open_shop": {
+      "type": "ACTION",
+      "action": "OPEN_SHOP",
+      "shopId": "weapons_basic",
+      "next": "default_choices"
+    },
+
+    "talk_dungeon_text": {
+      "type": "TEXT",
+      "content": "Down there? Don’t fight fair. Don’t fight pretty. Fight to leave. The only winning move is coming back with your hands still yours.",
+      "next": "default_choices"
+    },
+
+    "tutorial_router": {
+      "type": "TEXT",
+      "content": "You want to know how to not die? Fine. Listen close.",
+      "next": "tutorial_choices"
+    },
+    "tutorial_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Weapons", "target": "tut_weapons" },
+        { "label": "Armor", "target": "tut_armor" },
+        { "label": "Back", "target": "default_choices" }
+      ]
+    },
+    "tut_weapons": {
+      "type": "TEXT",
+      "content": "Swords are balanced. Axes hit hard but miss if you're clumsy. Magic weapons... well, they depend on your mind, not your muscle. Pick what fits your hand.",
+      "next": "tutorial_choices"
+    },
+    "tut_armor": {
+      "type": "TEXT",
+      "content": "Heavy plate stops claws, but it slows you down. If you're slow, you get hit more. Sometimes dodging is better than tanking. Your choice.",
+      "next": "tutorial_choices"
+    },
+
+    "quest_offer_router": {
+      "type": "ROUTER",
+      "branches": [
+        { "condition": "questStatus:shattered_blade_recovery:completed", "target": "quest_completed_text" },
+        { "condition": "questStatus:shattered_blade_recovery:active", "target": "quest_reminder_text" },
+        { "default": true, "target": "quest_offer_text" }
+      ]
+    },
+    "quest_offer_text": {
+      "type": "TEXT",
+      "content": "Interesting? Maybe. Legends say a 'Shattered Blade' lies in the Cryptic Vault. Floor 4, maybe 5. It's useless scrap to you, but I could reforge it into something... lethal.",
+      "next": "quest_offer_choice"
+    },
+    "quest_offer_choice": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "I'll keep an eye out.", "target": "action_offer_quest" },
+        { "label": "Not interested.", "target": "default_choices" }
+      ]
+    },
+    "action_offer_quest": {
+      "type": "ACTION",
+      "action": "OFFER_QUEST",
+      "questId": "shattered_blade_recovery",
+      "next": "default_choices"
+    },
+
+    "quest_reminder_text": {
+      "type": "TEXT",
+      "content": "Find that scrap metal yet? The forge is waiting.",
+      "next": "default_choices"
+    },
+
+    "quest_turnin_text": {
+      "type": "TEXT",
+      "content": "Let me see that... Hah! Yes. The core is intact. The steel is ancient, folded a thousand times. Give me an hour.",
+      "next": "quest_turnin_action"
+    },
+    "quest_turnin_action": {
+      "type": "ACTION",
+      "action": "COMPLETE_QUEST",
+      "questId": "shattered_blade_recovery",
+      "takeItem": "shattered_blade",
+      "setFlag": "shattered_blade_reforged",
+      "next": "quest_reward_text"
+    },
+    "quest_reward_text": {
+      "type": "TEXT",
+      "content": "Done. I've added my best work to the shop inventory. Special stock, just for you. Don't dull it on a rat's skull.",
+      "next": "default_choices"
+    },
+    "quest_completed_text": {
+      "type": "TEXT",
+      "content": "The blade is done. Check my wares if you have the coin.",
+      "next": "default_choices"
+    }
+  }
+}

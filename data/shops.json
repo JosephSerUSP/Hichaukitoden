@@ -1,0 +1,61 @@
+{
+  "consumables_basic": {
+    "items": [
+      { "id": "hp_tonic" },
+      { "id": "sigil_ink", "condition": "level:2" },
+      { "id": "whispered_lessons", "condition": "level:5" },
+      { "id": "elixir_of_insight", "condition": "flag:alicia_trust_earned" }
+    ]
+  },
+  "weapons_basic": {
+    "items": [
+      { "id": "silver_blade" },
+      { "id": "bone_plate" },
+      { "id": "radiant_blade_flavio", "condition": "level:3" },
+      { "id": "wind_dancer", "condition": "level:3" },
+      { "id": "water_scepter", "condition": "level:3" },
+      { "id": "holy_sword_gram", "condition": "level:10" },
+      { "id": "dark_scepter_lucille", "condition": "level:10" },
+      { "id": "shattered_edge_reforged", "condition": "flag:shattered_blade_reforged" },
+      { "id": "meteorite_plate", "condition": "flag:shattered_blade_reforged" }
+    ]
+  },
+  "accessories_special": {
+    "items": [
+      { "id": "wind_charm" },
+      { "id": "light_amulet" },
+      { "id": "mars_emblem", "condition": "level:5" },
+      { "id": "mercury_crest", "condition": "level:5" },
+      { "id": "alert_charm", "condition": "level:3" },
+      { "id": "rear_mirror", "condition": "level:3" },
+      { "id": "hp_boost1" },
+      { "id": "hp_boost2", "condition": "level:5" },
+      { "id": "hp_boost3", "condition": "level:10" }
+    ]
+  },
+  "auction_house": {
+    "items": [
+      { "id": "mystic_egg" },
+      { "id": "untarnished_signet" },
+      { "id": "exp_boost", "condition": "gold:5000" },
+      { "id": "hermes_boots", "condition": "level:10" }
+    ]
+  },
+  "pub_drinks": {
+    "items": [
+      { "id": "ale_mug" },
+      { "id": "stout_pint" },
+      { "id": "wine_glass", "condition": "level:5" }
+    ]
+  },
+  "dungeon_merchant": {
+    "items": [
+      { "id": "hp_tonic" },
+      { "id": "sigil_ink" },
+      { "id": "bone_plate" },
+      { "id": "glittering_teardrop" },
+      { "id": "hp_boost1" },
+      { "id": "mystic_egg", "condition": "level:10" }
+    ]
+  }
+}

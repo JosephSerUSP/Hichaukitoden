@@ -1,0 +1,40 @@
+{
+  "id": "npc_geraldo",
+  "name": "Geraldo",
+  "layout": "visual_novel",
+  "portrait": "NPC_Geraldo",
+  "initialNode": "default_text",
+  "nodes": {
+    "default_text": {
+      "type": "TEXT",
+      "content": "Heh. You look like you’ve seen a ghost. Want to hear a story? They’re all true. That’s what makes them useless.",
+      "next": "default_choices"
+    },
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Tell me.", "target": "story_1_text" },
+        { "label": "Browse", "target": "open_shop" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "open_shop": {
+      "type": "ACTION",
+      "action": "OPEN_SHOP",
+      "shopId": "auction_house",
+      "next": "default_choices"
+    },
+    "story_1_text": {
+      "type": "TEXT",
+      "content": "Once, a Summoner ran out of MP and begged his own creature to stop draining him. The creature cried. Then it kept eating. The dungeon doesn’t make monsters. It just reveals who’s hungry.",
+      "next": "story_1_choices"
+    },
+    "story_1_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "…Lovely.", "target": "default_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    }
+  }
+}

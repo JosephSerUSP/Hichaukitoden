@@ -1,0 +1,54 @@
+{
+  "id": "pub_alicia",
+  "name": "Alicia",
+  "layout": "visual_novel",
+  "portrait": "NPC_Alicia",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "speaker": "Alicia",
+      "content": "Oh! H-hello again. I... I just needed to get out of the shop for a little while. All the dust... it gets in my throat.",
+      "next": "hub_choices"
+    },
+    "hub_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Is everything okay?", "target": "ask_about_laura" },
+        { "label": "It's nice to see you out.", "target": "nice_to_see_you" },
+        { "label": "Leave her be.", "action": "close" }
+      ]
+    },
+    "ask_about_laura": {
+        "type": "TEXT",
+        "speaker": "Alicia",
+        "content": "Yes! Everything is... fine. Laura, she... she liked the gift. I think. She's wearing it. Under her apron, so no one else can see. It's... nice. Thank you, again. For helping me.",
+        "next": "after_thanks_choices"
+    },
+    "after_thanks_choices": {
+        "type": "CHOICE",
+        "options": [
+            { "label": "You're welcome.", "target": "youre_welcome_text" },
+            { "label": "Leave her be.", "action": "close" }
+        ]
+    },
+    "youre_welcome_text": {
+        "type": "TEXT",
+        "speaker": "Alicia",
+        "content": "(She gives you a genuine, heartfelt smile.)",
+        "next": "close_dialogue"
+    },
+    "nice_to_see_you": {
+        "type": "TEXT",
+        "speaker": "Alicia",
+        "content": "Thank you. It's... a little loud. But the tea is good. It's nice to just... sit for a moment. And not worry about what needs restocking.",
+        "next": "close_dialogue"
+    },
+    "close_dialogue": {
+        "type": "CHOICE",
+        "options": [
+            { "label": "I'll let you rest.", "action": "close" }
+        ]
+    }
+  }
+}

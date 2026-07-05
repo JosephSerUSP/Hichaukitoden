@@ -1,0 +1,26 @@
+{
+  "id": "npc_drunkard",
+  "name": "Drunkard",
+  "layout": "visual_novel",
+  "portrait": "NPC_Drunkard",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "content": "*hic* Whaddya want? Can'tcha see I'm... thinkin'?",
+      "next": "choices"
+    },
+    "choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Ask what he's thinking about.", "target": "thinking_about" },
+        { "label": "Leave him to his thoughts.", "action": "close" }
+      ]
+    },
+    "thinking_about": {
+      "type": "TEXT",
+      "content": "Thinkin' 'bout... 'bout how the floor keeps movin'. An' how my mug's always empty. It's a conspiracy, I tell ya... A thirsty, wobbly conspiracy.",
+      "next": "choices"
+    }
+  }
+}

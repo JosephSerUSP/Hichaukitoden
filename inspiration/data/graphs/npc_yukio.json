@@ -1,0 +1,42 @@
+{
+  "id": "npc_yukio",
+  "name": "Yukio",
+  "layout": "visual_novel",
+  "portrait": "NPC_Yukio",
+  "initialNode": "default_text",
+  "nodes": {
+    "default_text": {
+      "type": "TEXT",
+      "content": "Efficiency is key. Do not waste my time.",
+      "next": "default_choices"
+    },
+    "default_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "You’re a Summoner too.", "target": "talk_summoner_text" },
+        { "label": "Leave", "action": "close" }
+      ]
+    },
+    "talk_summoner_text": {
+      "type": "TEXT",
+      "content": "I summon because I don’t trust people to stand where I need them. Creatures are honest. They take payment and they do the job.",
+      "next": "talk_summoner_choices"
+    },
+    "talk_summoner_choices": {
+      "type": "CHOICE",
+      "options": [
+        { "label": "Sounds lonely.", "target": "talk_lonely_text" },
+        { "label": "Back", "target": "default_text" }
+      ]
+    },
+    "talk_lonely_text": {
+      "type": "TEXT",
+      "content": "Lonely is a luxury. You’ll learn that if you keep surviving.",
+      "next": "talk_lonely_choices"
+    },
+    "talk_lonely_choices": {
+      "type": "CHOICE",
+      "options": [ { "label": "Back", "target": "default_text" } ]
+    }
+  }
+}
