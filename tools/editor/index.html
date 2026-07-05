@@ -541,8 +541,9 @@
                 <div class="db-sidebar-tabs inset-panel">
                     <button id="db-tab-actors" class="db-tab-btn active" onclick="setDbTab('actors')">Actors</button>
                     <button id="db-tab-items" class="db-tab-btn" onclick="setDbTab('items')">Items</button>
-                    <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
+                                                            <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
+                    <button id="db-tab-battle" class="db-tab-btn" onclick="setDbTab('battle')">Battle Screen</button>
                 </div>
 
                 <!-- Database items list (middle column) -->
@@ -941,8 +942,9 @@
             let items = [];
             if (activeDbTab === 'actors') items = dbPayload.actors;
             else if (activeDbTab === 'items') items = dbPayload.items;
-            else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
+                                    else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
+            else if (activeDbTab === 'battle') items = [{ id: 'battle_settings', name: 'Battle Settings' }];
             
             items.forEach((item, idx) => {
                 const btn = document.createElement('button');
@@ -970,7 +972,7 @@
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.querySelector('.db-items-column button');
-            if (activeDbTab === 'system') {
+                        if (activeDbTab === 'system' || activeDbTab === 'battle') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -1058,17 +1060,55 @@
                 formPanel.appendChild(listWrapper);
             } else if (activeDbTab === 'system') {
                 if (!dbPayload.system) dbPayload.system = {};
-                buildRecursiveForm(formPanel, dbPayload.system, []);
+                const systemConfig = { ui: dbPayload.system.ui || {} };
+                buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
+            } else if (activeDbTab === 'battle') {
+                if (!dbPayload.system) dbPayload.system = {};
+                const battleConfig = {
+                    physics: dbPayload.system.physics || {},
+                    battle_screen: dbPayload.system.battle_screen || {},
+                    combat: dbPayload.system.combat || {}
+                };
+                buildRecursiveForm(formPanel, battleConfig, [], dbPayload.system);
             }
         }
 
-        function buildRecursiveForm(container, obj, path) {
+        function buildRecursiveForm(container, obj, path, targetRoot) {
             for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     const value = obj[key];
                     const currentPath = [...path, key];
 
-                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    if (key === 'activeFont') {
+                        const group = document.createElement('div');
+                        group.className = 'form-group';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = 'Active UI Font';
+                        group.appendChild(lbl);
+
+                        const select = document.createElement('select');
+                        select.className = 'form-control inset-bevel';
+                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
+                        fonts.forEach(f => {
+                            const opt = document.createElement('option');
+                            opt.value = f;
+                            opt.textContent = f;
+                            if (value === f) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.onchange = () => {
+                            let target = targetRoot;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                target = target[currentPath[i]];
+                            }
+                            target[key] = select.value;
+                        };
+
+                        group.appendChild(select);
+                        container.appendChild(group);
+                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                         // Create collapsible section header
                         const sectionWrapper = document.createElement('div');
                         sectionWrapper.style.marginBottom = '10px';
@@ -1100,17 +1140,23 @@
                         sectionWrapper.appendChild(content);
                         container.appendChild(sectionWrapper);
 
-                        buildRecursiveForm(content, value, currentPath);
+                        buildRecursiveForm(content, value, currentPath, targetRoot);
                     } else {
                         // Primitive value input
                         const type = typeof value === 'number' ? 'number' : 'text';
                         createFormField(container, key, value, (newVal) => {
                             // Update nested object value
-                            let target = dbPayload.system;
+                            let target = targetRoot;
                             for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
                                 target = target[currentPath[i]];
                             }
-                            target[key] = type === 'number' ? (parseFloat(newVal) || 0) : newVal;
+                            if (type === 'number') {
+                                const parsed = parseFloat(newVal);
+                                target[key] = isNaN(parsed) ? 0 : parsed;
+                            } else {
+                                target[key] = newVal;
+                            }
                         }, type);
                     }
                 }

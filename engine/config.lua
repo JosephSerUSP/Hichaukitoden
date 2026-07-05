@@ -17,7 +17,9 @@ function config.load()
 
                 -- Populate with new data
                 for k, v in pairs(data) do
-                    config[k] = v
+                    if k ~= "load" then
+                        config[k] = v
+                    end
                 end
             end
         end
