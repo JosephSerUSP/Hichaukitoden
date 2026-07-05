@@ -50,30 +50,22 @@ local wallQx, wallQy = 0, 0
 
 local npcSprites = {}
 
+local spriteImageCache = {}
 local function getEventSprite(ev)
-    if ev.sprite ~= nil and npcSprites[ev.sprite] then
-        return npcSprites[ev.sprite]
+    if not ev or not ev.sprite then return nil end
+    local path = ev.sprite
+    if spriteImageCache[path] then
+        return spriteImageCache[path]
     end
-
-    local eventId = ev.id or ""
-    if eventId == "npc_gate_guard" then return npcSprites[0]
-    elseif eventId == "npc_weapon_shop" then return npcSprites[1]
-    elseif eventId == "npc_alicia" then return npcSprites[2]
-    elseif eventId == "npc_laura" then return npcSprites[3]
-    elseif eventId == "loc_pub" or eventId == "npc_drunkard" then return npcSprites[4]
-    elseif eventId == "loc_temple" then return npcSprites[5]
-    elseif eventId == "npc_auction" then return npcSprites[6]
-    elseif eventId == "recruit" then return npcSprites[7]
-    elseif eventId == "loc_abandoned_house" then return npcSprites[8]
-    elseif eventId == "recovery" then return npcSprites[9]
+    
+    if love.filesystem.getInfo(path) then
+        local img = love.graphics.newImage(path)
+        img:setFilter("nearest", "nearest")
+        spriteImageCache[path] = img
+        return img
     end
-    -- Fallback stable index hashing
-    local hash = 0
-    for i = 1, #eventId do
-        hash = hash + string.byte(eventId, i)
-    end
-    local idx = hash % 17
-    return npcSprites[idx]
+    
+    return nil
 end
 
 function viewport_3d.init()
@@ -305,34 +297,7 @@ function viewport_3d.draw(session)
         end
     end
 
-    -- Add standard grid-based characters (R, T, U, M)
-    for gy = 1, #grid do
-        for gx = 1, #grid[gy] do
-            local cell = grid[gy][gx]
-            local img = nil
-            if cell == "R" then img = npcSprites[9]
-            elseif cell == "T" then img = npcSprites[14]
-            elseif cell == "U" then img = npcSprites[15]
-            elseif cell == "M" then img = npcSprites[16]
-            end
-            if img then
-                local duplicate = false
-                for _, s in ipairs(spritesToDraw) do
-                    if s.x == gx - 1 and s.y == gy - 1 then
-                        duplicate = true
-                        break
-                    end
-                end
-                if not duplicate then
-                    table.insert(spritesToDraw, {
-                        x = gx - 1,
-                        y = gy - 1,
-                        img = img
-                    })
-                end
-            end
-        end
-    end
+
 
     -- Calculate distance to camera for painter sorting
     for _, s in ipairs(spritesToDraw) do

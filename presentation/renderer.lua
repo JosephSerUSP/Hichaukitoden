@@ -242,21 +242,19 @@ local function drawMinimap(x, y, size)
                 end
                 
                 if mapEvent then
-                    if mapEvent.id == "recovery" then
+                    if mapEvent.scriptId == 7 then
                         love.graphics.setColor(0, 0.8, 0, 1) -- Green for recovery
-                    elseif mapEvent.id:sub(1, 4) == "npc_" or mapEvent.id:sub(1, 4) == "loc_" then
-                        love.graphics.setColor(0.4, 0.6, 1, 1) -- Light blue for NPCs / shops
+                    elseif mapEvent.scriptId == 12 then
+                        love.graphics.setColor(0.8, 0.8, 0, 1) -- Yellow for treasures
+                    elseif mapEvent.scriptId == 13 then
+                        love.graphics.setColor(0.8, 0, 0, 1) -- Red for battles
+                    elseif mapEvent.scriptId == 1 then
+                        love.graphics.setColor(0, 0.8, 0.8, 1) -- Cyan for stairs
                     else
-                        love.graphics.setColor(0.8, 0, 0.8, 1) -- Purple for other events
+                        love.graphics.setColor(0.4, 0.6, 1, 1) -- Light blue for NPCs / shops
                     end
                 elseif cell == "#" then
                     love.graphics.setColor(0.2, 0.2, 0.2, 1)
-                elseif cell == "S" or cell == "E" then
-                    love.graphics.setColor(0, 0.8, 0.8, 1)
-                elseif cell == "R" then
-                    love.graphics.setColor(0, 0.8, 0, 1)
-                elseif cell == "T" then
-                    love.graphics.setColor(0.8, 0.8, 0, 1)
                 else
                     love.graphics.setColor(0.4, 0.4, 0.4, 1)
                 end

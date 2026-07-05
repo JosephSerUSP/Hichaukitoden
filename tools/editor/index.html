@@ -554,6 +554,24 @@
             background-color: #000080;
             color: white;
         }
+        .context-menu-item:hover {
+            background-color: #000080;
+            color: white;
+        }
+        .dialog-footer {
+            background-color: var(--win-gray);
+            border-top: 1px solid var(--win-shadow);
+            padding: 6px;
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .dialog-footer button {
+            min-width: 75px;
+            padding: 4px 10px;
+        }
     </style>
 </head>
 <body>
@@ -621,14 +639,7 @@
 
         <!-- Workspace Layout -->
         <div class="workspace">
-            <div class="sidebar inset-panel">
-                <div class="sidebar-title">Map Hierarchy</div>
-                <div id="map-tree" class="map-tree-container">
-                    <!-- Tree view loaded dynamically -->
-                </div>
-
-
-
+            <div class="sidebar inset-panel" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
                 <!-- 1. MAP PALETTE (Only active in Map mode) -->
                 <div id="map-palette-section">
                     <div class="sidebar-title">Paint Brush</div>
@@ -649,12 +660,18 @@
                         In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y).
                     </p>
                 </div>
+
+                <!-- 3. MAP HIERARCHY (Bottom aligned, stretching) -->
+                <div style="display: flex; flex-direction: column; flex: 1; min-height: 200px; margin-top: 10px;">
+                    <div class="sidebar-title">Map Hierarchy</div>
+                    <div id="map-tree" class="map-tree-container" style="flex: 1; height: auto;">
+                        <!-- Tree view loaded dynamically -->
+                    </div>
+                </div>
             </div>
 
-            <div class="canvas-area inset-panel">
-                <div id="map-grid-container" class="map-grid-container">
-                    <!-- Grid cells loaded dynamically -->
-                </div>
+            <div class="canvas-area inset-panel" style="position: relative; overflow: auto; display: flex; justify-content: center; align-items: center; background-color: #808080;">
+                <canvas id="map-canvas" style="display: block; cursor: crosshair; background-color: #ffffff; box-shadow: 2px 2px 8px rgba(0,0,0,0.3);"></canvas>
             </div>
         </div>
 
@@ -686,7 +703,8 @@
                 <div class="db-sidebar-tabs inset-panel">
                     <button id="db-tab-actors" class="db-tab-btn active" onclick="setDbTab('actors')">Actors</button>
                     <button id="db-tab-items" class="db-tab-btn" onclick="setDbTab('items')">Items</button>
-                                                            <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
+                    <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
+                    <button id="db-tab-commonEvents" class="db-tab-btn" onclick="setDbTab('commonEvents')">Common Events</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
                     <button id="db-tab-battle" class="db-tab-btn" onclick="setDbTab('battle')">Battle Screen</button>
                 </div>
@@ -706,7 +724,7 @@
             </div>
 
             <!-- Dialogue Controls -->
-            <div class="status-bar" style="justify-content: flex-end; gap: 6px; padding: 6px;">
+            <div class="dialog-footer">
                  <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
                 <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
@@ -716,32 +734,271 @@
 
     <!-- --- EVENT PROPERTIES DIALOG BOX MODAL --- -->
     <div id="event-modal" class="modal-overlay">
-        <div class="window outset-bevel event-modal-window">
+        <div class="window outset-bevel" style="width: 760px; height: 500px; display: flex; flex-direction: column;">
             <div class="title-bar">
-                <div class="title-bar-text">📁 Event Properties</div>
+                <div class="title-bar-text" id="event-modal-title">Event Editor - ID: 0001</div>
                 <div class="title-bar-controls">
                     <button class="win-btn-small outset-bevel" onclick="closeEventModal()">×</button>
                 </div>
             </div>
-            <div class="event-modal-body">
-                <div style="font-weight: bold; font-size: 12px; margin-bottom: 4px;" id="event-coords-title">Coordinates: (0, 0)</div>
+            
+            <div class="window-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 8px;">
+                <!-- Header Name Options -->
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2px;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <label style="font-size: 10px; font-weight: bold;">Name:</label>
+                        <input type="text" id="event-prop-name" class="win98-input" style="width: 180px;" placeholder="EV001" />
+                    </div>
+                </div>
+
+                <div class="db-tabs" style="margin-bottom: 0;">
+                    <div class="db-tab active" style="font-size: 10px; padding: 2px 8px; font-weight: bold;">Page 1</div>
+                </div>
+
+                <!-- Main Grid Split -->
+                <div style="flex: 1; display: flex; overflow: hidden; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: #dfdfdf; padding: 6px; gap: 6px; box-sizing: border-box;">
+                    
+                    <!-- Left Sidebar Controls -->
+                    <div style="width: 220px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 2px;">
+                        
+                        <!-- Graphic Box Pane -->
+                        <fieldset style="padding: 6px; display: flex; gap: 10px;">
+                            <legend>Graphic</legend>
+                            <div id="event-graphic-preview" style="width: 48px; height: 48px; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: #ffffff; display: flex; justify-content: center; align-items: center; box-shadow: inset 1px 1px 0px var(--win-black);">
+                                <img id="event-graphic-img" src="" style="max-width: 40px; max-height: 40px; image-rendering: pixelated; display: none;" />
+                                <span id="event-graphic-none" style="font-size: 10px; color: var(--win-dark-shadow);">None</span>
+                            </div>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; justify-content: center;">
+                                <div style="display: flex; align-items: center; gap: 4px; font-size: 10px;">
+                                    <input type="checkbox" id="event-prop-transparent" />
+                                    <label for="event-prop-transparent">Transparent</label>
+                                </div>
+                                <button class="win98-btn" style="font-size: 10px; padding: 2px;" onclick="openAssetPickerForEventSprite()">Set...</button>
+                            </div>
+                        </fieldset>
+
+                        <!-- Trigger Mode -->
+                        <fieldset style="padding: 6px;">
+                            <legend>Trigger</legend>
+                            <select id="event-prop-trigger" class="win98-select" style="width: 100%;">
+                                <option value="interact">Action Button (Space/Enter)</option>
+                                <option value="step">Player Touch / Walk On</option>
+                            </select>
+                        </fieldset>
+
+                        <!-- Priority -->
+                        <fieldset style="padding: 6px;">
+                            <legend>Priority</legend>
+                            <select id="event-prop-priority" class="win98-select" style="width: 100%;">
+                                <option value="same">Same as Characters</option>
+                                <option value="below">Below Characters</option>
+                                <option value="above">Above Characters</option>
+                            </select>
+                        </fieldset>
+
+                        <!-- Spawn Settings (Procedural Floors) -->
+                        <fieldset style="padding: 6px;">
+                            <legend>Dungeon Spawn Rule</legend>
+                            <select id="event-prop-spawn" class="win98-select" style="width: 100%;">
+                                <option value="Fixed">Fixed Coordinates (x, y)</option>
+                                <option value="Random">Randomly Scattered (Random)</option>
+                            </select>
+                        </fieldset>
+
+                        <!-- Logic Configuration -->
+                        <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+                            <legend>Run Action Logic</legend>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="radio" id="event-logic-common" name="event-logic-type" value="common" onchange="toggleEventLogicType()" checked />
+                                <label for="event-logic-common" style="font-size: 10px; font-weight: bold;">Link Common Event</label>
+                            </div>
+                            <select id="event-prop-script-id" class="win98-select" style="width: 100%; margin-bottom: 6px;">
+                                <!-- Common Events list -->
+                            </select>
+                            <div style="display: flex; align-items: center; gap: 4px; border-top: 1px solid var(--win-shadow); padding-top: 6px;">
+                                <input type="radio" id="event-logic-custom" name="event-logic-type" value="custom" onchange="toggleEventLogicType()" />
+                                <label for="event-logic-custom" style="font-size: 10px; font-weight: bold;">Custom Commands List</label>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <!-- Right Column Contents Listing Panel -->
+                    <div style="flex: 1; display: flex; flex-direction: column; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: #ffffff; overflow: hidden; box-shadow: inset 1px 1px 0px var(--win-black);">
+                        <div style="background: var(--win-shadow); color: white; padding: 2px 6px; font-size: 10px; font-weight: bold; border-bottom: 1px solid #808080;">
+                            Contents List
+                        </div>
+                        <div id="event-contents-list" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 11px; padding: 4px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; align-content: flex-start;">
+                            <!-- Dynamically loaded commands -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="dialog-footer">
+                    <div style="font-size: 10px; color: var(--win-dark-shadow); margin-right: auto;" id="event-coords-info">Coords: (0, 0)</div>
+                    <button class="win98-btn win98-btn-success" onclick="applyEventProperties()">OK</button>
+                    <button class="win98-btn" onclick="closeEventModal()">Cancel</button>
+                    <button class="win98-btn" style="color: red;" onclick="deleteEventAtCoords()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- MAP PROPERTIES DIALOG MODAL --- -->
+    <div id="map-properties-modal" class="modal-overlay" style="z-index: 1050;">
+        <div class="window outset-bevel" style="width: 550px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Map Properties</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeMapPropertiesModal()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 10px;">
+                    <fieldset style="flex: 1;">
+                        <legend>General Settings</legend>
+                        <div class="field-row-stacked">
+                           <label>Map Title:</label>
+                           <input type="text" id="prop-map-title" class="win98-input" />
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Generation Mode:</label>
+                           <select id="prop-map-gen" class="win98-select" onchange="togglePropGenMode()">
+                               <option value="Fixed">Fixed (Pre-designed layout)</option>
+                               <option value="Procedural">Procedural (Runtime Generated)</option>
+                           </select>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 6px;">
+                           <div class="field-row-stacked" style="flex: 1;">
+                               <label>Width:</label>
+                               <input type="number" id="prop-map-width" class="win98-input" min="3" max="100" />
+                           </div>
+                           <div class="field-row-stacked" style="flex: 1;">
+                               <label>Height:</label>
+                               <input type="number" id="prop-map-height" class="win98-input" min="3" max="100" />
+                           </div>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>BGM Music Path:</label>
+                           <div style="display: flex; gap: 4px;">
+                               <input type="text" id="prop-map-bgm" class="win98-input" style="flex: 1;" />
+                               <button class="win98-btn" onclick="openAssetPickerForBgm()">...</button>
+                           </div>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Encounter Steps:</label>
+                           <input type="number" id="prop-map-enc-steps" class="win98-input" min="0" />
+                        </div>
+                    </fieldset>
+                    
+                    <fieldset style="flex: 1; display: flex; flex-direction: column;">
+                       <legend>Encounters List</legend>
+                       <div style="flex: 1; border: 1px solid var(--win-shadow); background: #fff; overflow-y: auto; height: 120px; padding: 4px;" id="prop-enc-list"></div>
+                       <div style="display: flex; gap: 4px; margin-top: 6px;">
+                           <button class="win98-btn" onclick="addEncounterToMap()" style="flex: 1; font-size: 10px;">Add</button>
+                           <button class="win98-btn" onclick="removeEncounterFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
+                       </div>
+                    </fieldset>
+                </div>
                 
-                <div class="form-group">
-                    <label for="event-template-select">Event Template Type</label>
-                    <select id="event-template-select" class="form-control inset-bevel">
-                        <!-- Loaded dynamically from events.json -->
+                <div class="dialog-footer">
+                   <button class="win98-btn win98-btn-success" onclick="saveMapProperties()">OK</button>
+                   <button class="win98-btn" onclick="closeMapPropertiesModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- COMMAND EDITOR DIALOG BOX --- -->
+    <div id="cmd-modal" class="modal-overlay" style="z-index: 1200;">
+        <div class="window outset-bevel" style="width: 400px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Command Editor</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeCmdDialog()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="field-row-stacked">
+                    <label>Command Type:</label>
+                    <select id="cmd-select-type" class="win98-select" onchange="toggleCmdTypeFields()">
+                        <option value="TEXT">Show Text</option>
+                        <option value="RECOVER_PARTY">Recover Party</option>
+                        <option value="DESCEND">Descend Floor</option>
+                        <option value="BATTLE">Start Battle</option>
+                        <option value="GIVE_ITEM">Give Random Item</option>
+                        <option value="CALL_COMMON_EVENT">Call Common Event</option>
                     </select>
                 </div>
-
-                <div class="form-group">
-                    <label>Event Script Preview</label>
-                    <textarea id="event-script-preview" class="form-control inset-bevel" style="height: 60px; background-color: var(--win-gray); color: var(--win-dark-shadow); font-family: monospace; font-size: 9px;" readonly></textarea>
+                
+                <div id="cmd-fields-text" class="field-row-stacked">
+                    <label>Text Content:</label>
+                    <textarea id="cmd-input-text" class="win98-input" style="height: 60px; font-family: monospace; font-size: 11px;"></textarea>
                 </div>
 
-                <div class="form-row" style="margin-top: 10px;">
-                    <button class="win98-btn win98-btn-success" onclick="applyEventProperties()">OK (Apply)</button>
-                    <button class="win98-btn" id="event-delete-btn" style="color: red;" onclick="deleteEventAtCoords()">Delete</button>
-                    <button class="win98-btn" onclick="closeEventModal()" style="margin-left: auto;">Cancel</button>
+                <div id="cmd-fields-common-event" class="field-row-stacked" style="display: none;">
+                    <label>Select Common Event:</label>
+                    <select id="cmd-select-common-event" class="win98-select">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="dialog-footer">
+                    <button class="win98-btn win98-btn-success" onclick="applyCmdDialog()">OK</button>
+                    <button class="win98-btn" onclick="closeCmdDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- CUSTOM SCRIPT EDITOR MODAL --- -->
+    <div id="custom-script-modal" class="modal-overlay" style="z-index: 1150;">
+        <div class="window outset-bevel" style="width: 440px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Edit Custom Script Commands</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeCustomScriptModal()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; padding: 4px;" id="custom-script-commands-list"></div>
+                <div style="display: flex; gap: 4px; margin-top: 6px;">
+                    <button class="win98-btn" onclick="addCustomScriptCommand()" style="font-size: 10px;">Add Command</button>
+                    <button class="win98-btn" onclick="editCustomScriptCommand()" style="font-size: 10px;">Edit</button>
+                    <button class="win98-btn" onclick="deleteCustomScriptCommand()" style="font-size: 10px;">Delete</button>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="closeCustomScriptModal()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ASSET FILE PICKER MODAL --- -->
+    <div id="asset-picker-modal" class="modal-overlay" style="z-index: 1300;">
+        <div class="window outset-bevel" style="width: 450px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Select Asset File</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeAssetPicker()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <label>Folder:</label>
+                    <select id="asset-picker-dir" class="win98-select" style="flex: 1;" onchange="loadAssetPickerFiles()"></select>
+                </div>
+                
+                <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
+                
+                <div class="field-row-stacked">
+                    <label>Selected File Path:</label>
+                    <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" />
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
+                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
+                    <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -784,6 +1041,19 @@
             </div>
         </div>
     </div>
+    <!-- --- CUSTOM CONTEXT MENU FOR MAP TREE --- -->
+    <div id="map-context-menu" class="outset-bevel" style="display: none; position: absolute; z-index: 10000; background: #dfdfdf; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; box-shadow: 1px 1px 4px rgba(0,0,0,0.3); padding: 2px; width: 140px; font-family: sans-serif; font-size: 11px; box-sizing: border-box;">
+        <div class="context-menu-item" onclick="handleMapContextMenuAction('properties')" style="padding: 4px 8px; cursor: default; display: flex; align-items: center; gap: 6px;">
+            📝 Map Properties...
+        </div>
+        <div style="border-top: 1px solid #808080; margin: 2px 0;"></div>
+        <div class="context-menu-item" onclick="handleMapContextMenuAction('new')" style="padding: 4px 8px; cursor: default; display: flex; align-items: center; gap: 6px;">
+            ➕ New Map...
+        </div>
+        <div class="context-menu-item" onclick="handleMapContextMenuAction('delete')" style="padding: 4px 8px; cursor: default; display: flex; align-items: center; gap: 6px; color: #cc0000;">
+            ❌ Delete
+        </div>
+    </div>
 
     <script>
         const API_URL = 'http://127.0.0.1:8080';
@@ -806,6 +1076,40 @@
         let activePaintTool = 'wall';
         let currentMapIndex = 0;
         let isMouseDown = false;
+
+        let contextMenuMapIdx = null;
+
+        function showMapContextMenu(e, mapIdx) {
+            e.preventDefault();
+            e.stopPropagation();
+            contextMenuMapIdx = mapIdx;
+            
+            currentMapIndex = mapIdx;
+            loadActiveMap();
+            
+            const menu = document.getElementById('map-context-menu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.style.display = 'block';
+        }
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('map-context-menu');
+            if (menu) menu.style.display = 'none';
+        });
+
+        function handleMapContextMenuAction(action) {
+            if (contextMenuMapIdx === null) return;
+            currentMapIndex = contextMenuMapIdx;
+            
+            if (action === 'properties') {
+                openMapProperties();
+            } else if (action === 'new') {
+                createNewMap();
+            } else if (action === 'delete') {
+                deleteMap();
+            }
+        }
 
         // Coordinates selected for Event edit
         let selectedEventX = 0;
@@ -951,6 +1255,9 @@
                     currentMapIndex = 0;
                     loadActiveMap();
                 };
+                mapItem.oncontextmenu = (e) => {
+                    showMapContextMenu(e, 0);
+                };
                 townChildren.appendChild(mapItem);
             }
             
@@ -978,6 +1285,9 @@
                     currentMapIndex = i;
                     loadActiveMap();
                 };
+                mapItem.oncontextmenu = (e) => {
+                    showMapContextMenu(e, i);
+                };
                 dungeonChildren.appendChild(mapItem);
             }
             
@@ -996,87 +1306,283 @@
             });
         }
 
+        const TILE_SIZE = 24;
+        let mapCanvas = null;
+        let ctx = null;
+        let selectedEvent = null;
+        let dragOffset = { x: 0, y: 0 };
+        let mouseX = 0, mouseY = 0;
+        let eventCopyBuffer = null;
+        const imageCache = {};
+
+        function getCachedImage(src) {
+            if (imageCache[src]) {
+                return imageCache[src];
+            }
+            const img = new Image();
+            img.src = '/' + src;
+            img.onload = () => {
+                renderGridCells();
+            };
+            imageCache[src] = img;
+            return img;
+        }
+
+        function loadActiveMap() {
+            // Initialize canvas event listeners once canvas is loaded
+            const canvas = document.getElementById('map-canvas');
+            if (canvas && !mapCanvas) {
+                mapCanvas = canvas;
+                ctx = canvas.getContext('2d');
+                initCanvasEvents();
+            }
+            renderGridCells();
+            document.querySelectorAll('.map-tree-item').forEach(el => {
+                if (parseInt(el.dataset.idx) === currentMapIndex) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+
         function renderGridCells() {
             const map = dbPayload.maps[currentMapIndex];
-            const gridContainer = document.getElementById('map-grid-container');
-            gridContainer.innerHTML = '';
+            if (!map) return;
             
-            const height = map.layout.length;
-            const width = map.layout[0].length;
+            const canvas = document.getElementById('map-canvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
             
-            gridContainer.style.gridTemplateColumns = `repeat(${width}, 24px)`;
+            const isProcedural = !map.layout || map.layout.length === 0;
+            const height = isProcedural ? 21 : map.layout.length;
+            const width = isProcedural ? 21 : map.layout[0].length;
             
+            const targetW = width * TILE_SIZE;
+            const targetH = height * TILE_SIZE;
+            
+            if (canvas.width !== targetW || canvas.height !== targetH) {
+                canvas.width = targetW;
+                canvas.height = targetH;
+            }
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 1. Draw tiles (wall or floor)
             for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
-                    const tile = map.layout[y][x];
-                    const cell = document.createElement('div');
-                    cell.className = 'map-cell inset-bevel';
-                    cell.dataset.x = x;
-                    cell.dataset.y = y;
-                    
-                    // Style basic floor/wall
-                    if (tile === '#') {
-                        cell.classList.add('wall');
+                    let tile = '#';
+                    if (isProcedural) {
+                        tile = (x === 0 || y === 0 || x === width - 1 || y === height - 1) ? '#' : '.';
                     } else {
-                        cell.classList.add('floor');
+                        tile = map.layout[y][x];
                     }
                     
-                    // Check if an event exists at these coordinates
-                    const eventData = (map.events || []).find(e => e.x === x && e.y === y);
-                    if (eventData) {
-                        const marker = document.createElement('div');
-                        marker.className = 'event-marker';
-                        
-                        // Find matching event symbol in events.json
-                        const evTemplate = dbPayload.events.find(t => t.id === eventData.id);
-                        marker.textContent = evTemplate ? evTemplate.symbol : '?';
-                        cell.appendChild(marker);
+                    if (tile === '#') {
+                        ctx.fillStyle = '#808080'; // Wall
+                    } else {
+                        ctx.fillStyle = '#ffffff'; // Floor
                     }
-
-                    // Render player start position marker on town map
-                    const isSpawn = dbPayload.system && dbPayload.system.spawn &&
-                                    parseInt(dbPayload.system.spawn.x) === x &&
-                                    parseInt(dbPayload.system.spawn.y) === y &&
-                                    currentMapIndex === 0;
-                    if (isSpawn) {
-                        const spawnMarker = document.createElement('div');
-                        spawnMarker.className = 'spawn-marker';
-                        spawnMarker.textContent = '👤';
-                        spawnMarker.title = 'Player Starting Spawn Position';
-                        cell.appendChild(spawnMarker);
-                    }
-
-                    // Click interactions depending on mode
-                    cell.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                    });
-
-                    cell.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        if (editingMode === 'map') {
-                            if (e.button === 0) {
-                                paintCell(cell);
-                            }
-                        } else {
-                            if (e.button === 2) {
-                                // Right click -> Set start position
-                                setPlayerStartPosition(x, y);
-                            } else if (e.button === 0) {
-                                // Left click -> Edit event details
-                                openEventModal(x, y);
-                            }
-                        }
-                    });
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                     
-                    cell.addEventListener('mouseenter', () => {
-                        if (isMouseDown && editingMode === 'map') {
-                            paintCell(cell);
-                        }
-                    });
-                    
-                    gridContainer.appendChild(cell);
+                    // Grid borders
+                    ctx.strokeStyle = '#e0e0e0';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
+            
+            // 2. Draw Events
+            (map.events || []).forEach(ev => {
+                if (ev.x === undefined || ev.y === undefined) return;
+                const ex = ev.x;
+                const ey = ev.y;
+                
+                if (selectedEvent === ev) {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(ex * TILE_SIZE, ey * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                } else {
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(ex * TILE_SIZE + 1.5, ey * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
+                }
+                
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+                ctx.fillRect(ex * TILE_SIZE + 1.5, ey * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
+                
+                if (ev.sprite) {
+                    const img = getCachedImage(ev.sprite);
+                    if (img && img.complete) {
+                        ctx.drawImage(img, ex * TILE_SIZE + 2, ey * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                    } else {
+                        ctx.fillStyle = '#ef4444';
+                        ctx.font = 'bold 10px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('E', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
+                    }
+                } else {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('?', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
+                }
+            });
+            
+            // 3. Draw Player spawn indicator
+            const isSpawn = dbPayload.system && dbPayload.system.spawn &&
+                            currentMapIndex === 0;
+            if (isSpawn) {
+                const sx = parseInt(dbPayload.system.spawn.x);
+                const sy = parseInt(dbPayload.system.spawn.y);
+                
+                ctx.fillStyle = 'rgba(0, 128, 0, 0.25)';
+                ctx.fillRect(sx * TILE_SIZE, sy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                ctx.strokeStyle = '#008000';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(sx * TILE_SIZE + 1, sy * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('👤', sx * TILE_SIZE + TILE_SIZE / 2, sy * TILE_SIZE + TILE_SIZE / 2);
+            }
+        }
+
+        function initCanvasEvents() {
+            const canvas = document.getElementById('map-canvas');
+            if (!canvas) return;
+            
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                
+                const map = dbPayload.maps[currentMapIndex];
+                if (!map) return;
+                
+                if (editingMode === 'map') {
+                    if (e.button === 0) {
+                        isMouseDown = true;
+                        paintCellAt(x, y);
+                    }
+                } else {
+                    if (e.button === 2) {
+                        setPlayerStartPosition(x, y);
+                    } else if (e.button === 0) {
+                        const clickedEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
+                        if (clickedEvent) {
+                            selectedEvent = clickedEvent;
+                            isMouseDown = true;
+                            renderGridCells();
+                        } else {
+                            selectedEvent = null;
+                            renderGridCells();
+                        }
+                    }
+                }
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                
+                const map = dbPayload.maps[currentMapIndex];
+                if (!map) return;
+                
+                const isProcedural = !map.layout || map.layout.length === 0;
+                const width = isProcedural ? 21 : map.layout[0].length;
+                const height = isProcedural ? 21 : map.layout.length;
+                if (x < 0 || x >= width || y < 0 || y >= height) return;
+                
+                if (editingMode === 'map' && isMouseDown) {
+                    paintCellAt(x, y);
+                } else if (editingMode === 'event' && isMouseDown && selectedEvent) {
+                    if (selectedEvent.x !== x || selectedEvent.y !== y) {
+                        const occupied = (map.events || []).find(ev => ev !== selectedEvent && ev.x === x && ev.y === y);
+                        if (!occupied) {
+                            selectedEvent.x = x;
+                            selectedEvent.y = y;
+                            setDirty(true);
+                            renderGridCells();
+                        }
+                    }
+                }
+            });
+            
+            canvas.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                
+                if (editingMode === 'event') {
+                    openEventModal(x, y);
+                }
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (editingMode === 'event' && selectedEvent) {
+                if (e.ctrlKey && e.key === 'c') {
+                    eventCopyBuffer = JSON.stringify(selectedEvent);
+                }
+            }
+            if (editingMode === 'event' && eventCopyBuffer) {
+                if (e.ctrlKey && e.key === 'v') {
+                    const canvas = document.getElementById('map-canvas');
+                    if (!canvas) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
+                    const y = Math.floor((mouseY - rect.top) / TILE_SIZE);
+                    
+                    const map = dbPayload.maps[currentMapIndex];
+                    if (!map || x < 0 || x >= map.layout[0].length || y < 0 || y >= map.layout.length) return;
+                    
+                    const occupied = (map.events || []).find(ev => ev.x === x && ev.y === y);
+                    if (!occupied) {
+                        const copiedObj = JSON.parse(eventCopyBuffer);
+                        let maxId = 0;
+                        (map.events || []).forEach(ev => {
+                            if (ev.id > maxId) maxId = ev.id;
+                        });
+                        copiedObj.id = maxId + 1;
+                        copiedObj.x = x;
+                        copiedObj.y = y;
+                        
+                        map.events = map.events || [];
+                        map.events.push(copiedObj);
+                        selectedEvent = copiedObj;
+                        setDirty(true);
+                        renderGridCells();
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function paintCellAt(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !map.layout[y]) return;
+            
+            let tileChar = activePaintTool === 'floor' ? '.' : '#';
+            const line = map.layout[y];
+            const updatedLine = line.substring(0, x) + tileChar + line.substring(x + 1);
+            map.layout[y] = updatedLine;
+            setDirty(true);
+            renderGridCells();
         }
 
         function setPlayerStartPosition(x, y) {
@@ -1096,60 +1602,459 @@
             activePaintTool = toolName;
         }
 
-        function paintCell(cell) {
-            const x = parseInt(cell.dataset.x);
-            const y = parseInt(cell.dataset.y);
+        // --- MAP PROPERTIES & EVENTS CONTROLLERS ---
+        function openMapProperties() {
             const map = dbPayload.maps[currentMapIndex];
+            if (!map) return;
             
-            let tileChar = activePaintTool === 'floor' ? '.' : '#';
+            document.getElementById('prop-map-title').value = map.title || map.name || '';
+            document.getElementById('prop-map-gen').value = map.generation || 'Fixed';
+            document.getElementById('prop-map-width').value = map.width || (map.layout ? map.layout[0].length : 15);
+            document.getElementById('prop-map-height').value = map.height || (map.layout ? map.layout.length : 15);
+            document.getElementById('prop-map-bgm').value = map.bgm || '';
+            document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
             
-            const line = map.layout[y];
-            const updatedLine = line.substring(0, x) + tileChar + line.substring(x + 1);
-            map.layout[y] = updatedLine;
+            renderEncountersList(map.encounters || []);
+            document.getElementById('map-properties-modal').classList.add('active');
+        }
+
+        function closeMapPropertiesModal() {
+            document.getElementById('map-properties-modal').classList.remove('active');
+        }
+
+        function togglePropGenMode() {}
+
+        function renderEncountersList(encounters) {
+            const list = document.getElementById('prop-enc-list');
+            list.innerHTML = '';
+            encounters.forEach((enc, idx) => {
+                const item = document.createElement('div');
+                item.style.fontSize = '10px';
+                item.style.padding = '2px 4px';
+                item.style.cursor = 'pointer';
+                item.textContent = `Troop: ${enc.troopId || enc.id} (Weight: ${enc.weight || 10})`;
+                item.onclick = () => {
+                    document.querySelectorAll('#prop-enc-list > div').forEach(d => d.style.background = '');
+                    item.style.background = 'var(--win-blue)';
+                    item.style.color = '#fff';
+                    list.dataset.selectedIdx = idx;
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function addEncounterToMap() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map) return;
+            const troopId = prompt("Enter Troop/Monster ID (numerical ID):", "1");
+            if (troopId !== null) {
+                const weight = parseInt(prompt("Enter Spawn Weight (probability weight):", "10")) || 10;
+                map.encounters = map.encounters || [];
+                map.encounters.push({ troopId: parseInt(troopId) || 1, weight: weight });
+                renderEncountersList(map.encounters);
+            }
+        }
+
+        function removeEncounterFromMap() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map) return;
+            const list = document.getElementById('prop-enc-list');
+            const idx = parseInt(list.dataset.selectedIdx);
+            if (!isNaN(idx) && map.encounters && map.encounters[idx]) {
+                map.encounters.splice(idx, 1);
+                delete list.dataset.selectedIdx;
+                renderEncountersList(map.encounters);
+            }
+        }
+
+        function saveMapProperties() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map) return;
             
-            cell.className = 'map-cell inset-bevel ' + (tileChar === '#' ? 'wall' : 'floor');
+            const newTitle = document.getElementById('prop-map-title').value;
+            const newGen = document.getElementById('prop-map-gen').value;
+            const newW = parseInt(document.getElementById('prop-map-width').value) || 15;
+            const newH = parseInt(document.getElementById('prop-map-height').value) || 15;
+            const newBgm = document.getElementById('prop-map-bgm').value;
+            const newSteps = parseInt(document.getElementById('prop-map-enc-steps').value) || 0;
+            
+            map.title = newTitle;
+            map.generation = newGen;
+            map.bgm = newBgm;
+            map.encounterSteps = newSteps;
+            
+            if (map.layout) {
+                const currentH = map.layout.length;
+                const currentW = map.layout[0].length;
+                
+                if (newH !== currentH || newW !== currentW) {
+                    if (newH > currentH) {
+                        for (let y = currentH; y < newH; y++) {
+                            map.layout.push(".".repeat(newW));
+                        }
+                    } else if (newH < currentH) {
+                        map.layout = map.layout.slice(0, newH);
+                    }
+                    
+                    for (let y = 0; y < map.layout.length; y++) {
+                        const row = map.layout[y];
+                        if (row.length < newW) {
+                            map.layout[y] = row + ".".repeat(newW - row.length);
+                        } else if (row.length > newW) {
+                            map.layout[y] = row.substring(0, newW);
+                        }
+                    }
+                }
+            }
+            
+            closeMapPropertiesModal();
+            renderMapTree();
+            renderGridCells();
             setDirty(true);
         }
 
-        // --- EVENT MODAL LOGIC ---
-        function initEventModalTemplates() {
-            const select = document.getElementById('event-template-select');
-            select.innerHTML = '<option value="">[ NONE / EMPTY ]</option>';
-            
-            dbPayload.events.forEach(ev => {
-                const opt = document.createElement('option');
-                opt.value = ev.id;
-                opt.textContent = `${ev.id} (Symbol: ${ev.symbol})`;
-                select.appendChild(opt);
+        function createNewMap() {
+            let maxId = 0;
+            dbPayload.maps.forEach(m => {
+                if (m.id && m.id > maxId) maxId = m.id;
             });
-
-            select.onchange = () => {
-                const evId = select.value;
-                const template = dbPayload.events.find(e => e.id === evId);
-                document.getElementById('event-script-preview').value = template ? JSON.stringify(template.scripts || template.script || {}, null, 2) : '';
+            
+            const newId = maxId + 1;
+            const newMap = {
+                id: newId,
+                title: `New Floor ${newId}`,
+                generation: 'Fixed',
+                layout: [
+                    "###############",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "#.............#",
+                    "###############"
+                ],
+                bgm: "assets/midi/dungeon.mid",
+                encounterSteps: 25,
+                encounters: [],
+                events: []
             };
+            
+            dbPayload.maps.push(newMap);
+            currentMapIndex = dbPayload.maps.length - 1;
+            renderMapTree();
+            loadActiveMap();
+            setDirty(true);
         }
+
+        function deleteMap() {
+            if (currentMapIndex === 0) {
+                alert("Cannot delete the starting Town map.");
+                return;
+            }
+            if (confirm(`Are you sure you want to delete "${dbPayload.maps[currentMapIndex].title}"?`)) {
+                dbPayload.maps.splice(currentMapIndex, 1);
+                currentMapIndex = 0;
+                renderMapTree();
+                loadActiveMap();
+                setDirty(true);
+            }
+        }
+
+        function openAssetPickerForBgm() {
+            openAssetPicker('midi', (path) => {
+                document.getElementById('prop-map-bgm').value = path;
+            });
+        }
+
+        // --- ASSET PICKER IMPLEMENTATION ---
+        let activeAssetCallback = null;
+        function openAssetPicker(defaultDir, callback) {
+            activeAssetCallback = callback;
+            document.getElementById('asset-picker-selected').value = '';
+            
+            fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const dirSelect = document.getElementById('asset-picker-dir');
+                    dirSelect.innerHTML = '';
+                    data.directories.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d;
+                        opt.textContent = d;
+                        if (d === defaultDir) opt.selected = true;
+                        dirSelect.appendChild(opt);
+                    });
+                    
+                    renderAssetPickerFiles(data.files);
+                    document.getElementById('asset-picker-modal').classList.add('active');
+                });
+        }
+
+        function loadAssetPickerFiles() {
+            const dir = document.getElementById('asset-picker-dir').value;
+            fetch(`/api/assets?dir=${encodeURIComponent(dir)}`)
+                .then(r => r.json())
+                .then(data => {
+                    renderAssetPickerFiles(data.files);
+                });
+        }
+
+        function renderAssetPickerFiles(files) {
+            const grid = document.getElementById('asset-picker-grid');
+            grid.innerHTML = '';
+            
+            files.forEach(f => {
+                const card = document.createElement('div');
+                card.style.border = '1px solid #c0c0c0';
+                card.style.padding = '4px';
+                card.style.cursor = 'pointer';
+                card.style.display = 'flex';
+                card.style.flexDirection = 'column';
+                card.style.alignItems = 'center';
+                card.style.justifyContent = 'center';
+                card.style.background = '#f0f0f0';
+                card.style.fontSize = '9px';
+                card.style.textAlign = 'center';
+                card.style.height = '64px';
+                card.style.boxSizing = 'border-box';
+                
+                const img = document.createElement('img');
+                img.src = '/' + f;
+                img.style.maxHeight = '32px';
+                img.style.maxWidth = '100%';
+                img.style.display = 'block';
+                img.style.marginBottom = '2px';
+                card.appendChild(img);
+                
+                const name = document.createElement('div');
+                name.textContent = f.split('/').pop();
+                name.style.overflow = 'hidden';
+                name.style.textOverflow = 'ellipsis';
+                name.style.whiteSpace = 'nowrap';
+                name.style.width = '100%';
+                card.appendChild(name);
+                
+                card.onclick = () => {
+                    document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
+                    card.style.border = '2px solid var(--win-blue)';
+                    document.getElementById('asset-picker-selected').value = f;
+                };
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function applyAssetSelection() {
+            const path = document.getElementById('asset-picker-selected').value;
+            if (!path) {
+                alert('Please select an asset file.');
+                return;
+            }
+            closeAssetPicker();
+            if (activeAssetCallback) activeAssetCallback(path);
+        }
+
+        function closeAssetPicker() {
+            document.getElementById('asset-picker-modal').classList.remove('active');
+        }
+
+        // --- EVENT CONTROLLERS ---
+        let activeEventLocalScript = null;
 
         function openEventModal(x, y) {
             selectedEventX = x;
             selectedEventY = y;
             
-            document.getElementById('event-coords-title').textContent = `Coordinates: (${x}, ${y})`;
+            document.getElementById('event-coords-info').textContent = `Coords: (${x}, ${y})`;
+            
+            // Populate common events dropdown
+            const commonSelect = document.getElementById('event-prop-script-id');
+            commonSelect.innerHTML = '';
+            Object.keys(dbPayload.commonEvents || {}).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = `${k.padStart(4, '0')}: ${dbPayload.commonEvents[k].name}`;
+                commonSelect.appendChild(opt);
+            });
+            
+            commonSelect.onchange = () => {
+                toggleEventLogicType();
+            };
             
             const map = dbPayload.maps[currentMapIndex];
             const eventData = (map.events || []).find(e => e.x === x && e.y === y);
             
-            const select = document.getElementById('event-template-select');
             if (eventData) {
-                select.value = eventData.id;
-                document.getElementById('event-delete-btn').style.display = 'block';
+                document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(eventData.id).padStart(4, '0')}`;
+                document.getElementById('event-prop-name').value = eventData.name || `EV${String(eventData.id).padStart(3, '0')}`;
+                document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
+                document.getElementById('event-prop-transparent').checked = !!eventData.transparent;
+                document.getElementById('event-prop-priority').value = eventData.priority || 'same';
+                document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
+                
+                updateEventGraphicPreview(eventData.sprite);
+                activeEventLocalScript = eventData.script ? [...eventData.script] : [];
+                
+                if (eventData.scriptId) {
+                    document.getElementById('event-logic-common').checked = true;
+                    document.getElementById('event-prop-script-id').value = eventData.scriptId;
+                } else {
+                    document.getElementById('event-logic-custom').checked = true;
+                }
             } else {
-                select.value = '';
-                document.getElementById('event-delete-btn').style.display = 'none';
+                let maxId = 0;
+                (map.events || []).forEach(e => { maxId = Math.max(maxId, e.id || 0); });
+                const nextId = maxId + 1;
+                
+                document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(nextId).padStart(4, '0')}`;
+                document.getElementById('event-prop-name').value = `EV${String(nextId).padStart(3, '0')}`;
+                document.getElementById('event-prop-trigger').value = 'interact';
+                document.getElementById('event-prop-transparent').checked = false;
+                document.getElementById('event-prop-priority').value = 'same';
+                document.getElementById('event-prop-spawn').value = 'Fixed';
+                
+                updateEventGraphicPreview('');
+                activeEventLocalScript = [];
+                document.getElementById('event-logic-common').checked = true;
             }
-            select.onchange();
-
+            
+            toggleEventLogicType();
             document.getElementById('event-modal').classList.add('active');
+        }
+
+        function updateEventGraphicPreview(spritePath) {
+            const img = document.getElementById('event-graphic-img');
+            const none = document.getElementById('event-graphic-none');
+            window.activeEventSpritePath = spritePath || '';
+            
+            if (spritePath) {
+                img.src = '/' + spritePath;
+                img.style.display = 'block';
+                none.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                none.style.display = 'block';
+            }
+        }
+
+        function openAssetPickerForEventSprite() {
+            openAssetPicker('sprites', (filepath) => {
+                filepath = filepath.replace(/\\/g, '/');
+                updateEventGraphicPreview(filepath);
+            });
+        }
+
+        function toggleEventLogicType() {
+            const isCommon = document.getElementById('event-logic-common').checked;
+            const commonSelect = document.getElementById('event-prop-script-id');
+            
+            commonSelect.disabled = !isCommon;
+            
+            if (isCommon) {
+                const ceId = commonSelect.value;
+                const ce = dbPayload.commonEvents && dbPayload.commonEvents[ceId];
+                renderEventContentsList(ce ? ce.commands : [], true);
+            } else {
+                renderEventContentsList(activeEventLocalScript, false);
+            }
+        }
+
+        function renderEventContentsList(commands, readOnly) {
+            const list = document.getElementById('event-contents-list');
+            list.innerHTML = '';
+            
+            if (!commands || commands.length === 0) {
+                const line = document.createElement('div');
+                line.style.padding = '2px';
+                line.style.color = '#808080';
+                line.innerHTML = '@&gt;';
+                if (!readOnly) {
+                    line.style.cursor = 'pointer';
+                    line.onclick = () => openCommandModalForAdd();
+                }
+                list.appendChild(line);
+                return;
+            }
+            
+            commands.forEach((cmd, idx) => {
+                const line = document.createElement('div');
+                line.style.padding = '2px';
+                line.style.display = 'flex';
+                line.style.alignItems = 'center';
+                
+                let text = '';
+                if (cmd.type === 'TEXT') {
+                    text = `@&gt;Text: ${cmd.text}`;
+                } else if (cmd.type === 'RECOVER_PARTY') {
+                    text = `@&gt;Recover Party`;
+                } else if (cmd.type === 'DESCEND') {
+                    text = `@&gt;Descend Floor`;
+                } else if (cmd.type === 'BATTLE') {
+                    text = `@&gt;Start Battle`;
+                } else if (cmd.type === 'GIVE_ITEM') {
+                    text = `@&gt;Give Random Item`;
+                } else if (cmd.type === 'CALL_COMMON_EVENT') {
+                    const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
+                    const ceName = ce ? ce.name : `ID ${cmd.commonEventId}`;
+                    text = `@&gt;Call Common Event: ${ceName}`;
+                }
+                
+                line.innerHTML = `<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>`;
+                
+                if (!readOnly) {
+                    line.style.cursor = 'pointer';
+                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
+                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
+                    line.onclick = () => editCommandAtIndex(idx);
+                    
+                    const controls = document.createElement('div');
+                    controls.style.display = 'flex';
+                    controls.style.gap = '2px';
+                    controls.innerHTML = `
+                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px;" onclick="event.stopPropagation(); editCommandAtIndex(${idx})">✏️</button>
+                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px; color: red;" onclick="event.stopPropagation(); deleteCommandAtIndex(${idx})">×</button>
+                    `;
+                    line.appendChild(controls);
+                } else {
+                    line.style.color = '#808080';
+                }
+                list.appendChild(line);
+            });
+            
+            if (!readOnly) {
+                const trailingLine = document.createElement('div');
+                trailingLine.style.padding = '2px';
+                trailingLine.style.color = '#808080';
+                trailingLine.style.cursor = 'pointer';
+                trailingLine.innerHTML = '@&gt;';
+                trailingLine.onclick = () => openCommandModalForAdd();
+                list.appendChild(trailingLine);
+            }
+        }
+
+        function openCommandModalForAdd() {
+            populateCmdCommonEventsDropdown();
+            openAddCommandDialog((cmd) => {
+                activeEventLocalScript.push(cmd);
+                toggleEventLogicType();
+            });
+        }
+        
+        function editCommandAtIndex(idx) {
+            populateCmdCommonEventsDropdown();
+            openEditCommandDialog(activeEventLocalScript[idx], (updatedCmd) => {
+                activeEventLocalScript[idx] = updatedCmd;
+                toggleEventLogicType();
+            });
+        }
+        
+        function deleteCommandAtIndex(idx) {
+            activeEventLocalScript.splice(idx, 1);
+            toggleEventLogicType();
         }
 
         function closeEventModal() {
@@ -1160,27 +2065,34 @@
             const map = dbPayload.maps[currentMapIndex];
             if (!map.events) map.events = [];
             
-            const evId = document.getElementById('event-template-select').value;
+            let eventData = map.events.find(e => e.x === selectedEventX && e.y === selectedEventY);
             
-            // Delete existing event at coordinate first
-            map.events = map.events.filter(e => !(e.x === selectedEventX && e.y === selectedEventY));
+            const isNew = !eventData;
+            if (isNew) {
+                eventData = { x: selectedEventX, y: selectedEventY };
+            }
             
-            if (evId !== '') {
-                // Add new event
-                map.events.push({ id: evId, x: selectedEventX, y: selectedEventY });
-                
-                // Write matching symbol into map layout character
-                const template = dbPayload.events.find(e => e.id === evId);
-                const charSymbol = template ? template.symbol : '.';
-                
-                const line = map.layout[selectedEventY];
-                const updatedLine = line.substring(0, selectedEventX) + charSymbol + line.substring(selectedEventX + 1);
-                map.layout[selectedEventY] = updatedLine;
+            eventData.name = document.getElementById('event-prop-name').value;
+            eventData.trigger = document.getElementById('event-prop-trigger').value;
+            eventData.sprite = window.activeEventSpritePath || '';
+            eventData.transparent = document.getElementById('event-prop-transparent').checked;
+            eventData.priority = document.getElementById('event-prop-priority').value;
+            eventData.spawn = document.getElementById('event-prop-spawn').value;
+            
+            const isCommon = document.getElementById('event-logic-common').checked;
+            if (isCommon) {
+                eventData.scriptId = parseInt(document.getElementById('event-prop-script-id').value);
+                delete eventData.script;
             } else {
-                // Clear symbol back to floor
-                const line = map.layout[selectedEventY];
-                const updatedLine = line.substring(0, selectedEventX) + '.' + line.substring(selectedEventX + 1);
-                map.layout[selectedEventY] = updatedLine;
+                delete eventData.scriptId;
+                eventData.script = activeEventLocalScript;
+            }
+            
+            if (isNew) {
+                let maxId = 0;
+                map.events.forEach(e => { maxId = Math.max(maxId, e.id || 0); });
+                eventData.id = maxId + 1;
+                map.events.push(eventData);
             }
             
             closeEventModal();
@@ -1193,16 +2105,80 @@
             if (map.events) {
                 map.events = map.events.filter(e => !(e.x === selectedEventX && e.y === selectedEventY));
             }
-            
-            // Revert layout tile to floor
-            const line = map.layout[selectedEventY];
-            const updatedLine = line.substring(0, selectedEventX) + '.' + line.substring(selectedEventX + 1);
-            map.layout[selectedEventY] = updatedLine;
-            
             closeEventModal();
             renderGridCells();
             setDirty(true);
         }
+
+        // --- COMMAND MODAL EXTENSIONS ---
+        let activeCmdCallback = null;
+
+        function populateCmdCommonEventsDropdown() {
+            const select = document.getElementById('cmd-select-common-event');
+            if (!select) return;
+            select.innerHTML = '';
+            
+            if (dbPayload.commonEvents) {
+                Object.keys(dbPayload.commonEvents).forEach(id => {
+                    const ce = dbPayload.commonEvents[id];
+                    const opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = `${id.padStart(4, '0')}: ${ce.name}`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        function openAddCommandDialog(callback) {
+            activeCmdCallback = callback;
+            document.getElementById('cmd-select-type').value = 'TEXT';
+            document.getElementById('cmd-input-text').value = 'Hello!';
+            toggleCmdTypeFields();
+            document.getElementById('cmd-modal').classList.add('active');
+        }
+
+        function openEditCommandDialog(cmd, callback) {
+            activeCmdCallback = callback;
+            document.getElementById('cmd-select-type').value = cmd.type;
+            if (cmd.type === 'TEXT') {
+                document.getElementById('cmd-input-text').value = cmd.text || '';
+            } else if (cmd.type === 'CALL_COMMON_EVENT') {
+                document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
+            }
+            toggleCmdTypeFields();
+            document.getElementById('cmd-modal').classList.add('active');
+        }
+
+        function toggleCmdTypeFields() {
+            const type = document.getElementById('cmd-select-type').value;
+            const textFields = document.getElementById('cmd-fields-text');
+            const ceFields = document.getElementById('cmd-fields-common-event');
+            
+            textFields.style.display = type === 'TEXT' ? 'flex' : 'none';
+            if (ceFields) {
+                ceFields.style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
+            }
+        }
+
+        function closeCmdDialog() {
+            document.getElementById('cmd-modal').classList.remove('active');
+        }
+
+        function applyCmdDialog() {
+            const type = document.getElementById('cmd-select-type').value;
+            let cmd = { type: type };
+            if (type === 'TEXT') {
+                cmd.text = document.getElementById('cmd-input-text').value;
+            } else if (type === 'CALL_COMMON_EVENT') {
+                cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
+            }
+            closeCmdDialog();
+            if (activeCmdCallback) activeCmdCallback(cmd);
+        }
+
+        // --- SYSTEM CONFIG ---
+        function initSystemTab() {}
+        function initEventModalTemplates() {}
 
         // --- DATABASE MODAL LOGIC ---
         function openDatabaseModal() {
@@ -1239,7 +2215,13 @@
             let items = [];
             if (activeDbTab === 'actors') items = dbPayload.actors;
             else if (activeDbTab === 'items') items = dbPayload.items;
-                                    else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
+            else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
+            else if (activeDbTab === 'commonEvents') {
+                if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
+                items = Object.keys(dbPayload.commonEvents)
+                    .map(k => ({ id: k, name: dbPayload.commonEvents[k].name || `Event ${k}` }))
+                    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            }
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
             else if (activeDbTab === 'battle') items = [{ id: 'battle_settings', name: 'Battle Settings' }];
             
@@ -1269,7 +2251,7 @@
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.querySelector('.db-items-column button');
-                        if (activeDbTab === 'system' || activeDbTab === 'battle') {
+            if (activeDbTab === 'system' || activeDbTab === 'battle') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -1289,6 +2271,129 @@
             header.style.paddingBottom = '4px';
             header.textContent = `General Settings - ${item.name || item.id}`;
             formPanel.appendChild(header);
+            
+            if (activeDbTab === 'commonEvents') {
+                const eventData = dbPayload.commonEvents[item.id];
+                if (!eventData) return;
+                
+                createFormField(formPanel, 'Event Name', eventData.name, val => {
+                    eventData.name = val;
+                    initDatabaseEditor();
+                });
+                
+                const cmdTitle = document.createElement('div');
+                cmdTitle.style.fontWeight = 'bold';
+                cmdTitle.style.marginTop = '12px';
+                cmdTitle.style.marginBottom = '6px';
+                cmdTitle.textContent = 'Event Commands:';
+                formPanel.appendChild(cmdTitle);
+                
+                const listBox = document.createElement('div');
+                listBox.style.border = '1px solid var(--win-shadow)';
+                listBox.style.background = '#fff';
+                listBox.style.height = '240px';
+                listBox.style.overflowY = 'auto';
+                listBox.style.padding = '4px';
+                listBox.style.display = 'flex';
+                listBox.style.flexDirection = 'column';
+                listBox.style.gap = '2px';
+                listBox.id = 'common-event-commands-list';
+                
+                let selectedCommandIdx = -1;
+                
+                function renderCommands() {
+                    listBox.innerHTML = '';
+                    eventData.commands = eventData.commands || [];
+                    
+                    if (eventData.commands.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.style.color = '#808080';
+                        empty.style.fontStyle = 'italic';
+                        empty.style.fontSize = '10px';
+                        empty.textContent = '<Empty Command List>';
+                        listBox.appendChild(empty);
+                    }
+                    
+                    eventData.commands.forEach((cmd, idx) => {
+                        const line = document.createElement('div');
+                        line.style.fontSize = '10px';
+                        line.style.padding = '2px 4px';
+                        line.style.cursor = 'pointer';
+                        line.style.userSelect = 'none';
+                        line.style.fontFamily = 'monospace';
+                        
+                        let desc = '';
+                        if (cmd.type === 'TEXT') desc = `◆ Show Text: "${cmd.text}"`;
+                        else if (cmd.type === 'RECOVER_PARTY') desc = `◆ Recover Party`;
+                        else if (cmd.type === 'DESCEND') desc = `◆ Descend Floor`;
+                        else desc = `◆ Unknown (${cmd.type})`;
+                        
+                        line.textContent = desc;
+                        
+                        if (selectedCommandIdx === idx) {
+                            line.style.background = 'var(--win-blue)';
+                            line.style.color = '#fff';
+                        }
+                        
+                        line.onclick = () => {
+                            selectedCommandIdx = idx;
+                            renderCommands();
+                        };
+                        listBox.appendChild(line);
+                    });
+                }
+                
+                renderCommands();
+                formPanel.appendChild(listBox);
+                
+                const btnRow = document.createElement('div');
+                btnRow.style.display = 'flex';
+                btnRow.style.gap = '4px';
+                btnRow.style.marginTop = '6px';
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'win98-btn';
+                addBtn.textContent = 'Add Command';
+                addBtn.onclick = () => {
+                    openAddCommandDialog((newCmd) => {
+                        eventData.commands.push(newCmd);
+                        setDirty(true);
+                        renderCommands();
+                    });
+                };
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'win98-btn';
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = () => {
+                    if (selectedCommandIdx >= 0) {
+                        openEditCommandDialog(eventData.commands[selectedCommandIdx], (updatedCmd) => {
+                            eventData.commands[selectedCommandIdx] = updatedCmd;
+                            setDirty(true);
+                            renderCommands();
+                        });
+                    } else {
+                        alert('Select a command to edit.');
+                    }
+                };
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'win98-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = () => {
+                    if (selectedCommandIdx >= 0) {
+                        eventData.commands.splice(selectedCommandIdx, 1);
+                        selectedCommandIdx = -1;
+                        setDirty(true);
+                        renderCommands();
+                    }
+                };
+                
+                btnRow.appendChild(addBtn);
+                btnRow.appendChild(editBtn);
+                btnRow.appendChild(deleteBtn);
+                formPanel.appendChild(btnRow);
+            }
             
             if (activeDbTab === 'actors') {
                 createFormField(formPanel, 'Actor ID (Static)', item.id, null, 'text', true);
@@ -1556,6 +2661,7 @@
             if (activeDbTab === 'actors') maxVal = dbPayload.actors.length;
             else if (activeDbTab === 'items') maxVal = dbPayload.items.length;
             else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
+            else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
             
             document.getElementById('max-input-val').value = maxVal;
             document.getElementById('max-modal').classList.add('active');
@@ -1615,6 +2721,22 @@
                 } else if (newMax < currentLen) {
                     const keysToDelete = shopKeys.slice(newMax);
                     keysToDelete.forEach(k => delete dbPayload.shops[k]);
+                }
+            } else if (activeDbTab === 'commonEvents') {
+                if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
+                const currentKeys = Object.keys(dbPayload.commonEvents).sort((a, b) => parseInt(a) - parseInt(b));
+                const currentLen = currentKeys.length;
+                if (newMax > currentLen) {
+                    for (let i = currentLen + 1; i <= newMax; i++) {
+                        dbPayload.commonEvents[String(i)] = {
+                            name: `New Common Event ${i}`,
+                            commands: []
+                        };
+                    }
+                } else if (newMax < currentLen) {
+                    for (let i = newMax + 1; i <= currentLen; i++) {
+                        delete dbPayload.commonEvents[String(i)];
+                    }
                 }
             }
             
