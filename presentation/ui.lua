@@ -1,3 +1,5 @@
+local config = require("engine.config")
+
 local ui = {}
 
 local iconset
@@ -48,16 +50,7 @@ function ui.init()
     end
     
     -- Load active font from system config
-    local fontName = "Lucida"
-    if love.filesystem.getInfo("data/system.json") then
-        local contents = love.filesystem.read("data/system.json")
-        if contents then
-            local match = contents:match('"activeFont"%s*:%s*"([^"]+)"')
-            if match then
-                fontName = match
-            end
-        end
-    end
+    local fontName = config.ui and config.ui.activeFont or "Lucida"
     
     ui.setFont(fontName)
 end

@@ -4,6 +4,7 @@ local exploration = require("engine.exploration")
 local battleSystem = require("engine.battle")
 local director = require("engine.director")
 local traits = require("engine.traits")
+local config = require("engine.config")
 
 local renderer = {}
 
@@ -108,7 +109,8 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
 end
 
 function renderer.update(dt)
-    local gravity = 480
+    local gravity = config.physics and config.physics.gravity or 480
+    local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
     for i = #damagePopups, 1, -1 do
         local p = damagePopups[i]
         p.vy = p.vy + gravity * dt
@@ -119,7 +121,7 @@ function renderer.update(dt)
         if p.y >= p.startY and p.vy > 0 then
             p.y = p.startY
             if p.bounceCount < 2 then
-                p.vy = -p.vy * 0.45 -- reverse velocity and reduce
+                p.vy = -p.vy * bounceRetain -- reverse velocity and reduce
                 p.vx = (p.vx or 0) * 0.6
                 p.bounceCount = p.bounceCount + 1
             else
@@ -172,6 +174,8 @@ function renderer.update(dt)
 end
 
 function renderer.addDamagePopup(text, x, y, color)
+    local scatter = config.physics and config.physics.horizontalScatter or 40
+    local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1
     table.insert(damagePopups, {
         text = text,
         x = x,
@@ -179,9 +183,9 @@ function renderer.addDamagePopup(text, x, y, color)
         startY = y,
         color = color or {1, 1, 1, 1},
         vy = -160, -- launch upwards
-        vx = math.random(-40, 40), -- random horizontal direction
+        vx = math.random(-scatter, scatter), -- random horizontal direction
         bounceCount = 0,
-        life = 1.1
+        life = lifeSpan
     })
 end
 
@@ -569,7 +573,8 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
 end
 
 function renderer.drawShop(shopId, selectedIdx, shopItems)
-    local progress = math.min(1, menuTimer / 0.22)
+    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
+    local progress = math.min(1, menuTimer / slideDur)
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 
@@ -652,7 +657,8 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     end
     
     -- Quadratic ease-out slide-in animation
-    local slideProgress = math.min(1, menuTimer / 0.22)
+    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
+    local slideProgress = math.min(1, menuTimer / slideDur)
     local ease = 1 - (1 - slideProgress) * (1 - slideProgress)
     
     local leftX = ui.toPx(1) - (1 - ease) * ui.toPx(10)
@@ -772,7 +778,8 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
 end
 
 function renderer.drawStatusDetail(c, session)
-    local progress = math.min(1, menuTimer / 0.22)
+    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
+    local progress = math.min(1, menuTimer / slideDur)
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 
@@ -892,7 +899,8 @@ function renderer.drawTargetSelector(selectedSubIdx, session)
 end
 
 function renderer.drawEquipMenu(c, selectedSlotIdx, session)
-    local progress = math.min(1, menuTimer / 0.22)
+    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
+    local progress = math.min(1, menuTimer / slideDur)
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 

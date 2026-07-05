@@ -471,6 +471,7 @@
                 Tools
                 <div class="dropdown-menu">
                     <div class="dropdown-item" onclick="openDatabaseModal()">Database Manager</div>
+                    <div class="dropdown-item" onclick="testPlay()">Test Play</div>
                 </div>
             </div>
         </div>
@@ -522,7 +523,8 @@
         <div class="status-bar">
             <div class="status-field" id="status-mode" style="flex: 1;">Layer: Map</div>
             <div class="status-field" id="status-db" style="width: 140px;">Database: Connected</div>
-            <button class="win98-btn win98-btn-success" style="margin-left: auto; min-width: 80px;" onclick="saveData()">Save Changes</button>
+            <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">Test Play</button>
+            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="saveData()">Save Changes</button>
         </div>
     </div>
 
@@ -541,8 +543,9 @@
                 <div class="db-sidebar-tabs inset-panel">
                     <button id="db-tab-actors" class="db-tab-btn active" onclick="setDbTab('actors')">Actors</button>
                     <button id="db-tab-items" class="db-tab-btn" onclick="setDbTab('items')">Items</button>
-                    <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
+                                                            <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
+                    <button id="db-tab-battle" class="db-tab-btn" onclick="setDbTab('battle')">Battle Screen</button>
                 </div>
 
                 <!-- Database items list (middle column) -->
@@ -561,7 +564,8 @@
 
             <!-- Dialogue Controls -->
             <div class="status-bar" style="justify-content: flex-end; gap: 6px; padding: 6px;">
-                <button class="win98-btn win98-btn-success" onclick="closeDatabaseModal()">OK</button>
+                <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
+                <button class="win98-btn" onclick="saveData()">Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
             </div>
         </div>
@@ -702,6 +706,30 @@
                 showToast('Connection failed: server offline');
             }
         }
+
+        async function testPlay() {
+            if (confirm('Save database changes before starting Test Play?')) {
+                await saveData();
+            }
+            try {
+                const res = await fetch(`${API_URL}/play`, { method: 'POST' });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('Game launched successfully for Test Play!');
+                } else {
+                    showToast('Failed to launch game: ' + result.message);
+                }
+            } catch (err) {
+                showToast('Failed to start Test Play: ' + err.message);
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F5') {
+                e.preventDefault();
+                testPlay();
+            }
+        });
 
         // --- LAYER / EDITING MODE LOGIC ---
         function switchMode(mode) {
@@ -941,8 +969,9 @@
             let items = [];
             if (activeDbTab === 'actors') items = dbPayload.actors;
             else if (activeDbTab === 'items') items = dbPayload.items;
-            else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
+                                    else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
+            else if (activeDbTab === 'battle') items = [{ id: 'battle_settings', name: 'Battle Settings' }];
             
             items.forEach((item, idx) => {
                 const btn = document.createElement('button');
@@ -970,7 +999,7 @@
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.querySelector('.db-items-column button');
-            if (activeDbTab === 'system') {
+                        if (activeDbTab === 'system' || activeDbTab === 'battle') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -1057,30 +1086,107 @@
                 });
                 formPanel.appendChild(listWrapper);
             } else if (activeDbTab === 'system') {
-                const select = document.createElement('select');
-                select.className = 'form-control inset-bevel';
-                
-                const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
-                fonts.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f;
-                    opt.textContent = f;
-                    if (dbPayload.system && dbPayload.system.activeFont === f) opt.selected = true;
-                    select.appendChild(opt);
-                });
-                
-                select.onchange = () => {
-                    if (!dbPayload.system) dbPayload.system = {};
-                    dbPayload.system.activeFont = select.value;
+                if (!dbPayload.system) dbPayload.system = {};
+                const systemConfig = { ui: dbPayload.system.ui || {} };
+                buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
+            } else if (activeDbTab === 'battle') {
+                if (!dbPayload.system) dbPayload.system = {};
+                const battleConfig = {
+                    physics: dbPayload.system.physics || {},
+                    battle_screen: dbPayload.system.battle_screen || {},
+                    combat: dbPayload.system.combat || {}
                 };
+                buildRecursiveForm(formPanel, battleConfig, [], dbPayload.system);
+            }
+        }
 
-                const group = document.createElement('div');
-                group.className = 'form-group';
-                const lbl = document.createElement('label');
-                lbl.textContent = 'Active UI Font';
-                group.appendChild(lbl);
-                group.appendChild(select);
-                formPanel.appendChild(group);
+        function buildRecursiveForm(container, obj, path, targetRoot) {
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const value = obj[key];
+                    const currentPath = [...path, key];
+
+                    if (key === 'activeFont') {
+                        const group = document.createElement('div');
+                        group.className = 'form-group';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = 'Active UI Font';
+                        group.appendChild(lbl);
+
+                        const select = document.createElement('select');
+                        select.className = 'form-control inset-bevel';
+                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
+                        fonts.forEach(f => {
+                            const opt = document.createElement('option');
+                            opt.value = f;
+                            opt.textContent = f;
+                            if (value === f) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.onchange = () => {
+                            let target = targetRoot;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                target = target[currentPath[i]];
+                            }
+                            target[key] = select.value;
+                        };
+
+                        group.appendChild(select);
+                        container.appendChild(group);
+                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        // Create collapsible section header
+                        const sectionWrapper = document.createElement('div');
+                        sectionWrapper.style.marginBottom = '10px';
+                        sectionWrapper.style.border = '1px solid var(--win-shadow)';
+                        sectionWrapper.style.padding = '4px';
+
+                        const header = document.createElement('div');
+                        header.style.fontWeight = 'bold';
+                        header.style.cursor = 'pointer';
+                        header.style.backgroundColor = 'var(--win-gray)';
+                        header.style.padding = '2px 4px';
+                        header.textContent = `[-] ${key}`;
+
+                        const content = document.createElement('div');
+                        content.style.marginTop = '6px';
+                        content.style.paddingLeft = '10px';
+
+                        header.onclick = () => {
+                            if (content.style.display === 'none') {
+                                content.style.display = 'block';
+                                header.textContent = `[-] ${key}`;
+                            } else {
+                                content.style.display = 'none';
+                                header.textContent = `[+] ${key}`;
+                            }
+                        };
+
+                        sectionWrapper.appendChild(header);
+                        sectionWrapper.appendChild(content);
+                        container.appendChild(sectionWrapper);
+
+                        buildRecursiveForm(content, value, currentPath, targetRoot);
+                    } else {
+                        // Primitive value input
+                        const type = typeof value === 'number' ? 'number' : 'text';
+                        createFormField(container, key, value, (newVal) => {
+                            // Update nested object value
+                            let target = targetRoot;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                target = target[currentPath[i]];
+                            }
+                            if (type === 'number') {
+                                const parsed = parseFloat(newVal);
+                                target[key] = isNaN(parsed) ? 0 : parsed;
+                            } else {
+                                target[key] = newVal;
+                            }
+                        }, type);
+                    }
+                }
             }
         }
 

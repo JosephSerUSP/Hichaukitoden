@@ -1,3 +1,19 @@
 {
-  "activeFont": "Lucida"
+  "ui": {
+    "activeFont": "Silkscreen",
+    "menuSlideDuration": 0.15
+  },
+  "physics": {
+    "gravity": 480,
+    "bounceVelocityRetain": 0.45,
+    "horizontalScatter": 40
+  },
+  "battle_screen": {
+    "damagePopupLife": 1.1
+  },
+  "combat": {
+    "baseFleeChance": 0.4,
+    "goldLossOnFleeMin": 5,
+    "goldLossOnFleeMax": 15
+  }
 }
