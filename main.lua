@@ -683,27 +683,35 @@ local function handleKeyPressed(key)
                 triggerDialogue("npc_drunkard")
             elseif frontTile == "T" then
                 local possibleTreasures = activeSession.currentMapData.treasures or { "hp_tonic" }
-                local loot = possibleTreasures[math.random(#possibleTreasures)]
-                local item = loader.getItem(loot)
-                activeSession:addItem(loot, 1)
                 activeSession.mapGrid[ty][tx] = "."
                 
-                local lootGraph = {
-                    initialNode = "start",
-                    name = "Treasure Chest",
-                    nodes = {
-                        start = {
-                            type = "TEXT",
-                            content = "You opened the chest and found a " .. (item and item.name or loot) .. "!",
-                            next = nil
+                if #possibleTreasures > 0 then
+                    local loot = possibleTreasures[math.random(#possibleTreasures)]
+                    local item = loader.getItem(loot)
+                    activeSession:addItem(loot, 1)
+
+                    local lootGraph = {
+                        initialNode = "start",
+                        name = "Treasure Chest",
+                        nodes = {
+                            start = {
+                                type = "TEXT",
+                                content = "You opened the chest and found a " .. (item and item.name or loot) .. "!",
+                                next = nil
+                            }
                         }
                     }
-                }
-                activeWalker = director.GraphWalker.new(activeSession, lootGraph)
-                currentScene = "dialogue"
+                    activeWalker = director.GraphWalker.new(activeSession, lootGraph)
+                    currentScene = "dialogue"
+                else
+                    print("Error: No treasures available in this map's loot table.")
+                end
             elseif frontTile == "U" then
                 local recruits = activeSession.currentMapData.recruits or { "pixie" }
-                local recId = recruits[math.random(#recruits)]
+                local recId = recruits[1]
+                if #recruits > 0 then
+                    recId = recruits[math.random(#recruits)]
+                end
                 local actorData = loader.getActor(recId)
                 if actorData then
                     local newBattler = session.Battler.new(actorData, activeSession.dungeonFloor)
