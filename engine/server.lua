@@ -116,10 +116,14 @@ function server.update(dt)
                             local loader = require("data.loader")
                             loader.init()
                             
+                            -- Reload configuration
+                            local config = require("engine.config")
+                            config.load()
+
                             -- Hot-reload active UI font
                             local ui = require("presentation.ui")
-                            if payload.system and payload.system.activeFont then
-                                ui.setFont(payload.system.activeFont)
+                            if config.ui and config.ui.activeFont then
+                                ui.setFont(config.ui.activeFont)
                             end
                             
                             success = true

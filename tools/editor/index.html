@@ -1057,30 +1057,63 @@
                 });
                 formPanel.appendChild(listWrapper);
             } else if (activeDbTab === 'system') {
-                const select = document.createElement('select');
-                select.className = 'form-control inset-bevel';
-                
-                const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
-                fonts.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f;
-                    opt.textContent = f;
-                    if (dbPayload.system && dbPayload.system.activeFont === f) opt.selected = true;
-                    select.appendChild(opt);
-                });
-                
-                select.onchange = () => {
-                    if (!dbPayload.system) dbPayload.system = {};
-                    dbPayload.system.activeFont = select.value;
-                };
+                if (!dbPayload.system) dbPayload.system = {};
+                buildRecursiveForm(formPanel, dbPayload.system, []);
+            }
+        }
 
-                const group = document.createElement('div');
-                group.className = 'form-group';
-                const lbl = document.createElement('label');
-                lbl.textContent = 'Active UI Font';
-                group.appendChild(lbl);
-                group.appendChild(select);
-                formPanel.appendChild(group);
+        function buildRecursiveForm(container, obj, path) {
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const value = obj[key];
+                    const currentPath = [...path, key];
+
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        // Create collapsible section header
+                        const sectionWrapper = document.createElement('div');
+                        sectionWrapper.style.marginBottom = '10px';
+                        sectionWrapper.style.border = '1px solid var(--win-shadow)';
+                        sectionWrapper.style.padding = '4px';
+
+                        const header = document.createElement('div');
+                        header.style.fontWeight = 'bold';
+                        header.style.cursor = 'pointer';
+                        header.style.backgroundColor = 'var(--win-gray)';
+                        header.style.padding = '2px 4px';
+                        header.textContent = `[-] ${key}`;
+
+                        const content = document.createElement('div');
+                        content.style.marginTop = '6px';
+                        content.style.paddingLeft = '10px';
+
+                        header.onclick = () => {
+                            if (content.style.display === 'none') {
+                                content.style.display = 'block';
+                                header.textContent = `[-] ${key}`;
+                            } else {
+                                content.style.display = 'none';
+                                header.textContent = `[+] ${key}`;
+                            }
+                        };
+
+                        sectionWrapper.appendChild(header);
+                        sectionWrapper.appendChild(content);
+                        container.appendChild(sectionWrapper);
+
+                        buildRecursiveForm(content, value, currentPath);
+                    } else {
+                        // Primitive value input
+                        const type = typeof value === 'number' ? 'number' : 'text';
+                        createFormField(container, key, value, (newVal) => {
+                            // Update nested object value
+                            let target = dbPayload.system;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                target = target[currentPath[i]];
+                            }
+                            target[key] = type === 'number' ? (parseFloat(newVal) || 0) : newVal;
+                        }, type);
+                    }
+                }
             }
         }
 

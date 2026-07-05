@@ -1,5 +1,6 @@
 local effects = require("engine.effects")
 local traits = require("engine.traits")
+local config = require("engine.config")
 
 local battle = {}
 
@@ -107,7 +108,7 @@ function Battle:resolveRound(summonerAction)
             end
         elseif sumAct.type == "flee" then
             local roll = math.random()
-            local baseFlee = 0.4
+            local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
             -- Add flee bonus from coward/fleeChanceBonus passive
             for _, ally in ipairs(self.allies) do
                 if not ally:isDead() then
@@ -121,7 +122,9 @@ function Battle:resolveRound(summonerAction)
             else
                 table.insert(roundEvents, { type = "text", text = "Failed to escape!" })
                 -- Lose some gold as penalty
-                local goldLoss = math.random(5, 15)
+                local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
+                local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
+                local goldLoss = math.random(goldLossMin, goldLossMax)
                 self.session.gold = math.max(0, self.session.gold - goldLoss)
             end
         end
