@@ -58,18 +58,15 @@ function exploration.generateDungeon(mapData, seed)
         end
     end
     
-    -- Place Stairs Up in room 1, Stairs Down in last room
     local startX, startY = rooms[1].cx, rooms[1].cy
-    grid[startY][startX] = "S"
-    
     local exitX, exitY = rooms[#rooms].cx, rooms[#rooms].cy
-    grid[exitY][exitX] = "E"
     
-    -- Place extra events (recovery, chest, encounter, recruit)
+    local generatedEvents = {}
+    
     local openTiles = {}
     for y = 2, height - 1 do
         for x = 2, width - 1 do
-            if grid[y][x] == "." then
+            if grid[y][x] == "." and not (x == startX and y == startY) and not (x == exitX and y == exitY) then
                 table.insert(openTiles, { x = x, y = y })
             end
         end
@@ -81,36 +78,49 @@ function exploration.generateDungeon(mapData, seed)
         openTiles[i], openTiles[j] = openTiles[j], openTiles[i]
     end
     
-    -- Place events based on counts
     local placedCount = 1
     
-    -- Shrines/Recovery sites
-    grid[openTiles[placedCount].y][openTiles[placedCount].x] = "R"
-    placedCount = placedCount + 1
+    -- Spawn exit stairs dynamically
+    table.insert(generatedEvents, {
+        id = 99,
+        x = exitX - 1,
+        y = exitY - 1,
+        scriptId = 1, -- Stairs trigger descend script
+        sprite = "assets/sprites/NPC00.png",
+        trigger = "interact"
+    })
     
-    -- Treasures
-    for i = 1, 2 do
-        if openTiles[placedCount] then
-            grid[openTiles[placedCount].y][openTiles[placedCount].x] = "T"
-            placedCount = placedCount + 1
+    -- Process events from mapData.events database
+    if mapData.events then
+        for _, ev in ipairs(mapData.events) do
+            local tx, ty
+            if ev.spawn == "Fixed" and ev.x and ev.y then
+                tx, ty = ev.x + 1, ev.y + 1
+            elseif ev.spawn == "Random" or not (ev.x and ev.y) then
+                local tile = openTiles[placedCount]
+                if tile then
+                    tx, ty = tile.x, tile.y
+                    placedCount = placedCount + 1
+                end
+            else
+                tx, ty = ev.x + 1, ev.y + 1
+            end
+            
+            if tx and ty then
+                table.insert(generatedEvents, {
+                    id = ev.id,
+                    x = tx - 1,
+                    y = ty - 1,
+                    scriptId = ev.scriptId,
+                    sprite = ev.sprite,
+                    trigger = ev.trigger or "interact",
+                    script = ev.script
+                })
+            end
         end
     end
     
-    -- Recruits
-    if math.random() < 0.7 and openTiles[placedCount] then
-        grid[openTiles[placedCount].y][openTiles[placedCount].x] = "U"
-        placedCount = placedCount + 1
-    end
-    
-    -- Enemies
-    for i = 1, 4 do
-        if openTiles[placedCount] then
-            grid[openTiles[placedCount].y][openTiles[placedCount].x] = "M"
-            placedCount = placedCount + 1
-        end
-    end
-    
-    return grid, startX, startY
+    return grid, startX, startY, generatedEvents
 end
 
 -- Initialize map state in GameSession
@@ -127,19 +137,17 @@ function exploration.loadMap(session, mapIdx)
             grid[y] = {}
             for x = 1, #rowStr do
                 grid[y][x] = rowStr:sub(x, x)
-                -- Find starting position (usually near center)
-                if grid[y][x] == "." and not startX then
-                    startX, startY = x, y
-                end
             end
         end
-        -- Spawn point configuration from system settings, fallback to center bottom
+        -- Spawn point configuration from system settings
         local startXDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.x or 10
         local startYDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.y or 17
-        startX, startY = startXDef, startYDef
+        startX, startY = startXDef + 1, startYDef + 1 -- Lua is 1-indexed, systems spawn is 0-indexed
     else
-        -- Procedurally generate floor layout
-        grid, startX, startY = exploration.generateDungeon(mapData, os.time() + mapIdx)
+        -- Procedurally generate floor layout and inject events
+        local generatedEvents
+        grid, startX, startY, generatedEvents = exploration.generateDungeon(mapData, os.time() + mapIdx)
+        session.currentMapData.events = generatedEvents
     end
     
     session.mapGrid = grid

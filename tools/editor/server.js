@@ -24,7 +24,9 @@ const server = http.createServer((req, res) => {
     const decodedUrl = decodeURIComponent(requestPath);
     const relativePath = decodedUrl.replace(/^[\/\\]/, '');
     const safePath = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, '');
-    const filePath = path.join(__dirname, safePath);
+    const isAsset = relativePath.startsWith('assets');
+    const baseDir = isAsset ? PROJECT_DIR : __dirname;
+    const filePath = path.join(baseDir, safePath);
 
     if (req.method === 'GET' && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
         console.log(`GET ${req.url} -> ${filePath} [FOUND]`);
@@ -57,7 +59,7 @@ const server = http.createServer((req, res) => {
                 return null;
             }
         };
-
+ 
         const data = {
             actors: getFileContents('actors.json'),
             elements: getFileContents('elements.json'),
@@ -69,11 +71,53 @@ const server = http.createServer((req, res) => {
             sounds: getFileContents('sounds.json'),
             terms: getFileContents('terms.json'),
             themes: getFileContents('themes.json'),
-            system: getFileContents('system.json')
+            system: getFileContents('system.json'),
+            commonEvents: getFileContents('commonEvents.json')
         };
-
+ 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
+    } else if (req.method === 'GET' && req.url.startsWith('/api/assets')) {
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
+        const subDir = parsedUrl.searchParams.get('dir') || 'sprites';
+        const safeSubDir = path.normalize(subDir).replace(/^(\.\.[\/\\])+/, '');
+        const assetsDir = path.join(PROJECT_DIR, 'assets', safeSubDir);
+        
+        if (fs.existsSync(assetsDir) && fs.statSync(assetsDir).isDirectory()) {
+            fs.readdir(assetsDir, (err, files) => {
+                if (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                } else {
+                    const result = {
+                        directories: [],
+                        files: []
+                    };
+                    
+                    try {
+                        const parentFiles = fs.readdirSync(path.join(PROJECT_DIR, 'assets'));
+                        result.directories = parentFiles.filter(f => {
+                            return fs.statSync(path.join(PROJECT_DIR, 'assets', f)).isDirectory();
+                        });
+                    } catch(e) {}
+
+                    files.forEach(f => {
+                        try {
+                            const stat = fs.statSync(path.join(assetsDir, f));
+                            if (stat.isFile() && /\.(png|jpe?g|gif|webp)$/i.test(f)) {
+                                result.files.push(`assets/${safeSubDir}/${f}`);
+                            }
+                        } catch(e) {}
+                    });
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                }
+            });
+        } else {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid directory' }));
+        }
     } else if (req.method === 'POST' && req.url === '/save') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -86,12 +130,13 @@ const server = http.createServer((req, res) => {
                         fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
                     }
                 };
-
+ 
                 saveFile('actors.json', payload.actors);
                 saveFile('items.json', payload.items);
                 saveFile('maps.json', payload.maps);
                 saveFile('shops.json', payload.shops);
                 saveFile('system.json', payload.system);
+                saveFile('commonEvents.json', payload.commonEvents);
 
                 // Notify Love2D game to reload if it is running
                 const notifyReq = http.request({

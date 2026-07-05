@@ -1,0 +1,138 @@
+{
+  "1": {
+    "name": "Stairs Down",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Go down the stairs?"
+      },
+      {
+        "type": "CHOICE",
+        "options": [
+          {
+            "label": "Yes",
+            "script": [
+              {
+                "type": "DESCEND"
+              }
+            ]
+          },
+          {
+            "label": "No",
+            "script": []
+          }
+        ]
+      }
+    ]
+  },
+  "2": {
+    "name": "Gate Guard Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The gate to the lower depths is sealed. Come back when you are prepared."
+      }
+    ]
+  },
+  "3": {
+    "name": "Weapon Shop Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Welcome to the Weapon Shop! How can I help you?"
+      }
+    ]
+  },
+  "4": {
+    "name": "Recruit Pixie",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "A friendly Pixie wants to join your party!"
+      }
+    ]
+  },
+  "5": {
+    "name": "Laura Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Laura: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
+      }
+    ]
+  },
+  "6": {
+    "name": "Abandoned House Description",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "This abandoned house is now your home. It feels safe here."
+      }
+    ]
+  },
+  "7": {
+    "name": "Recovery Light",
+    "commands": [
+      {
+        "type": "RECOVER_PARTY"
+      },
+      {
+        "type": "TEXT",
+        "text": "The soothing light restores your party's HP and MP!"
+      }
+    ]
+  },
+  "8": {
+    "name": "Alicia Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Alicia: I have prepared some items for your journey. Check the database."
+      }
+    ]
+  },
+  "9": {
+    "name": "Pub Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Pub: The drinks here are cheap. Feel free to rest."
+      }
+    ]
+  },
+  "10": {
+    "name": "Auction Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Auctioneer: Welcome to the summoners auction house!"
+      }
+    ]
+  },
+  "11": {
+    "name": "Temple Dialogue",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The temple is quiet. You feel a sense of peace."
+      }
+    ]
+  },
+  "12": {
+    "name": "Treasure Chest Loot",
+    "commands": [
+      {
+        "type": "GIVE_ITEM",
+        "itemType": "random"
+      }
+    ]
+  },
+  "13": {
+    "name": "Dungeon Monster Battle",
+    "commands": [
+      {
+        "type": "BATTLE"
+      }
+    ]
+  }
+}

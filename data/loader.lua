@@ -23,6 +23,7 @@ function loader.init()
     loader.terms = load_json("data/terms.json")
     loader.themes = load_json("data/themes.json")
     loader.system = load_json("data/system.json")
+    loader.commonEvents = load_json("data/commonEvents.json")
     
     loader.animations = require("data.animations")
     loader.states = require("data.states")
