@@ -6,13 +6,13 @@ local tcpListener = nil
 local active = false
 
 function server.start()
-    tcpListener = socket.bind("127.0.0.1", 8080)
+    tcpListener = socket.bind("127.0.0.1", 8081)
     if tcpListener then
         tcpListener:settimeout(0)
         active = true
-        print("Developer server running on http://127.0.0.1:8080/")
+        print("Developer hot-reload server running on http://127.0.0.1:8081/")
     else
-        print("Failed to bind developer server to port 8080")
+        print("Failed to bind developer hot-reload server to port 8081")
     end
 end
 
@@ -49,13 +49,29 @@ function server.update(dt)
     
     local client = tcpListener:accept()
     if client then
-        client:settimeout(0.01)
+        client:settimeout(1.0)
         local line, err = client:receive()
         if line then
             local method, path = line:match("^(%S+)%s+(%S+)%s+HTTP/")
             if method then
                 if method == "OPTIONS" then
                     sendResponse(client, "200 OK", "text/plain", "")
+                elseif method == "GET" and path == "/reload" then
+                    -- Reload loader caches
+                    local loader = require("data.loader")
+                    loader.init()
+                    
+                    -- Reload configuration
+                    local config = require("engine.config")
+                    config.load()
+
+                    -- Hot-reload active UI font
+                    local ui = require("presentation.ui")
+                    if config.ui and config.ui.activeFont then
+                        ui.setFont(config.ui.activeFont)
+                    end
+                    
+                    sendResponse(client, "200 OK", "application/json", json.encode({ success = true, message = "Reloaded config and database" }))
                 elseif method == "GET" and path == "/data" then
                     local function getFileContents(fpath)
                         local contents = love.filesystem.read(fpath)
@@ -102,6 +118,16 @@ function server.update(dt)
                             local function saveFile(fpath, tbl)
                                 if tbl then
                                     local encoded = json.encode(tbl)
+                                    -- Write to project source directory using absolute path
+                                    local absPath = love.filesystem.getSourceDirectory() .. "/" .. fpath
+                                    local file, err = io.open(absPath, "w")
+                                    if file then
+                                        file:write(encoded)
+                                        file:close()
+                                    else
+                                        print("Failed to write to project file: " .. tostring(err))
+                                    end
+                                    -- Also write to save directory
                                     love.filesystem.write(fpath, encoded)
                                 end
                             end

@@ -471,6 +471,7 @@
                 Tools
                 <div class="dropdown-menu">
                     <div class="dropdown-item" onclick="openDatabaseModal()">Database Manager</div>
+                    <div class="dropdown-item" onclick="testPlay()">Test Play</div>
                 </div>
             </div>
         </div>
@@ -522,7 +523,8 @@
         <div class="status-bar">
             <div class="status-field" id="status-mode" style="flex: 1;">Layer: Map</div>
             <div class="status-field" id="status-db" style="width: 140px;">Database: Connected</div>
-            <button class="win98-btn win98-btn-success" style="margin-left: auto; min-width: 80px;" onclick="saveData()">Save Changes</button>
+            <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">Test Play</button>
+            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="saveData()">Save Changes</button>
         </div>
     </div>
 
@@ -704,6 +706,30 @@
                 showToast('Connection failed: server offline');
             }
         }
+
+        async function testPlay() {
+            if (confirm('Save database changes before starting Test Play?')) {
+                await saveData();
+            }
+            try {
+                const res = await fetch(`${API_URL}/play`, { method: 'POST' });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('Game launched successfully for Test Play!');
+                } else {
+                    showToast('Failed to launch game: ' + result.message);
+                }
+            } catch (err) {
+                showToast('Failed to start Test Play: ' + err.message);
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F5') {
+                e.preventDefault();
+                testPlay();
+            }
+        });
 
         // --- LAYER / EDITING MODE LOGIC ---
         function switchMode(mode) {
