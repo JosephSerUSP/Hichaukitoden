@@ -1,0 +1,2 @@
+Everything in this folder and subfolders refers to ANOTHER GAME that serves as inspiration for this one.
+Things such as technical documentation are therefore not relevant to this LUA game; This was another JavaScript based game. 
