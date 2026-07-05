@@ -15,6 +15,8 @@ local scale, scaleX, scaleY = 1, 1, 1
 -- Global Session and State Router
 local activeSession
 local currentScene = "title"
+local isTestBattle = false
+local triggerTestBattle
 
 -- Scene States Cache
 local townSelectedIdx = 1
@@ -49,6 +51,8 @@ local selectedSlotIndex = 1
 statusInspectMode = false
 statusInspectIdx = 1
 
+local inputCooldown = 0
+
 -- Interactive Battle Input variables
 local battleLivingMembers = {}
 local battleActiveMemberIndex = 1
@@ -56,7 +60,20 @@ local battleCollectedActions = {}
 
 local server = require("engine.server")
 
-function love.load()
+function love.load(arg)
+    print("--------------------------------------------------")
+    print("HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)")
+    print("--------------------------------------------------")
+    
+    -- Check for test battle CLI argument
+    if arg then
+        for _, val in ipairs(arg) do
+            if val == "test-battle" then
+                isTestBattle = true
+            end
+        end
+    end
+    
     love.graphics.setDefaultFilter("nearest", "nearest")
     canvas = love.graphics.newCanvas(gameWidth, gameHeight)
     love.resize(love.graphics.getWidth(), love.graphics.getHeight())
@@ -76,6 +93,11 @@ function love.load()
     
     -- Start developer server
     server.start()
+    
+    -- If in test battle mode, launch immediately into battle
+    if isTestBattle then
+        triggerTestBattle()
+    end
 end
 
 function love.update(dt)
@@ -83,6 +105,24 @@ function love.update(dt)
     server.update(dt)
     if activeSession and activeSession.transitionTimer and activeSession.transitionTimer > 0 then
         activeSession.transitionTimer = activeSession.transitionTimer - dt
+    end
+    
+    if inputCooldown > 0 then
+        inputCooldown = inputCooldown - dt
+    end
+    
+    -- Exiting scene transition (slide-out animation)
+    if renderer.closing then
+        renderer.closingTimer = renderer.closingTimer - dt
+        if renderer.closingTimer <= 0 then
+            renderer.closing = false
+            currentScene = renderer.closingTargetScene
+            if renderer.closingTargetSubScene ~= "" then
+                menuSubScene = renderer.closingTargetSubScene
+            end
+            renderer.resetMenuTimer()
+            inputCooldown = 0.30
+        end
     end
 end
 
@@ -268,6 +308,48 @@ local function triggerBattle()
     renderer.initBattleAnims(enemyList)
 end
 
+triggerTestBattle = function()
+    -- Initialize session if not initialized
+    if not activeSession then
+        activeSession = session.GameSession.new(loader)
+        activeSession:initializeStartingParty()
+    end
+    
+    -- Spawn mock enemies (use database entries if they exist, otherwise fall back to generic dummy data)
+    local enemyList = {}
+    local gData = loader.getActor("goblin") or { id = "enemy_1", name = "Test Target A", level = 1 }
+    local b1 = session.Battler.new(gData, 1)
+    b1.hp = b1:getMaxHp(activeSession)
+    table.insert(enemyList, b1)
+    
+    local pData = loader.getActor("pixie") or { id = "enemy_2", name = "Test Target B", level = 1 }
+    local b2 = session.Battler.new(pData, 1)
+    b2.hp = b2:getMaxHp(activeSession)
+    table.insert(enemyList, b2)
+    
+    activeBattle = battleSystem.Battle.new(activeSession, enemyList)
+    battleCombatLog = { "--- BATTLE SCREEN TEST MODE ---", "Press SPACE or P to spawn damage popups!" }
+    battleEventsQueue = {}
+    battleEventQueueIndex = 1
+    battleCombatState = "input"
+    battleSelectedIndex = 1
+    battleSpellSelect = false
+    
+    battleLivingMembers = {}
+    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
+    for i = 1, 4 do
+        local c = activeSession.party[i]
+        if c and not c:isDead() then
+            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
+        end
+    end
+    battleActiveMemberIndex = 1
+    battleCollectedActions = {}
+    
+    currentScene = "battle"
+    renderer.initBattleAnims(enemyList)
+end
+
 -- Map a battler to screen coordinates on the battle scene
 local function getTargetCoords(target)
     if activeBattle then
@@ -410,6 +492,7 @@ end
 
 -- Action handling for key presses
 local function handleKeyPressed(key)
+    if renderer.closing then return end
     if key == "escape" then
         if currentScene == "title" then
             love.event.quit()
@@ -429,19 +512,24 @@ local function handleKeyPressed(key)
                 menuActiveCol = 1
                 menuSelectedSubIdx = 1
             else
-                currentScene = previousSceneBeforeMenu
+                renderer.startClosing("menu", previousSceneBeforeMenu)
             end
             return
         elseif currentScene == "dialogue" then
-            currentScene = isSafeMap() and "town" or "map"
+            currentScene = "map"
             return
         end
     end
     
     if currentScene == "title" then
         if key == "return" or key == "space" then
-            currentScene = "town"
-            townSelectedIdx = 1
+            -- Initialize session if not exists
+            if not activeSession then
+                activeSession = session.GameSession.new(loader)
+                activeSession:initializeStartingParty()
+            end
+            exploration.loadMap(activeSession, 1) -- Load Town Map (mapIdx = 1)
+            currentScene = "map"
         end
         
     elseif currentScene == "town" then
@@ -506,9 +594,80 @@ local function handleKeyPressed(key)
             end
         elseif key == "space" or key == "return" then
             local frontTile, tx, ty = exploration.getFrontTile(activeSession)
-            if frontTile == "S" then
-                currentScene = "town"
-                townSelectedIdx = 1
+            
+            -- 1. Check for coordinate-based events from the map's JSON array
+            local eventObj = nil
+            if activeSession.currentMapData.events then
+                for _, ev in ipairs(activeSession.currentMapData.events) do
+                    if ev.x == tx and ev.y == ty then
+                        eventObj = ev
+                        break
+                    end
+                end
+            end
+            
+            if eventObj then
+                if eventObj.id == "npc_gate_guard" then
+                    triggerDialogue("npc_gate_guard")
+                elseif eventObj.id == "npc_weapon_shop" then
+                    triggerDialogue("npc_weapon_shop")
+                elseif eventObj.id == "npc_alicia" then
+                    triggerDialogue("npc_alicia")
+                elseif eventObj.id == "npc_laura" then
+                    triggerDialogue("npc_laura")
+                elseif eventObj.id == "loc_pub" then
+                    triggerDialogue("loc_pub")
+                elseif eventObj.id == "npc_auction" then
+                    triggerDialogue("npc_auction")
+                elseif eventObj.id == "loc_temple" then
+                    local templeGraph = {
+                        initialNode = "start",
+                        name = "Temple of Stillnight",
+                        nodes = {
+                            start = {
+                                type = "TEXT",
+                                content = "The temple is quiet. You feel a sense of peace.",
+                                next = nil
+                            }
+                        }
+                    }
+                    activeWalker = director.GraphWalker.new(activeSession, templeGraph)
+                    currentScene = "dialogue"
+                elseif eventObj.id == "loc_abandoned_house" then
+                    local houseGraph = {
+                        initialNode = "start",
+                        name = "Your Home",
+                        nodes = {
+                            start = {
+                                type = "TEXT",
+                                content = "This abandoned house is now your home. It's safe here.",
+                                next = nil
+                            }
+                        }
+                    }
+                    activeWalker = director.GraphWalker.new(activeSession, houseGraph)
+                    currentScene = "dialogue"
+                elseif eventObj.id == "recovery" then
+                    activeSession.mp = activeSession.maxMp
+                    for _, c in ipairs(activeSession.party) do
+                        c.hp = c:getMaxHp(activeSession)
+                        c:removeState("dead")
+                    end
+                    activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
+                    activeSession.summoner:removeState("dead")
+                    triggerDialogue("npc_drunkard")
+                end
+                
+            -- 2. Fall back to standard grid character checks if no coordinate event exists
+            elseif frontTile == "S" then
+                if isSafeMap() then
+                    activeSession.dungeonFloor = 1
+                    exploration.loadMap(activeSession, 2)
+                    currentScene = "map"
+                else
+                    exploration.loadMap(activeSession, 1)
+                    currentScene = "map"
+                end
             elseif frontTile == "E" then
                 activeSession.dungeonFloor = activeSession.dungeonFloor + 1
                 if activeSession.dungeonFloor > 5 then
@@ -585,7 +744,7 @@ local function handleKeyPressed(key)
                     dialogueSelectIdx = 1
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
-                        currentScene = isSafeMap() and "town" or "map"
+                        currentScene = "map"
                     end
                 end
             elseif node.type == "CHOICE" then
@@ -598,7 +757,7 @@ local function handleKeyPressed(key)
                     dialogueSelectIdx = 1
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
-                        currentScene = isSafeMap() and "town" or "map"
+                        currentScene = "map"
                     end
                 end
             end
@@ -670,8 +829,7 @@ local function handleKeyPressed(key)
                     menuSelectedSubIdx = menuSelectedSubIdx % #items + 1
                 end
             elseif key == "escape" then
-                menuSubScene = "main"
-                menuSelectedSubIdx = 1
+                renderer.startClosing("items_list", "menu", "main")
             elseif key == "space" or key == "return" then
                 local selectedEntry = items[menuSelectedSubIdx]
                 if selectedEntry then
@@ -734,8 +892,7 @@ local function handleKeyPressed(key)
             elseif key == "down" or key == "s" then
                 menuSelectedSubIdx = menuSelectedSubIdx % 3 + 1
             elseif key == "escape" then
-                menuSubScene = "party_select"
-                menuSelectedSubIdx = selectedCreatureIndex
+                renderer.startClosing("equip_passive", "menu", "party_select")
             elseif key == "space" or key == "return" then
                 selectedSlotIndex = menuSelectedSubIdx
                 menuSubScene = "select_passive"
@@ -758,8 +915,7 @@ local function handleKeyPressed(key)
             elseif key == "down" or key == "s" then
                 menuSelectedSubIdx = menuSelectedSubIdx % #list + 1
             elseif key == "escape" then
-                menuSubScene = "equip_passive"
-                menuSelectedSubIdx = selectedSlotIndex
+                renderer.startClosing("select_passive", "menu", "equip_passive")
             elseif key == "space" or key == "return" then
                 local choice = list[menuSelectedSubIdx]
                 local targetCreature = activeSession.party[selectedCreatureIndex]
@@ -802,8 +958,7 @@ local function handleKeyPressed(key)
                 end
             else
                 if key == "escape" then
-                    menuSubScene = "party_select"
-                    menuSelectedSubIdx = selectedCreatureIndex
+                    renderer.startClosing("status_detail", "menu", "party_select")
                 elseif key == "space" or key == "return" or key == "tab" then
                     if totalTraits > 0 then
                         statusInspectMode = true
@@ -1092,10 +1247,65 @@ local function handleKeyPressed(key)
                 end
             end
         end
+    elseif currentScene == "shop" then
+        if key == "up" or key == "w" then
+            if #shopItems > 0 then
+                shopSelectedIdx = (shopSelectedIdx - 2) % #shopItems + 1
+            end
+        elseif key == "down" or key == "s" then
+            if #shopItems > 0 then
+                shopSelectedIdx = shopSelectedIdx % #shopItems + 1
+            end
+        elseif key == "escape" then
+            renderer.startClosing("shop", "map")
+        elseif key == "space" or key == "return" then
+            local selectedItem = shopItems[shopSelectedIdx]
+            if selectedItem then
+                if activeSession.gold >= selectedItem.cost then
+                    activeSession.gold = activeSession.gold - selectedItem.cost
+                    activeSession:addItem(selectedItem.id, 1)
+                end
+            end
+        end
     end
 end
 
-function love.keypressed(key)
+function love.keypressed(key, scancode, isrepeat)
+    local repeat_event = isrepeat or (type(scancode) == "boolean" and scancode)
+    if repeat_event then return end
+    
+    -- If in test battle mode, only handle popup triggers and ignore/block other inputs
+    if isTestBattle then
+        if key == "space" or key == "p" then
+            if activeBattle and activeSession then
+                -- Collect potential targets
+                local targets = {}
+                for _, e in ipairs(activeBattle.enemies) do
+                    table.insert(targets, e)
+                end
+                for _, c in ipairs(activeSession.party) do
+                    table.insert(targets, c)
+                end
+                table.insert(targets, activeSession.summoner)
+                
+                if #targets > 0 then
+                    local target = targets[math.random(#targets)]
+                    local isHeal = math.random() < 0.25
+                    local txt = isHeal and ("+" .. math.random(5, 20)) or ("-" .. math.random(5, 30))
+                    if math.random() < 0.1 then txt = "CRITICAL!" end
+                    
+                    local x, y = getTargetCoords(target)
+                    if x and y then
+                        local col = isHeal and {0.2, 1, 0.2} or {1, 0.2, 0.2}
+                        renderer.addDamagePopup(txt, x, y, col)
+                    end
+                end
+            end
+        end
+        return -- Block all other keys from progressing state/crashing
+    end
+    
+    if inputCooldown > 0 then return end
     if key == "f9" then
         if server.isActive() then
             server.stop()
@@ -1111,8 +1321,21 @@ function love.keypressed(key)
     
     handleKeyPressed(key)
     
-    if currentScene ~= oldScene or menuSubScene ~= oldSub then
-        renderer.resetMenuTimer()
+    local function isMajorSubSceneTransition(oldSub, newSub)
+        if oldSub == newSub then return false end
+        if (oldSub == "main" and newSub == "party_select") or (oldSub == "party_select" and newSub == "main") then
+            return false
+        end
+        if (oldSub == "items_list" and newSub == "use_target") or (oldSub == "use_target" and newSub == "items_list") then
+            return false
+        end
+        return true
+    end
+
+    if currentScene ~= oldScene or (currentScene == "menu" and isMajorSubSceneTransition(oldSub, menuSubScene)) then
+        if not renderer.closing then
+            renderer.resetMenuTimer()
+        end
     end
 end
 

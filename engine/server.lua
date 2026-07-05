@@ -11,6 +11,13 @@ function server.start()
         tcpListener:settimeout(0)
         active = true
         print("Developer hot-reload server running on http://127.0.0.1:8081/")
+        
+        -- Ping the editor server to notify successful startup
+        pcall(function()
+            local http = require("socket.http")
+            http.TIMEOUT = 0.5
+            http.request("http://127.0.0.1:8080/ping?scene=game_loaded")
+        end)
     else
         print("Failed to bind developer hot-reload server to port 8081")
     end

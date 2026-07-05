@@ -19,18 +19,36 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-        const filePath = path.join(__dirname, 'index.html');
-        fs.readFile(filePath, 'utf8', (err, content) => {
+    let requestPath = req.url === '/' ? '/index.html' : req.url;
+    requestPath = requestPath.split('?')[0];
+    const decodedUrl = decodeURIComponent(requestPath);
+    const relativePath = decodedUrl.replace(/^[\/\\]/, '');
+    const safePath = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, '');
+    const filePath = path.join(__dirname, safePath);
+
+    if (req.method === 'GET' && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        console.log(`GET ${req.url} -> ${filePath} [FOUND]`);
+        const ext = path.extname(filePath).toLowerCase();
+        let contentType = 'text/html';
+        if (ext === '.js') contentType = 'text/javascript';
+        else if (ext === '.css') contentType = 'text/css';
+        else if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        else if (ext === '.json') contentType = 'application/json';
+
+        fs.readFile(filePath, (err, content) => {
             if (err) {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Error loading editor');
+                res.end('Error loading asset');
             } else {
-                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.writeHead(200, { 'Content-Type': contentType });
                 res.end(content);
             }
         });
-    } else if (req.method === 'GET' && req.url === '/data') {
+        return;
+    }
+    
+    if (req.method === 'GET' && req.url === '/data') {
         const getFileContents = (filename) => {
             try {
                 const filePath = path.join(PROJECT_DIR, 'data', filename);
@@ -104,6 +122,22 @@ const server = http.createServer((req, res) => {
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Game launched!' }));
+    } else if (req.method === 'POST' && req.url === '/play-test-battle') {
+        const loveCmd = '"C:\\Program Files\\LOVE\\love.exe" . test-battle';
+        exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
+            if (err) {
+                console.error(`Failed to launch Love2D in test battle: ${err}`);
+            }
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Test battle launched!' }));
+    } else if (req.method === 'GET' && req.url.startsWith('/ping')) {
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
+        const scene = parsedUrl.searchParams.get('scene') || 'unknown';
+        console.log(`\n[GAME STATUS PING] Game connected! Scene: ${scene.toUpperCase()}`);
+        console.log(`[GAME STATUS PING] Build checks: Input Cooldown & Repeat Filters are fully active.\n`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');

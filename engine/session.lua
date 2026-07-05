@@ -110,8 +110,9 @@ function GameSession.new(loader)
     self.transitionDir = "forward"
     
     -- Summoner details
-    self.mp = 820
-    self.maxMp = 820
+    local startMp = loader.system and loader.system.summoner and loader.system.summoner.startMp or 820
+    self.mp = startMp
+    self.maxMp = startMp
     self.summoner = Battler.new(loader.getActor("summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     

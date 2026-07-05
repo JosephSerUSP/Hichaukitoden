@@ -6,7 +6,7 @@
   "physics": {
     "gravity": 480,
     "bounceVelocityRetain": 0.45,
-    "horizontalScatter": 40
+    "horizontalScatter": 0
   },
   "battle_screen": {
     "damagePopupLife": 1.1
@@ -15,5 +15,13 @@
     "baseFleeChance": 0.4,
     "goldLossOnFleeMin": 5,
     "goldLossOnFleeMax": 15
+  },
+  "summoner": {
+    "startMp": 820
+  },
+  "spawn": {
+    "x": 11,
+    "y": 9,
+    "dir": "N"
   }
 }

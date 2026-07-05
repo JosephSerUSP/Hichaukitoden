@@ -83,6 +83,21 @@ end
 local battleAnims = {}
 local menuTimer = 0
 
+renderer.closing = false
+renderer.closingScene = ""
+renderer.closingTimer = 0
+renderer.closingTargetScene = ""
+renderer.closingTargetSubScene = ""
+
+function renderer.startClosing(closingScene, targetScene, targetSubScene)
+    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
+    renderer.closing = true
+    renderer.closingScene = closingScene
+    renderer.closingTimer = slideDur
+    renderer.closingTargetScene = targetScene
+    renderer.closingTargetSubScene = targetSubScene or ""
+end
+
 function renderer.resetMenuTimer()
     menuTimer = 0
 end
@@ -109,6 +124,15 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
 end
 
 function renderer.update(dt)
+    if renderer.closing then
+        renderer.closingTimer = renderer.closingTimer - dt
+        if renderer.closingTimer <= 0 then
+            renderer.closing = false
+            renderer.session.scene = renderer.closingTargetScene
+            renderer.session.subScene = renderer.closingTargetSubScene
+        end
+    end
+
     local gravity = config.physics and config.physics.gravity or 480
     local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
     for i = #damagePopups, 1, -1 do
@@ -158,18 +182,17 @@ function renderer.update(dt)
             end
         end
         
-        if not session.displayedMp then session.displayedMp = session.mp end
-        session.displayedMp = session.displayedMp + (session.mp - session.displayedMp) * 8 * dt
-        if math.abs(session.mp - session.displayedMp) < 0.1 then session.displayedMp = session.mp end
-        
-        for i = 1, 4 do
-            local c = session.party[i]
-            if c then
+        if session.party then
+            for _, c in ipairs(session.party) do
                 if not c.displayedHp then c.displayedHp = c.hp end
                 c.displayedHp = c.displayedHp + (c.hp - c.displayedHp) * 8 * dt
                 if math.abs(c.hp - c.displayedHp) < 0.1 then c.displayedHp = c.hp end
             end
         end
+        
+        if not session.displayedMp then session.displayedMp = session.mp end
+        session.displayedMp = session.displayedMp + (session.mp - session.displayedMp) * 8 * dt
+        if math.abs(session.mp - session.displayedMp) < 0.1 then session.displayedMp = session.mp end
     end
 end
 
@@ -206,7 +229,27 @@ local function drawMinimap(x, y, size)
         for gx = 1, #grid[gy] do
             if renderer.session.visitedGrid[gy][gx] then
                 local cell = grid[gy][gx]
-                if cell == "#" then
+                
+                -- Check for coordinate-based event at this tile (0-indexed coordinates)
+                local mapEvent = nil
+                if renderer.session.currentMapData and renderer.session.currentMapData.events then
+                    for _, ev in ipairs(renderer.session.currentMapData.events) do
+                        if ev.x == gx - 1 and ev.y == gy - 1 then
+                            mapEvent = ev
+                            break
+                        end
+                    end
+                end
+                
+                if mapEvent then
+                    if mapEvent.id == "recovery" then
+                        love.graphics.setColor(0, 0.8, 0, 1) -- Green for recovery
+                    elseif mapEvent.id:sub(1, 4) == "npc_" or mapEvent.id:sub(1, 4) == "loc_" then
+                        love.graphics.setColor(0.4, 0.6, 1, 1) -- Light blue for NPCs / shops
+                    else
+                        love.graphics.setColor(0.8, 0, 0.8, 1) -- Purple for other events
+                    end
+                elseif cell == "#" then
                     love.graphics.setColor(0.2, 0.2, 0.2, 1)
                 elseif cell == "S" or cell == "E" then
                     love.graphics.setColor(0, 0.8, 0.8, 1)
@@ -324,15 +367,8 @@ end
 
 -- Renders the Dialogue / Graph Walker Scene
 function renderer.drawDialogue(walker, selectIdx)
-    -- Still render background under dialogue
-    if renderer.session.currentMapIndex == 1 then
-        if townBg then
-            love.graphics.setColor(1, 1, 1, 0.7)
-            love.graphics.draw(townBg, 0, 0, 0, 256/townBg:getWidth(), ui.toPx(18)/townBg:getHeight())
-        end
-    else
-        viewport_3d.draw(renderer.session)
-    end
+    -- Render background under dialogue
+    viewport_3d.draw(renderer.session)
     
     local node = walker:getCurrentNode()
     if not node then return end
@@ -574,19 +610,17 @@ end
 
 function renderer.drawShop(shopId, selectedIdx, shopItems)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local progress = math.min(1, menuTimer / slideDur)
+    local progress
+    if renderer.closing and renderer.closingScene == "shop" then
+        progress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
+    else
+        progress = math.min(1, menuTimer / slideDur)
+    end
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 
-    -- Draw shop background (Town or dungeon)
-    if renderer.session.currentMapIndex == 1 then
-        if townBg then
-            love.graphics.setColor(1, 1, 1, 0.7)
-            love.graphics.draw(townBg, 0, 0, 0, 256/townBg:getWidth(), 140/townBg:getHeight())
-        end
-    else
-        viewport_3d.draw(renderer.session)
-    end
+    -- Draw shop background
+    viewport_3d.draw(renderer.session)
     
     -- Draw shop title and item list
     ui.drawPanel(ui.toPx(1) + ox, ui.toPx(1), ui.toPx(30), ui.toPx(15))
@@ -658,7 +692,14 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     
     -- Quadratic ease-out slide-in animation
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local slideProgress = math.min(1, menuTimer / slideDur)
+    local slideProgress
+    if renderer.closing and renderer.closingScene == "menu" then
+        slideProgress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
+    elseif renderer.closing and renderer.closingScene == "items_list" then
+        slideProgress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
+    else
+        slideProgress = math.min(1, menuTimer / slideDur)
+    end
     local ease = 1 - (1 - slideProgress) * (1 - slideProgress)
     
     local leftX = ui.toPx(1) - (1 - ease) * ui.toPx(10)
@@ -779,7 +820,12 @@ end
 
 function renderer.drawStatusDetail(c, session)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local progress = math.min(1, menuTimer / slideDur)
+    local progress
+    if renderer.closing and renderer.closingScene == "status_detail" then
+        progress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
+    else
+        progress = math.min(1, menuTimer / slideDur)
+    end
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 
@@ -900,7 +946,12 @@ end
 
 function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local progress = math.min(1, menuTimer / slideDur)
+    local progress
+    if renderer.closing and renderer.closingScene == "equip_passive" then
+        progress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
+    else
+        progress = math.min(1, menuTimer / slideDur)
+    end
     local ease = 1 - (1 - progress) * (1 - progress)
     local ox = (1 - ease) * ui.toPx(32.5)
 

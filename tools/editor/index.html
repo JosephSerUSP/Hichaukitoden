@@ -17,6 +17,7 @@
             --text-color: #000000;
             --text-muted: #808080;
             --font-family: 'Tahoma', 'Arial', sans-serif;
+            --spritesheet-url: url('Assets/Icons.png');
         }
 
         body {
@@ -191,7 +192,10 @@
             box-shadow: inset 1px 1px 0px var(--win-white), inset -1px -1px 0px var(--win-black);
             padding: 4px;
             cursor: pointer;
-            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
         .layer-btn.active {
@@ -274,10 +278,26 @@
             display: flex;
         }
 
+        .spawn-marker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #008000;
+            background-color: rgba(0, 128, 0, 0.25);
+            pointer-events: none;
+            z-index: 5;
+        }
+
         /* --- DATABASE MODAL --- */
         .db-modal-window {
-            width: 780px;
-            height: 520px;
+            width: 1024px;
+            height: 680px;
             display: flex;
             flex-direction: column;
             box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
@@ -371,7 +391,10 @@
             cursor: pointer;
             outline: none;
             min-width: 60px;
-            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
         }
 
         .win98-btn:active {
@@ -443,6 +466,94 @@
             padding: 1px 5px;
             background-color: var(--win-gray);
         }
+
+        .icon-sprite {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-image: url('Assets/Icons.png');
+            background-repeat: no-repeat;
+            vertical-align: middle;
+            image-rendering: pixelated;
+            flex-shrink: 0;
+        }
+        
+        .icon-map { background-position: 0px 0px; }
+        .icon-event { background-position: -16px 0px; }
+        .icon-database { background-position: -32px 0px; }
+        .icon-play { background-position: -48px 0px; }
+        .icon-save { background-position: -64px 0px; }
+        .icon-reload { background-position: -80px 0px; }
+        .icon-tools { background-position: -96px 0px; }
+
+        /* --- TOOLBAR --- */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--win-gray);
+            padding: 4px 6px;
+            border-bottom: 2px solid;
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+            box-shadow: inset 1px 1px 0px var(--win-white);
+            margin-bottom: 4px;
+        }
+        .toolbar-separator {
+            width: 2px;
+            height: 18px;
+            background-color: var(--win-shadow);
+            border-right: 1px solid var(--win-white);
+            margin: 0 4px;
+        }
+        .toolbar .win98-btn {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toolbar .win98-btn.active {
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+            box-shadow: inset 1px 1px 0px var(--win-black);
+            background-color: #dfdfdf;
+        }
+
+        /* --- MAP HIERARCHY TREE --- */
+        .map-tree-container {
+            height: 180px;
+            background-color: var(--win-white);
+            border: 2px solid;
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+            box-shadow: inset 1px 1px 0px var(--win-black);
+            overflow-y: auto;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .tree-node {
+            margin-left: 10px;
+            position: relative;
+        }
+        .tree-node-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 4px;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            font-size: 11px;
+        }
+        .tree-node-header:hover {
+            background-color: #dfdfdf;
+        }
+        .tree-node-header.active {
+            background-color: #000080;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -463,32 +574,60 @@
             <div class="menu-item">
                 File
                 <div class="dropdown-menu">
-                    <div class="dropdown-item" onclick="saveData()">Save Database</div>
-                    <div class="dropdown-item" onclick="fetchDatabase()">Reload Data</div>
+                    <div class="dropdown-item" onclick="saveData()">
+                        <span class="icon-sprite icon-save"></span> Save Database
+                    </div>
+                    <div class="dropdown-item" onclick="fetchDatabase()">
+                        <span class="icon-sprite icon-reload"></span> Reload Data
+                    </div>
                 </div>
             </div>
             <div class="menu-item">
                 Tools
                 <div class="dropdown-menu">
-                    <div class="dropdown-item" onclick="openDatabaseModal()">Database Manager</div>
-                    <div class="dropdown-item" onclick="testPlay()">Test Play</div>
+                    <div class="dropdown-item" onclick="openDatabaseModal()">
+                        <span class="icon-sprite icon-database"></span> Database Manager
+                    </div>
+                    <div class="dropdown-item" onclick="testPlay()">
+                        <span class="icon-sprite icon-play"></span> Test Play
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button id="tool-save-btn" class="win98-btn" onclick="saveData()" title="Save Database" disabled>
+                <span class="icon-sprite icon-save"></span>
+            </button>
+            <button class="win98-btn" onclick="fetchDatabase()" title="Reload Data">
+                <span class="icon-sprite icon-reload"></span>
+            </button>
+            <div class="toolbar-separator"></div>
+            <button id="tool-map-btn" class="win98-btn active" onclick="switchMode('map')" title="Map Layer">
+                <span class="icon-sprite icon-map"></span>
+            </button>
+            <button id="tool-event-btn" class="win98-btn" onclick="switchMode('event')" title="Event Layer">
+                <span class="icon-sprite icon-event"></span>
+            </button>
+            <div class="toolbar-separator"></div>
+            <button class="win98-btn" onclick="openDatabaseModal()" title="Database Manager">
+                <span class="icon-sprite icon-database"></span>
+            </button>
+            <button class="win98-btn" style="color: #005500;" onclick="testPlay()" title="Test Play (F5)">
+                <span class="icon-sprite icon-play"></span>
+            </button>
         </div>
 
         <!-- Workspace Layout -->
         <div class="workspace">
             <div class="sidebar inset-panel">
-                <div class="sidebar-title">Map Controls</div>
-                <select id="map-select" class="form-control inset-bevel" onchange="loadActiveMap()">
-                    <!-- Loaded dynamically -->
-                </select>
-
-                <div style="margin-top: 10px;" class="sidebar-title">Editing Mode</div>
-                <div class="layer-selector">
-                    <button id="mode-map-btn" class="layer-btn active" onclick="switchMode('map')">Map Layer</button>
-                    <button id="mode-event-btn" class="layer-btn" onclick="switchMode('event')">Event Layer</button>
+                <div class="sidebar-title">Map Hierarchy</div>
+                <div id="map-tree" class="map-tree-container">
+                    <!-- Tree view loaded dynamically -->
                 </div>
+
+
 
                 <!-- 1. MAP PALETTE (Only active in Map mode) -->
                 <div id="map-palette-section">
@@ -523,8 +662,12 @@
         <div class="status-bar">
             <div class="status-field" id="status-mode" style="flex: 1;">Layer: Map</div>
             <div class="status-field" id="status-db" style="width: 140px;">Database: Connected</div>
-            <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">Test Play</button>
-            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="saveData()">Save Changes</button>
+            <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">
+                <span class="icon-sprite icon-play"></span> Test Play
+            </button>
+            <button id="status-save-btn" class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="saveData()" disabled>
+                <span class="icon-sprite icon-save"></span> Save Changes
+            </button>
         </div>
     </div>
 
@@ -564,8 +707,8 @@
 
             <!-- Dialogue Controls -->
             <div class="status-bar" style="justify-content: flex-end; gap: 6px; padding: 6px;">
-                <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
-                <button class="win98-btn" onclick="saveData()">Apply</button>
+                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
+                <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
             </div>
         </div>
@@ -645,6 +788,19 @@
     <script>
         const API_URL = 'http://127.0.0.1:8080';
         let dbPayload = {};
+        let isDirty = false;
+
+        function setDirty(dirty) {
+            isDirty = dirty;
+            const saveBtns = [
+                document.getElementById('tool-save-btn'),
+                document.getElementById('status-save-btn'),
+                document.getElementById('db-apply-btn')
+            ];
+            saveBtns.forEach(btn => {
+                if (btn) btn.disabled = !dirty;
+            });
+        }
         
         let editingMode = 'map'; // 'map' or 'event'
         let activePaintTool = 'wall';
@@ -673,10 +829,11 @@
                 initSystemTab();
                 
                 document.getElementById('status-db').textContent = 'Database: Connected';
+                setDirty(false);
             } catch (err) {
                 console.error(err);
                 document.getElementById('status-db').textContent = 'Database: Offline';
-                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the game is running and Dev Mode (F9) is ON.');
+                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the game is running.');
             }
         }
 
@@ -698,7 +855,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast('Changes saved and hot-reloaded successfully!');
+                    setDirty(false);
                 } else {
                     showToast('Failed to save data: ' + result.message);
                 }
@@ -708,15 +865,13 @@
         }
 
         async function testPlay() {
-            if (confirm('Save database changes before starting Test Play?')) {
+            if (isDirty && confirm('Save database changes before starting Test Play?')) {
                 await saveData();
             }
             try {
                 const res = await fetch(`${API_URL}/play`, { method: 'POST' });
                 const result = await res.json();
-                if (result.success) {
-                    showToast('Game launched successfully for Test Play!');
-                } else {
+                if (!result.success) {
                     showToast('Failed to launch game: ' + result.message);
                 }
             } catch (err) {
@@ -734,10 +889,10 @@
         // --- LAYER / EDITING MODE LOGIC ---
         function switchMode(mode) {
             editingMode = mode;
-            document.getElementById('mode-map-btn').classList.remove('active');
-            document.getElementById('mode-event-btn').classList.remove('active');
+            document.getElementById('tool-map-btn').classList.remove('active');
+            document.getElementById('tool-event-btn').classList.remove('active');
             
-            document.getElementById(`mode-${mode}-btn`).classList.add('active');
+            document.getElementById(`tool-${mode}-btn`).classList.add('active');
             document.getElementById('status-mode').textContent = `Layer: ${mode === 'map' ? 'Map Layer' : 'Event Layer'}`;
 
             if (mode === 'map') {
@@ -754,24 +909,91 @@
 
         // --- MAP EDITOR LOGIC ---
         function initMapEditor() {
-            const select = document.getElementById('map-select');
-            select.innerHTML = '';
-            
-            dbPayload.maps.forEach((m, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                opt.textContent = `Map ${idx + 1}: ${m.title || 'Dungeon'}`;
-                select.appendChild(opt);
-            });
-            
+            renderMapTree();
             currentMapIndex = 0;
             loadActiveMap();
         }
 
+        function renderMapTree() {
+            const container = document.getElementById('map-tree');
+            container.innerHTML = '';
+            
+            const rootNode = document.createElement('div');
+            rootNode.className = 'tree-node';
+            
+            const rootHeader = document.createElement('div');
+            rootHeader.className = 'tree-node-header';
+            rootHeader.innerHTML = '📁 Hichaukitoden';
+            rootNode.appendChild(rootHeader);
+            
+            const rootChildren = document.createElement('div');
+            rootChildren.style.marginLeft = '12px';
+            rootNode.appendChild(rootChildren);
+            
+            const townFolder = document.createElement('div');
+            townFolder.className = 'tree-node';
+            
+            const townHeader = document.createElement('div');
+            townHeader.className = 'tree-node-header';
+            townHeader.innerHTML = '📁 Town';
+            townFolder.appendChild(townHeader);
+            
+            const townChildren = document.createElement('div');
+            townChildren.style.marginLeft = '12px';
+            townFolder.appendChild(townChildren);
+            
+            if (dbPayload.maps[0]) {
+                const mapItem = document.createElement('div');
+                mapItem.className = 'tree-node-header map-tree-item';
+                mapItem.dataset.idx = 0;
+                mapItem.innerHTML = '🟩 ' + (dbPayload.maps[0].title || 'Town');
+                mapItem.onclick = () => {
+                    currentMapIndex = 0;
+                    loadActiveMap();
+                };
+                townChildren.appendChild(mapItem);
+            }
+            
+            rootChildren.appendChild(townFolder);
+            
+            const dungeonFolder = document.createElement('div');
+            dungeonFolder.className = 'tree-node';
+            
+            const dungeonHeader = document.createElement('div');
+            dungeonHeader.className = 'tree-node-header';
+            dungeonHeader.innerHTML = '📁 Dungeon Floors';
+            
+            const dungeonChildren = document.createElement('div');
+            dungeonChildren.style.marginLeft = '12px';
+            dungeonFolder.appendChild(dungeonHeader);
+            dungeonFolder.appendChild(dungeonChildren);
+            
+            for (let i = 1; i < dbPayload.maps.length; i++) {
+                const map = dbPayload.maps[i];
+                const mapItem = document.createElement('div');
+                mapItem.className = 'tree-node-header map-tree-item';
+                mapItem.dataset.idx = i;
+                mapItem.innerHTML = '🟩 ' + (map.title || `Floor ${i}`);
+                mapItem.onclick = () => {
+                    currentMapIndex = i;
+                    loadActiveMap();
+                };
+                dungeonChildren.appendChild(mapItem);
+            }
+            
+            rootChildren.appendChild(dungeonFolder);
+            container.appendChild(rootNode);
+        }
+
         function loadActiveMap() {
-            const select = document.getElementById('map-select');
-            currentMapIndex = parseInt(select.value);
             renderGridCells();
+            document.querySelectorAll('.map-tree-item').forEach(el => {
+                if (parseInt(el.dataset.idx) === currentMapIndex) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
         }
 
         function renderGridCells() {
@@ -811,13 +1033,38 @@
                         cell.appendChild(marker);
                     }
 
+                    // Render player start position marker on town map
+                    const isSpawn = dbPayload.system && dbPayload.system.spawn &&
+                                    parseInt(dbPayload.system.spawn.x) === x &&
+                                    parseInt(dbPayload.system.spawn.y) === y &&
+                                    currentMapIndex === 0;
+                    if (isSpawn) {
+                        const spawnMarker = document.createElement('div');
+                        spawnMarker.className = 'spawn-marker';
+                        spawnMarker.textContent = '👤';
+                        spawnMarker.title = 'Player Starting Spawn Position';
+                        cell.appendChild(spawnMarker);
+                    }
+
                     // Click interactions depending on mode
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                    });
+
                     cell.addEventListener('mousedown', (e) => {
                         e.preventDefault();
                         if (editingMode === 'map') {
-                            paintCell(cell);
+                            if (e.button === 0) {
+                                paintCell(cell);
+                            }
                         } else {
-                            openEventModal(x, y);
+                            if (e.button === 2) {
+                                // Right click -> Set start position
+                                setPlayerStartPosition(x, y);
+                            } else if (e.button === 0) {
+                                // Left click -> Edit event details
+                                openEventModal(x, y);
+                            }
                         }
                     });
                     
@@ -830,6 +1077,17 @@
                     gridContainer.appendChild(cell);
                 }
             }
+        }
+
+        function setPlayerStartPosition(x, y) {
+            if (!dbPayload.system) dbPayload.system = {};
+            if (!dbPayload.system.spawn) dbPayload.system.spawn = {};
+            
+            dbPayload.system.spawn.x = x;
+            dbPayload.system.spawn.y = y;
+            
+            setDirty(true);
+            renderGridCells();
         }
 
         function setPaintTool(toolName, btn) {
@@ -850,6 +1108,7 @@
             map.layout[y] = updatedLine;
             
             cell.className = 'map-cell inset-bevel ' + (tileChar === '#' ? 'wall' : 'floor');
+            setDirty(true);
         }
 
         // --- EVENT MODAL LOGIC ---
@@ -926,6 +1185,7 @@
             
             closeEventModal();
             renderGridCells();
+            setDirty(true);
         }
 
         function deleteEventAtCoords() {
@@ -941,6 +1201,7 @@
             
             closeEventModal();
             renderGridCells();
+            setDirty(true);
         }
 
         // --- DATABASE MODAL LOGIC ---
@@ -959,6 +1220,15 @@
             
             activeDbTab = tabName;
             activeDbItemId = '';
+            
+            // Hide middle column on tabs that don't need lists/IDs
+            const itemsCol = document.getElementById('db-items-column');
+            if (tabName === 'system' || tabName === 'battle') {
+                itemsCol.style.display = 'none';
+            } else {
+                itemsCol.style.display = 'flex';
+            }
+            
             initDatabaseEditor();
         }
 
@@ -1009,6 +1279,7 @@
         function loadFormForItem(item) {
             const formPanel = document.getElementById('db-form-panel');
             formPanel.innerHTML = '';
+            formPanel.style.display = 'block'; // Reset layout
             
             const header = document.createElement('div');
             header.style.fontWeight = 'bold';
@@ -1068,6 +1339,7 @@
                     chk.type = 'checkbox';
                     chk.checked = hasItem;
                     chk.onchange = () => {
+                        setDirty(true);
                         if (chk.checked) {
                             if (!shopData.items.some(i => i.id === availItem.id)) {
                                 shopData.items.push({ id: availItem.id, price: availItem.cost });
@@ -1087,16 +1359,40 @@
                 formPanel.appendChild(listWrapper);
             } else if (activeDbTab === 'system') {
                 if (!dbPayload.system) dbPayload.system = {};
-                const systemConfig = { ui: dbPayload.system.ui || {} };
+                const systemConfig = {
+                    ui: dbPayload.system.ui || {},
+                    summoner: dbPayload.system.summoner || {},
+                    spawn: dbPayload.system.spawn || {}
+                };
                 buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
             } else if (activeDbTab === 'battle') {
                 if (!dbPayload.system) dbPayload.system = {};
+                
+                formPanel.innerHTML = '';
+                formPanel.style.display = 'grid';
+                formPanel.style.gridTemplateColumns = '1fr 280px';
+                formPanel.style.gap = '12px';
+                formPanel.style.alignItems = 'start';
+                
+                const formCol = document.createElement('div');
+                formCol.style.display = 'flex';
+                formCol.style.flexDirection = 'column';
+                formCol.style.gap = '8px';
+                formPanel.appendChild(formCol);
+                
+                const previewCol = document.createElement('div');
+                previewCol.style.display = 'flex';
+                previewCol.style.flexDirection = 'column';
+                previewCol.style.gap = '8px';
+                formPanel.appendChild(previewCol);
+                
                 const battleConfig = {
                     physics: dbPayload.system.physics || {},
                     battle_screen: dbPayload.system.battle_screen || {},
                     combat: dbPayload.system.combat || {}
                 };
-                buildRecursiveForm(formPanel, battleConfig, [], dbPayload.system);
+                buildRecursiveForm(formCol, battleConfig, [], dbPayload.system);
+                buildBattleScreenPreview(previewCol);
             }
         }
 
@@ -1125,6 +1421,38 @@
                         });
 
                         select.onchange = () => {
+                            setDirty(true);
+                            let target = targetRoot;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                target = target[currentPath[i]];
+                            }
+                            target[key] = select.value;
+                        };
+
+                        group.appendChild(select);
+                        container.appendChild(group);
+                    } else if (key === 'dir') {
+                        const group = document.createElement('div');
+                        group.className = 'form-group';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = 'Spawn Facing Direction';
+                        group.appendChild(lbl);
+
+                        const select = document.createElement('select');
+                        select.className = 'form-control inset-bevel';
+                        select.id = 'field-dir';
+                        const directions = ['N', 'E', 'S', 'W'];
+                        directions.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d;
+                            opt.textContent = d;
+                            if (value === d) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.onchange = () => {
+                            setDirty(true);
                             let target = targetRoot;
                             for (let i = 0; i < currentPath.length - 1; i++) {
                                 if (!target[currentPath[i]]) target[currentPath[i]] = {};
@@ -1184,13 +1512,13 @@
                             } else {
                                 target[key] = newVal;
                             }
-                        }, type);
+                        }, type, false, key);
                     }
                 }
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
             const group = document.createElement('div');
             group.className = 'form-group';
             
@@ -1203,6 +1531,9 @@
             input.className = 'form-control inset-bevel';
             input.value = value;
             input.readOnly = readOnly;
+            if (keyId) {
+                input.id = 'field-' + keyId;
+            }
             if (readOnly) {
                 input.style.backgroundColor = 'var(--win-gray)';
                 input.style.color = 'var(--win-dark-shadow)';
@@ -1211,6 +1542,7 @@
             if (onChange && !readOnly) {
                 input.addEventListener('input', () => {
                     onChange(input.value);
+                    setDirty(true);
                 });
             }
             
@@ -1286,6 +1618,7 @@
                 }
             }
             
+            setDirty(true);
             closeChangeMaxDialog();
             initDatabaseEditor();
         }
@@ -1293,6 +1626,34 @@
         // --- SYSTEM CONFIG ---
         function initSystemTab() {
             // Managed inside form loading dynamically
+        }
+
+        function buildBattleScreenPreview(container) {
+            const header = document.createElement('div');
+            header.style.fontSize = '12px';
+            header.style.fontWeight = 'bold';
+            header.style.marginBottom = '8px';
+            header.style.color = 'var(--win-dark-shadow)';
+            header.textContent = 'Battle Screen Live Tester';
+            container.appendChild(header);
+
+            const launchBtn = document.createElement('button');
+            launchBtn.className = 'win98-btn';
+            launchBtn.style.padding = '8px 16px';
+            launchBtn.style.fontWeight = 'bold';
+            launchBtn.style.alignSelf = 'start';
+            launchBtn.style.marginTop = '4px';
+            launchBtn.innerHTML = '<span class="icon-sprite icon-play" style="margin-right: 6px;"></span> Launch Test Battle';
+            container.appendChild(launchBtn);
+
+            launchBtn.onclick = () => {
+                fetch('/play-test-battle', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('Launched test battle successfully.');
+                    })
+                    .catch(err => console.error('Failed to launch test battle:', err));
+            };
         }
 
         fetchDatabase();

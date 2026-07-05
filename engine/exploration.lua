@@ -133,8 +133,10 @@ function exploration.loadMap(session, mapIdx)
                 end
             end
         end
-        -- Hardcoded town spawn point (let's put player at center bottom)
-        startX, startY = 10, 17
+        -- Spawn point configuration from system settings, fallback to center bottom
+        local startXDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.x or 10
+        local startYDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.y or 17
+        startX, startY = startXDef, startYDef
     else
         -- Procedurally generate floor layout
         grid, startX, startY = exploration.generateDungeon(mapData, os.time() + mapIdx)
@@ -143,7 +145,7 @@ function exploration.loadMap(session, mapIdx)
     session.mapGrid = grid
     session.playerX = startX
     session.playerY = startY
-    session.playerDir = "N"
+    session.playerDir = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.dir or "N"
     
     -- Initialize Fog-of-War (visited tiles)
     session.visitedGrid = {}

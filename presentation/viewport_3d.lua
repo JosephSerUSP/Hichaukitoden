@@ -48,13 +48,45 @@ local sheetW, sheetH = 1024, 1024
 local sliceQuad = nil
 local wallQx, wallQy = 0, 0
 
+local npcSprites = {}
+
+local function getEventSprite(eventId)
+    if eventId == "npc_gate_guard" then return npcSprites[0]
+    elseif eventId == "npc_weapon_shop" then return npcSprites[1]
+    elseif eventId == "npc_alicia" then return npcSprites[2]
+    elseif eventId == "npc_laura" then return npcSprites[3]
+    elseif eventId == "loc_pub" or eventId == "npc_drunkard" then return npcSprites[4]
+    elseif eventId == "loc_temple" then return npcSprites[5]
+    elseif eventId == "npc_auction" then return npcSprites[6]
+    elseif eventId == "recruit" then return npcSprites[7]
+    elseif eventId == "loc_abandoned_house" then return npcSprites[8]
+    elseif eventId == "recovery" then return npcSprites[9]
+    end
+    -- Fallback stable index hashing
+    local hash = 0
+    for i = 1, #eventId do
+        hash = hash + string.byte(eventId, i)
+    end
+    local idx = hash % 17
+    return npcSprites[idx]
+end
+
 function viewport_3d.init()
     if love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
         tileset = love.graphics.newImage("assets/textures/dungeon_tileset.jpg")
         tileset:setFilter("nearest", "nearest")
         sliceQuad = love.graphics.newQuad(0, 0, 1, 256, sheetW, sheetH)
-        -- Col 0, Row 0 is the brick wall face
         wallQx, wallQy = 0, 0
+    end
+    
+    -- Load NPC sprites NPC00 to NPC16
+    for i = 0, 16 do
+        local filename = string.format("assets/sprites/NPC%02d.png", i)
+        if love.filesystem.getInfo(filename) then
+            local img = love.graphics.newImage(filename)
+            img:setFilter("nearest", "nearest")
+            npcSprites[i] = img
+        end
     end
 end
 
@@ -131,6 +163,8 @@ function viewport_3d.draw(session)
     local fovHalfTan = math.tan(math.pi / 6)
     local planeX = -dirY * fovHalfTan
     local planeY = dirX * fovHalfTan
+    
+    local zBuffer = {}
 
     for x = 0, 255 do
         -- x-coordinate in camera space (from -1 to 1)
@@ -201,6 +235,9 @@ function viewport_3d.draw(session)
         end
 
         if perpWallDist < 0.05 then perpWallDist = 0.05 end
+        
+        -- Store in ZBuffer
+        zBuffer[x + 1] = perpWallDist
 
         -- Calculate height of line to draw on screen
         local lineHeight = math.floor(140 / perpWallDist)
@@ -243,6 +280,108 @@ function viewport_3d.draw(session)
             local b = (side == 0) and 0.55 or 0.45
             love.graphics.setColor(r * brightness, g * brightness, b * brightness, 1)
             love.graphics.line(x, drawStart, x, drawEnd)
+        end
+    end
+
+    -- ── 4. Collect and Sort Sprite Objects by Distance ───────────────────
+    local spritesToDraw = {}
+
+    -- Add coordinate-based events (from maps.json events list)
+    if session.currentMapData and session.currentMapData.events then
+        for _, ev in ipairs(session.currentMapData.events) do
+            local img = getEventSprite(ev.id)
+            if img then
+                table.insert(spritesToDraw, {
+                    x = ev.x,
+                    y = ev.y,
+                    img = img
+                })
+            end
+        end
+    end
+
+    -- Add standard grid-based characters (R, T, U, M)
+    for gy = 1, #grid do
+        for gx = 1, #grid[gy] do
+            local cell = grid[gy][gx]
+            local img = nil
+            if cell == "R" then img = npcSprites[9]
+            elseif cell == "T" then img = npcSprites[14]
+            elseif cell == "U" then img = npcSprites[15]
+            elseif cell == "M" then img = npcSprites[16]
+            end
+            if img then
+                local duplicate = false
+                for _, s in ipairs(spritesToDraw) do
+                    if s.x == gx - 1 and s.y == gy - 1 then
+                        duplicate = true
+                        break
+                    end
+                end
+                if not duplicate then
+                    table.insert(spritesToDraw, {
+                        x = gx - 1,
+                        y = gy - 1,
+                        img = img
+                    })
+                end
+            end
+        end
+    end
+
+    -- Calculate distance to camera for painter sorting
+    for _, s in ipairs(spritesToDraw) do
+        local dx = s.x + 0.5 - cx
+        local dy = s.y + 0.5 - cy
+        s.dist = dx * dx + dy * dy
+    end
+
+    table.sort(spritesToDraw, function(a, b)
+        return a.dist > b.dist
+    end)
+
+    -- ── 5. Render Sprite Billboards with Occlusion ─────────────────────
+    for _, s in ipairs(spritesToDraw) do
+        local spriteX = s.x + 0.5 - cx
+        local spriteY = s.y + 0.5 - cy
+
+        -- Translate relative to camera and project
+        local invDet = 1.0 / (planeX * dirY - dirX * planeY)
+        local transformX = invDet * (dirY * spriteX - dirX * spriteY)
+        local transformY = invDet * (-planeY * spriteX + planeX * spriteY)
+
+        if transformY > 0.1 then
+            local spriteScreenX = math.floor((256 / 2) * (1 + transformX / transformY))
+            
+            -- Calculate billboard height and width
+            local spriteHeight = math.abs(math.floor(140 / transformY))
+            local spriteWidth = spriteHeight
+            
+            local drawStartY = 70 - spriteHeight / 2
+            local drawStartX = spriteScreenX - spriteWidth / 2
+
+            local brightness = math.max(0.12, 1.0 / (1.0 + transformY * 0.35))
+
+            -- Render stripe by stripe
+            for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
+                if stripeX >= 0 and stripeX < 256 then
+                    if transformY < zBuffer[stripeX + 1] then
+                        local clipY = math.max(0, drawStartY)
+                        local clipH = math.min(144, drawStartY + spriteHeight) - clipY
+                        
+                        if clipH > 0 then
+                            love.graphics.setScissor(stripeX, clipY, 1, clipH)
+                            love.graphics.setColor(brightness, brightness, brightness, 1)
+                            
+                            local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
+                            local quad = love.graphics.newQuad(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())
+                            love.graphics.draw(s.img, quad, stripeX, drawStartY, 0, 1, spriteHeight / s.img:getHeight())
+                        end
+                    end
+                end
+            end
+            -- Restore active viewport scissor
+            love.graphics.setScissor(0, 0, 256, 144)
         end
     end
 
