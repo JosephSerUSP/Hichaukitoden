@@ -350,8 +350,18 @@ function renderer.drawMap()
     ui.drawString("X:" .. renderer.session.playerX .. " Y:" .. renderer.session.playerY .. " [" .. renderer.session.playerDir .. "]", 6, 6, {1, 1, 0.7, 0.8})
     
     -- Front action prompt if any
-    local frontTile = exploration.getFrontTile(renderer.session)
-    if frontTile and frontTile ~= "#" and frontTile ~= "." then
+    local frontTile, tx, ty = exploration.getFrontTile(renderer.session)
+    local hasEvent = false
+    if tx and ty and renderer.session.currentMapData and renderer.session.currentMapData.events then
+        for _, ev in ipairs(renderer.session.currentMapData.events) do
+            if ev.x == tx - 1 and ev.y == ty - 1 then
+                hasEvent = true
+                break
+            end
+        end
+    end
+
+    if (frontTile and frontTile ~= "#" and frontTile ~= ".") or hasEvent then
         local label = "INTERACT [SPACE]"
         if frontTile == "E" then label = "STAIRS DOWN [SPACE]"
         elseif frontTile == "S" then label = "STAIRS UP [SPACE]"

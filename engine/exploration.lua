@@ -149,13 +149,16 @@ function exploration.loadMap(session, mapIdx)
     
     -- Initialize Fog-of-War (visited tiles)
     session.visitedGrid = {}
+    local isSafeMap = mapData.safe == true
     for y = 1, #grid do
         session.visitedGrid[y] = {}
         for x = 1, #grid[y] do
-            session.visitedGrid[y][x] = false
+            session.visitedGrid[y][x] = isSafeMap
         end
     end
-    exploration.revealFog(session)
+    if not isSafeMap then
+        exploration.revealFog(session)
+    end
 end
 
 function exploration.revealFog(session)
