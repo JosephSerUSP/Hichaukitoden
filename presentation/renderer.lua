@@ -12,6 +12,8 @@ local damagePopups = {}
 local portraitCache = {}
 local function getPortrait(id)
     if not id or id == "" then return nil end
+    -- Battlers without a spriteKey fall back to their numeric actor id
+    id = tostring(id)
     if portraitCache[id] then return portraitCache[id] end
     
     local paths = {

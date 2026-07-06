@@ -4,7 +4,6 @@
     "title": "Town of Stillnight",
     "intro": "A quiet settlement on the edge of the void.",
     "depth": 0,
-    "safe": true,
     "music": "town1",
     "image": "TownAlencar.png",
     "layout": [
@@ -169,8 +168,17 @@
       }
     ],
     "treasures": [],
-    "encounters": [],
-    "recruits": []
+    "encounters": [
+      {
+        "id": 1,
+        "weight": 10
+      }
+    ],
+    "recruits": [],
+    "category": "town",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 5
   },
   {
     "id": 2,
