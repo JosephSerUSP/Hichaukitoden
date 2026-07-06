@@ -6,6 +6,13 @@ const { exec } = require('child_process');
 const PORT = 8080;
 const GAME_PORT = 8081;
 const PROJECT_DIR = path.resolve(__dirname, '../..');
+// Single manifest of database files exposed to the editor. Keep in sync with
+// DATA_FILES in engine/server.lua.
+const DATA_FILES = [
+    'actors', 'elements', 'events', 'items', 'maps', 'quests', 'shops',
+    'sounds', 'terms', 'themes', 'system', 'commonEvents',
+    'skills', 'passives', 'states'
+];
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
 const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
 
@@ -62,20 +69,10 @@ const server = http.createServer((req, res) => {
             }
         };
  
-        const data = {
-            actors: getFileContents('actors.json'),
-            elements: getFileContents('elements.json'),
-            events: getFileContents('events.json'),
-            items: getFileContents('items.json'),
-            maps: getFileContents('maps.json'),
-            quests: getFileContents('quests.json'),
-            shops: getFileContents('shops.json'),
-            sounds: getFileContents('sounds.json'),
-            terms: getFileContents('terms.json'),
-            themes: getFileContents('themes.json'),
-            system: getFileContents('system.json'),
-            commonEvents: getFileContents('commonEvents.json')
-        };
+        const data = {};
+        DATA_FILES.forEach(name => {
+            data[name] = getFileContents(`${name}.json`);
+        });
  
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
@@ -133,12 +130,9 @@ const server = http.createServer((req, res) => {
                     }
                 };
  
-                saveFile('actors.json', payload.actors);
-                saveFile('items.json', payload.items);
-                saveFile('maps.json', payload.maps);
-                saveFile('shops.json', payload.shops);
-                saveFile('system.json', payload.system);
-                saveFile('commonEvents.json', payload.commonEvents);
+                DATA_FILES.forEach(name => {
+                    saveFile(`${name}.json`, payload[name]);
+                });
 
                 // Notify Love2D game to reload if it is running
                 const notifyReq = http.request({

@@ -98,8 +98,39 @@ function effects.apply(effectData, a, b, session)
                 state = effectData.status
             })
         end
+
+    -- Item-style effects (items.json): flat HP restore, permanent max HP
+    -- boost, and XP grants. Handled here so items behave identically in
+    -- battle and from the field menu.
+    elseif effectData.type == "hp" then
+        local maxHp = traits.getParam(b, "maxHp", session)
+        local healVal = math.max(0, math.min(maxHp - b.hp, effectData.value or 0))
+        b.hp = b.hp + healVal
+        table.insert(events, {
+            type = "heal",
+            target = b,
+            value = healVal
+        })
+
+    elseif effectData.type == "maxHp" then
+        local gain = effectData.value or 0
+        b.paramPlus.maxHp = (b.paramPlus.maxHp or 0) + gain
+        local maxHp = traits.getParam(b, "maxHp", session)
+        b.hp = math.min(maxHp, b.hp + gain)
+        table.insert(events, {
+            type = "heal",
+            target = b,
+            value = gain
+        })
+
+    elseif effectData.type == "xp" then
+        b:gainExp(effectData.value or 0, session)
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.gains_xp", "- {0} gains {1} XP.", b.name, effectData.value or 0)
+        })
     end
-    
+
     return events
 end
 

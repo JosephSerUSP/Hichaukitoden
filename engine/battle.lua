@@ -4,6 +4,12 @@ local config = require("engine.config")
 
 local battle = {}
 
+-- The basic attack every battler falls back to (combat.attackSkillId)
+local function getAttackSkill(session)
+    local id = config.combat and config.combat.attackSkillId or "attack"
+    return session.loader.getSkill(id) or session.loader.getSkill("attack")
+end
+
 local Battle = {}
 Battle.__index = Battle
 
@@ -27,7 +33,7 @@ function Battle:getAIAction(enemy)
     
     -- Pick a random skill
     local skillId = skills[math.random(#skills)]
-    local skill = self.session.loader.getSkill(skillId) or self.session.loader.getSkill("attack")
+    local skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
     
     -- Select target
     local target
@@ -82,7 +88,7 @@ function Battle:resolveRound(summonerAction)
                 self.session.mp = self.session.mp - (spell.mpCost or 0)
                 table.insert(roundEvents, {
                     type = "text",
-                    text = "Alex casts " .. spell.name .. "!"
+                    text = self.session.loader.formatTerm("battle.casts_spell", "{0} casts {1}!", self.session.summoner.name, spell.name)
                 })
                 for _, eff in ipairs(spell.effects or {}) do
                     local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
@@ -97,7 +103,7 @@ function Battle:resolveRound(summonerAction)
                 local item = self.session.loader.getItem(sumAct.id)
                 table.insert(roundEvents, {
                     type = "text",
-                    text = "Alex uses " .. item.name .. "!"
+                    text = self.session.loader.formatTerm("battle.uses_item", "{0} uses {1}!", self.session.summoner.name, item.name)
                 })
                 for _, eff in ipairs(item.effects or {}) do
                     local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
@@ -120,7 +126,7 @@ function Battle:resolveRound(summonerAction)
                 table.insert(roundEvents, { type = "flee_success" })
                 return roundEvents
             else
-                table.insert(roundEvents, { type = "text", text = "Failed to escape!" })
+                table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
                 -- Lose some gold as penalty
                 local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
                 local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
@@ -150,18 +156,21 @@ function Battle:resolveRound(summonerAction)
             
             if chosenAct then
                 if chosenAct.type == "spell" or chosenAct.type == "skill" then
-                    skill = self.session.loader.getSkill(chosenAct.id) or self.session.loader.getSkill("attack")
+                    skill = self.session.loader.getSkill(chosenAct.id) or getAttackSkill(self.session)
                     target = chosenAct.target
                 elseif chosenAct.type == "defend" then
-                    -- Defend grants temporary defense increase or just logs defend
-                    skill = { name = "Defend", speed = 50, effects = { { code = "STATE_ADD", value = "defending", dataId = "defending" } } }
+                    -- Defend is a data-defined skill (combat.defendSkillId) so its
+                    -- speed/effects are editable like any other skill
+                    local defendId = config.combat and config.combat.defendSkillId or "defend"
+                    skill = self.session.loader.getSkill(defendId)
+                        or { name = "Defend", speed = 50, effects = {} }
                     target = ally
                 else
-                    skill = self.session.loader.getSkill("attack")
+                    skill = getAttackSkill(self.session)
                     target = chosenAct.target
                 end
             else
-                skill = self.session.loader.getSkill("attack")
+                skill = getAttackSkill(self.session)
                 -- Target first living enemy
                 for _, enemy in ipairs(self.enemies) do
                     if not enemy:isDead() then target = enemy break end
@@ -279,8 +288,10 @@ function Battle:resolveRound(summonerAction)
         end
     end
     
-    -- MP drain at round end for each active monster
-    if not self.session.currentMapData.safe then
+    -- MP drain at round end for each active monster (no drain on safe maps
+    -- or when no map is loaded, e.g. test battles)
+    local mapData = self.session.currentMapData
+    if not (mapData and mapData.safe) then
         for i = 1, 4 do
             local ally = self.allies[i]
             if ally and not ally:isDead() then
@@ -307,7 +318,7 @@ function Battle:resolveRound(summonerAction)
                     })
                     table.insert(roundEvents, {
                         type = "text",
-                        text = ally.name .. " suffers from MP exhaustion!"
+                        text = self.session.loader.formatTerm("battle.mp_exhaustion", "{0} suffers from MP exhaustion!", ally.name)
                     })
                 end
             end

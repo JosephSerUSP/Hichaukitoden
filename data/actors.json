@@ -36,7 +36,8 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 2,

@@ -1,4 +1,14 @@
+local config = require("engine.config")
+
 local traits = {}
+
+-- Level-growth tuning from data/system.json (system.growth), editable in the
+-- editor's System tab; engine defaults keep old saves/data working.
+local function growthConf(key, default)
+    local g = config.growth
+    if g and g[key] ~= nil then return g[key] end
+    return default
+end
 
 -- Returns a list of all trait objects currently active on a battler
 function traits.getActiveObjects(battler, session)
@@ -68,15 +78,12 @@ function traits.getBaseParam(battler, paramName)
     if paramName == "maxHp" then
         -- Scale Max HP with level
         local base = data.maxHp or 10
-        return math.floor(base + (battler.level - 1) * (base * 0.15))
-    elseif paramName == "atk" then
-        return 10 + (battler.level - 1) * 0.5
-    elseif paramName == "def" then
-        return 10 + (battler.level - 1) * 0.5
-    elseif paramName == "mat" then
-        return 10 + (battler.level - 1) * 0.5
-    elseif paramName == "mdf" then
-        return 10 + (battler.level - 1) * 0.5
+        local rate = growthConf("hpPerLevelRate", 0.15)
+        return math.floor(base + (battler.level - 1) * (base * rate))
+    elseif paramName == "atk" or paramName == "def" or paramName == "mat" or paramName == "mdf" then
+        local statBase = growthConf("statBase", 10)
+        local perLevel = growthConf("statPerLevel", 0.5)
+        return statBase + (battler.level - 1) * perLevel
     elseif paramName == "mpd" then
         return data.mpd or 2
     elseif paramName == "mxa" then
@@ -84,7 +91,7 @@ function traits.getBaseParam(battler, paramName)
     elseif paramName == "mxp" then
         return data.mxp or 2
     end
-    return 10
+    return growthConf("statBase", 10)
 end
 
 -- Get a final parameter value after applying all traits

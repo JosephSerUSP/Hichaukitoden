@@ -48,15 +48,16 @@ local function drawSlicedPortrait(portraitId, x, y, targetW, targetH)
     end
 end
 
+-- Element orb icon ids come from system.json (ui.elementIcons); the table
+-- below is only the fallback for older data files.
+local DEFAULT_ELEMENT_ICONS = {
+    Black = 15, White = 14, Green = 12, Red = 11, Blue = 13, Yellow = 17,
+    default = 16
+}
+
 local function drawElementIcon(element, x, y)
-    local id = 16 -- fallback grey gem/orb
-    if element == "Black" then id = 15
-    elseif element == "White" then id = 14
-    elseif element == "Green" then id = 12
-    elseif element == "Red" then id = 11
-    elseif element == "Blue" then id = 13
-    elseif element == "Yellow" then id = 17
-    end
+    local icons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
+    local id = icons[element] or icons.default or DEFAULT_ELEMENT_ICONS.default
     ui.drawIcon(id, x, y - 2) -- y - 2 aligns 12x12 icon perfectly with text
 end
 
@@ -66,6 +67,13 @@ local function drawElementIcons(elems, x, y)
         drawElementIcon(elem, x + (i - 1) * 10, y)
     end
     return #elems * 10
+end
+
+-- The summoner's display name, taken from actor data instead of a hardcoded
+-- string so renaming the protagonist in the editor updates every UI panel.
+local function summonerName()
+    local s = renderer.session and renderer.session.summoner
+    return (s and s.name or "Alex"):upper()
 end
 
 local townBg
@@ -242,16 +250,18 @@ local function drawMinimap(x, y, size)
                 end
                 
                 if mapEvent then
-                    if mapEvent.scriptId == 7 then
-                        love.graphics.setColor(0, 0.8, 0, 1) -- Green for recovery
-                    elseif mapEvent.scriptId == 12 then
-                        love.graphics.setColor(0.8, 0.8, 0, 1) -- Yellow for treasures
-                    elseif mapEvent.scriptId == 13 then
-                        love.graphics.setColor(0.8, 0, 0, 1) -- Red for battles
-                    elseif mapEvent.scriptId == 1 then
-                        love.graphics.setColor(0, 0.8, 0.8, 1) -- Cyan for stairs
+                    -- Minimap color comes from the linked common event's
+                    -- minimapColor (editable in the Database); default light
+                    -- blue marks generic NPCs / shops.
+                    local ceColor = nil
+                    if mapEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
+                        local ce = renderer.session.loader.commonEvents[tostring(mapEvent.scriptId)]
+                        ceColor = ce and ce.minimapColor or nil
+                    end
+                    if ceColor then
+                        love.graphics.setColor(ceColor[1] or 0, ceColor[2] or 0, ceColor[3] or 0, ceColor[4] or 1)
                     else
-                        love.graphics.setColor(0.4, 0.6, 1, 1) -- Light blue for NPCs / shops
+                        love.graphics.setColor(0.4, 0.6, 1, 1)
                     end
                 elseif cell == "#" then
                     love.graphics.setColor(0.2, 0.2, 0.2, 1)
@@ -280,7 +290,7 @@ local function drawHUD(x, y, w, h)
     local session = renderer.session
     
     -- Draw Summoner MP stats on bottom left (identical to battle console)
-    ui.drawString("ALEX", x + 1.25 * ui.tileSize, y + 1.75 * ui.tileSize, {1, 0.85, 0.5, 1})
+    ui.drawString(summonerName(), x + 1.25 * ui.tileSize, y + 1.75 * ui.tileSize, {1, 0.85, 0.5, 1})
     
     local dispMp = session.displayedMp or session.mp
     ui.drawString("MP: " .. math.floor(dispMp + 0.5) .. "/" .. session.maxMp, x + 1.25 * ui.tileSize, y + 3.25 * ui.tileSize, {0.6, 0.8, 1, 1})
@@ -327,11 +337,12 @@ function renderer.drawTown(selectedIdx)
     ui.drawPanel(ui.toPx(1), ui.toPx(1), ui.toPx(13), ui.toPx(15))
     ui.drawString("TOWN SQUARE", ui.toPx(2), ui.toPx(2), {1, 0.85, 0.5, 1})
     
-    local options = { "Dungeon", "Weapon Shop", "Alicia Shop", "Rest (House)" }
-    for i, opt in ipairs(options) do
+    -- Town options are data-driven (system.town.options)
+    local townOptions = (config.town and config.town.options) or {}
+    for i, opt in ipairs(townOptions) do
         local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = (i == selectedIdx) and "> " or "  "
-        ui.drawString(prefix .. opt, ui.toPx(2), ui.toPx(2) + i * ui.lineHeight * 2, color)
+        ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight * 2, color)
     end
     
     drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
@@ -448,6 +459,56 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     end
 end
 
+-- Battle-scene layout constants shared by drawBattle and getBattlerCoords,
+-- per the BIBLE rule that coordinate mappings must never be duplicated.
+local BATTLE_LAYOUT = {
+    enemyRowWidth = 220,
+    enemyStartX = 18,
+    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
+    enemyPopupY = 60,
+    partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
+    consoleTileY = 18,
+    headerTileOffset = 1,
+    slotPopupOffsetX = 27,
+    slotPopupOffsetY = 10,
+    summonerPopupX = 50,
+    summonerPopupYOffset = 62,
+    fallbackX = 128,
+    fallbackY = 70
+}
+
+-- Maps a battler to the screen position where damage popups should spawn.
+-- Used by main.lua so popup coordinates always match the drawn battle layout.
+function renderer.getBattlerCoords(battleState, session, target)
+    local L = BATTLE_LAYOUT
+    if battleState then
+        for idx, enemy in ipairs(battleState.enemies) do
+            if enemy == target then
+                local spacing = L.enemyRowWidth / #battleState.enemies
+                local ex = L.enemyStartX + (idx - 1) * spacing
+                return ex + L.enemyPopupOffsetX, L.enemyPopupY
+            end
+        end
+
+        local gridX = ui.toPx(L.partyGridTileX)
+        local gridY = ui.toPx(L.consoleTileY) + ui.toPx(L.headerTileOffset)
+        -- Same 2x2 slot arithmetic as drawPartyGrid
+        for idx, c in ipairs(session.party) do
+            if c == target then
+                local col = (idx - 1) % 2
+                local row = math.floor((idx - 1) / 2)
+                local slotX = gridX + col * 8 * ui.tileSize
+                local slotY = gridY + row * 5 * ui.tileSize
+                return slotX + L.slotPopupOffsetX, slotY + L.slotPopupOffsetY
+            end
+        end
+        if target == session.summoner then
+            return L.summonerPopupX, ui.toPx(L.consoleTileY) + L.summonerPopupYOffset
+        end
+    end
+    return L.fallbackX, L.fallbackY
+end
+
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx)
     renderer.activeBattle = battleState
     
@@ -460,11 +521,11 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.setColor(1, 1, 1, 1)
     
     -- Render enemies portraits in viewport with slide-in and death animations
-    local spacing = 220 / #battleState.enemies
+    local spacing = BATTLE_LAYOUT.enemyRowWidth / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
         local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
-        local ex = 18 + (idx - 1) * spacing
+        local ex = BATTLE_LAYOUT.enemyStartX + (idx - 1) * spacing
         local ey = 30
         
         -- Slide-in offset: start offscreen right, slide to position
@@ -529,10 +590,10 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     end
     
     -- Bottom Command console
-    local consoleY = ui.toPx(18)
+    local consoleY = ui.toPx(BATTLE_LAYOUT.consoleTileY)
     local consoleH = ui.toPx(12)
     local textX = ui.toPx(1)
-    local headerY = consoleY + ui.toPx(1)
+    local headerY = consoleY + ui.toPx(BATTLE_LAYOUT.headerTileOffset)
     
     ui.drawPanel(0, consoleY, ui.toPx(32), consoleH)
     
@@ -541,11 +602,20 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local isSummoner = (not memberInfo or memberInfo.type == "summoner")
         
         if isSummoner then
-            ui.drawString("ALEX'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
+            ui.drawString(summonerName() .. "'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
             local actions = { "Attack", "Spell", "Item", "Flee" }
             if spellSelect then
                 ui.drawString("CAST SPELL (MP: " .. renderer.session.mp .. ")", textX, headerY, {0.5, 0.8, 1, 1})
-                local spells = { "Cure (5MP)", "Protect (8MP)", "Wall (15MP)" }
+                -- Real spell names + MP costs from summoner.spells / skills.json
+                -- (this list was previously hardcoded and out of sync)
+                local spells = {}
+                for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
+                    if type(spellId) == "table" then spellId = spellId.id end
+                    local sk = renderer.session.loader.getSkill(spellId)
+                    if sk then
+                        table.insert(spells, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
+                    end
+                end
                 for i, spellName in ipairs(spells) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
@@ -589,13 +659,13 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
     else
         -- Log state console title
-        ui.drawString("ALEX'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
-        ui.drawString("Resolving actions...", textX, headerY + 16, {0.6, 0.6, 0.6, 1})
+        ui.drawString(summonerName() .. "'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
+        ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + 16, {0.6, 0.6, 0.6, 1})
     end
-    
+
     -- Draw Summoner MP stats on bottom left
     local session = renderer.session
-    ui.drawString("ALEX", textX, consoleY + ui.toPx(6), {1, 0.85, 0.5, 1})
+    ui.drawString(summonerName(), textX, consoleY + ui.toPx(6), {1, 0.85, 0.5, 1})
     ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, textX, consoleY + ui.toPx(8), {0.6, 0.8, 1, 1})
     ui.drawBar(textX, consoleY + ui.toPx(10), 10 * ui.tileSize, 4, session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
     
@@ -609,7 +679,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             showHighlight = true
         end
     end
-    renderer.drawPartyGrid(ui.toPx(16), headerY, highlightIdx, session, showHighlight)
+    renderer.drawPartyGrid(ui.toPx(BATTLE_LAYOUT.partyGridTileX), headerY, highlightIdx, session, showHighlight)
     
     -- Draw active damage popups
     love.graphics.push("all")
@@ -775,7 +845,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
             local stateStr = #states > 0 and table.concat(states, ", ") or "NORMAL"
             ui.drawString("STATUS: " .. stateStr, textLeftMargin, bottomY + 6.5 * ui.tileSize, {1, 1, 1, 1})
         else
-            ui.drawString("ALEX'S CREATURES", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
+            ui.drawString(summonerName() .. "'S CREATURES", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
             ui.drawString("Manage your active summon spirits and modify equipment parameters.", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.7, 0.7, 0.7, 1}, "left", ui.toPx(28))
         end
         

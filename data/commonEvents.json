@@ -1,6 +1,11 @@
 {
   "1": {
     "name": "Stairs Down",
+    "minimapColor": [
+      0,
+      0.8,
+      0.8
+    ],
     "commands": [
       {
         "type": "TEXT",
@@ -11,7 +16,7 @@
         "options": [
           {
             "label": "Yes",
-            "script": [
+            "commands": [
               {
                 "type": "DESCEND"
               }
@@ -19,7 +24,7 @@
           },
           {
             "label": "No",
-            "script": []
+            "commands": []
           }
         ]
       }
@@ -36,6 +41,11 @@
   },
   "7": {
     "name": "Recovery Light",
+    "minimapColor": [
+      0,
+      0.8,
+      0
+    ],
     "commands": [
       {
         "type": "RECOVER_PARTY"
@@ -48,6 +58,11 @@
   },
   "12": {
     "name": "Treasure Chest Loot",
+    "minimapColor": [
+      0.8,
+      0.8,
+      0
+    ],
     "commands": [
       {
         "type": "GIVE_ITEM",
@@ -57,6 +72,11 @@
   },
   "13": {
     "name": "Dungeon Monster Battle",
+    "minimapColor": [
+      0.8,
+      0,
+      0
+    ],
     "commands": [
       {
         "type": "BATTLE"

@@ -1,4 +1,6 @@
 local traits = require("engine.traits")
+local config = require("engine.config")
+local newgame = require("engine.newgame")
 
 local session = {}
 
@@ -79,8 +81,9 @@ end
 function Battler:gainExp(amount, sess)
     self.exp = self.exp + amount
     local leveledUp = false
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     while true do
-        local needed = self.level * 15
+        local needed = self.level * expPerLevel
         if self.exp >= needed then
             self.exp = self.exp - needed
             self.level = self.level + 1
@@ -123,18 +126,15 @@ function GameSession.new(loader)
 end
 
 function GameSession:initializeStartingParty()
-    self.gold = self.loader.party.getGold()
-    
-    -- Setup inventory
-    local startInv = self.loader.party.getInventory(self.loader.items)
-    for _, item in ipairs(startInv) do
-        self:addItem(item.id, 1)
+    -- All starting gold/inventory/party rules come from system.newGame
+    self.gold = newgame.rollGold(self.loader)
+
+    for _, itemId in ipairs(newgame.rollInventory(self.loader)) do
+        self:addItem(itemId, 1)
     end
-    self:addItem(20, 1) -- Dark Scepter Lucille
-    self:addItem(6, 1) -- Bone Plate
-    
+
     -- Setup members
-    local members = self.loader.party.getMembers(self.loader.actors)
+    local members = newgame.rollMembers(self.loader)
     for i, m in ipairs(members) do
         local actorData = self.loader.getActor(m.id)
         if actorData then

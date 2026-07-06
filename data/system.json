@@ -53,7 +53,16 @@
         0.6,
         1
       ]
-    ]
+    ],
+    "elementIcons": {
+      "Black": 15,
+      "White": 14,
+      "Green": 12,
+      "Red": 11,
+      "Blue": 13,
+      "Yellow": 17,
+      "default": 16
+    }
   },
   "physics": {
     "gravity": 480,
@@ -77,7 +86,60 @@
     "speedPerLevel": 0.5,
     "regenRate": 0.1,
     "poisonRate": 0.1,
-    "mpExhaustionDamage": 1
+    "mpExhaustionDamage": 1,
+    "battleItem": 1,
+    "defendSkillId": "defend",
+    "attackSkillId": "attack"
+  },
+  "growth": {
+    "hpPerLevelRate": 0.15,
+    "statBase": 10,
+    "statPerLevel": 0.5,
+    "expPerLevel": 15
+  },
+  "newGame": {
+    "goldMin": 25,
+    "goldMax": 75,
+    "guaranteedItem": {
+      "id": 1,
+      "minQty": 1,
+      "maxQty": 3
+    },
+    "randomConsumables": 2,
+    "randomEquipment": 2,
+    "bonusItems": [
+      20,
+      6
+    ],
+    "party": {
+      "twoMemberChance": 0.25,
+      "twoMemberBonusLevels": 3,
+      "defaultSize": 3
+    }
+  },
+  "town": {
+    "options": [
+      {
+        "label": "Dungeon",
+        "action": "enter_dungeon",
+        "mapId": 2
+      },
+      {
+        "label": "Weapon Shop",
+        "action": "dialogue",
+        "graph": "npc_weapon_shop"
+      },
+      {
+        "label": "Alicia Shop",
+        "action": "dialogue",
+        "graph": "npc_alicia"
+      },
+      {
+        "label": "Rest (House)",
+        "action": "rest",
+        "graph": "npc_drunkard"
+      }
+    ]
   },
   "dungeon": {
     "maxFloor": 5,
@@ -95,18 +157,9 @@
   "summoner": {
     "startMp": 820,
     "spells": [
-      {
-        "id": "soothingMote",
-        "mp": 5
-      },
-      {
-        "id": "divineFavor",
-        "mp": 8
-      },
-      {
-        "id": "holySmite",
-        "mp": 15
-      }
+      "soothingMote",
+      "divineFavor",
+      "holySmite"
     ]
   },
   "spawn": {

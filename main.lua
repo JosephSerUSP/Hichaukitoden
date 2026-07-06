@@ -5,6 +5,7 @@ local battleSystem = require("engine.battle")
 local director = require("engine.director")
 local renderer = require("presentation.renderer")
 local traits = require("engine.traits")
+local effects = require("engine.effects")
 local viewport_3d = require("presentation.viewport_3d")
 
 -- Game resolution dimensions
@@ -16,7 +17,9 @@ local scale, scaleX, scaleY = 1, 1, 1
 local activeSession
 local currentScene = "title"
 local isTestBattle = false
+local isValidateMode = false
 local triggerTestBattle
+local runValidation
 
 -- Scene States Cache
 local townSelectedIdx = 1
@@ -29,6 +32,7 @@ local battleSelectedIndex = 1
 local battleSpellSelect = false
 local battleEventsQueue = {}
 local battleEventQueueIndex = 1
+local battleEscaped = false
 
 -- Dialogue State
 local activeWalker
@@ -69,18 +73,123 @@ local function conf(group, key, default)
     return default
 end
 
+-- Database validation for `lovec . validate`: cross-reference integrity plus
+-- a scripted battle round, so data edits can be smoke-tested headlessly.
+runValidation = function()
+    local problems = {}
+    local function check(cond, msg)
+        if not cond then table.insert(problems, msg) end
+        return cond
+    end
+
+    -- Actors must reference existing skills/passives
+    for _, actor in ipairs(loader.actors) do
+        for _, skId in ipairs(actor.skills or {}) do
+            check(loader.getSkill(skId), "actor " .. tostring(actor.id) .. " references missing skill '" .. tostring(skId) .. "'")
+        end
+        for _, pId in ipairs(actor.passives or {}) do
+            check(loader.getPassive(pId), "actor " .. tostring(actor.id) .. " references missing passive '" .. tostring(pId) .. "'")
+        end
+    end
+
+    -- Skills must reference existing states
+    for id, skill in pairs(loader.skills) do
+        for _, eff in ipairs(skill.effects or {}) do
+            if eff.type == "add_status" then
+                check(loader.getState(eff.status), "skill '" .. tostring(id) .. "' references missing state '" .. tostring(eff.status) .. "'")
+            end
+        end
+    end
+
+    -- System config references
+    local sys = loader.system or {}
+    local combat = sys.combat or {}
+    check(loader.getSkill(combat.defendSkillId or "defend"), "combat.defendSkillId references a missing skill")
+    check(loader.getSkill(combat.attackSkillId or "attack"), "combat.attackSkillId references a missing skill")
+    check(loader.getItem(combat.battleItem or 1), "combat.battleItem references a missing item")
+    local spells = (sys.summoner and sys.summoner.spells) or {}
+    for _, spellId in ipairs(spells) do
+        if type(spellId) == "table" then spellId = spellId.id end
+        check(loader.getSkill(spellId), "summoner spell references missing skill '" .. tostring(spellId) .. "'")
+    end
+    for i, opt in ipairs((sys.town and sys.town.options) or {}) do
+        check(opt.label and opt.action, "town option #" .. i .. " is missing label/action")
+    end
+
+    -- Shop stock must reference existing items
+    for shopId, shop in pairs(loader.shops or {}) do
+        for _, stock in ipairs(shop.items or {}) do
+            check(loader.getItem(stock.id), "shop " .. tostring(shopId) .. " stocks missing item '" .. tostring(stock.id) .. "'")
+        end
+    end
+
+    -- Simulated battle round with a starting party
+    local vSession = session.GameSession.new(loader)
+    vSession:initializeStartingParty()
+    check(#vSession.party > 0, "new game produced an empty party")
+
+    local enemyData = loader.getActor(1)
+    if check(enemyData, "actor id 1 missing (needed for validation battle)") then
+        local enemy = session.Battler.new(enemyData, 1)
+        enemy.hp = enemy:getMaxHp(vSession)
+        local vBattle = battleSystem.Battle.new(vSession, { enemy })
+
+        local actions = {}
+        local firstSpell = spells[1]
+        if type(firstSpell) == "table" then firstSpell = firstSpell.id end
+        if firstSpell then
+            actions[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
+        end
+        for i = 1, 4 do
+            if vSession.party[i] then
+                actions[i + 1] = { type = (i == 1) and "defend" or "attack", target = enemy }
+            end
+        end
+        local events = vBattle:resolveRound(actions)
+        check(#events > 0, "battle round produced no events")
+    end
+
+    -- Item effects go through the same pipeline in and out of battle
+    local item = loader.getItem(combat.battleItem or 1)
+    if item and vSession.party[1] then
+        for _, eff in ipairs(item.effects or {}) do
+            effects.apply(eff, vSession.party[1], vSession.party[1], vSession)
+        end
+    end
+
+    if #problems > 0 then
+        error(table.concat(problems, "\n"), 0)
+    end
+end
+
 function love.load(arg)
     print("--------------------------------------------------")
     print("HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)")
     print("--------------------------------------------------")
     
-    -- Check for test battle CLI argument
+    -- Check for CLI arguments (test-battle, validate)
     if arg then
         for _, val in ipairs(arg) do
             if val == "test-battle" then
                 isTestBattle = true
+            elseif val == "validate" then
+                isValidateMode = true
             end
         end
+    end
+
+    -- Headless data validation: check database cross-references and simulate
+    -- a battle round, then quit. Run via `lovec . validate` (used by CI/tools).
+    if isValidateMode then
+        loader.init()
+        local ok, err = pcall(runValidation)
+        if ok then
+            print("VALIDATE OK")
+        else
+            print("VALIDATE FAIL:\n" .. tostring(err))
+        end
+        love.event.quit(ok and 0 or 1)
+        return
     end
     
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -204,17 +313,12 @@ local function recoverParty()
     activeSession.summoner:removeState("dead")
 end
 
--- Applies an item's data-defined effects (from items.json) to a party member
+-- Applies an item's data-defined effects (from items.json) to a party member.
+-- Delegates to engine/effects.lua so field and battle item use share one
+-- implementation.
 local function applyItemToTarget(item, target)
     for _, eff in ipairs(item.effects or {}) do
-        if eff.type == "hp" then
-            target.hp = math.min(target:getMaxHp(activeSession), target.hp + eff.value)
-        elseif eff.type == "maxHp" then
-            target.paramPlus.maxHp = target.paramPlus.maxHp + eff.value
-            target.hp = math.min(target:getMaxHp(activeSession), target.hp + eff.value)
-        elseif eff.type == "xp" then
-            target:gainExp(eff.value, activeSession)
-        end
+        effects.apply(eff, target, target, activeSession)
     end
 end
 
@@ -238,7 +342,8 @@ local function compileCommands(nodes, commands, prefix, tailNodeId)
         elseif cmd.type == "CHOICE" then
             local options = {}
             for oi, opt in ipairs(cmd.options or {}) do
-                local optFirst = compileCommands(nodes, opt.commands, nodeId .. "_opt" .. oi, nextId)
+                -- Older data files used "script" for option sub-commands
+                local optFirst = compileCommands(nodes, opt.commands or opt.script, nodeId .. "_opt" .. oi, nextId)
                 table.insert(options, {
                     label = opt.label,
                     setFlag = opt.setFlag,
@@ -257,10 +362,10 @@ local function compileCommands(nodes, commands, prefix, tailNodeId)
             }
         elseif cmd.type == "RECOVER_PARTY" then
             recoverParty()
-            nodes[nodeId] = { type = "TEXT", content = "Your party has been fully recovered!", next = nextId }
+            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
         elseif cmd.type == "DESCEND" then
             local descendId = nodeId .. "_descend"
-            nodes[nodeId] = { type = "TEXT", content = "You descend deeper into the chasm...", next = descendId }
+            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.descend", "You descend deeper into the chasm..."), next = descendId }
             nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
         elseif cmd.type == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
@@ -304,7 +409,10 @@ local function openShop(shopId)
             if allowed then
                 local itemData = loader.getItem(shopItem.id)
                 if itemData then
-                    table.insert(shopItems, itemData)
+                    -- Honor the per-shop price override set in the editor;
+                    -- everything else reads through to the item database entry.
+                    local entry = setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData })
+                    table.insert(shopItems, entry)
                 end
             end
         end
@@ -348,9 +456,9 @@ handleDialogueAction = function()
             end
             local item = loader.getItem(loot)
             activeSession:addItem(loot, 1)
-            
+
             node.type = "TEXT"
-            node.content = "Found a " .. (item and item.name or loot) .. "!"
+            node.content = loader.formatTerm("events.found_item", "Found a {0}!", (item and item.name or loot))
             node.action = nil
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then
             local ce = loader.commonEvents and loader.commonEvents[tostring(node.commonEventId)]
@@ -368,7 +476,7 @@ handleDialogueAction = function()
             recoverParty()
 
             node.type = "TEXT"
-            node.content = "Your party has been fully recovered!"
+            node.content = loader.getTerm("events.recover_party", "Your party has been fully recovered!")
             node.action = nil
         else
             activeWalker:advance()
@@ -479,13 +587,14 @@ triggerBattle = function()
     end
     
     activeBattle = battleSystem.Battle.new(activeSession, enemyList)
-    battleCombatLog = { "A hostile group blocks your path!" }
+    battleCombatLog = { loader.getTerm("battle.encounter", "A hostile group blocks your path!") }
     battleEventsQueue = {}
     battleEventQueueIndex = 1
     battleCombatState = "input"
     battleSelectedIndex = 1
     battleSpellSelect = false
-    
+    battleEscaped = false
+
     rebuildBattleLivingMembers()
 
     currentScene = "battle"
@@ -525,34 +634,11 @@ triggerTestBattle = function()
     renderer.initBattleAnims(enemyList)
 end
 
--- Map a battler to screen coordinates on the battle scene
+-- Map a battler to screen coordinates on the battle scene. The layout lives
+-- in the renderer (shared with drawBattle) so popups always match the drawn
+-- positions.
 local function getTargetCoords(target)
-    if activeBattle then
-        for idx, enemy in ipairs(activeBattle.enemies) do
-            if enemy == target then
-                local spacing = 220 / #activeBattle.enemies
-                local ex = 18 + (idx - 1) * spacing
-                return ex + 28, 60 -- Centered over the 56x56 enemy sprite
-            end
-        end
-        
-        local gridCoords = {
-            { x = 130 + 27, y = 146 + 10 },
-            { x = 192 + 27, y = 146 + 10 },
-            { x = 130 + 27, y = 185 + 10 },
-            { x = 192 + 27, y = 185 + 10 }
-        }
-        for idx, c in ipairs(activeSession.party) do
-            if c == target then
-                local slot = gridCoords[idx]
-                if slot then return slot.x, slot.y end
-            end
-        end
-        if target == activeSession.summoner then
-            return 50, 196 + 10
-        end
-    end
-    return 128, 70
+    return renderer.getBattlerCoords(activeBattle, activeSession, target)
 end
 
 -- Resolves combat rounds with dynamic state backup/restore for sequential action rendering
@@ -594,7 +680,7 @@ local function advanceBattleLog()
         if ev.type == "text" then
             desc = ev.text
         elseif ev.type == "action" then
-            desc = ev.actor.name .. " uses " .. ev.skill.name .. " on " .. ev.target.name .. "!"
+            desc = loader.formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
             if activeBattle then
                 for idx, enemy in ipairs(activeBattle.enemies) do
                     if enemy == ev.actor then
@@ -604,7 +690,7 @@ local function advanceBattleLog()
                 end
             end
         elseif ev.type == "damage" then
-            desc = "- " .. ev.target.name .. " takes " .. ev.value .. " damage."
+            desc = loader.formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
             renderer.addDamagePopup("-" .. ev.value, popupX, popupY, {1, 0.2, 0.2})
             -- Apply damage sequentially
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
@@ -617,12 +703,12 @@ local function advanceBattleLog()
                 end
             end
         elseif ev.type == "heal" then
-            desc = "- " .. ev.target.name .. " recovers " .. ev.value .. " HP."
+            desc = loader.formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
             renderer.addDamagePopup("+" .. ev.value, popupX, popupY, {0.2, 1, 0.2})
             -- Apply heal sequentially
             ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
         elseif ev.type == "death" then
-            desc = "! " .. ev.target.name .. " has fallen!"
+            desc = loader.formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
             renderer.addDamagePopup("DEAD", popupX, popupY, {0.6, 0.6, 0.6})
             -- Apply death state sequentially
             ev.target:addState("dead")
@@ -637,24 +723,25 @@ local function advanceBattleLog()
                 end
             end
         elseif ev.type == "state_add" then
-            desc = "- " .. ev.target.name .. " got " .. ev.state:upper() .. " status."
+            desc = loader.formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
             renderer.addDamagePopup(ev.state:upper(), popupX, popupY, {0.8, 0.4, 1.0})
             -- Apply state add sequentially
             ev.target:addState(ev.state)
         elseif ev.type == "state_remove" then
-            desc = "- " .. ev.target.name .. "'s " .. ev.state:upper() .. " wore off."
+            desc = loader.formatTerm("battle.status_wore_off", "- {0}'s {1} wore off.", ev.target.name, ev.state:upper())
             -- Apply state removal sequentially
             ev.target:removeState(ev.state)
         elseif ev.type == "mp_drain" then
-            desc = "- " .. ev.actor.name .. " consumes " .. ev.value .. " MP."
+            desc = loader.formatTerm("battle.consumes_mp", "- {0} consumes {1} MP.", ev.actor.name, ev.value)
             -- Apply MP drain sequentially
             activeSession.mp = math.max(0, activeSession.mp - ev.value)
         elseif ev.type == "victory" then
-            desc = "Victory! All hostile forces vanquished."
+            desc = loader.getTerm("battle.victory_full", "Victory! All hostile forces vanquished.")
         elseif ev.type == "defeat" then
-            desc = "Defeat! The party has fallen in battle..."
+            desc = loader.getTerm("battle.defeat_full", "Defeat! The party has fallen in battle...")
         elseif ev.type == "flee_success" then
-            desc = "Escaped successfully!"
+            desc = loader.getTerm("battle.flee_success", "Escaped successfully!")
+            battleEscaped = true
         end
         
         if desc ~= "" then
@@ -673,6 +760,7 @@ local function commitBattleAction(memberIndex, action)
     battleSpellSelect = false
 
     if battleActiveMemberIndex > #battleLivingMembers then
+        battleEscaped = false
         battleEventsQueue = resolveBattleRound()
         battleEventQueueIndex = 1
         battleCombatLog = {}
@@ -733,22 +821,27 @@ local function handleKeyPressed(key)
         end
         
     elseif currentScene == "town" then
+        -- Town menu entries come from system.town.options (label + action),
+        -- editable from the editor's System tab.
+        local townOptions = conf("town", "options", {})
+        local optCount = math.max(1, #townOptions)
         if key == "up" or key == "w" then
-            townSelectedIdx = (townSelectedIdx - 2) % 4 + 1
+            townSelectedIdx = (townSelectedIdx - 2) % optCount + 1
         elseif key == "down" or key == "s" then
-            townSelectedIdx = townSelectedIdx % 4 + 1
+            townSelectedIdx = townSelectedIdx % optCount + 1
         elseif key == "return" or key == "space" then
-            if townSelectedIdx == 1 then
-                activeSession.dungeonFloor = 1
-                exploration.loadMap(activeSession, 2)
-                currentScene = "map"
-            elseif townSelectedIdx == 2 then
-                triggerDialogue("npc_weapon_shop")
-            elseif townSelectedIdx == 3 then
-                triggerDialogue("npc_alicia")
-            elseif townSelectedIdx == 4 then
-                recoverParty()
-                triggerDialogue("npc_drunkard")
+            local opt = townOptions[townSelectedIdx]
+            if opt then
+                if opt.action == "enter_dungeon" then
+                    activeSession.dungeonFloor = 1
+                    exploration.loadMap(activeSession, opt.mapId or 2)
+                    currentScene = "map"
+                elseif opt.action == "dialogue" then
+                    triggerDialogue(opt.graph)
+                elseif opt.action == "rest" then
+                    recoverParty()
+                    if opt.graph then triggerDialogue(opt.graph) end
+                end
             end
         end
         
@@ -1096,11 +1189,14 @@ local function handleKeyPressed(key)
                 -- Get skills/spells list
                 local options = {}
                 if isSummoner then
-                    options = conf("summoner", "spells", {
-                        { id = "soothingMote", mp = 5 },
-                        { id = "divineFavor", mp = 8 },
-                        { id = "holySmite", mp = 15 }
-                    })
+                    -- summoner.spells lists skill ids; costs come from the
+                    -- skill database (skills.json mpCost). Legacy {id, mp}
+                    -- entries are still accepted.
+                    for _, spellId in ipairs(conf("summoner", "spells", {})) do
+                        if type(spellId) == "table" then spellId = spellId.id end
+                        local sk = loader.getSkill(spellId)
+                        if sk then table.insert(options, sk) end
+                    end
                 else
                     for _, skId in ipairs(memberInfo.actor.skills or {}) do
                         local sk = loader.getSkill(skId)
@@ -1124,7 +1220,7 @@ local function handleKeyPressed(key)
                     if choice then
                         local allowed = true
                         if isSummoner then
-                            allowed = (activeSession.mp >= choice.mp)
+                            allowed = (activeSession.mp >= (choice.mpCost or choice.mp or 0))
                         end
                         
                         if allowed then
@@ -1152,7 +1248,7 @@ local function handleKeyPressed(key)
                                 target = target
                             })
                         else
-                            showBattleMessage("Not enough MP!")
+                            showBattleMessage(loader.getTerm("battle.not_enough_mp", "Not enough MP!"))
                         end
                     end
                 end
@@ -1199,7 +1295,7 @@ local function handleKeyPressed(key)
                                     target = target
                                 })
                             else
-                                showBattleMessage("No " .. (battleItem and battleItem.name or battleItemId) .. "s left!")
+                                showBattleMessage(loader.formatTerm("battle.no_item_left", "No {0}s left!", (battleItem and battleItem.name or battleItemId)))
                             end
                         else
                             -- Monster Defend action
@@ -1239,11 +1335,9 @@ local function handleKeyPressed(key)
                         activeSession:initializeStartingParty()
                         renderer.init(activeSession)
                     else
-                        local escaped = false
-                        for _, line in ipairs(battleCombatLog) do
-                            if line == "Escaped successfully!" then escaped = true break end
-                        end
-                        if escaped then
+                        -- battleEscaped is set when a flee_success event is
+                        -- processed (no string comparison against log text)
+                        if battleEscaped then
                             currentScene = "map"
                         else
                             -- Rebuild living members list for the next round

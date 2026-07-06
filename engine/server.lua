@@ -5,6 +5,14 @@ local server = {}
 local tcpListener = nil
 local active = false
 
+-- Single manifest of database files exposed to the editor. Keep in sync with
+-- DATA_FILES in tools/editor/server.js.
+local DATA_FILES = {
+    "actors", "elements", "events", "items", "maps", "quests", "shops",
+    "sounds", "terms", "themes", "system", "commonEvents",
+    "skills", "passives", "states"
+}
+
 function server.start()
     tcpListener = socket.bind("127.0.0.1", 8081)
     if tcpListener then
@@ -84,22 +92,12 @@ function server.update(dt)
                         local contents = love.filesystem.read(fpath)
                         return contents and json.decode(contents) or nil
                     end
-                    
-                    local data = {
-                        actors = getFileContents("data/actors.json"),
-                        elements = getFileContents("data/elements.json"),
-                        events = getFileContents("data/events.json"),
-                        items = getFileContents("data/items.json"),
-                        maps = getFileContents("data/maps.json"),
-                        quests = getFileContents("data/quests.json"),
-                        shops = getFileContents("data/shops.json"),
-                        sounds = getFileContents("data/sounds.json"),
-                        terms = getFileContents("data/terms.json"),
-                        themes = getFileContents("data/themes.json"),
-                        system = getFileContents("data/system.json"),
-                        commonEvents = getFileContents("data/commonEvents.json")
-                    }
-                    
+
+                    local data = {}
+                    for _, name in ipairs(DATA_FILES) do
+                        data[name] = getFileContents("data/" .. name .. ".json")
+                    end
+
                     local responseBody = json.encode(data)
                     sendResponse(client, "200 OK", "application/json", responseBody)
                     
@@ -140,12 +138,9 @@ function server.update(dt)
                                 end
                             end
                             
-                            saveFile("data/actors.json", payload.actors)
-                            saveFile("data/items.json", payload.items)
-                            saveFile("data/maps.json", payload.maps)
-                            saveFile("data/shops.json", payload.shops)
-                            saveFile("data/system.json", payload.system)
-                            saveFile("data/commonEvents.json", payload.commonEvents)
+                            for _, name in ipairs(DATA_FILES) do
+                                saveFile("data/" .. name .. ".json", payload[name])
+                            end
                             
                             -- Reload loader caches
                             local loader = require("data.loader")

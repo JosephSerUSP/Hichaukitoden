@@ -24,12 +24,11 @@ function loader.init()
     loader.themes = load_json("data/themes.json")
     loader.system = load_json("data/system.json")
     loader.commonEvents = load_json("data/commonEvents.json")
-    
+    loader.skills = load_json("data/skills.json")
+    loader.passives = load_json("data/passives.json")
+    loader.states = load_json("data/states.json")
+
     loader.animations = require("data.animations")
-    loader.states = require("data.states")
-    loader.passives = require("data.passives")
-    loader.skills = require("data.skills")
-    loader.party = require("data.party")
 
     -- Create lookup indices for scalability
     loader.actorsById = {}
@@ -72,6 +71,30 @@ end
 
 function loader.getState(id)
     return loader.states[id]
+end
+
+-- Looks up a UI/battle string from data/terms.json by dotted path
+-- (e.g. "battle.flee_success"); falls back to the engine default when the
+-- key is missing so incomplete terms files never crash the game.
+function loader.getTerm(path, fallback)
+    local node = loader.terms
+    for part in path:gmatch("[^%.]+") do
+        if type(node) ~= "table" then return fallback end
+        node = node[part]
+    end
+    if type(node) == "string" then return node end
+    return fallback
+end
+
+-- getTerm + positional substitution: replaces {0}, {1}, ... with the extra
+-- arguments (the same placeholder style terms.json already uses).
+function loader.formatTerm(path, fallback, ...)
+    local str = loader.getTerm(path, fallback)
+    local args = { ... }
+    return (str:gsub("{(%d+)}", function(idx)
+        local v = args[tonumber(idx) + 1]
+        return v ~= nil and tostring(v) or ("{" .. idx .. "}")
+    end))
 end
 
 return loader
