@@ -94,7 +94,10 @@
             "text": "This abandoned house is now your home. It feels safe here."
           }
         ],
-        "name": "Sign"
+        "name": "Sign",
+        "transparent": true,
+        "priority": "same",
+        "spawn": "Fixed"
       },
       {
         "id": 6,
