@@ -725,7 +725,7 @@
 
             <!-- Dialogue Controls -->
             <div class="dialog-footer">
-                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
+                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal(true)">OK</button>
                 <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
             </div>
@@ -862,6 +862,13 @@
                            <input type="text" id="prop-map-title" class="win98-input" />
                         </div>
                         <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Category:</label>
+                           <select id="prop-map-category" class="win98-select">
+                               <option value="town">Town</option>
+                               <option value="dungeon">Dungeon Floor</option>
+                           </select>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
                            <label>Generation Mode:</label>
                            <select id="prop-map-gen" class="win98-select" onchange="togglePropGenMode()">
                                <option value="Fixed">Fixed (Pre-designed layout)</option>
@@ -931,6 +938,7 @@
                     <label>Command Type:</label>
                     <select id="cmd-select-type" class="win98-select" onchange="toggleCmdTypeFields()">
                         <option value="TEXT">Show Text</option>
+                        <option value="CHOICE">Show Choice</option>
                         <option value="RECOVER_PARTY">Recover Party</option>
                         <option value="DESCEND">Descend Floor</option>
                         <option value="BATTLE">Start Battle</option>
@@ -938,7 +946,7 @@
                         <option value="CALL_COMMON_EVENT">Call Common Event</option>
                     </select>
                 </div>
-                
+
 
                     <div id="cmd-fields-text" class="form-group" style="display: none; flex-direction: column;">
                         <label>Speaker Name (Leave empty for none):</label>
@@ -953,7 +961,12 @@
                         <!-- Populated dynamically -->
                     </select>
                 </div>
-                
+
+                <div id="cmd-fields-choice" class="form-group" style="display: none; flex-direction: column;">
+                    <label>Options:</label>
+                    <div id="cmd-choice-options-list" style="border: 1px solid var(--win-shadow); background: #fff; max-height: 160px; overflow-y: auto; padding: 2px;"></div>
+                </div>
+
                 <div class="dialog-footer">
                     <button class="win98-btn win98-btn-success" onclick="applyCmdDialog()">OK</button>
                     <button class="win98-btn" onclick="closeCmdDialog()">Cancel</button>
@@ -962,24 +975,50 @@
         </div>
     </div>
 
-    <!-- --- CUSTOM SCRIPT EDITOR MODAL --- -->
-    <div id="custom-script-modal" class="modal-overlay" style="z-index: 1150;">
-        <div class="window outset-bevel" style="width: 440px;">
+    <!-- --- CHOICE OPTION EDITOR MODAL --- -->
+    <div id="choice-option-modal" class="modal-overlay" style="z-index: 1250;">
+        <div class="window outset-bevel" style="width: 420px;">
             <div class="title-bar">
-                <div class="title-bar-text">Edit Custom Script Commands</div>
+                <div class="title-bar-text">Choice Option</div>
                 <div class="title-bar-controls">
-                    <button class="win-btn-small outset-bevel" onclick="closeCustomScriptModal()">×</button>
+                    <button class="win-btn-small outset-bevel" onclick="closeChoiceOptionModal()">×</button>
                 </div>
             </div>
             <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; padding: 4px;" id="custom-script-commands-list"></div>
-                <div style="display: flex; gap: 4px; margin-top: 6px;">
-                    <button class="win98-btn" onclick="addCustomScriptCommand()" style="font-size: 10px;">Add Command</button>
-                    <button class="win98-btn" onclick="editCustomScriptCommand()" style="font-size: 10px;">Edit</button>
-                    <button class="win98-btn" onclick="deleteCustomScriptCommand()" style="font-size: 10px;">Delete</button>
+                <div class="field-row-stacked">
+                    <label>Option Label:</label>
+                    <input type="text" id="choice-opt-label" class="win98-input" placeholder="e.g. Yes" />
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="closeCustomScriptModal()">OK</button>
+                <div class="field-row-stacked">
+                    <label>Set Flag on Selection (optional):</label>
+                    <input type="text" id="choice-opt-flag" class="win98-input" placeholder="e.g. metAlicia" />
+                </div>
+                <div class="field-row-stacked">
+                    <label>Commands run when chosen:</label>
+                    <div id="choice-opt-commands-list" style="border: 1px solid var(--win-shadow); background: #fff; max-height: 160px; overflow-y: auto; padding: 2px; font-family: monospace; font-size: 11px;"></div>
+                </div>
+                <div class="dialog-footer">
+                    <button class="win98-btn win98-btn-success" onclick="applyChoiceOption()">OK</button>
+                    <button class="win98-btn" onclick="closeChoiceOptionModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- DAMAGE POPUP SETTINGS MODAL --- -->
+    <div id="damage-popup-modal" class="modal-overlay" style="z-index: 1150;">
+        <div class="window outset-bevel" style="width: 420px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Damage Popup Settings</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeDamagePopupModal()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div id="damage-popup-form" style="max-height: 360px; overflow-y: auto;"></div>
+                <div class="dialog-footer">
+                    <button class="win98-btn win98-btn-success" onclick="closeDamagePopupModal(true)">OK</button>
+                    <button class="win98-btn" onclick="closeDamagePopupModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1083,6 +1122,48 @@
             });
         }
         
+        // --- GENERIC MODAL DIRTY-TRACKING / ESCAPE HANDLING ---
+        // Each staged-edit modal (fields only commit to dbPayload on OK) sets its
+        // own `*Dirty` flag to true via a delegated input/change listener, and
+        // resets it to false when the modal opens. Close handlers accept an
+        // optional `force` flag so the OK button can close without prompting.
+        function confirmDiscard(message) {
+            return confirm(message || 'You have unsaved changes. Discard them?');
+        }
+
+        function wireModalDirtyTracking(modalId, setDirtyFn) {
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.addEventListener('input', setDirtyFn);
+            el.addEventListener('change', setDirtyFn);
+        }
+
+        // Closes whichever staged-edit modal is topmost (by declared z-index).
+        // Registered once; each entry's close function already knows how to
+        // prompt-and-discard if that modal has unsaved staged changes.
+        const ESCAPE_MODAL_CLOSERS = [
+            ['asset-picker-modal', () => closeAssetPicker()],
+            ['choice-option-modal', () => closeChoiceOptionModal()],
+            ['cmd-modal', () => closeCmdDialog()],
+            ['damage-popup-modal', () => closeDamagePopupModal()],
+            ['max-modal', () => closeChangeMaxDialog()],
+            ['map-properties-modal', () => closeMapPropertiesModal()],
+            ['event-modal', () => closeEventModal()],
+            ['db-modal', () => closeDatabaseModal()],
+            ['toast-modal', () => closeToast()]
+        ];
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            for (const [id, closeFn] of ESCAPE_MODAL_CLOSERS) {
+                const el = document.getElementById(id);
+                if (el && el.classList.contains('active')) {
+                    closeFn();
+                    return;
+                }
+            }
+        });
+
         let editingMode = 'map'; // 'map' or 'event'
         let activePaintTool = 'wall';
         let currentMapIndex = 0;
@@ -1171,6 +1252,12 @@
                 const result = await res.json();
                 if (result.success) {
                     setDirty(false);
+                    // Fields inside the Database modal are live-bound, so a
+                    // successful save means there's nothing left to "discard" if
+                    // the modal is closed afterwards — refresh its snapshot.
+                    if (dbModalSnapshot !== null) {
+                        dbModalSnapshot = JSON.stringify(dbPayload);
+                    }
                 } else {
                     showToast('Failed to save data: ' + result.message);
                 }
@@ -1229,80 +1316,71 @@
             loadActiveMap();
         }
 
+        // A map's category is explicit metadata (map.category); maps saved
+        // before this field existed fall back to "index 0 = town" for compatibility.
+        function getMapCategory(map, idx) {
+            return map.category || (idx === 0 ? 'town' : 'dungeon');
+        }
+
+        function makeMapTreeItem(map, idx) {
+            const mapItem = document.createElement('div');
+            mapItem.className = 'tree-node-header map-tree-item';
+            mapItem.dataset.idx = idx;
+            mapItem.innerHTML = '🟩 ' + (map.title || `Map ${idx}`);
+            mapItem.onclick = () => {
+                currentMapIndex = idx;
+                loadActiveMap();
+            };
+            mapItem.ondblclick = () => {
+                currentMapIndex = idx;
+                loadActiveMap();
+                openMapProperties();
+            };
+            mapItem.oncontextmenu = (e) => {
+                showMapContextMenu(e, idx);
+            };
+            return mapItem;
+        }
+
+        function makeTreeFolder(title) {
+            const folder = document.createElement('div');
+            folder.className = 'tree-node';
+            const header = document.createElement('div');
+            header.className = 'tree-node-header';
+            header.innerHTML = title;
+            const children = document.createElement('div');
+            children.style.marginLeft = '12px';
+            folder.appendChild(header);
+            folder.appendChild(children);
+            return { folder, children };
+        }
+
         function renderMapTree() {
             const container = document.getElementById('map-tree');
             container.innerHTML = '';
-            
+
             const rootNode = document.createElement('div');
             rootNode.className = 'tree-node';
-            
+
             const rootHeader = document.createElement('div');
             rootHeader.className = 'tree-node-header';
             rootHeader.innerHTML = '📁 Hichaukitoden';
             rootNode.appendChild(rootHeader);
-            
+
             const rootChildren = document.createElement('div');
             rootChildren.style.marginLeft = '12px';
             rootNode.appendChild(rootChildren);
-            
-            const townFolder = document.createElement('div');
-            townFolder.className = 'tree-node';
-            
-            const townHeader = document.createElement('div');
-            townHeader.className = 'tree-node-header';
-            townHeader.innerHTML = '📁 Town';
-            townFolder.appendChild(townHeader);
-            
-            const townChildren = document.createElement('div');
-            townChildren.style.marginLeft = '12px';
-            townFolder.appendChild(townChildren);
-            
-            if (dbPayload.maps[0]) {
-                const mapItem = document.createElement('div');
-                mapItem.className = 'tree-node-header map-tree-item';
-                mapItem.dataset.idx = 0;
-                mapItem.innerHTML = '🟩 ' + (dbPayload.maps[0].title || 'Town');
-                mapItem.onclick = () => {
-                    currentMapIndex = 0;
-                    loadActiveMap();
-                };
-                mapItem.oncontextmenu = (e) => {
-                    showMapContextMenu(e, 0);
-                };
-                townChildren.appendChild(mapItem);
-            }
-            
-            rootChildren.appendChild(townFolder);
-            
-            const dungeonFolder = document.createElement('div');
-            dungeonFolder.className = 'tree-node';
-            
-            const dungeonHeader = document.createElement('div');
-            dungeonHeader.className = 'tree-node-header';
-            dungeonHeader.innerHTML = '📁 Dungeon Floors';
-            
-            const dungeonChildren = document.createElement('div');
-            dungeonChildren.style.marginLeft = '12px';
-            dungeonFolder.appendChild(dungeonHeader);
-            dungeonFolder.appendChild(dungeonChildren);
-            
-            for (let i = 1; i < dbPayload.maps.length; i++) {
-                const map = dbPayload.maps[i];
-                const mapItem = document.createElement('div');
-                mapItem.className = 'tree-node-header map-tree-item';
-                mapItem.dataset.idx = i;
-                mapItem.innerHTML = '🟩 ' + (map.title || `Floor ${i}`);
-                mapItem.onclick = () => {
-                    currentMapIndex = i;
-                    loadActiveMap();
-                };
-                mapItem.oncontextmenu = (e) => {
-                    showMapContextMenu(e, i);
-                };
-                dungeonChildren.appendChild(mapItem);
-            }
-            
-            rootChildren.appendChild(dungeonFolder);
+
+            const town = makeTreeFolder('📁 Town');
+            const dungeon = makeTreeFolder('📁 Dungeon Floors');
+
+            dbPayload.maps.forEach((map, idx) => {
+                const target = getMapCategory(map, idx) === 'town' ? town.children : dungeon.children;
+                target.appendChild(makeMapTreeItem(map, idx));
+            });
+
+            rootChildren.appendChild(town.folder);
+            rootChildren.appendChild(dungeon.folder);
             container.appendChild(rootNode);
         }
 
@@ -1603,11 +1681,17 @@
         }
 
         // --- MAP PROPERTIES & EVENTS CONTROLLERS ---
+        // Encounters are edited as a staged working copy so Cancel/ESC can
+        // discard them cleanly, matching the rest of this dialog's OK/Cancel semantics.
+        let mapPropsEncounters = [];
+        let mapPropsDirty = false;
+
         function openMapProperties() {
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
-            
+
             document.getElementById('prop-map-title').value = map.title || map.name || '';
+            document.getElementById('prop-map-category').value = getMapCategory(map, currentMapIndex);
             document.getElementById('prop-map-gen').value = map.generation || 'Fixed';
             document.getElementById('prop-map-width').value = map.width || (map.layout ? map.layout[0].length : 15);
             document.getElementById('prop-map-height').value = map.height || (map.layout ? map.layout.length : 15);
@@ -1616,11 +1700,14 @@
             document.getElementById('prop-map-enc-rate').value = (map.encounterRate !== undefined) ? map.encounterRate : '';
             document.getElementById('prop-map-safe').checked = !!map.safe;
 
-            renderEncountersList(map.encounters || []);
+            mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
+            renderEncountersList(mapPropsEncounters);
+            mapPropsDirty = false;
             document.getElementById('map-properties-modal').classList.add('active');
         }
 
-        function closeMapPropertiesModal() {
+        function closeMapPropertiesModal(force) {
+            if (!force && mapPropsDirty && !confirmDiscard('Discard changes to this map\'s properties?')) return;
             document.getElementById('map-properties-modal').classList.remove('active');
         }
 
@@ -1646,44 +1733,43 @@
         }
 
         function addEncounterToMap() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
             const troopId = prompt("Enter Troop/Monster ID (numerical ID):", "1");
             if (troopId !== null) {
                 const weight = parseInt(prompt("Enter Spawn Weight (probability weight):", "10")) || 10;
-                map.encounters = map.encounters || [];
-                map.encounters.push({ troopId: parseInt(troopId) || 1, weight: weight });
-                renderEncountersList(map.encounters);
+                mapPropsEncounters.push({ troopId: parseInt(troopId) || 1, weight: weight });
+                mapPropsDirty = true;
+                renderEncountersList(mapPropsEncounters);
             }
         }
 
         function removeEncounterFromMap() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
             const list = document.getElementById('prop-enc-list');
             const idx = parseInt(list.dataset.selectedIdx);
-            if (!isNaN(idx) && map.encounters && map.encounters[idx]) {
-                map.encounters.splice(idx, 1);
+            if (!isNaN(idx) && mapPropsEncounters[idx]) {
+                mapPropsEncounters.splice(idx, 1);
                 delete list.dataset.selectedIdx;
-                renderEncountersList(map.encounters);
+                mapPropsDirty = true;
+                renderEncountersList(mapPropsEncounters);
             }
         }
 
         function saveMapProperties() {
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
-            
+
             const newTitle = document.getElementById('prop-map-title').value;
             const newGen = document.getElementById('prop-map-gen').value;
             const newW = parseInt(document.getElementById('prop-map-width').value) || 15;
             const newH = parseInt(document.getElementById('prop-map-height').value) || 15;
             const newBgm = document.getElementById('prop-map-bgm').value;
             const newSteps = parseInt(document.getElementById('prop-map-enc-steps').value) || 0;
-            
+
             map.title = newTitle;
+            map.category = document.getElementById('prop-map-category').value;
             map.generation = newGen;
             map.bgm = newBgm;
             map.encounterSteps = newSteps;
+            map.encounters = mapPropsEncounters;
 
             const rateRaw = document.getElementById('prop-map-enc-rate').value;
             if (rateRaw === '') {
@@ -1693,7 +1779,7 @@
             }
             map.safe = document.getElementById('prop-map-safe').checked;
             if (!map.safe) delete map.safe;
-            
+
             if (map.layout) {
                 const currentH = map.layout.length;
                 const currentW = map.layout[0].length;
@@ -1718,7 +1804,7 @@
                 }
             }
             
-            closeMapPropertiesModal();
+            closeMapPropertiesModal(true);
             renderMapTree();
             renderGridCells();
             setDirty(true);
@@ -1729,11 +1815,12 @@
             dbPayload.maps.forEach(m => {
                 if (m.id && m.id > maxId) maxId = m.id;
             });
-            
+
             const newId = maxId + 1;
             const newMap = {
                 id: newId,
                 title: `New Floor ${newId}`,
+                category: 'dungeon',
                 generation: 'Fixed',
                 layout: [
                     "###############",
@@ -1753,7 +1840,7 @@
                 encounters: [],
                 events: []
             };
-            
+
             dbPayload.maps.push(newMap);
             currentMapIndex = dbPayload.maps.length - 1;
             renderMapTree();
@@ -1762,11 +1849,12 @@
         }
 
         function deleteMap() {
-            if (currentMapIndex === 0) {
-                alert("Cannot delete the starting Town map.");
+            const map = dbPayload.maps[currentMapIndex];
+            if (getMapCategory(map, currentMapIndex) === 'town') {
+                alert("Cannot delete a Town category map.");
                 return;
             }
-            if (confirm(`Are you sure you want to delete "${dbPayload.maps[currentMapIndex].title}"?`)) {
+            if (confirm(`Are you sure you want to delete "${map.title}"?`)) {
                 dbPayload.maps.splice(currentMapIndex, 1);
                 currentMapIndex = 0;
                 renderMapTree();
@@ -1876,10 +1964,12 @@
         // --- EVENT CONTROLLERS ---
         let activeEventLocalScript = null;
 
+        let eventModalDirty = false;
+
         function openEventModal(x, y) {
             selectedEventX = x;
             selectedEventY = y;
-            
+
             document.getElementById('event-coords-info').textContent = `Coords: (${x}, ${y})`;
             
             // Populate common events dropdown
@@ -1934,6 +2024,7 @@
             }
             
             toggleEventLogicType();
+            eventModalDirty = false;
             document.getElementById('event-modal').classList.add('active');
         }
 
@@ -1956,119 +2047,31 @@
             openAssetPicker('sprites', (filepath) => {
                 filepath = filepath.replace(/\\/g, '/');
                 updateEventGraphicPreview(filepath);
+                eventModalDirty = true;
             });
         }
 
         function toggleEventLogicType() {
             const isCommon = document.getElementById('event-logic-common').checked;
             const commonSelect = document.getElementById('event-prop-script-id');
-            
+
             commonSelect.disabled = !isCommon;
-            
+
+            const container = document.getElementById('event-contents-list');
             if (isCommon) {
                 const ceId = commonSelect.value;
                 const ce = dbPayload.commonEvents && dbPayload.commonEvents[ceId];
-                renderEventContentsList(ce ? ce.commands : [], true);
+                renderCommandList(container, ce ? ce.commands : [], null, true);
             } else {
-                renderEventContentsList(activeEventLocalScript, false);
+                renderCommandList(container, activeEventLocalScript, () => {
+                    eventModalDirty = true;
+                    toggleEventLogicType();
+                }, false);
             }
         }
 
-        function renderEventContentsList(commands, readOnly) {
-            const list = document.getElementById('event-contents-list');
-            list.innerHTML = '';
-            
-            if (!commands || commands.length === 0) {
-                const line = document.createElement('div');
-                line.style.padding = '2px';
-                line.style.color = '#808080';
-                line.innerHTML = '@&gt;';
-                if (!readOnly) {
-                    line.style.cursor = 'pointer';
-                    line.onclick = () => openCommandModalForAdd();
-                }
-                list.appendChild(line);
-                return;
-            }
-            
-            commands.forEach((cmd, idx) => {
-                const line = document.createElement('div');
-                line.style.padding = '2px';
-                line.style.display = 'flex';
-                line.style.alignItems = 'center';
-                
-                let text = '';
-                if (cmd.type === 'TEXT') {
-                    text = `@&gt;Text: ${cmd.text}`;
-                } else if (cmd.type === 'RECOVER_PARTY') {
-                    text = `@&gt;Recover Party`;
-                } else if (cmd.type === 'DESCEND') {
-                    text = `@&gt;Descend Floor`;
-                } else if (cmd.type === 'BATTLE') {
-                    text = `@&gt;Start Battle`;
-                } else if (cmd.type === 'GIVE_ITEM') {
-                    text = `@&gt;Give Random Item`;
-                } else if (cmd.type === 'CALL_COMMON_EVENT') {
-                    const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
-                    const ceName = ce ? ce.name : `ID ${cmd.commonEventId}`;
-                    text = `@&gt;Call Common Event: ${ceName}`;
-                }
-                
-                line.innerHTML = `<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>`;
-                
-                if (!readOnly) {
-                    line.style.cursor = 'pointer';
-                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
-                    line.onclick = () => editCommandAtIndex(idx);
-                    
-                    const controls = document.createElement('div');
-                    controls.style.display = 'flex';
-                    controls.style.gap = '2px';
-                    controls.innerHTML = `
-                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px;" onclick="event.stopPropagation(); editCommandAtIndex(${idx})">✏️</button>
-                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px; color: red;" onclick="event.stopPropagation(); deleteCommandAtIndex(${idx})">×</button>
-                    `;
-                    line.appendChild(controls);
-                } else {
-                    line.style.color = '#808080';
-                }
-                list.appendChild(line);
-            });
-            
-            if (!readOnly) {
-                const trailingLine = document.createElement('div');
-                trailingLine.style.padding = '2px';
-                trailingLine.style.color = '#808080';
-                trailingLine.style.cursor = 'pointer';
-                trailingLine.innerHTML = '@&gt;';
-                trailingLine.onclick = () => openCommandModalForAdd();
-                list.appendChild(trailingLine);
-            }
-        }
-
-        function openCommandModalForAdd() {
-            populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                activeEventLocalScript.push(cmd);
-                toggleEventLogicType();
-            });
-        }
-        
-        function editCommandAtIndex(idx) {
-            populateCmdCommonEventsDropdown();
-            openEditCommandDialog(activeEventLocalScript[idx], (updatedCmd) => {
-                activeEventLocalScript[idx] = updatedCmd;
-                toggleEventLogicType();
-            });
-        }
-        
-        function deleteCommandAtIndex(idx) {
-            activeEventLocalScript.splice(idx, 1);
-            toggleEventLogicType();
-        }
-
-        function closeEventModal() {
+        function closeEventModal(force) {
+            if (!force && eventModalDirty && !confirmDiscard('Discard changes to this event?')) return;
             document.getElementById('event-modal').classList.remove('active');
         }
 
@@ -2106,7 +2109,7 @@
                 map.events.push(eventData);
             }
             
-            closeEventModal();
+            closeEventModal(true);
             renderGridCells();
             setDirty(true);
         }
@@ -2116,19 +2119,144 @@
             if (map.events) {
                 map.events = map.events.filter(e => !(e.x === selectedEventX && e.y === selectedEventY));
             }
-            closeEventModal();
+            closeEventModal(true);
             renderGridCells();
             setDirty(true);
         }
 
-        // --- COMMAND MODAL EXTENSIONS ---
+        // --- SHARED COMMAND LIST RENDERING ---
+        // Used by the Event Editor's custom script list AND the Common Event
+        // command list in the Database modal, so both surfaces look and behave
+        // identically (same row format, same add/edit/delete affordances).
+        function describeCommand(cmd) {
+            if (cmd.type === 'TEXT') {
+                const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
+                return `Text: "${speakerPrefix}${cmd.text}"`;
+            } else if (cmd.type === 'CHOICE') {
+                const n = (cmd.options || []).length;
+                return `Choice (${n} option${n === 1 ? '' : 's'})`;
+            } else if (cmd.type === 'RECOVER_PARTY') {
+                return 'Recover Party';
+            } else if (cmd.type === 'DESCEND') {
+                return 'Descend Floor';
+            } else if (cmd.type === 'BATTLE') {
+                return 'Start Battle';
+            } else if (cmd.type === 'GIVE_ITEM') {
+                return 'Give Random Item';
+            } else if (cmd.type === 'CALL_COMMON_EVENT') {
+                const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
+                return `Call Common Event: ${ce ? ce.name : 'ID ' + cmd.commonEventId}`;
+            }
+            return `Unknown (${cmd.type})`;
+        }
+
+        // Renders `commandsArray` into `container` as an RPG-Maker-style command
+        // list. `onChange()` is called after any add/edit/delete so the caller can
+        // re-render and mark itself dirty; pass null/readOnly=true for a static preview.
+        function renderCommandList(container, commandsArray, onChange, readOnly) {
+            container.innerHTML = '';
+
+            if (!commandsArray || commandsArray.length === 0) {
+                const line = document.createElement('div');
+                line.style.padding = '2px';
+                line.style.color = '#808080';
+                line.textContent = readOnly ? '<Empty Command List>' : '@>';
+                if (!readOnly) {
+                    line.style.cursor = 'pointer';
+                    line.onclick = () => openCommandModalForAdd(commandsArray, onChange);
+                }
+                container.appendChild(line);
+                return;
+            }
+
+            commandsArray.forEach((cmd, idx) => {
+                const line = document.createElement('div');
+                line.style.padding = '2px';
+                line.style.display = 'flex';
+                line.style.alignItems = 'center';
+
+                const label = document.createElement('span');
+                label.style.flex = '1';
+                label.style.overflow = 'hidden';
+                label.style.textOverflow = 'ellipsis';
+                label.style.whiteSpace = 'nowrap';
+                label.textContent = '@>' + describeCommand(cmd);
+                line.appendChild(label);
+
+                if (!readOnly) {
+                    line.style.cursor = 'pointer';
+                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
+                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
+                    line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange);
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'win-btn-small outset-bevel';
+                    editBtn.style.fontSize = '8px';
+                    editBtn.style.padding = '0px 3px';
+                    editBtn.textContent = '✏️';
+                    editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange); };
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'win-btn-small outset-bevel';
+                    delBtn.style.fontSize = '8px';
+                    delBtn.style.padding = '0px 3px';
+                    delBtn.style.color = 'red';
+                    delBtn.textContent = '×';
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        commandsArray.splice(idx, 1);
+                        if (onChange) onChange();
+                    };
+
+                    const controls = document.createElement('div');
+                    controls.style.display = 'flex';
+                    controls.style.gap = '2px';
+                    controls.appendChild(editBtn);
+                    controls.appendChild(delBtn);
+                    line.appendChild(controls);
+                } else {
+                    line.style.color = '#808080';
+                }
+                container.appendChild(line);
+            });
+
+            if (!readOnly) {
+                const trailingLine = document.createElement('div');
+                trailingLine.style.padding = '2px';
+                trailingLine.style.color = '#808080';
+                trailingLine.style.cursor = 'pointer';
+                trailingLine.textContent = '@>';
+                trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange);
+                container.appendChild(trailingLine);
+            }
+        }
+
+        function openCommandModalForAdd(commandsArray, onChange) {
+            populateCmdCommonEventsDropdown();
+            openAddCommandDialog((cmd) => {
+                commandsArray.push(cmd);
+                if (onChange) onChange();
+            });
+        }
+
+        function openCommandModalForEdit(commandsArray, idx, onChange) {
+            populateCmdCommonEventsDropdown();
+            openEditCommandDialog(commandsArray[idx], (updatedCmd) => {
+                commandsArray[idx] = updatedCmd;
+                if (onChange) onChange();
+            });
+        }
+
+        // --- COMMAND EDITOR MODAL (single command, incl. nested CHOICE options) ---
         let activeCmdCallback = null;
+        let activeCmdChoiceOptions = [];
+        let cmdDialogDirty = false;
 
         function populateCmdCommonEventsDropdown() {
             const select = document.getElementById('cmd-select-common-event');
             if (!select) return;
             select.innerHTML = '';
-            
+
             if (dbPayload.commonEvents) {
                 Object.keys(dbPayload.commonEvents).forEach(id => {
                     const ce = dbPayload.commonEvents[id];
@@ -2145,7 +2273,9 @@
             document.getElementById('cmd-select-type').value = 'TEXT';
             document.getElementById('cmd-input-text').value = 'Hello!';
             document.getElementById('cmd-input-speaker').value = '';
+            activeCmdChoiceOptions = [];
             toggleCmdTypeFields();
+            cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.add('active');
         }
 
@@ -2157,23 +2287,85 @@
                 document.getElementById('cmd-input-speaker').value = cmd.speaker || '';
             } else if (cmd.type === 'CALL_COMMON_EVENT') {
                 document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
+            } else if (cmd.type === 'CHOICE') {
+                // Deep clone so edits made before hitting OK don't mutate the original.
+                activeCmdChoiceOptions = JSON.parse(JSON.stringify(cmd.options || []));
             }
             toggleCmdTypeFields();
+            cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.add('active');
         }
 
         function toggleCmdTypeFields() {
             const type = document.getElementById('cmd-select-type').value;
-            const textFields = document.getElementById('cmd-fields-text');
-            const ceFields = document.getElementById('cmd-fields-common-event');
-            
-            textFields.style.display = type === 'TEXT' ? 'flex' : 'none';
-            if (ceFields) {
-                ceFields.style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
-            }
+            document.getElementById('cmd-fields-text').style.display = type === 'TEXT' ? 'flex' : 'none';
+            document.getElementById('cmd-fields-common-event').style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
+            document.getElementById('cmd-fields-choice').style.display = type === 'CHOICE' ? 'flex' : 'none';
+            if (type === 'CHOICE') renderChoiceOptionsList();
         }
 
-        function closeCmdDialog() {
+        function renderChoiceOptionsList() {
+            const container = document.getElementById('cmd-choice-options-list');
+            container.innerHTML = '';
+
+            if (activeCmdChoiceOptions.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.padding = '2px';
+                empty.style.color = '#808080';
+                empty.style.fontSize = '10px';
+                empty.textContent = '<No options yet>';
+                container.appendChild(empty);
+            }
+
+            activeCmdChoiceOptions.forEach((opt, idx) => {
+                const line = document.createElement('div');
+                line.style.padding = '2px';
+                line.style.display = 'flex';
+                line.style.alignItems = 'center';
+                line.style.fontSize = '10px';
+                line.style.cursor = 'pointer';
+                line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
+                line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
+                line.onclick = () => openChoiceOptionModal(idx);
+
+                const label = document.createElement('span');
+                label.style.flex = '1';
+                const n = (opt.commands || []).length;
+                label.textContent = `${opt.label || '(no label)'} — ${n} command${n === 1 ? '' : 's'}`;
+                line.appendChild(label);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win-btn-small outset-bevel';
+                delBtn.style.fontSize = '8px';
+                delBtn.style.padding = '0px 3px';
+                delBtn.style.color = 'red';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeCmdChoiceOptions.splice(idx, 1);
+                    cmdDialogDirty = true;
+                    renderChoiceOptionsList();
+                };
+                line.appendChild(delBtn);
+                container.appendChild(line);
+            });
+
+            const addLine = document.createElement('div');
+            addLine.style.padding = '2px';
+            addLine.style.color = '#808080';
+            addLine.style.cursor = 'pointer';
+            addLine.textContent = '+ Add Option';
+            addLine.onclick = () => {
+                activeCmdChoiceOptions.push({ label: 'New Option', commands: [] });
+                cmdDialogDirty = true;
+                renderChoiceOptionsList();
+                openChoiceOptionModal(activeCmdChoiceOptions.length - 1);
+            };
+            container.appendChild(addLine);
+        }
+
+        function closeCmdDialog(force) {
+            if (!force && cmdDialogDirty && !confirmDiscard('Discard this command?')) return;
             document.getElementById('cmd-modal').classList.remove('active');
         }
 
@@ -2185,20 +2377,75 @@
                 cmd.speaker = document.getElementById('cmd-input-speaker').value;
             } else if (type === 'CALL_COMMON_EVENT') {
                 cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
+            } else if (type === 'CHOICE') {
+                cmd.options = activeCmdChoiceOptions;
             }
-            closeCmdDialog();
+            closeCmdDialog(true);
             if (activeCmdCallback) activeCmdCallback(cmd);
+        }
+
+        // --- CHOICE OPTION EDITOR (nested modal: label + flag + sub-command list) ---
+        let activeChoiceOptionIndex = -1;
+        let choiceOptionDirty = false;
+
+        function openChoiceOptionModal(idx) {
+            activeChoiceOptionIndex = idx;
+            const opt = activeCmdChoiceOptions[idx];
+            opt.commands = opt.commands || [];
+            document.getElementById('choice-opt-label').value = opt.label || '';
+            document.getElementById('choice-opt-flag').value = opt.setFlag || '';
+            renderChoiceOptionCommands();
+            choiceOptionDirty = false;
+            document.getElementById('choice-option-modal').classList.add('active');
+        }
+
+        function renderChoiceOptionCommands() {
+            const opt = activeCmdChoiceOptions[activeChoiceOptionIndex];
+            const container = document.getElementById('choice-opt-commands-list');
+            renderCommandList(container, opt.commands, () => {
+                choiceOptionDirty = true;
+                renderChoiceOptionCommands();
+            }, false);
+        }
+
+        function closeChoiceOptionModal(force) {
+            if (!force && choiceOptionDirty && !confirmDiscard('Discard changes to this option?')) return;
+            document.getElementById('choice-option-modal').classList.remove('active');
+        }
+
+        function applyChoiceOption() {
+            const opt = activeCmdChoiceOptions[activeChoiceOptionIndex];
+            opt.label = document.getElementById('choice-opt-label').value;
+            const flag = document.getElementById('choice-opt-flag').value.trim();
+            if (flag) { opt.setFlag = flag; } else { delete opt.setFlag; }
+            closeChoiceOptionModal(true);
+            cmdDialogDirty = true;
+            renderChoiceOptionsList();
         }
 
         function initEventModalTemplates() {}
 
         // --- DATABASE MODAL LOGIC ---
+        // Database-modal fields mutate dbPayload live (no separate "staged" copy),
+        // so "discard on Cancel/ESC" is implemented by snapshotting on open and
+        // restoring that snapshot if the user confirms they want to discard.
+        let dbModalSnapshot = null;
+
         function openDatabaseModal() {
+            dbModalSnapshot = JSON.stringify(dbPayload);
             document.getElementById('db-modal').classList.add('active');
             setDbTab(activeDbTab);
         }
 
-        function closeDatabaseModal() {
+        function closeDatabaseModal(force) {
+            if (!force && dbModalSnapshot !== null && JSON.stringify(dbPayload) !== dbModalSnapshot) {
+                if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
+                dbPayload = JSON.parse(dbModalSnapshot);
+                initMapEditor();
+                initDatabaseEditor();
+                setDirty(false);
+            }
+            dbModalSnapshot = null;
             document.getElementById('db-modal').classList.remove('active');
         }
 
@@ -2309,105 +2556,19 @@
                 listBox.style.display = 'flex';
                 listBox.style.flexDirection = 'column';
                 listBox.style.gap = '2px';
+                listBox.style.fontFamily = 'monospace';
+                listBox.style.fontSize = '11px';
                 listBox.id = 'common-event-commands-list';
-                
-                let selectedCommandIdx = -1;
-                
-                function renderCommands() {
-                    listBox.innerHTML = '';
-                    eventData.commands = eventData.commands || [];
-                    
-                    if (eventData.commands.length === 0) {
-                        const empty = document.createElement('div');
-                        empty.style.color = '#808080';
-                        empty.style.fontStyle = 'italic';
-                        empty.style.fontSize = '10px';
-                        empty.textContent = '<Empty Command List>';
-                        listBox.appendChild(empty);
-                    }
-                    
-                    eventData.commands.forEach((cmd, idx) => {
-                        const line = document.createElement('div');
-                        line.style.fontSize = '10px';
-                        line.style.padding = '2px 4px';
-                        line.style.cursor = 'pointer';
-                        line.style.userSelect = 'none';
-                        line.style.fontFamily = 'monospace';
-                        
-                        let desc = '';
-                        if (cmd.type === 'TEXT') {
-                            const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
-                            desc = `◆ Show Text: "${speakerPrefix}${cmd.text}"`;
-                        }
-                        else if (cmd.type === 'RECOVER_PARTY') desc = `◆ Recover Party`;
-                        else if (cmd.type === 'DESCEND') desc = `◆ Descend Floor`;
-                        else desc = `◆ Unknown (${cmd.type})`;
-                        
-                        line.textContent = desc;
-                        
-                        if (selectedCommandIdx === idx) {
-                            line.style.background = 'var(--win-blue)';
-                            line.style.color = '#fff';
-                        }
-                        
-                        line.onclick = () => {
-                            selectedCommandIdx = idx;
-                            renderCommands();
-                        };
-                        listBox.appendChild(line);
-                    });
-                }
-                
-                renderCommands();
+
+                eventData.commands = eventData.commands || [];
+                // Same renderCommandList used by the Event Editor's script list,
+                // so Common Events and Map Events edit commands identically.
+                const rerenderCeCommands = () => {
+                    setDirty(true);
+                    renderCommandList(listBox, eventData.commands, rerenderCeCommands, false);
+                };
+                renderCommandList(listBox, eventData.commands, rerenderCeCommands, false);
                 formPanel.appendChild(listBox);
-                
-                const btnRow = document.createElement('div');
-                btnRow.style.display = 'flex';
-                btnRow.style.gap = '4px';
-                btnRow.style.marginTop = '6px';
-                
-                const addBtn = document.createElement('button');
-                addBtn.className = 'win98-btn';
-                addBtn.textContent = 'Add Command';
-                addBtn.onclick = () => {
-                    openAddCommandDialog((newCmd) => {
-                        eventData.commands.push(newCmd);
-                        setDirty(true);
-                        renderCommands();
-                    });
-                };
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win98-btn';
-                editBtn.textContent = 'Edit';
-                editBtn.onclick = () => {
-                    if (selectedCommandIdx >= 0) {
-                        openEditCommandDialog(eventData.commands[selectedCommandIdx], (updatedCmd) => {
-                            eventData.commands[selectedCommandIdx] = updatedCmd;
-                            setDirty(true);
-                            renderCommands();
-                        });
-                    } else {
-                        alert('Select a command to edit.');
-                    }
-                };
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'win98-btn';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => {
-                    if (selectedCommandIdx >= 0) {
-                        eventData.commands.splice(selectedCommandIdx, 1);
-                        selectedCommandIdx = -1;
-                        setDirty(true);
-                        renderCommands();
-                    }
-                };
-                
-                btnRow.appendChild(addBtn);
-                btnRow.appendChild(editBtn);
-                btnRow.appendChild(deleteBtn);
-                formPanel.appendChild(btnRow);
             }
             
             if (activeDbTab === 'actors') {
@@ -2506,9 +2667,9 @@
                 previewCol.style.gap = '8px';
                 formPanel.appendChild(previewCol);
                 
+                // Physics + battle_screen only affect the damage-popup animation,
+                // so they live in their own modal instead of cluttering this tab.
                 const battleConfig = {
-                    physics: dbPayload.system.physics || {},
-                    battle_screen: dbPayload.system.battle_screen || {},
                     combat: dbPayload.system.combat || {},
                     dungeon: dbPayload.system.dungeon || {}
                 };
@@ -2823,7 +2984,57 @@
                     })
                     .catch(err => console.error('Failed to launch test battle:', err));
             };
+
+            const popupBtn = document.createElement('button');
+            popupBtn.className = 'win98-btn';
+            popupBtn.style.padding = '8px 16px';
+            popupBtn.style.alignSelf = 'start';
+            popupBtn.style.marginTop = '4px';
+            popupBtn.textContent = 'Damage Popup Settings...';
+            popupBtn.onclick = () => openDamagePopupModal();
+            container.appendChild(popupBtn);
         }
+
+        // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---
+        let damagePopupSnapshot = null;
+
+        function damagePopupConfigSnapshot() {
+            return JSON.stringify({
+                physics: dbPayload.system.physics || {},
+                battle_screen: dbPayload.system.battle_screen || {}
+            });
+        }
+
+        function openDamagePopupModal() {
+            if (!dbPayload.system) dbPayload.system = {};
+            damagePopupSnapshot = damagePopupConfigSnapshot();
+
+            const container = document.getElementById('damage-popup-form');
+            container.innerHTML = '';
+            const cfg = {
+                physics: dbPayload.system.physics || {},
+                battle_screen: dbPayload.system.battle_screen || {}
+            };
+            buildRecursiveForm(container, cfg, [], dbPayload.system);
+            document.getElementById('damage-popup-modal').classList.add('active');
+        }
+
+        function closeDamagePopupModal(force) {
+            if (!force && damagePopupSnapshot !== null && damagePopupConfigSnapshot() !== damagePopupSnapshot) {
+                if (!confirmDiscard('Discard changes to Damage Popup settings?')) return;
+                const snap = JSON.parse(damagePopupSnapshot);
+                dbPayload.system.physics = snap.physics;
+                dbPayload.system.battle_screen = snap.battle_screen;
+            }
+            damagePopupSnapshot = null;
+            document.getElementById('damage-popup-modal').classList.remove('active');
+        }
+
+        wireModalDirtyTracking('map-properties-modal', () => { mapPropsDirty = true; });
+        wireModalDirtyTracking('event-modal', () => { eventModalDirty = true; });
+        wireModalDirtyTracking('cmd-modal', () => { cmdDialogDirty = true; });
+        wireModalDirtyTracking('choice-option-modal', () => { choiceOptionDirty = true; });
+        wireModalDirtyTracking('damage-popup-modal', () => { setDirty(true); });
 
         fetchDatabase();
     </script>

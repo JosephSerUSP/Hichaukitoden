@@ -217,6 +217,52 @@ local function applyItemToTarget(item, target)
     end
 end
 
+-- Compiles a flat "commands" list (as authored in the editor) into GraphWalker
+-- nodes, chaining them together and rejoining at tailNodeId at the end.
+-- Shared by runEventCommands (map/common events run directly) and the
+-- CALL_COMMON_EVENT_ACTION handler (common events invoked from a dialogue
+-- graph), so both places understand exactly the same command set.
+-- Returns the id of the first node generated (or tailNodeId if commands is empty).
+local function compileCommands(nodes, commands, prefix, tailNodeId)
+    if not commands or #commands == 0 then return tailNodeId end
+
+    local firstId = nil
+    for i, cmd in ipairs(commands) do
+        local nodeId = prefix .. "_" .. i
+        firstId = firstId or nodeId
+        local nextId = (i < #commands) and (prefix .. "_" .. (i + 1)) or tailNodeId
+
+        if cmd.type == "TEXT" then
+            nodes[nodeId] = { type = "TEXT", content = cmd.text, speaker = cmd.speaker, next = nextId }
+        elseif cmd.type == "CHOICE" then
+            local options = {}
+            for oi, opt in ipairs(cmd.options or {}) do
+                local optFirst = compileCommands(nodes, opt.commands, nodeId .. "_opt" .. oi, nextId)
+                table.insert(options, {
+                    label = opt.label,
+                    setFlag = opt.setFlag,
+                    target = optFirst or nextId
+                })
+            end
+            nodes[nodeId] = { type = "CHOICE", options = options }
+        elseif cmd.type == "RECOVER_PARTY" then
+            recoverParty()
+            nodes[nodeId] = { type = "TEXT", content = "Your party has been fully recovered!", next = nextId }
+        elseif cmd.type == "DESCEND" then
+            local descendId = nodeId .. "_descend"
+            nodes[nodeId] = { type = "TEXT", content = "You descend deeper into the chasm...", next = descendId }
+            nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
+        elseif cmd.type == "BATTLE" then
+            nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
+        elseif cmd.type == "GIVE_ITEM" then
+            nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
+        elseif cmd.type == "CALL_COMMON_EVENT" then
+            nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
+        end
+    end
+    return firstId
+end
+
 local function openShop(shopId)
     activeShopId = shopId
     shopItems = {}
@@ -294,59 +340,9 @@ handleDialogueAction = function()
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then
             local ce = loader.commonEvents and loader.commonEvents[tostring(node.commonEventId)]
             if ce and ce.commands then
-                local nextNodeName = node.next
                 -- Build and inject sub-nodes into current walker graph dynamically
-                local timeStr = tostring(os.clock()):gsub("%.", "_")
-                local firstCeNode = "ce_" .. node.commonEventId .. "_" .. timeStr .. "_1"
-                for idx, ceCmd in ipairs(ce.commands) do
-                    local nodeId = "ce_" .. node.commonEventId .. "_" .. timeStr .. "_" .. idx
-                    local nextId = (idx < #ce.commands) and ("ce_" .. node.commonEventId .. "_" .. timeStr .. "_" .. (idx + 1)) or nextNodeName
-                    
-                    if ceCmd.type == "TEXT" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "TEXT",
-                            content = ceCmd.text,
-                            next = nextId
-                        }
-                    elseif ceCmd.type == "RECOVER_PARTY" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "ACTION",
-                            action = "RECOVER_PARTY_ACTION",
-                            next = nextId
-                        }
-                    elseif ceCmd.type == "DESCEND" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "TEXT",
-                            content = "You descend deeper into the chasm...",
-                            next = "ce_descend_" .. timeStr .. "_" .. idx
-                        }
-                        activeWalker.graph.nodes["ce_descend_" .. timeStr .. "_" .. idx] = {
-                            type = "ACTION",
-                            action = "DESCEND_FLOOR",
-                            next = nil
-                        }
-                    elseif ceCmd.type == "BATTLE" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "ACTION",
-                            action = "START_BATTLE",
-                            next = nil
-                        }
-                    elseif ceCmd.type == "GIVE_ITEM" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "ACTION",
-                            action = "GIVE_ITEM_ACTION",
-                            next = nextId
-                        }
-                    elseif ceCmd.type == "CALL_COMMON_EVENT" then
-                        activeWalker.graph.nodes[nodeId] = {
-                            type = "ACTION",
-                            action = "CALL_COMMON_EVENT_ACTION",
-                            commonEventId = ceCmd.commonEventId,
-                            next = nextId
-                        }
-                    end
-                end
-                
+                local prefix = "ce_" .. node.commonEventId .. "_" .. tostring(os.clock()):gsub("%.", "_")
+                local firstCeNode = compileCommands(activeWalker.graph.nodes, ce.commands, prefix, node.next)
                 activeWalker:goToNode(firstCeNode)
                 handleDialogueAction()
             else
@@ -369,81 +365,16 @@ end
 -- Translates JSON command lists to dynamic conversation graphs
 local function runEventCommands(eventTitle, commands)
     if not commands or #commands == 0 then return end
-    
-    local nodes = {}
-    local startNode = "node_1"
-    
-    for i, cmd in ipairs(commands) do
-        local nodeName = "node_" .. i
-        local nextNode = (i < #commands) and ("node_" .. (i + 1)) or nil
-        
-        if cmd.type == "TEXT" then
-            nodes[nodeName] = {
-                type = "TEXT",
-                content = cmd.text,
-                speaker = cmd.speaker,
-                next = nextNode
-            }
-        elseif cmd.type == "CHOICE" then
-            local options = {}
-            for _, opt in ipairs(cmd.options) do
-                table.insert(options, {
-                    label = opt.label,
-                    script = opt.script
-                })
-            end
-            nodes[nodeName] = {
-                type = "CHOICE",
-                options = options,
-                next = nextNode
-            }
-        elseif cmd.type == "RECOVER_PARTY" then
-            recoverParty()
 
-            nodes[nodeName] = {
-                type = "TEXT",
-                content = "Your party has been fully recovered!",
-                next = nextNode
-            }
-        elseif cmd.type == "DESCEND" then
-            nodes[nodeName] = {
-                type = "TEXT",
-                content = "You descend deeper into the chasm...",
-                next = "descend_action"
-            }
-            nodes["descend_action"] = {
-                type = "ACTION",
-                action = "DESCEND_FLOOR",
-                next = nil
-            }
-        elseif cmd.type == "BATTLE" then
-            nodes[nodeName] = {
-                type = "ACTION",
-                action = "START_BATTLE",
-                next = nil
-            }
-        elseif cmd.type == "GIVE_ITEM" then
-            nodes[nodeName] = {
-                type = "ACTION",
-                action = "GIVE_ITEM_ACTION",
-                next = nextNode
-            }
-        elseif cmd.type == "CALL_COMMON_EVENT" then
-            nodes[nodeName] = {
-                type = "ACTION",
-                action = "CALL_COMMON_EVENT_ACTION",
-                commonEventId = cmd.commonEventId,
-                next = nextNode
-            }
-        end
-    end
-    
+    local nodes = {}
+    local startNode = compileCommands(nodes, commands, "node", nil)
+
     local graph = {
         initialNode = startNode,
         name = eventTitle,
         nodes = nodes
     }
-    
+
     activeWalker = director.GraphWalker.new(activeSession, graph)
     activeWalker.eventName = eventTitle
     currentScene = "dialogue"

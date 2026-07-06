@@ -95,9 +95,18 @@
   "summoner": {
     "startMp": 820,
     "spells": [
-      { "id": "soothingMote", "mp": 5 },
-      { "id": "divineFavor", "mp": 8 },
-      { "id": "holySmite", "mp": 15 }
+      {
+        "id": "soothingMote",
+        "mp": 5
+      },
+      {
+        "id": "divineFavor",
+        "mp": 8
+      },
+      {
+        "id": "holySmite",
+        "mp": 15
+      }
     ]
   },
   "spawn": {
