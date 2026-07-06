@@ -1,81 +1,123 @@
 {
-    "id": "npc_gambler",
-    "name": "The Gambler",
-    "layout": "visual_novel",
-    "portrait": "NPC_Gambler",
-    "initialNode": "start",
-    "nodes": {
-        "start": {
-            "type": "TEXT",
-            "content": "Well met, traveler. I'm a collector of sorts. A collector of... numbers.",
-            "next": "choice1",
-            "portrait": "NPC_Gambler",
-            "speakers": [{ "id": "NPC_Gambler", "name": "The Gambler", "active": true }]
-        },
-        "choice1": {
-            "type": "CHOICE",
-            "content": "Would you like to play a little game of chance?",
-            "options": [
-                { "label": "Sure, I'm feeling lucky.", "target": "game_start" },
-                { "label": "No thanks.", "target": "end" }
-            ]
-        },
-        "game_start": {
-            "type": "TEXT",
-            "content": "Excellent! I'll pick a number between 1 and 10. You just have to guess if it's high or low.",
-            "next": "set_number"
-        },
-        "set_number": {
-            "type": "ACTION",
-            "next": "guess",
-            "script": [
-                { "type": "SET_VARIABLE", "key": "secret_num", "value": 5 }
-            ]
-        },
-        "guess": {
-            "type": "CHOICE",
-            "content": "The number is 5. Is the next number higher or lower?",
-            "options": [
-                { "label": "Higher", "target": "check_higher" },
-                { "label": "Lower", "target": "check_lower" }
-            ]
-        },
-        "check_higher": {
-            "type": "ROUTER",
-            "branches": [
-                { "condition": "random:0.5", "target": "win" },
-                { "default": true, "target": "lose" }
-            ]
-        },
-        "check_lower": {
-            "type": "ROUTER",
-            "branches": [
-                { "condition": "random:0.5", "target": "win" },
-                { "default": true, "target": "lose" }
-            ]
-        },
-        "win": {
-            "type": "TEXT",
-            "content": "You won! Here's a prize.",
-            "next": "reward"
-        },
-        "reward": {
-            "type": "ACTION",
-            "next": "end",
-            "script": [
-                { "type": "GIVE_GOLD", "value": 10 },
-                { "type": "MODIFY_VARIABLE", "key": "gambler_wins", "operation": "add", "value": 1 }
-            ]
-        },
-        "lose": {
-            "type": "TEXT",
-            "content": "Too bad! Better luck next time.",
-            "next": "end"
-        },
-        "end": {
-            "type": "TEXT",
-            "content": "Come back later. Current wins: ${gambler_wins}",
-            "next": null
+  "id": "npc_gambler",
+  "name": "The Gambler",
+  "layout": "visual_novel",
+  "portrait": "NPC_Gambler",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "content": "Well met, traveler. I'm a collector of sorts. A collector of... numbers.",
+      "next": "choice1",
+      "portrait": "NPC_Gambler",
+      "speakers": [
+        {
+          "id": "NPC_Gambler",
+          "name": "The Gambler",
+          "active": true
         }
+      ]
+    },
+    "choice1": {
+      "type": "CHOICE",
+      "content": "Would you like to play a little game of chance?",
+      "options": [
+        {
+          "label": "Sure, I'm feeling lucky.",
+          "target": "game_start"
+        },
+        {
+          "label": "No thanks.",
+          "target": "end"
+        }
+      ]
+    },
+    "game_start": {
+      "type": "TEXT",
+      "content": "Excellent! I'll pick a number between 1 and 10. You just have to guess if it's high or low.",
+      "next": "set_number"
+    },
+    "set_number": {
+      "type": "ACTION",
+      "next": "guess",
+      "script": [
+        {
+          "type": "SET_VARIABLE",
+          "key": "secret_num",
+          "value": 5
+        }
+      ]
+    },
+    "guess": {
+      "type": "CHOICE",
+      "content": "The number is 5. Is the next number higher or lower?",
+      "options": [
+        {
+          "label": "Higher",
+          "target": "check_higher"
+        },
+        {
+          "label": "Lower",
+          "target": "check_lower"
+        }
+      ]
+    },
+    "check_higher": {
+      "type": "ROUTER",
+      "branches": [
+        {
+          "condition": "random:0.5",
+          "target": "win"
+        },
+        {
+          "default": true,
+          "target": "lose"
+        }
+      ]
+    },
+    "check_lower": {
+      "type": "ROUTER",
+      "branches": [
+        {
+          "condition": "random:0.5",
+          "target": "win"
+        },
+        {
+          "default": true,
+          "target": "lose"
+        }
+      ]
+    },
+    "win": {
+      "type": "TEXT",
+      "content": "You won! Here's a prize.",
+      "next": "reward"
+    },
+    "reward": {
+      "type": "ACTION",
+      "next": "end",
+      "script": [
+        {
+          "type": "GIVE_GOLD",
+          "value": 10
+        },
+        {
+          "type": "MODIFY_VARIABLE",
+          "key": "gambler_wins",
+          "operation": "add",
+          "value": 1
+        }
+      ]
+    },
+    "lose": {
+      "type": "TEXT",
+      "content": "Too bad! Better luck next time.",
+      "next": "end"
+    },
+    "end": {
+      "type": "TEXT",
+      "content": "Come back later. Current wins: ${gambler_wins}",
+      "next": null
     }
+  }
 }

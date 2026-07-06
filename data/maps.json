@@ -227,25 +227,25 @@
     ],
     "encounters": [
       {
-        "id": "pixie",
+        "id": 1,
         "weight": 5
       },
       {
-        "id": "skeleton",
+        "id": 3,
         "weight": 5
       },
       {
-        "id": "imp",
+        "id": 9,
         "weight": 3
       }
     ],
     "recruits": [
-      "pixie",
-      "skeleton",
-      "imp",
-      "wisp",
-      "bat",
-      "candle"
+      1,
+      3,
+      9,
+      14,
+      13,
+      20
     ]
   },
   {
@@ -300,34 +300,38 @@
     "treasures": [
       "hi_potion",
       "iron_sword",
-      "glittering_teardrop"
+      24
     ],
     "encounters": [
       {
-        "id": "skeleton",
+        "id": 3,
         "weight": 8
       },
       {
-        "id": "imp",
+        "id": 9,
         "weight": 5
       },
       {
-        "id": "wisp",
+        "id": 14,
         "weight": 4
       },
       {
-        "id": "ooze",
+        "id": 12,
         "weight": 3
       }
     ],
     "recruits": [
-      "skeleton",
-      "imp",
-      "ooze",
-      "golem",
-      "candle",
-      "flauros"
-    ]
+      3,
+      9,
+      12,
+      10,
+      20,
+      19
+    ],
+    "category": "dungeon",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 0
   },
   {
     "id": 4,
@@ -372,24 +376,24 @@
     ],
     "encounters": [
       {
-        "id": "golem",
+        "id": 10,
         "weight": 6
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 4
       },
       {
-        "id": "angel",
+        "id": 4,
         "weight": 3
       }
     ],
     "recruits": [
-      "golem",
-      "demon",
-      "angel",
-      "larva",
-      "flauros"
+      10,
+      6,
+      4,
+      17,
+      19
     ]
   },
   {
@@ -434,27 +438,27 @@
       }
     ],
     "treasures": [
-      "shattered_blade"
+      26
     ],
     "encounters": [
       {
-        "id": "demon",
+        "id": 6,
         "weight": 8
       },
       {
-        "id": "highPixie",
+        "id": 2,
         "weight": 4
       },
       {
-        "id": "ghoul",
+        "id": 11,
         "weight": 4
       }
     ],
     "recruits": [
-      "demon",
-      "angel",
-      "golem",
-      "flauros"
+      6,
+      4,
+      10,
+      19
     ]
   },
   {
@@ -499,25 +503,25 @@
       }
     ],
     "treasures": [
-      "untarnished_signet"
+      25
     ],
     "encounters": [
       {
-        "id": "crimsonLord",
+        "id": 18,
         "weight": 2
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 8
       },
       {
-        "id": "highPixie",
+        "id": 2,
         "weight": 5
       }
     ],
     "recruits": [
-      "demon",
-      "angel"
+      6,
+      4
     ]
   },
   {
@@ -547,11 +551,11 @@
     ],
     "encounters": [
       {
-        "id": "crimsonLord",
+        "id": 18,
         "weight": 10
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 5
       }
     ],

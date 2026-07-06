@@ -13,8 +13,14 @@
     "default_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "You’re a Summoner too.", "target": "talk_summoner_text" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "You’re a Summoner too.",
+          "target": "talk_summoner_text"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
     "talk_summoner_text": {
@@ -25,8 +31,14 @@
     "talk_summoner_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Sounds lonely.", "target": "talk_lonely_text" },
-        { "label": "Back", "target": "default_text" }
+        {
+          "label": "Sounds lonely.",
+          "target": "talk_lonely_text"
+        },
+        {
+          "label": "Back",
+          "target": "default_text"
+        }
       ]
     },
     "talk_lonely_text": {
@@ -36,7 +48,12 @@
     },
     "talk_lonely_choices": {
       "type": "CHOICE",
-      "options": [ { "label": "Back", "target": "default_text" } ]
+      "options": [
+        {
+          "label": "Back",
+          "target": "default_text"
+        }
+      ]
     }
   }
 }

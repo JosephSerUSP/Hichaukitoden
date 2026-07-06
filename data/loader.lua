@@ -48,6 +48,16 @@ function loader.getActor(id)
     return loader.actorsById[id]
 end
 
+-- Finds an actor by its role (e.g. "Summoner") instead of a numeric id, for
+-- the handful of actors the engine references structurally rather than by
+-- content-catalog id.
+function loader.getActorByRole(role)
+    for _, actor in ipairs(loader.actors) do
+        if actor.role == role then return actor end
+    end
+    return nil
+end
+
 function loader.getItem(id)
     return loader.itemsById[id]
 end

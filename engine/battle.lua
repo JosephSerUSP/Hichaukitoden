@@ -69,7 +69,7 @@ function Battle:getAIAction(enemy)
 end
 
 -- Resolve one round of battle
--- summonerAction can be: { type = "spell", id = "cure", target = ... }, { type = "item", id = "hp_tonic", target = ... }, { type = "flee" }, { type = "formation" } or nil
+-- summonerAction can be: { type = "spell", id = "cure", target = ... }, { type = "item", id = 1 (numeric item id), target = ... }, { type = "flee" }, { type = "formation" } or nil
 function Battle:resolveRound(summonerAction)
     local roundEvents = {}
     

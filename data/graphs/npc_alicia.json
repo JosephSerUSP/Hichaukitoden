@@ -8,19 +8,23 @@
     "root_router": {
       "type": "ROUTER",
       "branches": [
-         { "condition": "questStatus:silent_shipment:active", "target": "quest_shipment_router" },
-         { "condition": "flag:alicia_first_met", "target": "default_hub_text" }
+        {
+          "condition": "questStatus:silent_shipment:active",
+          "target": "quest_shipment_router"
+        },
+        {
+          "condition": "flag:alicia_first_met",
+          "target": "default_hub_text"
+        }
       ],
       "next": "intro_text"
     },
-
     "quest_shipment_router": {
       "type": "ROUTER",
       "condition": "flag:shipment_investigated",
       "trueNode": "default_hub_text",
       "falseNode": "quest_shipment_text"
     },
-
     "quest_shipment_text": {
       "type": "TEXT",
       "speaker": "Alicia",
@@ -30,7 +34,11 @@
     "quest_shipment_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Goblins? I should tell the guard.", "target": "quest_shipment_resolve", "setFlag": "shipment_investigated" }
+        {
+          "label": "Goblins? I should tell the guard.",
+          "target": "quest_shipment_resolve",
+          "setFlag": "shipment_investigated"
+        }
       ]
     },
     "quest_shipment_resolve": {
@@ -39,7 +47,6 @@
       "content": "Please be careful! If the goblins have the food, they'll be... energetic.",
       "next": "default_hub_text"
     },
-
     "intro_text": {
       "type": "TEXT",
       "speaker": "Alicia",
@@ -49,9 +56,20 @@
     "intro_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Buy Consumables", "target": "shop_consumables", "setFlag": "alicia_first_met" },
-        { "label": "You’re kind.", "target": "intro_kind_text" },
-        { "label": "Leave", "action": "close", "setFlag": "alicia_first_met" }
+        {
+          "label": "Buy Consumables",
+          "target": "shop_consumables",
+          "setFlag": "alicia_first_met"
+        },
+        {
+          "label": "You’re kind.",
+          "target": "intro_kind_text"
+        },
+        {
+          "label": "Leave",
+          "action": "close",
+          "setFlag": "alicia_first_met"
+        }
       ]
     },
     "intro_kind_text": {
@@ -63,9 +81,20 @@
     "intro_kind_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Not weird.", "target": "intro_not_weird_text" },
-        { "label": "Buy Consumables", "target": "shop_consumables", "setFlag": "alicia_first_met" },
-        { "label": "Leave", "action": "close", "setFlag": "alicia_first_met" }
+        {
+          "label": "Not weird.",
+          "target": "intro_not_weird_text"
+        },
+        {
+          "label": "Buy Consumables",
+          "target": "shop_consumables",
+          "setFlag": "alicia_first_met"
+        },
+        {
+          "label": "Leave",
+          "action": "close",
+          "setFlag": "alicia_first_met"
+        }
       ]
     },
     "intro_not_weird_text": {
@@ -77,9 +106,21 @@
     "intro_not_weird_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Buy Consumables", "target": "shop_consumables", "setFlag": "alicia_first_met" },
-        { "label": "Talk", "target": "talk_hub", "setFlag": "alicia_first_met" },
-        { "label": "Leave", "action": "close", "setFlag": "alicia_first_met" }
+        {
+          "label": "Buy Consumables",
+          "target": "shop_consumables",
+          "setFlag": "alicia_first_met"
+        },
+        {
+          "label": "Talk",
+          "target": "talk_hub",
+          "setFlag": "alicia_first_met"
+        },
+        {
+          "label": "Leave",
+          "action": "close",
+          "setFlag": "alicia_first_met"
+        }
       ]
     },
     "default_hub_text": {
@@ -91,15 +132,24 @@
     "default_hub_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Buy Consumables", "target": "shop_consumables" },
-        { "label": "Talk", "target": "talk_hub" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Buy Consumables",
+          "target": "shop_consumables"
+        },
+        {
+          "label": "Talk",
+          "target": "talk_hub"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
     "shop_consumables": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "consumables_basic",
+      "shopId": 1,
       "next": "default_hub_choices"
     },
     "talk_hub": {
@@ -111,11 +161,26 @@
     "talk_menu_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "About Laura", "target": "talk_laura" },
-        { "label": "About Shop", "target": "talk_shop" },
-        { "label": "About You", "target": "talk_self" },
-        { "label": "Ask about Quest", "target": "quest_router" },
-        { "label": "That's enough talk for now.", "target": "default_hub_choices" }
+        {
+          "label": "About Laura",
+          "target": "talk_laura"
+        },
+        {
+          "label": "About Shop",
+          "target": "talk_shop"
+        },
+        {
+          "label": "About You",
+          "target": "talk_self"
+        },
+        {
+          "label": "Ask about Quest",
+          "target": "quest_router"
+        },
+        {
+          "label": "That's enough talk for now.",
+          "target": "default_hub_choices"
+        }
       ]
     },
     "talk_laura": {
@@ -139,15 +204,27 @@
     "talk_buffer_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Ask about something else.", "target": "talk_hub" },
-        { "label": "I should get going.", "target": "default_hub_choices" }
+        {
+          "label": "Ask about something else.",
+          "target": "talk_hub"
+        },
+        {
+          "label": "I should get going.",
+          "target": "default_hub_choices"
+        }
       ]
     },
     "quest_router": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "questStatus:sparkling_gift:completed", "target": "quest_completed_text" },
-        { "condition": "questStatus:sparkling_gift:active", "target": "quest_active_text" }
+        {
+          "condition": "questStatus:sparkling_gift:completed",
+          "target": "quest_completed_text"
+        },
+        {
+          "condition": "questStatus:sparkling_gift:active",
+          "target": "quest_active_text"
+        }
       ],
       "next": "quest_offer_text"
     },
@@ -160,8 +237,14 @@
     "quest_offer_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "I'll find it.", "target": "action_offer_quest" },
-        { "label": "Maybe later.", "target": "talk_hub" }
+        {
+          "label": "I'll find it.",
+          "target": "action_offer_quest"
+        },
+        {
+          "label": "Maybe later.",
+          "target": "talk_hub"
+        }
       ]
     },
     "action_offer_quest": {
@@ -179,14 +262,17 @@
     },
     "quest_active_router": {
       "type": "ROUTER",
-      "condition": "hasItem:glittering_teardrop",
+      "condition": "hasItem:24",
       "trueNode": "quest_turnin_text",
       "falseNode": "quest_active_choices"
     },
     "quest_active_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "I'm still looking.", "target": "talk_hub" }
+        {
+          "label": "I'm still looking.",
+          "target": "talk_hub"
+        }
       ]
     },
     "quest_turnin_text": {
@@ -198,7 +284,10 @@
     "quest_turnin_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Here you go.", "target": "action_complete_quest" }
+        {
+          "label": "Here you go.",
+          "target": "action_complete_quest"
+        }
       ]
     },
     "action_complete_quest": {
@@ -206,7 +295,7 @@
       "action": "COMPLETE_QUEST",
       "questId": "sparkling_gift",
       "completeNode": "quest_completed_text",
-      "takeItem": "glittering_teardrop"
+      "takeItem": 24
     },
     "quest_completed_text": {
       "type": "TEXT",

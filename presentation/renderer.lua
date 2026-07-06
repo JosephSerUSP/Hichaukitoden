@@ -621,7 +621,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.pop()
 end
 
-function renderer.drawShop(shopId, selectedIdx, shopItems)
+function renderer.drawShop(shopTitle, selectedIdx, shopItems)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
     local progress
     if renderer.closing and renderer.closingScene == "shop" then
@@ -638,7 +638,7 @@ function renderer.drawShop(shopId, selectedIdx, shopItems)
     -- Draw shop title and item list
     ui.drawPanel(ui.toPx(1) + ox, ui.toPx(1), ui.toPx(30), ui.toPx(15))
     
-    local titleText = "SHOP: " .. shopId:gsub("_", " "):upper()
+    local titleText = "SHOP: " .. tostring(shopTitle):upper()
     ui.drawString(titleText, ui.toPx(2) + ox, ui.toPx(2), {1, 0.85, 0.5, 1})
     
     if #shopItems == 0 then

@@ -113,7 +113,7 @@ function GameSession.new(loader)
     local startMp = loader.system and loader.system.summoner and loader.system.summoner.startMp or 820
     self.mp = startMp
     self.maxMp = startMp
-    self.summoner = Battler.new(loader.getActor("summoner"), 1)
+    self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     
     -- Party composition: 1-4 active creatures, 5 is summoner, 6+ are reserve
@@ -130,8 +130,8 @@ function GameSession:initializeStartingParty()
     for _, item in ipairs(startInv) do
         self:addItem(item.id, 1)
     end
-    self:addItem("dark_scepter_lucille", 1)
-    self:addItem("bone_plate", 1)
+    self:addItem(20, 1) -- Dark Scepter Lucille
+    self:addItem(6, 1) -- Bone Plate
     
     -- Setup members
     local members = self.loader.party.getMembers(self.loader.actors)

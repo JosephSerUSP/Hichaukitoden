@@ -13,15 +13,24 @@
     "default_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Browse", "target": "open_shop" },
-        { "label": "Ask what’s ‘unidentified’ mean", "target": "talk_unid_text" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Browse",
+          "target": "open_shop"
+        },
+        {
+          "label": "Ask what’s ‘unidentified’ mean",
+          "target": "talk_unid_text"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
     "open_shop": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "auction_house",
+      "shopId": 4,
       "next": "default_choices"
     },
     "talk_unid_text": {
@@ -32,8 +41,14 @@
     "talk_unid_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Browse", "target": "open_shop" },
-        { "label": "Back", "target": "default_text" }
+        {
+          "label": "Browse",
+          "target": "open_shop"
+        },
+        {
+          "label": "Back",
+          "target": "default_text"
+        }
       ]
     }
   }

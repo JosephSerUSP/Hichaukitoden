@@ -10,6 +10,9 @@ function GraphWalker.new(session, graphData)
     self.currentNodeId = graphData.initialNode or "start"
     self.currentNode = graphData.nodes[self.currentNodeId]
     self.history = {}
+    -- A CONDITIONAL_BRANCH command can compile to a ROUTER as the very first
+    -- node of a graph; settle it immediately so callers never see a raw ROUTER.
+    self:settleRouter()
     return self
 end
 
@@ -20,7 +23,9 @@ function GraphWalker:evaluateCondition(condStr)
         local flag = condStr:match("^flag:(.+)")
         return self.session.flags[flag] == true
     elseif condStr:match("^hasItem:(.+)") then
-        local itemId = condStr:match("^hasItem:(.+)")
+        -- Item ids are numeric; the pattern always yields a string, so convert
+        -- it back before checking the (numeric-keyed) inventory table.
+        local itemId = tonumber(condStr:match("^hasItem:(.+)"))
         return self.session:hasItem(itemId, 1)
     end
     
@@ -33,7 +38,7 @@ end
 
 function GraphWalker:advance()
     if not self.currentNode then return nil end
-    
+
     local nextNodeId = self.currentNode.next
     if self.currentNode.type == "ROUTER" then
         if self:evaluateCondition(self.currentNode.condition) then
@@ -42,14 +47,14 @@ function GraphWalker:advance()
             nextNodeId = self.currentNode.falseNode
         end
     end
-    
+
     if nextNodeId then
         self:goToNode(nextNodeId)
     else
         self.currentNode = nil
         self.currentNodeId = nil
     end
-    
+
     return self.currentNode
 end
 
@@ -57,8 +62,13 @@ function GraphWalker:goToNode(nodeId)
     table.insert(self.history, self.currentNodeId)
     self.currentNodeId = nodeId
     self.currentNode = self.graph.nodes[nodeId]
-    
-    -- Auto-evaluate routers
+    self:settleRouter()
+end
+
+-- ROUTER nodes (compiled from CONDITIONAL_BRANCH) are silent/automatic: they
+-- pick a branch and continue rather than waiting for player input, so nothing
+-- outside this file should ever see currentNode.type == "ROUTER".
+function GraphWalker:settleRouter()
     if self.currentNode and self.currentNode.type == "ROUTER" then
         self:advance()
     end

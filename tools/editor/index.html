@@ -622,10 +622,10 @@
                 <span class="icon-sprite icon-reload"></span>
             </button>
             <div class="toolbar-separator"></div>
-            <button id="tool-map-btn" class="win98-btn active" onclick="switchMode('map')" title="Map Layer">
+            <button id="tool-map-btn" class="win98-btn" onclick="switchMode('map')" title="Map Layer">
                 <span class="icon-sprite icon-map"></span>
             </button>
-            <button id="tool-event-btn" class="win98-btn" onclick="switchMode('event')" title="Event Layer">
+            <button id="tool-event-btn" class="win98-btn active" onclick="switchMode('event')" title="Event Layer">
                 <span class="icon-sprite icon-event"></span>
             </button>
             <div class="toolbar-separator"></div>
@@ -641,7 +641,7 @@
         <div class="workspace">
             <div class="sidebar inset-panel" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
                 <!-- 1. MAP PALETTE (Only active in Map mode) -->
-                <div id="map-palette-section">
+                <div id="map-palette-section" style="display: none;">
                     <div class="sidebar-title">Paint Brush</div>
                     <button id="brush-wall-btn" class="tool-btn active" onclick="setPaintTool('wall', this)">
                         <div class="tile-color-indicator" style="background-color: var(--win-shadow);"></div>
@@ -654,10 +654,10 @@
                 </div>
 
                 <!-- 2. EVENT PALETTE (Only active in Event mode) -->
-                <div id="event-palette-section" style="display: none;">
+                <div id="event-palette-section">
                     <div class="sidebar-title">Event Mode</div>
                     <p style="font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 0;">
-                        In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y).
+                        In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y). Right-click for more options.
                     </p>
                 </div>
 
@@ -677,7 +677,7 @@
 
         <!-- Status Bar -->
         <div class="status-bar">
-            <div class="status-field" id="status-mode" style="flex: 1;">Layer: Map</div>
+            <div class="status-field" id="status-mode" style="flex: 1;">Layer: Event</div>
             <div class="status-field" id="status-db" style="width: 140px;">Database: Connected</div>
             <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">
                 <span class="icon-sprite icon-play"></span> Test Play
@@ -939,6 +939,7 @@
                     <select id="cmd-select-type" class="win98-select" onchange="toggleCmdTypeFields()">
                         <option value="TEXT">Show Text</option>
                         <option value="CHOICE">Show Choice</option>
+                        <option value="CONDITIONAL_BRANCH">Conditional Branch</option>
                         <option value="RECOVER_PARTY">Recover Party</option>
                         <option value="DESCEND">Descend Floor</option>
                         <option value="BATTLE">Start Battle</option>
@@ -962,44 +963,20 @@
                     </select>
                 </div>
 
-                <div id="cmd-fields-choice" class="form-group" style="display: none; flex-direction: column;">
-                    <label>Options:</label>
-                    <div id="cmd-choice-options-list" style="border: 1px solid var(--win-shadow); background: #fff; max-height: 160px; overflow-y: auto; padding: 2px;"></div>
+                <div id="cmd-fields-conditional" class="field-row-stacked" style="display: none;">
+                    <label>Condition:</label>
+                    <input type="text" id="cmd-input-condition" class="win98-input" placeholder="e.g. flag:metAlicia or hasItem:silver_blade" />
+                </div>
+
+                <div id="cmd-fields-nested-hint" class="form-group" style="display: none;">
+                    <p style="font-size: 10px; color: var(--win-dark-shadow); margin: 0;">
+                        Branches are edited inline in the command list after adding this — expand it there to add options/commands, like in RPG Maker.
+                    </p>
                 </div>
 
                 <div class="dialog-footer">
                     <button class="win98-btn win98-btn-success" onclick="applyCmdDialog()">OK</button>
                     <button class="win98-btn" onclick="closeCmdDialog()">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- --- CHOICE OPTION EDITOR MODAL --- -->
-    <div id="choice-option-modal" class="modal-overlay" style="z-index: 1250;">
-        <div class="window outset-bevel" style="width: 420px;">
-            <div class="title-bar">
-                <div class="title-bar-text">Choice Option</div>
-                <div class="title-bar-controls">
-                    <button class="win-btn-small outset-bevel" onclick="closeChoiceOptionModal()">×</button>
-                </div>
-            </div>
-            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
-                <div class="field-row-stacked">
-                    <label>Option Label:</label>
-                    <input type="text" id="choice-opt-label" class="win98-input" placeholder="e.g. Yes" />
-                </div>
-                <div class="field-row-stacked">
-                    <label>Set Flag on Selection (optional):</label>
-                    <input type="text" id="choice-opt-flag" class="win98-input" placeholder="e.g. metAlicia" />
-                </div>
-                <div class="field-row-stacked">
-                    <label>Commands run when chosen:</label>
-                    <div id="choice-opt-commands-list" style="border: 1px solid var(--win-shadow); background: #fff; max-height: 160px; overflow-y: auto; padding: 2px; font-family: monospace; font-size: 11px;"></div>
-                </div>
-                <div class="dialog-footer">
-                    <button class="win98-btn win98-btn-success" onclick="applyChoiceOption()">OK</button>
-                    <button class="win98-btn" onclick="closeChoiceOptionModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1105,6 +1082,9 @@
         </div>
     </div>
 
+    <!-- --- CANVAS RIGHT-CLICK CONTEXT MENU (built dynamically per click) --- -->
+    <div id="canvas-context-menu" class="outset-bevel" style="display: none; position: absolute; z-index: 10000; background: #dfdfdf; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; box-shadow: 1px 1px 4px rgba(0,0,0,0.3); padding: 2px; min-width: 170px; font-family: sans-serif; font-size: 11px; box-sizing: border-box;"></div>
+
     <script>
         const API_URL = 'http://127.0.0.1:8080';
         let dbPayload = {};
@@ -1143,7 +1123,6 @@
         // prompt-and-discard if that modal has unsaved staged changes.
         const ESCAPE_MODAL_CLOSERS = [
             ['asset-picker-modal', () => closeAssetPicker()],
-            ['choice-option-modal', () => closeChoiceOptionModal()],
             ['cmd-modal', () => closeCmdDialog()],
             ['damage-popup-modal', () => closeDamagePopupModal()],
             ['max-modal', () => closeChangeMaxDialog()],
@@ -1164,7 +1143,7 @@
             }
         });
 
-        let editingMode = 'map'; // 'map' or 'event'
+        let editingMode = 'event'; // 'map' or 'event' — Event mode is the default: it's what you use most
         let activePaintTool = 'wall';
         let currentMapIndex = 0;
         let isMouseDown = false;
@@ -1186,8 +1165,10 @@
         }
 
         window.addEventListener('click', () => {
-            const menu = document.getElementById('map-context-menu');
-            if (menu) menu.style.display = 'none';
+            ['map-context-menu', 'canvas-context-menu'].forEach(id => {
+                const menu = document.getElementById(id);
+                if (menu) menu.style.display = 'none';
+            });
         });
 
         function handleMapContextMenuAction(action) {
@@ -1535,26 +1516,30 @@
             
             canvas.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-            });
-            
-            canvas.addEventListener('mousedown', (e) => {
-                e.preventDefault();
                 const rect = canvas.getBoundingClientRect();
                 const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
                 const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-                
+                showCanvasContextMenu(e, x, y);
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (e.button === 2) return; // handled by the contextmenu event instead
+
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+
                 const map = dbPayload.maps[currentMapIndex];
                 if (!map) return;
-                
+
                 if (editingMode === 'map') {
                     if (e.button === 0) {
                         isMouseDown = true;
                         paintCellAt(x, y);
                     }
                 } else {
-                    if (e.button === 2) {
-                        setPlayerStartPosition(x, y);
-                    } else if (e.button === 0) {
+                    if (e.button === 0) {
                         const clickedEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
                         if (clickedEvent) {
                             selectedEvent = clickedEvent;
@@ -1608,43 +1593,101 @@
             });
         }
 
+        // Pastes eventCopyBuffer at (x, y) on the current map, if the tile is free.
+        // Shared by the Ctrl+V shortcut and the canvas right-click menu's Paste option.
+        function pasteEventAt(x, y) {
+            if (!eventCopyBuffer) return;
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || x < 0 || x >= map.layout[0].length || y < 0 || y >= map.layout.length) return;
+
+            const occupied = (map.events || []).find(ev => ev.x === x && ev.y === y);
+            if (occupied) return;
+
+            const copiedObj = JSON.parse(eventCopyBuffer);
+            let maxId = 0;
+            (map.events || []).forEach(ev => {
+                if (ev.id > maxId) maxId = ev.id;
+            });
+            copiedObj.id = maxId + 1;
+            copiedObj.x = x;
+            copiedObj.y = y;
+
+            map.events = map.events || [];
+            map.events.push(copiedObj);
+            selectedEvent = copiedObj;
+            setDirty(true);
+            renderGridCells();
+        }
+
         window.addEventListener('keydown', (e) => {
             if (editingMode === 'event' && selectedEvent) {
                 if (e.ctrlKey && e.key === 'c') {
                     eventCopyBuffer = JSON.stringify(selectedEvent);
                 }
             }
-            if (editingMode === 'event' && eventCopyBuffer) {
-                if (e.ctrlKey && e.key === 'v') {
-                    const canvas = document.getElementById('map-canvas');
-                    if (!canvas) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
-                    const y = Math.floor((mouseY - rect.top) / TILE_SIZE);
-                    
-                    const map = dbPayload.maps[currentMapIndex];
-                    if (!map || x < 0 || x >= map.layout[0].length || y < 0 || y >= map.layout.length) return;
-                    
-                    const occupied = (map.events || []).find(ev => ev.x === x && ev.y === y);
-                    if (!occupied) {
-                        const copiedObj = JSON.parse(eventCopyBuffer);
-                        let maxId = 0;
-                        (map.events || []).forEach(ev => {
-                            if (ev.id > maxId) maxId = ev.id;
-                        });
-                        copiedObj.id = maxId + 1;
-                        copiedObj.x = x;
-                        copiedObj.y = y;
-                        
-                        map.events = map.events || [];
-                        map.events.push(copiedObj);
-                        selectedEvent = copiedObj;
-                        setDirty(true);
-                        renderGridCells();
-                    }
-                }
+            if (editingMode === 'event' && eventCopyBuffer && e.ctrlKey && e.key === 'v') {
+                const canvas = document.getElementById('map-canvas');
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
+                const y = Math.floor((mouseY - rect.top) / TILE_SIZE);
+                pasteEventAt(x, y);
             }
         });
+
+        // --- CANVAS RIGHT-CLICK CONTEXT MENU ---
+        function showCanvasContextMenu(e, x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map) return;
+
+            const menu = document.getElementById('canvas-context-menu');
+            menu.innerHTML = '';
+
+            const addItem = (label, onClick, danger) => {
+                const item = document.createElement('div');
+                item.className = 'context-menu-item';
+                item.style.padding = '4px 8px';
+                item.style.cursor = 'default';
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '6px';
+                if (danger) item.style.color = '#cc0000';
+                item.textContent = label;
+                item.onclick = () => { menu.style.display = 'none'; onClick(); };
+                menu.appendChild(item);
+            };
+            const addSeparator = () => {
+                const sep = document.createElement('div');
+                sep.style.borderTop = '1px solid #808080';
+                sep.style.margin = '2px 0';
+                menu.appendChild(sep);
+            };
+
+            if (editingMode === 'event') {
+                const existingEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
+                if (existingEvent) {
+                    addItem('✏️ Edit Event...', () => openEventModal(x, y));
+                    addItem('📋 Copy Event', () => { selectedEvent = existingEvent; eventCopyBuffer = JSON.stringify(existingEvent); });
+                    addItem('❌ Delete Event', () => {
+                        map.events = map.events.filter(ev => ev !== existingEvent);
+                        setDirty(true);
+                        renderGridCells();
+                    }, true);
+                } else {
+                    addItem('➕ Add Event Here...', () => openEventModal(x, y));
+                    if (eventCopyBuffer) {
+                        addItem('📋 Paste Event', () => pasteEventAt(x, y));
+                    }
+                }
+                addSeparator();
+            }
+
+            addItem('🚩 Set Player Start Position Here', () => setPlayerStartPosition(x, y));
+
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.style.display = 'block';
+        }
 
         window.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
@@ -1717,11 +1760,12 @@
             const list = document.getElementById('prop-enc-list');
             list.innerHTML = '';
             encounters.forEach((enc, idx) => {
+                const actor = (dbPayload.actors || []).find(a => a.id === enc.id);
                 const item = document.createElement('div');
                 item.style.fontSize = '10px';
                 item.style.padding = '2px 4px';
                 item.style.cursor = 'pointer';
-                item.textContent = `Troop: ${enc.troopId || enc.id} (Weight: ${enc.weight || 10})`;
+                item.textContent = `${actor ? actor.name : 'Unknown'} (ID ${enc.id}) — Weight: ${enc.weight || 10}`;
                 item.onclick = () => {
                     document.querySelectorAll('#prop-enc-list > div').forEach(d => d.style.background = '');
                     item.style.background = 'var(--win-blue)';
@@ -1733,10 +1777,11 @@
         }
 
         function addEncounterToMap() {
-            const troopId = prompt("Enter Troop/Monster ID (numerical ID):", "1");
-            if (troopId !== null) {
+            const actorList = (dbPayload.actors || []).map(a => `${a.id}: ${a.name}`).join('\n');
+            const actorId = parseInt(prompt(`Enter Actor ID to encounter:\n${actorList}`, dbPayload.actors && dbPayload.actors[0] ? dbPayload.actors[0].id : '1'));
+            if (!isNaN(actorId)) {
                 const weight = parseInt(prompt("Enter Spawn Weight (probability weight):", "10")) || 10;
-                mapPropsEncounters.push({ troopId: parseInt(troopId) || 1, weight: weight });
+                mapPropsEncounters.push({ id: actorId, weight: weight });
                 mapPropsDirty = true;
                 renderEncountersList(mapPropsEncounters);
             }
@@ -2132,9 +2177,6 @@
             if (cmd.type === 'TEXT') {
                 const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
                 return `Text: "${speakerPrefix}${cmd.text}"`;
-            } else if (cmd.type === 'CHOICE') {
-                const n = (cmd.options || []).length;
-                return `Choice (${n} option${n === 1 ? '' : 's'})`;
             } else if (cmd.type === 'RECOVER_PARTY') {
                 return 'Recover Party';
             } else if (cmd.type === 'DESCEND') {
@@ -2150,15 +2192,36 @@
             return `Unknown (${cmd.type})`;
         }
 
+        function makeMarkerRow(text, indent, onClick) {
+            const row = document.createElement('div');
+            row.style.padding = '2px';
+            row.style.paddingLeft = (indent * 14) + 'px';
+            row.style.color = '#808080';
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.gap = '4px';
+            row.textContent = text;
+            if (onClick) {
+                row.style.cursor = 'pointer';
+                row.onclick = onClick;
+            }
+            return row;
+        }
+
         // Renders `commandsArray` into `container` as an RPG-Maker-style command
         // list. `onChange()` is called after any add/edit/delete so the caller can
         // re-render and mark itself dirty; pass null/readOnly=true for a static preview.
-        function renderCommandList(container, commandsArray, onChange, readOnly) {
+        // CHOICE and CONDITIONAL_BRANCH render as nested branches with their own
+        // sub-command-lists rendered inline (via recursion), rather than opening a
+        // separate modal — you add commands directly inside the nest, like RPG Maker.
+        function renderCommandList(container, commandsArray, onChange, readOnly, indent) {
+            indent = indent || 0;
             container.innerHTML = '';
 
             if (!commandsArray || commandsArray.length === 0) {
                 const line = document.createElement('div');
                 line.style.padding = '2px';
+                line.style.paddingLeft = (indent * 14) + 'px';
                 line.style.color = '#808080';
                 line.textContent = readOnly ? '<Empty Command List>' : '@>';
                 if (!readOnly) {
@@ -2170,8 +2233,18 @@
             }
 
             commandsArray.forEach((cmd, idx) => {
+                if (cmd.type === 'CHOICE') {
+                    renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent);
+                    return;
+                }
+                if (cmd.type === 'CONDITIONAL_BRANCH') {
+                    renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent);
+                    return;
+                }
+
                 const line = document.createElement('div');
                 line.style.padding = '2px';
+                line.style.paddingLeft = (indent * 14) + 'px';
                 line.style.display = 'flex';
                 line.style.alignItems = 'center';
 
@@ -2223,12 +2296,174 @@
             if (!readOnly) {
                 const trailingLine = document.createElement('div');
                 trailingLine.style.padding = '2px';
+                trailingLine.style.paddingLeft = (indent * 14) + 'px';
                 trailingLine.style.color = '#808080';
                 trailingLine.style.cursor = 'pointer';
                 trailingLine.textContent = '@>';
                 trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange);
                 container.appendChild(trailingLine);
             }
+        }
+
+        function renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent) {
+            cmd.options = cmd.options || [];
+
+            const header = document.createElement('div');
+            header.style.padding = '2px';
+            header.style.paddingLeft = (indent * 14) + 'px';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.fontWeight = 'bold';
+            const headerLabel = document.createElement('span');
+            headerLabel.style.flex = '1';
+            headerLabel.textContent = '@>Show Choice';
+            header.appendChild(headerLabel);
+            if (!readOnly) {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win-btn-small outset-bevel';
+                delBtn.style.fontSize = '8px';
+                delBtn.style.padding = '0px 3px';
+                delBtn.style.color = 'red';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    commandsArray.splice(idx, 1);
+                    if (onChange) onChange();
+                };
+                header.appendChild(delBtn);
+            }
+            container.appendChild(header);
+
+            cmd.options.forEach((opt, optIdx) => {
+                opt.commands = opt.commands || [];
+                const marker = makeMarkerRow(`: ${opt.label || '(no label)'}${opt.setFlag ? '  [sets flag: ' + opt.setFlag + ']' : ''}`, indent + 1);
+                marker.style.color = '#000080';
+                marker.style.fontWeight = 'bold';
+                if (!readOnly) {
+                    const renameBtn = document.createElement('button');
+                    renameBtn.className = 'win-btn-small outset-bevel';
+                    renameBtn.style.fontSize = '8px';
+                    renameBtn.style.padding = '0px 3px';
+                    renameBtn.textContent = '✏️';
+                    renameBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const newLabel = prompt('Option label:', opt.label || '');
+                        if (newLabel === null) return;
+                        opt.label = newLabel;
+                        const newFlag = prompt('Set flag when chosen (blank for none):', opt.setFlag || '');
+                        if (newFlag === null) return;
+                        if (newFlag.trim()) { opt.setFlag = newFlag.trim(); } else { delete opt.setFlag; }
+                        if (onChange) onChange();
+                    };
+                    const delOptBtn = document.createElement('button');
+                    delOptBtn.className = 'win-btn-small outset-bevel';
+                    delOptBtn.style.fontSize = '8px';
+                    delOptBtn.style.padding = '0px 3px';
+                    delOptBtn.style.color = 'red';
+                    delOptBtn.textContent = '×';
+                    delOptBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        cmd.options.splice(optIdx, 1);
+                        if (onChange) onChange();
+                    };
+                    marker.appendChild(renameBtn);
+                    marker.appendChild(delOptBtn);
+                }
+                container.appendChild(marker);
+
+                const optContainer = document.createElement('div');
+                container.appendChild(optContainer);
+                renderCommandList(optContainer, opt.commands, onChange, readOnly, indent + 2);
+            });
+
+            if (!readOnly) {
+                container.appendChild(makeMarkerRow('+ Add Option', indent + 1, () => {
+                    cmd.options.push({ label: 'New Option', commands: [] });
+                    if (onChange) onChange();
+                }));
+            }
+
+            container.appendChild(makeMarkerRow(': End Choice', indent));
+        }
+
+        function renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent) {
+            cmd.commands = cmd.commands || [];
+
+            const header = document.createElement('div');
+            header.style.padding = '2px';
+            header.style.paddingLeft = (indent * 14) + 'px';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.fontWeight = 'bold';
+            const headerLabel = document.createElement('span');
+            headerLabel.style.flex = '1';
+            headerLabel.style.overflow = 'hidden';
+            headerLabel.style.textOverflow = 'ellipsis';
+            headerLabel.style.whiteSpace = 'nowrap';
+            headerLabel.textContent = `@>If [${cmd.condition || '(no condition)'}]`;
+            header.appendChild(headerLabel);
+            if (!readOnly) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'win-btn-small outset-bevel';
+                editBtn.style.fontSize = '8px';
+                editBtn.style.padding = '0px 3px';
+                editBtn.textContent = '✏️';
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const newCond = prompt('Condition (e.g. flag:metAlicia or hasItem:silver_blade):', cmd.condition || '');
+                    if (newCond === null) return;
+                    cmd.condition = newCond;
+                    if (onChange) onChange();
+                };
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win-btn-small outset-bevel';
+                delBtn.style.fontSize = '8px';
+                delBtn.style.padding = '0px 3px';
+                delBtn.style.color = 'red';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    commandsArray.splice(idx, 1);
+                    if (onChange) onChange();
+                };
+                header.appendChild(editBtn);
+                header.appendChild(delBtn);
+            }
+            container.appendChild(header);
+
+            const thenContainer = document.createElement('div');
+            container.appendChild(thenContainer);
+            renderCommandList(thenContainer, cmd.commands, onChange, readOnly, indent + 1);
+
+            if (cmd.elseCommands) {
+                const elseMarker = makeMarkerRow(': Else', indent);
+                if (!readOnly) {
+                    const removeElseBtn = document.createElement('button');
+                    removeElseBtn.className = 'win-btn-small outset-bevel';
+                    removeElseBtn.style.fontSize = '8px';
+                    removeElseBtn.style.padding = '0px 3px';
+                    removeElseBtn.style.color = 'red';
+                    removeElseBtn.textContent = 'Remove';
+                    removeElseBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        delete cmd.elseCommands;
+                        if (onChange) onChange();
+                    };
+                    elseMarker.appendChild(removeElseBtn);
+                }
+                container.appendChild(elseMarker);
+
+                const elseContainer = document.createElement('div');
+                container.appendChild(elseContainer);
+                renderCommandList(elseContainer, cmd.elseCommands, onChange, readOnly, indent + 1);
+            } else if (!readOnly) {
+                container.appendChild(makeMarkerRow('+ Add Else Branch', indent, () => {
+                    cmd.elseCommands = [];
+                    if (onChange) onChange();
+                }));
+            }
+
+            container.appendChild(makeMarkerRow(': End Branch', indent));
         }
 
         function openCommandModalForAdd(commandsArray, onChange) {
@@ -2247,9 +2482,10 @@
             });
         }
 
-        // --- COMMAND EDITOR MODAL (single command, incl. nested CHOICE options) ---
+        // --- COMMAND EDITOR MODAL (single command; CHOICE/CONDITIONAL_BRANCH ---
+        // create an empty shell here, then are edited inline in the tree above)
         let activeCmdCallback = null;
-        let activeCmdChoiceOptions = [];
+        let activeCmdOriginal = null;
         let cmdDialogDirty = false;
 
         function populateCmdCommonEventsDropdown() {
@@ -2270,10 +2506,11 @@
 
         function openAddCommandDialog(callback) {
             activeCmdCallback = callback;
+            activeCmdOriginal = null;
             document.getElementById('cmd-select-type').value = 'TEXT';
             document.getElementById('cmd-input-text').value = 'Hello!';
             document.getElementById('cmd-input-speaker').value = '';
-            activeCmdChoiceOptions = [];
+            document.getElementById('cmd-input-condition').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.add('active');
@@ -2281,15 +2518,15 @@
 
         function openEditCommandDialog(cmd, callback) {
             activeCmdCallback = callback;
+            activeCmdOriginal = cmd;
             document.getElementById('cmd-select-type').value = cmd.type;
             if (cmd.type === 'TEXT') {
                 document.getElementById('cmd-input-text').value = cmd.text || '';
                 document.getElementById('cmd-input-speaker').value = cmd.speaker || '';
             } else if (cmd.type === 'CALL_COMMON_EVENT') {
                 document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
-            } else if (cmd.type === 'CHOICE') {
-                // Deep clone so edits made before hitting OK don't mutate the original.
-                activeCmdChoiceOptions = JSON.parse(JSON.stringify(cmd.options || []));
+            } else if (cmd.type === 'CONDITIONAL_BRANCH') {
+                document.getElementById('cmd-input-condition').value = cmd.condition || '';
             }
             toggleCmdTypeFields();
             cmdDialogDirty = false;
@@ -2300,68 +2537,8 @@
             const type = document.getElementById('cmd-select-type').value;
             document.getElementById('cmd-fields-text').style.display = type === 'TEXT' ? 'flex' : 'none';
             document.getElementById('cmd-fields-common-event').style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
-            document.getElementById('cmd-fields-choice').style.display = type === 'CHOICE' ? 'flex' : 'none';
-            if (type === 'CHOICE') renderChoiceOptionsList();
-        }
-
-        function renderChoiceOptionsList() {
-            const container = document.getElementById('cmd-choice-options-list');
-            container.innerHTML = '';
-
-            if (activeCmdChoiceOptions.length === 0) {
-                const empty = document.createElement('div');
-                empty.style.padding = '2px';
-                empty.style.color = '#808080';
-                empty.style.fontSize = '10px';
-                empty.textContent = '<No options yet>';
-                container.appendChild(empty);
-            }
-
-            activeCmdChoiceOptions.forEach((opt, idx) => {
-                const line = document.createElement('div');
-                line.style.padding = '2px';
-                line.style.display = 'flex';
-                line.style.alignItems = 'center';
-                line.style.fontSize = '10px';
-                line.style.cursor = 'pointer';
-                line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
-                line.onclick = () => openChoiceOptionModal(idx);
-
-                const label = document.createElement('span');
-                label.style.flex = '1';
-                const n = (opt.commands || []).length;
-                label.textContent = `${opt.label || '(no label)'} — ${n} command${n === 1 ? '' : 's'}`;
-                line.appendChild(label);
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    activeCmdChoiceOptions.splice(idx, 1);
-                    cmdDialogDirty = true;
-                    renderChoiceOptionsList();
-                };
-                line.appendChild(delBtn);
-                container.appendChild(line);
-            });
-
-            const addLine = document.createElement('div');
-            addLine.style.padding = '2px';
-            addLine.style.color = '#808080';
-            addLine.style.cursor = 'pointer';
-            addLine.textContent = '+ Add Option';
-            addLine.onclick = () => {
-                activeCmdChoiceOptions.push({ label: 'New Option', commands: [] });
-                cmdDialogDirty = true;
-                renderChoiceOptionsList();
-                openChoiceOptionModal(activeCmdChoiceOptions.length - 1);
-            };
-            container.appendChild(addLine);
+            document.getElementById('cmd-fields-conditional').style.display = type === 'CONDITIONAL_BRANCH' ? 'flex' : 'none';
+            document.getElementById('cmd-fields-nested-hint').style.display = (type === 'CHOICE' || type === 'CONDITIONAL_BRANCH') ? 'block' : 'none';
         }
 
         function closeCmdDialog(force) {
@@ -2371,6 +2548,7 @@
 
         function applyCmdDialog() {
             const type = document.getElementById('cmd-select-type').value;
+            const wasSameType = activeCmdOriginal && activeCmdOriginal.type === type;
             let cmd = { type: type };
             if (type === 'TEXT') {
                 cmd.text = document.getElementById('cmd-input-text').value;
@@ -2378,49 +2556,17 @@
             } else if (type === 'CALL_COMMON_EVENT') {
                 cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
             } else if (type === 'CHOICE') {
-                cmd.options = activeCmdChoiceOptions;
+                // Preserve existing nested options when just re-confirming this dialog.
+                cmd.options = wasSameType ? activeCmdOriginal.options : [];
+            } else if (type === 'CONDITIONAL_BRANCH') {
+                cmd.condition = document.getElementById('cmd-input-condition').value;
+                cmd.commands = wasSameType ? activeCmdOriginal.commands : [];
+                if (wasSameType && activeCmdOriginal.elseCommands) {
+                    cmd.elseCommands = activeCmdOriginal.elseCommands;
+                }
             }
             closeCmdDialog(true);
             if (activeCmdCallback) activeCmdCallback(cmd);
-        }
-
-        // --- CHOICE OPTION EDITOR (nested modal: label + flag + sub-command list) ---
-        let activeChoiceOptionIndex = -1;
-        let choiceOptionDirty = false;
-
-        function openChoiceOptionModal(idx) {
-            activeChoiceOptionIndex = idx;
-            const opt = activeCmdChoiceOptions[idx];
-            opt.commands = opt.commands || [];
-            document.getElementById('choice-opt-label').value = opt.label || '';
-            document.getElementById('choice-opt-flag').value = opt.setFlag || '';
-            renderChoiceOptionCommands();
-            choiceOptionDirty = false;
-            document.getElementById('choice-option-modal').classList.add('active');
-        }
-
-        function renderChoiceOptionCommands() {
-            const opt = activeCmdChoiceOptions[activeChoiceOptionIndex];
-            const container = document.getElementById('choice-opt-commands-list');
-            renderCommandList(container, opt.commands, () => {
-                choiceOptionDirty = true;
-                renderChoiceOptionCommands();
-            }, false);
-        }
-
-        function closeChoiceOptionModal(force) {
-            if (!force && choiceOptionDirty && !confirmDiscard('Discard changes to this option?')) return;
-            document.getElementById('choice-option-modal').classList.remove('active');
-        }
-
-        function applyChoiceOption() {
-            const opt = activeCmdChoiceOptions[activeChoiceOptionIndex];
-            opt.label = document.getElementById('choice-opt-label').value;
-            const flag = document.getElementById('choice-opt-flag').value.trim();
-            if (flag) { opt.setFlag = flag; } else { delete opt.setFlag; }
-            closeChoiceOptionModal(true);
-            cmdDialogDirty = true;
-            renderChoiceOptionsList();
         }
 
         function initEventModalTemplates() {}
@@ -2474,7 +2620,11 @@
             let items = [];
             if (activeDbTab === 'actors') items = dbPayload.actors;
             else if (activeDbTab === 'items') items = dbPayload.items;
-            else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
+            else if (activeDbTab === 'shops') {
+                items = Object.keys(dbPayload.shops)
+                    .map(k => ({ id: k, name: dbPayload.shops[k].name || `Shop ${k}` }))
+                    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+            }
             else if (activeDbTab === 'commonEvents') {
                 if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
                 items = Object.keys(dbPayload.commonEvents)
@@ -2600,8 +2750,12 @@
                 
             } else if (activeDbTab === 'shops') {
                 const shopData = dbPayload.shops[item.id];
-                createFormField(formPanel, 'Shop ID', item.id, null, 'text', true);
-                
+                createFormField(formPanel, 'Shop ID (Static)', item.id, null, 'text', true);
+                createFormField(formPanel, 'Shop Name', shopData.name || '', val => {
+                    shopData.name = val;
+                    initDatabaseEditor();
+                });
+
                 const listWrapper = document.createElement('div');
                 listWrapper.className = 'form-group';
                 const lbl = document.createElement('label');
@@ -2888,11 +3042,14 @@
             
             if (activeDbTab === 'actors') {
                 const currentLen = dbPayload.actors.length;
+                let maxId = 0;
+                dbPayload.actors.forEach(a => { if (a.id > maxId) maxId = a.id; });
                 if (newMax > currentLen) {
                     for (let i = currentLen + 1; i <= newMax; i++) {
+                        maxId += 1;
                         dbPayload.actors.push({
-                            id: `actor_new_${i}`,
-                            name: `New Actor ${i}`,
+                            id: maxId,
+                            name: `New Actor ${maxId}`,
                             role: 'Spirit',
                             maxHp: 10,
                             mpd: 2,
@@ -2905,11 +3062,14 @@
                 }
             } else if (activeDbTab === 'items') {
                 const currentLen = dbPayload.items.length;
+                let maxId = 0;
+                dbPayload.items.forEach(it => { if (it.id > maxId) maxId = it.id; });
                 if (newMax > currentLen) {
                     for (let i = currentLen + 1; i <= newMax; i++) {
+                        maxId += 1;
                         dbPayload.items.push({
-                            id: `item_new_${i}`,
-                            name: `New Item ${i}`,
+                            id: maxId,
+                            name: `New Item ${maxId}`,
                             type: 'consumable',
                             description: 'Item description.',
                             cost: 0,
@@ -2920,11 +3080,14 @@
                     dbPayload.items = dbPayload.items.slice(0, newMax);
                 }
             } else if (activeDbTab === 'shops') {
-                const shopKeys = Object.keys(dbPayload.shops);
+                const shopKeys = Object.keys(dbPayload.shops).sort((a, b) => parseInt(a) - parseInt(b));
                 const currentLen = shopKeys.length;
                 if (newMax > currentLen) {
+                    let maxId = 0;
+                    shopKeys.forEach(k => { if (parseInt(k) > maxId) maxId = parseInt(k); });
                     for (let i = currentLen + 1; i <= newMax; i++) {
-                        dbPayload.shops[`shop_new_${i}`] = { items: [] };
+                        maxId += 1;
+                        dbPayload.shops[String(maxId)] = { name: `New Shop ${maxId}`, items: [] };
                     }
                 } else if (newMax < currentLen) {
                     const keysToDelete = shopKeys.slice(newMax);
@@ -3033,7 +3196,6 @@
         wireModalDirtyTracking('map-properties-modal', () => { mapPropsDirty = true; });
         wireModalDirtyTracking('event-modal', () => { eventModalDirty = true; });
         wireModalDirtyTracking('cmd-modal', () => { cmdDialogDirty = true; });
-        wireModalDirtyTracking('choice-option-modal', () => { choiceOptionDirty = true; });
         wireModalDirtyTracking('damage-popup-modal', () => { setDirty(true); });
 
         fetchDatabase();

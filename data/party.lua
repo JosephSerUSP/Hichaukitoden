@@ -34,7 +34,7 @@ function party.getInventory(allItems)
     local equipment = {}
 
     for _, item in ipairs(allItems) do
-        if item.type == 'consumable' and item.id ~= 'hp_tonic' then
+        if item.type == 'consumable' and item.id ~= 1 then -- 1 = HP Tonic
             table.insert(consumables, item)
         elseif item.type == 'equipment' then
             table.insert(equipment, item)
@@ -44,7 +44,7 @@ function party.getInventory(allItems)
     -- 1-3 HP Tonics
     local hpTonic
     for _, item in ipairs(allItems) do
-        if item.id == 'hp_tonic' then
+        if item.id == 1 then -- HP Tonic
             hpTonic = item
             break
         end

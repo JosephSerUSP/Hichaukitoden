@@ -82,7 +82,7 @@
   "dungeon": {
     "maxFloor": 5,
     "moveMpDrain": 1,
-    "defaultLoot": "hp_tonic",
+    "defaultLoot": 1,
     "genWidth": 21,
     "genHeight": 21,
     "genMinRooms": 4,

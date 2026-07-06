@@ -36,6 +36,7 @@ local dialogueSelectIdx = 1
 
 -- Shop State
 local activeShopId = ""
+local activeShopName = ""
 local shopItems = {}
 local shopSelectedIdx = 1
 
@@ -150,7 +151,7 @@ function love.draw()
     elseif currentScene == "battle" then
         renderer.drawBattle(activeBattle, battleCombatLog, battleCombatState, battleSelectedIndex, battleSpellSelect, battleLivingMembers, battleActiveMemberIndex)
     elseif currentScene == "shop" then
-        renderer.drawShop(activeShopId, shopSelectedIdx, shopItems)
+        renderer.drawShop(activeShopName, shopSelectedIdx, shopItems)
     elseif currentScene == "menu" then
         if previousSceneBeforeMenu == "town" then
             renderer.drawTown(townSelectedIdx)
@@ -245,6 +246,15 @@ local function compileCommands(nodes, commands, prefix, tailNodeId)
                 })
             end
             nodes[nodeId] = { type = "CHOICE", options = options }
+        elseif cmd.type == "CONDITIONAL_BRANCH" then
+            local trueFirst = compileCommands(nodes, cmd.commands, nodeId .. "_then", nextId)
+            local falseFirst = compileCommands(nodes, cmd.elseCommands, nodeId .. "_else", nextId)
+            nodes[nodeId] = {
+                type = "ROUTER",
+                condition = cmd.condition,
+                trueNode = trueFirst or nextId,
+                falseNode = falseFirst or nextId
+            }
         elseif cmd.type == "RECOVER_PARTY" then
             recoverParty()
             nodes[nodeId] = { type = "TEXT", content = "Your party has been fully recovered!", next = nextId }
@@ -267,8 +277,13 @@ local function openShop(shopId)
     activeShopId = shopId
     shopItems = {}
     shopSelectedIdx = 1
-    
-    local shopData = loader.shops[shopId]
+
+    -- Shops are stored as a string-keyed table (JSON object keys are always
+    -- strings) even though shopId itself arrives as a number from dialogue
+    -- graphs, so the lookup needs an explicit tostring() -- same pattern used
+    -- for commonEvents lookups by scriptId elsewhere in this file.
+    local shopData = loader.shops[tostring(shopId)]
+    activeShopName = (shopData and shopData.name) or tostring(shopId)
     if shopData and shopData.items then
         for _, shopItem in ipairs(shopData.items) do
             local allowed = true
@@ -327,7 +342,7 @@ handleDialogueAction = function()
         elseif node.action == "START_BATTLE" then
             triggerBattle()
         elseif node.action == "GIVE_ITEM_ACTION" then
-            local loot = conf("dungeon", "defaultLoot", "hp_tonic")
+            local loot = conf("dungeon", "defaultLoot", 1) -- 1 = HP Tonic
             if activeSession.currentMapData.treasures and #activeSession.currentMapData.treasures > 0 then
                 loot = activeSession.currentMapData.treasures[math.random(#activeSession.currentMapData.treasures)]
             end
@@ -486,12 +501,12 @@ triggerTestBattle = function()
     
     -- Spawn mock enemies (use database entries if they exist, otherwise fall back to generic dummy data)
     local enemyList = {}
-    local gData = loader.getActor("goblin") or { id = "enemy_1", name = "Test Target A", level = 1 }
+    local gData = loader.getActor(1) or { id = "enemy_1", name = "Test Target A", level = 1 } -- Pixie
     local b1 = session.Battler.new(gData, 1)
     b1.hp = b1:getMaxHp(activeSession)
     table.insert(enemyList, b1)
-    
-    local pData = loader.getActor("pixie") or { id = "enemy_2", name = "Test Target B", level = 1 }
+
+    local pData = loader.getActor(2) or { id = "enemy_2", name = "Test Target B", level = 1 } -- High Pixie
     local b2 = session.Battler.new(pData, 1)
     b2.hp = b2:getMaxHp(activeSession)
     table.insert(enemyList, b2)
@@ -1166,7 +1181,7 @@ local function handleKeyPressed(key)
                     elseif battleSelectedIndex == 3 then
                         -- Item (Summoner) or Defend (Monster)
                         if isSummoner then
-                            local battleItemId = conf("combat", "battleItem", "hp_tonic")
+                            local battleItemId = conf("combat", "battleItem", 1) -- 1 = HP Tonic
                             local battleItem = loader.getItem(battleItemId)
                             if battleItem and activeSession:hasItem(battleItemId, 1) then
                                 local target = activeSession.summoner
