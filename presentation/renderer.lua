@@ -398,7 +398,7 @@ function renderer.drawDialogue(walker, selectIdx)
     ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
     
     if node.type == "TEXT" then
-        ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2))
+        ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), {eventName = walker.graph.name})
         ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
     elseif node.type == "CHOICE" then
         ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2))

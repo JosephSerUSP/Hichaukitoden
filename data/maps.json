@@ -72,9 +72,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Laura: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
+            "text": "\\eventName: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
           }
-        ]
+        ],
+        "name": "Laura"
       },
       {
         "id": 5,
@@ -106,9 +107,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Alicia: I have prepared some items for your journey. Check the database."
+            "text": "\\eventName: I have prepared some items for your journey. Check the database."
           }
-        ]
+        ],
+        "name": "Alicia"
       },
       {
         "id": 8,
@@ -119,9 +121,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Pub: The drinks here are cheap. Feel free to rest."
+            "text": "\\eventName: The drinks here are cheap. Feel free to rest."
           }
-        ]
+        ],
+        "name": "Pub"
       },
       {
         "id": 9,
@@ -132,9 +135,10 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Auctioneer: Welcome to the summoners auction house!"
+            "text": "\\eventName: Welcome to the summoners auction house!"
           }
-        ]
+        ],
+        "name": "Auctioneer"
       },
       {
         "id": 10,
