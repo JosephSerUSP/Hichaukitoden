@@ -209,7 +209,8 @@ end
 
 -- Draw text with drop shadow (crisp monochrome)
 function ui.drawString(text, x, y, color, alignment, limit, eventName)
-    love.graphics.push("all")
+    local r, g, b, a = love.graphics.getColor()
+    local currentFont = love.graphics.getFont()
     
     color = color or {1, 1, 1, 1}
     alignment = alignment or "left"
@@ -218,9 +219,29 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     -- Set active font explicitly to ensure properties apply
     if mainFont then love.graphics.setFont(mainFont) end
     
+    local parsedText = text or ""
+    if eventName and eventName ~= "" then
+        parsedText = string.gsub(parsedText, "\\eventName", string.gsub(eventName, "%%", "%%%%"))
+    else
+        parsedText = string.gsub(parsedText, "\\eventName", "")
+    end
+
+    if not string.find(parsedText, "\\c%[") then
+        -- Fallback to simple printing
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.printf(parsedText, x + 1, y + 1, limit, alignment)
+        love.graphics.setColor(color)
+        love.graphics.printf(parsedText, x, y, limit, alignment)
+
+        love.graphics.setColor(r, g, b, a)
+        love.graphics.setFont(currentFont)
+        return
+    end
+
     local chunks = parseRichText(text, color, eventName)
     if #chunks == 0 then
-        love.graphics.pop()
+        love.graphics.setColor(r, g, b, a)
+        love.graphics.setFont(currentFont)
         return
     end
 
@@ -234,18 +255,20 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     end
 
     -- Draw shadow (1px down, 1px right)
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf(shadowChunks, x + 1, y + 1, limit, alignment)
     
     -- Draw text
-    love.graphics.printf(chunks, x, y, limit, alignment)
     love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf(chunks, x, y, limit, alignment)
     
-    love.graphics.pop()
+    love.graphics.setColor(r, g, b, a)
+    love.graphics.setFont(currentFont)
 end
 
 -- Draw HP/MP status gauge
 function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
-    love.graphics.push("all")
+    local r_old, g_old, b_old, a_old = love.graphics.getColor()
     
     love.graphics.setColor(0.1, 0.1, 0.1, 1)
     love.graphics.rectangle("fill", x, y, w, h)
@@ -265,9 +288,9 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
     end
     
     love.graphics.setColor(0.4, 0.4, 0.4, 1)
-    love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
+    love.graphics.rectangle("line", x, y, w, h)
     
-    love.graphics.pop()
+    love.graphics.setColor(r_old, g_old, b_old, a_old)
 end
 
 -- Draw icons from system/iconset.png
