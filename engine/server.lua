@@ -96,7 +96,8 @@ function server.update(dt)
                         sounds = getFileContents("data/sounds.json"),
                         terms = getFileContents("data/terms.json"),
                         themes = getFileContents("data/themes.json"),
-                        system = getFileContents("data/system.json")
+                        system = getFileContents("data/system.json"),
+                        commonEvents = getFileContents("data/commonEvents.json")
                     }
                     
                     local responseBody = json.encode(data)
@@ -144,6 +145,7 @@ function server.update(dt)
                             saveFile("data/maps.json", payload.maps)
                             saveFile("data/shops.json", payload.shops)
                             saveFile("data/system.json", payload.system)
+                            saveFile("data/commonEvents.json", payload.commonEvents)
                             
                             -- Reload loader caches
                             local loader = require("data.loader")

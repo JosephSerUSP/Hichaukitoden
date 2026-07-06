@@ -1,4 +1,13 @@
+local config = require("engine.config")
+
 local exploration = {}
+
+-- Dungeon-generation settings from data/system.json (with engine defaults)
+local function dungeonConf(key, default)
+    local d = config.dungeon
+    if d and d[key] ~= nil then return d[key] end
+    return default
+end
 
 -- Direction vectors
 local DIRS = {
@@ -13,7 +22,8 @@ local DIR_ORDER = { "N", "E", "S", "W" }
 function exploration.generateDungeon(mapData, seed)
     if seed then math.randomseed(seed) end
     
-    local width, height = 21, 21
+    local width = mapData.width or dungeonConf("genWidth", 21)
+    local height = mapData.height or dungeonConf("genHeight", 21)
     local grid = {}
     for y = 1, height do
         grid[y] = {}
@@ -23,11 +33,13 @@ function exploration.generateDungeon(mapData, seed)
     end
     
     local rooms = {}
-    local numRooms = math.random(4, 6)
-    
+    local numRooms = math.random(dungeonConf("genMinRooms", 4), dungeonConf("genMaxRooms", 6))
+    local minRoom = dungeonConf("genMinRoomSize", 3)
+    local maxRoom = dungeonConf("genMaxRoomSize", 5)
+
     for r = 1, numRooms do
-        local rw = math.random(3, 5)
-        local rh = math.random(3, 5)
+        local rw = math.random(minRoom, maxRoom)
+        local rh = math.random(minRoom, maxRoom)
         local rx = math.random(2, width - rw - 1)
         local ry = math.random(2, height - rh - 1)
         
@@ -85,8 +97,8 @@ function exploration.generateDungeon(mapData, seed)
         id = 99,
         x = exitX - 1,
         y = exitY - 1,
-        scriptId = 1, -- Stairs trigger descend script
-        sprite = "assets/sprites/NPC00.png",
+        scriptId = dungeonConf("exitScriptId", 1), -- Stairs trigger descend script
+        sprite = dungeonConf("exitSprite", "assets/sprites/NPC00.png"),
         trigger = "interact"
     })
     
@@ -201,89 +213,52 @@ function exploration.turnRight(session)
     session.playerDir = DIR_ORDER[idx]
 end
 
--- Move player
-function exploration.moveForward(session)
-    local dirInfo = DIRS[session.playerDir]
-    local targetX = session.playerX + dirInfo.dx
-    local targetY = session.playerY + dirInfo.dy
-    
+-- Attempts to move the player by a tile delta; drains MP outside safe maps
+local function tryMove(session, dx, dy)
+    local targetX = session.playerX + dx
+    local targetY = session.playerY + dy
+
     local row = session.mapGrid[targetY]
     if row and row[targetX] and row[targetX] ~= "#" then
         session.playerX = targetX
         session.playerY = targetY
         exploration.revealFog(session)
-        
-        -- Drains MP on move if not on a safe map
+
         if not session.currentMapData.safe then
-            session.mp = math.max(0, session.mp - 1)
+            session.mp = math.max(0, session.mp - dungeonConf("moveMpDrain", 1))
         end
-        
+
         return true -- Moved successfully
     end
     return false -- Blocked by wall
 end
 
+local function dirIndex(session)
+    for i, d in ipairs(DIR_ORDER) do
+        if d == session.playerDir then return i end
+    end
+    return 1
+end
+
+-- Move player
+function exploration.moveForward(session)
+    local dirInfo = DIRS[session.playerDir]
+    return tryMove(session, dirInfo.dx, dirInfo.dy)
+end
+
 function exploration.moveBackward(session)
     local dirInfo = DIRS[session.playerDir]
-    local targetX = session.playerX - dirInfo.dx
-    local targetY = session.playerY - dirInfo.dy
-    
-    local row = session.mapGrid[targetY]
-    if row and row[targetX] and row[targetX] ~= "#" then
-        session.playerX = targetX
-        session.playerY = targetY
-        exploration.revealFog(session)
-        
-        -- Drains MP on move if not on a safe map
-        if not session.currentMapData.safe then
-            session.mp = math.max(0, session.mp - 1)
-        end
-        
-        return true
-    end
-    return false
+    return tryMove(session, -dirInfo.dx, -dirInfo.dy)
 end
 
 function exploration.strafeLeft(session)
-    local idx = 1
-    for i, d in ipairs(DIR_ORDER) do
-        if d == session.playerDir then idx = i; break end
-    end
-    local leftDir = DIRS[DIR_ORDER[(idx - 2) % 4 + 1]]
-    local targetX = session.playerX + leftDir.dx
-    local targetY = session.playerY + leftDir.dy
-    local row = session.mapGrid[targetY]
-    if row and row[targetX] and row[targetX] ~= "#" then
-        session.playerX = targetX
-        session.playerY = targetY
-        exploration.revealFog(session)
-        if not session.currentMapData.safe then
-            session.mp = math.max(0, session.mp - 1)
-        end
-        return true
-    end
-    return false
+    local leftDir = DIRS[DIR_ORDER[(dirIndex(session) - 2) % 4 + 1]]
+    return tryMove(session, leftDir.dx, leftDir.dy)
 end
 
 function exploration.strafeRight(session)
-    local idx = 1
-    for i, d in ipairs(DIR_ORDER) do
-        if d == session.playerDir then idx = i; break end
-    end
-    local rightDir = DIRS[DIR_ORDER[idx % 4 + 1]]
-    local targetX = session.playerX + rightDir.dx
-    local targetY = session.playerY + rightDir.dy
-    local row = session.mapGrid[targetY]
-    if row and row[targetX] and row[targetX] ~= "#" then
-        session.playerX = targetX
-        session.playerY = targetY
-        exploration.revealFog(session)
-        if not session.currentMapData.safe then
-            session.mp = math.max(0, session.mp - 1)
-        end
-        return true
-    end
-    return false
+    local rightDir = DIRS[DIR_ORDER[dirIndex(session) % 4 + 1]]
+    return tryMove(session, rightDir.dx, rightDir.dy)
 end
 
 -- Checks what event tile is directly in front of the player

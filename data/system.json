@@ -2,6 +2,8 @@
   "ui": {
     "activeFont": "Silkscreen",
     "menuSlideDuration": 0.15,
+    "moveTransitionDuration": 0.15,
+    "inputCooldown": 0.3,
     "textPalette": [
       [
         1,
@@ -64,10 +66,39 @@
   "combat": {
     "baseFleeChance": 0.4,
     "goldLossOnFleeMin": 5,
-    "goldLossOnFleeMax": 15
+    "goldLossOnFleeMax": 15,
+    "encounterChance": 0.1,
+    "minEnemies": 1,
+    "maxEnemies": 3,
+    "victoryGoldMin": 10,
+    "victoryGoldMax": 30,
+    "victoryExp": 5,
+    "baseSpeed": 10,
+    "speedPerLevel": 0.5,
+    "regenRate": 0.1,
+    "poisonRate": 0.1,
+    "mpExhaustionDamage": 1
+  },
+  "dungeon": {
+    "maxFloor": 5,
+    "moveMpDrain": 1,
+    "defaultLoot": "hp_tonic",
+    "genWidth": 21,
+    "genHeight": 21,
+    "genMinRooms": 4,
+    "genMaxRooms": 6,
+    "genMinRoomSize": 3,
+    "genMaxRoomSize": 5,
+    "exitSprite": "assets/sprites/NPC00.png",
+    "exitScriptId": 1
   },
   "summoner": {
-    "startMp": 820
+    "startMp": 820,
+    "spells": [
+      { "id": "soothingMote", "mp": 5 },
+      { "id": "divineFavor", "mp": 8 },
+      { "id": "holySmite", "mp": 15 }
+    ]
   },
   "spawn": {
     "x": 11,

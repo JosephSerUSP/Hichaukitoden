@@ -889,6 +889,14 @@
                            <label>Encounter Steps:</label>
                            <input type="number" id="prop-map-enc-steps" class="win98-input" min="0" />
                         </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Encounter Rate (0-1, blank = system default):</label>
+                           <input type="number" id="prop-map-enc-rate" class="win98-input" min="0" max="1" step="0.01" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 6px;">
+                           <input type="checkbox" id="prop-map-safe" />
+                           <label for="prop-map-safe" style="font-size: 10px;">Safe Map (no encounters, no MP drain)</label>
+                        </div>
                     </fieldset>
                     
                     <fieldset style="flex: 1; display: flex; flex-direction: column;">
@@ -1298,17 +1306,6 @@
             container.appendChild(rootNode);
         }
 
-        function loadActiveMap() {
-            renderGridCells();
-            document.querySelectorAll('.map-tree-item').forEach(el => {
-                if (parseInt(el.dataset.idx) === currentMapIndex) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-        }
-
         const TILE_SIZE = 24;
         let mapCanvas = null;
         let ctx = null;
@@ -1616,7 +1613,9 @@
             document.getElementById('prop-map-height').value = map.height || (map.layout ? map.layout.length : 15);
             document.getElementById('prop-map-bgm').value = map.bgm || '';
             document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
-            
+            document.getElementById('prop-map-enc-rate').value = (map.encounterRate !== undefined) ? map.encounterRate : '';
+            document.getElementById('prop-map-safe').checked = !!map.safe;
+
             renderEncountersList(map.encounters || []);
             document.getElementById('map-properties-modal').classList.add('active');
         }
@@ -1685,6 +1684,15 @@
             map.generation = newGen;
             map.bgm = newBgm;
             map.encounterSteps = newSteps;
+
+            const rateRaw = document.getElementById('prop-map-enc-rate').value;
+            if (rateRaw === '') {
+                delete map.encounterRate;
+            } else {
+                map.encounterRate = Math.min(1, Math.max(0, parseFloat(rateRaw) || 0));
+            }
+            map.safe = document.getElementById('prop-map-safe').checked;
+            if (!map.safe) delete map.safe;
             
             if (map.layout) {
                 const currentH = map.layout.length;
@@ -2182,8 +2190,6 @@
             if (activeCmdCallback) activeCmdCallback(cmd);
         }
 
-        // --- SYSTEM CONFIG ---
-        function initSystemTab() {}
         function initEventModalTemplates() {}
 
         // --- DATABASE MODAL LOGIC ---
@@ -2503,7 +2509,8 @@
                 const battleConfig = {
                     physics: dbPayload.system.physics || {},
                     battle_screen: dbPayload.system.battle_screen || {},
-                    combat: dbPayload.system.combat || {}
+                    combat: dbPayload.system.combat || {},
+                    dungeon: dbPayload.system.dungeon || {}
                 };
                 buildRecursiveForm(formCol, battleConfig, [], dbPayload.system);
                 buildBattleScreenPreview(previewCol);
@@ -2577,7 +2584,38 @@
 
                         group.appendChild(select);
                         container.appendChild(group);
-                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                    } else if (Array.isArray(value)) {
+                        const group = document.createElement('div');
+                        group.className = 'form-group';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = key + ' (JSON array)';
+                        group.appendChild(lbl);
+
+                        const area = document.createElement('textarea');
+                        area.className = 'form-control inset-bevel';
+                        area.rows = Math.min(6, Math.max(2, value.length + 1));
+                        area.style.fontFamily = 'monospace';
+                        area.value = JSON.stringify(value);
+                        area.onchange = () => {
+                            try {
+                                const parsed = JSON.parse(area.value);
+                                if (!Array.isArray(parsed)) throw new Error('not an array');
+                                let target = targetRoot;
+                                for (let i = 0; i < currentPath.length - 1; i++) {
+                                    if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                    target = target[currentPath[i]];
+                                }
+                                target[key] = parsed;
+                                area.style.background = '';
+                                setDirty(true);
+                            } catch (e) {
+                                area.style.background = '#ffcccc';
+                            }
+                        };
+
+                        group.appendChild(area);
+                        container.appendChild(group);
+                    } else if (typeof value === 'object' && value !== null) {
                         // Create collapsible section header
                         const sectionWrapper = document.createElement('div');
                         sectionWrapper.style.marginBottom = '10px';

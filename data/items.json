@@ -53,7 +53,8 @@
         "type": "xp",
         "value": 50
       }
-    ]
+    ],
+    "targetScope": "party"
   },
   {
     "id": "silver_blade",

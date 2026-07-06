@@ -59,6 +59,14 @@ local battleActiveMemberIndex = 1
 local battleCollectedActions = {}
 
 local server = require("engine.server")
+local config = require("engine.config")
+
+-- Config accessor with fallback for missing keys
+local function conf(group, key, default)
+    local g = config[group]
+    if g and g[key] ~= nil then return g[key] end
+    return default
+end
 
 function love.load(arg)
     print("--------------------------------------------------")
@@ -121,7 +129,7 @@ function love.update(dt)
                 menuSubScene = renderer.closingTargetSubScene
             end
             renderer.resetMenuTimer()
-            inputCooldown = 0.30
+            inputCooldown = conf("ui", "inputCooldown", 0.30)
         end
     end
 end
@@ -174,12 +182,39 @@ function love.draw()
 end
 
 local handleDialogueAction -- forward declaration
+local triggerBattle -- forward declaration
+local rebuildBattleLivingMembers -- forward declaration
 
 local function isSafeMap()
     if activeSession and activeSession.currentMapData then
         return activeSession.currentMapData.safe == true
     end
     return true
+end
+
+-- Fully restores HP/MP and revives the whole party
+local function recoverParty()
+    activeSession.mp = activeSession.maxMp
+    for _, c in ipairs(activeSession.party) do
+        c.hp = c:getMaxHp(activeSession)
+        c:removeState("dead")
+    end
+    activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
+    activeSession.summoner:removeState("dead")
+end
+
+-- Applies an item's data-defined effects (from items.json) to a party member
+local function applyItemToTarget(item, target)
+    for _, eff in ipairs(item.effects or {}) do
+        if eff.type == "hp" then
+            target.hp = math.min(target:getMaxHp(activeSession), target.hp + eff.value)
+        elseif eff.type == "maxHp" then
+            target.paramPlus.maxHp = target.paramPlus.maxHp + eff.value
+            target.hp = math.min(target:getMaxHp(activeSession), target.hp + eff.value)
+        elseif eff.type == "xp" then
+            target:gainExp(eff.value, activeSession)
+        end
+    end
 end
 
 local function openShop(shopId)
@@ -236,16 +271,17 @@ handleDialogueAction = function()
             activeWalker:goToNode(node.completeNode or node.next)
             handleDialogueAction()
         elseif node.action == "DESCEND_FLOOR" then
+            local maxFloor = conf("dungeon", "maxFloor", 5)
             activeSession.dungeonFloor = activeSession.dungeonFloor + 1
-            if activeSession.dungeonFloor > 5 then
-                activeSession.dungeonFloor = 5
+            if activeSession.dungeonFloor > maxFloor then
+                activeSession.dungeonFloor = maxFloor
             end
             exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
             currentScene = "map"
         elseif node.action == "START_BATTLE" then
             triggerBattle()
         elseif node.action == "GIVE_ITEM_ACTION" then
-            local loot = "hp_tonic"
+            local loot = conf("dungeon", "defaultLoot", "hp_tonic")
             if activeSession.currentMapData.treasures and #activeSession.currentMapData.treasures > 0 then
                 loot = activeSession.currentMapData.treasures[math.random(#activeSession.currentMapData.treasures)]
             end
@@ -318,14 +354,8 @@ handleDialogueAction = function()
                 handleDialogueAction()
             end
         elseif node.action == "RECOVER_PARTY_ACTION" then
-            activeSession.mp = activeSession.maxMp
-            for _, c in ipairs(activeSession.party) do
-                c.hp = c:getMaxHp(activeSession)
-                c:removeState("dead")
-            end
-            activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
-            activeSession.summoner:removeState("dead")
-            
+            recoverParty()
+
             node.type = "TEXT"
             node.content = "Your party has been fully recovered!"
             node.action = nil
@@ -368,14 +398,8 @@ local function runEventCommands(eventTitle, commands)
                 next = nextNode
             }
         elseif cmd.type == "RECOVER_PARTY" then
-            activeSession.mp = activeSession.maxMp
-            for _, c in ipairs(activeSession.party) do
-                c.hp = c:getMaxHp(activeSession)
-                c:removeState("dead")
-            end
-            activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
-            activeSession.summoner:removeState("dead")
-            
+            recoverParty()
+
             nodes[nodeName] = {
                 type = "TEXT",
                 content = "Your party has been fully recovered!",
@@ -462,13 +486,27 @@ local function triggerDialogue(graphName)
     end
 end
 
-local function triggerBattle()
+-- Rebuilds the list of party members that still get to act this round
+rebuildBattleLivingMembers = function()
+    battleLivingMembers = {}
+    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
+    for i = 1, 4 do
+        local c = activeSession.party[i]
+        if c and not c:isDead() then
+            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
+        end
+    end
+    battleActiveMemberIndex = 1
+    battleCollectedActions = {}
+end
+
+triggerBattle = function()
     local mapData = activeSession.currentMapData
     local possibleEnemies = mapData.encounters
     if not possibleEnemies or #possibleEnemies == 0 then return end
     
     local enemyList = {}
-    local numEnemies = math.random(1, 3)
+    local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
     
     for i = 1, numEnemies do
         local totalWeight = 0
@@ -502,17 +540,8 @@ local function triggerBattle()
     battleSelectedIndex = 1
     battleSpellSelect = false
     
-    battleLivingMembers = {}
-    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
-    for i = 1, 4 do
-        local c = activeSession.party[i]
-        if c and not c:isDead() then
-            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
-        end
-    end
-    battleActiveMemberIndex = 1
-    battleCollectedActions = {}
-    
+    rebuildBattleLivingMembers()
+
     currentScene = "battle"
     renderer.initBattleAnims(enemyList)
 end
@@ -544,17 +573,8 @@ triggerTestBattle = function()
     battleSelectedIndex = 1
     battleSpellSelect = false
     
-    battleLivingMembers = {}
-    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
-    for i = 1, 4 do
-        local c = activeSession.party[i]
-        if c and not c:isDead() then
-            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
-        end
-    end
-    battleActiveMemberIndex = 1
-    battleCollectedActions = {}
-    
+    rebuildBattleLivingMembers()
+
     currentScene = "battle"
     renderer.initBattleAnims(enemyList)
 end
@@ -699,6 +719,31 @@ local function advanceBattleLog()
     end
 end
 
+-- Records the chosen action for the active member; resolves the round once everyone has acted
+local function commitBattleAction(memberIndex, action)
+    battleCollectedActions[memberIndex] = action
+    battleActiveMemberIndex = battleActiveMemberIndex + 1
+    battleSelectedIndex = 1
+    battleSpellSelect = false
+
+    if battleActiveMemberIndex > #battleLivingMembers then
+        battleEventsQueue = resolveBattleRound()
+        battleEventQueueIndex = 1
+        battleCombatLog = {}
+        advanceBattleLog()
+        battleCombatState = "log"
+    end
+end
+
+-- Interrupts input to show a one-line battle message
+local function showBattleMessage(text)
+    battleEventsQueue = { { type = "text", text = text } }
+    battleEventQueueIndex = 1
+    battleCombatLog = {}
+    advanceBattleLog()
+    battleCombatState = "log"
+end
+
 -- Action handling for key presses
 local function handleKeyPressed(key)
     if renderer.closing then return end
@@ -756,13 +801,7 @@ local function handleKeyPressed(key)
             elseif townSelectedIdx == 3 then
                 triggerDialogue("npc_alicia")
             elseif townSelectedIdx == 4 then
-                activeSession.mp = activeSession.maxMp
-                for _, actor in ipairs(activeSession.party) do
-                    actor.hp = actor:getMaxHp(activeSession)
-                    actor:removeState("dead")
-                end
-                activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
-                activeSession.summoner:removeState("dead")
+                recoverParty()
                 triggerDialogue("npc_drunkard")
             end
         end
@@ -772,33 +811,33 @@ local function handleKeyPressed(key)
         if key == "up" or key == "w" then
             moved = exploration.moveForward(activeSession)
             if moved then
-                activeSession.transitionTimer = 0.15
+                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
                 activeSession.transitionDir = "forward"
             end
         elseif key == "down" or key == "s" then
             moved = exploration.moveBackward(activeSession)
             if moved then
-                activeSession.transitionTimer = 0.15
+                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
                 activeSession.transitionDir = "backward"
             end
         elseif key == "left" or key == "a" then
             exploration.turnLeft(activeSession)
-            activeSession.transitionTimer = 0.15
+            activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
             activeSession.transitionDir = "turn_left"
         elseif key == "right" or key == "d" then
             exploration.turnRight(activeSession)
-            activeSession.transitionTimer = 0.15
+            activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
             activeSession.transitionDir = "turn_right"
         elseif key == "q" then
             moved = exploration.strafeLeft(activeSession)
             if moved then
-                activeSession.transitionTimer = 0.15
+                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
                 activeSession.transitionDir = "strafe_left"
             end
         elseif key == "e" then
             moved = exploration.strafeRight(activeSession)
             if moved then
-                activeSession.transitionTimer = 0.15
+                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
                 activeSession.transitionDir = "strafe_right"
             end
         elseif key == "space" or key == "return" then
@@ -835,7 +874,9 @@ local function handleKeyPressed(key)
         if moved then
             local triggered = checkStepEvents()
             if not triggered and not isSafeMap() then
-                if math.random() < 0.10 then
+                local chance = activeSession.currentMapData.encounterRate
+                    or conf("combat", "encounterChance", 0.10)
+                if math.random() < chance then
                     triggerBattle()
                 end
             end
@@ -939,15 +980,15 @@ local function handleKeyPressed(key)
             elseif key == "space" or key == "return" then
                 local selectedEntry = items[menuSelectedSubIdx]
                 if selectedEntry then
-                    selectedItemIdToUse = selectedEntry.item.id
-                    if selectedItemIdToUse == "elixir_of_insight" then
+                    local item = selectedEntry.item
+                    if item.targetScope == "party" then
                         -- Instantly use on the whole party
                         for _, c in ipairs(activeSession.party) do
-                            c:gainExp(15, activeSession)
+                            applyItemToTarget(item, c)
                         end
-                        activeSession:addItem("elixir_of_insight", -1)
-                        selectedItemIdToUse = nil
+                        activeSession:addItem(item.id, -1)
                     else
+                        selectedItemIdToUse = item.id
                         menuSubScene = "use_target"
                         menuSelectedSubIdx = 1
                     end
@@ -975,16 +1016,10 @@ local function handleKeyPressed(key)
             elseif key == "space" or key == "return" then
                 local target = activeSession.party[menuSelectedSubIdx]
                 if target and selectedItemIdToUse then
-                    if selectedItemIdToUse == "hp_tonic" then
-                        target.hp = target:getMaxHp(activeSession)
-                        activeSession:addItem("hp_tonic", -1)
-                    elseif selectedItemIdToUse == "sigil_ink" then
-                        target.paramPlus.maxHp = target.paramPlus.maxHp + 2
-                        target.hp = math.min(target:getMaxHp(activeSession), target.hp + 2)
-                        activeSession:addItem("sigil_ink", -1)
-                    elseif selectedItemIdToUse == "whispered_lessons" then
-                        target:gainExp(6, activeSession)
-                        activeSession:addItem("whispered_lessons", -1)
+                    local item = loader.getItem(selectedItemIdToUse)
+                    if item then
+                        applyItemToTarget(item, target)
+                        activeSession:addItem(item.id, -1)
                     end
                     menuSubScene = "items_list"
                     menuSelectedSubIdx = 1
@@ -1115,7 +1150,11 @@ local function handleKeyPressed(key)
                 -- Get skills/spells list
                 local options = {}
                 if isSummoner then
-                    options = { {id = "soothingMote", mp = 5}, {id = "divineFavor", mp = 8}, {id = "holySmite", mp = 15} }
+                    options = conf("summoner", "spells", {
+                        { id = "soothingMote", mp = 5 },
+                        { id = "divineFavor", mp = 8 },
+                        { id = "holySmite", mp = 15 }
+                    })
                 else
                     for _, skId in ipairs(memberInfo.actor.skills or {}) do
                         local sk = loader.getSkill(skId)
@@ -1161,33 +1200,13 @@ local function handleKeyPressed(key)
                                 end
                             end
                             
-                            battleCollectedActions[memberInfo.index] = {
+                            commitBattleAction(memberInfo.index, {
                                 type = isSummoner and "spell" or "skill",
                                 id = choice.id,
                                 target = target
-                            }
-                            
-                            -- Move to next member
-                            battleActiveMemberIndex = battleActiveMemberIndex + 1
-                            battleSelectedIndex = 1
-                            battleSpellSelect = false
-                            
-                            -- If all actions collected, resolve round!
-                            if battleActiveMemberIndex > #battleLivingMembers then
-                                local events = resolveBattleRound()
-                                battleEventsQueue = events
-                                battleEventQueueIndex = 1
-                                battleCombatLog = {}
-                                advanceBattleLog()
-                                battleCombatState = "log"
-                            end
+                            })
                         else
-                            -- Not enough MP error popup/log
-                            battleEventsQueue = { { type = "text", text = "Not enough MP!" } }
-                            battleEventQueueIndex = 1
-                            battleCombatLog = {}
-                            advanceBattleLog()
-                            battleCombatState = "log"
+                            showBattleMessage("Not enough MP!")
                         end
                     end
                 end
@@ -1205,22 +1224,10 @@ local function handleKeyPressed(key)
                             if not e:isDead() then target = e break end
                         end
                         
-                        battleCollectedActions[memberInfo.index] = {
+                        commitBattleAction(memberInfo.index, {
                             type = "attack",
                             target = target
-                        }
-                        
-                        battleActiveMemberIndex = battleActiveMemberIndex + 1
-                        battleSelectedIndex = 1
-                        
-                        if battleActiveMemberIndex > #battleLivingMembers then
-                            local events = resolveBattleRound()
-                            battleEventsQueue = events
-                            battleEventQueueIndex = 1
-                            battleCombatLog = {}
-                            advanceBattleLog()
-                            battleCombatState = "log"
-                        end
+                        })
                     elseif battleSelectedIndex == 2 then
                         -- Spell/Skill selection submenu
                         battleSpellSelect = true
@@ -1228,7 +1235,9 @@ local function handleKeyPressed(key)
                     elseif battleSelectedIndex == 3 then
                         -- Item (Summoner) or Defend (Monster)
                         if isSummoner then
-                            if activeSession:hasItem("hp_tonic", 1) then
+                            local battleItemId = conf("combat", "battleItem", "hp_tonic")
+                            local battleItem = loader.getItem(battleItemId)
+                            if battleItem and activeSession:hasItem(battleItemId, 1) then
                                 local target = activeSession.summoner
                                 local lowestHp = 9999
                                 for _, c in ipairs(activeSession.party) do
@@ -1237,64 +1246,22 @@ local function handleKeyPressed(key)
                                         target = c
                                     end
                                 end
-                                
-                                battleCollectedActions[memberInfo.index] = {
+
+                                commitBattleAction(memberInfo.index, {
                                     type = "item",
-                                    id = "hp_tonic",
+                                    id = battleItemId,
                                     target = target
-                                }
-                                
-                                battleActiveMemberIndex = battleActiveMemberIndex + 1
-                                battleSelectedIndex = 1
-                                
-                                if battleActiveMemberIndex > #battleLivingMembers then
-                                    local events = resolveBattleRound()
-                                    battleEventsQueue = events
-                                    battleEventQueueIndex = 1
-                                    battleCombatLog = {}
-                                    advanceBattleLog()
-                                    battleCombatState = "log"
-                                end
+                                })
                             else
-                                battleEventsQueue = { { type = "text", text = "No HP Tonics left!" } }
-                                battleEventQueueIndex = 1
-                                battleCombatLog = {}
-                                advanceBattleLog()
-                                battleCombatState = "log"
+                                showBattleMessage("No " .. (battleItem and battleItem.name or battleItemId) .. "s left!")
                             end
                         else
                             -- Monster Defend action
-                            battleCollectedActions[memberInfo.index] = {
-                                type = "defend"
-                            }
-                            battleActiveMemberIndex = battleActiveMemberIndex + 1
-                            battleSelectedIndex = 1
-                            
-                            if battleActiveMemberIndex > #battleLivingMembers then
-                                local events = resolveBattleRound()
-                                battleEventsQueue = events
-                                battleEventQueueIndex = 1
-                                battleCombatLog = {}
-                                advanceBattleLog()
-                                battleCombatState = "log"
-                            end
+                            commitBattleAction(memberInfo.index, { type = "defend" })
                         end
                     elseif battleSelectedIndex == 4 then
                         -- Flee
-                        battleCollectedActions[memberInfo.index] = {
-                            type = "flee"
-                        }
-                        battleActiveMemberIndex = battleActiveMemberIndex + 1
-                        battleSelectedIndex = 1
-                        
-                        if battleActiveMemberIndex > #battleLivingMembers then
-                            local events = resolveBattleRound()
-                            battleEventsQueue = events
-                            battleEventQueueIndex = 1
-                            battleCombatLog = {}
-                            advanceBattleLog()
-                            battleCombatState = "log"
-                        end
+                        commitBattleAction(memberInfo.index, { type = "flee" })
                     end
                 end
             end
@@ -1305,13 +1272,13 @@ local function handleKeyPressed(key)
                     advanceBattleLog()
                 else
                     if activeBattle:isVictory() then
-                        local goldGain = math.random(10, 30)
+                        local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
                         activeSession.gold = activeSession.gold + goldGain
-                        
+
                         -- Apply passive mending / trick heal if present on survivors
                         for _, c in ipairs(activeSession.party) do
                             if not c:isDead() then
-                                c:gainExp(5, activeSession)
+                                c:gainExp(conf("combat", "victoryExp", 5), activeSession)
                                 local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", activeSession)
                                 if regenVal > 0 then
                                     c.hp = math.min(c:getMaxHp(activeSession), c.hp + regenVal)
@@ -1334,17 +1301,7 @@ local function handleKeyPressed(key)
                             currentScene = "map"
                         else
                             -- Rebuild living members list for the next round
-                            battleLivingMembers = {}
-                            table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
-                            for i = 1, 4 do
-                                local c = activeSession.party[i]
-                                if c and not c:isDead() then
-                                    table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
-                                end
-                            end
-                            
-                            battleActiveMemberIndex = 1
-                            battleCollectedActions = {}
+                            rebuildBattleLivingMembers()
                             battleCombatState = "input"
                             battleSelectedIndex = 1
                             battleSpellSelect = false

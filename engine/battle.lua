@@ -169,7 +169,7 @@ function Battle:resolveRound(summonerAction)
             end
             
             if target then
-                local baseSpeed = 10 + ally.level * 0.5
+                local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + ally.level * (config.combat and config.combat.speedPerLevel or 0.5)
                 local actSpeed = skill.speed or 0
                 local totalSpeed = baseSpeed + actSpeed
                 table.insert(queue, {
@@ -187,7 +187,7 @@ function Battle:resolveRound(summonerAction)
         if not enemy:isDead() then
             local action = self:getAIAction(enemy)
             if action then
-                local baseSpeed = 10 + enemy.level * 0.5
+                local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + enemy.level * (config.combat and config.combat.speedPerLevel or 0.5)
                 local actSpeed = action.skill.speed or 0
                 local totalSpeed = baseSpeed + actSpeed
                 action.speed = totalSpeed
@@ -236,7 +236,7 @@ function Battle:resolveRound(summonerAction)
             for _, state in ipairs(battler.states) do
                 if state.id == "regen" then
                     local maxHp = traits.getParam(battler, "maxHp", self.session)
-                    local heal = math.floor(maxHp * 0.1)
+                    local heal = math.floor(maxHp * (config.combat and config.combat.regenRate or 0.1))
                     battler.hp = math.min(maxHp, battler.hp + heal)
                     table.insert(roundEvents, {
                         type = "heal",
@@ -244,7 +244,7 @@ function Battle:resolveRound(summonerAction)
                         value = heal
                     })
                 elseif state.id == "poison" then
-                    local dmg = math.floor(traits.getParam(battler, "maxHp", self.session) * 0.1)
+                    local dmg = math.floor(traits.getParam(battler, "maxHp", self.session) * (config.combat and config.combat.poisonRate or 0.1))
                     battler.hp = math.max(0, battler.hp - dmg)
                     table.insert(roundEvents, {
                         type = "damage",
@@ -298,11 +298,12 @@ function Battle:resolveRound(summonerAction)
             for i = 1, 4 do
                 local ally = self.allies[i]
                 if ally and not ally:isDead() then
-                    ally.hp = math.max(1, ally.hp - 1)
+                    local exhaustDmg = config.combat and config.combat.mpExhaustionDamage or 1
+                    ally.hp = math.max(1, ally.hp - exhaustDmg)
                     table.insert(roundEvents, {
                         type = "damage",
                         target = ally,
-                        value = 1
+                        value = exhaustDmg
                     })
                     table.insert(roundEvents, {
                         type = "text",

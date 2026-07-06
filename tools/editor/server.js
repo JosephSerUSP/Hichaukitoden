@@ -6,6 +6,8 @@ const { exec } = require('child_process');
 const PORT = 8080;
 const GAME_PORT = 8081;
 const PROJECT_DIR = path.resolve(__dirname, '../..');
+// Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
+const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
 
 const server = http.createServer((req, res) => {
     // Enable CORS
@@ -159,7 +161,7 @@ const server = http.createServer((req, res) => {
             }
         });
     } else if (req.method === 'POST' && req.url === '/play') {
-        const loveCmd = '"C:\\Program Files\\LOVE\\love.exe" .';
+        const loveCmd = `"${LOVE_EXE}" .`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
             if (err) {
                 console.error(`Failed to launch Love2D: ${err}`);
@@ -168,7 +170,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Game launched!' }));
     } else if (req.method === 'POST' && req.url === '/play-test-battle') {
-        const loveCmd = '"C:\\Program Files\\LOVE\\love.exe" . test-battle';
+        const loveCmd = `"${LOVE_EXE}" . test-battle`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
             if (err) {
                 console.error(`Failed to launch Love2D in test battle: ${err}`);
