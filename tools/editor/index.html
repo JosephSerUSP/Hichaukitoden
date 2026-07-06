@@ -2722,7 +2722,6 @@
             }
             
             if (activeDbTab === 'actors') {
-                createFormField(formPanel, 'Actor ID (Static)', item.id, null, 'text', true);
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(); });
                 createFormField(formPanel, 'Role', item.role || 'Spirit', val => { item.role = val; });
                 
@@ -2737,7 +2736,6 @@
                 });
                 
             } else if (activeDbTab === 'items') {
-                createFormField(formPanel, 'Item ID (Static)', item.id, null, 'text', true);
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(); });
                 createFormField(formPanel, 'Type', item.type || 'consumable', val => { item.type = val; });
                 createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
@@ -2750,7 +2748,6 @@
                 
             } else if (activeDbTab === 'shops') {
                 const shopData = dbPayload.shops[item.id];
-                createFormField(formPanel, 'Shop ID (Static)', item.id, null, 'text', true);
                 createFormField(formPanel, 'Shop Name', shopData.name || '', val => {
                     shopData.name = val;
                     initDatabaseEditor();
