@@ -151,23 +151,104 @@ function ui.drawPanel(x, y, w, h, title)
 end
 
 -- Draw text with drop shadow (crisp monochrome)
-function ui.drawString(text, x, y, color, alignment, limit)
+
+function ui.parseRichText(text, baseColor, context)
+    if type(text) ~= "string" then
+        return text
+    end
+
+    -- Replace \eventName
+    if context and context.eventName then
+        text = text:gsub("\\eventName", function() return context.eventName end)
+    end
+
+    if not text:find("\\c%[%d+%]") then
+        return text
+    end
+
+    local parsed = {}
+    local currentColor = baseColor
+
+    local palette = {
+        [0] = {1, 1, 1, 1},
+        [1] = {0.2, 0.6, 1, 1},
+        [2] = {1, 0.2, 0.2, 1},
+        [3] = {0.2, 1, 0.2, 1},
+        [4] = {1, 1, 0.2, 1},
+        [5] = {1, 0.6, 0.8, 1},
+        [6] = {1, 1, 0.6, 1},
+        [7] = {0.6, 0.6, 0.6, 1},
+    }
+
+    if config.ui and config.ui.textPalette then
+        for k, v in pairs(config.ui.textPalette) do
+            palette[tonumber(k)] = v
+        end
+    end
+
+    local lastEnd = 1
+    while true do
+        local s, e, cIdxStr = text:find("\\c%[(%d+)%]", lastEnd)
+        if not s then
+            local remainder = text:sub(lastEnd)
+            if remainder ~= "" then
+                table.insert(parsed, currentColor)
+                table.insert(parsed, remainder)
+            end
+            break
+        end
+
+        if s > lastEnd then
+            table.insert(parsed, currentColor)
+            table.insert(parsed, text:sub(lastEnd, s - 1))
+        end
+
+        local cIdx = tonumber(cIdxStr)
+        if palette[cIdx] then
+            currentColor = palette[cIdx]
+        else
+            currentColor = baseColor
+        end
+
+        lastEnd = e + 1
+    end
+
+    return parsed
+end
+
+function ui.drawString(text, x, y, color, alignment, limit, context)
     love.graphics.push("all")
     
     color = color or {1, 1, 1, 1}
     alignment = alignment or "left"
     limit = limit or 256
     
-    -- Set active font explicitly to ensure properties apply
     if mainFont then love.graphics.setFont(mainFont) end
     
-    -- Draw shadow (1px down, 1px right)
-    love.graphics.setColor(0, 0, 0, 0.8)
-    love.graphics.printf(text, x + 1, y + 1, limit, alignment)
+    local parsed = ui.parseRichText(text, color, context)
     
-    -- Draw text
-    love.graphics.setColor(color)
-    love.graphics.printf(text, x, y, limit, alignment)
+    if type(parsed) == "table" then
+        -- Draw shadow first
+        local shadowColor = {0, 0, 0, 0.8}
+        local shadowParsed = {}
+        for i, v in ipairs(parsed) do
+            if type(v) == "table" then
+                table.insert(shadowParsed, shadowColor)
+            else
+                table.insert(shadowParsed, v)
+            end
+        end
+        love.graphics.printf(shadowParsed, x + 1, y + 1, limit, alignment)
+
+        -- Draw colored text
+        love.graphics.printf(parsed, x, y, limit, alignment)
+    else
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.printf(parsed, x + 1, y + 1, limit, alignment)
+
+        love.graphics.setColor(color)
+        love.graphics.printf(parsed, x, y, limit, alignment)
+    end
     
     love.graphics.pop()
 end
