@@ -1,50 +1,69 @@
 {
-  "Light": {
-    "strong": [
-      "Dark"
+  "White": {
+    "name": "White",
+    "icon": 14,
+    "strongAgainst": [
+      "Black",
+      "Shadow"
     ],
-    "weak": [
-      "Bone"
+    "weakAgainst": [
+      "Green"
     ]
   },
-  "Dark": {
-    "strong": [
-      "Light"
+  "Black": {
+    "name": "Black",
+    "icon": 15,
+    "strongAgainst": [
+      "White"
     ],
-    "weak": [
-      "Light"
+    "weakAgainst": [
+      "Red"
     ]
   },
-  "Bone": {
-    "strong": [
-      "Light"
+  "Green": {
+    "name": "Green",
+    "icon": 12,
+    "strongAgainst": [
+      "Blue"
     ],
-    "weak": [
-      "Earth"
+    "weakAgainst": [
+      "Red"
     ]
   },
-  "Wind": {
-    "strong": [
-      "Water"
+  "Red": {
+    "name": "Red",
+    "icon": 11,
+    "strongAgainst": [
+      "Green"
     ],
-    "weak": [
-      "Earth"
+    "weakAgainst": [
+      "Blue"
     ]
   },
-  "Earth": {
-    "strong": [
-      "Wind"
+  "Blue": {
+    "name": "Blue",
+    "icon": 13,
+    "strongAgainst": [
+      "Red"
     ],
-    "weak": [
-      "Water"
+    "weakAgainst": [
+      "Green"
     ]
   },
-  "Water": {
-    "strong": [
-      "Earth"
+  "Shadow": {
+    "name": "Shadow",
+    "icon": 16,
+    "strongAgainst": [
+      "White"
     ],
-    "weak": [
-      "Wind"
+    "weakAgainst": [
+      "White"
     ]
+  },
+  "Yellow": {
+    "name": "Yellow",
+    "icon": 17,
+    "strongAgainst": [],
+    "weakAgainst": []
   }
 }

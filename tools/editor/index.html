@@ -450,6 +450,38 @@
             flex: 1;
         }
 
+        /* Compact label:input rows for short scalar fields */
+        .form-group.field-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .form-group.field-inline label {
+            flex: 0 0 170px;
+            margin-bottom: 0;
+        }
+
+        .form-group.field-inline .form-control {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-group.field-inline input[type="number"].form-control {
+            flex: 0 1 90px;
+        }
+
+        .form-row .form-group.field-inline label {
+            flex: 0 0 auto;
+        }
+
+        .field-help {
+            font-size: 9px;
+            color: var(--win-dark-shadow);
+            margin-left: 4px;
+        }
+
         /* --- STATUS BAR --- */
         .status-bar {
             background-color: var(--win-gray);
@@ -606,6 +638,9 @@
                     <div class="dropdown-item" onclick="openDatabaseModal()">
                         <span class="icon-sprite icon-database"></span> Database Manager
                     </div>
+                    <div class="dropdown-item" onclick="openEngineModal()">
+                        ⚙️ Engine Editor
+                    </div>
                     <div class="dropdown-item" onclick="testPlay()">
                         <span class="icon-sprite icon-play"></span> Test Play
                     </div>
@@ -632,6 +667,7 @@
             <button class="win98-btn" onclick="openDatabaseModal()" title="Database Manager">
                 <span class="icon-sprite icon-database"></span>
             </button>
+            <button class="win98-btn" onclick="openEngineModal()" title="Engine Editor">⚙️</button>
             <button class="win98-btn" style="color: #005500;" onclick="testPlay()" title="Test Play (F5)">
                 <span class="icon-sprite icon-play"></span>
             </button>
@@ -706,11 +742,12 @@
                     <button id="db-tab-skills" class="db-tab-btn" onclick="setDbTab('skills')">Skills</button>
                     <button id="db-tab-passives" class="db-tab-btn" onclick="setDbTab('passives')">Passives</button>
                     <button id="db-tab-states" class="db-tab-btn" onclick="setDbTab('states')">States</button>
+                    <button id="db-tab-elements" class="db-tab-btn" onclick="setDbTab('elements')">Elements</button>
+                    <button id="db-tab-roles" class="db-tab-btn" onclick="setDbTab('roles')">Roles</button>
                     <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-commonEvents" class="db-tab-btn" onclick="setDbTab('commonEvents')">Common Events</button>
                     <button id="db-tab-terms" class="db-tab-btn" onclick="setDbTab('terms')">Terms</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
-                    <button id="db-tab-battle" class="db-tab-btn" onclick="setDbTab('battle')">Battle Screen</button>
                 </div>
 
                 <!-- Database items list (middle column) -->
@@ -732,6 +769,36 @@
                  <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal(true)">OK</button>
                 <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ENGINE EDITOR MODAL --- -->
+    <div id="engine-modal" class="modal-overlay">
+        <div class="window outset-bevel db-modal-window">
+            <div class="title-bar">
+                <div class="title-bar-text">⚙️ Engine</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeEngineModal()">×</button>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; overflow: hidden; padding: 6px; gap: 6px;">
+                <div class="db-sidebar-tabs inset-panel" id="engine-tabs" style="width: 130px; flex-shrink: 0;">
+                    <button id="engine-tab-battleflow" class="db-tab-btn active" onclick="setEngineTab('battleflow')">Battle Flow</button>
+                    <button id="engine-tab-progression" class="db-tab-btn" onclick="setEngineTab('progression')">Progression</button>
+                    <button id="engine-tab-dungeon" class="db-tab-btn" onclick="setEngineTab('dungeon')">Map &amp; Dungeon</button>
+                    <button id="engine-tab-rendering" class="db-tab-btn" onclick="setEngineTab('rendering')">Rendering</button>
+                    <button id="engine-tab-effectTypes" class="db-tab-btn" onclick="setEngineTab('effectTypes')">Effect Types</button>
+                    <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
+                </div>
+                <div id="engine-form-panel" class="db-form-panel inset-panel" style="flex: 1; overflow-y: auto;"></div>
+            </div>
+
+            <div class="dialog-footer">
+                <button class="win98-btn win98-btn-success" onclick="saveData(); closeEngineModal(true)">OK</button>
+                <button class="win98-btn" onclick="saveData()">Apply</button>
+                <button class="win98-btn" onclick="closeEngineModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -809,6 +876,19 @@
                             </select>
                         </fieldset>
 
+                        <!-- Minimap Marker (overrides linked common event default) -->
+                        <fieldset style="padding: 6px;">
+                            <legend>Minimap Marker</legend>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 10px;">
+                                <input type="checkbox" id="event-prop-color-enabled" />
+                                <label for="event-prop-color-enabled">Custom color</label>
+                                <input type="color" id="event-prop-color" style="width: 40px;" disabled />
+                            </div>
+                            <p style="font-size: 9px; color: var(--win-dark-shadow); margin: 4px 0 0;">
+                                Unchecked: uses the linked common event's default color.
+                            </p>
+                        </fieldset>
+
                         <!-- Logic Configuration -->
                         <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
                             <legend>Run Action Logic</legend>
@@ -823,6 +903,10 @@
                                 <input type="radio" id="event-logic-custom" name="event-logic-type" value="custom" onchange="toggleEventLogicType()" />
                                 <label for="event-logic-custom" style="font-size: 10px; font-weight: bold;">Custom Commands List</label>
                             </div>
+                            <p style="font-size: 9px; color: var(--win-dark-shadow); margin: 4px 0 0;">
+                                Link: this event <b>is</b> the common event — edits to it propagate here.
+                                To run one mid-script instead, add a "Call Common Event" command to a custom list.
+                            </p>
                         </fieldset>
                     </div>
 
@@ -2015,6 +2099,28 @@
 
         let eventModalDirty = false;
 
+        // rgb01 array <-> #rrggbb hex for <input type=color>
+        function rgb01ToHex(c) {
+            return '#' + (c || [0.4, 0.6, 1]).slice(0, 3)
+                .map(v => Math.round((v || 0) * 255).toString(16).padStart(2, '0')).join('');
+        }
+        function hexToRgb01(hex) {
+            return [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) / 255 * 100) / 100);
+        }
+
+        function setEventColorFields(minimapColor) {
+            const chk = document.getElementById('event-prop-color-enabled');
+            const pick = document.getElementById('event-prop-color');
+            chk.checked = Array.isArray(minimapColor);
+            pick.disabled = !chk.checked;
+            pick.value = rgb01ToHex(minimapColor);
+        }
+        document.getElementById('event-prop-color-enabled').onchange = () => {
+            document.getElementById('event-prop-color').disabled =
+                !document.getElementById('event-prop-color-enabled').checked;
+            eventModalDirty = true;
+        };
+
         function openEventModal(x, y) {
             selectedEventX = x;
             selectedEventY = y;
@@ -2047,6 +2153,7 @@
                 document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
                 
                 updateEventGraphicPreview(eventData.sprite);
+                setEventColorFields(eventData.minimapColor);
                 activeEventLocalScript = eventData.script ? [...eventData.script] : [];
                 
                 if (eventData.scriptId) {
@@ -2068,6 +2175,7 @@
                 document.getElementById('event-prop-spawn').value = 'Fixed';
                 
                 updateEventGraphicPreview('');
+                setEventColorFields(null);
                 activeEventLocalScript = [];
                 document.getElementById('event-logic-common').checked = true;
             }
@@ -2141,6 +2249,11 @@
             eventData.transparent = document.getElementById('event-prop-transparent').checked;
             eventData.priority = document.getElementById('event-prop-priority').value;
             eventData.spawn = document.getElementById('event-prop-spawn').value;
+            if (document.getElementById('event-prop-color-enabled').checked) {
+                eventData.minimapColor = hexToRgb01(document.getElementById('event-prop-color').value);
+            } else {
+                delete eventData.minimapColor;
+            }
             
             const isCommon = document.getElementById('event-logic-common').checked;
             if (isCommon) {
@@ -2608,7 +2721,7 @@
             
             // Hide middle column on tabs that don't need lists/IDs
             const itemsCol = document.getElementById('db-items-column');
-            if (tabName === 'system' || tabName === 'battle' || tabName === 'terms') {
+            if (tabName === 'system' || tabName === 'terms') {
                 itemsCol.style.display = 'none';
             } else {
                 itemsCol.style.display = 'flex';
@@ -2637,8 +2750,9 @@
                     .map(k => ({ id: k, name: dbPayload.commonEvents[k].name || `Event ${k}` }))
                     .sort((a, b) => parseInt(a.id) - parseInt(b.id));
             }
-            else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states') {
-                // String-keyed collections (skills.json / passives.json / states.json)
+            else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
+                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
+                // String-keyed collections (skills/passives/states/elements/roles)
                 if (!dbPayload[activeDbTab]) dbPayload[activeDbTab] = {};
                 items = Object.keys(dbPayload[activeDbTab])
                     .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }))
@@ -2646,7 +2760,6 @@
             }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
-            else if (activeDbTab === 'battle') items = [{ id: 'battle_settings', name: 'Battle Settings' }];
             
             items.forEach((item, idx) => {
                 const btn = document.createElement('button');
@@ -2674,7 +2787,7 @@
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.querySelector('.db-items-column button');
-            if (activeDbTab === 'system' || activeDbTab === 'battle') {
+            if (activeDbTab === 'system' || activeDbTab === 'terms') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -2683,16 +2796,32 @@
 
         // ---- Shared structured editors (used by Skills/Passives/States/Actors/Items forms) ----
 
-        const EFFECT_TYPES = ['hp_damage', 'hp_heal', 'hp_drain', 'add_status', 'hp', 'maxHp', 'xp'];
-        const TRAIT_CODES = [
-            'PARAM_PLUS', 'PARAM_RATE', 'HIT', 'EVA', 'CRI', 'HRG',
-            'POST_BATTLE_HEAL', 'GOLD_DIGGER', 'PARASITE', 'BATTLE_START_DAMAGE',
-            'MOVE_HEAL', 'RECOVERY_XP_BONUS', 'FLEE_CHANCE_BONUS', 'ON_PERMADEATH',
-            'SEE_TRAPS', 'SEE_WALLS', 'SYMBIOSIS', 'INITIATIVE', 'REAR_GUARD'
-        ];
+        // Effect types and trait codes come from the engine registry
+        // (data/engine.json), editable in the Engine editor. The literals here
+        // are only fallbacks for payloads saved before the registry existed.
+        function effectTypeOptions() {
+            const reg = (dbPayload.engine && dbPayload.engine.effectTypes) || [];
+            if (reg.length) return reg.map(et => ({ value: et.id, label: et.label || et.id }));
+            return ['hp_damage', 'hp_heal', 'hp_drain', 'add_status', 'hp', 'maxHp', 'xp'];
+        }
+        function traitCodeOptions() {
+            const reg = (dbPayload.engine && dbPayload.engine.traitCodes) || [];
+            if (reg.length) return reg.map(tc => ({ value: tc.code, label: tc.label || tc.code }));
+            return ['PARAM_PLUS', 'PARAM_RATE', 'HIT', 'EVA', 'CRI', 'HRG'];
+        }
+        function traitUsesDataId(code) {
+            const reg = (dbPayload.engine && dbPayload.engine.traitCodes) || [];
+            const entry = reg.find(tc => tc.code === code);
+            if (entry) return !!entry.usesDataId;
+            return code === 'PARAM_PLUS' || code === 'PARAM_RATE' || code === 'ELEMENT_CHANGE';
+        }
         const PARAM_IDS = ['maxHp', 'atk', 'def', 'mat', 'mdf', 'asp', 'mpd'];
         const SKILL_TARGETS = ['enemy', 'enemy-any', 'ally-any', 'self'];
-        const ELEMENT_NAMES = ['', 'White', 'Black', 'Green', 'Red', 'Blue', 'Yellow'];
+        function elementOptions(includeNone) {
+            const names = Object.keys(dbPayload.elements || {});
+            const opts = names.length ? names : ['White', 'Black', 'Green', 'Red', 'Blue', 'Yellow'];
+            return includeNone ? [''].concat(opts) : opts;
+        }
 
         function makeSelect(options, current, onChange, flex) {
             const sel = document.createElement('select');
@@ -2748,7 +2877,7 @@
                 owner.effects.forEach((eff, idx) => {
                     const row = document.createElement('div');
                     row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    row.appendChild(makeSelect(EFFECT_TYPES, eff.type, v => {
+                    row.appendChild(makeSelect(effectTypeOptions(), eff.type, v => {
                         eff.type = v;
                         render();
                     }));
@@ -2816,13 +2945,15 @@
                 owner.traits.forEach((tr, idx) => {
                     const row = document.createElement('div');
                     row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    row.appendChild(makeSelect(TRAIT_CODES, tr.code, v => {
+                    row.appendChild(makeSelect(traitCodeOptions(), tr.code, v => {
                         tr.code = v;
-                        if (v !== 'PARAM_PLUS' && v !== 'PARAM_RATE') delete tr.dataId;
+                        if (!traitUsesDataId(v)) delete tr.dataId;
                         render();
                     }, '1'));
-                    if (tr.code === 'PARAM_PLUS' || tr.code === 'PARAM_RATE') {
-                        row.appendChild(makeSelect(PARAM_IDS, tr.dataId || 'maxHp', v => { tr.dataId = v; }));
+                    if (traitUsesDataId(tr.code)) {
+                        // ELEMENT_CHANGE's dataId is an element; param traits use stat ids
+                        const dataIdOpts = tr.code === 'ELEMENT_CHANGE' ? elementOptions(false) : PARAM_IDS;
+                        row.appendChild(makeSelect(dataIdOpts, tr.dataId || dataIdOpts[0], v => { tr.dataId = v; }));
                     }
                     const v = document.createElement('input');
                     v.type = 'number'; v.step = 'any';
@@ -2972,6 +3103,383 @@
             container.appendChild(row);
         }
 
+        // ---- Config schema: friendly labels + typed widgets for system/engine keys ----
+        // Keys not listed fall back to the generic key-name field.
+        const CONFIG_SCHEMA = {
+            'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05 },
+            'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05 },
+            'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05 },
+            'ui.textPalette':              { label: 'Text Palette \\c[n] Colors', widget: 'colorList' },
+            'physics.gravity':             { label: 'Popup Gravity (px/s²)' },
+            'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05 },
+            'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)' },
+            'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1 },
+            'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05 },
+            'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)' },
+            'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)' },
+            'combat.encounterChance':      { label: 'Encounter Chance per Step (0-1)', step: 0.01 },
+            'combat.minEnemies':           { label: 'Encounter Size (min)' },
+            'combat.maxEnemies':           { label: 'Encounter Size (max)' },
+            'combat.victoryGoldMin':       { label: 'Victory Gold (min)' },
+            'combat.victoryGoldMax':       { label: 'Victory Gold (max)' },
+            'combat.victoryExp':           { label: 'Victory XP per Survivor' },
+            'combat.baseSpeed':            { label: 'Base Action Speed' },
+            'combat.speedPerLevel':        { label: 'Action Speed per Level', step: 0.1 },
+            'combat.regenRate':            { label: 'Regen State: % Max HP / Turn', step: 0.01 },
+            'combat.poisonRate':           { label: 'Poison State: % Max HP / Turn', step: 0.01 },
+            'combat.mpExhaustionDamage':   { label: 'MP Exhaustion Damage / Turn' },
+            'combat.battleItem':           { label: 'Battle "Item" Command Uses', widget: 'itemSelect' },
+            'combat.defendSkillId':        { label: '"Defend" Command Skill', widget: 'skillSelect' },
+            'combat.attackSkillId':        { label: '"Attack" Command Skill', widget: 'skillSelect' },
+            'growth.hpPerLevelRate':       { label: 'HP Gain per Level (% of base)', step: 0.01 },
+            'growth.statBase':             { label: 'Stat Base Value' },
+            'growth.statPerLevel':         { label: 'Stat Gain per Level', step: 0.1 },
+            'growth.expPerLevel':          { label: 'XP per Level (× current level)' },
+            'dungeon.maxFloor':            { label: 'Deepest Floor' },
+            'dungeon.moveMpDrain':         { label: 'MP Drain per Step' },
+            'dungeon.defaultLoot':         { label: 'Default Treasure Item', widget: 'itemSelect' },
+            'dungeon.genWidth':            { label: 'Generated Map Width' },
+            'dungeon.genHeight':           { label: 'Generated Map Height' },
+            'dungeon.genMinRooms':         { label: 'Rooms per Floor (min)' },
+            'dungeon.genMaxRooms':         { label: 'Rooms per Floor (max)' },
+            'dungeon.genMinRoomSize':      { label: 'Room Size (min)' },
+            'dungeon.genMaxRoomSize':      { label: 'Room Size (max)' },
+            'dungeon.exitSprite':          { label: 'Exit Stairs Sprite', widget: 'assetPath', dir: 'sprites' },
+            'dungeon.exitScriptId':        { label: 'Exit Stairs Common Event', widget: 'commonEventSelect' },
+            'summoner.startMp':            { label: 'Starting MP' },
+            'summoner.spells':             { label: 'Summoner Spells', widget: 'skillChecklist' },
+            'spawn.x':                     { label: 'Town Spawn X' },
+            'spawn.y':                     { label: 'Town Spawn Y' },
+            'newGame.goldMin':             { label: 'Starting Gold (min)' },
+            'newGame.goldMax':             { label: 'Starting Gold (max)' },
+            'newGame.guaranteedItem.id':   { label: 'Guaranteed Item', widget: 'itemSelect' },
+            'newGame.guaranteedItem.minQty': { label: 'Guaranteed Item Qty (min)' },
+            'newGame.guaranteedItem.maxQty': { label: 'Guaranteed Item Qty (max)' },
+            'newGame.randomConsumables':   { label: 'Random Consumables (count)' },
+            'newGame.randomEquipment':     { label: 'Random Equipment (count)' },
+            'newGame.bonusItems':          { label: 'Fixed Bonus Items', widget: 'itemChecklist' },
+            'newGame.party.twoMemberChance': { label: 'Duo Start Chance (0-1)', step: 0.05 },
+            'newGame.party.twoMemberBonusLevels': { label: 'Duo Start Bonus Levels' },
+            'newGame.party.defaultSize':   { label: 'Trio Start Party Size' },
+            'town.options':                { label: 'Town Menu Options', widget: 'townOptions' },
+            'elementRules.strongMultiplier': { label: 'Strong-Element Damage ×', step: 0.05 },
+            'elementRules.weakMultiplier': { label: 'Weak-Element Damage ×', step: 0.05 },
+            'battleLayout.enemyRowWidth':  { label: 'Enemy Row Width (px)' },
+            'battleLayout.enemyStartX':    { label: 'Enemy Row Start X (px)' },
+            'battleLayout.enemyPopupOffsetX': { label: 'Enemy Popup Offset X (px)' },
+            'battleLayout.enemyPopupY':    { label: 'Enemy Popup Y (px)' },
+            'battleLayout.partyGridTileX': { label: 'Party Grid X (tiles)' },
+            'battleLayout.consoleTileY':   { label: 'Console Y (tiles)' },
+            'battleLayout.headerTileOffset': { label: 'Console Header Offset (tiles)' },
+            'battleLayout.slotPopupOffsetX': { label: 'Party Popup Offset X (px)' },
+            'battleLayout.slotPopupOffsetY': { label: 'Party Popup Offset Y (px)' },
+            'battleLayout.summonerPopupX': { label: 'Summoner Popup X (px)' },
+            'battleLayout.summonerPopupYOffset': { label: 'Summoner Popup Y Offset (px)' },
+            'battleLayout.fallbackX':      { label: 'Popup Fallback X (px)' },
+            'battleLayout.fallbackY':      { label: 'Popup Fallback Y (px)' }
+        };
+
+        function setNestedValue(targetRoot, currentPath, key, val) {
+            let target = targetRoot;
+            for (let i = 0; i < currentPath.length - 1; i++) {
+                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                target = target[currentPath[i]];
+            }
+            target[key] = val;
+        }
+
+        // Renders a schema-typed widget; returns false to fall through to the
+        // generic renderer.
+        function renderSchemaField(container, schema, value, key, currentPath, targetRoot) {
+            const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
+
+            if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
+                let opts;
+                if (widget === 'itemSelect') {
+                    opts = dbPayload.items.map(it => ({ value: String(it.id), label: it.name }));
+                } else if (widget === 'skillSelect') {
+                    opts = Object.keys(dbPayload.skills || {}).map(id => ({ value: id, label: (dbPayload.skills[id].name || id) }));
+                } else {
+                    opts = Object.keys(dbPayload.commonEvents || {}).map(id => ({ value: id, label: `${id}: ${dbPayload.commonEvents[id].name || ''}` }));
+                }
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const numeric = (widget !== 'skillSelect');
+                group.appendChild(makeSelect(opts, value, v => {
+                    setNestedValue(targetRoot, currentPath, key, numeric ? (parseInt(v) || v) : v);
+                }, '1'));
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'skillChecklist' || widget === 'itemChecklist') {
+                const ids = widget === 'skillChecklist'
+                    ? Object.keys(dbPayload.skills || {})
+                    : dbPayload.items.map(it => it.id);
+                const nameOf = widget === 'skillChecklist'
+                    ? id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id
+                    : id => { const it = dbPayload.items.find(x => x.id === id); return it ? it.name : id; };
+                buildChecklistField(container, schema.label || key, ids, nameOf,
+                    () => {
+                        let target = targetRoot;
+                        for (let i = 0; i < currentPath.length - 1; i++) target = target[currentPath[i]] || {};
+                        return target[key];
+                    },
+                    arr => setNestedValue(targetRoot, currentPath, key, arr));
+                return true;
+            }
+
+            if (widget === 'assetPath') {
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const input = document.createElement('input');
+                input.className = 'form-control inset-bevel';
+                input.value = value || '';
+                input.oninput = () => { setNestedValue(targetRoot, currentPath, key, input.value); setDirty(true); };
+                group.appendChild(input);
+                const btn = document.createElement('button');
+                btn.className = 'win98-btn';
+                btn.textContent = '...';
+                btn.onclick = () => openAssetPicker(schema.dir || 'sprites', path => {
+                    input.value = path;
+                    setNestedValue(targetRoot, currentPath, key, path);
+                    setDirty(true);
+                });
+                group.appendChild(btn);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'colorList' && Array.isArray(value)) {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const box = makeListBox();
+                const arr = value;
+                const render = () => {
+                    box.innerHTML = '';
+                    arr.forEach((col, idx) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 6px; align-items: center;';
+                        const tag = document.createElement('span');
+                        tag.style.cssText = 'font-size: 10px; width: 42px;';
+                        tag.textContent = '\\c[' + idx + ']';
+                        row.appendChild(tag);
+                        const pick = document.createElement('input');
+                        pick.type = 'color';
+                        pick.value = rgb01ToHex(col);
+                        pick.oninput = () => {
+                            const rgb = hexToRgb01(pick.value);
+                            arr[idx] = [rgb[0], rgb[1], rgb[2], (col && col[3]) !== undefined ? col[3] : 1];
+                            setDirty(true);
+                        };
+                        row.appendChild(pick);
+                        row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
+                        box.appendChild(row);
+                    });
+                    box.appendChild(makeAddRowBtn('+ Add Color', () => { arr.push([1, 1, 1, 1]); render(); }));
+                };
+                render();
+                group.appendChild(box);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'townOptions' && Array.isArray(value)) {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const box = makeListBox();
+                const arr = value;
+                const graphNames = ['npc_weapon_shop', 'npc_alicia', 'npc_drunkard'];
+                const render = () => {
+                    box.innerHTML = '';
+                    arr.forEach((opt, idx) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                        const label = document.createElement('input');
+                        label.className = 'win98-input';
+                        label.style.width = '90px';
+                        label.title = 'Menu label';
+                        label.value = opt.label || '';
+                        label.oninput = () => { opt.label = label.value; setDirty(true); };
+                        row.appendChild(label);
+                        row.appendChild(makeSelect(['enter_dungeon', 'dialogue', 'rest'], opt.action, v => {
+                            opt.action = v;
+                            setDirty(true);
+                            render();
+                        }));
+                        if (opt.action === 'enter_dungeon') {
+                            const mapOpts = dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) }));
+                            row.appendChild(makeSelect(mapOpts, opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
+                        } else {
+                            const graph = document.createElement('input');
+                            graph.className = 'win98-input';
+                            graph.style.flex = '1';
+                            graph.placeholder = 'dialogue graph, e.g. npc_alicia';
+                            graph.value = opt.graph || '';
+                            graph.oninput = () => { opt.graph = graph.value; setDirty(true); };
+                            row.appendChild(graph);
+                        }
+                        row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
+                        box.appendChild(row);
+                    });
+                    box.appendChild(makeAddRowBtn('+ Add Option', () => {
+                        arr.push({ label: 'New Option', action: 'dialogue', graph: graphNames[0] });
+                        render();
+                    }));
+                };
+                render();
+                group.appendChild(box);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'number' || typeof value === 'number') {
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'form-control inset-bevel';
+                if (schema.step) input.step = schema.step;
+                if (schema.min !== undefined) input.min = schema.min;
+                if (schema.max !== undefined) input.max = schema.max;
+                input.value = value;
+                input.oninput = () => {
+                    const parsed = parseFloat(input.value);
+                    setNestedValue(targetRoot, currentPath, key, isNaN(parsed) ? 0 : parsed);
+                    setDirty(true);
+                };
+                group.appendChild(input);
+                container.appendChild(group);
+                return true;
+            }
+
+            return false;
+        }
+
+        // ---- Direct JSON editing mode ----
+        // Adds an "Edit as JSON" button to buttonHost; clicking swaps formPanel
+        // for a JSON textarea. Apply replaces the target's contents in place
+        // (references stay valid) and re-renders the form via onApplied.
+        function attachJsonToggle(buttonHost, formPanel, targetObj, onApplied) {
+            if (!targetObj || typeof targetObj !== 'object') return;
+            const btn = document.createElement('button');
+            btn.className = 'win98-btn';
+            btn.style.cssText = 'float: right; font-size: 10px; font-family: monospace; margin-top: -2px;';
+            btn.textContent = '{ } JSON';
+            btn.onclick = () => {
+                formPanel.innerHTML = '';
+
+                const area = document.createElement('textarea');
+                area.className = 'form-control inset-bevel';
+                area.style.cssText = 'font-family: monospace; font-size: 11px; height: 320px; white-space: pre;';
+                area.value = JSON.stringify(targetObj, null, 2);
+                area.oninput = () => {
+                    try { JSON.parse(area.value); area.style.background = ''; }
+                    catch (e) { area.style.background = '#ffcccc'; }
+                };
+
+                const bar = document.createElement('div');
+                bar.style.cssText = 'display: flex; gap: 6px; margin-bottom: 6px;';
+                const applyBtn = document.createElement('button');
+                applyBtn.className = 'win98-btn win98-btn-success';
+                applyBtn.textContent = 'Apply JSON';
+                applyBtn.onclick = () => {
+                    let parsed;
+                    try { parsed = JSON.parse(area.value); }
+                    catch (e) { area.style.background = '#ffcccc'; return; }
+                    if (Array.isArray(targetObj) && Array.isArray(parsed)) {
+                        targetObj.length = 0;
+                        parsed.forEach(v => targetObj.push(v));
+                    } else if (!Array.isArray(targetObj) && typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+                        Object.keys(targetObj).forEach(k => delete targetObj[k]);
+                        Object.assign(targetObj, parsed);
+                    } else {
+                        area.style.background = '#ffcccc';
+                        return;
+                    }
+                    setDirty(true);
+                    if (onApplied) onApplied();
+                };
+                const backBtn = document.createElement('button');
+                backBtn.className = 'win98-btn';
+                backBtn.textContent = 'Back to Form';
+                backBtn.onclick = () => { if (onApplied) onApplied(); };
+                bar.appendChild(applyBtn);
+                bar.appendChild(backBtn);
+
+                formPanel.appendChild(bar);
+                formPanel.appendChild(area);
+            };
+            buttonHost.appendChild(btn);
+        }
+
+        // ---- Sprite-key suggestions from assets/portraits ----
+        let portraitKeysLoaded = false;
+        function ensurePortraitKeys() {
+            if (portraitKeysLoaded) return;
+            portraitKeysLoaded = true;
+            let list = document.getElementById('portrait-keys-list');
+            if (!list) {
+                list = document.createElement('datalist');
+                list.id = 'portrait-keys-list';
+                document.body.appendChild(list);
+            }
+            fetch('/api/assets?dir=portraits')
+                .then(r => r.json())
+                .then(data => {
+                    (data.files || []).forEach(f => {
+                        const base = f.split('/').pop().replace(/\.(png|jpe?g|gif|webp)$/i, '').replace(/^NPC_/, '');
+                        const opt = document.createElement('option');
+                        opt.value = base;
+                        list.appendChild(opt);
+                    });
+                })
+                .catch(() => {});
+        }
+
+        // Editable list of element slots (duplicates allowed, e.g. Green ×2)
+        function buildElementSlotsEditor(container, owner) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = 'Elements (slots; duplicates stack)';
+            group.appendChild(lbl);
+            const box = makeListBox();
+            const render = () => {
+                owner.elements = owner.elements || [];
+                box.innerHTML = '';
+                owner.elements.forEach((el, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    row.appendChild(makeSelect(elementOptions(false), el, v => { owner.elements[idx] = v; }, '1'));
+                    row.appendChild(makeRowDeleteBtn(() => { owner.elements.splice(idx, 1); render(); }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Element', () => {
+                    owner.elements.push(elementOptions(false)[0]);
+                    render();
+                }));
+            };
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         function loadFormForItem(item) {
             const formPanel = document.getElementById('db-form-panel');
             formPanel.innerHTML = '';
@@ -2995,8 +3503,34 @@
                     initDatabaseEditor(true);
                 });
 
-                // Minimap marker color for map events linked to this common
-                // event (renderer reads commonEvents[id].minimapColor)
+                // Default sprite: map events linked to this common event
+                // inherit it unless they set their own graphic.
+                const spriteRow = document.createElement('div');
+                spriteRow.className = 'form-group field-inline';
+                const spriteLbl = document.createElement('label');
+                spriteLbl.textContent = 'Default Sprite (inherited)';
+                spriteRow.appendChild(spriteLbl);
+                const spriteInput = document.createElement('input');
+                spriteInput.className = 'form-control inset-bevel';
+                spriteInput.value = eventData.sprite || '';
+                spriteInput.oninput = () => {
+                    if (spriteInput.value === '') { delete eventData.sprite; } else { eventData.sprite = spriteInput.value; }
+                    setDirty(true);
+                };
+                spriteRow.appendChild(spriteInput);
+                const spriteBtn = document.createElement('button');
+                spriteBtn.className = 'win98-btn';
+                spriteBtn.textContent = '...';
+                spriteBtn.onclick = () => openAssetPicker('sprites', path => {
+                    spriteInput.value = path;
+                    eventData.sprite = path;
+                    setDirty(true);
+                });
+                spriteRow.appendChild(spriteBtn);
+                formPanel.appendChild(spriteRow);
+
+                // Default minimap marker color: map events linked to this
+                // common event use it unless they set their own.
                 const colorRow = document.createElement('div');
                 colorRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin: 6px 0;';
                 const colorChk = document.createElement('input');
@@ -3004,7 +3538,7 @@
                 colorChk.checked = Array.isArray(eventData.minimapColor);
                 const colorLbl = document.createElement('label');
                 colorLbl.style.fontSize = '11px';
-                colorLbl.textContent = 'Custom minimap color:';
+                colorLbl.textContent = 'Default minimap color (events can override):';
                 const colorPick = document.createElement('input');
                 colorPick.type = 'color';
                 colorPick.disabled = !colorChk.checked;
@@ -3059,7 +3593,14 @@
             
             if (activeDbTab === 'actors') {
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
-                createFormField(formPanel, 'Role', item.role || 'Spirit', val => { item.role = val; });
+
+                const roleGroup = document.createElement('div');
+                roleGroup.className = 'form-group field-inline';
+                const roleLbl = document.createElement('label');
+                roleLbl.textContent = 'Role';
+                roleGroup.appendChild(roleLbl);
+                roleGroup.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
+                formPanel.appendChild(roleGroup);
 
                 const statsRow = document.createElement('div');
                 statsRow.className = 'form-row';
@@ -3074,10 +3615,21 @@
                 createFormField(growthRow, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(growthRow);
 
-                createFormField(formPanel, 'Sprite Key', item.spriteKey || '', val => { item.spriteKey = val; });
-                createFormField(formPanel, 'Elements (comma separated)', (item.elements || []).join(', '), val => {
-                    item.elements = val.split(',').map(s => s.trim()).filter(s => s !== '');
-                });
+                ensurePortraitKeys();
+                const spriteGroup = document.createElement('div');
+                spriteGroup.className = 'form-group field-inline';
+                const spriteLbl = document.createElement('label');
+                spriteLbl.textContent = 'Sprite Key (assets/portraits)';
+                spriteGroup.appendChild(spriteLbl);
+                const spriteInput = document.createElement('input');
+                spriteInput.className = 'form-control inset-bevel';
+                spriteInput.setAttribute('list', 'portrait-keys-list');
+                spriteInput.value = item.spriteKey || '';
+                spriteInput.oninput = () => { item.spriteKey = spriteInput.value; setDirty(true); };
+                spriteGroup.appendChild(spriteInput);
+                formPanel.appendChild(spriteGroup);
+
+                buildElementSlotsEditor(formPanel, item);
                 createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
 
                 createCheckboxField(formPanel, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
@@ -3168,7 +3720,7 @@
                 const eLbl = document.createElement('label');
                 eLbl.textContent = 'Element';
                 elGroup.appendChild(eLbl);
-                elGroup.appendChild(makeSelect(ELEMENT_NAMES, skill.element || '', v => {
+                elGroup.appendChild(makeSelect(elementOptions(true), skill.element || '', v => {
                     if (v === '') { skill.element = null; } else { skill.element = v; }
                 }));
                 formPanel.appendChild(elGroup);
@@ -3206,6 +3758,32 @@
                     if (v) { state.removeAtDamage = true; } else { delete state.removeAtDamage; }
                 });
                 buildTraitsEditor(formPanel, state);
+
+            } else if (activeDbTab === 'elements') {
+                const elem = dbPayload.elements[item.id];
+                if (!elem) return;
+                createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
+                createFormField(formPanel, 'Orb Icon #', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; }, 'number');
+
+                const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
+                buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
+                    id => id,
+                    () => elem.strongAgainst, arr => { elem.strongAgainst = arr; });
+                buildChecklistField(formPanel, 'Weak Against (deals reduced damage to)', others,
+                    id => id,
+                    () => elem.weakAgainst, arr => { elem.weakAgainst = arr; });
+
+            } else if (activeDbTab === 'roles') {
+                const role = dbPayload.roles[item.id];
+                if (!role) return;
+                createFormField(formPanel, 'Name', role.name || item.id, val => { role.name = val; initDatabaseEditor(true); });
+                createFormField(formPanel, 'Description', role.description || '', val => { role.description = val; });
+                if (item.id === 'Summoner') {
+                    const note = document.createElement('p');
+                    note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow);';
+                    note.textContent = 'The engine locates the player character by the "Summoner" role — keep exactly one actor with it.';
+                    formPanel.appendChild(note);
+                }
 
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};
@@ -3284,45 +3862,35 @@
                 renderStock();
                 formPanel.appendChild(listWrapper);
             } else if (activeDbTab === 'system') {
+                // Game-content configuration; engine behavior (combat, growth,
+                // dungeon generation, rendering) lives in the Engine editor.
                 if (!dbPayload.system) dbPayload.system = {};
                 const systemConfig = {
-                    ui: dbPayload.system.ui || {},
                     summoner: dbPayload.system.summoner || {},
                     spawn: dbPayload.system.spawn || {},
-                    growth: dbPayload.system.growth || {},
                     newGame: dbPayload.system.newGame || {},
                     town: dbPayload.system.town || {}
                 };
                 buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
-            } else if (activeDbTab === 'battle') {
-                if (!dbPayload.system) dbPayload.system = {};
-                
-                formPanel.innerHTML = '';
-                formPanel.style.display = 'grid';
-                formPanel.style.gridTemplateColumns = '1fr 280px';
-                formPanel.style.gap = '12px';
-                formPanel.style.alignItems = 'start';
-                
-                const formCol = document.createElement('div');
-                formCol.style.display = 'flex';
-                formCol.style.flexDirection = 'column';
-                formCol.style.gap = '8px';
-                formPanel.appendChild(formCol);
-                
-                const previewCol = document.createElement('div');
-                previewCol.style.display = 'flex';
-                previewCol.style.flexDirection = 'column';
-                previewCol.style.gap = '8px';
-                formPanel.appendChild(previewCol);
-                
-                // Physics + battle_screen only affect the damage-popup animation,
-                // so they live in their own modal instead of cluttering this tab.
-                const battleConfig = {
-                    combat: dbPayload.system.combat || {},
-                    dungeon: dbPayload.system.dungeon || {}
-                };
-                buildRecursiveForm(formCol, battleConfig, [], dbPayload.system);
-                buildBattleScreenPreview(previewCol);
+            }
+
+            // Every tab gets a direct-JSON escape hatch on its edit target
+            const jsonTarget = (function () {
+                switch (activeDbTab) {
+                    case 'actors': case 'items': return item;
+                    case 'skills': case 'passives': case 'states':
+                    case 'elements': case 'roles': return dbPayload[activeDbTab][item.id];
+                    case 'shops': return dbPayload.shops[item.id];
+                    case 'commonEvents': return dbPayload.commonEvents[item.id];
+                    case 'terms': return dbPayload.terms;
+                    case 'system': return dbPayload.system;
+                    default: return null;
+                }
+            })();
+            if (jsonTarget) {
+                attachJsonToggle(header, formPanel, jsonTarget, () => {
+                    initDatabaseEditor();
+                });
             }
         }
 
@@ -3332,7 +3900,10 @@
                     const value = obj[key];
                     const currentPath = [...path, key];
 
-                    if (key === 'activeFont') {
+                    const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
+                    if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot)) {
+                        // rendered by a typed schema widget
+                    } else if (key === 'activeFont') {
                         const group = document.createElement('div');
                         group.className = 'form-group';
                         const lbl = document.createElement('label');
@@ -3481,7 +4052,7 @@
 
         function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
             const group = document.createElement('div');
-            group.className = 'form-group';
+            group.className = 'form-group field-inline';
             
             const label = document.createElement('label');
             label.textContent = labelText;
@@ -3518,7 +4089,8 @@
             else if (activeDbTab === 'items') maxVal = dbPayload.items.length;
             else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
             else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
-            else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states') {
+            else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
+                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
                 maxVal = Object.keys(dbPayload[activeDbTab] || {}).length;
             }
             
@@ -3606,16 +4178,20 @@
                         delete dbPayload.commonEvents[String(i)];
                     }
                 }
-            } else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states') {
+            } else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
+                    || activeDbTab === 'elements' || activeDbTab === 'roles') {
                 // String-keyed collections: grow with generated unique ids,
                 // shrink by dropping the alphabetically-last entries
                 const coll = dbPayload[activeDbTab] = dbPayload[activeDbTab] || {};
                 const defaults = {
                     skills: n => ({ id: n, name: `New Skill`, target: 'enemy-any', element: null, description: '', effects: [] }),
                     passives: n => ({ id: n, name: `New Passive`, description: '', effect: '', icon: 1, traits: [] }),
-                    states: n => ({ id: n, name: `New State`, icon: 1, duration: 3, traits: [] })
+                    states: n => ({ id: n, name: `New State`, icon: 1, duration: 3, traits: [] }),
+                    elements: n => ({ name: `New Element`, icon: 16, strongAgainst: [], weakAgainst: [] }),
+                    roles: n => ({ name: `New Role`, description: '' })
                 };
-                const prefix = activeDbTab === 'skills' ? 'newSkill' : (activeDbTab === 'passives' ? 'newPassive' : 'newState');
+                const prefixes = { skills: 'newSkill', passives: 'newPassive', states: 'newState', elements: 'NewElement', roles: 'NewRole' };
+                const prefix = prefixes[activeDbTab];
                 let currentLen = Object.keys(coll).length;
                 let counter = 1;
                 while (currentLen < newMax) {
@@ -3676,6 +4252,183 @@
             popupBtn.textContent = 'Damage Popup Settings...';
             popupBtn.onclick = () => openDamagePopupModal();
             container.appendChild(popupBtn);
+        }
+
+        // --- ENGINE EDITOR MODAL ---
+        // Engine-level behavior, kept apart from game content in the Database:
+        // battle flow, growth curves, dungeon generation, rendering layout, and
+        // the effect-type / trait-code registries that drive editor dropdowns
+        // and validation.
+        let activeEngineTab = 'battleflow';
+        let engineModalSnapshot = null;
+
+        function engineSnapshotStr() {
+            return JSON.stringify({ system: dbPayload.system, engine: dbPayload.engine });
+        }
+
+        function openEngineModal() {
+            if (!dbPayload.system) dbPayload.system = {};
+            if (!dbPayload.engine) dbPayload.engine = {};
+            engineModalSnapshot = engineSnapshotStr();
+            document.getElementById('engine-modal').classList.add('active');
+            setEngineTab(activeEngineTab);
+        }
+
+        function closeEngineModal(force) {
+            if (!force && engineModalSnapshot !== null && engineSnapshotStr() !== engineModalSnapshot) {
+                if (!confirmDiscard('You have unsaved engine changes. Discard them and close?')) return;
+                const snap = JSON.parse(engineModalSnapshot);
+                dbPayload.system = snap.system;
+                dbPayload.engine = snap.engine;
+                setDirty(false);
+            }
+            engineModalSnapshot = null;
+            document.getElementById('engine-modal').classList.remove('active');
+        }
+
+        function buildEffectTypeRegistryEditor(panel) {
+            dbPayload.engine.effectTypes = dbPayload.engine.effectTypes || [];
+            const list = dbPayload.engine.effectTypes;
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Registered types appear in effect dropdowns and pass validation. The id must match a handler in engine/effects.lua — new ids need a matching Lua handler to do anything.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((et, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const mk = (val, ph, width, onInput) => {
+                        const input = document.createElement('input');
+                        input.className = 'win98-input';
+                        input.placeholder = ph;
+                        input.title = ph;
+                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                        input.value = val;
+                        input.oninput = () => { onInput(input.value); setDirty(true); };
+                        return input;
+                    };
+                    row.appendChild(mk(et.id || '', 'id (Lua handler)', '110px', v => { et.id = v; }));
+                    row.appendChild(mk(et.label || '', 'Label', '110px', v => { et.label = v; }));
+                    row.appendChild(mk((et.params || []).join(', '), 'params (csv)', '120px', v => {
+                        et.params = v.split(',').map(s => s.trim()).filter(s => s !== '');
+                    }));
+                    row.appendChild(mk(et.description || '', 'Description', null, v => { et.description = v; }));
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Effect Type', () => {
+                    list.push({ id: 'new_effect', label: 'New Effect', params: ['value'], description: '' });
+                    render();
+                }));
+            };
+            render();
+            panel.appendChild(box);
+        }
+
+        function buildTraitCodeRegistryEditor(panel) {
+            dbPayload.engine.traitCodes = dbPayload.engine.traitCodes || [];
+            const list = dbPayload.engine.traitCodes;
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Registered codes appear in trait dropdowns and pass validation. Codes are read by engine/traits.lua and engine feature code — new codes need engine support to have an effect.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((tc, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const mk = (val, ph, width, onInput) => {
+                        const input = document.createElement('input');
+                        input.className = 'win98-input';
+                        input.placeholder = ph;
+                        input.title = ph;
+                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                        input.value = val;
+                        input.oninput = () => { onInput(input.value); setDirty(true); };
+                        return input;
+                    };
+                    row.appendChild(mk(tc.code || '', 'CODE', '150px', v => { tc.code = v; }));
+                    row.appendChild(mk(tc.label || '', 'Label', '110px', v => { tc.label = v; }));
+                    const chkWrap = document.createElement('label');
+                    chkWrap.style.cssText = 'font-size: 10px; display: flex; align-items: center; gap: 3px;';
+                    const chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.checked = !!tc.usesDataId;
+                    chk.onchange = () => { tc.usesDataId = chk.checked; setDirty(true); };
+                    chkWrap.appendChild(chk);
+                    chkWrap.appendChild(document.createTextNode('dataId'));
+                    row.appendChild(chkWrap);
+                    row.appendChild(mk(tc.description || '', 'Description', null, v => { tc.description = v; }));
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Trait Code', () => {
+                    list.push({ code: 'NEW_CODE', label: 'New Trait', usesDataId: false, description: '' });
+                    render();
+                }));
+            };
+            render();
+            panel.appendChild(box);
+        }
+
+        function setEngineTab(tabName) {
+            activeEngineTab = tabName;
+            document.querySelectorAll('#engine-tabs .db-tab-btn').forEach(b => b.classList.remove('active'));
+            const tabBtn = document.getElementById(`engine-tab-${tabName}`);
+            if (tabBtn) tabBtn.classList.add('active');
+
+            const panel = document.getElementById('engine-form-panel');
+            panel.innerHTML = '';
+            const header = document.createElement('div');
+            header.style.cssText = 'font-weight: bold; font-size: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--win-shadow); padding-bottom: 4px;';
+            panel.appendChild(header);
+            const rerender = () => setEngineTab(tabName);
+
+            if (tabName === 'battleflow') {
+                header.textContent = 'Battle Flow';
+                dbPayload.system.combat = dbPayload.system.combat || {};
+                dbPayload.engine.elementRules = dbPayload.engine.elementRules || {};
+                buildRecursiveForm(panel, { combat: dbPayload.system.combat }, [], dbPayload.system);
+                buildRecursiveForm(panel, { elementRules: dbPayload.engine.elementRules }, [], dbPayload.engine);
+                attachJsonToggle(header, panel, dbPayload.system.combat, rerender);
+            } else if (tabName === 'progression') {
+                header.textContent = 'Progression & Growth';
+                dbPayload.system.growth = dbPayload.system.growth || {};
+                buildRecursiveForm(panel, { growth: dbPayload.system.growth }, [], dbPayload.system);
+                attachJsonToggle(header, panel, dbPayload.system.growth, rerender);
+            } else if (tabName === 'dungeon') {
+                header.textContent = 'Map & Dungeon Generation';
+                dbPayload.system.dungeon = dbPayload.system.dungeon || {};
+                buildRecursiveForm(panel, { dungeon: dbPayload.system.dungeon }, [], dbPayload.system);
+                attachJsonToggle(header, panel, dbPayload.system.dungeon, rerender);
+            } else if (tabName === 'rendering') {
+                header.textContent = 'Rendering & Menus';
+                dbPayload.system.ui = dbPayload.system.ui || {};
+                dbPayload.system.physics = dbPayload.system.physics || {};
+                dbPayload.system.battle_screen = dbPayload.system.battle_screen || {};
+                dbPayload.engine.battleLayout = dbPayload.engine.battleLayout || {};
+                buildRecursiveForm(panel, {
+                    ui: dbPayload.system.ui,
+                    physics: dbPayload.system.physics,
+                    battle_screen: dbPayload.system.battle_screen
+                }, [], dbPayload.system);
+                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout }, [], dbPayload.engine);
+                buildBattleScreenPreview(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
+            } else if (tabName === 'effectTypes') {
+                header.textContent = 'Effect Type Registry';
+                buildEffectTypeRegistryEditor(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.effectTypes, rerender);
+            } else if (tabName === 'traitCodes') {
+                header.textContent = 'Trait Code Registry';
+                buildTraitCodeRegistryEditor(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.traitCodes, rerender);
+            }
         }
 
         // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---

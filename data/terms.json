@@ -23,7 +23,28 @@
     "consumes_mp": "- {0} consumes {1} MP.",
     "mp_exhaustion": "{0} suffers from MP exhaustion!",
     "gains_xp": "- {0} gains {1} XP.",
-    "resolving": "Resolving actions..."
+    "recovers_mp": "- {0} MP restored.",
+    "resolving": "Resolving actions...",
+    "commands_summoner": [
+      "Attack",
+      "Spell",
+      "Item",
+      "Flee"
+    ],
+    "commands_monster": [
+      "Attack",
+      "Skill",
+      "Defend",
+      "Flee"
+    ]
+  },
+  "menu": {
+    "main_options": [
+      "ITEMS",
+      "STATUS",
+      "EQUIP",
+      "EXIT"
+    ]
   },
   "events": {
     "recover_party": "Your party has been fully recovered!",

@@ -53,16 +53,7 @@
         0.6,
         1
       ]
-    ],
-    "elementIcons": {
-      "Black": 15,
-      "White": 14,
-      "Green": 12,
-      "Red": 11,
-      "Blue": 13,
-      "Yellow": 17,
-      "default": 16
-    }
+    ]
   },
   "physics": {
     "gravity": 480,

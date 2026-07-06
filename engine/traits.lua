@@ -116,6 +116,25 @@ function traits.getParam(battler, paramName, session)
     return math.max(1, math.floor(base * rate + plus))
 end
 
+-- The battler's effective elements: ELEMENT_CHANGE traits (from equipment,
+-- passives or states) override the actor's innate element list while active.
+function traits.getElements(battler, session)
+    local override = nil
+    local activeObjects = traits.getActiveObjects(battler, session)
+    for _, obj in ipairs(activeObjects) do
+        if traits.evaluateCondition(obj.condition, battler, session) then
+            for _, t in ipairs(obj.traits) do
+                if t.code == "ELEMENT_CHANGE" and t.dataId then
+                    override = override or {}
+                    table.insert(override, t.dataId)
+                end
+            end
+        end
+    end
+    if override then return override end
+    return (battler.actorData and battler.actorData.elements) or {}
+end
+
 -- Get rate modifiers (e.g. HIT, EVA, CRI, HRG)
 function traits.getRate(battler, traitCode, session)
     local sum = 0

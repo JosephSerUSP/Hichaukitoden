@@ -2,6 +2,31 @@ local traits = require("engine.traits")
 
 local effects = {}
 
+-- Elemental affinity multiplier: the attack's element vs each of the target's
+-- elements, using the strongAgainst/weakAgainst lists in data/elements.json
+-- and the multipliers in data/engine.json (elementRules).
+local function elementMultiplier(element, target, session)
+    if not element then return 1.0 end
+    local elemData = session.loader.elements and session.loader.elements[element]
+    if not elemData then return 1.0 end
+
+    local rules = (session.loader.engine and session.loader.engine.elementRules) or {}
+    local strongMult = rules.strongMultiplier or 1.5
+    local weakMult = rules.weakMultiplier or 0.65
+
+    local mult = 1.0
+    local targetElems = traits.getElements(target, session)
+    for _, targetElem in ipairs(targetElems) do
+        for _, strong in ipairs(elemData.strongAgainst or {}) do
+            if strong == targetElem then mult = mult * strongMult end
+        end
+        for _, weak in ipairs(elemData.weakAgainst or {}) do
+            if weak == targetElem then mult = mult * weakMult end
+        end
+    end
+    return mult
+end
+
 local function evaluateFormula(formula, a, b, session)
     if not formula then return 0 end
     
@@ -27,14 +52,17 @@ local function evaluateFormula(formula, a, b, session)
     return 1
 end
 
-function effects.apply(effectData, a, b, session)
+-- context (optional): { element = "White" } — the element of the skill/item
+-- driving this effect, used for affinity multipliers on damage.
+function effects.apply(effectData, a, b, session, context)
     local events = {}
-    
+    local ctxElement = context and context.element or nil
+
     if effectData.type == "hp_damage" then
         local val = evaluateFormula(effectData.formula, a, b, session)
-        -- Defense reduction
+        -- Defense reduction, then elemental affinity
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         table.insert(events, {
@@ -64,7 +92,7 @@ function effects.apply(effectData, a, b, session)
     elseif effectData.type == "hp_drain" then
         local val = evaluateFormula(effectData.formula, a, b, session)
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         a.hp = math.min(traits.getParam(a, "maxHp", session), a.hp + finalDmg)
@@ -129,6 +157,27 @@ function effects.apply(effectData, a, b, session)
             type = "text",
             text = session.loader.formatTerm("battle.gains_xp", "- {0} gains {1} XP.", b.name, effectData.value or 0)
         })
+
+    -- Restores the summoner's shared MP pool (e.g. pub drinks)
+    elseif effectData.type == "mp_heal" then
+        local healVal = math.max(0, math.min(session.maxMp - session.mp, effectData.value or 0))
+        session.mp = session.mp + healVal
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.recovers_mp", "- {0} MP restored.", healVal)
+        })
+
+    -- Cures the state named in value (e.g. wine curing "weakened")
+    elseif effectData.type == "remove_status" then
+        local stateId = effectData.value or effectData.status
+        if stateId then
+            b:removeState(stateId)
+            table.insert(events, {
+                type = "state_remove",
+                target = b,
+                state = stateId
+            })
+        end
     end
 
     return events

@@ -79,6 +79,13 @@ function Battler:isDead()
 end
 
 function Battler:gainExp(amount, sess)
+    -- XP_RATE traits (equipment/passives) boost experience gained
+    if sess then
+        local bonus = traits.getRate(self, "XP_RATE", sess)
+        if bonus ~= 0 then
+            amount = math.floor(amount * (1 + bonus))
+        end
+    end
     self.exp = self.exp + amount
     local leveledUp = false
     local expPerLevel = (config.growth and config.growth.expPerLevel) or 15

@@ -58,8 +58,15 @@ local DEFAULT_ELEMENT_ICONS = {
 }
 
 local function drawElementIcon(element, x, y)
-    local icons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
-    local id = icons[element] or icons.default or DEFAULT_ELEMENT_ICONS.default
+    -- Icon comes from the element registry (data/elements.json); legacy
+    -- ui.elementIcons config and the built-in table remain as fallbacks.
+    local loaderRef = renderer.session and renderer.session.loader
+    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
+    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
+    local id = (registryEntry and registryEntry.icon)
+        or legacyIcons[element]
+        or legacyIcons.default
+        or DEFAULT_ELEMENT_ICONS.default
     ui.drawIcon(id, x, y - 2) -- y - 2 aligns 12x12 icon perfectly with text
 end
 
@@ -252,16 +259,16 @@ local function drawMinimap(x, y, size)
                 end
                 
                 if mapEvent then
-                    -- Minimap color comes from the linked common event's
-                    -- minimapColor (editable in the Database); default light
-                    -- blue marks generic NPCs / shops.
-                    local ceColor = nil
-                    if mapEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
+                    -- Marker color precedence: the map event's own
+                    -- minimapColor, else the linked common event's default,
+                    -- else light blue for generic NPCs / shops.
+                    local evColor = mapEvent.minimapColor
+                    if not evColor and mapEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
                         local ce = renderer.session.loader.commonEvents[tostring(mapEvent.scriptId)]
-                        ceColor = ce and ce.minimapColor or nil
+                        evColor = ce and ce.minimapColor or nil
                     end
-                    if ceColor then
-                        love.graphics.setColor(ceColor[1] or 0, ceColor[2] or 0, ceColor[3] or 0, ceColor[4] or 1)
+                    if evColor then
+                        love.graphics.setColor(evColor[1] or 0, evColor[2] or 0, evColor[3] or 0, evColor[4] or 1)
                     else
                         love.graphics.setColor(0.4, 0.6, 1, 1)
                     end
@@ -447,7 +454,7 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
             
             local prefix = isSel and ">" or " "
-            local iconW = drawElementIcons(c.actorData.elements, slot.x, slot.y)
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x, slot.y)
             ui.drawString(prefix .. c.name, slot.x + iconW + 1, slot.y, color, "left", 60)
             
             local dispHp = c.displayedHp or c.hp
@@ -461,8 +468,10 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     end
 end
 
--- Battle-scene layout constants shared by drawBattle and getBattlerCoords,
+-- Battle-scene layout defaults shared by drawBattle and getBattlerCoords,
 -- per the BIBLE rule that coordinate mappings must never be duplicated.
+-- Values can be overridden from data/engine.json (battleLayout), editable
+-- in the Engine editor.
 local BATTLE_LAYOUT = {
     enemyRowWidth = 220,
     enemyStartX = 18,
@@ -479,21 +488,28 @@ local BATTLE_LAYOUT = {
     fallbackY = 70
 }
 
+-- Battle layout accessor: engine.json override -> built-in default
+local function layoutVal(key)
+    local loaderRef = renderer.session and renderer.session.loader
+    local overrides = loaderRef and loaderRef.engine and loaderRef.engine.battleLayout
+    if overrides and overrides[key] ~= nil then return overrides[key] end
+    return BATTLE_LAYOUT[key]
+end
+
 -- Maps a battler to the screen position where damage popups should spawn.
 -- Used by main.lua so popup coordinates always match the drawn battle layout.
 function renderer.getBattlerCoords(battleState, session, target)
-    local L = BATTLE_LAYOUT
     if battleState then
         for idx, enemy in ipairs(battleState.enemies) do
             if enemy == target then
-                local spacing = L.enemyRowWidth / #battleState.enemies
-                local ex = L.enemyStartX + (idx - 1) * spacing
-                return ex + L.enemyPopupOffsetX, L.enemyPopupY
+                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+                local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+                return ex + layoutVal("enemyPopupOffsetX"), layoutVal("enemyPopupY")
             end
         end
 
-        local gridX = ui.toPx(L.partyGridTileX)
-        local gridY = ui.toPx(L.consoleTileY) + ui.toPx(L.headerTileOffset)
+        local gridX = ui.toPx(layoutVal("partyGridTileX"))
+        local gridY = ui.toPx(layoutVal("consoleTileY")) + ui.toPx(layoutVal("headerTileOffset"))
         -- Same 2x2 slot arithmetic as drawPartyGrid
         for idx, c in ipairs(session.party) do
             if c == target then
@@ -501,14 +517,14 @@ function renderer.getBattlerCoords(battleState, session, target)
                 local row = math.floor((idx - 1) / 2)
                 local slotX = gridX + col * 8 * ui.tileSize
                 local slotY = gridY + row * 5 * ui.tileSize
-                return slotX + L.slotPopupOffsetX, slotY + L.slotPopupOffsetY
+                return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
         end
         if target == session.summoner then
-            return L.summonerPopupX, ui.toPx(L.consoleTileY) + L.summonerPopupYOffset
+            return layoutVal("summonerPopupX"), ui.toPx(layoutVal("consoleTileY")) + layoutVal("summonerPopupYOffset")
         end
     end
-    return L.fallbackX, L.fallbackY
+    return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
 
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx)
@@ -523,11 +539,11 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.setColor(1, 1, 1, 1)
     
     -- Render enemies portraits in viewport with slide-in and death animations
-    local spacing = BATTLE_LAYOUT.enemyRowWidth / #battleState.enemies
+    local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
         local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
-        local ex = BATTLE_LAYOUT.enemyStartX + (idx - 1) * spacing
+        local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
         local ey = 30
         
         -- Slide-in offset: start offscreen right, slide to position
@@ -592,10 +608,10 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     end
     
     -- Bottom Command console
-    local consoleY = ui.toPx(BATTLE_LAYOUT.consoleTileY)
+    local consoleY = ui.toPx(layoutVal("consoleTileY"))
     local consoleH = ui.toPx(12)
     local textX = ui.toPx(1)
-    local headerY = consoleY + ui.toPx(BATTLE_LAYOUT.headerTileOffset)
+    local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
     
     ui.drawPanel(0, consoleY, ui.toPx(32), consoleH)
     
@@ -605,7 +621,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         
         if isSummoner then
             ui.drawString(summonerName() .. "'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = { "Attack", "Spell", "Item", "Flee" }
+            local actions = renderer.session.loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
             if spellSelect then
                 ui.drawString("CAST SPELL (MP: " .. renderer.session.mp .. ")", textX, headerY, {0.5, 0.8, 1, 1})
                 -- Real spell names + MP costs from summoner.spells / skills.json
@@ -634,7 +650,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             -- Monster Turn
             local monster = memberInfo.actor
             ui.drawString(monster.name:upper() .. "'S TURN", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = { "Attack", "Skill", "Defend", "Flee" }
+            local actions = renderer.session.loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
             if spellSelect then
                 ui.drawString("USE SKILL", textX, headerY, {0.5, 0.8, 1, 1})
                 local skillsList = {}
@@ -681,7 +697,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             showHighlight = true
         end
     end
-    renderer.drawPartyGrid(ui.toPx(BATTLE_LAYOUT.partyGridTileX), headerY, highlightIdx, session, showHighlight)
+    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
     
     -- Draw active damage popups
     love.graphics.push("all")
@@ -793,7 +809,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     
     -- 1. Draw Left Menu Column
     ui.drawPanel(leftX, ui.toPx(1), ui.toPx(8), ui.toPx(18), "MENU")
-    local mainOpts = { "ITEMS", "STATUS", "EQUIP", "EXIT" }
+    local mainOpts = session.loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
     for i, opt in ipairs(mainOpts) do
         local isSel = (subScene == "main" and i == mainIdx)
         local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
@@ -924,7 +940,7 @@ function renderer.drawStatusDetail(c, session)
     local contentX = panelX + ui.toPx(1)
     
     -- Header info (y = ui.toPx(4) i.e. 32px)
-    local iconW = drawElementIcons(c.actorData.elements, contentX, ui.toPx(4))
+    local iconW = drawElementIcons(traits.getElements(c, session), contentX, ui.toPx(4))
     ui.drawString(c.name .. " L" .. c.level, contentX + iconW + 4, ui.toPx(4), {1, 0.85, 0.5, 1})
     ui.drawString("ROLE: " .. (c.actorData.role or "CREATURE"), contentX, ui.toPx(5.5), {0.7, 0.7, 0.7, 1})
     

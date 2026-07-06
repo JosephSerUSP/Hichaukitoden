@@ -91,7 +91,7 @@ function Battle:resolveRound(summonerAction)
                     text = self.session.loader.formatTerm("battle.casts_spell", "{0} casts {1}!", self.session.summoner.name, spell.name)
                 })
                 for _, eff in ipairs(spell.effects or {}) do
-                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
+                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session, { element = spell.element })
                     for _, ev in ipairs(evs) do
                         table.insert(roundEvents, ev)
                     end
@@ -221,7 +221,7 @@ function Battle:resolveRound(summonerAction)
             })
             
             for _, eff in ipairs(turn.skill.effects or {}) do
-                local evs = effects.apply(eff, turn.actor, turn.target, self.session)
+                local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
                 for _, ev in ipairs(evs) do
                     table.insert(roundEvents, ev)
                 end

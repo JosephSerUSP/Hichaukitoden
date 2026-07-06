@@ -1,0 +1,231 @@
+{
+  "elementRules": {
+    "strongMultiplier": 1.5,
+    "weakMultiplier": 0.65
+  },
+  "battleLayout": {
+    "enemyRowWidth": 220,
+    "enemyStartX": 18,
+    "enemyPopupOffsetX": 28,
+    "enemyPopupY": 60,
+    "partyGridTileX": 16,
+    "consoleTileY": 18,
+    "headerTileOffset": 1,
+    "slotPopupOffsetX": 27,
+    "slotPopupOffsetY": 10,
+    "summonerPopupX": 50,
+    "summonerPopupYOffset": 62,
+    "fallbackX": 128,
+    "fallbackY": 70
+  },
+  "effectTypes": [
+    {
+      "id": "hp_damage",
+      "label": "HP Damage",
+      "params": [
+        "formula"
+      ],
+      "description": "Deals formula damage, reduced by the target's DEF and scaled by elemental affinity."
+    },
+    {
+      "id": "hp_heal",
+      "label": "HP Heal",
+      "params": [
+        "formula"
+      ],
+      "description": "Restores formula HP, capped at max HP."
+    },
+    {
+      "id": "hp_drain",
+      "label": "HP Drain",
+      "params": [
+        "formula"
+      ],
+      "description": "Deals formula damage and heals the user for the same amount."
+    },
+    {
+      "id": "add_status",
+      "label": "Add Status",
+      "params": [
+        "status",
+        "chance",
+        "duration"
+      ],
+      "description": "Applies a state with the given chance and turn duration."
+    },
+    {
+      "id": "hp",
+      "label": "Flat HP Restore",
+      "params": [
+        "value"
+      ],
+      "description": "Item-style flat HP restore."
+    },
+    {
+      "id": "maxHp",
+      "label": "Max HP Up",
+      "params": [
+        "value"
+      ],
+      "description": "Permanently raises max HP and heals the difference."
+    },
+    {
+      "id": "xp",
+      "label": "Grant XP",
+      "params": [
+        "value"
+      ],
+      "description": "Grants experience points, possibly leveling up."
+    },
+    {
+      "id": "mp_heal",
+      "label": "MP Restore",
+      "params": [
+        "value"
+      ],
+      "description": "Restores the summoner's shared MP pool."
+    },
+    {
+      "id": "remove_status",
+      "label": "Remove Status",
+      "params": [
+        "value"
+      ],
+      "description": "Cures the state named in value."
+    },
+    {
+      "id": "recruit_egg",
+      "label": "Recruit Egg",
+      "params": [],
+      "description": "Reserved for the recruiting system (not yet implemented by the engine)."
+    }
+  ],
+  "traitCodes": [
+    {
+      "code": "PARAM_PLUS",
+      "label": "Parameter +",
+      "usesDataId": true,
+      "description": "Adds a flat amount to a parameter."
+    },
+    {
+      "code": "PARAM_RATE",
+      "label": "Parameter %",
+      "usesDataId": true,
+      "description": "Multiplies a parameter (1.2 = +20%)."
+    },
+    {
+      "code": "HIT",
+      "label": "Hit Rate",
+      "usesDataId": false,
+      "description": "Modifies hit chance (base 100%)."
+    },
+    {
+      "code": "EVA",
+      "label": "Evasion",
+      "usesDataId": false,
+      "description": "Modifies evade chance (base 0%)."
+    },
+    {
+      "code": "CRI",
+      "label": "Critical Rate",
+      "usesDataId": false,
+      "description": "Modifies crit chance (base 5%)."
+    },
+    {
+      "code": "HRG",
+      "label": "HP Regen",
+      "usesDataId": false,
+      "description": "Regenerates a fraction of max HP per turn."
+    },
+    {
+      "code": "POST_BATTLE_HEAL",
+      "label": "Post-Battle Heal",
+      "usesDataId": false,
+      "description": "Restores HP to the holder after victory."
+    },
+    {
+      "code": "GOLD_DIGGER",
+      "label": "Bonus Gold",
+      "usesDataId": false,
+      "description": "Increases gold found."
+    },
+    {
+      "code": "PARASITE",
+      "label": "Parasite",
+      "usesDataId": false,
+      "description": "Drains HP from a nearby ally each turn."
+    },
+    {
+      "code": "BATTLE_START_DAMAGE",
+      "label": "Ambush Damage",
+      "usesDataId": false,
+      "description": "Damages an enemy at battle start."
+    },
+    {
+      "code": "MOVE_HEAL",
+      "label": "Heal on Move",
+      "usesDataId": false,
+      "description": "Restores HP when moving on the map."
+    },
+    {
+      "code": "RECOVERY_XP_BONUS",
+      "label": "Recovery XP Bonus",
+      "usesDataId": false,
+      "description": "Bonus XP at recovery sites."
+    },
+    {
+      "code": "FLEE_CHANCE_BONUS",
+      "label": "Flee Chance +",
+      "usesDataId": false,
+      "description": "Increases the party's flee chance."
+    },
+    {
+      "code": "ON_PERMADEATH",
+      "label": "On Death Trigger",
+      "usesDataId": false,
+      "description": "Special behavior on death (e.g. Rebirth)."
+    },
+    {
+      "code": "SEE_TRAPS",
+      "label": "See Traps",
+      "usesDataId": false,
+      "description": "Detects hidden traps (value = level)."
+    },
+    {
+      "code": "SEE_WALLS",
+      "label": "See Secrets",
+      "usesDataId": false,
+      "description": "Reveals breakable walls."
+    },
+    {
+      "code": "SYMBIOSIS",
+      "label": "Symbiosis",
+      "usesDataId": false,
+      "description": "Heals a neighboring ally each turn."
+    },
+    {
+      "code": "INITIATIVE",
+      "label": "Initiative",
+      "usesDataId": false,
+      "description": "Chance to act first at battle start."
+    },
+    {
+      "code": "REAR_GUARD",
+      "label": "Rear Guard",
+      "usesDataId": false,
+      "description": "Negates enemy first strikes."
+    },
+    {
+      "code": "ELEMENT_CHANGE",
+      "label": "Element Change",
+      "usesDataId": true,
+      "description": "Overrides the holder's elements with dataId while active."
+    },
+    {
+      "code": "XP_RATE",
+      "label": "XP Rate +",
+      "usesDataId": false,
+      "description": "Multiplies experience gained (0.5 = +50%)."
+    }
+  ]
+}

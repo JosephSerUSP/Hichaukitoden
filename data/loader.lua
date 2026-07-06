@@ -27,6 +27,9 @@ function loader.init()
     loader.skills = load_json("data/skills.json")
     loader.passives = load_json("data/passives.json")
     loader.states = load_json("data/states.json")
+    loader.roles = load_json("data/roles.json")
+    -- Engine registries: effect types, trait codes, battle layout, element rules
+    loader.engine = load_json("data/engine.json")
 
     loader.animations = require("data.animations")
 
@@ -73,6 +76,14 @@ function loader.getState(id)
     return loader.states[id]
 end
 
+function loader.getElement(id)
+    return loader.elements and loader.elements[id]
+end
+
+function loader.getRole(id)
+    return loader.roles and loader.roles[id]
+end
+
 -- Looks up a UI/battle string from data/terms.json by dotted path
 -- (e.g. "battle.flee_success"); falls back to the engine default when the
 -- key is missing so incomplete terms files never crash the game.
@@ -83,6 +94,17 @@ function loader.getTerm(path, fallback)
         node = node[part]
     end
     if type(node) == "string" then return node end
+    return fallback
+end
+
+-- Like getTerm but for list-valued terms (e.g. menu command label arrays).
+function loader.getTermList(path, fallback)
+    local node = loader.terms
+    for part in path:gmatch("[^%.]+") do
+        if type(node) ~= "table" then return fallback end
+        node = node[part]
+    end
+    if type(node) == "table" and #node > 0 then return node end
     return fallback
 end
 

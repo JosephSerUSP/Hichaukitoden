@@ -82,7 +82,30 @@ runValidation = function()
         return cond
     end
 
-    -- Actors must reference existing skills/passives
+    -- Registry lookup sets from data/engine.json
+    local validEffectTypes = {}
+    for _, et in ipairs((loader.engine and loader.engine.effectTypes) or {}) do
+        validEffectTypes[et.id] = true
+    end
+    local validTraitCodes = {}
+    for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
+        validTraitCodes[tc.code] = true
+    end
+    local function checkTraits(traitList, ownerDesc)
+        for _, tr in ipairs(traitList or {}) do
+            check(validTraitCodes[tr.code], ownerDesc .. " uses unregistered trait code '" .. tostring(tr.code) .. "'")
+        end
+    end
+    local function checkEffects(effList, ownerDesc)
+        for _, eff in ipairs(effList or {}) do
+            check(validEffectTypes[eff.type], ownerDesc .. " uses unregistered effect type '" .. tostring(eff.type) .. "'")
+            if eff.type == "add_status" then
+                check(loader.getState(eff.status), ownerDesc .. " references missing state '" .. tostring(eff.status) .. "'")
+            end
+        end
+    end
+
+    -- Actors must reference existing skills/passives/elements/roles
     for _, actor in ipairs(loader.actors) do
         for _, skId in ipairs(actor.skills or {}) do
             check(loader.getSkill(skId), "actor " .. tostring(actor.id) .. " references missing skill '" .. tostring(skId) .. "'")
@@ -90,14 +113,42 @@ runValidation = function()
         for _, pId in ipairs(actor.passives or {}) do
             check(loader.getPassive(pId), "actor " .. tostring(actor.id) .. " references missing passive '" .. tostring(pId) .. "'")
         end
+        for _, el in ipairs(actor.elements or {}) do
+            check(loader.getElement(el), "actor " .. tostring(actor.id) .. " references missing element '" .. tostring(el) .. "'")
+        end
+        if actor.role then
+            check(loader.getRole(actor.role), "actor " .. tostring(actor.id) .. " references missing role '" .. tostring(actor.role) .. "'")
+        end
+        checkTraits(actor.traits, "actor " .. tostring(actor.id))
     end
 
-    -- Skills must reference existing states
+    -- Skills: effect types, states and elements must exist
     for id, skill in pairs(loader.skills) do
-        for _, eff in ipairs(skill.effects or {}) do
-            if eff.type == "add_status" then
-                check(loader.getState(eff.status), "skill '" .. tostring(id) .. "' references missing state '" .. tostring(eff.status) .. "'")
-            end
+        checkEffects(skill.effects, "skill '" .. tostring(id) .. "'")
+        if skill.element then
+            check(loader.getElement(skill.element), "skill '" .. tostring(id) .. "' references missing element '" .. tostring(skill.element) .. "'")
+        end
+    end
+
+    -- Passives/states/items: trait codes must be registered
+    for id, passive in pairs(loader.passives) do
+        checkTraits(passive.traits, "passive '" .. tostring(id) .. "'")
+    end
+    for id, state in pairs(loader.states) do
+        checkTraits(state.traits, "state '" .. tostring(id) .. "'")
+    end
+    for _, item in ipairs(loader.items) do
+        checkTraits(item.traits, "item " .. tostring(item.id))
+        checkEffects(item.effects, "item " .. tostring(item.id))
+    end
+
+    -- Elements: affinity lists must point at registered elements
+    for id, elem in pairs(loader.elements or {}) do
+        for _, other in ipairs(elem.strongAgainst or {}) do
+            check(loader.getElement(other), "element '" .. tostring(id) .. "' strongAgainst missing element '" .. tostring(other) .. "'")
+        end
+        for _, other in ipairs(elem.weakAgainst or {}) do
+            check(loader.getElement(other), "element '" .. tostring(id) .. "' weakAgainst missing element '" .. tostring(other) .. "'")
         end
     end
 
