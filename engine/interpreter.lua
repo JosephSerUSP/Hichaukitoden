@@ -325,6 +325,17 @@ handlers.REMOVE_STATE = function(cmd, ctx)
     emitAll(ctx, effects.apply({ type = "remove_status", status = cmd.state }, target, target, ctx.session))
 end
 
+handlers.CHANGE_MP = function(cmd, ctx)
+    local amount = math.floor(evalFormula(cmd.amount, ctx))
+    if amount < 0 then
+        local drain = math.abs(amount)
+        ctx.session.mp = math.max(0, ctx.session.mp - drain)
+        table.insert(ctx.events, { type = "mp_drain", value = drain, actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a })
+    else
+        ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
+    end
+end
+
 handlers.DRAIN_MP = function(cmd, ctx)
     local amount = math.floor(evalFormula(cmd.amount, ctx))
     ctx.session.mp = math.max(0, ctx.session.mp - amount)
@@ -333,7 +344,7 @@ end
 
 handlers.RESTORE_MP = function(cmd, ctx)
     local amount = math.floor(evalFormula(cmd.amount, ctx))
-    ctx.session.mp = math.min(ctx.session.maxMp or amount, ctx.session.mp + amount)
+    ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
 end
 
 -- The regen/poison/duration-decay block as one command (S2). Mirrors the
@@ -398,6 +409,28 @@ handlers.EMIT_TEXT = function(cmd, ctx)
         text = cmd.fallback or ""
     end
     table.insert(ctx.events, { type = "text", text = text })
+end
+
+handlers.CHANGE_ITEM = function(cmd, ctx)
+    local count = cmd.count or 1
+    if cmd.item == "random" then
+        local loot = "1"
+        local mapData = ctx.session.currentMapData
+        if mapData and mapData.treasures and #mapData.treasures > 0 then
+            loot = mapData.treasures[math.random(#mapData.treasures)]
+        end
+        if count < 0 then
+            if ctx.session:hasItem(loot, 1) then ctx.session:addItem(loot, count) end
+        else
+            ctx.session:addItem(loot, count)
+        end
+    else
+        if count < 0 then
+            if ctx.session:hasItem(cmd.item, 1) then ctx.session:addItem(cmd.item, count) end
+        else
+            ctx.session:addItem(cmd.item, count)
+        end
+    end
 end
 
 handlers.TAKE_ITEM = function(cmd, ctx)

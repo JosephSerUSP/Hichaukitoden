@@ -245,7 +245,7 @@
             return cmdRegistry().find(c => c.id === id);
         }
         function cmdsForContext(hostCtx) {
-            return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx));
+            return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx) && !c.deprecatedBy);
         }
         function showCommentsPref() {
             return localStorage.getItem('hkt_showComments') !== '0';
@@ -893,7 +893,7 @@
                 const opts = Object.keys(dbPayload.states || {}).map(id => ({ value: id, label: (dbPayload.states[id].name || id) }));
                 input = makeSelect(opts, currentValue, () => {}, null);
             } else if (paramDef.type === 'item') {
-                const opts = (dbPayload.items || []).map(it => ({ value: String(it.id), label: it.name }));
+                const opts = [{ value: "random", label: "Random Map Treasure" }].concat((dbPayload.items || []).map(it => ({ value: String(it.id), label: it.name })));
                 input = makeSelect(opts, currentValue, () => {}, null);
             } else if (paramDef.type === 'skill') {
                 const opts = Object.keys(dbPayload.skills || {}).map(id => ({ value: id, label: (dbPayload.skills[id].name || id) }));
