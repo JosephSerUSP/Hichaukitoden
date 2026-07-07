@@ -728,10 +728,10 @@
 
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
+            openCommandSelector(hostCtx, (cmd) => {
                 commandsArray.push(cmd);
                 if (onChange) onChange();
-            }, hostCtx);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -740,6 +740,76 @@
                 commandsArray[idx] = updatedCmd;
                 if (onChange) onChange();
             }, hostCtx);
+        }
+
+        // --- COMMAND SELECTOR MODAL (C1) ---
+        let activeSelectorCallback = null;
+        let activeSelectorHostCtx = 'map';
+
+        function openCommandSelector(hostCtx, callback) {
+            activeSelectorCallback = callback;
+            activeSelectorHostCtx = hostCtx || 'map';
+            const defs = cmdsForContext(activeSelectorHostCtx);
+
+            const groups = {};
+            defs.forEach(def => {
+                const cat = def.category || 'Other';
+                groups[cat] = groups[cat] || [];
+                groups[cat].push(def);
+            });
+
+            // Predictable category order, putting "Other" at the end
+            const orderedCategories = ["Message", "Flow Control", "Party", "Battler", "Progression", "Advanced"];
+            const cats = Object.keys(groups).sort((a, b) => {
+                if (a === 'Other') return 1;
+                if (b === 'Other') return -1;
+                const ia = orderedCategories.indexOf(a);
+                const ib = orderedCategories.indexOf(b);
+                if (ia >= 0 && ib >= 0) return ia - ib;
+                if (ia >= 0) return -1;
+                if (ib >= 0) return 1;
+                return a.localeCompare(b);
+            });
+
+            const container = document.getElementById('cmd-selector-categories');
+            container.innerHTML = '';
+
+            cats.forEach(cat => {
+                const fs = document.createElement('fieldset');
+                fs.className = 'win98-fieldset';
+                fs.style.display = 'grid';
+                fs.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+                fs.style.gap = '4px';
+
+                const legend = document.createElement('legend');
+                legend.textContent = cat;
+                fs.appendChild(legend);
+
+                groups[cat].forEach(def => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.style.width = '100%';
+                    btn.style.textAlign = 'left';
+                    btn.style.padding = '4px';
+                    btn.style.fontSize = '10px';
+                    btn.textContent = def.label || def.id;
+                    btn.title = def.description || '';
+                    btn.onclick = () => {
+                        closeCommandSelector();
+                        openAddCommandDialog(activeSelectorCallback, activeSelectorHostCtx, def.id);
+                    };
+                    fs.appendChild(btn);
+                });
+
+                container.appendChild(fs);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        }
+
+        function closeCommandSelector() {
+            document.getElementById('cmd-selector-modal').classList.remove('active');
+            activeSelectorCallback = null;
         }
 
         // --- COMMAND EDITOR MODAL ---
@@ -794,15 +864,21 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+        function openAddCommandDialog(callback, hostCtx, preSelectedId) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
-            populateCmdTypeSelect(activeCmdHostCtx);
+            populateCmdTypeSelect(activeCmdHostCtx, preSelectedId);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
-            else if (select.options.length) { select.selectedIndex = 0; }
+            if (preSelectedId && [...select.options].some(o => o.value === preSelectedId)) {
+                select.value = preSelectedId;
+            } else if ([...select.options].some(o => o.value === 'TEXT')) {
+                select.value = 'TEXT';
+            } else if (select.options.length) {
+                select.selectedIndex = 0;
+            }
+            select.disabled = true; // Read-only for adding flow from selector
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
@@ -816,7 +892,9 @@
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
-            document.getElementById('cmd-select-type').value = id;
+            const select = document.getElementById('cmd-select-type');
+            select.value = id;
+            select.disabled = true; // Read-only for editing
             document.getElementById('cmd-input-comment').value = cmd.comment || '';
             toggleCmdTypeFields(cmd);
             cmdDialogDirty = false;
