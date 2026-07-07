@@ -13,7 +13,7 @@ const PROJECT_DIR = path.resolve(__dirname, '../..');
 const DATA_FILES = [
     'actors', 'elements', 'events', 'items', 'maps', 'quests', 'shops',
     'sounds', 'terms', 'themes', 'system', 'commonEvents',
-    'skills', 'passives', 'states', 'roles', 'engine', 'flows'
+    'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes'
 ];
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
 const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';

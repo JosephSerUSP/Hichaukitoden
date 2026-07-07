@@ -6,6 +6,12 @@
     "cost": 10,
     "description": "Heals one member to full HP.",
     "icon": 52,
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
     "effects": [
       {
         "type": "hp",
@@ -25,7 +31,13 @@
         "type": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "alchemy"
+    }
   },
   {
     "id": 3,
@@ -39,7 +51,13 @@
         "type": "xp",
         "value": 6
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 18,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
   },
   {
     "id": 4,
@@ -54,7 +72,13 @@
         "value": 50
       }
     ],
-    "targetScope": "party"
+    "targetScope": "party",
+    "meta": {
+      "tier": 2,
+      "potency": 25,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
   },
   {
     "id": 5,
@@ -74,7 +98,13 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 6,
@@ -90,7 +120,13 @@
         "dataId": "maxHp",
         "value": 3
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 7,
@@ -111,7 +147,13 @@
         "dataId": "maxHp",
         "value": 1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 6,
+      "craftElement": "Green",
+      "craftKind": "tinkering"
+    }
   },
   {
     "id": 8,
@@ -127,7 +169,13 @@
         "dataId": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "White",
+      "craftKind": "tinkering"
+    }
   },
   {
     "id": 9,
@@ -142,7 +190,13 @@
         "code": "INITIATIVE",
         "value": 0.05
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 15,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
   },
   {
     "id": 10,
@@ -157,7 +211,13 @@
         "code": "REAR_GUARD",
         "value": 1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "tinkering"
+    }
   },
   {
     "id": 11,
@@ -186,7 +246,13 @@
         "code": "XP_RATE",
         "value": 1.5
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 50,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
   },
   {
     "id": 13,
@@ -258,7 +324,13 @@
         "code": "CRI",
         "value": 0.2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Red",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 17,
@@ -282,7 +354,13 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Green",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 18,
@@ -306,7 +384,13 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Blue",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 19,
@@ -330,7 +414,13 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 35,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 20,
@@ -354,7 +444,13 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 32,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 21,
@@ -452,7 +548,13 @@
         "code": "CRI",
         "value": 0.25
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 40,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 28,
@@ -473,7 +575,13 @@
         "dataId": "def",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
     "id": 29,
@@ -487,7 +595,13 @@
         "type": "mp_heal",
         "value": 10
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
   },
   {
     "id": 30,
@@ -501,7 +615,13 @@
         "type": "mp_heal",
         "value": 25
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "cooking"
+    }
   },
   {
     "id": 31,
@@ -519,6 +639,104 @@
         "type": "remove_status",
         "value": "weakened"
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 16,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 32,
+    "name": "Scrap Metal",
+    "type": "junk",
+    "cost": 1,
+    "icon": 180,
+    "description": "A lump of useless metal.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 33,
+    "name": "Sludge",
+    "type": "junk",
+    "cost": 1,
+    "icon": 55,
+    "description": "A smelly, failed alchemical mixture.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 34,
+    "name": "Burnt Slop",
+    "type": "junk",
+    "cost": 1,
+    "icon": 220,
+    "description": "Completely charcoal. Inedible.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 35,
+    "name": "Broken Spring",
+    "type": "junk",
+    "cost": 1,
+    "icon": 174,
+    "description": "A snapped spring and bent gear.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 36,
+    "name": "Ambrosia",
+    "type": "consumable",
+    "cost": 500,
+    "icon": 222,
+    "description": "Food of the gods. Restores full HP and MP.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 999
+      },
+      {
+        "type": "mp_heal",
+        "value": 999
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "cooking",
+      "potency": 45,
+      "craftElement": "White"
+    }
+  },
+  {
+    "id": 37,
+    "name": "Philosopher's Stone",
+    "type": "consumable",
+    "cost": 1000,
+    "icon": 65,
+    "description": "A legendary alchemical catalyst.",
+    "effects": [
+      {
+        "type": "xp",
+        "value": 1000
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "alchemy",
+      "potency": 50,
+      "craftElement": "Red"
+    }
   }
 ]

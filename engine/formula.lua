@@ -42,6 +42,16 @@ function formula.battlerView(battler, session)
         mat = traits.getParam(battler, "mat", session) or 10,
         mdf = traits.getParam(battler, "mdf", session) or 10,
         mpd = traits.getParam(battler, "mpd", session) or 1,
+        meta = battler.meta or {}
+    }
+end
+
+function formula.itemView(item)
+    if not item then return nil end
+    return {
+        id = item.id,
+        name = item.name or "",
+        meta = item.meta or {}
     }
 end
 
@@ -105,6 +115,8 @@ function formula.makeContext(opts, session)
     end
     ctx.battle = opts.battle
     ctx.v = opts.v
+    if opts.ingredient1 then ctx.ingredient1 = formula.itemView(opts.ingredient1) end
+    if opts.ingredient2 then ctx.ingredient2 = formula.itemView(opts.ingredient2) end
     return ctx
 end
 

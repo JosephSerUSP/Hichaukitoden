@@ -8,6 +8,7 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
+require("engine.scenes.crafting")
 local viewport_3d = require("presentation.viewport_3d")
 
 -- Game resolution dimensions
@@ -16,6 +17,25 @@ local canvas
 local scale, scaleX, scaleY = 1, 1, 1
 
 -- Global Session and State Router
+
+local function getPopupFormat(key)
+    if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup[key] then
+        return config.battle_screen.popup[key]
+    end
+    -- Fallbacks
+    if key == "damageFormat" then return "-{0}" end
+    if key == "damageColor" then return {1, 0.2, 0.2, 1} end
+    if key == "healFormat" then return "+{0}" end
+    if key == "healColor" then return {0.2, 1, 0.2, 1} end
+    if key == "critFormat" then return "CRITICAL!" end
+    if key == "critColor" then return {1, 0.2, 0.2, 1} end
+    if key == "deadFormat" then return "DEAD" end
+    if key == "deadColor" then return {0.6, 0.6, 0.6, 1} end
+    if key == "stateFormat" then return "{0}" end
+    if key == "stateColor" then return {0.8, 0.4, 1.0, 1} end
+    return ""
+end
+
 local activeSession
 local currentScene = "title"
 local isTestBattle = false
@@ -198,6 +218,77 @@ runValidation = function()
     local validTraitCodes = {}
     for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
         validTraitCodes[tc.code] = true
+    end
+
+    -- Meta system validation (C10)
+    local registeredMeta = {}
+    for _, mk in ipairs((loader.engine and loader.engine.metaKeys) or {}) do
+        local applies = {}
+        for _, coll in ipairs(mk.appliesTo or {}) do
+            applies[coll] = true
+        end
+        registeredMeta[mk.key] = {
+            type = mk.type,
+            appliesTo = applies
+        }
+    end
+
+    local undeclaredWarnings = 0
+    local function validateMeta(metaObj, collName, entryId)
+        if not metaObj then return end
+        for k, v in pairs(metaObj) do
+            local reg = registeredMeta[k]
+            if reg then
+                if not reg.appliesTo[collName] then
+                    check(false, "meta key '" .. tostring(k) .. "' does not apply to collection '" .. collName .. "' (on entry '" .. tostring(entryId) .. "')")
+                else
+                    local ok = false
+                    if reg.type == "number" then
+                        ok = (type(v) == "number")
+                    elseif reg.type == "string" then
+                        ok = (type(v) == "string")
+                    elseif reg.type == "flag" then
+                        ok = (type(v) == "boolean")
+                    end
+                    check(ok, "meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "' has wrong type (expected " .. reg.type .. ", got " .. type(v) .. ")")
+                end
+            else
+                print("[validator] warning: undeclared meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "'")
+                undeclaredWarnings = undeclaredWarnings + 1
+            end
+        end
+    end
+
+    for _, actor in ipairs(loader.actors or {}) do
+        validateMeta(actor.meta, "actors", actor.id or actor.name or "?")
+    end
+    for _, item in ipairs(loader.items or {}) do
+        validateMeta(item.meta, "items", item.id or item.name or "?")
+    end
+    for _, ce in ipairs(loader.commonEvents or {}) do
+        validateMeta(ce.meta, "commonEvents", ce.id or ce.name or "?")
+    end
+
+    local dictColls = {
+        elements = loader.elements,
+        maps = loader.maps,
+        quests = loader.quests,
+        shops = loader.shops,
+        sounds = loader.sounds,
+        themes = loader.themes,
+        skills = loader.skills,
+        passives = loader.passives,
+        states = loader.states,
+        roles = loader.roles
+    }
+    for collName, dict in pairs(dictColls) do
+        for id, entry in pairs(dict or {}) do
+            validateMeta(entry.meta, collName, id)
+        end
+    end
+
+    if undeclaredWarnings > 0 then
+        print("[validator] total undeclared meta warnings: " .. undeclaredWarnings)
     end
     local function checkTraits(traitList, ownerDesc)
         for _, tr in ipairs(traitList or {}) do
@@ -625,6 +716,84 @@ elseif paramDef.type == "script" then
         end
     end
 
+    -- Scenes validation (C9)
+    local function validateScenes()
+        local formulaEngine = require("engine.formula")
+        local mockItem1 = loader.getItem(1)
+        local mockItem2 = loader.getItem(2)
+        local mockCrafter = session.Battler.new(loader.getActor(1), 1)
+        
+        local mockCtx = {
+            i1 = formulaEngine.itemView(mockItem1),
+            i2 = formulaEngine.itemView(mockItem2),
+            crafter = mockCrafter,
+            alpha = 0.5,
+            S = 10
+        }
+        
+        for _, scene in ipairs(loader.scenes or {}) do
+            local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
+            check(type(scene.id) == "number", sceneDesc .. " ID must be a number")
+            check(scene.kind == "crafting", sceneDesc .. " unknown scene kind '" .. tostring(scene.kind) .. "'")
+            
+            local config = scene.config or {}
+            check(config.disciplines ~= nil, sceneDesc .. " missing disciplines config")
+            if config.disciplines then
+                for _, disc in ipairs(config.disciplines) do
+                    check(disc.kind ~= nil, sceneDesc .. " discipline missing kind")
+                    check(disc.stat ~= nil, sceneDesc .. " discipline missing stat")
+                    local validStats = { atk = true, def = true, mat = true, mdf = true, maxHp = true, asp = true, mpd = true, level = true }
+                    check(validStats[disc.stat], sceneDesc .. " discipline uses invalid stat parameter '" .. tostring(disc.stat) .. "'")
+                end
+            end
+            
+            check(config.yieldFormula ~= nil, sceneDesc .. " missing yieldFormula")
+            if config.yieldFormula then
+                local ok, _, ferr = pcall(formulaEngine.eval, config.yieldFormula, mockCtx)
+                check(ok and ferr == nil, sceneDesc .. " yieldFormula failed to compile: " .. tostring(ferr or ""))
+            end
+            
+            check(config.penaltyFormula ~= nil, sceneDesc .. " missing penaltyFormula")
+            if config.penaltyFormula then
+                local ok, _, ferr = pcall(formulaEngine.eval, config.penaltyFormula, mockCtx)
+                check(ok and ferr == nil, sceneDesc .. " penaltyFormula failed to compile: " .. tostring(ferr or ""))
+            end
+            
+            check(config.anomalyFormula ~= nil, sceneDesc .. " missing anomalyFormula")
+            if config.anomalyFormula then
+                local ok, _, ferr = pcall(formulaEngine.eval, config.anomalyFormula, mockCtx)
+                check(ok and ferr == nil, sceneDesc .. " anomalyFormula failed to compile: " .. tostring(ferr or ""))
+            end
+            
+            check(config.brackets ~= nil, sceneDesc .. " missing brackets config")
+            if config.brackets then
+                for _, br in ipairs(config.brackets) do
+                    check(br.max ~= nil, sceneDesc .. " bracket missing max value")
+                    check(br.tier ~= nil, sceneDesc .. " bracket missing tier value")
+                    check(type(br.max) == "number", sceneDesc .. " bracket max must be a number")
+                    check(type(br.tier) == "number", sceneDesc .. " bracket tier must be a number")
+                end
+            end
+
+            if config.disciplines and config.brackets then
+                for _, disc in ipairs(config.disciplines) do
+                    for _, br in ipairs(config.brackets) do
+                        local count = 0
+                        for _, item in ipairs(loader.items or {}) do
+                            if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == br.tier then
+                                count = count + 1
+                            end
+                        end
+                        check(count > 0, sceneDesc .. " no items match discipline '" .. tostring(disc.kind) .. "' and tier " .. tostring(br.tier))
+                    end
+                end
+            end
+            
+            check(config.timing ~= nil, sceneDesc .. " missing timing config")
+        end
+    end
+    validateScenes()
+
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
 
     if #problems > 0 then
@@ -720,6 +889,10 @@ function love.update(dt)
             inputCooldown = conf("ui", "inputCooldown", 0.30)
         end
     end
+    
+    if currentScene == "crafting" then
+        if updateCraftingScene then updateCraftingScene(dt) end
+    end
 end
 
 function love.draw()
@@ -755,6 +928,8 @@ function love.draw()
         else
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
+    elseif currentScene == "crafting" then
+        if drawCraftingScene then drawCraftingScene() end
     end
     
     if server.isActive() then
@@ -1159,7 +1334,8 @@ local function advanceBattleLog()
             end
         elseif ev.type == "damage" then
             desc = loader.formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
-            renderer.addDamagePopup("-" .. ev.value, popupX, popupY, {1, 0.2, 0.2})
+            local text = getPopupFormat("damageFormat"):gsub("{0}", tostring(ev.value))
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("damageColor"))
             -- Apply damage sequentially
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
             if activeBattle then
@@ -1172,12 +1348,13 @@ local function advanceBattleLog()
             end
         elseif ev.type == "heal" then
             desc = loader.formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
-            renderer.addDamagePopup("+" .. ev.value, popupX, popupY, {0.2, 1, 0.2})
+            local text = getPopupFormat("healFormat"):gsub("{0}", tostring(ev.value))
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("healColor"))
             -- Apply heal sequentially
             ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
         elseif ev.type == "death" then
             desc = loader.formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
-            renderer.addDamagePopup("DEAD", popupX, popupY, {0.6, 0.6, 0.6})
+            renderer.addDamagePopup(getPopupFormat("deadFormat"), popupX, popupY, getPopupFormat("deadColor"))
             -- Apply death state sequentially
             ev.target:addState("dead")
             ev.target.hp = 0
@@ -1192,7 +1369,8 @@ local function advanceBattleLog()
             end
         elseif ev.type == "state_add" then
             desc = loader.formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
-            renderer.addDamagePopup(ev.state:upper(), popupX, popupY, {0.8, 0.4, 1.0})
+            local text = getPopupFormat("stateFormat"):gsub("{0}", ev.state:upper())
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("stateColor"))
             -- Apply state add sequentially
             ev.target:addState(ev.state)
         elseif ev.type == "state_remove" then
@@ -1248,7 +1426,12 @@ end
 
 -- Action handling for key presses
 local function handleKeyPressed(key)
+    if inputCooldown > 0 then return end
     if renderer.closing then return end
+    if currentScene == "crafting" then
+        if keypressedCraftingScene then keypressedCraftingScene(key) end
+        return
+    end
     if key == "escape" then
         if currentScene == "title" then
             love.event.quit()
@@ -1428,18 +1611,24 @@ local function handleKeyPressed(key)
         
     elseif currentScene == "menu" then
         if menuSubScene == "main" then
+            local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
+            local numOpts = #mainOpts
             if key == "up" or key == "w" then
-                menuSelectedIdx = (menuSelectedIdx - 2) % 4 + 1
+                menuSelectedIdx = (menuSelectedIdx - 2) % numOpts + 1
             elseif key == "down" or key == "s" then
-                menuSelectedIdx = menuSelectedIdx % 4 + 1
+                menuSelectedIdx = menuSelectedIdx % numOpts + 1
             elseif key == "space" or key == "return" then
-                if menuSelectedIdx == 1 then -- ITEMS
+                local opt = mainOpts[menuSelectedIdx]
+                if opt == "ITEMS" then
                     menuSubScene = "items_list"
                     menuSelectedSubIdx = 1
-                elseif menuSelectedIdx == 2 or menuSelectedIdx == 3 then -- STATUS or EQUIP
+                elseif opt == "STATUS" or opt == "EQUIP" then
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
-                elseif menuSelectedIdx == 4 then -- EXIT
+                elseif opt == "CRAFTING" then
+                    currentScene = "crafting"
+                    if initCraftingScene then initCraftingScene() end
+                elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
                     menuSelectedSubIdx = 2 -- Default to NO
                 end
@@ -1465,7 +1654,9 @@ local function handleKeyPressed(key)
             elseif key == "space" or key == "return" then
                 if activeSession.party[menuSelectedSubIdx] then
                     selectedCreatureIndex = menuSelectedSubIdx
-                    if menuSelectedIdx == 2 then
+                    local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
+                    local opt = mainOpts[menuSelectedIdx]
+                    if opt == "STATUS" then
                         menuSubScene = "status_detail"
                         statusInspectMode = false
                         statusInspectIdx = 1
@@ -1899,12 +2090,14 @@ function love.keypressed(key, scancode, isrepeat)
                 if #targets > 0 then
                     local target = targets[math.random(#targets)]
                     local isHeal = math.random() < 0.25
-                    local txt = isHeal and ("+" .. math.random(5, 20)) or ("-" .. math.random(5, 30))
-                    if math.random() < 0.1 then txt = "CRITICAL!" end
+                    local val = isHeal and math.random(5, 20) or math.random(5, 30)
+                    local isCrit = not isHeal and math.random() < 0.1
+                    local txt = isCrit and getPopupFormat("critFormat") or (isHeal and getPopupFormat("healFormat") or getPopupFormat("damageFormat"))
+                    txt = txt:gsub("{0}", tostring(val))
                     
                     local x, y = getTargetCoords(target)
                     if x and y then
-                        local col = isHeal and {0.2, 1, 0.2} or {1, 0.2, 0.2}
+                        local col = isCrit and getPopupFormat("critColor") or (isHeal and getPopupFormat("healColor") or getPopupFormat("damageColor"))
                         renderer.addDamagePopup(txt, x, y, col)
                     end
                 end
