@@ -1,5 +1,13 @@
 {
   "battle": {
+    "encounter_check": [
+      { "cmd": "COMMENT", "text": "Per-step encounter roll; the map host applies the safe-map exemption before running this phase (task A5d)." },
+      { "cmd": "ROLL_ENCOUNTER", "chance": "session.encounterRate" }
+    ],
+    "battle_start": [
+      { "cmd": "COMMENT", "text": "Enemy group composition: count roll then weighted picks from the map's encounter table (task A5d)." },
+      { "cmd": "SPAWN_ENEMIES", "count": "random(combat.minEnemies, combat.maxEnemies)" }
+    ],
     "round_end": [
       { "cmd": "COMMENT", "text": "End-of-round ticks: regen/poison/decay for everyone, then per-slot MP drain and MP-exhaustion damage off safe maps. Mirrors the legacy engine/battle.lua block exactly, including its slot-1..4 drain loop (task A5b)." },
       { "cmd": "STATE_TICKS" },

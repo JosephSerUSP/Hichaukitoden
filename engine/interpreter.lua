@@ -368,6 +368,54 @@ handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
 end
 
+-- Rolls the encounter chance; on success emits an `encounter` event the map
+-- host consumes to start a battle. One math.random() call, like the legacy
+-- step-handler roll.
+handlers.ROLL_ENCOUNTER = function(cmd, ctx)
+    local chance = evalFormula(cmd.chance, ctx)
+    if math.random() < chance then
+        table.insert(ctx.events, { type = "encounter" })
+    end
+end
+
+-- Builds the enemy group from the current map's weighted encounter table and
+-- emits it as a `spawn_enemies` event; the host constructs the Battle. RNG
+-- sequence matches legacy triggerBattle: one count roll (via the count
+-- formula), then one weighted roll per enemy.
+handlers.SPAWN_ENEMIES = function(cmd, ctx)
+    local sessionMod = require("engine.session")
+    local mapData = ctx.session.currentMapData
+    local possibleEnemies = mapData and mapData.encounters
+    if not possibleEnemies or #possibleEnemies == 0 then return end
+
+    local count = math.floor(evalFormula(cmd.count, ctx))
+    local enemyList = {}
+    for _ = 1, count do
+        local totalWeight = 0
+        for _, enemyOpt in ipairs(possibleEnemies) do
+            totalWeight = totalWeight + enemyOpt.weight
+        end
+        local roll = math.random(totalWeight)
+        local sum = 0
+        local enemyId = possibleEnemies[1].id
+        for _, enemyOpt in ipairs(possibleEnemies) do
+            sum = sum + enemyOpt.weight
+            if roll <= sum then
+                enemyId = enemyOpt.id
+                break
+            end
+        end
+
+        local enemyData = (ctx.loader or ctx.session.loader).getActor(enemyId)
+        if enemyData then
+            local enemyBattler = sessionMod.Battler.new(enemyData, enemyData.level or ctx.session.dungeonFloor)
+            enemyBattler.hp = enemyBattler:getMaxHp(ctx.session)
+            table.insert(enemyList, enemyBattler)
+        end
+    end
+    table.insert(ctx.events, { type = "spawn_enemies", enemies = enemyList })
+end
+
 -- Emits a raw event of the given type (e.g. flee_success), optionally with
 -- value/state fields, so flows can signal the host battle loop.
 handlers.EMIT_EVENT = function(cmd, ctx)

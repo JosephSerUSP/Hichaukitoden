@@ -823,34 +823,42 @@ triggerBattle = function()
     local mapData = activeSession.currentMapData
     local possibleEnemies = mapData.encounters
     if not possibleEnemies or #possibleEnemies == 0 then return end
-    
+
     local enemyList = {}
-    local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
-    
-    for i = 1, numEnemies do
-        local totalWeight = 0
-        for _, enemyOpt in ipairs(possibleEnemies) do
-            totalWeight = totalWeight + enemyOpt.weight
+    if flow.has("battle.battle_start") then
+        for _, ev in ipairs(flow.run("battle.battle_start", { session = activeSession })) do
+            if ev.type == "spawn_enemies" then enemyList = ev.enemies end
         end
-        local roll = math.random(totalWeight)
-        local sum = 0
-        local enemyId = possibleEnemies[1].id
-        for _, enemyOpt in ipairs(possibleEnemies) do
-            sum = sum + enemyOpt.weight
-            if roll <= sum then
-                enemyId = enemyOpt.id
-                break
+        if #enemyList == 0 then return end
+    else
+        -- Legacy composition (SPEC S4 fallback rule)
+        local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
+
+        for i = 1, numEnemies do
+            local totalWeight = 0
+            for _, enemyOpt in ipairs(possibleEnemies) do
+                totalWeight = totalWeight + enemyOpt.weight
+            end
+            local roll = math.random(totalWeight)
+            local sum = 0
+            local enemyId = possibleEnemies[1].id
+            for _, enemyOpt in ipairs(possibleEnemies) do
+                sum = sum + enemyOpt.weight
+                if roll <= sum then
+                    enemyId = enemyOpt.id
+                    break
+                end
+            end
+
+            local enemyData = loader.getActor(enemyId)
+            if enemyData then
+                local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
+                enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
+                table.insert(enemyList, enemyBattler)
             end
         end
-        
-        local enemyData = loader.getActor(enemyId)
-        if enemyData then
-            local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
-            enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
-            table.insert(enemyList, enemyBattler)
-        end
     end
-    
+
     activeBattle = battleSystem.Battle.new(activeSession, enemyList)
     battleCombatLog = { loader.getTerm("battle.encounter", "A hostile group blocks your path!") }
     battleEventsQueue = {}
@@ -1180,10 +1188,17 @@ local function handleKeyPressed(key)
         if moved then
             local triggered = checkStepEvents()
             if not triggered and not isSafeMap() then
-                local chance = activeSession.currentMapData.encounterRate
-                    or conf("combat", "encounterChance", 0.10)
-                if math.random() < chance then
-                    triggerBattle()
+                if flow.has("battle.encounter_check") then
+                    for _, ev in ipairs(flow.run("battle.encounter_check", { session = activeSession })) do
+                        if ev.type == "encounter" then triggerBattle() end
+                    end
+                else
+                    -- Legacy roll (SPEC S4 fallback rule)
+                    local chance = activeSession.currentMapData.encounterRate
+                        or conf("combat", "encounterChance", 0.10)
+                    if math.random() < chance then
+                        triggerBattle()
+                    end
                 end
             end
         end
