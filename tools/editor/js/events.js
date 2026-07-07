@@ -728,10 +728,12 @@
 
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                commandsArray.push(cmd);
-                if (onChange) onChange();
-            }, hostCtx);
+            openCommandSelector(hostCtx, (selectedId) => {
+                openAddCommandDialog((cmd) => {
+                    commandsArray.push(cmd);
+                    if (onChange) onChange();
+                }, hostCtx, selectedId);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -740,6 +742,65 @@
                 commandsArray[idx] = updatedCmd;
                 if (onChange) onChange();
             }, hostCtx);
+        }
+
+
+        // --- COMMAND SELECTOR MODAL ---
+        function openCommandSelector(hostCtx, cb) {
+            const container = document.getElementById('cmd-selector-categories');
+            container.innerHTML = '';
+
+            const defs = cmdsForContext(hostCtx);
+            const categories = {};
+            defs.forEach(def => {
+                const cat = def.category || 'Other';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(def);
+            });
+
+            const catOrder = ['Message', 'Flow Control', 'Party', 'Battler', 'Progression', 'Map', 'Advanced', 'Other'];
+            const allCats = Object.keys(categories);
+            catOrder.forEach(c => {
+                if (categories[c]) renderCategoryGroup(container, c, categories[c], cb);
+            });
+            allCats.forEach(c => {
+                if (!catOrder.includes(c)) renderCategoryGroup(container, c, categories[c], cb);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        }
+
+        function renderCategoryGroup(container, categoryName, commands, cb) {
+            const fieldset = document.createElement('fieldset');
+            fieldset.style.padding = '6px';
+            fieldset.style.display = 'flex';
+            fieldset.style.flexDirection = 'column';
+            fieldset.style.gap = '4px';
+
+            const legend = document.createElement('legend');
+            legend.textContent = categoryName;
+            fieldset.appendChild(legend);
+
+            commands.forEach(def => {
+                const btn = document.createElement('button');
+                btn.className = 'win98-btn';
+                btn.style.width = '100%';
+                btn.style.textAlign = 'left';
+                btn.style.justifyContent = 'flex-start';
+                btn.textContent = def.label || def.id;
+                if (def.description) btn.title = def.description;
+                btn.onclick = () => {
+                    closeCommandSelector();
+                    cb(def.id);
+                };
+                fieldset.appendChild(btn);
+            });
+
+            container.appendChild(fieldset);
+        }
+
+        function closeCommandSelector() {
+            document.getElementById('cmd-selector-modal').classList.remove('active');
         }
 
         // --- COMMAND EDITOR MODAL ---
@@ -794,15 +855,20 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+        function openAddCommandDialog(callback, hostCtx, presetId) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
-            else if (select.options.length) { select.selectedIndex = 0; }
+            if (presetId) {
+                select.value = presetId;
+            } else {
+                if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
+                else if (select.options.length) { select.selectedIndex = 0; }
+            }
+            select.disabled = true;
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
@@ -816,7 +882,9 @@
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
-            document.getElementById('cmd-select-type').value = id;
+            const select = document.getElementById('cmd-select-type');
+            select.value = id;
+            select.disabled = true;
             document.getElementById('cmd-input-comment').value = cmd.comment || '';
             toggleCmdTypeFields(cmd);
             cmdDialogDirty = false;

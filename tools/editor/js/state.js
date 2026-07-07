@@ -36,6 +36,7 @@
         // prompt-and-discard if that modal has unsaved staged changes.
         const ESCAPE_MODAL_CLOSERS = [
             ['asset-picker-modal', () => closeAssetPicker()],
+            ['cmd-selector-modal', () => closeCommandSelector()],
             ['cmd-modal', () => closeCmdDialog()],
             ['icon-picker-modal', () => closeIconPicker()],
             ['damage-popup-modal', () => closeDamagePopupModal()],
