@@ -1173,6 +1173,28 @@
     <!-- --- CANVAS RIGHT-CLICK CONTEXT MENU (built dynamically per click) --- -->
     <div id="canvas-context-menu" class="outset-bevel" style="display: none; position: absolute; z-index: 10000; background: #dfdfdf; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; box-shadow: 1px 1px 4px rgba(0,0,0,0.3); padding: 2px; min-width: 170px; font-family: sans-serif; font-size: 11px; box-sizing: border-box;"></div>
 
+    <!-- --- ICON PICKER MODAL --- -->
+    <div id="icon-picker-modal" class="modal-overlay" style="z-index: 1350;">
+        <div class="window outset-bevel" style="width: 320px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Pick an Icon</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeIconPicker()">×</button>
+                </div>
+            </div>
+            <div class="window-body inset-bevel" style="padding: 10px; background: #fff; height: 350px; overflow-y: auto;">
+                <div id="icon-picker-grid" style="display: flex; flex-wrap: wrap; gap: 2px; width: 280px; margin: 0 auto;">
+                </div>
+            </div>
+            <div class="window-footer" style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="icon-picker-hover-info">Icon: 0</span>
+                <div>
+                    <button class="win-btn outset-bevel" onclick="closeIconPicker()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
         <script src="js/state.js"></script>
     <script src="js/net.js"></script>
     <script src="js/widgets.js"></script>
@@ -1180,5 +1202,7 @@
     <script src="js/engine-editor.js"></script>
     <script src="js/map-editor.js"></script>
     <script src="js/events.js"></script>
+    <script src="js/icon-picker.js"></script>
+    <script src="js/icon-field.js"></script>
 </body>
 </html>
