@@ -254,6 +254,11 @@ function Battle:resolveRound(summonerAction)
         end
     end
     
+    -- Skip round-end ticks if the battle outcome is already decided
+    if self:isVictory() or self:isDefeat() then
+        return roundEvents
+    end
+    
     if flow.has("battle.round_end") then
         local flowEvents = flow.run("battle.round_end", {
             session = self.session,

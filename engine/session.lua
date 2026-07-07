@@ -13,6 +13,7 @@ function Battler.new(actorData, level)
     self.actorData = actorData
     self.id = actorData.id
     self.name = actorData.name
+    self.meta = actorData.meta or {}
     self.level = level or actorData.level or 1
     self.exp = 0
     self.passives = {}
