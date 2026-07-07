@@ -1,8 +1,8 @@
 $ErrorActionPreference = "Stop"
-$rootDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$rootDir = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 Set-Location $rootDir
 
-$output = & love . validate golden
+$output = & lovec . validate golden
 $inBlock = $false
 $log = @()
 foreach ($line in $output) {

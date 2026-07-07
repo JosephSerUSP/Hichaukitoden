@@ -8,6 +8,75 @@ local config = require("engine.config")
 
 local renderer = {}
 
+-- Battle-scene layout defaults shared by drawBattle and getBattlerCoords,
+-- per the BIBLE rule that coordinate mappings must never be duplicated.
+-- Values can be overridden from data/engine.json (battleLayout), editable
+-- in the Engine editor.
+local BATTLE_LAYOUT = {
+    enemyRowWidth = 220,
+    enemyStartX = 18,
+    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
+    enemyPopupY = 60,
+    partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
+    consoleTileY = 18,
+    headerTileOffset = 1,
+    slotPopupOffsetX = 27,
+    slotPopupOffsetY = 10,
+    summonerPopupX = 50,
+    summonerPopupYOffset = 62,
+    fallbackX = 128,
+    fallbackY = 70,
+    enemyY = 30,
+    enemyNameY = 90,
+    enemyHpBarY = 104,
+    enemyHpBarWidth = 50,
+    enemyHpBarHeight = 4,
+    enemySpriteSize = 56,
+    enemyFallbackSize = 50,
+    enemySlideOffset = 280,
+    enemyDeathYOffset = 20,
+    viewportOverlayW = 256,
+    viewportOverlayH = 140,
+    logPanelX = 10,
+    logPanelY = 6,
+    logPanelWidth = 236,
+    logPanelHeight = 32,
+    logTextX = 16,
+    logTextY = 12,
+    logTextLimit = 224,
+    logSpaceX = 200,
+    logSpaceY = 23,
+    consoleTileX = 0,
+    consoleTileW = 32,
+    consoleTileH = 12,
+    consoleTextTileX = 1,
+    menuChoiceSpacing = 16,
+    summonerStatusX = 8,
+    summonerNameYOffset = 48,
+    summonerMpTextYOffset = 64,
+    summonerMpBarYOffset = 80,
+    summonerMpBarWidth = 80,
+    summonerMpBarHeight = 4,
+    partyGridColWidth = 64,
+    partyGridRowHeight = 40,
+    partyGridNameXOffset = 1,
+    partyGridHpXOffset = 8,
+    partyGridHpYOffset = 11,
+    partyGridHpBarXOffset = 8,
+    partyGridHpBarYOffset = 22,
+    partyGridHpBarWidth = 52,
+    partyGridHpBarHeight = 3,
+    partyGridEmptyYOffset = 8
+}
+
+-- Battle layout accessor: engine.json override -> built-in default
+local function layoutVal(key)
+    local loaderRef = renderer.session and renderer.session.loader
+    local overrides = loaderRef and loaderRef.engine and loaderRef.engine.battleLayout
+    if overrides and overrides[key] ~= nil then return overrides[key] end
+    return BATTLE_LAYOUT[key]
+end
+
 local damagePopups = {}
 local portraitCache = {}
 local function getPortrait(id)
@@ -434,11 +503,13 @@ function renderer.drawDialogue(walker, selectIdx)
 end
 
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
+    local colW = layoutVal("partyGridColWidth")
+    local rowH = layoutVal("partyGridRowHeight")
     local gridCoords = {
         { x = x, y = y },
-        { x = x + 8 * ui.tileSize, y = y },
-        { x = x, y = y + 5 * ui.tileSize },
-        { x = x + 8 * ui.tileSize, y = y + 5 * ui.tileSize }
+        { x = x + colW, y = y },
+        { x = x, y = y + rowH },
+        { x = x + colW, y = y + rowH }
     }
     for i = 1, 4 do
         local c = session.party[i]
@@ -451,46 +522,19 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             
             local prefix = isSel and ">" or " "
             local iconW = drawElementIcons(traits.getElements(c, session), slot.x, slot.y)
-            ui.drawString(prefix .. c.name, slot.x + iconW + 1, slot.y, color, "left", 60)
+            ui.drawString(prefix .. c.name, slot.x + iconW + layoutVal("partyGridNameXOffset"), slot.y, color, "left", 60)
             
             local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + 8, slot.y + 11, hpColor)
-            ui.drawBar(slot.x + 8, slot.y + 22, 52, 3, dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset"), slot.y + layoutVal("partyGridHpYOffset"), hpColor)
+            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset"), slot.y + layoutVal("partyGridHpBarYOffset"), layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
-            ui.drawString(prefix .. "- EMPTY -", slot.x, slot.y + 8, {0.3, 0.3, 0.3, 1})
+            ui.drawString(prefix .. "- EMPTY -", slot.x, slot.y + layoutVal("partyGridEmptyYOffset"), {0.3, 0.3, 0.3, 1})
         end
     end
 end
 
--- Battle-scene layout defaults shared by drawBattle and getBattlerCoords,
--- per the BIBLE rule that coordinate mappings must never be duplicated.
--- Values can be overridden from data/engine.json (battleLayout), editable
--- in the Engine editor.
-local BATTLE_LAYOUT = {
-    enemyRowWidth = 220,
-    enemyStartX = 18,
-    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
-    enemyPopupY = 60,
-    partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
-    consoleTileY = 18,
-    headerTileOffset = 1,
-    slotPopupOffsetX = 27,
-    slotPopupOffsetY = 10,
-    summonerPopupX = 50,
-    summonerPopupYOffset = 62,
-    fallbackX = 128,
-    fallbackY = 70
-}
-
--- Battle layout accessor: engine.json override -> built-in default
-local function layoutVal(key)
-    local loaderRef = renderer.session and renderer.session.loader
-    local overrides = loaderRef and loaderRef.engine and loaderRef.engine.battleLayout
-    if overrides and overrides[key] ~= nil then return overrides[key] end
-    return BATTLE_LAYOUT[key]
-end
 
 -- Maps a battler to the screen position where damage popups should spawn.
 -- Used by main.lua so popup coordinates always match the drawn battle layout.
@@ -511,8 +555,8 @@ function renderer.getBattlerCoords(battleState, session, target)
             if c == target then
                 local col = (idx - 1) % 2
                 local row = math.floor((idx - 1) / 2)
-                local slotX = gridX + col * 8 * ui.tileSize
-                local slotY = gridY + row * 5 * ui.tileSize
+                local slotX = gridX + col * layoutVal("partyGridColWidth")
+                local slotY = gridY + row * layoutVal("partyGridRowHeight")
                 return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
         end
@@ -531,7 +575,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     
     -- Subtle darkened overlay (not too heavy)
     love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle("fill", 0, 0, 256, 140)
+    love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
     
     -- Render enemies portraits in viewport with slide-in and death animations
@@ -540,12 +584,12 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
         local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
-        local ey = 30
+        local ey = layoutVal("enemyY")
         
         -- Slide-in offset: start offscreen right, slide to position
         local slideOff = 0
         if anim.slideTimer > 0 then
-            slideOff = 280 * (anim.slideTimer / 0.35)
+            slideOff = layoutVal("enemySlideOffset") * (anim.slideTimer / 0.35)
         end
         local drawX = ex + slideOff
         
@@ -556,19 +600,19 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             love.graphics.setBlendMode("add")
             if portrait then
                 love.graphics.setColor(0.6 * alpha, 0, 0.9 * alpha, alpha)
-                love.graphics.draw(portrait, drawX, ey + (1-t)*20, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                love.graphics.draw(portrait, drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
             else
                 love.graphics.setColor(0.6*alpha, 0, 0.9*alpha, alpha)
-                love.graphics.rectangle("fill", drawX, ey + (1-t)*20, 50, 50)
+                love.graphics.rectangle("fill", drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             love.graphics.setBlendMode("alpha")
         elseif not anim.dead then
             if portrait then
                 love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(portrait, drawX, ey, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
             else
                 love.graphics.setColor(0.8, 0.1, 0.1, 1)
-                love.graphics.rectangle("fill", drawX, ey, 50, 50)
+                love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             
             -- Apply action/damage flash overlay
@@ -580,9 +624,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                     love.graphics.setColor(1.0, 0.2, 0.2, anim.flashTimer / 0.35)
                 end
                 if portrait then
-                    love.graphics.draw(portrait, drawX, ey, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                    love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
                 else
-                    love.graphics.rectangle("fill", drawX, ey, 50, 50)
+                    love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
                 end
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
@@ -590,26 +634,26 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
-            ui.drawString(enemy.name, ex, 90, {1, 1, 1, 1})
-            ui.drawBar(ex, 104, 50, 4, enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(enemy.name, ex, layoutVal("enemyNameY"), {1, 1, 1, 1})
+            ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         end
     end
     
     -- Slim dialogue at the top of the screen during Battle Resolution
     if combatState == "log" then
-        ui.drawPanel(10, 6, 236, 32)
+        ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
         local latestLog = combatLog[#combatLog] or ""
-        ui.drawString(latestLog, 16, 12, {1, 1, 1, 1}, "left", 224)
-        ui.drawString("[SPACE]", 200, 23, {0.5, 0.5, 0.5, 1}, "right", 40)
+        ui.drawString(latestLog, layoutVal("logTextX"), layoutVal("logTextY"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+        ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
     -- Bottom Command console
     local consoleY = ui.toPx(layoutVal("consoleTileY"))
-    local consoleH = ui.toPx(12)
-    local textX = ui.toPx(1)
+    local consoleH = ui.toPx(layoutVal("consoleTileH"))
+    local textX = ui.toPx(layoutVal("consoleTextTileX"))
     local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
     
-    ui.drawPanel(0, consoleY, ui.toPx(32), consoleH)
+    ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
     
     if combatState == "input" then
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
@@ -633,13 +677,13 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                 for i, spellName in ipairs(spells) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. spellName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. spellName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             else
                 for i, actName in ipairs(actions) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             end
         else
@@ -655,33 +699,33 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                     if sk then table.insert(skillsList, sk) end
                 end
                 if #skillsList == 0 then
-                    ui.drawString("  (No skills)", textX, headerY + ui.lineHeight * 2, {0.5, 0.5, 0.5, 1})
+                    ui.drawString("  (No skills)", textX, headerY + layoutVal("menuChoiceSpacing"), {0.5, 0.5, 0.5, 1})
                 else
                     for i, sk in ipairs(skillsList) do
                         local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                         local prefix = (i == selectedIndex) and "> " or "  "
-                        ui.drawString(prefix .. sk.name, textX, headerY + i * ui.lineHeight * 2, color)
+                        ui.drawString(prefix .. sk.name, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                     end
                 end
             else
                 for i, actName in ipairs(actions) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             end
         end
     else
         -- Log state console title
         ui.drawString(summonerName() .. "'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
-        ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + 16, {0.6, 0.6, 0.6, 1})
+        ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + layoutVal("menuChoiceSpacing"), {0.6, 0.6, 0.6, 1})
     end
 
     -- Draw Summoner MP stats on bottom left
     local session = renderer.session
-    ui.drawString(summonerName(), textX, consoleY + ui.toPx(6), {1, 0.85, 0.5, 1})
-    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, textX, consoleY + ui.toPx(8), {0.6, 0.8, 1, 1})
-    ui.drawBar(textX, consoleY + ui.toPx(10), 10 * ui.tileSize, 4, session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+    ui.drawString(summonerName(), layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset"), {1, 0.85, 0.5, 1})
+    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset"), {0.6, 0.8, 1, 1})
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset"), layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
     
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0
