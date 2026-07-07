@@ -215,7 +215,120 @@
                 header.textContent = 'Trait Code Registry';
                 buildTraitCodeRegistryEditor(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.traitCodes, rerender);
+            } else if (tabName === 'flows') {
+                header.textContent = 'Flows';
+                dbPayload.flows = dbPayload.flows || {};
+                renderFlowsTab(panel, header);
             }
+        }
+
+        // --- FLOWS TAB (SPEC A6 / S4) ---
+        // scene select -> phase select, each phase badged "has data" (overrides
+        // the legacy Lua block) or "legacy" (falls back to it, per S4's
+        // fallback rule). Editing a phase uses the same registry-driven
+        // renderCommandList as map/common events, with hostCtx 'battle_phase'
+        // so the palette only offers non-interactive commands valid there.
+        let activeFlowScene = 'battle';
+        let activeFlowPhase = null;
+
+        // v1 phase names (SPEC S4); union'd with whatever's actually present so
+        // a future phase added directly to flows.json still shows up.
+        const KNOWN_PHASES_BY_SCENE = {
+            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
+        };
+
+        function flowScenes() {
+            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
+            return scenes.length ? scenes : ['battle'];
+        }
+
+        function flowPhasesForScene(scene) {
+            const known = KNOWN_PHASES_BY_SCENE[scene] || [];
+            const existing = Object.keys((dbPayload.flows || {})[scene] || {});
+            const seen = {};
+            const out = [];
+            known.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
+            return out;
+        }
+
+        function renderFlowsTab(panel, header) {
+            const scenes = flowScenes();
+            if (!scenes.includes(activeFlowScene)) activeFlowScene = scenes[0];
+
+            const sceneRow = document.createElement('div');
+            sceneRow.style.cssText = 'display: flex; gap: 6px; align-items: center; margin-bottom: 8px;';
+            const sceneLabel = document.createElement('label');
+            sceneLabel.textContent = 'Scene:';
+            sceneRow.appendChild(sceneLabel);
+            const sceneSelect = makeSelect(scenes, activeFlowScene, (v) => {
+                activeFlowScene = v;
+                activeFlowPhase = null;
+                setEngineTab('flows');
+            }, null);
+            sceneRow.appendChild(sceneSelect);
+            panel.appendChild(sceneRow);
+
+            const phases = flowPhasesForScene(activeFlowScene);
+            if (!activeFlowPhase || !phases.includes(activeFlowPhase)) activeFlowPhase = phases[0];
+
+            const phaseTabs = document.createElement('div');
+            phaseTabs.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
+            phases.forEach(phase => {
+                const hasData = !!((dbPayload.flows[activeFlowScene] || {})[phase]);
+                const btn = document.createElement('button');
+                btn.className = 'db-tab-btn' + (phase === activeFlowPhase ? ' active' : '');
+                btn.style.fontSize = '10px';
+                btn.textContent = phase + (hasData ? ' [has data]' : ' [legacy]');
+                btn.onclick = () => { activeFlowPhase = phase; setEngineTab('flows'); };
+                phaseTabs.appendChild(btn);
+            });
+            panel.appendChild(phaseTabs);
+
+            if (!activeFlowPhase) return;
+
+            dbPayload.flows[activeFlowScene] = dbPayload.flows[activeFlowScene] || {};
+            const hasData = !!dbPayload.flows[activeFlowScene][activeFlowPhase];
+
+            const infoRow = document.createElement('div');
+            infoRow.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 6px;';
+            infoRow.textContent = hasData
+                ? 'This phase has data and overrides the legacy Lua block.'
+                : 'This phase has no data yet — the engine falls back to its legacy Lua block (S4). Create an override to edit it here.';
+            panel.appendChild(infoRow);
+
+            if (!hasData) {
+                const activateBtn = document.createElement('button');
+                activateBtn.className = 'win98-btn';
+                activateBtn.style.cssText = 'margin-bottom: 8px; align-self: flex-start;';
+                activateBtn.textContent = '+ Create Override';
+                activateBtn.onclick = () => {
+                    dbPayload.flows[activeFlowScene][activeFlowPhase] = [];
+                    setDirty(true);
+                    setEngineTab('flows');
+                };
+                panel.appendChild(activateBtn);
+                return;
+            }
+
+            const listBox = document.createElement('div');
+            listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 200px; max-height: 320px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px;';
+            const phaseCommands = dbPayload.flows[activeFlowScene][activeFlowPhase];
+            const rerenderPhase = () => { setDirty(true); renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase'); };
+            renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase');
+            panel.appendChild(listBox);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'win98-btn';
+            removeBtn.style.cssText = 'margin-top: 6px; align-self: flex-start; font-size: 10px;';
+            removeBtn.textContent = 'Remove Override (revert to legacy)';
+            removeBtn.onclick = () => {
+                delete dbPayload.flows[activeFlowScene][activeFlowPhase];
+                setDirty(true);
+                setEngineTab('flows');
+            };
+            panel.appendChild(removeBtn);
+
+            attachJsonToggle(header, panel, phaseCommands, () => setEngineTab('flows'));
         }
 
         // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---

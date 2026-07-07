@@ -999,11 +999,13 @@
                 eventData.commands = eventData.commands || [];
                 // Same renderCommandList used by the Event Editor's script list,
                 // so Common Events and Map Events edit commands identically.
+                // hostCtx 'common' filters the add/edit palette to commands whose
+                // registry contexts include "common" (SPEC A6).
                 const rerenderCeCommands = () => {
                     setDirty(true);
-                    renderCommandList(listBox, eventData.commands, rerenderCeCommands, false);
+                    renderCommandList(listBox, eventData.commands, rerenderCeCommands, false, 0, 'common');
                 };
-                renderCommandList(listBox, eventData.commands, rerenderCeCommands, false);
+                renderCommandList(listBox, eventData.commands, rerenderCeCommands, false, 0, 'common');
                 formPanel.appendChild(listBox);
             }
 
