@@ -408,6 +408,56 @@ runValidation = function()
         end
     end
 
+    -- Zero-SCRIPT rule (SPEC S6): shipped default battle.* flows must not
+    -- contain SCRIPT commands.
+    do
+        local function scanForScript(cmds, where)
+            for _, cmd in ipairs(cmds or {}) do
+                check((cmd.cmd or cmd.type) ~= "SCRIPT", where .. " contains a SCRIPT command (S6 zero-SCRIPT rule)")
+                for _, key in ipairs({ "do", "then", "else", "commands", "elseCommands" }) do
+                    scanForScript(cmd[key], where)
+                end
+            end
+        end
+        for phaseName, cmds in pairs((loader.flows or {}).battle or {}) do
+            scanForScript(cmds, "flows.json battle." .. phaseName)
+        end
+    end
+
+    -- battle.victory flow must reproduce the legacy reward block exactly:
+    -- same gold roll, same XP, same POST_BATTLE_HEAL (task A5a).
+    if flow.has("battle.victory") then
+        local function freshParty()
+            local s = session.GameSession.new(loader)
+            s:initializeStartingParty()
+            for _, c in ipairs(s.party) do c.hp = math.max(1, math.floor(c:getMaxHp(s) / 2)) end
+            return s
+        end
+        math.randomseed(4242)
+        local sFlow = freshParty()
+        flow.run("battle.victory", { session = sFlow, party = sFlow.party, enemies = {} })
+        math.randomseed(4242)
+        local sLegacy = freshParty()
+        sLegacy.gold = sLegacy.gold + math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
+        for _, c in ipairs(sLegacy.party) do
+            if not c:isDead() then
+                c:gainExp(conf("combat", "victoryExp", 5), sLegacy)
+                local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", sLegacy)
+                if regenVal > 0 then
+                    c.hp = math.min(c:getMaxHp(sLegacy), c.hp + regenVal)
+                end
+            end
+        end
+        check(sFlow.gold == sLegacy.gold,
+            "battle.victory flow gold mismatch: flow=" .. sFlow.gold .. " legacy=" .. sLegacy.gold)
+        for i, c in ipairs(sFlow.party) do
+            local l = sLegacy.party[i]
+            check(c.hp == l.hp and c.exp == l.exp and c.level == l.level,
+                "battle.victory flow diverges from legacy for party member " .. i ..
+                " (hp " .. c.hp .. "/" .. l.hp .. ", exp " .. tostring(c.exp) .. "/" .. tostring(l.exp) .. ")")
+        end
+    end
+
     -- Item effects go through the same pipeline in and out of battle
     local item = loader.getItem(combat.battleItem or 1)
     if item and vSession.party[1] then
@@ -1531,20 +1581,31 @@ local function handleKeyPressed(key)
                     advanceBattleLog()
                 else
                     if activeBattle:isVictory() then
-                        local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
-                        activeSession.gold = activeSession.gold + goldGain
+                        if flow.has("battle.victory") then
+                            flow.run("battle.victory", {
+                                session = activeSession,
+                                battle = activeBattle,
+                                party = activeSession.party,
+                                enemies = activeBattle.enemies,
+                            })
+                        else
+                            -- Legacy block: runs only when the phase is
+                            -- removed from flows.json (SPEC S4 fallback rule)
+                            local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
+                            activeSession.gold = activeSession.gold + goldGain
 
-                        -- Apply passive mending / trick heal if present on survivors
-                        for _, c in ipairs(activeSession.party) do
-                            if not c:isDead() then
-                                c:gainExp(conf("combat", "victoryExp", 5), activeSession)
-                                local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", activeSession)
-                                if regenVal > 0 then
-                                    c.hp = math.min(c:getMaxHp(activeSession), c.hp + regenVal)
+                            -- Apply passive mending / trick heal if present on survivors
+                            for _, c in ipairs(activeSession.party) do
+                                if not c:isDead() then
+                                    c:gainExp(conf("combat", "victoryExp", 5), activeSession)
+                                    local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", activeSession)
+                                    if regenVal > 0 then
+                                        c.hp = math.min(c:getMaxHp(activeSession), c.hp + regenVal)
+                                    end
                                 end
                             end
                         end
-                        
+
                         currentScene = "map"
                     elseif activeBattle:isDefeat() then
                         currentScene = "title"

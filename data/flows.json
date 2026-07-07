@@ -1,5 +1,14 @@
 {
-  "battle": {},
+  "battle": {
+    "victory": [
+      { "cmd": "COMMENT", "text": "Victory rewards: gold roll, XP per survivor, POST_BATTLE_HEAL trait. Mirrors the legacy main.lua block (task A5a)." },
+      { "cmd": "GAIN_GOLD", "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax)" },
+      { "cmd": "FOR_EACH", "scope": "living_allies", "as": "ally", "do": [
+        { "cmd": "GRANT_XP", "target": "ally", "amount": "combat.victoryExp" },
+        { "cmd": "TRAIT_HEAL", "target": "ally", "trait": "POST_BATTLE_HEAL" }
+      ] }
+    ]
+  },
   "_test": {
     "scene": [
       { "cmd": "COMMENT", "text": "Validator-only phase: exercises every non-interactive command in immediate mode." },
