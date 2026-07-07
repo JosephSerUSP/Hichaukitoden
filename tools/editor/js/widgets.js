@@ -390,6 +390,54 @@
             container.appendChild(group);
         }
 
+        // List field bound to an array of ids (actor skills/passives)
+        function buildIdListEditor(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter, addLabel) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = label;
+            group.appendChild(lbl);
+            const box = makeListBox();
+            box.style.maxHeight = '120px';
+            box.style.overflowY = 'auto';
+
+            const options = allIds.map(id => ({ value: id, label: nameOf(id) }));
+
+            const render = () => {
+                box.innerHTML = '';
+                const arr = ownerArrGetter() || [];
+                arr.forEach((id, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+
+                    row.appendChild(makeSelect(options, id, v => {
+                        arr[idx] = v;
+                        ownerArrSetter(arr);
+                        render();
+                    }, '1'));
+
+                    row.appendChild(makeRowDeleteBtn(() => {
+                        arr.splice(idx, 1);
+                        ownerArrSetter(arr);
+                        render();
+                    }));
+
+                    box.appendChild(row);
+                });
+
+                box.appendChild(makeAddRowBtn(addLabel, () => {
+                    const newArr = ownerArrGetter() || [];
+                    newArr.push(allIds.length > 0 ? allIds[0] : '');
+                    ownerArrSetter(newArr);
+                    render();
+                }));
+            };
+
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         // Editable list of drop rows ({itemId, chance}) for actors
         function buildDropsEditor(container, actor) {
             const group = document.createElement('div');
@@ -1087,14 +1135,14 @@
                 twoCol.appendChild(passivesCol);
                 formPanel.appendChild(twoCol);
 
-                buildChecklistField(skillsCol, 'Skills',
+                buildIdListEditor(skillsCol, 'Skills',
                     Object.keys(dbPayload.skills || {}),
                     id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id,
-                    () => item.skills, arr => { item.skills = arr; });
-                buildChecklistField(passivesCol, 'Passives',
+                    () => item.skills, arr => { item.skills = arr; }, '+ Add Skill');
+                buildIdListEditor(passivesCol, 'Passives',
                     Object.keys(dbPayload.passives || {}),
                     id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
-                    () => item.passives, arr => { item.passives = arr; });
+                    () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
 
                 buildTraitsEditor(formPanel, item, 'Innate Traits');
                 buildDropsEditor(formPanel, item);
