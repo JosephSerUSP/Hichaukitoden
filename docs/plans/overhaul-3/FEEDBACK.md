@@ -55,3 +55,20 @@ Each item lists where it was routed. "C-brief" = a new brief in
   node executed through `interpreter.runImmediate`; emitted text events
   render as dialogue. The validator now also rejects interactive commands
   nested inside immediate-only blocks (IF/FOR_EACH) in any host.
+
+# Feedback round 2 (2026-07-07, after Workbench shipped)
+
+## Editor
+1. Cancel/× on a modal must REVERT changes (currently kept). → *C6 brief.*
+2. Actor Skills/Passives should be "+ Add" rows, not a full checklist. → *C7 brief.*
+3. Missing image previews; actor sprite selection should reuse the Event
+   asset selector + preview; Common Events too. → *C8 brief.*
+4. Future: visual previews for all Scenes in the flow menu — likely by
+   dynamically interpreting the Lua in JS for accuracy rather than
+   rebuilding UI code in JavaScript. → *Deferred (research; groundwork C4/C9).*
+
+## Game
+1. Battle/crafting: working per owner play-test.
+2. Item Creation should be a menu-accessible SCENE with its own Star Ocean
+   -style interface; scenes get numeric IDs, are creatable in the editor,
+   and their flows edited under Engine → Flows. → *C9 brief (flagship).*
