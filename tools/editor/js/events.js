@@ -758,6 +758,7 @@
                 const opt = document.createElement('option');
                 opt.value = def.id;
                 opt.textContent = def.label || def.id;
+                opt.title = def.description || '';
                 select.appendChild(opt);
             });
             // Defensive: if editing a command whose id somehow isn't offered in
@@ -856,11 +857,14 @@
                 input.checked = !!currentValue;
             } else if (paramDef.type === 'scope') {
                 input = makeSelect(['enemies', 'living_enemies', 'allies', 'living_allies', 'party', 'slot_allies'], currentValue || 'enemies', () => {}, null);
+                input.title = 'Which battlers FOR_EACH iterates. slot_allies = living battlers in battle slots 1-4.';
             } else if (paramDef.type === 'battlerRef') {
                 input = document.createElement('input');
                 input.className = 'win98-input';
                 input.setAttribute('list', 'cmd-battlerref-suggestions');
                 input.value = currentValue || '';
+                input.placeholder = 'e.g. ally (a FOR_EACH "as" name) or target';
+                input.title = 'A FOR_EACH loop variable (its "as" name), one of a/b/target/enemy/ally, or "summoner".';
             } else if (paramDef.type === 'state') {
                 const opts = Object.keys(dbPayload.states || {}).map(id => ({ value: id, label: (dbPayload.states[id].name || id) }));
                 input = makeSelect(opts, currentValue, () => {}, null);
@@ -877,6 +881,24 @@
                 input.type = 'text';
                 input.className = 'win98-input';
                 input.value = currentValue !== undefined && currentValue !== null ? currentValue : '';
+                if (paramDef.key === 'condition') {
+                    // CONDITIONAL_BRANCH's string condition — the most
+                    // open-ended field in the dialog (feedback #1).
+                    input.placeholder = 'e.g. flag:metAlicia or hasItem:3';
+                    input.title = 'flag:<name> checks a session flag; hasItem:<itemId> checks item presence. IF also accepts a formula here.';
+                } else if (paramDef.key === 'flag') {
+                    input.placeholder = 'flag name, e.g. metAlicia';
+                    input.title = 'The same session flags flag:<name> conditions read.';
+                } else if (paramDef.key === 'as') {
+                    input.placeholder = 'loop variable name, e.g. ally';
+                    input.title = 'Nested commands and formulas can reference each iterated battler by this name.';
+                } else if (paramDef.key === 'trait') {
+                    input.placeholder = 'e.g. POST_BATTLE_HEAL';
+                    input.title = 'A trait code from the Engine window’s Trait Codes registry.';
+                } else if (paramDef.type === 'formula') {
+                    input.placeholder = 'e.g. random(1, 6) + session.floor';
+                    input.title = 'A formula over the sandboxed context — see the ⓘ button for every token.';
+                }
             }
             input.id = 'cmd-dyn-' + paramDef.key;
             wrap.appendChild(input);

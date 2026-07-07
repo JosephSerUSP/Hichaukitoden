@@ -590,6 +590,18 @@
             background-color: #000080;
             color: white;
         }
+        /* Every dialog body gets the same inset as the dialog footer, so
+           content never sits flush against the window edge (B5 / feedback). */
+        .window-body {
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .field-help {
+            display: block;
+            font-size: 9px;
+            color: var(--win-dark-shadow);
+            margin-top: 1px;
+        }
         .dialog-footer {
             background-color: var(--win-gray);
             border-top: 1px solid var(--win-shadow);
