@@ -1,6 +1,79 @@
 
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
+
+        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
+            const group = document.createElement('div');
+            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+
+            const lbl = document.createElement('label');
+            lbl.textContent = labelText;
+            group.appendChild(lbl);
+
+            // Thumbnail wrapper
+            const thumbWrap = document.createElement('div');
+            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
+
+            const img = document.createElement('img');
+            img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
+
+            const noneTxt = document.createElement('div');
+            noneTxt.style.cssText = 'color: #888; font-size: 9px; font-family: monospace;';
+            noneTxt.textContent = '(none)';
+
+            function updateThumb(path) {
+                if (path) {
+                    // standardize path
+                    path = path.replace(/\\/g, '/');
+                    if (isBareKey && !path.includes('/')) {
+                        img.src = '/assets/portraits/' + path + '.png';
+                    } else {
+                        img.src = '/' + path;
+                    }
+                    img.style.display = 'block';
+                    noneTxt.style.display = 'none';
+                } else {
+                    img.style.display = 'none';
+                    noneTxt.style.display = 'block';
+                }
+            }
+            updateThumb(value);
+
+            thumbWrap.appendChild(img);
+            thumbWrap.appendChild(noneTxt);
+            group.appendChild(thumbWrap);
+
+            const input = document.createElement('input');
+            input.className = 'form-control inset-bevel';
+            input.value = value || '';
+            input.style.flex = '1';
+            if (defaultDir === 'portraits') {
+                input.setAttribute('list', 'portrait-keys-list');
+            }
+            input.oninput = () => {
+                updateThumb(input.value);
+                onChange(input.value);
+            };
+            group.appendChild(input);
+
+            const btn = document.createElement('button');
+            btn.className = 'win98-btn';
+            btn.textContent = '...';
+            btn.onclick = () => openAssetPicker(defaultDir, path => {
+                if (isBareKey) {
+                    const parts = path.replace(/\\/g, '/').split('/');
+                    const filename = parts.pop();
+                    path = filename.replace(/\.[^/.]+$/, ""); // remove extension
+                }
+                input.value = path;
+                updateThumb(path);
+                onChange(path);
+            });
+            group.appendChild(btn);
+
+            container.appendChild(group);
+        };
+
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
@@ -616,26 +689,10 @@
             }
 
             if (widget === 'assetPath') {
-                const group = document.createElement('div');
-                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
-                const lbl = document.createElement('label');
-                lbl.textContent = schema.label || key;
-                group.appendChild(lbl);
-                const input = document.createElement('input');
-                input.className = 'form-control inset-bevel';
-                input.value = value || '';
-                input.oninput = () => { setNestedValue(targetRoot, currentPath, key, input.value); setDirty(true); };
-                group.appendChild(input);
-                const btn = document.createElement('button');
-                btn.className = 'win98-btn';
-                btn.textContent = '...';
-                btn.onclick = () => openAssetPicker(schema.dir || 'sprites', path => {
-                    input.value = path;
+                window.createSpriteField(container, schema.label || key, value || '', (path) => {
                     setNestedValue(targetRoot, currentPath, key, path);
                     setDirty(true);
-                });
-                group.appendChild(btn);
-                container.appendChild(group);
+                }, useBlockLayout, schema.dir || 'sprites');
                 return true;
             }
 
@@ -947,29 +1004,10 @@
 
                 // Default sprite: map events linked to this common event
                 // inherit it unless they set their own graphic.
-                const spriteRow = document.createElement('div');
-                spriteRow.className = 'form-group field-inline';
-                const spriteLbl = document.createElement('label');
-                spriteLbl.textContent = 'Default Sprite (inherited)';
-                spriteRow.appendChild(spriteLbl);
-                const spriteInput = document.createElement('input');
-                spriteInput.className = 'form-control inset-bevel';
-                spriteInput.value = eventData.sprite || '';
-                spriteInput.oninput = () => {
-                    if (spriteInput.value === '') { delete eventData.sprite; } else { eventData.sprite = spriteInput.value; }
-                    setDirty(true);
-                };
-                spriteRow.appendChild(spriteInput);
-                const spriteBtn = document.createElement('button');
-                spriteBtn.className = 'win98-btn';
-                spriteBtn.textContent = '...';
-                spriteBtn.onclick = () => openAssetPicker('sprites', path => {
-                    spriteInput.value = path;
-                    eventData.sprite = path;
+                window.createSpriteField(formPanel, 'Default Sprite (inherited)', eventData.sprite || '', (path) => {
+                    if (path === '') { delete eventData.sprite; } else { eventData.sprite = path; }
                     setDirty(true);
                 });
-                spriteRow.appendChild(spriteBtn);
-                formPanel.appendChild(spriteRow);
 
                 // Default minimap marker color: map events linked to this
                 // common event use it unless they set their own.
@@ -1060,18 +1098,10 @@
                 formPanel.appendChild(growthRow);
 
                 ensurePortraitKeys();
-                const spriteGroup = document.createElement('div');
-                spriteGroup.className = 'form-group field-inline';
-                const spriteLbl = document.createElement('label');
-                spriteLbl.textContent = 'Sprite Key (assets/portraits)';
-                spriteGroup.appendChild(spriteLbl);
-                const spriteInput = document.createElement('input');
-                spriteInput.className = 'form-control inset-bevel';
-                spriteInput.setAttribute('list', 'portrait-keys-list');
-                spriteInput.value = item.spriteKey || '';
-                spriteInput.oninput = () => { item.spriteKey = spriteInput.value; setDirty(true); };
-                spriteGroup.appendChild(spriteInput);
-                formPanel.appendChild(spriteGroup);
+                window.createSpriteField(formPanel, 'Sprite Key (assets/portraits)', item.spriteKey || '', (path) => {
+                    item.spriteKey = path;
+                    setDirty(true);
+                }, false, 'portraits', true);
 
                 buildElementSlotsEditor(formPanel, item);
                 createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
