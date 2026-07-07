@@ -489,7 +489,18 @@
             'physics.gravity':             { label: 'Popup Gravity (px/s²)', min: 0 },
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
             'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
+
             'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'battle_screen.popup.damageFormat': { type: 'string', label: 'Damage Format' },
+            'battle_screen.popup.healFormat': { type: 'string', label: 'Heal Format' },
+            'battle_screen.popup.deathFormat': { type: 'string', label: 'Death Format' },
+            'battle_screen.popup.stateFormat': { type: 'string', label: 'State Format' },
+            'battle_screen.popup.critFormat': { type: 'string', label: 'Crit Format' },
+            'battle_screen.popup.damageColor': { widget: 'color', label: 'Damage Color' },
+            'battle_screen.popup.healColor': { widget: 'color', label: 'Heal Color' },
+            'battle_screen.popup.deathColor': { widget: 'color', label: 'Death Color' },
+            'battle_screen.popup.stateColor': { widget: 'color', label: 'State Color' },
+
             'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05, min: 0, max: 1 },
             'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)', min: 0 },
             'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)', min: 0 },

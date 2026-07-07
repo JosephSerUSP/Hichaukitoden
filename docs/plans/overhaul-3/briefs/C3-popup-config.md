@@ -35,7 +35,7 @@ change it (feedback item 5 in `docs/plans/overhaul-3/FEEDBACK.md`).
 
 ## Acceptance
 
-- [ ] Changing damageFormat/colors in the editor changes the in-game popup
-- [ ] Defaults reproduce today's exact appearance; G2 stays green
-- [ ] G1 + G3 green
-- [ ] PR checklist filled in
+- [x] Changing damageFormat/colors in the editor changes the in-game popup
+- [x] Defaults reproduce today's exact appearance; G2 stays green
+- [x] G1 + G3 green
+- [x] PR checklist filled in
