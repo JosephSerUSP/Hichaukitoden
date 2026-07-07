@@ -199,6 +199,77 @@ runValidation = function()
     for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
         validTraitCodes[tc.code] = true
     end
+
+    -- Meta system validation (C10)
+    local registeredMeta = {}
+    for _, mk in ipairs((loader.engine and loader.engine.metaKeys) or {}) do
+        local applies = {}
+        for _, coll in ipairs(mk.appliesTo or {}) do
+            applies[coll] = true
+        end
+        registeredMeta[mk.key] = {
+            type = mk.type,
+            appliesTo = applies
+        }
+    end
+
+    local undeclaredWarnings = 0
+    local function validateMeta(metaObj, collName, entryId)
+        if not metaObj then return end
+        for k, v in pairs(metaObj) do
+            local reg = registeredMeta[k]
+            if reg then
+                if not reg.appliesTo[collName] then
+                    check(false, "meta key '" .. tostring(k) .. "' does not apply to collection '" .. collName .. "' (on entry '" .. tostring(entryId) .. "')")
+                else
+                    local ok = false
+                    if reg.type == "number" then
+                        ok = (type(v) == "number")
+                    elseif reg.type == "string" then
+                        ok = (type(v) == "string")
+                    elseif reg.type == "flag" then
+                        ok = (type(v) == "boolean")
+                    end
+                    check(ok, "meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "' has wrong type (expected " .. reg.type .. ", got " .. type(v) .. ")")
+                end
+            else
+                print("[validator] warning: undeclared meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "'")
+                undeclaredWarnings = undeclaredWarnings + 1
+            end
+        end
+    end
+
+    for _, actor in ipairs(loader.actors or {}) do
+        validateMeta(actor.meta, "actors", actor.id or actor.name or "?")
+    end
+    for _, item in ipairs(loader.items or {}) do
+        validateMeta(item.meta, "items", item.id or item.name or "?")
+    end
+    for _, ce in ipairs(loader.commonEvents or {}) do
+        validateMeta(ce.meta, "commonEvents", ce.id or ce.name or "?")
+    end
+
+    local dictColls = {
+        elements = loader.elements,
+        maps = loader.maps,
+        quests = loader.quests,
+        shops = loader.shops,
+        sounds = loader.sounds,
+        themes = loader.themes,
+        skills = loader.skills,
+        passives = loader.passives,
+        states = loader.states,
+        roles = loader.roles
+    }
+    for collName, dict in pairs(dictColls) do
+        for id, entry in pairs(dict or {}) do
+            validateMeta(entry.meta, collName, id)
+        end
+    end
+
+    if undeclaredWarnings > 0 then
+        print("[validator] total undeclared meta warnings: " .. undeclaredWarnings)
+    end
     local function checkTraits(traitList, ownerDesc)
         for _, tr in ipairs(traitList or {}) do
             check(validTraitCodes[tr.code], ownerDesc .. " uses unregistered trait code '" .. tostring(tr.code) .. "'")

@@ -1376,6 +1376,9 @@
                 attachJsonToggle(header, formPanel, jsonTarget, () => {
                     initDatabaseEditor();
                 });
+                if (activeDbTab !== 'terms' && activeDbTab !== 'system') {
+                    buildMetaEditor(formPanel, jsonTarget, activeDbTab);
+                }
             }
         }
 
@@ -1678,5 +1681,159 @@
             }
 
             group.appendChild(input);
+            container.appendChild(group);
+        }
+
+        function buildMetaEditor(container, owner, appliesToName) {
+            if (!owner) return;
+            
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.style.marginTop = '16px';
+            group.style.borderTop = '1px solid var(--win-shadow)';
+            group.style.paddingTop = '8px';
+            
+            const title = document.createElement('label');
+            title.style.fontWeight = 'bold';
+            title.textContent = 'Meta Parameters';
+            group.appendChild(title);
+            
+            const box = makeListBox();
+            
+            const render = () => {
+                box.innerHTML = '';
+                owner.meta = owner.meta || {};
+                
+                const registeredKeys = ((dbPayload.engine && dbPayload.engine.metaKeys) || []).filter(
+                    mk => mk.appliesTo && mk.appliesTo.includes(appliesToName)
+                );
+                
+                const presentKeys = Object.keys(owner.meta);
+                if (presentKeys.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.style.color = 'var(--win-dark-shadow)';
+                    empty.style.fontSize = '10px';
+                    empty.style.fontStyle = 'italic';
+                    empty.style.marginBottom = '6px';
+                    empty.textContent = 'No meta parameters set.';
+                    box.appendChild(empty);
+                } else {
+                    presentKeys.forEach(k => {
+                        const reg = registeredKeys.find(r => r.key === k);
+                        const regType = reg ? reg.type : (typeof owner.meta[k] === 'boolean' ? 'flag' : (typeof owner.meta[k] === 'number' ? 'number' : 'string'));
+                        
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 4px;';
+                        
+                        const keySpan = document.createElement('span');
+                        keySpan.style.cssText = 'font-weight: bold; font-size: 11px; width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                        keySpan.textContent = k;
+                        if (reg && reg.description) {
+                            keySpan.title = reg.description;
+                        }
+                        row.appendChild(keySpan);
+                        
+                        let input;
+                        if (regType === 'flag') {
+                            input = document.createElement('input');
+                            input.type = 'checkbox';
+                            input.checked = !!owner.meta[k];
+                            input.onchange = () => {
+                                owner.meta[k] = input.checked;
+                                setDirty(true);
+                            };
+                        } else if (regType === 'number') {
+                            input = document.createElement('input');
+                            input.type = 'number';
+                            input.className = 'win98-input';
+                            input.style.flex = '1';
+                            input.style.boxSizing = 'border-box';
+                            input.style.height = '19px';
+                            input.value = owner.meta[k];
+                            input.oninput = () => {
+                                owner.meta[k] = parseFloat(input.value) || 0;
+                                setDirty(true);
+                            };
+                        } else {
+                            input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'win98-input';
+                            input.style.flex = '1';
+                            input.style.boxSizing = 'border-box';
+                            input.style.height = '19px';
+                            input.value = owner.meta[k];
+                            input.oninput = () => {
+                                owner.meta[k] = input.value;
+                                setDirty(true);
+                            };
+                        }
+                        row.appendChild(input);
+                        
+                        row.appendChild(makeRowDeleteBtn(() => {
+                            delete owner.meta[k];
+                            if (Object.keys(owner.meta).length === 0) {
+                                delete owner.meta;
+                            }
+                            setDirty(true);
+                            render();
+                        }));
+                        
+                        box.appendChild(row);
+                    });
+                }
+                
+                const missingKeys = registeredKeys.filter(mk => !presentKeys.includes(mk.key));
+                if (missingKeys.length > 0) {
+                    const addContainer = document.createElement('div');
+                    addContainer.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-top: 6px;';
+                    
+                    const select = document.createElement('select');
+                    select.className = 'win98-select';
+                    select.style.flex = '1';
+                    select.style.height = '19px';
+                    
+                    const helpSpan = document.createElement('span');
+                    helpSpan.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                    
+                    const updateHelp = () => {
+                        const selectedKey = select.value;
+                        const selectedReg = missingKeys.find(mk => mk.key === selectedKey);
+                        helpSpan.textContent = selectedReg ? selectedReg.description : '';
+                        helpSpan.title = selectedReg ? selectedReg.description : '';
+                    };
+                    
+                    missingKeys.forEach(mk => {
+                        const opt = document.createElement('option');
+                        opt.value = mk.key;
+                        opt.textContent = `${mk.key} (${mk.type})`;
+                        select.appendChild(opt);
+                    });
+                    
+                    select.onchange = updateHelp;
+                    updateHelp();
+                    
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'win98-btn';
+                    addBtn.textContent = '+ Add Key';
+                    addBtn.onclick = (e) => {
+                        e.preventDefault();
+                        const selectedKey = select.value;
+                        const reg = missingKeys.find(mk => mk.key === selectedKey);
+                        const defVal = reg.type === 'flag' ? false : (reg.type === 'number' ? 0 : '');
+                        owner.meta = owner.meta || {};
+                        owner.meta[selectedKey] = defVal;
+                        setDirty(true);
+                        render();
+                    };
+                    
+                    addContainer.appendChild(select);
+                    addContainer.appendChild(helpSpan);
+                    addContainer.appendChild(addBtn);
+                    box.appendChild(addContainer);
+                }
+            };
+            
+            render();
+            group.appendChild(box);
             container.appendChild(group);
         }

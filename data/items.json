@@ -6,6 +6,9 @@
     "cost": 10,
     "description": "Heals one member to full HP.",
     "icon": 52,
+    "meta": {
+      "tier": 1
+    },
     "effects": [
       {
         "type": "hp",

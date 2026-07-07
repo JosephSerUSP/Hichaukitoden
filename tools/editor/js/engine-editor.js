@@ -163,6 +163,60 @@
             panel.appendChild(box);
         }
 
+        function buildMetaKeyRegistryEditor(panel) {
+            dbPayload.engine.metaKeys = dbPayload.engine.metaKeys || [];
+            const list = dbPayload.engine.metaKeys;
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Registered metadata keys can be attached to database entries and read in formulas. appliesTo lists collections (e.g. items, actors). types: number, string, flag.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((mkEntry, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const mkInput = (val, ph, width, onInput) => {
+                        const input = document.createElement('input');
+                        input.className = 'win98-input';
+                        input.placeholder = ph;
+                        input.title = ph;
+                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                        input.value = val;
+                        input.oninput = () => { onInput(input.value); setDirty(true); };
+                        return input;
+                    };
+                    
+                    row.appendChild(mkInput(mkEntry.key || '', 'key name', '110px', v => { mkEntry.key = v; }));
+                    
+                    const typeSelect = makeSelect(['number', 'string', 'flag'], mkEntry.type || 'number', v => {
+                        mkEntry.type = v;
+                        setDirty(true);
+                    });
+                    typeSelect.style.width = '80px';
+                    typeSelect.style.height = '19px';
+                    typeSelect.style.fontSize = '11px';
+                    row.appendChild(typeSelect);
+                    
+                    row.appendChild(mkInput((mkEntry.appliesTo || []).join(', '), 'appliesTo (csv)', '120px', v => {
+                        mkEntry.appliesTo = v.split(',').map(s => s.trim()).filter(s => s !== '');
+                    }));
+                    
+                    row.appendChild(mkInput(mkEntry.description || '', 'Description', null, v => { mkEntry.description = v; }));
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    row.style.marginBottom = '2px';
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Meta Key', () => {
+                    list.push({ key: 'new_meta_key', type: 'number', appliesTo: ['items'], description: '' });
+                    render();
+                }));
+            };
+            render();
+            panel.appendChild(box);
+        }
+
         function setEngineTab(tabName) {
             activeEngineTab = tabName;
             document.querySelectorAll('#engine-tabs .db-tab-btn').forEach(b => b.classList.remove('active'));
@@ -215,6 +269,10 @@
                 header.textContent = 'Trait Code Registry';
                 buildTraitCodeRegistryEditor(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.traitCodes, rerender);
+            } else if (tabName === 'metaKeys') {
+                header.textContent = 'Meta Keys Registry';
+                buildMetaKeyRegistryEditor(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.metaKeys, rerender);
             } else if (tabName === 'flows') {
                 header.textContent = 'Flows';
                 dbPayload.flows = dbPayload.flows || {};

@@ -38,7 +38,16 @@
     { "token": "abs(x)", "description": "Absolute value." },
     { "token": "min(a, b, ...)", "description": "Smallest argument." },
     { "token": "max(a, b, ...)", "description": "Largest argument." },
-    { "token": "clamp(x, lo, hi)", "description": "Constrain x to [lo, hi]." }
+    { "token": "clamp(x, lo, hi)", "description": "Constrain x to [lo, hi]." },
+    { "token": "a.meta.key", "description": "Expose custom meta keys from the battler's database entry (also on b/target/enemy/ally)." },
+    { "token": "ingredient1.meta.key", "description": "Reads meta key on ingredient 1 (item metadata, also on ingredient2)." }
+  ],
+  "metaKeys": [
+    { "key": "tier", "appliesTo": ["items"], "type": "number", "description": "Crafting tier/quality of the item" },
+    { "key": "density", "appliesTo": ["items"], "type": "number", "description": "Material density" },
+    { "key": "potency", "appliesTo": ["items"], "type": "number", "description": "Chemical/magical potency" },
+    { "key": "craftElement", "appliesTo": ["items"], "type": "string", "description": "Elemental alignment of the ingredient" },
+    { "key": "craftKind", "appliesTo": ["items"], "type": "string", "description": "Crafting pool category (blacksmith/tinker/alchemy/cooking)" }
   ],
   "scripting": {
     "allowRawAccess": false
