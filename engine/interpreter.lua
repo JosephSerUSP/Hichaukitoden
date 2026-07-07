@@ -175,7 +175,11 @@ handlers.IF = function(cmd, ctx)
         branch = ctx.session:hasItem(tonumber(cmd.condition:match("^hasItem:(.+)")), 1)
     else
         local val = evalFormula(cmd.condition, ctx)
-        branch = (val ~= 0 and val ~= nil) and val == val -- NaN-safe truthiness
+        if type(val) == "boolean" then
+            branch = val
+        else
+            branch = (val ~= 0 and val ~= nil) and val == val -- NaN-safe truthiness
+        end
     end
     interpreter.execList(branch and cmd["then"] or cmd["else"], ctx)
 end
@@ -339,6 +343,16 @@ end
 
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
+end
+
+-- Emits a raw event of the given type (e.g. flee_success), optionally with
+-- value/state fields, so flows can signal the host battle loop.
+handlers.EMIT_EVENT = function(cmd, ctx)
+    local ev = { type = cmd.event }
+    if cmd.value ~= nil then ev.value = evalFormula(cmd.value, ctx) end
+    if cmd.state ~= nil then ev.state = cmd.state end
+    if cmd.target ~= nil then ev.target = resolveRef(cmd.target, ctx) end
+    table.insert(ctx.events, ev)
 end
 
 handlers.SCENE_EVENT = function(cmd, ctx)

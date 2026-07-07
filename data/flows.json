@@ -1,5 +1,15 @@
 {
   "battle": {
+    "flee_attempt": [
+      { "cmd": "COMMENT", "text": "Flee roll: base chance + living party FLEE_CHANCE_BONUS; failure costs gold. Mirrors the legacy engine/battle.lua block (task A5c)." },
+      { "cmd": "SET_VAR", "name": "roll", "value": "random()" },
+      { "cmd": "IF", "condition": "v.roll < combat.baseFleeChance + party.fleeBonus", "then": [
+        { "cmd": "EMIT_EVENT", "event": "flee_success" }
+      ], "else": [
+        { "cmd": "EMIT_TEXT", "term": "battle.flee_fail", "fallback": "Failed to escape!" },
+        { "cmd": "GAIN_GOLD", "amount": "-random(combat.goldLossOnFleeMin, combat.goldLossOnFleeMax)" }
+      ] }
+    ],
     "victory": [
       { "cmd": "COMMENT", "text": "Victory rewards: gold roll, XP per survivor, POST_BATTLE_HEAL trait. Mirrors the legacy main.lua block (task A5a)." },
       { "cmd": "GAIN_GOLD", "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax)" },
@@ -38,6 +48,7 @@
       { "cmd": "GIVE_ITEM_ID", "item": 1, "count": 1 },
       { "cmd": "TAKE_ITEM", "item": 1, "count": 1 },
       { "cmd": "EMIT_TEXT", "term": "battle.victory_full", "fallback": "Test text." },
+      { "cmd": "EMIT_EVENT", "event": "_test_event", "value": "1 + 1" },
       { "cmd": "SCENE_EVENT", "kind": "map" },
       { "cmd": "SCRIPT", "code": "api.damage(ctx.target, 5)\napi.emit({ type = 'text', text = 'script ran, floor ' .. ctx.session.floor })" }
     ],

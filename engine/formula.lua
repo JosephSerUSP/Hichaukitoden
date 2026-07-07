@@ -46,13 +46,15 @@ end
 -- Aggregate view over a list of battlers (party or enemies).
 function formula.groupView(list, session)
     list = list or {}
-    local count, alive, totalLevel, totalMaxHp = 0, 0, 0, 0
+    local count, alive, totalLevel, totalMaxHp, fleeBonus = 0, 0, 0, 0, 0
     for _, b in ipairs(list) do
         count = count + 1
         totalLevel = totalLevel + (b.level or 1)
         totalMaxHp = totalMaxHp + (traits.getParam(b, "maxHp", session) or 1)
         if not (b.isDead and b:isDead()) and (b.hp or 0) > 0 then
             alive = alive + 1
+            -- Living members only, matching the legacy flee roll in battle.lua
+            fleeBonus = fleeBonus + traits.getRate(b, "FLEE_CHANCE_BONUS", session)
         end
     end
     return {
@@ -62,6 +64,7 @@ function formula.groupView(list, session)
         avgLevel = count > 0 and totalLevel / count or 0,
         totalLevel = totalLevel,
         totalMaxHp = totalMaxHp,
+        fleeBonus = fleeBonus,
     }
 end
 
@@ -121,8 +124,8 @@ function formula.eval(exprString, ctx)
         warnOnce(exprString, result)
         return 0, result
     end
-    if type(result) ~= "number" then
-        local msg = "formula did not return a number"
+    if type(result) ~= "number" and type(result) ~= "boolean" then
+        local msg = "formula did not return a number or boolean"
         warnOnce(exprString, msg)
         return 0, msg
     end
