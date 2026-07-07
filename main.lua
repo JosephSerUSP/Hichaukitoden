@@ -18,6 +18,7 @@ local activeSession
 local currentScene = "title"
 local isTestBattle = false
 local isValidateMode = false
+local isGoldenMode = false
 local triggerTestBattle
 local runValidation
 
@@ -75,6 +76,111 @@ end
 
 -- Database validation for `lovec . validate`: cross-reference integrity plus
 -- a scripted battle round, so data edits can be smoke-tested headlessly.
+
+-- Golden-master battle log validation
+local function runGolden()
+    math.randomseed(12345)
+
+    local vSession = session.GameSession.new(loader)
+
+    -- Explicitly construct party and enemies
+    vSession.party = {}
+
+    -- Fixed party: High Pixie (2), Skeleton (3), Angel (4)
+    local actIds = {2, 3, 4}
+    for _, id in ipairs(actIds) do
+        local actorData = loader.getActor(id)
+        if actorData then
+            local b = session.Battler.new(actorData, 1)
+            b.hp = b:getMaxHp(vSession)
+            table.insert(vSession.party, b)
+        end
+    end
+
+    local enemies = {}
+    for i=1, 3 do
+        local enemyData = loader.getActor(1) -- Pixie
+        if enemyData then
+            local b = session.Battler.new(enemyData, 1)
+            b.hp = b:getMaxHp(vSession)
+            table.insert(enemies, b)
+        end
+    end
+
+    local vBattle = battleSystem.Battle.new(vSession, enemies)
+
+    local function logEvents(events)
+        for _, ev in ipairs(events) do
+            local t = ev.type or ""
+            local a = ev.actor and ev.actor.name or ""
+            local trg = ev.target and ev.target.name or ""
+            local v = ev.value or ""
+            local s = ev.state or ""
+            print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
+        end
+    end
+
+    print("GOLDEN BEGIN")
+
+    -- Round 1: all attack
+    local actionsR1 = {}
+    actionsR1[1] = { type = "attack", target = enemies[1] } -- Summoner
+    for i=1, 3 do
+        if vSession.party[i] then
+            actionsR1[i+1] = { type = "attack", target = enemies[1] }
+        end
+    end
+    logEvents(vBattle:resolveRound(actionsR1))
+
+    -- Round 2: spell + defend + attacks
+    local actionsR2 = {}
+    local sysSpells = loader.system and loader.system.summoner and loader.system.summoner.spells or {}
+    local firstSpell = sysSpells[1]
+    if type(firstSpell) == "table" then firstSpell = firstSpell.id end
+
+    if firstSpell then
+        actionsR2[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
+    else
+        actionsR2[1] = { type = "attack", target = enemies[2] }
+    end
+
+    if vSession.party[1] then actionsR2[2] = { type = "defend", target = vSession.party[1] } end
+    if vSession.party[2] then actionsR2[3] = { type = "attack", target = enemies[2] } end
+    if vSession.party[3] then actionsR2[4] = { type = "attack", target = enemies[2] } end
+
+    logEvents(vBattle:resolveRound(actionsR2))
+
+    -- Round 3: flee
+    local actionsR3 = {}
+    actionsR3[1] = { type = "flee" }
+    for i=1, 3 do
+        if vSession.party[i] then
+            actionsR3[i+1] = { type = "attack", target = enemies[2] }
+        end
+    end
+    logEvents(vBattle:resolveRound(actionsR3))
+
+    -- One victory resolution against a 1-HP enemy
+    local vSessionVic = session.GameSession.new(loader)
+    vSessionVic.party = {}
+    local bVic = session.Battler.new(loader.getActor(2), 1)
+    bVic.hp = bVic:getMaxHp(vSessionVic)
+    table.insert(vSessionVic.party, bVic)
+
+    local enemiesVic = {}
+    local bVicEnm = session.Battler.new(loader.getActor(1), 1)
+    bVicEnm.hp = 1
+    table.insert(enemiesVic, bVicEnm)
+
+    local vBattleVic = battleSystem.Battle.new(vSessionVic, enemiesVic)
+    local actionsVic = {}
+    actionsVic[1] = { type = "attack", target = enemiesVic[1] }
+    actionsVic[2] = { type = "attack", target = enemiesVic[1] }
+    logEvents(vBattleVic:resolveRound(actionsVic))
+
+    print("GOLDEN END")
+end
+
 runValidation = function()
     local problems = {}
     local function check(cond, msg)
@@ -225,6 +331,8 @@ function love.load(arg)
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
+            elseif val == "golden" then
+                isGoldenMode = true
             end
         end
     end
@@ -233,10 +341,16 @@ function love.load(arg)
     -- a battle round, then quit. Run via `lovec . validate` (used by CI/tools).
     if isValidateMode then
         loader.init()
-        local ok, err = pcall(runValidation)
-        if ok then
-            print("VALIDATE OK")
+        local ok, err
+        if isGoldenMode then
+            ok, err = pcall(runGolden)
         else
+            ok, err = pcall(runValidation)
+        end
+
+        if ok and not isGoldenMode then
+            print("VALIDATE OK")
+        elseif not ok then
             print("VALIDATE FAIL:\n" .. tostring(err))
         end
         love.event.quit(ok and 0 or 1)
