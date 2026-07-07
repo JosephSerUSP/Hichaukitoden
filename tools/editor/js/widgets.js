@@ -21,6 +21,10 @@
             noneTxt.style.cssText = 'color: #888; font-size: 9px; font-family: monospace;';
             noneTxt.textContent = '(none)';
 
+            // A missing/broken sprite falls back to the (none) placeholder
+            // rather than the browser's broken-image glyph.
+            img.onerror = () => { img.style.display = 'none'; noneTxt.style.display = 'block'; };
+
             function updateThumb(path) {
                 if (path) {
                     // standardize path
