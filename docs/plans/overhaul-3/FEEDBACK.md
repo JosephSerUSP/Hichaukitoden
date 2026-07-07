@@ -72,3 +72,12 @@ Each item lists where it was routed. "C-brief" = a new brief in
 2. Item Creation should be a menu-accessible SCENE with its own Star Ocean
    -style interface; scenes get numeric IDs, are creatable in the editor,
    and their flows edited under Engine → Flows. → *C9 brief (flagship).*
+
+## Round-2 addendum (Item Creation design doc)
+The owner supplied a full Star Ocean 2-style design: dynamic parameter
+crafting (no fixed recipes), stat-driven disciplines, yield formula
+Y = floor((I1+I2)/2) + floor(alpha*S), bracket-based outcome pools,
+roulette UI, element-conflict/stat-deficit failures, 5% anomaly crit.
+→ *C10 brief* (typed meta system — registry-backed, the notetag analog)
+is the prerequisite; *C9 REV 2* rewritten to this design. C4 landed
+(Antigravity), G1/G2 re-verified locally.
