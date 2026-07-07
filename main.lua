@@ -18,6 +18,7 @@ local activeSession
 local currentScene = "title"
 local isTestBattle = false
 local isValidateMode = false
+local isGoldenMode = false
 local triggerTestBattle
 local runValidation
 
@@ -75,7 +76,55 @@ end
 
 -- Database validation for `lovec . validate`: cross-reference integrity plus
 -- a scripted battle round, so data edits can be smoke-tested headlessly.
-runValidation = function()
+runValidation = function(isGoldenMode)
+    if isGoldenMode then
+        math.randomseed(12345)
+        local vSession = session.GameSession.new(loader)
+        table.insert(vSession.party, session.Battler.new(loader.getActor(1), 1))
+        vSession.party[1].hp = vSession.party[1]:getMaxHp(vSession)
+
+        local e1 = session.Battler.new(loader.getActor(1), 1)
+        e1.hp = e1:getMaxHp(vSession)
+        local vBattle = battleSystem.Battle.new(vSession, {e1})
+
+        local function formatEvent(ev)
+            local t = ev.type or ""
+            local a = ev.actor and ev.actor.name or ""
+            local tgt = ev.target and ev.target.name or ""
+            local val = ev.value or ""
+            local st = ev.state or ""
+            print(t .. "|" .. a .. "|" .. tgt .. "|" .. val .. "|" .. st)
+        end
+
+        print("GOLDEN BEGIN")
+
+        -- Round 1
+        local acts = { nil, {type="attack", target=e1} }
+        local evs = vBattle:resolveRound(acts)
+        for _, ev in ipairs(evs) do formatEvent(ev) end
+
+        -- Round 2
+        acts = { {type="spell", id="soothingMote", target=vSession.party[1]}, {type="defend"} }
+        evs = vBattle:resolveRound(acts)
+        for _, ev in ipairs(evs) do formatEvent(ev) end
+
+        -- Round 3
+        acts = { {type="flee"}, {type="defend"} }
+        evs = vBattle:resolveRound(acts)
+        for _, ev in ipairs(evs) do formatEvent(ev) end
+
+        -- Victory check
+        local e2 = session.Battler.new(loader.getActor(1), 1)
+        e2.hp = 1
+        local vBattle2 = battleSystem.Battle.new(vSession, {e2})
+        acts = { nil, {type="attack", target=e2} }
+        evs = vBattle2:resolveRound(acts)
+        for _, ev in ipairs(evs) do formatEvent(ev) end
+
+        print("GOLDEN END")
+        os.exit(0)
+    end
+
     local problems = {}
     local function check(cond, msg)
         if not cond then table.insert(problems, msg) end
@@ -225,6 +274,8 @@ function love.load(arg)
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
+            elseif val == "golden" then
+                isGoldenMode = true
             end
         end
     end
@@ -233,7 +284,7 @@ function love.load(arg)
     -- a battle round, then quit. Run via `lovec . validate` (used by CI/tools).
     if isValidateMode then
         loader.init()
-        local ok, err = pcall(runValidation)
+        local ok, err = pcall(runValidation, isGoldenMode)
         if ok then
             print("VALIDATE OK")
         else

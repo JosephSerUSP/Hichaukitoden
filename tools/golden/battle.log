@@ -1,0 +1,19 @@
+GOLDEN BEGIN
+action|Pixie|Pixie||
+damage||Pixie|10|
+death||Pixie||
+victory||||
+mp_drain|Pixie||2|
+mp_drain|Alex||2|
+text||||
+heal||Pixie|0|
+victory||||
+text||||
+victory||||
+action|Pixie|Pixie||
+damage||Pixie|10|
+death||Pixie||
+victory||||
+mp_drain|Pixie||2|
+mp_drain|Alex||2|
+GOLDEN END
