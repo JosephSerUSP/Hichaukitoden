@@ -3,25 +3,42 @@
         // Database-modal fields mutate dbPayload live (no separate "staged" copy),
         // so "discard on Cancel/ESC" is implemented by snapshotting on open and
         // restoring that snapshot if the user confirms they want to discard.
-        let dbModalSnapshot = null;
-
-        function openDatabaseModal() {
-            dbModalSnapshot = JSON.stringify(dbPayload);
-            document.getElementById('db-modal').classList.add('active');
-            setDbTab(activeDbTab);
+        function dbConfigSnapshot() {
+    // Deep clone the entire dbPayload except for engine and maps which are handled by their own editors
+    const snap = {};
+    Object.keys(dbPayload).forEach(k => {
+        if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+            snap[k] = JSON.parse(JSON.stringify(dbPayload[k]));
         }
+    });
+    return JSON.stringify(snap);
+}
 
-        function closeDatabaseModal(force) {
-            if (!force && dbModalSnapshot !== null && JSON.stringify(dbPayload) !== dbModalSnapshot) {
-                if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
-                dbPayload = JSON.parse(dbModalSnapshot);
-                initMapEditor();
-                initDatabaseEditor();
-                setDirty(false);
+let dbModalSnapshot = null;
+
+function openDatabaseModal() {
+    dbModalSnapshot = dbConfigSnapshot();
+    document.getElementById('db-modal').classList.add('active');
+    setDbTab(activeDbTab);
+}
+
+function closeDatabaseModal(force) {
+    if (!force && dbModalSnapshot !== null && dbConfigSnapshot() !== dbModalSnapshot) {
+        if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
+        const snap = JSON.parse(dbModalSnapshot);
+        Object.keys(dbPayload).forEach(k => {
+            if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                delete dbPayload[k];
             }
-            dbModalSnapshot = null;
-            document.getElementById('db-modal').classList.remove('active');
-        }
+        });
+        Object.assign(dbPayload, snap);
+
+        initMapEditor();
+        initDatabaseEditor();
+    }
+    dbModalSnapshot = null;
+    document.getElementById('db-modal').classList.remove('active');
+}
 
         function setDbTab(tabName) {
             document.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
