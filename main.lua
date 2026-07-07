@@ -325,6 +325,147 @@ runValidation = function()
         check(escErr ~= nil, "formula sandbox allowed access to os.*")
     end
 
+    -- Unified Event Engine Validator (SPEC A7)
+    local scriptUsageCount = 0
+    local registry = {}
+    for _, c in ipairs((loader.engine and loader.engine.commands) or {}) do
+        registry[c.id] = c
+    end
+
+    local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
+        for _, cmd in ipairs(cmds or {}) do
+
+            local id = cmd.cmd or cmd.type
+            if id == nil then
+                check(false, ownerDesc .. " uses unknown command 'nil' (missing cmd or type field)")
+                goto continue
+            end
+            if id == "COMMENT" then
+                -- COMMENT is accepted everywhere and never flagged.
+                -- comment field is also accepted everywhere, which we just ignore.
+                goto continue
+            end
+
+            local cmdDef = registry[id]
+            check(cmdDef ~= nil, ownerDesc .. " uses unknown command '" .. tostring(id) .. "'")
+
+            if cmdDef then
+                -- Check context
+                local ctxAllowed = false
+                for _, c in ipairs(cmdDef.contexts or {}) do
+                    if c == "any" or c == hostCtx then ctxAllowed = true; break end
+                end
+                check(ctxAllowed, ownerDesc .. " uses command '" .. id .. "' in invalid context '" .. hostCtx .. "'")
+
+                -- Check interactive in immediate mode
+                if isImmediate and cmdDef.interactive then
+                    check(false, ownerDesc .. " immediate mode cannot use interactive command '" .. id .. "'")
+                end
+
+                if id == "SCRIPT" then
+                    scriptUsageCount = scriptUsageCount + 1
+                    check(allowScript, ownerDesc .. " contains a SCRIPT command (S6 zero-SCRIPT rule)")
+                end
+
+                -- Validate params
+                for _, paramDef in ipairs(cmdDef.params or {}) do
+                    local val = cmd[paramDef.key]
+                    if val ~= nil then
+
+                if paramDef.type == "formula" then
+                    local mockCtx = {
+                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
+                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
+                        v = { roll = 0.5, bonus = 10 },
+                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 }
+                    }
+                    local formulaEngine = require("engine.formula")
+                    if type(val) == "string" and (val:match("^flag:") or val:match("^hasItem:")) then
+                        -- Allow legacy condition strings
+                    else
+                        local ok, _, ferr = pcall(formulaEngine.eval, val, mockCtx)
+                        check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' failed to compile formula '" .. tostring(val) .. "': " .. tostring(ferr))
+                    end
+                elseif paramDef.type == "commands" then
+                    -- val could be a list of commands, OR for CHOICE it could be a list of options where each option has .commands
+                    if id == "CHOICE" and type(val) == "table" then
+                        for oi, opt in ipairs(val) do
+                            if opt.commands then validateCommands(opt.commands, hostCtx, isImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
+                            if opt.script then validateCommands(opt.script, hostCtx, isImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
+                        end
+                    else
+                        validateCommands(val, hostCtx, isImmediate, allowScript, ownerDesc .. " -> nested")
+                    end
+elseif paramDef.type == "script" then
+                            local chunk, err = load(val, "validator", "t", {})
+                            check(chunk ~= nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' script syntax error: " .. tostring(err))
+                        elseif paramDef.type == "term" then
+                            -- Ensure it's a string, resolution is implicit as getTerm falls back to the key, but we check type
+                            check(type(val) == "string", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string term")
+                        elseif paramDef.type == "state" then
+                            check(loader.getState(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing state '" .. tostring(val) .. "'")
+                        elseif paramDef.type == "item" then
+                            check(loader.getItem(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing item '" .. tostring(val) .. "'")
+                        elseif paramDef.type == "scope" then
+                            local validScopes = { enemies=true, living_enemies=true, allies=true, living_allies=true, party=true, slot_allies=true }
+                            check(validScopes[val], ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' has invalid scope '" .. tostring(val) .. "'")
+                        elseif paramDef.type == "battlerRef" then
+                            -- Usually just a string like "target", "a", "b", "summoner", etc.
+                            check(type(val) == "string" or type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a valid battlerRef")
+                        elseif paramDef.type == "commands" then
+                            validateCommands(val, hostCtx, isImmediate, allowScript, ownerDesc .. " -> nested")
+                        end
+                    end
+                end
+            end
+
+            ::continue::
+        end
+    end
+
+    -- Run the tree walker over all data files
+    for _, map in ipairs(loader.maps or {}) do
+        for i, ev in ipairs(map.events or {}) do
+            local desc = "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")"
+            if ev.commands then
+                validateCommands(ev.commands, "map", false, true, desc)
+            end
+            if ev.script then
+                validateCommands(ev.script, "map", false, true, desc)
+            end
+        end
+    end
+
+    for ceId, ce in pairs(loader.commonEvents or {}) do
+        if ce.commands then
+            validateCommands(ce.commands, "common", false, true, "common event '" .. tostring(ceId) .. "'")
+        end
+        if ce.script then
+            validateCommands(ce.script, "common", false, true, "common event '" .. tostring(ceId) .. "'")
+        end
+    end
+
+    for phaseName, cmds in pairs((loader.flows or {}).battle or {}) do
+        if type(cmds) == "table" then
+            -- Default battle phases enforce zero-SCRIPT (S6)
+            validateCommands(cmds, "battle_phase", true, false, "flows.json battle." .. phaseName)
+        end
+    end
+
+    for phaseName, cmds in pairs((loader.flows or {})._test or {}) do
+        if type(cmds) == "table" then
+            validateCommands(cmds, "battle_phase", true, true, "flows.json _test." .. phaseName)
+        end
+    end
+
+
+
     -- Interpreter immediate mode: the _test flow exercises every implemented
     -- non-interactive command (SPEC S1/S2; ROLL_ENCOUNTER/SPAWN_ENEMIES land
     -- with task A5d and are registry-only for now).
@@ -360,20 +501,9 @@ runValidation = function()
         local okEsc = pcall(flow.run, "_test.script_escape", { session = tSession })
         check(not okEsc, "SCRIPT sandbox allowed os.* access with allowRawAccess=false")
 
-        -- Interactive commands are invalid in immediate mode
-        local okInt = pcall(interpreter.runImmediate,
-            { { cmd = "TEXT", text = "nope" } }, { session = tSession })
-        check(not okInt, "immediate mode accepted an interactive command")
 
-        -- Registry sanity: every flows.json command id must be registered
-        local registered = {}
-        for _, c in ipairs(loader.engine.commands or {}) do registered[c.id] = true end
-        for _, id in ipairs({ "COMMENT", "SET_VAR", "SET_FLAG", "IF", "FOR_EACH", "GAIN_GOLD",
-                              "GRANT_XP", "DAMAGE", "HEAL", "ADD_STATE", "REMOVE_STATE",
-                              "DRAIN_MP", "RESTORE_MP", "STATE_TICKS", "TRAIT_HEAL", "EMIT_TEXT",
-                              "TAKE_ITEM", "GIVE_ITEM_ID", "SCENE_EVENT", "SCRIPT" }) do
-            check(registered[id], "engine.json commands registry missing '" .. id .. "'")
-        end
+
+
     end
 
     -- Interactive compile sweep: every map event and common event must
@@ -408,21 +538,7 @@ runValidation = function()
         end
     end
 
-    -- Zero-SCRIPT rule (SPEC S6): shipped default battle.* flows must not
-    -- contain SCRIPT commands.
-    do
-        local function scanForScript(cmds, where)
-            for _, cmd in ipairs(cmds or {}) do
-                check((cmd.cmd or cmd.type) ~= "SCRIPT", where .. " contains a SCRIPT command (S6 zero-SCRIPT rule)")
-                for _, key in ipairs({ "do", "then", "else", "commands", "elseCommands" }) do
-                    scanForScript(cmd[key], where)
-                end
-            end
-        end
-        for phaseName, cmds in pairs((loader.flows or {}).battle or {}) do
-            scanForScript(cmds, "flows.json battle." .. phaseName)
-        end
-    end
+
 
     -- battle.victory flow must reproduce the legacy reward block exactly:
     -- same gold roll, same XP, same POST_BATTLE_HEAL (task A5a).
@@ -465,6 +581,8 @@ runValidation = function()
             effects.apply(eff, vSession.party[1], vSession.party[1], vSession)
         end
     end
+
+    print("[validator] total SCRIPT usages: " .. scriptUsageCount)
 
     if #problems > 0 then
         error(table.concat(problems, "\n"), 0)
