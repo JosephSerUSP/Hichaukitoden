@@ -75,7 +75,7 @@ merges them:
     validator accepts it (`map`, `common`, `battle_phase`, `menu`, `any`).
   - `params[].type` drives the editor widget: `formula`, `term`, `state`,
     `item`, `skill`, `actor`, `scope`, `battlerRef`, `commands` (nested list),
-    `text`, `number`, `flag`.
+    `text`, `number`, `flag`, `script` (multiline Lua — see §0.5).
 - **The payoff for plain game eventing:** because NPC/chest/common events run on
   the same registry, every system-level command whose `contexts` includes
   `map`/`common` immediately becomes available in the existing Event editor.
@@ -109,6 +109,7 @@ Existing interactive commands keep their ids and behavior: `TEXT`, `CHOICE`,
 | `ROLL_ENCOUNTER` | chance:formula | (A5d) |
 | `SPAWN_ENEMIES` | count:formula, table | weighted pick from map encounters (A5d) |
 | `SCENE_EVENT` | kind | emits a `scene_change`-style event that main.lua consumes; the interpreter never switches scenes itself |
+| `SCRIPT` | code:script | sandboxed Lua escape hatch — see §0.5; forbidden in shipped default flows |
 
 Adding a command later = one Lua handler + one registry entry; the editor and
 validator pick it up from the registry with zero editor code.
@@ -158,7 +159,40 @@ documented, sandboxed context. Design constraints:
 - On error: fallback 0, log once, validator flags it.
 - Deterministic under `math.randomseed` (golden harness depends on it).
 
-### 0.5 Golden-master safety net (build BEFORE converting anything)
+### 0.5 Script Call — the sandboxed escape hatch
+
+`SCRIPT` executes a multiline Lua chunk from event/flow data. It exists so
+one-off ideas never block on a missing command; recurring script patterns are
+the backlog for new registered commands (the validator reports usage counts to
+keep the creep visible). Design constraints:
+
+- **Curated environment, not raw globals.** Scripts run in the same sandbox
+  family as formulas, widened: `ctx` (live handles — session view, battle,
+  actor, target, plus `v` flow-locals), the `math`/`string`/`table` stdlib,
+  the seeded `random`, and an **`api` table whose mutators route through the
+  existing pipelines so the event stream stays consistent**:
+  `api.damage(target, n)` / `api.heal(target, n)` (via `effects.apply`, so
+  death/animation/log events emit normally), `api.giveItem(id, n)`,
+  `api.takeItem(id, n)`, `api.gainGold(n)`, `api.grantXp(target, n)`,
+  `api.addState(target, id, dur)` / `api.removeState(target, id)`,
+  `api.setFlag(flag, val)`, `api.emit(event)` for custom log/text events.
+  Explicitly absent: `io`, `os`, `love`, `require`, and raw `loader`/`session`
+  mutation. The point is invariant protection and debuggability, not security
+  against the game's own author.
+- **Opt-out for the engine owner:** `engine.json → scripting.allowRawAccess`
+  (default `false`) additionally injects real `session`/`loader` references
+  for off-road work. Reaching for it is a decision, not an accident.
+- **Zero-SCRIPT rule for shipped defaults:** the default phases written by the
+  A5 conversions must contain no `SCRIPT` commands — validator-enforced. The
+  baseline engine stays fully transparent blocks; `SCRIPT` is the designer's
+  extension point, not the engine's crutch.
+- **Determinism:** scripts using the provided `random` stay golden-master
+  compatible; anything else is on its own (stated in the editor popover).
+- **Documented in data:** `engine.json → scriptingHelp` (same pattern as
+  `formulaHelp`) lists every `ctx`/`api` member and drives the editor's ⓘ
+  popover.
+
+### 0.6 Golden-master safety net (build BEFORE converting anything)
 
 Extend the `validate` CLI mode:
 
@@ -172,7 +206,7 @@ Extend the `validate` CLI mode:
   `tools/golden/battle.log` is committed once at A3 and regenerated only
   deliberately — never to make a red diff green.
 
-### 0.6 Composability proof — the crafting demo (A8)
+### 0.7 Composability proof — the crafting demo (A8)
 
 The architecture is accepted only when a small **Item Creation** system can be
 authored as *data*: a common event (attachable to an NPC or town option) that
@@ -182,7 +216,7 @@ conditions / IF), consumes them (TAKE_ITEM), rolls success against a formula
 text. If A8 needs bespoke Lua beyond the generic v1 commands, the command set —
 not the demo — is what gets fixed.
 
-### 0.7 Non-goals this round
+### 0.8 Non-goals this round
 
 Full menu scripting (input loops as data), enemy AI scripting, dialogue-graph
 editor UI, the recruit system. The interpreter is built so these become data
@@ -311,7 +345,7 @@ grep shows `load(` only with an explicit env argument.
 
 ### A3 — Golden-master harness [G1]
 
-Implement §0.5: the `validate golden` mode in `main.lua`, normalized event-log
+Implement §0.6: the `validate golden` mode in `main.lua`, normalized event-log
 dump, `tools/golden/` capture+check scripts (both `.ps1` and `.sh`), commit the
 initial `tools/golden/battle.log`. Fixed seed, explicit party construction, no
 newgame randomness. Acceptance: check mode passes twice consecutively; editing
@@ -325,12 +359,18 @@ Implement §0.1–§0.3: `engine/interpreter.lua` with `runInteractive` (absorb
 `data/flows.json` (empty `battle` object); `engine.json → commands` with the
 full §0.2 registry (existing interactive command ids included, with `contexts`
 and `interactive` flags). Add `flows` to BOTH server manifests. Handlers for
-every v1 command, exercised by a `_test` scene key in flows.json that the
-validator runs in immediate mode (interactive commands excluded). Do NOT
-convert any live phase — that's A5. Header comment documents ctx shape and how
-a future host (menu) declares phases. Acceptance: G1+G2 green; map/common
-events still play identically (they now run through the interpreter);
-`_test` phase exercises every non-interactive command without error.
+every v1 command — including `SCRIPT` per §0.5: the widened sandbox, the `api`
+mutator table routing through `effects.apply`/inventory/state pipelines,
+`engine.json → scripting.allowRawAccess` (default false), and
+`engine.json → scriptingHelp` documenting every `ctx`/`api` member. All
+exercised by a `_test` scene key in flows.json that the validator runs in
+immediate mode (interactive commands excluded). Do NOT convert any live
+phase — that's A5. Header comment documents ctx shape and how a future host
+(menu) declares phases. Acceptance: G1+G2 green; map/common events still play
+identically (they now run through the interpreter); `_test` phase exercises
+every non-interactive command without error; a `_test` SCRIPT proves
+`api.damage` emits normal damage events and that touching `io`/`os`/`loader`
+raises an error with `allowRawAccess` false.
 
 ### A5a — Convert victory rewards [G1][G2] · A5b — round-end ticks [G1][G2] · A5c — flee resolution [G1][G2] · A5d — battle start/encounter [G1][G2] · A5e — defeat/escape [G1][G2]
 
@@ -349,8 +389,11 @@ merges, as a follow-up cleanup).
 Extend the editor's existing command UI (`renderCommandList` + the command
 modal) to be **registry-driven**: the add/edit dialog builds its fields from
 `engine.json → commands` param schemas (`formula` params get an ⓘ popover
-listing `formulaHelp`; `term`/`state`/`item`/`skill` params get pickers;
-`commands` params render nested lists like CHOICE branches today). The palette
+listing `formulaHelp`; `script` params get a monospace multiline textarea with
+an ⓘ popover listing `scriptingHelp`, and SCRIPT rows render in a distinct
+color in command lists, RPG-Maker style; `term`/`state`/`item`/`skill` params
+get pickers; `commands` params render nested lists like CHOICE branches
+today). The palette
 filters by host context: Event editor + Common Events offer `map`/`common`
 commands; a new **Flows** tab in the Engine window (scene select → phase select
 with "has data / legacy" badges) offers `battle_phase` commands. Include the
@@ -363,18 +406,23 @@ edited in the UI changes behavior in a test play; G3 green.
 Extend `runValidation`: every `cmd` exists in the registry; commands only
 appear in hosts allowed by `contexts`; `interactive` commands never appear in
 immediate hosts (flows.json); every formula/condition compiles against a mock
-context; `term`/`state`/`item`/`scope`/`battlerRef` params resolve; nested
-lists recurse. Acceptance: G1 green on clean data; corrupting a cmd id, a
-formula, and a context placement each turn it red (then revert).
+context; every `script` param compiles (`load` syntax check, not executed);
+the **zero-SCRIPT rule** (§0.5) holds for the default `battle.*` phases in
+`data/flows.json`; an info line reports total SCRIPT usages across all data;
+`term`/`state`/`item`/`scope`/`battlerRef` params resolve; nested lists
+recurse. Acceptance: G1 green on clean data; corrupting a cmd id, a formula, a
+script body, and a context placement each turn it red (then revert).
 
 ### A8 — Composability proof: Item Creation demo [G1][G3]
 
-Author §0.6's crafting system as pure data: a new common event "Workbench"
+Author §0.7's crafting system as pure data: a new common event "Workbench"
 (recipe CHOICE built from 2–3 recipes; ingredient checks; TAKE_ITEM;
 success-roll IF with a formula using `session` context; GIVE_ITEM_ID on
 success, consolation EMIT_TEXT/TEXT on failure), attach it to a town option or
-a map event on the town map. If any step is impossible without new Lua, STOP
-and file a report naming the missing command instead of adding bespoke code.
+a map event on the town map. **The SCRIPT command is off-limits here** — it
+exists, but this demo's purpose is proving the block set, and SCRIPT would
+hide gaps. If any step is impossible without new Lua or SCRIPT, STOP and file
+a report naming the missing command instead of adding bespoke code.
 Acceptance: crafting works in a play session; `git diff --stat` shows data/
 editor files only (no engine/*.lua changes); G1 green.
 
