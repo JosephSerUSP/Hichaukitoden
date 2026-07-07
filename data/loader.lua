@@ -30,6 +30,8 @@ function loader.init()
     loader.roles = load_json("data/roles.json")
     -- Engine registries: effect types, trait codes, battle layout, element rules
     loader.engine = load_json("data/engine.json")
+    -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
+    loader.flows = load_json("data/flows.json")
 
     loader.animations = require("data.animations")
 

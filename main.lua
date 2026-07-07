@@ -6,6 +6,8 @@ local director = require("engine.director")
 local renderer = require("presentation.renderer")
 local traits = require("engine.traits")
 local effects = require("engine.effects")
+local interpreter = require("engine.interpreter")
+local flow = require("engine.flow")
 local viewport_3d = require("presentation.viewport_3d")
 
 -- Game resolution dimensions
@@ -323,6 +325,89 @@ runValidation = function()
         check(escErr ~= nil, "formula sandbox allowed access to os.*")
     end
 
+    -- Interpreter immediate mode: the _test flow exercises every implemented
+    -- non-interactive command (SPEC S1/S2; ROLL_ENCOUNTER/SPAWN_ENEMIES land
+    -- with task A5d and are registry-only for now).
+    do
+        local tSession = session.GameSession.new(loader)
+        tSession:initializeStartingParty()
+        local tEnemy = session.Battler.new(loader.getActor(1), 1)
+        tEnemy.hp = tEnemy:getMaxHp(tSession)
+        local tCtx = {
+            session = tSession,
+            party = tSession.party,
+            enemies = { tEnemy },
+            target = tSession.party[1],
+            a = tSession.party[1],
+        }
+        local okFlow, flowErr = pcall(flow.run, "_test.scene", tCtx)
+        check(okFlow, "_test.scene flow failed: " .. tostring(flowErr))
+        if okFlow then
+            local sawDamage, sawScript, sawScene = false, false, false
+            for _, ev in ipairs(tCtx.events or {}) do
+                if ev.type == "damage" then sawDamage = true end
+                if ev.type == "text" and tostring(ev.text):match("^script ran") then sawScript = true end
+                if ev.type == "scene_change" then sawScene = true end
+            end
+            check(sawDamage, "_test.scene emitted no damage events (api.damage / DAMAGE broken)")
+            check(sawScript, "_test.scene SCRIPT did not emit through api.emit")
+            check(sawScene, "_test.scene SCENE_EVENT did not emit scene_change")
+        end
+
+        -- SCRIPT sandbox negative test: raw access must error by default
+        check((loader.engine.scripting or {}).allowRawAccess == false,
+            "engine.json scripting.allowRawAccess must default to false")
+        local okEsc = pcall(flow.run, "_test.script_escape", { session = tSession })
+        check(not okEsc, "SCRIPT sandbox allowed os.* access with allowRawAccess=false")
+
+        -- Interactive commands are invalid in immediate mode
+        local okInt = pcall(interpreter.runImmediate,
+            { { cmd = "TEXT", text = "nope" } }, { session = tSession })
+        check(not okInt, "immediate mode accepted an interactive command")
+
+        -- Registry sanity: every flows.json command id must be registered
+        local registered = {}
+        for _, c in ipairs(loader.engine.commands or {}) do registered[c.id] = true end
+        for _, id in ipairs({ "COMMENT", "SET_VAR", "SET_FLAG", "IF", "FOR_EACH", "GAIN_GOLD",
+                              "GRANT_XP", "DAMAGE", "HEAL", "ADD_STATE", "REMOVE_STATE",
+                              "DRAIN_MP", "RESTORE_MP", "STATE_TICKS", "TRAIT_HEAL", "EMIT_TEXT",
+                              "TAKE_ITEM", "GIVE_ITEM_ID", "SCENE_EVENT", "SCRIPT" }) do
+            check(registered[id], "engine.json commands registry missing '" .. id .. "'")
+        end
+    end
+
+    -- Interactive compile sweep: every map event and common event must
+    -- compile to a well-formed dialogue graph (all node links resolve).
+    do
+        local cSession = session.GameSession.new(loader)
+        local cCtx = { loader = loader, recoverParty = function() end, session = cSession }
+        local function checkGraph(desc, commands)
+            if not commands or #commands == 0 then return end
+            local nodes = {}
+            local ok, firstOrErr = pcall(interpreter.compile, nodes, commands, "node", nil, cCtx)
+            if not check(ok, desc .. " failed to compile: " .. tostring(firstOrErr)) then return end
+            for id, node in pairs(nodes) do
+                for _, key in ipairs({ "next", "trueNode", "falseNode" }) do
+                    local link = node[key]
+                    check(link == nil or nodes[link] ~= nil,
+                        desc .. " node '" .. id .. "' links to missing node '" .. tostring(link) .. "'")
+                end
+                for _, opt in ipairs(node.options or {}) do
+                    check(opt.target == nil or nodes[opt.target] ~= nil,
+                        desc .. " choice option links to missing node '" .. tostring(opt.target) .. "'")
+                end
+            end
+        end
+        for _, map in ipairs(loader.maps or {}) do
+            for _, ev in ipairs(map.events or {}) do
+                checkGraph("map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")", ev.commands)
+            end
+        end
+        for ceId, ce in pairs(loader.commonEvents or {}) do
+            checkGraph("common event " .. tostring(ceId), ce.commands)
+        end
+    end
+
     -- Item effects go through the same pipeline in and out of battle
     local item = loader.getItem(combat.battleItem or 1)
     if item and vSession.party[1] then
@@ -504,60 +589,15 @@ local function applyItemToTarget(item, target)
     end
 end
 
--- Compiles a flat "commands" list (as authored in the editor) into GraphWalker
--- nodes, chaining them together and rejoining at tailNodeId at the end.
--- Shared by runEventCommands (map/common events run directly) and the
--- CALL_COMMON_EVENT_ACTION handler (common events invoked from a dialogue
--- graph), so both places understand exactly the same command set.
--- Returns the id of the first node generated (or tailNodeId if commands is empty).
+-- Command compilation moved to engine/interpreter.lua (task A4); main.lua
+-- keeps only this thin glue that supplies the loader and the recoverParty
+-- callback the RECOVER_PARTY command needs.
+local function interpreterCtx()
+    return { loader = loader, recoverParty = recoverParty, session = activeSession }
+end
+
 local function compileCommands(nodes, commands, prefix, tailNodeId)
-    if not commands or #commands == 0 then return tailNodeId end
-
-    local firstId = nil
-    for i, cmd in ipairs(commands) do
-        local nodeId = prefix .. "_" .. i
-        firstId = firstId or nodeId
-        local nextId = (i < #commands) and (prefix .. "_" .. (i + 1)) or tailNodeId
-
-        if cmd.type == "TEXT" then
-            nodes[nodeId] = { type = "TEXT", content = cmd.text, speaker = cmd.speaker, next = nextId }
-        elseif cmd.type == "CHOICE" then
-            local options = {}
-            for oi, opt in ipairs(cmd.options or {}) do
-                -- Older data files used "script" for option sub-commands
-                local optFirst = compileCommands(nodes, opt.commands or opt.script, nodeId .. "_opt" .. oi, nextId)
-                table.insert(options, {
-                    label = opt.label,
-                    setFlag = opt.setFlag,
-                    target = optFirst or nextId
-                })
-            end
-            nodes[nodeId] = { type = "CHOICE", options = options }
-        elseif cmd.type == "CONDITIONAL_BRANCH" then
-            local trueFirst = compileCommands(nodes, cmd.commands, nodeId .. "_then", nextId)
-            local falseFirst = compileCommands(nodes, cmd.elseCommands, nodeId .. "_else", nextId)
-            nodes[nodeId] = {
-                type = "ROUTER",
-                condition = cmd.condition,
-                trueNode = trueFirst or nextId,
-                falseNode = falseFirst or nextId
-            }
-        elseif cmd.type == "RECOVER_PARTY" then
-            recoverParty()
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif cmd.type == "DESCEND" then
-            local descendId = nodeId .. "_descend"
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.descend", "You descend deeper into the chasm..."), next = descendId }
-            nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
-        elseif cmd.type == "BATTLE" then
-            nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
-        elseif cmd.type == "GIVE_ITEM" then
-            nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
-        elseif cmd.type == "CALL_COMMON_EVENT" then
-            nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
-        end
-    end
-    return firstId
+    return interpreter.compile(nodes, commands, prefix, tailNodeId, interpreterCtx())
 end
 
 local function openShop(shopId)
@@ -669,16 +709,9 @@ end
 
 -- Translates JSON command lists to dynamic conversation graphs
 local function runEventCommands(eventTitle, commands)
-    if not commands or #commands == 0 then return end
-
-    local nodes = {}
-    local startNode = compileCommands(nodes, commands, "node", nil)
-
-    local graph = {
-        initialNode = startNode,
-        name = eventTitle,
-        nodes = nodes
-    }
+    local graph = interpreter.runInteractive(commands, interpreterCtx())
+    if not graph then return end
+    graph.name = eventTitle
 
     activeWalker = director.GraphWalker.new(activeSession, graph)
     activeWalker.eventName = eventTitle
