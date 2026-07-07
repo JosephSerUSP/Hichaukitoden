@@ -1,5 +1,57 @@
 
-        // --- ASSET PICKER IMPLEMENTATION ---
+
+        // --- ICON PICKER IMPLEMENTATION ---
+        let activeIconPickerCallback = null;
+
+        // Ensure globals for inline onclick work correctly if split across files
+        window.openIconPicker = function(currentId, callback) {
+            activeIconPickerCallback = callback;
+
+            const grid = document.getElementById('icon-picker-grid');
+            grid.innerHTML = '';
+
+            // Generate grid (e.g. 200 icons or depending on sheet height, hardcoding 200 for now, could be dynamic but CSS takes care of it)
+            // Icon IDs are 1-indexed.
+            for (let id = 1; id <= 200; id++) {
+                const cell = document.createElement('div');
+                cell.className = 'icon-picker-cell' + (id === currentId ? ' active' : '');
+
+                // Calculate position: (id-1)%10 col, floor((id-1)/10) row
+                // scale x2: 12px -> 24px per cell. So -col * 24px, -row * 24px
+                const col = (id - 1) % 10;
+                const row = Math.floor((id - 1) / 10);
+                cell.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
+
+                cell.onmouseover = () => {
+                    document.getElementById('icon-picker-label').textContent = `ID: ${id}`;
+                };
+
+                cell.onclick = () => {
+                    if (activeIconPickerCallback) {
+                        activeIconPickerCallback(id);
+                    }
+                    closeIconPicker();
+                };
+
+                grid.appendChild(cell);
+            }
+
+            document.getElementById('icon-picker-label').textContent = currentId ? `ID: ${currentId}` : 'ID: -';
+            document.getElementById('icon-picker-modal').classList.add('active');
+
+            // Scroll to active if exists
+            setTimeout(() => {
+                const active = grid.querySelector('.active');
+                if (active) active.scrollIntoView({ block: 'center' });
+            }, 10);
+        };
+
+        window.closeIconPicker = function() {
+            document.getElementById('icon-picker-modal').classList.remove('active');
+            activeIconPickerCallback = null;
+        };
+
+// --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
@@ -972,7 +1024,7 @@
                 const attrRow = document.createElement('div');
                 attrRow.className = 'form-row';
                 createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createFormField(attrRow, 'Icon #', item.icon || 0, val => { item.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(attrRow, 'Icon #', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
                 formPanel.appendChild(attrRow);
 
                 if (item.type === 'equipment') {
@@ -1036,7 +1088,7 @@
                 createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createFormField(formPanel, 'Icon #', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(formPanel, 'Icon #', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1048,7 +1100,7 @@
                 createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createFormField(stRow, 'Icon #', state.icon || 0, val => { state.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(stRow, 'Icon #', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1060,7 +1112,7 @@
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
                 createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
-                createFormField(formPanel, 'Orb Icon #', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(formPanel, 'Orb Icon #', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
                 buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
@@ -1346,6 +1398,60 @@
                 }
             }
         }
+
+
+        window.createIconPickerField = function(container, labelText, value, onChange) {
+            const group = document.createElement('div');
+            group.className = 'form-group field-inline';
+
+            const label = document.createElement('label');
+            label.textContent = labelText;
+            group.appendChild(label);
+
+            const previewSwatch = document.createElement('div');
+            previewSwatch.className = 'icon-preview-swatch';
+
+            const updateSwatch = (id) => {
+                if (!id) {
+                    previewSwatch.style.backgroundPosition = `0px 0px`;
+                    return;
+                }
+                const col = (id - 1) % 10;
+                const row = Math.floor((id - 1) / 10);
+                previewSwatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
+            };
+
+            updateSwatch(value);
+
+            const idLabel = document.createElement('span');
+            idLabel.style.marginLeft = '8px';
+            idLabel.style.marginRight = '8px';
+            idLabel.style.width = '24px';
+            idLabel.style.textAlign = 'right';
+            idLabel.textContent = value || '0';
+
+            const pickBtn = document.createElement('button');
+            pickBtn.className = 'win-btn outset-bevel';
+            pickBtn.textContent = 'Pick...';
+            pickBtn.onclick = () => {
+                window.openIconPicker(parseInt(idLabel.textContent) || 0, (newId) => {
+                    idLabel.textContent = newId;
+                    updateSwatch(newId);
+                    if (onChange) onChange(newId);
+                });
+            };
+
+            const flexContainer = document.createElement('div');
+            flexContainer.style.display = 'flex';
+            flexContainer.style.alignItems = 'center';
+
+            flexContainer.appendChild(previewSwatch);
+            flexContainer.appendChild(idLabel);
+            flexContainer.appendChild(pickBtn);
+
+            group.appendChild(flexContainer);
+            container.appendChild(group);
+        };
 
         function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
             const group = document.createElement('div');

@@ -604,7 +604,39 @@
             min-width: 75px;
             padding: 4px 10px;
         }
-    </style>
+
+        /* --- ICON PICKER CSS --- */
+        .icon-picker-cell {
+            width: 24px;
+            height: 24px;
+            background-image: url('/assets/system/iconset.png');
+            background-size: 240px auto; /* 10 cols * 12px = 120px, scaled x2 -> 240px */
+            cursor: pointer;
+            border: 1px solid transparent;
+            image-rendering: pixelated;
+        }
+
+        .icon-picker-cell:hover {
+            border-color: blue;
+            background-color: rgba(0, 0, 255, 0.1);
+        }
+
+        .icon-picker-cell.active {
+            border-color: red;
+            background-color: rgba(255, 0, 0, 0.2);
+        }
+
+        .icon-preview-swatch {
+            width: 24px;
+            height: 24px;
+            background-image: url('/assets/system/iconset.png');
+            background-size: 240px auto;
+            image-rendering: pixelated;
+            display: inline-block;
+            vertical-align: middle;
+            border: 1px inset var(--win-shadow);
+        }
+</style>
 </head>
 <body>
     <div class="window outset-bevel main-app-window">
@@ -1089,7 +1121,28 @@
         </div>
     </div>
 
-    <!-- --- ASSET FILE PICKER MODAL --- -->
+
+    <!-- --- ICON PICKER MODAL --- -->
+    <div id="icon-picker-modal" class="modal-overlay" style="z-index: 1350;">
+        <div class="window outset-bevel" style="width: 320px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Select Icon</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeIconPicker()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div id="icon-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 260px; overflow-y: auto; display: grid; grid-template-columns: repeat(10, 24px); gap: 2px; padding: 6px; justify-content: center;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <span id="icon-picker-label" style="font-weight: bold;">ID: -</span>
+                    <button class="win-btn outset-bevel" style="width: 70px;" onclick="closeIconPicker()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- --- ASSET FILE PICKER MODAL --- -->
     <div id="asset-picker-modal" class="modal-overlay" style="z-index: 1300;">
         <div class="window outset-bevel" style="width: 450px;">
             <div class="title-bar">
