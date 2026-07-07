@@ -98,12 +98,12 @@
         // are only fallbacks for payloads saved before the registry existed.
         function effectTypeOptions() {
             const reg = (dbPayload.engine && dbPayload.engine.effectTypes) || [];
-            if (reg.length) return reg.map(et => ({ value: et.id, label: et.label || et.id }));
+            if (reg.length) return reg.map(et => ({ value: et.id, label: et.label || et.id, title: et.description || '' }));
             return ['hp_damage', 'hp_heal', 'hp_drain', 'add_status', 'hp', 'maxHp', 'xp'];
         }
         function traitCodeOptions() {
             const reg = (dbPayload.engine && dbPayload.engine.traitCodes) || [];
-            if (reg.length) return reg.map(tc => ({ value: tc.code, label: tc.label || tc.code }));
+            if (reg.length) return reg.map(tc => ({ value: tc.code, label: tc.label || tc.code, title: tc.description || '' }));
             return ['PARAM_PLUS', 'PARAM_RATE', 'HIT', 'EVA', 'CRI', 'HRG'];
         }
         function traitUsesDataId(code) {
@@ -195,14 +195,22 @@
             const sel = document.createElement('select');
             sel.className = 'win98-select';
             if (flex) sel.style.flex = flex;
+            // Registry-sourced descriptions surface as native tooltips, both
+            // per-option and on the select (kept in sync with the selection).
+            const syncTitle = () => {
+                const chosen = sel.options[sel.selectedIndex];
+                sel.title = (chosen && chosen.title) || '';
+            };
             options.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o.value !== undefined ? o.value : o;
                 opt.textContent = o.label !== undefined ? o.label : (o === '' ? '(none)' : o);
+                if (o.title) opt.title = o.title;
                 if (opt.value === String(current !== undefined && current !== null ? current : '')) opt.selected = true;
                 sel.appendChild(opt);
             });
-            sel.onchange = () => { onChange(sel.value); setDirty(true); };
+            syncTitle();
+            sel.onchange = () => { onChange(sel.value); setDirty(true); syncTitle(); };
             return sel;
         }
 
@@ -474,37 +482,41 @@
         // ---- Config schema: friendly labels + typed widgets for system/engine keys ----
         // Keys not listed fall back to the generic key-name field.
         const CONFIG_SCHEMA = {
-            'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05 },
-            'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05 },
-            'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05 },
+            'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05, min: 0 },
+            'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05, min: 0 },
+            'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05, min: 0 },
             'ui.textPalette':              { label: 'Text Palette \\c[n] Colors', widget: 'colorList' },
-            'physics.gravity':             { label: 'Popup Gravity (px/s²)' },
-            'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05 },
-            'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)' },
-            'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1 },
-            'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05 },
-            'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)' },
-            'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)' },
-            'combat.encounterChance':      { label: 'Encounter Chance per Step (0-1)', step: 0.01 },
-            'combat.minEnemies':           { label: 'Encounter Size (min)' },
-            'combat.maxEnemies':           { label: 'Encounter Size (max)' },
-            'combat.victoryGoldMin':       { label: 'Victory Gold (min)' },
-            'combat.victoryGoldMax':       { label: 'Victory Gold (max)' },
-            'combat.victoryExp':           { label: 'Victory XP per Survivor' },
-            'combat.baseSpeed':            { label: 'Base Action Speed' },
-            'combat.speedPerLevel':        { label: 'Action Speed per Level', step: 0.1 },
-            'combat.regenRate':            { label: 'Regen State: % Max HP / Turn', step: 0.01 },
-            'combat.poisonRate':           { label: 'Poison State: % Max HP / Turn', step: 0.01 },
-            'combat.mpExhaustionDamage':   { label: 'MP Exhaustion Damage / Turn' },
+            'physics.gravity':             { label: 'Popup Gravity (px/s²)', min: 0 },
+            'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
+            'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
+            'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05, min: 0, max: 1 },
+            'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)', min: 0 },
+            'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)', min: 0 },
+            'combat.encounterChance':      { label: 'Encounter Chance per Step (0-1)', step: 0.01, min: 0, max: 1 },
+            'combat.minEnemies':           { label: 'Encounter Size (min)', min: 1 },
+            'combat.maxEnemies':           { label: 'Encounter Size (max)', min: 1 },
+            'combat.victoryGoldMin':       { label: 'Victory Gold (min)', min: 0 },
+            'combat.victoryGoldMax':       { label: 'Victory Gold (max)', min: 0 },
+            'combat.victoryExp':           { label: 'Victory XP per Survivor', min: 0 },
+            'combat.baseSpeed':            { label: 'Base Action Speed', min: 0 },
+            'combat.speedPerLevel':        { label: 'Action Speed per Level', step: 0.1, min: 0 },
+            'combat.regenRate':            { label: 'Regen State: % Max HP / Turn', step: 0.01, min: 0, max: 1 },
+            'combat.poisonRate':           { label: 'Poison State: % Max HP / Turn', step: 0.01, min: 0, max: 1 },
+            'combat.mpExhaustionDamage':   { label: 'MP Exhaustion Damage / Turn', min: 0 },
             'combat.battleItem':           { label: 'Battle "Item" Command Uses', widget: 'itemSelect' },
             'combat.defendSkillId':        { label: '"Defend" Command Skill', widget: 'skillSelect' },
             'combat.attackSkillId':        { label: '"Attack" Command Skill', widget: 'skillSelect' },
-            'growth.hpPerLevelRate':       { label: 'HP Gain per Level (% of base)', step: 0.01 },
-            'growth.statBase':             { label: 'Stat Base Value' },
-            'growth.statPerLevel':         { label: 'Stat Gain per Level', step: 0.1 },
-            'growth.expPerLevel':          { label: 'XP per Level (× current level)' },
-            'dungeon.maxFloor':            { label: 'Deepest Floor' },
-            'dungeon.moveMpDrain':         { label: 'MP Drain per Step' },
+            'growth.hpPerLevelRate':       { label: 'HP Gain per Level (% of base)', step: 0.01, min: 0,
+                                             help: 'Each level adds this fraction of the actor\'s base max HP (0.15 = +15%/level).' },
+            'growth.statBase':             { label: 'Stat Base Value', min: 0,
+                                             help: 'The level-1 value every growth curve starts from for atk/def/mat/mdf.' },
+            'growth.statPerLevel':         { label: 'Stat Gain per Level', step: 0.1, min: 0,
+                                             help: 'Flat amount added to each stat per level on top of the base value.' },
+            'growth.expPerLevel':          { label: 'XP per Level (× current level)', min: 1,
+                                             help: 'XP needed for the next level = this value × the current level.' },
+            'dungeon.maxFloor':            { label: 'Deepest Floor', min: 1 },
+            'dungeon.moveMpDrain':         { label: 'MP Drain per Step', min: 0 },
             'dungeon.defaultLoot':         { label: 'Default Treasure Item', widget: 'itemSelect' },
             'dungeon.genWidth':            { label: 'Generated Map Width' },
             'dungeon.genHeight':           { label: 'Generated Map Height' },
@@ -530,8 +542,10 @@
             'newGame.party.twoMemberBonusLevels': { label: 'Duo Start Bonus Levels' },
             'newGame.party.defaultSize':   { label: 'Trio Start Party Size' },
             'town.options':                { label: 'Town Menu Options', widget: 'townOptions' },
-            'elementRules.strongMultiplier': { label: 'Strong-Element Damage ×', step: 0.05 },
-            'elementRules.weakMultiplier': { label: 'Weak-Element Damage ×', step: 0.05 },
+            'elementRules.strongMultiplier': { label: 'Strong-Element Damage ×', step: 0.05, min: 0,
+                                               help: 'Damage multiplier when the attack element is strong against the target (1.5 = +50%).' },
+            'elementRules.weakMultiplier': { label: 'Weak-Element Damage ×', step: 0.05, min: 0,
+                                             help: 'Damage multiplier when the attack element is weak against the target (0.65 = -35%).' },
             'battleLayout.enemyRowWidth':  { label: 'Enemy Row Width (px)' },
             'battleLayout.enemyStartX':    { label: 'Enemy Row Start X (px)' },
             'battleLayout.enemyPopupOffsetX': { label: 'Enemy Popup Offset X (px)' },
@@ -579,6 +593,7 @@
                 group.appendChild(makeSelect(opts, value, v => {
                     setNestedValue(targetRoot, currentPath, key, numeric ? (parseInt(v) || v) : v);
                 }, '1'));
+                appendFieldHelp(group, schema);
                 container.appendChild(group);
                 return true;
             }
@@ -726,11 +741,22 @@
                     setDirty(true);
                 };
                 group.appendChild(input);
+                appendFieldHelp(group, schema);
                 container.appendChild(group);
                 return true;
             }
 
             return false;
+        }
+
+        // B5: schema entries with a `help` string render it as a muted line
+        // beneath the field, so the label can stay short.
+        function appendFieldHelp(group, schema) {
+            if (!schema || !schema.help) return;
+            const span = document.createElement('span');
+            span.className = 'field-help';
+            span.textContent = schema.help;
+            group.appendChild(span);
         }
 
         // ---- Direct JSON editing mode ----

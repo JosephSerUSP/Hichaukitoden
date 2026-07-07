@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const PORT = 8080;
+// PORT env override lets a second instance (e.g. preview/CI tooling) run
+// alongside a developer's own server on the default 8080.
+const PORT = parseInt(process.env.PORT, 10) || 8080;
 const GAME_PORT = 8081;
 const PROJECT_DIR = path.resolve(__dirname, '../..');
 // Single manifest of database files exposed to the editor. Keep in sync with

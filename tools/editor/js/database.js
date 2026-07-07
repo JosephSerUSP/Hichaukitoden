@@ -117,8 +117,13 @@
                 maxVal = Object.keys(dbPayload[activeDbTab] || {}).length;
             }
 
-            document.getElementById('max-input-val').value = maxVal;
+            const input = document.getElementById('max-input-val');
+            input.value = maxVal;
+            // B5: Enter applies, like clicking OK.
+            input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); applyChangeMax(); } };
             document.getElementById('max-modal').classList.add('active');
+            input.focus();
+            input.select();
         }
 
         function closeChangeMaxDialog() {
