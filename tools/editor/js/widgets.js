@@ -681,14 +681,68 @@
             btn.onclick = () => {
                 formPanel.innerHTML = '';
 
+                const container = document.createElement('div');
+                container.className = 'form-control inset-bevel';
+                container.style.cssText = 'position: relative; height: 320px; background: #fff; overflow: hidden; padding: 0; box-sizing: border-box;';
+
+                const pre = document.createElement('pre');
+                pre.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 4px; box-sizing: border-box; overflow: hidden; font-family: monospace; font-size: 11px; white-space: pre; pointer-events: none; color: black; z-index: 0;';
+
                 const area = document.createElement('textarea');
-                area.className = 'form-control inset-bevel';
-                area.style.cssText = 'font-family: monospace; font-size: 11px; height: 320px; white-space: pre;';
+                area.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 4px; box-sizing: border-box; font-family: monospace; font-size: 11px; white-space: pre; background: transparent; color: transparent; caret-color: black; border: none; outline: none; resize: none; overflow: auto; z-index: 1;';
+                area.spellcheck = false;
                 area.value = JSON.stringify(targetObj, null, 2);
-                area.oninput = () => {
-                    try { JSON.parse(area.value); area.style.background = ''; }
-                    catch (e) { area.style.background = '#ffcccc'; }
+
+                const syntaxHighlight = (jsonStr) => {
+                    let escaped = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    // In order to correctly match trailing newlines and spaces, we make sure to match them inside the pre tag natively.
+                    return escaped.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                        let cls = 'color: #000;';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'color: #880000;'; // key
+                            } else {
+                                cls = 'color: #008800;'; // string
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'color: #0000ff;'; // boolean
+                        } else if (/null/.test(match)) {
+                            cls = 'color: #888888; font-style: italic;'; // null
+                        } else {
+                            cls = 'color: #ff8800;'; // number
+                        }
+                        return '<span style="' + cls + '">' + match + '</span>';
+                    });
                 };
+
+                const updateHighlight = () => {
+                    // Add an extra newline at the end if it ends with one, to keep the pre scrollheight the same as textarea.
+                    let html = syntaxHighlight(area.value);
+                    if (html.endsWith('\n')) {
+                        html += ' ';
+                    }
+                    pre.innerHTML = html;
+                };
+
+                area.onscroll = () => {
+                    pre.scrollTop = area.scrollTop;
+                    pre.scrollLeft = area.scrollLeft;
+                };
+
+                area.oninput = () => {
+                    updateHighlight();
+                    try {
+                        JSON.parse(area.value);
+                        container.style.backgroundColor = '#fff';
+                    } catch (e) {
+                        container.style.backgroundColor = '#ffcccc';
+                    }
+                };
+
+                updateHighlight();
+
+                container.appendChild(pre);
+                container.appendChild(area);
 
                 const bar = document.createElement('div');
                 bar.style.cssText = 'display: flex; gap: 6px; margin-bottom: 6px;';
@@ -698,7 +752,7 @@
                 applyBtn.onclick = () => {
                     let parsed;
                     try { parsed = JSON.parse(area.value); }
-                    catch (e) { area.style.background = '#ffcccc'; return; }
+                    catch (e) { container.style.backgroundColor = '#ffcccc'; return; }
                     if (Array.isArray(targetObj) && Array.isArray(parsed)) {
                         targetObj.length = 0;
                         parsed.forEach(v => targetObj.push(v));
@@ -706,7 +760,7 @@
                         Object.keys(targetObj).forEach(k => delete targetObj[k]);
                         Object.assign(targetObj, parsed);
                     } else {
-                        area.style.background = '#ffcccc';
+                        container.style.backgroundColor = '#ffcccc';
                         return;
                     }
                     setDirty(true);
@@ -720,7 +774,7 @@
                 bar.appendChild(backBtn);
 
                 formPanel.appendChild(bar);
-                formPanel.appendChild(area);
+                formPanel.appendChild(container);
             };
             buttonHost.appendChild(btn);
         }
