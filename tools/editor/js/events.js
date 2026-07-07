@@ -726,12 +726,71 @@
             container.appendChild(makeMarkerRow(': End Branch', indent));
         }
 
+        function openCommandSelector(hostCtx, callback) {
+            const container = document.getElementById('cmd-selector-content');
+            container.innerHTML = '';
+
+            const defs = cmdsForContext(hostCtx);
+            const groups = {};
+
+            defs.forEach(def => {
+                const cat = def.category || 'Other';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(def);
+            });
+
+            // Standard order for RPG Maker style
+            const catOrder = ['Message', 'Flow Control', 'Party', 'Battler', 'Progression', 'Advanced', 'Other'];
+            const sortedCats = Object.keys(groups).sort((a, b) => {
+                const idxA = catOrder.indexOf(a);
+                const idxB = catOrder.indexOf(b);
+                if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            });
+
+            sortedCats.forEach(cat => {
+                const fieldset = document.createElement('fieldset');
+                fieldset.style.padding = '6px';
+                fieldset.style.display = 'grid';
+                fieldset.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                fieldset.style.gap = '4px';
+
+                const legend = document.createElement('legend');
+                legend.textContent = cat;
+                fieldset.appendChild(legend);
+
+                groups[cat].forEach(def => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.style.width = '100%';
+                    btn.style.textAlign = 'left';
+                    btn.style.justifyContent = 'flex-start';
+                    btn.textContent = def.label || def.id;
+                    if (def.description) btn.title = def.description;
+
+                    btn.onclick = () => {
+                        closeCommandSelector();
+                        callback(def.id);
+                    };
+                    fieldset.appendChild(btn);
+                });
+
+                container.appendChild(fieldset);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        }
+
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                commandsArray.push(cmd);
-                if (onChange) onChange();
-            }, hostCtx);
+            openCommandSelector(hostCtx, (presetId) => {
+                openAddCommandDialog((cmd) => {
+                    commandsArray.push(cmd);
+                    if (onChange) onChange();
+                }, hostCtx, presetId);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -794,15 +853,20 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+        function openAddCommandDialog(callback, hostCtx, presetId) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
-            else if (select.options.length) { select.selectedIndex = 0; }
+            if (presetId) {
+                select.value = presetId;
+            } else if ([...select.options].some(o => o.value === 'TEXT')) {
+                select.value = 'TEXT';
+            } else if (select.options.length) {
+                select.selectedIndex = 0;
+            }
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
