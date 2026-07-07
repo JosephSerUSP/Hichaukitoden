@@ -180,8 +180,12 @@
                 header.textContent = 'Battle Flow';
                 dbPayload.system.combat = dbPayload.system.combat || {};
                 dbPayload.engine.elementRules = dbPayload.engine.elementRules || {};
-                buildRecursiveForm(panel, { combat: dbPayload.system.combat }, [], dbPayload.system);
-                buildRecursiveForm(panel, { elementRules: dbPayload.engine.elementRules }, [], dbPayload.engine);
+
+                buildTabbedSections(panel, [
+                    { id: 'combat', label: 'Combat', render: p => buildRecursiveForm(p, dbPayload.system.combat, ['combat'], dbPayload.system) },
+                    { id: 'elementRules', label: 'Element Rules', render: p => buildRecursiveForm(p, dbPayload.engine.elementRules, ['elementRules'], dbPayload.engine) }
+                ]);
+
                 attachJsonToggle(header, panel, dbPayload.system.combat, rerender);
             } else if (tabName === 'progression') {
                 header.textContent = 'Progression & Growth';
@@ -199,12 +203,14 @@
                 dbPayload.system.physics = dbPayload.system.physics || {};
                 dbPayload.system.battle_screen = dbPayload.system.battle_screen || {};
                 dbPayload.engine.battleLayout = dbPayload.engine.battleLayout || {};
-                buildRecursiveForm(panel, {
-                    ui: dbPayload.system.ui,
-                    physics: dbPayload.system.physics,
-                    battle_screen: dbPayload.system.battle_screen
-                }, [], dbPayload.system);
-                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout }, [], dbPayload.engine);
+
+                buildTabbedSections(panel, [
+                    { id: 'ui', label: 'UI', render: p => buildRecursiveForm(p, dbPayload.system.ui, ['ui'], dbPayload.system) },
+                    { id: 'physics', label: 'Physics', render: p => buildRecursiveForm(p, dbPayload.system.physics, ['physics'], dbPayload.system) },
+                    { id: 'battle_screen', label: 'Battle Screen', render: p => buildRecursiveForm(p, dbPayload.system.battle_screen, ['battle_screen'], dbPayload.system) },
+                    { id: 'battleLayout', label: 'Battle Layout', render: p => buildRecursiveForm(p, dbPayload.engine.battleLayout, ['battleLayout'], dbPayload.engine) }
+                ]);
+
                 buildBattleScreenPreview(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
             } else if (tabName === 'effectTypes') {

@@ -91,6 +91,85 @@
             document.getElementById('asset-picker-modal').classList.remove('active');
         }
 
+        // ---- Shared Layout Helpers for Tabs and Grid Formats ----
+
+        /**
+         * Builds a horizontal tab strip and dynamically swaps content into a panel.
+         * @param {HTMLElement} container - the DOM node to append the UI to.
+         * @param {Array<{id: string, label: string, render: function(HTMLElement)}>} sections
+         */
+        window.buildTabbedSections = function(container, sections) {
+            if (!sections || sections.length === 0) return;
+
+            const tabContainer = document.createElement('div');
+            tabContainer.style.display = 'flex';
+            tabContainer.style.flexWrap = 'wrap';
+            tabContainer.style.gap = '4px';
+            tabContainer.style.marginBottom = '12px';
+            tabContainer.style.borderBottom = '1px solid var(--win-shadow)';
+            tabContainer.style.paddingBottom = '4px';
+
+            const panelContainer = document.createElement('div');
+
+            let activeTabId = sections[0].id;
+
+            const renderTabs = () => {
+                tabContainer.innerHTML = '';
+                sections.forEach(sec => {
+                    const btn = document.createElement('button');
+                    btn.className = 'db-tab-btn' + (activeTabId === sec.id ? ' active' : '');
+                    btn.textContent = sec.label;
+                    btn.onclick = () => {
+                        activeTabId = sec.id;
+                        renderTabs();
+                        renderPanel();
+                    };
+                    tabContainer.appendChild(btn);
+                });
+            };
+
+            const renderPanel = () => {
+                panelContainer.innerHTML = '';
+                const activeSection = sections.find(s => s.id === activeTabId);
+                if (activeSection && activeSection.render) {
+                    activeSection.render(panelContainer);
+                }
+            };
+
+            renderTabs();
+            renderPanel();
+
+            container.appendChild(tabContainer);
+            container.appendChild(panelContainer);
+        };
+
+        /**
+         * Builds a fieldset containing a CSS grid with the specified number of columns.
+         * @param {string} title
+         * @param {number} cols
+         * @returns {{ fieldset: HTMLElement, grid: HTMLElement }}
+         */
+        window.buildFieldGroup = function(title, cols) {
+            const fieldset = document.createElement('fieldset');
+            fieldset.style.border = '1px solid var(--win-shadow)';
+            fieldset.style.padding = '8px';
+            fieldset.style.marginBottom = '12px';
+
+            const legend = document.createElement('legend');
+            legend.style.fontWeight = 'bold';
+            legend.style.padding = '0 4px';
+            legend.textContent = title;
+            fieldset.appendChild(legend);
+
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = `repeat(${cols || 2}, 1fr)`;
+            grid.style.gap = '8px';
+            fieldset.appendChild(grid);
+
+            return { fieldset, grid };
+        };
+
         // ---- Shared structured editors (used by Skills/Passives/States/Actors/Items forms) ----
 
         // Effect types and trait codes come from the engine registry
@@ -487,7 +566,7 @@
 
         // Renders a schema-typed widget; returns false to fall through to the
         // generic renderer.
-        function renderSchemaField(container, schema, value, key, currentPath, targetRoot) {
+        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, stacked = false) {
             const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
 
             if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
@@ -500,7 +579,7 @@
                     opts = Object.keys(dbPayload.commonEvents || {}).map(id => ({ value: id, label: `${id}: ${dbPayload.commonEvents[id].name || ''}` }));
                 }
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -531,7 +610,7 @@
 
             if (widget === 'assetPath') {
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -644,7 +723,7 @@
 
             if (widget === 'number' || typeof value === 'number') {
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -1191,165 +1270,239 @@
             }
         }
 
-        function buildRecursiveForm(container, obj, path, targetRoot) {
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    const value = obj[key];
-                    const currentPath = [...path, key];
+        function renderSingleField(container, key, value, currentPath, targetRoot, stacked = false) {
+            const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
+            if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot, stacked)) {
+                // rendered by a typed schema widget
+            } else if (key === 'activeFont') {
+                const group = document.createElement('div');
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = 'Active UI Font';
+                group.appendChild(lbl);
 
-                    const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
-                    if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot)) {
-                        // rendered by a typed schema widget
-                    } else if (key === 'activeFont') {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = 'Active UI Font';
-                        group.appendChild(lbl);
+                const select = document.createElement('select');
+                select.className = 'form-control inset-bevel';
+                const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
+                fonts.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    if (value === f) opt.selected = true;
+                    select.appendChild(opt);
+                });
 
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
-                        fonts.forEach(f => {
-                            const opt = document.createElement('option');
-                            opt.value = f;
-                            opt.textContent = f;
-                            if (value === f) opt.selected = true;
-                            select.appendChild(opt);
-                        });
+                select.onchange = () => {
+                    setDirty(true);
+                    let target = targetRoot;
+                    for (let i = 0; i < currentPath.length - 1; i++) {
+                        if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                        target = target[currentPath[i]];
+                    }
+                    target[key] = select.value;
+                };
 
-                        select.onchange = () => {
-                            setDirty(true);
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            target[key] = select.value;
-                        };
+                group.appendChild(select);
+                container.appendChild(group);
+            } else if (key === 'dir') {
+                const group = document.createElement('div');
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = 'Spawn Facing Direction';
+                group.appendChild(lbl);
 
-                        group.appendChild(select);
-                        container.appendChild(group);
-                    } else if (key === 'dir') {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = 'Spawn Facing Direction';
-                        group.appendChild(lbl);
+                const select = document.createElement('select');
+                select.className = 'form-control inset-bevel';
+                select.id = 'field-dir';
+                const directions = ['N', 'E', 'S', 'W'];
+                directions.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    if (value === d) opt.selected = true;
+                    select.appendChild(opt);
+                });
 
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        select.id = 'field-dir';
-                        const directions = ['N', 'E', 'S', 'W'];
-                        directions.forEach(d => {
-                            const opt = document.createElement('option');
-                            opt.value = d;
-                            opt.textContent = d;
-                            if (value === d) opt.selected = true;
-                            select.appendChild(opt);
-                        });
+                select.onchange = () => {
+                    setDirty(true);
+                    let target = targetRoot;
+                    for (let i = 0; i < currentPath.length - 1; i++) {
+                        if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                        target = target[currentPath[i]];
+                    }
+                    target[key] = select.value;
+                };
 
-                        select.onchange = () => {
-                            setDirty(true);
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            target[key] = select.value;
-                        };
+                group.appendChild(select);
+                container.appendChild(group);
+            } else if (Array.isArray(value)) {
+                const group = document.createElement('div');
+                group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
+                if (stacked) group.style.flexDirection = 'column';
+                const lbl = document.createElement('label');
+                lbl.textContent = key + ' (JSON array)';
+                group.appendChild(lbl);
 
-                        group.appendChild(select);
-                        container.appendChild(group);
-                    } else if (Array.isArray(value)) {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = key + ' (JSON array)';
-                        group.appendChild(lbl);
+                const area = document.createElement('textarea');
+                area.className = 'form-control inset-bevel';
+                area.rows = Math.min(6, Math.max(2, value.length + 1));
+                area.style.fontFamily = 'monospace';
+                area.value = JSON.stringify(value);
+                area.onchange = () => {
+                    try {
+                        const parsed = JSON.parse(area.value);
+                        if (!Array.isArray(parsed)) throw new Error('not an array');
+                        let target = targetRoot;
+                        for (let i = 0; i < currentPath.length - 1; i++) {
+                            if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                            target = target[currentPath[i]];
+                        }
+                        target[key] = parsed;
+                        area.style.background = '';
+                        setDirty(true);
+                    } catch (e) {
+                        area.style.background = '#ffcccc';
+                    }
+                };
 
-                        const area = document.createElement('textarea');
-                        area.className = 'form-control inset-bevel';
-                        area.rows = Math.min(6, Math.max(2, value.length + 1));
-                        area.style.fontFamily = 'monospace';
-                        area.value = JSON.stringify(value);
-                        area.onchange = () => {
-                            try {
-                                const parsed = JSON.parse(area.value);
-                                if (!Array.isArray(parsed)) throw new Error('not an array');
-                                let target = targetRoot;
-                                for (let i = 0; i < currentPath.length - 1; i++) {
-                                    if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                    target = target[currentPath[i]];
-                                }
-                                target[key] = parsed;
-                                area.style.background = '';
-                                setDirty(true);
-                            } catch (e) {
-                                area.style.background = '#ffcccc';
-                            }
-                        };
-
-                        group.appendChild(area);
-                        container.appendChild(group);
-                    } else if (typeof value === 'object' && value !== null) {
-                        // Create collapsible section header
-                        const sectionWrapper = document.createElement('div');
-                        sectionWrapper.style.marginBottom = '10px';
-                        sectionWrapper.style.border = '1px solid var(--win-shadow)';
-                        sectionWrapper.style.padding = '4px';
-
-                        const header = document.createElement('div');
-                        header.style.fontWeight = 'bold';
-                        header.style.cursor = 'pointer';
-                        header.style.backgroundColor = 'var(--win-gray)';
-                        header.style.padding = '2px 4px';
-                        header.textContent = `[-] ${key}`;
-
-                        const content = document.createElement('div');
-                        content.style.marginTop = '6px';
-                        content.style.paddingLeft = '10px';
-
-                        header.onclick = () => {
-                            if (content.style.display === 'none') {
-                                content.style.display = 'block';
-                                header.textContent = `[-] ${key}`;
-                            } else {
-                                content.style.display = 'none';
-                                header.textContent = `[+] ${key}`;
-                            }
-                        };
-
-                        sectionWrapper.appendChild(header);
-                        sectionWrapper.appendChild(content);
-                        container.appendChild(sectionWrapper);
-
-                        buildRecursiveForm(content, value, currentPath, targetRoot);
+                group.appendChild(area);
+                container.appendChild(group);
+            } else {
+                // Primitive value input
+                const type = typeof value === 'number' ? 'number' : 'text';
+                createFormField(container, key, value, (newVal) => {
+                    // Update nested object value
+                    let target = targetRoot;
+                    for (let i = 0; i < currentPath.length - 1; i++) {
+                        if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                        target = target[currentPath[i]];
+                    }
+                    if (type === 'number') {
+                        const parsed = parseFloat(newVal);
+                        target[key] = isNaN(parsed) ? 0 : parsed;
                     } else {
-                        // Primitive value input
-                        const type = typeof value === 'number' ? 'number' : 'text';
-                        createFormField(container, key, value, (newVal) => {
-                            // Update nested object value
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            if (type === 'number') {
-                                const parsed = parseFloat(newVal);
-                                target[key] = isNaN(parsed) ? 0 : parsed;
-                            } else {
-                                target[key] = newVal;
-                            }
-                        }, type, false, key);
+                        target[key] = newVal;
+                    }
+                }, type, false, key, stacked);
+            }
+        }
+
+        function renderCollapsibleSection(container, key, value, currentPath, targetRoot) {
+            const sectionWrapper = document.createElement('div');
+            sectionWrapper.style.marginBottom = '10px';
+            sectionWrapper.style.border = '1px solid var(--win-shadow)';
+            sectionWrapper.style.padding = '4px';
+
+            const header = document.createElement('div');
+            header.style.fontWeight = 'bold';
+            header.style.cursor = 'pointer';
+            header.style.backgroundColor = 'var(--win-gray)';
+            header.style.padding = '2px 4px';
+            header.textContent = `[-] ${key}`;
+
+            const content = document.createElement('div');
+            content.style.marginTop = '6px';
+            content.style.paddingLeft = '10px';
+
+            header.onclick = () => {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    header.textContent = `[-] ${key}`;
+                } else {
+                    content.style.display = 'none';
+                    header.textContent = `[+] ${key}`;
+                }
+            };
+
+            sectionWrapper.appendChild(header);
+            sectionWrapper.appendChild(content);
+            container.appendChild(sectionWrapper);
+
+            buildRecursiveForm(content, value, currentPath, targetRoot);
+        }
+
+        function buildRecursiveForm(container, obj, path, targetRoot) {
+            const depth = path.length;
+
+            if (depth === 0) {
+                const primitiveKeys = [];
+                const objectKeys = [];
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        const value = obj[key];
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            objectKeys.push(key);
+                        } else {
+                            primitiveKeys.push(key);
+                        }
+                    }
+                }
+
+                if (primitiveKeys.length > 0) {
+                    const fg = buildFieldGroup('General', 2);
+                    primitiveKeys.forEach(key => {
+                        const currentPath = [...path, key];
+                        renderSingleField(fg.grid, key, obj[key], currentPath, targetRoot, true);
+                    });
+                    container.appendChild(fg.fieldset);
+                }
+
+                if (objectKeys.length > 0) {
+                    const sections = objectKeys.map(key => ({
+                        id: 'tab-' + key,
+                        label: key,
+                        render: (panel) => {
+                            const currentPath = [...path, key];
+                            buildRecursiveForm(panel, obj[key], currentPath, targetRoot);
+                        }
+                    }));
+                    buildTabbedSections(container, sections);
+                }
+            } else if (depth === 1) {
+                const primitiveKeys = [];
+                const objectKeys = [];
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        const value = obj[key];
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            objectKeys.push(key);
+                        } else {
+                            primitiveKeys.push(key);
+                        }
+                    }
+                }
+
+                if (primitiveKeys.length > 0) {
+                    const fg = buildFieldGroup(path[path.length - 1], 2);
+                    primitiveKeys.forEach(key => {
+                        const currentPath = [...path, key];
+                        renderSingleField(fg.grid, key, obj[key], currentPath, targetRoot, true);
+                    });
+                    container.appendChild(fg.fieldset);
+                }
+
+                objectKeys.forEach(key => {
+                    const currentPath = [...path, key];
+                    renderCollapsibleSection(container, key, obj[key], currentPath, targetRoot);
+                });
+            } else {
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        const value = obj[key];
+                        const currentPath = [...path, key];
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            renderCollapsibleSection(container, key, value, currentPath, targetRoot);
+                        } else {
+                            renderSingleField(container, key, value, currentPath, targetRoot, false);
+                        }
                     }
                 }
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, stacked = false) {
             const group = document.createElement('div');
-            group.className = 'form-group field-inline';
+            group.className = stacked ? 'field-row-stacked' : 'form-group field-inline';
 
             const label = document.createElement('label');
             label.textContent = labelText;
