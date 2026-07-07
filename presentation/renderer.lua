@@ -858,15 +858,16 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     end
     
     -- Gold and Floor stats inside left menu column below the options
-    ui.drawString("GOLD", leftX + 0.5 * ui.tileSize, ui.toPx(12.5), {0.6, 0.6, 0.6, 1})
-    ui.drawString(session.gold .. " G", leftX + 0.5 * ui.tileSize, ui.toPx(13.75), {1, 0.9, 0.3, 1})
+    local statsY = math.max(12.5, 4.0 + #mainOpts * 2.0)
+    ui.drawString("GOLD", leftX + 0.5 * ui.tileSize, ui.toPx(statsY), {0.6, 0.6, 0.6, 1})
+    ui.drawString(session.gold .. " G", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 1.0), {1, 0.9, 0.3, 1})
     
     local mapTitle = "Town"
     if session.currentMapData then
         mapTitle = session.currentMapData.title or "1"
     end
-    ui.drawString("FLOOR", leftX + 0.5 * ui.tileSize, ui.toPx(15.25), {0.6, 0.6, 0.6, 1})
-    ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(16.5), {1, 1, 1, 1}, "left", ui.toPx(6.75))
+    ui.drawString("FLOOR", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 2.25), {0.6, 0.6, 0.6, 1})
+    ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 3.25), {1, 1, 1, 1}, "left", ui.toPx(6.75))
     
     -- 2. Draw Bottom Description Panel
     ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")
