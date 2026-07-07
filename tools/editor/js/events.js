@@ -727,11 +727,13 @@
         }
 
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
-            populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                commandsArray.push(cmd);
-                if (onChange) onChange();
-            }, hostCtx);
+            openCommandSelector(hostCtx, (typeId) => {
+                populateCmdCommonEventsDropdown();
+                openAddCommandDialog((cmd) => {
+                    commandsArray.push(cmd);
+                    if (onChange) onChange();
+                }, hostCtx, typeId);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -750,6 +752,64 @@
         // `commands`-type param show the nested-edit hint instead of a field —
         // those lists are edited inline in the tree above (see
         // renderChoiceBlock/renderConditionalBlock/renderGenericBlock).
+
+        let cmdSelectorCallback = null;
+
+        function openCommandSelector(hostCtx, callback) {
+            cmdSelectorCallback = callback;
+            const container = document.getElementById('cmd-selector-container');
+            container.innerHTML = '';
+
+            const defs = cmdsForContext(hostCtx);
+            const groups = {};
+
+            defs.forEach(def => {
+                const cat = def.category || 'Other';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(def);
+            });
+
+            // Render groups in a specific order if desired, or alphabetically
+            const groupNames = Object.keys(groups).sort();
+
+            groupNames.forEach(cat => {
+                const fieldset = document.createElement('fieldset');
+                fieldset.style.padding = '6px';
+                fieldset.style.display = 'grid';
+                fieldset.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                fieldset.style.gap = '6px';
+
+                const legend = document.createElement('legend');
+                legend.textContent = cat;
+                fieldset.appendChild(legend);
+
+                groups[cat].forEach(def => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.style.width = '100%';
+                    btn.style.textAlign = 'left';
+                    btn.style.display = 'block';
+                    btn.style.padding = '4px 6px';
+                    btn.textContent = def.label || def.id;
+                    btn.title = def.description || '';
+                    btn.onclick = () => {
+                        closeCommandSelector();
+                        if (cmdSelectorCallback) cmdSelectorCallback(def.id);
+                    };
+                    fieldset.appendChild(btn);
+                });
+
+                container.appendChild(fieldset);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        }
+
+        function closeCommandSelector() {
+            document.getElementById('cmd-selector-modal').classList.remove('active');
+            cmdSelectorCallback = null;
+        }
+
         let activeCmdCallback = null;
         let activeCmdOriginal = null;
         let activeCmdHostCtx = 'map';
@@ -794,15 +854,22 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+        function openAddCommandDialog(callback, hostCtx, preselectedType) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
-            else if (select.options.length) { select.selectedIndex = 0; }
+
+            if (preselectedType && [...select.options].some(o => o.value === preselectedType)) {
+                select.value = preselectedType;
+            } else if ([...select.options].some(o => o.value === 'TEXT')) {
+                select.value = 'TEXT';
+            } else if (select.options.length) {
+                select.selectedIndex = 0;
+            }
+
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;

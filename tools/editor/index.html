@@ -1026,6 +1026,26 @@
         </div>
     </div>
 
+
+    <!-- --- COMMAND SELECTOR MODAL (SPEC C1) --- -->
+    <div id="cmd-selector-modal" class="modal-overlay" style="z-index: 1250;">
+        <div class="window outset-bevel" style="width: 600px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Select Command</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeCommandSelector()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+                <div id="cmd-selector-container" style="max-height: 70vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px;">
+                </div>
+                <div class="dialog-footer">
+                    <button class="win98-btn" onclick="closeCommandSelector()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- --- COMMAND EDITOR DIALOG BOX --- -->
     <!-- Registry-driven (SPEC A6): options in #cmd-select-type and the fields
          in #cmd-fields-dynamic are generated from engine.json -> commands,
