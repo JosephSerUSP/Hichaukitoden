@@ -1,0 +1,20 @@
+action|Pixie|Pixie||
+damage||Pixie|10|
+death||Pixie||
+victory||||
+mp_drain|Pixie||2|
+mp_drain|High Pixie||2|
+mp_drain|Alex||2|
+victory||||
+text||||
+victory||||
+action|High Pixie|High Pixie||
+state_add||High Pixie||defending
+action|Alex|Pixie||
+damage||Pixie|10|
+death||Pixie||
+victory||||
+state_remove||High Pixie||defending
+mp_drain|Pixie||2|
+mp_drain|High Pixie||2|
+mp_drain|Alex||2|

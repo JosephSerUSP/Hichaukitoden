@@ -18,8 +18,10 @@ local activeSession
 local currentScene = "title"
 local isTestBattle = false
 local isValidateMode = false
+local isGoldenMode = false
 local triggerTestBattle
 local runValidation
+local runGoldenValidation
 
 -- Scene States Cache
 local townSelectedIdx = 1
@@ -220,11 +222,14 @@ function love.load(arg)
     
     -- Check for CLI arguments (test-battle, validate)
     if arg then
-        for _, val in ipairs(arg) do
+        for i, val in ipairs(arg) do
             if val == "test-battle" then
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
+                if arg[i + 1] == "golden" then
+                    isGoldenMode = true
+                end
             end
         end
     end
@@ -233,14 +238,25 @@ function love.load(arg)
     -- a battle round, then quit. Run via `lovec . validate` (used by CI/tools).
     if isValidateMode then
         loader.init()
-        local ok, err = pcall(runValidation)
-        if ok then
-            print("VALIDATE OK")
+        if isGoldenMode then
+            local ok, err = pcall(runGoldenValidation)
+            if ok then
+                print("VALIDATE OK")
+            else
+                print("VALIDATE FAIL:\n" .. tostring(err))
+            end
+            love.event.quit(ok and 0 or 1)
+            return
         else
-            print("VALIDATE FAIL:\n" .. tostring(err))
+            local ok, err = pcall(runValidation)
+            if ok then
+                print("VALIDATE OK")
+            else
+                print("VALIDATE FAIL:\n" .. tostring(err))
+            end
+            love.event.quit(ok and 0 or 1)
+            return
         end
-        love.event.quit(ok and 0 or 1)
-        return
     end
     
     love.graphics.setDefaultFilter("nearest", "nearest")
@@ -293,6 +309,83 @@ function love.update(dt)
             inputCooldown = conf("ui", "inputCooldown", 0.30)
         end
     end
+end
+
+runGoldenValidation = function()
+    math.randomseed(12345)
+
+    local vSession = session.GameSession.new(loader)
+
+    local actor1Data = loader.getActor(1)
+    local ally1 = session.Battler.new(actor1Data, 1)
+    ally1.hp = ally1:getMaxHp(vSession)
+
+    local actor2Data = loader.getActor(2)
+    local ally2 = session.Battler.new(actor2Data, 1)
+    ally2.hp = ally2:getMaxHp(vSession)
+
+    table.insert(vSession.party, ally1)
+    table.insert(vSession.party, ally2)
+
+    local enemyData = loader.getActor(1)
+    local enemy = session.Battler.new(enemyData, 1)
+    enemy.hp = enemy:getMaxHp(vSession)
+    local vBattle = battleSystem.Battle.new(vSession, { enemy })
+
+    local function logEvents(events)
+        for _, ev in ipairs(events or {}) do
+            local actorName = ev.actor and ev.actor.name or ""
+            local targetName = ev.target and ev.target.name or ""
+            local val = (ev.value ~= nil) and tostring(ev.value) or ""
+            local stateStr = ev.state or ""
+            print(string.format("%s|%s|%s|%s|%s", ev.type or "", actorName, targetName, val, stateStr))
+        end
+    end
+
+    print("GOLDEN BEGIN")
+
+    local actions = {}
+
+    -- Round 1: All attack
+    actions[1] = { type = "attack", target = enemy }
+    actions[2] = { type = "attack", target = enemy }
+    actions[3] = { type = "attack", target = enemy }
+
+    local events1 = vBattle:resolveRound(actions)
+    logEvents(events1)
+
+    -- Round 2: Spell + Defend + Attacks
+    local spellId = "attack"
+    if loader.getActor(1).skills and #loader.getActor(1).skills > 0 then
+        spellId = loader.getActor(1).skills[1]
+    end
+
+    actions[1] = { type = "attack", target = enemy }
+    actions[2] = { type = "spell", id = spellId, target = enemy }
+    actions[3] = { type = "defend", target = enemy }
+
+    local events2 = vBattle:resolveRound(actions)
+    logEvents(events2)
+
+    -- Round 3: Flee
+    actions[1] = { type = "flee" }
+    actions[2] = { type = "flee" }
+    actions[3] = { type = "flee" }
+
+    local events3 = vBattle:resolveRound(actions)
+    logEvents(events3)
+
+    -- One victory resolution against a 1-HP enemy
+    local weakEnemy = session.Battler.new(enemyData, 1)
+    weakEnemy.hp = 1
+    local vBattle2 = battleSystem.Battle.new(vSession, { weakEnemy })
+    actions[1] = { type = "attack", target = weakEnemy }
+    actions[2] = { type = "attack", target = weakEnemy }
+    actions[3] = { type = "defend", target = weakEnemy }
+    local events4 = vBattle2:resolveRound(actions)
+    logEvents(events4)
+
+    print("GOLDEN END")
 end
 
 function love.draw()
