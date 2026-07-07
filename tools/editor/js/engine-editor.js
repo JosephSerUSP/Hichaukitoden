@@ -163,6 +163,60 @@
             panel.appendChild(box);
         }
 
+        function buildMetaKeyRegistryEditor(panel) {
+            dbPayload.engine.metaKeys = dbPayload.engine.metaKeys || [];
+            const list = dbPayload.engine.metaKeys;
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Registered metadata keys can be attached to database entries and read in formulas. appliesTo lists collections (e.g. items, actors). types: number, string, flag.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((mkEntry, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const mkInput = (val, ph, width, onInput) => {
+                        const input = document.createElement('input');
+                        input.className = 'win98-input';
+                        input.placeholder = ph;
+                        input.title = ph;
+                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                        input.value = val;
+                        input.oninput = () => { onInput(input.value); setDirty(true); };
+                        return input;
+                    };
+                    
+                    row.appendChild(mkInput(mkEntry.key || '', 'key name', '110px', v => { mkEntry.key = v; }));
+                    
+                    const typeSelect = makeSelect(['number', 'string', 'flag'], mkEntry.type || 'number', v => {
+                        mkEntry.type = v;
+                        setDirty(true);
+                    });
+                    typeSelect.style.width = '80px';
+                    typeSelect.style.height = '19px';
+                    typeSelect.style.fontSize = '11px';
+                    row.appendChild(typeSelect);
+                    
+                    row.appendChild(mkInput((mkEntry.appliesTo || []).join(', '), 'appliesTo (csv)', '120px', v => {
+                        mkEntry.appliesTo = v.split(',').map(s => s.trim()).filter(s => s !== '');
+                    }));
+                    
+                    row.appendChild(mkInput(mkEntry.description || '', 'Description', null, v => { mkEntry.description = v; }));
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    row.style.marginBottom = '2px';
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Meta Key', () => {
+                    list.push({ key: 'new_meta_key', type: 'number', appliesTo: ['items'], description: '' });
+                    render();
+                }));
+            };
+            render();
+            panel.appendChild(box);
+        }
+
         function setEngineTab(tabName) {
             activeEngineTab = tabName;
             document.querySelectorAll('#engine-tabs .db-tab-btn').forEach(b => b.classList.remove('active'));
@@ -215,11 +269,342 @@
                 header.textContent = 'Trait Code Registry';
                 buildTraitCodeRegistryEditor(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.traitCodes, rerender);
+            } else if (tabName === 'metaKeys') {
+                header.textContent = 'Meta Keys Registry';
+                buildMetaKeyRegistryEditor(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.metaKeys, rerender);
             } else if (tabName === 'flows') {
-                header.textContent = 'Flows';
+                header.textContent = 'Flows & Scenes';
                 dbPayload.flows = dbPayload.flows || {};
-                renderFlowsTab(panel, header);
+                dbPayload.scenes = dbPayload.scenes || [];
+                renderFlowsAndScenesContainer(panel, header);
             }
+        }
+
+        let activeFlowsSubTab = 'phases'; // 'phases' or 'scenes'
+        let activeSceneId = null;
+
+        function renderFlowsAndScenesContainer(panel, header) {
+            panel.innerHTML = '';
+            
+            const subTabs = document.createElement('div');
+            subTabs.style.cssText = 'display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
+            
+            const btnPhases = document.createElement('button');
+            btnPhases.className = 'db-tab-btn' + (activeFlowsSubTab === 'phases' ? ' active' : '');
+            btnPhases.textContent = 'Phase Flows';
+            btnPhases.onclick = () => {
+                activeFlowsSubTab = 'phases';
+                renderFlowsAndScenesContainer(panel, header);
+            };
+            
+            const btnScenes = document.createElement('button');
+            btnScenes.className = 'db-tab-btn' + (activeFlowsSubTab === 'scenes' ? ' active' : '');
+            btnScenes.textContent = 'Custom Scenes';
+            btnScenes.onclick = () => {
+                activeFlowsSubTab = 'scenes';
+                renderFlowsAndScenesContainer(panel, header);
+            };
+            
+            subTabs.appendChild(btnPhases);
+            subTabs.appendChild(btnScenes);
+            panel.appendChild(subTabs);
+            
+            if (activeFlowsSubTab === 'phases') {
+                header.textContent = 'Phase Flows';
+                renderFlowsTab(panel, header);
+            } else {
+                header.textContent = 'Custom Scenes';
+                renderScenesSection(panel, header);
+            }
+        }
+
+        function renderScenesSection(panel, header) {
+            dbPayload.scenes = dbPayload.scenes || [];
+            
+            const mainContainer = document.createElement('div');
+            mainContainer.style.cssText = 'display: flex; gap: 8px; height: 350px; overflow: hidden;';
+            
+            const listCol = document.createElement('div');
+            listCol.style.cssText = 'width: 140px; border-right: 1px solid var(--win-shadow); padding-right: 6px; display: flex; flex-direction: column; gap: 4px;';
+            
+            const listBox = makeListBox();
+            listBox.style.flex = '1';
+            
+            const renderList = () => {
+                listBox.innerHTML = '';
+                dbPayload.scenes.forEach((sc) => {
+                    const row = document.createElement('div');
+                    row.className = 'tree-node-header' + (sc.id === activeSceneId ? ' active' : '');
+                    row.style.cssText = 'padding: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 11px;';
+                    
+                    const spanName = document.createElement('span');
+                    spanName.textContent = `[${sc.id}] ${sc.name}`;
+                    row.appendChild(spanName);
+                    
+                    const delBtn = makeRowDeleteBtn(() => {
+                        dbPayload.scenes = dbPayload.scenes.filter(s => s.id !== sc.id);
+                        if (activeSceneId === sc.id) activeSceneId = null;
+                        setDirty(true);
+                        renderScenesSection(panel, header);
+                    });
+                    row.appendChild(delBtn);
+                    
+                    row.onclick = (e) => {
+                        if (e.target.tagName === 'BUTTON') return;
+                        activeSceneId = sc.id;
+                        renderScenesSection(panel, header);
+                    };
+                    listBox.appendChild(row);
+                });
+            };
+            renderList();
+            listCol.appendChild(listBox);
+            
+            const addBtn = makeAddRowBtn('+ Create Scene', () => {
+                const nextId = dbPayload.scenes.reduce((max, s) => Math.max(max, s.id), 0) + 1;
+                const newScene = {
+                    id: nextId,
+                    name: 'New Scene',
+                    kind: 'crafting',
+                    config: {
+                        disciplines: [
+                            { kind: 'blacksmithing', label: 'Blacksmithing', stat: 'atk', description: '' }
+                        ],
+                        alpha: 0.5,
+                        yieldFormula: 'floor((i1.meta.potency + i2.meta.potency) / 2) + floor(alpha * S)',
+                        penaltyFormula: '0',
+                        anomalyFormula: '1.0',
+                        brackets: [
+                            { max: 10, tier: 0, name: 'Junk' },
+                            { max: 25, tier: 1, name: 'Standard' }
+                        ],
+                        timing: { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 },
+                        terms: { title: 'Item Creation', yieldText: 'Expected Yield: {0}', resultText: 'Crafted: {0}!' }
+                    }
+                };
+                dbPayload.scenes.push(newScene);
+                activeSceneId = nextId;
+                setDirty(true);
+                renderScenesSection(panel, header);
+            });
+            listCol.appendChild(addBtn);
+            mainContainer.appendChild(listCol);
+            
+            const configCol = document.createElement('div');
+            configCol.style.cssText = 'flex: 1; overflow-y: auto; padding-left: 4px; display: flex; flex-direction: column; gap: 8px;';
+            
+            if (activeSceneId === null && dbPayload.scenes.length > 0) {
+                activeSceneId = dbPayload.scenes[0].id;
+            }
+            
+            const activeScene = dbPayload.scenes.find(s => s.id === activeSceneId);
+            if (activeScene) {
+                activeScene.config = activeScene.config || {};
+                
+                const createField = (labelVal, value, onChange, type = 'text', helpType = null) => {
+                    const row = document.createElement('div');
+                    row.className = 'form-group field-inline';
+                    const lbl = document.createElement('label');
+                    lbl.textContent = labelVal;
+                    row.appendChild(lbl);
+                    
+                    const input = document.createElement('input');
+                    input.className = 'win98-input';
+                    input.style.flex = '1';
+                    input.value = value !== undefined ? value : '';
+                    input.type = type;
+                    input.oninput = () => {
+                        onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
+                        setDirty(true);
+                    };
+                    row.appendChild(input);
+                    
+                    if (helpType) {
+                        const btnHelp = document.createElement('button');
+                        btnHelp.className = 'win98-btn';
+                        btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold;';
+                        btnHelp.textContent = 'ⓘ';
+                        btnHelp.onclick = (e) => {
+                            e.preventDefault();
+                            showParamHelpPopover(btnHelp, helpType);
+                        };
+                        row.appendChild(btnHelp);
+                    }
+                    configCol.appendChild(row);
+                };
+                
+                createField('Scene Name:', activeScene.name, (v) => {
+                    activeScene.name = v;
+                    renderList();
+                });
+                
+                const kindRow = document.createElement('div');
+                kindRow.className = 'form-group field-inline';
+                const kindLbl = document.createElement('label');
+                kindLbl.textContent = 'Scene Kind:';
+                kindRow.appendChild(kindLbl);
+                const kindSelect = makeSelect(['crafting'], activeScene.kind || 'crafting', (v) => {
+                    activeScene.kind = v;
+                    setDirty(true);
+                });
+                kindSelect.style.flex = '1';
+                kindRow.appendChild(kindSelect);
+                configCol.appendChild(kindRow);
+                
+                createField('Alpha Coefficient:', activeScene.config.alpha, (v) => { activeScene.config.alpha = v; }, 'number');
+                createField('Yield Formula:', activeScene.config.yieldFormula, (v) => { activeScene.config.yieldFormula = v; }, 'text', 'formula');
+                createField('Penalty Formula:', activeScene.config.penaltyFormula, (v) => { activeScene.config.penaltyFormula = v; }, 'text', 'formula');
+                createField('Anomaly Formula:', activeScene.config.anomalyFormula, (v) => { activeScene.config.anomalyFormula = v; }, 'text', 'formula');
+                
+                const timingTitle = document.createElement('div');
+                timingTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+                timingTitle.textContent = 'Timing Configuration';
+                configCol.appendChild(timingTitle);
+                
+                activeScene.config.timing = activeScene.config.timing || { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 };
+                createField('Initial Delay (s):', activeScene.config.timing.initialDelay, (v) => { activeScene.config.timing.initialDelay = v; }, 'number');
+                createField('Max Delay (s):', activeScene.config.timing.maxDelay, (v) => { activeScene.config.timing.maxDelay = v; }, 'number');
+                createField('Delay Multiplier:', activeScene.config.timing.delayMult, (v) => { activeScene.config.timing.delayMult = v; }, 'number');
+                createField('Total Steps:', activeScene.config.timing.steps, (v) => { activeScene.config.timing.steps = v; }, 'number');
+                
+                const discTitle = document.createElement('div');
+                discTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+                discTitle.textContent = 'Disciplines';
+                configCol.appendChild(discTitle);
+                
+                const discBox = makeListBox();
+                const renderDiscs = () => {
+                    discBox.innerHTML = '';
+                    activeScene.config.disciplines = activeScene.config.disciplines || [];
+                    activeScene.config.disciplines.forEach((disc, dIdx) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
+                        
+                        const inputKind = document.createElement('input');
+                        inputKind.className = 'win98-input';
+                        inputKind.style.width = '70px';
+                        inputKind.placeholder = 'kind';
+                        inputKind.value = disc.kind || '';
+                        inputKind.oninput = () => { disc.kind = inputKind.value; setDirty(true); };
+                        row.appendChild(inputKind);
+                        
+                        const inputLabel = document.createElement('input');
+                        inputLabel.className = 'win98-input';
+                        inputLabel.style.width = '70px';
+                        inputLabel.placeholder = 'label';
+                        inputLabel.value = disc.label || '';
+                        inputLabel.oninput = () => { disc.label = inputLabel.value; setDirty(true); };
+                        row.appendChild(inputLabel);
+                        
+                        const selectStat = makeSelect(['atk', 'def', 'mat', 'mdf', 'maxHp', 'asp', 'mpd', 'level'], disc.stat || 'atk', (v) => {
+                            disc.stat = v;
+                            setDirty(true);
+                        });
+                        selectStat.style.width = '60px';
+                        selectStat.style.height = '19px';
+                        row.appendChild(selectStat);
+                        
+                        const inputDesc = document.createElement('input');
+                        inputDesc.className = 'win98-input';
+                        inputDesc.style.flex = '1';
+                        inputDesc.placeholder = 'description';
+                        inputDesc.value = disc.description || '';
+                        inputDesc.oninput = () => { disc.description = inputDesc.value; setDirty(true); };
+                        row.appendChild(inputDesc);
+                        
+                        row.appendChild(makeRowDeleteBtn(() => {
+                            activeScene.config.disciplines.splice(dIdx, 1);
+                            setDirty(true);
+                            renderDiscs();
+                        }));
+                        discBox.appendChild(row);
+                    });
+                    
+                    discBox.appendChild(makeAddRowBtn('+ Add Discipline', () => {
+                        activeScene.config.disciplines.push({ kind: 'new_discipline', label: 'New', stat: 'atk', description: '' });
+                        setDirty(true);
+                        renderDiscs();
+                    }));
+                };
+                renderDiscs();
+                configCol.appendChild(discBox);
+                
+                const brTitle = document.createElement('div');
+                brTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+                brTitle.textContent = 'Outcome Brackets';
+                configCol.appendChild(brTitle);
+                
+                const brBox = makeListBox();
+                const renderBrackets = () => {
+                    brBox.innerHTML = '';
+                    activeScene.config.brackets = activeScene.config.brackets || [];
+                    activeScene.config.brackets.forEach((br, bIdx) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
+                        
+                        const inputMax = document.createElement('input');
+                        inputMax.type = 'number';
+                        inputMax.className = 'win98-input';
+                        inputMax.style.width = '60px';
+                        inputMax.placeholder = 'max Y';
+                        inputMax.value = br.max !== undefined ? br.max : 0;
+                        inputMax.oninput = () => { br.max = parseInt(inputMax.value) || 0; setDirty(true); };
+                        row.appendChild(inputMax);
+                        
+                        const inputTier = document.createElement('input');
+                        inputTier.type = 'number';
+                        inputTier.className = 'win98-input';
+                        inputTier.style.width = '50px';
+                        inputTier.placeholder = 'tier';
+                        inputTier.value = br.tier !== undefined ? br.tier : 0;
+                        inputTier.oninput = () => { br.tier = parseInt(inputTier.value) || 0; setDirty(true); };
+                        row.appendChild(inputTier);
+                        
+                        const inputName = document.createElement('input');
+                        inputName.className = 'win98-input';
+                        inputName.style.flex = '1';
+                        inputName.placeholder = 'bracket name';
+                        inputName.value = br.name || '';
+                        inputName.oninput = () => { br.name = inputName.value; setDirty(true); };
+                        row.appendChild(inputName);
+                        
+                        row.appendChild(makeRowDeleteBtn(() => {
+                            activeScene.config.brackets.splice(bIdx, 1);
+                            setDirty(true);
+                            renderBrackets();
+                        }));
+                        brBox.appendChild(row);
+                    });
+                    
+                    brBox.appendChild(makeAddRowBtn('+ Add Bracket', () => {
+                        activeScene.config.brackets.push({ max: 50, tier: 1, name: 'New Bracket' });
+                        setDirty(true);
+                        renderBrackets();
+                    }));
+                };
+                renderBrackets();
+                configCol.appendChild(brBox);
+                
+                const termsTitle = document.createElement('div');
+                termsTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+                termsTitle.textContent = 'Terms / Text Keys';
+                configCol.appendChild(termsTitle);
+                
+                activeScene.config.terms = activeScene.config.terms || {};
+                const termKeys = ['title', 'selectDiscipline', 'selectCrafter', 'selectIngredients', 'yieldText', 'anomalyText', 'craftBtn', 'cancelBtn', 'resultText'];
+                termKeys.forEach(tKey => {
+                    createField(`Text [${tKey}]:`, activeScene.config.terms[tKey], (v) => { activeScene.config.terms[tKey] = v; });
+                });
+            } else {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'font-style: italic; color: var(--win-dark-shadow); padding: 20px;';
+                empty.textContent = 'No scenes defined. Click "+ Create Scene" to start.';
+                configCol.appendChild(empty);
+            }
+            
+            mainContainer.appendChild(configCol);
+            panel.appendChild(mainContainer);
         }
 
         // --- FLOWS TAB (SPEC A6 / S4) ---

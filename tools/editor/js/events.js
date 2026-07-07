@@ -3,6 +3,8 @@
         let activeEventLocalScript = null;
 
         let eventModalDirty = false;
+        let eventModalSnapshot = null;
+        let eventOriginalData = null;
 
         // rgb01 array <-> #rrggbb hex for <input type=color>
         function rgb01ToHex(c) {
@@ -50,6 +52,9 @@
             const eventData = (map.events || []).find(e => e.x === x && e.y === y);
 
             if (eventData) {
+                eventModalSnapshot = JSON.stringify(eventData);
+                eventOriginalData = eventData;
+
                 document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(eventData.id).padStart(4, '0')}`;
                 document.getElementById('event-prop-name').value = eventData.name || `EV${String(eventData.id).padStart(3, '0')}`;
                 document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
@@ -59,7 +64,7 @@
 
                 updateEventGraphicPreview(eventData.sprite);
                 setEventColorFields(eventData.minimapColor);
-                activeEventLocalScript = eventData.script ? [...eventData.script] : [];
+                activeEventLocalScript = eventData.script ? JSON.parse(JSON.stringify(eventData.script)) : [];
 
                 if (eventData.scriptId) {
                     document.getElementById('event-logic-common').checked = true;
@@ -68,6 +73,8 @@
                     document.getElementById('event-logic-custom').checked = true;
                 }
             } else {
+                eventModalSnapshot = null;
+                eventOriginalData = null;
                 let maxId = 0;
                 (map.events || []).forEach(e => { maxId = Math.max(maxId, e.id || 0); });
                 const nextId = maxId + 1;
@@ -136,6 +143,20 @@
 
         function closeEventModal(force) {
             if (!force && eventModalDirty && !confirmDiscard('Discard changes to this event?')) return;
+
+            // Only revert on an actual discard: applyEventProperties() mutates
+            // eventData (== eventOriginalData) and then calls close(true) while
+            // still dirty, so restoring on the force path would undo the Apply.
+            if (!force && eventModalDirty && eventOriginalData && eventModalSnapshot) {
+                // Restore in place
+                const snap = JSON.parse(eventModalSnapshot);
+                Object.keys(eventOriginalData).forEach(k => delete eventOriginalData[k]);
+                Object.assign(eventOriginalData, snap);
+            }
+
+            eventModalSnapshot = null;
+            eventOriginalData = null;
+            eventModalDirty = false;
             document.getElementById('event-modal').classList.remove('active');
         }
 
@@ -733,6 +754,7 @@
         let activeCmdOriginal = null;
         let activeCmdHostCtx = 'map';
         let cmdDialogDirty = false;
+        let cmdModalSnapshot = null;
 
         function populateCmdCommonEventsDropdown() {
             const select = document.getElementById('cmd-select-common-event');
@@ -775,6 +797,7 @@
         function openAddCommandDialog(callback, hostCtx) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
+            cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx);
             const select = document.getElementById('cmd-select-type');
@@ -789,6 +812,7 @@
         function openEditCommandDialog(cmd, callback, hostCtx) {
             activeCmdCallback = callback;
             activeCmdOriginal = cmd;
+            cmdModalSnapshot = JSON.stringify(cmd);
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
@@ -965,6 +989,16 @@
 
         function closeCmdDialog(force) {
             if (!force && cmdDialogDirty && !confirmDiscard('Discard this command?')) return;
+
+            // Revert only on discard, never on the force path applyCmdDialog uses.
+            if (!force && cmdDialogDirty && activeCmdOriginal && cmdModalSnapshot) {
+                const snap = JSON.parse(cmdModalSnapshot);
+                Object.keys(activeCmdOriginal).forEach(k => delete activeCmdOriginal[k]);
+                Object.assign(activeCmdOriginal, snap);
+            }
+
+            cmdModalSnapshot = null;
+            cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.remove('active');
         }
 

@@ -3,21 +3,40 @@
         // Database-modal fields mutate dbPayload live (no separate "staged" copy),
         // so "discard on Cancel/ESC" is implemented by snapshotting on open and
         // restoring that snapshot if the user confirms they want to discard.
+        // engine/maps/flows are owned by their own editors (Engine window,
+        // map editor, Flows tab), so the Database modal snapshots everything
+        // else and restores it in place on discard (references stay valid).
+        function dbConfigSnapshot() {
+            const snap = {};
+            Object.keys(dbPayload).forEach(k => {
+                if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                    snap[k] = JSON.parse(JSON.stringify(dbPayload[k]));
+                }
+            });
+            return JSON.stringify(snap);
+        }
+
         let dbModalSnapshot = null;
 
         function openDatabaseModal() {
-            dbModalSnapshot = JSON.stringify(dbPayload);
+            dbModalSnapshot = dbConfigSnapshot();
             document.getElementById('db-modal').classList.add('active');
             setDbTab(activeDbTab);
         }
 
         function closeDatabaseModal(force) {
-            if (!force && dbModalSnapshot !== null && JSON.stringify(dbPayload) !== dbModalSnapshot) {
+            if (!force && dbModalSnapshot !== null && dbConfigSnapshot() !== dbModalSnapshot) {
                 if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
-                dbPayload = JSON.parse(dbModalSnapshot);
+                const snap = JSON.parse(dbModalSnapshot);
+                Object.keys(dbPayload).forEach(k => {
+                    if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                        delete dbPayload[k];
+                    }
+                });
+                Object.assign(dbPayload, snap);
+
                 initMapEditor();
                 initDatabaseEditor();
-                setDirty(false);
             }
             dbModalSnapshot = null;
             document.getElementById('db-modal').classList.remove('active');
