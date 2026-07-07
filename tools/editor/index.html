@@ -791,6 +791,7 @@
                     <button id="engine-tab-rendering" class="db-tab-btn" onclick="setEngineTab('rendering')">Rendering</button>
                     <button id="engine-tab-effectTypes" class="db-tab-btn" onclick="setEngineTab('effectTypes')">Effect Types</button>
                     <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
+                    <button id="engine-tab-flows" class="db-tab-btn" onclick="setEngineTab('flows')">Flows</button>
                 </div>
                 <div id="engine-form-panel" class="db-form-panel inset-panel" style="flex: 1; overflow-y: auto;"></div>
             </div>
@@ -1013,53 +1014,38 @@
     </div>
 
     <!-- --- COMMAND EDITOR DIALOG BOX --- -->
+    <!-- Registry-driven (SPEC A6): options in #cmd-select-type and the fields
+         in #cmd-fields-dynamic are generated from engine.json -> commands,
+         filtered to the host context (map/common/battle_phase) passed to
+         openAddCommandDialog/openEditCommandDialog. -->
     <div id="cmd-modal" class="modal-overlay" style="z-index: 1200;">
-        <div class="window outset-bevel" style="width: 400px;">
+        <div class="window outset-bevel" style="width: 420px;">
             <div class="title-bar">
                 <div class="title-bar-text">Command Editor</div>
                 <div class="title-bar-controls">
                     <button class="win-btn-small outset-bevel" onclick="closeCmdDialog()">×</button>
                 </div>
             </div>
-            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto;">
                 <div class="field-row-stacked">
                     <label>Command Type:</label>
                     <select id="cmd-select-type" class="win98-select" onchange="toggleCmdTypeFields()">
-                        <option value="TEXT">Show Text</option>
-                        <option value="CHOICE">Show Choice</option>
-                        <option value="CONDITIONAL_BRANCH">Conditional Branch</option>
-                        <option value="RECOVER_PARTY">Recover Party</option>
-                        <option value="DESCEND">Descend Floor</option>
-                        <option value="BATTLE">Start Battle</option>
-                        <option value="GIVE_ITEM">Give Random Item</option>
-                        <option value="CALL_COMMON_EVENT">Call Common Event</option>
+                        <!-- Populated dynamically from the registry, filtered by host context -->
                     </select>
+                    <p id="cmd-type-description" style="font-size: 10px; color: var(--win-dark-shadow); margin: 4px 0 0;"></p>
                 </div>
 
-
-                    <div id="cmd-fields-text" class="form-group" style="display: none; flex-direction: column;">
-                        <label>Speaker Name (Leave empty for none):</label>
-                        <input type="text" id="cmd-input-speaker" class="form-control inset-bevel" placeholder="e.g. \eventName or Alicia" />
-                        <label style="margin-top: 4px;">Text Content:</label>
-                        <textarea id="cmd-input-text" class="form-control inset-bevel" rows="3"></textarea>
-                    </div>
-
-                <div id="cmd-fields-common-event" class="field-row-stacked" style="display: none;">
-                    <label>Select Common Event:</label>
-                    <select id="cmd-select-common-event" class="win98-select">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-
-                <div id="cmd-fields-conditional" class="field-row-stacked" style="display: none;">
-                    <label>Condition:</label>
-                    <input type="text" id="cmd-input-condition" class="win98-input" placeholder="e.g. flag:metAlicia or hasItem:silver_blade" />
-                </div>
+                <div id="cmd-fields-dynamic" style="display: flex; flex-direction: column; gap: 8px;"></div>
 
                 <div id="cmd-fields-nested-hint" class="form-group" style="display: none;">
                     <p style="font-size: 10px; color: var(--win-dark-shadow); margin: 0;">
                         Branches are edited inline in the command list after adding this — expand it there to add options/commands, like in RPG Maker.
                     </p>
+                </div>
+
+                <div class="field-row-stacked">
+                    <label>Comment (optional):</label>
+                    <input type="text" id="cmd-input-comment" class="win98-input" placeholder="Shown as a note beneath this command in the list" />
                 </div>
 
                 <div class="dialog-footer">
@@ -1069,6 +1055,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Small floating popover for formulaHelp/scriptingHelp (SPEC S5/S6),
+         opened by the ⓘ button next to formula/script param fields. -->
+    <div id="cmd-help-popover" style="display: none; position: fixed; z-index: 1400; width: 320px; max-height: 320px; overflow-y: auto; background: var(--win-gray); border: 1px solid var(--win-dark-shadow); box-shadow: 2px 2px 6px rgba(0,0,0,0.4); padding: 6px; font-size: 10px;"></div>
+
+    <datalist id="cmd-battlerref-suggestions">
+        <option value="a"></option>
+        <option value="b"></option>
+        <option value="target"></option>
+        <option value="enemy"></option>
+        <option value="ally"></option>
+        <option value="summoner"></option>
+    </datalist>
 
     <!-- --- DAMAGE POPUP SETTINGS MODAL --- -->
     <div id="damage-popup-modal" class="modal-overlay" style="z-index: 1150;">

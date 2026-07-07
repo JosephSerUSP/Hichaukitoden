@@ -123,12 +123,14 @@
             if (isCommon) {
                 const ceId = commonSelect.value;
                 const ce = dbPayload.commonEvents && dbPayload.commonEvents[ceId];
-                renderCommandList(container, ce ? ce.commands : [], null, true);
+                // Read-only preview of the linked common event's own body, so
+                // its palette context is 'common' even though this event is 'map'.
+                renderCommandList(container, ce ? ce.commands : [], null, true, 0, 'common');
             } else {
                 renderCommandList(container, activeEventLocalScript, () => {
                     eventModalDirty = true;
                     toggleEventLogicType();
-                }, false);
+                }, false, 0, 'map');
             }
         }
 
@@ -191,27 +193,89 @@
             setDirty(true);
         }
 
+        // --- REGISTRY-DRIVEN COMMAND SYSTEM (SPEC A6) ---
+        // The command palette (add/edit dialog) and the command-list tree are
+        // both generated from data/engine.json -> commands, so any command
+        // registered there (with a matching Lua handler) is automatically
+        // addable/editable/nestable in every host that lists it in `contexts`.
+        // The nine commands the interactive interpreter (engine/interpreter.lua
+        // compile()) actually knows how to run — TEXT, CHOICE,
+        // CONDITIONAL_BRANCH, RECOVER_PARTY, DESCEND, BATTLE, GIVE_ITEM,
+        // CALL_COMMON_EVENT, COMMENT — are stored under the legacy `type` field
+        // when added to a map/common host, matching what that interpreter path
+        // reads; everything else (and COMMENT in battle_phase flows, matching
+        // existing data/flows.json) is stored under `cmd`, which both
+        // interpreter.runImmediate and the A7 validator resolve via
+        // `cmd.cmd or cmd.type`.
+        const INTERACTIVE_COMPILE_IDS = {
+            TEXT: 1, CHOICE: 1, CONDITIONAL_BRANCH: 1, RECOVER_PARTY: 1,
+            DESCEND: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1
+        };
+        function cmdFieldName(id, hostCtx) {
+            return (hostCtx !== 'battle_phase' && INTERACTIVE_COMPILE_IDS[id]) ? 'type' : 'cmd';
+        }
+        function cmdId(cmd) {
+            return cmd.cmd || cmd.type;
+        }
+        function cmdRegistry() {
+            return (dbPayload.engine && dbPayload.engine.commands) || [];
+        }
+        function getCmdDef(id) {
+            return cmdRegistry().find(c => c.id === id);
+        }
+        function cmdsForContext(hostCtx) {
+            return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx));
+        }
+        function showCommentsPref() {
+            return localStorage.getItem('hkt_showComments') !== '0';
+        }
+        function setShowCommentsPref(v) {
+            localStorage.setItem('hkt_showComments', v ? '1' : '0');
+        }
+
         // --- SHARED COMMAND LIST RENDERING ---
-        // Used by the Event Editor's custom script list AND the Common Event
-        // command list in the Database modal, so both surfaces look and behave
-        // identically (same row format, same add/edit/delete affordances).
+        // Used by the Event Editor's custom script list, the Common Event
+        // command list in the Database modal, and the Engine window's Flows
+        // tab, so all three surfaces look and behave identically (same row
+        // format, same add/edit/delete affordances).
         function describeCommand(cmd) {
-            if (cmd.type === 'TEXT') {
+            const id = cmdId(cmd);
+            if (id === 'TEXT') {
                 const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
                 return `Text: "${speakerPrefix}${cmd.text}"`;
-            } else if (cmd.type === 'RECOVER_PARTY') {
+            } else if (id === 'RECOVER_PARTY') {
                 return 'Recover Party';
-            } else if (cmd.type === 'DESCEND') {
+            } else if (id === 'DESCEND') {
                 return 'Descend Floor';
-            } else if (cmd.type === 'BATTLE') {
+            } else if (id === 'BATTLE') {
                 return 'Start Battle';
-            } else if (cmd.type === 'GIVE_ITEM') {
+            } else if (id === 'GIVE_ITEM') {
                 return 'Give Random Item';
-            } else if (cmd.type === 'CALL_COMMON_EVENT') {
+            } else if (id === 'CALL_COMMON_EVENT') {
                 const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
                 return `Call Common Event: ${ce ? ce.name : 'ID ' + cmd.commonEventId}`;
             }
-            return `Unknown (${cmd.type})`;
+            const def = getCmdDef(id);
+            if (!def) return `Unknown (${id})`;
+            const parts = [];
+            (def.params || []).forEach(p => {
+                if (p.type === 'commands') return;
+                const v = cmd[p.key];
+                if (v === undefined || v === null || v === '') return;
+                parts.push(`${p.key}=${p.type === 'script' ? '<script>' : v}`);
+            });
+            return def.label + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+        }
+
+        function makeCommentLine(text, indent) {
+            const line = document.createElement('div');
+            line.style.padding = '2px';
+            line.style.paddingLeft = (indent * 14) + 'px';
+            line.style.color = '#008000';
+            line.style.fontFamily = 'monospace';
+            line.style.fontSize = '10px';
+            line.textContent = '// ' + text;
+            return line;
         }
 
         function makeMarkerRow(text, indent, onClick) {
@@ -233,12 +297,34 @@
         // Renders `commandsArray` into `container` as an RPG-Maker-style command
         // list. `onChange()` is called after any add/edit/delete so the caller can
         // re-render and mark itself dirty; pass null/readOnly=true for a static preview.
-        // CHOICE and CONDITIONAL_BRANCH render as nested branches with their own
-        // sub-command-lists rendered inline (via recursion), rather than opening a
-        // separate modal — you add commands directly inside the nest, like RPG Maker.
-        function renderCommandList(container, commandsArray, onChange, readOnly, indent) {
+        // `hostCtx` ('map'/'common'/'battle_phase') filters which registry
+        // commands the add/edit dialog offers (SPEC S1 contexts) and picks the
+        // storage field (SPEC A6 note above cmdFieldName). CHOICE and
+        // CONDITIONAL_BRANCH render as nested branches with their own
+        // sub-command-lists rendered inline (via recursion); any other
+        // registered command with a `commands`-type param (IF, FOR_EACH, ...)
+        // gets the same inline nested treatment generically, so new block
+        // commands need zero editor code (SPEC S1/A6). You add commands
+        // directly inside the nest, like RPG Maker.
+        function renderCommandList(container, commandsArray, onChange, readOnly, indent, hostCtx) {
             indent = indent || 0;
+            hostCtx = hostCtx || 'map';
             container.innerHTML = '';
+
+            if (indent === 0) {
+                const toggleRow = document.createElement('label');
+                toggleRow.style.cssText = 'display: flex; align-items: center; gap: 4px; padding: 2px; font-size: 10px; color: var(--win-dark-shadow); cursor: pointer;';
+                const chk = document.createElement('input');
+                chk.type = 'checkbox';
+                chk.checked = showCommentsPref();
+                chk.onchange = () => {
+                    setShowCommentsPref(chk.checked);
+                    renderCommandList(container, commandsArray, onChange, readOnly, indent, hostCtx);
+                };
+                toggleRow.appendChild(chk);
+                toggleRow.appendChild(document.createTextNode('Show comments'));
+                container.appendChild(toggleRow);
+            }
 
             if (!commandsArray || commandsArray.length === 0) {
                 const line = document.createElement('div');
@@ -248,19 +334,32 @@
                 line.textContent = readOnly ? '<Empty Command List>' : '@>';
                 if (!readOnly) {
                     line.style.cursor = 'pointer';
-                    line.onclick = () => openCommandModalForAdd(commandsArray, onChange);
+                    line.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
                 }
                 container.appendChild(line);
                 return;
             }
 
             commandsArray.forEach((cmd, idx) => {
-                if (cmd.type === 'CHOICE') {
-                    renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent);
+                const id = cmdId(cmd);
+
+                if (id === 'COMMENT') {
+                    if (showCommentsPref()) {
+                        renderCommentRow(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx);
+                    }
                     return;
                 }
-                if (cmd.type === 'CONDITIONAL_BRANCH') {
-                    renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent);
+                if (id === 'CHOICE') {
+                    renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx);
+                    return;
+                }
+                if (id === 'CONDITIONAL_BRANCH') {
+                    renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx);
+                    return;
+                }
+                const def = getCmdDef(id);
+                if (def && (def.params || []).some(p => p.type === 'commands')) {
+                    renderGenericBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx);
                     return;
                 }
 
@@ -282,14 +381,14 @@
                     line.style.cursor = 'pointer';
                     line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
                     line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
-                    line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange);
+                    line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
 
                     const editBtn = document.createElement('button');
                     editBtn.className = 'win-btn-small outset-bevel';
                     editBtn.style.fontSize = '8px';
                     editBtn.style.padding = '0px 3px';
                     editBtn.textContent = '✏️';
-                    editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange); };
+                    editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
 
                     const delBtn = document.createElement('button');
                     delBtn.className = 'win-btn-small outset-bevel';
@@ -313,6 +412,10 @@
                     line.style.color = '#808080';
                 }
                 container.appendChild(line);
+
+                if (cmd.comment && showCommentsPref()) {
+                    container.appendChild(makeCommentLine(cmd.comment, indent + 1));
+                }
             });
 
             if (!readOnly) {
@@ -322,12 +425,118 @@
                 trailingLine.style.color = '#808080';
                 trailingLine.style.cursor = 'pointer';
                 trailingLine.textContent = '@>';
-                trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange);
+                trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
                 container.appendChild(trailingLine);
             }
         }
 
-        function renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent) {
+        // A standalone COMMENT row (SPEC S3): documentation only, rendered in
+        // green, hidden entirely (not just dimmed) when "Show comments" is off.
+        function renderCommentRow(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
+            const line = document.createElement('div');
+            line.style.padding = '2px';
+            line.style.paddingLeft = (indent * 14) + 'px';
+            line.style.display = 'flex';
+            line.style.alignItems = 'center';
+            line.style.color = '#008000';
+            line.style.fontFamily = 'monospace';
+            line.style.fontSize = '10px';
+
+            const label = document.createElement('span');
+            label.style.flex = '1';
+            label.style.overflow = 'hidden';
+            label.style.textOverflow = 'ellipsis';
+            label.style.whiteSpace = 'nowrap';
+            label.textContent = '// ' + (cmd.text || '');
+            line.appendChild(label);
+
+            if (!readOnly) {
+                line.style.cursor = 'pointer';
+                line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win-btn-small outset-bevel';
+                delBtn.style.fontSize = '8px';
+                delBtn.style.padding = '0px 3px';
+                delBtn.style.color = 'red';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    commandsArray.splice(idx, 1);
+                    if (onChange) onChange();
+                };
+                line.appendChild(delBtn);
+            }
+            container.appendChild(line);
+        }
+
+        // Generic nested-block renderer (SPEC A6): any registered command with
+        // one or more `commands`-type params (IF's then/else, FOR_EACH's do, and
+        // any future block command) renders its scalar params in the header and
+        // each command-list param as its own inline sub-tree, with zero
+        // command-specific editor code required.
+        function renderGenericBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
+            const id = cmdId(cmd);
+            const def = getCmdDef(id);
+
+            const header = document.createElement('div');
+            header.style.padding = '2px';
+            header.style.paddingLeft = (indent * 14) + 'px';
+            header.style.display = 'flex';
+            header.style.alignItems = 'center';
+            header.style.fontWeight = 'bold';
+            const headerLabel = document.createElement('span');
+            headerLabel.style.flex = '1';
+            headerLabel.style.overflow = 'hidden';
+            headerLabel.style.textOverflow = 'ellipsis';
+            headerLabel.style.whiteSpace = 'nowrap';
+            headerLabel.textContent = '@>' + describeCommand(cmd);
+            header.appendChild(headerLabel);
+            if (!readOnly) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'win-btn-small outset-bevel';
+                editBtn.style.fontSize = '8px';
+                editBtn.style.padding = '0px 3px';
+                editBtn.textContent = '✏️';
+                editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win-btn-small outset-bevel';
+                delBtn.style.fontSize = '8px';
+                delBtn.style.padding = '0px 3px';
+                delBtn.style.color = 'red';
+                delBtn.textContent = '×';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    commandsArray.splice(idx, 1);
+                    if (onChange) onChange();
+                };
+                header.appendChild(editBtn);
+                header.appendChild(delBtn);
+            } else {
+                header.style.color = '#808080';
+            }
+            container.appendChild(header);
+
+            if (cmd.comment && showCommentsPref()) {
+                container.appendChild(makeCommentLine(cmd.comment, indent + 1));
+            }
+
+            (def.params || []).forEach(p => {
+                if (p.type !== 'commands') return;
+                cmd[p.key] = cmd[p.key] || [];
+                const marker = makeMarkerRow(`: ${p.key}`, indent + 1);
+                marker.style.color = '#000080';
+                marker.style.fontWeight = 'bold';
+                container.appendChild(marker);
+                const subContainer = document.createElement('div');
+                container.appendChild(subContainer);
+                renderCommandList(subContainer, cmd[p.key], onChange, readOnly, indent + 2, hostCtx);
+            });
+
+            container.appendChild(makeMarkerRow(`: End ${def.label || id}`, indent));
+        }
+
+        function renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
             cmd.options = cmd.options || [];
 
             const header = document.createElement('div');
@@ -355,6 +564,10 @@
                 header.appendChild(delBtn);
             }
             container.appendChild(header);
+
+            if (cmd.comment && showCommentsPref()) {
+                container.appendChild(makeCommentLine(cmd.comment, indent + 1));
+            }
 
             cmd.options.forEach((opt, optIdx) => {
                 opt.commands = opt.commands || [];
@@ -395,7 +608,7 @@
 
                 const optContainer = document.createElement('div');
                 container.appendChild(optContainer);
-                renderCommandList(optContainer, opt.commands, onChange, readOnly, indent + 2);
+                renderCommandList(optContainer, opt.commands, onChange, readOnly, indent + 2, hostCtx);
             });
 
             if (!readOnly) {
@@ -408,7 +621,7 @@
             container.appendChild(makeMarkerRow(': End Choice', indent));
         }
 
-        function renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent) {
+        function renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
             cmd.commands = cmd.commands || [];
 
             const header = document.createElement('div');
@@ -453,9 +666,13 @@
             }
             container.appendChild(header);
 
+            if (cmd.comment && showCommentsPref()) {
+                container.appendChild(makeCommentLine(cmd.comment, indent + 1));
+            }
+
             const thenContainer = document.createElement('div');
             container.appendChild(thenContainer);
-            renderCommandList(thenContainer, cmd.commands, onChange, readOnly, indent + 1);
+            renderCommandList(thenContainer, cmd.commands, onChange, readOnly, indent + 1, hostCtx);
 
             if (cmd.elseCommands) {
                 const elseMarker = makeMarkerRow(': Else', indent);
@@ -477,7 +694,7 @@
 
                 const elseContainer = document.createElement('div');
                 container.appendChild(elseContainer);
-                renderCommandList(elseContainer, cmd.elseCommands, onChange, readOnly, indent + 1);
+                renderCommandList(elseContainer, cmd.elseCommands, onChange, readOnly, indent + 1, hostCtx);
             } else if (!readOnly) {
                 container.appendChild(makeMarkerRow('+ Add Else Branch', indent, () => {
                     cmd.elseCommands = [];
@@ -488,26 +705,33 @@
             container.appendChild(makeMarkerRow(': End Branch', indent));
         }
 
-        function openCommandModalForAdd(commandsArray, onChange) {
+        function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
             openAddCommandDialog((cmd) => {
                 commandsArray.push(cmd);
                 if (onChange) onChange();
-            });
+            }, hostCtx);
         }
 
-        function openCommandModalForEdit(commandsArray, idx, onChange) {
+        function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
             openEditCommandDialog(commandsArray[idx], (updatedCmd) => {
                 commandsArray[idx] = updatedCmd;
                 if (onChange) onChange();
-            });
+            }, hostCtx);
         }
 
-        // --- COMMAND EDITOR MODAL (single command; CHOICE/CONDITIONAL_BRANCH ---
-        // create an empty shell here, then are edited inline in the tree above)
+        // --- COMMAND EDITOR MODAL ---
+        // Registry-driven (SPEC A6): #cmd-select-type is populated from
+        // data/engine.json -> commands, filtered to activeCmdHostCtx (S1
+        // contexts), and #cmd-fields-dynamic is rebuilt per param schema by
+        // renderParamField. CHOICE/CONDITIONAL_BRANCH/any command with a
+        // `commands`-type param show the nested-edit hint instead of a field —
+        // those lists are edited inline in the tree above (see
+        // renderChoiceBlock/renderConditionalBlock/renderGenericBlock).
         let activeCmdCallback = null;
         let activeCmdOriginal = null;
+        let activeCmdHostCtx = 'map';
         let cmdDialogDirty = false;
 
         function populateCmdCommonEventsDropdown() {
@@ -526,41 +750,195 @@
             }
         }
 
-        function openAddCommandDialog(callback) {
+        function populateCmdTypeSelect(hostCtx, ensureId) {
+            const select = document.getElementById('cmd-select-type');
+            select.innerHTML = '';
+            const defs = cmdsForContext(hostCtx);
+            defs.forEach(def => {
+                const opt = document.createElement('option');
+                opt.value = def.id;
+                opt.textContent = def.label || def.id;
+                select.appendChild(opt);
+            });
+            // Defensive: if editing a command whose id somehow isn't offered in
+            // this host's palette (stale/foreign data), still let it be edited.
+            if (ensureId && !defs.some(d => d.id === ensureId)) {
+                const def = getCmdDef(ensureId);
+                const opt = document.createElement('option');
+                opt.value = ensureId;
+                opt.textContent = (def && def.label) || ensureId;
+                select.appendChild(opt);
+            }
+        }
+
+        function openAddCommandDialog(callback, hostCtx) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
-            document.getElementById('cmd-select-type').value = 'TEXT';
-            document.getElementById('cmd-input-text').value = 'Hello!';
-            document.getElementById('cmd-input-speaker').value = '';
-            document.getElementById('cmd-input-condition').value = '';
+            activeCmdHostCtx = hostCtx || 'map';
+            populateCmdTypeSelect(activeCmdHostCtx);
+            const select = document.getElementById('cmd-select-type');
+            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
+            else if (select.options.length) { select.selectedIndex = 0; }
+            document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.add('active');
         }
 
-        function openEditCommandDialog(cmd, callback) {
+        function openEditCommandDialog(cmd, callback, hostCtx) {
             activeCmdCallback = callback;
             activeCmdOriginal = cmd;
-            document.getElementById('cmd-select-type').value = cmd.type;
-            if (cmd.type === 'TEXT') {
-                document.getElementById('cmd-input-text').value = cmd.text || '';
-                document.getElementById('cmd-input-speaker').value = cmd.speaker || '';
-            } else if (cmd.type === 'CALL_COMMON_EVENT') {
-                document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
-            } else if (cmd.type === 'CONDITIONAL_BRANCH') {
-                document.getElementById('cmd-input-condition').value = cmd.condition || '';
-            }
-            toggleCmdTypeFields();
+            activeCmdHostCtx = hostCtx || 'map';
+            const id = cmdId(cmd);
+            populateCmdTypeSelect(activeCmdHostCtx, id);
+            document.getElementById('cmd-select-type').value = id;
+            document.getElementById('cmd-input-comment').value = cmd.comment || '';
+            toggleCmdTypeFields(cmd);
             cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.add('active');
         }
 
-        function toggleCmdTypeFields() {
+        // Builds one labeled field for a registry param. `commonEventId` gets
+        // the friendlier common-event dropdown; `term`/`state`/`item`/`skill`
+        // use pickers (term via B4's window.cmdParamWidgets.term); `formula`/
+        // `script` get an (i) popover into formulaHelp/scriptingHelp (S5/S6).
+        function renderParamField(container, cmdTypeId, paramDef, currentValue) {
+            const wrap = document.createElement('div');
+            wrap.className = 'field-row-stacked';
+            const labelRow = document.createElement('div');
+            labelRow.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+            const label = document.createElement('label');
+            label.textContent = paramDef.key + ':';
+            labelRow.appendChild(label);
+            if (paramDef.type === 'formula' || paramDef.type === 'script') {
+                const infoBtn = document.createElement('button');
+                infoBtn.type = 'button';
+                infoBtn.className = 'win-btn-small outset-bevel';
+                infoBtn.style.cssText = 'font-size: 8px; padding: 0 3px;';
+                infoBtn.textContent = 'ⓘ';
+                infoBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); showParamHelpPopover(infoBtn, paramDef.type); };
+                labelRow.appendChild(infoBtn);
+            }
+            wrap.appendChild(labelRow);
+
+            let input;
+            if (paramDef.key === 'commonEventId') {
+                input = document.createElement('select');
+                input.className = 'win98-select';
+                if (dbPayload.commonEvents) {
+                    Object.keys(dbPayload.commonEvents).forEach(id => {
+                        const opt = document.createElement('option');
+                        opt.value = id;
+                        opt.textContent = `${id.padStart(4, '0')}: ${dbPayload.commonEvents[id].name || ''}`;
+                        input.appendChild(opt);
+                    });
+                }
+                if (currentValue !== undefined) input.value = String(currentValue);
+            } else if (paramDef.type === 'script') {
+                input = document.createElement('textarea');
+                input.className = 'form-control inset-bevel';
+                input.style.fontFamily = 'monospace';
+                input.rows = 4;
+                input.value = currentValue || '';
+            } else if (paramDef.type === 'text' && cmdTypeId === 'TEXT' && paramDef.key === 'text') {
+                input = document.createElement('textarea');
+                input.className = 'form-control inset-bevel';
+                input.rows = 3;
+                input.value = currentValue || '';
+            } else if (paramDef.type === 'number') {
+                input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'win98-input';
+                input.value = currentValue !== undefined && currentValue !== null ? currentValue : '';
+            } else if (paramDef.type === 'flag') {
+                input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = !!currentValue;
+            } else if (paramDef.type === 'scope') {
+                input = makeSelect(['enemies', 'living_enemies', 'allies', 'living_allies', 'party', 'slot_allies'], currentValue || 'enemies', () => {}, null);
+            } else if (paramDef.type === 'battlerRef') {
+                input = document.createElement('input');
+                input.className = 'win98-input';
+                input.setAttribute('list', 'cmd-battlerref-suggestions');
+                input.value = currentValue || '';
+            } else if (paramDef.type === 'state') {
+                const opts = Object.keys(dbPayload.states || {}).map(id => ({ value: id, label: (dbPayload.states[id].name || id) }));
+                input = makeSelect(opts, currentValue, () => {}, null);
+            } else if (paramDef.type === 'item') {
+                const opts = (dbPayload.items || []).map(it => ({ value: String(it.id), label: it.name }));
+                input = makeSelect(opts, currentValue, () => {}, null);
+            } else if (paramDef.type === 'skill') {
+                const opts = Object.keys(dbPayload.skills || {}).map(id => ({ value: id, label: (dbPayload.skills[id].name || id) }));
+                input = makeSelect(opts, currentValue, () => {}, null);
+            } else if (paramDef.type === 'term' && window.cmdParamWidgets && window.cmdParamWidgets.term) {
+                input = window.cmdParamWidgets.term(currentValue, () => {});
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'win98-input';
+                input.value = currentValue !== undefined && currentValue !== null ? currentValue : '';
+            }
+            input.id = 'cmd-dyn-' + paramDef.key;
+            wrap.appendChild(input);
+            container.appendChild(wrap);
+        }
+
+        // Small floating popover listing engine.json -> formulaHelp/scriptingHelp
+        // (S5/S6), positioned under the (i) button that opened it.
+        function showParamHelpPopover(anchorEl, paramType) {
+            const pop = document.getElementById('cmd-help-popover');
+            if (pop.style.display === 'block' && pop._anchor === anchorEl) {
+                pop.style.display = 'none';
+                pop._anchor = null;
+                return;
+            }
+            const entries = (paramType === 'script')
+                ? ((dbPayload.engine && dbPayload.engine.scriptingHelp) || [])
+                : ((dbPayload.engine && dbPayload.engine.formulaHelp) || []);
+            pop.innerHTML = '';
+            const title = document.createElement('div');
+            title.style.cssText = 'font-weight: bold; margin-bottom: 4px;';
+            title.textContent = paramType === 'script' ? 'Script Call context' : 'Formula context';
+            pop.appendChild(title);
+            entries.forEach(e => {
+                const row = document.createElement('div');
+                row.style.marginBottom = '3px';
+                const tok = document.createElement('span');
+                tok.style.cssText = 'font-family: monospace; color: #000080; font-weight: bold;';
+                tok.textContent = e.token;
+                row.appendChild(tok);
+                row.appendChild(document.createTextNode(' — ' + e.description));
+                pop.appendChild(row);
+            });
+            const rect = anchorEl.getBoundingClientRect();
+            pop.style.left = Math.max(4, rect.left) + 'px';
+            pop.style.top = (rect.bottom + 2) + 'px';
+            pop.style.display = 'block';
+            pop._anchor = anchorEl;
+        }
+        document.addEventListener('click', (e) => {
+            const pop = document.getElementById('cmd-help-popover');
+            if (pop && pop.style.display === 'block' && !pop.contains(e.target) && e.target !== pop._anchor) {
+                pop.style.display = 'none';
+                pop._anchor = null;
+            }
+        });
+
+        function toggleCmdTypeFields(existingCmd) {
             const type = document.getElementById('cmd-select-type').value;
-            document.getElementById('cmd-fields-text').style.display = type === 'TEXT' ? 'flex' : 'none';
-            document.getElementById('cmd-fields-common-event').style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
-            document.getElementById('cmd-fields-conditional').style.display = type === 'CONDITIONAL_BRANCH' ? 'flex' : 'none';
-            document.getElementById('cmd-fields-nested-hint').style.display = (type === 'CHOICE' || type === 'CONDITIONAL_BRANCH') ? 'block' : 'none';
+            const def = getCmdDef(type);
+            document.getElementById('cmd-type-description').textContent = def ? (def.description || '') : '';
+
+            const dynContainer = document.getElementById('cmd-fields-dynamic');
+            dynContainer.innerHTML = '';
+            (def && def.params || []).forEach(p => {
+                if (p.type === 'commands') return;
+                const currentValue = existingCmd ? existingCmd[p.key] : undefined;
+                renderParamField(dynContainer, type, p, currentValue);
+            });
+
+            const hasNested = def && (def.params || []).some(p => p.type === 'commands');
+            document.getElementById('cmd-fields-nested-hint').style.display = hasNested ? 'block' : 'none';
         }
 
         function closeCmdDialog(force) {
@@ -570,23 +948,35 @@
 
         function applyCmdDialog() {
             const type = document.getElementById('cmd-select-type').value;
-            const wasSameType = activeCmdOriginal && activeCmdOriginal.type === type;
-            let cmd = { type: type };
-            if (type === 'TEXT') {
-                cmd.text = document.getElementById('cmd-input-text').value;
-                cmd.speaker = document.getElementById('cmd-input-speaker').value;
-            } else if (type === 'CALL_COMMON_EVENT') {
-                cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
-            } else if (type === 'CHOICE') {
-                // Preserve existing nested options when just re-confirming this dialog.
-                cmd.options = wasSameType ? activeCmdOriginal.options : [];
-            } else if (type === 'CONDITIONAL_BRANCH') {
-                cmd.condition = document.getElementById('cmd-input-condition').value;
-                cmd.commands = wasSameType ? activeCmdOriginal.commands : [];
-                if (wasSameType && activeCmdOriginal.elseCommands) {
-                    cmd.elseCommands = activeCmdOriginal.elseCommands;
+            const def = getCmdDef(type);
+            const wasSameType = activeCmdOriginal && cmdId(activeCmdOriginal) === type;
+
+            let cmd = {};
+            cmd[cmdFieldName(type, activeCmdHostCtx)] = type;
+
+            (def && def.params || []).forEach(p => {
+                if (p.type === 'commands') {
+                    // Preserve existing nested command lists when just
+                    // re-confirming the same type; start empty otherwise.
+                    cmd[p.key] = (wasSameType && activeCmdOriginal[p.key]) ? activeCmdOriginal[p.key] : [];
+                    return;
                 }
-            }
+                const el = document.getElementById('cmd-dyn-' + p.key);
+                if (!el) return;
+                if (p.type === 'flag') {
+                    cmd[p.key] = el.checked;
+                } else if (p.type === 'number') {
+                    cmd[p.key] = el.value === '' ? undefined : parseFloat(el.value);
+                } else if (p.key === 'commonEventId') {
+                    cmd[p.key] = parseInt(el.value);
+                } else {
+                    cmd[p.key] = el.value;
+                }
+            });
+
+            const comment = document.getElementById('cmd-input-comment').value.trim();
+            if (comment) { cmd.comment = comment; }
+
             closeCmdDialog(true);
             if (activeCmdCallback) activeCmdCallback(cmd);
         }
