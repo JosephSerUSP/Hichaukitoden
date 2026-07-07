@@ -487,7 +487,10 @@
         function closeMapPropertiesModal(force) {
             if (!force && mapPropsDirty && !confirmDiscard('Discard changes to this map\'s properties?')) return;
 
-            if (mapPropsDirty && mapPropsOriginal && mapPropsSnapshot) {
+            // Revert only on discard: saveMapProperties() mutates the map then
+            // calls close(true) while still dirty, so a force-path restore would
+            // undo the save.
+            if (!force && mapPropsDirty && mapPropsOriginal && mapPropsSnapshot) {
                 const snap = JSON.parse(mapPropsSnapshot);
                 Object.keys(mapPropsOriginal).forEach(k => delete mapPropsOriginal[k]);
                 Object.assign(mapPropsOriginal, snap);

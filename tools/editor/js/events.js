@@ -144,7 +144,10 @@
         function closeEventModal(force) {
             if (!force && eventModalDirty && !confirmDiscard('Discard changes to this event?')) return;
 
-            if (eventModalDirty && eventOriginalData && eventModalSnapshot) {
+            // Only revert on an actual discard: applyEventProperties() mutates
+            // eventData (== eventOriginalData) and then calls close(true) while
+            // still dirty, so restoring on the force path would undo the Apply.
+            if (!force && eventModalDirty && eventOriginalData && eventModalSnapshot) {
                 // Restore in place
                 const snap = JSON.parse(eventModalSnapshot);
                 Object.keys(eventOriginalData).forEach(k => delete eventOriginalData[k]);
@@ -987,7 +990,8 @@
         function closeCmdDialog(force) {
             if (!force && cmdDialogDirty && !confirmDiscard('Discard this command?')) return;
 
-            if (cmdDialogDirty && activeCmdOriginal && cmdModalSnapshot) {
+            // Revert only on discard, never on the force path applyCmdDialog uses.
+            if (!force && cmdDialogDirty && activeCmdOriginal && cmdModalSnapshot) {
                 const snap = JSON.parse(cmdModalSnapshot);
                 Object.keys(activeCmdOriginal).forEach(k => delete activeCmdOriginal[k]);
                 Object.assign(activeCmdOriginal, snap);

@@ -3,42 +3,44 @@
         // Database-modal fields mutate dbPayload live (no separate "staged" copy),
         // so "discard on Cancel/ESC" is implemented by snapshotting on open and
         // restoring that snapshot if the user confirms they want to discard.
+        // engine/maps/flows are owned by their own editors (Engine window,
+        // map editor, Flows tab), so the Database modal snapshots everything
+        // else and restores it in place on discard (references stay valid).
         function dbConfigSnapshot() {
-    // Deep clone the entire dbPayload except for engine and maps which are handled by their own editors
-    const snap = {};
-    Object.keys(dbPayload).forEach(k => {
-        if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
-            snap[k] = JSON.parse(JSON.stringify(dbPayload[k]));
+            const snap = {};
+            Object.keys(dbPayload).forEach(k => {
+                if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                    snap[k] = JSON.parse(JSON.stringify(dbPayload[k]));
+                }
+            });
+            return JSON.stringify(snap);
         }
-    });
-    return JSON.stringify(snap);
-}
 
-let dbModalSnapshot = null;
+        let dbModalSnapshot = null;
 
-function openDatabaseModal() {
-    dbModalSnapshot = dbConfigSnapshot();
-    document.getElementById('db-modal').classList.add('active');
-    setDbTab(activeDbTab);
-}
+        function openDatabaseModal() {
+            dbModalSnapshot = dbConfigSnapshot();
+            document.getElementById('db-modal').classList.add('active');
+            setDbTab(activeDbTab);
+        }
 
-function closeDatabaseModal(force) {
-    if (!force && dbModalSnapshot !== null && dbConfigSnapshot() !== dbModalSnapshot) {
-        if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
-        const snap = JSON.parse(dbModalSnapshot);
-        Object.keys(dbPayload).forEach(k => {
-            if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
-                delete dbPayload[k];
+        function closeDatabaseModal(force) {
+            if (!force && dbModalSnapshot !== null && dbConfigSnapshot() !== dbModalSnapshot) {
+                if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
+                const snap = JSON.parse(dbModalSnapshot);
+                Object.keys(dbPayload).forEach(k => {
+                    if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                        delete dbPayload[k];
+                    }
+                });
+                Object.assign(dbPayload, snap);
+
+                initMapEditor();
+                initDatabaseEditor();
             }
-        });
-        Object.assign(dbPayload, snap);
-
-        initMapEditor();
-        initDatabaseEditor();
-    }
-    dbModalSnapshot = null;
-    document.getElementById('db-modal').classList.remove('active');
-}
+            dbModalSnapshot = null;
+            document.getElementById('db-modal').classList.remove('active');
+        }
 
         function setDbTab(tabName) {
             document.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
