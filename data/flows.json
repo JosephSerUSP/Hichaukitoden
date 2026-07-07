@@ -1,0 +1,40 @@
+{
+  "battle": {},
+  "_test": {
+    "scene": [
+      { "cmd": "COMMENT", "text": "Validator-only phase: exercises every non-interactive command in immediate mode." },
+      { "cmd": "SET_VAR", "name": "bonus", "value": "floor(session.floor * 2) + random(1, 2)" },
+      { "cmd": "SET_FLAG", "flag": "_test_flag", "value": true },
+      { "cmd": "IF", "condition": "flag:_test_flag", "then": [
+        { "cmd": "GAIN_GOLD", "amount": "v.bonus", "comment": "per-command comment fields must be ignored" }
+      ], "else": [
+        { "cmd": "GAIN_GOLD", "amount": "9999" }
+      ] },
+      { "cmd": "SET_FLAG", "flag": "_test_flag", "value": false },
+      { "cmd": "FOR_EACH", "scope": "living_allies", "as": "ally", "do": [
+        { "cmd": "GRANT_XP", "target": "ally", "amount": "1" },
+        { "cmd": "TRAIT_HEAL", "target": "ally", "trait": "POST_BATTLE_HEAL" }
+      ] },
+      { "cmd": "FOR_EACH", "scope": "living_enemies", "as": "enemy", "do": [
+        { "cmd": "DAMAGE", "target": "enemy", "amount": "2 + enemy.level" }
+      ] },
+      { "cmd": "FOR_EACH", "scope": "party", "as": "ally", "do": [
+        { "cmd": "HEAL", "target": "ally", "amount": "3" }
+      ] },
+      { "cmd": "ADD_STATE", "target": "summoner", "state": "regen", "duration": 2 },
+      { "cmd": "STATE_TICKS" },
+      { "cmd": "REMOVE_STATE", "target": "summoner", "state": "regen" },
+      { "cmd": "DRAIN_MP", "amount": "1" },
+      { "cmd": "RESTORE_MP", "amount": "1" },
+      { "cmd": "GIVE_ITEM_ID", "item": 1, "count": 1 },
+      { "cmd": "TAKE_ITEM", "item": 1, "count": 1 },
+      { "cmd": "EMIT_TEXT", "term": "battle.victory_full", "fallback": "Test text." },
+      { "cmd": "SCENE_EVENT", "kind": "map" },
+      { "cmd": "SCRIPT", "code": "api.damage(ctx.target, 5)\napi.emit({ type = 'text', text = 'script ran, floor ' .. ctx.session.floor })" }
+    ],
+    "script_escape": [
+      { "cmd": "COMMENT", "text": "Negative test: the validator expects this phase to ERROR while scripting.allowRawAccess is false." },
+      { "cmd": "SCRIPT", "code": "return os.time()" }
+    ]
+  }
+}

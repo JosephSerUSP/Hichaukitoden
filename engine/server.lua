@@ -10,7 +10,7 @@ local active = false
 local DATA_FILES = {
     "actors", "elements", "events", "items", "maps", "quests", "shops",
     "sounds", "terms", "themes", "system", "commonEvents",
-    "skills", "passives", "states", "roles", "engine"
+    "skills", "passives", "states", "roles", "engine", "flows"
 }
 
 function server.start()
