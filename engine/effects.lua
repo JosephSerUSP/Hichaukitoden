@@ -1,4 +1,5 @@
 local traits = require("engine.traits")
+local formulaEngine = require("engine.formula")
 
 local effects = {}
 
@@ -27,29 +28,13 @@ local function elementMultiplier(element, target, session)
     return mult
 end
 
-local function evaluateFormula(formula, a, b, session)
-    if not formula then return 0 end
-    
-    local str = formula
-    -- Replace a.level, a.atk
-    str = str:gsub("a%.level", tostring(a.level or 1))
-    str = str:gsub("a%.atk", tostring(traits.getParam(a, "atk", session) or 10))
-    str = str:gsub("a%.mat", tostring(traits.getParam(a, "mat", session) or 10))
-    
-    -- Replace b.level, b.def, etc.
-    if b then
-        str = str:gsub("b%.level", tostring(b.level or 1))
-        str = str:gsub("b%.def", tostring(traits.getParam(b, "def", session) or 10))
-        str = str:gsub("b%.mdf", tostring(traits.getParam(b, "mdf", session) or 10))
-    end
-    
-    -- Compile and evaluate
-    local func = load("return " .. str)
-    if func then
-        local success, val = pcall(func)
-        if success then return val end
-    end
-    return 1
+-- Thin wrapper kept for the existing call sites: builds the a/b context
+-- through engine/formula.lua and evaluates in its sandbox. On error the
+-- sandbox falls back to 0 (SPEC S5) where the old code returned 1.
+local function evaluateFormula(expr, a, b, session)
+    if not expr then return 0 end
+    local ctx = formulaEngine.makeContext({ a = a, b = b, target = b }, session)
+    return (formulaEngine.eval(expr, ctx))
 end
 
 -- context (optional): { element = "White" } — the element of the skill/item
