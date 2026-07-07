@@ -1119,6 +1119,27 @@
         </div>
     </div>
 
+    <!-- --- ICON PICKER MODAL --- -->
+    <div id="icon-picker-modal" class="modal-overlay" style="z-index: 1350;">
+        <div class="window outset-bevel" style="width: 420px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Select Icon</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeIconPicker()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px; padding: 10px;">
+                <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px;">Hover to see ID: <span id="icon-picker-hover-id" style="color: var(--title-blue);">...</span></div>
+                <div id="icon-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 260px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; align-content: flex-start;">
+                    <!-- Icons injected here -->
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
+                    <button class="win98-btn" style="min-width: 80px;" onclick="closeIconPicker()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- --- CHANGE MAXIMUM DIALOG MODAL --- -->
     <div id="max-modal" class="modal-overlay" style="z-index: 1100;">
         <div class="window outset-bevel" style="width: 240px;">

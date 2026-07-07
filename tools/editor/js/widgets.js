@@ -91,6 +91,87 @@
             document.getElementById('asset-picker-modal').classList.remove('active');
         }
 
+        // --- ICON PICKER IMPLEMENTATION ---
+        let activeIconCallback = null;
+
+        function openIconPicker(currentId, callback) {
+            activeIconCallback = callback;
+            const modal = document.getElementById('icon-picker-modal');
+            const grid = document.getElementById('icon-picker-grid');
+            grid.innerHTML = '';
+
+            // Assume 12x12 iconset with max index roughly 255. We'll show up to 200 for now or whatever is needed.
+            // But we know iconset has 10 columns. We also need to add an option for 0 (None)
+            for (let id = 0; id <= 300; id++) {
+                const cell = document.createElement('div');
+                cell.style.width = '24px';
+                cell.style.height = '24px';
+                cell.style.cursor = 'pointer';
+                cell.style.boxSizing = 'border-box';
+                cell.style.border = (id === currentId) ? '2px solid var(--title-blue)' : '1px solid transparent';
+
+                if (id === currentId) {
+                    cell.style.backgroundColor = 'rgba(0, 0, 128, 0.1)';
+                }
+
+                if (id === 0) {
+                    cell.textContent = 'Ø';
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.color = 'var(--win-shadow)';
+                    cell.style.fontSize = '12px';
+                    cell.style.fontWeight = 'bold';
+                } else {
+                    cell.style.backgroundImage = 'url(/assets/system/iconset.png)';
+                    // Scaling 12x12 to 24x24 means image needs to be scaled
+                    // We use background-size to scale the iconset x2.
+                    // Original iconset width is 120px (10 cols * 12px). We set background size to 240px auto.
+                    cell.style.backgroundSize = '240px auto';
+                    cell.style.backgroundRepeat = 'no-repeat';
+
+                    const col = (id - 1) % 10;
+                    const row = Math.floor((id - 1) / 10);
+
+                    cell.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
+                    cell.style.imageRendering = 'pixelated';
+                }
+
+                cell.onmouseenter = () => {
+                    document.getElementById('icon-picker-hover-id').textContent = id;
+                    if (id !== currentId) cell.style.border = '1px solid var(--win-shadow)';
+                };
+                cell.onmouseleave = () => {
+                    if (id !== currentId) cell.style.border = '1px solid transparent';
+                };
+
+                cell.onclick = () => {
+                    closeIconPicker();
+                    if (activeIconCallback) activeIconCallback(id);
+                };
+
+                grid.appendChild(cell);
+            }
+
+            // Scroll current icon into view
+            if (currentId >= 0 && currentId <= 300) {
+                const currentCell = grid.children[currentId];
+                if (currentCell) {
+                    setTimeout(() => currentCell.scrollIntoView({ block: 'center' }), 10);
+                }
+            }
+
+            document.getElementById('icon-picker-hover-id').textContent = '...';
+            modal.classList.add('active');
+        }
+
+        function closeIconPicker() {
+            document.getElementById('icon-picker-modal').classList.remove('active');
+        }
+
+        // Expose to global scope so HTML can access it
+        window.closeIconPicker = closeIconPicker;
+
         // ---- Shared structured editors (used by Skills/Passives/States/Actors/Items forms) ----
 
         // Effect types and trait codes come from the engine registry
@@ -972,7 +1053,7 @@
                 const attrRow = document.createElement('div');
                 attrRow.className = 'form-row';
                 createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createFormField(attrRow, 'Icon #', item.icon || 0, val => { item.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(attrRow, 'Icon #', item.icon || 0, val => { item.icon = val || 0; });
                 formPanel.appendChild(attrRow);
 
                 if (item.type === 'equipment') {
@@ -1036,7 +1117,7 @@
                 createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createFormField(formPanel, 'Icon #', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(formPanel, 'Icon #', passive.icon || 0, val => { passive.icon = val || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1048,7 +1129,7 @@
                 createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createFormField(stRow, 'Icon #', state.icon || 0, val => { state.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(stRow, 'Icon #', state.icon || 0, val => { state.icon = val || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1060,7 +1141,7 @@
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
                 createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
-                createFormField(formPanel, 'Orb Icon #', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; }, 'number');
+                createIconPickerField(formPanel, 'Orb Icon #', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = val || 0; });
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
                 buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
@@ -1345,6 +1426,77 @@
                     }
                 }
             }
+        }
+
+        function createIconPickerField(container, labelText, currentValue, onChange) {
+            const group = document.createElement('div');
+            group.className = 'form-group field-inline';
+
+            const label = document.createElement('label');
+            label.textContent = labelText;
+            group.appendChild(label);
+
+            const swatch = document.createElement('div');
+            swatch.style.width = '24px';
+            swatch.style.height = '24px';
+            swatch.style.border = '1px solid var(--win-shadow)';
+            swatch.style.backgroundColor = '#fff';
+
+            if (currentValue === 0) {
+                swatch.style.backgroundImage = 'none';
+            } else {
+                swatch.style.backgroundImage = 'url(/assets/system/iconset.png)';
+                swatch.style.backgroundSize = '240px auto';
+                swatch.style.backgroundRepeat = 'no-repeat';
+                swatch.style.imageRendering = 'pixelated';
+
+                const col = (currentValue - 1) % 10;
+                const row = Math.floor((currentValue - 1) / 10);
+                swatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
+            }
+
+            const idLabel = document.createElement('span');
+            idLabel.style.fontSize = '11px';
+            idLabel.style.marginLeft = '6px';
+            idLabel.style.marginRight = '6px';
+            idLabel.style.width = '30px';
+            idLabel.textContent = currentValue;
+
+            const btn = document.createElement('button');
+            btn.className = 'win98-btn';
+            btn.textContent = 'Pick...';
+            btn.onclick = () => {
+                openIconPicker(currentValue, (newId) => {
+                    currentValue = newId;
+                    if (newId === 0) {
+                        swatch.style.backgroundImage = 'none';
+                    } else {
+                        swatch.style.backgroundImage = 'url(/assets/system/iconset.png)';
+                        swatch.style.backgroundSize = '240px auto';
+                        swatch.style.backgroundRepeat = 'no-repeat';
+                        swatch.style.imageRendering = 'pixelated';
+
+                        const newCol = (newId - 1) % 10;
+                        const newRow = Math.floor((newId - 1) / 10);
+                        swatch.style.backgroundPosition = `-${newCol * 24}px -${newRow * 24}px`;
+                    }
+                    idLabel.textContent = newId;
+                    onChange(newId);
+                    setDirty(true);
+                });
+            };
+
+            const controlGroup = document.createElement('div');
+            controlGroup.style.display = 'flex';
+            controlGroup.style.alignItems = 'center';
+            controlGroup.style.flex = '1';
+
+            controlGroup.appendChild(swatch);
+            controlGroup.appendChild(idLabel);
+            controlGroup.appendChild(btn);
+
+            group.appendChild(controlGroup);
+            container.appendChild(group);
         }
 
         function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
