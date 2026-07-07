@@ -76,6 +76,25 @@ const server = http.createServer((req, res) => {
  
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
+    } else if (req.method === 'GET' && req.url === '/api/graphs') {
+        const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
+        if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {
+            fs.readdir(graphsDir, (err, files) => {
+                if (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                } else {
+                    const result = files
+                        .filter(f => f.endsWith('.json'))
+                        .map(f => path.basename(f, '.json'));
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                }
+            });
+        } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([]));
+        }
     } else if (req.method === 'GET' && req.url.startsWith('/api/assets')) {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
         const subDir = parsedUrl.searchParams.get('dir') || 'sprites';

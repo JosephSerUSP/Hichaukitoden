@@ -120,6 +120,32 @@
             return includeNone ? [''].concat(opts) : opts;
         }
 
+        function makeMapPicker(current, onChange, flex) {
+            const mapOpts = dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) }));
+            return makeSelect(mapOpts, current, onChange, flex);
+        }
+
+        function makeGraphPicker(current, onChange, flex) {
+            const opts = (window.graphsList || []).map(g => ({ value: g, label: g }));
+            return makeSelect(opts, current, onChange, flex);
+        }
+
+        function makeTermPicker(current, onChange, flex) {
+            const paths = [];
+            function walk(obj, currentPath) {
+                if (typeof obj === 'string' || Array.isArray(obj)) {
+                    paths.push(currentPath);
+                } else if (typeof obj === 'object' && obj !== null) {
+                    for (const key in obj) {
+                        walk(obj[key], currentPath ? `${currentPath}.${key}` : key);
+                    }
+                }
+            }
+            if (dbPayload.terms) walk(dbPayload.terms, '');
+            const opts = paths.map(p => ({ value: p, label: p }));
+            return makeSelect(opts, current, onChange, flex);
+        }
+
         function makeSelect(options, current, onChange, flex) {
             const sel = document.createElement('select');
             sel.className = 'win98-select';
@@ -488,7 +514,20 @@
         // Renders a schema-typed widget; returns false to fall through to the
         // generic renderer.
         function renderSchemaField(container, schema, value, key, currentPath, targetRoot) {
-            const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
+            const widget = schema.type === 'term' ? 'termPicker' : (schema.widget || (typeof value === 'number' ? 'number' : null));
+
+            if (widget === 'termPicker') {
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                group.appendChild(makeTermPicker(value, v => {
+                    setNestedValue(targetRoot, currentPath, key, v);
+                }, '1'));
+                container.appendChild(group);
+                return true;
+            }
 
             if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
                 let opts;
@@ -590,6 +629,32 @@
                 return true;
             }
 
+            if (widget === 'mapPicker') {
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                group.appendChild(makeMapPicker(value, v => {
+                    setNestedValue(targetRoot, currentPath, key, parseInt(v));
+                }, '1'));
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'graphPicker') {
+                const group = document.createElement('div');
+                group.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                group.appendChild(makeGraphPicker(value, v => {
+                    setNestedValue(targetRoot, currentPath, key, v);
+                }, '1'));
+                container.appendChild(group);
+                return true;
+            }
+
             if (widget === 'townOptions' && Array.isArray(value)) {
                 const group = document.createElement('div');
                 group.className = 'form-group';
@@ -617,16 +682,9 @@
                             render();
                         }));
                         if (opt.action === 'enter_dungeon') {
-                            const mapOpts = dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) }));
-                            row.appendChild(makeSelect(mapOpts, opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
+                            row.appendChild(makeMapPicker(opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
                         } else {
-                            const graph = document.createElement('input');
-                            graph.className = 'win98-input';
-                            graph.style.flex = '1';
-                            graph.placeholder = 'dialogue graph, e.g. npc_alicia';
-                            graph.value = opt.graph || '';
-                            graph.oninput = () => { opt.graph = graph.value; setDirty(true); };
-                            row.appendChild(graph);
+                            row.appendChild(makeGraphPicker(opt.graph || '', v => { opt.graph = v; }, '1'));
                         }
                         row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
                         box.appendChild(row);

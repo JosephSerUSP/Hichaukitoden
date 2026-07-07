@@ -5,6 +5,17 @@
                 if (!res.ok) throw new Error('Database server offline');
                 dbPayload = await res.json();
 
+                try {
+                    const graphsRes = await fetch(`${API_URL}/api/graphs`);
+                    if (graphsRes.ok) {
+                        window.graphsList = await graphsRes.json();
+                    } else {
+                        window.graphsList = [];
+                    }
+                } catch (e) {
+                    window.graphsList = [];
+                }
+
                 initMapEditor();
                 initDatabaseEditor();
                 initEventModalTemplates();
