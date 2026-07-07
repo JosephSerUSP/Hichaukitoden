@@ -327,6 +327,7 @@ runValidation = function()
 
     -- Unified Event Engine Validator (SPEC A7)
     local scriptUsageCount = 0
+    local deprecatedUsageCount = 0
     local registry = {}
     for _, c in ipairs((loader.engine and loader.engine.commands) or {}) do
         registry[c.id] = c
@@ -350,6 +351,9 @@ runValidation = function()
             check(cmdDef ~= nil, ownerDesc .. " uses unknown command '" .. tostring(id) .. "'")
 
             if cmdDef then
+                if cmdDef.deprecatedBy then
+                    deprecatedUsageCount = deprecatedUsageCount + 1
+                end
                 -- Check context
                 local ctxAllowed = false
                 for _, c in ipairs(cmdDef.contexts or {}) do
@@ -625,6 +629,7 @@ elseif paramDef.type == "script" then
         end
     end
 
+    print("[validator] deprecated command usages: " .. deprecatedUsageCount)
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
 
     if #problems > 0 then

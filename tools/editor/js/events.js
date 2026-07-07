@@ -209,7 +209,7 @@
         // `cmd.cmd or cmd.type`.
         const INTERACTIVE_COMPILE_IDS = {
             TEXT: 1, CHOICE: 1, CONDITIONAL_BRANCH: 1, RECOVER_PARTY: 1,
-            DESCEND: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1
+            DESCEND: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1, CHANGE_ITEM: 1
         };
         function cmdFieldName(id, hostCtx) {
             return (hostCtx !== 'battle_phase' && INTERACTIVE_COMPILE_IDS[id]) ? 'type' : 'cmd';
@@ -224,7 +224,7 @@
             return cmdRegistry().find(c => c.id === id);
         }
         function cmdsForContext(hostCtx) {
-            return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx));
+            return cmdRegistry().filter(c => !c.deprecatedBy && (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx));
         }
         function showCommentsPref() {
             return localStorage.getItem('hkt_showComments') !== '0';

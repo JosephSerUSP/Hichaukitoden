@@ -33,7 +33,7 @@ local interpreter = {}
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     DESCEND = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
-    COMMENT = true,
+    COMMENT = true, CHANGE_ITEM = true,
 }
 
 local function cmdId(cmd)
@@ -122,8 +122,10 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
         elseif cmd.type == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
-        elseif cmd.type == "GIVE_ITEM" then
+        elseif cmd.type == "GIVE_ITEM" or (cmd.type == "CHANGE_ITEM" and cmd.item == "random") then
             nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
+        elseif cmd.type == "CHANGE_ITEM" then
+            nodes[nodeId] = { type = "ACTION", action = "RUN_IMMEDIATE", commands = { cmd }, next = nextId }
         elseif cmd.type == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
         elseif cmdId(cmd) == "COMMENT" then
@@ -336,6 +338,18 @@ handlers.RESTORE_MP = function(cmd, ctx)
     ctx.session.mp = math.min(ctx.session.maxMp or amount, ctx.session.mp + amount)
 end
 
+handlers.CHANGE_MP = function(cmd, ctx)
+    local amount = math.floor(evalFormula(cmd.amount, ctx))
+    if amount > 0 then
+        ctx.session.mp = math.min(ctx.session.maxMp or amount, ctx.session.mp + amount)
+    elseif amount < 0 then
+        local drainAmount = math.abs(amount)
+        local actualDrain = math.min(ctx.session.mp, drainAmount)
+        ctx.session.mp = math.max(0, ctx.session.mp - drainAmount)
+        table.insert(ctx.events, { type = "mp_drain", value = actualDrain, actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a })
+    end
+end
+
 -- The regen/poison/duration-decay block as one command (S2). Mirrors the
 -- legacy block in engine/battle.lua resolveRound; A5b deletes that copy.
 handlers.STATE_TICKS = function(cmd, ctx)
@@ -409,6 +423,29 @@ end
 
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
+end
+
+handlers.CHANGE_ITEM = function(cmd, ctx)
+    if cmd.item == "random" then
+        local config = require("engine.config")
+        local loot = (config.dungeon and config.dungeon.defaultLoot) or 1
+        if ctx.session.currentMapData and ctx.session.currentMapData.treasures and #ctx.session.currentMapData.treasures > 0 then
+            loot = ctx.session.currentMapData.treasures[math.random(#ctx.session.currentMapData.treasures)]
+        end
+        local itemData = ctx.loader.getItem(loot)
+        local itemName = itemData and itemData.name or loot
+        ctx.session:addItem(loot, 1)
+        table.insert(ctx.events, { type = "text", text = ctx.loader.formatTerm("events.found_item", "Found a {0}!", itemName) })
+    else
+        local count = cmd.count or 1
+        if count > 0 then
+            ctx.session:addItem(cmd.item, count)
+        elseif count < 0 then
+            if ctx.session:hasItem(cmd.item, math.abs(count)) then
+                ctx.session:addItem(cmd.item, count) -- count is already negative
+            end
+        end
+    end
 end
 
 -- Rolls the encounter chance; on success emits an `encounter` event the map
