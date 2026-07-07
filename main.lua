@@ -394,13 +394,19 @@ runValidation = function()
                     end
                 elseif paramDef.type == "commands" then
                     -- val could be a list of commands, OR for CHOICE it could be a list of options where each option has .commands
+                    -- Task A4b: nested lists of a NON-interactive block command
+                    -- (IF, FOR_EACH, ...) always execute in immediate mode —
+                    -- even in map/common hosts, where the RUN_IMMEDIATE bridge
+                    -- runs them through runImmediate. Interactive commands
+                    -- inside them would error at runtime, so flag them here.
+                    local nestedImmediate = isImmediate or (cmdDef.interactive ~= true)
                     if id == "CHOICE" and type(val) == "table" then
                         for oi, opt in ipairs(val) do
-                            if opt.commands then validateCommands(opt.commands, hostCtx, isImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
-                            if opt.script then validateCommands(opt.script, hostCtx, isImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
+                            if opt.commands then validateCommands(opt.commands, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
+                            if opt.script then validateCommands(opt.script, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
                         end
                     else
-                        validateCommands(val, hostCtx, isImmediate, allowScript, ownerDesc .. " -> nested")
+                        validateCommands(val, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> nested")
                     end
 elseif paramDef.type == "script" then
                             local chunk, err = load(val, "validator", "t", {})
@@ -419,7 +425,7 @@ elseif paramDef.type == "script" then
                             -- Usually just a string like "target", "a", "b", "summoner", etc.
                             check(type(val) == "string" or type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a valid battlerRef")
                         elseif paramDef.type == "commands" then
-                            validateCommands(val, hostCtx, isImmediate, allowScript, ownerDesc .. " -> nested")
+                            validateCommands(val, hostCtx, isImmediate or (cmdDef.interactive ~= true), allowScript, ownerDesc .. " -> nested")
                         end
                     end
                 end
@@ -501,9 +507,46 @@ elseif paramDef.type == "script" then
         local okEsc = pcall(flow.run, "_test.script_escape", { session = tSession })
         check(not okEsc, "SCRIPT sandbox allowed os.* access with allowRawAccess=false")
 
-
-
-
+        -- Task A4b: the interactive-immediate bridge. A mixed command list
+        -- must compile its contiguous non-interactive run (COMMENTs swallowed)
+        -- into ONE RUN_IMMEDIATE node between the TEXT nodes, and executing
+        -- that run must share flow-locals (SET_VAR -> IF) and emit text.
+        do
+            local nodes = {}
+            local mixed = {
+                { type = "TEXT", text = "before" },
+                { cmd = "SET_VAR", name = "n", value = "2 + 3" },
+                { cmd = "COMMENT", text = "swallowed into the run" },
+                { cmd = "IF", condition = "v.n == 5", ["then"] = {
+                    { cmd = "GAIN_GOLD", amount = "v.n" },
+                    { cmd = "EMIT_TEXT", fallback = "bridge ran" },
+                } },
+                { type = "TEXT", text = "after" },
+            }
+            local firstId = interpreter.compile(nodes, mixed, "a4b", nil,
+                { loader = loader, recoverParty = function() end, session = tSession })
+            check(nodes[firstId] and nodes[firstId].type == "TEXT", "A4b: first mixed node should be TEXT")
+            local runNode = nodes[firstId] and nodes[nodes[firstId].next]
+            check(runNode and runNode.type == "ACTION" and runNode.action == "RUN_IMMEDIATE",
+                "A4b: non-interactive run did not compile to RUN_IMMEDIATE")
+            if runNode then
+                check(#runNode.commands == 3, "A4b: run should group 3 commands (SET_VAR, COMMENT, IF), got " .. tostring(#runNode.commands))
+                check(nodes[runNode.next] and nodes[runNode.next].type == "TEXT" and nodes[runNode.next].content == "after",
+                    "A4b: RUN_IMMEDIATE must chain to the trailing TEXT node")
+                local goldBefore = tSession.gold
+                local okRun, evs = pcall(interpreter.runImmediate, runNode.commands,
+                    { session = tSession, loader = loader, party = tSession.party })
+                check(okRun, "A4b: RUN_IMMEDIATE execution failed: " .. tostring(evs))
+                if okRun then
+                    check(tSession.gold == goldBefore + 5, "A4b: SET_VAR -> IF -> GAIN_GOLD did not share flow-locals across the run")
+                    local sawBridgeText = false
+                    for _, ev in ipairs(evs) do
+                        if ev.type == "text" and ev.text == "bridge ran" then sawBridgeText = true end
+                    end
+                    check(sawBridgeText, "A4b: EMIT_TEXT inside the run emitted no text event")
+                end
+            end
+        end
     end
 
     -- Interactive compile sweep: every map event and common event must
@@ -811,11 +854,45 @@ local function openShop(shopId)
 end
 
 handleDialogueAction = function()
-    local node = activeWalker:getCurrentNode()
+    local node, nodeId = activeWalker:getCurrentNode()
     if not node then return end
-    
+
     if node.type == "ACTION" then
-        if node.action == "OPEN_SHOP" then
+        if node.action == "RUN_IMMEDIATE" then
+            -- Task A4b: a compiled run of non-interactive registry commands.
+            -- Mutations (gold, items, states, flags) apply through the same
+            -- handlers battle phases use; emitted text events render as
+            -- dialogue lines by converting this node into a TEXT chain, the
+            -- same trick GIVE_ITEM_ACTION uses.
+            local events = interpreter.runImmediate(node.commands, {
+                session = activeSession,
+                loader = loader,
+                party = activeSession.party,
+            })
+            local texts = {}
+            for _, ev in ipairs(events) do
+                if ev.type == "text" and ev.text and ev.text ~= "" then
+                    table.insert(texts, ev.text)
+                end
+            end
+            if #texts > 0 then
+                local tail = node.next
+                node.type = "TEXT"
+                node.content = texts[1]
+                node.action = nil
+                node.commands = nil
+                local prev = node
+                for k = 2, #texts do
+                    local tid = nodeId .. "_imtext" .. k
+                    activeWalker.graph.nodes[tid] = { type = "TEXT", content = texts[k], next = tail }
+                    prev.next = tid
+                    prev = activeWalker.graph.nodes[tid]
+                end
+            else
+                activeWalker:advance()
+                handleDialogueAction()
+            end
+        elseif node.action == "OPEN_SHOP" then
             openShop(node.shopId)
         elseif node.action == "OFFER_QUEST" then
             activeSession.flags["quest:" .. node.questId .. ":active"] = true
