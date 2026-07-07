@@ -728,10 +728,10 @@
 
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
+            openCommandSelector(hostCtx, (cmd) => {
                 commandsArray.push(cmd);
                 if (onChange) onChange();
-            }, hostCtx);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -794,14 +794,74 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+
+        window.closeCmdSelectorDialog = function() {
+            document.getElementById('cmd-selector-modal').classList.remove('active');
+        };
+
+        window.openCommandSelector = function(hostCtx, cb) {
+            const container = document.getElementById('cmd-selector-content');
+            container.innerHTML = '';
+            const defs = cmdsForContext(hostCtx);
+
+            const groups = {};
+            defs.forEach(def => {
+                const cat = def.category || 'Other';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(def);
+            });
+
+            // Standard category order if present
+            const categoryOrder = ['Message', 'Flow Control', 'Party/Progression', 'Battler/Combat', 'Advanced', 'Other'];
+            const sortedCategories = Object.keys(groups).sort((a, b) => {
+                const idxA = categoryOrder.indexOf(a);
+                const idxB = categoryOrder.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            });
+
+            sortedCategories.forEach(cat => {
+                const fieldset = document.createElement('fieldset');
+                fieldset.className = 'win98-fieldset';
+                const legend = document.createElement('legend');
+                legend.textContent = cat;
+                fieldset.appendChild(legend);
+
+                const btnContainer = document.createElement('div');
+                btnContainer.style.cssText = 'display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px;';
+
+                groups[cat].forEach(def => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.textContent = def.label || def.id;
+                    btn.title = def.description || '';
+                    btn.style.textAlign = 'left';
+                    btn.onclick = () => {
+                        closeCmdSelectorDialog();
+                        openAddCommandDialog(cb, hostCtx, def.id);
+                    };
+                    btnContainer.appendChild(btn);
+                });
+
+                fieldset.appendChild(btnContainer);
+                container.appendChild(fieldset);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        };
+
+        function openAddCommandDialog(callback, hostCtx, preselectedType) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
+            select.disabled = true;
+            if (preselectedType) { select.value = preselectedType; }
+            else if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
             else if (select.options.length) { select.selectedIndex = 0; }
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
@@ -816,7 +876,9 @@
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
-            document.getElementById('cmd-select-type').value = id;
+            const select = document.getElementById('cmd-select-type');
+            select.disabled = true;
+            select.value = id;
             document.getElementById('cmd-input-comment').value = cmd.comment || '';
             toggleCmdTypeFields(cmd);
             cmdDialogDirty = false;

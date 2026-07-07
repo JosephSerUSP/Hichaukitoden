@@ -37,6 +37,7 @@
         const ESCAPE_MODAL_CLOSERS = [
             ['asset-picker-modal', () => closeAssetPicker()],
             ['cmd-modal', () => closeCmdDialog()],
+            ['cmd-selector-modal', () => closeCmdSelectorDialog()],
             ['icon-picker-modal', () => closeIconPicker()],
             ['damage-popup-modal', () => closeDamagePopupModal()],
             ['max-modal', () => closeChangeMaxDialog()],
