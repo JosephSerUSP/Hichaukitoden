@@ -30,8 +30,8 @@ later conversion tasks.
 
 ## Acceptance
 
-- [ ] G1 green
-- [ ] Check script passes twice consecutively
-- [ ] Temporarily editing a damage formula in `data/skills.json` turns the
+- [x] G1 green
+- [x] Check script passes twice consecutively
+- [x] Temporarily editing a damage formula in `data/skills.json` turns the
       check red; reverted afterward
-- [ ] PR checklist filled in
+- [x] PR checklist filled in
