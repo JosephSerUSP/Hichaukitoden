@@ -29,6 +29,6 @@ hardcoded calculation, branch, constant, and player-facing behavior in
 
 ## Acceptance
 
-- [ ] `flow-inventory.md` exists with a `file:line` reference for every row
-- [ ] All eight minimum behaviors above are present
-- [ ] PR checklist from SPEC Ground rules filled in (gates: N/A — text only)
+ - [x] `flow-inventory.md` exists with a `file:line` reference for every row
+ - [x] All eight minimum behaviors above are present
+ - [x] PR checklist from SPEC Ground rules filled in (gates: N/A — text only)
