@@ -33,6 +33,7 @@ end
 function formula.battlerView(battler, session)
     if not battler then return nil end
     return {
+        name = battler.name or "",
         level = battler.level or 1,
         hp = battler.hp or 0,
         maxHp = traits.getParam(battler, "maxHp", session) or 1,
@@ -40,6 +41,7 @@ function formula.battlerView(battler, session)
         def = traits.getParam(battler, "def", session) or 10,
         mat = traits.getParam(battler, "mat", session) or 10,
         mdf = traits.getParam(battler, "mdf", session) or 10,
+        mpd = traits.getParam(battler, "mpd", session) or 1,
     }
 end
 
@@ -75,6 +77,7 @@ function formula.sessionView(session)
         mp = session.mp or 0,
         maxMp = session.maxMp or 0,
         floor = session.currentFloor or session.floor or 1,
+        mapSafe = (session.currentMapData and session.currentMapData.safe) and true or false,
     }
 end
 
@@ -124,8 +127,9 @@ function formula.eval(exprString, ctx)
         warnOnce(exprString, result)
         return 0, result
     end
-    if type(result) ~= "number" and type(result) ~= "boolean" then
-        local msg = "formula did not return a number or boolean"
+    local rt = type(result)
+    if rt ~= "number" and rt ~= "boolean" and rt ~= "string" then
+        local msg = "formula did not return a number, boolean or string"
         warnOnce(exprString, msg)
         return 0, msg
     end

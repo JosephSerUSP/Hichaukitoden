@@ -254,6 +254,20 @@ function Battle:resolveRound(summonerAction)
         end
     end
     
+    if flow.has("battle.round_end") then
+        local flowEvents = flow.run("battle.round_end", {
+            session = self.session,
+            battle = self,
+        })
+        for _, ev in ipairs(flowEvents) do
+            table.insert(roundEvents, ev)
+        end
+        self.round = self.round + 1
+        return roundEvents
+    end
+
+    -- Legacy block: runs only when the phase is removed from flows.json
+    -- (SPEC S4 fallback rule)
     -- Apply end of turn effects (poison, regen, status decay)
     for _, battler in ipairs(self:getAllActiveBattlers()) do
         if not battler:isDead() then

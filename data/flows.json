@@ -1,5 +1,20 @@
 {
   "battle": {
+    "round_end": [
+      { "cmd": "COMMENT", "text": "End-of-round ticks: regen/poison/decay for everyone, then per-slot MP drain and MP-exhaustion damage off safe maps. Mirrors the legacy engine/battle.lua block exactly, including its slot-1..4 drain loop (task A5b)." },
+      { "cmd": "STATE_TICKS" },
+      { "cmd": "IF", "condition": "not session.mapSafe", "then": [
+        { "cmd": "FOR_EACH", "scope": "slot_allies", "as": "ally", "do": [
+          { "cmd": "DRAIN_MP", "amount": "ally.mpd", "actor": "ally" }
+        ] },
+        { "cmd": "IF", "condition": "session.mp <= 0", "then": [
+          { "cmd": "FOR_EACH", "scope": "slot_allies", "as": "ally", "do": [
+            { "cmd": "DAMAGE", "target": "ally", "amount": "combat.mpExhaustionDamage", "pierce": true, "minHp": 1 },
+            { "cmd": "EMIT_TEXT", "term": "battle.mp_exhaustion", "fallback": "{0} suffers from MP exhaustion!", "args": [ "ally.name" ] }
+          ] }
+        ] }
+      ] }
+    ],
     "defeat": [
       { "cmd": "COMMENT", "text": "Party wiped: signal the reset-to-title transition. main.lua performs the actual scene switch and session reset (task A5e)." },
       { "cmd": "SCENE_EVENT", "kind": "defeat" }

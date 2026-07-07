@@ -186,7 +186,17 @@ end
 
 local function scopeList(scope, ctx)
     local base
-    if scope == "party" or scope == "allies" or scope == "living_allies" then
+    if scope == "slot_allies" then
+        -- Battle slots 1-4 only, matching the legacy `for i = 1, 4` loops in
+        -- engine/battle.lua: with a full party this excludes the summoner
+        -- (index 5 of battle.allies); with fewer creatures it includes them.
+        local allies = ctx.party or (ctx.battle and ctx.battle.allies) or ctx.session.party or {}
+        local slots = {}
+        for i = 1, 4 do
+            if allies[i] and not allies[i]:isDead() then table.insert(slots, allies[i]) end
+        end
+        return slots
+    elseif scope == "party" or scope == "allies" or scope == "living_allies" then
         base = ctx.party or (ctx.battle and ctx.battle.allies) or ctx.session.party or {}
     else
         base = ctx.enemies or (ctx.battle and ctx.battle.enemies) or {}
@@ -235,6 +245,19 @@ handlers.DAMAGE = function(cmd, ctx)
     local target = resolveRef(cmd.target, ctx)
     if not target then return end
     local amount = evalFormula(cmd.amount, ctx)
+    if cmd.pierce then
+        -- Raw damage: no DEF reduction, no element scaling, and minHp floors
+        -- the target's HP without killing. Exists to reproduce legacy blocks
+        -- like MP-exhaustion damage (hp = max(1, hp - n)) exactly.
+        local dmg = math.floor(amount)
+        target.hp = math.max(cmd.minHp or 0, target.hp - dmg)
+        table.insert(ctx.events, { type = "damage", target = target, value = dmg })
+        if target.hp <= 0 then
+            target:addState("dead")
+            table.insert(ctx.events, { type = "death", target = target })
+        end
+        return
+    end
     local source = ctx.a or target
     emitAll(ctx, effects.apply({ type = "hp_damage", formula = tostring(amount) }, source, target, ctx.session))
 end
@@ -262,7 +285,7 @@ end
 handlers.DRAIN_MP = function(cmd, ctx)
     local amount = math.floor(evalFormula(cmd.amount, ctx))
     ctx.session.mp = math.max(0, ctx.session.mp - amount)
-    table.insert(ctx.events, { type = "mp_drain", value = amount, actor = ctx.a })
+    table.insert(ctx.events, { type = "mp_drain", value = amount, actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a })
 end
 
 handlers.RESTORE_MP = function(cmd, ctx)
