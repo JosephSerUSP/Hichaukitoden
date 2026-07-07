@@ -1,5 +1,13 @@
 {
   "battle": {
+    "defeat": [
+      { "cmd": "COMMENT", "text": "Party wiped: signal the reset-to-title transition. main.lua performs the actual scene switch and session reset (task A5e)." },
+      { "cmd": "SCENE_EVENT", "kind": "defeat" }
+    ],
+    "escaped": [
+      { "cmd": "COMMENT", "text": "Successful flee: signal the return-to-map transition (task A5e)." },
+      { "cmd": "SCENE_EVENT", "kind": "map" }
+    ],
     "flee_attempt": [
       { "cmd": "COMMENT", "text": "Flee roll: base chance + living party FLEE_CHANCE_BONUS; failure costs gold. Mirrors the legacy engine/battle.lua block (task A5c)." },
       { "cmd": "SET_VAR", "name": "roll", "value": "random()" },

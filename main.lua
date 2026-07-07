@@ -1608,15 +1608,32 @@ local function handleKeyPressed(key)
 
                         currentScene = "map"
                     elseif activeBattle:isDefeat() then
-                        currentScene = "title"
-                        activeSession = session.GameSession.new(loader)
-                        activeSession:initializeStartingParty()
-                        renderer.init(activeSession)
+                        local doReset = true
+                        if flow.has("battle.defeat") then
+                            -- The flow only signals; the reset itself stays here
+                            doReset = false
+                            for _, ev in ipairs(flow.run("battle.defeat", { session = activeSession, battle = activeBattle })) do
+                                if ev.type == "scene_change" and ev.kind == "defeat" then doReset = true end
+                            end
+                        end
+                        if doReset then
+                            currentScene = "title"
+                            activeSession = session.GameSession.new(loader)
+                            activeSession:initializeStartingParty()
+                            renderer.init(activeSession)
+                        end
                     else
                         -- battleEscaped is set when a flee_success event is
                         -- processed (no string comparison against log text)
                         if battleEscaped then
-                            currentScene = "map"
+                            local toMap = true
+                            if flow.has("battle.escaped") then
+                                toMap = false
+                                for _, ev in ipairs(flow.run("battle.escaped", { session = activeSession, battle = activeBattle })) do
+                                    if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
+                                end
+                            end
+                            if toMap then currentScene = "map" end
                         else
                             -- Rebuild living members list for the next round
                             rebuildBattleLivingMembers()
