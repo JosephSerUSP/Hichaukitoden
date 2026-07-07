@@ -1008,16 +1008,18 @@ local function handleKeyPressed(key)
             currentScene = "menu"
             return
         elseif currentScene == "menu" then
-            if menuSubScene == "use_target" then
-                menuSubScene = "main"
-                menuActiveCol = 2
-            elseif menuActiveCol == 2 then
-                menuActiveCol = 1
-                menuSelectedSubIdx = 1
-            else
-                renderer.startClosing("menu", previousSceneBeforeMenu)
+            -- Only the top-level menu is handled here; submenus each have
+            -- their own escape branch below that steps back exactly one
+            -- level (intercepting them here used to close the whole menu).
+            if menuSubScene == "main" then
+                if menuActiveCol == 2 then
+                    menuActiveCol = 1
+                    menuSelectedSubIdx = 1
+                else
+                    renderer.startClosing("menu", previousSceneBeforeMenu)
+                end
+                return
             end
-            return
         elseif currentScene == "dialogue" then
             currentScene = "map"
             return

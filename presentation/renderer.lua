@@ -141,14 +141,10 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
 end
 
 function renderer.update(dt)
-    if renderer.closing then
-        renderer.closingTimer = renderer.closingTimer - dt
-        if renderer.closingTimer <= 0 then
-            renderer.closing = false
-            renderer.session.scene = renderer.closingTargetScene
-            renderer.session.subScene = renderer.closingTargetSubScene
-        end
-    end
+    -- The closing animation timer is owned by love.update in main.lua (it
+    -- performs the scene switch and sets the input cooldown). Decrementing it
+    -- here too made the two race: when this copy hit zero first, the scene
+    -- never switched and the menu popped back open.
 
     local gravity = config.physics and config.physics.gravity or 480
     local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
