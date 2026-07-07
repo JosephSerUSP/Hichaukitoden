@@ -14,4 +14,4 @@ foreach ($line in $output) {
         $log += $line
     }
 }
-$log | Out-File -FilePath tools/golden/battle.log -Encoding utf8
+[System.IO.File]::WriteAllLines("tools/golden/battle.log", $log)
