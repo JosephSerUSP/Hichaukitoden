@@ -26,27 +26,71 @@ local config = require("engine.config")
 
 local interpreter = {}
 
+-- The nine ids interpreter.compile knows how to turn into dialogue nodes.
+-- Anything else is a registry command executed via runImmediate (task A4b);
+-- in map/common data the legacy nine are stored under `type`, newer commands
+-- under `cmd` (the editor's cmdFieldName rule mirrors this table).
+local INTERACTIVE_COMPILE_IDS = {
+    TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
+    DESCEND = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    COMMENT = true,
+}
+
+local function cmdId(cmd)
+    return cmd.cmd or cmd.type
+end
+
 ------------------------------------------------------------------
 -- Interactive mode: command list -> GraphWalker node graph
 ------------------------------------------------------------------
 
 -- Compiles a flat "commands" list (as authored in the editor) into GraphWalker
 -- nodes, chaining them together and rejoining at tailNodeId at the end.
--- Moved verbatim from main.lua (task A4); behavior must stay pixel-identical.
--- ctx carries loader and the recoverParty callback formerly reached as
--- main.lua upvalues. Returns the id of the first node generated (or
--- tailNodeId if commands is empty).
+-- Moved verbatim from main.lua (task A4); behavior must stay pixel-identical
+-- for the legacy interactive commands. ctx carries loader and the
+-- recoverParty callback formerly reached as main.lua upvalues. Returns the
+-- id of the first node generated (or tailNodeId if commands is empty).
+--
+-- Task A4b: any command that is NOT one of the legacy interactive ids
+-- compiles into a RUN_IMMEDIATE action node instead. Contiguous runs of
+-- such commands share ONE node (so SET_VAR -> IF chains keep their ctx.v
+-- flow-locals), and the host (main.lua handleDialogueAction) executes the
+-- run through interpreter.runImmediate, rendering any emitted text events
+-- as dialogue. This is what makes registry commands with map/common
+-- contexts actually work in map/common events (SPEC S1).
 function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
     if not commands or #commands == 0 then return tailNodeId end
     local loader = ctx.loader
 
     local firstId = nil
+    local skipUntil = 0
     for i, cmd in ipairs(commands) do
+        if i > skipUntil then
         local nodeId = prefix .. "_" .. i
         firstId = firstId or nodeId
         local nextId = (i < #commands) and (prefix .. "_" .. (i + 1)) or tailNodeId
 
-        if cmd.type == "TEXT" then
+        if not INTERACTIVE_COMPILE_IDS[cmdId(cmd)] then
+            -- Task A4b: collect the contiguous run of non-interactive
+            -- commands into ONE node so ctx.v flow-locals survive across the
+            -- run (SET_VAR -> IF chains). COMMENTs inside the run are
+            -- swallowed too — they are no-ops in runImmediate, and splitting
+            -- the run on them would silently reset v.
+            local run = { cmd }
+            local j = i
+            while j < #commands do
+                local nid = cmdId(commands[j + 1])
+                if nid == "COMMENT" or not INTERACTIVE_COMPILE_IDS[nid] then
+                    j = j + 1
+                    table.insert(run, commands[j])
+                else
+                    break
+                end
+            end
+            skipUntil = j
+            local runNext = (j < #commands) and (prefix .. "_" .. (j + 1)) or tailNodeId
+            nodes[nodeId] = { type = "ACTION", action = "RUN_IMMEDIATE", commands = run, next = runNext }
+        elseif cmd.type == "TEXT" then
             nodes[nodeId] = { type = "TEXT", content = cmd.text, speaker = cmd.speaker, next = nextId }
         elseif cmd.type == "CHOICE" then
             local options = {}
@@ -82,11 +126,14 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
         elseif cmd.type == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
-        elseif cmd.type == "COMMENT" then
+        elseif cmdId(cmd) == "COMMENT" then
             -- Documentation only (SPEC S3): compiles to nothing. Keep the
             -- chain intact by letting the previous node's nextId point past
             -- it — easiest is an empty ROUTER-less passthrough node.
+            -- (cmdId: flows-style data stores COMMENT under `cmd`, editor
+            -- map/common data under `type`; both must stay inert here.)
             nodes[nodeId] = { type = "ROUTER", condition = "", trueNode = nextId, falseNode = nextId }
+        end
         end
     end
     return firstId
@@ -115,10 +162,6 @@ local INTERACTIVE_IDS = {
 }
 
 local handlers = {}
-
-local function cmdId(cmd)
-    return cmd.cmd or cmd.type
-end
 
 local function evalFormula(expr, ctx)
     if type(expr) == "number" then return expr end
