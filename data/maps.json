@@ -165,6 +165,15 @@
           }
         ],
         "name": "Temple"
+      },
+      {
+        "id": 11,
+        "x": 5,
+        "y": 6,
+        "sprite": "assets/sprites/NPC06.png",
+        "trigger": "interact",
+        "scriptId": 14,
+        "name": "Workbench"
       }
     ],
     "treasures": [],
