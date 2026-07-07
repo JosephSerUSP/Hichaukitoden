@@ -729,6 +729,22 @@
             }
 
 
+            if (schema.type === 'text' && widget !== 'assetPath') {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const input = document.createElement('input');
+                input.className = 'form-control inset-bevel';
+                input.value = value !== undefined && value !== null ? value : '';
+                input.oninput = () => { setNestedValue(targetRoot, currentPath, key, input.value); setDirty(true); };
+                group.appendChild(input);
+                appendFieldHelp(group, schema);
+                container.appendChild(group);
+                return true;
+            }
+
             if (widget === 'color') {
                 const group = document.createElement('div');
                 group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
