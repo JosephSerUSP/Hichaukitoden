@@ -189,6 +189,70 @@ runValidation = function()
         if not cond then table.insert(problems, msg) end
         return cond
     end
+    local totalScriptUsages = 0
+    local validCommands = {}
+    if loader.engine and loader.engine.commands then
+        for _, c in ipairs(loader.engine.commands) do
+            validCommands[c.id] = c
+        end
+    end
+
+    local function validateCommands(commands, contextType, ownerDesc)
+        if not commands then return end
+        for _, cmd in ipairs(commands) do
+            local cid = cmd.cmd or cmd.type or cmd.id
+            local def = validCommands[cid]
+            if not check(def, ownerDesc .. " uses unknown command '" .. tostring(cid) .. "'") then goto continue end
+
+            local contextValid = false
+            for _, ctx in ipairs(def.contexts or {}) do
+                if ctx == "any" or ctx == contextType then contextValid = true break end
+            end
+            check(contextValid, ownerDesc .. " uses command '" .. tostring(cid) .. "' in invalid context '" .. tostring(contextType) .. "'")
+
+            if def.interactive then
+                check(contextType ~= "battle_phase", ownerDesc .. " uses interactive command '" .. tostring(cid) .. "' in immediate host")
+            end
+
+            for _, param in ipairs(def.params or {}) do
+                local val = cmd[param.key]
+                if val ~= nil then
+                    if param.type == "commands" then
+                        if cid == "CHOICE" and type(val) == "table" then
+                            for _, opt in ipairs(val) do
+                                validateCommands(opt.commands, contextType, ownerDesc)
+                            end
+                        elseif type(val) == "table" then
+                            validateCommands(val, contextType, ownerDesc)
+                        end
+                    elseif param.type == "formula" or param.type == "condition" then
+                        local sval = tostring(val)
+                        if not (sval:match("^flag:") or sval:match("^hasItem:")) then
+                            local fn, err = load("return " .. sval, "test", "t", {})
+                            check(fn, ownerDesc .. " has invalid formula '" .. sval .. "': " .. tostring(err))
+                        end
+                    elseif param.type == "script" then
+                        local fn, err = load(tostring(val), "test", "t", {})
+                        check(fn, ownerDesc .. " has invalid script: " .. tostring(err))
+                        totalScriptUsages = totalScriptUsages + 1
+                        check(not (contextType == "battle_phase" and ownerDesc:find("flows%.json battle%.")), ownerDesc .. " violates zero-SCRIPT rule")
+                    elseif param.type == "term" then
+                        check(loader.getTerm(val), ownerDesc .. " missing term '" .. tostring(val) .. "'")
+                    elseif param.type == "state" then
+                        check(loader.getState(val), ownerDesc .. " missing state '" .. tostring(val) .. "'")
+                    elseif param.type == "item" then
+                        check(loader.getItem(val), ownerDesc .. " missing item '" .. tostring(val) .. "'")
+                    elseif param.type == "skill" then
+                        check(loader.getSkill(val), ownerDesc .. " missing skill '" .. tostring(val) .. "'")
+                    elseif param.type == "actor" then
+                        check(loader.getActor(val), ownerDesc .. " missing actor '" .. tostring(val) .. "'")
+                    end
+                end
+            end
+            ::continue::
+        end
+    end
+
 
     -- Registry lookup sets from data/engine.json
     local validEffectTypes = {}
@@ -465,6 +529,31 @@ runValidation = function()
             effects.apply(eff, vSession.party[1], vSession.party[1], vSession)
         end
     end
+
+    -- Validate Map Events
+    for _, map in ipairs(loader.maps or {}) do
+        for _, ev in ipairs(map.events or {}) do
+            if ev.script then
+                validateCommands(ev.script, "map", "map " .. map.id .. " event " .. ev.id)
+            end
+        end
+    end
+
+    -- Validate Common Events
+    for id, ce in pairs(loader.commonEvents or {}) do
+        validateCommands(ce.commands, "common", "common event " .. id)
+    end
+
+    -- Validate Flows
+    for host, phases in pairs(loader.flows or {}) do
+        if not host:match("^_") then
+            for phase, cmds in pairs(phases) do
+                validateCommands(cmds, host .. "_phase", "flows.json " .. host .. "." .. phase)
+            end
+        end
+    end
+
+    print("Total SCRIPT usages across all data files: " .. totalScriptUsages)
 
     if #problems > 0 then
         error(table.concat(problems, "\n"), 0)
