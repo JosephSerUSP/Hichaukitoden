@@ -117,6 +117,31 @@ const server = http.createServer((req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
+    } else if (req.method === 'GET' && req.url === '/api/graphs') {
+        const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
+        if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {
+            fs.readdir(graphsDir, (err, files) => {
+                if (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                } else {
+                    const result = [];
+                    files.forEach(f => {
+                        try {
+                            const stat = fs.statSync(path.join(graphsDir, f));
+                            if (stat.isFile() && f.endsWith('.json')) {
+                                result.push(f.slice(0, -5)); // remove .json
+                            }
+                        } catch(e) {}
+                    });
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                }
+            });
+        } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([]));
+        }
     } else if (req.method === 'POST' && req.url === '/save') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
