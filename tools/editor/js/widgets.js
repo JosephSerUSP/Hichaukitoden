@@ -487,7 +487,7 @@
 
         // Renders a schema-typed widget; returns false to fall through to the
         // generic renderer.
-        function renderSchemaField(container, schema, value, key, currentPath, targetRoot) {
+        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, useBlockLayout = false) {
             const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
 
             if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
@@ -500,7 +500,7 @@
                     opts = Object.keys(dbPayload.commonEvents || {}).map(id => ({ value: id, label: `${id}: ${dbPayload.commonEvents[id].name || ''}` }));
                 }
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -531,7 +531,7 @@
 
             if (widget === 'assetPath') {
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -644,7 +644,7 @@
 
             if (widget === 'number' || typeof value === 'number') {
                 const group = document.createElement('div');
-                group.className = 'form-group field-inline';
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
                 const lbl = document.createElement('label');
                 lbl.textContent = schema.label || key;
                 group.appendChild(lbl);
@@ -1191,14 +1191,125 @@
             }
         }
 
-        function buildRecursiveForm(container, obj, path, targetRoot) {
+        function buildTabbedSections(container, sections) {
+            const tabsContainer = document.createElement('div');
+            tabsContainer.style.cssText = 'display: flex; gap: 4px; margin-bottom: 8px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 2px; flex-wrap: wrap;';
+            const panelContainer = document.createElement('div');
+
+            let activeTab = null;
+
+            sections.forEach((sec, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'db-tab-btn';
+                btn.style.padding = '4px 8px';
+                btn.textContent = sec.title;
+                if (idx === 0) {
+                    btn.classList.add('active');
+                    activeTab = btn;
+                    sec.render(panelContainer);
+                }
+
+                btn.onclick = () => {
+                    if (activeTab) activeTab.classList.remove('active');
+                    btn.classList.add('active');
+                    activeTab = btn;
+                    panelContainer.innerHTML = '';
+                    sec.render(panelContainer);
+                };
+
+                tabsContainer.appendChild(btn);
+            });
+
+            container.appendChild(tabsContainer);
+            container.appendChild(panelContainer);
+        }
+
+        function buildFieldGroup(title, cols) {
+            const fieldset = document.createElement('fieldset');
+            fieldset.style.cssText = `border: 1px solid var(--win-shadow); padding: 8px; margin-bottom: 8px; display: grid; grid-template-columns: repeat(${cols}, 1fr); gap: 10px;`;
+
+            if (title) {
+                const legend = document.createElement('legend');
+                legend.textContent = title;
+                fieldset.appendChild(legend);
+            }
+
+            return fieldset;
+        }
+
+        function buildRecursiveForm(container, obj, path, targetRoot, depth = 0) {
+            if (depth === 0 && obj && typeof obj === 'object') {
+                const sections = [];
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        sections.push({
+                            title: key,
+                            render: (panel) => {
+                                const subObj = {};
+                                subObj[key] = obj[key];
+                                buildRecursiveForm(panel, subObj, path, targetRoot, depth + 1);
+                            }
+                        });
+                    }
+                }
+                if (sections.length > 0) {
+                    buildTabbedSections(container, sections);
+                    return;
+                }
+            }
+
+            if (depth === 1 && obj && typeof obj === 'object') {
+                for (const topKey in obj) {
+                    if (obj.hasOwnProperty(topKey)) {
+                        const topVal = obj[topKey];
+                        if (typeof topVal === 'object' && topVal !== null && !Array.isArray(topVal)) {
+                            // Find properties to put inside the fieldset
+                            const keys = Object.keys(topVal);
+                            const cols = keys.length > 4 ? 4 : (keys.length > 0 ? keys.length : 1);
+                            const fieldset = buildFieldGroup(topKey, cols);
+                            buildRecursiveForm(fieldset, topVal, [...path, topKey], targetRoot, depth + 1);
+                            container.appendChild(fieldset);
+                        } else {
+                            // Not an object, just render it normally inside the current container
+                            const subObj = {};
+                            subObj[topKey] = topVal;
+                            // Using a private loop to not change signature too much, just rendering the single property
+                            const currentPath = [...path, topKey];
+                            const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
+                            if (schemaEntry && renderSchemaField(container, schemaEntry, topVal, topKey, currentPath, targetRoot, true)) {
+                                // rendered
+                            } else {
+                                // Fallback for single primitive at depth 1
+                                const type = typeof topVal === 'number' ? 'number' : 'text';
+                                createFormField(container, topKey, topVal, (newVal) => {
+                                    let target = targetRoot;
+                                    for (let i = 0; i < currentPath.length - 1; i++) {
+                                        if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                        target = target[currentPath[i]];
+                                    }
+                                    if (type === 'number') {
+                                        const parsed = parseFloat(newVal);
+                                        target[topKey] = isNaN(parsed) ? 0 : parsed;
+                                    } else {
+                                        target[topKey] = newVal;
+                                    }
+                                }, type, false, topKey, true);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
             for (const key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     const value = obj[key];
                     const currentPath = [...path, key];
 
+                    const useBlockLayout = (depth === 2);
+
                     const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
-                    if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot)) {
+                    if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot, useBlockLayout)) {
                         // rendered by a typed schema widget
                     } else if (key === 'activeFont') {
                         const group = document.createElement('div');
@@ -1324,7 +1435,7 @@
                         sectionWrapper.appendChild(content);
                         container.appendChild(sectionWrapper);
 
-                        buildRecursiveForm(content, value, currentPath, targetRoot);
+                        buildRecursiveForm(content, value, currentPath, targetRoot, depth + 1);
                     } else {
                         // Primitive value input
                         const type = typeof value === 'number' ? 'number' : 'text';
@@ -1341,18 +1452,21 @@
                             } else {
                                 target[key] = newVal;
                             }
-                        }, type, false, key);
+                        }, type, false, key, useBlockLayout);
                     }
                 }
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = false) {
             const group = document.createElement('div');
-            group.className = 'form-group field-inline';
+            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 
             const label = document.createElement('label');
             label.textContent = labelText;
+            if (useBlockLayout) {
+                label.style.marginBottom = '2px';
+            }
             group.appendChild(label);
 
             const input = document.createElement('input');
