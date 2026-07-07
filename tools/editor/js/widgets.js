@@ -1,6 +1,83 @@
 
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
+
+        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
+            const group = document.createElement('div');
+            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+
+            const lbl = document.createElement('label');
+            lbl.textContent = labelText;
+            group.appendChild(lbl);
+
+            // Thumbnail wrapper
+            const thumbWrap = document.createElement('div');
+            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
+
+            const img = document.createElement('img');
+            img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
+
+            const noneTxt = document.createElement('div');
+            noneTxt.style.cssText = 'color: #888; font-size: 9px; font-family: monospace;';
+            noneTxt.textContent = '(none)';
+
+            // A missing/broken sprite falls back to the (none) placeholder
+            // rather than the browser's broken-image glyph.
+            img.onerror = () => { img.style.display = 'none'; noneTxt.style.display = 'block'; };
+
+            function updateThumb(path) {
+                if (path) {
+                    // standardize path
+                    path = path.replace(/\\/g, '/');
+                    if (isBareKey && !path.includes('/')) {
+                        img.src = '/assets/portraits/' + path + '.png';
+                    } else {
+                        img.src = '/' + path;
+                    }
+                    img.style.display = 'block';
+                    noneTxt.style.display = 'none';
+                } else {
+                    img.style.display = 'none';
+                    noneTxt.style.display = 'block';
+                }
+            }
+            updateThumb(value);
+
+            thumbWrap.appendChild(img);
+            thumbWrap.appendChild(noneTxt);
+            group.appendChild(thumbWrap);
+
+            const input = document.createElement('input');
+            input.className = 'form-control inset-bevel';
+            input.value = value || '';
+            input.style.flex = '1';
+            if (defaultDir === 'portraits') {
+                input.setAttribute('list', 'portrait-keys-list');
+            }
+            input.oninput = () => {
+                updateThumb(input.value);
+                onChange(input.value);
+            };
+            group.appendChild(input);
+
+            const btn = document.createElement('button');
+            btn.className = 'win98-btn';
+            btn.textContent = '...';
+            btn.onclick = () => openAssetPicker(defaultDir, path => {
+                if (isBareKey) {
+                    const parts = path.replace(/\\/g, '/').split('/');
+                    const filename = parts.pop();
+                    path = filename.replace(/\.[^/.]+$/, ""); // remove extension
+                }
+                input.value = path;
+                updateThumb(path);
+                onChange(path);
+            });
+            group.appendChild(btn);
+
+            container.appendChild(group);
+        };
+
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
@@ -390,6 +467,54 @@
             container.appendChild(group);
         }
 
+        // List field bound to an array of ids (actor skills/passives)
+        function buildIdListEditor(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter, addLabel) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = label;
+            group.appendChild(lbl);
+            const box = makeListBox();
+            box.style.maxHeight = '120px';
+            box.style.overflowY = 'auto';
+
+            const options = allIds.map(id => ({ value: id, label: nameOf(id) }));
+
+            const render = () => {
+                box.innerHTML = '';
+                const arr = ownerArrGetter() || [];
+                arr.forEach((id, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+
+                    row.appendChild(makeSelect(options, id, v => {
+                        arr[idx] = v;
+                        ownerArrSetter(arr);
+                        render();
+                    }, '1'));
+
+                    row.appendChild(makeRowDeleteBtn(() => {
+                        arr.splice(idx, 1);
+                        ownerArrSetter(arr);
+                        render();
+                    }));
+
+                    box.appendChild(row);
+                });
+
+                box.appendChild(makeAddRowBtn(addLabel, () => {
+                    const newArr = ownerArrGetter() || [];
+                    newArr.push(allIds.length > 0 ? allIds[0] : '');
+                    ownerArrSetter(newArr);
+                    render();
+                }));
+            };
+
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         // Editable list of drop rows ({itemId, chance}) for actors
         function buildDropsEditor(container, actor) {
             const group = document.createElement('div');
@@ -490,6 +615,17 @@
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
             'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
             'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'battle_screen.popup.damageFormat': { label: 'Damage Popup Format', type: 'text' },
+            'battle_screen.popup.damageColor': { label: 'Damage Popup Color', widget: 'color' },
+            'battle_screen.popup.healFormat': { label: 'Heal Popup Format', type: 'text' },
+            'battle_screen.popup.healColor': { label: 'Heal Popup Color', widget: 'color' },
+            'battle_screen.popup.critFormat': { label: 'Crit Popup Format', type: 'text' },
+            'battle_screen.popup.critColor': { label: 'Crit Popup Color', widget: 'color' },
+            'battle_screen.popup.deadFormat': { label: 'Dead Popup Format', type: 'text' },
+            'battle_screen.popup.deadColor': { label: 'Dead Popup Color', widget: 'color' },
+            'battle_screen.popup.stateFormat': { label: 'State Popup Format', type: 'text' },
+            'battle_screen.popup.stateColor': { label: 'State Popup Color', widget: 'color' },
+
             'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05, min: 0, max: 1 },
             'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)', min: 0 },
             'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)', min: 0 },
@@ -558,7 +694,48 @@
             'battleLayout.summonerPopupX': { label: 'Summoner Popup X (px)' },
             'battleLayout.summonerPopupYOffset': { label: 'Summoner Popup Y Offset (px)' },
             'battleLayout.fallbackX':      { label: 'Popup Fallback X (px)' },
-            'battleLayout.fallbackY':      { label: 'Popup Fallback Y (px)' }
+            'battleLayout.fallbackY':      { label: 'Popup Fallback Y (px)' },
+            'battleLayout.enemyY':         { label: 'Enemy Y (px)' },
+            'battleLayout.enemyNameY':     { label: 'Enemy Name Y (px)' },
+            'battleLayout.enemyHpBarY':    { label: 'Enemy HP Bar Y (px)' },
+            'battleLayout.enemyHpBarWidth': { label: 'Enemy HP Bar Width (px)' },
+            'battleLayout.enemyHpBarHeight': { label: 'Enemy HP Bar Height (px)' },
+            'battleLayout.enemySpriteSize': { label: 'Enemy Sprite Size (px)' },
+            'battleLayout.enemyFallbackSize': { label: 'Enemy Fallback Sprite Size (px)' },
+            'battleLayout.enemySlideOffset': { label: 'Enemy Slide-in Offset (px)' },
+            'battleLayout.enemyDeathYOffset': { label: 'Enemy Death Bounce Height (px)' },
+            'battleLayout.viewportOverlayW': { label: 'Viewport Overlay Width (px)' },
+            'battleLayout.viewportOverlayH': { label: 'Viewport Overlay Height (px)' },
+            'battleLayout.logPanelX':      { label: 'Log Panel X (px)' },
+            'battleLayout.logPanelY':      { label: 'Log Panel Y (px)' },
+            'battleLayout.logPanelWidth':  { label: 'Log Panel Width (px)' },
+            'battleLayout.logPanelHeight': { label: 'Log Panel Height (px)' },
+            'battleLayout.logTextX':       { label: 'Log Text X (px)' },
+            'battleLayout.logTextY':       { label: 'Log Text Y (px)' },
+            'battleLayout.logTextLimit':   { label: 'Log Text Width Limit (px)' },
+            'battleLayout.logSpaceX':      { label: 'Log SPACE Prompt X (px)' },
+            'battleLayout.logSpaceY':      { label: 'Log SPACE Prompt Y (px)' },
+            'battleLayout.consoleTileX':   { label: 'Console X (tiles)' },
+            'battleLayout.consoleTileW':   { label: 'Console Width (tiles)' },
+            'battleLayout.consoleTileH':   { label: 'Console Height (tiles)' },
+            'battleLayout.consoleTextTileX': { label: 'Console Text X (tiles)' },
+            'battleLayout.menuChoiceSpacing': { label: 'Menu Choice Spacing (px)' },
+            'battleLayout.summonerStatusX': { label: 'Summoner Status X (px)' },
+            'battleLayout.summonerNameYOffset': { label: 'Summoner Name Y Offset (px)' },
+            'battleLayout.summonerMpTextYOffset': { label: 'Summoner MP Text Y Offset (px)' },
+            'battleLayout.summonerMpBarYOffset': { label: 'Summoner MP Bar Y Offset (px)' },
+            'battleLayout.summonerMpBarWidth': { label: 'Summoner MP Bar Width (px)' },
+            'battleLayout.summonerMpBarHeight': { label: 'Summoner MP Bar Height (px)' },
+            'battleLayout.partyGridColWidth': { label: 'Party Grid Column Width (px)' },
+            'battleLayout.partyGridRowHeight': { label: 'Party Grid Row Height (px)' },
+            'battleLayout.partyGridNameXOffset': { label: 'Party Grid Name X Offset (px)' },
+            'battleLayout.partyGridHpXOffset': { label: 'Party Grid HP X Offset (px)' },
+            'battleLayout.partyGridHpYOffset': { label: 'Party Grid HP Y Offset (px)' },
+            'battleLayout.partyGridHpBarXOffset': { label: 'Party Grid HP Bar X Offset (px)' },
+            'battleLayout.partyGridHpBarYOffset': { label: 'Party Grid HP Bar Y Offset (px)' },
+            'battleLayout.partyGridHpBarWidth': { label: 'Party Grid HP Bar Width (px)' },
+            'battleLayout.partyGridHpBarHeight': { label: 'Party Grid HP Bar Height (px)' },
+            'battleLayout.partyGridEmptyYOffset': { label: 'Party Grid Empty Y Offset (px)' }
         };
 
         function setNestedValue(targetRoot, currentPath, key, val) {
@@ -616,26 +793,10 @@
             }
 
             if (widget === 'assetPath') {
-                const group = document.createElement('div');
-                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
-                const lbl = document.createElement('label');
-                lbl.textContent = schema.label || key;
-                group.appendChild(lbl);
-                const input = document.createElement('input');
-                input.className = 'form-control inset-bevel';
-                input.value = value || '';
-                input.oninput = () => { setNestedValue(targetRoot, currentPath, key, input.value); setDirty(true); };
-                group.appendChild(input);
-                const btn = document.createElement('button');
-                btn.className = 'win98-btn';
-                btn.textContent = '...';
-                btn.onclick = () => openAssetPicker(schema.dir || 'sprites', path => {
-                    input.value = path;
+                window.createSpriteField(container, schema.label || key, value || '', (path) => {
                     setNestedValue(targetRoot, currentPath, key, path);
                     setDirty(true);
-                });
-                group.appendChild(btn);
-                container.appendChild(group);
+                }, useBlockLayout, schema.dir || 'sprites');
                 return true;
             }
 
@@ -672,6 +833,44 @@
                 };
                 render();
                 group.appendChild(box);
+                container.appendChild(group);
+                return true;
+            }
+
+
+            if (schema.type === 'text' && widget !== 'assetPath') {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const input = document.createElement('input');
+                input.className = 'form-control inset-bevel';
+                input.value = value !== undefined && value !== null ? value : '';
+                input.oninput = () => { setNestedValue(targetRoot, currentPath, key, input.value); setDirty(true); };
+                group.appendChild(input);
+                appendFieldHelp(group, schema);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'color') {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+
+                const pick = document.createElement('input');
+                pick.type = 'color';
+                pick.value = rgb01ToHex(value);
+                pick.oninput = () => {
+                    const rgb = hexToRgb01(pick.value);
+                    const newVal = [rgb[0], rgb[1], rgb[2], (value && value[3]) !== undefined ? value[3] : 1];
+                    setNestedValue(targetRoot, currentPath, key, newVal);
+                    setDirty(true);
+                };
+                group.appendChild(pick);
                 container.appendChild(group);
                 return true;
             }
@@ -947,29 +1146,10 @@
 
                 // Default sprite: map events linked to this common event
                 // inherit it unless they set their own graphic.
-                const spriteRow = document.createElement('div');
-                spriteRow.className = 'form-group field-inline';
-                const spriteLbl = document.createElement('label');
-                spriteLbl.textContent = 'Default Sprite (inherited)';
-                spriteRow.appendChild(spriteLbl);
-                const spriteInput = document.createElement('input');
-                spriteInput.className = 'form-control inset-bevel';
-                spriteInput.value = eventData.sprite || '';
-                spriteInput.oninput = () => {
-                    if (spriteInput.value === '') { delete eventData.sprite; } else { eventData.sprite = spriteInput.value; }
-                    setDirty(true);
-                };
-                spriteRow.appendChild(spriteInput);
-                const spriteBtn = document.createElement('button');
-                spriteBtn.className = 'win98-btn';
-                spriteBtn.textContent = '...';
-                spriteBtn.onclick = () => openAssetPicker('sprites', path => {
-                    spriteInput.value = path;
-                    eventData.sprite = path;
+                window.createSpriteField(formPanel, 'Default Sprite (inherited)', eventData.sprite || '', (path) => {
+                    if (path === '') { delete eventData.sprite; } else { eventData.sprite = path; }
                     setDirty(true);
                 });
-                spriteRow.appendChild(spriteBtn);
-                formPanel.appendChild(spriteRow);
 
                 // Default minimap marker color: map events linked to this
                 // common event use it unless they set their own.
@@ -1060,18 +1240,10 @@
                 formPanel.appendChild(growthRow);
 
                 ensurePortraitKeys();
-                const spriteGroup = document.createElement('div');
-                spriteGroup.className = 'form-group field-inline';
-                const spriteLbl = document.createElement('label');
-                spriteLbl.textContent = 'Sprite Key (assets/portraits)';
-                spriteGroup.appendChild(spriteLbl);
-                const spriteInput = document.createElement('input');
-                spriteInput.className = 'form-control inset-bevel';
-                spriteInput.setAttribute('list', 'portrait-keys-list');
-                spriteInput.value = item.spriteKey || '';
-                spriteInput.oninput = () => { item.spriteKey = spriteInput.value; setDirty(true); };
-                spriteGroup.appendChild(spriteInput);
-                formPanel.appendChild(spriteGroup);
+                window.createSpriteField(formPanel, 'Sprite Key (assets/portraits)', item.spriteKey || '', (path) => {
+                    item.spriteKey = path;
+                    setDirty(true);
+                }, false, 'portraits', true);
 
                 buildElementSlotsEditor(formPanel, item);
                 createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
@@ -1087,14 +1259,14 @@
                 twoCol.appendChild(passivesCol);
                 formPanel.appendChild(twoCol);
 
-                buildChecklistField(skillsCol, 'Skills',
+                buildIdListEditor(skillsCol, 'Skills',
                     Object.keys(dbPayload.skills || {}),
                     id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id,
-                    () => item.skills, arr => { item.skills = arr; });
-                buildChecklistField(passivesCol, 'Passives',
+                    () => item.skills, arr => { item.skills = arr; }, '+ Add Skill');
+                buildIdListEditor(passivesCol, 'Passives',
                     Object.keys(dbPayload.passives || {}),
                     id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
-                    () => item.passives, arr => { item.passives = arr; });
+                    () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
 
                 buildTraitsEditor(formPanel, item, 'Innate Traits');
                 buildDropsEditor(formPanel, item);
@@ -1335,6 +1507,9 @@
                 attachJsonToggle(header, formPanel, jsonTarget, () => {
                     initDatabaseEditor();
                 });
+                if (activeDbTab !== 'terms' && activeDbTab !== 'system') {
+                    buildMetaEditor(formPanel, jsonTarget, activeDbTab);
+                }
             }
         }
 
@@ -1637,5 +1812,159 @@
             }
 
             group.appendChild(input);
+            container.appendChild(group);
+        }
+
+        function buildMetaEditor(container, owner, appliesToName) {
+            if (!owner) return;
+            
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.style.marginTop = '16px';
+            group.style.borderTop = '1px solid var(--win-shadow)';
+            group.style.paddingTop = '8px';
+            
+            const title = document.createElement('label');
+            title.style.fontWeight = 'bold';
+            title.textContent = 'Meta Parameters';
+            group.appendChild(title);
+            
+            const box = makeListBox();
+            
+            const render = () => {
+                box.innerHTML = '';
+                owner.meta = owner.meta || {};
+                
+                const registeredKeys = ((dbPayload.engine && dbPayload.engine.metaKeys) || []).filter(
+                    mk => mk.appliesTo && mk.appliesTo.includes(appliesToName)
+                );
+                
+                const presentKeys = Object.keys(owner.meta);
+                if (presentKeys.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.style.color = 'var(--win-dark-shadow)';
+                    empty.style.fontSize = '10px';
+                    empty.style.fontStyle = 'italic';
+                    empty.style.marginBottom = '6px';
+                    empty.textContent = 'No meta parameters set.';
+                    box.appendChild(empty);
+                } else {
+                    presentKeys.forEach(k => {
+                        const reg = registeredKeys.find(r => r.key === k);
+                        const regType = reg ? reg.type : (typeof owner.meta[k] === 'boolean' ? 'flag' : (typeof owner.meta[k] === 'number' ? 'number' : 'string'));
+                        
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 4px;';
+                        
+                        const keySpan = document.createElement('span');
+                        keySpan.style.cssText = 'font-weight: bold; font-size: 11px; width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                        keySpan.textContent = k;
+                        if (reg && reg.description) {
+                            keySpan.title = reg.description;
+                        }
+                        row.appendChild(keySpan);
+                        
+                        let input;
+                        if (regType === 'flag') {
+                            input = document.createElement('input');
+                            input.type = 'checkbox';
+                            input.checked = !!owner.meta[k];
+                            input.onchange = () => {
+                                owner.meta[k] = input.checked;
+                                setDirty(true);
+                            };
+                        } else if (regType === 'number') {
+                            input = document.createElement('input');
+                            input.type = 'number';
+                            input.className = 'win98-input';
+                            input.style.flex = '1';
+                            input.style.boxSizing = 'border-box';
+                            input.style.height = '19px';
+                            input.value = owner.meta[k];
+                            input.oninput = () => {
+                                owner.meta[k] = parseFloat(input.value) || 0;
+                                setDirty(true);
+                            };
+                        } else {
+                            input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'win98-input';
+                            input.style.flex = '1';
+                            input.style.boxSizing = 'border-box';
+                            input.style.height = '19px';
+                            input.value = owner.meta[k];
+                            input.oninput = () => {
+                                owner.meta[k] = input.value;
+                                setDirty(true);
+                            };
+                        }
+                        row.appendChild(input);
+                        
+                        row.appendChild(makeRowDeleteBtn(() => {
+                            delete owner.meta[k];
+                            if (Object.keys(owner.meta).length === 0) {
+                                delete owner.meta;
+                            }
+                            setDirty(true);
+                            render();
+                        }));
+                        
+                        box.appendChild(row);
+                    });
+                }
+                
+                const missingKeys = registeredKeys.filter(mk => !presentKeys.includes(mk.key));
+                if (missingKeys.length > 0) {
+                    const addContainer = document.createElement('div');
+                    addContainer.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-top: 6px;';
+                    
+                    const select = document.createElement('select');
+                    select.className = 'win98-select';
+                    select.style.flex = '1';
+                    select.style.height = '19px';
+                    
+                    const helpSpan = document.createElement('span');
+                    helpSpan.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                    
+                    const updateHelp = () => {
+                        const selectedKey = select.value;
+                        const selectedReg = missingKeys.find(mk => mk.key === selectedKey);
+                        helpSpan.textContent = selectedReg ? selectedReg.description : '';
+                        helpSpan.title = selectedReg ? selectedReg.description : '';
+                    };
+                    
+                    missingKeys.forEach(mk => {
+                        const opt = document.createElement('option');
+                        opt.value = mk.key;
+                        opt.textContent = `${mk.key} (${mk.type})`;
+                        select.appendChild(opt);
+                    });
+                    
+                    select.onchange = updateHelp;
+                    updateHelp();
+                    
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'win98-btn';
+                    addBtn.textContent = '+ Add Key';
+                    addBtn.onclick = (e) => {
+                        e.preventDefault();
+                        const selectedKey = select.value;
+                        const reg = missingKeys.find(mk => mk.key === selectedKey);
+                        const defVal = reg.type === 'flag' ? false : (reg.type === 'number' ? 0 : '');
+                        owner.meta = owner.meta || {};
+                        owner.meta[selectedKey] = defVal;
+                        setDirty(true);
+                        render();
+                    };
+                    
+                    addContainer.appendChild(select);
+                    addContainer.appendChild(helpSpan);
+                    addContainer.appendChild(addBtn);
+                    box.appendChild(addContainer);
+                }
+            };
+            
+            render();
+            group.appendChild(box);
             container.appendChild(group);
         }

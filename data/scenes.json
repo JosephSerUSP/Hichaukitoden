@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Item Creation",
+    "kind": "crafting",
+    "config": {
+      "disciplines": [
+        {
+          "kind": "blacksmithing",
+          "label": "Blacksmithing",
+          "stat": "atk",
+          "description": "Forge weapons and armor using ATK."
+        },
+        {
+          "kind": "tinkering",
+          "label": "Tinkering",
+          "stat": "asp",
+          "description": "Assemble accessories using ASP."
+        },
+        {
+          "kind": "alchemy",
+          "label": "Alchemy",
+          "stat": "mat",
+          "description": "Brew potions and ink using MAT."
+        },
+        {
+          "kind": "cooking",
+          "label": "Cooking",
+          "stat": "maxHp",
+          "description": "Cook foods using Max HP."
+        }
+      ],
+      "alpha": 0.5,
+      "yieldFormula": "floor((i1.meta.potency + i2.meta.potency) / 2) + floor(alpha * S)",
+      "penaltyFormula": "((i1.meta.craftElement ~= i2.meta.craftElement and i1.meta.craftElement ~= '' and i2.meta.craftElement ~= '') and 15 or 0) + (S < (i1.meta.tier + i2.meta.tier) * 6 and 20 or 0)",
+      "anomalyFormula": "random() < 0.05 and 1.5 or 1.0",
+      "brackets": [
+        { "max": 10, "tier": 0, "name": "Junk" },
+        { "max": 25, "tier": 1, "name": "Standard" },
+        { "max": 45, "tier": 2, "name": "Superior" },
+        { "max": 999, "tier": 3, "name": "Rare" }
+      ],
+      "timing": {
+        "initialDelay": 0.05,
+        "maxDelay": 0.4,
+        "delayMult": 1.25,
+        "steps": 12
+      },
+      "terms": {
+        "title": "Item Creation",
+        "selectDiscipline": "Select Discipline:",
+        "selectCrafter": "Select Crafter:",
+        "selectIngredients": "Select Ingredients:",
+        "yieldText": "Expected Yield: {0}",
+        "anomalyText": "CRITICAL ANOMALY DETECTED!",
+        "craftBtn": "Craft",
+        "cancelBtn": "Back",
+        "resultText": "Crafted: {0}!"
+      }
+    }
+  }
+]

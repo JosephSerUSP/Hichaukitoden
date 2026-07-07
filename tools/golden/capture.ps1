@@ -1,8 +1,8 @@
 $ErrorActionPreference = "Stop"
-$rootDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$rootDir = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 Set-Location $rootDir
 
-$output = & love . validate golden
+$output = & lovec . validate golden
 $inBlock = $false
 $log = @()
 foreach ($line in $output) {
@@ -14,4 +14,4 @@ foreach ($line in $output) {
         $log += $line
     }
 }
-$log | Out-File -FilePath tools/golden/battle.log -Encoding utf8
+[System.IO.File]::WriteAllLines("tools/golden/battle.log", $log)

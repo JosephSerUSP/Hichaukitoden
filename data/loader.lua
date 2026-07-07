@@ -32,6 +32,8 @@ function loader.init()
     loader.engine = load_json("data/engine.json")
     -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
     loader.flows = load_json("data/flows.json")
+    -- Scenes configuration
+    loader.scenes = load_json("data/scenes.json")
 
     loader.animations = require("data.animations")
 
@@ -44,6 +46,11 @@ function loader.init()
     loader.itemsById = {}
     for _, item in ipairs(loader.items) do
         loader.itemsById[item.id] = item
+    end
+
+    loader.scenesById = {}
+    for _, scene in ipairs(loader.scenes or {}) do
+        loader.scenesById[scene.id] = scene
     end
 end
 
@@ -80,6 +87,10 @@ end
 
 function loader.getElement(id)
     return loader.elements and loader.elements[id]
+end
+
+function loader.getScene(id)
+    return loader.scenesById[id]
 end
 
 function loader.getRole(id)
