@@ -490,6 +490,14 @@
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
             'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
             'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'battle_screen.popup.damageFormat': { label: 'Damage Popup Format' },
+            'battle_screen.popup.healFormat': { label: 'Heal Popup Format' },
+            'battle_screen.popup.damageColor': { label: 'Damage Popup Color', widget: 'color' },
+            'battle_screen.popup.healColor': { label: 'Heal Popup Color', widget: 'color' },
+            'battle_screen.popup.deathFormat': { label: 'Death Popup Format' },
+            'battle_screen.popup.deathColor': { label: 'Death Popup Color', widget: 'color' },
+            'battle_screen.popup.stateFormat': { label: 'State Popup Format' },
+            'battle_screen.popup.stateColor': { label: 'State Popup Color', widget: 'color' },
             'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05, min: 0, max: 1 },
             'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)', min: 0 },
             'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)', min: 0 },
@@ -635,6 +643,25 @@
                     setDirty(true);
                 });
                 group.appendChild(btn);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'color' && Array.isArray(value)) {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const pick = document.createElement('input');
+                pick.type = 'color';
+                pick.value = rgb01ToHex(value);
+                pick.oninput = () => {
+                    const rgb = hexToRgb01(pick.value);
+                    setNestedValue(targetRoot, currentPath, key, rgb);
+                    setDirty(true);
+                };
+                group.appendChild(pick);
                 container.appendChild(group);
                 return true;
             }

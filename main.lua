@@ -1159,7 +1159,10 @@ local function advanceBattleLog()
             end
         elseif ev.type == "damage" then
             desc = loader.formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
-            renderer.addDamagePopup("-" .. ev.value, popupX, popupY, {1, 0.2, 0.2})
+            local popupCfg = config.battle_screen and config.battle_screen.popup or {}
+            local fmt = popupCfg.damageFormat or "-{0}"
+            local col = popupCfg.damageColor or {1, 0.2, 0.2}
+            renderer.addDamagePopup(fmt:gsub("{0}", tostring(ev.value)), popupX, popupY, col)
             -- Apply damage sequentially
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
             if activeBattle then
@@ -1172,12 +1175,18 @@ local function advanceBattleLog()
             end
         elseif ev.type == "heal" then
             desc = loader.formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
-            renderer.addDamagePopup("+" .. ev.value, popupX, popupY, {0.2, 1, 0.2})
+            local popupCfg = config.battle_screen and config.battle_screen.popup or {}
+            local fmt = popupCfg.healFormat or "+{0}"
+            local col = popupCfg.healColor or {0.2, 1, 0.2}
+            renderer.addDamagePopup(fmt:gsub("{0}", tostring(ev.value)), popupX, popupY, col)
             -- Apply heal sequentially
             ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
         elseif ev.type == "death" then
             desc = loader.formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
-            renderer.addDamagePopup("DEAD", popupX, popupY, {0.6, 0.6, 0.6})
+            local popupCfg = config.battle_screen and config.battle_screen.popup or {}
+            local fmt = popupCfg.deathFormat or "DEAD"
+            local col = popupCfg.deathColor or {0.6, 0.6, 0.6}
+            renderer.addDamagePopup(fmt, popupX, popupY, col)
             -- Apply death state sequentially
             ev.target:addState("dead")
             ev.target.hp = 0
@@ -1192,7 +1201,10 @@ local function advanceBattleLog()
             end
         elseif ev.type == "state_add" then
             desc = loader.formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
-            renderer.addDamagePopup(ev.state:upper(), popupX, popupY, {0.8, 0.4, 1.0})
+            local popupCfg = config.battle_screen and config.battle_screen.popup or {}
+            local fmt = popupCfg.stateFormat or "{0}"
+            local col = popupCfg.stateColor or {0.8, 0.4, 1.0}
+            renderer.addDamagePopup(fmt:gsub("{0}", ev.state:upper()), popupX, popupY, col)
             -- Apply state add sequentially
             ev.target:addState(ev.state)
         elseif ev.type == "state_remove" then
@@ -1899,12 +1911,17 @@ function love.keypressed(key, scancode, isrepeat)
                 if #targets > 0 then
                     local target = targets[math.random(#targets)]
                     local isHeal = math.random() < 0.25
-                    local txt = isHeal and ("+" .. math.random(5, 20)) or ("-" .. math.random(5, 30))
+                    local popupCfg = config.battle_screen and config.battle_screen.popup or {}
+                    local val = isHeal and math.random(5, 20) or math.random(5, 30)
+                    local fmt = isHeal and (popupCfg.healFormat or "+{0}") or (popupCfg.damageFormat or "-{0}")
+                    local txt = fmt:gsub("{0}", tostring(val))
                     if math.random() < 0.1 then txt = "CRITICAL!" end
                     
                     local x, y = getTargetCoords(target)
                     if x and y then
-                        local col = isHeal and {0.2, 1, 0.2} or {1, 0.2, 0.2}
+                        local dmgCol = popupCfg.damageColor or {1, 0.2, 0.2}
+                        local healCol = popupCfg.healColor or {0.2, 1, 0.2}
+                        local col = isHeal and healCol or dmgCol
                         renderer.addDamagePopup(txt, x, y, col)
                     end
                 end

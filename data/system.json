@@ -61,7 +61,17 @@
     "horizontalScatter": 0
   },
   "battle_screen": {
-    "damagePopupLife": 1.1
+    "damagePopupLife": 1.1,
+    "popup": {
+      "damageFormat": "-{0}",
+      "healFormat": "+{0}",
+      "damageColor": [1, 0.2, 0.2, 1],
+      "healColor": [0.2, 1, 0.2, 1],
+      "deathFormat": "DEAD",
+      "deathColor": [0.6, 0.6, 0.6, 1],
+      "stateFormat": "{0}",
+      "stateColor": [0.8, 0.4, 1.0, 1]
+    }
   },
   "combat": {
     "baseFleeChance": 0.4,
