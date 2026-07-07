@@ -120,6 +120,77 @@
             return includeNone ? [''].concat(opts) : opts;
         }
 
+        window.cmdParamWidgets = window.cmdParamWidgets || {};
+        window.cmdParamWidgets.term = function(current, onChange) {
+            const terms = [];
+            function walk(obj, path) {
+                if (!obj || typeof obj !== 'object') return;
+                for (const k in obj) {
+                    const newPath = path ? path + '.' + k : k;
+                    if (typeof obj[k] === 'string') {
+                        terms.push(newPath);
+                    } else if (typeof obj[k] === 'object') {
+                        walk(obj[k], newPath);
+                    }
+                }
+            }
+            if (window.dbPayload && window.dbPayload.terms) {
+                walk(window.dbPayload.terms, '');
+            }
+
+            const sel = document.createElement('select');
+            sel.className = 'win98-select';
+            sel.style.width = '100%';
+
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '(none)';
+            sel.appendChild(defaultOpt);
+
+            terms.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                if (current === t) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            sel.onchange = () => { onChange(sel.value); };
+            return sel;
+        };
+
+        function createGraphPicker(current, onChange, flex) {
+            const sel = document.createElement('select');
+            sel.className = 'win98-select';
+            if (flex) sel.style.flex = flex;
+
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '(none)';
+            sel.appendChild(defaultOpt);
+
+            fetch('/api/graphs')
+                .then(r => r.json())
+                .then(graphs => {
+                    graphs.forEach(g => {
+                        const opt = document.createElement('option');
+                        opt.value = g;
+                        opt.textContent = g;
+                        if (current === g) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                })
+                .catch(e => console.error('Failed to load graphs', e));
+
+            sel.onchange = () => { onChange(sel.value); setDirty(true); };
+            return sel;
+        }
+
+        function createMapPicker(current, onChange, flex) {
+            const mapOpts = dbPayload.maps ? dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) })) : [];
+            return makeSelect(mapOpts, current, onChange, flex);
+        }
+
         function makeSelect(options, current, onChange, flex) {
             const sel = document.createElement('select');
             sel.className = 'win98-select';
@@ -617,15 +688,9 @@
                             render();
                         }));
                         if (opt.action === 'enter_dungeon') {
-                            const mapOpts = dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) }));
-                            row.appendChild(makeSelect(mapOpts, opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
+                            row.appendChild(createMapPicker(opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
                         } else {
-                            const graph = document.createElement('input');
-                            graph.className = 'win98-input';
-                            graph.style.flex = '1';
-                            graph.placeholder = 'dialogue graph, e.g. npc_alicia';
-                            graph.value = opt.graph || '';
-                            graph.oninput = () => { opt.graph = graph.value; setDirty(true); };
+                            const graph = createGraphPicker(opt.graph || '', v => { opt.graph = v; }, '1');
                             row.appendChild(graph);
                         }
                         row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
