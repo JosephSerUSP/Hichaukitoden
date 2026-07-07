@@ -457,6 +457,7 @@
         // Encounters are edited as a staged working copy so Cancel/ESC can
         // discard them cleanly, matching the rest of this dialog's OK/Cancel semantics.
         let mapPropsEncounters = [];
+        let mapPropsSnapshot = null;
         let mapPropsDirty = false;
 
         function openMapProperties() {
@@ -476,12 +477,26 @@
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
             renderEncountersList(mapPropsEncounters);
             mapPropsDirty = false;
+            mapPropsSnapshot = JSON.stringify(map);
             document.getElementById('map-properties-modal').classList.add('active');
         }
 
         function closeMapPropertiesModal(force) {
             if (!force && mapPropsDirty && !confirmDiscard('Discard changes to this map\'s properties?')) return;
+            if (!force && mapPropsDirty && mapPropsSnapshot) {
+                const map = dbPayload.maps[currentMapIndex];
+                if (map) {
+                    const snap = JSON.parse(mapPropsSnapshot);
+                    Object.keys(map).forEach(k => {
+                        if (k !== 'events' && k !== 'layout') delete map[k];
+                    });
+                    Object.keys(snap).forEach(k => {
+                        if (k !== 'events' && k !== 'layout') map[k] = snap[k];
+                    });
+                }
+            }
             document.getElementById('map-properties-modal').classList.remove('active');
+            mapPropsSnapshot = null;
         }
 
         function togglePropGenMode() {}

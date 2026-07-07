@@ -2,6 +2,7 @@
         // --- EVENT CONTROLLERS ---
         let activeEventLocalScript = null;
 
+        let eventModalSnapshot = null;
         let eventModalDirty = false;
 
         // rgb01 array <-> #rrggbb hex for <input type=color>
@@ -87,6 +88,9 @@
 
             toggleEventLogicType();
             eventModalDirty = false;
+            const map = dbPayload.maps[currentMapIndex];
+            const eventData = (map.events || []).find(e => e.x === x && e.y === y);
+            eventModalSnapshot = eventData ? JSON.stringify(eventData) : null;
             document.getElementById('event-modal').classList.add('active');
         }
 
@@ -136,7 +140,27 @@
 
         function closeEventModal(force) {
             if (!force && eventModalDirty && !confirmDiscard('Discard changes to this event?')) return;
+            if (!force && eventModalDirty) {
+                const map = dbPayload.maps[currentMapIndex];
+                if (map && map.events) {
+                    const idx = map.events.findIndex(e => e.x === selectedEventX && e.y === selectedEventY);
+                    if (eventModalSnapshot) {
+                        const snap = JSON.parse(eventModalSnapshot);
+                        if (idx !== -1) {
+                            Object.keys(map.events[idx]).forEach(k => delete map.events[idx][k]);
+                            Object.assign(map.events[idx], snap);
+                        } else {
+                            map.events.push(snap);
+                        }
+                    } else {
+                        if (idx !== -1) {
+                            map.events.splice(idx, 1);
+                        }
+                    }
+                }
+            }
             document.getElementById('event-modal').classList.remove('active');
+            eventModalSnapshot = null;
         }
 
         function applyEventProperties() {

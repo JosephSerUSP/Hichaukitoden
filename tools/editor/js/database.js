@@ -14,7 +14,13 @@
         function closeDatabaseModal(force) {
             if (!force && dbModalSnapshot !== null && JSON.stringify(dbPayload) !== dbModalSnapshot) {
                 if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
-                dbPayload = JSON.parse(dbModalSnapshot);
+                const snap = JSON.parse(dbModalSnapshot);
+                Object.keys(dbPayload).forEach(k => {
+                    if (k !== 'maps') delete dbPayload[k];
+                });
+                Object.keys(snap).forEach(k => {
+                    if (k !== 'maps') dbPayload[k] = snap[k];
+                });
                 initMapEditor();
                 initDatabaseEditor();
                 setDirty(false);
