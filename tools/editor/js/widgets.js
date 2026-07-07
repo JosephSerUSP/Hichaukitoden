@@ -490,6 +490,17 @@
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
             'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
             'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'battle_screen.popup.damageFormat': { label: 'Damage Popup Format', type: 'text' },
+            'battle_screen.popup.damageColor': { label: 'Damage Popup Color', widget: 'color' },
+            'battle_screen.popup.healFormat': { label: 'Heal Popup Format', type: 'text' },
+            'battle_screen.popup.healColor': { label: 'Heal Popup Color', widget: 'color' },
+            'battle_screen.popup.critFormat': { label: 'Crit Popup Format', type: 'text' },
+            'battle_screen.popup.critColor': { label: 'Crit Popup Color', widget: 'color' },
+            'battle_screen.popup.deadFormat': { label: 'Dead Popup Format', type: 'text' },
+            'battle_screen.popup.deadColor': { label: 'Dead Popup Color', widget: 'color' },
+            'battle_screen.popup.stateFormat': { label: 'State Popup Format', type: 'text' },
+            'battle_screen.popup.stateColor': { label: 'State Popup Color', widget: 'color' },
+
             'combat.baseFleeChance':       { label: 'Base Flee Chance (0-1)', step: 0.05, min: 0, max: 1 },
             'combat.goldLossOnFleeMin':    { label: 'Gold Lost on Failed Flee (min)', min: 0 },
             'combat.goldLossOnFleeMax':    { label: 'Gold Lost on Failed Flee (max)', min: 0 },
@@ -672,6 +683,28 @@
                 };
                 render();
                 group.appendChild(box);
+                container.appendChild(group);
+                return true;
+            }
+
+
+            if (widget === 'color') {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+
+                const pick = document.createElement('input');
+                pick.type = 'color';
+                pick.value = rgb01ToHex(value);
+                pick.oninput = () => {
+                    const rgb = hexToRgb01(pick.value);
+                    const newVal = [rgb[0], rgb[1], rgb[2], (value && value[3]) !== undefined ? value[3] : 1];
+                    setNestedValue(targetRoot, currentPath, key, newVal);
+                    setDirty(true);
+                };
+                group.appendChild(pick);
                 container.appendChild(group);
                 return true;
             }

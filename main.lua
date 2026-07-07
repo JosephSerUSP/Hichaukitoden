@@ -16,6 +16,25 @@ local canvas
 local scale, scaleX, scaleY = 1, 1, 1
 
 -- Global Session and State Router
+
+local function getPopupFormat(key)
+    if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup[key] then
+        return config.battle_screen.popup[key]
+    end
+    -- Fallbacks
+    if key == "damageFormat" then return "-{0}" end
+    if key == "damageColor" then return {1, 0.2, 0.2, 1} end
+    if key == "healFormat" then return "+{0}" end
+    if key == "healColor" then return {0.2, 1, 0.2, 1} end
+    if key == "critFormat" then return "CRITICAL!" end
+    if key == "critColor" then return {1, 0.2, 0.2, 1} end
+    if key == "deadFormat" then return "DEAD" end
+    if key == "deadColor" then return {0.6, 0.6, 0.6, 1} end
+    if key == "stateFormat" then return "{0}" end
+    if key == "stateColor" then return {0.8, 0.4, 1.0, 1} end
+    return ""
+end
+
 local activeSession
 local currentScene = "title"
 local isTestBattle = false
@@ -1159,7 +1178,8 @@ local function advanceBattleLog()
             end
         elseif ev.type == "damage" then
             desc = loader.formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
-            renderer.addDamagePopup("-" .. ev.value, popupX, popupY, {1, 0.2, 0.2})
+            local text = getPopupFormat("damageFormat"):gsub("{0}", tostring(ev.value))
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("damageColor"))
             -- Apply damage sequentially
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
             if activeBattle then
@@ -1172,12 +1192,13 @@ local function advanceBattleLog()
             end
         elseif ev.type == "heal" then
             desc = loader.formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
-            renderer.addDamagePopup("+" .. ev.value, popupX, popupY, {0.2, 1, 0.2})
+            local text = getPopupFormat("healFormat"):gsub("{0}", tostring(ev.value))
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("healColor"))
             -- Apply heal sequentially
             ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
         elseif ev.type == "death" then
             desc = loader.formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
-            renderer.addDamagePopup("DEAD", popupX, popupY, {0.6, 0.6, 0.6})
+            renderer.addDamagePopup(getPopupFormat("deadFormat"), popupX, popupY, getPopupFormat("deadColor"))
             -- Apply death state sequentially
             ev.target:addState("dead")
             ev.target.hp = 0
@@ -1192,7 +1213,8 @@ local function advanceBattleLog()
             end
         elseif ev.type == "state_add" then
             desc = loader.formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
-            renderer.addDamagePopup(ev.state:upper(), popupX, popupY, {0.8, 0.4, 1.0})
+            local text = getPopupFormat("stateFormat"):gsub("{0}", ev.state:upper())
+            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("stateColor"))
             -- Apply state add sequentially
             ev.target:addState(ev.state)
         elseif ev.type == "state_remove" then
@@ -1899,12 +1921,14 @@ function love.keypressed(key, scancode, isrepeat)
                 if #targets > 0 then
                     local target = targets[math.random(#targets)]
                     local isHeal = math.random() < 0.25
-                    local txt = isHeal and ("+" .. math.random(5, 20)) or ("-" .. math.random(5, 30))
-                    if math.random() < 0.1 then txt = "CRITICAL!" end
+                    local val = isHeal and math.random(5, 20) or math.random(5, 30)
+                    local isCrit = not isHeal and math.random() < 0.1
+                    local txt = isCrit and getPopupFormat("critFormat") or (isHeal and getPopupFormat("healFormat") or getPopupFormat("damageFormat"))
+                    txt = txt:gsub("{0}", tostring(val))
                     
                     local x, y = getTargetCoords(target)
                     if x and y then
-                        local col = isHeal and {0.2, 1, 0.2} or {1, 0.2, 0.2}
+                        local col = isCrit and getPopupFormat("critColor") or (isHeal and getPopupFormat("healColor") or getPopupFormat("damageColor"))
                         renderer.addDamagePopup(txt, x, y, col)
                     end
                 end
