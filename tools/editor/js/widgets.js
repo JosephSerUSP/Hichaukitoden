@@ -352,6 +352,47 @@
             container.appendChild(group);
         }
 
+        // Editable list of ids (e.g. skills or passives)
+        function buildIdListEditor(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter, addLabel) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = label;
+            group.appendChild(lbl);
+            const box = makeListBox();
+
+            const options = allIds.map(id => ({ value: id, label: nameOf(id) }));
+
+            const render = () => {
+                box.innerHTML = '';
+                const arr = ownerArrGetter() || [];
+                arr.forEach((id, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    row.appendChild(makeSelect(options, id, v => {
+                        arr[idx] = v;
+                        ownerArrSetter(arr);
+                        render();
+                    }, '1'));
+                    row.appendChild(makeRowDeleteBtn(() => {
+                        arr.splice(idx, 1);
+                        ownerArrSetter(arr);
+                        render();
+                    }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn(addLabel, () => {
+                    const newId = allIds.length > 0 ? allIds[0] : '';
+                    arr.push(newId);
+                    ownerArrSetter(arr);
+                    render();
+                }));
+            };
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         // Checkbox list bound to an array of ids (actor skills/passives)
         function buildChecklistField(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter) {
             const group = document.createElement('div');
@@ -1087,14 +1128,14 @@
                 twoCol.appendChild(passivesCol);
                 formPanel.appendChild(twoCol);
 
-                buildChecklistField(skillsCol, 'Skills',
+                buildIdListEditor(skillsCol, 'Skills',
                     Object.keys(dbPayload.skills || {}),
                     id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id,
-                    () => item.skills, arr => { item.skills = arr; });
-                buildChecklistField(passivesCol, 'Passives',
+                    () => item.skills, arr => { item.skills = arr; }, '+ Add Skill');
+                buildIdListEditor(passivesCol, 'Passives',
                     Object.keys(dbPayload.passives || {}),
                     id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
-                    () => item.passives, arr => { item.passives = arr; });
+                    () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
 
                 buildTraitsEditor(formPanel, item, 'Innate Traits');
                 buildDropsEditor(formPanel, item);
