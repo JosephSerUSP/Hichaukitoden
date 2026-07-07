@@ -672,6 +672,25 @@
         // Adds an "Edit as JSON" button to buttonHost; clicking swaps formPanel
         // for a JSON textarea. Apply replaces the target's contents in place
         // (references stay valid) and re-renders the form via onApplied.
+        function highlightJSON(jsonStr) {
+            const escaped = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return escaped.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, function (match, p1, p2, p3) {
+                let color = 'blue';
+                if (p1) {
+                    if (p3) {
+                        return '<span style="color: #a11;">' + p1 + '</span>' + p3;
+                    } else {
+                        color = '#0a0';
+                    }
+                } else if (/true|false/.test(match)) {
+                    color = '#d60';
+                } else if (/null/.test(match)) {
+                    color = '#888';
+                }
+                return '<span style="color: ' + color + ';">' + match + '</span>';
+            });
+        }
+
         function attachJsonToggle(buttonHost, formPanel, targetObj, onApplied) {
             if (!targetObj || typeof targetObj !== 'object') return;
             const btn = document.createElement('button');
@@ -681,14 +700,32 @@
             btn.onclick = () => {
                 formPanel.innerHTML = '';
 
+                const editorContainer = document.createElement('div');
+                editorContainer.className = 'inset-bevel';
+                editorContainer.style.cssText = 'position: relative; height: 320px; background: white; margin-bottom: 6px;';
+
+                const pre = document.createElement('pre');
+                pre.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 6px; box-sizing: border-box; overflow: hidden; font-family: monospace; font-size: 11px; white-space: pre; tab-size: 2; background: transparent; pointer-events: none;';
+
                 const area = document.createElement('textarea');
-                area.className = 'form-control inset-bevel';
-                area.style.cssText = 'font-family: monospace; font-size: 11px; height: 320px; white-space: pre;';
+                area.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 6px; box-sizing: border-box; overflow: auto; font-family: monospace; font-size: 11px; white-space: pre; tab-size: 2; color: transparent; background: transparent; caret-color: black; border: none; outline: none; resize: none;';
                 area.value = JSON.stringify(targetObj, null, 2);
-                area.oninput = () => {
-                    try { JSON.parse(area.value); area.style.background = ''; }
-                    catch (e) { area.style.background = '#ffcccc'; }
+
+                pre.innerHTML = highlightJSON(area.value);
+
+                area.onscroll = () => {
+                    pre.scrollTop = area.scrollTop;
+                    pre.scrollLeft = area.scrollLeft;
                 };
+
+                area.oninput = () => {
+                    pre.innerHTML = highlightJSON(area.value);
+                    try { JSON.parse(area.value); editorContainer.style.background = 'white'; }
+                    catch (e) { editorContainer.style.background = '#ffcccc'; }
+                };
+
+                editorContainer.appendChild(pre);
+                editorContainer.appendChild(area);
 
                 const bar = document.createElement('div');
                 bar.style.cssText = 'display: flex; gap: 6px; margin-bottom: 6px;';
@@ -698,7 +735,7 @@
                 applyBtn.onclick = () => {
                     let parsed;
                     try { parsed = JSON.parse(area.value); }
-                    catch (e) { area.style.background = '#ffcccc'; return; }
+                    catch (e) { editorContainer.style.background = '#ffcccc'; return; }
                     if (Array.isArray(targetObj) && Array.isArray(parsed)) {
                         targetObj.length = 0;
                         parsed.forEach(v => targetObj.push(v));
@@ -706,7 +743,7 @@
                         Object.keys(targetObj).forEach(k => delete targetObj[k]);
                         Object.assign(targetObj, parsed);
                     } else {
-                        area.style.background = '#ffcccc';
+                        editorContainer.style.background = '#ffcccc';
                         return;
                     }
                     setDirty(true);
@@ -720,7 +757,7 @@
                 bar.appendChild(backBtn);
 
                 formPanel.appendChild(bar);
-                formPanel.appendChild(area);
+                formPanel.appendChild(editorContainer);
             };
             buttonHost.appendChild(btn);
         }
