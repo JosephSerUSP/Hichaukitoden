@@ -306,6 +306,23 @@ runValidation = function()
         check(#events > 0, "battle round produced no events")
     end
 
+    -- Formula sandbox: a representative reward-curve expression must compile
+    -- and evaluate against a mock context (SPEC S5 / task A2).
+    do
+        local formulaEngine = require("engine.formula")
+        local mockCtx = {
+            enemy = { level = 4, hp = 30, maxHp = 40, atk = 12, def = 8, mat = 10, mdf = 9 },
+            session = { gold = 100, mp = 20, maxMp = 30, floor = 3 },
+        }
+        local expr = "floor(enemy.maxHp * 0.5) + random(1, session.floor * 2) + round(enemy.level * 1.5)"
+        local val, ferr = formulaEngine.eval(expr, mockCtx)
+        check(ferr == nil and type(val) == "number" and val >= 27 and val <= 32,
+            "formula sandbox failed reward-curve check: " .. tostring(ferr or val))
+        -- The sandbox must reject environment escapes
+        local _, escErr = formulaEngine.eval("os.time()", mockCtx)
+        check(escErr ~= nil, "formula sandbox allowed access to os.*")
+    end
+
     -- Item effects go through the same pipeline in and out of battle
     local item = loader.getItem(combat.battleItem or 1)
     if item and vSession.party[1] then
