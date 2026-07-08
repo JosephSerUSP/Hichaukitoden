@@ -178,6 +178,10 @@ function GameSession:getActiveParty()
     return active
 end
 
+function GameSession:playSound(soundId)
+    -- Stub: to be implemented
+end
+
 session.GameSession = GameSession
 session.Battler = Battler
 

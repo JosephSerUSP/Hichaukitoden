@@ -389,6 +389,24 @@
       "description": "Triggers an encounter on the current map."
     },
     {
+      "id": "PLAY_SOUND",
+      "category": "Other",
+      "label": "Play Sound",
+      "params": [
+        {
+          "key": "name",
+          "label": "Sound Name",
+          "type": "string"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Stub command to play a sound. Audio system not implemented yet."
+    },
+    {
       "id": "GIVE_ITEM",
       "category": "Progression",
       "label": "Give Random Treasure",
