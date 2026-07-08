@@ -1833,13 +1833,13 @@
             
             const render = () => {
                 box.innerHTML = '';
-                owner.meta = owner.meta || {};
+                const meta = owner.meta || {};
                 
                 const registeredKeys = ((dbPayload.engine && dbPayload.engine.metaKeys) || []).filter(
                     mk => mk.appliesTo && mk.appliesTo.includes(appliesToName)
                 );
                 
-                const presentKeys = Object.keys(owner.meta);
+                const presentKeys = Object.keys(meta);
                 if (presentKeys.length === 0) {
                     const empty = document.createElement('div');
                     empty.style.color = 'var(--win-dark-shadow)';
@@ -1851,7 +1851,7 @@
                 } else {
                     presentKeys.forEach(k => {
                         const reg = registeredKeys.find(r => r.key === k);
-                        const regType = reg ? reg.type : (typeof owner.meta[k] === 'boolean' ? 'flag' : (typeof owner.meta[k] === 'number' ? 'number' : 'string'));
+                        const regType = reg ? reg.type : (typeof meta[k] === 'boolean' ? 'flag' : (typeof meta[k] === 'number' ? 'number' : 'string'));
                         
                         const row = document.createElement('div');
                         row.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 4px;';
@@ -1868,7 +1868,7 @@
                         if (regType === 'flag') {
                             input = document.createElement('input');
                             input.type = 'checkbox';
-                            input.checked = !!owner.meta[k];
+                            input.checked = !!meta[k];
                             input.onchange = () => {
                                 owner.meta[k] = input.checked;
                                 setDirty(true);
@@ -1880,7 +1880,7 @@
                             input.style.flex = '1';
                             input.style.boxSizing = 'border-box';
                             input.style.height = '19px';
-                            input.value = owner.meta[k];
+                            input.value = meta[k];
                             input.oninput = () => {
                                 owner.meta[k] = parseFloat(input.value) || 0;
                                 setDirty(true);
@@ -1892,7 +1892,7 @@
                             input.style.flex = '1';
                             input.style.boxSizing = 'border-box';
                             input.style.height = '19px';
-                            input.value = owner.meta[k];
+                            input.value = meta[k];
                             input.oninput = () => {
                                 owner.meta[k] = input.value;
                                 setDirty(true);
