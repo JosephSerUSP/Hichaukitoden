@@ -178,6 +178,11 @@ function GameSession:getActiveParty()
     return active
 end
 
+function GameSession:playSound(soundId)
+    -- Stub method to satisfy audio playback calls in UI scenes (e.g. crafting)
+    -- Real sound implementation will be injected later
+end
+
 session.GameSession = GameSession
 session.Battler = Battler
 
