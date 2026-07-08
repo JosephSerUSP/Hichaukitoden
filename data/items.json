@@ -3,7 +3,7 @@
     "id": 1,
     "name": "HP Tonic",
     "type": "consumable",
-    "cost": 10,
+    "cost": 15,
     "description": "Heals one member to full HP.",
     "icon": 52,
     "meta": {
@@ -23,7 +23,7 @@
     "id": 2,
     "name": "Sigil Ink",
     "type": "consumable",
-    "cost": 20,
+    "cost": 40,
     "description": "+2 max HP to one member.",
     "icon": 55,
     "effects": [
@@ -43,7 +43,7 @@
     "id": 3,
     "name": "Whispered Lessons",
     "type": "consumable",
-    "cost": 64,
+    "cost": 50,
     "description": "+6 XP to one member.",
     "icon": 64,
     "effects": [
@@ -85,7 +85,7 @@
     "name": "Silver Blade",
     "type": "equipment",
     "equipType": "Weapon",
-    "cost": 25,
+    "cost": 30,
     "icon": 180,
     "description": "Sharpened steel blade.",
     "traits": [
@@ -111,7 +111,7 @@
     "name": "Bone Plate",
     "type": "equipment",
     "equipType": "Armor",
-    "cost": 25,
+    "cost": 30,
     "icon": 172,
     "description": "Sturdy bone harness.",
     "traits": [
@@ -133,7 +133,7 @@
     "name": "Wind Charm",
     "type": "equipment",
     "equipType": "Accessory",
-    "cost": 35,
+    "cost": 20,
     "icon": 174,
     "description": "A charm of rushing air.",
     "traits": [
@@ -160,7 +160,7 @@
     "name": "Light Amulet",
     "type": "equipment",
     "equipType": "Accessory",
-    "cost": 30,
+    "cost": 20,
     "icon": 174,
     "description": "Glowing amulet.",
     "traits": [
@@ -587,7 +587,7 @@
     "id": 29,
     "name": "Mug of Ale",
     "type": "consumable",
-    "cost": 5,
+    "cost": 8,
     "icon": 220,
     "description": "Cheap, frothy ale. Refreshes the spirit.",
     "effects": [
@@ -607,7 +607,7 @@
     "id": 30,
     "name": "Pint of Stout",
     "type": "consumable",
-    "cost": 12,
+    "cost": 20,
     "icon": 221,
     "description": "Dark, heavy stout. A meal in a glass.",
     "effects": [
@@ -737,6 +737,26 @@
       "craftKind": "alchemy",
       "potency": 50,
       "craftElement": "Red"
+    }
+  },
+  {
+    "id": 38,
+    "name": "Lesser HP Tonic",
+    "type": "consumable",
+    "cost": 5,
+    "icon": 52,
+    "description": "Heals one member for 50 HP.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 50
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
     }
   }
 ]
