@@ -635,4 +635,16 @@ end
 
 interpreter.INTERACTIVE_IDS = INTERACTIVE_IDS
 
+-- Exposed so the validator can prove every command registered in engine.json
+-- is actually implemented: a command counts as implemented if it has an
+-- immediate-mode handler OR is one of the ids interpreter.compile turns into
+-- dialogue nodes. Registering a command with no handler puts a silent no-op
+-- in the editor's command palette — exactly the dead/unimplemented content
+-- the validator exists to catch.
+interpreter.INTERACTIVE_COMPILE_IDS = INTERACTIVE_COMPILE_IDS
+
+function interpreter.isImplemented(id)
+    return handlers[id] ~= nil or INTERACTIVE_COMPILE_IDS[id] == true
+end
+
 return interpreter

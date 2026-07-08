@@ -424,6 +424,18 @@ runValidation = function()
         registry[c.id] = c
     end
 
+    -- Handler coverage: every command the registry offers must actually be
+    -- implemented. Without this, a registered-but-unimplemented command (a
+    -- "stub") appears in the editor's palette and silently no-ops when a
+    -- designer authors it — the dead-content failure this validator exists to
+    -- prevent. Registry entries are a contract: an id needs a Lua handler (or
+    -- an interpreter.compile case) to mean anything.
+    for _, c in ipairs((loader.engine and loader.engine.commands) or {}) do
+        check(interpreter.isImplemented(c.id),
+            "engine.json registers command '" .. tostring(c.id) ..
+            "' with no handler in engine/interpreter.lua (stub commands are not allowed)")
+    end
+
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
