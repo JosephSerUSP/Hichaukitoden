@@ -269,8 +269,7 @@
           "type": "DAMAGE_PARTY",
           "amount": 5,
           "message": "You triggered a spike trap!"
-        },
-
+        }
       ]
     }
   },

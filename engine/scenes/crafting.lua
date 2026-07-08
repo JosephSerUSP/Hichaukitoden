@@ -201,12 +201,12 @@ function updateCraftingScene(dt)
                 interpreter.runImmediate(cmds, cCtx)
                 
                 -- Play select sound
-                activeSession:playSound("ITEM_GET")
+
             else
                 -- decel delay
                 rouletteDelay = math.min(timing.maxDelay or 0.4, rouletteDelay * (timing.delayMult or 1.25))
                 rouletteCurrentIdx = math.random(#roulettePool)
-                activeSession:playSound("UI_HOVER")
+
             end
         end
     end
@@ -409,16 +409,16 @@ function keypressedCraftingScene(key)
         local disciplines = config.disciplines or {}
         if key == "up" or key == "w" then
             selectedDisciplineIdx = (selectedDisciplineIdx - 2) % #disciplines + 1
-            activeSession:playSound("UI_HOVER")
+
         elseif key == "down" or key == "s" then
             selectedDisciplineIdx = selectedDisciplineIdx % #disciplines + 1
-            activeSession:playSound("UI_HOVER")
+
         elseif key == "escape" then
-            activeSession:playSound("UI_CANCEL")
+
             currentScene = "menu"
             menuSubScene = "main"
         elseif key == "space" or key == "return" then
-            activeSession:playSound("UI_SELECT")
+
             state = 2 -- Go to Select Crafter
             selectedCrafterIdx = 1
         end
@@ -426,15 +426,15 @@ function keypressedCraftingScene(key)
     elseif state == 2 then -- Select Crafter
         if key == "up" or key == "w" then
             selectedCrafterIdx = (selectedCrafterIdx - 2) % #activeSession.party + 1
-            activeSession:playSound("UI_HOVER")
+
         elseif key == "down" or key == "s" then
             selectedCrafterIdx = selectedCrafterIdx % #activeSession.party + 1
-            activeSession:playSound("UI_HOVER")
+
         elseif key == "escape" then
-            activeSession:playSound("UI_CANCEL")
+
             state = 1 -- Back to Select Discipline
         elseif key == "space" or key == "return" then
-            activeSession:playSound("UI_SELECT")
+
             crafter_battler = activeSession.party[selectedCrafterIdx]
             
             -- Prepare ingredients inventory list
@@ -451,11 +451,11 @@ function keypressedCraftingScene(key)
         
     elseif state == 3 then -- Select Ingredients
         if key == "escape" then
-            activeSession:playSound("UI_CANCEL")
+
             state = 2 -- Back to Select Crafter
             
         elseif key == "left" or key == "a" or key == "right" or key == "d" then
-            activeSession:playSound("UI_HOVER")
+
             if cursorIngredientSlot == 1 then
                 cursorIngredientSlot = 2
             else
@@ -464,7 +464,7 @@ function keypressedCraftingScene(key)
             
         elseif key == "up" or key == "w" then
             if #inventoryItems > 0 then
-                activeSession:playSound("UI_HOVER")
+
                 if cursorIngredientSlot == 1 then
                     selectedIngredient1Idx = (selectedIngredient1Idx - 2) % #inventoryItems + 1
                 else
@@ -474,7 +474,7 @@ function keypressedCraftingScene(key)
             
         elseif key == "down" or key == "s" then
             if #inventoryItems > 0 then
-                activeSession:playSound("UI_HOVER")
+
                 if cursorIngredientSlot == 1 then
                     selectedIngredient1Idx = selectedIngredient1Idx % #inventoryItems + 1
                 else
@@ -484,7 +484,7 @@ function keypressedCraftingScene(key)
             
         elseif key == "space" or key == "return" then
             if #inventoryItems > 0 then
-                activeSession:playSound("UI_SELECT")
+    
                 local scrollIdx = (cursorIngredientSlot == 1) and selectedIngredient1Idx or selectedIngredient2Idx
                 local selectedEntry = inventoryItems[scrollIdx]
                 
@@ -500,7 +500,7 @@ function keypressedCraftingScene(key)
                     else
                         -- Check we are not picking the same single inventory stack if qty is 1
                         if i1_item.id == i2_item.id and selectedEntry.qty < 2 then
-                            activeSession:playSound("UI_ERROR")
+
                             i2_item = nil
                         else
                             state = 4 -- Go to Confirm Craft
@@ -513,21 +513,21 @@ function keypressedCraftingScene(key)
         
     elseif state == 4 then -- Confirm Craft
         if key == "left" or key == "a" or key == "right" or key == "d" then
-            activeSession:playSound("UI_HOVER")
+
             confirmOptionIdx = (confirmOptionIdx == 1) and 2 or 1
             
         elseif key == "escape" then
-            activeSession:playSound("UI_CANCEL")
+
             state = 3 -- Back to Select Ingredients
             cursorIngredientSlot = 2 -- Select slot 2
             
         elseif key == "space" or key == "return" then
             if confirmOptionIdx == 2 then -- Back
-                activeSession:playSound("UI_CANCEL")
+    
                 state = 3
                 cursorIngredientSlot = 2
             else
-                activeSession:playSound("UI_SELECT")
+    
                 
                 -- Calculate outcome pool and result
                 local score, score_anomaly, penalty, isCrit = calculateYield()
@@ -554,7 +554,7 @@ function keypressedCraftingScene(key)
         
     elseif state == 6 then -- Result
         if key == "space" or key == "return" or key == "escape" then
-            activeSession:playSound("UI_SELECT")
+
             
             -- Re-evaluate inventory lists
             local disc = getDiscipline()
