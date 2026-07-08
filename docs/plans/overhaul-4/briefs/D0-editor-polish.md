@@ -9,6 +9,6 @@
 - [ ] Update field layouts to use vertical labels in all remaining editor tabs (matching the recent Terms tab improvements).
 - [ ] Ensure that Icons are positioned as the top leftmost element in all applicable data tabs.
 - [ ] Refactor image preview fields: remove the separate string input and `[...]` button. Make it so double-clicking the image preview directly opens the image selector.
-- [ ] Add a full-resolution (and animated, if applicable) sprite preview to the right side of the Image Selector modal.
+- [ ] Ensure the image selector modal itself provides an (animated, if applicable) preview of the currently selected sprite.
 
 **Gates:** G3.
