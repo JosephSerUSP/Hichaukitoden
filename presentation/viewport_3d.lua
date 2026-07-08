@@ -51,20 +51,27 @@ local wallQx, wallQy = 0, 0
 local npcSprites = {}
 
 local spriteImageCache = {}
-local function getEventSprite(ev)
-    if not ev or not ev.sprite then return nil end
+local function getEventSprite(ev, session)
+    if not ev then return nil end
+    -- Sprite precedence: the map event's own sprite, else the default sprite
+    -- of the common event it links to (template-style inheritance).
     local path = ev.sprite
+    if (not path or path == "") and ev.scriptId and session and session.loader and session.loader.commonEvents then
+        local ce = session.loader.commonEvents[tostring(ev.scriptId)]
+        path = ce and ce.sprite or nil
+    end
+    if not path or path == "" then return nil end
     if spriteImageCache[path] then
         return spriteImageCache[path]
     end
-    
+
     if love.filesystem.getInfo(path) then
         local img = love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
         spriteImageCache[path] = img
         return img
     end
-    
+
     return nil
 end
 
@@ -286,7 +293,7 @@ function viewport_3d.draw(session)
     -- Add coordinate-based events (from maps.json events list)
     if session.currentMapData and session.currentMapData.events then
         for _, ev in ipairs(session.currentMapData.events) do
-            local img = getEventSprite(ev)
+            local img = getEventSprite(ev, session)
             if img then
                 table.insert(spritesToDraw, {
                     x = ev.x,

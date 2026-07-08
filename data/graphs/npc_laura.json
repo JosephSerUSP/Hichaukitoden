@@ -8,12 +8,17 @@
     "root_router": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "questStatus:broken_blade:active", "target": "quest_blade_router" },
-        { "condition": "flag:laura_met", "target": "default_hub_text" }
+        {
+          "condition": "questStatus:broken_blade:active",
+          "target": "quest_blade_router"
+        },
+        {
+          "condition": "flag:laura_met",
+          "target": "default_hub_text"
+        }
       ],
       "next": "intro_text"
     },
-
     "intro_text": {
       "type": "TEXT",
       "speaker": "Laura",
@@ -23,9 +28,20 @@
     "intro_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "I need weapons.", "target": "shop_weapons", "setFlag": "laura_met" },
-        { "label": "You seem busy.", "target": "intro_busy_text" },
-        { "label": "Leave", "action": "close", "setFlag": "laura_met" }
+        {
+          "label": "I need weapons.",
+          "target": "shop_weapons",
+          "setFlag": "laura_met"
+        },
+        {
+          "label": "You seem busy.",
+          "target": "intro_busy_text"
+        },
+        {
+          "label": "Leave",
+          "action": "close",
+          "setFlag": "laura_met"
+        }
       ]
     },
     "intro_busy_text": {
@@ -37,12 +53,23 @@
     "intro_busy_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Understood.", "target": "shop_weapons", "setFlag": "laura_met" },
-        { "label": "Talk", "target": "talk_hub", "setFlag": "laura_met" },
-        { "label": "Leave", "action": "close", "setFlag": "laura_met" }
+        {
+          "label": "Understood.",
+          "target": "shop_weapons",
+          "setFlag": "laura_met"
+        },
+        {
+          "label": "Talk",
+          "target": "talk_hub",
+          "setFlag": "laura_met"
+        },
+        {
+          "label": "Leave",
+          "action": "close",
+          "setFlag": "laura_met"
+        }
       ]
     },
-
     "default_hub_text": {
       "type": "TEXT",
       "speaker": "Laura",
@@ -52,18 +79,26 @@
     "default_hub_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Shop Weapons", "target": "shop_weapons" },
-        { "label": "Talk", "target": "talk_hub" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Shop Weapons",
+          "target": "shop_weapons"
+        },
+        {
+          "label": "Talk",
+          "target": "talk_hub"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
     "shop_weapons": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "weapons_basic",
+      "shopId": 2,
       "next": "default_hub_choices"
     },
-
     "talk_hub": {
       "type": "TEXT",
       "speaker": "Laura",
@@ -73,10 +108,22 @@
     "talk_menu_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "About Alicia", "target": "talk_alicia" },
-        { "label": "About Smithing", "target": "talk_smithing" },
-        { "label": "Ask about Quest", "target": "quest_router" },
-        { "label": "That's all.", "target": "default_hub_choices" }
+        {
+          "label": "About Alicia",
+          "target": "talk_alicia"
+        },
+        {
+          "label": "About Smithing",
+          "target": "talk_smithing"
+        },
+        {
+          "label": "Ask about Quest",
+          "target": "quest_router"
+        },
+        {
+          "label": "That's all.",
+          "target": "default_hub_choices"
+        }
       ]
     },
     "talk_alicia": {
@@ -94,16 +141,27 @@
     "talk_buffer_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Ask about something else.", "target": "talk_hub" },
-        { "label": "I'm going.", "target": "default_hub_choices" }
+        {
+          "label": "Ask about something else.",
+          "target": "talk_hub"
+        },
+        {
+          "label": "I'm going.",
+          "target": "default_hub_choices"
+        }
       ]
     },
-
     "quest_router": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "questStatus:broken_blade:completed", "target": "quest_completed_text" },
-        { "condition": "questStatus:broken_blade:active", "target": "quest_active_text" }
+        {
+          "condition": "questStatus:broken_blade:completed",
+          "target": "quest_completed_text"
+        },
+        {
+          "condition": "questStatus:broken_blade:active",
+          "target": "quest_active_text"
+        }
       ],
       "next": "quest_offer_text"
     },
@@ -116,8 +174,14 @@
     "quest_offer_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "I'll look for it.", "target": "action_offer_quest" },
-        { "label": "Not my job.", "target": "talk_hub" }
+        {
+          "label": "I'll look for it.",
+          "target": "action_offer_quest"
+        },
+        {
+          "label": "Not my job.",
+          "target": "talk_hub"
+        }
       ]
     },
     "action_offer_quest": {
@@ -135,14 +199,17 @@
     },
     "quest_blade_router": {
       "type": "ROUTER",
-      "condition": "hasItem:shattered_blade",
+      "condition": "hasItem:26",
       "trueNode": "quest_turnin_text",
       "falseNode": "quest_active_choices"
     },
     "quest_active_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Still looking.", "target": "talk_hub" }
+        {
+          "label": "Still looking.",
+          "target": "talk_hub"
+        }
       ]
     },
     "quest_turnin_text": {
@@ -154,7 +221,10 @@
     "quest_turnin_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Hand it over.", "target": "action_complete_quest" }
+        {
+          "label": "Hand it over.",
+          "target": "action_complete_quest"
+        }
       ]
     },
     "action_complete_quest": {
@@ -162,7 +232,7 @@
       "action": "COMPLETE_QUEST",
       "questId": "broken_blade",
       "completeNode": "quest_completed_text",
-      "takeItem": "shattered_blade"
+      "takeItem": 26
     },
     "quest_completed_text": {
       "type": "TEXT",

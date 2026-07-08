@@ -450,6 +450,38 @@
             flex: 1;
         }
 
+        /* Compact label:input rows for short scalar fields */
+        .form-group.field-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .form-group.field-inline label {
+            flex: 0 0 170px;
+            margin-bottom: 0;
+        }
+
+        .form-group.field-inline .form-control {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .form-group.field-inline input[type="number"].form-control {
+            flex: 0 1 90px;
+        }
+
+        .form-row .form-group.field-inline label {
+            flex: 0 0 auto;
+        }
+
+        .field-help {
+            font-size: 9px;
+            color: var(--win-dark-shadow);
+            margin-left: 4px;
+        }
+
         /* --- STATUS BAR --- */
         .status-bar {
             background-color: var(--win-gray);
@@ -558,6 +590,18 @@
             background-color: #000080;
             color: white;
         }
+        /* Every dialog body gets the same inset as the dialog footer, so
+           content never sits flush against the window edge (B5 / feedback). */
+        .window-body {
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .field-help {
+            display: block;
+            font-size: 9px;
+            color: var(--win-dark-shadow);
+            margin-top: 1px;
+        }
         .dialog-footer {
             background-color: var(--win-gray);
             border-top: 1px solid var(--win-shadow);
@@ -606,6 +650,9 @@
                     <div class="dropdown-item" onclick="openDatabaseModal()">
                         <span class="icon-sprite icon-database"></span> Database Manager
                     </div>
+                    <div class="dropdown-item" onclick="openEngineModal()">
+                        ⚙️ Engine Editor
+                    </div>
                     <div class="dropdown-item" onclick="testPlay()">
                         <span class="icon-sprite icon-play"></span> Test Play
                     </div>
@@ -622,16 +669,17 @@
                 <span class="icon-sprite icon-reload"></span>
             </button>
             <div class="toolbar-separator"></div>
-            <button id="tool-map-btn" class="win98-btn active" onclick="switchMode('map')" title="Map Layer">
+            <button id="tool-map-btn" class="win98-btn" onclick="switchMode('map')" title="Map Layer">
                 <span class="icon-sprite icon-map"></span>
             </button>
-            <button id="tool-event-btn" class="win98-btn" onclick="switchMode('event')" title="Event Layer">
+            <button id="tool-event-btn" class="win98-btn active" onclick="switchMode('event')" title="Event Layer">
                 <span class="icon-sprite icon-event"></span>
             </button>
             <div class="toolbar-separator"></div>
             <button class="win98-btn" onclick="openDatabaseModal()" title="Database Manager">
                 <span class="icon-sprite icon-database"></span>
             </button>
+            <button class="win98-btn" onclick="openEngineModal()" title="Engine Editor">⚙️</button>
             <button class="win98-btn" style="color: #005500;" onclick="testPlay()" title="Test Play (F5)">
                 <span class="icon-sprite icon-play"></span>
             </button>
@@ -641,7 +689,7 @@
         <div class="workspace">
             <div class="sidebar inset-panel" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
                 <!-- 1. MAP PALETTE (Only active in Map mode) -->
-                <div id="map-palette-section">
+                <div id="map-palette-section" style="display: none;">
                     <div class="sidebar-title">Paint Brush</div>
                     <button id="brush-wall-btn" class="tool-btn active" onclick="setPaintTool('wall', this)">
                         <div class="tile-color-indicator" style="background-color: var(--win-shadow);"></div>
@@ -654,10 +702,10 @@
                 </div>
 
                 <!-- 2. EVENT PALETTE (Only active in Event mode) -->
-                <div id="event-palette-section" style="display: none;">
+                <div id="event-palette-section">
                     <div class="sidebar-title">Event Mode</div>
                     <p style="font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 0;">
-                        In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y).
+                        In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y). Right-click for more options.
                     </p>
                 </div>
 
@@ -677,7 +725,7 @@
 
         <!-- Status Bar -->
         <div class="status-bar">
-            <div class="status-field" id="status-mode" style="flex: 1;">Layer: Map</div>
+            <div class="status-field" id="status-mode" style="flex: 1;">Layer: Event</div>
             <div class="status-field" id="status-db" style="width: 140px;">Database: Connected</div>
             <button class="win98-btn" style="margin-left: auto; min-width: 80px; font-weight: bold; color: #005500;" onclick="testPlay()">
                 <span class="icon-sprite icon-play"></span> Test Play
@@ -703,10 +751,15 @@
                 <div class="db-sidebar-tabs inset-panel">
                     <button id="db-tab-actors" class="db-tab-btn active" onclick="setDbTab('actors')">Actors</button>
                     <button id="db-tab-items" class="db-tab-btn" onclick="setDbTab('items')">Items</button>
+                    <button id="db-tab-skills" class="db-tab-btn" onclick="setDbTab('skills')">Skills</button>
+                    <button id="db-tab-passives" class="db-tab-btn" onclick="setDbTab('passives')">Passives</button>
+                    <button id="db-tab-states" class="db-tab-btn" onclick="setDbTab('states')">States</button>
+                    <button id="db-tab-elements" class="db-tab-btn" onclick="setDbTab('elements')">Elements</button>
+                    <button id="db-tab-roles" class="db-tab-btn" onclick="setDbTab('roles')">Roles</button>
                     <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-commonEvents" class="db-tab-btn" onclick="setDbTab('commonEvents')">Common Events</button>
+                    <button id="db-tab-terms" class="db-tab-btn" onclick="setDbTab('terms')">Terms</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
-                    <button id="db-tab-battle" class="db-tab-btn" onclick="setDbTab('battle')">Battle Screen</button>
                 </div>
 
                 <!-- Database items list (middle column) -->
@@ -725,9 +778,41 @@
 
             <!-- Dialogue Controls -->
             <div class="dialog-footer">
-                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal()">OK</button>
+                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal(true)">OK</button>
                 <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ENGINE EDITOR MODAL --- -->
+    <div id="engine-modal" class="modal-overlay">
+        <div class="window outset-bevel db-modal-window">
+            <div class="title-bar">
+                <div class="title-bar-text">⚙️ Engine</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeEngineModal()">×</button>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; overflow: hidden; padding: 6px; gap: 6px;">
+                <div class="db-sidebar-tabs inset-panel" id="engine-tabs" style="width: 130px; flex-shrink: 0;">
+                    <button id="engine-tab-battleflow" class="db-tab-btn active" onclick="setEngineTab('battleflow')">Battle Flow</button>
+                    <button id="engine-tab-progression" class="db-tab-btn" onclick="setEngineTab('progression')">Progression</button>
+                    <button id="engine-tab-dungeon" class="db-tab-btn" onclick="setEngineTab('dungeon')">Map &amp; Dungeon</button>
+                    <button id="engine-tab-rendering" class="db-tab-btn" onclick="setEngineTab('rendering')">Rendering</button>
+                    <button id="engine-tab-effectTypes" class="db-tab-btn" onclick="setEngineTab('effectTypes')">Effect Types</button>
+                    <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
+                    <button id="engine-tab-metaKeys" class="db-tab-btn" onclick="setEngineTab('metaKeys')">Meta Keys</button>
+                    <button id="engine-tab-flows" class="db-tab-btn" onclick="setEngineTab('flows')">Flows</button>
+                </div>
+                <div id="engine-form-panel" class="db-form-panel inset-panel" style="flex: 1; overflow-y: auto;"></div>
+            </div>
+
+            <div class="dialog-footer">
+                <button class="win98-btn win98-btn-success" onclick="saveData(); closeEngineModal(true)">OK</button>
+                <button class="win98-btn" onclick="saveData()">Apply</button>
+                <button class="win98-btn" onclick="closeEngineModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -805,6 +890,19 @@
                             </select>
                         </fieldset>
 
+                        <!-- Minimap Marker (overrides linked common event default) -->
+                        <fieldset style="padding: 6px;">
+                            <legend>Minimap Marker</legend>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 10px;">
+                                <input type="checkbox" id="event-prop-color-enabled" />
+                                <label for="event-prop-color-enabled">Custom color</label>
+                                <input type="color" id="event-prop-color" style="width: 40px;" disabled />
+                            </div>
+                            <p style="font-size: 9px; color: var(--win-dark-shadow); margin: 4px 0 0;">
+                                Unchecked: uses the linked common event's default color.
+                            </p>
+                        </fieldset>
+
                         <!-- Logic Configuration -->
                         <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
                             <legend>Run Action Logic</legend>
@@ -819,6 +917,10 @@
                                 <input type="radio" id="event-logic-custom" name="event-logic-type" value="custom" onchange="toggleEventLogicType()" />
                                 <label for="event-logic-custom" style="font-size: 10px; font-weight: bold;">Custom Commands List</label>
                             </div>
+                            <p style="font-size: 9px; color: var(--win-dark-shadow); margin: 4px 0 0;">
+                                Link: this event <b>is</b> the common event — edits to it propagate here.
+                                To run one mid-script instead, add a "Call Common Event" command to a custom list.
+                            </p>
                         </fieldset>
                     </div>
 
@@ -862,6 +964,13 @@
                            <input type="text" id="prop-map-title" class="win98-input" />
                         </div>
                         <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Category:</label>
+                           <select id="prop-map-category" class="win98-select">
+                               <option value="town">Town</option>
+                               <option value="dungeon">Dungeon Floor</option>
+                           </select>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
                            <label>Generation Mode:</label>
                            <select id="prop-map-gen" class="win98-select" onchange="togglePropGenMode()">
                                <option value="Fixed">Fixed (Pre-designed layout)</option>
@@ -889,6 +998,14 @@
                            <label>Encounter Steps:</label>
                            <input type="number" id="prop-map-enc-steps" class="win98-input" min="0" />
                         </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Encounter Rate (0-1, blank = system default):</label>
+                           <input type="number" id="prop-map-enc-rate" class="win98-input" min="0" max="1" step="0.01" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 6px;">
+                           <input type="checkbox" id="prop-map-safe" />
+                           <label for="prop-map-safe" style="font-size: 10px;">Safe Map (no encounters, no MP drain)</label>
+                        </div>
                     </fieldset>
                     
                     <fieldset style="flex: 1; display: flex; flex-direction: column;">
@@ -909,40 +1026,62 @@
         </div>
     </div>
 
+
+    <!-- --- COMMAND SELECTOR MODAL --- -->
+    <div id="cmd-selector-modal" class="modal-overlay" style="z-index: 1210;">
+        <div class="window outset-bevel" style="width: 600px; max-width: 90vw;">
+            <div class="title-bar">
+                <div class="title-bar-text">Select Command</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeCmdSelectorModal()">×</button>
+                </div>
+            </div>
+            <div class="window-body" style="max-height: 70vh; overflow-y: auto;">
+                <div id="cmd-selector-categories" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <div class="dialog-footer" style="margin-top: 8px;">
+                <button class="win98-btn" onclick="closeCmdSelectorModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- --- COMMAND EDITOR DIALOG BOX --- -->
+    <!-- Registry-driven (SPEC A6): options in #cmd-select-type and the fields
+         in #cmd-fields-dynamic are generated from engine.json -> commands,
+         filtered to the host context (map/common/battle_phase) passed to
+         openAddCommandDialog/openEditCommandDialog. -->
     <div id="cmd-modal" class="modal-overlay" style="z-index: 1200;">
-        <div class="window outset-bevel" style="width: 400px;">
+        <div class="window outset-bevel" style="width: 420px;">
             <div class="title-bar">
                 <div class="title-bar-text">Command Editor</div>
                 <div class="title-bar-controls">
                     <button class="win-btn-small outset-bevel" onclick="closeCmdDialog()">×</button>
                 </div>
             </div>
-            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto;">
                 <div class="field-row-stacked">
                     <label>Command Type:</label>
                     <select id="cmd-select-type" class="win98-select" onchange="toggleCmdTypeFields()">
-                        <option value="TEXT">Show Text</option>
-                        <option value="RECOVER_PARTY">Recover Party</option>
-                        <option value="DESCEND">Descend Floor</option>
-                        <option value="BATTLE">Start Battle</option>
-                        <option value="GIVE_ITEM">Give Random Item</option>
-                        <option value="CALL_COMMON_EVENT">Call Common Event</option>
+                        <!-- Populated dynamically from the registry, filtered by host context -->
                     </select>
-                </div>
-                
-                <div id="cmd-fields-text" class="field-row-stacked">
-                    <label>Text Content:</label>
-                    <textarea id="cmd-input-text" class="win98-input" style="height: 60px; font-family: monospace; font-size: 11px;"></textarea>
+                    <p id="cmd-type-description" style="font-size: 10px; color: var(--win-dark-shadow); margin: 4px 0 0;"></p>
                 </div>
 
-                <div id="cmd-fields-common-event" class="field-row-stacked" style="display: none;">
-                    <label>Select Common Event:</label>
-                    <select id="cmd-select-common-event" class="win98-select">
-                        <!-- Populated dynamically -->
-                    </select>
+                <div id="cmd-fields-dynamic" style="display: flex; flex-direction: column; gap: 8px;"></div>
+
+                <div id="cmd-fields-nested-hint" class="form-group" style="display: none;">
+                    <p style="font-size: 10px; color: var(--win-dark-shadow); margin: 0;">
+                        Branches are edited inline in the command list after adding this — expand it there to add options/commands, like in RPG Maker.
+                    </p>
                 </div>
-                
+
+                <div class="field-row-stacked">
+                    <label>Comment (optional):</label>
+                    <input type="text" id="cmd-input-comment" class="win98-input" placeholder="Shown as a note beneath this command in the list" />
+                </div>
+
                 <div class="dialog-footer">
                     <button class="win98-btn win98-btn-success" onclick="applyCmdDialog()">OK</button>
                     <button class="win98-btn" onclick="closeCmdDialog()">Cancel</button>
@@ -951,24 +1090,33 @@
         </div>
     </div>
 
-    <!-- --- CUSTOM SCRIPT EDITOR MODAL --- -->
-    <div id="custom-script-modal" class="modal-overlay" style="z-index: 1150;">
-        <div class="window outset-bevel" style="width: 440px;">
+    <!-- Small floating popover for formulaHelp/scriptingHelp (SPEC S5/S6),
+         opened by the ⓘ button next to formula/script param fields. -->
+    <div id="cmd-help-popover" style="display: none; position: fixed; z-index: 1400; width: 320px; max-height: 320px; overflow-y: auto; background: var(--win-gray); border: 1px solid var(--win-dark-shadow); box-shadow: 2px 2px 6px rgba(0,0,0,0.4); padding: 6px; font-size: 10px;"></div>
+
+    <datalist id="cmd-battlerref-suggestions">
+        <option value="a"></option>
+        <option value="b"></option>
+        <option value="target"></option>
+        <option value="enemy"></option>
+        <option value="ally"></option>
+        <option value="summoner"></option>
+    </datalist>
+
+    <!-- --- DAMAGE POPUP SETTINGS MODAL --- -->
+    <div id="damage-popup-modal" class="modal-overlay" style="z-index: 1150;">
+        <div class="window outset-bevel" style="width: 420px;">
             <div class="title-bar">
-                <div class="title-bar-text">Edit Custom Script Commands</div>
+                <div class="title-bar-text">Damage Popup Settings</div>
                 <div class="title-bar-controls">
-                    <button class="win-btn-small outset-bevel" onclick="closeCustomScriptModal()">×</button>
+                    <button class="win-btn-small outset-bevel" onclick="closeDamagePopupModal()">×</button>
                 </div>
             </div>
             <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; padding: 4px;" id="custom-script-commands-list"></div>
-                <div style="display: flex; gap: 4px; margin-top: 6px;">
-                    <button class="win98-btn" onclick="addCustomScriptCommand()" style="font-size: 10px;">Add Command</button>
-                    <button class="win98-btn" onclick="editCustomScriptCommand()" style="font-size: 10px;">Edit</button>
-                    <button class="win98-btn" onclick="deleteCustomScriptCommand()" style="font-size: 10px;">Delete</button>
-                </div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="closeCustomScriptModal()">OK</button>
+                <div id="damage-popup-form" style="max-height: 360px; overflow-y: auto;"></div>
+                <div class="dialog-footer">
+                    <button class="win98-btn win98-btn-success" onclick="closeDamagePopupModal(true)">OK</button>
+                    <button class="win98-btn" onclick="closeDamagePopupModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1055,1730 +1203,39 @@
         </div>
     </div>
 
-    <script>
-        const API_URL = 'http://127.0.0.1:8080';
-        let dbPayload = {};
-        let isDirty = false;
-
-        function setDirty(dirty) {
-            isDirty = dirty;
-            const saveBtns = [
-                document.getElementById('tool-save-btn'),
-                document.getElementById('status-save-btn'),
-                document.getElementById('db-apply-btn')
-            ];
-            saveBtns.forEach(btn => {
-                if (btn) btn.disabled = !dirty;
-            });
-        }
-        
-        let editingMode = 'map'; // 'map' or 'event'
-        let activePaintTool = 'wall';
-        let currentMapIndex = 0;
-        let isMouseDown = false;
-
-        let contextMenuMapIdx = null;
-
-        function showMapContextMenu(e, mapIdx) {
-            e.preventDefault();
-            e.stopPropagation();
-            contextMenuMapIdx = mapIdx;
-            
-            currentMapIndex = mapIdx;
-            loadActiveMap();
-            
-            const menu = document.getElementById('map-context-menu');
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
-            menu.style.display = 'block';
-        }
-
-        window.addEventListener('click', () => {
-            const menu = document.getElementById('map-context-menu');
-            if (menu) menu.style.display = 'none';
-        });
-
-        function handleMapContextMenuAction(action) {
-            if (contextMenuMapIdx === null) return;
-            currentMapIndex = contextMenuMapIdx;
-            
-            if (action === 'properties') {
-                openMapProperties();
-            } else if (action === 'new') {
-                createNewMap();
-            } else if (action === 'delete') {
-                deleteMap();
-            }
-        }
-
-        // Coordinates selected for Event edit
-        let selectedEventX = 0;
-        let selectedEventY = 0;
-
-        let activeDbTab = 'actors';
-        let activeDbItemId = '';
-
-        window.addEventListener('mousedown', () => { isMouseDown = true; });
-        window.addEventListener('mouseup', () => { isMouseDown = false; });
-
-        async function fetchDatabase() {
-            try {
-                const res = await fetch(`${API_URL}/data`);
-                if (!res.ok) throw new Error('Database server offline');
-                dbPayload = await res.json();
-                
-                initMapEditor();
-                initDatabaseEditor();
-                initEventModalTemplates();
-                initSystemTab();
-                
-                document.getElementById('status-db').textContent = 'Database: Connected';
-                setDirty(false);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('status-db').textContent = 'Database: Offline';
-                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the game is running.');
-            }
-        }
-
-        function showToast(message) {
-            document.getElementById('toast-text').textContent = message;
-            document.getElementById('toast-modal').classList.add('active');
-        }
-
-        function closeToast() {
-            document.getElementById('toast-modal').classList.remove('active');
-        }
-
-        async function saveData() {
-            try {
-                const res = await fetch(`${API_URL}/save`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dbPayload)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    setDirty(false);
-                } else {
-                    showToast('Failed to save data: ' + result.message);
-                }
-            } catch (err) {
-                showToast('Connection failed: server offline');
-            }
-        }
-
-        async function testPlay() {
-            if (isDirty && confirm('Save database changes before starting Test Play?')) {
-                await saveData();
-            }
-            try {
-                const res = await fetch(`${API_URL}/play`, { method: 'POST' });
-                const result = await res.json();
-                if (!result.success) {
-                    showToast('Failed to launch game: ' + result.message);
-                }
-            } catch (err) {
-                showToast('Failed to start Test Play: ' + err.message);
-            }
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'F5') {
-                e.preventDefault();
-                testPlay();
-            }
-        });
-
-        // --- LAYER / EDITING MODE LOGIC ---
-        function switchMode(mode) {
-            editingMode = mode;
-            document.getElementById('tool-map-btn').classList.remove('active');
-            document.getElementById('tool-event-btn').classList.remove('active');
-            
-            document.getElementById(`tool-${mode}-btn`).classList.add('active');
-            document.getElementById('status-mode').textContent = `Layer: ${mode === 'map' ? 'Map Layer' : 'Event Layer'}`;
-
-            if (mode === 'map') {
-                document.getElementById('map-palette-section').style.display = 'block';
-                document.getElementById('event-palette-section').style.display = 'none';
-            } else {
-                document.getElementById('map-palette-section').style.display = 'none';
-                document.getElementById('event-palette-section').style.display = 'block';
-            }
-            
-            // Re-render the map cells to update active visual style representation
-            renderGridCells();
-        }
-
-        // --- MAP EDITOR LOGIC ---
-        function initMapEditor() {
-            renderMapTree();
-            currentMapIndex = 0;
-            loadActiveMap();
-        }
-
-        function renderMapTree() {
-            const container = document.getElementById('map-tree');
-            container.innerHTML = '';
-            
-            const rootNode = document.createElement('div');
-            rootNode.className = 'tree-node';
-            
-            const rootHeader = document.createElement('div');
-            rootHeader.className = 'tree-node-header';
-            rootHeader.innerHTML = '📁 Hichaukitoden';
-            rootNode.appendChild(rootHeader);
-            
-            const rootChildren = document.createElement('div');
-            rootChildren.style.marginLeft = '12px';
-            rootNode.appendChild(rootChildren);
-            
-            const townFolder = document.createElement('div');
-            townFolder.className = 'tree-node';
-            
-            const townHeader = document.createElement('div');
-            townHeader.className = 'tree-node-header';
-            townHeader.innerHTML = '📁 Town';
-            townFolder.appendChild(townHeader);
-            
-            const townChildren = document.createElement('div');
-            townChildren.style.marginLeft = '12px';
-            townFolder.appendChild(townChildren);
-            
-            if (dbPayload.maps[0]) {
-                const mapItem = document.createElement('div');
-                mapItem.className = 'tree-node-header map-tree-item';
-                mapItem.dataset.idx = 0;
-                mapItem.innerHTML = '🟩 ' + (dbPayload.maps[0].title || 'Town');
-                mapItem.onclick = () => {
-                    currentMapIndex = 0;
-                    loadActiveMap();
-                };
-                mapItem.oncontextmenu = (e) => {
-                    showMapContextMenu(e, 0);
-                };
-                townChildren.appendChild(mapItem);
-            }
-            
-            rootChildren.appendChild(townFolder);
-            
-            const dungeonFolder = document.createElement('div');
-            dungeonFolder.className = 'tree-node';
-            
-            const dungeonHeader = document.createElement('div');
-            dungeonHeader.className = 'tree-node-header';
-            dungeonHeader.innerHTML = '📁 Dungeon Floors';
-            
-            const dungeonChildren = document.createElement('div');
-            dungeonChildren.style.marginLeft = '12px';
-            dungeonFolder.appendChild(dungeonHeader);
-            dungeonFolder.appendChild(dungeonChildren);
-            
-            for (let i = 1; i < dbPayload.maps.length; i++) {
-                const map = dbPayload.maps[i];
-                const mapItem = document.createElement('div');
-                mapItem.className = 'tree-node-header map-tree-item';
-                mapItem.dataset.idx = i;
-                mapItem.innerHTML = '🟩 ' + (map.title || `Floor ${i}`);
-                mapItem.onclick = () => {
-                    currentMapIndex = i;
-                    loadActiveMap();
-                };
-                mapItem.oncontextmenu = (e) => {
-                    showMapContextMenu(e, i);
-                };
-                dungeonChildren.appendChild(mapItem);
-            }
-            
-            rootChildren.appendChild(dungeonFolder);
-            container.appendChild(rootNode);
-        }
-
-        function loadActiveMap() {
-            renderGridCells();
-            document.querySelectorAll('.map-tree-item').forEach(el => {
-                if (parseInt(el.dataset.idx) === currentMapIndex) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-        }
-
-        const TILE_SIZE = 24;
-        let mapCanvas = null;
-        let ctx = null;
-        let selectedEvent = null;
-        let dragOffset = { x: 0, y: 0 };
-        let mouseX = 0, mouseY = 0;
-        let eventCopyBuffer = null;
-        const imageCache = {};
-
-        function getCachedImage(src) {
-            if (imageCache[src]) {
-                return imageCache[src];
-            }
-            const img = new Image();
-            img.src = '/' + src;
-            img.onload = () => {
-                renderGridCells();
-            };
-            imageCache[src] = img;
-            return img;
-        }
-
-        function loadActiveMap() {
-            // Initialize canvas event listeners once canvas is loaded
-            const canvas = document.getElementById('map-canvas');
-            if (canvas && !mapCanvas) {
-                mapCanvas = canvas;
-                ctx = canvas.getContext('2d');
-                initCanvasEvents();
-            }
-            renderGridCells();
-            document.querySelectorAll('.map-tree-item').forEach(el => {
-                if (parseInt(el.dataset.idx) === currentMapIndex) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
-            });
-        }
-
-        function renderGridCells() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
-            
-            const canvas = document.getElementById('map-canvas');
-            if (!canvas) return;
-            ctx = canvas.getContext('2d');
-            
-            const isProcedural = !map.layout || map.layout.length === 0;
-            const height = isProcedural ? 21 : map.layout.length;
-            const width = isProcedural ? 21 : map.layout[0].length;
-            
-            const targetW = width * TILE_SIZE;
-            const targetH = height * TILE_SIZE;
-            
-            if (canvas.width !== targetW || canvas.height !== targetH) {
-                canvas.width = targetW;
-                canvas.height = targetH;
-            }
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 1. Draw tiles (wall or floor)
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    let tile = '#';
-                    if (isProcedural) {
-                        tile = (x === 0 || y === 0 || x === width - 1 || y === height - 1) ? '#' : '.';
-                    } else {
-                        tile = map.layout[y][x];
-                    }
-                    
-                    if (tile === '#') {
-                        ctx.fillStyle = '#808080'; // Wall
-                    } else {
-                        ctx.fillStyle = '#ffffff'; // Floor
-                    }
-                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                    
-                    // Grid borders
-                    ctx.strokeStyle = '#e0e0e0';
-                    ctx.lineWidth = 0.5;
-                    ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                }
-            }
-            
-            // 2. Draw Events
-            (map.events || []).forEach(ev => {
-                if (ev.x === undefined || ev.y === undefined) return;
-                const ex = ev.x;
-                const ey = ev.y;
-                
-                if (selectedEvent === ev) {
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(ex * TILE_SIZE, ey * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                } else {
-                    ctx.strokeStyle = '#ef4444';
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(ex * TILE_SIZE + 1.5, ey * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
-                }
-                
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
-                ctx.fillRect(ex * TILE_SIZE + 1.5, ey * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
-                
-                if (ev.sprite) {
-                    const img = getCachedImage(ev.sprite);
-                    if (img && img.complete) {
-                        ctx.drawImage(img, ex * TILE_SIZE + 2, ey * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-                    } else {
-                        ctx.fillStyle = '#ef4444';
-                        ctx.font = 'bold 10px sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('E', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
-                    }
-                } else {
-                    ctx.fillStyle = '#ef4444';
-                    ctx.font = 'bold 10px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('?', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
-                }
-            });
-            
-            // 3. Draw Player spawn indicator
-            const isSpawn = dbPayload.system && dbPayload.system.spawn &&
-                            currentMapIndex === 0;
-            if (isSpawn) {
-                const sx = parseInt(dbPayload.system.spawn.x);
-                const sy = parseInt(dbPayload.system.spawn.y);
-                
-                ctx.fillStyle = 'rgba(0, 128, 0, 0.25)';
-                ctx.fillRect(sx * TILE_SIZE, sy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                ctx.strokeStyle = '#008000';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(sx * TILE_SIZE + 1, sy * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-                
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('👤', sx * TILE_SIZE + TILE_SIZE / 2, sy * TILE_SIZE + TILE_SIZE / 2);
-            }
-        }
-
-        function initCanvasEvents() {
-            const canvas = document.getElementById('map-canvas');
-            if (!canvas) return;
-            
-            canvas.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-            });
-            
-            canvas.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-                
-                const map = dbPayload.maps[currentMapIndex];
-                if (!map) return;
-                
-                if (editingMode === 'map') {
-                    if (e.button === 0) {
-                        isMouseDown = true;
-                        paintCellAt(x, y);
-                    }
-                } else {
-                    if (e.button === 2) {
-                        setPlayerStartPosition(x, y);
-                    } else if (e.button === 0) {
-                        const clickedEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
-                        if (clickedEvent) {
-                            selectedEvent = clickedEvent;
-                            isMouseDown = true;
-                            renderGridCells();
-                        } else {
-                            selectedEvent = null;
-                            renderGridCells();
-                        }
-                    }
-                }
-            });
-            
-            canvas.addEventListener('mousemove', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-                
-                const map = dbPayload.maps[currentMapIndex];
-                if (!map) return;
-                
-                const isProcedural = !map.layout || map.layout.length === 0;
-                const width = isProcedural ? 21 : map.layout[0].length;
-                const height = isProcedural ? 21 : map.layout.length;
-                if (x < 0 || x >= width || y < 0 || y >= height) return;
-                
-                if (editingMode === 'map' && isMouseDown) {
-                    paintCellAt(x, y);
-                } else if (editingMode === 'event' && isMouseDown && selectedEvent) {
-                    if (selectedEvent.x !== x || selectedEvent.y !== y) {
-                        const occupied = (map.events || []).find(ev => ev !== selectedEvent && ev.x === x && ev.y === y);
-                        if (!occupied) {
-                            selectedEvent.x = x;
-                            selectedEvent.y = y;
-                            setDirty(true);
-                            renderGridCells();
-                        }
-                    }
-                }
-            });
-            
-            canvas.addEventListener('dblclick', (e) => {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-                
-                if (editingMode === 'event') {
-                    openEventModal(x, y);
-                }
-            });
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (editingMode === 'event' && selectedEvent) {
-                if (e.ctrlKey && e.key === 'c') {
-                    eventCopyBuffer = JSON.stringify(selectedEvent);
-                }
-            }
-            if (editingMode === 'event' && eventCopyBuffer) {
-                if (e.ctrlKey && e.key === 'v') {
-                    const canvas = document.getElementById('map-canvas');
-                    if (!canvas) return;
-                    const rect = canvas.getBoundingClientRect();
-                    const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
-                    const y = Math.floor((mouseY - rect.top) / TILE_SIZE);
-                    
-                    const map = dbPayload.maps[currentMapIndex];
-                    if (!map || x < 0 || x >= map.layout[0].length || y < 0 || y >= map.layout.length) return;
-                    
-                    const occupied = (map.events || []).find(ev => ev.x === x && ev.y === y);
-                    if (!occupied) {
-                        const copiedObj = JSON.parse(eventCopyBuffer);
-                        let maxId = 0;
-                        (map.events || []).forEach(ev => {
-                            if (ev.id > maxId) maxId = ev.id;
-                        });
-                        copiedObj.id = maxId + 1;
-                        copiedObj.x = x;
-                        copiedObj.y = y;
-                        
-                        map.events = map.events || [];
-                        map.events.push(copiedObj);
-                        selectedEvent = copiedObj;
-                        setDirty(true);
-                        renderGridCells();
-                    }
-                }
-            }
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function paintCellAt(x, y) {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map || !map.layout[y]) return;
-            
-            let tileChar = activePaintTool === 'floor' ? '.' : '#';
-            const line = map.layout[y];
-            const updatedLine = line.substring(0, x) + tileChar + line.substring(x + 1);
-            map.layout[y] = updatedLine;
-            setDirty(true);
-            renderGridCells();
-        }
-
-        function setPlayerStartPosition(x, y) {
-            if (!dbPayload.system) dbPayload.system = {};
-            if (!dbPayload.system.spawn) dbPayload.system.spawn = {};
-            
-            dbPayload.system.spawn.x = x;
-            dbPayload.system.spawn.y = y;
-            
-            setDirty(true);
-            renderGridCells();
-        }
-
-        function setPaintTool(toolName, btn) {
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activePaintTool = toolName;
-        }
-
-        // --- MAP PROPERTIES & EVENTS CONTROLLERS ---
-        function openMapProperties() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
-            
-            document.getElementById('prop-map-title').value = map.title || map.name || '';
-            document.getElementById('prop-map-gen').value = map.generation || 'Fixed';
-            document.getElementById('prop-map-width').value = map.width || (map.layout ? map.layout[0].length : 15);
-            document.getElementById('prop-map-height').value = map.height || (map.layout ? map.layout.length : 15);
-            document.getElementById('prop-map-bgm').value = map.bgm || '';
-            document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
-            
-            renderEncountersList(map.encounters || []);
-            document.getElementById('map-properties-modal').classList.add('active');
-        }
-
-        function closeMapPropertiesModal() {
-            document.getElementById('map-properties-modal').classList.remove('active');
-        }
-
-        function togglePropGenMode() {}
-
-        function renderEncountersList(encounters) {
-            const list = document.getElementById('prop-enc-list');
-            list.innerHTML = '';
-            encounters.forEach((enc, idx) => {
-                const item = document.createElement('div');
-                item.style.fontSize = '10px';
-                item.style.padding = '2px 4px';
-                item.style.cursor = 'pointer';
-                item.textContent = `Troop: ${enc.troopId || enc.id} (Weight: ${enc.weight || 10})`;
-                item.onclick = () => {
-                    document.querySelectorAll('#prop-enc-list > div').forEach(d => d.style.background = '');
-                    item.style.background = 'var(--win-blue)';
-                    item.style.color = '#fff';
-                    list.dataset.selectedIdx = idx;
-                };
-                list.appendChild(item);
-            });
-        }
-
-        function addEncounterToMap() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
-            const troopId = prompt("Enter Troop/Monster ID (numerical ID):", "1");
-            if (troopId !== null) {
-                const weight = parseInt(prompt("Enter Spawn Weight (probability weight):", "10")) || 10;
-                map.encounters = map.encounters || [];
-                map.encounters.push({ troopId: parseInt(troopId) || 1, weight: weight });
-                renderEncountersList(map.encounters);
-            }
-        }
-
-        function removeEncounterFromMap() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
-            const list = document.getElementById('prop-enc-list');
-            const idx = parseInt(list.dataset.selectedIdx);
-            if (!isNaN(idx) && map.encounters && map.encounters[idx]) {
-                map.encounters.splice(idx, 1);
-                delete list.dataset.selectedIdx;
-                renderEncountersList(map.encounters);
-            }
-        }
-
-        function saveMapProperties() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map) return;
-            
-            const newTitle = document.getElementById('prop-map-title').value;
-            const newGen = document.getElementById('prop-map-gen').value;
-            const newW = parseInt(document.getElementById('prop-map-width').value) || 15;
-            const newH = parseInt(document.getElementById('prop-map-height').value) || 15;
-            const newBgm = document.getElementById('prop-map-bgm').value;
-            const newSteps = parseInt(document.getElementById('prop-map-enc-steps').value) || 0;
-            
-            map.title = newTitle;
-            map.generation = newGen;
-            map.bgm = newBgm;
-            map.encounterSteps = newSteps;
-            
-            if (map.layout) {
-                const currentH = map.layout.length;
-                const currentW = map.layout[0].length;
-                
-                if (newH !== currentH || newW !== currentW) {
-                    if (newH > currentH) {
-                        for (let y = currentH; y < newH; y++) {
-                            map.layout.push(".".repeat(newW));
-                        }
-                    } else if (newH < currentH) {
-                        map.layout = map.layout.slice(0, newH);
-                    }
-                    
-                    for (let y = 0; y < map.layout.length; y++) {
-                        const row = map.layout[y];
-                        if (row.length < newW) {
-                            map.layout[y] = row + ".".repeat(newW - row.length);
-                        } else if (row.length > newW) {
-                            map.layout[y] = row.substring(0, newW);
-                        }
-                    }
-                }
-            }
-            
-            closeMapPropertiesModal();
-            renderMapTree();
-            renderGridCells();
-            setDirty(true);
-        }
-
-        function createNewMap() {
-            let maxId = 0;
-            dbPayload.maps.forEach(m => {
-                if (m.id && m.id > maxId) maxId = m.id;
-            });
-            
-            const newId = maxId + 1;
-            const newMap = {
-                id: newId,
-                title: `New Floor ${newId}`,
-                generation: 'Fixed',
-                layout: [
-                    "###############",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "#.............#",
-                    "###############"
-                ],
-                bgm: "assets/midi/dungeon.mid",
-                encounterSteps: 25,
-                encounters: [],
-                events: []
-            };
-            
-            dbPayload.maps.push(newMap);
-            currentMapIndex = dbPayload.maps.length - 1;
-            renderMapTree();
-            loadActiveMap();
-            setDirty(true);
-        }
-
-        function deleteMap() {
-            if (currentMapIndex === 0) {
-                alert("Cannot delete the starting Town map.");
-                return;
-            }
-            if (confirm(`Are you sure you want to delete "${dbPayload.maps[currentMapIndex].title}"?`)) {
-                dbPayload.maps.splice(currentMapIndex, 1);
-                currentMapIndex = 0;
-                renderMapTree();
-                loadActiveMap();
-                setDirty(true);
-            }
-        }
-
-        function openAssetPickerForBgm() {
-            openAssetPicker('midi', (path) => {
-                document.getElementById('prop-map-bgm').value = path;
-            });
-        }
-
-        // --- ASSET PICKER IMPLEMENTATION ---
-        let activeAssetCallback = null;
-        function openAssetPicker(defaultDir, callback) {
-            activeAssetCallback = callback;
-            document.getElementById('asset-picker-selected').value = '';
-            
-            fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
-                .then(r => r.json())
-                .then(data => {
-                    const dirSelect = document.getElementById('asset-picker-dir');
-                    dirSelect.innerHTML = '';
-                    data.directories.forEach(d => {
-                        const opt = document.createElement('option');
-                        opt.value = d;
-                        opt.textContent = d;
-                        if (d === defaultDir) opt.selected = true;
-                        dirSelect.appendChild(opt);
-                    });
-                    
-                    renderAssetPickerFiles(data.files);
-                    document.getElementById('asset-picker-modal').classList.add('active');
-                });
-        }
-
-        function loadAssetPickerFiles() {
-            const dir = document.getElementById('asset-picker-dir').value;
-            fetch(`/api/assets?dir=${encodeURIComponent(dir)}`)
-                .then(r => r.json())
-                .then(data => {
-                    renderAssetPickerFiles(data.files);
-                });
-        }
-
-        function renderAssetPickerFiles(files) {
-            const grid = document.getElementById('asset-picker-grid');
-            grid.innerHTML = '';
-            
-            files.forEach(f => {
-                const card = document.createElement('div');
-                card.style.border = '1px solid #c0c0c0';
-                card.style.padding = '4px';
-                card.style.cursor = 'pointer';
-                card.style.display = 'flex';
-                card.style.flexDirection = 'column';
-                card.style.alignItems = 'center';
-                card.style.justifyContent = 'center';
-                card.style.background = '#f0f0f0';
-                card.style.fontSize = '9px';
-                card.style.textAlign = 'center';
-                card.style.height = '64px';
-                card.style.boxSizing = 'border-box';
-                
-                const img = document.createElement('img');
-                img.src = '/' + f;
-                img.style.maxHeight = '32px';
-                img.style.maxWidth = '100%';
-                img.style.display = 'block';
-                img.style.marginBottom = '2px';
-                card.appendChild(img);
-                
-                const name = document.createElement('div');
-                name.textContent = f.split('/').pop();
-                name.style.overflow = 'hidden';
-                name.style.textOverflow = 'ellipsis';
-                name.style.whiteSpace = 'nowrap';
-                name.style.width = '100%';
-                card.appendChild(name);
-                
-                card.onclick = () => {
-                    document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
-                    card.style.border = '2px solid var(--win-blue)';
-                    document.getElementById('asset-picker-selected').value = f;
-                };
-                
-                grid.appendChild(card);
-            });
-        }
-
-        function applyAssetSelection() {
-            const path = document.getElementById('asset-picker-selected').value;
-            if (!path) {
-                alert('Please select an asset file.');
-                return;
-            }
-            closeAssetPicker();
-            if (activeAssetCallback) activeAssetCallback(path);
-        }
-
-        function closeAssetPicker() {
-            document.getElementById('asset-picker-modal').classList.remove('active');
-        }
-
-        // --- EVENT CONTROLLERS ---
-        let activeEventLocalScript = null;
-
-        function openEventModal(x, y) {
-            selectedEventX = x;
-            selectedEventY = y;
-            
-            document.getElementById('event-coords-info').textContent = `Coords: (${x}, ${y})`;
-            
-            // Populate common events dropdown
-            const commonSelect = document.getElementById('event-prop-script-id');
-            commonSelect.innerHTML = '';
-            Object.keys(dbPayload.commonEvents || {}).forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k;
-                opt.textContent = `${k.padStart(4, '0')}: ${dbPayload.commonEvents[k].name}`;
-                commonSelect.appendChild(opt);
-            });
-            
-            commonSelect.onchange = () => {
-                toggleEventLogicType();
-            };
-            
-            const map = dbPayload.maps[currentMapIndex];
-            const eventData = (map.events || []).find(e => e.x === x && e.y === y);
-            
-            if (eventData) {
-                document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(eventData.id).padStart(4, '0')}`;
-                document.getElementById('event-prop-name').value = eventData.name || `EV${String(eventData.id).padStart(3, '0')}`;
-                document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
-                document.getElementById('event-prop-transparent').checked = !!eventData.transparent;
-                document.getElementById('event-prop-priority').value = eventData.priority || 'same';
-                document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
-                
-                updateEventGraphicPreview(eventData.sprite);
-                activeEventLocalScript = eventData.script ? [...eventData.script] : [];
-                
-                if (eventData.scriptId) {
-                    document.getElementById('event-logic-common').checked = true;
-                    document.getElementById('event-prop-script-id').value = eventData.scriptId;
-                } else {
-                    document.getElementById('event-logic-custom').checked = true;
-                }
-            } else {
-                let maxId = 0;
-                (map.events || []).forEach(e => { maxId = Math.max(maxId, e.id || 0); });
-                const nextId = maxId + 1;
-                
-                document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(nextId).padStart(4, '0')}`;
-                document.getElementById('event-prop-name').value = `EV${String(nextId).padStart(3, '0')}`;
-                document.getElementById('event-prop-trigger').value = 'interact';
-                document.getElementById('event-prop-transparent').checked = false;
-                document.getElementById('event-prop-priority').value = 'same';
-                document.getElementById('event-prop-spawn').value = 'Fixed';
-                
-                updateEventGraphicPreview('');
-                activeEventLocalScript = [];
-                document.getElementById('event-logic-common').checked = true;
-            }
-            
-            toggleEventLogicType();
-            document.getElementById('event-modal').classList.add('active');
-        }
-
-        function updateEventGraphicPreview(spritePath) {
-            const img = document.getElementById('event-graphic-img');
-            const none = document.getElementById('event-graphic-none');
-            window.activeEventSpritePath = spritePath || '';
-            
-            if (spritePath) {
-                img.src = '/' + spritePath;
-                img.style.display = 'block';
-                none.style.display = 'none';
-            } else {
-                img.style.display = 'none';
-                none.style.display = 'block';
-            }
-        }
-
-        function openAssetPickerForEventSprite() {
-            openAssetPicker('sprites', (filepath) => {
-                filepath = filepath.replace(/\\/g, '/');
-                updateEventGraphicPreview(filepath);
-            });
-        }
-
-        function toggleEventLogicType() {
-            const isCommon = document.getElementById('event-logic-common').checked;
-            const commonSelect = document.getElementById('event-prop-script-id');
-            
-            commonSelect.disabled = !isCommon;
-            
-            if (isCommon) {
-                const ceId = commonSelect.value;
-                const ce = dbPayload.commonEvents && dbPayload.commonEvents[ceId];
-                renderEventContentsList(ce ? ce.commands : [], true);
-            } else {
-                renderEventContentsList(activeEventLocalScript, false);
-            }
-        }
-
-        function renderEventContentsList(commands, readOnly) {
-            const list = document.getElementById('event-contents-list');
-            list.innerHTML = '';
-            
-            if (!commands || commands.length === 0) {
-                const line = document.createElement('div');
-                line.style.padding = '2px';
-                line.style.color = '#808080';
-                line.innerHTML = '@&gt;';
-                if (!readOnly) {
-                    line.style.cursor = 'pointer';
-                    line.onclick = () => openCommandModalForAdd();
-                }
-                list.appendChild(line);
-                return;
-            }
-            
-            commands.forEach((cmd, idx) => {
-                const line = document.createElement('div');
-                line.style.padding = '2px';
-                line.style.display = 'flex';
-                line.style.alignItems = 'center';
-                
-                let text = '';
-                if (cmd.type === 'TEXT') {
-                    text = `@&gt;Text: ${cmd.text}`;
-                } else if (cmd.type === 'RECOVER_PARTY') {
-                    text = `@&gt;Recover Party`;
-                } else if (cmd.type === 'DESCEND') {
-                    text = `@&gt;Descend Floor`;
-                } else if (cmd.type === 'BATTLE') {
-                    text = `@&gt;Start Battle`;
-                } else if (cmd.type === 'GIVE_ITEM') {
-                    text = `@&gt;Give Random Item`;
-                } else if (cmd.type === 'CALL_COMMON_EVENT') {
-                    const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
-                    const ceName = ce ? ce.name : `ID ${cmd.commonEventId}`;
-                    text = `@&gt;Call Common Event: ${ceName}`;
-                }
-                
-                line.innerHTML = `<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${text}</span>`;
-                
-                if (!readOnly) {
-                    line.style.cursor = 'pointer';
-                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
-                    line.onclick = () => editCommandAtIndex(idx);
-                    
-                    const controls = document.createElement('div');
-                    controls.style.display = 'flex';
-                    controls.style.gap = '2px';
-                    controls.innerHTML = `
-                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px;" onclick="event.stopPropagation(); editCommandAtIndex(${idx})">✏️</button>
-                        <button class="win-btn-small outset-bevel" style="font-size: 8px; padding: 0px 3px; color: red;" onclick="event.stopPropagation(); deleteCommandAtIndex(${idx})">×</button>
-                    `;
-                    line.appendChild(controls);
-                } else {
-                    line.style.color = '#808080';
-                }
-                list.appendChild(line);
-            });
-            
-            if (!readOnly) {
-                const trailingLine = document.createElement('div');
-                trailingLine.style.padding = '2px';
-                trailingLine.style.color = '#808080';
-                trailingLine.style.cursor = 'pointer';
-                trailingLine.innerHTML = '@&gt;';
-                trailingLine.onclick = () => openCommandModalForAdd();
-                list.appendChild(trailingLine);
-            }
-        }
-
-        function openCommandModalForAdd() {
-            populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                activeEventLocalScript.push(cmd);
-                toggleEventLogicType();
-            });
-        }
-        
-        function editCommandAtIndex(idx) {
-            populateCmdCommonEventsDropdown();
-            openEditCommandDialog(activeEventLocalScript[idx], (updatedCmd) => {
-                activeEventLocalScript[idx] = updatedCmd;
-                toggleEventLogicType();
-            });
-        }
-        
-        function deleteCommandAtIndex(idx) {
-            activeEventLocalScript.splice(idx, 1);
-            toggleEventLogicType();
-        }
-
-        function closeEventModal() {
-            document.getElementById('event-modal').classList.remove('active');
-        }
-
-        function applyEventProperties() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (!map.events) map.events = [];
-            
-            let eventData = map.events.find(e => e.x === selectedEventX && e.y === selectedEventY);
-            
-            const isNew = !eventData;
-            if (isNew) {
-                eventData = { x: selectedEventX, y: selectedEventY };
-            }
-            
-            eventData.name = document.getElementById('event-prop-name').value;
-            eventData.trigger = document.getElementById('event-prop-trigger').value;
-            eventData.sprite = window.activeEventSpritePath || '';
-            eventData.transparent = document.getElementById('event-prop-transparent').checked;
-            eventData.priority = document.getElementById('event-prop-priority').value;
-            eventData.spawn = document.getElementById('event-prop-spawn').value;
-            
-            const isCommon = document.getElementById('event-logic-common').checked;
-            if (isCommon) {
-                eventData.scriptId = parseInt(document.getElementById('event-prop-script-id').value);
-                delete eventData.script;
-            } else {
-                delete eventData.scriptId;
-                eventData.script = activeEventLocalScript;
-            }
-            
-            if (isNew) {
-                let maxId = 0;
-                map.events.forEach(e => { maxId = Math.max(maxId, e.id || 0); });
-                eventData.id = maxId + 1;
-                map.events.push(eventData);
-            }
-            
-            closeEventModal();
-            renderGridCells();
-            setDirty(true);
-        }
-
-        function deleteEventAtCoords() {
-            const map = dbPayload.maps[currentMapIndex];
-            if (map.events) {
-                map.events = map.events.filter(e => !(e.x === selectedEventX && e.y === selectedEventY));
-            }
-            closeEventModal();
-            renderGridCells();
-            setDirty(true);
-        }
-
-        // --- COMMAND MODAL EXTENSIONS ---
-        let activeCmdCallback = null;
-
-        function populateCmdCommonEventsDropdown() {
-            const select = document.getElementById('cmd-select-common-event');
-            if (!select) return;
-            select.innerHTML = '';
-            
-            if (dbPayload.commonEvents) {
-                Object.keys(dbPayload.commonEvents).forEach(id => {
-                    const ce = dbPayload.commonEvents[id];
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.textContent = `${id.padStart(4, '0')}: ${ce.name}`;
-                    select.appendChild(opt);
-                });
-            }
-        }
-
-        function openAddCommandDialog(callback) {
-            activeCmdCallback = callback;
-            document.getElementById('cmd-select-type').value = 'TEXT';
-            document.getElementById('cmd-input-text').value = 'Hello!';
-            toggleCmdTypeFields();
-            document.getElementById('cmd-modal').classList.add('active');
-        }
-
-        function openEditCommandDialog(cmd, callback) {
-            activeCmdCallback = callback;
-            document.getElementById('cmd-select-type').value = cmd.type;
-            if (cmd.type === 'TEXT') {
-                document.getElementById('cmd-input-text').value = cmd.text || '';
-            } else if (cmd.type === 'CALL_COMMON_EVENT') {
-                document.getElementById('cmd-select-common-event').value = cmd.commonEventId;
-            }
-            toggleCmdTypeFields();
-            document.getElementById('cmd-modal').classList.add('active');
-        }
-
-        function toggleCmdTypeFields() {
-            const type = document.getElementById('cmd-select-type').value;
-            const textFields = document.getElementById('cmd-fields-text');
-            const ceFields = document.getElementById('cmd-fields-common-event');
-            
-            textFields.style.display = type === 'TEXT' ? 'flex' : 'none';
-            if (ceFields) {
-                ceFields.style.display = type === 'CALL_COMMON_EVENT' ? 'flex' : 'none';
-            }
-        }
-
-        function closeCmdDialog() {
-            document.getElementById('cmd-modal').classList.remove('active');
-        }
-
-        function applyCmdDialog() {
-            const type = document.getElementById('cmd-select-type').value;
-            let cmd = { type: type };
-            if (type === 'TEXT') {
-                cmd.text = document.getElementById('cmd-input-text').value;
-            } else if (type === 'CALL_COMMON_EVENT') {
-                cmd.commonEventId = parseInt(document.getElementById('cmd-select-common-event').value);
-            }
-            closeCmdDialog();
-            if (activeCmdCallback) activeCmdCallback(cmd);
-        }
-
-        // --- SYSTEM CONFIG ---
-        function initSystemTab() {}
-        function initEventModalTemplates() {}
-
-        // --- DATABASE MODAL LOGIC ---
-        function openDatabaseModal() {
-            document.getElementById('db-modal').classList.add('active');
-            setDbTab(activeDbTab);
-        }
-
-        function closeDatabaseModal() {
-            document.getElementById('db-modal').classList.remove('active');
-        }
-
-        function setDbTab(tabName) {
-            document.querySelectorAll('.db-tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`db-tab-${tabName}`).classList.add('active');
-            
-            activeDbTab = tabName;
-            activeDbItemId = '';
-            
-            // Hide middle column on tabs that don't need lists/IDs
-            const itemsCol = document.getElementById('db-items-column');
-            if (tabName === 'system' || tabName === 'battle') {
-                itemsCol.style.display = 'none';
-            } else {
-                itemsCol.style.display = 'flex';
-            }
-            
-            initDatabaseEditor();
-        }
-
-        function initDatabaseEditor() {
-            const listContainer = document.getElementById('db-list-box');
-            listContainer.innerHTML = '';
-            
-            let items = [];
-            if (activeDbTab === 'actors') items = dbPayload.actors;
-            else if (activeDbTab === 'items') items = dbPayload.items;
-            else if (activeDbTab === 'shops') items = Object.keys(dbPayload.shops).map(k => ({ id: k, name: k }));
-            else if (activeDbTab === 'commonEvents') {
-                if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
-                items = Object.keys(dbPayload.commonEvents)
-                    .map(k => ({ id: k, name: dbPayload.commonEvents[k].name || `Event ${k}` }))
-                    .sort((a, b) => parseInt(a.id) - parseInt(b.id));
-            }
-            else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
-            else if (activeDbTab === 'battle') items = [{ id: 'battle_settings', name: 'Battle Settings' }];
-            
-            items.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'db-list-item';
-                
-                // Format prefix like RPG Maker "0001: summoner"
-                const idxStr = String(idx + 1).padStart(4, '0');
-                btn.textContent = activeDbTab === 'system' ? item.name : `${idxStr}: ${item.name || item.id}`;
-                
-                if (activeDbItemId === item.id || (activeDbItemId === '' && idx === 0)) {
-                    btn.classList.add('active');
-                    activeDbItemId = item.id;
-                    loadFormForItem(item);
-                }
-                
-                btn.onclick = () => {
-                    document.querySelectorAll('.db-list-item').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    activeDbItemId = item.id;
-                    loadFormForItem(item);
-                };
-                
-                listContainer.appendChild(btn);
-            });
-
-            // Toggle change max visibility (system doesn't need expandable count)
-            const changeMaxBtn = document.querySelector('.db-items-column button');
-            if (activeDbTab === 'system' || activeDbTab === 'battle') {
-                changeMaxBtn.style.display = 'none';
-            } else {
-                changeMaxBtn.style.display = 'block';
-            }
-        }
-
-        function loadFormForItem(item) {
-            const formPanel = document.getElementById('db-form-panel');
-            formPanel.innerHTML = '';
-            formPanel.style.display = 'block'; // Reset layout
-            
-            const header = document.createElement('div');
-            header.style.fontWeight = 'bold';
-            header.style.fontSize = '12px';
-            header.style.marginBottom = '12px';
-            header.style.borderBottom = '1px solid var(--win-shadow)';
-            header.style.paddingBottom = '4px';
-            header.textContent = `General Settings - ${item.name || item.id}`;
-            formPanel.appendChild(header);
-            
-            if (activeDbTab === 'commonEvents') {
-                const eventData = dbPayload.commonEvents[item.id];
-                if (!eventData) return;
-                
-                createFormField(formPanel, 'Event Name', eventData.name, val => {
-                    eventData.name = val;
-                    initDatabaseEditor();
-                });
-                
-                const cmdTitle = document.createElement('div');
-                cmdTitle.style.fontWeight = 'bold';
-                cmdTitle.style.marginTop = '12px';
-                cmdTitle.style.marginBottom = '6px';
-                cmdTitle.textContent = 'Event Commands:';
-                formPanel.appendChild(cmdTitle);
-                
-                const listBox = document.createElement('div');
-                listBox.style.border = '1px solid var(--win-shadow)';
-                listBox.style.background = '#fff';
-                listBox.style.height = '240px';
-                listBox.style.overflowY = 'auto';
-                listBox.style.padding = '4px';
-                listBox.style.display = 'flex';
-                listBox.style.flexDirection = 'column';
-                listBox.style.gap = '2px';
-                listBox.id = 'common-event-commands-list';
-                
-                let selectedCommandIdx = -1;
-                
-                function renderCommands() {
-                    listBox.innerHTML = '';
-                    eventData.commands = eventData.commands || [];
-                    
-                    if (eventData.commands.length === 0) {
-                        const empty = document.createElement('div');
-                        empty.style.color = '#808080';
-                        empty.style.fontStyle = 'italic';
-                        empty.style.fontSize = '10px';
-                        empty.textContent = '<Empty Command List>';
-                        listBox.appendChild(empty);
-                    }
-                    
-                    eventData.commands.forEach((cmd, idx) => {
-                        const line = document.createElement('div');
-                        line.style.fontSize = '10px';
-                        line.style.padding = '2px 4px';
-                        line.style.cursor = 'pointer';
-                        line.style.userSelect = 'none';
-                        line.style.fontFamily = 'monospace';
-                        
-                        let desc = '';
-                        if (cmd.type === 'TEXT') desc = `◆ Show Text: "${cmd.text}"`;
-                        else if (cmd.type === 'RECOVER_PARTY') desc = `◆ Recover Party`;
-                        else if (cmd.type === 'DESCEND') desc = `◆ Descend Floor`;
-                        else desc = `◆ Unknown (${cmd.type})`;
-                        
-                        line.textContent = desc;
-                        
-                        if (selectedCommandIdx === idx) {
-                            line.style.background = 'var(--win-blue)';
-                            line.style.color = '#fff';
-                        }
-                        
-                        line.onclick = () => {
-                            selectedCommandIdx = idx;
-                            renderCommands();
-                        };
-                        listBox.appendChild(line);
-                    });
-                }
-                
-                renderCommands();
-                formPanel.appendChild(listBox);
-                
-                const btnRow = document.createElement('div');
-                btnRow.style.display = 'flex';
-                btnRow.style.gap = '4px';
-                btnRow.style.marginTop = '6px';
-                
-                const addBtn = document.createElement('button');
-                addBtn.className = 'win98-btn';
-                addBtn.textContent = 'Add Command';
-                addBtn.onclick = () => {
-                    openAddCommandDialog((newCmd) => {
-                        eventData.commands.push(newCmd);
-                        setDirty(true);
-                        renderCommands();
-                    });
-                };
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win98-btn';
-                editBtn.textContent = 'Edit';
-                editBtn.onclick = () => {
-                    if (selectedCommandIdx >= 0) {
-                        openEditCommandDialog(eventData.commands[selectedCommandIdx], (updatedCmd) => {
-                            eventData.commands[selectedCommandIdx] = updatedCmd;
-                            setDirty(true);
-                            renderCommands();
-                        });
-                    } else {
-                        alert('Select a command to edit.');
-                    }
-                };
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'win98-btn';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => {
-                    if (selectedCommandIdx >= 0) {
-                        eventData.commands.splice(selectedCommandIdx, 1);
-                        selectedCommandIdx = -1;
-                        setDirty(true);
-                        renderCommands();
-                    }
-                };
-                
-                btnRow.appendChild(addBtn);
-                btnRow.appendChild(editBtn);
-                btnRow.appendChild(deleteBtn);
-                formPanel.appendChild(btnRow);
-            }
-            
-            if (activeDbTab === 'actors') {
-                createFormField(formPanel, 'Actor ID (Static)', item.id, null, 'text', true);
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(); });
-                createFormField(formPanel, 'Role', item.role || 'Spirit', val => { item.role = val; });
-                
-                const statsRow = document.createElement('div');
-                statsRow.className = 'form-row';
-                createFormField(statsRow, 'Base HP', item.maxHp || 10, val => { item.maxHp = parseInt(val) || 10; }, 'number');
-                createFormField(statsRow, 'Base MP Drain', item.mpd || 2, val => { item.mpd = parseInt(val) || 2; }, 'number');
-                formPanel.appendChild(statsRow);
-                
-                createFormField(formPanel, 'Elements (comma separated)', (item.elements || []).join(', '), val => {
-                    item.elements = val.split(',').map(s => s.trim()).filter(s => s !== '');
-                });
-                
-            } else if (activeDbTab === 'items') {
-                createFormField(formPanel, 'Item ID (Static)', item.id, null, 'text', true);
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(); });
-                createFormField(formPanel, 'Type', item.type || 'consumable', val => { item.type = val; });
-                createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
-                
-                const attrRow = document.createElement('div');
-                attrRow.className = 'form-row';
-                createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createFormField(attrRow, 'Effect Value', item.value || 0, val => { item.value = parseInt(val) || 0; }, 'number');
-                formPanel.appendChild(attrRow);
-                
-            } else if (activeDbTab === 'shops') {
-                const shopData = dbPayload.shops[item.id];
-                createFormField(formPanel, 'Shop ID', item.id, null, 'text', true);
-                
-                const listWrapper = document.createElement('div');
-                listWrapper.className = 'form-group';
-                const lbl = document.createElement('label');
-                lbl.textContent = 'Stock Selection';
-                listWrapper.appendChild(lbl);
-                
-                dbPayload.items.forEach(availItem => {
-                    const hasItem = shopData.items.some(shIt => shIt.id === availItem.id);
-                    const div = document.createElement('div');
-                    div.style.margin = '4px 0';
-                    div.style.display = 'flex';
-                    div.style.alignItems = 'center';
-                    div.style.gap = '6px';
-                    
-                    const chk = document.createElement('input');
-                    chk.type = 'checkbox';
-                    chk.checked = hasItem;
-                    chk.onchange = () => {
-                        setDirty(true);
-                        if (chk.checked) {
-                            if (!shopData.items.some(i => i.id === availItem.id)) {
-                                shopData.items.push({ id: availItem.id, price: availItem.cost });
-                            }
-                        } else {
-                            shopData.items = shopData.items.filter(i => i.id !== availItem.id);
-                        }
-                    };
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = `${availItem.name} (${availItem.cost} G)`;
-                    
-                    div.appendChild(chk);
-                    div.appendChild(nameSpan);
-                    listWrapper.appendChild(div);
-                });
-                formPanel.appendChild(listWrapper);
-            } else if (activeDbTab === 'system') {
-                if (!dbPayload.system) dbPayload.system = {};
-                const systemConfig = {
-                    ui: dbPayload.system.ui || {},
-                    summoner: dbPayload.system.summoner || {},
-                    spawn: dbPayload.system.spawn || {}
-                };
-                buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
-            } else if (activeDbTab === 'battle') {
-                if (!dbPayload.system) dbPayload.system = {};
-                
-                formPanel.innerHTML = '';
-                formPanel.style.display = 'grid';
-                formPanel.style.gridTemplateColumns = '1fr 280px';
-                formPanel.style.gap = '12px';
-                formPanel.style.alignItems = 'start';
-                
-                const formCol = document.createElement('div');
-                formCol.style.display = 'flex';
-                formCol.style.flexDirection = 'column';
-                formCol.style.gap = '8px';
-                formPanel.appendChild(formCol);
-                
-                const previewCol = document.createElement('div');
-                previewCol.style.display = 'flex';
-                previewCol.style.flexDirection = 'column';
-                previewCol.style.gap = '8px';
-                formPanel.appendChild(previewCol);
-                
-                const battleConfig = {
-                    physics: dbPayload.system.physics || {},
-                    battle_screen: dbPayload.system.battle_screen || {},
-                    combat: dbPayload.system.combat || {}
-                };
-                buildRecursiveForm(formCol, battleConfig, [], dbPayload.system);
-                buildBattleScreenPreview(previewCol);
-            }
-        }
-
-        function buildRecursiveForm(container, obj, path, targetRoot) {
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    const value = obj[key];
-                    const currentPath = [...path, key];
-
-                    if (key === 'activeFont') {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = 'Active UI Font';
-                        group.appendChild(lbl);
-
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
-                        fonts.forEach(f => {
-                            const opt = document.createElement('option');
-                            opt.value = f;
-                            opt.textContent = f;
-                            if (value === f) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = () => {
-                            setDirty(true);
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            target[key] = select.value;
-                        };
-
-                        group.appendChild(select);
-                        container.appendChild(group);
-                    } else if (key === 'dir') {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = 'Spawn Facing Direction';
-                        group.appendChild(lbl);
-
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        select.id = 'field-dir';
-                        const directions = ['N', 'E', 'S', 'W'];
-                        directions.forEach(d => {
-                            const opt = document.createElement('option');
-                            opt.value = d;
-                            opt.textContent = d;
-                            if (value === d) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = () => {
-                            setDirty(true);
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            target[key] = select.value;
-                        };
-
-                        group.appendChild(select);
-                        container.appendChild(group);
-                    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                        // Create collapsible section header
-                        const sectionWrapper = document.createElement('div');
-                        sectionWrapper.style.marginBottom = '10px';
-                        sectionWrapper.style.border = '1px solid var(--win-shadow)';
-                        sectionWrapper.style.padding = '4px';
-
-                        const header = document.createElement('div');
-                        header.style.fontWeight = 'bold';
-                        header.style.cursor = 'pointer';
-                        header.style.backgroundColor = 'var(--win-gray)';
-                        header.style.padding = '2px 4px';
-                        header.textContent = `[-] ${key}`;
-
-                        const content = document.createElement('div');
-                        content.style.marginTop = '6px';
-                        content.style.paddingLeft = '10px';
-
-                        header.onclick = () => {
-                            if (content.style.display === 'none') {
-                                content.style.display = 'block';
-                                header.textContent = `[-] ${key}`;
-                            } else {
-                                content.style.display = 'none';
-                                header.textContent = `[+] ${key}`;
-                            }
-                        };
-
-                        sectionWrapper.appendChild(header);
-                        sectionWrapper.appendChild(content);
-                        container.appendChild(sectionWrapper);
-
-                        buildRecursiveForm(content, value, currentPath, targetRoot);
-                    } else {
-                        // Primitive value input
-                        const type = typeof value === 'number' ? 'number' : 'text';
-                        createFormField(container, key, value, (newVal) => {
-                            // Update nested object value
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            if (type === 'number') {
-                                const parsed = parseFloat(newVal);
-                                target[key] = isNaN(parsed) ? 0 : parsed;
-                            } else {
-                                target[key] = newVal;
-                            }
-                        }, type, false, key);
-                    }
-                }
-            }
-        }
-
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            
-            const label = document.createElement('label');
-            label.textContent = labelText;
-            group.appendChild(label);
-            
-            const input = document.createElement('input');
-            input.type = type;
-            input.className = 'form-control inset-bevel';
-            input.value = value;
-            input.readOnly = readOnly;
-            if (keyId) {
-                input.id = 'field-' + keyId;
-            }
-            if (readOnly) {
-                input.style.backgroundColor = 'var(--win-gray)';
-                input.style.color = 'var(--win-dark-shadow)';
-            }
-            
-            if (onChange && !readOnly) {
-                input.addEventListener('input', () => {
-                    onChange(input.value);
-                    setDirty(true);
-                });
-            }
-            
-            group.appendChild(input);
-            container.appendChild(group);
-        }
-
-        // --- CHANGE MAXIMUM LOGIC ---
-        function openChangeMaxDialog() {
-            let maxVal = 0;
-            if (activeDbTab === 'actors') maxVal = dbPayload.actors.length;
-            else if (activeDbTab === 'items') maxVal = dbPayload.items.length;
-            else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
-            else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
-            
-            document.getElementById('max-input-val').value = maxVal;
-            document.getElementById('max-modal').classList.add('active');
-        }
-
-        function closeChangeMaxDialog() {
-            document.getElementById('max-modal').classList.remove('active');
-        }
-
-        function applyChangeMax() {
-            const newMax = parseInt(document.getElementById('max-input-val').value);
-            if (isNaN(newMax) || newMax < 1 || newMax > 99) {
-                alert('Invalid max size (Enter 1 - 99).');
-                return;
-            }
-            
-            if (activeDbTab === 'actors') {
-                const currentLen = dbPayload.actors.length;
-                if (newMax > currentLen) {
-                    for (let i = currentLen + 1; i <= newMax; i++) {
-                        dbPayload.actors.push({
-                            id: `actor_new_${i}`,
-                            name: `New Actor ${i}`,
-                            role: 'Spirit',
-                            maxHp: 10,
-                            mpd: 2,
-                            elements: [],
-                            skills: []
-                        });
-                    }
-                } else if (newMax < currentLen) {
-                    dbPayload.actors = dbPayload.actors.slice(0, newMax);
-                }
-            } else if (activeDbTab === 'items') {
-                const currentLen = dbPayload.items.length;
-                if (newMax > currentLen) {
-                    for (let i = currentLen + 1; i <= newMax; i++) {
-                        dbPayload.items.push({
-                            id: `item_new_${i}`,
-                            name: `New Item ${i}`,
-                            type: 'consumable',
-                            description: 'Item description.',
-                            cost: 0,
-                            value: 0
-                        });
-                    }
-                } else if (newMax < currentLen) {
-                    dbPayload.items = dbPayload.items.slice(0, newMax);
-                }
-            } else if (activeDbTab === 'shops') {
-                const shopKeys = Object.keys(dbPayload.shops);
-                const currentLen = shopKeys.length;
-                if (newMax > currentLen) {
-                    for (let i = currentLen + 1; i <= newMax; i++) {
-                        dbPayload.shops[`shop_new_${i}`] = { items: [] };
-                    }
-                } else if (newMax < currentLen) {
-                    const keysToDelete = shopKeys.slice(newMax);
-                    keysToDelete.forEach(k => delete dbPayload.shops[k]);
-                }
-            } else if (activeDbTab === 'commonEvents') {
-                if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
-                const currentKeys = Object.keys(dbPayload.commonEvents).sort((a, b) => parseInt(a) - parseInt(b));
-                const currentLen = currentKeys.length;
-                if (newMax > currentLen) {
-                    for (let i = currentLen + 1; i <= newMax; i++) {
-                        dbPayload.commonEvents[String(i)] = {
-                            name: `New Common Event ${i}`,
-                            commands: []
-                        };
-                    }
-                } else if (newMax < currentLen) {
-                    for (let i = newMax + 1; i <= currentLen; i++) {
-                        delete dbPayload.commonEvents[String(i)];
-                    }
-                }
-            }
-            
-            setDirty(true);
-            closeChangeMaxDialog();
-            initDatabaseEditor();
-        }
-
-        // --- SYSTEM CONFIG ---
-        function initSystemTab() {
-            // Managed inside form loading dynamically
-        }
-
-        function buildBattleScreenPreview(container) {
-            const header = document.createElement('div');
-            header.style.fontSize = '12px';
-            header.style.fontWeight = 'bold';
-            header.style.marginBottom = '8px';
-            header.style.color = 'var(--win-dark-shadow)';
-            header.textContent = 'Battle Screen Live Tester';
-            container.appendChild(header);
-
-            const launchBtn = document.createElement('button');
-            launchBtn.className = 'win98-btn';
-            launchBtn.style.padding = '8px 16px';
-            launchBtn.style.fontWeight = 'bold';
-            launchBtn.style.alignSelf = 'start';
-            launchBtn.style.marginTop = '4px';
-            launchBtn.innerHTML = '<span class="icon-sprite icon-play" style="margin-right: 6px;"></span> Launch Test Battle';
-            container.appendChild(launchBtn);
-
-            launchBtn.onclick = () => {
-                fetch('/play-test-battle', { method: 'POST' })
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log('Launched test battle successfully.');
-                    })
-                    .catch(err => console.error('Failed to launch test battle:', err));
-            };
-        }
-
-        fetchDatabase();
-    </script>
+    <!-- --- CANVAS RIGHT-CLICK CONTEXT MENU (built dynamically per click) --- -->
+    <div id="canvas-context-menu" class="outset-bevel" style="display: none; position: absolute; z-index: 10000; background: #dfdfdf; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; box-shadow: 1px 1px 4px rgba(0,0,0,0.3); padding: 2px; min-width: 170px; font-family: sans-serif; font-size: 11px; box-sizing: border-box;"></div>
+
+    <!-- --- ICON PICKER MODAL --- -->
+    <div id="icon-picker-modal" class="modal-overlay" style="z-index: 1350;">
+        <div class="window outset-bevel" style="width: 320px;">
+            <div class="title-bar">
+                <div class="title-bar-text">Pick an Icon</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeIconPicker()">×</button>
+                </div>
+            </div>
+            <div class="window-body inset-bevel" style="padding: 10px; background: #fff; height: 350px; overflow-y: auto;">
+                <div id="icon-picker-grid" style="display: flex; flex-wrap: wrap; gap: 2px; width: 280px; margin: 0 auto;">
+                </div>
+            </div>
+            <div class="window-footer" style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span id="icon-picker-hover-info">Icon: 0</span>
+                <div>
+                    <button class="win-btn outset-bevel" onclick="closeIconPicker()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="js/state.js"></script>
+    <script src="js/net.js"></script>
+    <script src="js/widgets.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/engine-editor.js"></script>
+    <script src="js/map-editor.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/icon-picker.js"></script>
+    <script src="js/icon-field.js"></script>
 </body>
 </html>

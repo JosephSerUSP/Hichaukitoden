@@ -8,10 +8,81 @@ local config = require("engine.config")
 
 local renderer = {}
 
+-- Battle-scene layout defaults shared by drawBattle and getBattlerCoords,
+-- per the BIBLE rule that coordinate mappings must never be duplicated.
+-- Values can be overridden from data/engine.json (battleLayout), editable
+-- in the Engine editor.
+local BATTLE_LAYOUT = {
+    enemyRowWidth = 220,
+    enemyStartX = 18,
+    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
+    enemyPopupY = 60,
+    partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
+    consoleTileY = 18,
+    headerTileOffset = 1,
+    slotPopupOffsetX = 27,
+    slotPopupOffsetY = 10,
+    summonerPopupX = 50,
+    summonerPopupYOffset = 62,
+    fallbackX = 128,
+    fallbackY = 70,
+    enemyY = 30,
+    enemyNameY = 90,
+    enemyHpBarY = 104,
+    enemyHpBarWidth = 50,
+    enemyHpBarHeight = 4,
+    enemySpriteSize = 56,
+    enemyFallbackSize = 50,
+    enemySlideOffset = 280,
+    enemyDeathYOffset = 20,
+    viewportOverlayW = 256,
+    viewportOverlayH = 140,
+    logPanelX = 10,
+    logPanelY = 6,
+    logPanelWidth = 236,
+    logPanelHeight = 32,
+    logTextX = 16,
+    logTextY = 12,
+    logTextLimit = 224,
+    logSpaceX = 200,
+    logSpaceY = 23,
+    consoleTileX = 0,
+    consoleTileW = 32,
+    consoleTileH = 12,
+    consoleTextTileX = 1,
+    menuChoiceSpacing = 16,
+    summonerStatusX = 8,
+    summonerNameYOffset = 48,
+    summonerMpTextYOffset = 64,
+    summonerMpBarYOffset = 80,
+    summonerMpBarWidth = 80,
+    summonerMpBarHeight = 4,
+    partyGridColWidth = 64,
+    partyGridRowHeight = 40,
+    partyGridNameXOffset = 1,
+    partyGridHpXOffset = 8,
+    partyGridHpYOffset = 11,
+    partyGridHpBarXOffset = 8,
+    partyGridHpBarYOffset = 22,
+    partyGridHpBarWidth = 52,
+    partyGridHpBarHeight = 3,
+    partyGridEmptyYOffset = 8
+}
+
+-- Battle layout accessor: engine.json override -> built-in default
+local function layoutVal(key)
+    local loaderRef = renderer.session and renderer.session.loader
+    local overrides = loaderRef and loaderRef.engine and loaderRef.engine.battleLayout
+    if overrides and overrides[key] ~= nil then return overrides[key] end
+    return BATTLE_LAYOUT[key]
+end
+
 local damagePopups = {}
 local portraitCache = {}
 local function getPortrait(id)
     if not id or id == "" then return nil end
+    -- Battlers without a spriteKey fall back to their numeric actor id
+    id = tostring(id)
     if portraitCache[id] then return portraitCache[id] end
     
     local paths = {
@@ -48,15 +119,23 @@ local function drawSlicedPortrait(portraitId, x, y, targetW, targetH)
     end
 end
 
+-- Element orb icon ids come from system.json (ui.elementIcons); the table
+-- below is only the fallback for older data files.
+local DEFAULT_ELEMENT_ICONS = {
+    Black = 15, White = 14, Green = 12, Red = 11, Blue = 13, Yellow = 17,
+    default = 16
+}
+
 local function drawElementIcon(element, x, y)
-    local id = 16 -- fallback grey gem/orb
-    if element == "Black" then id = 15
-    elseif element == "White" then id = 14
-    elseif element == "Green" then id = 12
-    elseif element == "Red" then id = 11
-    elseif element == "Blue" then id = 13
-    elseif element == "Yellow" then id = 17
-    end
+    -- Icon comes from the element registry (data/elements.json); legacy
+    -- ui.elementIcons config and the built-in table remain as fallbacks.
+    local loaderRef = renderer.session and renderer.session.loader
+    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
+    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
+    local id = (registryEntry and registryEntry.icon)
+        or legacyIcons[element]
+        or legacyIcons.default
+        or DEFAULT_ELEMENT_ICONS.default
     ui.drawIcon(id, x, y - 2) -- y - 2 aligns 12x12 icon perfectly with text
 end
 
@@ -66,6 +145,13 @@ local function drawElementIcons(elems, x, y)
         drawElementIcon(elem, x + (i - 1) * 10, y)
     end
     return #elems * 10
+end
+
+-- The summoner's display name, taken from actor data instead of a hardcoded
+-- string so renaming the protagonist in the editor updates every UI panel.
+local function summonerName()
+    local s = renderer.session and renderer.session.summoner
+    return (s and s.name or "Alex"):upper()
 end
 
 local townBg
@@ -124,14 +210,10 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
 end
 
 function renderer.update(dt)
-    if renderer.closing then
-        renderer.closingTimer = renderer.closingTimer - dt
-        if renderer.closingTimer <= 0 then
-            renderer.closing = false
-            renderer.session.scene = renderer.closingTargetScene
-            renderer.session.subScene = renderer.closingTargetSubScene
-        end
-    end
+    -- The closing animation timer is owned by love.update in main.lua (it
+    -- performs the scene switch and sets the input cooldown). Decrementing it
+    -- here too made the two race: when this copy hit zero first, the scene
+    -- never switched and the menu popped back open.
 
     local gravity = config.physics and config.physics.gravity or 480
     local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
@@ -242,16 +324,18 @@ local function drawMinimap(x, y, size)
                 end
                 
                 if mapEvent then
-                    if mapEvent.scriptId == 7 then
-                        love.graphics.setColor(0, 0.8, 0, 1) -- Green for recovery
-                    elseif mapEvent.scriptId == 12 then
-                        love.graphics.setColor(0.8, 0.8, 0, 1) -- Yellow for treasures
-                    elseif mapEvent.scriptId == 13 then
-                        love.graphics.setColor(0.8, 0, 0, 1) -- Red for battles
-                    elseif mapEvent.scriptId == 1 then
-                        love.graphics.setColor(0, 0.8, 0.8, 1) -- Cyan for stairs
+                    -- Marker color precedence: the map event's own
+                    -- minimapColor, else the linked common event's default,
+                    -- else light blue for generic NPCs / shops.
+                    local evColor = mapEvent.minimapColor
+                    if not evColor and mapEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
+                        local ce = renderer.session.loader.commonEvents[tostring(mapEvent.scriptId)]
+                        evColor = ce and ce.minimapColor or nil
+                    end
+                    if evColor then
+                        love.graphics.setColor(evColor[1] or 0, evColor[2] or 0, evColor[3] or 0, evColor[4] or 1)
                     else
-                        love.graphics.setColor(0.4, 0.6, 1, 1) -- Light blue for NPCs / shops
+                        love.graphics.setColor(0.4, 0.6, 1, 1)
                     end
                 elseif cell == "#" then
                     love.graphics.setColor(0.2, 0.2, 0.2, 1)
@@ -280,7 +364,7 @@ local function drawHUD(x, y, w, h)
     local session = renderer.session
     
     -- Draw Summoner MP stats on bottom left (identical to battle console)
-    ui.drawString("ALEX", x + 1.25 * ui.tileSize, y + 1.75 * ui.tileSize, {1, 0.85, 0.5, 1})
+    ui.drawString(summonerName(), x + 1.25 * ui.tileSize, y + 1.75 * ui.tileSize, {1, 0.85, 0.5, 1})
     
     local dispMp = session.displayedMp or session.mp
     ui.drawString("MP: " .. math.floor(dispMp + 0.5) .. "/" .. session.maxMp, x + 1.25 * ui.tileSize, y + 3.25 * ui.tileSize, {0.6, 0.8, 1, 1})
@@ -327,11 +411,12 @@ function renderer.drawTown(selectedIdx)
     ui.drawPanel(ui.toPx(1), ui.toPx(1), ui.toPx(13), ui.toPx(15))
     ui.drawString("TOWN SQUARE", ui.toPx(2), ui.toPx(2), {1, 0.85, 0.5, 1})
     
-    local options = { "Dungeon", "Weapon Shop", "Alicia Shop", "Rest (House)" }
-    for i, opt in ipairs(options) do
+    -- Town options are data-driven (system.town.options)
+    local townOptions = (config.town and config.town.options) or {}
+    for i, opt in ipairs(townOptions) do
         local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = (i == selectedIdx) and "> " or "  "
-        ui.drawString(prefix .. opt, ui.toPx(2), ui.toPx(2) + i * ui.lineHeight * 2, color)
+        ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight, color)
     end
     
     drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
@@ -394,18 +479,23 @@ function renderer.drawDialogue(walker, selectIdx)
     ui.drawPanel(winX, ui.toPx(1), winW, ui.toPx(16))
     
     -- Speaker name
-    local speakerName = node.speaker or walker.graph.name or "???"
-    ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
+    local speakerName = node.speaker
+    if speakerName and speakerName ~= "" then
+        -- Parse \eventName if present
+        local rName = string.gsub(walker.eventName or "??", "%%", "%%%%")
+        speakerName = string.gsub(speakerName, "\\eventName", rName)
+        ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
+    end
     
     if node.type == "TEXT" then
-        ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), {eventName = walker.graph.name})
+        ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
     elseif node.type == "CHOICE" then
-        ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2))
+        ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         for i, opt in ipairs(node.options or {}) do
             local color = (i == selectIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectIdx) and "> " or "  "
-            ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight * 2, color)
+            ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight, color)
         end
     end
     
@@ -413,11 +503,13 @@ function renderer.drawDialogue(walker, selectIdx)
 end
 
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
+    local colW = layoutVal("partyGridColWidth")
+    local rowH = layoutVal("partyGridRowHeight")
     local gridCoords = {
         { x = x, y = y },
-        { x = x + 8 * ui.tileSize, y = y },
-        { x = x, y = y + 5 * ui.tileSize },
-        { x = x + 8 * ui.tileSize, y = y + 5 * ui.tileSize }
+        { x = x + colW, y = y },
+        { x = x, y = y + rowH },
+        { x = x + colW, y = y + rowH }
     }
     for i = 1, 4 do
         local c = session.party[i]
@@ -429,18 +521,50 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
             
             local prefix = isSel and ">" or " "
-            local iconW = drawElementIcons(c.actorData.elements, slot.x, slot.y)
-            ui.drawString(prefix .. c.name, slot.x + iconW + 1, slot.y, color, "left", 60)
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x, slot.y)
+            ui.drawString(prefix .. c.name, slot.x + iconW + layoutVal("partyGridNameXOffset"), slot.y, color, "left", 60)
             
             local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + 8, slot.y + 11, hpColor)
-            ui.drawBar(slot.x + 8, slot.y + 22, 52, 3, dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset"), slot.y + layoutVal("partyGridHpYOffset"), hpColor)
+            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset"), slot.y + layoutVal("partyGridHpBarYOffset"), layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
-            ui.drawString(prefix .. "- EMPTY -", slot.x, slot.y + 8, {0.3, 0.3, 0.3, 1})
+            ui.drawString(prefix .. "- EMPTY -", slot.x, slot.y + layoutVal("partyGridEmptyYOffset"), {0.3, 0.3, 0.3, 1})
         end
     end
+end
+
+
+-- Maps a battler to the screen position where damage popups should spawn.
+-- Used by main.lua so popup coordinates always match the drawn battle layout.
+function renderer.getBattlerCoords(battleState, session, target)
+    if battleState then
+        for idx, enemy in ipairs(battleState.enemies) do
+            if enemy == target then
+                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+                local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+                return ex + layoutVal("enemyPopupOffsetX"), layoutVal("enemyPopupY")
+            end
+        end
+
+        local gridX = ui.toPx(layoutVal("partyGridTileX"))
+        local gridY = ui.toPx(layoutVal("consoleTileY")) + ui.toPx(layoutVal("headerTileOffset"))
+        -- Same 2x2 slot arithmetic as drawPartyGrid
+        for idx, c in ipairs(session.party) do
+            if c == target then
+                local col = (idx - 1) % 2
+                local row = math.floor((idx - 1) / 2)
+                local slotX = gridX + col * layoutVal("partyGridColWidth")
+                local slotY = gridY + row * layoutVal("partyGridRowHeight")
+                return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
+            end
+        end
+        if target == session.summoner then
+            return layoutVal("summonerPopupX"), ui.toPx(layoutVal("consoleTileY")) + layoutVal("summonerPopupYOffset")
+        end
+    end
+    return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
 
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx)
@@ -451,21 +575,21 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     
     -- Subtle darkened overlay (not too heavy)
     love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle("fill", 0, 0, 256, 140)
+    love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
     
     -- Render enemies portraits in viewport with slide-in and death animations
-    local spacing = 220 / #battleState.enemies
+    local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
         local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
-        local ex = 18 + (idx - 1) * spacing
-        local ey = 30
+        local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+        local ey = layoutVal("enemyY")
         
         -- Slide-in offset: start offscreen right, slide to position
         local slideOff = 0
         if anim.slideTimer > 0 then
-            slideOff = 280 * (anim.slideTimer / 0.35)
+            slideOff = layoutVal("enemySlideOffset") * (anim.slideTimer / 0.35)
         end
         local drawX = ex + slideOff
         
@@ -476,19 +600,19 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             love.graphics.setBlendMode("add")
             if portrait then
                 love.graphics.setColor(0.6 * alpha, 0, 0.9 * alpha, alpha)
-                love.graphics.draw(portrait, drawX, ey + (1-t)*20, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                love.graphics.draw(portrait, drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
             else
                 love.graphics.setColor(0.6*alpha, 0, 0.9*alpha, alpha)
-                love.graphics.rectangle("fill", drawX, ey + (1-t)*20, 50, 50)
+                love.graphics.rectangle("fill", drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             love.graphics.setBlendMode("alpha")
         elseif not anim.dead then
             if portrait then
                 love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(portrait, drawX, ey, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
             else
                 love.graphics.setColor(0.8, 0.1, 0.1, 1)
-                love.graphics.rectangle("fill", drawX, ey, 50, 50)
+                love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             
             -- Apply action/damage flash overlay
@@ -500,9 +624,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                     love.graphics.setColor(1.0, 0.2, 0.2, anim.flashTimer / 0.35)
                 end
                 if portrait then
-                    love.graphics.draw(portrait, drawX, ey, 0, 56/portrait:getWidth(), 56/portrait:getHeight())
+                    love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
                 else
-                    love.graphics.rectangle("fill", drawX, ey, 50, 50)
+                    love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
                 end
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
@@ -510,54 +634,63 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
-            ui.drawString(enemy.name, ex, 90, {1, 1, 1, 1})
-            ui.drawBar(ex, 104, 50, 4, enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(enemy.name, ex, layoutVal("enemyNameY"), {1, 1, 1, 1})
+            ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         end
     end
     
     -- Slim dialogue at the top of the screen during Battle Resolution
     if combatState == "log" then
-        ui.drawPanel(10, 6, 236, 32)
+        ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
         local latestLog = combatLog[#combatLog] or ""
-        ui.drawString(latestLog, 16, 12, {1, 1, 1, 1}, "left", 224)
-        ui.drawString("[SPACE]", 200, 23, {0.5, 0.5, 0.5, 1}, "right", 40)
+        ui.drawString(latestLog, layoutVal("logTextX"), layoutVal("logTextY"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+        ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
     -- Bottom Command console
-    local consoleY = ui.toPx(18)
-    local consoleH = ui.toPx(12)
-    local textX = ui.toPx(1)
-    local headerY = consoleY + ui.toPx(1)
+    local consoleY = ui.toPx(layoutVal("consoleTileY"))
+    local consoleH = ui.toPx(layoutVal("consoleTileH"))
+    local textX = ui.toPx(layoutVal("consoleTextTileX"))
+    local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
     
-    ui.drawPanel(0, consoleY, ui.toPx(32), consoleH)
+    ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
     
     if combatState == "input" then
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
         local isSummoner = (not memberInfo or memberInfo.type == "summoner")
         
         if isSummoner then
-            ui.drawString("ALEX'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = { "Attack", "Spell", "Item", "Flee" }
+            ui.drawString(summonerName() .. "'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
+            local actions = renderer.session.loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
             if spellSelect then
                 ui.drawString("CAST SPELL (MP: " .. renderer.session.mp .. ")", textX, headerY, {0.5, 0.8, 1, 1})
-                local spells = { "Cure (5MP)", "Protect (8MP)", "Wall (15MP)" }
+                -- Real spell names + MP costs from summoner.spells / skills.json
+                -- (this list was previously hardcoded and out of sync)
+                local spells = {}
+                for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
+                    if type(spellId) == "table" then spellId = spellId.id end
+                    local sk = renderer.session.loader.getSkill(spellId)
+                    if sk then
+                        table.insert(spells, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
+                    end
+                end
                 for i, spellName in ipairs(spells) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. spellName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. spellName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             else
                 for i, actName in ipairs(actions) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             end
         else
             -- Monster Turn
             local monster = memberInfo.actor
             ui.drawString(monster.name:upper() .. "'S TURN", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = { "Attack", "Skill", "Defend", "Flee" }
+            local actions = renderer.session.loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
             if spellSelect then
                 ui.drawString("USE SKILL", textX, headerY, {0.5, 0.8, 1, 1})
                 local skillsList = {}
@@ -566,33 +699,33 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                     if sk then table.insert(skillsList, sk) end
                 end
                 if #skillsList == 0 then
-                    ui.drawString("  (No skills)", textX, headerY + ui.lineHeight * 2, {0.5, 0.5, 0.5, 1})
+                    ui.drawString("  (No skills)", textX, headerY + layoutVal("menuChoiceSpacing"), {0.5, 0.5, 0.5, 1})
                 else
                     for i, sk in ipairs(skillsList) do
                         local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                         local prefix = (i == selectedIndex) and "> " or "  "
-                        ui.drawString(prefix .. sk.name, textX, headerY + i * ui.lineHeight * 2, color)
+                        ui.drawString(prefix .. sk.name, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                     end
                 end
             else
                 for i, actName in ipairs(actions) do
                     local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                     local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * ui.lineHeight * 2, color)
+                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
                 end
             end
         end
     else
         -- Log state console title
-        ui.drawString("ALEX'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
-        ui.drawString("Resolving actions...", textX, headerY + 16, {0.6, 0.6, 0.6, 1})
+        ui.drawString(summonerName() .. "'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
+        ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + layoutVal("menuChoiceSpacing"), {0.6, 0.6, 0.6, 1})
     end
-    
+
     -- Draw Summoner MP stats on bottom left
     local session = renderer.session
-    ui.drawString("ALEX", textX, consoleY + ui.toPx(6), {1, 0.85, 0.5, 1})
-    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, textX, consoleY + ui.toPx(8), {0.6, 0.8, 1, 1})
-    ui.drawBar(textX, consoleY + ui.toPx(10), 10 * ui.tileSize, 4, session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+    ui.drawString(summonerName(), layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset"), {1, 0.85, 0.5, 1})
+    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset"), {0.6, 0.8, 1, 1})
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset"), layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
     
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0
@@ -604,7 +737,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             showHighlight = true
         end
     end
-    renderer.drawPartyGrid(ui.toPx(16), headerY, highlightIdx, session, showHighlight)
+    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
     
     -- Draw active damage popups
     love.graphics.push("all")
@@ -616,7 +749,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.pop()
 end
 
-function renderer.drawShop(shopId, selectedIdx, shopItems)
+function renderer.drawShop(shopTitle, selectedIdx, shopItems)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
     local progress
     if renderer.closing and renderer.closingScene == "shop" then
@@ -633,7 +766,7 @@ function renderer.drawShop(shopId, selectedIdx, shopItems)
     -- Draw shop title and item list
     ui.drawPanel(ui.toPx(1) + ox, ui.toPx(1), ui.toPx(30), ui.toPx(15))
     
-    local titleText = "SHOP: " .. shopId:gsub("_", " "):upper()
+    local titleText = "SHOP: " .. tostring(shopTitle):upper()
     ui.drawString(titleText, ui.toPx(2) + ox, ui.toPx(2), {1, 0.85, 0.5, 1})
     
     if #shopItems == 0 then
@@ -644,7 +777,7 @@ function renderer.drawShop(shopId, selectedIdx, shopItems)
         local count = 0
         for i = start, math.min(#shopItems, start + 4) do
             local item = shopItems[i]
-            local itemY = ui.toPx(4) + count * ui.lineHeight * 2
+            local itemY = ui.toPx(4) + count * ui.lineHeight
             local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectedIdx) and "> " or "  "
             
@@ -716,24 +849,25 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     
     -- 1. Draw Left Menu Column
     ui.drawPanel(leftX, ui.toPx(1), ui.toPx(8), ui.toPx(18), "MENU")
-    local mainOpts = { "ITEMS", "STATUS", "EQUIP", "EXIT" }
+    local mainOpts = session.loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
     for i, opt in ipairs(mainOpts) do
         local isSel = (subScene == "main" and i == mainIdx)
         local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = isSel and ">" or " "
-        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, ui.toPx(4) + (i - 1) * ui.toPx(2), color)
+        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, ui.toPx(4) + (i - 1) * ui.lineHeight, color)
     end
     
     -- Gold and Floor stats inside left menu column below the options
-    ui.drawString("GOLD", leftX + 0.5 * ui.tileSize, ui.toPx(12.5), {0.6, 0.6, 0.6, 1})
-    ui.drawString(session.gold .. " G", leftX + 0.5 * ui.tileSize, ui.toPx(13.75), {1, 0.9, 0.3, 1})
+    local statsY = math.max(12.5, 4.0 + #mainOpts * 2.0)
+    ui.drawString("GOLD", leftX + 0.5 * ui.tileSize, ui.toPx(statsY), {0.6, 0.6, 0.6, 1})
+    ui.drawString(session.gold .. " G", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 1.0), {1, 0.9, 0.3, 1})
     
     local mapTitle = "Town"
     if session.currentMapData then
         mapTitle = session.currentMapData.title or "1"
     end
-    ui.drawString("FLOOR", leftX + 0.5 * ui.tileSize, ui.toPx(15.25), {0.6, 0.6, 0.6, 1})
-    ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(16.5), {1, 1, 1, 1}, "left", ui.toPx(6.75))
+    ui.drawString("FLOOR", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 2.25), {0.6, 0.6, 0.6, 1})
+    ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 3.25), {1, 1, 1, 1}, "left", ui.toPx(6.75))
     
     -- 2. Draw Bottom Description Panel
     ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")
@@ -770,7 +904,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
             local stateStr = #states > 0 and table.concat(states, ", ") or "NORMAL"
             ui.drawString("STATUS: " .. stateStr, textLeftMargin, bottomY + 6.5 * ui.tileSize, {1, 1, 1, 1})
         else
-            ui.drawString("ALEX'S CREATURES", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
+            ui.drawString(summonerName() .. "'S CREATURES", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
             ui.drawString("Manage your active summon spirits and modify equipment parameters.", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.7, 0.7, 0.7, 1}, "left", ui.toPx(28))
         end
         
@@ -847,7 +981,7 @@ function renderer.drawStatusDetail(c, session)
     local contentX = panelX + ui.toPx(1)
     
     -- Header info (y = ui.toPx(4) i.e. 32px)
-    local iconW = drawElementIcons(c.actorData.elements, contentX, ui.toPx(4))
+    local iconW = drawElementIcons(traits.getElements(c, session), contentX, ui.toPx(4))
     ui.drawString(c.name .. " L" .. c.level, contentX + iconW + 4, ui.toPx(4), {1, 0.85, 0.5, 1})
     ui.drawString("ROLE: " .. (c.actorData.role or "CREATURE"), contentX, ui.toPx(5.5), {0.7, 0.7, 0.7, 1})
     
@@ -862,10 +996,10 @@ function renderer.drawStatusDetail(c, session)
     local mat = traits.getParam(c, "mat", session)
     local mdf = traits.getParam(c, "mdf", session)
     ui.drawString("ATK: " .. atk, contentX, ui.toPx(11), {1, 1, 1, 1})
-    ui.drawString("DEF: " .. def, contentX, ui.toPx(12.5), {1, 1, 1, 1})
-    ui.drawString("MAT: " .. mat, contentX, ui.toPx(14), {1, 1, 1, 1})
-    ui.drawString("MDF: " .. mdf, contentX, ui.toPx(15.5), {1, 1, 1, 1})
-    
+    ui.drawString("DEF: " .. def, contentX, ui.toPx(12), {1, 1, 1, 1})
+    ui.drawString("MAT: " .. mat, contentX, ui.toPx(13), {1, 1, 1, 1})
+    ui.drawString("MDF: " .. mdf, contentX, ui.toPx(14), {1, 1, 1, 1})
+
     -- Equipment Column (Right, x = contentX + 13 tiles)
     local equipX = contentX + ui.toPx(13)
     ui.drawString("EQUIPMENT", equipX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
@@ -873,8 +1007,8 @@ function renderer.drawStatusDetail(c, session)
     local eq2 = c.equipment[2] and c.equipment[2].name or "[ EMPTY ]"
     local eq3 = c.equipment[3] and c.equipment[3].name or "[ EMPTY ]"
     ui.drawString("WPN: " .. eq1, equipX, ui.toPx(11), {0.8, 0.8, 0.8, 1})
-    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12.5), {0.8, 0.8, 0.8, 1})
-    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(14), {0.8, 0.8, 0.8, 1})
+    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
+    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
     
     -- Passives & Skills (y = ui.toPx(17.5))
     ui.drawString("PASSIVE TRAITS", contentX, ui.toPx(17.5), {1, 0.85, 0.5, 1})
@@ -988,9 +1122,9 @@ function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     local mdf = traits.getParam(c, "mdf", session)
     ui.drawString("STATS", ui.toPx(18) + ox, ui.toPx(6), {0.5, 0.8, 1, 1})
     ui.drawString("ATK: " .. atk, ui.toPx(18) + ox, ui.toPx(7.75), {1, 1, 1, 1})
-    ui.drawString("DEF: " .. def, ui.toPx(18) + ox, ui.toPx(9.25), {1, 1, 1, 1})
-    ui.drawString("MAT: " .. mat, ui.toPx(18) + ox, ui.toPx(10.75), {1, 1, 1, 1})
-    ui.drawString("MDF: " .. mdf, ui.toPx(18) + ox, ui.toPx(12.25), {1, 1, 1, 1})
+    ui.drawString("DEF: " .. def, ui.toPx(18) + ox, ui.toPx(8.75), {1, 1, 1, 1})
+    ui.drawString("MAT: " .. mat, ui.toPx(18) + ox, ui.toPx(9.75), {1, 1, 1, 1})
+    ui.drawString("MDF: " .. mdf, ui.toPx(18) + ox, ui.toPx(10.75), {1, 1, 1, 1})
     
     local bottomY = ui.toPx(20) + (1 - ease) * ui.toPx(12)
     ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")

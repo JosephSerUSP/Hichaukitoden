@@ -4,7 +4,6 @@
     "title": "Town of Stillnight",
     "intro": "A quiet settlement on the edge of the void.",
     "depth": 0,
-    "safe": true,
     "music": "town1",
     "image": "TownAlencar.png",
     "layout": [
@@ -39,8 +38,15 @@
           {
             "type": "TEXT",
             "text": "The gate to the lower depths is sealed. Come back when you are prepared."
+          },
+          {
+            "type": "DESCEND"
           }
-        ]
+        ],
+        "name": "Gate Guard",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
       },
       {
         "id": 2,
@@ -51,9 +57,11 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "Welcome to the Weapon Shop! How can I help you?"
+            "text": "Welcome to the Weapon Shop! How can I help you?",
+            "speaker": "\\eventName"
           }
-        ]
+        ],
+        "name": "Weapon Shop"
       },
       {
         "id": 3,
@@ -61,7 +69,8 @@
         "y": 5,
         "sprite": "assets/sprites/NPC07.png",
         "trigger": "interact",
-        "scriptId": 4
+        "scriptId": 4,
+        "name": "NPC 3"
       },
       {
         "id": 4,
@@ -72,7 +81,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: Welcome! Keep an eye on your summoner's MP, it depletes as you move."
+            "text": "Welcome! Keep an eye on your summoner's MP, it depletes as you move.",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Laura"
@@ -88,7 +98,11 @@
             "type": "TEXT",
             "text": "This abandoned house is now your home. It feels safe here."
           }
-        ]
+        ],
+        "name": "Sign",
+        "transparent": true,
+        "priority": "same",
+        "spawn": "Fixed"
       },
       {
         "id": 6,
@@ -96,7 +110,8 @@
         "y": 9,
         "sprite": "assets/sprites/NPC09.png",
         "trigger": "step",
-        "scriptId": 7
+        "scriptId": 7,
+        "name": "Trigger"
       },
       {
         "id": 7,
@@ -107,7 +122,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: I have prepared some items for your journey. Check the database."
+            "text": "I have prepared some items for your journey. Check the database.",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Alicia"
@@ -121,10 +137,11 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: The drinks here are cheap. Feel free to rest."
+            "text": "The drinks here are cheap. Feel free to rest.",
+            "speaker": "\\eventName"
           }
         ],
-        "name": "Pub"
+        "name": "Pub Owner"
       },
       {
         "id": 9,
@@ -135,7 +152,8 @@
         "script": [
           {
             "type": "TEXT",
-            "text": "\\eventName: Welcome to the summoners auction house!"
+            "text": "Welcome to the summoners auction house!",
+            "speaker": "\\eventName"
           }
         ],
         "name": "Auctioneer"
@@ -151,12 +169,32 @@
             "type": "TEXT",
             "text": "The temple is quiet. You feel a sense of peace."
           }
-        ]
+        ],
+        "name": "Temple"
+      },
+      {
+        "id": 11,
+        "x": 5,
+        "y": 6,
+        "sprite": "assets/sprites/NPC06.png",
+        "trigger": "interact",
+        "scriptId": 14,
+        "name": "Workbench"
       }
     ],
     "treasures": [],
-    "encounters": [],
-    "recruits": []
+    "encounters": [
+      {
+        "id": 1,
+        "weight": 10
+      }
+    ],
+    "recruits": [],
+    "category": "town",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 5,
+    "safe": true
   },
   {
     "id": 2,
@@ -213,25 +251,25 @@
     ],
     "encounters": [
       {
-        "id": "pixie",
+        "id": 1,
         "weight": 5
       },
       {
-        "id": "skeleton",
+        "id": 3,
         "weight": 5
       },
       {
-        "id": "imp",
+        "id": 9,
         "weight": 3
       }
     ],
     "recruits": [
-      "pixie",
-      "skeleton",
-      "imp",
-      "wisp",
-      "bat",
-      "candle"
+      1,
+      3,
+      9,
+      14,
+      13,
+      20
     ]
   },
   {
@@ -286,34 +324,38 @@
     "treasures": [
       "hi_potion",
       "iron_sword",
-      "glittering_teardrop"
+      24
     ],
     "encounters": [
       {
-        "id": "skeleton",
+        "id": 3,
         "weight": 8
       },
       {
-        "id": "imp",
+        "id": 9,
         "weight": 5
       },
       {
-        "id": "wisp",
+        "id": 14,
         "weight": 4
       },
       {
-        "id": "ooze",
+        "id": 12,
         "weight": 3
       }
     ],
     "recruits": [
-      "skeleton",
-      "imp",
-      "ooze",
-      "golem",
-      "candle",
-      "flauros"
-    ]
+      3,
+      9,
+      12,
+      10,
+      20,
+      19
+    ],
+    "category": "dungeon",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 0
   },
   {
     "id": 4,
@@ -358,24 +400,24 @@
     ],
     "encounters": [
       {
-        "id": "golem",
+        "id": 10,
         "weight": 6
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 4
       },
       {
-        "id": "angel",
+        "id": 4,
         "weight": 3
       }
     ],
     "recruits": [
-      "golem",
-      "demon",
-      "angel",
-      "larva",
-      "flauros"
+      10,
+      6,
+      4,
+      17,
+      19
     ]
   },
   {
@@ -420,27 +462,27 @@
       }
     ],
     "treasures": [
-      "shattered_blade"
+      26
     ],
     "encounters": [
       {
-        "id": "demon",
+        "id": 6,
         "weight": 8
       },
       {
-        "id": "highPixie",
+        "id": 2,
         "weight": 4
       },
       {
-        "id": "ghoul",
+        "id": 11,
         "weight": 4
       }
     ],
     "recruits": [
-      "demon",
-      "angel",
-      "golem",
-      "flauros"
+      6,
+      4,
+      10,
+      19
     ]
   },
   {
@@ -485,25 +527,25 @@
       }
     ],
     "treasures": [
-      "untarnished_signet"
+      25
     ],
     "encounters": [
       {
-        "id": "crimsonLord",
+        "id": 18,
         "weight": 2
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 8
       },
       {
-        "id": "highPixie",
+        "id": 2,
         "weight": 5
       }
     ],
     "recruits": [
-      "demon",
-      "angel"
+      6,
+      4
     ]
   },
   {
@@ -533,11 +575,11 @@
     ],
     "encounters": [
       {
-        "id": "crimsonLord",
+        "id": 18,
         "weight": 10
       },
       {
-        "id": "demon",
+        "id": 6,
         "weight": 5
       }
     ],

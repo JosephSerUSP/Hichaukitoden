@@ -1,8 +1,15 @@
 local effects = require("engine.effects")
 local traits = require("engine.traits")
 local config = require("engine.config")
+local flow = require("engine.flow")
 
 local battle = {}
+
+-- The basic attack every battler falls back to (combat.attackSkillId)
+local function getAttackSkill(session)
+    local id = config.combat and config.combat.attackSkillId or "attack"
+    return session.loader.getSkill(id) or session.loader.getSkill("attack")
+end
 
 local Battle = {}
 Battle.__index = Battle
@@ -27,7 +34,7 @@ function Battle:getAIAction(enemy)
     
     -- Pick a random skill
     local skillId = skills[math.random(#skills)]
-    local skill = self.session.loader.getSkill(skillId) or self.session.loader.getSkill("attack")
+    local skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
     
     -- Select target
     local target
@@ -69,7 +76,7 @@ function Battle:getAIAction(enemy)
 end
 
 -- Resolve one round of battle
--- summonerAction can be: { type = "spell", id = "cure", target = ... }, { type = "item", id = "hp_tonic", target = ... }, { type = "flee" }, { type = "formation" } or nil
+-- summonerAction can be: { type = "spell", id = "cure", target = ... }, { type = "item", id = 1 (numeric item id), target = ... }, { type = "flee" }, { type = "formation" } or nil
 function Battle:resolveRound(summonerAction)
     local roundEvents = {}
     
@@ -82,10 +89,10 @@ function Battle:resolveRound(summonerAction)
                 self.session.mp = self.session.mp - (spell.mpCost or 0)
                 table.insert(roundEvents, {
                     type = "text",
-                    text = "Alex casts " .. spell.name .. "!"
+                    text = self.session.loader.formatTerm("battle.casts_spell", "{0} casts {1}!", self.session.summoner.name, spell.name)
                 })
                 for _, eff in ipairs(spell.effects or {}) do
-                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
+                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session, { element = spell.element })
                     for _, ev in ipairs(evs) do
                         table.insert(roundEvents, ev)
                     end
@@ -97,7 +104,7 @@ function Battle:resolveRound(summonerAction)
                 local item = self.session.loader.getItem(sumAct.id)
                 table.insert(roundEvents, {
                     type = "text",
-                    text = "Alex uses " .. item.name .. "!"
+                    text = self.session.loader.formatTerm("battle.uses_item", "{0} uses {1}!", self.session.summoner.name, item.name)
                 })
                 for _, eff in ipairs(item.effects or {}) do
                     local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
@@ -107,25 +114,40 @@ function Battle:resolveRound(summonerAction)
                 end
             end
         elseif sumAct.type == "flee" then
-            local roll = math.random()
-            local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
-            -- Add flee bonus from coward/fleeChanceBonus passive
-            for _, ally in ipairs(self.allies) do
-                if not ally:isDead() then
-                    baseFlee = baseFlee + traits.getRate(ally, "FLEE_CHANCE_BONUS", self.session)
+            if flow.has("battle.flee_attempt") then
+                local flowEvents = flow.run("battle.flee_attempt", {
+                    session = self.session,
+                    battle = self,
+                })
+                local escaped = false
+                for _, ev in ipairs(flowEvents) do
+                    table.insert(roundEvents, ev)
+                    if ev.type == "flee_success" then escaped = true end
                 end
-            end
-            
-            if roll < baseFlee then
-                table.insert(roundEvents, { type = "flee_success" })
-                return roundEvents
+                if escaped then return roundEvents end
             else
-                table.insert(roundEvents, { type = "text", text = "Failed to escape!" })
-                -- Lose some gold as penalty
-                local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
-                local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
-                local goldLoss = math.random(goldLossMin, goldLossMax)
-                self.session.gold = math.max(0, self.session.gold - goldLoss)
+                -- Legacy block: runs only when the phase is removed from
+                -- flows.json (SPEC S4 fallback rule)
+                local roll = math.random()
+                local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
+                -- Add flee bonus from coward/fleeChanceBonus passive
+                for _, ally in ipairs(self.allies) do
+                    if not ally:isDead() then
+                        baseFlee = baseFlee + traits.getRate(ally, "FLEE_CHANCE_BONUS", self.session)
+                    end
+                end
+
+                if roll < baseFlee then
+                    table.insert(roundEvents, { type = "flee_success" })
+                    return roundEvents
+                else
+                    table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
+                    -- Lose some gold as penalty
+                    local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
+                    local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
+                    local goldLoss = math.random(goldLossMin, goldLossMax)
+                    self.session.gold = math.max(0, self.session.gold - goldLoss)
+                end
             end
         end
     end
@@ -150,18 +172,21 @@ function Battle:resolveRound(summonerAction)
             
             if chosenAct then
                 if chosenAct.type == "spell" or chosenAct.type == "skill" then
-                    skill = self.session.loader.getSkill(chosenAct.id) or self.session.loader.getSkill("attack")
+                    skill = self.session.loader.getSkill(chosenAct.id) or getAttackSkill(self.session)
                     target = chosenAct.target
                 elseif chosenAct.type == "defend" then
-                    -- Defend grants temporary defense increase or just logs defend
-                    skill = { name = "Defend", speed = 50, effects = { { code = "STATE_ADD", value = "defending", dataId = "defending" } } }
+                    -- Defend is a data-defined skill (combat.defendSkillId) so its
+                    -- speed/effects are editable like any other skill
+                    local defendId = config.combat and config.combat.defendSkillId or "defend"
+                    skill = self.session.loader.getSkill(defendId)
+                        or { name = "Defend", speed = 50, effects = {} }
                     target = ally
                 else
-                    skill = self.session.loader.getSkill("attack")
+                    skill = getAttackSkill(self.session)
                     target = chosenAct.target
                 end
             else
-                skill = self.session.loader.getSkill("attack")
+                skill = getAttackSkill(self.session)
                 -- Target first living enemy
                 for _, enemy in ipairs(self.enemies) do
                     if not enemy:isDead() then target = enemy break end
@@ -169,7 +194,7 @@ function Battle:resolveRound(summonerAction)
             end
             
             if target then
-                local baseSpeed = 10 + ally.level * 0.5
+                local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + ally.level * (config.combat and config.combat.speedPerLevel or 0.5)
                 local actSpeed = skill.speed or 0
                 local totalSpeed = baseSpeed + actSpeed
                 table.insert(queue, {
@@ -187,7 +212,7 @@ function Battle:resolveRound(summonerAction)
         if not enemy:isDead() then
             local action = self:getAIAction(enemy)
             if action then
-                local baseSpeed = 10 + enemy.level * 0.5
+                local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + enemy.level * (config.combat and config.combat.speedPerLevel or 0.5)
                 local actSpeed = action.skill.speed or 0
                 local totalSpeed = baseSpeed + actSpeed
                 action.speed = totalSpeed
@@ -212,7 +237,7 @@ function Battle:resolveRound(summonerAction)
             })
             
             for _, eff in ipairs(turn.skill.effects or {}) do
-                local evs = effects.apply(eff, turn.actor, turn.target, self.session)
+                local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
                 for _, ev in ipairs(evs) do
                     table.insert(roundEvents, ev)
                 end
@@ -229,6 +254,25 @@ function Battle:resolveRound(summonerAction)
         end
     end
     
+    -- Skip round-end ticks if the battle outcome is already decided
+    if self:isVictory() or self:isDefeat() then
+        return roundEvents
+    end
+    
+    if flow.has("battle.round_end") then
+        local flowEvents = flow.run("battle.round_end", {
+            session = self.session,
+            battle = self,
+        })
+        for _, ev in ipairs(flowEvents) do
+            table.insert(roundEvents, ev)
+        end
+        self.round = self.round + 1
+        return roundEvents
+    end
+
+    -- Legacy block: runs only when the phase is removed from flows.json
+    -- (SPEC S4 fallback rule)
     -- Apply end of turn effects (poison, regen, status decay)
     for _, battler in ipairs(self:getAllActiveBattlers()) do
         if not battler:isDead() then
@@ -236,7 +280,7 @@ function Battle:resolveRound(summonerAction)
             for _, state in ipairs(battler.states) do
                 if state.id == "regen" then
                     local maxHp = traits.getParam(battler, "maxHp", self.session)
-                    local heal = math.floor(maxHp * 0.1)
+                    local heal = math.floor(maxHp * (config.combat and config.combat.regenRate or 0.1))
                     battler.hp = math.min(maxHp, battler.hp + heal)
                     table.insert(roundEvents, {
                         type = "heal",
@@ -244,7 +288,7 @@ function Battle:resolveRound(summonerAction)
                         value = heal
                     })
                 elseif state.id == "poison" then
-                    local dmg = math.floor(traits.getParam(battler, "maxHp", self.session) * 0.1)
+                    local dmg = math.floor(traits.getParam(battler, "maxHp", self.session) * (config.combat and config.combat.poisonRate or 0.1))
                     battler.hp = math.max(0, battler.hp - dmg)
                     table.insert(roundEvents, {
                         type = "damage",
@@ -279,8 +323,10 @@ function Battle:resolveRound(summonerAction)
         end
     end
     
-    -- MP drain at round end for each active monster
-    if not self.session.currentMapData.safe then
+    -- MP drain at round end for each active monster (no drain on safe maps
+    -- or when no map is loaded, e.g. test battles)
+    local mapData = self.session.currentMapData
+    if not (mapData and mapData.safe) then
         for i = 1, 4 do
             local ally = self.allies[i]
             if ally and not ally:isDead() then
@@ -298,15 +344,16 @@ function Battle:resolveRound(summonerAction)
             for i = 1, 4 do
                 local ally = self.allies[i]
                 if ally and not ally:isDead() then
-                    ally.hp = math.max(1, ally.hp - 1)
+                    local exhaustDmg = config.combat and config.combat.mpExhaustionDamage or 1
+                    ally.hp = math.max(1, ally.hp - exhaustDmg)
                     table.insert(roundEvents, {
                         type = "damage",
                         target = ally,
-                        value = 1
+                        value = exhaustDmg
                     })
                     table.insert(roundEvents, {
                         type = "text",
-                        text = ally.name .. " suffers from MP exhaustion!"
+                        text = self.session.loader.formatTerm("battle.mp_exhaustion", "{0} suffers from MP exhaustion!", ally.name)
                     })
                 end
             end

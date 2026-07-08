@@ -1,40 +1,53 @@
 local traits = require("engine.traits")
+local formulaEngine = require("engine.formula")
 
 local effects = {}
 
-local function evaluateFormula(formula, a, b, session)
-    if not formula then return 0 end
-    
-    local str = formula
-    -- Replace a.level, a.atk
-    str = str:gsub("a%.level", tostring(a.level or 1))
-    str = str:gsub("a%.atk", tostring(traits.getParam(a, "atk", session) or 10))
-    str = str:gsub("a%.mat", tostring(traits.getParam(a, "mat", session) or 10))
-    
-    -- Replace b.level, b.def, etc.
-    if b then
-        str = str:gsub("b%.level", tostring(b.level or 1))
-        str = str:gsub("b%.def", tostring(traits.getParam(b, "def", session) or 10))
-        str = str:gsub("b%.mdf", tostring(traits.getParam(b, "mdf", session) or 10))
+-- Elemental affinity multiplier: the attack's element vs each of the target's
+-- elements, using the strongAgainst/weakAgainst lists in data/elements.json
+-- and the multipliers in data/engine.json (elementRules).
+local function elementMultiplier(element, target, session)
+    if not element then return 1.0 end
+    local elemData = session.loader.elements and session.loader.elements[element]
+    if not elemData then return 1.0 end
+
+    local rules = (session.loader.engine and session.loader.engine.elementRules) or {}
+    local strongMult = rules.strongMultiplier or 1.5
+    local weakMult = rules.weakMultiplier or 0.65
+
+    local mult = 1.0
+    local targetElems = traits.getElements(target, session)
+    for _, targetElem in ipairs(targetElems) do
+        for _, strong in ipairs(elemData.strongAgainst or {}) do
+            if strong == targetElem then mult = mult * strongMult end
+        end
+        for _, weak in ipairs(elemData.weakAgainst or {}) do
+            if weak == targetElem then mult = mult * weakMult end
+        end
     end
-    
-    -- Compile and evaluate
-    local func = load("return " .. str)
-    if func then
-        local success, val = pcall(func)
-        if success then return val end
-    end
-    return 1
+    return mult
 end
 
-function effects.apply(effectData, a, b, session)
+-- Thin wrapper kept for the existing call sites: builds the a/b context
+-- through engine/formula.lua and evaluates in its sandbox. On error the
+-- sandbox falls back to 0 (SPEC S5) where the old code returned 1.
+local function evaluateFormula(expr, a, b, session)
+    if not expr then return 0 end
+    local ctx = formulaEngine.makeContext({ a = a, b = b, target = b }, session)
+    return (formulaEngine.eval(expr, ctx))
+end
+
+-- context (optional): { element = "White" } — the element of the skill/item
+-- driving this effect, used for affinity multipliers on damage.
+function effects.apply(effectData, a, b, session, context)
     local events = {}
-    
+    local ctxElement = context and context.element or nil
+
     if effectData.type == "hp_damage" then
         local val = evaluateFormula(effectData.formula, a, b, session)
-        -- Defense reduction
+        -- Defense reduction, then elemental affinity
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         table.insert(events, {
@@ -64,7 +77,7 @@ function effects.apply(effectData, a, b, session)
     elseif effectData.type == "hp_drain" then
         local val = evaluateFormula(effectData.formula, a, b, session)
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         a.hp = math.min(traits.getParam(a, "maxHp", session), a.hp + finalDmg)
@@ -98,8 +111,60 @@ function effects.apply(effectData, a, b, session)
                 state = effectData.status
             })
         end
+
+    -- Item-style effects (items.json): flat HP restore, permanent max HP
+    -- boost, and XP grants. Handled here so items behave identically in
+    -- battle and from the field menu.
+    elseif effectData.type == "hp" then
+        local maxHp = traits.getParam(b, "maxHp", session)
+        local healVal = math.max(0, math.min(maxHp - b.hp, effectData.value or 0))
+        b.hp = b.hp + healVal
+        table.insert(events, {
+            type = "heal",
+            target = b,
+            value = healVal
+        })
+
+    elseif effectData.type == "maxHp" then
+        local gain = effectData.value or 0
+        b.paramPlus.maxHp = (b.paramPlus.maxHp or 0) + gain
+        local maxHp = traits.getParam(b, "maxHp", session)
+        b.hp = math.min(maxHp, b.hp + gain)
+        table.insert(events, {
+            type = "heal",
+            target = b,
+            value = gain
+        })
+
+    elseif effectData.type == "xp" then
+        b:gainExp(effectData.value or 0, session)
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.gains_xp", "- {0} gains {1} XP.", b.name, effectData.value or 0)
+        })
+
+    -- Restores the summoner's shared MP pool (e.g. pub drinks)
+    elseif effectData.type == "mp_heal" then
+        local healVal = math.max(0, math.min(session.maxMp - session.mp, effectData.value or 0))
+        session.mp = session.mp + healVal
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.recovers_mp", "- {0} MP restored.", healVal)
+        })
+
+    -- Cures the state named in value (e.g. wine curing "weakened")
+    elseif effectData.type == "remove_status" then
+        local stateId = effectData.value or effectData.status
+        if stateId then
+            b:removeState(stateId)
+            table.insert(events, {
+                type = "state_remove",
+                target = b,
+                state = stateId
+            })
+        end
     end
-    
+
     return events
 end
 

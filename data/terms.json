@@ -4,7 +4,53 @@
     "enemies_emerge": "Enemies emerge from the dark!",
     "victory": "Victory!",
     "flee": "Flee",
-    "resolve_round": "Resolve Round"
+    "resolve_round": "Resolve Round",
+    "encounter": "A hostile group blocks your path!",
+    "victory_full": "Victory! All hostile forces vanquished.",
+    "defeat_full": "Defeat! The party has fallen in battle...",
+    "flee_success": "Escaped successfully!",
+    "flee_fail": "Failed to escape!",
+    "not_enough_mp": "Not enough MP!",
+    "no_item_left": "No {0}s left!",
+    "casts_spell": "{0} casts {1}!",
+    "uses_item": "{0} uses {1}!",
+    "uses_skill": "{0} uses {1} on {2}!",
+    "takes_damage": "- {0} takes {1} damage.",
+    "recovers_hp": "- {0} recovers {1} HP.",
+    "has_fallen": "! {0} has fallen!",
+    "got_status": "- {0} got {1} status.",
+    "status_wore_off": "- {0}'s {1} wore off.",
+    "consumes_mp": "- {0} consumes {1} MP.",
+    "mp_exhaustion": "{0} suffers from MP exhaustion!",
+    "gains_xp": "- {0} gains {1} XP.",
+    "recovers_mp": "- {0} MP restored.",
+    "resolving": "Resolving actions...",
+    "commands_summoner": [
+      "Attack",
+      "Spell",
+      "Item",
+      "Flee"
+    ],
+    "commands_monster": [
+      "Attack",
+      "Skill",
+      "Defend",
+      "Flee"
+    ]
+  },
+  "menu": {
+    "main_options": [
+      "ITEMS",
+      "STATUS",
+      "EQUIP",
+      "CRAFTING",
+      "EXIT"
+    ]
+  },
+  "events": {
+    "recover_party": "Your party has been fully recovered!",
+    "descend": "You descend deeper into the chasm...",
+    "found_item": "Found a {0}!"
   },
   "formation": {
     "title": "Formation – Stillnight",

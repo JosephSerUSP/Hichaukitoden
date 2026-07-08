@@ -11,15 +11,25 @@
     ],
     "requirements": {
       "items": [
-        { "id": "glittering_teardrop", "qty": 1, "consume": true }
+        {
+          "id": 24,
+          "qty": 1,
+          "consume": true
+        }
       ]
     },
     "rewards": {
       "gold": 45,
       "items": [
-        { "id": "light_amulet", "qty": 1 }
+        {
+          "id": 8,
+          "qty": 1
+        }
       ],
-      "flags": ["alicia_visits_pub", "alicia_trust_earned"]
+      "flags": [
+        "alicia_visits_pub",
+        "alicia_trust_earned"
+      ]
     }
   },
   "golden_promise": {
@@ -34,13 +44,20 @@
     ],
     "requirements": {
       "items": [
-        { "id": "untarnished_signet", "qty": 1, "consume": true }
+        {
+          "id": 25,
+          "qty": 1,
+          "consume": true
+        }
       ]
     },
     "rewards": {
       "gold": 80,
       "items": [
-        { "id": "alert_charm", "qty": 1 }
+        {
+          "id": 9,
+          "qty": 1
+        }
       ]
     }
   },
@@ -72,7 +89,11 @@
     ],
     "requirements": {
       "items": [
-        { "id": "shattered_blade", "qty": 1, "consume": true }
+        {
+          "id": 26,
+          "qty": 1,
+          "consume": true
+        }
       ]
     },
     "rewards": {

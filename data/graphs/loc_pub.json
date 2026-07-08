@@ -12,153 +12,221 @@
     "hub_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Approach the Bartender", "target": "bartender_start" },
-        { "label": "Speak to the Drunkard", "target": "drunkard_start" },
-        { "label": "Look for a table", "target": "look_around" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Approach the Bartender",
+          "target": "bartender_start"
+        },
+        {
+          "label": "Speak to the Drunkard",
+          "target": "drunkard_start"
+        },
+        {
+          "label": "Look for a table",
+          "target": "look_around"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
-
     "drunkard_start": {
-        "type": "ACTION",
-        "action": "NPC_DIALOGUE",
-        "id": "npc_drunkard",
-        "next": "hub_choices"
+      "type": "ACTION",
+      "action": "NPC_DIALOGUE",
+      "id": "npc_drunkard",
+      "next": "hub_choices"
     },
-
     "bartender_start": {
-        "type": "TEXT",
-        "portrait": "NPC_Barkeep",
-        "speakers": [{ "id": "NPC_Barkeep", "active": true }],
-        "content": "The bartender nods at you as he wipes a glass with a rag that's seen better days. 'What can I get you?'",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "portrait": "NPC_Barkeep",
+      "speakers": [
+        {
+          "id": "NPC_Barkeep",
+          "active": true
+        }
+      ],
+      "content": "The bartender nods at you as he wipes a glass with a rag that's seen better days. 'What can I get you?'",
+      "next": "bartender_choices"
     },
     "bartender_choices": {
-        "type": "CHOICE",
-        "options": [
-            { "label": "Buy a drink", "target": "shop_drink" },
-            { "label": "Any news?", "target": "bartender_gossip_router" },
-            { "label": "Back", "target": "hub_choices" }
-        ]
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Buy a drink",
+          "target": "shop_drink"
+        },
+        {
+          "label": "Any news?",
+          "target": "bartender_gossip_router"
+        },
+        {
+          "label": "Back",
+          "target": "hub_choices"
+        }
+      ]
     },
     "shop_drink": {
-        "type": "ACTION",
-        "action": "OPEN_SHOP",
-        "shopId": "pub_drinks",
-        "next": "bartender_choices"
+      "type": "ACTION",
+      "action": "OPEN_SHOP",
+      "shopId": 5,
+      "next": "bartender_choices"
     },
-
     "bartender_gossip_router": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "random:0.2", "target": "gossip_weather" },
-        { "condition": "random:0.2", "target": "gossip_dungeon_1" },
-        { "condition": "random:0.2", "target": "gossip_dungeon_2" },
-        { "condition": "random:0.2", "target": "gossip_alicia" },
-        { "default": true, "target": "gossip_default" }
+        {
+          "condition": "random:0.2",
+          "target": "gossip_weather"
+        },
+        {
+          "condition": "random:0.2",
+          "target": "gossip_dungeon_1"
+        },
+        {
+          "condition": "random:0.2",
+          "target": "gossip_dungeon_2"
+        },
+        {
+          "condition": "random:0.2",
+          "target": "gossip_alicia"
+        },
+        {
+          "default": true,
+          "target": "gossip_default"
+        }
       ]
     },
     "gossip_weather": {
-        "type": "TEXT",
-        "content": "Rain's coming. My knee aches. Means the slimes on the first floor will be extra sticky.",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "content": "Rain's coming. My knee aches. Means the slimes on the first floor will be extra sticky.",
+      "next": "bartender_choices"
     },
     "gossip_dungeon_1": {
-        "type": "TEXT",
-        "content": "Some fool said he saw a golden egg on the third floor. Probably just a trick of the light, or a trap.",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "content": "Some fool said he saw a golden egg on the third floor. Probably just a trick of the light, or a trap.",
+      "next": "bartender_choices"
     },
     "gossip_dungeon_2": {
-        "type": "TEXT",
-        "content": "If you see a statue that looks like it's crying, don't touch it. Unless you like curses.",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "content": "If you see a statue that looks like it's crying, don't touch it. Unless you like curses.",
+      "next": "bartender_choices"
     },
     "gossip_alicia": {
-        "type": "TEXT",
-        "content": "Alicia's been baking again. Smells like burnt cinnamon. Poor girl tries hard, though.",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "content": "Alicia's been baking again. Smells like burnt cinnamon. Poor girl tries hard, though.",
+      "next": "bartender_choices"
     },
     "gossip_default": {
-        "type": "TEXT",
-        "content": "News? The dungeon's deep, the monsters are hungry, and the beer is cold. That's all the news that matters.",
-        "next": "bartender_choices"
+      "type": "TEXT",
+      "content": "News? The dungeon's deep, the monsters are hungry, and the beer is cold. That's all the news that matters.",
+      "next": "bartender_choices"
     },
-
     "look_around": {
-        "type": "ROUTER",
-        "branches": [
-            { "condition": "flag:alicia_visits_pub", "target": "find_alicia" },
-            { "default": true, "target": "look_around_random" }
-        ]
+      "type": "ROUTER",
+      "branches": [
+        {
+          "condition": "flag:alicia_visits_pub",
+          "target": "find_alicia"
+        },
+        {
+          "default": true,
+          "target": "look_around_random"
+        }
+      ]
     },
     "find_alicia": {
-        "type": "TEXT",
-        "content": "You notice Alicia sitting by herself at a small table, nervously sipping a cup of tea. It's unusual to see her outside her shop.",
-        "next": "interact_alicia"
+      "type": "TEXT",
+      "content": "You notice Alicia sitting by herself at a small table, nervously sipping a cup of tea. It's unusual to see her outside her shop.",
+      "next": "interact_alicia"
     },
     "interact_alicia": {
-        "type": "CHOICE",
-        "options": [
-            { "label": "Approach her", "target": "trigger_alicia_dialogue" },
-            { "label": "Leave her be", "target": "hub_choices" }
-        ]
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Approach her",
+          "target": "trigger_alicia_dialogue"
+        },
+        {
+          "label": "Leave her be",
+          "target": "hub_choices"
+        }
+      ]
     },
     "trigger_alicia_dialogue": {
-        "type": "ACTION",
-        "action": "NPC_DIALOGUE",
-        "id": "pub_alicia",
-        "next": "hub_choices"
+      "type": "ACTION",
+      "action": "NPC_DIALOGUE",
+      "id": "pub_alicia",
+      "next": "hub_choices"
     },
     "look_around_random": {
-        "type": "ROUTER",
-        "branches": [
-            { "condition": "random:0.4", "target": "find_gambler" },
-            { "condition": "random:0.3", "target": "find_mercenary" },
-            { "default": true, "target": "find_nobody" }
-        ]
+      "type": "ROUTER",
+      "branches": [
+        {
+          "condition": "random:0.4",
+          "target": "find_gambler"
+        },
+        {
+          "condition": "random:0.3",
+          "target": "find_mercenary"
+        },
+        {
+          "default": true,
+          "target": "find_nobody"
+        }
+      ]
     },
     "find_gambler": {
-        "type": "TEXT",
-        "content": "In a dimly lit corner, you spot a familiar figure shuffling a deck of cards with practiced ease.",
-        "next": "interact_gambler"
+      "type": "TEXT",
+      "content": "In a dimly lit corner, you spot a familiar figure shuffling a deck of cards with practiced ease.",
+      "next": "interact_gambler"
     },
     "interact_gambler": {
-        "type": "CHOICE",
-        "options": [
-            { "label": "Approach the Gambler", "target": "trigger_gambler" },
-            { "label": "Ignore him", "target": "hub_choices" }
-        ]
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Approach the Gambler",
+          "target": "trigger_gambler"
+        },
+        {
+          "label": "Ignore him",
+          "target": "hub_choices"
+        }
+      ]
     },
     "trigger_gambler": {
-        "type": "ACTION",
-        "action": "NPC_DIALOGUE",
-        "id": "npc_gambler",
-        "next": "hub_choices"
+      "type": "ACTION",
+      "action": "NPC_DIALOGUE",
+      "id": "npc_gambler",
+      "next": "hub_choices"
     },
-
     "find_mercenary": {
-        "type": "TEXT",
-        "content": "An old mercenary sits by the fire, staring into the flames. He looks like he has stories to tell.",
-        "next": "interact_mercenary"
+      "type": "TEXT",
+      "content": "An old mercenary sits by the fire, staring into the flames. He looks like he has stories to tell.",
+      "next": "interact_mercenary"
     },
     "interact_mercenary": {
-        "type": "CHOICE",
-        "options": [
-            { "label": "Sit with him", "target": "trigger_mercenary" },
-            { "label": "Leave him be", "target": "hub_choices" }
-        ]
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Sit with him",
+          "target": "trigger_mercenary"
+        },
+        {
+          "label": "Leave him be",
+          "target": "hub_choices"
+        }
+      ]
     },
     "trigger_mercenary": {
-        "type": "ACTION",
-        "action": "NPC_DIALOGUE",
-        "id": "npc_geraldo",
-        "next": "hub_choices"
+      "type": "ACTION",
+      "action": "NPC_DIALOGUE",
+      "id": "npc_geraldo",
+      "next": "hub_choices"
     },
-
     "find_nobody": {
-        "type": "TEXT",
-        "content": "You find an empty table. It's nice to sit down for a moment, but there's no one interesting nearby right now.",
-        "next": "hub_choices"
+      "type": "TEXT",
+      "content": "You find an empty table. It's nice to sit down for a moment, but there's no one interesting nearby right now.",
+      "next": "hub_choices"
     }
   }
 }

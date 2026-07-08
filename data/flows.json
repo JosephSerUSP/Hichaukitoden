@@ -1,0 +1,299 @@
+{
+  "battle": {
+    "encounter_check": [
+      {
+        "cmd": "COMMENT",
+        "text": "Per-step encounter roll; the map host applies the safe-map exemption before running this phase (task A5d)."
+      },
+      {
+        "cmd": "ROLL_ENCOUNTER",
+        "chance": "session.encounterRate"
+      }
+    ],
+    "battle_start": [
+      {
+        "cmd": "COMMENT",
+        "text": "Enemy group composition: count roll then weighted picks from the map's encounter table (task A5d)."
+      },
+      {
+        "cmd": "SPAWN_ENEMIES",
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ],
+    "round_end": [
+      {
+        "cmd": "COMMENT",
+        "text": "End-of-round ticks: regen/poison/decay for everyone, then per-slot MP drain and MP-exhaustion damage off safe maps. Mirrors the legacy engine/battle.lua block exactly, including its slot-1..4 drain loop (task A5b)."
+      },
+      {
+        "cmd": "STATE_TICKS"
+      },
+      {
+        "cmd": "IF",
+        "condition": "not session.mapSafe",
+        "then": [
+          {
+            "cmd": "FOR_EACH",
+            "scope": "slot_allies",
+            "as": "ally",
+            "do": [
+              {
+                "cmd": "DRAIN_MP",
+                "amount": "ally.mpd",
+                "actor": "ally"
+              }
+            ]
+          },
+          {
+            "cmd": "IF",
+            "condition": "session.mp <= 0",
+            "then": [
+              {
+                "cmd": "FOR_EACH",
+                "scope": "slot_allies",
+                "as": "ally",
+                "do": [
+                  {
+                    "cmd": "DAMAGE",
+                    "target": "ally",
+                    "amount": "combat.mpExhaustionDamage",
+                    "pierce": true,
+                    "minHp": 1
+                  },
+                  {
+                    "cmd": "EMIT_TEXT",
+                    "term": "battle.mp_exhaustion",
+                    "fallback": "{0} suffers from MP exhaustion!",
+                    "args": [
+                      "ally.name"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "defeat": [
+      {
+        "cmd": "COMMENT",
+        "text": "Party wiped: signal the reset-to-title transition. main.lua performs the actual scene switch and session reset (task A5e)."
+      },
+      {
+        "cmd": "SCENE_EVENT",
+        "kind": "defeat"
+      }
+    ],
+    "escaped": [
+      {
+        "cmd": "COMMENT",
+        "text": "Successful flee: signal the return-to-map transition (task A5e)."
+      },
+      {
+        "cmd": "SCENE_EVENT",
+        "kind": "map"
+      }
+    ],
+    "flee_attempt": [
+      {
+        "cmd": "COMMENT",
+        "text": "Flee roll: base chance + living party FLEE_CHANCE_BONUS; failure costs gold. Mirrors the legacy engine/battle.lua block (task A5c)."
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "roll",
+        "value": "random()"
+      },
+      {
+        "cmd": "IF",
+        "condition": "v.roll < combat.baseFleeChance + party.fleeBonus",
+        "then": [
+          {
+            "cmd": "EMIT_EVENT",
+            "event": "flee_success"
+          }
+        ],
+        "else": [
+          {
+            "cmd": "EMIT_TEXT",
+            "term": "battle.flee_fail",
+            "fallback": "Failed to escape!"
+          },
+          {
+            "cmd": "GAIN_GOLD",
+            "amount": "-random(combat.goldLossOnFleeMin, combat.goldLossOnFleeMax)"
+          }
+        ]
+      }
+    ],
+    "victory": [
+      {
+        "cmd": "COMMENT",
+        "text": "Victory rewards: gold roll, XP per survivor, POST_BATTLE_HEAL trait. Mirrors the legacy main.lua block (task A5a)."
+      },
+      {
+        "cmd": "GAIN_GOLD",
+        "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax)"
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "GRANT_XP",
+            "target": "ally",
+            "amount": "combat.victoryExp"
+          },
+          {
+            "cmd": "TRAIT_HEAL",
+            "target": "ally",
+            "trait": "POST_BATTLE_HEAL"
+          }
+        ]
+      }
+    ]
+  },
+  "_test": {
+    "scene": [
+      {
+        "cmd": "COMMENT",
+        "text": "Validator-only phase: exercises every non-interactive command in immediate mode."
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "bonus",
+        "value": "floor(session.floor * 2) + random(1, 2)"
+      },
+      {
+        "cmd": "SET_FLAG",
+        "flag": "_test_flag",
+        "value": true
+      },
+      {
+        "cmd": "IF",
+        "condition": "flag:_test_flag",
+        "then": [
+          {
+            "cmd": "GAIN_GOLD",
+            "amount": "v.bonus",
+            "comment": "per-command comment fields must be ignored"
+          }
+        ],
+        "else": [
+          {
+            "cmd": "GAIN_GOLD",
+            "amount": "9999"
+          }
+        ]
+      },
+      {
+        "cmd": "SET_FLAG",
+        "flag": "_test_flag",
+        "value": false
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "GRANT_XP",
+            "target": "ally",
+            "amount": "1"
+          },
+          {
+            "cmd": "TRAIT_HEAL",
+            "target": "ally",
+            "trait": "POST_BATTLE_HEAL"
+          }
+        ]
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_enemies",
+        "as": "enemy",
+        "do": [
+          {
+            "cmd": "DAMAGE",
+            "target": "enemy",
+            "amount": "2 + enemy.level"
+          }
+        ]
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "party",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "HEAL",
+            "target": "ally",
+            "amount": "3"
+          }
+        ]
+      },
+      {
+        "cmd": "ADD_STATE",
+        "target": "summoner",
+        "state": "regen",
+        "duration": 2
+      },
+      {
+        "cmd": "STATE_TICKS"
+      },
+      {
+        "cmd": "REMOVE_STATE",
+        "target": "summoner",
+        "state": "regen"
+      },
+      {
+        "cmd": "DRAIN_MP",
+        "amount": "1"
+      },
+      {
+        "cmd": "RESTORE_MP",
+        "amount": "1"
+      },
+      {
+        "cmd": "GIVE_ITEM_ID",
+        "item": 1,
+        "count": 1
+      },
+      {
+        "cmd": "TAKE_ITEM",
+        "item": 1,
+        "count": 1
+      },
+      {
+        "cmd": "EMIT_TEXT",
+        "term": "battle.victory_full",
+        "fallback": "Test text."
+      },
+      {
+        "cmd": "EMIT_EVENT",
+        "event": "_test_event",
+        "value": "1 + 1"
+      },
+      {
+        "cmd": "SCENE_EVENT",
+        "kind": "map"
+      },
+      {
+        "cmd": "SCRIPT",
+        "code": "api.damage(ctx.target, 5)\napi.emit({ type = 'text', text = 'script ran, floor ' .. ctx.session.floor })"
+      }
+    ],
+    "script_escape": [
+      {
+        "cmd": "COMMENT",
+        "text": "Negative test: the validator expects this phase to ERROR while scripting.allowRawAccess is false."
+      },
+      {
+        "cmd": "SCRIPT",
+        "code": "return os.time()"
+      }
+    ]
+  }
+}

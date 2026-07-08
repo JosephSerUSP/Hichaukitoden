@@ -13,15 +13,24 @@
     "default_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Tell me.", "target": "story_1_text" },
-        { "label": "Browse", "target": "open_shop" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Tell me.",
+          "target": "story_1_text"
+        },
+        {
+          "label": "Browse",
+          "target": "open_shop"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
     "open_shop": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "auction_house",
+      "shopId": 4,
       "next": "default_choices"
     },
     "story_1_text": {
@@ -32,8 +41,14 @@
     "story_1_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "…Lovely.", "target": "default_text" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "…Lovely.",
+          "target": "default_text"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     }
   }

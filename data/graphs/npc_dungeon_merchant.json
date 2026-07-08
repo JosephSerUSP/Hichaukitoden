@@ -19,9 +19,21 @@
     "intro_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Show me what you have", "target": "open_shop", "setFlag": "dungeon_merchant_met" },
-        { "label": "Any advice?", "target": "advice_text", "setFlag": "dungeon_merchant_met" },
-        { "label": "No thanks", "action": "close", "setFlag": "dungeon_merchant_met" }
+        {
+          "label": "Show me what you have",
+          "target": "open_shop",
+          "setFlag": "dungeon_merchant_met"
+        },
+        {
+          "label": "Any advice?",
+          "target": "advice_text",
+          "setFlag": "dungeon_merchant_met"
+        },
+        {
+          "label": "No thanks",
+          "action": "close",
+          "setFlag": "dungeon_merchant_met"
+        }
       ]
     },
     "default_text": {
@@ -32,15 +44,24 @@
     "default_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Show me what you have", "target": "open_shop" },
-        { "label": "Any advice?", "target": "advice_text" },
-        { "label": "No thanks", "action": "close" }
+        {
+          "label": "Show me what you have",
+          "target": "open_shop"
+        },
+        {
+          "label": "Any advice?",
+          "target": "advice_text"
+        },
+        {
+          "label": "No thanks",
+          "action": "close"
+        }
       ]
     },
     "open_shop": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "dungeon_merchant",
+      "shopId": 6,
       "next": "default_choices"
     },
     "advice_text": {
@@ -51,8 +72,14 @@
     "advice_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Back", "target": "default_text" },
-        { "label": "Close", "action": "close" }
+        {
+          "label": "Back",
+          "target": "default_text"
+        },
+        {
+          "label": "Close",
+          "action": "close"
+        }
       ]
     }
   }

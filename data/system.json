@@ -2,56 +2,58 @@
   "ui": {
     "activeFont": "Silkscreen",
     "menuSlideDuration": 0.15,
-    "textPalette": {
-      "0": [
+    "moveTransitionDuration": 0.15,
+    "inputCooldown": 0.3,
+    "textPalette": [
+      [
         1,
         1,
         1,
         1
       ],
-      "1": [
+      [
         0.2,
         0.6,
         1,
         1
       ],
-      "2": [
+      [
         1,
-        0.2,
-        0.2,
+        0.3,
+        0.3,
         1
       ],
-      "3": [
-        0.2,
-        1,
-        0.2,
+      [
+        0.3,
+        0.8,
+        0.3,
         1
       ],
-      "4": [
-        1,
-        1,
-        0.2,
-        1
-      ],
-      "5": [
-        1,
-        0.6,
+      [
+        0.3,
+        0.8,
         0.8,
         1
       ],
-      "6": [
-        1,
-        1,
-        0.6,
+      [
+        0.8,
+        0.3,
+        0.8,
         1
       ],
-      "7": [
+      [
+        1,
+        0.8,
+        0.2,
+        1
+      ],
+      [
         0.6,
         0.6,
         0.6,
         1
       ]
-    }
+    ]
   },
   "physics": {
     "gravity": 480,
@@ -59,15 +61,134 @@
     "horizontalScatter": 0
   },
   "battle_screen": {
-    "damagePopupLife": 1.1
+    "damagePopupLife": 1.1,
+    "popup": {
+      "damageFormat": "-{0}",
+      "damageColor": [
+        1,
+        0.2,
+        0.2,
+        1
+      ],
+      "healFormat": "+{0}",
+      "healColor": [
+        0.2,
+        1,
+        0.2,
+        1
+      ],
+      "critFormat": "CRITICAL!",
+      "critColor": [
+        1,
+        0.2,
+        0.2,
+        1
+      ],
+      "deadFormat": "DEAD",
+      "deadColor": [
+        0.6,
+        0.6,
+        0.6,
+        1
+      ],
+      "stateFormat": "{0}",
+      "stateColor": [
+        0.8,
+        0.4,
+        1,
+        1
+      ]
+    }
   },
   "combat": {
     "baseFleeChance": 0.4,
     "goldLossOnFleeMin": 5,
-    "goldLossOnFleeMax": 15
+    "goldLossOnFleeMax": 15,
+    "encounterChance": 0.1,
+    "minEnemies": 1,
+    "maxEnemies": 3,
+    "victoryGoldMin": 10,
+    "victoryGoldMax": 30,
+    "victoryExp": 5,
+    "baseSpeed": 10,
+    "speedPerLevel": 0.5,
+    "regenRate": 0.1,
+    "poisonRate": 0.1,
+    "mpExhaustionDamage": 1,
+    "battleItem": 1,
+    "defendSkillId": "defend",
+    "attackSkillId": "attack"
+  },
+  "growth": {
+    "hpPerLevelRate": 0.15,
+    "statBase": 10,
+    "statPerLevel": 0.5,
+    "expPerLevel": 15
+  },
+  "newGame": {
+    "goldMin": 25,
+    "goldMax": 75,
+    "guaranteedItem": {
+      "id": 1,
+      "minQty": 1,
+      "maxQty": 3
+    },
+    "randomConsumables": 2,
+    "randomEquipment": 2,
+    "bonusItems": [
+      20,
+      6
+    ],
+    "party": {
+      "twoMemberChance": 0.25,
+      "twoMemberBonusLevels": 3,
+      "defaultSize": 3
+    }
+  },
+  "town": {
+    "options": [
+      {
+        "label": "Dungeon",
+        "action": "enter_dungeon",
+        "mapId": 2
+      },
+      {
+        "label": "Weapon Shop",
+        "action": "dialogue",
+        "graph": "npc_weapon_shop"
+      },
+      {
+        "label": "Alicia Shop",
+        "action": "dialogue",
+        "graph": "npc_alicia"
+      },
+      {
+        "label": "Rest (House)",
+        "action": "rest",
+        "graph": "npc_drunkard"
+      }
+    ]
+  },
+  "dungeon": {
+    "maxFloor": 5,
+    "moveMpDrain": 1,
+    "defaultLoot": 1,
+    "genWidth": 21,
+    "genHeight": 21,
+    "genMinRooms": 4,
+    "genMaxRooms": 6,
+    "genMinRoomSize": 3,
+    "genMaxRoomSize": 5,
+    "exitSprite": "assets/sprites/NPC00.png",
+    "exitScriptId": 1
   },
   "summoner": {
-    "startMp": 820
+    "startMp": 820,
+    "spells": [
+      "soothingMote",
+      "divineFavor",
+      "holySmite"
+    ]
   },
   "spawn": {
     "x": 11,

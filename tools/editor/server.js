@@ -3,9 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const PORT = 8080;
+// PORT env override lets a second instance (e.g. preview/CI tooling) run
+// alongside a developer's own server on the default 8080.
+const PORT = parseInt(process.env.PORT, 10) || 8080;
 const GAME_PORT = 8081;
 const PROJECT_DIR = path.resolve(__dirname, '../..');
+// Single manifest of database files exposed to the editor. Keep in sync with
+// DATA_FILES in engine/server.lua.
+const DATA_FILES = [
+    'actors', 'elements', 'events', 'items', 'maps', 'quests', 'shops',
+    'sounds', 'terms', 'themes', 'system', 'commonEvents',
+    'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes'
+];
+// Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
+const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
 
 const server = http.createServer((req, res) => {
     // Enable CORS
@@ -60,20 +71,10 @@ const server = http.createServer((req, res) => {
             }
         };
  
-        const data = {
-            actors: getFileContents('actors.json'),
-            elements: getFileContents('elements.json'),
-            events: getFileContents('events.json'),
-            items: getFileContents('items.json'),
-            maps: getFileContents('maps.json'),
-            quests: getFileContents('quests.json'),
-            shops: getFileContents('shops.json'),
-            sounds: getFileContents('sounds.json'),
-            terms: getFileContents('terms.json'),
-            themes: getFileContents('themes.json'),
-            system: getFileContents('system.json'),
-            commonEvents: getFileContents('commonEvents.json')
-        };
+        const data = {};
+        DATA_FILES.forEach(name => {
+            data[name] = getFileContents(`${name}.json`);
+        });
  
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
@@ -118,6 +119,31 @@ const server = http.createServer((req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
+    } else if (req.method === 'GET' && req.url === '/api/graphs') {
+        const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
+        if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {
+            fs.readdir(graphsDir, (err, files) => {
+                if (err) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: err.message }));
+                } else {
+                    const result = [];
+                    files.forEach(f => {
+                        try {
+                            const stat = fs.statSync(path.join(graphsDir, f));
+                            if (stat.isFile() && f.endsWith('.json')) {
+                                result.push(f.slice(0, -5)); // remove .json
+                            }
+                        } catch(e) {}
+                    });
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                }
+            });
+        } else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify([]));
+        }
     } else if (req.method === 'POST' && req.url === '/save') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -131,12 +157,9 @@ const server = http.createServer((req, res) => {
                     }
                 };
  
-                saveFile('actors.json', payload.actors);
-                saveFile('items.json', payload.items);
-                saveFile('maps.json', payload.maps);
-                saveFile('shops.json', payload.shops);
-                saveFile('system.json', payload.system);
-                saveFile('commonEvents.json', payload.commonEvents);
+                DATA_FILES.forEach(name => {
+                    saveFile(`${name}.json`, payload[name]);
+                });
 
                 // Notify Love2D game to reload if it is running
                 const notifyReq = http.request({
@@ -159,7 +182,7 @@ const server = http.createServer((req, res) => {
             }
         });
     } else if (req.method === 'POST' && req.url === '/play') {
-        const loveCmd = '"C:\\Program Files\\LOVE\\love.exe" .';
+        const loveCmd = `"${LOVE_EXE}" .`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
             if (err) {
                 console.error(`Failed to launch Love2D: ${err}`);
@@ -168,7 +191,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Game launched!' }));
     } else if (req.method === 'POST' && req.url === '/play-test-battle') {
-        const loveCmd = '"C:\\Program Files\\LOVE\\love.exe" . test-battle';
+        const loveCmd = `"${LOVE_EXE}" . test-battle`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
             if (err) {
                 console.error(`Failed to launch Love2D in test battle: ${err}`);

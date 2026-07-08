@@ -24,12 +24,18 @@ function loader.init()
     loader.themes = load_json("data/themes.json")
     loader.system = load_json("data/system.json")
     loader.commonEvents = load_json("data/commonEvents.json")
-    
+    loader.skills = load_json("data/skills.json")
+    loader.passives = load_json("data/passives.json")
+    loader.states = load_json("data/states.json")
+    loader.roles = load_json("data/roles.json")
+    -- Engine registries: effect types, trait codes, battle layout, element rules
+    loader.engine = load_json("data/engine.json")
+    -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
+    loader.flows = load_json("data/flows.json")
+    -- Scenes configuration
+    loader.scenes = load_json("data/scenes.json")
+
     loader.animations = require("data.animations")
-    loader.states = require("data.states")
-    loader.passives = require("data.passives")
-    loader.skills = require("data.skills")
-    loader.party = require("data.party")
 
     -- Create lookup indices for scalability
     loader.actorsById = {}
@@ -41,11 +47,26 @@ function loader.init()
     for _, item in ipairs(loader.items) do
         loader.itemsById[item.id] = item
     end
+
+    loader.scenesById = {}
+    for _, scene in ipairs(loader.scenes or {}) do
+        loader.scenesById[scene.id] = scene
+    end
 end
 
 -- Helpers to find items/skills by ID (O(1) lookups)
 function loader.getActor(id)
     return loader.actorsById[id]
+end
+
+-- Finds an actor by its role (e.g. "Summoner") instead of a numeric id, for
+-- the handful of actors the engine references structurally rather than by
+-- content-catalog id.
+function loader.getActorByRole(role)
+    for _, actor in ipairs(loader.actors) do
+        if actor.role == role then return actor end
+    end
+    return nil
 end
 
 function loader.getItem(id)
@@ -62,6 +83,53 @@ end
 
 function loader.getState(id)
     return loader.states[id]
+end
+
+function loader.getElement(id)
+    return loader.elements and loader.elements[id]
+end
+
+function loader.getScene(id)
+    return loader.scenesById[id]
+end
+
+function loader.getRole(id)
+    return loader.roles and loader.roles[id]
+end
+
+-- Looks up a UI/battle string from data/terms.json by dotted path
+-- (e.g. "battle.flee_success"); falls back to the engine default when the
+-- key is missing so incomplete terms files never crash the game.
+function loader.getTerm(path, fallback)
+    local node = loader.terms
+    for part in path:gmatch("[^%.]+") do
+        if type(node) ~= "table" then return fallback end
+        node = node[part]
+    end
+    if type(node) == "string" then return node end
+    return fallback
+end
+
+-- Like getTerm but for list-valued terms (e.g. menu command label arrays).
+function loader.getTermList(path, fallback)
+    local node = loader.terms
+    for part in path:gmatch("[^%.]+") do
+        if type(node) ~= "table" then return fallback end
+        node = node[part]
+    end
+    if type(node) == "table" and #node > 0 then return node end
+    return fallback
+end
+
+-- getTerm + positional substitution: replaces {0}, {1}, ... with the extra
+-- arguments (the same placeholder style terms.json already uses).
+function loader.formatTerm(path, fallback, ...)
+    local str = loader.getTerm(path, fallback)
+    local args = { ... }
+    return (str:gsub("{(%d+)}", function(idx)
+        local v = args[tonumber(idx) + 1]
+        return v ~= nil and tostring(v) or ("{" .. idx .. "}")
+    end))
 end
 
 return loader

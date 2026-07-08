@@ -8,13 +8,24 @@
     "router_start": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "questStatus:shattered_blade_recovery:active, hasItem:shattered_blade", "target": "quest_turnin_text" },
-        { "condition": "questStatus:shattered_blade_recovery:active", "target": "quest_reminder_text" },
-        { "condition": "flag:shattered_blade_reforged", "target": "greeting_respect" },
-        { "default": true, "target": "default_text" }
+        {
+          "condition": "questStatus:shattered_blade_recovery:active, hasItem:26",
+          "target": "quest_turnin_text"
+        },
+        {
+          "condition": "questStatus:shattered_blade_recovery:active",
+          "target": "quest_reminder_text"
+        },
+        {
+          "condition": "flag:shattered_blade_reforged",
+          "target": "greeting_respect"
+        },
+        {
+          "default": true,
+          "target": "default_text"
+        }
       ]
     },
-
     "default_text": {
       "type": "TEXT",
       "content": "Blades, hammers, axes. If it kills, I sell it. If it breaks, I fix it. If you break, that’s on you.",
@@ -25,31 +36,42 @@
       "content": "Good to see you alive. The forge is hot, and the steel is singing today. Need anything?",
       "next": "default_choices"
     },
-
     "default_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Buy Weapons", "target": "open_shop" },
-        { "label": "Ask about the dungeon", "target": "talk_dungeon_text" },
-        { "label": "Ask about equipment", "target": "tutorial_router" },
-        { "label": "Found anything interesting?", "target": "quest_offer_router" },
-        { "label": "Leave", "action": "close" }
+        {
+          "label": "Buy Weapons",
+          "target": "open_shop"
+        },
+        {
+          "label": "Ask about the dungeon",
+          "target": "talk_dungeon_text"
+        },
+        {
+          "label": "Ask about equipment",
+          "target": "tutorial_router"
+        },
+        {
+          "label": "Found anything interesting?",
+          "target": "quest_offer_router"
+        },
+        {
+          "label": "Leave",
+          "action": "close"
+        }
       ]
     },
-
     "open_shop": {
       "type": "ACTION",
       "action": "OPEN_SHOP",
-      "shopId": "weapons_basic",
+      "shopId": 2,
       "next": "default_choices"
     },
-
     "talk_dungeon_text": {
       "type": "TEXT",
       "content": "Down there? Don’t fight fair. Don’t fight pretty. Fight to leave. The only winning move is coming back with your hands still yours.",
       "next": "default_choices"
     },
-
     "tutorial_router": {
       "type": "TEXT",
       "content": "You want to know how to not die? Fine. Listen close.",
@@ -58,9 +80,18 @@
     "tutorial_choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Weapons", "target": "tut_weapons" },
-        { "label": "Armor", "target": "tut_armor" },
-        { "label": "Back", "target": "default_choices" }
+        {
+          "label": "Weapons",
+          "target": "tut_weapons"
+        },
+        {
+          "label": "Armor",
+          "target": "tut_armor"
+        },
+        {
+          "label": "Back",
+          "target": "default_choices"
+        }
       ]
     },
     "tut_weapons": {
@@ -73,13 +104,21 @@
       "content": "Heavy plate stops claws, but it slows you down. If you're slow, you get hit more. Sometimes dodging is better than tanking. Your choice.",
       "next": "tutorial_choices"
     },
-
     "quest_offer_router": {
       "type": "ROUTER",
       "branches": [
-        { "condition": "questStatus:shattered_blade_recovery:completed", "target": "quest_completed_text" },
-        { "condition": "questStatus:shattered_blade_recovery:active", "target": "quest_reminder_text" },
-        { "default": true, "target": "quest_offer_text" }
+        {
+          "condition": "questStatus:shattered_blade_recovery:completed",
+          "target": "quest_completed_text"
+        },
+        {
+          "condition": "questStatus:shattered_blade_recovery:active",
+          "target": "quest_reminder_text"
+        },
+        {
+          "default": true,
+          "target": "quest_offer_text"
+        }
       ]
     },
     "quest_offer_text": {
@@ -90,8 +129,14 @@
     "quest_offer_choice": {
       "type": "CHOICE",
       "options": [
-        { "label": "I'll keep an eye out.", "target": "action_offer_quest" },
-        { "label": "Not interested.", "target": "default_choices" }
+        {
+          "label": "I'll keep an eye out.",
+          "target": "action_offer_quest"
+        },
+        {
+          "label": "Not interested.",
+          "target": "default_choices"
+        }
       ]
     },
     "action_offer_quest": {
@@ -100,13 +145,11 @@
       "questId": "shattered_blade_recovery",
       "next": "default_choices"
     },
-
     "quest_reminder_text": {
       "type": "TEXT",
       "content": "Find that scrap metal yet? The forge is waiting.",
       "next": "default_choices"
     },
-
     "quest_turnin_text": {
       "type": "TEXT",
       "content": "Let me see that... Hah! Yes. The core is intact. The steel is ancient, folded a thousand times. Give me an hour.",
@@ -116,7 +159,7 @@
       "type": "ACTION",
       "action": "COMPLETE_QUEST",
       "questId": "shattered_blade_recovery",
-      "takeItem": "shattered_blade",
+      "takeItem": 26,
       "setFlag": "shattered_blade_reforged",
       "next": "quest_reward_text"
     },

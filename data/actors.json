@@ -1,6 +1,6 @@
 [
   {
-    "id": "pixie",
+    "id": 1,
     "name": "Pixie",
     "level": 1,
     "role": "Healer",
@@ -24,22 +24,23 @@
     "gold": 15,
     "drops": [
       {
-        "itemId": "hp_tonic",
+        "itemId": 1,
         "chance": 0.3
       }
     ],
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": "highPixie"
+        "evolvesTo": 2
       }
     ],
     "initialParty": true,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
-    "id": "highPixie",
+    "id": 2,
     "name": "High Pixie",
     "level": 6,
     "role": "Healer",
@@ -68,7 +69,7 @@
     "isEvolved": true
   },
   {
-    "id": "skeleton",
+    "id": 3,
     "name": "Skeleton",
     "level": 1,
     "role": "Attacker",
@@ -89,11 +90,11 @@
     "gold": 18,
     "drops": [
       {
-        "itemId": "bone_plate",
+        "itemId": 6,
         "chance": 0.1
       },
       {
-        "itemId": "untarnished_signet",
+        "itemId": 25,
         "chance": 0.05
       }
     ],
@@ -103,7 +104,7 @@
     "isEvolved": false
   },
   {
-    "id": "angel",
+    "id": 4,
     "name": "Angel",
     "level": 1,
     "role": "Support",
@@ -128,7 +129,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": "archangel"
+        "evolvesTo": 5
       }
     ],
     "initialParty": false,
@@ -136,7 +137,7 @@
     "isEvolved": false
   },
   {
-    "id": "archangel",
+    "id": 5,
     "name": "Archangel",
     "level": 6,
     "role": "Support",
@@ -165,7 +166,7 @@
     "isEvolved": true
   },
   {
-    "id": "demon",
+    "id": 6,
     "name": "Demon",
     "level": 2,
     "role": "Attacker",
@@ -188,14 +189,14 @@
     "gold": 25,
     "drops": [
       {
-        "itemId": "silver_blade",
+        "itemId": 5,
         "chance": 0.1
       }
     ],
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": "incubus"
+        "evolvesTo": 7
       }
     ],
     "initialParty": false,
@@ -203,7 +204,7 @@
     "isEvolved": false
   },
   {
-    "id": "incubus",
+    "id": 7,
     "name": "Incubus",
     "level": 6,
     "role": "Attacker",
@@ -233,7 +234,7 @@
     "isEvolved": true
   },
   {
-    "id": "nurse",
+    "id": 8,
     "name": "Nurse",
     "level": 1,
     "role": "Healer",
@@ -260,7 +261,7 @@
     "isEvolved": false
   },
   {
-    "id": "imp",
+    "id": 9,
     "name": "Imp",
     "level": 1,
     "role": "Attacker",
@@ -283,7 +284,7 @@
     "gold": 12,
     "drops": [
       {
-        "itemId": "whispered_lessons",
+        "itemId": 3,
         "chance": 0.2
       }
     ],
@@ -293,7 +294,7 @@
     "isEvolved": false
   },
   {
-    "id": "golem",
+    "id": 10,
     "name": "Golem",
     "level": 2,
     "role": "Tank",
@@ -317,7 +318,7 @@
     "isEvolved": false
   },
   {
-    "id": "ghoul",
+    "id": 11,
     "name": "Ghoul",
     "level": 2,
     "role": "Tank",
@@ -344,7 +345,7 @@
     "isEvolved": false
   },
   {
-    "id": "ooze",
+    "id": 12,
     "name": "Ooze",
     "level": 1,
     "role": "Debuffer",
@@ -368,7 +369,7 @@
     "isEvolved": false
   },
   {
-    "id": "bat",
+    "id": 13,
     "name": "Bat",
     "level": 1,
     "role": "Attacker",
@@ -393,7 +394,7 @@
     "isEvolved": false
   },
   {
-    "id": "wisp",
+    "id": 14,
     "name": "Wisp",
     "level": 1,
     "role": "Caster",
@@ -414,7 +415,7 @@
     "gold": 14,
     "drops": [
       {
-        "itemId": "glittering_teardrop",
+        "itemId": 24,
         "chance": 0.1
       }
     ],
@@ -424,7 +425,7 @@
     "isEvolved": false
   },
   {
-    "id": "egg",
+    "id": 15,
     "name": "Egg",
     "level": 1,
     "role": "None",
@@ -440,7 +441,7 @@
     "evolutions": [
       {
         "level": 10,
-        "evolvesTo": "phoenix"
+        "evolvesTo": 16
       }
     ],
     "initialParty": false,
@@ -448,7 +449,7 @@
     "isEvolved": false
   },
   {
-    "id": "phoenix",
+    "id": 16,
     "name": "Phoenix",
     "level": 10,
     "role": "Reviver",
@@ -474,7 +475,7 @@
     "isEvolved": true
   },
   {
-    "id": "larva",
+    "id": 17,
     "name": "Larva",
     "level": 1,
     "role": "Parasite",
@@ -495,7 +496,7 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": "crimsonLord"
+        "evolvesTo": 18
       }
     ],
     "initialParty": false,
@@ -503,7 +504,7 @@
     "isEvolved": false
   },
   {
-    "id": "crimsonLord",
+    "id": 18,
     "name": "Crimson Lord",
     "level": 6,
     "role": "Vampire",
@@ -528,7 +529,7 @@
     "isEvolved": true
   },
   {
-    "id": "flauros",
+    "id": 19,
     "name": "Flauros",
     "level": 3,
     "role": "Attacker",
@@ -563,7 +564,7 @@
     "isEvolved": false
   },
   {
-    "id": "candle",
+    "id": 20,
     "name": "Candle",
     "level": 1,
     "role": "Support",
@@ -601,7 +602,7 @@
     "isEvolved": false
   },
   {
-    "id": "shadowStalker",
+    "id": 21,
     "name": "Shadow Stalker",
     "level": 12,
     "maxHp": 40,
@@ -629,7 +630,7 @@
     "expGrowth": 10
   },
   {
-    "id": "summoner",
+    "id": 22,
     "name": "Alex",
     "level": 1,
     "maxHp": 18,

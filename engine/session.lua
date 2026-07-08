@@ -1,4 +1,6 @@
 local traits = require("engine.traits")
+local config = require("engine.config")
+local newgame = require("engine.newgame")
 
 local session = {}
 
@@ -11,6 +13,7 @@ function Battler.new(actorData, level)
     self.actorData = actorData
     self.id = actorData.id
     self.name = actorData.name
+    self.meta = actorData.meta or {}
     self.level = level or actorData.level or 1
     self.exp = 0
     self.passives = {}
@@ -77,10 +80,18 @@ function Battler:isDead()
 end
 
 function Battler:gainExp(amount, sess)
+    -- XP_RATE traits (equipment/passives) boost experience gained
+    if sess then
+        local bonus = traits.getRate(self, "XP_RATE", sess)
+        if bonus ~= 0 then
+            amount = math.floor(amount * (1 + bonus))
+        end
+    end
     self.exp = self.exp + amount
     local leveledUp = false
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     while true do
-        local needed = self.level * 15
+        local needed = self.level * expPerLevel
         if self.exp >= needed then
             self.exp = self.exp - needed
             self.level = self.level + 1
@@ -113,7 +124,7 @@ function GameSession.new(loader)
     local startMp = loader.system and loader.system.summoner and loader.system.summoner.startMp or 820
     self.mp = startMp
     self.maxMp = startMp
-    self.summoner = Battler.new(loader.getActor("summoner"), 1)
+    self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     
     -- Party composition: 1-4 active creatures, 5 is summoner, 6+ are reserve
@@ -123,18 +134,15 @@ function GameSession.new(loader)
 end
 
 function GameSession:initializeStartingParty()
-    self.gold = self.loader.party.getGold()
-    
-    -- Setup inventory
-    local startInv = self.loader.party.getInventory(self.loader.items)
-    for _, item in ipairs(startInv) do
-        self:addItem(item.id, 1)
+    -- All starting gold/inventory/party rules come from system.newGame
+    self.gold = newgame.rollGold(self.loader)
+
+    for _, itemId in ipairs(newgame.rollInventory(self.loader)) do
+        self:addItem(itemId, 1)
     end
-    self:addItem("dark_scepter_lucille", 1)
-    self:addItem("bone_plate", 1)
-    
+
     -- Setup members
-    local members = self.loader.party.getMembers(self.loader.actors)
+    local members = newgame.rollMembers(self.loader)
     for i, m in ipairs(members) do
         local actorData = self.loader.getActor(m.id)
         if actorData then

@@ -1,6 +1,11 @@
 {
   "1": {
     "name": "Stairs Down",
+    "minimapColor": [
+      0,
+      0.8,
+      0.8
+    ],
     "commands": [
       {
         "type": "TEXT",
@@ -11,7 +16,7 @@
         "options": [
           {
             "label": "Yes",
-            "script": [
+            "commands": [
               {
                 "type": "DESCEND"
               }
@@ -19,7 +24,7 @@
           },
           {
             "label": "No",
-            "script": []
+            "commands": []
           }
         ]
       }
@@ -36,6 +41,11 @@
   },
   "7": {
     "name": "Recovery Light",
+    "minimapColor": [
+      0,
+      0.8,
+      0
+    ],
     "commands": [
       {
         "type": "RECOVER_PARTY"
@@ -48,6 +58,11 @@
   },
   "12": {
     "name": "Treasure Chest Loot",
+    "minimapColor": [
+      0.8,
+      0.8,
+      0
+    ],
     "commands": [
       {
         "type": "GIVE_ITEM",
@@ -57,9 +72,250 @@
   },
   "13": {
     "name": "Dungeon Monster Battle",
+    "minimapColor": [
+      0.8,
+      0,
+      0
+    ],
     "commands": [
       {
         "type": "BATTLE"
+      }
+    ]
+  },
+  "14": {
+    "name": "Workbench",
+    "minimapColor": [
+      0.8,
+      0.5,
+      0.1
+    ],
+    "commands": [
+      {
+        "type": "COMMENT",
+        "text": "SPEC S8 composability proof: crafting authored as pure data. CHOICE -> hasItem checks -> TAKE_ITEM -> formula success roll -> GIVE_ITEM_ID / consolation text. Zero SCRIPT, zero engine Lua."
+      },
+      {
+        "type": "TEXT",
+        "text": "A sturdy workbench, cluttered with alembics and etching tools."
+      },
+      {
+        "type": "CHOICE",
+        "options": [
+          {
+            "label": "Brew: Whispered Lessons (Tonic + Ink)",
+            "commands": [
+              {
+                "type": "COMMENT",
+                "text": "Recipe: 1x HP Tonic + 1x Sigil Ink -> Whispered Lessons. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "hasItem:1",
+                "commands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "hasItem:2",
+                    "commands": [
+                      {
+                        "cmd": "COMMENT",
+                        "text": "Consume first, then roll: flat 75% success chance."
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 1,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 2,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "IF",
+                        "condition": "random() < 0.75",
+                        "then": [
+                          {
+                            "cmd": "GIVE_ITEM_ID",
+                            "item": 3,
+                            "count": 1
+                          },
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "Success! You crafted Whispered Lessons."
+                          }
+                        ],
+                        "else": [
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "The attempt fails; the materials are ruined..."
+                          }
+                        ]
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "TEXT",
+                        "text": "You are missing: Sigil Ink."
+                      }
+                    ]
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "text": "You are missing: HP Tonic."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Etch: Golden Egg (Mystic Egg + Ink)",
+            "commands": [
+              {
+                "type": "COMMENT",
+                "text": "Recipe: 1x Mystic Egg + 1x Sigil Ink -> Golden Egg. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "hasItem:11",
+                "commands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "hasItem:2",
+                    "commands": [
+                      {
+                        "cmd": "COMMENT",
+                        "text": "Consume first, then roll: success scales with average party level, 35%..85%."
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 11,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 2,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "IF",
+                        "condition": "random() < clamp(0.35 + party.avgLevel * 0.05, 0.35, 0.85)",
+                        "then": [
+                          {
+                            "cmd": "GIVE_ITEM_ID",
+                            "item": 12,
+                            "count": 1
+                          },
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "Success! You crafted Golden Egg."
+                          }
+                        ],
+                        "else": [
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "The attempt fails; the materials are ruined..."
+                          }
+                        ]
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "TEXT",
+                        "text": "You are missing: Sigil Ink."
+                      }
+                    ]
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "text": "You are missing: Mystic Egg."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Mix: Glass of Wine (Ale + Stout)",
+            "commands": [
+              {
+                "type": "COMMENT",
+                "text": "Recipe: 1x Mug of Ale + 1x Pint of Stout -> Glass of Wine. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "hasItem:29",
+                "commands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "hasItem:30",
+                    "commands": [
+                      {
+                        "cmd": "COMMENT",
+                        "text": "Consume first, then roll: a steady hand comes with a full purse: 50% +0.1%/gold, capped 90%."
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 29,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "TAKE_ITEM",
+                        "item": 30,
+                        "count": 1
+                      },
+                      {
+                        "cmd": "IF",
+                        "condition": "random() < clamp(0.5 + session.gold * 0.001, 0.5, 0.9)",
+                        "then": [
+                          {
+                            "cmd": "GIVE_ITEM_ID",
+                            "item": 31,
+                            "count": 1
+                          },
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "Success! You crafted Glass of Wine."
+                          }
+                        ],
+                        "else": [
+                          {
+                            "cmd": "EMIT_TEXT",
+                            "fallback": "The attempt fails; the materials are ruined..."
+                          }
+                        ]
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "TEXT",
+                        "text": "You are missing: Pint of Stout."
+                      }
+                    ]
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "text": "You are missing: Mug of Ale."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "You step away from the workbench."
+              }
+            ]
+          }
+        ]
       }
     ]
   }

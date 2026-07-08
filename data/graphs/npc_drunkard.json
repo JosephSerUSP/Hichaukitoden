@@ -13,8 +13,14 @@
     "choices": {
       "type": "CHOICE",
       "options": [
-        { "label": "Ask what he's thinking about.", "target": "thinking_about" },
-        { "label": "Leave him to his thoughts.", "action": "close" }
+        {
+          "label": "Ask what he's thinking about.",
+          "target": "thinking_about"
+        },
+        {
+          "label": "Leave him to his thoughts.",
+          "action": "close"
+        }
       ]
     },
     "thinking_about": {

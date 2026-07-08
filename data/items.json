@@ -1,11 +1,17 @@
 [
   {
-    "id": "hp_tonic",
+    "id": 1,
     "name": "HP Tonic",
     "type": "consumable",
     "cost": 10,
     "description": "Heals one member to full HP.",
     "icon": 52,
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
     "effects": [
       {
         "type": "hp",
@@ -14,7 +20,7 @@
     ]
   },
   {
-    "id": "sigil_ink",
+    "id": 2,
     "name": "Sigil Ink",
     "type": "consumable",
     "cost": 20,
@@ -25,10 +31,16 @@
         "type": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "alchemy"
+    }
   },
   {
-    "id": "whispered_lessons",
+    "id": 3,
     "name": "Whispered Lessons",
     "type": "consumable",
     "cost": 64,
@@ -39,10 +51,16 @@
         "type": "xp",
         "value": 6
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 18,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
   },
   {
-    "id": "elixir_of_insight",
+    "id": 4,
     "name": "Elixir of Insight",
     "type": "consumable",
     "cost": 100,
@@ -53,10 +71,17 @@
         "type": "xp",
         "value": 50
       }
-    ]
+    ],
+    "targetScope": "party",
+    "meta": {
+      "tier": 2,
+      "potency": 25,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
   },
   {
-    "id": "silver_blade",
+    "id": 5,
     "name": "Silver Blade",
     "type": "equipment",
     "equipType": "Weapon",
@@ -73,10 +98,16 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "bone_plate",
+    "id": 6,
     "name": "Bone Plate",
     "type": "equipment",
     "equipType": "Armor",
@@ -89,10 +120,16 @@
         "dataId": "maxHp",
         "value": 3
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "wind_charm",
+    "id": 7,
     "name": "Wind Charm",
     "type": "equipment",
     "equipType": "Accessory",
@@ -110,10 +147,16 @@
         "dataId": "maxHp",
         "value": 1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 6,
+      "craftElement": "Green",
+      "craftKind": "tinkering"
+    }
   },
   {
-    "id": "light_amulet",
+    "id": 8,
     "name": "Light Amulet",
     "type": "equipment",
     "equipType": "Accessory",
@@ -126,10 +169,16 @@
         "dataId": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "White",
+      "craftKind": "tinkering"
+    }
   },
   {
-    "id": "alert_charm",
+    "id": 9,
     "name": "Alert Charm",
     "type": "equipment",
     "equipType": "Accessory",
@@ -141,10 +190,16 @@
         "code": "INITIATIVE",
         "value": 0.05
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 15,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
   },
   {
-    "id": "rear_mirror",
+    "id": 10,
     "name": "Rear Mirror",
     "type": "equipment",
     "equipType": "Accessory",
@@ -156,10 +211,16 @@
         "code": "REAR_GUARD",
         "value": 1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "tinkering"
+    }
   },
   {
-    "id": "mystic_egg",
+    "id": 11,
     "name": "Mystic Egg",
     "type": "consumable",
     "cost": 500,
@@ -168,12 +229,12 @@
     "effects": [
       {
         "type": "recruit_egg",
-        "value": "egg"
+        "value": 15
       }
     ]
   },
   {
-    "id": "exp_boost",
+    "id": 12,
     "name": "Golden Egg",
     "type": "equipment",
     "equipType": "Accessory",
@@ -185,10 +246,16 @@
         "code": "XP_RATE",
         "value": 1.5
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 50,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
   },
   {
-    "id": "hp_boost1",
+    "id": 13,
     "name": "Vitality Seal 1",
     "type": "equipment",
     "equipType": "Accessory",
@@ -204,7 +271,7 @@
     ]
   },
   {
-    "id": "hp_boost2",
+    "id": 14,
     "name": "Vitality Seal 2",
     "type": "equipment",
     "equipType": "Accessory",
@@ -220,7 +287,7 @@
     ]
   },
   {
-    "id": "hp_boost3",
+    "id": 15,
     "name": "Vitality Seal 3",
     "type": "equipment",
     "equipType": "Accessory",
@@ -236,7 +303,7 @@
     ]
   },
   {
-    "id": "radiant_blade_flavio",
+    "id": 16,
     "name": "Radiant Blade Flavio",
     "type": "equipment",
     "equipType": "Weapon",
@@ -257,10 +324,16 @@
         "code": "CRI",
         "value": 0.2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Red",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "wind_dancer",
+    "id": 17,
     "name": "Wind Dancer",
     "type": "equipment",
     "equipType": "Weapon",
@@ -281,10 +354,16 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Green",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "water_scepter",
+    "id": 18,
     "name": "Water Scepter",
     "type": "equipment",
     "equipType": "Weapon",
@@ -305,10 +384,16 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Blue",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "holy_sword_gram",
+    "id": 19,
     "name": "Holy Sword Gram",
     "type": "equipment",
     "equipType": "Weapon",
@@ -329,10 +414,16 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 35,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "dark_scepter_lucille",
+    "id": 20,
     "name": "Dark Scepter Lucille",
     "type": "equipment",
     "equipType": "Weapon",
@@ -353,10 +444,16 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 32,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "mars_emblem",
+    "id": 21,
     "name": "Mars Emblem",
     "type": "equipment",
     "equipType": "Accessory",
@@ -371,7 +468,7 @@
     ]
   },
   {
-    "id": "mercury_crest",
+    "id": 22,
     "name": "Mercury Crest",
     "type": "equipment",
     "equipType": "Accessory",
@@ -390,7 +487,7 @@
     ]
   },
   {
-    "id": "hermes_boots",
+    "id": 23,
     "name": "Hermes' Boots",
     "type": "equipment",
     "equipType": "Accessory",
@@ -410,7 +507,7 @@
     ]
   },
   {
-    "id": "glittering_teardrop",
+    "id": 24,
     "name": "Glittering Teardrop",
     "type": "quest",
     "cost": 0,
@@ -418,7 +515,7 @@
     "description": "A flawless crystal that catches the faintest light. Alicia believes Laura will love it."
   },
   {
-    "id": "untarnished_signet",
+    "id": 25,
     "name": "Untarnished Signet",
     "type": "quest",
     "cost": 0,
@@ -426,7 +523,7 @@
     "description": "A heavy golden ring, unmarked and waiting for a new story. Laura can reshape it into something precious."
   },
   {
-    "id": "shattered_blade",
+    "id": 26,
     "name": "Shattered Blade",
     "type": "quest",
     "cost": 0,
@@ -434,7 +531,7 @@
     "description": "The rusted, broken remains of a blade that once held great power. The Weaponsmith might be interested."
   },
   {
-    "id": "shattered_edge_reforged",
+    "id": 27,
     "name": "Shattered Edge",
     "type": "equipment",
     "equipType": "Weapon",
@@ -451,10 +548,16 @@
         "code": "CRI",
         "value": 0.25
       }
-    ]
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 40,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "meteorite_plate",
+    "id": 28,
     "name": "Meteorite Plate",
     "type": "equipment",
     "equipType": "Armor",
@@ -472,10 +575,16 @@
         "dataId": "def",
         "value": 2
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
   },
   {
-    "id": "ale_mug",
+    "id": 29,
     "name": "Mug of Ale",
     "type": "consumable",
     "cost": 5,
@@ -486,10 +595,16 @@
         "type": "mp_heal",
         "value": 10
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
   },
   {
-    "id": "stout_pint",
+    "id": 30,
     "name": "Pint of Stout",
     "type": "consumable",
     "cost": 12,
@@ -500,10 +615,16 @@
         "type": "mp_heal",
         "value": 25
       }
-    ]
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "cooking"
+    }
   },
   {
-    "id": "wine_glass",
+    "id": 31,
     "name": "Glass of Wine",
     "type": "consumable",
     "cost": 25,
@@ -518,6 +639,104 @@
         "type": "remove_status",
         "value": "weakened"
       }
-    ]
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 16,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 32,
+    "name": "Scrap Metal",
+    "type": "junk",
+    "cost": 1,
+    "icon": 180,
+    "description": "A lump of useless metal.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 33,
+    "name": "Sludge",
+    "type": "junk",
+    "cost": 1,
+    "icon": 55,
+    "description": "A smelly, failed alchemical mixture.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 34,
+    "name": "Burnt Slop",
+    "type": "junk",
+    "cost": 1,
+    "icon": 220,
+    "description": "Completely charcoal. Inedible.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 35,
+    "name": "Broken Spring",
+    "type": "junk",
+    "cost": 1,
+    "icon": 174,
+    "description": "A snapped spring and bent gear.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 36,
+    "name": "Ambrosia",
+    "type": "consumable",
+    "cost": 500,
+    "icon": 222,
+    "description": "Food of the gods. Restores full HP and MP.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 999
+      },
+      {
+        "type": "mp_heal",
+        "value": 999
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "cooking",
+      "potency": 45,
+      "craftElement": "White"
+    }
+  },
+  {
+    "id": 37,
+    "name": "Philosopher's Stone",
+    "type": "consumable",
+    "cost": 1000,
+    "icon": 65,
+    "description": "A legendary alchemical catalyst.",
+    "effects": [
+      {
+        "type": "xp",
+        "value": 1000
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "alchemy",
+      "potency": 50,
+      "craftElement": "Red"
+    }
   }
 ]
