@@ -28,8 +28,25 @@
             document.getElementById('toast-modal').classList.remove('active');
         }
 
+        function stripEmptyMeta(obj) {
+            if (!obj || typeof obj !== 'object') return;
+            if (Array.isArray(obj)) {
+                obj.forEach(stripEmptyMeta);
+                return;
+            }
+            if (obj.meta && typeof obj.meta === 'object' && Object.keys(obj.meta).length === 0) {
+                delete obj.meta;
+            }
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
+                    stripEmptyMeta(obj[key]);
+                }
+            }
+        }
+
         async function saveData() {
             try {
+                stripEmptyMeta(dbPayload);
                 const res = await fetch(`${API_URL}/save`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
