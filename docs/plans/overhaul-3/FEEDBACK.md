@@ -81,3 +81,29 @@ roulette UI, element-conflict/stat-deficit failures, 5% anomaly crit.
 → *C10 brief* (typed meta system — registry-backed, the notetag analog)
 is the prerequisite; *C9 REV 2* rewritten to this design. C4 landed
 (Antigravity), G1/G2 re-verified locally.
+
+# Round close (merged to main 2026-07-07, tag `overhaul-3`)
+
+Gates green at merge: G1 validate, G2 golden byte-identical, G3 editor-console.
+main had diverged by PR #5 (`\c[x]` + `\eventName`), which independently
+reimplemented a feature this round already had in superseding form (structured
+`speaker` field vs inlined `\eventName:` markup). All four conflicting files
+resolved to the branch; the merged tree is byte-identical to the gated branch.
+
+## Known limitations carried forward (NOT defects — scope lines)
+
+1. **Scene UI/input is still hardcoded Lua.** `engine/scenes/crafting.lua` is
+   570 lines, of which ~356 (62%) are `drawCraftingScene` (190) and
+   `keypressedCraftingScene` (166). The *game logic* — yield formula, outcome
+   brackets, disciplines — is already data in `scenes.json`. What remains
+   hardcoded is drawing windows and moving a cursor. SPEC S9 explicitly scoped
+   "full menu scripting (input loops as data)" out of this round.
+2. **The editor's "Custom Scenes" tab is a paradigm mismatch,** not a bug (it
+   renders cleanly, zero console errors). It is a property form sitting beside
+   "Phase Flows", which is a command-list editor. The owner's instinct that
+   Phase Flows "looks more like what I visualized scenes to be" is correct and
+   is the architecture for the next round.
+3. Battle likewise retains hardcoded presentation, though C4 data-drove its
+   coordinates into `engine.json → battleLayout`.
+
+All three are the subject of **overhaul-4 — Scenes as data** (`docs/plans/overhaul-4/SPEC.md`).
