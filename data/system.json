@@ -133,7 +133,7 @@
       "minQty": 1,
       "maxQty": 3
     },
-    "randomConsumables": 2,
+    "randomConsumables": 999,
     "randomEquipment": 2,
     "bonusItems": [
       20,

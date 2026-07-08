@@ -66,7 +66,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true
+    "isEvolved": true,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 3,
@@ -99,9 +101,10 @@
       }
     ],
     "evolutions": [],
-    "initialParty": true,
+    "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 4,
@@ -134,7 +137,9 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 5,
@@ -163,7 +168,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true
+    "isEvolved": true,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 6,
@@ -199,9 +206,36 @@
         "evolvesTo": 7
       }
     ],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 9999
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 9999
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 9999
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "asp",
+        "value": 9999
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 9999
+      }
+    ]
   },
   {
     "id": 7,
@@ -231,7 +265,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true
+    "isEvolved": true,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 8,
@@ -258,7 +294,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 9,
@@ -289,9 +327,10 @@
       }
     ],
     "evolutions": [],
-    "initialParty": true,
+    "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 10,
@@ -315,7 +354,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 11,
@@ -342,7 +383,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 12,
@@ -364,9 +407,11 @@
     "expGrowth": 5,
     "gold": 10,
     "evolutions": [],
-    "initialParty": true,
+    "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 13,
@@ -389,9 +434,11 @@
     "expGrowth": 3,
     "gold": 8,
     "evolutions": [],
-    "initialParty": true,
+    "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 14,
@@ -420,9 +467,10 @@
       }
     ],
     "evolutions": [],
-    "initialParty": true,
+    "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 15,
@@ -446,7 +494,9 @@
     ],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 16,
@@ -472,7 +522,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true
+    "isEvolved": true,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 17,
@@ -501,7 +553,9 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 18,
@@ -526,7 +580,9 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true
+    "isEvolved": true,
+    "traits": [],
+    "drops": []
   },
   {
     "id": 19,
@@ -561,7 +617,8 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 20,
@@ -599,7 +656,8 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": false
+    "isEvolved": false,
+    "traits": []
   },
   {
     "id": 21,
@@ -627,7 +685,9 @@
     ],
     "spriteKey": "ShadowStalker",
     "gold": 14,
-    "expGrowth": 10
+    "expGrowth": 10,
+    "drops": [],
+    "evolutions": []
   },
   {
     "id": 22,
@@ -643,6 +703,8 @@
     "traits": [],
     "spriteKey": "egg",
     "gold": 0,
-    "expGrowth": 20
+    "expGrowth": 20,
+    "drops": [],
+    "evolutions": []
   }
 ]
