@@ -244,6 +244,66 @@
         function getCmdDef(id) {
             return cmdRegistry().find(c => c.id === id);
         }
+
+        function closeCmdSelectorModal() {
+            document.getElementById('cmd-selector-modal').classList.remove('active');
+        }
+
+        function openCommandSelector(hostCtx, cb) {
+            const container = document.getElementById('cmd-selector-categories');
+            container.innerHTML = '';
+
+            const cmds = cmdsForContext(hostCtx);
+            const groups = {};
+
+            // Group by category
+            cmds.forEach(cmd => {
+                const cat = cmd.category || 'Other';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(cmd);
+            });
+
+            // Sort categories in some order, or just keep as is
+            const categoryOrder = ["Message", "Flow Control", "Party", "Battler", "Progression", "Advanced", "Other"];
+            const cats = Object.keys(groups).sort((a, b) => {
+                let idxA = categoryOrder.indexOf(a);
+                let idxB = categoryOrder.indexOf(b);
+                if (idxA === -1) idxA = 999;
+                if (idxB === -1) idxB = 999;
+                if (idxA !== idxB) return idxA - idxB;
+                return a.localeCompare(b);
+            });
+
+            cats.forEach(cat => {
+                const fs = document.createElement('fieldset');
+                // Give each fieldset a minimum width to arrange them nicely
+                fs.style.cssText = 'padding: 6px; flex: 1 1 200px; min-width: 180px; max-width: 250px; display: flex; flex-direction: column; gap: 4px;';
+
+                const legend = document.createElement('legend');
+                legend.textContent = cat;
+                fs.appendChild(legend);
+
+                groups[cat].forEach(cmd => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.style.cssText = 'width: 100%; text-align: left; padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px;';
+                    btn.textContent = cmd.label || cmd.id;
+                    if (cmd.description) {
+                        btn.title = cmd.description;
+                    }
+                    btn.onclick = () => {
+                        closeCmdSelectorModal();
+                        cb(cmd.id);
+                    };
+                    fs.appendChild(btn);
+                });
+
+                container.appendChild(fs);
+            });
+
+            document.getElementById('cmd-selector-modal').classList.add('active');
+        }
+
         function cmdsForContext(hostCtx) {
             return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx) && !c.deprecatedBy);
         }
@@ -728,10 +788,12 @@
 
         function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
             populateCmdCommonEventsDropdown();
-            openAddCommandDialog((cmd) => {
-                commandsArray.push(cmd);
-                if (onChange) onChange();
-            }, hostCtx);
+            openCommandSelector(hostCtx, (cmdId) => {
+                openAddCommandDialog((cmd) => {
+                    commandsArray.push(cmd);
+                    if (onChange) onChange();
+                }, hostCtx, cmdId);
+            });
         }
 
         function openCommandModalForEdit(commandsArray, idx, onChange, hostCtx) {
@@ -794,15 +856,23 @@
             }
         }
 
-        function openAddCommandDialog(callback, hostCtx) {
+        function openAddCommandDialog(callback, hostCtx, ensureId) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
             cmdModalSnapshot = null;
             activeCmdHostCtx = hostCtx || 'map';
-            populateCmdTypeSelect(activeCmdHostCtx);
+            populateCmdTypeSelect(activeCmdHostCtx, ensureId);
             const select = document.getElementById('cmd-select-type');
-            if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
-            else if (select.options.length) { select.selectedIndex = 0; }
+
+            if (ensureId) {
+                select.value = ensureId;
+                select.disabled = true; // Lock it for adding
+            } else {
+                if ([...select.options].some(o => o.value === 'TEXT')) { select.value = 'TEXT'; }
+                else if (select.options.length) { select.selectedIndex = 0; }
+                select.disabled = false;
+            }
+
             document.getElementById('cmd-input-comment').value = '';
             toggleCmdTypeFields();
             cmdDialogDirty = false;
@@ -816,7 +886,9 @@
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
-            document.getElementById('cmd-select-type').value = id;
+            const select = document.getElementById('cmd-select-type');
+            select.value = id;
+            select.disabled = true; // Type shown read-only in edit mode
             document.getElementById('cmd-input-comment').value = cmd.comment || '';
             toggleCmdTypeFields(cmd);
             cmdDialogDirty = false;
