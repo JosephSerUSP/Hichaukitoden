@@ -226,7 +226,7 @@ function drawCraftingScene()
             local isSel = (i == selectedDisciplineIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and ">" or " "
-            ui.drawString(prefix .. d.label, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.toPx(2), color)
+            ui.drawString(prefix .. d.label, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.lineHeight, color)
         end
         
         -- Details panel
@@ -243,7 +243,7 @@ function drawCraftingScene()
             local isSel = (i == selectedCrafterIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and ">" or " "
-            ui.drawString(prefix .. member.actorData.name, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.toPx(2), color)
+            ui.drawString(prefix .. member.actorData.name, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.lineHeight, color)
         end
         
         -- Crafter stats panel
@@ -309,9 +309,9 @@ function drawCraftingScene()
                 end
                 
                 local name = entry.item.name .. " x" .. entry.qty
-                ui.drawString(prefix, ui.toPx(0.5), ui.toPx(10.5) + (i - startOffset) * ui.toPx(2), color)
-                ui.drawIcon(entry.item.icon or 0, ui.toPx(1.5), ui.toPx(10.5) + (i - startOffset) * ui.toPx(2) - 2)
-                ui.drawString(entry.item.name .. " (x" .. entry.qty .. ")", ui.toPx(3.5), ui.toPx(10.5) + (i - startOffset) * ui.toPx(2), matchColor)
+                ui.drawString(prefix, ui.toPx(0.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight, color)
+                ui.drawIcon(entry.item.icon or 0, ui.toPx(1.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight - 2)
+                ui.drawString(entry.item.name .. " (x" .. entry.qty .. ")", ui.toPx(3.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight, matchColor)
             end
         end
         

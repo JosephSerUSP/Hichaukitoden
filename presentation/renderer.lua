@@ -416,7 +416,7 @@ function renderer.drawTown(selectedIdx)
     for i, opt in ipairs(townOptions) do
         local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = (i == selectedIdx) and "> " or "  "
-        ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight * 2, color)
+        ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight, color)
     end
     
     drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
@@ -495,7 +495,7 @@ function renderer.drawDialogue(walker, selectIdx)
         for i, opt in ipairs(node.options or {}) do
             local color = (i == selectIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectIdx) and "> " or "  "
-            ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight * 2, color)
+            ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight, color)
         end
     end
     
@@ -777,7 +777,7 @@ function renderer.drawShop(shopTitle, selectedIdx, shopItems)
         local count = 0
         for i = start, math.min(#shopItems, start + 4) do
             local item = shopItems[i]
-            local itemY = ui.toPx(4) + count * ui.lineHeight * 2
+            local itemY = ui.toPx(4) + count * ui.lineHeight
             local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectedIdx) and "> " or "  "
             
@@ -854,7 +854,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         local isSel = (subScene == "main" and i == mainIdx)
         local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = isSel and ">" or " "
-        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, ui.toPx(4) + (i - 1) * ui.toPx(2), color)
+        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, ui.toPx(4) + (i - 1) * ui.lineHeight, color)
     end
     
     -- Gold and Floor stats inside left menu column below the options
@@ -996,10 +996,10 @@ function renderer.drawStatusDetail(c, session)
     local mat = traits.getParam(c, "mat", session)
     local mdf = traits.getParam(c, "mdf", session)
     ui.drawString("ATK: " .. atk, contentX, ui.toPx(11), {1, 1, 1, 1})
-    ui.drawString("DEF: " .. def, contentX, ui.toPx(12.5), {1, 1, 1, 1})
-    ui.drawString("MAT: " .. mat, contentX, ui.toPx(14), {1, 1, 1, 1})
-    ui.drawString("MDF: " .. mdf, contentX, ui.toPx(15.5), {1, 1, 1, 1})
-    
+    ui.drawString("DEF: " .. def, contentX, ui.toPx(12), {1, 1, 1, 1})
+    ui.drawString("MAT: " .. mat, contentX, ui.toPx(13), {1, 1, 1, 1})
+    ui.drawString("MDF: " .. mdf, contentX, ui.toPx(14), {1, 1, 1, 1})
+
     -- Equipment Column (Right, x = contentX + 13 tiles)
     local equipX = contentX + ui.toPx(13)
     ui.drawString("EQUIPMENT", equipX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
@@ -1007,8 +1007,8 @@ function renderer.drawStatusDetail(c, session)
     local eq2 = c.equipment[2] and c.equipment[2].name or "[ EMPTY ]"
     local eq3 = c.equipment[3] and c.equipment[3].name or "[ EMPTY ]"
     ui.drawString("WPN: " .. eq1, equipX, ui.toPx(11), {0.8, 0.8, 0.8, 1})
-    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12.5), {0.8, 0.8, 0.8, 1})
-    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(14), {0.8, 0.8, 0.8, 1})
+    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
+    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
     
     -- Passives & Skills (y = ui.toPx(17.5))
     ui.drawString("PASSIVE TRAITS", contentX, ui.toPx(17.5), {1, 0.85, 0.5, 1})
@@ -1122,9 +1122,9 @@ function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     local mdf = traits.getParam(c, "mdf", session)
     ui.drawString("STATS", ui.toPx(18) + ox, ui.toPx(6), {0.5, 0.8, 1, 1})
     ui.drawString("ATK: " .. atk, ui.toPx(18) + ox, ui.toPx(7.75), {1, 1, 1, 1})
-    ui.drawString("DEF: " .. def, ui.toPx(18) + ox, ui.toPx(9.25), {1, 1, 1, 1})
-    ui.drawString("MAT: " .. mat, ui.toPx(18) + ox, ui.toPx(10.75), {1, 1, 1, 1})
-    ui.drawString("MDF: " .. mdf, ui.toPx(18) + ox, ui.toPx(12.25), {1, 1, 1, 1})
+    ui.drawString("DEF: " .. def, ui.toPx(18) + ox, ui.toPx(8.75), {1, 1, 1, 1})
+    ui.drawString("MAT: " .. mat, ui.toPx(18) + ox, ui.toPx(9.75), {1, 1, 1, 1})
+    ui.drawString("MDF: " .. mdf, ui.toPx(18) + ox, ui.toPx(10.75), {1, 1, 1, 1})
     
     local bottomY = ui.toPx(20) + (1 - ease) * ui.toPx(12)
     ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")

@@ -1000,7 +1000,7 @@
     "consoleTileW": 32,
     "consoleTileH": 12,
     "consoleTextTileX": 1,
-    "menuChoiceSpacing": 16,
+    "menuChoiceSpacing": 8,
     "summonerStatusX": 8,
     "summonerNameYOffset": 48,
     "summonerMpTextYOffset": 64,

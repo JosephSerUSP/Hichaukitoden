@@ -87,7 +87,7 @@ local battleActiveMemberIndex = 1
 local battleCollectedActions = {}
 
 local server = require("engine.server")
-local config = require("engine.config")
+config = require("engine.config")
 
 -- Config accessor with fallback for missing keys
 local function conf(group, key, default)
