@@ -38,9 +38,15 @@
           {
             "type": "TEXT",
             "text": "The gate to the lower depths is sealed. Come back when you are prepared."
+          },
+          {
+            "type": "DESCEND"
           }
         ],
-        "name": "Gate Guard"
+        "name": "Gate Guard",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
       },
       {
         "id": 2,
