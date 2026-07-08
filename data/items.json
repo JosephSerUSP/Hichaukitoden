@@ -4,7 +4,7 @@
     "name": "HP Tonic",
     "type": "consumable",
     "cost": 10,
-    "description": "Heals one member to full HP.",
+    "description": "Heals 30 HP.",
     "icon": 52,
     "meta": {
       "tier": 1,
@@ -15,7 +15,7 @@
     "effects": [
       {
         "type": "hp",
-        "value": 999
+        "value": 30
       }
     ]
   },
@@ -85,7 +85,7 @@
     "name": "Silver Blade",
     "type": "equipment",
     "equipType": "Weapon",
-    "cost": 25,
+    "cost": 20,
     "icon": 180,
     "description": "Sharpened steel blade.",
     "traits": [
@@ -118,7 +118,7 @@
       {
         "code": "PARAM_PLUS",
         "dataId": "maxHp",
-        "value": 3
+        "value": 4
       }
     ],
     "meta": {
@@ -133,7 +133,7 @@
     "name": "Wind Charm",
     "type": "equipment",
     "equipType": "Accessory",
-    "cost": 35,
+    "cost": 20,
     "icon": 174,
     "description": "A charm of rushing air.",
     "traits": [
@@ -737,6 +737,48 @@
       "craftKind": "alchemy",
       "potency": 50,
       "craftElement": "Red"
+    }
+  },
+  {
+    "id": 38,
+    "name": "Minor Salve",
+    "type": "consumable",
+    "cost": 5,
+    "description": "Heals 10 HP.",
+    "icon": 52,
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Iron Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 15,
+    "icon": 174,
+    "description": "A basic iron ring.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "White",
+      "craftKind": "tinkering"
     }
   }
 ]
