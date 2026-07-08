@@ -178,6 +178,25 @@ though S4's `windowLayout` data is its prerequisite, and the deferred
 "interpret the Lua in JS for an accurate preview" idea becomes tractable only
 once windows are declarative. Enemy AI scripting. The recruit system.
 
+**Audio — deliberately deferred.** The sound design is not defined yet and is
+lower priority than getting scenes working. Note the trap: `data/sounds.json`
+exists, is loaded by `data/loader.lua` and shipped to the editor, but nothing
+consumes it — there is no audio system anywhere in the engine (no `love.audio`,
+no `newSource`). That implied-but-absent system is what led an agent to
+hallucinate 21 calls to a non-existent `session:playSound()` in the C9 crafting
+scene, and led two proposed "fixes" to want a `PLAY_SOUND` command backed by a
+no-op stub.
+
+Rules until audio is designed:
+- **Do NOT register a `PLAY_SOUND` command**, and do not add `playSound` stubs.
+  The validator now enforces this: every command in `engine.json → commands`
+  must have a handler in `engine/interpreter.lua` (`interpreter.isImplemented`),
+  so a stub command fails G1 by name.
+- `sounds.json` is aspirational data with no consumer. Leave it inert.
+- When audio is designed, it lands as one brief: an audio module reading
+  `sounds.json`, plus `PLAY_SOUND` registered **together with a working
+  handler** — never before.
+
 ## S10 — Task decomposition (briefs)
 
 | id | task | gates |
