@@ -3,8 +3,8 @@
     "id": 1,
     "name": "HP Tonic",
     "type": "consumable",
-    "cost": 10,
-    "description": "Heals one member to full HP.",
+    "cost": 25,
+    "description": "Heals one member for 50 HP.",
     "icon": 52,
     "meta": {
       "tier": 1,
@@ -15,7 +15,7 @@
     "effects": [
       {
         "type": "hp",
-        "value": 999
+        "value": 50
       }
     ]
   },
@@ -23,7 +23,7 @@
     "id": 2,
     "name": "Sigil Ink",
     "type": "consumable",
-    "cost": 20,
+    "cost": 50,
     "description": "+2 max HP to one member.",
     "icon": 55,
     "effects": [
@@ -85,14 +85,14 @@
     "name": "Silver Blade",
     "type": "equipment",
     "equipType": "Weapon",
-    "cost": 25,
+    "cost": 40,
     "icon": 180,
     "description": "Sharpened steel blade.",
     "traits": [
       {
         "code": "PARAM_PLUS",
         "dataId": "atk",
-        "value": 1
+        "value": 2
       },
       {
         "code": "CRI",
@@ -111,7 +111,7 @@
     "name": "Bone Plate",
     "type": "equipment",
     "equipType": "Armor",
-    "cost": 25,
+    "cost": 35,
     "icon": 172,
     "description": "Sturdy bone harness.",
     "traits": [
@@ -737,6 +737,66 @@
       "craftKind": "alchemy",
       "potency": 50,
       "craftElement": "Red"
+    }
+  },
+  {
+    "id": 38,
+    "name": "Minor HP Tonic",
+    "type": "consumable",
+    "cost": 8,
+    "description": "Heals one member for 20 HP.",
+    "icon": 52,
+    "effects": [
+      {
+        "type": "hp",
+        "value": 20
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 39,
+    "name": "Antidote",
+    "type": "consumable",
+    "cost": 12,
+    "description": "Cures the poison status.",
+    "icon": 53,
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "poison"
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Blue",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 40,
+    "name": "Awakening Herb",
+    "type": "consumable",
+    "cost": 15,
+    "description": "Awakens a sleeping ally.",
+    "icon": 54,
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "sleep"
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "White",
+      "craftKind": "alchemy"
     }
   }
 ]
