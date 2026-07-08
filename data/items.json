@@ -738,5 +738,40 @@
       "potency": 50,
       "craftElement": "Red"
     }
+  },
+  {
+    "id": 100,
+    "name": "Cult Amulet",
+    "type": "accessory",
+    "cost": 500,
+    "description": "An eerie amulet pulsating with dark energy. It feels warm to the touch.",
+    "icon": 12,
+    "stats": {
+      "def": 5,
+      "mdf": 15
+    }
+  },
+  {
+    "id": 101,
+    "name": "Whispering Blade",
+    "type": "weapon",
+    "cost": 0,
+    "description": "A living weapon that feeds on memories. High risk, high reward.",
+    "icon": 1,
+    "stats": {
+      "atk": 45,
+      "mat": 20
+    }
+  },
+  {
+    "id": 102,
+    "name": "Soul Gem",
+    "type": "accessory",
+    "cost": 1000,
+    "description": "A prize from the Soul Gambler. It slowly restores MP over time.",
+    "icon": 15,
+    "stats": {
+      "mdf": 5
+    }
   }
 ]

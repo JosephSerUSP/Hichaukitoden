@@ -1,0 +1,41 @@
+{
+  "id": "npc_cultist",
+  "name": "Hooded Figure",
+  "layout": "visual_novel",
+  "portrait": "NPC_Cultist",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "content": "The Void speaks to us all. Can you not hear its whispers in the dark?",
+      "next": "choices"
+    },
+    "choices": {
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Who are you?",
+          "target": "who"
+        },
+        {
+          "label": "The Void? What do you mean?",
+          "target": "void"
+        },
+        {
+          "label": "I have no time for nonsense.",
+          "action": "close"
+        }
+      ]
+    },
+    "who": {
+      "type": "TEXT",
+      "content": "We are the listeners. The watchers in the deep. When the world ends, only the Void remains.",
+      "next": "choices"
+    },
+    "void": {
+      "type": "TEXT",
+      "content": "It hungers. It waits. Soon, the Awakening will be upon us. Rejoice, for your end is near.",
+      "next": "choices"
+    }
+  }
+}

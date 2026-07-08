@@ -706,5 +706,38 @@
     "expGrowth": 20,
     "drops": [],
     "evolutions": []
+  },
+  {
+    "id": 23,
+    "name": "Cult Leader",
+    "level": 15,
+    "role": "Healer",
+    "maxHp": 250,
+    "spriteKey": "cultLeader",
+    "passives": [
+      "sense"
+    ],
+    "elements": [
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "attack"
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Cultist",
+    "level": 8,
+    "role": "Healer",
+    "maxHp": 60,
+    "spriteKey": "cultist",
+    "passives": [],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack"
+    ]
   }
 ]

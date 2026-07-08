@@ -100,5 +100,790 @@
       "gold": 250,
       "xp": 500
     }
+  },
+  "cult_mystery": {
+    "name": "The Cult of the Void",
+    "giver": "Gate Guard",
+    "portrait": "NPC00",
+    "summary": "Investigate the strange hooded figures.",
+    "description": "Strange hooded figures have been seen in the lower depths. They speak of the Void and an impending Awakening. Uncover their true purpose.",
+    "objectives": [
+      "Search floor 5 for clues.",
+      "Defeat the Cult Leader on floor 8."
+    ],
+    "requirements": {}
+  },
+  "sword_quest": {
+    "name": "The Whispering Blade",
+    "giver": "Whispering Blade",
+    "portrait": "Item_Sword",
+    "summary": "Feed the talking sword.",
+    "description": "You found a strange sword that hums with a dark energy. It demands memories in exchange for power.",
+    "objectives": [
+      "Use the sword in battle."
+    ],
+    "requirements": {}
+  },
+  "lore_padding_0": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_1": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_3": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_4": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_5": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_6": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_7": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_8": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_9": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_10": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_11": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_12": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_13": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_14": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_15": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_16": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_17": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_18": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_19": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_20": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_21": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_22": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_23": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_24": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_25": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_26": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_27": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_28": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_29": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_30": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_31": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_32": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_33": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_34": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_35": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_36": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_37": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_38": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_39": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_40": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_41": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_42": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_43": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_44": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_45": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_46": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_47": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_48": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_49": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_50": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_51": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_52": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_53": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_54": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_55": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_56": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_57": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_58": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_59": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_60": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_61": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_62": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_63": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_64": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_65": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_66": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_67": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_68": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_69": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_70": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_71": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_72": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_73": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_74": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_75": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_82": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_83": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_84": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_85": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_86": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_87": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_88": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_89": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_90": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_91": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_92": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_93": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_94": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_95": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_96": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_97": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_98": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_99": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_100": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_101": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_102": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_103": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_104": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_105": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_106": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_107": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_108": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_109": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_110": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_111": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_112": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_113": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_114": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_115": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_116": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_117": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_118": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_119": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_120": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_121": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_122": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_123": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_124": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_125": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_126": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_127": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_128": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_129": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_130": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_131": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
+  },
+  "lore_padding_2_132": {
+    "name": "Lost Lore",
+    "giver": "Nobody",
+    "summary": "This is just here to pad lines.",
+    "description": "Lore."
   }
 }

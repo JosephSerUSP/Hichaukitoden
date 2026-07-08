@@ -1,0 +1,41 @@
+{
+  "id": "npc_soul_gambler_2",
+  "name": "Soul Gambler",
+  "layout": "visual_novel",
+  "portrait": "NPC_Gambler",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "content": "Care for another wager? Your vitality for a chance at glory. The odds are always fair...",
+      "next": "choices"
+    },
+    "choices": {
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "I'll wager my soul.",
+          "target": "play"
+        },
+        {
+          "label": "Not today.",
+          "action": "close"
+        }
+      ]
+    },
+    "play": {
+      "type": "TEXT",
+      "content": "Excellent. Let the dice roll...",
+      "next": "result"
+    },
+    "result": {
+      "type": "TEXT",
+      "content": "*The dice tumble to a stop.* You lose. I'll be taking that vitality now.",
+      "next": "close"
+    },
+    "close": {
+      "type": "TEXT",
+      "content": "Come back when you feel lucky. Or desperate."
+    }
+  }
+}

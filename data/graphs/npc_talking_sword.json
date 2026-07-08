@@ -1,0 +1,36 @@
+{
+  "id": "npc_talking_sword",
+  "name": "Whispering Blade",
+  "layout": "visual_novel",
+  "portrait": "Item_Sword",
+  "initialNode": "start",
+  "nodes": {
+    "start": {
+      "type": "TEXT",
+      "content": "*A strange vibration echoes in your mind.* Hunger... feed me your memories...",
+      "next": "choices"
+    },
+    "choices": {
+      "type": "CHOICE",
+      "options": [
+        {
+          "label": "Touch the blade.",
+          "target": "touch"
+        },
+        {
+          "label": "Step away.",
+          "action": "close"
+        }
+      ]
+    },
+    "touch": {
+      "type": "TEXT",
+      "content": "*A jolt of cold energy rushes through you. A piece of your mind feels... gone. But the blade hums with newfound power.*",
+      "next": "close"
+    },
+    "close": {
+      "type": "TEXT",
+      "content": "*The blade goes silent, waiting for its next meal.*"
+    }
+  }
+}
