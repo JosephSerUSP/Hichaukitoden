@@ -88,10 +88,6 @@
           "message": "The soothing light restores your party."
         },
         {
-          "type": "PLAY_SOUND",
-          "name": "HEAL"
-        },
-        {
           "type": "LOG",
           "text": "You feel refreshed."
         }
@@ -274,10 +270,7 @@
           "amount": 5,
           "message": "You triggered a spike trap!"
         },
-        {
-          "type": "PLAY_SOUND",
-          "name": "DAMAGE"
-        }
+
       ]
     }
   },
