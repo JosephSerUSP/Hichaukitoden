@@ -6,6 +6,7 @@ local director = require("engine.director")
 local renderer = require("presentation.renderer")
 local traits = require("engine.traits")
 local effects = require("engine.effects")
+local scene_host = require("engine.scene.host")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 require("engine.scenes.crafting")
@@ -38,6 +39,46 @@ end
 
 activeSession = nil
 currentScene = "title"
+
+activeSceneHost = nil
+
+function setScene(sceneIdOrName)
+    if activeSceneHost then
+        activeSceneHost:exit()
+    end
+
+    if type(sceneIdOrName) == "number" then
+        local sceneData = loader.getScene(sceneIdOrName)
+        if sceneData then
+            activeSceneHost = scene_host.SceneHost.new(activeSession, loader, sceneData)
+            activeSceneHost:enter()
+            currentScene = sceneData.kind or "scene"
+            return
+        end
+    elseif type(sceneIdOrName) == "string" and sceneIdOrName == "crafting" then
+        -- Legacy strings compatibility: we specifically look up the crafting scene
+        -- since it's the only one migrating immediately for testing/fallback
+        local sceneData = nil
+        for _, s in ipairs(loader.scenes or {}) do
+            if s.kind == "crafting" then
+                sceneData = s
+                break
+            end
+        end
+        if sceneData then
+            activeSceneHost = scene_host.SceneHost.new(activeSession, loader, sceneData)
+            activeSceneHost:enter()
+        else
+            activeSceneHost = nil
+        end
+        currentScene = "crafting"
+        return
+    end
+
+    activeSceneHost = nil
+    currentScene = sceneIdOrName
+end
+
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
@@ -908,7 +949,9 @@ function love.update(dt)
         end
     end
     
-    if currentScene == "crafting" then
+    if activeSceneHost then
+        activeSceneHost:update(dt)
+    elseif currentScene == "crafting" then
         if updateCraftingScene then updateCraftingScene(dt) end
     end
 end
@@ -946,6 +989,8 @@ function love.draw()
         else
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
+    elseif activeSceneHost then
+        activeSceneHost:draw()
     elseif currentScene == "crafting" then
         if drawCraftingScene then drawCraftingScene() end
     end
@@ -1446,7 +1491,10 @@ end
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
-    if currentScene == "crafting" then
+    if activeSceneHost then
+        activeSceneHost:keypressed(key)
+        return
+    elseif currentScene == "crafting" then
         if keypressedCraftingScene then keypressedCraftingScene(key) end
         return
     end
@@ -1644,7 +1692,7 @@ local function handleKeyPressed(key)
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
-                    currentScene = "crafting"
+                    setScene("crafting")
                     if initCraftingScene then initCraftingScene() end
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
