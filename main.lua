@@ -36,8 +36,8 @@ local function getPopupFormat(key)
     return ""
 end
 
-local activeSession
-local currentScene = "title"
+activeSession = nil
+currentScene = "title"
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
@@ -71,7 +71,7 @@ local shopSelectedIdx = 1
 local previousSceneBeforeMenu = "town"
 local menuSelectedIdx = 1
 local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
-local menuSubScene = "main"
+menuSubScene = "main"
 local menuSelectedSubIdx = 1
 local selectedItemIdToUse = nil
 local selectedCreatureIndex = 1

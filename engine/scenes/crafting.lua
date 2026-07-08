@@ -41,8 +41,7 @@ local resultItem = nil
 local inventoryItems = {}
 
 local function getDiscipline()
-    local scenes = love.filesystem.load("data/scenes.json")
-    local scenesData = scenes and scenes() or {}
+    local scenesData = activeSession and activeSession.loader and activeSession.loader.scenes or {}
     local craftScene = scenesData[1]
     local config = craftScene and craftScene.config or {}
     local disciplines = config.disciplines or {}
@@ -50,8 +49,7 @@ local function getDiscipline()
 end
 
 local function getSceneConfig()
-    local scenes = love.filesystem.load("data/scenes.json")
-    local scenesData = scenes and scenes() or {}
+    local scenesData = activeSession and activeSession.loader and activeSession.loader.scenes or {}
     local craftScene = scenesData[1]
     return craftScene and craftScene.config or {}
 end

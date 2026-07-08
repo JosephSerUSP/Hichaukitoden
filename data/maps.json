@@ -187,7 +187,8 @@
     "category": "town",
     "generation": "Fixed",
     "bgm": "",
-    "encounterSteps": 5
+    "encounterSteps": 5,
+    "safe": true
   },
   {
     "id": 2,

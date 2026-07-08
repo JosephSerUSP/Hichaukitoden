@@ -35,10 +35,26 @@
       "penaltyFormula": "((i1.meta.craftElement ~= i2.meta.craftElement and i1.meta.craftElement ~= '' and i2.meta.craftElement ~= '') and 15 or 0) + (S < (i1.meta.tier + i2.meta.tier) * 6 and 20 or 0)",
       "anomalyFormula": "random() < 0.05 and 1.5 or 1.0",
       "brackets": [
-        { "max": 10, "tier": 0, "name": "Junk" },
-        { "max": 25, "tier": 1, "name": "Standard" },
-        { "max": 45, "tier": 2, "name": "Superior" },
-        { "max": 999, "tier": 3, "name": "Rare" }
+        {
+          "max": 10,
+          "tier": 0,
+          "name": "Junk"
+        },
+        {
+          "max": 25,
+          "tier": 1,
+          "name": "Standard"
+        },
+        {
+          "max": 45,
+          "tier": 2,
+          "name": "Superior"
+        },
+        {
+          "max": 999,
+          "tier": 3,
+          "name": "Rare"
+        }
       ],
       "timing": {
         "initialDelay": 0.05,
