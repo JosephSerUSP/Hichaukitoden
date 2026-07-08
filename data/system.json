@@ -63,25 +63,25 @@
   "battle_screen": {
     "damagePopupLife": 1.1,
     "popup": {
-      "damageFormat": "-{0}",
+      "damageFormat": "{0}",
       "damageColor": [
         1,
-        0.2,
-        0.2,
+        1,
+        1,
         1
       ],
-      "healFormat": "+{0}",
+      "healFormat": "{0}",
       "healColor": [
-        0.2,
-        1,
-        0.2,
+        0.44,
+        0.93,
+        0.44,
         1
       ],
       "critFormat": "CRITICAL!",
       "critColor": [
         1,
-        0.2,
-        0.2,
+        0.8,
+        0.38,
         1
       ],
       "deadFormat": "DEAD",
@@ -93,8 +93,8 @@
       ],
       "stateFormat": "{0}",
       "stateColor": [
-        0.8,
-        0.4,
+        0.77,
+        0.62,
         1,
         1
       ]

@@ -1,15 +1,5 @@
 {
   "battle": {
-    "encounter_check": [
-      {
-        "cmd": "COMMENT",
-        "text": "Per-step encounter roll; the map host applies the safe-map exemption before running this phase (task A5d)."
-      },
-      {
-        "cmd": "ROLL_ENCOUNTER",
-        "chance": "session.encounterRate"
-      }
-    ],
     "battle_start": [
       {
         "cmd": "COMMENT",
@@ -153,7 +143,8 @@
           }
         ]
       }
-    ]
+    ],
+    "encounter_check": []
   },
   "_test": {
     "scene": [
