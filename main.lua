@@ -1,5 +1,6 @@
 local loader = require("data.loader")
 local session = require("engine.session")
+local scene_host = require("engine.scene")
 local exploration = require("engine.exploration")
 local battleSystem = require("engine.battle")
 local director = require("engine.director")
@@ -909,7 +910,9 @@ function love.update(dt)
     end
     
     if currentScene == "crafting" then
-        if updateCraftingScene then updateCraftingScene(dt) end
+        if not scene_host.update(dt) then
+            if updateCraftingScene then updateCraftingScene(dt) end
+        end
     end
 end
 
@@ -1447,7 +1450,9 @@ local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
     if currentScene == "crafting" then
-        if keypressedCraftingScene then keypressedCraftingScene(key) end
+        if not scene_host.keypressed(key) then
+            if keypressedCraftingScene then keypressedCraftingScene(key) end
+        end
         return
     end
     if key == "escape" then
@@ -1645,7 +1650,10 @@ local function handleKeyPressed(key)
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
                     currentScene = "crafting"
-                    if initCraftingScene then initCraftingScene() end
+                    scene_host.init()
+                    if not scene_host.push({ session = activeSession, loader = loader }, 1) then
+                        if initCraftingScene then initCraftingScene() end
+                    end
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
                     menuSelectedSubIdx = 2 -- Default to NO
