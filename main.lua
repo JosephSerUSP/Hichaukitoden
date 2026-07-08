@@ -9,6 +9,7 @@ local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 require("engine.scenes.crafting")
+local scene_host = require("engine.scenes.host")
 local viewport_3d = require("presentation.viewport_3d")
 
 -- Game resolution dimensions
@@ -909,7 +910,7 @@ function love.update(dt)
     end
     
     if currentScene == "crafting" then
-        if updateCraftingScene then updateCraftingScene(dt) end
+        scene_host.update(dt, activeSession)
     end
 end
 
@@ -947,7 +948,7 @@ function love.draw()
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
     elseif currentScene == "crafting" then
-        if drawCraftingScene then drawCraftingScene() end
+        scene_host.draw(activeSession)
     end
     
     if server.isActive() then
@@ -1447,7 +1448,13 @@ local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
     if currentScene == "crafting" then
-        if keypressedCraftingScene then keypressedCraftingScene(key) end
+        scene_host.keypressed(key, activeSession)
+
+        -- Fallback: The legacy Lua block may have changed currentScene directly to "menu".
+        -- If so, clear our active scene stack so it matches main.lua's state.
+        if currentScene ~= "crafting" then
+            scene_host.clearStack()
+        end
         return
     end
     if key == "escape" then
@@ -1645,6 +1652,7 @@ local function handleKeyPressed(key)
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
                     currentScene = "crafting"
+                    if activeSession then scene_host.push(1, activeSession) end
                     if initCraftingScene then initCraftingScene() end
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
