@@ -57,10 +57,10 @@
         }
       ],
       "timing": {
-        "initialDelay": 0.05,
-        "maxDelay": 0.4,
-        "delayMult": 1.25,
-        "steps": 12
+        "initialDelay": 0.005,
+        "maxDelay": 10,
+        "delayMult": 1,
+        "steps": 200
       },
       "terms": {
         "title": "Item Creation",
