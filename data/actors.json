@@ -213,27 +213,27 @@
       {
         "code": "PARAM_PLUS",
         "dataId": "atk",
-        "value": 9999
+        "value": 999
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "def",
-        "value": 9999
+        "value": 999
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "maxHp",
-        "value": 9999
+        "value": 999
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "asp",
-        "value": 9999
+        "value": 999
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "mat",
-        "value": 9999
+        "value": 999
       }
     ]
   },
