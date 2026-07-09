@@ -942,7 +942,9 @@
         }
       ],
       "contexts": [
-        "scene"
+        "scene",
+        "common",
+        "battle_phase"
       ],
       "interactive": false,
       "description": "Emits text event using terms."
