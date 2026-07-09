@@ -1,4 +1,5 @@
 local ui = require("presentation.ui")
+local config = require("engine.config")
 local session = require("engine.session")
 local traits = require("engine.traits")
 local formula = require("engine.formula")
@@ -217,10 +218,10 @@ function drawCraftingScene()
     local term = config.terms or {}
     
     -- Title Header
-    ui.drawPanel(0, 0, ui.toPx(32), ui.toPx(3.5), term.title or "Item Creation")
+    local rect = config.windowLayout.craftingHeader; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), term.title or "Item Creation")
     
     if state == 1 then -- Select Discipline
-        ui.drawPanel(0, ui.toPx(3.5), ui.toPx(12), ui.toPx(20.5), term.selectDiscipline or "Select Discipline:")
+        local rect = config.windowLayout.craftingLeft; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), term.selectDiscipline or "Select Discipline:")
         local disciplines = config.disciplines or {}
         for i, d in ipairs(disciplines) do
             local isSel = (i == selectedDisciplineIdx)
@@ -232,13 +233,13 @@ function drawCraftingScene()
         -- Details panel
         local activeDisc = disciplines[selectedDisciplineIdx]
         if activeDisc then
-            ui.drawPanel(ui.toPx(12), ui.toPx(3.5), ui.toPx(20), ui.toPx(20.5), "Details")
+            local rect = config.windowLayout.craftingRight; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Details")
             ui.drawString("Governing Stat: " .. string.upper(activeDisc.stat), ui.toPx(12.5), ui.toPx(5.5), {1, 0.9, 0.3, 1})
             ui.drawString(activeDisc.description or "", ui.toPx(12.5), ui.toPx(7.5), {1, 1, 1, 1}, "left", ui.toPx(19))
         end
         
     elseif state == 2 then -- Select Crafter
-        ui.drawPanel(0, ui.toPx(3.5), ui.toPx(12), ui.toPx(20.5), term.selectCrafter or "Select Crafter:")
+        local rect = config.windowLayout.craftingLeft; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), term.selectCrafter or "Select Crafter:")
         for i, member in ipairs(activeSession.party) do
             local isSel = (i == selectedCrafterIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
@@ -249,7 +250,7 @@ function drawCraftingScene()
         -- Crafter stats panel
         local activeMember = activeSession.party[selectedCrafterIdx]
         if activeMember then
-            ui.drawPanel(ui.toPx(12), ui.toPx(3.5), ui.toPx(20), ui.toPx(20.5), "Crafter Stats")
+            local rect = config.windowLayout.craftingRight; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Crafter Stats")
             
             -- Draw Portrait
             if activeMember.actorData.spriteKey then
@@ -273,7 +274,7 @@ function drawCraftingScene()
         
     elseif state == 3 then -- Select Ingredients
         -- Slots panel at the top
-        ui.drawPanel(0, ui.toPx(3.5), ui.toPx(32), ui.toPx(5), term.selectIngredients or "Select Ingredients:")
+        local rect = config.windowLayout.craftingTop; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), term.selectIngredients or "Select Ingredients:")
         
         local colorI1 = (cursorIngredientSlot == 1) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local nameI1 = i1_item and i1_item.name or "--- [Empty] ---"
@@ -284,7 +285,7 @@ function drawCraftingScene()
         ui.drawString("Slot 2: " .. nameI2, ui.toPx(16), ui.toPx(5.5), colorI2)
         
         -- Inventory list below
-        ui.drawPanel(0, ui.toPx(8.5), ui.toPx(20), ui.toPx(15.5), "Inventory")
+        local rect = config.windowLayout.craftingInvLeft; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Inventory")
         
         local disc = getDiscipline()
         local scrollIdx = (cursorIngredientSlot == 1) and selectedIngredient1Idx or selectedIngredient2Idx
@@ -318,7 +319,7 @@ function drawCraftingScene()
         -- Details of selected item on the right
         local selectedEntry = inventoryItems[scrollIdx]
         if selectedEntry then
-            ui.drawPanel(ui.toPx(20), ui.toPx(8.5), ui.toPx(12), ui.toPx(15.5), "Item Info")
+            local rect = config.windowLayout.craftingInvRight; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Item Info")
             local item = selectedEntry.item
             ui.drawString(item.name, ui.toPx(20.5), ui.toPx(10.5), {1, 1, 0.5, 1})
             
@@ -338,7 +339,7 @@ function drawCraftingScene()
         end
         
     elseif state == 4 then -- Confirm Craft
-        ui.drawPanel(0, ui.toPx(3.5), ui.toPx(32), ui.toPx(20.5), "Confirm Crafting")
+        local rect = config.windowLayout.craftingConfirm; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Confirm Crafting")
         
         -- Crafter
         ui.drawString("Crafter: " .. crafter_battler.actorData.name, ui.toPx(2), ui.toPx(5.5), {1, 1, 0.5, 1})
@@ -374,7 +375,7 @@ function drawCraftingScene()
         ui.drawString(backSel, ui.toPx(18), ui.toPx(19.5), colorBack)
         
     elseif state == 5 then -- Roulette Animation
-        ui.drawPanel(ui.toPx(4), ui.toPx(7), ui.toPx(24), ui.toPx(10), "Crafting...")
+        local rect = config.windowLayout.craftingProgress; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Crafting...")
         
         local activeItem = roulettePool[rouletteCurrentIdx]
         if activeItem then
@@ -388,7 +389,7 @@ function drawCraftingScene()
         end
         
     elseif state == 6 then -- Result Screen
-        ui.drawPanel(ui.toPx(4), ui.toPx(6), ui.toPx(24), ui.toPx(12), "Crafting Success!")
+        local rect = config.windowLayout.craftingResult; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "Crafting Success!")
         
         if resultItem then
             ui.drawIcon(resultItem.icon or 0, ui.toPx(15), ui.toPx(8.5))

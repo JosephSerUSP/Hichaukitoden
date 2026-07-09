@@ -384,12 +384,12 @@ function renderer.drawTitle()
         love.graphics.line(0, i * 16, 256, i * 16 + 50)
     end
     
-    ui.drawPanel(20, 30, 216, 60)
+    local rect = config.windowLayout.titleRect; ui.drawPanel(rect.x, rect.y, rect.w, rect.h)
     ui.drawString("HICHAUKITODEN", 28, 48, {1, 0.9, 0.3, 1}, "center", 200)
     ui.drawString("First Person Crawler", 28, 66, {0.7, 0.8, 1, 0.8}, "center", 200)
     
     -- Menu options
-    ui.drawPanel(50, 110, 156, 80)
+    local rect = config.windowLayout.titleMenu; ui.drawPanel(rect.x, rect.y, rect.w, rect.h)
     ui.drawString("Press ENTER to start", 58, 130, {1, 1, 1, 1}, "center", 140)
     ui.drawString("Press ESC to exit", 58, 154, {0.7, 0.7, 0.7, 1}, "center", 140)
     
@@ -408,7 +408,7 @@ function renderer.drawTown(selectedIdx)
     end
     
     -- Town Options
-    ui.drawPanel(ui.toPx(1), ui.toPx(1), ui.toPx(13), ui.toPx(15))
+    local rect = config.windowLayout.townOptions; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h))
     ui.drawString("TOWN SQUARE", ui.toPx(2), ui.toPx(2), {1, 0.85, 0.5, 1})
     
     -- Town options are data-driven (system.town.options)
@@ -451,7 +451,7 @@ function renderer.drawMap()
         elseif frontTile == "R" then label = "RECOVERY [SPACE]"
         elseif frontTile == "T" then label = "TREASURE [SPACE]"
         end
-        ui.drawPanel(60, 105, 136, 26)
+        local rect = config.windowLayout.treasure; ui.drawPanel(rect.x, rect.y, rect.w, rect.h)
         ui.drawString(label, 64, 112, {1, 1, 0.5, 1}, "center", 128)
     end
     
@@ -764,7 +764,7 @@ function renderer.drawShop(shopTitle, selectedIdx, shopItems)
     viewport_3d.draw(renderer.session)
     
     -- Draw shop title and item list
-    ui.drawPanel(ui.toPx(1) + ox, ui.toPx(1), ui.toPx(30), ui.toPx(15))
+    local rect = config.windowLayout.shopMain; ui.drawPanel(ui.toPx(rect.x) + ox, ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h))
     
     local titleText = "SHOP: " .. tostring(shopTitle):upper()
     ui.drawString(titleText, ui.toPx(2) + ox, ui.toPx(2), {1, 0.85, 0.5, 1})
@@ -848,7 +848,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     local bottomY = ui.toPx(20) + (1 - ease) * ui.toPx(12)
     
     -- 1. Draw Left Menu Column
-    ui.drawPanel(leftX, ui.toPx(1), ui.toPx(8), ui.toPx(18), "MENU")
+    local rect = config.windowLayout.menuLeft; ui.drawPanel(leftX, ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "MENU")
     local mainOpts = session.loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
     for i, opt in ipairs(mainOpts) do
         local isSel = (subScene == "main" and i == mainIdx)
@@ -870,7 +870,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 3.25), {1, 1, 1, 1}, "left", ui.toPx(6.75))
     
     -- 2. Draw Bottom Description Panel
-    ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")
+    local rect = config.windowLayout.menuInfo; ui.drawPanel(ui.toPx(rect.x), bottomY, ui.toPx(rect.w), ui.toPx(rect.h), "INFO")
     
     -- 3. Draw Right Details Panel based on selection
     local panelTitle = mainOpts[mainIdx]
@@ -879,7 +879,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     elseif subScene == "exit_confirm" then
         panelTitle = "CONFIRM"
     end
-    ui.drawPanel(rightX, ui.toPx(1), ui.toPx(21), ui.toPx(18), panelTitle)
+    local rect = config.windowLayout.menuRight; ui.drawPanel(rightX, ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), panelTitle)
     
     local textLeftMargin = ui.toPx(2)
     if subScene == "main" or subScene == "party_select" then
@@ -1068,13 +1068,13 @@ function renderer.drawTargetSelector(selectedSubIdx, session)
     -- Dark gradient background overlay
     drawDarkGradient()
     
-    ui.drawPanel(ui.toPx(3), ui.toPx(2), ui.toPx(26), ui.toPx(16), "SELECT TARGET")
+    local rect = config.windowLayout.targetSelect; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "SELECT TARGET")
     ui.drawString("Use item on whom?", ui.toPx(4), ui.toPx(4.5), {1, 1, 1, 1})
     
     -- Reuse the 2x2 Party Grid for target selection overlay!
     renderer.drawPartyGrid(ui.toPx(4), ui.toPx(6), selectedSubIdx, session, true)
     
-    ui.drawPanel(ui.toPx(1), ui.toPx(19), ui.toPx(30), ui.toPx(10), "INFO")
+    local rect = config.windowLayout.targetInfo; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "INFO")
     local selC = session.party[selectedSubIdx]
     if selC then
         local maxHp = selC:getMaxHp(session)
@@ -1101,7 +1101,7 @@ function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     love.graphics.rectangle("fill", 0, 0, 256, 244)
     love.graphics.setColor(1, 1, 1, 1)
     
-    ui.drawPanel(ui.toPx(2) + ox, ui.toPx(3), ui.toPx(28), ui.toPx(15), "EQUIP: " .. c.name:upper())
+    local rect = config.windowLayout.equipMain; ui.drawPanel(ui.toPx(rect.x) + ox, ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "EQUIP: " .. c.name:upper())
     
     local eq1 = c.equipment[1]
     local eq2 = c.equipment[2]
@@ -1127,7 +1127,7 @@ function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     ui.drawString("MDF: " .. mdf, ui.toPx(18) + ox, ui.toPx(10.75), {1, 1, 1, 1})
     
     local bottomY = ui.toPx(20) + (1 - ease) * ui.toPx(12)
-    ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")
+    local rect = config.windowLayout.menuInfo; ui.drawPanel(ui.toPx(rect.x), bottomY, ui.toPx(rect.w), ui.toPx(rect.h), "INFO")
     local selEq = c.equipment[selectedSlotIdx]
     if selEq then
         ui.drawString(selEq.name:upper() .. " - Equipped", ui.toPx(2), bottomY + 23, {1, 0.85, 0.5, 1})
@@ -1173,7 +1173,7 @@ function renderer.drawSelectEquipMenu(rightIdx, session, slotType, c, slotIdx)
     love.graphics.rectangle("fill", 0, 0, 256, 244)
     love.graphics.setColor(1, 1, 1, 1)
     
-    ui.drawPanel(ui.toPx(3), ui.toPx(2), ui.toPx(26), ui.toPx(16), "SELECT " .. slotType:upper())
+    local rect = config.windowLayout.equipSlot; ui.drawPanel(ui.toPx(rect.x), ui.toPx(rect.y), ui.toPx(rect.w), ui.toPx(rect.h), "SELECT " .. slotType:upper())
     
     -- Filter inventory for matching equipment items
     local list = {}
@@ -1201,7 +1201,7 @@ function renderer.drawSelectEquipMenu(rightIdx, session, slotType, c, slotIdx)
     end
     
     local bottomY = ui.toPx(19)
-    ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(10), "INFO")
+    local rect = config.windowLayout.targetInfo; ui.drawPanel(ui.toPx(rect.x), bottomY, ui.toPx(rect.w), ui.toPx(rect.h), "INFO")
     local selItem = list[rightIdx]
     if selItem then
         ui.drawString(selItem.name:upper(), ui.toPx(2), bottomY + 23, {1, 0.85, 0.5, 1})

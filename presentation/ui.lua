@@ -198,10 +198,9 @@ function ui.drawPanel(x, y, w, h, title)
     
     -- Draw title header if specified
     if title then
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.rectangle("fill", x + 8, y + 6, w - 16, 14)
+        local spacing = (config.windowLayout and config.windowLayout.headerSpacing) or 0
         love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + 12, y + 7)
+        ui.drawString(title, x + 12, y + 7 + spacing)
     end
     
     love.graphics.pop()
@@ -229,9 +228,10 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     if not string.find(parsedText, "\\c%[") then
         -- Fallback to simple printing
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.printf(parsedText, x + 1, y + 1, limit, alignment)
+        local alignOffset = (alignment == "right") and ui.tileSize or 0
+        love.graphics.printf(parsedText, x + 1 - alignOffset, y + 1, limit, alignment)
         love.graphics.setColor(color)
-        love.graphics.printf(parsedText, x, y, limit, alignment)
+        love.graphics.printf(parsedText, x - alignOffset, y, limit, alignment)
 
         love.graphics.setColor(r, g, b, a)
         love.graphics.setFont(currentFont)
@@ -254,13 +254,14 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
         end
     end
 
+    local alignOffset = (alignment == "right") and ui.tileSize or 0
     -- Draw shadow (1px down, 1px right)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(shadowChunks, x + 1, y + 1, limit, alignment)
+    love.graphics.printf(shadowChunks, x + 1 - alignOffset, y + 1, limit, alignment)
     
     -- Draw text
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(chunks, x, y, limit, alignment)
+    love.graphics.printf(chunks, x - alignOffset, y, limit, alignment)
     
     love.graphics.setColor(r, g, b, a)
     love.graphics.setFont(currentFont)

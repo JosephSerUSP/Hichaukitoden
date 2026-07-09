@@ -596,6 +596,39 @@ end
 -- Execution entry points
 ------------------------------------------------------------------
 
+
+handlers.OPEN_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "OPEN_WINDOW", id = cmd.id, layout = cmd.layout })
+end
+
+handlers.CLOSE_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "CLOSE_WINDOW", id = cmd.id })
+end
+
+handlers.SET_LIST = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "SET_LIST", id = cmd.id, items = cmd.items })
+end
+
+handlers.SET_TEXT = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "SET_TEXT", id = cmd.id, text = cmd.text })
+end
+
+handlers.SET_CURSOR = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "SET_CURSOR", id = cmd.id, index = evalFormula(cmd.index, ctx) })
+end
+
+handlers.FOCUS_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "FOCUS_WINDOW", id = cmd.id })
+end
+
+handlers.PLAY_ANIM = function(cmd, ctx)
+    table.insert(ctx.events, { type = "ui_action", action = "PLAY_ANIM", id = cmd.id, anim = cmd.anim })
+end
+
+handlers.WAIT = function(cmd, ctx)
+    table.insert(ctx.events, { type = "wait", duration = evalFormula(cmd.duration, ctx) })
+end
+
 function interpreter.execList(commands, ctx)
     for _, cmd in ipairs(commands or {}) do
         local id = cmdId(cmd)
