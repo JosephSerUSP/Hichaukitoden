@@ -61,7 +61,7 @@ local function parseRichText(text, defaultColor, eventName)
 end
 
 -- Load assets (called from renderer)
-function ui.load()
+function ui.init()
     if love.filesystem.getInfo("assets/system/iconset.png") then
         iconset = love.graphics.newImage("assets/system/iconset.png")
         iconset:setFilter("nearest", "nearest")
