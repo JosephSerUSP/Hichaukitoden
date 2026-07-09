@@ -282,47 +282,39 @@
             }
         }
 
-        let activeFlowsSubTab = 'phases'; // 'phases' or 'scenes'
-        let activeSceneId = null;
+        let activeUnifiedSelection = 'flow:battle';
+        let activeFlowPhase = null;
+        let activeSceneHook = 'on_enter';
 
-        function renderFlowsAndScenesContainer(panel, header) {
-            panel.innerHTML = '';
-            
-            const subTabs = document.createElement('div');
-            subTabs.style.cssText = 'display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
-            
-            const btnPhases = document.createElement('button');
-            btnPhases.className = 'db-tab-btn' + (activeFlowsSubTab === 'phases' ? ' active' : '');
-            btnPhases.textContent = 'Phase Flows';
-            btnPhases.onclick = () => {
-                activeFlowsSubTab = 'phases';
-                renderFlowsAndScenesContainer(panel, header);
-            };
-            
-            const btnScenes = document.createElement('button');
-            btnScenes.className = 'db-tab-btn' + (activeFlowsSubTab === 'scenes' ? ' active' : '');
-            btnScenes.textContent = 'Custom Scenes';
-            btnScenes.onclick = () => {
-                activeFlowsSubTab = 'scenes';
-                renderFlowsAndScenesContainer(panel, header);
-            };
-            
-            subTabs.appendChild(btnPhases);
-            subTabs.appendChild(btnScenes);
-            panel.appendChild(subTabs);
-            
-            if (activeFlowsSubTab === 'phases') {
-                header.textContent = 'Phase Flows';
-                renderFlowsTab(panel, header);
-            } else {
-                header.textContent = 'Custom Scenes';
-                renderScenesSection(panel, header);
-            }
+        // v1 phase names (SPEC S4); union'd with whatever's actually present so
+        // a future phase added directly to flows.json still shows up.
+        const KNOWN_PHASES_BY_SCENE = {
+            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
+        };
+
+        const SCENE_HOOKS = ['on_enter', 'on_exit', 'on_frame', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right'];
+
+        function flowScenes() {
+            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
+            return scenes.length ? scenes : ['battle'];
         }
 
-        function renderScenesSection(panel, header) {
+        function flowPhasesForScene(scene) {
+            const known = KNOWN_PHASES_BY_SCENE[scene] || [];
+            const existing = Object.keys((dbPayload.flows || {})[scene] || {});
+            const seen = {};
+            const out = [];
+            known.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
+            return out;
+        }
+
+        function renderFlowsAndScenesContainer(panel, header) {
+            dbPayload.flows = dbPayload.flows || {};
             dbPayload.scenes = dbPayload.scenes || [];
             
+            panel.innerHTML = '';
+            header.textContent = 'Flows & Scenes';
+
             const mainContainer = document.createElement('div');
             mainContainer.style.cssText = 'display: flex; gap: 8px; height: 350px; overflow: hidden;';
             
@@ -334,9 +326,34 @@
             
             const renderList = () => {
                 listBox.innerHTML = '';
+
+                // Render standard flows
+                const scenes = flowScenes();
+                scenes.forEach((fl) => {
+                    const row = document.createElement('div');
+                    row.className = 'tree-node-header' + (activeUnifiedSelection === 'flow:' + fl ? ' active' : '');
+                    row.style.cssText = 'padding: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 11px;';
+
+                    const spanName = document.createElement('span');
+                    spanName.textContent = `[Flow] ${fl}`;
+                    row.appendChild(spanName);
+
+                    row.onclick = () => {
+                        activeUnifiedSelection = 'flow:' + fl;
+                        renderFlowsAndScenesContainer(panel, header);
+                    };
+                    listBox.appendChild(row);
+                });
+
+                // Add separator
+                const sep = document.createElement('div');
+                sep.style.cssText = 'height: 1px; background: var(--win-shadow); margin: 4px 0;';
+                listBox.appendChild(sep);
+
+                // Render custom scenes
                 dbPayload.scenes.forEach((sc) => {
                     const row = document.createElement('div');
-                    row.className = 'tree-node-header' + (sc.id === activeSceneId ? ' active' : '');
+                    row.className = 'tree-node-header' + (activeUnifiedSelection === 'scene:' + sc.id ? ' active' : '');
                     row.style.cssText = 'padding: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 11px;';
                     
                     const spanName = document.createElement('span');
@@ -345,16 +362,18 @@
                     
                     const delBtn = makeRowDeleteBtn(() => {
                         dbPayload.scenes = dbPayload.scenes.filter(s => s.id !== sc.id);
-                        if (activeSceneId === sc.id) activeSceneId = null;
+                        if (activeUnifiedSelection === 'scene:' + sc.id) {
+                            activeUnifiedSelection = 'flow:battle';
+                        }
                         setDirty(true);
-                        renderScenesSection(panel, header);
+                        renderFlowsAndScenesContainer(panel, header);
                     });
                     row.appendChild(delBtn);
                     
                     row.onclick = (e) => {
                         if (e.target.tagName === 'BUTTON') return;
-                        activeSceneId = sc.id;
-                        renderScenesSection(panel, header);
+                        activeUnifiedSelection = 'scene:' + sc.id;
+                        renderFlowsAndScenesContainer(panel, header);
                     };
                     listBox.appendChild(row);
                 });
@@ -382,12 +401,13 @@
                         ],
                         timing: { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 },
                         terms: { title: 'Item Creation', yieldText: 'Expected Yield: {0}', resultText: 'Crafted: {0}!' }
-                    }
+                    },
+                    hooks: {}
                 };
                 dbPayload.scenes.push(newScene);
-                activeSceneId = nextId;
+                activeUnifiedSelection = 'scene:' + nextId;
                 setDirty(true);
-                renderScenesSection(panel, header);
+                renderFlowsAndScenesContainer(panel, header);
             });
             listCol.appendChild(addBtn);
             mainContainer.appendChild(listCol);
@@ -395,265 +415,20 @@
             const configCol = document.createElement('div');
             configCol.style.cssText = 'flex: 1; overflow-y: auto; padding-left: 4px; display: flex; flex-direction: column; gap: 8px;';
             
-            if (activeSceneId === null && dbPayload.scenes.length > 0) {
-                activeSceneId = dbPayload.scenes[0].id;
-            }
-            
-            const activeScene = dbPayload.scenes.find(s => s.id === activeSceneId);
-            if (activeScene) {
-                activeScene.config = activeScene.config || {};
-                
-                const createField = (labelVal, value, onChange, type = 'text', helpType = null) => {
-                    const row = document.createElement('div');
-                    row.className = 'form-group field-inline';
-                    const lbl = document.createElement('label');
-                    lbl.textContent = labelVal;
-                    row.appendChild(lbl);
-                    
-                    const input = document.createElement('input');
-                    input.className = 'win98-input';
-                    input.style.flex = '1';
-                    input.value = value !== undefined ? value : '';
-                    input.type = type;
-                    input.oninput = () => {
-                        onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
-                        setDirty(true);
-                    };
-                    row.appendChild(input);
-                    
-                    if (helpType) {
-                        const btnHelp = document.createElement('button');
-                        btnHelp.className = 'win98-btn';
-                        btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold;';
-                        btnHelp.textContent = 'ⓘ';
-                        btnHelp.onclick = (e) => {
-                            e.preventDefault();
-                            showParamHelpPopover(btnHelp, helpType);
-                        };
-                        row.appendChild(btnHelp);
-                    }
-                    configCol.appendChild(row);
-                };
-                
-                createField('Scene Name:', activeScene.name, (v) => {
-                    activeScene.name = v;
-                    renderList();
-                });
-                
-                const kindRow = document.createElement('div');
-                kindRow.className = 'form-group field-inline';
-                const kindLbl = document.createElement('label');
-                kindLbl.textContent = 'Scene Kind:';
-                kindRow.appendChild(kindLbl);
-                const kindSelect = makeSelect(['crafting'], activeScene.kind || 'crafting', (v) => {
-                    activeScene.kind = v;
-                    setDirty(true);
-                });
-                kindSelect.style.flex = '1';
-                kindRow.appendChild(kindSelect);
-                configCol.appendChild(kindRow);
-                
-                createField('Alpha Coefficient:', activeScene.config.alpha, (v) => { activeScene.config.alpha = v; }, 'number');
-                createField('Yield Formula:', activeScene.config.yieldFormula, (v) => { activeScene.config.yieldFormula = v; }, 'text', 'formula');
-                createField('Penalty Formula:', activeScene.config.penaltyFormula, (v) => { activeScene.config.penaltyFormula = v; }, 'text', 'formula');
-                createField('Anomaly Formula:', activeScene.config.anomalyFormula, (v) => { activeScene.config.anomalyFormula = v; }, 'text', 'formula');
-                
-                const timingTitle = document.createElement('div');
-                timingTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
-                timingTitle.textContent = 'Timing Configuration';
-                configCol.appendChild(timingTitle);
-                
-                activeScene.config.timing = activeScene.config.timing || { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 };
-                createField('Initial Delay (s):', activeScene.config.timing.initialDelay, (v) => { activeScene.config.timing.initialDelay = v; }, 'number');
-                createField('Max Delay (s):', activeScene.config.timing.maxDelay, (v) => { activeScene.config.timing.maxDelay = v; }, 'number');
-                createField('Delay Multiplier:', activeScene.config.timing.delayMult, (v) => { activeScene.config.timing.delayMult = v; }, 'number');
-                createField('Total Steps:', activeScene.config.timing.steps, (v) => { activeScene.config.timing.steps = v; }, 'number');
-                
-                const discTitle = document.createElement('div');
-                discTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
-                discTitle.textContent = 'Disciplines';
-                configCol.appendChild(discTitle);
-                
-                const discBox = makeListBox();
-                const renderDiscs = () => {
-                    discBox.innerHTML = '';
-                    activeScene.config.disciplines = activeScene.config.disciplines || [];
-                    activeScene.config.disciplines.forEach((disc, dIdx) => {
-                        const row = document.createElement('div');
-                        row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
-                        
-                        const inputKind = document.createElement('input');
-                        inputKind.className = 'win98-input';
-                        inputKind.style.width = '70px';
-                        inputKind.placeholder = 'kind';
-                        inputKind.value = disc.kind || '';
-                        inputKind.oninput = () => { disc.kind = inputKind.value; setDirty(true); };
-                        row.appendChild(inputKind);
-                        
-                        const inputLabel = document.createElement('input');
-                        inputLabel.className = 'win98-input';
-                        inputLabel.style.width = '70px';
-                        inputLabel.placeholder = 'label';
-                        inputLabel.value = disc.label || '';
-                        inputLabel.oninput = () => { disc.label = inputLabel.value; setDirty(true); };
-                        row.appendChild(inputLabel);
-                        
-                        const selectStat = makeSelect(['atk', 'def', 'mat', 'mdf', 'maxHp', 'asp', 'mpd', 'level'], disc.stat || 'atk', (v) => {
-                            disc.stat = v;
-                            setDirty(true);
-                        });
-                        selectStat.style.width = '60px';
-                        selectStat.style.height = '19px';
-                        row.appendChild(selectStat);
-                        
-                        const inputDesc = document.createElement('input');
-                        inputDesc.className = 'win98-input';
-                        inputDesc.style.flex = '1';
-                        inputDesc.placeholder = 'description';
-                        inputDesc.value = disc.description || '';
-                        inputDesc.oninput = () => { disc.description = inputDesc.value; setDirty(true); };
-                        row.appendChild(inputDesc);
-                        
-                        row.appendChild(makeRowDeleteBtn(() => {
-                            activeScene.config.disciplines.splice(dIdx, 1);
-                            setDirty(true);
-                            renderDiscs();
-                        }));
-                        discBox.appendChild(row);
-                    });
-                    
-                    discBox.appendChild(makeAddRowBtn('+ Add Discipline', () => {
-                        activeScene.config.disciplines.push({ kind: 'new_discipline', label: 'New', stat: 'atk', description: '' });
-                        setDirty(true);
-                        renderDiscs();
-                    }));
-                };
-                renderDiscs();
-                configCol.appendChild(discBox);
-                
-                const brTitle = document.createElement('div');
-                brTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
-                brTitle.textContent = 'Outcome Brackets';
-                configCol.appendChild(brTitle);
-                
-                const brBox = makeListBox();
-                const renderBrackets = () => {
-                    brBox.innerHTML = '';
-                    activeScene.config.brackets = activeScene.config.brackets || [];
-                    activeScene.config.brackets.forEach((br, bIdx) => {
-                        const row = document.createElement('div');
-                        row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
-                        
-                        const inputMax = document.createElement('input');
-                        inputMax.type = 'number';
-                        inputMax.className = 'win98-input';
-                        inputMax.style.width = '60px';
-                        inputMax.placeholder = 'max Y';
-                        inputMax.value = br.max !== undefined ? br.max : 0;
-                        inputMax.oninput = () => { br.max = parseInt(inputMax.value) || 0; setDirty(true); };
-                        row.appendChild(inputMax);
-                        
-                        const inputTier = document.createElement('input');
-                        inputTier.type = 'number';
-                        inputTier.className = 'win98-input';
-                        inputTier.style.width = '50px';
-                        inputTier.placeholder = 'tier';
-                        inputTier.value = br.tier !== undefined ? br.tier : 0;
-                        inputTier.oninput = () => { br.tier = parseInt(inputTier.value) || 0; setDirty(true); };
-                        row.appendChild(inputTier);
-                        
-                        const inputName = document.createElement('input');
-                        inputName.className = 'win98-input';
-                        inputName.style.flex = '1';
-                        inputName.placeholder = 'bracket name';
-                        inputName.value = br.name || '';
-                        inputName.oninput = () => { br.name = inputName.value; setDirty(true); };
-                        row.appendChild(inputName);
-                        
-                        row.appendChild(makeRowDeleteBtn(() => {
-                            activeScene.config.brackets.splice(bIdx, 1);
-                            setDirty(true);
-                            renderBrackets();
-                        }));
-                        brBox.appendChild(row);
-                    });
-                    
-                    brBox.appendChild(makeAddRowBtn('+ Add Bracket', () => {
-                        activeScene.config.brackets.push({ max: 50, tier: 1, name: 'New Bracket' });
-                        setDirty(true);
-                        renderBrackets();
-                    }));
-                };
-                renderBrackets();
-                configCol.appendChild(brBox);
-                
-                const termsTitle = document.createElement('div');
-                termsTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
-                termsTitle.textContent = 'Terms / Text Keys';
-                configCol.appendChild(termsTitle);
-                
-                activeScene.config.terms = activeScene.config.terms || {};
-                const termKeys = ['title', 'selectDiscipline', 'selectCrafter', 'selectIngredients', 'yieldText', 'anomalyText', 'craftBtn', 'cancelBtn', 'resultText'];
-                termKeys.forEach(tKey => {
-                    createField(`Text [${tKey}]:`, activeScene.config.terms[tKey], (v) => { activeScene.config.terms[tKey] = v; });
-                });
-            } else {
-                const empty = document.createElement('div');
-                empty.style.cssText = 'font-style: italic; color: var(--win-dark-shadow); padding: 20px;';
-                empty.textContent = 'No scenes defined. Click "+ Create Scene" to start.';
-                configCol.appendChild(empty);
+            if (activeUnifiedSelection.startsWith('flow:')) {
+                const activeFlowScene = activeUnifiedSelection.substring(5);
+                renderFlowDetails(configCol, activeFlowScene, header, panel);
+            } else if (activeUnifiedSelection.startsWith('scene:')) {
+                const activeSceneId = parseInt(activeUnifiedSelection.substring(6));
+                renderSceneDetails(configCol, activeSceneId, header, panel, renderList);
             }
             
             mainContainer.appendChild(configCol);
             panel.appendChild(mainContainer);
         }
 
-        // --- FLOWS TAB (SPEC A6 / S4) ---
-        // scene select -> phase select, each phase badged "has data" (overrides
-        // the legacy Lua block) or "legacy" (falls back to it, per S4's
-        // fallback rule). Editing a phase uses the same registry-driven
-        // renderCommandList as map/common events, with hostCtx 'battle_phase'
-        // so the palette only offers non-interactive commands valid there.
-        let activeFlowScene = 'battle';
-        let activeFlowPhase = null;
 
-        // v1 phase names (SPEC S4); union'd with whatever's actually present so
-        // a future phase added directly to flows.json still shows up.
-        const KNOWN_PHASES_BY_SCENE = {
-            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
-        };
-
-        function flowScenes() {
-            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
-            return scenes.length ? scenes : ['battle'];
-        }
-
-        function flowPhasesForScene(scene) {
-            const known = KNOWN_PHASES_BY_SCENE[scene] || [];
-            const existing = Object.keys((dbPayload.flows || {})[scene] || {});
-            const seen = {};
-            const out = [];
-            known.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
-            return out;
-        }
-
-        function renderFlowsTab(panel, header) {
-            const scenes = flowScenes();
-            if (!scenes.includes(activeFlowScene)) activeFlowScene = scenes[0];
-
-            const sceneRow = document.createElement('div');
-            sceneRow.style.cssText = 'display: flex; gap: 6px; align-items: center; margin-bottom: 8px;';
-            const sceneLabel = document.createElement('label');
-            sceneLabel.textContent = 'Scene:';
-            sceneRow.appendChild(sceneLabel);
-            const sceneSelect = makeSelect(scenes, activeFlowScene, (v) => {
-                activeFlowScene = v;
-                activeFlowPhase = null;
-                setEngineTab('flows');
-            }, null);
-            sceneRow.appendChild(sceneSelect);
-            panel.appendChild(sceneRow);
-
+        function renderFlowDetails(configCol, activeFlowScene, header, panel) {
             const phases = flowPhasesForScene(activeFlowScene);
             if (!activeFlowPhase || !phases.includes(activeFlowPhase)) activeFlowPhase = phases[0];
 
@@ -668,7 +443,7 @@
                 btn.onclick = () => { activeFlowPhase = phase; setEngineTab('flows'); };
                 phaseTabs.appendChild(btn);
             });
-            panel.appendChild(phaseTabs);
+            configCol.appendChild(phaseTabs);
 
             if (!activeFlowPhase) return;
 
@@ -680,7 +455,7 @@
             infoRow.textContent = hasData
                 ? 'This phase has data and overrides the legacy Lua block.'
                 : 'This phase has no data yet — the engine falls back to its legacy Lua block (S4). Create an override to edit it here.';
-            panel.appendChild(infoRow);
+            configCol.appendChild(infoRow);
 
             if (!hasData) {
                 const activateBtn = document.createElement('button');
@@ -692,7 +467,7 @@
                     setDirty(true);
                     setEngineTab('flows');
                 };
-                panel.appendChild(activateBtn);
+                configCol.appendChild(activateBtn);
                 return;
             }
 
@@ -701,7 +476,7 @@
             const phaseCommands = dbPayload.flows[activeFlowScene][activeFlowPhase];
             const rerenderPhase = () => { setDirty(true); renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase'); };
             renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase');
-            panel.appendChild(listBox);
+            configCol.appendChild(listBox);
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'win98-btn';
@@ -712,9 +487,281 @@
                 setDirty(true);
                 setEngineTab('flows');
             };
-            panel.appendChild(removeBtn);
+            configCol.appendChild(removeBtn);
 
             attachJsonToggle(header, panel, phaseCommands, () => setEngineTab('flows'));
+        }
+
+        function renderSceneDetails(configCol, activeSceneId, header, panel, renderList) {
+            const activeScene = dbPayload.scenes.find(s => s.id === activeSceneId);
+            if (!activeScene) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'font-style: italic; color: var(--win-dark-shadow); padding: 20px;';
+                empty.textContent = 'Scene not found.';
+                configCol.appendChild(empty);
+                return;
+            }
+            activeScene.config = activeScene.config || {};
+            activeScene.hooks = activeScene.hooks || {};
+
+            const details = document.createElement('details');
+            details.style.cssText = 'margin-bottom: 8px; border: 1px solid var(--win-shadow); padding: 4px; background: var(--win-bg);';
+            const summary = document.createElement('summary');
+            summary.style.cssText = 'font-weight: bold; cursor: pointer; user-select: none;';
+            summary.textContent = 'Scene Config';
+            details.appendChild(summary);
+
+            const innerConfig = document.createElement('div');
+            innerConfig.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 8px;';
+
+            const createField = (labelVal, value, onChange, type = 'text', helpType = null) => {
+                const row = document.createElement('div');
+                row.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = labelVal;
+                row.appendChild(lbl);
+
+                const input = document.createElement('input');
+                input.className = 'win98-input';
+                input.style.flex = '1';
+                input.value = value !== undefined ? value : '';
+                input.type = type;
+                input.oninput = () => {
+                    onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
+                    setDirty(true);
+                };
+                row.appendChild(input);
+
+                if (helpType) {
+                    const btnHelp = document.createElement('button');
+                    btnHelp.className = 'win98-btn';
+                    btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold;';
+                    btnHelp.textContent = 'ⓘ';
+                    btnHelp.onclick = (e) => {
+                        e.preventDefault();
+                        showParamHelpPopover(btnHelp, helpType);
+                    };
+                    row.appendChild(btnHelp);
+                }
+                innerConfig.appendChild(row);
+            };
+
+            createField('Scene Name:', activeScene.name, (v) => {
+                activeScene.name = v;
+                renderList();
+            });
+
+            const kindRow = document.createElement('div');
+            kindRow.className = 'form-group field-inline';
+            const kindLbl = document.createElement('label');
+            kindLbl.textContent = 'Scene Kind:';
+            kindRow.appendChild(kindLbl);
+            const kindSelect = makeSelect(['crafting'], activeScene.kind || 'crafting', (v) => {
+                activeScene.kind = v;
+                setDirty(true);
+            });
+            kindSelect.style.flex = '1';
+            kindRow.appendChild(kindSelect);
+            innerConfig.appendChild(kindRow);
+
+            createField('Alpha Coefficient:', activeScene.config.alpha, (v) => { activeScene.config.alpha = v; }, 'number');
+            createField('Yield Formula:', activeScene.config.yieldFormula, (v) => { activeScene.config.yieldFormula = v; }, 'text', 'formula');
+            createField('Penalty Formula:', activeScene.config.penaltyFormula, (v) => { activeScene.config.penaltyFormula = v; }, 'text', 'formula');
+            createField('Anomaly Formula:', activeScene.config.anomalyFormula, (v) => { activeScene.config.anomalyFormula = v; }, 'text', 'formula');
+
+            const timingTitle = document.createElement('div');
+            timingTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+            timingTitle.textContent = 'Timing Configuration';
+            innerConfig.appendChild(timingTitle);
+
+            activeScene.config.timing = activeScene.config.timing || { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 };
+            createField('Initial Delay (s):', activeScene.config.timing.initialDelay, (v) => { activeScene.config.timing.initialDelay = v; }, 'number');
+            createField('Max Delay (s):', activeScene.config.timing.maxDelay, (v) => { activeScene.config.timing.maxDelay = v; }, 'number');
+            createField('Delay Multiplier:', activeScene.config.timing.delayMult, (v) => { activeScene.config.timing.delayMult = v; }, 'number');
+            createField('Total Steps:', activeScene.config.timing.steps, (v) => { activeScene.config.timing.steps = v; }, 'number');
+
+            const discTitle = document.createElement('div');
+            discTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+            discTitle.textContent = 'Disciplines';
+            innerConfig.appendChild(discTitle);
+
+            const discBox = makeListBox();
+            const renderDiscs = () => {
+                discBox.innerHTML = '';
+                activeScene.config.disciplines = activeScene.config.disciplines || [];
+                activeScene.config.disciplines.forEach((disc, dIdx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
+
+                    const inputKind = document.createElement('input');
+                    inputKind.className = 'win98-input';
+                    inputKind.style.width = '70px';
+                    inputKind.placeholder = 'kind';
+                    inputKind.value = disc.kind || '';
+                    inputKind.oninput = () => { disc.kind = inputKind.value; setDirty(true); };
+                    row.appendChild(inputKind);
+
+                    const inputLabel = document.createElement('input');
+                    inputLabel.className = 'win98-input';
+                    inputLabel.style.width = '70px';
+                    inputLabel.placeholder = 'label';
+                    inputLabel.value = disc.label || '';
+                    inputLabel.oninput = () => { disc.label = inputLabel.value; setDirty(true); };
+                    row.appendChild(inputLabel);
+
+                    const selectStat = makeSelect(['atk', 'def', 'mat', 'mdf', 'maxHp', 'asp', 'mpd', 'level'], disc.stat || 'atk', (v) => {
+                        disc.stat = v;
+                        setDirty(true);
+                    });
+                    selectStat.style.width = '60px';
+                    selectStat.style.height = '19px';
+                    row.appendChild(selectStat);
+
+                    const inputDesc = document.createElement('input');
+                    inputDesc.className = 'win98-input';
+                    inputDesc.style.flex = '1';
+                    inputDesc.placeholder = 'description';
+                    inputDesc.value = disc.description || '';
+                    inputDesc.oninput = () => { disc.description = inputDesc.value; setDirty(true); };
+                    row.appendChild(inputDesc);
+
+                    row.appendChild(makeRowDeleteBtn(() => {
+                        activeScene.config.disciplines.splice(dIdx, 1);
+                        setDirty(true);
+                        renderDiscs();
+                    }));
+                    discBox.appendChild(row);
+                });
+
+                discBox.appendChild(makeAddRowBtn('+ Add Discipline', () => {
+                    activeScene.config.disciplines.push({ kind: 'new_discipline', label: 'New', stat: 'atk', description: '' });
+                    setDirty(true);
+                    renderDiscs();
+                }));
+            };
+            renderDiscs();
+            innerConfig.appendChild(discBox);
+
+            const brTitle = document.createElement('div');
+            brTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+            brTitle.textContent = 'Outcome Brackets';
+            innerConfig.appendChild(brTitle);
+
+            const brBox = makeListBox();
+            const renderBrackets = () => {
+                brBox.innerHTML = '';
+                activeScene.config.brackets = activeScene.config.brackets || [];
+                activeScene.config.brackets.forEach((br, bIdx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 4px;';
+
+                    const inputMax = document.createElement('input');
+                    inputMax.type = 'number';
+                    inputMax.className = 'win98-input';
+                    inputMax.style.width = '60px';
+                    inputMax.placeholder = 'max Y';
+                    inputMax.value = br.max !== undefined ? br.max : 0;
+                    inputMax.oninput = () => { br.max = parseInt(inputMax.value) || 0; setDirty(true); };
+                    row.appendChild(inputMax);
+
+                    const inputTier = document.createElement('input');
+                    inputTier.type = 'number';
+                    inputTier.className = 'win98-input';
+                    inputTier.style.width = '50px';
+                    inputTier.placeholder = 'tier';
+                    inputTier.value = br.tier !== undefined ? br.tier : 0;
+                    inputTier.oninput = () => { br.tier = parseInt(inputTier.value) || 0; setDirty(true); };
+                    row.appendChild(inputTier);
+
+                    const inputName = document.createElement('input');
+                    inputName.className = 'win98-input';
+                    inputName.style.flex = '1';
+                    inputName.placeholder = 'bracket name';
+                    inputName.value = br.name || '';
+                    inputName.oninput = () => { br.name = inputName.value; setDirty(true); };
+                    row.appendChild(inputName);
+
+                    row.appendChild(makeRowDeleteBtn(() => {
+                        activeScene.config.brackets.splice(bIdx, 1);
+                        setDirty(true);
+                        renderBrackets();
+                    }));
+                    brBox.appendChild(row);
+                });
+
+                brBox.appendChild(makeAddRowBtn('+ Add Bracket', () => {
+                    activeScene.config.brackets.push({ max: 50, tier: 1, name: 'New Bracket' });
+                    setDirty(true);
+                    renderBrackets();
+                }));
+            };
+            renderBrackets();
+            innerConfig.appendChild(brBox);
+
+            const termsTitle = document.createElement('div');
+            termsTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
+            termsTitle.textContent = 'Terms / Text Keys';
+            innerConfig.appendChild(termsTitle);
+
+            activeScene.config.terms = activeScene.config.terms || {};
+            const termKeys = ['title', 'selectDiscipline', 'selectCrafter', 'selectIngredients', 'yieldText', 'anomalyText', 'craftBtn', 'cancelBtn', 'resultText'];
+            termKeys.forEach(tKey => {
+                createField(`Text [${tKey}]:`, activeScene.config.terms[tKey], (v) => { activeScene.config.terms[tKey] = v; });
+            });
+
+            details.appendChild(innerConfig);
+            configCol.appendChild(details);
+
+            // Now render tabs for Scene Hooks
+            const phaseTabs = document.createElement('div');
+            phaseTabs.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
+            SCENE_HOOKS.forEach(hook => {
+                const hasData = !!activeScene.hooks[hook];
+                const btn = document.createElement('button');
+                btn.className = 'db-tab-btn' + (hook === activeSceneHook ? ' active' : '');
+                btn.style.fontSize = '10px';
+                btn.textContent = hook + (hasData ? ' [has data]' : '');
+                btn.onclick = () => { activeSceneHook = hook; setEngineTab('flows'); };
+                phaseTabs.appendChild(btn);
+            });
+            configCol.appendChild(phaseTabs);
+
+            if (!activeSceneHook) return;
+
+            const hasData = !!activeScene.hooks[activeSceneHook];
+            if (!hasData) {
+                const activateBtn = document.createElement('button');
+                activateBtn.className = 'win98-btn';
+                activateBtn.style.cssText = 'margin-bottom: 8px; align-self: flex-start;';
+                activateBtn.textContent = '+ Create Hook Override';
+                activateBtn.onclick = () => {
+                    activeScene.hooks[activeSceneHook] = [];
+                    setDirty(true);
+                    setEngineTab('flows');
+                };
+                configCol.appendChild(activateBtn);
+                return;
+            }
+
+            const listBox = document.createElement('div');
+            listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 200px; max-height: 320px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px;';
+            const hookCommands = activeScene.hooks[activeSceneHook];
+            const rerenderHook = () => { setDirty(true); renderCommandList(listBox, hookCommands, rerenderHook, false, 0, 'scene'); };
+            renderCommandList(listBox, hookCommands, rerenderHook, false, 0, 'scene');
+            configCol.appendChild(listBox);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'win98-btn';
+            removeBtn.style.cssText = 'margin-top: 6px; align-self: flex-start; font-size: 10px;';
+            removeBtn.textContent = 'Remove Hook';
+            removeBtn.onclick = () => {
+                delete activeScene.hooks[activeSceneHook];
+                setDirty(true);
+                setEngineTab('flows');
+            };
+            configCol.appendChild(removeBtn);
+
+            attachJsonToggle(header, panel, hookCommands, () => setEngineTab('flows'));
         }
 
         // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---
