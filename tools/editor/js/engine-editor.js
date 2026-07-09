@@ -807,7 +807,10 @@
                 const btn = document.createElement('button');
                 btn.className = 'db-tab-btn' + (hook === activeUnifiedPhase ? ' active' : '');
                 btn.style.fontSize = '10px';
-                btn.textContent = hook + (hasData ? '' : ' [empty]');
+                btn.textContent = hook;
+                if (!hasData) {
+                    btn.style.color = 'var(--text-empty)';
+                }
                 btn.onclick = () => { activeUnifiedPhase = hook; renderUnifiedFlowsEditor(container.parentElement.parentElement, header); };
                 hookTabs.appendChild(btn);
             });
