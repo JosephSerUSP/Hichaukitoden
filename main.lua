@@ -179,9 +179,14 @@ local function runGoldenUI()
             events = {}
         }
 
-        local function logEvents(events)
+        -- Track event count so we only log NEW events each hook call,
+        -- not the entire accumulated ctx.events.
+        local loggedEventCount = 0
+
+        local function logNewEvents(events)
             if not events then return end
-            for _, ev in ipairs(events) do
+            for i = loggedEventCount + 1, #events do
+                local ev = events[i]
                 if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
                     local w = ev.windowId or ""
                     local a = ev.type or ""
@@ -193,16 +198,27 @@ local function runGoldenUI()
                     table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
                 end
             end
+            loggedEventCount = #events
         end
 
         interpreter.runImmediate = function(cmds, ctx)
             local events = originalRunImmediate(cmds, ctx)
-            logEvents(events)
-            logEvents(ctx.events)
+            logNewEvents(events)
             return events
         end
 
         scene_host.init(sceneKey)
+
+        -- Initialize scene state BEFORE driving the input sequence.
+        -- on_enter sets v.state, v.idx, etc. so directional/confirm hooks
+        -- operate on initialized variables.
+        if sceneDef.hooks and next(sceneDef.hooks) then
+            scene_host.runHook("on_enter", currentCtx)
+        else
+            -- Pre-seed uiEvents so the log shows on_enter:absent even
+            -- when no events were generated
+            table.insert(uiEvents, string.format("scene|%s|hook|on_enter:absent", sceneKey))
+        end
 
         -- Drive the scripted input sequence
         local script = sceneScripts[sceneKey] or {}
@@ -213,15 +229,6 @@ local function runGoldenUI()
 
         print("UI GOLDEN BEGIN")
         print(string.format("scene|%s|name|%s", tostring(sceneDef.id), sceneDef.name or ""))
-
-        -- Log hook presence; captured events from hook execution/render
-        -- will appear in the intercepted runImmediate log below.
-        if sceneDef.hooks and next(sceneDef.hooks) then
-            local hookCtx = { session = vSession, loader = loader, party = vSession.party, events = {} }
-            scene_host.runHook("on_enter", hookCtx)
-        else
-            print(string.format("scene|%s|hook|on_enter:absent", sceneKey))
-        end
 
         for _, l in ipairs(uiEvents) do
             print(l)

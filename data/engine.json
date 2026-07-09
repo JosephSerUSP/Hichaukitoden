@@ -1422,6 +1422,9 @@
     "menu_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Info" },
     "items_left_panel": { "x": 0, "y": 3.5, "width": 20, "height": 20.5, "style": "list", "title": "Items" },
     "items_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Item Info" },
-    "status_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "panel", "title": "Status" }
+    "status_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "panel", "title": "Status" },
+    "shop_header": { "x": 0, "y": 3.5, "width": 32, "height": 3, "style": "frame", "title": "Shop" },
+    "shop_list": { "x": 0, "y": 6.5, "width": 20, "height": 17.5, "style": "list", "title": "Items" },
+    "shop_info": { "x": 20, "y": 6.5, "width": 12, "height": 17.5, "style": "panel", "title": "Item Info" }
   }
 }

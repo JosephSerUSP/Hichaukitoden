@@ -267,9 +267,6 @@
         { "cmd": "OPEN_WINDOW", "windowId": "title_menu" },
         { "cmd": "SET_TEXT", "windowId": "title_menu", "text": "Press ENTER to start" },
         { "cmd": "SET_CURSOR", "windowId": "title_menu", "index": 1 }
-      ],
-      "on_select": [
-        { "cmd": "SCENE_EVENT", "kind": "goto", "scene": "town" }
       ]
     }
   },
@@ -330,7 +327,8 @@
     "kind": "shop",
     "hooks": {
       "on_enter": [
-        { "cmd": "SET_VAR", "name": "idx", "value": 1 }
+        { "cmd": "SET_VAR", "name": "idx", "value": 1 },
+        { "cmd": "SET_VAR", "name": "count", "value": 0 }
       ],
       "on_up": [
         {

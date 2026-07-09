@@ -7,6 +7,11 @@ local scene_host = {}
 -- Each element is { id = sceneId, v = {}, windows = {}, focusedWindow = nil }
 local sceneStack = {}
 
+-- Window definitions registered by kind (via scene_host.register).
+-- Populated by calling registerKindWindows from scene modules.
+-- Keyed by kind string (e.g. "crafting"), value is a table of window defs.
+local windowDefsByKind = {}
+
 local function getSceneData(ctx, id)
     if not ctx or not ctx.loader or not ctx.loader.scenes then return nil end
     for _, scene in ipairs(ctx.loader.scenes) do
@@ -44,6 +49,13 @@ end
 function scene_host.getCurrentState()
     if #sceneStack == 0 then return nil end
     return sceneStack[#sceneStack]
+end
+
+-- Register window definitions for a scene kind.
+-- Called by scene modules (e.g. crafting.registerKindWindows) during push.
+-- Stored defs are merged into the scene state's windows table on push.
+function scene_host.register(kind, windowDefs)
+    windowDefsByKind[kind] = windowDefs
 end
 
 function scene_host.runHook(hookName, ctx)
@@ -123,11 +135,24 @@ function scene_host.push(id, ctx)
         focusedWindow = nil
     })
 
+    local state = sceneStack[#sceneStack]
     local sceneData = getSceneData(ctx, id)
-    if sceneData and sceneData.kind == "crafting" then
-        local sceneModule = require("engine.scenes.crafting")
-        if sceneModule.registerKindWindows then
-            sceneModule.registerKindWindows(scene_host)
+
+    -- Merge registered window definitions for this scene's kind
+    if sceneData and sceneData.kind then
+        -- Let the scene module register its window defs first
+        if sceneData.kind == "crafting" then
+            local sceneModule = require("engine.scenes.crafting")
+            if sceneModule.registerKindWindows then
+                sceneModule.registerKindWindows(scene_host)
+            end
+        end
+        -- Merge any stored window definitions into the scene state
+        local kindDefs = windowDefsByKind[sceneData.kind]
+        if kindDefs then
+            for k, v in pairs(kindDefs) do
+                state.windows[k] = v
+            end
         end
     end
 

@@ -4,15 +4,21 @@ HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)
 UI GOLDEN BEGIN
 scene|1|name|Item Creation
 discipline_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|close_window||
 discipline_panel|open_window||
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|title|name|Title Screen
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
 title_frame|open_window||
 title_frame|set_text||\c[6]HICHAUKITODEN
 title_menu|open_window||
@@ -26,19 +32,9 @@ title_frame|set_text||\c[6]HICHAUKITODEN
 title_menu|open_window||
 title_menu|set_text||Press ENTER to start
 title_menu|set_cursor||1
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|items|name|Items
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
 title_frame|open_window||
 title_frame|set_text||\c[6]HICHAUKITODEN
 title_menu|open_window||
@@ -52,14 +48,7 @@ title_frame|set_text||\c[6]HICHAUKITODEN
 title_menu|open_window||
 title_menu|set_text||Press ENTER to start
 title_menu|set_cursor||1
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
 UI GOLDEN END
-[formula] error in 'v.count and v.idx < v.count': formula did not return a number, boolean or string
-[formula] error in 'v.idx > 1': [string "formula:v.idx > 1"]:1: attempt to compare number with nil
 UI GOLDEN BEGIN
 scene|shop|name|Shop
 UI GOLDEN END
