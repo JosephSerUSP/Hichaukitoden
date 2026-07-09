@@ -488,10 +488,10 @@ function renderer.drawDialogue(walker, selectIdx)
     end
     
     if node.type == "TEXT" then
-        ui.drawString(node.content or "", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
+        ui.drawString(node.content or "", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
     elseif node.type == "CHOICE" then
-        ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), ui.toPx(4), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
+        ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         for i, opt in ipairs(node.options or {}) do
             local color = (i == selectIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectIdx) and "> " or "  "
@@ -777,7 +777,7 @@ function renderer.drawShop(shopTitle, selectedIdx, shopItems)
         local count = 0
         for i = start, math.min(#shopItems, start + 4) do
             local item = shopItems[i]
-            local itemY = ui.toPx(4) + count * ui.lineHeight
+            local itemY = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + count * ui.lineHeight
             local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = (i == selectedIdx) and "> " or "  "
             
@@ -854,7 +854,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         local isSel = (subScene == "main" and i == mainIdx)
         local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
         local prefix = isSel and ">" or " "
-        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, ui.toPx(4) + (i - 1) * ui.lineHeight, color)
+        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + (i - 1) * ui.lineHeight, color)
     end
     
     -- Gold and Floor stats inside left menu column below the options
@@ -885,7 +885,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     if subScene == "main" or subScene == "party_select" then
         -- Displays unit grid by default when browsing the main menu!
         local showCursor = (subScene == "party_select")
-        renderer.drawPartyGrid(rightX + 1 * ui.tileSize, ui.toPx(4), rightIdx, session, showCursor)
+        renderer.drawPartyGrid(rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), rightIdx, session, showCursor)
         
         local selCreature = session.party[rightIdx]
         if selCreature then
@@ -918,14 +918,14 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         end
         
         if #items == 0 then
-            ui.drawString("Inventory is empty.", rightX + 1 * ui.tileSize, ui.toPx(4), {0.5, 0.5, 0.5, 1})
+            ui.drawString("Inventory is empty.", rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {0.5, 0.5, 0.5, 1})
             ui.drawString("No items to describe.", textLeftMargin, bottomY + 3 * ui.tileSize, {0.6, 0.6, 0.6, 1})
         else
             local startIdx = math.max(1, rightIdx - 7)
             local drawCount = 0
             for i = startIdx, math.min(#items, startIdx + 8) do
                 local itEntry = items[i]
-                local iy = ui.toPx(4) + drawCount * 11
+                local iy = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + drawCount * 11
                 local isSel = (i == rightIdx)
                 local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                 local prefix = isSel and ">" or " "
@@ -948,7 +948,7 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         end
         
     elseif subScene == "exit_confirm" then
-        ui.drawString("Exit Hichaukitoden?", rightX + 1 * ui.tileSize, ui.toPx(4), {1, 1, 1, 1})
+        ui.drawString("Exit Hichaukitoden?", rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1})
         
         local isYes = (rightIdx == 1)
         local isNo = (rightIdx == 2)
@@ -980,9 +980,9 @@ function renderer.drawStatusDetail(c, session)
     
     local contentX = panelX + ui.toPx(1)
     
-    -- Header info (y = ui.toPx(4) i.e. 32px)
-    local iconW = drawElementIcons(traits.getElements(c, session), contentX, ui.toPx(4))
-    ui.drawString(c.name .. " L" .. c.level, contentX + iconW + 4, ui.toPx(4), {1, 0.85, 0.5, 1})
+    -- Header info (y = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) i.e. 32px)
+    local iconW = drawElementIcons(traits.getElements(c, session), contentX, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)))
+    ui.drawString(c.name .. " L" .. c.level, contentX + iconW + 4, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 0.85, 0.5, 1})
     ui.drawString("ROLE: " .. (c.actorData.role or "CREATURE"), contentX, ui.toPx(5.5), {0.7, 0.7, 0.7, 1})
     
     local maxHp = c:getMaxHp(session)

@@ -253,12 +253,13 @@
                 dbPayload.system.physics = dbPayload.system.physics || {};
                 dbPayload.system.battle_screen = dbPayload.system.battle_screen || {};
                 dbPayload.engine.battleLayout = dbPayload.engine.battleLayout || {};
+                dbPayload.engine.windowLayout = dbPayload.engine.windowLayout || {};
                 buildRecursiveForm(panel, {
                     ui: dbPayload.system.ui,
                     physics: dbPayload.system.physics,
                     battle_screen: dbPayload.system.battle_screen
                 }, [], dbPayload.system);
-                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout }, [], dbPayload.engine);
+                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout, windowLayout: dbPayload.engine.windowLayout }, [], dbPayload.engine);
                 buildBattleScreenPreview(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
             } else if (tabName === 'effectTypes') {

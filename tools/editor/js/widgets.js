@@ -607,6 +607,7 @@
         // ---- Config schema: friendly labels + typed widgets for system/engine keys ----
         // Keys not listed fall back to the generic key-name field.
         const CONFIG_SCHEMA = {
+            'windowLayout.headerSpacing': { label: 'Header Spacing (px)', type: 'number', step: 1 },
             'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05, min: 0 },
             'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05, min: 0 },
             'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05, min: 0 },

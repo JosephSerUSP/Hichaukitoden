@@ -67,7 +67,10 @@ function scene_host.runHook(hookName, ctx)
     -- Consume SCENE_EVENT (scene_change) and update the stack
     if events then
         for _, ev in ipairs(events) do
-            if ev.type == "scene_change" then
+
+            if ev.type == "wait" then
+                state.waitTimer = ev.duration
+            elseif ev.type == "scene_change" then
                 if ev.kind == "pop" then
                     scene_host.pop(ctx)
                 elseif ev.kind == "push" and ev.scene then
@@ -86,6 +89,7 @@ function scene_host.push(id, ctx)
     table.insert(sceneStack, {
         id = resolveSceneId(id),
         v = {},
+        waitTimer = 0,
         windows = {},
         focusedWindow = nil
     })
@@ -110,6 +114,13 @@ function scene_host.goto_scene(id, ctx)
 end
 
 function scene_host.update(dt, ctx)
+    if #sceneStack > 0 then
+        local state = sceneStack[#sceneStack]
+        if state.waitTimer and state.waitTimer > 0 then
+            state.waitTimer = math.max(0, state.waitTimer - dt)
+            if state.waitTimer > 0 then return true end
+        end
+    end
     -- The hook runs runImmediate which takes ctx.
     return scene_host.runHook("on_frame", ctx)
 end
