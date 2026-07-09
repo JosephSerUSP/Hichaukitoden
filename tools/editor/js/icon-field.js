@@ -1,6 +1,5 @@
-function createIconField(container, labelText, value, onChange) {
+function createIconField(container, labelText, value, onChange, compact) {
     const group = document.createElement('div');
-    group.className = 'form-group';
 
     const lbl = document.createElement('label');
     lbl.textContent = labelText;
@@ -40,6 +39,14 @@ function createIconField(container, labelText, value, onChange) {
     };
 
     group.appendChild(swatch);
+
+    if (compact) {
+        // Compact mode: sits flush next to sibling fields (no form-group, no flex:1)
+        group.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; flex-shrink: 0; margin-right: 0;';
+    } else {
+        group.className = 'form-group';
+    }
+
     container.appendChild(group);
 }
 window.createIconField = createIconField;

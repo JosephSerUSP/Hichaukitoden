@@ -1307,7 +1307,8 @@
             } else if (activeDbTab === 'items') {
                 const topRow = document.createElement('div');
                 topRow.className = 'form-row';
-                createIconField(topRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; }, true);
                 createFormField(topRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
                 formPanel.appendChild(topRow);
 
@@ -1398,7 +1399,8 @@
                 if (!passive) return;
                 const topRow = document.createElement('div');
                 topRow.className = 'form-row';
-                createIconField(topRow, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; }, true);
                 createFormField(topRow, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
                 formPanel.appendChild(topRow);
 
@@ -1414,7 +1416,8 @@
                 if (!state) return;
                 const topRow = document.createElement('div');
                 topRow.className = 'form-row';
-                createIconField(topRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; }, true);
                 createFormField(topRow, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
                 formPanel.appendChild(topRow);
 
@@ -1432,7 +1435,8 @@
                 if (!elem) return;
                 const topRow = document.createElement('div');
                 topRow.className = 'form-row';
-                createIconField(topRow, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; }, true);
                 createFormField(topRow, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
                 formPanel.appendChild(topRow);
 
