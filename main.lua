@@ -8,6 +8,7 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
+local scene_host = require("engine.scene_host")
 require("engine.scenes.crafting")
 local viewport_3d = require("presentation.viewport_3d")
 
@@ -17,6 +18,8 @@ local canvas
 local scale, scaleX, scaleY = 1, 1, 1
 
 -- Global Session and State Router
+
+scene_host.loadScenes(loader.scenes)
 
 local function getPopupFormat(key)
     if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup[key] then
@@ -68,7 +71,7 @@ local shopItems = {}
 local shopSelectedIdx = 1
 
 -- Menu State
-local previousSceneBeforeMenu = "town"
+local sceneStack = {}
 local menuSelectedIdx = 1
 local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
 menuSubScene = "main"
@@ -909,7 +912,7 @@ function love.update(dt)
     end
     
     if currentScene == "crafting" then
-        if updateCraftingScene then updateCraftingScene(dt) end
+        scene_host.update(dt)
     end
 end
 
@@ -931,7 +934,8 @@ function love.draw()
     elseif currentScene == "shop" then
         renderer.drawShop(activeShopName, shopSelectedIdx, shopItems)
     elseif currentScene == "menu" then
-        if previousSceneBeforeMenu == "town" then
+        local prev = sceneStack[#sceneStack] or "town"
+        if prev == "town" then
             renderer.drawTown(townSelectedIdx)
         else
             renderer.drawMap()
@@ -947,7 +951,7 @@ function love.draw()
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
     elseif currentScene == "crafting" then
-        if drawCraftingScene then drawCraftingScene() end
+        scene_host.draw()
     end
     
     if server.isActive() then
@@ -1067,7 +1071,19 @@ handleDialogueAction = function()
                 if ev.type == "text" and ev.text and ev.text ~= "" then
                     table.insert(texts, ev.text)
                 end
-            end
+                if ev.type == "scene_change" then
+                    if ev.kind == "pop" then
+                currentScene = table.remove(sceneStack) or "town"
+                    elseif ev.kind == "push" and ev.scene then
+                table.insert(sceneStack, currentScene)
+                currentScene = ev.scene
+                scene_host.push(ev.scene, {session = activeSession, loader = loader})
+                    elseif ev.kind == "goto" and ev.scene then
+                currentScene = ev.scene
+                scene_host.goto(ev.scene, {session = activeSession, loader = loader})
+                    end
+                end
+                end
             if #texts > 0 then
                 local tail = node.next
                 node.type = "TEXT"
@@ -1447,7 +1463,7 @@ local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
     if currentScene == "crafting" then
-        if keypressedCraftingScene then keypressedCraftingScene(key) end
+        scene_host.keypressed(key)
         return
     end
     if key == "escape" then
@@ -1455,7 +1471,7 @@ local function handleKeyPressed(key)
             love.event.quit()
         elseif currentScene == "town" or currentScene == "map" then
             -- Open Main Menu instead of exiting!
-            previousSceneBeforeMenu = currentScene
+            table.insert(sceneStack, currentScene)
             menuSelectedIdx = 1
             menuSubScene = "main"
             renderer.resetMenuTimer()
@@ -1644,8 +1660,9 @@ local function handleKeyPressed(key)
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
+                    table.insert(sceneStack, currentScene)
                     currentScene = "crafting"
-                    if initCraftingScene then initCraftingScene() end
+                    scene_host.push(1, { session = activeSession, loader = loader })
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
                     menuSelectedSubIdx = 2 -- Default to NO

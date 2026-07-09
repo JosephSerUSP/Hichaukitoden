@@ -1,0 +1,12 @@
+Implement Scene Host and Lifecycle Hooks (S2)
+
+- Introduce `scene_host.lua` to manage frame loops (`update`), rendering (`draw`), and cursor state (`keypressed`).
+- Manage the scene stack tracking context `v` and hooking executing via `interpreter.runImmediate()`.
+- Update `main.lua` rendering to delegate to `scene_host` frame loops.
+- Replaced `previousSceneBeforeMenu` hack with `sceneStack`.
+- Update `scenes.json` format to declare default hooks (`on_enter`, `on_select`, `on_cancel`, `on_frame`, `on_exit`).
+- Handle manual fallback synchronization with `_G.currentScene` string mapping to keep `sceneStack` correctly synced with `scene_host` pop logic.
+
+SPEC Ground-rules:
+- Backward-compatible S4 fallback execution implemented.
+- `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`
