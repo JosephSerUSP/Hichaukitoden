@@ -1108,7 +1108,7 @@ handleDialogueAction = function()
             exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
             currentScene = "map"
         elseif node.action == "START_BATTLE" then
-            triggerBattle()
+            triggerBattle(node.encounter)
         elseif node.action == "GIVE_ITEM_ACTION" then
             local loot = conf("dungeon", "defaultLoot", 1) -- 1 = HP Tonic
             if activeSession.currentMapData.treasures and #activeSession.currentMapData.treasures > 0 then
@@ -1207,42 +1207,69 @@ rebuildBattleLivingMembers = function()
     battleCollectedActions = {}
 end
 
-triggerBattle = function()
+triggerBattle = function(forcedEncounter)
     local mapData = activeSession.currentMapData
     local possibleEnemies = mapData.encounters
     if not possibleEnemies or #possibleEnemies == 0 then return end
 
     local enemyList = {}
-    if flow.has("battle.battle_start") then
-        for _, ev in ipairs(flow.run("battle.battle_start", { session = activeSession })) do
-            if ev.type == "spawn_enemies" then enemyList = ev.enemies end
+
+    if forcedEncounter then
+        local enemyIdList = {}
+        if type(forcedEncounter) == "string" then
+            for id_str in string.gmatch(forcedEncounter, "([^,]+)") do
+                table.insert(enemyIdList, tonumber(id_str))
+            end
+        elseif type(forcedEncounter) == "table" then
+            for _, v in ipairs(forcedEncounter) do
+                table.insert(enemyIdList, tonumber(v))
+            end
+        else
+            table.insert(enemyIdList, tonumber(forcedEncounter))
         end
-        if #enemyList == 0 then return end
-    else
-        -- Legacy composition (SPEC S4 fallback rule)
-        local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
 
-        for i = 1, numEnemies do
-            local totalWeight = 0
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                totalWeight = totalWeight + enemyOpt.weight
-            end
-            local roll = math.random(totalWeight)
-            local sum = 0
-            local enemyId = possibleEnemies[1].id
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                sum = sum + enemyOpt.weight
-                if roll <= sum then
-                    enemyId = enemyOpt.id
-                    break
-                end
-            end
-
+        for _, enemyId in ipairs(enemyIdList) do
             local enemyData = loader.getActor(enemyId)
             if enemyData then
                 local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
                 enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
                 table.insert(enemyList, enemyBattler)
+            end
+        end
+    end
+
+    if #enemyList == 0 then
+        if flow.has("battle.battle_start") then
+            for _, ev in ipairs(flow.run("battle.battle_start", { session = activeSession })) do
+                if ev.type == "spawn_enemies" then enemyList = ev.enemies end
+            end
+            if #enemyList == 0 then return end
+        else
+            -- Legacy composition (SPEC S4 fallback rule)
+            local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
+
+            for i = 1, numEnemies do
+                local totalWeight = 0
+                for _, enemyOpt in ipairs(possibleEnemies) do
+                    totalWeight = totalWeight + enemyOpt.weight
+                end
+                local roll = math.random(totalWeight)
+                local sum = 0
+                local enemyId = possibleEnemies[1].id
+                for _, enemyOpt in ipairs(possibleEnemies) do
+                    sum = sum + enemyOpt.weight
+                    if roll <= sum then
+                        enemyId = enemyOpt.id
+                        break
+                    end
+                end
+
+                local enemyData = loader.getActor(enemyId)
+                if enemyData then
+                    local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
+                    enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
+                    table.insert(enemyList, enemyBattler)
+                end
             end
         end
     end
