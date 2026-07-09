@@ -136,6 +136,14 @@ function scene_host.keypressed(key, ctx)
         return scene_host.runHook("on_cancel", ctx)
     elseif key == "return" or key == "space" then
         return scene_host.runHook("on_select", ctx)
+    elseif key == "up" then
+        return scene_host.runHook("on_up", ctx)
+    elseif key == "down" then
+        return scene_host.runHook("on_down", ctx)
+    elseif key == "left" then
+        return scene_host.runHook("on_left", ctx)
+    elseif key == "right" then
+        return scene_host.runHook("on_right", ctx)
     end
     -- Fallback not handled
     return false
