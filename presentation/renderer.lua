@@ -554,6 +554,30 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     local colW = layoutVal("partyGridColWidth")
     local rowH = layoutVal("partyGridRowHeight")
     local spriteSize = 24  -- B.5: default small sprite cell size
+    --@@ ---- PARTY GRID (2x2) ------------------------------------------------
+    --@@ Each slot is `colW` wide (64px) and `rowH` tall (40px).
+    --@@ Grid layout: [0 1]   Each slot has:
+    --@@              [2 3]     - optional 24px sprite (top-left corner)
+    --@@                        - element icons + name (top area)
+    --@@                        - HP fraction text (mid area)
+    --@@                        - HP bar (bottom area)
+    --@@
+    --@@ VERTICAL ALIGNMENT (yOff):
+    --@@   When a small sprite IS present → yOff = -4 (content shifts UP 4px
+    --@@   because the sprite occupies the top portion of the slot).
+    --@@   When NO sprite → yOff = 4 (content shifts DOWN 4px, centering).
+    --@@
+    --@@ ELEMENT ICONS vs NAME Y:
+    --@@   Icons are drawn at: slot.y + yOff - 4   (4px above name)
+    --@@   Name is drawn at:   slot.y + yOff
+    --@@   To put them on the SAME line, change icon Y to `slot.y + yOff`
+    --@@   (remove the `- 4`).
+    --@@
+    --@@ HORIZONTAL CLAMPING (added fix):
+    --@@   slotColEndX = slot.x + colW - 2   <- column right-edge boundary
+    --@@   nameLimit = min(60, max(0, slotColEndX - nameX))  <- name won't overflow
+    --@@   barW      = min(52, max(4, slotColEndX - barX))   <- bar won't bleed
+    --@@
     local gridCoords = {
         { x = x, y = y },
         { x = x + colW, y = y },
@@ -563,13 +587,14 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     for i = 1, 4 do
         local c = session.party[i]
         local slot = gridCoords[i]
+        local slotColEndX = slot.x + colW - 2     -- column right-edge boundary
         if c then
             local maxHp = c:getMaxHp(session)
             local isSel = (showCursor and i == selectedIdx)
             local color = isSel and {1, 1, 0.5, 1} or (c:isDead() and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1})
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
-            
-            -- B.5: Draw small animated sprite for party member
+
+            --@@ SPRITE: 24px animated small battler drawn at slot top-left
             local spriteKey = (c.actorData and (c.actorData.smallSprite or c.actorData.spriteKey)) or c.spriteKey
             local spriteOffsetX = 0
             if spriteKey then
@@ -580,18 +605,32 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
                     local drawScale = spriteSize / ss.cellW
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(ss.img, quad, slot.x, slot.y, 0, drawScale, drawScale)
-                    spriteOffsetX = spriteSize - 2
+                    spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
                 end
             end
-            
+
             local prefix = isSel and ">" or " "
-            local yOff = spriteOffsetX > 0 and -4 or 4  -- push up ~8px when sprite is present
-            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, slot.y + yOff - 4)
-            ui.drawString(prefix .. c.name, slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset"), slot.y + yOff, color, "left", 60)
-            
+            local yOff = spriteOffsetX > 0 and -4 or 4
+
+            --@@ LINE 1 (top): element icons + name on the SAME Y line
+            local lineY = slot.y + yOff
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, lineY - 4)
+            local nameX = slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset")
+            local nameClipW = math.max(1, slotColEndX - nameX)
+            -- Silently truncate name to fit within the column (~6px per char
+            -- in 8px font). No ellipsis — just clean clipping.
+            local maxNameChars = math.floor(nameClipW / 6)
+            local displayName = (prefix .. c.name):sub(1, maxNameChars)
+            ui.drawString(displayName, nameX, lineY, color, "left", 256)
+
+            --@@ LINE 2 (mid): HP fraction text "current/max"
             local dispHp = c.displayedHp or c.hp
             ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + yOff, hpColor)
-            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpBarYOffset") + yOff, layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+
+            --@@ LINE 3 (bottom): HP bar (clamped so it stays inside the column)
+            local barX = slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX
+            local barW = math.min(layoutVal("partyGridHpBarWidth"), math.max(4, slotColEndX - barX))
+            ui.drawBar(barX, slot.y + layoutVal("partyGridHpBarYOffset") + yOff, barW, layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
