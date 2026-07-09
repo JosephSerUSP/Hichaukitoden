@@ -67,8 +67,11 @@ activeSession = nil
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
+local isGoldenUIMode = false
+local goldenUISceneKey = nil
 local triggerTestBattle
 local runValidation
+local runGoldenUI
 
 -- Scene States Cache
 local townSelectedIdx = 1
@@ -227,6 +230,71 @@ local function runGolden()
     logEvents(vBattleVic:resolveRound(actionsVic))
 
     print("GOLDEN END")
+end
+
+runGoldenUI = function(sceneKey)
+    local vSession = session.GameSession.new(loader)
+    vSession.party = {}
+    local actIds = {2, 3, 4}
+    for _, id in ipairs(actIds) do
+        local actorData = loader.getActor(id)
+        if actorData then
+            local b = session.Battler.new(actorData, 1)
+            b.hp = b:getMaxHp(vSession)
+            table.insert(vSession.party, b)
+        end
+    end
+
+    local ctx = { session = vSession, loader = loader }
+
+    -- Setup interceptor for events
+    ctx.events = {}
+    local originalInsert = table.insert
+    table.insert = function(t, pos, value)
+        local v = value
+        if value == nil then
+            v = pos
+        end
+        if t == ctx.events then
+            local t_name = v.type or ""
+            if t_name == "open_window" or t_name == "close_window" or t_name == "set_list" or t_name == "set_text" or t_name == "set_cursor" or t_name == "focus_window" or t_name == "play_anim" or t_name == "wait" or t_name == "scene_change" then
+                local window = v.windowId or ""
+                local target = ""
+                if t_name == "set_list" then target = tostring(v.listId or "") end
+                local val = ""
+                if t_name == "set_text" then val = tostring(v.text or "") end
+                if t_name == "set_cursor" then val = tostring(v.index or "") end
+                if t_name == "play_anim" then target = tostring(v.animId or "") end
+                if t_name == "wait" then val = tostring(v.duration or "") end
+                if t_name == "scene_change" then
+                    target = tostring(v.kind or "")
+                    val = tostring(v.scene or "")
+                end
+
+                print(string.format("%s|%s|%s|%s", window, t_name, target, val))
+            end
+        end
+        if value == nil then
+            originalInsert(t, pos)
+        else
+            originalInsert(t, pos, value)
+        end
+    end
+
+    print("UI GOLDEN BEGIN")
+
+    scene_host.init()
+    scene_host.push(sceneKey, ctx)
+
+    -- Scripted key sequence: down, down, return, escape
+    local sequence = {"down", "down", "return", "escape"}
+    for _, key in ipairs(sequence) do
+        scene_host.keypressed(key, ctx)
+    end
+
+    table.insert = originalInsert
+
+    print("UI GOLDEN END")
 end
 
 runValidation = function()
@@ -545,6 +613,10 @@ runValidation = function()
 elseif paramDef.type == "script" then
                             local chunk, err = load(val, "validator", "t", {})
                             check(chunk ~= nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' script syntax error: " .. tostring(err))
+                        elseif paramDef.type == "text" then
+                            check(type(val) == "string" or type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string or array")
+                        elseif paramDef.type == "number" then
+                            check(type(val) == "number", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a number")
                         elseif paramDef.type == "term" then
                             -- Ensure it's a string, resolution is implicit as getTerm falls back to the key, but we check type
                             check(type(val) == "string", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string term")
@@ -837,6 +909,13 @@ elseif paramDef.type == "script" then
     end
     validateScenes()
 
+    for _, scene in ipairs(loader.scenes or {}) do
+        for hookName, cmds in pairs(scene.hooks or {}) do
+            local desc = "scene '" .. tostring(scene.id) .. "' hook '" .. hookName .. "'"
+            validateCommands(cmds, "scene", true, false, desc)
+        end
+    end
+
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
     print("[validator] total deprecated usages: " .. deprecatedUsageCount)
 
@@ -853,13 +932,16 @@ function love.load(arg)
     
     -- Check for CLI arguments (test-battle, validate)
     if arg then
-        for _, val in ipairs(arg) do
+        for i, val in ipairs(arg) do
             if val == "test-battle" then
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
             elseif val == "golden" then
                 isGoldenMode = true
+            elseif val == "golden-ui" then
+                isGoldenUIMode = true
+                goldenUISceneKey = arg[i+1]
             end
         end
     end
@@ -871,6 +953,8 @@ function love.load(arg)
         local ok, err
         if isGoldenMode then
             ok, err = pcall(runGolden)
+        elseif isGoldenUIMode then
+            ok, err = pcall(runGoldenUI, goldenUISceneKey)
         else
             ok, err = pcall(runValidation)
         end
