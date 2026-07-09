@@ -323,6 +323,18 @@
     }
   },
   {
+    "id": "battle",
+    "name": "Battle",
+    "kind": "battle",
+    "hooks": {
+      "on_enter": [
+        { "cmd": "SET_VAR", "name": "combatState", "value": "'input'" },
+        { "cmd": "SET_VAR", "name": "selectedIndex", "value": 1 },
+        { "cmd": "SET_VAR", "name": "spellSelect", "value": 0 }
+      ]
+    }
+  },
+  {
     "id": "shop",
     "name": "Shop",
     "kind": "shop",

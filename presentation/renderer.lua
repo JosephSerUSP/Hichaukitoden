@@ -79,6 +79,45 @@ end
 
 local damagePopups = {}
 local portraitCache = {}
+local smallSpriteCache = {}  -- B.5: small sprite sheet cache
+local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
+
+-- B.5: Load a small sprite sheet.
+-- Default format: 24*N x 24 pixels, cell count = width / height.
+-- Returns { img, cellW, cellH, numFrames } or nil.
+local function getSmallSprite(spriteKey)
+    if not spriteKey or spriteKey == "" then return nil end
+    local key = tostring(spriteKey)
+    if smallSpriteCache[key] then return smallSpriteCache[key] end
+
+    -- Try multiple paths for the small sprite
+    local paths = {
+        "assets/sprites/" .. key .. ".png",
+        "assets/portraits/" .. key .. ".png",
+    }
+    for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            local img = love.graphics.newImage(p)
+            img:setFilter("nearest", "nearest")
+            local w = img:getWidth()
+            local h = img:getHeight()
+            local cellH = h
+            local cellW = math.min(w, cellH)  -- default cell is square (24x24)
+            local numFrames = math.floor(w / cellW)
+            if numFrames < 1 then numFrames = 1 end
+            local result = {
+                img = img,
+                cellW = cellW,
+                cellH = cellH,
+                numFrames = numFrames
+            }
+            smallSpriteCache[key] = result
+            return result
+        end
+    end
+    smallSpriteCache[key] = nil
+    return nil
+end
 local function getPortrait(id)
     if not id or id == "" then return nil end
     -- Battlers without a spriteKey fall back to their numeric actor id
@@ -88,7 +127,8 @@ local function getPortrait(id)
     local paths = {
         "assets/portraits/" .. id .. ".png",
         "assets/portraits/NPC_" .. id .. ".png",
-        "assets/portraits/" .. id:lower() .. ".png"
+        "assets/portraits/" .. id:lower() .. ".png",
+        "assets/portraits/" .. id:sub(1,1):upper() .. id:sub(2):lower() .. ".png"
     }
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then
@@ -136,7 +176,8 @@ local function drawElementIcon(element, x, y)
         or legacyIcons[element]
         or legacyIcons.default
         or DEFAULT_ELEMENT_ICONS.default
-    ui.drawIcon(id, x, y - 2) -- y - 2 aligns 12x12 icon perfectly with text
+    -- B.4: Displaced by 3px in both x and y directions
+    ui.drawIcon(id, x + 3, y + 1)
 end
 
 local function drawElementIcons(elems, x, y)
@@ -276,6 +317,9 @@ function renderer.update(dt)
         session.displayedMp = session.displayedMp + (session.mp - session.displayedMp) * 8 * dt
         if math.abs(session.mp - session.displayedMp) < 0.1 then session.displayedMp = session.mp end
     end
+    
+    -- B.5: Advance small sprite animation timer (shared, drives all party sprite animations)
+    smallSpriteAnimTimer = smallSpriteAnimTimer + dt
 end
 
 function renderer.addDamagePopup(text, x, y, color)
@@ -505,6 +549,7 @@ end
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     local colW = layoutVal("partyGridColWidth")
     local rowH = layoutVal("partyGridRowHeight")
+    local spriteSize = 24  -- B.5: default small sprite cell size
     local gridCoords = {
         { x = x, y = y },
         { x = x + colW, y = y },
@@ -520,13 +565,28 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             local color = isSel and {1, 1, 0.5, 1} or (c:isDead() and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1})
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
             
+            -- B.5: Draw small animated sprite for party member
+            local spriteKey = (c.actorData and (c.actorData.smallSprite or c.actorData.spriteKey)) or c.spriteKey
+            local spriteOffsetX = 0
+            if spriteKey then
+                local ss = getSmallSprite(spriteKey)
+                if ss and ss.img then
+                    local frame = math.floor(smallSpriteAnimTimer * 4) % ss.numFrames
+                    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+                    local drawScale = spriteSize / ss.cellW
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(ss.img, quad, slot.x, slot.y, 0, drawScale, drawScale)
+                    spriteOffsetX = spriteSize + 2
+                end
+            end
+            
             local prefix = isSel and ">" or " "
-            local iconW = drawElementIcons(traits.getElements(c, session), slot.x, slot.y)
-            ui.drawString(prefix .. c.name, slot.x + iconW + layoutVal("partyGridNameXOffset"), slot.y, color, "left", 60)
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, slot.y)
+            ui.drawString(prefix .. c.name, slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset"), slot.y + 4, color, "left", 60)
             
             local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset"), slot.y + layoutVal("partyGridHpYOffset"), hpColor)
-            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset"), slot.y + layoutVal("partyGridHpBarYOffset"), layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + 4, hpColor)
+            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpBarYOffset") + 4, layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
@@ -721,11 +781,17 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + layoutVal("menuChoiceSpacing"), {0.6, 0.6, 0.6, 1})
     end
 
-    -- Draw Summoner MP stats on bottom left
+    -- Draw Summoner HP/MP stats on bottom left (B.1: added HP display)
     local session = renderer.session
+    local summoner = session.summoner
     ui.drawString(summonerName(), layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset"), {1, 0.85, 0.5, 1})
-    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset"), {0.6, 0.8, 1, 1})
-    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset"), layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+    local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
+    local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
+    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {0.9, 0.3, 0.3, 1}
+    ui.drawString("HP: " .. math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 10, hpColor)
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 18, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
+    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset") + 8, {0.6, 0.8, 1, 1})
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset") + 8, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
     
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0

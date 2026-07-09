@@ -10,6 +10,7 @@ local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 require("engine.scenes.crafting")
+require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
 
 -- Setup currentScene interceptor on _G
@@ -1142,7 +1143,8 @@ function love.draw()
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
     elseif scene_host.getCurrent() == "battle" then
-        renderer.drawBattle(activeBattle, battleCombatLog, battleCombatState, battleSelectedIndex, battleSpellSelect, battleLivingMembers, battleActiveMemberIndex)
+        local bv = require("engine.scenes.battle").getState()
+        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
     elseif scene_host.getCurrent() == "shop" then
         local shopState = scene_host.getCurrentState()
         local sv = shopState and shopState.v or {}
@@ -1420,251 +1422,40 @@ end
 
 -- Rebuilds the list of party members that still get to act this round
 rebuildBattleLivingMembers = function()
-    battleLivingMembers = {}
-    table.insert(battleLivingMembers, { type = "summoner", actor = activeSession.summoner, index = 1 })
-    for i = 1, 4 do
-        local c = activeSession.party[i]
-        if c and not c:isDead() then
-            table.insert(battleLivingMembers, { type = "monster", actor = c, index = i + 1 })
-        end
-    end
-    battleActiveMemberIndex = 1
-    battleCollectedActions = {}
+    require("engine.scenes.battle").rebuildLivingMembers()
 end
 
 triggerBattle = function()
-    local mapData = activeSession.currentMapData
-    local possibleEnemies = mapData.encounters
-    if not possibleEnemies or #possibleEnemies == 0 then return end
-
-    local enemyList = {}
-    if flow.has("battle.battle_start") then
-        for _, ev in ipairs(flow.run("battle.battle_start", { session = activeSession })) do
-            if ev.type == "spawn_enemies" then enemyList = ev.enemies end
-        end
-        if #enemyList == 0 then return end
-    else
-        -- Legacy composition (SPEC S4 fallback rule)
-        local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
-
-        for i = 1, numEnemies do
-            local totalWeight = 0
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                totalWeight = totalWeight + enemyOpt.weight
-            end
-            local roll = math.random(totalWeight)
-            local sum = 0
-            local enemyId = possibleEnemies[1].id
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                sum = sum + enemyOpt.weight
-                if roll <= sum then
-                    enemyId = enemyOpt.id
-                    break
-                end
-            end
-
-            local enemyData = loader.getActor(enemyId)
-            if enemyData then
-                local enemyBattler = session.Battler.new(enemyData, enemyData.level or activeSession.dungeonFloor)
-                enemyBattler.hp = enemyBattler:getMaxHp(activeSession)
-                table.insert(enemyList, enemyBattler)
-            end
-        end
-    end
-
-    activeBattle = battleSystem.Battle.new(activeSession, enemyList)
-    battleCombatLog = { loader.getTerm("battle.encounter", "A hostile group blocks your path!") }
-    battleEventsQueue = {}
-    battleEventQueueIndex = 1
-    battleCombatState = "input"
-    battleSelectedIndex = 1
-    battleSpellSelect = false
-    battleEscaped = false
-
-    rebuildBattleLivingMembers()
-
-    scene_host.goto_scene("battle")
-    renderer.initBattleAnims(enemyList)
+    require("engine.scenes.battle").triggerBattle()
 end
 
 triggerTestBattle = function()
-    -- Initialize session if not initialized
-    if not activeSession then
-        activeSession = session.GameSession.new(loader)
-        activeSession:initializeStartingParty()
-    end
-    
-    -- Spawn mock enemies (use database entries if they exist, otherwise fall back to generic dummy data)
-    local enemyList = {}
-    local gData = loader.getActor(1) or { id = "enemy_1", name = "Test Target A", level = 1 } -- Pixie
-    local b1 = session.Battler.new(gData, 1)
-    b1.hp = b1:getMaxHp(activeSession)
-    table.insert(enemyList, b1)
-
-    local pData = loader.getActor(2) or { id = "enemy_2", name = "Test Target B", level = 1 } -- High Pixie
-    local b2 = session.Battler.new(pData, 1)
-    b2.hp = b2:getMaxHp(activeSession)
-    table.insert(enemyList, b2)
-    
-    activeBattle = battleSystem.Battle.new(activeSession, enemyList)
-    battleCombatLog = { "--- BATTLE SCREEN TEST MODE ---", "Press SPACE or P to spawn damage popups!" }
-    battleEventsQueue = {}
-    battleEventQueueIndex = 1
-    battleCombatState = "input"
-    battleSelectedIndex = 1
-    battleSpellSelect = false
-    
-    rebuildBattleLivingMembers()
-
-    scene_host.goto_scene("battle")
-    renderer.initBattleAnims(enemyList)
+    require("engine.scenes.battle").triggerTestBattle()
 end
 
--- Map a battler to screen coordinates on the battle scene. The layout lives
--- in the renderer (shared with drawBattle) so popups always match the drawn
--- positions.
+-- Map a battler to screen coordinates on the battle scene.
 local function getTargetCoords(target)
-    return renderer.getBattlerCoords(activeBattle, activeSession, target)
+    return require("engine.scenes.battle").getTargetCoords(target)
 end
 
 -- Resolves combat rounds with dynamic state backup/restore for sequential action rendering
 local function resolveBattleRound()
-    local backups = {}
-    for _, b in ipairs(activeBattle:getAllActiveBattlers()) do
-        local stateCopy = {}
-        for _, st in ipairs(b.states) do
-            table.insert(stateCopy, { id = st.id, duration = st.duration, maxDuration = st.maxDuration })
-        end
-        backups[b] = {
-            hp = b.hp,
-            states = stateCopy
-        }
-    end
-    local mpBackup = activeSession.mp
-
-    local events = activeBattle:resolveRound(battleCollectedActions)
-
-    -- Restore backup states immediately so the UI can apply changes step-by-step
-    for b, bk in pairs(backups) do
-        b.hp = bk.hp
-        b.states = bk.states
-    end
-    activeSession.mp = mpBackup
-
-    return events
+    return require("engine.scenes.battle").resolveRound()
 end
 
 -- Advances the combat logs queue by one event and formats it
 local function advanceBattleLog()
-    if battleEventQueueIndex <= #battleEventsQueue then
-        local ev = battleEventsQueue[battleEventQueueIndex]
-        battleEventQueueIndex = battleEventQueueIndex + 1
-        
-        local desc = ""
-        local popupX, popupY = getTargetCoords(ev.target)
-        
-        if ev.type == "text" then
-            desc = ev.text
-        elseif ev.type == "action" then
-            desc = loader.formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
-            if activeBattle then
-                for idx, enemy in ipairs(activeBattle.enemies) do
-                    if enemy == ev.actor then
-                        renderer.triggerActionFlash(idx, "action")
-                        break
-                    end
-                end
-            end
-        elseif ev.type == "damage" then
-            desc = loader.formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
-            local text = getPopupFormat("damageFormat"):gsub("{0}", tostring(ev.value))
-            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("damageColor"))
-            -- Apply damage sequentially
-            ev.target.hp = math.max(0, ev.target.hp - ev.value)
-            if activeBattle then
-                for idx, enemy in ipairs(activeBattle.enemies) do
-                    if enemy == ev.target then
-                        renderer.triggerActionFlash(idx, "damage")
-                        break
-                    end
-                end
-            end
-        elseif ev.type == "heal" then
-            desc = loader.formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
-            local text = getPopupFormat("healFormat"):gsub("{0}", tostring(ev.value))
-            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("healColor"))
-            -- Apply heal sequentially
-            ev.target.hp = math.min(ev.target:getMaxHp(activeSession), ev.target.hp + ev.value)
-        elseif ev.type == "death" then
-            desc = loader.formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
-            renderer.addDamagePopup(getPopupFormat("deadFormat"), popupX, popupY, getPopupFormat("deadColor"))
-            -- Apply death state sequentially
-            ev.target:addState("dead")
-            ev.target.hp = 0
-            -- Trigger death animation if enemy
-            if activeBattle then
-                for idx, enemy in ipairs(activeBattle.enemies) do
-                    if enemy == ev.target then
-                        renderer.triggerDeathAnim(idx)
-                        break
-                    end
-                end
-            end
-        elseif ev.type == "state_add" then
-            desc = loader.formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
-            local text = getPopupFormat("stateFormat"):gsub("{0}", ev.state:upper())
-            renderer.addDamagePopup(text, popupX, popupY, getPopupFormat("stateColor"))
-            -- Apply state add sequentially
-            ev.target:addState(ev.state)
-        elseif ev.type == "state_remove" then
-            desc = loader.formatTerm("battle.status_wore_off", "- {0}'s {1} wore off.", ev.target.name, ev.state:upper())
-            -- Apply state removal sequentially
-            ev.target:removeState(ev.state)
-        elseif ev.type == "mp_drain" then
-            desc = loader.formatTerm("battle.consumes_mp", "- {0} consumes {1} MP.", ev.actor.name, ev.value)
-            -- Apply MP drain sequentially
-            activeSession.mp = math.max(0, activeSession.mp - ev.value)
-        elseif ev.type == "victory" then
-            desc = loader.getTerm("battle.victory_full", "Victory! All hostile forces vanquished.")
-        elseif ev.type == "defeat" then
-            desc = loader.getTerm("battle.defeat_full", "Defeat! The party has fallen in battle...")
-        elseif ev.type == "flee_success" then
-            desc = loader.getTerm("battle.flee_success", "Escaped successfully!")
-            battleEscaped = true
-        end
-        
-        if desc ~= "" then
-            table.insert(battleCombatLog, desc)
-        else
-            advanceBattleLog() -- skip empty and try next
-        end
-    end
+    require("engine.scenes.battle").advanceLog()
 end
 
 -- Records the chosen action for the active member; resolves the round once everyone has acted
 local function commitBattleAction(memberIndex, action)
-    battleCollectedActions[memberIndex] = action
-    battleActiveMemberIndex = battleActiveMemberIndex + 1
-    battleSelectedIndex = 1
-    battleSpellSelect = false
-
-    if battleActiveMemberIndex > #battleLivingMembers then
-        battleEscaped = false
-        battleEventsQueue = resolveBattleRound()
-        battleEventQueueIndex = 1
-        battleCombatLog = {}
-        advanceBattleLog()
-        battleCombatState = "log"
-    end
+    require("engine.scenes.battle").commitAction(memberIndex, action)
 end
 
 -- Interrupts input to show a one-line battle message
 local function showBattleMessage(text)
-    battleEventsQueue = { { type = "text", text = text } }
-    battleEventQueueIndex = 1
-    battleCombatLog = {}
-    advanceBattleLog()
-    battleCombatState = "log"
+    require("engine.scenes.battle").showMessage(text)
 end
 
 -- Action handling for key presses
@@ -2095,22 +1886,22 @@ local function handleKeyPressed(key)
         end
         
     elseif scene_host.getCurrent() == "battle" then
-        if battleCombatState == "input" then
-            local memberInfo = battleLivingMembers[battleActiveMemberIndex]
+        local bv = require("engine.scenes.battle").getState()
+        local b = bv.battle
+        
+        if bv.combatState == "input" then
+            local memberInfo = (bv.livingMembers or {})[bv.activeMemberIdx or 1]
             if not memberInfo then
-                battleCombatState = "log"
+                bv.combatState = "log"
                 return
             end
             
             local isSummoner = (memberInfo.type == "summoner")
             
-            if battleSpellSelect then
+            if bv.spellSelect then
                 -- Get skills/spells list
                 local options = {}
                 if isSummoner then
-                    -- summoner.spells lists skill ids; costs come from the
-                    -- skill database (skills.json mpCost). Legacy {id, mp}
-                    -- entries are still accepted.
                     for _, spellId in ipairs(conf("summoner", "spells", {})) do
                         if type(spellId) == "table" then spellId = spellId.id end
                         local sk = loader.getSkill(spellId)
@@ -2125,17 +1916,17 @@ local function handleKeyPressed(key)
                 
                 if key == "up" or key == "w" then
                     if #options > 0 then
-                        battleSelectedIndex = (battleSelectedIndex - 2) % #options + 1
+                        bv.selectedIndex = (bv.selectedIndex - 2) % #options + 1
                     end
                 elseif key == "down" or key == "s" then
                     if #options > 0 then
-                        battleSelectedIndex = battleSelectedIndex % #options + 1
+                        bv.selectedIndex = bv.selectedIndex % #options + 1
                     end
                 elseif key == "escape" then
-                    battleSpellSelect = false
-                    battleSelectedIndex = 2 -- Back to Spell/Skill option
+                    bv.spellSelect = false
+                    bv.selectedIndex = 2
                 elseif key == "space" or key == "return" then
-                    local choice = options[battleSelectedIndex]
+                    local choice = options[bv.selectedIndex]
                     if choice then
                         local allowed = true
                         if isSummoner then
@@ -2146,12 +1937,10 @@ local function handleKeyPressed(key)
                             local spell = loader.getSkill(choice.id)
                             local target = activeSession.summoner
                             if spell and (spell.target == "enemy-any" or spell.target == "enemy") then
-                                -- Target first living enemy
-                                for _, e in ipairs(activeBattle.enemies) do
+                                for _, e in ipairs(b.enemies) do
                                     if not e:isDead() then target = e break end
                                 end
                             else
-                                -- Heal target lowest HP ally
                                 local lowestHp = 9999
                                 for _, c in ipairs(activeSession.party) do
                                     if not c:isDead() and c.hp < lowestHp then
@@ -2161,42 +1950,38 @@ local function handleKeyPressed(key)
                                 end
                             end
                             
-                            commitBattleAction(memberInfo.index, {
+                            require("engine.scenes.battle").commitAction(memberInfo.index, {
                                 type = isSummoner and "spell" or "skill",
                                 id = choice.id,
                                 target = target
                             })
                         else
-                            showBattleMessage(loader.getTerm("battle.not_enough_mp", "Not enough MP!"))
+                            require("engine.scenes.battle").showMessage(loader.getTerm("battle.not_enough_mp", "Not enough MP!"))
                         end
                     end
                 end
             else
                 -- Main commands: Attack (1), Spell/Skill (2), Item/Defend (3), Flee (4)
                 if key == "up" or key == "w" then
-                    battleSelectedIndex = (battleSelectedIndex - 2) % 4 + 1
+                    bv.selectedIndex = (bv.selectedIndex - 2) % 4 + 1
                 elseif key == "down" or key == "s" then
-                    battleSelectedIndex = battleSelectedIndex % 4 + 1
+                    bv.selectedIndex = bv.selectedIndex % 4 + 1
                 elseif key == "space" or key == "return" then
-                    if battleSelectedIndex == 1 then
-                        -- Attack
-                        local target = activeBattle.enemies[1]
-                        for _, e in ipairs(activeBattle.enemies) do
+                    if bv.selectedIndex == 1 then
+                        local target = b.enemies[1]
+                        for _, e in ipairs(b.enemies) do
                             if not e:isDead() then target = e break end
                         end
-                        
-                        commitBattleAction(memberInfo.index, {
+                        require("engine.scenes.battle").commitAction(memberInfo.index, {
                             type = "attack",
                             target = target
                         })
-                    elseif battleSelectedIndex == 2 then
-                        -- Spell/Skill selection submenu
-                        battleSpellSelect = true
-                        battleSelectedIndex = 1
-                    elseif battleSelectedIndex == 3 then
-                        -- Item (Summoner) or Defend (Monster)
+                    elseif bv.selectedIndex == 2 then
+                        bv.spellSelect = true
+                        bv.selectedIndex = 1
+                    elseif bv.selectedIndex == 3 then
                         if isSummoner then
-                            local battleItemId = conf("combat", "battleItem", 1) -- 1 = HP Tonic
+                            local battleItemId = conf("combat", "battleItem", 1)
                             local battleItem = loader.getItem(battleItemId)
                             if battleItem and activeSession:hasItem(battleItemId, 1) then
                                 local target = activeSession.summoner
@@ -2207,46 +1992,39 @@ local function handleKeyPressed(key)
                                         target = c
                                     end
                                 end
-
-                                commitBattleAction(memberInfo.index, {
+                                require("engine.scenes.battle").commitAction(memberInfo.index, {
                                     type = "item",
                                     id = battleItemId,
                                     target = target
                                 })
                             else
-                                showBattleMessage(loader.formatTerm("battle.no_item_left", "No {0}s left!", (battleItem and battleItem.name or battleItemId)))
+                                require("engine.scenes.battle").showMessage(loader.formatTerm("battle.no_item_left", "No {0}s left!", (battleItem and battleItem.name or battleItemId)))
                             end
                         else
-                            -- Monster Defend action
-                            commitBattleAction(memberInfo.index, { type = "defend" })
+                            require("engine.scenes.battle").commitAction(memberInfo.index, { type = "defend" })
                         end
-                    elseif battleSelectedIndex == 4 then
-                        -- Flee
-                        commitBattleAction(memberInfo.index, { type = "flee" })
+                    elseif bv.selectedIndex == 4 then
+                        require("engine.scenes.battle").commitAction(memberInfo.index, { type = "flee" })
                     end
                 end
             end
             
-        elseif battleCombatState == "log" then
+        elseif bv.combatState == "log" then
             if key == "space" or key == "return" then
-                if battleEventQueueIndex <= #battleEventsQueue then
-                    advanceBattleLog()
+                if bv.eventQueueIndex <= #(bv.eventsQueue or {}) then
+                    require("engine.scenes.battle").advanceLog()
                 else
-                    if activeBattle:isVictory() then
+                    if b:isVictory() then
                         if flow.has("battle.victory") then
                             flow.run("battle.victory", {
                                 session = activeSession,
-                                battle = activeBattle,
+                                battle = b,
                                 party = activeSession.party,
-                                enemies = activeBattle.enemies,
+                                enemies = b.enemies,
                             })
                         else
-                            -- Legacy block: runs only when the phase is
-                            -- removed from flows.json (SPEC S4 fallback rule)
                             local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
                             activeSession.gold = activeSession.gold + goldGain
-
-                            -- Apply passive mending / trick heal if present on survivors
                             for _, c in ipairs(activeSession.party) do
                                 if not c:isDead() then
                                     c:gainExp(conf("combat", "victoryExp", 5), activeSession)
@@ -2257,41 +2035,35 @@ local function handleKeyPressed(key)
                                 end
                             end
                         end
-
                         scene_host.goto_scene("map")
-                    elseif activeBattle:isDefeat() then
+                    elseif b:isDefeat() then
                         local doReset = true
                         if flow.has("battle.defeat") then
-                            -- The flow only signals; the reset itself stays here
                             doReset = false
-                            for _, ev in ipairs(flow.run("battle.defeat", { session = activeSession, battle = activeBattle })) do
+                            for _, ev in ipairs(flow.run("battle.defeat", { session = activeSession, battle = b })) do
                                 if ev.type == "scene_change" and ev.kind == "defeat" then doReset = true end
                             end
                         end
                         if doReset then
-
                             activeSession = session.GameSession.new(loader)
                             activeSession:initializeStartingParty()
                             renderer.init(activeSession)
                         end
                     else
-                        -- battleEscaped is set when a flee_success event is
-                        -- processed (no string comparison against log text)
-                        if battleEscaped then
+                        if bv.escaped then
                             local toMap = true
                             if flow.has("battle.escaped") then
                                 toMap = false
-                                for _, ev in ipairs(flow.run("battle.escaped", { session = activeSession, battle = activeBattle })) do
+                                for _, ev in ipairs(flow.run("battle.escaped", { session = activeSession, battle = b })) do
                                     if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
                                 end
                             end
                             if toMap then scene_host.goto_scene("map") end
                         else
-                            -- Rebuild living members list for the next round
-                            rebuildBattleLivingMembers()
-                            battleCombatState = "input"
-                            battleSelectedIndex = 1
-                            battleSpellSelect = false
+                            require("engine.scenes.battle").rebuildLivingMembers()
+                            bv.combatState = "input"
+                            bv.selectedIndex = 1
+                            bv.spellSelect = false
                         end
                     end
                 end
@@ -2307,10 +2079,11 @@ function love.keypressed(key, scancode, isrepeat)
     -- If in test battle mode, only handle popup triggers and ignore/block other inputs
     if isTestBattle then
         if key == "space" or key == "p" then
-            if activeBattle and activeSession then
-                -- Collect potential targets
+            local bv = require("engine.scenes.battle").getState()
+            local b = bv.battle
+            if b and activeSession then
                 local targets = {}
-                for _, e in ipairs(activeBattle.enemies) do
+                for _, e in ipairs(b.enemies) do
                     table.insert(targets, e)
                 end
                 for _, c in ipairs(activeSession.party) do

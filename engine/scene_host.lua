@@ -173,6 +173,11 @@ function scene_host.push(id, ctx)
             if sceneModule.registerKindWindows then
                 sceneModule.registerKindWindows(scene_host)
             end
+        elseif sceneData.kind == "battle" then
+            local sceneModule = require("engine.scenes.battle")
+            if sceneModule.registerKindWindows then
+                sceneModule.registerKindWindows(scene_host)
+            end
         end
         -- Merge any stored window definitions into the scene state
         local kindDefs = windowDefsByKind[sceneData.kind]
