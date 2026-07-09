@@ -542,6 +542,41 @@ handlers.SCENE_EVENT = function(cmd, ctx)
     table.insert(ctx.events, { type = "scene_change", kind = cmd.kind })
 end
 
+handlers.CRAFT_SELECT_CRAFTER = function(cmd, ctx)
+    local crafting = require("engine.scenes.crafting")
+    if crafting.handleSelectCrafter then
+        crafting.handleSelectCrafter(ctx)
+    end
+end
+
+handlers.CRAFT_RESET = function(cmd, ctx)
+    local crafting = require("engine.scenes.crafting")
+    if crafting.handleReset then
+        crafting.handleReset(ctx)
+    end
+end
+
+handlers.CRAFT_SELECT_INGREDIENT = function(cmd, ctx)
+    local crafting = require("engine.scenes.crafting")
+    if crafting.handleSelectIngredient then
+        crafting.handleSelectIngredient(ctx)
+    end
+end
+
+handlers.CRAFT_EVAL_POOL = function(cmd, ctx)
+    local crafting = require("engine.scenes.crafting")
+    if crafting.handleEvalPool then
+        crafting.handleEvalPool(ctx)
+    end
+end
+
+handlers.CRAFT_GIVE_RESULT = function(cmd, ctx)
+    local crafting = require("engine.scenes.crafting")
+    if crafting.handleGiveResult then
+        crafting.handleGiveResult(ctx)
+    end
+end
+
 ------------------------------------------------------------------
 -- SCRIPT (SPEC S6): sandboxed Lua escape hatch
 ------------------------------------------------------------------

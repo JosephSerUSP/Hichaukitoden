@@ -74,6 +74,50 @@
         "resultText": "Crafted: {0}!"
       }
     },
-    "hooks": {}
+    "hooks": {
+      "on_enter": [
+        { "cmd": "SET_VAR", "name": "state", "value": 1 },
+        { "cmd": "SET_VAR", "name": "selectedDisciplineIdx", "value": 1 },
+        { "cmd": "SET_VAR", "name": "selectedCrafterIdx", "value": 1 },
+        { "cmd": "SET_VAR", "name": "selectedIngredient1Idx", "value": 1 },
+        { "cmd": "SET_VAR", "name": "selectedIngredient2Idx", "value": 1 },
+        { "cmd": "SET_VAR", "name": "cursorIngredientSlot", "value": 1 },
+        { "cmd": "SET_VAR", "name": "confirmOptionIdx", "value": 1 },
+        { "cmd": "OPEN_WINDOW", "windowId": "craftingDiscipline" },
+        { "cmd": "SET_LIST", "windowId": "craftingDiscipline", "listId": "disciplines" }
+      ],
+      "on_select": [
+        { "cmd": "IF", "condition": "v.state == 1", "then": [ { "cmd": "SET_VAR", "name": "state", "value": 2 }, { "cmd": "SET_VAR", "name": "selectedCrafterIdx", "value": 1 } ], "else": [
+          { "cmd": "IF", "condition": "v.state == 2", "then": [ { "cmd": "CRAFT_SELECT_CRAFTER" }, { "cmd": "SET_VAR", "name": "state", "value": 3 }, { "cmd": "SET_VAR", "name": "cursorIngredientSlot", "value": 1 } ], "else": [
+            { "cmd": "IF", "condition": "v.state == 3", "then": [
+               { "cmd": "CRAFT_SELECT_INGREDIENT" }
+            ], "else": [
+              { "cmd": "IF", "condition": "v.state == 4", "then": [
+                 { "cmd": "IF", "condition": "v.confirmOptionIdx == 2", "then": [ { "cmd": "SET_VAR", "name": "state", "value": 3 }, { "cmd": "SET_VAR", "name": "cursorIngredientSlot", "value": 2 } ], "else": [
+                     { "cmd": "CRAFT_EVAL_POOL" },
+                     { "cmd": "SET_VAR", "name": "state", "value": 5 },
+                     { "cmd": "WAIT", "duration": 2.5 },
+                     { "cmd": "CRAFT_GIVE_RESULT" },
+                     { "cmd": "SET_VAR", "name": "state", "value": 6 }
+                 ] }
+              ], "else": [
+                { "cmd": "IF", "condition": "v.state == 6", "then": [ { "cmd": "CRAFT_RESET" } ], "else": [] }
+              ] }
+            ] }
+          ] }
+        ] }
+      ],
+      "on_cancel": [
+        { "cmd": "IF", "condition": "v.state == 1", "then": [ { "cmd": "SCENE_EVENT", "kind": "pop" } ], "else": [
+          { "cmd": "IF", "condition": "v.state == 2", "then": [ { "cmd": "SET_VAR", "name": "state", "value": 1 } ], "else": [
+            { "cmd": "IF", "condition": "v.state == 3", "then": [ { "cmd": "SET_VAR", "name": "state", "value": 2 } ], "else": [
+              { "cmd": "IF", "condition": "v.state == 4", "then": [ { "cmd": "SET_VAR", "name": "state", "value": 3 }, { "cmd": "SET_VAR", "name": "cursorIngredientSlot", "value": 2 } ], "else": [
+                 { "cmd": "IF", "condition": "v.state == 6", "then": [ { "cmd": "CRAFT_RESET" } ], "else": [] }
+              ] }
+            ] }
+          ] }
+        ] }
+      ]
+    }
   }
 ]

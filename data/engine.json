@@ -1083,6 +1083,61 @@
       "description": "Plays an animation."
     },
     {
+      "id": "CRAFT_SELECT_CRAFTER",
+      "category": "Other",
+      "label": "Crafting Select Crafter",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Handles crafter selection logic in the crafting scene."
+    },
+    {
+      "id": "CRAFT_RESET",
+      "category": "Other",
+      "label": "Crafting Reset",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Resets the crafting state and items."
+    },
+    {
+      "id": "CRAFT_SELECT_INGREDIENT",
+      "category": "Other",
+      "label": "Crafting Select Ingredient",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Handles ingredient selection logic in the crafting scene."
+    },
+    {
+      "id": "CRAFT_EVAL_POOL",
+      "category": "Other",
+      "label": "Crafting Eval Pool",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Calculates yield and configures the roulette pool."
+    },
+    {
+      "id": "CRAFT_GIVE_RESULT",
+      "category": "Other",
+      "label": "Crafting Give Result",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Takes ingredients and gives the crafted item."
+    },
+    {
       "id": "WAIT",
       "category": "UI",
       "label": "Wait",
