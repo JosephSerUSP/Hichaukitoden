@@ -184,12 +184,106 @@ local function drawElementIcon(element, x, y)
     ui.drawIcon(id, x + 3, y + 5)
 end
 
+-- Draw a single element icon at (x, y) with a uniform scale factor.
+-- The shadow offset is also scaled so it remains visually consistent.
+local function drawElementIconScaled(element, x, y, scale)
+    local loaderRef = renderer.session and renderer.session.loader
+    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
+    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
+    local id = (registryEntry and registryEntry.icon)
+        or legacyIcons[element]
+        or legacyIcons.default
+        or DEFAULT_ELEMENT_ICONS.default
+    ui.drawIconScaled(id, x, y, scale)
+end
+
+-- Draw element icons for an actor, compacted into the space of a single tile.
+--
+-- Rules:
+--   * If the actor has only one unique element → full-size icon.
+--   * If the actor has 2+ unique elements → each icon is scaled down to
+--     X = max(0.4, 1 - 0.2 * max(1, n - 3)) and arranged equidistantly
+--     within the 12×12 px tile (diagonal for 2, triangle for 3, polygon
+--     for n).
+--   * If one element type appears more often than the others (dominant),
+--     that element is drawn 0.2 larger and the rest 0.2 smaller.
+--
+-- @param  elems  array of element name strings (may contain duplicates)
+-- @param  x, y   top-left corner of the tile area
+-- @return        width consumed (always iconSize = 12)
 local function drawElementIcons(elems, x, y)
-    if not elems then return 0 end
-    for i, elem in ipairs(elems) do
-        drawElementIcon(elem, x + (i - 1) * 10, y)
+    if not elems or #elems == 0 then return 0 end
+
+    -- Count occurrences of each unique element type
+    local uniqueList = {}
+    local counts = {}
+    for _, elem in ipairs(elems) do
+        if counts[elem] then
+            counts[elem] = counts[elem] + 1
+        else
+            counts[elem] = 1
+            table.insert(uniqueList, elem)
+        end
     end
-    return #elems * 10
+
+    local n = #uniqueList
+
+    -- Single unique element → full-size icon (existing behaviour)
+    if n == 1 then
+        drawElementIcon(uniqueList[1], x, y)
+        return 12
+    end
+
+    -- Base scale: stays at 0.8 for 2–4 elements, then drops toward 0.4
+    local baseScale = math.max(0.4, 1 - 0.2 * math.max(1, n - 3))
+
+    -- Determine dominant element: one that appears strictly more than others
+    local maxCount = 0
+    for _, c in pairs(counts) do
+        if c > maxCount then maxCount = c end
+    end
+    local dominantElem = nil
+    local dominantCount = 0
+    for _, elem in ipairs(uniqueList) do
+        if counts[elem] == maxCount then
+            dominantCount = dominantCount + 1
+            dominantElem = elem
+        end
+    end
+    if dominantCount ~= 1 then dominantElem = nil end  -- tie → no dominant
+
+    -- The normal single-icon is drawn by drawElementIcon at (x+3, y+5)
+    -- with size 12×12, so its visual centre is at (x+9, y+11).  Scaled
+    -- icons must orbit this centre so they stay inside the same area.
+    local cx = x + 9
+    local cy = y + 11
+    local radius = 4
+
+    -- Starting angle: diagonal (-3π/4) for 2 icons, 12-o'clock (-π/2) for 3+
+    local startAngle = (n == 2) and (-3 * math.pi / 4) or (-math.pi / 2)
+
+    for i, elem in ipairs(uniqueList) do
+        local angle = startAngle + (i - 1) * (2 * math.pi / n)
+
+        local s = baseScale
+        if dominantElem then
+            s = elem == dominantElem and (baseScale + 0.2) or (baseScale - 0.2)
+        end
+
+        -- drawElementIconScaled(element, px, py, s) draws the 12×12 image at
+        -- (px, py) with scale s, so the centre of the drawn icon is at
+        -- (px + 6*s, py + 6*s).  Solve for px, py so that centre lands at
+        -- the orbit position (cx + cos(θ)*r,  cy + sin(θ)*r):
+        --
+        --   px = cx + cos(θ)*r - 6*s
+        --   py = cy + sin(θ)*r - 6*s
+        local px = cx + math.cos(angle) * radius - 6 * s
+        local py = cy + math.sin(angle) * radius - 6 * s
+
+        drawElementIconScaled(elem, px, py, s)
+    end
+
+    return 12   -- width consumed: one tile
 end
 
 -- The summoner's display name, taken from actor data instead of a hardcoded

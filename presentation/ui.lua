@@ -83,6 +83,7 @@ ui.fontSize   = 8
 ui.tileSize   = 8    -- SNES-style 8x8 tile size grid
 ui.lineHeight = ui.tileSize   -- exactly equal to tileHeight (8px)
 ui.screenWidthTiles = 32   -- 256 / 8
+ui.iconSize        = iconSize   -- expose for renderer use
 ui.screenHeightTiles = 30   -- 240 / 8
 
 -- Utility to convert tile coordinate to pixels
@@ -275,6 +276,23 @@ function ui.drawIcon(iconId, x, y)
     
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(iconset, quad, x, y)
+    love.graphics.pop()
+end
+
+-- Draw icons from system/iconset.png with uniform scale factor
+function ui.drawIconScaled(iconId, x, y, scale)
+    if not iconset or not iconId or iconId <= 0 then return end
+    scale = scale or 1.0
+
+    local col = (iconId - 1) % 10
+    local row = math.floor((iconId - 1) / 10)
+    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+
+    love.graphics.push("all")
+    love.graphics.setColor(0, 0, 0, 0.5)
+    love.graphics.draw(iconset, quad, x + scale, y + scale, 0, scale, scale)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(iconset, quad, x, y, 0, scale, scale)
     love.graphics.pop()
 end
 
