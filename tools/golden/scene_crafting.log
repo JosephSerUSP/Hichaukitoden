@@ -1,4 +1,419 @@
 UI GOLDEN BEGIN
 scene|1|name|Item Creation
-scene|crafting|hook|on_enter:absent
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|set_list||inventory
+ingredient_panel|set_text||Select Ingredient 1
+ingredient_panel|set_cursor||1
+ingredient_panel|set_text||Select Ingredient 2
+ingredient_panel|set_cursor||1
+ingredient_panel|set_cursor||2
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|set_text||Confirm Crafting
+confirm_panel|set_cursor||1
+confirm_panel|close_window||
+roulette_panel|open_window||
 UI GOLDEN END

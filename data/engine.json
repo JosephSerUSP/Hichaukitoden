@@ -451,7 +451,8 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
       "description": "Sets a flow-local variable, readable as v.name in formulas."
@@ -473,7 +474,8 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
       "description": "Sets or clears a session flag (the same flags conditions read)."
@@ -499,7 +501,8 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
       "description": "Runs then/else on a formula condition; flag:/hasItem: strings stay valid."
@@ -543,7 +546,8 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
       "description": "Adds floor(amount) gold to the party, clamped at 0."
@@ -1041,14 +1045,14 @@
         },
         {
           "key": "index",
-          "type": "number"
+          "type": "formula"
         }
       ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Sets cursor position."
+      "description": "Sets cursor position (formula for dynamic index)."
     },
     {
       "id": "FOCUS_WINDOW",

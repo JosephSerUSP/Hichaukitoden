@@ -1,4 +1,5 @@
 local interpreter = require("engine.interpreter")
+local formula = require("engine.formula")
 
 local scene_host = {}
 
@@ -62,6 +63,29 @@ function scene_host.runHook(hookName, ctx)
     -- We have a hook, execute it in immediate mode
     -- Ensure ctx.v is scoped to the scene instance
     ctx.v = state.v
+
+    -- Set up crafting-specific formula context if applicable
+    if sceneData and sceneData.kind == "crafting" and ctx.loader then
+        local loader = ctx.loader
+        if state.v.i1Id and state.v.i1Id > 0 then
+            local item = loader.getItem(state.v.i1Id)
+            if item then ctx.ingredient1 = formula.itemView(item) end
+        end
+        if state.v.i2Id and state.v.i2Id > 0 then
+            local item = loader.getItem(state.v.i2Id)
+            if item then ctx.ingredient2 = formula.itemView(item) end
+        end
+        if state.v.crafterIdx and ctx.party then
+            local crafter = ctx.party[state.v.crafterIdx]
+            if crafter then
+                ctx.crafter = formula.battlerView(crafter, ctx.session)
+            end
+        end
+        local config = sceneData.config or {}
+        ctx.alpha = config.alpha or 0.5
+        if state.v.S ~= nil then ctx.S = state.v.S end
+    end
+
     local events = interpreter.runImmediate(cmds, ctx)
 
     -- Consume SCENE_EVENT (scene_change) and update the stack
@@ -132,6 +156,13 @@ function scene_host.draw(ctx)
 end
 
 function scene_host.keypressed(key, ctx)
+    -- Normalize WASD to arrow key names
+    if key == "w" then key = "up"
+    elseif key == "s" then key = "down"
+    elseif key == "a" then key = "left"
+    elseif key == "d" then key = "right"
+    end
+
     if key == "escape" then
         return scene_host.runHook("on_cancel", ctx)
     elseif key == "return" or key == "space" then

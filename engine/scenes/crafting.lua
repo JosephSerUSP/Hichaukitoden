@@ -3,6 +3,7 @@ local session = require("engine.session")
 local traits = require("engine.traits")
 local formula = require("engine.formula")
 local interpreter = require("engine.interpreter")
+local scene_host = require("engine.scene_host")
 
 local crafting = {}
 
@@ -81,6 +82,21 @@ local function refreshInventoryList(disc)
             return a.item.id < b.item.id
         end
     end)
+end
+
+-- Bridge: sync local state from scene_host v table (hooks-managed state)
+local function syncFromHost()
+    local stateObj = scene_host.getCurrentState()
+    if stateObj and stateObj.v then
+        local v = stateObj.v
+        if v.state ~= nil then state = v.state end
+        if v.disciplineIdx ~= nil then selectedDisciplineIdx = v.disciplineIdx end
+        if v.crafterIdx ~= nil then selectedCrafterIdx = v.crafterIdx end
+        if v.i1Idx ~= nil then selectedIngredient1Idx = v.i1Idx end
+        if v.i2Idx ~= nil then selectedIngredient2Idx = v.i2Idx end
+        if v.slot ~= nil then cursorIngredientSlot = v.slot end
+        if v.confirmIdx ~= nil then confirmOptionIdx = v.confirmIdx end
+    end
 end
 
 function initCraftingScene()
@@ -175,6 +191,7 @@ local function getOutcomePool(tier, disc)
 end
 
 function updateCraftingScene(dt)
+    syncFromHost()
     if state == 5 then -- Roulette animation
         rouletteTimer = rouletteTimer + dt
         if rouletteTimer >= rouletteDelay then
@@ -213,6 +230,7 @@ function updateCraftingScene(dt)
 end
 
 function drawCraftingScene()
+    syncFromHost()
     local config = getSceneConfig()
     local term = config.terms or {}
     
@@ -257,7 +275,7 @@ function drawCraftingScene()
                 if love.filesystem.getInfo(imgPath) then
                     local img = love.graphics.newImage(imgPath)
                     img:setFilter("nearest", "nearest")
-                    love.graphics.draw(img, ui.toPx(13), ui.toPx(5.5), 0, 2, 2)
+                    love.graphics.draw(img, ui.toPx(13), ui.toPx(5.5), 0, 1, 1)
                 end
             end
             

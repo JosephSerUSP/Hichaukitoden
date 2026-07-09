@@ -428,5 +428,46 @@
         { "cmd": "SCENE_EVENT", "kind": "pop" }
       ]
     }
+  },
+  {
+    "id": "shop",
+    "name": "Shop",
+    "kind": "shop",
+    "hooks": {
+      "on_enter": [
+        { "cmd": "SET_VAR", "name": "idx", "value": 1 }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            { "cmd": "SET_VAR", "name": "idx", "value": "v.idx - 1" }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.count and v.idx < v.count",
+          "then": [
+            { "cmd": "SET_VAR", "name": "idx", "value": "v.idx + 1" }
+          ]
+        }
+      ],
+      "on_cancel": [
+        { "cmd": "SCENE_EVENT", "kind": "pop" }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.count > 0 and v.items[v.idx] and session.gold >= v.items[v.idx].cost",
+          "then": [
+            { "cmd": "GAIN_GOLD", "amount": "-v.items[v.idx].cost" },
+            { "cmd": "SET_VAR", "name": "pendingItem", "value": "v.items[v.idx].id" }
+          ]
+        }
+      ]
+    }
   }
 ]
