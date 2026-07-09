@@ -1,4 +1,5 @@
 local config = require("engine.config")
+local loader = require("data.loader")
 
 local ui = {}
 
@@ -131,17 +132,21 @@ end
 function ui.drawPanel(x, y, w, h, title)
     love.graphics.push("all")
     
+    local layout = (loader.engine and loader.engine.windowLayout) or {}
+    local bgW = layout.bgW or 32
+    local bgH = layout.bgH or 32
+    local edgeOffset = layout.edgeOffset or 4
+    local borderW = layout.borderW or 8
+
     if windowskin then
         local wsW, wsH = windowskin:getDimensions()
         
-        -- 1. Draw Background (from x=0, y=0, w=32, h=32) tiled seamlessly
-        local bgW, bgH = 32, 32
-        local startX = x + 4
-        local startY = y + 4
-        local endX = x + w - 4
-        local endY = y + h - 4
+        -- 1. Draw Background tiled seamlessly
+        local startX = x + edgeOffset
+        local startY = y + edgeOffset
+        local endX = x + w - edgeOffset
+        local endY = y + h - edgeOffset
         
-        -- Set scissor to keep background strictly inside the window border margins
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(startX, startY, endX - startX, endY - startY)
         
@@ -150,42 +155,39 @@ function ui.drawPanel(x, y, w, h, title)
             for bx = startX, endX - 1, bgW do
                 local drawW = math.min(bgW, endX - bx)
                 local drawH = math.min(bgH, endY - by)
-                local tileQuad = love.graphics.newQuad(0, 0, drawW, drawH, wsW, wsH)
+                local tileQuad = love.graphics.newQuad(layout.bgStartX or 0, layout.bgStartY or 0, drawW, drawH, wsW, wsH)
                 love.graphics.draw(windowskin, tileQuad, bx, by)
             end
         end
-        love.graphics.setScissor(sx, sy, sw, sh) -- restore scissor
+        love.graphics.setScissor(sx, sy, sw, sh)
         
-        -- 2. Draw 8px Edges (tiled/stretched)
-        local edgeW = w - 16
-        local edgeH = h - 16
+        -- 2. Draw Edges (tiled/stretched)
+        local edgeW = w - (borderW * 2)
+        local edgeH = h - (borderW * 2)
         
-        -- Top side edge (x=40, y=0, w=16, h=8)
-        local topQuad = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, topQuad, x + 8, y, 0, edgeW / 16, 1)
+        local topQuad = love.graphics.newQuad(layout.edgeTopX or 40, layout.edgeTopY or 0, layout.edgeTopW or 16, layout.edgeTopH or 8, wsW, wsH)
+        love.graphics.draw(windowskin, topQuad, x + borderW, y, 0, edgeW / (layout.edgeTopW or 16), 1)
         
-        -- Bottom side edge (x=40, y=24, w=16, h=8)
-        local botQuad = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
+        local botQuad = love.graphics.newQuad(layout.edgeBotX or 40, layout.edgeBotY or 24, layout.edgeBotW or 16, layout.edgeBotH or 8, wsW, wsH)
+        love.graphics.draw(windowskin, botQuad, x + borderW, y + h - borderW, 0, edgeW / (layout.edgeBotW or 16), 1)
         
-        -- Left side edge (x=32, y=8, w=8, h=16)
-        local leftQuad = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
+        local leftQuad = love.graphics.newQuad(layout.edgeLeftX or 32, layout.edgeLeftY or 8, layout.edgeLeftW or 8, layout.edgeLeftH or 16, wsW, wsH)
+        love.graphics.draw(windowskin, leftQuad, x, y + borderW, 0, 1, edgeH / (layout.edgeLeftH or 16))
         
-        -- Right side edge (x=56, y=8, w=8, h=16)
-        local rightQuad = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
+        local rightQuad = love.graphics.newQuad(layout.edgeRightX or 56, layout.edgeRightY or 8, layout.edgeRightW or 8, layout.edgeRightH or 16, wsW, wsH)
+        love.graphics.draw(windowskin, rightQuad, x + w - borderW, y + borderW, 0, 1, edgeH / (layout.edgeRightH or 16))
         
-        -- 3. Draw 8px Corners
-        local tlQuad = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
-        local trQuad = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
-        local blQuad = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
-        local brQuad = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
+        -- 3. Draw Corners
+        local cSize = layout.cornerSize or 8
+        local tlQuad = love.graphics.newQuad(layout.cornerTlX or 32, layout.cornerTlY or 0, cSize, cSize, wsW, wsH)
+        local trQuad = love.graphics.newQuad(layout.cornerTrX or 56, layout.cornerTrY or 0, cSize, cSize, wsW, wsH)
+        local blQuad = love.graphics.newQuad(layout.cornerBlX or 32, layout.cornerBlY or 24, cSize, cSize, wsW, wsH)
+        local brQuad = love.graphics.newQuad(layout.cornerBrX or 56, layout.cornerBrY or 24, cSize, cSize, wsW, wsH)
         
         love.graphics.draw(windowskin, tlQuad, x, y)
-        love.graphics.draw(windowskin, trQuad, x + w - 8, y)
-        love.graphics.draw(windowskin, blQuad, x, y + h - 8)
-        love.graphics.draw(windowskin, brQuad, x + w - 8, y + h - 8)
+        love.graphics.draw(windowskin, trQuad, x + w - borderW, y)
+        love.graphics.draw(windowskin, blQuad, x, y + h - borderW)
+        love.graphics.draw(windowskin, brQuad, x + w - borderW, y + h - borderW)
     else
         -- Fallback
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -198,10 +200,8 @@ function ui.drawPanel(x, y, w, h, title)
     
     -- Draw title header if specified
     if title then
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.rectangle("fill", x + 8, y + 6, w - 16, 14)
         love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + 12, y + 7)
+        ui.drawString(title, x + (layout.headerXOffset or 12), y + (layout.headerSpacing or 7))
     end
     
     love.graphics.pop()
@@ -226,7 +226,14 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
         parsedText = string.gsub(parsedText, "\\eventName", "")
     end
 
+
+    -- Adjust right alignment offset based on feedback
+    if alignment == "right" then
+        limit = limit - ui.tileSize
+    end
+
     if not string.find(parsedText, "\\c%[") then
+
         -- Fallback to simple printing
         love.graphics.setColor(0, 0, 0, 0.8)
         love.graphics.printf(parsedText, x + 1, y + 1, limit, alignment)

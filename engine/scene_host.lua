@@ -75,6 +75,8 @@ function scene_host.runHook(hookName, ctx)
                 elseif ev.kind == "goto" and ev.scene then
                     scene_host.goto_scene(ev.scene, ctx)
                 end
+            elseif ev.type == "wait" then
+                state.v.waitTimer = ev.duration
             end
         end
     end
@@ -110,6 +112,13 @@ function scene_host.goto_scene(id, ctx)
 end
 
 function scene_host.update(dt, ctx)
+    if #sceneStack > 0 then
+        local state = sceneStack[#sceneStack]
+        if state.v.waitTimer and state.v.waitTimer > 0 then
+            state.v.waitTimer = state.v.waitTimer - dt
+            return true
+        end
+    end
     -- The hook runs runImmediate which takes ctx.
     return scene_host.runHook("on_frame", ctx)
 end
