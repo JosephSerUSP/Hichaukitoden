@@ -134,6 +134,14 @@ function scene_host.update(dt, ctx)
 end
 
 function scene_host.draw(ctx)
+    if #sceneStack == 0 then return false end
+    local state = sceneStack[#sceneStack]
+    local sceneData = getSceneData(ctx, state.id)
+    if sceneData and sceneData.kind == "crafting" then
+        local ui = require("presentation.ui")
+        ui.drawWindows("crafting", state.windows or {}, ctx)
+        return true
+    end
     -- The drawing will be managed by scene hooks or windowLayout in D2.
     -- For D1, return false so we always fall back to legacy drawing.
     return false
