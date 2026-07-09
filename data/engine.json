@@ -233,11 +233,11 @@
     },
     {
       "token": "ctx.rawSession",
-      "description": "Real session object \u2014 only present when scripting.allowRawAccess is true."
+      "description": "Real session object — only present when scripting.allowRawAccess is true."
     },
     {
       "token": "ctx.rawLoader",
-      "description": "Real data loader \u2014 only present when scripting.allowRawAccess is true."
+      "description": "Real data loader — only present when scripting.allowRawAccess is true."
     },
     {
       "token": "api.damage(target, n)",
@@ -285,7 +285,7 @@
     },
     {
       "token": "random(m, n)",
-      "description": "The seeded math.random \u2014 deterministic under the golden harness."
+      "description": "The seeded math.random — deterministic under the golden harness."
     }
   ],
   "commands": [
@@ -1408,27 +1408,181 @@
   ],
   "windowLayout": {
     "headerSpacing": 0,
-    "discipline_panel": { "x": 0, "y": 3.5, "width": 12, "height": 20.5, "style": "list", "title": "Select Discipline" },
-    "crafter_panel": { "x": 0, "y": 3.5, "width": 12, "height": 20.5, "style": "list", "title": "Select Crafter" },
-    "ingredient_panel": { "x": 0, "y": 3.5, "width": 32, "height": 24, "style": "panel", "title": "Select Ingredients" },
-    "inventory_list": { "x": 0, "y": 8.5, "width": 20, "height": 15.5, "style": "list", "title": "Inventory" },
-    "detail_panel": { "x": 20, "y": 8.5, "width": 12, "height": 15.5, "style": "panel", "title": "Item Info" },
-    "confirm_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "confirm", "title": "Confirm Crafting" },
-    "roulette_panel": { "x": 4, "y": 7, "width": 24, "height": 10, "style": "roulette", "title": "Crafting..." },
-    "title_frame": { "x": 0, "y": 6, "width": 32, "height": 6, "style": "frame", "title": null },
-    "title_menu": { "x": 0, "y": 14, "width": 32, "height": 4, "style": "list", "title": null },
-    "menu_left_panel": { "x": 0, "y": 3.5, "width": 10, "height": 20.5, "style": "list", "title": "Menu" },
-    "menu_right_panel": { "x": 10, "y": 3.5, "width": 10, "height": 20.5, "style": "list", "title": "Party" },
-    "menu_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Info" },
-    "items_left_panel": { "x": 0, "y": 3.5, "width": 20, "height": 20.5, "style": "list", "title": "Items" },
-    "items_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Item Info" },
-    "status_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "panel", "title": "Status" },
-    "shop_header": { "x": 0, "y": 3.5, "width": 32, "height": 3, "style": "frame", "title": "Shop" },
-    "shop_list": { "x": 0, "y": 6.5, "width": 20, "height": 17.5, "style": "list", "title": "Items" },
-    "shop_info": { "x": 20, "y": 6.5, "width": 12, "height": 17.5, "style": "panel", "title": "Item Info" },
-    "battle_log_window": { "x": 0, "y": 0, "width": 32, "height": 5, "style": "log", "title": "Combat Log" },
-    "battle_command_window": { "x": 0, "y": 16, "width": 32, "height": 8, "style": "command", "title": "Commands" },
-    "battle_status_window": { "x": 0, "y": 5, "width": 32, "height": 11, "style": "status", "title": "Battle Status" },
-    "battle_victory_window": { "x": 4, "y": 5, "width": 24, "height": 14, "style": "victory", "title": "Victory" }
+    "discipline_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 12,
+      "height": 20.5,
+      "style": "list",
+      "title": "Select Discipline"
+    },
+    "crafter_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 12,
+      "height": 20.5,
+      "style": "list",
+      "title": "Select Crafter"
+    },
+    "ingredient_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 24,
+      "style": "panel",
+      "title": "Select Ingredients"
+    },
+    "inventory_list": {
+      "x": 0,
+      "y": 8.5,
+      "width": 20,
+      "height": 15.5,
+      "style": "list",
+      "title": "Inventory"
+    },
+    "detail_panel": {
+      "x": 20,
+      "y": 8.5,
+      "width": 12,
+      "height": 15.5,
+      "style": "panel",
+      "title": "Item Info"
+    },
+    "confirm_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 20.5,
+      "style": "confirm",
+      "title": "Confirm Crafting"
+    },
+    "roulette_panel": {
+      "x": 4,
+      "y": 7,
+      "width": 24,
+      "height": 10,
+      "style": "roulette",
+      "title": "Crafting..."
+    },
+    "title_frame": {
+      "x": 0,
+      "y": 6,
+      "width": 32,
+      "height": 6,
+      "style": "frame",
+      "title": null
+    },
+    "title_menu": {
+      "x": 0,
+      "y": 14,
+      "width": 32,
+      "height": 4,
+      "style": "list",
+      "title": null
+    },
+    "menu_left_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 10,
+      "height": 20.5,
+      "style": "list",
+      "title": "Menu"
+    },
+    "menu_right_panel": {
+      "x": 10,
+      "y": 3.5,
+      "width": 10,
+      "height": 20.5,
+      "style": "list",
+      "title": "Party"
+    },
+    "menu_info_panel": {
+      "x": 20,
+      "y": 3.5,
+      "width": 12,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Info"
+    },
+    "items_left_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 20,
+      "height": 20.5,
+      "style": "list",
+      "title": "Items"
+    },
+    "items_info_panel": {
+      "x": 20,
+      "y": 3.5,
+      "width": 12,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Item Info"
+    },
+    "status_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Status"
+    },
+    "shop_header": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 3,
+      "style": "frame",
+      "title": "Shop"
+    },
+    "shop_list": {
+      "x": 0,
+      "y": 6.5,
+      "width": 20,
+      "height": 17.5,
+      "style": "list",
+      "title": "Items"
+    },
+    "shop_info": {
+      "x": 20,
+      "y": 6.5,
+      "width": 12,
+      "height": 17.5,
+      "style": "panel",
+      "title": "Item Info"
+    },
+    "battle_log_window": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 5,
+      "style": "log",
+      "title": "Combat Log"
+    },
+    "battle_command_window": {
+      "x": 0,
+      "y": 16,
+      "width": 32,
+      "height": 8,
+      "style": "command",
+      "title": "Commands"
+    },
+    "battle_status_window": {
+      "x": 0,
+      "y": 5,
+      "width": 32,
+      "height": 11,
+      "style": "status",
+      "title": "Battle Status"
+    },
+    "battle_victory_window": {
+      "x": 4,
+      "y": 5,
+      "width": 24,
+      "height": 14,
+      "style": "victory",
+      "title": "Victory"
+    }
   }
 }

@@ -6,6 +6,7 @@
     "role": "Healer",
     "maxHp": 9,
     "spriteKey": "pixie",
+    "smallSprite": "pixie",
     "passives": [
       "postBattleHeal",
       "sense"
@@ -46,6 +47,7 @@
     "role": "Healer",
     "maxHp": 15,
     "spriteKey": "highPixie",
+    "smallSprite": "pixie",
     "passives": [
       "postBattleHeal"
     ],
@@ -77,6 +79,7 @@
     "role": "Attacker",
     "maxHp": 11,
     "spriteKey": "skeleton",
+    "smallSprite": "Skeleton",
     "passives": [
       "undeadFortitude"
     ],
@@ -113,6 +116,7 @@
     "role": "Support",
     "maxHp": 12,
     "spriteKey": "angel",
+    "smallSprite": "Angel",
     "passives": [
       "holyAura"
     ],
@@ -148,6 +152,7 @@
     "role": "Support",
     "maxHp": 16,
     "spriteKey": "archangel",
+    "smallSprite": "Angel",
     "passives": [
       "holyAura"
     ],
@@ -179,6 +184,7 @@
     "role": "Attacker",
     "maxHp": 12,
     "spriteKey": "demon",
+    "smallSprite": "Demon",
     "passives": [
       "chaosPact"
     ],
@@ -244,6 +250,7 @@
     "role": "Attacker",
     "maxHp": 22,
     "spriteKey": "incubus",
+    "smallSprite": "Demon",
     "passives": [
       "chaosPact",
       "etherealBody"
@@ -276,6 +283,7 @@
     "role": "Healer",
     "maxHp": 14,
     "spriteKey": "nurse",
+    "smallSprite": "Nurse",
     "passives": [
       "symbiosis"
     ],
@@ -305,6 +313,7 @@
     "role": "Attacker",
     "maxHp": 8,
     "spriteKey": "imp",
+    "smallSprite": "Imp",
     "passives": [
       "mischief"
     ],
@@ -339,6 +348,7 @@
     "role": "Tank",
     "maxHp": 15,
     "spriteKey": "golem",
+    "smallSprite": "Golem",
     "passives": [
       "rearGuard",
       "goldDigger"
@@ -365,6 +375,7 @@
     "role": "Tank",
     "maxHp": 15,
     "spriteKey": "ghoul",
+    "smallSprite": "Ghoul",
     "passives": [
       "goldDigger"
     ],
@@ -394,6 +405,7 @@
     "role": "Debuffer",
     "maxHp": 18,
     "spriteKey": "ooze",
+    "smallSprite": "Ooze",
     "passives": [
       "rearGuard"
     ],
@@ -420,6 +432,7 @@
     "role": "Attacker",
     "maxHp": 10,
     "spriteKey": "bat",
+    "smallSprite": "Imp",
     "passives": [
       "nightVision",
       "initiative"
@@ -447,6 +460,7 @@
     "role": "Caster",
     "maxHp": 12,
     "spriteKey": "wisp",
+    "smallSprite": "pixie",
     "passives": [
       "etherealBody"
     ],
@@ -479,6 +493,7 @@
     "role": "None",
     "maxHp": 5,
     "spriteKey": "egg",
+    "smallSprite": "Ooze",
     "elements": [],
     "skills": [
       "attack",
@@ -504,6 +519,7 @@
     "level": 10,
     "role": "Reviver",
     "spriteKey": "phoenix",
+    "smallSprite": "Angel",
     "maxHp": 25,
     "passives": [
       "rebirth"
@@ -533,6 +549,7 @@
     "role": "Parasite",
     "maxHp": 12,
     "spriteKey": "larva",
+    "smallSprite": "Ooze",
     "passives": [
       "parasite"
     ],
@@ -564,6 +581,7 @@
     "role": "Vampire",
     "maxHp": 55,
     "spriteKey": "vampire",
+    "smallSprite": "Demon",
     "passives": [],
     "elements": [
       "Red",
@@ -591,6 +609,7 @@
     "role": "Attacker",
     "maxHp": 19,
     "spriteKey": "flauros",
+    "smallSprite": "Demon",
     "passives": [
       "initiative",
       "chaosPact"
@@ -627,6 +646,7 @@
     "role": "Support",
     "maxHp": 7,
     "spriteKey": "candle",
+    "smallSprite": "pixie",
     "passives": [
       "nightVision"
     ],
@@ -684,6 +704,7 @@
       }
     ],
     "spriteKey": "ShadowStalker",
+    "smallSprite": "Ghoul",
     "gold": 14,
     "expGrowth": 10,
     "drops": [],

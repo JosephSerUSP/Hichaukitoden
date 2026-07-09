@@ -61,7 +61,6 @@
                     path = filename.replace(/\.[^/.]+$/, ""); // remove extension
                 }
                 updateThumb(path);
-                pathLabel.textContent = path || '(none)';
                 onChange(path);
             });
 

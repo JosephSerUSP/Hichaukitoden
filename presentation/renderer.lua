@@ -180,8 +180,8 @@ local function drawElementIcon(element, x, y)
         or legacyIcons[element]
         or legacyIcons.default
         or DEFAULT_ELEMENT_ICONS.default
-    -- B.4: Displaced by 3px in both x and y directions
-    ui.drawIcon(id, x + 3, y + 1)
+    -- B.4: Displaced by 3px in x, 6px in y to align with name text
+    ui.drawIcon(id, x + 3, y + 5)
 end
 
 local function drawElementIcons(elems, x, y)
