@@ -32,7 +32,7 @@ local interpreter = {}
 -- under `cmd` (the editor's cmdFieldName rule mirrors this table).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
-    DESCEND = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
     COMMENT = true,
 }
 
@@ -116,10 +116,10 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         elseif cmd.type == "RECOVER_PARTY" then
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif cmd.type == "DESCEND" then
-            local descendId = nodeId .. "_descend"
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.descend", "You descend deeper into the chasm..."), next = descendId }
-            nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
+        elseif cmd.type == "TELEPORT" then
+            local teleportId = nodeId .. "_teleport"
+            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.teleport", "You are whisked away..."), next = teleportId }
+            nodes[teleportId] = { type = "ACTION", action = "TELEPORT" }
         elseif cmd.type == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
         elseif cmd.type == "GIVE_ITEM" then
@@ -157,7 +157,7 @@ end
 ------------------------------------------------------------------
 
 local INTERACTIVE_IDS = {
-    TEXT = true, CHOICE = true, RECOVER_PARTY = true, DESCEND = true,
+    TEXT = true, CHOICE = true, RECOVER_PARTY = true, TELEPORT = true,
     BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
 }
 
@@ -170,6 +170,12 @@ local function evalFormula(expr, ctx)
         party = ctx.party, enemies = ctx.enemies,
         battle = ctx.battle and { round = ctx.battle.round } or nil,
         v = ctx.v,
+        -- Crafting scene context: ingredients and crafter stats
+        ingredient1 = ctx.ingredient1,
+        ingredient2 = ctx.ingredient2,
+        crafter = ctx.crafter,
+        alpha = ctx.alpha,
+        S = ctx.S,
     }, ctx.session)
     -- FOR_EACH loop variables (arbitrary names via `as`) shadow the fixed refs
     for name, battler in pairs(ctx.refs or {}) do
@@ -521,7 +527,8 @@ handlers.SET_TEXT = function(cmd, ctx)
 end
 
 handlers.SET_CURSOR = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_cursor", windowId = cmd.windowId, index = cmd.index })
+    local idx = evalFormula(cmd.index, ctx)
+    table.insert(ctx.events, { type = "set_cursor", windowId = cmd.windowId, index = idx })
 end
 
 handlers.FOCUS_WINDOW = function(cmd, ctx)

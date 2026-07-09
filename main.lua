@@ -88,12 +88,6 @@ local battleEscaped = false
 local activeWalker
 local dialogueSelectIdx = 1
 
--- Shop State
-local activeShopId = ""
-local activeShopName = ""
-local shopItems = {}
-local shopSelectedIdx = 1
-
 -- Menu State
 
 local menuSelectedIdx = 1
@@ -163,6 +157,11 @@ local function runGoldenUI()
             { key = "return" },
             { key = "escape" },
             { key = "escape" },
+            { key = "escape" },
+        },
+        shop = {
+            { key = "down" },
+            { key = "up" },
             { key = "escape" },
         }
     }
@@ -621,9 +620,13 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } } },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 }
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
+                        ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
+                        alpha = 0.5,
+                        S = 10
                     }
                     local formulaEngine = require("engine.formula")
                     if type(val) == "string" and (val:match("^flag:") or val:match("^hasItem:")) then
@@ -891,72 +894,78 @@ elseif paramDef.type == "script" then
         local mockCtx = {
             i1 = formulaEngine.itemView(mockItem1),
             i2 = formulaEngine.itemView(mockItem2),
+            ingredient1 = formulaEngine.itemView(mockItem1),
+            ingredient2 = formulaEngine.itemView(mockItem2),
             crafter = mockCrafter,
             alpha = 0.5,
-            S = 10
+            S = 10,
+            v = { state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1, i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0, rouletteStep = 0 }
         }
         
         for _, scene in ipairs(loader.scenes or {}) do
             local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
-            check(type(scene.id) == "number", sceneDesc .. " ID must be a number")
-            check(scene.kind == "crafting", sceneDesc .. " unknown scene kind '" .. tostring(scene.kind) .. "'")
             
-            local config = scene.config or {}
-            check(config.disciplines ~= nil, sceneDesc .. " missing disciplines config")
-            if config.disciplines then
-                for _, disc in ipairs(config.disciplines) do
-                    check(disc.kind ~= nil, sceneDesc .. " discipline missing kind")
-                    check(disc.stat ~= nil, sceneDesc .. " discipline missing stat")
-                    local validStats = { atk = true, def = true, mat = true, mdf = true, maxHp = true, asp = true, mpd = true, level = true }
-                    check(validStats[disc.stat], sceneDesc .. " discipline uses invalid stat parameter '" .. tostring(disc.stat) .. "'")
-                end
-            end
-            
-            check(config.yieldFormula ~= nil, sceneDesc .. " missing yieldFormula")
-            if config.yieldFormula then
-                local ok, _, ferr = pcall(formulaEngine.eval, config.yieldFormula, mockCtx)
-                check(ok and ferr == nil, sceneDesc .. " yieldFormula failed to compile: " .. tostring(ferr or ""))
-            end
-            
-            check(config.penaltyFormula ~= nil, sceneDesc .. " missing penaltyFormula")
-            if config.penaltyFormula then
-                local ok, _, ferr = pcall(formulaEngine.eval, config.penaltyFormula, mockCtx)
-                check(ok and ferr == nil, sceneDesc .. " penaltyFormula failed to compile: " .. tostring(ferr or ""))
-            end
-            
-            check(config.anomalyFormula ~= nil, sceneDesc .. " missing anomalyFormula")
-            if config.anomalyFormula then
-                local ok, _, ferr = pcall(formulaEngine.eval, config.anomalyFormula, mockCtx)
-                check(ok and ferr == nil, sceneDesc .. " anomalyFormula failed to compile: " .. tostring(ferr or ""))
-            end
-            
-            check(config.brackets ~= nil, sceneDesc .. " missing brackets config")
-            if config.brackets then
-                for _, br in ipairs(config.brackets) do
-                    check(br.max ~= nil, sceneDesc .. " bracket missing max value")
-                    check(br.tier ~= nil, sceneDesc .. " bracket missing tier value")
-                    check(type(br.max) == "number", sceneDesc .. " bracket max must be a number")
-                    check(type(br.tier) == "number", sceneDesc .. " bracket tier must be a number")
-                end
-            end
-
-            if config.disciplines and config.brackets then
-                for _, disc in ipairs(config.disciplines) do
-                    for _, br in ipairs(config.brackets) do
-                        local count = 0
-                        for _, item in ipairs(loader.items or {}) do
-                            if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == br.tier then
-                                count = count + 1
-                            end
-                        end
-                        check(count > 0, sceneDesc .. " no items match discipline '" .. tostring(disc.kind) .. "' and tier " .. tostring(br.tier))
+            -- Crafting-specific validation
+            if scene.kind == "crafting" then
+                check(type(scene.id) == "number", sceneDesc .. " ID must be a number for crafting scenes")
+                
+                local config = scene.config or {}
+                check(config.disciplines ~= nil, sceneDesc .. " missing disciplines config")
+                if config.disciplines then
+                    for _, disc in ipairs(config.disciplines) do
+                        check(disc.kind ~= nil, sceneDesc .. " discipline missing kind")
+                        check(disc.stat ~= nil, sceneDesc .. " discipline missing stat")
+                        local validStats = { atk = true, def = true, mat = true, mdf = true, maxHp = true, asp = true, mpd = true, level = true }
+                        check(validStats[disc.stat], sceneDesc .. " discipline uses invalid stat parameter '" .. tostring(disc.stat) .. "'")
                     end
                 end
-            end
-            
-            check(config.timing ~= nil, sceneDesc .. " missing timing config")
+                
+                check(config.yieldFormula ~= nil, sceneDesc .. " missing yieldFormula")
+                if config.yieldFormula then
+                    local ok, _, ferr = pcall(formulaEngine.eval, config.yieldFormula, mockCtx)
+                    check(ok and ferr == nil, sceneDesc .. " yieldFormula failed to compile: " .. tostring(ferr or ""))
+                end
+                
+                check(config.penaltyFormula ~= nil, sceneDesc .. " missing penaltyFormula")
+                if config.penaltyFormula then
+                    local ok, _, ferr = pcall(formulaEngine.eval, config.penaltyFormula, mockCtx)
+                    check(ok and ferr == nil, sceneDesc .. " penaltyFormula failed to compile: " .. tostring(ferr or ""))
+                end
+                
+                check(config.anomalyFormula ~= nil, sceneDesc .. " missing anomalyFormula")
+                if config.anomalyFormula then
+                    local ok, _, ferr = pcall(formulaEngine.eval, config.anomalyFormula, mockCtx)
+                    check(ok and ferr == nil, sceneDesc .. " anomalyFormula failed to compile: " .. tostring(ferr or ""))
+                end
+                
+                check(config.brackets ~= nil, sceneDesc .. " missing brackets config")
+                if config.brackets then
+                    for _, br in ipairs(config.brackets) do
+                        check(br.max ~= nil, sceneDesc .. " bracket missing max value")
+                        check(br.tier ~= nil, sceneDesc .. " bracket missing tier value")
+                        check(type(br.max) == "number", sceneDesc .. " bracket max must be a number")
+                        check(type(br.tier) == "number", sceneDesc .. " bracket tier must be a number")
+                    end
+                end
 
-            -- Hook validation
+                if config.disciplines and config.brackets then
+                    for _, disc in ipairs(config.disciplines) do
+                        for _, br in ipairs(config.brackets) do
+                            local count = 0
+                            for _, item in ipairs(loader.items or {}) do
+                                if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == br.tier then
+                                    count = count + 1
+                                end
+                            end
+                            check(count > 0, sceneDesc .. " no items match discipline '" .. tostring(disc.kind) .. "' and tier " .. tostring(br.tier))
+                        end
+                    end
+                end
+                
+                check(config.timing ~= nil, sceneDesc .. " missing timing config")
+            end
+
+            -- Hook validation (all scene kinds)
             if scene.hooks then
                 for hookName, cmds in pairs(scene.hooks) do
                     validateCommands(cmds, "scene", true, false, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
@@ -1079,6 +1088,15 @@ function love.update(dt)
     if scene_host.getCurrent() == "crafting" then
         if updateCraftingScene then updateCraftingScene(dt) end
     end
+
+    -- Shop: grant the pending item after the hook deducted gold
+    if scene_host.getCurrent() == "shop" then
+        local shopState = scene_host.getCurrentState()
+        if shopState and shopState.v.pendingItem then
+            activeSession:addItem(shopState.v.pendingItem, 1)
+            shopState.v.pendingItem = nil
+        end
+    end
 end
 
 function love.draw()
@@ -1101,7 +1119,9 @@ function love.draw()
     elseif scene_host.getCurrent() == "battle" then
         renderer.drawBattle(activeBattle, battleCombatLog, battleCombatState, battleSelectedIndex, battleSpellSelect, battleLivingMembers, battleActiveMemberIndex)
     elseif scene_host.getCurrent() == "shop" then
-        renderer.drawShop(activeShopName, shopSelectedIdx, shopItems)
+        local shopState = scene_host.getCurrentState()
+        local sv = shopState and shopState.v or {}
+        renderer.drawShop(sv.shopName, sv.idx or 1, sv.items or {})
     elseif scene_host.getCurrent() == "menu" then
         if scene_host.getPrevious() == "town" then
             renderer.drawTown(townSelectedIdx)
@@ -1178,16 +1198,14 @@ local function compileCommands(nodes, commands, prefix, tailNodeId)
 end
 
 local function openShop(shopId)
-    activeShopId = shopId
-    shopItems = {}
-    shopSelectedIdx = 1
-
     -- Shops are stored as a string-keyed table (JSON object keys are always
     -- strings) even though shopId itself arrives as a number from dialogue
     -- graphs, so the lookup needs an explicit tostring() -- same pattern used
     -- for commonEvents lookups by scriptId elsewhere in this file.
     local shopData = loader.shops[tostring(shopId)]
-    activeShopName = (shopData and shopData.name) or tostring(shopId)
+    local shopName = (shopData and shopData.name) or tostring(shopId)
+
+    local items = {}
     if shopData and shopData.items then
         for _, shopItem in ipairs(shopData.items) do
             local allowed = true
@@ -1211,12 +1229,21 @@ local function openShop(shopId)
                     -- Honor the per-shop price override set in the editor;
                     -- everything else reads through to the item database entry.
                     local entry = setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData })
-                    table.insert(shopItems, entry)
+                    table.insert(items, entry)
                 end
             end
         end
     end
-    scene_host.goto_scene("shop")
+
+    -- Push the shop scene and seed its v-state with shop data
+    scene_host.push("shop")
+    local state = scene_host.getCurrentState()
+    if state then
+        state.v.shopName = shopName
+        state.v.items = items
+        state.v.count = #items
+        state.v.idx = 1
+    end
 end
 
 handleDialogueAction = function()
@@ -1272,7 +1299,7 @@ handleDialogueAction = function()
             end
             activeWalker:goToNode(node.completeNode or node.next)
             handleDialogueAction()
-        elseif node.action == "DESCEND_FLOOR" then
+        elseif node.action == "TELEPORT" then
             local maxFloor = conf("dungeon", "maxFloor", 5)
             activeSession.dungeonFloor = activeSession.dungeonFloor + 1
             if activeSession.dungeonFloor > maxFloor then
@@ -1620,7 +1647,7 @@ local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
 
-    local ctx = { session = activeSession, loader = loader }
+    local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then
         return
     end
@@ -2243,26 +2270,6 @@ local function handleKeyPressed(key)
                             battleSpellSelect = false
                         end
                     end
-                end
-            end
-        end
-    elseif scene_host.getCurrent() == "shop" then
-        if key == "up" or key == "w" then
-            if #shopItems > 0 then
-                shopSelectedIdx = (shopSelectedIdx - 2) % #shopItems + 1
-            end
-        elseif key == "down" or key == "s" then
-            if #shopItems > 0 then
-                shopSelectedIdx = shopSelectedIdx % #shopItems + 1
-            end
-        elseif key == "escape" then
-            renderer.startClosing("shop", "map")
-        elseif key == "space" or key == "return" then
-            local selectedItem = shopItems[shopSelectedIdx]
-            if selectedItem then
-                if activeSession.gold >= selectedItem.cost then
-                    activeSession.gold = activeSession.gold - selectedItem.cost
-                    activeSession:addItem(selectedItem.id, 1)
                 end
             end
         end

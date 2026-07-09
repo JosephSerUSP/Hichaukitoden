@@ -19,7 +19,7 @@
               "label": "Yes",
               "script": [
                 {
-                  "type": "DESCEND"
+                  "type": "TELEPORT"
                 }
               ]
             },

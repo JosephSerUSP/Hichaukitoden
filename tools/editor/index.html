@@ -1124,7 +1124,7 @@
 
     <!-- --- ASSET FILE PICKER MODAL --- -->
     <div id="asset-picker-modal" class="modal-overlay" style="z-index: 1300;">
-        <div class="window outset-bevel" style="width: 450px;">
+        <div class="window outset-bevel" style="width: 520px;">
             <div class="title-bar">
                 <div class="title-bar-text">Select Asset File</div>
                 <div class="title-bar-controls">
@@ -1137,16 +1137,24 @@
                     <select id="asset-picker-dir" class="win98-select" style="flex: 1;" onchange="loadAssetPickerFiles()"></select>
                 </div>
                 
-                <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
+                <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
                 
-                <div class="field-row-stacked">
-                    <label>Selected File Path:</label>
-                    <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" />
-                </div>
-                
-                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
-                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
-                    <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
+                <!-- Full-resolution preview pane -->
+                <div style="display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--win-shadow); background: #f0f0f0; padding: 8px;">
+                    <div id="asset-preview-wrap" style="width: 96px; height: 96px; border: 1px inset var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                        <img id="asset-preview-img" src="" style="max-width: 96px; max-height: 96px; image-rendering: pixelated; display: none;" />
+                        <span id="asset-preview-none" style="font-size: 10px; color: #888; font-family: monospace;">No selection</span>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <div class="field-row-stacked" style="margin: 0;">
+                            <label style="font-size: 10px;">Selected File:</label>
+                            <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" readonly />
+                        </div>
+                        <div style="display: flex; gap: 6px; margin-top: 4px; justify-content: flex-end;">
+                            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
+                            <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
