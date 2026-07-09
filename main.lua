@@ -4,12 +4,38 @@ local exploration = require("engine.exploration")
 local battleSystem = require("engine.battle")
 local director = require("engine.director")
 local renderer = require("presentation.renderer")
+local scene_host = require("engine.scene_host")
 local traits = require("engine.traits")
 local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 require("engine.scenes.crafting")
 local viewport_3d = require("presentation.viewport_3d")
+
+-- Setup currentScene interceptor on _G
+setmetatable(_G, {
+    __index = function(t, k)
+        if k == "currentScene" then
+            return scene_host.getCurrent()
+        end
+        return rawget(t, k)
+    end,
+    __newindex = function(t, k, v)
+        if k == "currentScene" then
+            local curr = scene_host.getCurrent()
+            if curr ~= v then
+                -- if popping (e.g. from crafting back to menu)
+                if scene_host.getPrevious() == v then
+                    scene_host.pop()
+                else
+                    scene_host.goto_scene(v)
+                end
+            end
+        else
+            rawset(t, k, v)
+        end
+    end
+})
 
 -- Game resolution dimensions
 local gameWidth, gameHeight = 256, 240
@@ -37,7 +63,7 @@ local function getPopupFormat(key)
 end
 
 activeSession = nil
-currentScene = "title"
+
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
@@ -68,7 +94,7 @@ local shopItems = {}
 local shopSelectedIdx = 1
 
 -- Menu State
-local previousSceneBeforeMenu = "town"
+
 local menuSelectedIdx = 1
 local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
 menuSubScene = "main"
@@ -820,6 +846,7 @@ elseif paramDef.type == "script" then
 end
 
 function love.load(arg)
+    scene_host.init("title")
     print("--------------------------------------------------")
     print("HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)")
     print("--------------------------------------------------")
@@ -908,7 +935,12 @@ function love.update(dt)
         end
     end
     
-    if currentScene == "crafting" then
+    local ctx = { session = activeSession, loader = loader }
+    if scene_host.update(dt, ctx) then
+        return
+    end
+
+    if scene_host.getCurrent() == "crafting" then
         if updateCraftingScene then updateCraftingScene(dt) end
     end
 end
@@ -918,20 +950,24 @@ function love.draw()
     love.graphics.clear(0, 0, 0, 1)
     love.graphics.setColor(1, 1, 1, 1) -- reset color at start of frame
     
-    if currentScene == "title" then
+    local ctx = { session = activeSession, loader = loader }
+    if scene_host.draw(ctx) then
+        -- scene host handles drawing (currently does nothing for D1, but returns true if it has hooks)
+    else
+        if scene_host.getCurrent() == "title" then
         renderer.drawTitle()
-    elseif currentScene == "town" then
+    elseif scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
-    elseif currentScene == "map" then
+    elseif scene_host.getCurrent() == "map" then
         renderer.drawMap()
-    elseif currentScene == "dialogue" then
+    elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
-    elseif currentScene == "battle" then
+    elseif scene_host.getCurrent() == "battle" then
         renderer.drawBattle(activeBattle, battleCombatLog, battleCombatState, battleSelectedIndex, battleSpellSelect, battleLivingMembers, battleActiveMemberIndex)
-    elseif currentScene == "shop" then
+    elseif scene_host.getCurrent() == "shop" then
         renderer.drawShop(activeShopName, shopSelectedIdx, shopItems)
-    elseif currentScene == "menu" then
-        if previousSceneBeforeMenu == "town" then
+    elseif scene_host.getCurrent() == "menu" then
+        if scene_host.getPrevious() == "town" then
             renderer.drawTown(townSelectedIdx)
         else
             renderer.drawMap()
@@ -946,8 +982,9 @@ function love.draw()
         else
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
-    elseif currentScene == "crafting" then
+    elseif scene_host.getCurrent() == "crafting" then
         if drawCraftingScene then drawCraftingScene() end
+    end
     end
     
     if server.isActive() then
@@ -1043,7 +1080,7 @@ local function openShop(shopId)
             end
         end
     end
-    currentScene = "shop"
+    scene_host.goto_scene("shop")
 end
 
 handleDialogueAction = function()
@@ -1106,7 +1143,7 @@ handleDialogueAction = function()
                 activeSession.dungeonFloor = maxFloor
             end
             exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
-            currentScene = "map"
+            scene_host.goto_scene("map")
         elseif node.action == "START_BATTLE" then
             triggerBattle()
         elseif node.action == "GIVE_ITEM_ACTION" then
@@ -1153,7 +1190,7 @@ local function runEventCommands(eventTitle, commands)
 
     activeWalker = director.GraphWalker.new(activeSession, graph)
     activeWalker.eventName = eventTitle
-    currentScene = "dialogue"
+    scene_host.goto_scene("dialogue")
     handleDialogueAction()
 end
 
@@ -1188,7 +1225,7 @@ local function triggerDialogue(graphName)
     if walker then
         activeWalker = walker
         dialogueSelectIdx = 1
-        currentScene = "dialogue"
+        scene_host.goto_scene("dialogue")
         handleDialogueAction()
     end
 end
@@ -1258,7 +1295,7 @@ triggerBattle = function()
 
     rebuildBattleLivingMembers()
 
-    currentScene = "battle"
+    scene_host.goto_scene("battle")
     renderer.initBattleAnims(enemyList)
 end
 
@@ -1291,7 +1328,7 @@ triggerTestBattle = function()
     
     rebuildBattleLivingMembers()
 
-    currentScene = "battle"
+    scene_host.goto_scene("battle")
     renderer.initBattleAnims(enemyList)
 end
 
@@ -1446,22 +1483,28 @@ end
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if renderer.closing then return end
-    if currentScene == "crafting" then
+
+    local ctx = { session = activeSession, loader = loader }
+    if scene_host.keypressed(key, ctx) then
+        return
+    end
+
+    if scene_host.getCurrent() == "crafting" then
         if keypressedCraftingScene then keypressedCraftingScene(key) end
         return
     end
     if key == "escape" then
-        if currentScene == "title" then
+        if scene_host.getCurrent() == "title" then
             love.event.quit()
-        elseif currentScene == "town" or currentScene == "map" then
+        elseif scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
             -- Open Main Menu instead of exiting!
-            previousSceneBeforeMenu = currentScene
+
             menuSelectedIdx = 1
             menuSubScene = "main"
             renderer.resetMenuTimer()
-            currentScene = "menu"
+            scene_host.push("menu")
             return
-        elseif currentScene == "menu" then
+        elseif scene_host.getCurrent() == "menu" then
             -- Only the top-level menu is handled here; submenus each have
             -- their own escape branch below that steps back exactly one
             -- level (intercepting them here used to close the whole menu).
@@ -1470,17 +1513,20 @@ local function handleKeyPressed(key)
                     menuActiveCol = 1
                     menuSelectedSubIdx = 1
                 else
-                    renderer.startClosing("menu", previousSceneBeforeMenu)
+                    local currentId = scene_host.getPrevious()
+                    if currentId then
+                        renderer.startClosing("menu", currentId)
+                    end
                 end
                 return
             end
-        elseif currentScene == "dialogue" then
-            currentScene = "map"
+        elseif scene_host.getCurrent() == "dialogue" then
+            scene_host.goto_scene("map")
             return
         end
     end
     
-    if currentScene == "title" then
+    if scene_host.getCurrent() == "title" then
         if key == "return" or key == "space" then
             -- Initialize session if not exists
             if not activeSession then
@@ -1488,10 +1534,10 @@ local function handleKeyPressed(key)
                 activeSession:initializeStartingParty()
             end
             exploration.loadMap(activeSession, 1) -- Load Town Map (mapIdx = 1)
-            currentScene = "map"
+            scene_host.goto_scene("map")
         end
         
-    elseif currentScene == "town" then
+    elseif scene_host.getCurrent() == "town" then
         -- Town menu entries come from system.town.options (label + action),
         -- editable from the editor's System tab.
         local townOptions = conf("town", "options", {})
@@ -1506,7 +1552,7 @@ local function handleKeyPressed(key)
                 if opt.action == "enter_dungeon" then
                     activeSession.dungeonFloor = 1
                     exploration.loadMap(activeSession, opt.mapId or 2)
-                    currentScene = "map"
+                    scene_host.goto_scene("map")
                 elseif opt.action == "dialogue" then
                     triggerDialogue(opt.graph)
                 elseif opt.action == "rest" then
@@ -1516,7 +1562,7 @@ local function handleKeyPressed(key)
             end
         end
         
-    elseif currentScene == "map" then
+    elseif scene_host.getCurrent() == "map" then
         local moved = false
         if key == "up" or key == "w" then
             moved = exploration.moveForward(activeSession)
@@ -1599,7 +1645,7 @@ local function handleKeyPressed(key)
             end
         end
         
-    elseif currentScene == "dialogue" then
+    elseif scene_host.getCurrent() == "dialogue" then
         local node = activeWalker:getCurrentNode()
         if node then
             if node.type == "TEXT" then
@@ -1608,7 +1654,7 @@ local function handleKeyPressed(key)
                     dialogueSelectIdx = 1
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
-                        currentScene = "map"
+                        scene_host.goto_scene("map")
                     end
                 end
             elseif node.type == "CHOICE" then
@@ -1621,13 +1667,13 @@ local function handleKeyPressed(key)
                     dialogueSelectIdx = 1
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
-                        currentScene = "map"
+                        scene_host.goto_scene("map")
                     end
                 end
             end
         end
         
-    elseif currentScene == "menu" then
+    elseif scene_host.getCurrent() == "menu" then
         if menuSubScene == "main" then
             local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
             local numOpts = #mainOpts
@@ -1644,7 +1690,7 @@ local function handleKeyPressed(key)
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
-                    currentScene = "crafting"
+                    scene_host.push("crafting")
                     if initCraftingScene then initCraftingScene() end
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
@@ -1861,7 +1907,7 @@ local function handleKeyPressed(key)
             end
         end
         
-    elseif currentScene == "battle" then
+    elseif scene_host.getCurrent() == "battle" then
         if battleCombatState == "input" then
             local memberInfo = battleLivingMembers[battleActiveMemberIndex]
             if not memberInfo then
@@ -2025,7 +2071,7 @@ local function handleKeyPressed(key)
                             end
                         end
 
-                        currentScene = "map"
+                        scene_host.goto_scene("map")
                     elseif activeBattle:isDefeat() then
                         local doReset = true
                         if flow.has("battle.defeat") then
@@ -2036,7 +2082,7 @@ local function handleKeyPressed(key)
                             end
                         end
                         if doReset then
-                            currentScene = "title"
+
                             activeSession = session.GameSession.new(loader)
                             activeSession:initializeStartingParty()
                             renderer.init(activeSession)
@@ -2052,7 +2098,7 @@ local function handleKeyPressed(key)
                                     if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
                                 end
                             end
-                            if toMap then currentScene = "map" end
+                            if toMap then scene_host.goto_scene("map") end
                         else
                             -- Rebuild living members list for the next round
                             rebuildBattleLivingMembers()
@@ -2064,7 +2110,7 @@ local function handleKeyPressed(key)
                 end
             end
         end
-    elseif currentScene == "shop" then
+    elseif scene_host.getCurrent() == "shop" then
         if key == "up" or key == "w" then
             if #shopItems > 0 then
                 shopSelectedIdx = (shopSelectedIdx - 2) % #shopItems + 1
@@ -2135,7 +2181,7 @@ function love.keypressed(key, scancode, isrepeat)
         return
     end
     
-    local oldScene = currentScene
+    local oldScene = scene_host.getCurrent()
     local oldSub = menuSubScene
     
     handleKeyPressed(key)
@@ -2151,7 +2197,7 @@ function love.keypressed(key, scancode, isrepeat)
         return true
     end
 
-    if currentScene ~= oldScene or (currentScene == "menu" and isMajorSubSceneTransition(oldSub, menuSubScene)) then
+    if scene_host.getCurrent() ~= oldScene or (scene_host.getCurrent() == "menu" and isMajorSubSceneTransition(oldSub, menuSubScene)) then
         if not renderer.closing then
             renderer.resetMenuTimer()
         end
