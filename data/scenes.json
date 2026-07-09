@@ -74,6 +74,94 @@
         "resultText": "Crafted: {0}!"
       }
     },
-    "hooks": {}
+    "hooks": {
+      "on_enter": [
+        { "cmd": "SET_VAR", "name": "state", "value": 1 },
+        { "cmd": "OPEN_WINDOW", "window": "discipline_list" },
+        { "cmd": "SET_LIST", "window": "discipline_list", "source": "config.disciplines", "bind": "label", "format": "{label}" },
+        { "cmd": "FOCUS_WINDOW", "window": "discipline_list" },
+        { "cmd": "SET_TEXT", "window": "header", "term": "terms.selectDiscipline" }
+      ],
+      "on_select": [
+        { "cmd": "IF", "condition": "v.state == 1", "then": [
+          { "cmd": "SET_VAR", "name": "selectedDiscipline", "value": "cursor.discipline_list" },
+          { "cmd": "SET_VAR", "name": "state", "value": 2 },
+          { "cmd": "OPEN_WINDOW", "window": "crafter_list" },
+          { "cmd": "SET_LIST", "window": "crafter_list", "source": "party", "bind": "name", "format": "{name}" },
+          { "cmd": "FOCUS_WINDOW", "window": "crafter_list" },
+          { "cmd": "SET_TEXT", "window": "header", "term": "terms.selectCrafter" }
+        ]},
+        { "cmd": "IF", "condition": "v.state == 2", "then": [
+          { "cmd": "SET_VAR", "name": "crafter", "value": "cursor.crafter_list" },
+          { "cmd": "SET_VAR", "name": "state", "value": 3 },
+          { "cmd": "OPEN_WINDOW", "window": "ingredient_slots" },
+          { "cmd": "SET_LIST", "window": "inventory_list", "source": "inventory", "bind": "item", "format": "{item.name} x{item.qty}", "filter": "meta.craftKind == v.selectedDiscipline.kind" },
+          { "cmd": "FOCUS_WINDOW", "window": "inventory_list" },
+          { "cmd": "SET_TEXT", "window": "header", "term": "terms.selectIngredients" }
+        ]},
+        { "cmd": "IF", "condition": "v.state == 3", "then": [
+          { "cmd": "IF", "condition": "v.cursorSlot == 1", "then": [
+            { "cmd": "SET_VAR", "name": "i1", "value": "cursor.inventory_list.item" }
+          ], "else": [
+            { "cmd": "SET_VAR", "name": "i2", "value": "cursor.inventory_list.item" }
+          ]},
+          { "cmd": "IF", "condition": "v.i1 and v.i2", "then": [
+            { "cmd": "SET_VAR", "name": "state", "value": 4 },
+            { "cmd": "CALC_CRAFT_YIELD", "yieldVar": "yield", "anomalyVar": "isAnomaly" },
+            { "cmd": "SET_LIST", "window": "confirm_options", "source": "[{label:'Craft'},{label:'Back'}]" },
+            { "cmd": "OPEN_WINDOW", "window": "confirm_panel" },
+            { "cmd": "FOCUS_WINDOW", "window": "confirm_options" },
+            { "cmd": "SET_TEXT", "window": "yield_text", "text": "terms.yieldText", "args": ["v.yield"] }
+          ] }
+        ]},
+        { "cmd": "IF", "condition": "v.state == 4", "then": [
+          { "cmd": "IF", "condition": "cursor.confirm_options == 1", "then": [
+            { "cmd": "SET_VAR", "name": "state", "value": 5 },
+            { "cmd": "SET_VAR", "name": "pool", "value": "CALC_OUTCOME_POOL(v.yield, v.selectedDiscipline.kind)" },
+            { "cmd": "SET_VAR", "name": "targetIdx", "value": "random(1, len(v.pool))" },
+            { "cmd": "OPEN_WINDOW", "window": "roulette_window" },
+            { "cmd": "PLAY_ANIM", "anim": "roulette", "target": "v.pool[v.targetIdx]" },
+            { "cmd": "WAIT", "duration": "config.timing.initialDelay" }
+          ], "else": [
+            { "cmd": "SCENE_EVENT", "kind": "pop" }
+          ]}
+        ]},
+        { "cmd": "IF", "condition": "v.state == 6", "then": [
+          { "cmd": "SCENE_EVENT", "kind": "pop" }
+        ]}
+      ],
+      "on_cancel": [
+        { "cmd": "IF", "condition": "v.state > 1", "then": [
+          { "cmd": "SET_VAR", "name": "state", "value": "v.state - 1" },
+          { "cmd": "CLOSE_WINDOW", "window": "current" },
+          { "cmd": "OPEN_WINDOW", "window": "previous" }
+        ], "else": [
+          { "cmd": "SCENE_EVENT", "kind": "pop" }
+        ]}
+      ],
+      "on_cursor_move": [
+        { "cmd": "IF", "condition": "v.state == 3", "then": [
+          { "cmd": "SET_VAR", "name": "cursorSlot", "value": "cursor.ingredient_slots" }
+        ]},
+        { "cmd": "SET_TEXT", "window": "detail_panel", "source": "cursor.inventory_list" }
+      ],
+      "on_frame": [
+        { "cmd": "IF", "condition": "v.state == 5", "then": [
+          { "cmd": "IF", "condition": "rouletteStep < config.timing.steps", "then": [
+            { "cmd": "SET_VAR", "name": "currentIdx", "value": "random(1, len(v.pool))" },
+            { "cmd": "PLAY_ANIM", "anim": "roulette_tick", "target": "v.pool[v.currentIdx]" },
+            { "cmd": "WAIT", "duration": "config.timing.delayMult * rouletteDelay" }
+          ], "else": [
+            { "cmd": "SET_VAR", "name": "resultItem", "value": "v.pool[v.targetIdx]" },
+            { "cmd": "SET_VAR", "name": "state", "value": 6 },
+            { "cmd": "TAKE_ITEM", "item": "v.i1.id", "count": 1 },
+            { "cmd": "TAKE_ITEM", "item": "v.i2.id", "count": 1 },
+            { "cmd": "GIVE_ITEM_ID", "item": "v.resultItem.id", "count": 1 },
+            { "cmd": "EMIT_TEXT", "term": "terms.resultText", "args": ["v.resultItem.name"] },
+            { "cmd": "OPEN_WINDOW", "window": "result_window" }
+          ]}
+        ]}
+      ]
+    }
   }
 ]

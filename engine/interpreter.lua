@@ -542,6 +542,20 @@ handlers.SCENE_EVENT = function(cmd, ctx)
     table.insert(ctx.events, { type = "scene_change", kind = cmd.kind })
 end
 
+handlers.CALC_CRAFT_YIELD = function(cmd, ctx)
+    local sceneModule = require("engine.scenes.crafting")
+    if sceneModule.calcCraftYield then
+        sceneModule.calcCraftYield(ctx)
+    end
+    -- yield and anomaly set into ctx.v by helper
+end
+
+handlers.START_ROULETTE = function(cmd, ctx)
+    -- thin wrapper; on_frame hook drives the timing per spec
+    ctx.v.state = 5
+    ctx.v.rouletteStep = 0
+end
+
 ------------------------------------------------------------------
 -- SCRIPT (SPEC S6): sandboxed Lua escape hatch
 ------------------------------------------------------------------

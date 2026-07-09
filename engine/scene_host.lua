@@ -94,6 +94,14 @@ function scene_host.push(id, ctx)
         focusedWindow = nil
     })
 
+    local sceneData = getSceneData(ctx, id)
+    if sceneData and sceneData.kind == "crafting" then
+        local sceneModule = require("engine.scenes.crafting")
+        if sceneModule.registerKindWindows then
+            sceneModule.registerKindWindows(scene_host)
+        end
+    end
+
     if ctx then
         scene_host.runHook("on_enter", ctx)
     end
