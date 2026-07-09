@@ -4,15 +4,20 @@
 
         window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
             const group = document.createElement('div');
-            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+            group.className = 'form-group';
 
             const lbl = document.createElement('label');
             lbl.textContent = labelText;
+            lbl.style.marginBottom = '2px';
             group.appendChild(lbl);
 
-            // Thumbnail wrapper
+            // Thumbnail-row: thumbnail + path label
+            const thumbRow = document.createElement('div');
+            thumbRow.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+
             const thumbWrap = document.createElement('div');
-            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
+            thumbWrap.style.cssText = 'width: 48px; height: 48px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer;';
+            thumbWrap.title = 'Double-click to select image';
 
             const img = document.createElement('img');
             img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
@@ -27,7 +32,6 @@
 
             function updateThumb(path) {
                 if (path) {
-                    // standardize path
                     path = path.replace(/\\/g, '/');
                     if (isBareKey && !path.includes('/')) {
                         img.src = '/assets/portraits/' + path + '.png';
@@ -45,35 +49,27 @@
 
             thumbWrap.appendChild(img);
             thumbWrap.appendChild(noneTxt);
-            group.appendChild(thumbWrap);
+            thumbRow.appendChild(thumbWrap);
 
-            const input = document.createElement('input');
-            input.className = 'form-control inset-bevel';
-            input.value = value || '';
-            input.style.flex = '1';
-            if (defaultDir === 'portraits') {
-                input.setAttribute('list', 'portrait-keys-list');
-            }
-            input.oninput = () => {
-                updateThumb(input.value);
-                onChange(input.value);
-            };
-            group.appendChild(input);
+            // Small read-only path label
+            const pathLabel = document.createElement('span');
+            pathLabel.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); font-family: monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+            pathLabel.textContent = value || '(none)';
+            thumbRow.appendChild(pathLabel);
 
-            const btn = document.createElement('button');
-            btn.className = 'win98-btn';
-            btn.textContent = '...';
-            btn.onclick = () => openAssetPicker(defaultDir, path => {
+            group.appendChild(thumbRow);
+
+            // Double-click on thumbnail opens asset picker
+            thumbWrap.ondblclick = () => openAssetPicker(defaultDir, path => {
                 if (isBareKey) {
                     const parts = path.replace(/\\/g, '/').split('/');
                     const filename = parts.pop();
                     path = filename.replace(/\.[^/.]+$/, ""); // remove extension
                 }
-                input.value = path;
                 updateThumb(path);
+                pathLabel.textContent = path || '(none)';
                 onChange(path);
             });
-            group.appendChild(btn);
 
             container.appendChild(group);
         };
@@ -81,6 +77,11 @@
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
+            // Clear preview
+            const prevImg = document.getElementById('asset-preview-img');
+            const prevNone = document.getElementById('asset-preview-none');
+            if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
+            if (prevNone) prevNone.style.display = 'block';
 
             fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
@@ -148,6 +149,14 @@
                     document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
                     card.style.border = '2px solid var(--win-blue)';
                     document.getElementById('asset-picker-selected').value = f;
+                    // Update the full-resolution preview
+                    const prevImg = document.getElementById('asset-preview-img');
+                    const prevNone = document.getElementById('asset-preview-none');
+                    if (prevImg && prevNone) {
+                        prevImg.src = '/' + f;
+                        prevImg.style.display = 'block';
+                        prevNone.style.display = 'none';
+                    }
                 };
 
                 grid.appendChild(card);
@@ -750,7 +759,7 @@
 
         // Renders a schema-typed widget; returns false to fall through to the
         // generic renderer.
-        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, useBlockLayout = false) {
+        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, useBlockLayout = true) {
             const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
 
             if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
@@ -1781,7 +1790,7 @@
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = false) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = true) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 

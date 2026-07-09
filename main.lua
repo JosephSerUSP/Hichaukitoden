@@ -1272,7 +1272,7 @@ handleDialogueAction = function()
             end
             activeWalker:goToNode(node.completeNode or node.next)
             handleDialogueAction()
-        elseif node.action == "DESCEND_FLOOR" then
+        elseif node.action == "TELEPORT" then
             local maxFloor = conf("dungeon", "maxFloor", 5)
             activeSession.dungeonFloor = activeSession.dungeonFloor + 1
             if activeSession.dungeonFloor > maxFloor then

@@ -365,16 +365,16 @@
       "description": "Fully restores the party and shows the recovery line."
     },
     {
-      "id": "DESCEND",
+      "id": "TELEPORT",
       "category": "Progression",
-      "label": "Descend Floor",
+      "label": "Teleport",
       "params": [],
       "contexts": [
         "map",
         "common"
       ],
       "interactive": true,
-      "description": "Advances one dungeon floor (clamped at the deepest)."
+      "description": "Teleport the party to another location."
     },
     {
       "id": "BATTLE",
