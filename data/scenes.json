@@ -369,12 +369,6 @@
         { "cmd": "OPEN_WINDOW", "windowId": "title_menu" },
         { "cmd": "SET_TEXT", "windowId": "title_menu", "text": "Press ENTER to start" },
         { "cmd": "SET_CURSOR", "windowId": "title_menu", "index": 1 }
-      ],
-      "on_select": [
-        { "cmd": "SCENE_EVENT", "kind": "goto", "scene": "town" }
-      ],
-      "on_cancel": [
-        { "cmd": "SCENE_EVENT", "kind": "quit" }
       ]
     }
   },
