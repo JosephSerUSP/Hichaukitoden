@@ -67,6 +67,7 @@ activeSession = nil
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
+local isGoldenUIMode = false
 local triggerTestBattle
 local runValidation
 
@@ -126,6 +127,71 @@ end
 -- a scripted battle round, so data edits can be smoke-tested headlessly.
 
 -- Golden-master battle log validation
+local function runGoldenUI()
+    math.randomseed(12345)
+
+    local vSession = session.GameSession.new(loader)
+    vSession.party = {}
+
+    -- Fixed party: High Pixie (2), Skeleton (3), Angel (4)
+    local actIds = {2, 3, 4}
+    for _, id in ipairs(actIds) do
+        local actorData = loader.getActor(id)
+        if actorData then
+            local b = session.Battler.new(actorData, 1)
+            b.hp = b:getMaxHp(vSession)
+            table.insert(vSession.party, b)
+        end
+    end
+
+    local testScenes = {
+        { id = "title", inputs = {"down", "down", "return", "escape"} },
+        { id = "main_menu", inputs = {"down", "return", "escape"} },
+        { id = "item", inputs = {"down", "return", "escape"} },
+        { id = "status", inputs = {"down", "escape"} },
+        { id = "shop", inputs = {"down", "return", "escape"} },
+        { id = "crafting", inputs = {"down", "return", "escape"} },
+        { id = "battle", inputs = {"return", "escape"} }
+    }
+
+    for _, test in ipairs(testScenes) do
+        print("UI GOLDEN BEGIN " .. test.id)
+        scene_host.init(test.id)
+        local ctx = { session = vSession, loader = loader, events = {} }
+
+        for _, input in ipairs(test.inputs) do
+            ctx.events = {}
+            scene_host.keypressed(input, ctx)
+            scene_host.update(0.016, ctx)
+
+            print(string.format("%s|%s||", input, input))
+            for _, ev in ipairs(ctx.events or {}) do
+                local window = ev.windowId or ""
+                local action = ev.type or ""
+                local target = ""
+                local value = ""
+
+                if action == "set_list" then
+                    value = ev.listId or ""
+                elseif action == "set_text" then
+                    value = ev.text or ""
+                elseif action == "set_cursor" then
+                    value = ev.index or ""
+                elseif action == "play_anim" then
+                    value = ev.animId or ""
+                elseif action == "wait" then
+                    value = ev.duration or ""
+                elseif action == "scene_change" then
+                    target = ev.kind or ""
+                    value = ev.scene or ""
+                end
+
+                print(string.format("%s|%s|%s|%s", tostring(window), tostring(action), tostring(target), tostring(value)))
+            end
+        end
+        print("UI GOLDEN END " .. test.id)
+    end
+end
 local function runGolden()
     math.randomseed(12345)
 
@@ -833,6 +899,10 @@ elseif paramDef.type == "script" then
             end
             
             check(config.timing ~= nil, sceneDesc .. " missing timing config")
+
+            for hookName, cmds in pairs(scene.hooks or {}) do
+                validateCommands(cmds, "scene", true, false, sceneDesc .. " hook '" .. hookName .. "'")
+            end
         end
     end
     validateScenes()
@@ -860,6 +930,9 @@ function love.load(arg)
                 isValidateMode = true
             elseif val == "golden" then
                 isGoldenMode = true
+            elseif val == "golden-ui" then
+                isValidateMode = true
+                isGoldenUIMode = true
             end
         end
     end
@@ -869,13 +942,15 @@ function love.load(arg)
     if isValidateMode then
         loader.init()
         local ok, err
-        if isGoldenMode then
+        if isGoldenUIMode then
+            ok, err = pcall(runGoldenUI)
+        elseif isGoldenMode then
             ok, err = pcall(runGolden)
         else
             ok, err = pcall(runValidation)
         end
 
-        if ok and not isGoldenMode then
+        if ok and not isGoldenMode and not isGoldenUIMode then
             print("VALIDATE OK")
         elseif not ok then
             print("VALIDATE FAIL:\n" .. tostring(err))
