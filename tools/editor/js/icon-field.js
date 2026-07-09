@@ -7,10 +7,7 @@ function createIconField(container, labelText, value, onChange) {
     lbl.style.marginBottom = '2px';
     group.appendChild(lbl);
 
-    // Horizontal row for swatch + ID + Pick button (icon is the leftmost element)
-    const row = document.createElement('div');
-    row.style.cssText = 'display: flex; align-items: flex-start; gap: 8px;';
-
+    // Swatch is double-clickable to open the icon picker
     const swatch = document.createElement('div');
     swatch.style.width = '24px';
     swatch.style.height = '24px';
@@ -19,6 +16,8 @@ function createIconField(container, labelText, value, onChange) {
     swatch.style.border = '1px solid #ccc';
     swatch.style.imageRendering = 'pixelated';
     swatch.style.flexShrink = '0';
+    swatch.style.cursor = 'pointer';
+    swatch.title = 'Double-click to pick icon';
 
     function updateSwatch(id) {
         if (!id || id <= 0) {
@@ -30,31 +29,17 @@ function createIconField(container, labelText, value, onChange) {
         swatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
     }
     updateSwatch(value);
-    row.appendChild(swatch);
 
-    const idLabel = document.createElement('span');
-    idLabel.textContent = `ID: ${value || 0}`;
-    idLabel.style.minWidth = '40px';
-    idLabel.style.fontSize = '11px';
-    row.appendChild(idLabel);
-
-    const btn = document.createElement('button');
-    btn.className = 'win-btn outset-bevel';
-    btn.textContent = 'Pick...';
-    btn.onclick = (e) => {
+    swatch.ondblclick = (e) => {
         e.preventDefault();
         openIconPicker(value || 0, (newId) => {
             value = newId;
             updateSwatch(newId);
-            idLabel.textContent = `ID: ${newId}`;
             onChange(newId);
-            const evt = new Event('change', { bubbles: true });
-            btn.dispatchEvent(evt);
         });
     };
-    row.appendChild(btn);
 
-    group.appendChild(row);
+    group.appendChild(swatch);
     container.appendChild(group);
 }
 window.createIconField = createIconField;

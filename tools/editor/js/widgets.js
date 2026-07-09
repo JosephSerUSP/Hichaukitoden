@@ -1220,15 +1220,23 @@
             }
 
             if (activeDbTab === 'actors') {
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                // Name + Role side by side
+                const nameRoleRow = document.createElement('div');
+                nameRoleRow.className = 'form-row';
+                createFormField(nameRoleRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
 
                 const roleGroup = document.createElement('div');
-                roleGroup.className = 'form-group field-inline';
+                roleGroup.className = 'form-group';
+                roleGroup.style.flex = '1';
                 const roleLbl = document.createElement('label');
                 roleLbl.textContent = 'Role';
                 roleGroup.appendChild(roleLbl);
                 roleGroup.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
-                formPanel.appendChild(roleGroup);
+                nameRoleRow.appendChild(roleGroup);
+                formPanel.appendChild(nameRoleRow);
+
+                // Biography (renamed from Flavor Text) under Name/Role
+                createFormField(formPanel, 'Biography', item.flavor || '', val => { item.flavor = val; });
 
                 const statsRow = document.createElement('div');
                 statsRow.className = 'form-row';
@@ -1257,19 +1265,19 @@
                 }, false, 'smallBattlers', true);
                 formPanel.appendChild(spriteRow);
 
-                buildElementSlotsEditor(formPanel, item);
-                createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
-
                 createCheckboxField(formPanel, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
                 createCheckboxField(formPanel, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
 
-                const twoCol = document.createElement('div');
-                twoCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px;';
+                // Three-column grid: Skills, Passives, Traits
+                const threeCol = document.createElement('div');
+                threeCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
                 const skillsCol = document.createElement('div');
                 const passivesCol = document.createElement('div');
-                twoCol.appendChild(skillsCol);
-                twoCol.appendChild(passivesCol);
-                formPanel.appendChild(twoCol);
+                const traitsCol = document.createElement('div');
+                threeCol.appendChild(skillsCol);
+                threeCol.appendChild(passivesCol);
+                threeCol.appendChild(traitsCol);
+                formPanel.appendChild(threeCol);
 
                 buildIdListEditor(skillsCol, 'Skills',
                     Object.keys(dbPayload.skills || {}),
@@ -1279,10 +1287,22 @@
                     Object.keys(dbPayload.passives || {}),
                     id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
                     () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
+                buildTraitsEditor(traitsCol, item, 'Innate Traits');
 
-                buildTraitsEditor(formPanel, item, 'Innate Traits');
-                buildDropsEditor(formPanel, item);
-                buildEvolutionsEditor(formPanel, item);
+                // Three-column grid: Elements, Item Drops, Evolutions
+                const threeColBottom = document.createElement('div');
+                threeColBottom.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
+                const elementsCol = document.createElement('div');
+                const dropsCol = document.createElement('div');
+                const evolutionsCol = document.createElement('div');
+                threeColBottom.appendChild(elementsCol);
+                threeColBottom.appendChild(dropsCol);
+                threeColBottom.appendChild(evolutionsCol);
+                formPanel.appendChild(threeColBottom);
+
+                buildElementSlotsEditor(elementsCol, item);
+                buildDropsEditor(dropsCol, item);
+                buildEvolutionsEditor(evolutionsCol, item);
 
             } else if (activeDbTab === 'items') {
                 const topRow = document.createElement('div');
@@ -1291,8 +1311,13 @@
                 createFormField(topRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
                 formPanel.appendChild(topRow);
 
+                // Type, Scope/EquipSlot, Buy Cost side by side
+                const itemRow = document.createElement('div');
+                itemRow.className = 'form-row';
+
                 const typeGroup = document.createElement('div');
                 typeGroup.className = 'form-group';
+                typeGroup.style.flex = '1';
                 const typeLbl = document.createElement('label');
                 typeLbl.textContent = 'Type';
                 typeGroup.appendChild(typeLbl);
@@ -1300,27 +1325,21 @@
                     item.type = v;
                     loadFormForItem(item); // re-render: equipment shows equip fields
                 }));
-                formPanel.appendChild(typeGroup);
-
-                createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
-
-                const attrRow = document.createElement('div');
-                attrRow.className = 'form-row';
-                createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                formPanel.appendChild(attrRow);
+                itemRow.appendChild(typeGroup);
 
                 if (item.type === 'equipment') {
                     const eqGroup = document.createElement('div');
                     eqGroup.className = 'form-group';
+                    eqGroup.style.flex = '1';
                     const eqLbl = document.createElement('label');
                     eqLbl.textContent = 'Equip Slot';
                     eqGroup.appendChild(eqLbl);
                     eqGroup.appendChild(makeSelect(['Weapon', 'Armor', 'Accessory'], item.equipType || 'Weapon', v => { item.equipType = v; }));
-                    formPanel.appendChild(eqGroup);
-                    buildTraitsEditor(formPanel, item, 'Equipment Traits');
+                    itemRow.appendChild(eqGroup);
                 } else {
                     const scopeGroup = document.createElement('div');
                     scopeGroup.className = 'form-group';
+                    scopeGroup.style.flex = '1';
                     const scopeLbl = document.createElement('label');
                     scopeLbl.textContent = 'Target Scope';
                     scopeGroup.appendChild(scopeLbl);
@@ -1328,7 +1347,17 @@
                         [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
                         item.targetScope || '',
                         v => { if (v === '') { delete item.targetScope; } else { item.targetScope = v; } }));
-                    formPanel.appendChild(scopeGroup);
+                    itemRow.appendChild(scopeGroup);
+                }
+
+                createFormField(itemRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
+                formPanel.appendChild(itemRow);
+
+                createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
+
+                if (item.type === 'equipment') {
+                    buildTraitsEditor(formPanel, item, 'Equipment Traits');
+                } else {
                     buildEffectsEditor(formPanel, item);
                 }
 
