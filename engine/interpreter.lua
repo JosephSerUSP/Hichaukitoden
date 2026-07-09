@@ -502,6 +502,40 @@ handlers.EMIT_EVENT = function(cmd, ctx)
     table.insert(ctx.events, ev)
 end
 
+
+
+handlers.OPEN_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "open_window", windowId = cmd.windowId })
+end
+
+handlers.CLOSE_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "close_window", windowId = cmd.windowId })
+end
+
+handlers.SET_LIST = function(cmd, ctx)
+    table.insert(ctx.events, { type = "set_list", windowId = cmd.windowId, listId = cmd.listId })
+end
+
+handlers.SET_TEXT = function(cmd, ctx)
+    table.insert(ctx.events, { type = "set_text", windowId = cmd.windowId, text = cmd.text })
+end
+
+handlers.SET_CURSOR = function(cmd, ctx)
+    table.insert(ctx.events, { type = "set_cursor", windowId = cmd.windowId, index = cmd.index })
+end
+
+handlers.FOCUS_WINDOW = function(cmd, ctx)
+    table.insert(ctx.events, { type = "focus_window", windowId = cmd.windowId })
+end
+
+handlers.PLAY_ANIM = function(cmd, ctx)
+    table.insert(ctx.events, { type = "play_anim", animId = cmd.animId })
+end
+
+handlers.WAIT = function(cmd, ctx)
+    table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
+end
+
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); main.lua consumes
     -- this event and performs the transition.

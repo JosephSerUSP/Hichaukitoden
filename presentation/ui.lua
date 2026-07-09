@@ -198,8 +198,6 @@ function ui.drawPanel(x, y, w, h, title)
     
     -- Draw title header if specified
     if title then
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.rectangle("fill", x + 8, y + 6, w - 16, 14)
         love.graphics.setColor(1, 1, 0.7, 1)
         ui.drawString(title, x + 12, y + 7)
     end
@@ -224,6 +222,10 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
         parsedText = string.gsub(parsedText, "\\eventName", string.gsub(eventName, "%%", "%%%%"))
     else
         parsedText = string.gsub(parsedText, "\\eventName", "")
+    end
+
+    if alignment == "right" and limit then
+        limit = limit - ui.tileSize
     end
 
     if not string.find(parsedText, "\\c%[") then
