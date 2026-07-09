@@ -67,6 +67,8 @@ activeSession = nil
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
+local isGoldenUIMode = false
+local goldenUISceneKey = nil
 local triggerTestBattle
 local runValidation
 
@@ -126,6 +128,66 @@ end
 -- a scripted battle round, so data edits can be smoke-tested headlessly.
 
 -- Golden-master battle log validation
+
+local function runGoldenUI(sceneKey)
+    local vSession = session.GameSession.new(loader)
+    vSession:initializeStartingParty()
+
+    local scene_host = require("engine.scene_host")
+    local interpreter = require("engine.interpreter")
+
+    local originalRunImmediate = interpreter.runImmediate
+    local uiEvents = {}
+
+    local function logEvents(events)
+        if not events then return end
+        for _, ev in ipairs(events) do
+            if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
+                local w = ev.windowId or ""
+                local a = ev.type or ""
+                local t = ""
+                local v = ""
+                if ev.type == "set_text" then v = tostring(ev.text)
+                elseif ev.type == "set_list" then v = tostring(ev.listId)
+                elseif ev.type == "set_cursor" then v = tostring(ev.index) end
+                table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
+            end
+        end
+    end
+
+    interpreter.runImmediate = function(cmds, ctx)
+        local events = originalRunImmediate(cmds, ctx)
+        logEvents(events)
+        -- In some versions runImmediate returns the events, but they are also in ctx.events
+        logEvents(ctx.events)
+        return events
+    end
+
+    local ctx = {
+        session = vSession,
+        loader = loader,
+        events = {} -- Ensure events array exists
+    }
+
+    scene_host.init(sceneKey)
+
+    -- Drive sequence: update, down, down, return, escape, escape
+    scene_host.update(0.1, ctx)
+    scene_host.keypressed("down", ctx)
+    scene_host.keypressed("down", ctx)
+    scene_host.keypressed("return", ctx)
+    scene_host.keypressed("escape", ctx)
+    scene_host.keypressed("escape", ctx)
+
+    print("UI GOLDEN BEGIN")
+    for _, l in ipairs(uiEvents) do
+        print(l)
+    end
+    print("UI GOLDEN END")
+
+    interpreter.runImmediate = originalRunImmediate
+end
+
 local function runGolden()
     math.randomseed(12345)
 
@@ -548,6 +610,18 @@ elseif paramDef.type == "script" then
                         elseif paramDef.type == "term" then
                             -- Ensure it's a string, resolution is implicit as getTerm falls back to the key, but we check type
                             check(type(val) == "string", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string term")
+                        elseif paramDef.key == "windowId" and val ~= nil then
+                            check(type(val) == "string" and val ~= "", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' must be a valid window id string")
+                        elseif paramDef.key == "scene" and val ~= nil then
+                            -- Validate that if scene is provided, it references a valid scene ID or name
+                            local foundScene = false
+                            for _, s in ipairs(loader.scenes or {}) do
+                                if tostring(s.id) == tostring(val) or s.name == val or s.kind == val then
+                                    foundScene = true
+                                    break
+                                end
+                            end
+                            check(foundScene, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing scene '" .. tostring(val) .. "'")
                         elseif paramDef.type == "state" then
                             check(loader.getState(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing state '" .. tostring(val) .. "'")
                         elseif paramDef.type == "item" then
@@ -833,6 +907,13 @@ elseif paramDef.type == "script" then
             end
             
             check(config.timing ~= nil, sceneDesc .. " missing timing config")
+
+            -- Hook validation
+            if scene.hooks then
+                for hookName, cmds in pairs(scene.hooks) do
+                    validateCommands(cmds, "scene", true, false, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
+                end
+            end
         end
     end
     validateScenes()
@@ -853,14 +934,23 @@ function love.load(arg)
     
     -- Check for CLI arguments (test-battle, validate)
     if arg then
-        for _, val in ipairs(arg) do
+        local i = 1
+        while i <= #arg do
+            local val = arg[i]
             if val == "test-battle" then
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
             elseif val == "golden" then
                 isGoldenMode = true
+            elseif val == "golden-ui" then
+                isGoldenUIMode = true
+                if i < #arg then
+                    goldenUISceneKey = arg[i+1]
+                    i = i + 1
+                end
             end
+            i = i + 1
         end
     end
 
@@ -871,6 +961,8 @@ function love.load(arg)
         local ok, err
         if isGoldenMode then
             ok, err = pcall(runGolden)
+        elseif isGoldenUIMode then
+            ok, err = pcall(runGoldenUI, goldenUISceneKey)
         else
             ok, err = pcall(runValidation)
         end
