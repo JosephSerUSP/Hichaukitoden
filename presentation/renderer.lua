@@ -580,17 +580,18 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
                     local drawScale = spriteSize / ss.cellW
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(ss.img, quad, slot.x, slot.y, 0, drawScale, drawScale)
-                    spriteOffsetX = spriteSize + 2
+                    spriteOffsetX = spriteSize - 2
                 end
             end
             
             local prefix = isSel and ">" or " "
-            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, slot.y)
-            ui.drawString(prefix .. c.name, slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset"), slot.y + 4, color, "left", 60)
+            local yOff = spriteOffsetX > 0 and -4 or 4  -- push up ~8px when sprite is present
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, slot.y + yOff - 4)
+            ui.drawString(prefix .. c.name, slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset"), slot.y + yOff, color, "left", 60)
             
             local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + 4, hpColor)
-            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpBarYOffset") + 4, layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + yOff, hpColor)
+            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpBarYOffset") + yOff, layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
