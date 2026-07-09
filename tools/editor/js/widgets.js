@@ -1283,7 +1283,11 @@
                 buildEvolutionsEditor(formPanel, item);
 
             } else if (activeDbTab === 'items') {
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                createIconField(topRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
+                createFormField(topRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
 
                 const typeGroup = document.createElement('div');
                 typeGroup.className = 'form-group';
@@ -1301,7 +1305,6 @@
                 const attrRow = document.createElement('div');
                 attrRow.className = 'form-row';
                 createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createIconField(attrRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
                 formPanel.appendChild(attrRow);
 
                 if (item.type === 'equipment') {
@@ -1362,10 +1365,14 @@
             } else if (activeDbTab === 'passives') {
                 const passive = dbPayload.passives[item.id];
                 if (!passive) return;
-                createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                createIconField(topRow, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
+                createFormField(topRow, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
+
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1374,10 +1381,14 @@
             } else if (activeDbTab === 'states') {
                 const state = dbPayload.states[item.id];
                 if (!state) return;
-                createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                createIconField(topRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
+                createFormField(topRow, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
+
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createIconField(stRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1388,8 +1399,11 @@
             } else if (activeDbTab === 'elements') {
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
-                createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
-                createIconField(formPanel, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                createIconField(topRow, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
+                createFormField(topRow, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
                 buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
