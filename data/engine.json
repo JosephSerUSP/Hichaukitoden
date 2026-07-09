@@ -1029,13 +1029,25 @@
         {
           "key": "listId",
           "type": "text"
+        },
+        {
+          "key": "format",
+          "type": "text"
+        },
+        {
+          "key": "priority",
+          "type": "text"
+        },
+        {
+          "key": "highlight",
+          "type": "text"
         }
       ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Sets a list in a window."
+      "description": "Sets a window's list. listId sources: inventory, party, config:<key>, v:<key>, static:a,b. Optional: format row template (\"{name} (x{qty})\"), priority/highlight row formulas."
     },
     {
       "id": "SET_TEXT",

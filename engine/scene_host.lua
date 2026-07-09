@@ -66,6 +66,52 @@ function scene_host.register(kind, windowDefs)
     windowDefsByKind[kind] = windowDefs
 end
 
+-- Consume a D2 window command event into the scene's runtime window state,
+-- which the generic window renderer (presentation/window_renderer.lua) draws
+-- for scenes that opt in with "draw": "windows".
+local function applyWindowEvent(state, ev)
+    if not state.winState then
+        state.winState = {}
+        state.windowOrder = {}
+    end
+    local function ensure(id)
+        if not id then return nil end
+        if not state.winState[id] then
+            state.winState[id] = {}
+            table.insert(state.windowOrder, id)
+        end
+        return state.winState[id]
+    end
+    if ev.type == "open_window" then
+        local w = ensure(ev.windowId)
+        if w then w.open = true end
+    elseif ev.type == "close_window" then
+        local w = state.winState[ev.windowId]
+        if w then w.open = false end
+    elseif ev.type == "set_list" then
+        local w = ensure(ev.windowId)
+        if w then
+            w.listId = ev.listId
+            w.format = ev.format
+            w.priority = ev.priority
+            w.highlight = ev.highlight
+        end
+    elseif ev.type == "set_text" then
+        local w = ensure(ev.windowId)
+        if w then w.text = ev.text end
+    elseif ev.type == "set_cursor" then
+        local w = ensure(ev.windowId)
+        if w then
+            w.cursor = ev.index
+            -- Keep the raw formula so the renderer can re-evaluate the
+            -- cursor against live scene variables every frame.
+            w.cursorFormula = ev.indexFormula
+        end
+    elseif ev.type == "focus_window" then
+        state.focusedWindow = ev.windowId
+    end
+end
+
 function scene_host.runHook(hookName, ctx)
     if #sceneStack == 0 then return false end
     local state = sceneStack[#sceneStack]
@@ -127,6 +173,10 @@ function scene_host.runHook(hookName, ctx)
                 state.waitTimer = ev.duration
             elseif ev.type == "scene_change" then
                 table.insert(transitions, ev)
+            elseif ev.type == "open_window" or ev.type == "close_window"
+                or ev.type == "set_list" or ev.type == "set_text"
+                or ev.type == "set_cursor" or ev.type == "focus_window" then
+                applyWindowEvent(state, ev)
             end
         end
     end
@@ -220,9 +270,16 @@ function scene_host.update(dt, ctx)
 end
 
 function scene_host.draw(ctx)
-    -- The drawing will be managed by scene hooks or windowLayout in D2.
-    -- For D1, return false so we always fall back to legacy drawing.
-    return false
+    -- Declarative drawing is opt-in per scene ("draw": "windows" in
+    -- scenes.json). Scenes without the flag fall back to legacy Lua drawing
+    -- (SPEC S2 fallback rule), so conversions stay independently shippable.
+    if #sceneStack == 0 then return false end
+    local state = sceneStack[#sceneStack]
+    local sceneData = getSceneData(ctx, state.id)
+    if not sceneData or sceneData.draw ~= "windows" then return false end
+    local window_renderer = require("presentation.window_renderer")
+    window_renderer.draw(state, sceneData, ctx)
+    return true
 end
 
 function scene_host.keypressed(key, ctx)

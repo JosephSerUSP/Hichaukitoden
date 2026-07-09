@@ -519,7 +519,11 @@ handlers.CLOSE_WINDOW = function(cmd, ctx)
 end
 
 handlers.SET_LIST = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_list", windowId = cmd.windowId, listId = cmd.listId })
+    table.insert(ctx.events, {
+        type = "set_list", windowId = cmd.windowId, listId = cmd.listId,
+        -- Optional row template/formulas consumed by the window renderer.
+        format = cmd.format, priority = cmd.priority, highlight = cmd.highlight,
+    })
 end
 
 handlers.SET_TEXT = function(cmd, ctx)
@@ -528,7 +532,12 @@ end
 
 handlers.SET_CURSOR = function(cmd, ctx)
     local idx = evalFormula(cmd.index, ctx)
-    table.insert(ctx.events, { type = "set_cursor", windowId = cmd.windowId, index = idx })
+    table.insert(ctx.events, {
+        type = "set_cursor", windowId = cmd.windowId, index = idx,
+        -- Raw formula kept so the renderer can bind the cursor to live
+        -- scene variables instead of the value at hook time.
+        indexFormula = type(cmd.index) == "string" and cmd.index or nil,
+    })
 end
 
 handlers.FOCUS_WINDOW = function(cmd, ctx)
