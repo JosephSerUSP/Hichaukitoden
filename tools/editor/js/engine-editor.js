@@ -275,7 +275,7 @@
                 buildMetaKeyRegistryEditor(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.metaKeys, rerender);
             } else if (tabName === 'flows') {
-                header.textContent = 'Flows';
+                header.textContent = 'Scenes';
                 dbPayload.flows = dbPayload.flows || {};
                 dbPayload.scenes = dbPayload.scenes || [];
                 renderUnifiedFlowsEditor(panel, header);
@@ -664,7 +664,12 @@
             kindLbl.style.flex = '0 0 80px';
             kindLbl.textContent = 'Kind:';
             kindRow.appendChild(kindLbl);
-            const kindSelect = makeSelect(['crafting'], scene.kind || 'crafting', (v) => {
+            // Kinds with an engine host. 'menu' is the plain default (SPEC S2);
+            // scene-specific kinds like 'crafting' are being dissolved (D13) but
+            // an off-list value already on the scene must stay editable.
+            const kindOptions = ['menu', 'shop', 'battle'];
+            if (scene.kind && !kindOptions.includes(scene.kind)) kindOptions.unshift(scene.kind);
+            const kindSelect = makeSelect(kindOptions, scene.kind || 'menu', (v) => {
                 scene.kind = v;
                 setDirty(true);
             });
