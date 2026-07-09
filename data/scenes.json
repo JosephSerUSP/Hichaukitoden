@@ -3,6 +3,19 @@
     "id": 1,
     "name": "Item Creation",
     "kind": "crafting",
+    "goldenScript": [
+      { "key": "return" },
+      { "key": "down" },
+      { "key": "return" },
+      { "key": "down" },
+      { "key": "return" },
+      { "key": "right" },
+      { "key": "down" },
+      { "key": "return" },
+      { "key": "escape" },
+      { "key": "escape" },
+      { "key": "escape" }
+    ],
     "config": {
       "disciplines": [
         {
@@ -937,7 +950,12 @@
   {
     "id": "shop",
     "name": "Shop",
-    "kind": "shop",
+    "kind": "menu",
+    "goldenScript": [
+      { "key": "down" },
+      { "key": "up" },
+      { "key": "escape" }
+    ],
     "hooks": {
       "on_enter": [
         {

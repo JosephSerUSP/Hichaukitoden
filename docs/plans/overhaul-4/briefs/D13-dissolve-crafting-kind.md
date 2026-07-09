@@ -16,7 +16,6 @@ renderer battle work will reuse).
 | `engine/interpreter.lua` | `CALC_CRAFT_YIELD` and `START_ROULETTE` handlers |
 | `data/engine.json → commands` | `CALC_CRAFT_YIELD` (already `deprecatedBy: SCRIPT`), `START_ROULETTE` |
 | `main.lua` validateScenes | `if scene.kind == "crafting"` block (disciplines/formulas/brackets checks) |
-| `main.lua` runGoldenUI | `sceneScripts` keyed by kind (`crafting`, `shop`) — input scripts hardcoded in Lua |
 | `tools/editor/js/engine-editor.js` | `if (scene.kind === 'crafting')` config field block |
 | `data/scenes.json` crafting entry | `kind: "crafting"` |
 
@@ -38,9 +37,9 @@ renderer battle work will reuse).
       `menu` kind (or kindless). Editor kind dropdown already excludes it.
 - [ ] Crafting-specific validator block replaced by generic checks (formulas
       in `config` compile; SCRIPT counted).
-- [ ] Golden-UI input scripts move from `main.lua sceneScripts` into scene data
-      (e.g. `scene.goldenScript`), so extra scenes get golden coverage without
-      engine edits.
+- [x] Golden-UI input scripts move from `main.lua sceneScripts` into scene data
+      (`scene.goldenScript`) — DONE 09.07.2026 alongside collapsing the `shop`
+      kind into `menu` (owner feedback: shop is not a distinct kind).
 - [ ] `engine/scenes/crafting.lua` deleted (or reduced to nothing).
 - [ ] UI-golden reference for the crafting scene regenerated with line-by-line
       justification (events will change shape); all other scene references

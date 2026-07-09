@@ -667,7 +667,7 @@
             // Kinds with an engine host. 'menu' is the plain default (SPEC S2);
             // scene-specific kinds like 'crafting' are being dissolved (D13) but
             // an off-list value already on the scene must stay editable.
-            const kindOptions = ['menu', 'shop', 'battle'];
+            const kindOptions = ['menu', 'battle'];
             if (scene.kind && !kindOptions.includes(scene.kind)) kindOptions.unshift(scene.kind);
             const kindSelect = makeSelect(kindOptions, scene.kind || 'menu', (v) => {
                 scene.kind = v;

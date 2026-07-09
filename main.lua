@@ -146,33 +146,14 @@ local function runGoldenUI()
 
     local originalRunImmediate = interpreter.runImmediate
 
-    -- Scene-specific input scripts: a list of { key } steps that drive
-    -- the scene's state machine through scene_host.keypressed().
-    local sceneScripts = {
-        crafting = {
-            { key = "return" },  -- state 1: select discipline → state 2 (crafter)
-            { key = "down" },    -- state 2: move crafter cursor down
-            { key = "return" },  -- state 2: select crafter → state 3 (ingredients)
-            { key = "down" },    -- state 3: move ingredient cursor down
-            { key = "return" },  -- state 3: select ingredient 1 (cursorSlot=1)
-            { key = "right" },   -- state 3: switch to cursorSlot=2
-            { key = "down" },    -- state 3: move ingredient cursor down
-            { key = "return" },  -- state 3: select ingredient 2 → state 4 (confirm)
-            { key = "escape" },  -- state 4: escape back to state 3
-            { key = "escape" },  -- state 3: escape back to state 2 (crafter)
-            { key = "escape" },  -- state 2: escape back to state 1 (discipline)
-        },
-        shop = {
-            { key = "down" },
-            { key = "up" },
-            { key = "escape" },
-        }
-    }
+    -- Scene input scripts live in scene data (scenes.json → goldenScript):
+    -- a list of { key } steps that drive the scene's state machine through
+    -- scene_host.keypressed(). Extra scenes get golden coverage by authoring
+    -- a goldenScript, with no engine edits.
 
     for _, sceneDef in ipairs(loader.scenes or {}) do
         local sceneId = sceneDef.id
-        local sceneKind = sceneDef.kind
-        if not sceneId or not sceneKind then goto continue end
+        if not sceneId then goto continue end
 
         local uiEvents = {}
         local currentCtx = {
@@ -223,7 +204,7 @@ local function runGoldenUI()
         end
 
         -- Drive the scripted input sequence
-        local script = sceneScripts[sceneKind] or {}
+        local script = sceneDef.goldenScript or {}
         for _, step in ipairs(script) do
             scene_host.update(0.1, currentCtx)
             scene_host.keypressed(step.key, currentCtx)
