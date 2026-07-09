@@ -616,6 +616,16 @@
             min-width: 75px;
             padding: 4px 10px;
         }
+
+        @keyframes preview-bob {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+            100% { transform: translateY(0); }
+        }
+        .animated-preview {
+            animation: preview-bob 1s infinite step-end;
+        }
+
     </style>
 </head>
 <body>
@@ -1137,7 +1147,15 @@
                     <select id="asset-picker-dir" class="win98-select" style="flex: 1;" onchange="loadAssetPickerFiles()"></select>
                 </div>
                 
-                <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
+
+                <div style="display: flex; gap: 8px;">
+                    <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 6px; flex: 1;"></div>
+                    <div id="asset-picker-preview" style="width: 150px; border: 1px solid var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; flex-direction: column;">
+                        <img id="asset-picker-preview-img" style="max-width: 100%; max-height: 100%; image-rendering: pixelated; display: none;">
+                        <div id="asset-picker-preview-none" style="color: #888; font-size: 11px; font-family: monospace;">(no selection)</div>
+                    </div>
+                </div>
+
                 
                 <div class="field-row-stacked">
                     <label>Selected File Path:</label>

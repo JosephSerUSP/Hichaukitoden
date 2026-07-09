@@ -233,11 +233,11 @@
     },
     {
       "token": "ctx.rawSession",
-      "description": "Real session object \u2014 only present when scripting.allowRawAccess is true."
+      "description": "Real session object — only present when scripting.allowRawAccess is true."
     },
     {
       "token": "ctx.rawLoader",
-      "description": "Real data loader \u2014 only present when scripting.allowRawAccess is true."
+      "description": "Real data loader — only present when scripting.allowRawAccess is true."
     },
     {
       "token": "api.damage(target, n)",
@@ -285,7 +285,7 @@
     },
     {
       "token": "random(m, n)",
-      "description": "The seeded math.random \u2014 deterministic under the golden harness."
+      "description": "The seeded math.random — deterministic under the golden harness."
     }
   ],
   "commands": [
@@ -365,16 +365,16 @@
       "description": "Fully restores the party and shows the recovery line."
     },
     {
-      "id": "DESCEND",
+      "id": "TELEPORT",
       "category": "Progression",
-      "label": "Descend Floor",
+      "label": "Teleport",
       "params": [],
       "contexts": [
         "map",
         "common"
       ],
       "interactive": true,
-      "description": "Advances one dungeon floor (clamped at the deepest)."
+      "description": "Teleports the player to a specified location."
     },
     {
       "id": "BATTLE",

@@ -49,7 +49,7 @@
   },
   "events": {
     "recover_party": "Your party has been fully recovered!",
-    "descend": "You descend deeper into the chasm...",
+    "teleport": "You are teleported to a new location...",
     "found_item": "Found a {0}!"
   },
   "formation": {
@@ -82,7 +82,7 @@
     "log_cleared": "Log cleared.",
     "only_adjacent_tiles": "You can only move to adjacent tiles.",
     "enemy_encountered": "Enemy encountered!",
-    "descending": "Descending.",
+    "teleporting": "Teleporting.",
     "victory": "Victory."
   },
   "shop": {

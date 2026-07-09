@@ -32,7 +32,7 @@ local interpreter = {}
 -- under `cmd` (the editor's cmdFieldName rule mirrors this table).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
-    DESCEND = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
     COMMENT = true,
 }
 
@@ -116,10 +116,10 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         elseif cmd.type == "RECOVER_PARTY" then
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif cmd.type == "DESCEND" then
-            local descendId = nodeId .. "_descend"
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.descend", "You descend deeper into the chasm..."), next = descendId }
-            nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
+        elseif cmd.type == "TELEPORT" then
+            local teleportId = nodeId .. "_teleport"
+            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.teleport", "You are teleported to a new location..."), next = teleportId }
+            nodes[teleportId] = { type = "ACTION", action = "DESCEND_FLOOR" }
         elseif cmd.type == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
         elseif cmd.type == "GIVE_ITEM" then
@@ -157,7 +157,7 @@ end
 ------------------------------------------------------------------
 
 local INTERACTIVE_IDS = {
-    TEXT = true, CHOICE = true, RECOVER_PARTY = true, DESCEND = true,
+    TEXT = true, CHOICE = true, RECOVER_PARTY = true, TELEPORT = true,
     BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
 }
 

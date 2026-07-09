@@ -2,17 +2,21 @@
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
 
-        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
+                window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = true, defaultDir = 'sprites', isBareKey = false) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 
             const lbl = document.createElement('label');
             lbl.textContent = labelText;
+            if (useBlockLayout) {
+                lbl.style.marginBottom = '2px';
+            }
             group.appendChild(lbl);
 
             // Thumbnail wrapper
             const thumbWrap = document.createElement('div');
-            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
+            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0; cursor: pointer;';
+            thumbWrap.title = 'Double-click to select image';
 
             const img = document.createElement('img');
             img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
@@ -24,6 +28,8 @@
             // A missing/broken sprite falls back to the (none) placeholder
             // rather than the browser's broken-image glyph.
             img.onerror = () => { img.style.display = 'none'; noneTxt.style.display = 'block'; };
+
+            let currentPath = value || '';
 
             function updateThumb(path) {
                 if (path) {
@@ -47,33 +53,18 @@
             thumbWrap.appendChild(noneTxt);
             group.appendChild(thumbWrap);
 
-            const input = document.createElement('input');
-            input.className = 'form-control inset-bevel';
-            input.value = value || '';
-            input.style.flex = '1';
-            if (defaultDir === 'portraits') {
-                input.setAttribute('list', 'portrait-keys-list');
-            }
-            input.oninput = () => {
-                updateThumb(input.value);
-                onChange(input.value);
+            thumbWrap.ondblclick = () => {
+                openAssetPicker(defaultDir, path => {
+                    if (isBareKey) {
+                        const parts = path.replace(/\\/g, '/').split('/');
+                        const filename = parts.pop();
+                        path = filename.replace(/\.[^/.]+$/, ""); // remove extension
+                    }
+                    currentPath = path;
+                    updateThumb(path);
+                    onChange(path);
+                });
             };
-            group.appendChild(input);
-
-            const btn = document.createElement('button');
-            btn.className = 'win98-btn';
-            btn.textContent = '...';
-            btn.onclick = () => openAssetPicker(defaultDir, path => {
-                if (isBareKey) {
-                    const parts = path.replace(/\\/g, '/').split('/');
-                    const filename = parts.pop();
-                    path = filename.replace(/\.[^/.]+$/, ""); // remove extension
-                }
-                input.value = path;
-                updateThumb(path);
-                onChange(path);
-            });
-            group.appendChild(btn);
 
             container.appendChild(group);
         };
@@ -81,6 +72,14 @@
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
+
+            const previewImg = document.getElementById('asset-picker-preview-img');
+            const previewNone = document.getElementById('asset-picker-preview-none');
+            if (previewImg && previewNone) {
+                previewImg.style.display = 'none';
+                previewImg.src = '';
+                previewNone.style.display = 'block';
+            }
 
             fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
@@ -144,10 +143,26 @@
                 name.style.width = '100%';
                 card.appendChild(name);
 
-                card.onclick = () => {
+                                card.onclick = () => {
                     document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
                     card.style.border = '2px solid var(--win-blue)';
                     document.getElementById('asset-picker-selected').value = f;
+
+                    const previewImg = document.getElementById('asset-picker-preview-img');
+                    const previewNone = document.getElementById('asset-picker-preview-none');
+                    if (previewImg && previewNone) {
+                        previewImg.src = '/' + f;
+                        previewImg.style.display = 'block';
+                        previewNone.style.display = 'none';
+
+                        // Check if it's a sprite that might be animated
+                        if (f.includes('/sprites/') || f.includes('/characters/')) {
+                            // If we wanted to add a simple bob animation, we could toggle a class here
+                            previewImg.classList.add('animated-preview');
+                        } else {
+                            previewImg.classList.remove('animated-preview');
+                        }
+                    }
                 };
 
                 grid.appendChild(card);
@@ -1218,6 +1233,7 @@
 
             if (activeDbTab === 'actors') {
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                createIconField(formPanel, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
 
                 const roleGroup = document.createElement('div');
                 roleGroup.className = 'form-group field-inline';
@@ -1275,6 +1291,7 @@
 
             } else if (activeDbTab === 'items') {
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                createIconField(formPanel, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
 
                 const typeGroup = document.createElement('div');
                 typeGroup.className = 'form-group';
@@ -1292,7 +1309,6 @@
                 const attrRow = document.createElement('div');
                 attrRow.className = 'form-row';
                 createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createIconField(attrRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
                 formPanel.appendChild(attrRow);
 
                 if (item.type === 'equipment') {
@@ -1354,9 +1370,9 @@
                 const passive = dbPayload.passives[item.id];
                 if (!passive) return;
                 createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
+                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1366,9 +1382,10 @@
                 const state = dbPayload.states[item.id];
                 if (!state) return;
                 createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
+                createIconField(formPanel, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
+
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createIconField(stRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1380,6 +1397,7 @@
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
                 createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
+
                 createIconField(formPanel, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
@@ -1781,7 +1799,7 @@
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = false) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = true) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 
