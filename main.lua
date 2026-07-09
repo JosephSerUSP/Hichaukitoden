@@ -991,10 +991,18 @@ elseif paramDef.type == "script" then
                 check(config.timing ~= nil, sceneDesc .. " missing timing config")
             end
 
-            -- Hook validation (all scene kinds)
+            -- Hook validation (all scene kinds).
+            -- Zero-SCRIPT (S6) applies to built-in scenes only; extra
+            -- (user-authored) scenes may use SCRIPT as their escape hatch
+            -- (owner feedback 09.07.2026, FEEDBACK.md).
+            local builtinSceneIds = {
+                title = true, menu = true, items = true,
+                status = true, shop = true, battle = true,
+            }
+            local allowSceneScript = not builtinSceneIds[scene.id]
             if scene.hooks then
                 for hookName, cmds in pairs(scene.hooks) do
-                    validateCommands(cmds, "scene", true, false, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
+                    validateCommands(cmds, "scene", true, allowSceneScript, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
                 end
             end
         end

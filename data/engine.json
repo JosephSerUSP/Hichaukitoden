@@ -979,10 +979,11 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
-      "description": "Sandboxed Lua escape hatch (see scriptingHelp). Forbidden in shipped default flows."
+      "description": "Sandboxed Lua escape hatch (see scriptingHelp). Forbidden in shipped default flows and built-in scenes; allowed in extra (user-authored) scenes."
     },
     {
       "id": "OPEN_WINDOW",
@@ -1133,7 +1134,8 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Calculates crafting yield, outcome pool, and roulette state from scene v-variables."
+      "deprecatedBy": "SCRIPT",
+      "description": "DEPRECATED (D13): scene-specific command slated for removal; extra scenes should compute yields via SCRIPT. Calculates crafting yield, outcome pool, and roulette state from scene v-variables."
     }
   ],
   "elementRules": {
