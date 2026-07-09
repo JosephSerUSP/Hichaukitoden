@@ -923,9 +923,14 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         else
             local startIdx = math.max(1, rightIdx - 7)
             local drawCount = 0
+            -- Calculate dynamic spacing to fill the right panel vertically
+            local contentStartY = ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)
+            local panelInteriorBottom = ui.toPx(1) + ui.toPx(18) - 8  -- bottom border inset
+            local visibleCount = math.min(#items, startIdx + 8) - startIdx + 1
+            local itemSpacing = math.max(ui.lineHeight, math.floor((panelInteriorBottom - contentStartY) / visibleCount))
             for i = startIdx, math.min(#items, startIdx + 8) do
                 local itEntry = items[i]
-                local iy = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + drawCount * 11
+                local iy = contentStartY + drawCount * itemSpacing
                 local isSel = (i == rightIdx)
                 local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                 local prefix = isSel and ">" or " "
@@ -989,8 +994,14 @@ function renderer.drawStatusDetail(c, session)
     ui.drawString("HP: " .. c.hp .. " / " .. maxHp, contentX, ui.toPx(7), {1, 1, 1, 1})
     ui.drawBar(contentX + ui.toPx(9), ui.toPx(7.25), ui.toPx(17.5), 4, c.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
     
-    -- Stats Column (Left, y = ui.toPx(9.25))
-    ui.drawString("STATS", contentX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
+    -- Experience / Level Progress
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local needed = c.level * expPerLevel
+    ui.drawString("EXP: " .. c.exp .. " / " .. needed, contentX, ui.toPx(8.25), {0.6, 0.9, 0.6, 1})
+    ui.drawBar(contentX + ui.toPx(9), ui.toPx(8.5), ui.toPx(17.5), 4, c.exp, needed, {0, 0.6, 0}, {0.3, 1, 0.3})
+    
+    -- Stats Column (Left, y = ui.toPx(10.5))
+    ui.drawString("STATS", contentX, ui.toPx(10.5), {0.5, 0.8, 1, 1})
     local atk = traits.getParam(c, "atk", session)
     local def = traits.getParam(c, "def", session)
     local mat = traits.getParam(c, "mat", session)
@@ -1002,13 +1013,13 @@ function renderer.drawStatusDetail(c, session)
 
     -- Equipment Column (Right, x = contentX + 13 tiles)
     local equipX = contentX + ui.toPx(13)
-    ui.drawString("EQUIPMENT", equipX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
+    ui.drawString("EQUIPMENT", equipX, ui.toPx(10.5), {0.5, 0.8, 1, 1})
     local eq1 = c.equipment[1] and c.equipment[1].name or "[ EMPTY ]"
     local eq2 = c.equipment[2] and c.equipment[2].name or "[ EMPTY ]"
     local eq3 = c.equipment[3] and c.equipment[3].name or "[ EMPTY ]"
-    ui.drawString("WPN: " .. eq1, equipX, ui.toPx(11), {0.8, 0.8, 0.8, 1})
-    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
-    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
+    ui.drawString("WPN: " .. eq1, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
+    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
+    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(14), {0.8, 0.8, 0.8, 1})
     
     -- Passives & Skills (y = ui.toPx(17.5))
     ui.drawString("PASSIVE TRAITS", contentX, ui.toPx(17.5), {1, 0.85, 0.5, 1})
@@ -1190,12 +1201,25 @@ function renderer.drawSelectEquipMenu(rightIdx, session, slotType, c, slotIdx)
     else
         local startIdx = math.max(1, rightIdx - 8)
         local count = 0
+        -- Dynamic spacing to fill the panel vertically
+        local equipContentStart = ui.toPx(5.5)
+        local equipPanelBottom = ui.toPx(2) + ui.toPx(16) - 8
+        local equipVisibleCount = math.min(#list, startIdx + 9) - startIdx + 1
+        local equipSpacing = math.max(ui.lineHeight, math.floor((equipPanelBottom - equipContentStart) / equipVisibleCount))
         for i = startIdx, math.min(#list, startIdx + 9) do
+            local entry = list[i]
             local isSel = (i == rightIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and "> " or "  "
-            local py = ui.toPx(5.5) + count * 11
-            ui.drawString(prefix .. list[i].name, ui.toPx(4), py, color)
+            local py = equipContentStart + count * equipSpacing
+            -- Draw item icon if available
+            local textX = ui.toPx(4)
+            if entry.icon and entry.id ~= "empty" then
+                ui.drawIcon(entry.icon, textX + 1 * ui.tileSize, py - 1)
+                ui.drawString(prefix .. entry.name, textX + 3 * ui.tileSize, py, color)
+            else
+                ui.drawString(prefix .. entry.name, textX, py, color)
+            end
             count = count + 1
         end
     end
