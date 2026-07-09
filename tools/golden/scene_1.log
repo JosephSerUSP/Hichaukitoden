@@ -1,0 +1,16 @@
+UI GOLDEN BEGIN
+scene|1|name|Item Creation
+discipline_panel|open_window||
+discipline_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|close_window||
+ingredient_panel|open_window||
+ingredient_panel|close_window||
+crafter_panel|open_window||
+crafter_panel|close_window||
+discipline_panel|open_window||
+UI GOLDEN END

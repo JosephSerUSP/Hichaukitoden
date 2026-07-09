@@ -1,0 +1,8 @@
+UI GOLDEN BEGIN
+scene|shop|name|Shop
+shop_header|open_window||
+shop_list|open_window||
+shop_list|set_list||shop_items
+shop_list|set_cursor||1
+shop_info|open_window||
+UI GOLDEN END
