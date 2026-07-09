@@ -233,11 +233,11 @@
     },
     {
       "token": "ctx.rawSession",
-      "description": "Real session object — only present when scripting.allowRawAccess is true."
+      "description": "Real session object \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "ctx.rawLoader",
-      "description": "Real data loader — only present when scripting.allowRawAccess is true."
+      "description": "Real data loader \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "api.damage(target, n)",
@@ -285,7 +285,7 @@
     },
     {
       "token": "random(m, n)",
-      "description": "The seeded math.random — deterministic under the golden harness."
+      "description": "The seeded math.random \u2014 deterministic under the golden harness."
     }
   ],
   "commands": [
@@ -934,7 +934,8 @@
         }
       ],
       "contexts": [
-        "battle_phase"
+        "battle_phase",
+        "scene"
       ],
       "interactive": false,
       "description": "Emits a scene_change event that main.lua consumes; the interpreter never switches scenes itself."
@@ -956,6 +957,170 @@
       ],
       "interactive": false,
       "description": "Sandboxed Lua escape hatch (see scriptingHelp). Forbidden in shipped default flows."
+    },
+    {
+      "id": "OPEN_WINDOW",
+      "category": "UI",
+      "label": "Open Window",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "x",
+          "type": "number"
+        },
+        {
+          "key": "y",
+          "type": "number"
+        },
+        {
+          "key": "w",
+          "type": "number"
+        },
+        {
+          "key": "h",
+          "type": "number"
+        },
+        {
+          "key": "title",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Opens a UI window."
+    },
+    {
+      "id": "CLOSE_WINDOW",
+      "category": "UI",
+      "label": "Close Window",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Closes a UI window."
+    },
+    {
+      "id": "SET_LIST",
+      "category": "UI",
+      "label": "Set List",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "items",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets the list items for a window."
+    },
+    {
+      "id": "SET_TEXT",
+      "category": "UI",
+      "label": "Set Text",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "text",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets the text content for a window."
+    },
+    {
+      "id": "SET_CURSOR",
+      "category": "UI",
+      "label": "Set Cursor",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "index",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets the cursor position."
+    },
+    {
+      "id": "FOCUS_WINDOW",
+      "category": "UI",
+      "label": "Focus Window",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Focuses a UI window."
+    },
+    {
+      "id": "PLAY_ANIM",
+      "category": "UI",
+      "label": "Play Animation",
+      "params": [
+        {
+          "key": "id",
+          "type": "text"
+        },
+        {
+          "key": "anim",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Plays a UI animation."
+    },
+    {
+      "id": "WAIT",
+      "category": "UI",
+      "label": "Wait",
+      "params": [
+        {
+          "key": "time",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Waits for a given amount of time."
     }
   ],
   "elementRules": {
@@ -1227,5 +1392,9 @@
       "usesDataId": false,
       "description": "Multiplies experience gained (0.5 = +50%)."
     }
-  ]
+  ],
+  "windowLayout": {
+    "headerSpacing": 4,
+    "rightPaddingTileOffset": 1
+  }
 }

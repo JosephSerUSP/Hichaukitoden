@@ -1,4 +1,9 @@
 local config = require("engine.config")
+local json = require("data.json")
+local engineData
+if love.filesystem.getInfo("data/engine.json") then
+    engineData = json.decode(love.filesystem.read("data/engine.json"))
+end
 
 local ui = {}
 
@@ -198,10 +203,9 @@ function ui.drawPanel(x, y, w, h, title)
     
     -- Draw title header if specified
     if title then
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.rectangle("fill", x + 8, y + 6, w - 16, 14)
+        local headerSpacing = (engineData and engineData.windowLayout and engineData.windowLayout.headerSpacing) or 0
         love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + 12, y + 7)
+        ui.drawString(title, x + 12, y + 6 + headerSpacing)
     end
     
     love.graphics.pop()
@@ -224,6 +228,11 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
         parsedText = string.gsub(parsedText, "\\eventName", string.gsub(eventName, "%%", "%%%%"))
     else
         parsedText = string.gsub(parsedText, "\\eventName", "")
+    end
+
+    if alignment == "right" then
+        local padding = (engineData and engineData.windowLayout and engineData.windowLayout.rightPaddingTileOffset) or 1
+        limit = limit - (padding * ui.tileSize)
     end
 
     if not string.find(parsedText, "\\c%[") then
