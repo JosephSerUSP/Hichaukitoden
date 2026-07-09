@@ -282,50 +282,46 @@
             }
         }
 
-        let activeFlowsSubTab = 'phases'; // 'phases' or 'scenes'
-        let activeSceneId = null;
+        let activeSceneId = 'battle'; // string for phase flow, number for custom scene
+        let activeFlowPhase = null;
 
-        function renderFlowsAndScenesContainer(panel, header) {
-            panel.innerHTML = '';
-            
-            const subTabs = document.createElement('div');
-            subTabs.style.cssText = 'display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
-            
-            const btnPhases = document.createElement('button');
-            btnPhases.className = 'db-tab-btn' + (activeFlowsSubTab === 'phases' ? ' active' : '');
-            btnPhases.textContent = 'Phase Flows';
-            btnPhases.onclick = () => {
-                activeFlowsSubTab = 'phases';
-                renderFlowsAndScenesContainer(panel, header);
-            };
-            
-            const btnScenes = document.createElement('button');
-            btnScenes.className = 'db-tab-btn' + (activeFlowsSubTab === 'scenes' ? ' active' : '');
-            btnScenes.textContent = 'Custom Scenes';
-            btnScenes.onclick = () => {
-                activeFlowsSubTab = 'scenes';
-                renderFlowsAndScenesContainer(panel, header);
-            };
-            
-            subTabs.appendChild(btnPhases);
-            subTabs.appendChild(btnScenes);
-            panel.appendChild(subTabs);
-            
-            if (activeFlowsSubTab === 'phases') {
-                header.textContent = 'Phase Flows';
-                renderFlowsTab(panel, header);
-            } else {
-                header.textContent = 'Custom Scenes';
-                renderScenesSection(panel, header);
-            }
+        const KNOWN_PHASES_BY_SCENE = {
+            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
+        };
+        const SCENE_HOOKS = ['on_enter', 'on_frame', 'on_exit', 'on_up', 'on_down', 'on_left', 'on_right', 'on_select', 'on_cancel'];
+
+        function flowScenes() {
+            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
+            return scenes.length ? scenes : ['battle'];
         }
 
-        function renderScenesSection(panel, header) {
+        function flowPhasesForScene(scene) {
+            if (typeof scene === 'number') {
+                const s = (dbPayload.scenes || []).find(x => x.id === scene);
+                if (!s) return SCENE_HOOKS;
+                const existing = Object.keys(s.hooks || {});
+                const seen = {};
+                const out = [];
+                SCENE_HOOKS.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
+                return out;
+            }
+            const known = KNOWN_PHASES_BY_SCENE[scene] || [];
+            const existing = Object.keys((dbPayload.flows || {})[scene] || {});
+            const seen = {};
+            const out = [];
+            known.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
+            return out;
+        }
+
+        function renderFlowsAndScenesContainer(panel, header) {
+            header.textContent = 'Flows & Scenes';
+            dbPayload.flows = dbPayload.flows || {};
             dbPayload.scenes = dbPayload.scenes || [];
             
             const mainContainer = document.createElement('div');
-            mainContainer.style.cssText = 'display: flex; gap: 8px; height: 350px; overflow: hidden;';
+            mainContainer.style.cssText = 'display: flex; gap: 8px; height: 100%; overflow: hidden;';
             
+            // --- LEFT COLUMN: SCENE LIST ---
             const listCol = document.createElement('div');
             listCol.style.cssText = 'width: 140px; border-right: 1px solid var(--win-shadow); padding-right: 6px; display: flex; flex-direction: column; gap: 4px;';
             
@@ -334,6 +330,37 @@
             
             const renderList = () => {
                 listBox.innerHTML = '';
+
+                // 1. System Flows
+                const sysTitle = document.createElement('div');
+                sysTitle.style.cssText = 'font-weight: bold; font-size: 10px; color: var(--win-dark-shadow); padding: 2px; border-bottom: 1px solid var(--win-shadow); margin-bottom: 2px;';
+                sysTitle.textContent = 'System Flows';
+                listBox.appendChild(sysTitle);
+
+                flowScenes().forEach((sc) => {
+                    const row = document.createElement('div');
+                    row.className = 'tree-node-header' + (sc === activeSceneId ? ' active' : '');
+                    row.style.cssText = 'padding: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 11px;';
+
+                    const spanName = document.createElement('span');
+                    spanName.textContent = `[flow] ${sc}`;
+                    row.appendChild(spanName);
+
+                    row.onclick = (e) => {
+                        if (e.target.tagName === 'BUTTON') return;
+                        activeSceneId = sc;
+                        activeFlowPhase = null;
+                        setEngineTab('flows');
+                    };
+                    listBox.appendChild(row);
+                });
+
+                // 2. Custom Scenes
+                const sceneTitle = document.createElement('div');
+                sceneTitle.style.cssText = 'font-weight: bold; font-size: 10px; color: var(--win-dark-shadow); padding: 2px; border-bottom: 1px solid var(--win-shadow); margin-top: 6px; margin-bottom: 2px;';
+                sceneTitle.textContent = 'Custom Scenes';
+                listBox.appendChild(sceneTitle);
+
                 dbPayload.scenes.forEach((sc) => {
                     const row = document.createElement('div');
                     row.className = 'tree-node-header' + (sc.id === activeSceneId ? ' active' : '');
@@ -345,16 +372,17 @@
                     
                     const delBtn = makeRowDeleteBtn(() => {
                         dbPayload.scenes = dbPayload.scenes.filter(s => s.id !== sc.id);
-                        if (activeSceneId === sc.id) activeSceneId = null;
+                        if (activeSceneId === sc.id) activeSceneId = 'battle';
                         setDirty(true);
-                        renderScenesSection(panel, header);
+                        setEngineTab('flows');
                     });
                     row.appendChild(delBtn);
                     
                     row.onclick = (e) => {
                         if (e.target.tagName === 'BUTTON') return;
                         activeSceneId = sc.id;
-                        renderScenesSection(panel, header);
+                        activeFlowPhase = null;
+                        setEngineTab('flows');
                     };
                     listBox.appendChild(row);
                 });
@@ -382,86 +410,124 @@
                         ],
                         timing: { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 },
                         terms: { title: 'Item Creation', yieldText: 'Expected Yield: {0}', resultText: 'Crafted: {0}!' }
-                    }
+                    },
+                    hooks: {}
                 };
                 dbPayload.scenes.push(newScene);
                 activeSceneId = nextId;
+                activeFlowPhase = null;
                 setDirty(true);
-                renderScenesSection(panel, header);
+                setEngineTab('flows');
             });
             listCol.appendChild(addBtn);
             mainContainer.appendChild(listCol);
             
-            const configCol = document.createElement('div');
-            configCol.style.cssText = 'flex: 1; overflow-y: auto; padding-left: 4px; display: flex; flex-direction: column; gap: 8px;';
+            // --- RIGHT COLUMN: CONFIG & HOOKS/PHASES ---
+            const rightCol = document.createElement('div');
+            rightCol.style.cssText = 'flex: 1; overflow-y: auto; padding-left: 4px; display: flex; flex-direction: column; gap: 8px;';
             
-            if (activeSceneId === null && dbPayload.scenes.length > 0) {
-                activeSceneId = dbPayload.scenes[0].id;
+            // Ensure activeSceneId is valid
+            const isCustomScene = typeof activeSceneId === 'number';
+            if (isCustomScene && !dbPayload.scenes.find(s => s.id === activeSceneId)) {
+                activeSceneId = 'battle';
             }
             
-            const activeScene = dbPayload.scenes.find(s => s.id === activeSceneId);
-            if (activeScene) {
-                activeScene.config = activeScene.config || {};
+            if (typeof activeSceneId === 'number') {
+                renderSceneConfigAndHooks(rightCol, header, activeSceneId);
+            } else {
+                renderFlowPhases(rightCol, header, activeSceneId);
+            }
+
+            mainContainer.appendChild(rightCol);
+            panel.appendChild(mainContainer);
+        }
+
+        function renderSceneConfigAndHooks(rightCol, header, sceneId) {
+            const activeScene = dbPayload.scenes.find(s => s.id === sceneId);
+            if (!activeScene) return;
+            activeScene.config = activeScene.config || {};
+            activeScene.hooks = activeScene.hooks || {};
+
+            // 1. Config Panel (Collapsible/Small)
+            const configFieldset = document.createElement('fieldset');
+            configFieldset.style.cssText = 'padding: 6px; margin-bottom: 8px; border: 1px solid var(--win-shadow);';
+            const configLegend = document.createElement('legend');
+            configLegend.style.cssText = 'cursor: pointer; user-select: none; color: var(--title-blue);';
+            configLegend.textContent = '▼ Scene Config (Click to toggle)';
+            configFieldset.appendChild(configLegend);
+
+            const configContainer = document.createElement('div');
+            configContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 6px; max-height: 250px; overflow-y: auto;';
+            configFieldset.appendChild(configContainer);
+
+            let configOpen = false;
+            configContainer.style.display = 'none';
+            configLegend.textContent = '▶ Scene Config (Click to toggle)';
+            configLegend.onclick = () => {
+                configOpen = !configOpen;
+                configContainer.style.display = configOpen ? 'flex' : 'none';
+                configLegend.textContent = configOpen ? '▼ Scene Config (Click to toggle)' : '▶ Scene Config (Click to toggle)';
+            };
+
+            const createField = (labelVal, value, onChange, type = 'text', helpType = null) => {
+                const row = document.createElement('div');
+                row.className = 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = labelVal;
+                row.appendChild(lbl);
                 
-                const createField = (labelVal, value, onChange, type = 'text', helpType = null) => {
-                    const row = document.createElement('div');
-                    row.className = 'form-group field-inline';
-                    const lbl = document.createElement('label');
-                    lbl.textContent = labelVal;
-                    row.appendChild(lbl);
-                    
-                    const input = document.createElement('input');
-                    input.className = 'win98-input';
-                    input.style.flex = '1';
-                    input.value = value !== undefined ? value : '';
-                    input.type = type;
-                    input.oninput = () => {
-                        onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
-                        setDirty(true);
-                    };
-                    row.appendChild(input);
-                    
-                    if (helpType) {
-                        const btnHelp = document.createElement('button');
-                        btnHelp.className = 'win98-btn';
-                        btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold;';
-                        btnHelp.textContent = 'ⓘ';
-                        btnHelp.onclick = (e) => {
-                            e.preventDefault();
-                            showParamHelpPopover(btnHelp, helpType);
-                        };
-                        row.appendChild(btnHelp);
-                    }
-                    configCol.appendChild(row);
-                };
-                
-                createField('Scene Name:', activeScene.name, (v) => {
-                    activeScene.name = v;
-                    renderList();
-                });
-                
-                const kindRow = document.createElement('div');
-                kindRow.className = 'form-group field-inline';
-                const kindLbl = document.createElement('label');
-                kindLbl.textContent = 'Scene Kind:';
-                kindRow.appendChild(kindLbl);
-                const kindSelect = makeSelect(['crafting'], activeScene.kind || 'crafting', (v) => {
-                    activeScene.kind = v;
+                const input = document.createElement('input');
+                input.className = 'win98-input';
+                input.style.flex = '1';
+                input.value = value !== undefined ? value : '';
+                input.type = type;
+                input.oninput = () => {
+                    onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
                     setDirty(true);
-                });
-                kindSelect.style.flex = '1';
-                kindRow.appendChild(kindSelect);
-                configCol.appendChild(kindRow);
+                };
+                row.appendChild(input);
                 
-                createField('Alpha Coefficient:', activeScene.config.alpha, (v) => { activeScene.config.alpha = v; }, 'number');
-                createField('Yield Formula:', activeScene.config.yieldFormula, (v) => { activeScene.config.yieldFormula = v; }, 'text', 'formula');
-                createField('Penalty Formula:', activeScene.config.penaltyFormula, (v) => { activeScene.config.penaltyFormula = v; }, 'text', 'formula');
-                createField('Anomaly Formula:', activeScene.config.anomalyFormula, (v) => { activeScene.config.anomalyFormula = v; }, 'text', 'formula');
-                
-                const timingTitle = document.createElement('div');
+                if (helpType) {
+                    const btnHelp = document.createElement('button');
+                    btnHelp.className = 'win98-btn';
+                    btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold;';
+                    btnHelp.textContent = 'ⓘ';
+                    btnHelp.onclick = (e) => {
+                        e.preventDefault();
+                        showParamHelpPopover(btnHelp, helpType);
+                    };
+                    row.appendChild(btnHelp);
+                }
+                configContainer.appendChild(row);
+            };
+
+            createField('Scene Name:', activeScene.name, (v) => {
+                activeScene.name = v;
+                setEngineTab('flows');
+            });
+
+            const kindRow = document.createElement('div');
+            kindRow.className = 'form-group field-inline';
+            const kindLbl = document.createElement('label');
+            kindLbl.textContent = 'Scene Kind:';
+            kindRow.appendChild(kindLbl);
+            const kindSelect = makeSelect(['crafting'], activeScene.kind || 'crafting', (v) => {
+                activeScene.kind = v;
+                setDirty(true);
+            });
+            kindSelect.style.flex = '1';
+            kindRow.appendChild(kindSelect);
+            configContainer.appendChild(kindRow);
+
+            createField('Alpha Coefficient:', activeScene.config.alpha, (v) => { activeScene.config.alpha = v; }, 'number');
+            createField('Yield Formula:', activeScene.config.yieldFormula, (v) => { activeScene.config.yieldFormula = v; }, 'text', 'formula');
+            createField('Penalty Formula:', activeScene.config.penaltyFormula, (v) => { activeScene.config.penaltyFormula = v; }, 'text', 'formula');
+            createField('Anomaly Formula:', activeScene.config.anomalyFormula, (v) => { activeScene.config.anomalyFormula = v; }, 'text', 'formula');
+
+            const timingTitle = document.createElement('div');
                 timingTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
                 timingTitle.textContent = 'Timing Configuration';
-                configCol.appendChild(timingTitle);
+                configContainer.appendChild(timingTitle);
                 
                 activeScene.config.timing = activeScene.config.timing || { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 };
                 createField('Initial Delay (s):', activeScene.config.timing.initialDelay, (v) => { activeScene.config.timing.initialDelay = v; }, 'number');
@@ -472,7 +538,7 @@
                 const discTitle = document.createElement('div');
                 discTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
                 discTitle.textContent = 'Disciplines';
-                configCol.appendChild(discTitle);
+                configContainer.appendChild(discTitle);
                 
                 const discBox = makeListBox();
                 const renderDiscs = () => {
@@ -529,12 +595,12 @@
                     }));
                 };
                 renderDiscs();
-                configCol.appendChild(discBox);
+                configContainer.appendChild(discBox);
                 
                 const brTitle = document.createElement('div');
                 brTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
                 brTitle.textContent = 'Outcome Brackets';
-                configCol.appendChild(brTitle);
+                configContainer.appendChild(brTitle);
                 
                 const brBox = makeListBox();
                 const renderBrackets = () => {
@@ -585,82 +651,38 @@
                     }));
                 };
                 renderBrackets();
-                configCol.appendChild(brBox);
+                configContainer.appendChild(brBox);
                 
                 const termsTitle = document.createElement('div');
                 termsTitle.style.cssText = 'font-weight: bold; margin-top: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--win-shadow);';
                 termsTitle.textContent = 'Terms / Text Keys';
-                configCol.appendChild(termsTitle);
+                configContainer.appendChild(termsTitle);
                 
                 activeScene.config.terms = activeScene.config.terms || {};
                 const termKeys = ['title', 'selectDiscipline', 'selectCrafter', 'selectIngredients', 'yieldText', 'anomalyText', 'craftBtn', 'cancelBtn', 'resultText'];
                 termKeys.forEach(tKey => {
                     createField(`Text [${tKey}]:`, activeScene.config.terms[tKey], (v) => { activeScene.config.terms[tKey] = v; });
                 });
-            } else {
-                const empty = document.createElement('div');
-                empty.style.cssText = 'font-style: italic; color: var(--win-dark-shadow); padding: 20px;';
-                empty.textContent = 'No scenes defined. Click "+ Create Scene" to start.';
-                configCol.appendChild(empty);
-            }
             
-            mainContainer.appendChild(configCol);
-            panel.appendChild(mainContainer);
+            rightCol.appendChild(configFieldset);
+
+            // 2. Scene Hooks as Phases
+            renderPhaseTabsAndList(rightCol, header, sceneId, activeScene.hooks, 'scene');
         }
 
-        // --- FLOWS TAB (SPEC A6 / S4) ---
-        // scene select -> phase select, each phase badged "has data" (overrides
-        // the legacy Lua block) or "legacy" (falls back to it, per S4's
-        // fallback rule). Editing a phase uses the same registry-driven
-        // renderCommandList as map/common events, with hostCtx 'battle_phase'
-        // so the palette only offers non-interactive commands valid there.
-        let activeFlowScene = 'battle';
-        let activeFlowPhase = null;
-
-        // v1 phase names (SPEC S4); union'd with whatever's actually present so
-        // a future phase added directly to flows.json still shows up.
-        const KNOWN_PHASES_BY_SCENE = {
-            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
-        };
-
-        function flowScenes() {
-            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
-            return scenes.length ? scenes : ['battle'];
+        function renderFlowPhases(rightCol, header, flowId) {
+            dbPayload.flows[flowId] = dbPayload.flows[flowId] || {};
+            renderPhaseTabsAndList(rightCol, header, flowId, dbPayload.flows[flowId], 'battle_phase');
         }
 
-        function flowPhasesForScene(scene) {
-            const known = KNOWN_PHASES_BY_SCENE[scene] || [];
-            const existing = Object.keys((dbPayload.flows || {})[scene] || {});
-            const seen = {};
-            const out = [];
-            known.concat(existing).forEach(p => { if (!seen[p]) { seen[p] = true; out.push(p); } });
-            return out;
-        }
-
-        function renderFlowsTab(panel, header) {
-            const scenes = flowScenes();
-            if (!scenes.includes(activeFlowScene)) activeFlowScene = scenes[0];
-
-            const sceneRow = document.createElement('div');
-            sceneRow.style.cssText = 'display: flex; gap: 6px; align-items: center; margin-bottom: 8px;';
-            const sceneLabel = document.createElement('label');
-            sceneLabel.textContent = 'Scene:';
-            sceneRow.appendChild(sceneLabel);
-            const sceneSelect = makeSelect(scenes, activeFlowScene, (v) => {
-                activeFlowScene = v;
-                activeFlowPhase = null;
-                setEngineTab('flows');
-            }, null);
-            sceneRow.appendChild(sceneSelect);
-            panel.appendChild(sceneRow);
-
-            const phases = flowPhasesForScene(activeFlowScene);
+        function renderPhaseTabsAndList(container, header, sceneId, hooksObj, hostCtx) {
+            const phases = flowPhasesForScene(sceneId);
             if (!activeFlowPhase || !phases.includes(activeFlowPhase)) activeFlowPhase = phases[0];
 
             const phaseTabs = document.createElement('div');
             phaseTabs.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
             phases.forEach(phase => {
-                const hasData = !!((dbPayload.flows[activeFlowScene] || {})[phase]);
+                const hasData = !!hooksObj[phase];
                 const btn = document.createElement('button');
                 btn.className = 'db-tab-btn' + (phase === activeFlowPhase ? ' active' : '');
                 btn.style.fontSize = '10px';
@@ -668,19 +690,18 @@
                 btn.onclick = () => { activeFlowPhase = phase; setEngineTab('flows'); };
                 phaseTabs.appendChild(btn);
             });
-            panel.appendChild(phaseTabs);
+            container.appendChild(phaseTabs);
 
             if (!activeFlowPhase) return;
 
-            dbPayload.flows[activeFlowScene] = dbPayload.flows[activeFlowScene] || {};
-            const hasData = !!dbPayload.flows[activeFlowScene][activeFlowPhase];
+            const hasData = !!hooksObj[activeFlowPhase];
 
             const infoRow = document.createElement('div');
             infoRow.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 6px;';
             infoRow.textContent = hasData
-                ? 'This phase has data and overrides the legacy Lua block.'
-                : 'This phase has no data yet — the engine falls back to its legacy Lua block (S4). Create an override to edit it here.';
-            panel.appendChild(infoRow);
+                ? 'This phase/hook has data and overrides the legacy Lua block.'
+                : 'This phase/hook has no data yet — the engine falls back to its legacy Lua block. Create an override to edit it here.';
+            container.appendChild(infoRow);
 
             if (!hasData) {
                 const activateBtn = document.createElement('button');
@@ -688,34 +709,39 @@
                 activateBtn.style.cssText = 'margin-bottom: 8px; align-self: flex-start;';
                 activateBtn.textContent = '+ Create Override';
                 activateBtn.onclick = () => {
-                    dbPayload.flows[activeFlowScene][activeFlowPhase] = [];
+                    hooksObj[activeFlowPhase] = [];
                     setDirty(true);
                     setEngineTab('flows');
                 };
-                panel.appendChild(activateBtn);
+                container.appendChild(activateBtn);
                 return;
             }
 
             const listBox = document.createElement('div');
-            listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 200px; max-height: 320px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px;';
-            const phaseCommands = dbPayload.flows[activeFlowScene][activeFlowPhase];
-            const rerenderPhase = () => { setDirty(true); renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase'); };
-            renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase');
-            panel.appendChild(listBox);
+            listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 200px; max-height: 320px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px; flex: 1;';
+            const phaseCommands = hooksObj[activeFlowPhase];
+
+            // Pass the correct hostCtx depending on whether it's a custom scene ('scene') or phase flow ('battle_phase')
+            const rerenderPhase = () => { setDirty(true); renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, hostCtx); };
+            renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, hostCtx);
+            container.appendChild(listBox);
 
             const removeBtn = document.createElement('button');
             removeBtn.className = 'win98-btn';
             removeBtn.style.cssText = 'margin-top: 6px; align-self: flex-start; font-size: 10px;';
             removeBtn.textContent = 'Remove Override (revert to legacy)';
             removeBtn.onclick = () => {
-                delete dbPayload.flows[activeFlowScene][activeFlowPhase];
+                delete hooksObj[activeFlowPhase];
                 setDirty(true);
                 setEngineTab('flows');
             };
-            panel.appendChild(removeBtn);
+            container.appendChild(removeBtn);
 
-            attachJsonToggle(header, panel, phaseCommands, () => setEngineTab('flows'));
+            // This adds the { } JSON toggle for the currently selected hook/phase
+            attachJsonToggle(header, container, phaseCommands, () => setEngineTab('flows'));
         }
+
+
 
         // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---
         let damagePopupSnapshot = null;
