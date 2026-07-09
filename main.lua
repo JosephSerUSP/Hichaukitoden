@@ -68,7 +68,6 @@ local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
-local goldenUISceneKey = nil
 local triggerTestBattle
 local runValidation
 
@@ -129,61 +128,106 @@ end
 
 -- Golden-master battle log validation
 
-local function runGoldenUI(sceneKey)
+-- Golden-master UI log validation: drives a scripted input sequence through
+-- each scene in the registry via scene_host, capturing the normalized UI
+-- event log. Events are logged in `window|action|target|value` format between
+-- UI GOLDEN BEGIN/END markers (matching the pattern used by capture scripts).
+local function runGoldenUI()
+    math.randomseed(12345)
+
     local vSession = session.GameSession.new(loader)
     vSession:initializeStartingParty()
+
+    -- Give inventory items so crafting scenes have ingredients to select
+    for _, item in ipairs(loader.items or {}) do
+        if item.meta and item.meta.craftKind then
+            vSession:addItem(item.id, 3)
+        end
+    end
+    vSession:addItem(1, 5) -- HP Tonic
 
     local scene_host = require("engine.scene_host")
     local interpreter = require("engine.interpreter")
 
     local originalRunImmediate = interpreter.runImmediate
-    local uiEvents = {}
 
-    local function logEvents(events)
-        if not events then return end
-        for _, ev in ipairs(events) do
-            if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
-                local w = ev.windowId or ""
-                local a = ev.type or ""
-                local t = ""
-                local v = ""
-                if ev.type == "set_text" then v = tostring(ev.text)
-                elseif ev.type == "set_list" then v = tostring(ev.listId)
-                elseif ev.type == "set_cursor" then v = tostring(ev.index) end
-                table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
-            end
-        end
-    end
-
-    interpreter.runImmediate = function(cmds, ctx)
-        local events = originalRunImmediate(cmds, ctx)
-        logEvents(events)
-        -- In some versions runImmediate returns the events, but they are also in ctx.events
-        logEvents(ctx.events)
-        return events
-    end
-
-    local ctx = {
-        session = vSession,
-        loader = loader,
-        events = {} -- Ensure events array exists
+    -- Scene-specific input scripts: a list of { key } steps that drive
+    -- the scene's state machine through scene_host.keypressed().
+    local sceneScripts = {
+        crafting = {
+            { key = "return" },
+            { key = "down" },
+            { key = "return" },
+            { key = "down" },
+            { key = "return" },
+            { key = "return" },
+            { key = "escape" },
+            { key = "escape" },
+            { key = "escape" },
+        }
     }
 
-    scene_host.init(sceneKey)
+    for _, sceneDef in ipairs(loader.scenes or {}) do
+        local sceneKey = sceneDef.kind
+        if not sceneKey then goto continue end
 
-    -- Drive sequence: update, down, down, return, escape, escape
-    scene_host.update(0.1, ctx)
-    scene_host.keypressed("down", ctx)
-    scene_host.keypressed("down", ctx)
-    scene_host.keypressed("return", ctx)
-    scene_host.keypressed("escape", ctx)
-    scene_host.keypressed("escape", ctx)
+        local uiEvents = {}
+        local currentCtx = {
+            session = vSession,
+            loader = loader,
+            events = {}
+        }
 
-    print("UI GOLDEN BEGIN")
-    for _, l in ipairs(uiEvents) do
-        print(l)
+        local function logEvents(events)
+            if not events then return end
+            for _, ev in ipairs(events) do
+                if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
+                    local w = ev.windowId or ""
+                    local a = ev.type or ""
+                    local t = ""
+                    local v = ""
+                    if ev.type == "set_text" then v = tostring(ev.text)
+                    elseif ev.type == "set_list" then v = tostring(ev.listId)
+                    elseif ev.type == "set_cursor" then v = tostring(ev.index) end
+                    table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
+                end
+            end
+        end
+
+        interpreter.runImmediate = function(cmds, ctx)
+            local events = originalRunImmediate(cmds, ctx)
+            logEvents(events)
+            logEvents(ctx.events)
+            return events
+        end
+
+        scene_host.init(sceneKey)
+
+        -- Drive the scripted input sequence
+        local script = sceneScripts[sceneKey] or {}
+        for _, step in ipairs(script) do
+            scene_host.update(0.1, currentCtx)
+            scene_host.keypressed(step.key, currentCtx)
+        end
+
+        print("UI GOLDEN BEGIN")
+        print(string.format("scene|%s|name|%s", tostring(sceneDef.id), sceneDef.name or ""))
+
+        -- Log hook presence; captured events from hook execution/render
+        -- will appear in the intercepted runImmediate log below.
+        if sceneDef.hooks and next(sceneDef.hooks) then
+            local hookCtx = { session = vSession, loader = loader, party = vSession.party, events = {} }
+            scene_host.runHook("on_enter", hookCtx)
+        else
+            print(string.format("scene|%s|hook|on_enter:absent", sceneKey))
+        end
+
+        for _, l in ipairs(uiEvents) do
+            print(l)
+        end
+        print("UI GOLDEN END")
     end
-    print("UI GOLDEN END")
+    ::continue::
 
     interpreter.runImmediate = originalRunImmediate
 end
@@ -945,10 +989,6 @@ function love.load(arg)
                 isGoldenMode = true
             elseif val == "golden-ui" then
                 isGoldenUIMode = true
-                if i < #arg then
-                    goldenUISceneKey = arg[i+1]
-                    i = i + 1
-                end
             end
             i = i + 1
         end
@@ -962,7 +1002,7 @@ function love.load(arg)
         if isGoldenMode then
             ok, err = pcall(runGolden)
         elseif isGoldenUIMode then
-            ok, err = pcall(runGoldenUI, goldenUISceneKey)
+            ok, err = pcall(runGoldenUI)
         else
             ok, err = pcall(runValidation)
         end
