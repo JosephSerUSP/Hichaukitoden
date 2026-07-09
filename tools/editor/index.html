@@ -1124,7 +1124,7 @@
 
     <!-- --- ASSET FILE PICKER MODAL --- -->
     <div id="asset-picker-modal" class="modal-overlay" style="z-index: 1300;">
-        <div class="window outset-bevel" style="width: 450px;">
+        <div class="window outset-bevel" style="width: 500px;">
             <div class="title-bar">
                 <div class="title-bar-text">Select Asset File</div>
                 <div class="title-bar-controls">
@@ -1139,15 +1139,23 @@
                 
                 <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 200px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
                 
-                <div class="field-row-stacked">
-                    <label>Selected File Path:</label>
-                    <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" />
+
+                <div style="display: flex; gap: 8px;">
+                    <div style="width: 128px; height: 128px; border: 1px inset var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                        <img id="asset-picker-preview" style="max-width: 100%; max-height: 100%; image-rendering: pixelated; display: none;" />
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="field-row-stacked" style="flex: 1;">
+                            <label>Selected File Path:</label>
+                            <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" readonly />
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
+                            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
+                            <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
+                        </div>
+                    </div>
                 </div>
-                
-                <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
-                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
-                    <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
-                </div>
+
             </div>
         </div>
     </div>

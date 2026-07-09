@@ -1,15 +1,21 @@
-function createIconField(container, labelText, value, onChange) {
+function createIconField(container, labelText, value, onChange, useBlockLayout = true) {
     const group = document.createElement('div');
-    group.className = 'form-group';
-    group.style.display = 'flex';
-    group.style.alignItems = 'center';
-    group.style.gap = '8px';
+    group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+    if (!useBlockLayout) { group.style.display = 'flex';   }
+
+
 
     const lbl = document.createElement('label');
     lbl.textContent = labelText;
     lbl.style.marginBottom = '0';
     lbl.style.minWidth = '80px';
     group.appendChild(lbl);
+
+    const innerContainer = document.createElement('div');
+    innerContainer.style.display = 'flex';
+    innerContainer.style.alignItems = 'center';
+    innerContainer.style.gap = '8px';
+    group.appendChild(innerContainer);
 
     const swatch = document.createElement('div');
     swatch.style.width = '24px';
@@ -29,12 +35,12 @@ function createIconField(container, labelText, value, onChange) {
         swatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
     }
     updateSwatch(value);
-    group.appendChild(swatch);
+    innerContainer.appendChild(swatch);
 
     const idLabel = document.createElement('span');
     idLabel.textContent = `ID: ${value || 0}`;
     idLabel.style.minWidth = '40px';
-    group.appendChild(idLabel);
+    innerContainer.appendChild(idLabel);
 
     const btn = document.createElement('button');
     btn.className = 'win-btn outset-bevel';
@@ -51,7 +57,7 @@ function createIconField(container, labelText, value, onChange) {
             btn.dispatchEvent(evt);
         });
     };
-    group.appendChild(btn);
+    innerContainer.appendChild(btn);
 
     container.appendChild(group);
 }

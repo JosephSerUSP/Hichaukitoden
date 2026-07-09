@@ -2,7 +2,7 @@
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
 
-        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
+        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = true, defaultDir = 'sprites', isBareKey = false) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 
@@ -15,11 +15,35 @@
             thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
 
             const img = document.createElement('img');
-            img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
+            img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated; cursor: pointer;';
+            img.ondblclick = () => {
+                openAssetPicker(defaultDir, path => {
+                    if (isBareKey) {
+                        const parts = path.replace(/\\/g, '/').split('/');
+                        const filename = parts.pop();
+                        path = filename.replace(/\.[^/.]+$/, ""); // remove extension
+                    }
+                    input.value = path;
+                    updateThumb(path);
+                    onChange(path);
+                });
+            };
 
             const noneTxt = document.createElement('div');
-            noneTxt.style.cssText = 'color: #888; font-size: 9px; font-family: monospace;';
+            noneTxt.style.cssText = 'color: #888; font-size: 9px; font-family: monospace; cursor: pointer;';
             noneTxt.textContent = '(none)';
+            noneTxt.ondblclick = () => {
+                openAssetPicker(defaultDir, path => {
+                    if (isBareKey) {
+                        const parts = path.replace(/\\/g, '/').split('/');
+                        const filename = parts.pop();
+                        path = filename.replace(/\.[^/.]+$/, ""); // remove extension
+                    }
+                    input.value = path;
+                    updateThumb(path);
+                    onChange(path);
+                });
+            };
 
             // A missing/broken sprite falls back to the (none) placeholder
             // rather than the browser's broken-image glyph.
@@ -81,6 +105,11 @@
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
+            document.getElementById('asset-picker-preview').style.display = 'none';
+            if (window.assetPreviewInterval) {
+                clearInterval(window.assetPreviewInterval);
+                window.assetPreviewInterval = null;
+            }
 
             fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
@@ -148,6 +177,49 @@
                     document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
                     card.style.border = '2px solid var(--win-blue)';
                     document.getElementById('asset-picker-selected').value = f;
+
+                    const previewImg = document.getElementById('asset-picker-preview');
+
+                    // Simple animation if it looks like a spritesheet
+                    if (window.assetPreviewInterval) {
+                        clearInterval(window.assetPreviewInterval);
+                        window.assetPreviewInterval = null;
+                    }
+
+                    previewImg.style.objectFit = 'contain';
+                    previewImg.style.objectPosition = 'center';
+                    previewImg.style.width = '100%';
+                    previewImg.style.height = '100%';
+
+                    // Clear any previous onload handler
+                    previewImg.onload = null;
+
+                    // Basic heuristic: if it's in sprites/characters, it's 3x4 grid
+                    const dir = document.getElementById('asset-picker-dir').value;
+                    if (dir === 'sprites/characters' || dir.includes('characters')) {
+                        previewImg.onload = () => {
+                            const frameW = previewImg.naturalWidth / 3;
+                            const frameH = previewImg.naturalHeight / 4;
+
+                            // Use fixed size for animation window if we want to crop
+                            previewImg.style.width = frameW + 'px';
+                            previewImg.style.height = frameH + 'px';
+                            previewImg.style.objectFit = 'none'; // so it doesn't scale
+
+                            let frame = 0;
+                            // walk cycle: 1, 0, 1, 2
+                            const seq = [1, 0, 1, 2];
+                            window.assetPreviewInterval = setInterval(() => {
+                                frame = (frame + 1) % 4;
+                                const col = seq[frame];
+                                const row = 0; // facing down
+                                previewImg.style.objectPosition = `-${col * frameW}px -${row * frameH}px`;
+                            }, 250);
+                        };
+                    }
+
+                    previewImg.src = '/' + f;
+                    previewImg.style.display = 'block';
                 };
 
                 grid.appendChild(card);
@@ -165,6 +237,11 @@
         }
 
         function closeAssetPicker() {
+            if (window.assetPreviewInterval) {
+                clearInterval(window.assetPreviewInterval);
+                window.assetPreviewInterval = null;
+            }
+            document.getElementById('asset-picker-preview').style.display = 'none';
             document.getElementById('asset-picker-modal').classList.remove('active');
         }
 
@@ -589,7 +666,7 @@
             container.appendChild(group);
         }
 
-        function createCheckboxField(container, labelText, checked, onChange) {
+        function createCheckboxField(container, labelText, checked, onChange, useBlockLayout = true) {
             const row = document.createElement('div');
             row.style.cssText = 'display: flex; align-items: center; gap: 6px; margin: 4px 0;';
             const chk = document.createElement('input');
@@ -1274,6 +1351,7 @@
                 buildEvolutionsEditor(formPanel, item);
 
             } else if (activeDbTab === 'items') {
+                createIconField(formPanel, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
 
                 const typeGroup = document.createElement('div');
@@ -1292,7 +1370,6 @@
                 const attrRow = document.createElement('div');
                 attrRow.className = 'form-row';
                 createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createIconField(attrRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
                 formPanel.appendChild(attrRow);
 
                 if (item.type === 'equipment') {
@@ -1321,6 +1398,7 @@
             } else if (activeDbTab === 'skills') {
                 const skill = dbPayload.skills[item.id];
                 if (!skill) return;
+                createIconField(formPanel, 'Icon', skill.icon || 0, val => { skill.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Name', skill.name || '', val => { skill.name = val; initDatabaseEditor(true); });
                 createFormField(formPanel, 'Description', skill.description || '', val => { skill.description = val; });
 
@@ -1353,10 +1431,10 @@
             } else if (activeDbTab === 'passives') {
                 const passive = dbPayload.passives[item.id];
                 if (!passive) return;
+                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1365,10 +1443,10 @@
             } else if (activeDbTab === 'states') {
                 const state = dbPayload.states[item.id];
                 if (!state) return;
+                createIconField(formPanel, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createIconField(stRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1379,8 +1457,8 @@
             } else if (activeDbTab === 'elements') {
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
-                createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
                 createIconField(formPanel, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
+                createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
                 buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
@@ -1781,7 +1859,7 @@
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = false) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = true) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 

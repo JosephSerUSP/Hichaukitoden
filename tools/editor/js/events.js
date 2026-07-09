@@ -326,8 +326,8 @@
                 return `Text: "${speakerPrefix}${cmd.text}"`;
             } else if (id === 'RECOVER_PARTY') {
                 return 'Recover Party';
-            } else if (id === 'DESCEND') {
-                return 'Descend Floor';
+            } else if (id === 'TELEPORT') {
+                return 'Teleport';
             } else if (id === 'BATTLE') {
                 return 'Start Battle';
             } else if (id === 'GIVE_ITEM') {
