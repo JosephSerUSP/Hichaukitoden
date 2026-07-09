@@ -237,7 +237,7 @@ function crafting.calcCraftYield(ctx)
         and i1.meta.craftElement ~= "" and i2.meta.craftElement ~= ""
         and i1.meta.craftElement ~= i2.meta.craftElement)
 
-    -- Roulette pool
+    -- Roulette pool, published as v.pool for the "v:pool" list source
     v.poolTargetIdx = v.poolTargetIdx or 0
     if #pool > 0 then
         v.poolSize = #pool
@@ -249,15 +249,16 @@ function crafting.calcCraftYield(ctx)
         local targetItem = pool[v.poolTargetIdx]
         v.resultItemId = targetItem and targetItem.id or 0
         v.resultItemName = targetItem and targetItem.name or ""
-        for pi, pitem in ipairs(pool) do
-            v["poolName" .. pi] = pitem.name or ""
-            v["poolIcon" .. pi] = pitem.icon or 0
+        v.pool = {}
+        for _, pitem in ipairs(pool) do
+            table.insert(v.pool, { name = pitem.name or "", icon = pitem.icon or 0 })
         end
     else
         v.poolSize = 0
         v.poolCurrentIdx = 0
         v.resultItemId = 0
         v.resultItemName = ""
+        v.pool = {}
     end
 
     -- 8. Roulette completion logic (state 5 only)
@@ -302,7 +303,9 @@ function crafting.calcCraftYield(ctx)
 end
 
 -- ---------------------------------------------------------------------------
--- Drawing — reads from scene state v (scene_host.getCurrentState().v)
+-- Legacy drawing (superseded by the generic window renderer; the crafting
+-- scene opts in with "draw": "windows" in scenes.json). Kept callable until
+-- D13 phase 2 deletes this module; main.lua no longer routes here.
 -- ---------------------------------------------------------------------------
 function drawCraftingScene()
     local stateObj = require("engine.scene_host").getCurrentState()

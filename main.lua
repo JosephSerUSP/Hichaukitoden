@@ -205,9 +205,33 @@ local function runGoldenUI()
 
         -- Drive the scripted input sequence
         local script = sceneDef.goldenScript or {}
+        local stepIndex = 0
         for _, step in ipairs(script) do
             scene_host.update(0.1, currentCtx)
             scene_host.keypressed(step.key, currentCtx)
+
+            -- Draw smoke test: scenes with declarative drawing exercise the
+            -- window renderer at every step so a bad binding fails validate,
+            -- not gameplay. Each step is rendered to an offscreen canvas and
+            -- saved to the LOVE save directory (golden_ui_<scene>_<step>.png)
+            -- for visual inspection. Prints stay outside the UI GOLDEN
+            -- markers, so reference logs are unaffected.
+            if sceneDef.draw == "windows" then
+                stepIndex = (stepIndex or 0) + 1
+                local okDraw, drawErr = pcall(function()
+                    local smokeCanvas = love.graphics.newCanvas(256, 240)
+                    love.graphics.setCanvas(smokeCanvas)
+                    love.graphics.clear(0, 0, 0, 1)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    scene_host.draw(currentCtx)
+                    love.graphics.setCanvas()
+                    smokeCanvas:newImageData():encode("png",
+                        string.format("golden_ui_%s_%02d.png", tostring(sceneId), stepIndex))
+                end)
+                if not okDraw then
+                    error("golden-ui draw smoke failed for scene '" .. tostring(sceneId) .. "': " .. tostring(drawErr), 0)
+                end
+            end
         end
 
         print("UI GOLDEN BEGIN")

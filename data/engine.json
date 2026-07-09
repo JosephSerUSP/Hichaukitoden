@@ -1442,9 +1442,10 @@
       "x": 0,
       "y": 3.5,
       "width": 32,
-      "height": 24,
+      "height": 5,
       "style": "panel",
-      "title": "Select Ingredients"
+      "title": "Select Ingredients",
+      "lineSpacing": 1
     },
     "inventory_list": {
       "x": 0,
@@ -1460,7 +1461,8 @@
       "width": 12,
       "height": 15.5,
       "style": "panel",
-      "title": "Item Info"
+      "title": "Item Info",
+      "lineSpacing": 2
     },
     "confirm_panel": {
       "x": 0,
@@ -1597,6 +1599,43 @@
       "height": 14,
       "style": "victory",
       "title": "Victory"
+    },
+    "craft_header": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 3.5,
+      "style": "panel",
+      "title": "Item Creation"
+    },
+    "discipline_detail": {
+      "x": 12,
+      "y": 3.5,
+      "width": 20,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Details"
+    },
+    "crafter_detail": {
+      "x": 12,
+      "y": 3.5,
+      "width": 20,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Crafter Stats",
+      "portrait": "sel('crafter_panel').spriteKey",
+      "portraitX": 1,
+      "portraitY": 2,
+      "textX": 8
+    },
+    "result_panel": {
+      "x": 4,
+      "y": 6,
+      "width": 24,
+      "height": 12,
+      "style": "frame",
+      "title": "Crafting Success!",
+      "contentY": 5
     }
   }
 }
