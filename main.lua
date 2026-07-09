@@ -651,6 +651,10 @@ runValidation = function()
 elseif paramDef.type == "script" then
                             local chunk, err = load(val, "validator", "t", {})
                             check(chunk ~= nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' script syntax error: " .. tostring(err))
+                        elseif paramDef.type == "text" then
+                            check(type(val) == "string" or type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string or array")
+                        elseif paramDef.type == "number" then
+                            check(type(val) == "number", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a number")
                         elseif paramDef.type == "term" then
                             -- Ensure it's a string, resolution is implicit as getTerm falls back to the key, but we check type
                             check(type(val) == "string", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a string term")
