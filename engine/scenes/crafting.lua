@@ -6,531 +6,459 @@ local interpreter = require("engine.interpreter")
 
 local crafting = {}
 
--- Scene States
--- 1 = select_discipline
--- 2 = select_crafter
--- 3 = select_ingredients (two slots: first selects i1, then i2)
--- 4 = confirm_craft
--- 5 = roulette
--- 6 = result
+-- Window definitions registered with scene_host for the crafting kind
+local windowDefs = {
+    discipline_panel = { type = "list", title = "Select Discipline:" },
+    crafter_panel = { type = "list", title = "Select Crafter:" },
+    ingredient_panel = { type = "panel", title = "Select Ingredients:" },
+    inventory_list = { type = "list", title = "Inventory", icon = true },
+    detail_panel = { type = "panel", title = "Item Info" },
+    confirm_panel = { type = "confirm", title = "Confirm Crafting" },
+    roulette_panel = { type = "roulette", title = "Crafting..." },
+}
 
-local state = 1
-local selectedDisciplineIdx = 1
-local selectedCrafterIdx = 1
-local selectedIngredient1Idx = 1
-local selectedIngredient2Idx = 1
-local cursorIngredientSlot = 1 -- 1 for i1, 2 for i2
-local confirmOptionIdx = 1 -- 1 = Craft, 2 = Back
-
--- State variables for choices
-local i1_item = nil
-local i2_item = nil
-local crafter_battler = nil
-
--- Roulette timing
-local rouletteTimer = 0
-local rouletteDelay = 0
-local rouletteStep = 0
-local roulettePool = {}
-local rouletteTargetIdx = 1
-local rouletteCurrentIdx = 1
-local isAnomaly = false
-local resultItem = nil
-
--- Cache list of items from inventory
-local inventoryItems = {}
-
-local function getDiscipline()
-    local scenesData = activeSession and activeSession.loader and activeSession.loader.scenes or {}
-    local craftScene = scenesData[1]
-    local config = craftScene and craftScene.config or {}
-    local disciplines = config.disciplines or {}
-    return disciplines[selectedDisciplineIdx]
+function crafting.registerKindWindows(host)
+    -- Register window definitions so scene_host knows the crafting scene's windows
+    -- This is called from scene_host.push() when a crafting scene is entered.
+    if host and host.register then
+        host.register("crafting", windowDefs)
+    end
 end
 
-local function getSceneConfig()
-    local scenesData = activeSession and activeSession.loader and activeSession.loader.scenes or {}
-    local craftScene = scenesData[1]
+-- Scene-state key map (mirrors what hooks set in ctx.v):
+--   v.state                    1=discipline, 2=crafter, 3=ingredients, 4=confirm, 5=roulette, 6=result
+--   v.selectedDisciplineIdx    current discipline list cursor
+--   v.selectedCrafterIdx       current crafter list cursor
+--   v.selectedIngredient1Idx   inventory cursor for ingredient slot 1
+--   v.selectedIngredient2Idx   inventory cursor for ingredient slot 2
+--   v.cursorSlot               1 or 2 (which ingredient slot is active)
+--   v.confirmOptionIdx         1=Craft, 2=Back
+--   v.i1_item_id               resolved item id for slot 1 (0 = none)
+--   v.i2_item_id               resolved item id for slot 2 (0 = none)
+--   v.crafterIdx               party index of selected crafter
+--   v.yieldScore               calculated yield score
+--   v.yieldAnomalyScore        anomaly-boosted score
+--   v.isAnomaly                true when anomaly triggered
+--   v.rouletteStep             roulette animation step counter
+--   v.rouletteDelay            current roulette delay
+
+-- Cached inventory list (rebuilt on state 3 entry via CALC_CRAFT_YIELD)
+local inventoryItems = {}
+
+-- ---------------------------------------------------------------------------
+-- Helpers that work against session / loader (no module-level state)
+-- ---------------------------------------------------------------------------
+
+local function getSceneConfig(ctx)
+    local loader = ctx and ctx.loader
+    if not loader and activeSession then loader = activeSession.loader end
+    local scenes = loader and loader.scenes or {}
+    local craftScene = scenes[1]
     return craftScene and craftScene.config or {}
 end
 
-local function refreshInventoryList(disc)
+local function getDiscipline(ctx)
+    local config = getSceneConfig(ctx)
+    local v = ctx and ctx.v or {}
+    local disciplines = config.disciplines or {}
+    return disciplines[v.selectedDisciplineIdx or 1]
+end
+
+local function getBattlerStat(battler, statName, sess)
+    if statName == "level" then return battler.level end
+    return traits.getParam(battler, statName, sess)
+end
+
+local function refreshInventoryList(disc, session)
     inventoryItems = {}
-    if not activeSession then return end
-    
-    for itemId, qty in pairs(activeSession.inventory) do
+    if not session then return end
+
+    for itemId, qty in pairs(session.inventory) do
         if qty > 0 then
-            local item = activeSession.loader.getItem(itemId)
+            local item = session.loader.getItem(itemId)
             if item then
                 table.insert(inventoryItems, { item = item, qty = qty })
             end
         end
     end
-    
+
     -- Sort inventory to prioritize items of this discipline's craftKind
+    local discKind = disc and disc.kind or ""
     table.sort(inventoryItems, function(a, b)
         local aKind = a.item.meta and a.item.meta.craftKind or ""
         local bKind = b.item.meta and b.item.meta.craftKind or ""
-        local discKind = disc and disc.kind or ""
-        
-        if aKind == discKind and bKind ~= discKind then
-            return true
-        elseif aKind ~= discKind and bKind == discKind then
-            return false
-        else
-            return a.item.id < b.item.id
-        end
+        if aKind == discKind and bKind ~= discKind then return true
+        elseif aKind ~= discKind and bKind == discKind then return false
+        else return a.item.id < b.item.id end
     end)
 end
 
-function initCraftingScene()
-    state = 1
-    selectedDisciplineIdx = 1
-    selectedCrafterIdx = 1
-    selectedIngredient1Idx = 1
-    selectedIngredient2Idx = 1
-    cursorIngredientSlot = 1
-    confirmOptionIdx = 1
-    
-    i1_item = nil
-    i2_item = nil
-    crafter_battler = nil
-    
-    local disc = getDiscipline()
-    refreshInventoryList(disc)
-end
+-- ---------------------------------------------------------------------------
+-- calcCraftYield(ctx) — called by CALC_CRAFT_YIELD handler in interpreter.lua
+--
+-- 1. Builds / refreshes the inventory list
+-- 2. Resolves ingredient selections into item IDs
+-- 3. Calculates yield / penalty / anomaly
+-- 4. Determines outcome tier and builds the roulette pool
+-- 5. Sets all results into ctx.v
+-- ---------------------------------------------------------------------------
+function crafting.calcCraftYield(ctx)
+    if not ctx or not ctx.session then return end
+    local v = ctx.v
+    local session = ctx.session
+    local loader = session.loader
+    local config = getSceneConfig(ctx)
 
-local function getBattlerStat(battler, statName)
-    if statName == "level" then
-        return battler.level
+    -- 1. Resolve the craft scenario
+    local disc = config.disciplines and config.disciplines[v.selectedDisciplineIdx or 1]
+    if not disc then return end
+
+    -- Refresh inventory list
+    refreshInventoryList(disc, session)
+
+    -- Track inventory count for modulo wrapping in up/down hooks
+    v.invCount = #inventoryItems
+
+    -- Track party count for crafter list wrapping (replaces hardcoded % 4)
+    v.partyCount = ctx.party and #ctx.party or (session.party and #session.party or 4)
+
+    -- 2. Resolve ingredient item IDs from cursor positions
+    local function resolveItem(idx)
+        local entry = inventoryItems[idx]
+        return entry and entry.item or nil
     end
-    return traits.getParam(battler, statName, activeSession)
-end
 
-local function calculateYield()
-    if not i1_item or not i2_item or not crafter_battler then return 0, 0, 0, false end
-    
-    local config = getSceneConfig()
-    local disc = getDiscipline()
-    
-    local S = getBattlerStat(crafter_battler, disc.stat)
-    
+    local i1 = resolveItem(v.selectedIngredient1Idx)
+    local i2 = resolveItem(v.selectedIngredient2Idx)
+
+    if i1 then v.i1_item_id = i1.id else v.i1_item_id = 0 end
+    if i2 then v.i2_item_id = i2.id else v.i2_item_id = 0 end
+
+    -- If both slots aren't filled, no yield calculation yet
+    if v.i1_item_id == 0 or v.i2_item_id == 0 then
+        v.yieldScore = 0
+        v.yieldAnomalyScore = 0
+        v.isAnomaly = false
+        return
+    end
+
+    -- 3. Get crafter
+    local crafter = session.party[v.crafterIdx or 1]
+    if not crafter then return end
+
+    -- 4. Calculate yield
+    local S = getBattlerStat(crafter, disc.stat, session)
+
     local mockCtx = {
-        i1 = formula.itemView(i1_item),
-        i2 = formula.itemView(i2_item),
-        crafter = crafter_battler,
+        i1 = formula.itemView(i1),
+        i2 = formula.itemView(i2),
+        ingredient1 = formula.itemView(i1),
+        ingredient2 = formula.itemView(i2),
+        crafter = crafter,
         alpha = config.alpha or 0.5,
-        S = S
+        S = S,
     }
-    
+
     local _, Y = pcall(formula.eval, config.yieldFormula or "0", mockCtx)
     Y = math.floor(tonumber(Y) or 0)
-    
+
     local _, penalty = pcall(formula.eval, config.penaltyFormula or "0", mockCtx)
     penalty = math.floor(tonumber(penalty) or 0)
-    
+
     local Y_final = math.max(0, Y - penalty)
-    
-    -- Check for anomaly
+
     local _, anomalyMult = pcall(formula.eval, config.anomalyFormula or "1.0", mockCtx)
     anomalyMult = tonumber(anomalyMult) or 1.0
     local isCrit = (anomalyMult > 1.0)
-    
-    local Y_anomaly = math.floor(Y_final * anomalyMult)
-    
-    return Y_final, Y_anomaly, penalty, isCrit
-end
 
-local function getOutcomeTier(score)
-    local config = getSceneConfig()
+    local Y_anomaly = math.floor(Y_final * anomalyMult)
+
+    -- 5. Determine outcome tier
     local brackets = config.brackets or {}
-    
+    local tier = 0
+    local tierName = "Junk"
     for _, br in ipairs(brackets) do
-        if score <= br.max then
-            return br.tier, br.name
+        if Y_final <= br.max then
+            tier = br.tier
+            tierName = br.name
+            break
         end
     end
-    
-    local lastBr = brackets[#brackets]
-    return lastBr and lastBr.tier or 0, lastBr and lastBr.name or "Junk"
-end
+    -- If no bracket matched, use the last one
+    if tier == 0 and Y_final > 0 then
+        local lastBr = brackets[#brackets]
+        if lastBr and Y_final > lastBr.max then
+            tier = lastBr.tier
+            tierName = lastBr.name
+        end
+    end
 
-local function getOutcomePool(tier, disc)
+    -- 6. Build outcome pool
+    local finalScore = isCrit and Y_anomaly or Y_final
+    local outcomeTier = 0
+    for _, br in ipairs(brackets) do
+        if finalScore <= br.max then
+            outcomeTier = br.tier
+            break
+        end
+    end
+    if outcomeTier == 0 and finalScore > 0 then
+        local lastBr = brackets[#brackets]
+        if lastBr then outcomeTier = lastBr.tier end
+    end
+
     local pool = {}
-    for _, item in ipairs(activeSession.loader.items or {}) do
-        if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == tier then
+    for _, item in ipairs(loader.items or {}) do
+        if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == outcomeTier then
             table.insert(pool, item)
         end
     end
-    
-    -- Fallback to junk if pool empty
+    -- Fallback to junk
     if #pool == 0 then
-        for _, item in ipairs(activeSession.loader.items or {}) do
+        for _, item in ipairs(loader.items or {}) do
             if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == 0 then
                 table.insert(pool, item)
             end
         end
     end
-    return pool
-end
 
-function updateCraftingScene(dt)
-    if state == 5 then -- Roulette animation
-        rouletteTimer = rouletteTimer + dt
-        if rouletteTimer >= rouletteDelay then
-            rouletteTimer = 0
-            rouletteStep = rouletteStep + 1
-            
-            local config = getSceneConfig()
-            local timing = config.timing or {}
-            
-            if rouletteStep >= (timing.steps or 12) then
-                -- Settle on target result
-                resultItem = roulettePool[rouletteTargetIdx]
-                state = 6 -- Result state
-                
-                -- Route ingredient consumption and item grants through runImmediate
-                local cmds = {
-                    { cmd = "TAKE_ITEM", item = i1_item.id, count = 1 },
-                    { cmd = "TAKE_ITEM", item = i2_item.id, count = 1 },
-                    { cmd = "GIVE_ITEM_ID", item = resultItem.id, count = 1 },
-                    { cmd = "EMIT_TEXT", fallback = "Crafted " .. resultItem.name .. "!" }
-                }
-                
-                local cCtx = { session = activeSession, loader = activeSession.loader, party = activeSession.party }
-                interpreter.runImmediate(cmds, cCtx)
-                
-                -- Play select sound
+    -- 7. Store results in ctx.v
+    v.yieldScore = Y_final
+    v.yieldAnomalyScore = Y_anomaly
+    v.penaltyValue = penalty
+    v.isAnomaly = isCrit
+    v.outcomeTier = outcomeTier
+    v.outcomeTierName = tierName
+    v.i1Name = i1 and i1.name or ""
+    v.i2Name = i2 and i2.name or ""
+    v.crafterName = crafter and crafter.actorData.name or ""
+    v.elementConflict = (i1 and i2 and i1.meta and i2.meta
+        and i1.meta.craftElement and i2.meta.craftElement
+        and i1.meta.craftElement ~= "" and i2.meta.craftElement ~= ""
+        and i1.meta.craftElement ~= i2.meta.craftElement)
 
-            else
-                -- decel delay
-                rouletteDelay = math.min(timing.maxDelay or 0.4, rouletteDelay * (timing.delayMult or 1.25))
-                rouletteCurrentIdx = math.random(#roulettePool)
+    -- Roulette pool
+    v.poolTargetIdx = v.poolTargetIdx or 0
+    if #pool > 0 then
+        v.poolSize = #pool
+        -- On first entry (target not yet picked), randomize target
+        if v.poolTargetIdx == 0 then
+            v.poolTargetIdx = math.random(#pool)
+        end
+        v.poolCurrentIdx = math.random(#pool)
+        local targetItem = pool[v.poolTargetIdx]
+        v.resultItemId = targetItem and targetItem.id or 0
+        v.resultItemName = targetItem and targetItem.name or ""
+        for pi, pitem in ipairs(pool) do
+            v["poolName" .. pi] = pitem.name or ""
+            v["poolIcon" .. pi] = pitem.icon or 0
+        end
+    else
+        v.poolSize = 0
+        v.poolCurrentIdx = 0
+        v.resultItemId = 0
+        v.resultItemName = ""
+    end
 
+    -- 8. Roulette completion logic (state 5 only)
+    if v.state == 5 then
+        local timing = config.timing or {}
+        local steps = timing.steps or 200
+        v.rouletteStep = (v.rouletteStep or 0) + 1
+
+        if v.rouletteStep >= steps then
+            -- Consume ingredients and grant result
+            local i1Item = session.loader.getItem(v.i1_item_id or 0)
+            local i2Item = session.loader.getItem(v.i2_item_id or 0)
+            local resultItem = pool[v.poolTargetIdx or 1]
+
+            if i1Item and session:hasItem(i1Item.id, 1) then
+                session:addItem(i1Item.id, -1)
             end
+            if i2Item and session:hasItem(i2Item.id, 1) then
+                session:addItem(i2Item.id, -1)
+            end
+            if resultItem then
+                session:addItem(resultItem.id, 1)
+            end
+
+            -- Emit text event
+            table.insert(ctx.events or {}, {
+                type = "text",
+                text = "Crafted " .. (v.resultItemName or "") .. "!"
+            })
+
+            v.state = 6
+            v.rouletteStep = 0
+        else
+            -- Animate: compute next delay
+            local delay = v.rouletteDelay or timing.initialDelay or 0.05
+            v.rouletteDelay = math.min(
+                delay * (timing.delayMult or 1.25),
+                timing.maxDelay or 10
+            )
         end
     end
 end
 
+-- ---------------------------------------------------------------------------
+-- Drawing — reads from scene state v (scene_host.getCurrentState().v)
+-- ---------------------------------------------------------------------------
 function drawCraftingScene()
+    local stateObj = require("engine.scene_host").getCurrentState()
+    local v = stateObj and stateObj.v or {}
+
     local config = getSceneConfig()
     local term = config.terms or {}
-    
+
     -- Title Header
     ui.drawPanel(0, 0, ui.toPx(32), ui.toPx(3.5), term.title or "Item Creation")
-    
-    if state == 1 then -- Select Discipline
+
+    local sv = v.state or 1
+
+    if sv == 1 then -- Select Discipline
         ui.drawPanel(0, ui.toPx(3.5), ui.toPx(12), ui.toPx(20.5), term.selectDiscipline or "Select Discipline:")
         local disciplines = config.disciplines or {}
+        local selIdx = v.selectedDisciplineIdx or 1
         for i, d in ipairs(disciplines) do
-            local isSel = (i == selectedDisciplineIdx)
+            local isSel = (i == selIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and ">" or " "
             ui.drawString(prefix .. d.label, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.lineHeight, color)
         end
-        
         -- Details panel
-        local activeDisc = disciplines[selectedDisciplineIdx]
+        local activeDisc = disciplines[selIdx]
         if activeDisc then
             ui.drawPanel(ui.toPx(12), ui.toPx(3.5), ui.toPx(20), ui.toPx(20.5), "Details")
             ui.drawString("Governing Stat: " .. string.upper(activeDisc.stat), ui.toPx(12.5), ui.toPx(5.5), {1, 0.9, 0.3, 1})
             ui.drawString(activeDisc.description or "", ui.toPx(12.5), ui.toPx(7.5), {1, 1, 1, 1}, "left", ui.toPx(19))
         end
-        
-    elseif state == 2 then -- Select Crafter
+
+    elseif sv == 2 then -- Select Crafter
         ui.drawPanel(0, ui.toPx(3.5), ui.toPx(12), ui.toPx(20.5), term.selectCrafter or "Select Crafter:")
-        for i, member in ipairs(activeSession.party) do
-            local isSel = (i == selectedCrafterIdx)
+        local party = activeSession and activeSession.party or {}
+        local selIdx = v.selectedCrafterIdx or 1
+        for i, member in ipairs(party) do
+            local isSel = (i == selIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and ">" or " "
             ui.drawString(prefix .. member.actorData.name, ui.toPx(0.5), ui.toPx(5.5) + (i - 1) * ui.lineHeight, color)
         end
-        
         -- Crafter stats panel
-        local activeMember = activeSession.party[selectedCrafterIdx]
+        local activeMember = activeSession and activeSession.party[selIdx]
         if activeMember then
+            local disc = getDiscipline()
+            local S = getBattlerStat(activeMember, disc and disc.stat or "atk", activeSession)
             ui.drawPanel(ui.toPx(12), ui.toPx(3.5), ui.toPx(20), ui.toPx(20.5), "Crafter Stats")
-            
-            -- Draw Portrait
             if activeMember.actorData.spriteKey then
                 local imgPath = "assets/portraits/" .. activeMember.actorData.spriteKey .. ".png"
                 if love.filesystem.getInfo(imgPath) then
                     local img = love.graphics.newImage(imgPath)
                     img:setFilter("nearest", "nearest")
-                    love.graphics.draw(img, ui.toPx(13), ui.toPx(5.5), 0, 2, 2)
+                    love.graphics.draw(img, ui.toPx(13), ui.toPx(5.5), 0, 1, 1)
                 end
             end
-            
-            local disc = getDiscipline()
-            local S = getBattlerStat(activeMember, disc.stat)
-            
             ui.drawString(activeMember.actorData.name, ui.toPx(20), ui.toPx(5.5), {1, 1, 0.5, 1})
             ui.drawString("Level: " .. activeMember.level, ui.toPx(20), ui.toPx(7.5))
-            
-            -- Show governing stat prominently
-            ui.drawString(string.upper(disc.stat) .. ": " .. S, ui.toPx(20), ui.toPx(9.5), {1, 0.9, 0.3, 1})
+            ui.drawString(string.upper(disc and disc.stat or "ATK") .. ": " .. S, ui.toPx(20), ui.toPx(9.5), {1, 0.9, 0.3, 1})
         end
-        
-    elseif state == 3 then -- Select Ingredients
-        -- Slots panel at the top
+
+    elseif sv == 3 then -- Select Ingredients
         ui.drawPanel(0, ui.toPx(3.5), ui.toPx(32), ui.toPx(5), term.selectIngredients or "Select Ingredients:")
-        
-        local colorI1 = (cursorIngredientSlot == 1) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local nameI1 = i1_item and i1_item.name or "--- [Empty] ---"
-        ui.drawString("Slot 1: " .. nameI1, ui.toPx(1), ui.toPx(5.5), colorI1)
-        
-        local colorI2 = (cursorIngredientSlot == 2) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local nameI2 = i2_item and i2_item.name or "--- [Empty] ---"
-        ui.drawString("Slot 2: " .. nameI2, ui.toPx(16), ui.toPx(5.5), colorI2)
-        
-        -- Inventory list below
+        local cursorSlot = v.cursorSlot or 1
+        local i1Id = v.i1_item_id or 0
+        local i2Id = v.i2_item_id or 0
+        local i1Name = (i1Id > 0) and (v.i1Name or "") or "--- [Empty] ---"
+        local i2Name = (i2Id > 0) and (v.i2Name or "") or "--- [Empty] ---"
+        local colorI1 = (cursorSlot == 1) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        local colorI2 = (cursorSlot == 2) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        ui.drawString("Slot 1: " .. i1Name, ui.toPx(1), ui.toPx(5.5), colorI1)
+        ui.drawString("Slot 2: " .. i2Name, ui.toPx(16), ui.toPx(5.5), colorI2)
+
         ui.drawPanel(0, ui.toPx(8.5), ui.toPx(20), ui.toPx(15.5), "Inventory")
-        
         local disc = getDiscipline()
-        local scrollIdx = (cursorIngredientSlot == 1) and selectedIngredient1Idx or selectedIngredient2Idx
-        
+        local scrollIdx = (cursorSlot == 1) and (v.selectedIngredient1Idx or 1) or (v.selectedIngredient2Idx or 1)
+
         if #inventoryItems == 0 then
             ui.drawString("No items in inventory.", ui.toPx(1), ui.toPx(10), {0.6, 0.6, 0.6, 1})
         else
-            -- Render list of items
             local startOffset = math.max(1, scrollIdx - 3)
             local endOffset = math.min(#inventoryItems, startOffset + 5)
-            
             for i = startOffset, endOffset do
                 local entry = inventoryItems[i]
                 local isSel = (i == scrollIdx)
                 local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                local prefix = isSel and ">" or " "
-                
-                -- Highlight if matches discipline's craftKind
                 local matchColor = color
-                if entry.item.meta and entry.item.meta.craftKind == disc.kind then
+                if entry.item.meta and entry.item.meta.craftKind == (disc and disc.kind or "") then
                     if not isSel then matchColor = {0.6, 1, 0.6, 1} end
                 end
-                
-                local name = entry.item.name .. " x" .. entry.qty
-                ui.drawString(prefix, ui.toPx(0.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight, color)
+                ui.drawString((isSel and ">" or " "), ui.toPx(0.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight, color)
                 ui.drawIcon(entry.item.icon or 0, ui.toPx(1.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight - 2)
                 ui.drawString(entry.item.name .. " (x" .. entry.qty .. ")", ui.toPx(3.5), ui.toPx(10.5) + (i - startOffset) * ui.lineHeight, matchColor)
             end
         end
-        
-        -- Details of selected item on the right
+        -- Item details
         local selectedEntry = inventoryItems[scrollIdx]
         if selectedEntry then
             ui.drawPanel(ui.toPx(20), ui.toPx(8.5), ui.toPx(12), ui.toPx(15.5), "Item Info")
             local item = selectedEntry.item
             ui.drawString(item.name, ui.toPx(20.5), ui.toPx(10.5), {1, 1, 0.5, 1})
-            
             if item.meta then
-                if item.meta.tier then
-                    ui.drawString("Tier: " .. item.meta.tier, ui.toPx(20.5), ui.toPx(12.5))
-                end
-                if item.meta.potency then
-                    ui.drawString("Potency: " .. item.meta.potency, ui.toPx(20.5), ui.toPx(14.5), {1, 0.9, 0.3, 1})
-                end
-                if item.meta.craftElement then
-                    ui.drawString("Element: " .. item.meta.craftElement, ui.toPx(20.5), ui.toPx(16.5))
-                end
+                if item.meta.tier then ui.drawString("Tier: " .. item.meta.tier, ui.toPx(20.5), ui.toPx(12.5)) end
+                if item.meta.potency then ui.drawString("Potency: " .. item.meta.potency, ui.toPx(20.5), ui.toPx(14.5), {1, 0.9, 0.3, 1}) end
+                if item.meta.craftElement then ui.drawString("Element: " .. item.meta.craftElement, ui.toPx(20.5), ui.toPx(16.5)) end
             else
                 ui.drawString("No meta parameters.", ui.toPx(20.5), ui.toPx(12.5), {0.6, 0.6, 0.6, 1})
             end
         end
-        
-    elseif state == 4 then -- Confirm Craft
+
+    elseif sv == 4 then -- Confirm Craft
         ui.drawPanel(0, ui.toPx(3.5), ui.toPx(32), ui.toPx(20.5), "Confirm Crafting")
-        
-        -- Crafter
-        ui.drawString("Crafter: " .. crafter_battler.actorData.name, ui.toPx(2), ui.toPx(5.5), {1, 1, 0.5, 1})
-        
-        -- Ingredients
-        ui.drawString("Ingredient 1: " .. i1_item.name, ui.toPx(2), ui.toPx(7.5))
-        ui.drawString("Ingredient 2: " .. i2_item.name, ui.toPx(2), ui.toPx(9.5))
-        
-        -- Yield calculations
-        local score, score_anomaly, penalty, isCrit = calculateYield()
-        local tier, tier_name = getOutcomeTier(score)
-        
-        ui.drawString(term.yieldText:gsub("{0}", score), ui.toPx(2), ui.toPx(12.5), {1, 0.9, 0.3, 1})
-        ui.drawString("Expected Tier: " .. tier_name .. " (Tier " .. tier .. ")", ui.toPx(2), ui.toPx(14.5))
-        
-        -- Check element conflicts
-        if i1_item.meta and i2_item.meta then
-            local el1 = i1_item.meta.craftElement or ""
-            local el2 = i2_item.meta.craftElement or ""
-            if el1 ~= el2 and el1 ~= "" and el2 ~= "" then
-                ui.drawString("WARNING: Element conflict (" .. el1 .. " vs " .. el2 .. ")!", ui.toPx(2), ui.toPx(16.5), {1, 0.3, 0.3, 1})
-            end
+        ui.drawString("Crafter: " .. (v.crafterName or ""), ui.toPx(2), ui.toPx(5.5), {1, 1, 0.5, 1})
+        ui.drawString("Ingredient 1: " .. (v.i1Name or ""), ui.toPx(2), ui.toPx(7.5))
+        ui.drawString("Ingredient 2: " .. (v.i2Name or ""), ui.toPx(2), ui.toPx(9.5))
+        local score = v.yieldScore or 0
+        ui.drawString(term.yieldText:gsub("{0}", tostring(score)), ui.toPx(2), ui.toPx(12.5), {1, 0.9, 0.3, 1})
+        ui.drawString("Expected Tier: " .. (v.outcomeTierName or "Junk"), ui.toPx(2), ui.toPx(14.5))
+        if v.elementConflict then
+            ui.drawString("WARNING: Element conflict!", ui.toPx(2), ui.toPx(16.5), {1, 0.3, 0.3, 1})
         end
-        
-        -- Option prompt at the bottom
-        local craftSel = (confirmOptionIdx == 1) and "> Craft" or "  Craft"
-        local backSel = (confirmOptionIdx == 2) and "> Back" or "  Back"
-        
-        local colorCraft = (confirmOptionIdx == 1) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local colorBack = (confirmOptionIdx == 2) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        
-        ui.drawString(craftSel, ui.toPx(6), ui.toPx(19.5), colorCraft)
-        ui.drawString(backSel, ui.toPx(18), ui.toPx(19.5), colorBack)
-        
-    elseif state == 5 then -- Roulette Animation
+        local confirmIdx = v.confirmOptionIdx or 1
+        local colC = (confirmIdx == 1) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        local colB = (confirmIdx == 2) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        ui.drawString((confirmIdx == 1 and "> Craft" or "  Craft"), ui.toPx(6), ui.toPx(19.5), colC)
+        ui.drawString((confirmIdx == 2 and "> Back" or "  Back"), ui.toPx(18), ui.toPx(19.5), colB)
+
+    elseif sv == 5 then -- Roulette Animation
         ui.drawPanel(ui.toPx(4), ui.toPx(7), ui.toPx(24), ui.toPx(10), "Crafting...")
-        
-        local activeItem = roulettePool[rouletteCurrentIdx]
-        if activeItem then
-            -- Draw background pulsing border
+        local poolSize = v.poolSize or 0
+        local currentIdx = v.poolCurrentIdx or 1
+        if poolSize > 0 and currentIdx >= 1 and currentIdx <= poolSize then
+            local icon = v["poolIcon" .. currentIdx] or 0
+            local name = v["poolName" .. currentIdx] or ""
             love.graphics.setColor(1, 1, 0.5, 0.5 + 0.5 * math.sin(love.timer.getTime() * 15))
             love.graphics.rectangle("line", ui.toPx(14.5) - 4, ui.toPx(10) - 4, 20, 20)
             love.graphics.setColor(1, 1, 1, 1)
-            
-            ui.drawIcon(activeItem.icon or 0, ui.toPx(15), ui.toPx(10.5))
-            ui.drawString(activeItem.name, ui.toPx(4), ui.toPx(13.5), {1, 1, 0.5, 1}, "center", ui.toPx(24))
+            ui.drawIcon(icon, ui.toPx(15), ui.toPx(10.5))
+            ui.drawString(name, ui.toPx(4), ui.toPx(13.5), {1, 1, 0.5, 1}, "center", ui.toPx(24))
         end
-        
-    elseif state == 6 then -- Result Screen
+
+    elseif sv == 6 then -- Result Screen
         ui.drawPanel(ui.toPx(4), ui.toPx(6), ui.toPx(24), ui.toPx(12), "Crafting Success!")
-        
-        if resultItem then
-            ui.drawIcon(resultItem.icon or 0, ui.toPx(15), ui.toPx(8.5))
-            ui.drawString(term.resultText:gsub("{0}", resultItem.name), ui.toPx(4), ui.toPx(11.5), {1, 1, 0.5, 1}, "center", ui.toPx(24))
-            ui.drawString(resultItem.description or "", ui.toPx(5), ui.toPx(13.5), {0.8, 0.8, 0.8, 1}, "center", ui.toPx(22))
+        local resultName = v.resultItemName or ""
+        if resultName ~= "" then
+            ui.drawString(term.resultText:gsub("{0}", resultName), ui.toPx(4), ui.toPx(11.5), {1, 1, 0.5, 1}, "center", ui.toPx(24))
         end
-        
-        if isAnomaly then
+        if v.isAnomaly then
             ui.drawString(term.anomalyText or "CRITICAL ANOMALY!", ui.toPx(4), ui.toPx(15.5), {1, 0.3, 0.3, 1}, "center", ui.toPx(24))
         end
     end
 end
 
-function keypressedCraftingScene(key)
-    local config = getSceneConfig()
-    local term = config.terms or {}
-    
-    if state == 1 then -- Select Discipline
-        if key == "up" or key == "w" then
-            selectedDisciplineIdx = (selectedDisciplineIdx - 2) % #config.disciplines + 1
-        elseif key == "down" or key == "s" then
-            selectedDisciplineIdx = selectedDisciplineIdx % #config.disciplines + 1
-        elseif key == "space" or key == "return" then
-            state = 2 -- Next: Select Crafter
-            selectedCrafterIdx = 1
-            local disc = getDiscipline()
-        elseif key == "escape" then
-            scene_host.pop()
-        end
-        
-    elseif state == 2 then -- Select Crafter
-        if key == "up" or key == "w" then
-            selectedCrafterIdx = (selectedCrafterIdx - 2) % #activeSession.party + 1
-        elseif key == "down" or key == "s" then
-            selectedCrafterIdx = selectedCrafterIdx % #activeSession.party + 1
-        elseif key == "space" or key == "return" then
-            state = 3 -- Next: Select Ingredients
-            selectedIngredient1Idx = 1
-            selectedIngredient2Idx = 1
-            cursorIngredientSlot = 1
-            i1_item = nil
-            i2_item = nil
-            local disc = getDiscipline()
-            crafter_battler = activeSession.party[selectedCrafterIdx]
-            refreshInventoryList(disc)
-        elseif key == "escape" then
-            state = 1 -- Back to Select Discipline
-            selectedDisciplineIdx = 1
-        end
-        
-    elseif state == 3 then -- Select Ingredients
-        if key == "escape" then
-            state = 2 -- Back to Select Crafter
-        elseif key == "left" or key == "a" or key == "right" or key == "d" then
-            -- Toggle between ingredient slots
-            if cursorIngredientSlot == 1 then
-                cursorIngredientSlot = 2
-            else
-                cursorIngredientSlot = 1
-            end
-        elseif key == "up" or key == "w" then
-            if #inventoryItems > 0 then
-                if cursorIngredientSlot == 1 then
-                    selectedIngredient1Idx = (selectedIngredient1Idx - 2) % #inventoryItems + 1
-                else
-                    selectedIngredient2Idx = (selectedIngredient2Idx - 2) % #inventoryItems + 1
-                end
-            end
-        elseif key == "down" or key == "s" then
-            if #inventoryItems > 0 then
-                if cursorIngredientSlot == 1 then
-                    selectedIngredient1Idx = selectedIngredient1Idx % #inventoryItems + 1
-                else
-                    selectedIngredient2Idx = selectedIngredient2Idx % #inventoryItems + 1
-                end
-            end
-        elseif key == "space" or key == "return" then
-            if #inventoryItems > 0 then
-                local scrollIdx = (cursorIngredientSlot == 1) and selectedIngredient1Idx or selectedIngredient2Idx
-                local selectedEntry = inventoryItems[scrollIdx]
-                
-                if cursorIngredientSlot == 1 then
-                    i1_item = selectedEntry.item
-                    cursorIngredientSlot = 2 -- Move to Slot 2 selection
-                else
-                    i2_item = selectedEntry.item
-                    -- Check if both slots filled
-                    if i1_item and i2_item then
-                        -- Verify it's not the same item if only 1 qty
-                        if i1_item.id == i2_item.id and selectedEntry.qty < 2 then
-                            i2_item = nil
-                        else
-                            state = 4 -- Go to Confirm Craft
-                            confirmOptionIdx = 1
-                        end
-                    end
-                end
-            end
-        end
-        
-    elseif state == 4 then -- Confirm Craft
-        if key == "left" or key == "a" or key == "right" or key == "d" then
-            confirmOptionIdx = (confirmOptionIdx == 1) and 2 or 1
-        elseif key == "escape" then
-            state = 3 -- Back to Select Ingredients
-            cursorIngredientSlot = 2 -- Select slot 2
-        elseif key == "space" or key == "return" then
-            if confirmOptionIdx == 2 then -- Back
-                state = 3
-                cursorIngredientSlot = 2
-            else -- Craft!
-                local score, score_anomaly, penalty, isCrit = calculateYield()
-                
-                isAnomaly = isCrit
-                local finalScore = isAnomaly and score_anomaly or score
-                
-                local outcome_tier, tier_name = getOutcomeTier(finalScore)
-                local disc = getDiscipline()
-                
-                roulettePool = getOutcomePool(outcome_tier, disc)
-                rouletteTargetIdx = math.random(#roulettePool)
-                
-                local timing = config.timing or {}
-                rouletteTimer = 0
-                rouletteDelay = timing.initialDelay or 0.05
-                rouletteStep = 0
-                rouletteCurrentIdx = math.random(#roulettePool)
-                
-                state = 5 -- Go to Roulette
-            end
-        end
-        
-    elseif state == 6 then -- Result
-        if key == "space" or key == "return" or key == "escape" then
-            -- Back to state 1
-            local disc = getDiscipline()
-            i1_item = nil
-            i2_item = nil
-            state = 1 -- Return to Select Discipline
-            refreshInventoryList(disc)
-        end
-    end
-end
+-- Legacy fallback stubs (called only when hooks are absent)
+-- All logic now lives in hooks; these remain as no-ops for safety.
+function initCraftingScene() end
+function updateCraftingScene(dt) end
+function keypressedCraftingScene(key) end
 
 return crafting

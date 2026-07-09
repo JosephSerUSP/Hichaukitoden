@@ -1123,6 +1123,17 @@
       ],
       "interactive": false,
       "description": "Waits for a duration."
+    },
+    {
+      "id": "CALC_CRAFT_YIELD",
+      "category": "Crafting",
+      "label": "Calc Craft Yield",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Calculates crafting yield, outcome pool, and roulette state from scene v-variables."
     }
   ],
   "elementRules": {
@@ -1396,6 +1407,21 @@
     }
   ],
   "windowLayout": {
-    "headerSpacing": 0
+    "headerSpacing": 0,
+    "discipline_panel": { "x": 0, "y": 3.5, "width": 12, "height": 20.5, "style": "list", "title": "Select Discipline" },
+    "crafter_panel": { "x": 0, "y": 3.5, "width": 12, "height": 20.5, "style": "list", "title": "Select Crafter" },
+    "ingredient_panel": { "x": 0, "y": 3.5, "width": 32, "height": 24, "style": "panel", "title": "Select Ingredients" },
+    "inventory_list": { "x": 0, "y": 8.5, "width": 20, "height": 15.5, "style": "list", "title": "Inventory" },
+    "detail_panel": { "x": 20, "y": 8.5, "width": 12, "height": 15.5, "style": "panel", "title": "Item Info" },
+    "confirm_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "confirm", "title": "Confirm Crafting" },
+    "roulette_panel": { "x": 4, "y": 7, "width": 24, "height": 10, "style": "roulette", "title": "Crafting..." },
+    "title_frame": { "x": 0, "y": 6, "width": 32, "height": 6, "style": "frame", "title": null },
+    "title_menu": { "x": 0, "y": 14, "width": 32, "height": 4, "style": "list", "title": null },
+    "menu_left_panel": { "x": 0, "y": 3.5, "width": 10, "height": 20.5, "style": "list", "title": "Menu" },
+    "menu_right_panel": { "x": 10, "y": 3.5, "width": 10, "height": 20.5, "style": "list", "title": "Party" },
+    "menu_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Info" },
+    "items_left_panel": { "x": 0, "y": 3.5, "width": 20, "height": 20.5, "style": "list", "title": "Items" },
+    "items_info_panel": { "x": 20, "y": 3.5, "width": 12, "height": 20.5, "style": "panel", "title": "Item Info" },
+    "status_panel": { "x": 0, "y": 3.5, "width": 32, "height": 20.5, "style": "panel", "title": "Status" }
   }
 }

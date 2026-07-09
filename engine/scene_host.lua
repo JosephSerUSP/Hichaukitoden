@@ -64,6 +64,11 @@ function scene_host.runHook(hookName, ctx)
     -- Ensure ctx.v is scoped to the scene instance
     ctx.v = state.v
 
+    -- Reset cascade guard: sequential IF blocks check v._guard == 0
+    -- and set v._guard = 1 when they match, preventing state cascades
+    -- (e.g. IF v.state==1 sets state=2, then IF v.state==2 fires immediately)
+    state.v._guard = 0
+
     -- Set up crafting-specific formula context if applicable
     if sceneData and sceneData.kind == "crafting" and ctx.loader then
         local loader = ctx.loader

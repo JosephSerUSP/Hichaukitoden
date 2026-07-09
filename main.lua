@@ -149,15 +149,17 @@ local function runGoldenUI()
     -- the scene's state machine through scene_host.keypressed().
     local sceneScripts = {
         crafting = {
-            { key = "return" },
-            { key = "down" },
-            { key = "return" },
-            { key = "down" },
-            { key = "return" },
-            { key = "return" },
-            { key = "escape" },
-            { key = "escape" },
-            { key = "escape" },
+            { key = "return" },  -- state 1: select discipline → state 2 (crafter)
+            { key = "down" },    -- state 2: move crafter cursor down
+            { key = "return" },  -- state 2: select crafter → state 3 (ingredients)
+            { key = "down" },    -- state 3: move ingredient cursor down
+            { key = "return" },  -- state 3: select ingredient 1 (cursorSlot=1)
+            { key = "right" },   -- state 3: switch to cursorSlot=2
+            { key = "down" },    -- state 3: move ingredient cursor down
+            { key = "return" },  -- state 3: select ingredient 2 → state 4 (confirm)
+            { key = "escape" },  -- state 4: escape back to state 3
+            { key = "escape" },  -- state 3: escape back to state 2 (crafter)
+            { key = "escape" },  -- state 2: escape back to state 1 (discipline)
         },
         shop = {
             { key = "down" },
@@ -620,7 +622,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } } },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item" },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -899,7 +901,7 @@ elseif paramDef.type == "script" then
             crafter = mockCrafter,
             alpha = 0.5,
             S = 10,
-            v = { state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1, i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0, rouletteStep = 0 }
+            v = { state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1, i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0, rouletteStep = 0, selectedDisciplineIdx = 1, selectedCrafterIdx = 1, selectedIngredient1Idx = 1, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 0, i2_item_id = 0, invCount = 0, rouletteDelay = 0, isAnomaly = false, yieldScore = 0, yieldAnomalyScore = 0, poolSize = 0, poolTargetIdx = 0, poolCurrentIdx = 0, resultItemId = 0, resultItemName = "" }
         }
         
         for _, scene in ipairs(loader.scenes or {}) do
@@ -1853,8 +1855,7 @@ local function handleKeyPressed(key)
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
-                    scene_host.push("crafting")
-                    if initCraftingScene then initCraftingScene() end
+                    scene_host.push("crafting", { session = activeSession, loader = loader, party = activeSession.party })
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
                     menuSelectedSubIdx = 2 -- Default to NO
