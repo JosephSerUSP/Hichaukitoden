@@ -85,15 +85,19 @@ local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
 -- B.5: Load a small sprite sheet.
 -- Default format: 24*N x 24 pixels, cell count = width / height.
 -- Returns { img, cellW, cellH, numFrames } or nil.
+-- B.5: Load a small sprite sheet from assets/smallBattlers/.
+-- Format: animated sprite, cell count = width/height, default 24x24 cells.
+-- The existing files use mixed case filenames (e.g. "Angel.png", "Golem.png").
 local function getSmallSprite(spriteKey)
     if not spriteKey or spriteKey == "" then return nil end
     local key = tostring(spriteKey)
     if smallSpriteCache[key] then return smallSpriteCache[key] end
 
-    -- Try multiple paths for the small sprite
     local paths = {
+        "assets/smallBattlers/" .. key:sub(1,1):upper() .. key:sub(2):lower() .. ".png",
+        "assets/smallBattlers/" .. key .. ".png",
+        "assets/smallBattlers/" .. key:lower() .. ".png",
         "assets/sprites/" .. key .. ".png",
-        "assets/portraits/" .. key .. ".png",
     }
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then

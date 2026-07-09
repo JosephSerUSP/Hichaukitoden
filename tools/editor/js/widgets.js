@@ -34,7 +34,7 @@
                 if (path) {
                     path = path.replace(/\\/g, '/');
                     if (isBareKey && !path.includes('/')) {
-                        img.src = '/assets/portraits/' + path + '.png';
+                        img.src = '/assets/' + defaultDir + '/' + path + '.png';
                     } else {
                         img.src = '/' + path;
                     }
@@ -50,12 +50,6 @@
             thumbWrap.appendChild(img);
             thumbWrap.appendChild(noneTxt);
             thumbRow.appendChild(thumbWrap);
-
-            // Small read-only path label
-            const pathLabel = document.createElement('span');
-            pathLabel.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); font-family: monospace; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-            pathLabel.textContent = value || '(none)';
-            thumbRow.appendChild(pathLabel);
 
             group.appendChild(thumbRow);
 
@@ -1250,10 +1244,18 @@
                 formPanel.appendChild(growthRow);
 
                 ensurePortraitKeys();
-                window.createSpriteField(formPanel, 'Sprite Key (assets/portraits)', item.spriteKey || '', (path) => {
+                // Sprite fields in a horizontal row
+                const spriteRow = document.createElement('div');
+                spriteRow.className = 'form-row';
+                window.createSpriteField(spriteRow, 'Sprite Key', item.spriteKey || '', (path) => {
                     item.spriteKey = path;
                     setDirty(true);
                 }, false, 'portraits', true);
+                window.createSpriteField(spriteRow, 'Small Sprite', item.smallSprite || '', (path) => {
+                    item.smallSprite = path;
+                    setDirty(true);
+                }, false, 'smallBattlers', true);
+                formPanel.appendChild(spriteRow);
 
                 buildElementSlotsEditor(formPanel, item);
                 createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
