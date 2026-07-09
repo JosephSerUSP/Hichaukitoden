@@ -6,6 +6,7 @@ local director = require("engine.director")
 local renderer = require("presentation.renderer")
 local traits = require("engine.traits")
 local effects = require("engine.effects")
+local scene_host = require("engine.scene.host")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 require("engine.scenes.crafting")
@@ -38,6 +39,8 @@ end
 
 activeSession = nil
 currentScene = "title"
+
+scene_host.clearStack()
 local isTestBattle = false
 local isValidateMode = false
 local isGoldenMode = false
@@ -68,7 +71,6 @@ local shopItems = {}
 local shopSelectedIdx = 1
 
 -- Menu State
-local previousSceneBeforeMenu = "town"
 local menuSelectedIdx = 1
 local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
 menuSubScene = "main"
@@ -886,6 +888,13 @@ end
 function love.update(dt)
     renderer.update(dt)
     server.update(dt)
+
+    if scene_host.getActiveScene() then
+        if scene_host.runHook("on_frame", { dt = dt }) then
+            return
+        end
+    end
+
     if activeSession and activeSession.transitionTimer and activeSession.transitionTimer > 0 then
         activeSession.transitionTimer = activeSession.transitionTimer - dt
     end
@@ -931,7 +940,8 @@ function love.draw()
     elseif currentScene == "shop" then
         renderer.drawShop(activeShopName, shopSelectedIdx, shopItems)
     elseif currentScene == "menu" then
-        if previousSceneBeforeMenu == "town" then
+        local underlyingScene = scene_host.stack[#scene_host.stack - 1] or "town"
+        if underlyingScene == "town" then
             renderer.drawTown(townSelectedIdx)
         else
             renderer.drawMap()
@@ -1107,6 +1117,8 @@ handleDialogueAction = function()
             end
             exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
             currentScene = "map"
+
+            scene_host.clearStack()
         elseif node.action == "START_BATTLE" then
             triggerBattle()
         elseif node.action == "GIVE_ITEM_ACTION" then
@@ -1154,6 +1166,8 @@ local function runEventCommands(eventTitle, commands)
     activeWalker = director.GraphWalker.new(activeSession, graph)
     activeWalker.eventName = eventTitle
     currentScene = "dialogue"
+
+    scene_host.clearStack()
     handleDialogueAction()
 end
 
@@ -1189,6 +1203,8 @@ local function triggerDialogue(graphName)
         activeWalker = walker
         dialogueSelectIdx = 1
         currentScene = "dialogue"
+
+        scene_host.clearStack()
         handleDialogueAction()
     end
 end
@@ -1444,6 +1460,15 @@ end
 
 -- Action handling for key presses
 local function handleKeyPressed(key)
+
+    if scene_host.getActiveScene() then
+        if key == "return" or key == "space" then
+            if scene_host.runHook("on_select", { key = key }) then return end
+        elseif key == "escape" then
+            if scene_host.runHook("on_cancel", { key = key }) then return end
+        end
+    end
+
     if inputCooldown > 0 then return end
     if renderer.closing then return end
     if currentScene == "crafting" then
@@ -1455,7 +1480,8 @@ local function handleKeyPressed(key)
             love.event.quit()
         elseif currentScene == "town" or currentScene == "map" then
             -- Open Main Menu instead of exiting!
-            previousSceneBeforeMenu = currentScene
+            scene_host.push(currentScene, { session = activeSession, loader = loader })
+            scene_host.push("menu", { session = activeSession, loader = loader })
             menuSelectedIdx = 1
             menuSubScene = "main"
             renderer.resetMenuTimer()
@@ -1470,12 +1496,16 @@ local function handleKeyPressed(key)
                     menuActiveCol = 1
                     menuSelectedSubIdx = 1
                 else
-                    renderer.startClosing("menu", previousSceneBeforeMenu)
+                    scene_host.pop()
+                    local previous = scene_host.pop() or "town"
+                    renderer.startClosing("menu", previous)
                 end
                 return
             end
         elseif currentScene == "dialogue" then
             currentScene = "map"
+
+            scene_host.clearStack()
             return
         end
     end
@@ -1489,6 +1519,8 @@ local function handleKeyPressed(key)
             end
             exploration.loadMap(activeSession, 1) -- Load Town Map (mapIdx = 1)
             currentScene = "map"
+
+            scene_host.clearStack()
         end
         
     elseif currentScene == "town" then
@@ -1507,6 +1539,8 @@ local function handleKeyPressed(key)
                     activeSession.dungeonFloor = 1
                     exploration.loadMap(activeSession, opt.mapId or 2)
                     currentScene = "map"
+
+                    scene_host.clearStack()
                 elseif opt.action == "dialogue" then
                     triggerDialogue(opt.graph)
                 elseif opt.action == "rest" then
@@ -1609,6 +1643,8 @@ local function handleKeyPressed(key)
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
                         currentScene = "map"
+
+                        scene_host.clearStack()
                     end
                 end
             elseif node.type == "CHOICE" then
@@ -1622,6 +1658,8 @@ local function handleKeyPressed(key)
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
                         currentScene = "map"
+
+                        scene_host.clearStack()
                     end
                 end
             end
@@ -2026,6 +2064,9 @@ local function handleKeyPressed(key)
                         end
 
                         currentScene = "map"
+
+
+                        scene_host.clearStack()
                     elseif activeBattle:isDefeat() then
                         local doReset = true
                         if flow.has("battle.defeat") then
@@ -2037,6 +2078,8 @@ local function handleKeyPressed(key)
                         end
                         if doReset then
                             currentScene = "title"
+
+                            scene_host.clearStack()
                             activeSession = session.GameSession.new(loader)
                             activeSession:initializeStartingParty()
                             renderer.init(activeSession)
@@ -2052,7 +2095,10 @@ local function handleKeyPressed(key)
                                     if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
                                 end
                             end
-                            if toMap then currentScene = "map" end
+                            if toMap then
+                                currentScene = "map"
+                                scene_host.clearStack()
+                            end
                         else
                             -- Rebuild living members list for the next round
                             rebuildBattleLivingMembers()

@@ -73,6 +73,13 @@
         "cancelBtn": "Back",
         "resultText": "Crafted: {0}!"
       }
+    },
+    "hooks": {
+      "on_enter": [],
+      "on_select": [],
+      "on_cancel": [],
+      "on_frame": [],
+      "on_exit": []
     }
   }
 ]
