@@ -169,8 +169,9 @@ local function runGoldenUI()
     }
 
     for _, sceneDef in ipairs(loader.scenes or {}) do
-        local sceneKey = sceneDef.kind
-        if not sceneKey then goto continue end
+        local sceneId = sceneDef.id
+        local sceneKind = sceneDef.kind
+        if not sceneId or not sceneKind then goto continue end
 
         local uiEvents = {}
         local currentCtx = {
@@ -207,7 +208,7 @@ local function runGoldenUI()
             return events
         end
 
-        scene_host.init(sceneKey)
+        scene_host.init(sceneId)
 
         -- Initialize scene state BEFORE driving the input sequence.
         -- on_enter sets v.state, v.idx, etc. so directional/confirm hooks
@@ -217,18 +218,18 @@ local function runGoldenUI()
         else
             -- Pre-seed uiEvents so the log shows on_enter:absent even
             -- when no events were generated
-            table.insert(uiEvents, string.format("scene|%s|hook|on_enter:absent", sceneKey))
+            table.insert(uiEvents, string.format("scene|%s|hook|on_enter:absent", tostring(sceneId)))
         end
 
         -- Drive the scripted input sequence
-        local script = sceneScripts[sceneKey] or {}
+        local script = sceneScripts[sceneKind] or {}
         for _, step in ipairs(script) do
             scene_host.update(0.1, currentCtx)
             scene_host.keypressed(step.key, currentCtx)
         end
 
         print("UI GOLDEN BEGIN")
-        print(string.format("scene|%s|name|%s", tostring(sceneDef.id), sceneDef.name or ""))
+        print(string.format("scene|%s|name|%s", tostring(sceneId), sceneDef.name or ""))
 
         for _, l in ipairs(uiEvents) do
             print(l)
@@ -629,7 +630,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item" },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, _guard = 0 },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -908,7 +909,22 @@ elseif paramDef.type == "script" then
             crafter = mockCrafter,
             alpha = 0.5,
             S = 10,
-            v = { state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1, i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0, rouletteStep = 0, selectedDisciplineIdx = 1, selectedCrafterIdx = 1, selectedIngredient1Idx = 1, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 0, i2_item_id = 0, invCount = 0, rouletteDelay = 0, isAnomaly = false, yieldScore = 0, yieldAnomalyScore = 0, poolSize = 0, poolTargetIdx = 0, poolCurrentIdx = 0, resultItemId = 0, resultItemName = "" }
+            v = {
+                -- Crafting variables
+                state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1,
+                i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0,
+                rouletteStep = 0, selectedDisciplineIdx = 1,
+                selectedCrafterIdx = 1, selectedIngredient1Idx = 1,
+                selectedIngredient2Idx = 1, cursorSlot = 1,
+                confirmOptionIdx = 1, i1_item_id = 0, i2_item_id = 0,
+                invCount = 0, rouletteDelay = 0, isAnomaly = false,
+                yieldScore = 0, yieldAnomalyScore = 0, poolSize = 0,
+                poolTargetIdx = 0, poolCurrentIdx = 0, resultItemId = 0,
+                resultItemName = "",
+                -- Common menu variables (D6 scenes)
+                opt = 1, subIdx = 1, idx = 1, count = 1,
+                selectedIdx = 1, _guard = 0
+            }
         }
         
         for _, scene in ipairs(loader.scenes or {}) do
@@ -1245,7 +1261,7 @@ local function openShop(shopId)
     end
 
     -- Push the shop scene and seed its v-state with shop data
-    scene_host.push("shop")
+    scene_host.push("shop", { session = activeSession, loader = loader, party = activeSession.party })
     local state = scene_host.getCurrentState()
     if state then
         state.v.shopName = shopName
@@ -1674,7 +1690,7 @@ local function handleKeyPressed(key)
             menuSelectedIdx = 1
             menuSubScene = "main"
             renderer.resetMenuTimer()
-            scene_host.push("menu")
+            scene_host.push("menu", { session = activeSession, loader = loader, party = activeSession.party })
             return
         elseif scene_host.getCurrent() == "menu" then
             -- Only the top-level menu is handled here; submenus each have

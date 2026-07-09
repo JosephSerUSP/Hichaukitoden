@@ -14,9 +14,17 @@ local windowDefsByKind = {}
 
 local function getSceneData(ctx, id)
     if not ctx or not ctx.loader or not ctx.loader.scenes then return nil end
+    -- Two-pass matching: first pass prefers exact id/name match,
+    -- second pass falls back to kind match.
+    -- This prevents ambiguity when multiple scenes share a kind (e.g. "menu").
     for _, scene in ipairs(ctx.loader.scenes) do
-        -- Check numeric or string matching
-        if tostring(scene.id) == tostring(id) or scene.name == id or scene.kind == id then
+        if tostring(scene.id) == tostring(id) or scene.name == id then
+            return scene
+        end
+    end
+    -- Second pass: match by kind (lowest priority)
+    for _, scene in ipairs(ctx.loader.scenes) do
+        if scene.kind == id then
             return scene
         end
     end
@@ -103,23 +111,42 @@ function scene_host.runHook(hookName, ctx)
         if state.v.S ~= nil then ctx.S = state.v.S end
     end
 
+    -- Save old events list to avoid accumulating transition events across nested hook/push calls
+    local oldEvents = ctx.events
+    ctx.events = {}
+
     local events = interpreter.runImmediate(cmds, ctx)
 
     -- Consume SCENE_EVENT (scene_change) and update the stack
+    -- Wait to process these until after the loop so we don't recurse deeply
+    -- or mutate sceneStack while iterating.
+    local transitions = {}
     if events then
         for _, ev in ipairs(events) do
-
             if ev.type == "wait" then
                 state.waitTimer = ev.duration
             elseif ev.type == "scene_change" then
-                if ev.kind == "pop" then
-                    scene_host.pop(ctx)
-                elseif ev.kind == "push" and ev.scene then
-                    scene_host.push(ev.scene, ctx)
-                elseif ev.kind == "goto" and ev.scene then
-                    scene_host.goto_scene(ev.scene, ctx)
-                end
+                table.insert(transitions, ev)
             end
+        end
+    end
+
+    -- If there was an old events list, append the new events to it
+    -- so that the caller (like the golden harness) can still see them.
+    if oldEvents then
+        for _, ev in ipairs(events) do
+            table.insert(oldEvents, ev)
+        end
+        ctx.events = oldEvents
+    end
+
+    for _, ev in ipairs(transitions) do
+        if ev.kind == "pop" then
+            scene_host.pop(ctx)
+        elseif ev.kind == "push" and ev.scene then
+            scene_host.push(ev.scene, ctx)
+        elseif ev.kind == "goto" and ev.scene then
+            scene_host.goto_scene(ev.scene, ctx)
         end
     end
 

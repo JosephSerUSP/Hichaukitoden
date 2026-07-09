@@ -546,7 +546,7 @@ end
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); main.lua consumes
     -- this event and performs the transition.
-    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind })
+    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene })
 end
 
 handlers.CALC_CRAFT_YIELD = function(cmd, ctx)

@@ -1,6 +1,3 @@
---------------------------------------------------
-HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)
---------------------------------------------------
 UI GOLDEN BEGIN
 scene|1|name|Item Creation
 discipline_panel|open_window||
@@ -27,29 +24,29 @@ title_menu|set_cursor||1
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|menu|name|Main Menu
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
+menu_left_panel|open_window||
+menu_left_panel|set_list||menu_options
+menu_left_panel|set_cursor||1
+menu_right_panel|open_window||
+menu_right_panel|set_list||party
+menu_info_panel|open_window||
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|items|name|Items
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
+items_left_panel|open_window||
+items_left_panel|set_list||inventory
+items_left_panel|set_cursor||1
+items_info_panel|open_window||
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|status|name|Status
-title_frame|open_window||
-title_frame|set_text||\c[6]HICHAUKITODEN
-title_menu|open_window||
-title_menu|set_text||Press ENTER to start
-title_menu|set_cursor||1
+status_panel|open_window||
 UI GOLDEN END
 UI GOLDEN BEGIN
 scene|shop|name|Shop
+shop_header|open_window||
+shop_list|open_window||
+shop_list|set_list||shop_items
+shop_list|set_cursor||1
+shop_info|open_window||
 UI GOLDEN END
-VALIDATE OK
