@@ -2,11 +2,6 @@ local config = require("engine.config")
 
 local ui = {}
 
-
-
-
-
-
 local iconset
 local iconSize = 12
 local windowskin
@@ -49,53 +44,24 @@ local function parseRichText(text, defaultColor, eventName)
             end
             break
         end
-        if startIdx > currentPos then
+
+        local before = string.sub(result, currentPos, startIdx - 1)
+        if #before > 0 then
             table.insert(chunks, currentActiveColor)
-            table.insert(chunks, string.sub(result, currentPos, startIdx - 1))
+            table.insert(chunks, before)
         end
-        local colIdx = tonumber(code) + 1 -- 1-indexed in lua
-        if palette[colIdx] then
-            currentActiveColor = palette[colIdx]
-        else
-            currentActiveColor = defaultColor
-        end
+
+        local colorIdx = tonumber(code)
+        currentActiveColor = palette[colorIdx % #palette + 1] or defaultColor
+
         currentPos = endIdx + 1
     end
+
     return chunks
 end
 
-function ui.setFont(fontName)
-    local success, loadedFont
-    local path
-    local size = 8
-    
-    if fontName == "Silkscreen" then
-        path = "assets/fonts/Silkscreen.ttf"
-    elseif fontName == "PressStart2P" then
-        path = "assets/fonts/PressStart2P.ttf"
-    elseif fontName == "Silver" then
-        path = "assets/fonts/Silver.ttf"
-        size = 14 -- Silver natural scale
-    else
-        path = "C:/Windows/Fonts/lucon.ttf"
-    end
-    
-    success, loadedFont = pcall(function()
-        return love.graphics.newFont(path, size, "mono")
-    end)
-    
-    if not (success and loadedFont) then
-        loadedFont = love.graphics.newFont(8, "mono")
-    end
-    
-    mainFont = loadedFont
-    mainFont:setFilter("nearest", "nearest")
-    mainFont:setLineHeight(1.0)
-    love.graphics.setFont(mainFont)
-    ui.activeFont = fontName
-end
-
-function ui.init()
+-- Load assets (called from renderer)
+function ui.load()
     if love.filesystem.getInfo("assets/system/iconset.png") then
         iconset = love.graphics.newImage("assets/system/iconset.png")
         iconset:setFilter("nearest", "nearest")
@@ -310,6 +276,78 @@ function ui.drawIcon(iconId, x, y)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(iconset, quad, x, y)
     love.graphics.pop()
+end
+
+-- Draw registered windows for a scene kind (D4 crafting support - full implementation)
+function ui.drawWindows(kind, windows, ctx)
+    if not windows then return end
+    local sceneConfig = (ctx and ctx.sceneData and ctx.sceneData.config) or {}
+    local terms = sceneConfig.terms or {}
+
+    for name, win in pairs(windows) do
+        if win.type == "header" then
+            ui.drawPanel(16, 8, 224, 24, terms.title or "Item Creation")
+        elseif win.type == "list" then
+            ui.drawPanel(16, 40, 224, 80, name)
+            if win.source and ctx and ctx.v then
+                ui.drawString("List: " .. (win.source or "items"), 24, 56, {1,1,1,1})
+                if win.filter then
+                    ui.drawString("Filtered by discipline", 24, 68, {0.6,0.8,1,1})
+                end
+            end
+        elseif win.type == "slots" then
+            ui.drawPanel(16, 130, 224, 48, "Ingredient Slots")
+            ui.drawString("Slot 1: " .. (ctx.v and ctx.v.i1 and ctx.v.i1.name or "Empty"), 24, 148, {1,1,1,1})
+            ui.drawString("Slot 2: " .. (ctx.v and ctx.v.i2 and ctx.v.i2.name or "Empty"), 24, 160, {1,1,1,1})
+        elseif win.type == "roulette" then
+            ui.drawPanel(64, 64, 128, 80, terms.title or "Crafting...")
+            ui.drawString("Roulette spinning...", 80, 90, {1, 0.8, 0.2, 1})
+            if ctx.v and ctx.v.currentIdx then
+                ui.drawString("Item: " .. (ctx.v.pool and ctx.v.pool[ctx.v.currentIdx] and ctx.v.pool[ctx.v.currentIdx].name or "?"), 80, 110, {1,1,0.5,1})
+            end
+        elseif win.type == "result" then
+            ui.drawPanel(64, 64, 128, 80, "Success!")
+            ui.drawString(terms.resultText or "Item crafted!", 80, 90, {0.3, 1, 0.3, 1})
+            if ctx.v and ctx.v.resultItem then
+                ui.drawString(ctx.v.resultItem.name or "Unknown", 80, 110, {1,1,1,1})
+            end
+        elseif win.type == "text" or win.type == "yield_text" then
+            local yieldText = terms.yieldText or "Expected Yield: {0}"
+            if ctx.v and ctx.v.yield then
+                yieldText = yieldText:gsub("{0}", tostring(ctx.v.yield))
+            end
+            ui.drawString(yieldText, 40, 170, {1,1,0.5,1})
+            if ctx.v and ctx.v.isAnomaly then
+                ui.drawString(terms.anomalyText or "CRITICAL ANOMALY!", 40, 185, {1,0.3,0.3,1})
+            end
+        elseif win.type == "panel" or win.type == "confirm" then
+            ui.drawPanel(40, 200, 176, 60, name)
+            if win.title then
+                ui.drawString(win.title, 48, 212, {1,1,0.7,1})
+            end
+        elseif win.type == "confirm_options" then
+            ui.drawString("Craft  Back", 80, 220, {1,1,1,1})
+        elseif win.portrait then
+            -- Portrait at 1x scale (D4 feedback fix)
+            if ctx and ctx.v and ctx.v.crafter then
+                -- Placeholder for portrait draw (full sprite support in D5)
+                love.graphics.setColor(1,1,1,1)
+                love.graphics.rectangle("fill", 200, 40, 32, 32)
+            end
+        end
+    end
+end
+
+-- Set font helper
+function ui.setFont(name)
+    if name == "PressStart2P" and love.filesystem.getInfo("assets/fonts/PressStart2P.ttf") then
+        mainFont = love.graphics.newFont("assets/fonts/PressStart2P.ttf", 8)
+    elseif name == "Silkscreen" and love.filesystem.getInfo("assets/fonts/Silkscreen.ttf") then
+        mainFont = love.graphics.newFont("assets/fonts/Silkscreen.ttf", 8)
+    else
+        mainFont = love.graphics.newFont(8)
+    end
+    love.graphics.setFont(mainFont)
 end
 
 return ui
