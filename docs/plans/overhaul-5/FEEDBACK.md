@@ -24,6 +24,24 @@ HUMAN FEEDBACK (10.07.2026, addendum):
 6. Change Control Variable to Control Variables: one event command that can set either one
    or several variables at once.
 
+HUMAN FEEDBACK (10.07.2026, post-playtest batch — battle/system):
+7. Enemy flash-when-targeted is great, but must become configurable — and it is the seed of
+   a future ANIMATIONS TAB in the editor, similar to RPG Maker's, with one key difference:
+   besides animations assigned to skills, SYSTEM animations must be directly editable too —
+   the damage flash, the damage shake, the death animation, etc. Everything battler-related
+   that animates (and perhaps screen/map-related too) should live in that future animation
+   editor. (See future-animation-system.md; likely an overhaul-6 flagship.)
+8. IMMEDIATE: smallBattlers (party grid / summoner sprites) must flash AND shake when taking
+   damage. When dead, they must NOT play a death animation — tint them dark purple/greyish,
+   stop animating, show only the first frame. (Brief E8.)
+9. Game-overing doesn't really work well right now; we need a dedicated Game Over scene.
+   (Brief E9.)
+10. The title screen needs a dedicated "New Game / Continue / Exit" selector. (Brief E10.)
+11. Save data will eventually need handling, including Save and Load scenes. (Recorded as
+    future work — E10's Continue option must degrade gracefully until it exists.)
+12. No dedicated TRAIT_HEAL command — the HEAL command should be used to apply trait
+    healing instead. (Brief E11; command-consolidation lesson, same as CALC_CRAFT_YIELD.)
+
 AUDIO (discuss, don't implement yet):
 Sound needs to be tackled eventually. There's existing music produced for an earlier
 iteration of the game, meant to be played as plain square-wave tones via the standard Web
