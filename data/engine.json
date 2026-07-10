@@ -1019,6 +1019,33 @@
       "description": "Emits a scene_change event that main.lua consumes; the interpreter never switches scenes itself."
     },
     {
+      "id": "LOAD_MAP",
+      "category": "Progression",
+      "label": "Load Map",
+      "params": [
+        {
+          "key": "mapId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Loads the map with the given index into the session (title New Game, warps)."
+    },
+    {
+      "id": "QUIT_GAME",
+      "category": "Advanced",
+      "label": "Quit Game",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Quits the game (title Exit)."
+    },
+    {
       "id": "RESET_SESSION",
       "category": "Advanced",
       "label": "Reset Session",
@@ -1559,11 +1586,28 @@
       "title": null
     },
     "title_menu": {
-      "x": 0,
+      "x": 10,
       "y": 14,
-      "width": 32,
-      "height": 4,
+      "width": 12,
+      "height": 7,
       "style": "list",
+      "visibleRows": 3,
+      "title": null
+    },
+    "title_notice": {
+      "x": 8,
+      "y": 22,
+      "width": 16,
+      "height": 3,
+      "style": "frame",
+      "title": null
+    },
+    "title_footer": {
+      "x": 0,
+      "y": 27,
+      "width": 32,
+      "height": 3,
+      "style": "frame",
       "title": null
     },
     "game_over_frame": {

@@ -578,6 +578,18 @@ handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
 end
 
+-- E10: load a map by index (title New Game, future warps). Same call the
+-- legacy title key handler made (exploration.loadMap).
+handlers.LOAD_MAP = function(cmd, ctx)
+    local exploration = require("engine.exploration")
+    exploration.loadMap(ctx.session, tonumber(evalFormula(cmd.mapId, ctx)) or 1)
+end
+
+-- E10: quit the game (title Exit). No-op outside a LOVE runtime.
+handlers.QUIT_GAME = function(cmd, ctx)
+    if love and love.event then love.event.quit() end
+end
+
 -- E9: rebuild the global session from scratch (data-authored game over →
 -- "Return to Title"). Generic on purpose: any scene hook can start a fresh
 -- run. The renderer is re-pointed because it caches the session reference.

@@ -1059,7 +1059,13 @@ function love.load(arg)
     
     -- Initialize renderer graphics
     renderer.init(activeSession)
-    
+
+    -- E10: the boot-time scene_host.init("title") ran before the loader was
+    -- ready, so the title scene's on_enter (which builds its windows) could
+    -- not run. Re-enter it now that session and loader exist.
+    scene_host.init(nil)
+    scene_host.push("title", { session = activeSession, loader = loader, party = activeSession.party })
+
     -- Initialize 3D viewport textures
     viewport_3d.init()
     
@@ -1454,9 +1460,9 @@ local function handleKeyPressed(key)
     end
 
     if key == "escape" then
-        if scene_host.getCurrent() == "title" then
-            love.event.quit()
-        elseif scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
+        -- E10: title ESC is handled by the scene's on_cancel hook (moves the
+        -- cursor to Exit instead of instant-quitting).
+        if scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
             -- Open Main Menu instead of exiting!
 
             menuSelectedIdx = 1
@@ -1486,18 +1492,9 @@ local function handleKeyPressed(key)
         end
     end
     
-    if scene_host.getCurrent() == "title" then
-        if key == "return" or key == "space" then
-            -- Initialize session if not exists
-            if not activeSession then
-                activeSession = session.GameSession.new(loader)
-                activeSession:initializeStartingParty()
-            end
-            exploration.loadMap(activeSession, 1) -- Load Town Map (mapIdx = 1)
-            scene_host.goto_scene("map")
-        end
-        
-    elseif scene_host.getCurrent() == "town" then
+    -- E10: title input is fully handled by the title scene's data hooks
+    -- (scene_host.keypressed above), so no legacy title branch remains.
+    if scene_host.getCurrent() == "town" then
         -- Town menu entries come from system.town.options (label + action),
         -- editable from the editor's System tab.
         local townOptions = conf("town", "options", {})

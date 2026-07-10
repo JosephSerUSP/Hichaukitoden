@@ -143,6 +143,17 @@ local function vRows(state, key)
     return rows
 end
 
+-- E10: rows from a terms.json list entry (e.g. "term:title.options"), so
+-- menu labels stay owner-editable without touching scene data.
+local function termRows(loader, path)
+    local rows = {}
+    local labels = (loader and loader.getTermList) and loader.getTermList(path, {}) or {}
+    for _, label in ipairs(labels) do
+        table.insert(rows, { name = tostring(label) })
+    end
+    return rows
+end
+
 local function staticRows(spec)
     local rows = {}
     for label in tostring(spec):gmatch("[^,]+") do
@@ -165,6 +176,8 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = vRows(state, src:sub(3))
     elseif src:sub(1, 7) == "static:" then
         rows = staticRows(src:sub(8))
+    elseif src:sub(1, 5) == "term:" then
+        rows = termRows(ctx.loader or (ctx.session and ctx.session.loader), src:sub(6))
     else
         rows = {}
     end

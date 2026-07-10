@@ -997,11 +997,26 @@
     "id": "title",
     "name": "Title Screen",
     "kind": "menu",
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "escape"
+      }
+    ],
     "hooks": {
       "on_enter": [
         {
           "cmd": "SET_VAR",
-          "name": "selectedIdx",
+          "name": "idx",
           "value": 1
         },
         {
@@ -1018,14 +1033,102 @@
           "windowId": "title_menu"
         },
         {
-          "cmd": "SET_TEXT",
+          "cmd": "SET_LIST",
           "windowId": "title_menu",
-          "text": "Press ENTER to start"
+          "listId": "term:title.options"
         },
         {
           "cmd": "SET_CURSOR",
           "windowId": "title_menu",
-          "index": 1
+          "index": "v.idx"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "title_footer"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "title_footer",
+          "term": "title.copyright",
+          "text": "(C) 2026 Developer"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "SET_VAR",
+          "name": "idx",
+          "value": 3
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 1",
+          "then": [
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "LOAD_MAP",
+              "mapId": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "map"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 2",
+          "then": [
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "title_notice"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "title_notice",
+              "term": "title.no_save",
+              "text": "No save data."
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 3",
+          "then": [
+            {
+              "cmd": "QUIT_GAME"
+            }
+          ]
         }
       ]
     }
