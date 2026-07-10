@@ -118,9 +118,9 @@
       "shakeAmplitude": 2,
       "shakeFrequency": 30,
       "deadTint": [
-        0.45,
-        0.35,
-        0.55,
+        0.28,
+        0.26,
+        0.32,
         1
       ]
     }

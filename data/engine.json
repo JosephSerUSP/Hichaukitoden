@@ -1592,6 +1592,7 @@
       "width": 32,
       "height": 3,
       "style": "frame",
+      "contentY": 1,
       "title": null
     },
     "game_over_frame": {
@@ -1602,9 +1603,18 @@
       "style": "frame",
       "title": null
     },
+    "game_over_message": {
+      "x": 0,
+      "y": 13,
+      "width": 32,
+      "height": 3,
+      "style": "frame",
+      "contentY": 1,
+      "title": null
+    },
     "game_over_menu": {
       "x": 0,
-      "y": 14,
+      "y": 17,
       "width": 32,
       "height": 4,
       "style": "list",
