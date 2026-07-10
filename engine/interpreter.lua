@@ -331,6 +331,18 @@ end
 handlers.HEAL = function(cmd, ctx)
     local target = resolveRef(cmd.target, ctx)
     if not target then return end
+    -- E11: absorbed TRAIT_HEAL. With a trait code the heal amount is the
+    -- target's rate for that trait, applied silently (no heal event) and
+    -- skipping dead targets and zero rates — exact former TRAIT_HEAL
+    -- semantics, so the golden victory flow stays byte-identical.
+    if cmd.trait then
+        if target:isDead() then return end
+        local rate = traits.getRate(target, cmd.trait, ctx.session)
+        if rate > 0 then
+            target.hp = math.min(traits.getParam(target, "maxHp", ctx.session), target.hp + rate)
+        end
+        return
+    end
     local amount = evalFormula(cmd.amount, ctx)
     local source = ctx.a or target
     emitAll(ctx, effects.apply({ type = "hp_heal", formula = tostring(amount) }, source, target, ctx.session))
@@ -405,17 +417,6 @@ handlers.STATE_TICKS = function(cmd, ctx)
                 end
             end
         end
-    end
-end
-
--- Generalizes the hardcoded POST_BATTLE_HEAL block in main.lua victory
--- handling: heal the target by its rate for the named trait.
-handlers.TRAIT_HEAL = function(cmd, ctx)
-    local target = resolveRef(cmd.target, ctx)
-    if not target or target:isDead() then return end
-    local rate = traits.getRate(target, cmd.trait or "POST_BATTLE_HEAL", ctx.session)
-    if rate > 0 then
-        target.hp = math.min(traits.getParam(target, "maxHp", ctx.session), target.hp + rate)
     end
 end
 

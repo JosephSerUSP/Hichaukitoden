@@ -138,7 +138,7 @@
             "amount": "combat.victoryExp"
           },
           {
-            "cmd": "TRAIT_HEAL",
+            "cmd": "HEAL",
             "target": "ally",
             "trait": "POST_BATTLE_HEAL"
           }
@@ -196,7 +196,7 @@
             "amount": "1"
           },
           {
-            "cmd": "TRAIT_HEAL",
+            "cmd": "HEAL",
             "target": "ally",
             "trait": "POST_BATTLE_HEAL"
           }

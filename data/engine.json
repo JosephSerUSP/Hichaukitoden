@@ -664,6 +664,10 @@
         {
           "key": "amount",
           "type": "formula"
+        },
+        {
+          "key": "trait",
+          "type": "text"
         }
       ],
       "contexts": [
@@ -672,7 +676,7 @@
         "common"
       ],
       "interactive": false,
-      "description": "Heals via effects.apply, capped at max HP."
+      "description": "Heals via effects.apply, capped at max HP. With a trait code, heals silently by the target's rate for that trait (absorbed TRAIT_HEAL)."
     },
     {
       "id": "ADD_STATE",
@@ -796,26 +800,6 @@
       ],
       "interactive": false,
       "description": "Runs the regen/poison/duration-decay block for all battlers."
-    },
-    {
-      "id": "TRAIT_HEAL",
-      "category": "Battler",
-      "label": "Trait Heal",
-      "params": [
-        {
-          "key": "target",
-          "type": "battlerRef"
-        },
-        {
-          "key": "trait",
-          "type": "text"
-        }
-      ],
-      "contexts": [
-        "battle_phase"
-      ],
-      "interactive": false,
-      "description": "Heals the target by its rate for the named trait (e.g. POST_BATTLE_HEAL)."
     },
     {
       "id": "EMIT_TEXT",
