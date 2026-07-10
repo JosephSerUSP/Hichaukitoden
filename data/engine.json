@@ -1250,14 +1250,16 @@
     "partyGridHpBarHeight": 3,
     "partyGridEmptyYOffset": 8,
     "logLineSpacing": 10,
-    "commandWindowTileX": 0,
-    "commandWindowTileW": 12,
-    "commandWindowPadY": 14,
     "victoryPanelTileX": 6,
     "victoryPanelTileY": 4,
     "victoryPanelTileW": 20,
     "victoryPanelTileH": 13,
-    "victoryLineSpacing": 12
+    "victoryLineSpacing": 12,
+    "commandBarTileH": 2.5,
+    "commandBarTextYOffset": 6,
+    "victoryRowHeight": 16,
+    "victoryGaugeWidth": 64,
+    "victoryGaugeHeight": 3
   },
   "effectTypes": [
     {

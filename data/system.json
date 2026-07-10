@@ -100,7 +100,8 @@
         1,
         1
       ]
-    }
+    },
+    "victoryExpPerSecond": 40
   },
   "combat": {
     "baseFleeChance": 0.4,

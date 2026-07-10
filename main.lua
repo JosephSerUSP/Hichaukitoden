@@ -1610,11 +1610,17 @@ local function handleKeyPressed(key)
         if node then
             if node.type == "TEXT" then
                 if key == "space" or key == "return" then
-                    activeWalker:advance()
-                    dialogueSelectIdx = 1
-                    handleDialogueAction()
-                    if not activeWalker:getCurrentNode() then
-                        scene_host.goto_scene("map")
+                    -- B.0: a confirm press while text is revealing completes
+                    -- it; only a second press advances the dialogue.
+                    if renderer.isDialogueRevealing() then
+                        renderer.finishDialogueReveal()
+                    else
+                        activeWalker:advance()
+                        dialogueSelectIdx = 1
+                        handleDialogueAction()
+                        if not activeWalker:getCurrentNode() then
+                            scene_host.goto_scene("map")
+                        end
                     end
                 end
             elseif node.type == "CHOICE" then

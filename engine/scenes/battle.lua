@@ -494,28 +494,26 @@ function battle.handleTransition(action)
                 end
             end
         end
-        -- Reward lines for the window. gainExp rolls exp over on level-up,
-        -- so total gained = exp delta + the thresholds of each level crossed.
-        local expPerLevel = conf("growth", "expPerLevel", 15)
-        local lines = { "Gold +" .. (s.gold - goldBefore) }
+        -- Structured reward data for the window: gold delta, the battle's
+        -- base EXP grant, and per-member before/after level+exp so the
+        -- renderer can animate each EXP gauge (rollover handled there).
+        local members = {}
         for _, c in ipairs(s.party) do
             local snap = before[c]
             if snap then
-                local gained = c.exp - snap.exp
-                for lvl = snap.level, c.level - 1 do
-                    gained = gained + lvl * expPerLevel
-                end
-                if gained > 0 or c.level > snap.level then
-                    local cname = c.name or (c.actorData and c.actorData.name) or "?"
-                    local line = cname .. " +" .. gained .. " EXP"
-                    if c.level > snap.level then
-                        line = line .. "  LEVEL UP! (Lv " .. c.level .. ")"
-                    end
-                    table.insert(lines, line)
-                end
+                table.insert(members, {
+                    name = c.name or (c.actorData and c.actorData.name) or "?",
+                    fromLevel = snap.level, fromExp = snap.exp,
+                    toLevel = c.level, toExp = c.exp,
+                })
             end
         end
-        v.victory = { lines = lines }
+        v.victory = {
+            gold = s.gold - goldBefore,
+            exp = conf("combat", "victoryExp", 5),
+            expPerLevel = conf("growth", "expPerLevel", 15),
+            members = members,
+        }
         v.combatState = "victory"
     elseif b:isDefeat() then
         local doReset = true

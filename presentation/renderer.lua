@@ -47,14 +47,16 @@ local BATTLE_LAYOUT = {
     logSpaceX = 200,
     logSpaceY = 23,
     logLineSpacing = 10,        -- B.8: second log line offset
-    commandWindowTileX = 0,     -- B.7: battler command window (own panel,
-    commandWindowTileW = 12,    --      flush above the status console)
-    commandWindowPadY = 12,     --      px above first row / below last row
+    commandBarTileH = 2.5,      -- B.7: single-line full-width command bar
+    commandBarTextYOffset = 6,  --      flush above the status console
     victoryPanelTileX = 6,      -- B.9: victory window
     victoryPanelTileY = 4,
     victoryPanelTileW = 20,
     victoryPanelTileH = 13,
     victoryLineSpacing = 12,
+    victoryRowHeight = 16,      -- B.9: per-member EXP gauge rows
+    victoryGaugeWidth = 64,
+    victoryGaugeHeight = 3,
     consoleTileX = 0,
     consoleTileW = 32,
     consoleTileH = 12,
@@ -91,11 +93,17 @@ local portraitCache = {}
 local smallSpriteCache = {}  -- B.5: small sprite sheet cache
 local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
 
--- B.0: per-character text reveal (battle log line + dialogue TEXT nodes).
--- Elapsed advances in renderer.update; each tracker resets when its source
--- string/node changes. ui.textRevealDelay <= 0 disables the effect.
-local battleLogReveal = { text = nil, elapsed = 0 }
+-- B.0: per-character text reveal (battle log lines + dialogue TEXT nodes).
+-- Elapsed advances in renderer.update. The battle log tracker walks the log
+-- sequentially (cursor = index of the line currently animating); the
+-- dialogue tracker resets when its node changes. ui.textRevealDelay <= 0
+-- disables the effect.
+local battleLogReveal = { cursor = 0, elapsed = 0 }
 local dialogueReveal = { node = nil, elapsed = 0 }
+
+-- Victory-window EXP gauge animation (keyed by the victory info table's
+-- identity; a new battle produces a new table and re-seeds the animation).
+local victoryAnim = { source = nil, members = {} }
 
 local function revealDelay()
     return (config.ui and config.ui.textRevealDelay) or 0
@@ -319,6 +327,26 @@ local function summonerName()
     return (s and s.name or "Alex"):upper()
 end
 
+-- Summoner status block (name, HP, MP with bars), shared by the battle
+-- console and the out-of-battle HUD so the layout is identical in and out
+-- of battle and HP is visible everywhere (owner feedback 10.07.2026).
+-- baseY is the top of the containing panel; offsets come from battleLayout.
+local function drawSummonerStatus(baseY)
+    local session = renderer.session
+    local summoner = session.summoner
+    local x = layoutVal("summonerStatusX")
+    local nameY = baseY + layoutVal("summonerNameYOffset")
+    ui.drawString(summonerName(), x, nameY, {1, 0.85, 0.5, 1})
+    local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
+    local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
+    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {0.9, 0.3, 0.3, 1}
+    ui.drawString("HP: " .. math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, x, nameY + 10, hpColor)
+    ui.drawBar(x, nameY + 18, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
+    local dispMp = session.displayedMp or session.mp
+    ui.drawString("MP: " .. math.floor(dispMp + 0.5) .. "/" .. session.maxMp, x, baseY + layoutVal("summonerMpTextYOffset") + 8, {0.6, 0.8, 1, 1})
+    ui.drawBar(x, baseY + layoutVal("summonerMpBarYOffset") + 8, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), dispMp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+end
+
 local townBg
 function renderer.init(session)
     renderer.session = session
@@ -456,6 +484,43 @@ function renderer.update(dt)
     -- the tracked line/node changes)
     battleLogReveal.elapsed = battleLogReveal.elapsed + dt
     dialogueReveal.elapsed = dialogueReveal.elapsed + dt
+
+    -- Victory-window EXP gauges animate toward their post-battle values,
+    -- rolling over and incrementing the level as thresholds are crossed.
+    if victoryAnim.source then
+        local info = victoryAnim.source
+        local speed = (config.battle_screen and config.battle_screen.victoryExpPerSecond) or 30
+        local expPerLevel = info.expPerLevel or 15
+        for i, m in ipairs(info.members or {}) do
+            local a = victoryAnim.members[i]
+            if a and (a.level < m.toLevel or a.exp < m.toExp) then
+                a.exp = a.exp + speed * dt
+                local needed = a.level * expPerLevel
+                while a.exp >= needed and a.level < m.toLevel do
+                    a.exp = a.exp - needed
+                    a.level = a.level + 1
+                    needed = a.level * expPerLevel
+                end
+                if a.level >= m.toLevel and a.exp >= m.toExp then
+                    a.level = m.toLevel
+                    a.exp = m.toExp
+                end
+            end
+        end
+    end
+end
+
+-- Dialogue text-reveal control for the input layer: a confirm press while
+-- text is still revealing completes it instead of advancing the node.
+function renderer.isDialogueRevealing()
+    local node = dialogueReveal.node
+    if not node or node.type ~= "TEXT" then return false end
+    local content = node.content or ""
+    return revealedCount(content, dialogueReveal.elapsed) < #content
+end
+
+function renderer.finishDialogueReveal()
+    dialogueReveal.elapsed = math.huge
 end
 
 function renderer.addDamagePopup(text, x, y, color)
@@ -550,21 +615,12 @@ local function drawMinimap(x, y, size)
     love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
--- Render HUD/Party details in the bottom panel
+-- Render HUD/Party details in the bottom panel — the same summoner status
+-- block and party grid geometry as the battle console.
 local function drawHUD(x, y, w, h)
     ui.drawPanel(x, y, w, h)
-    
-    local session = renderer.session
-    
-    -- Draw Summoner MP stats on bottom left (identical to battle console)
-    ui.drawString(summonerName(), x + 1.25 * ui.tileSize, y + 1.75 * ui.tileSize, {1, 0.85, 0.5, 1})
-    
-    local dispMp = session.displayedMp or session.mp
-    ui.drawString("MP: " .. math.floor(dispMp + 0.5) .. "/" .. session.maxMp, x + 1.25 * ui.tileSize, y + 3.25 * ui.tileSize, {0.6, 0.8, 1, 1})
-    ui.drawBar(x + 1.25 * ui.tileSize, y + 4.75 * ui.tileSize, 10 * ui.tileSize, 4, dispMp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
-    
-    -- Draw active creatures in the unified 2x2 grid!
-    renderer.drawPartyGrid(x + 16 * ui.tileSize, y + 0.75 * ui.tileSize, 0, session, false)
+    drawSummonerStatus(y)
+    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), y + ui.toPx(layoutVal("headerTileOffset")), 0, renderer.session, false)
 end
 
 -- Renders the Title Scene
@@ -897,18 +953,30 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     
     -- Slim dialogue at the top of the screen during Battle Resolution.
     -- B.8: two lines — the previous entry dimmed above the latest one.
-    -- B.0: the latest line reveals character by character.
+    -- B.0: lines reveal character by character, strictly one at a time —
+    -- when several lines land in one log advance, each animates at the
+    -- bottom slot before the next begins (owner feedback 10.07.2026).
     if combatState == "log" then
         ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
-        local latestLog = combatLog[#combatLog] or ""
-        local previousLog = combatLog[#combatLog - 1] or ""
-        if battleLogReveal.text ~= latestLog then
-            battleLogReveal.text = latestLog
+        if battleLogReveal.cursor > #combatLog then
+            -- Log was cleared (new battle / showMessage): restart
+            battleLogReveal.cursor = math.min(1, #combatLog)
+            battleLogReveal.elapsed = 0
+        elseif battleLogReveal.cursor == 0 and #combatLog > 0 then
+            battleLogReveal.cursor = 1
             battleLogReveal.elapsed = 0
         end
-        local shown = latestLog:sub(1, revealedCount(latestLog, battleLogReveal.elapsed))
-        ui.drawString(previousLog, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
-        ui.drawString(shown, layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+        local current = combatLog[battleLogReveal.cursor] or ""
+        local shownCount = revealedCount(current, battleLogReveal.elapsed)
+        if shownCount >= #current and battleLogReveal.cursor < #combatLog then
+            battleLogReveal.cursor = battleLogReveal.cursor + 1
+            battleLogReveal.elapsed = 0
+            current = combatLog[battleLogReveal.cursor] or ""
+            shownCount = revealedCount(current, 0)
+        end
+        local previous = combatLog[battleLogReveal.cursor - 1] or ""
+        ui.drawString(previous, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
+        ui.drawString(current:sub(1, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
         ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
@@ -921,74 +989,84 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
 
     ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
 
-    -- B.7: the battler command menu is its own window that opens flush above
-    -- the status console during input and closes outside it.
+    -- B.7: the battler command menu is its own single-line window spanning
+    -- the full width, flush above the status console; it opens during input
+    -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
     if combatState == "input" then
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
         local isSummoner = (not memberInfo or memberInfo.type == "summoner")
+        local loader = renderer.session.loader
 
-        local title
-        local entries = {}
+        local entries, helps = {}, {}
         if isSummoner then
             if spellSelect then
-                title = "CAST SPELL (MP: " .. renderer.session.mp .. ")"
                 -- Real spell names + MP costs from summoner.spells / skills.json
-                -- (this list was previously hardcoded and out of sync)
                 for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
                     if type(spellId) == "table" then spellId = spellId.id end
-                    local sk = renderer.session.loader.getSkill(spellId)
+                    local sk = loader.getSkill(spellId)
                     if sk then
                         table.insert(entries, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
+                        table.insert(helps, sk.description or "")
                     end
                 end
             else
-                title = summonerName() .. "'S TURN (Inst.)"
-                entries = renderer.session.loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
+                entries = loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
+                helps = loader.getTermList("battle.help_summoner", {
+                    "Strike with a basic attack.",
+                    "Cast a spell from the grimoire.",
+                    "Use an item from the inventory.",
+                    "Attempt to escape the battle.",
+                })
             end
         else
             local monster = memberInfo.actor
             if spellSelect then
-                title = "USE SKILL"
                 for _, skId in ipairs(monster.skills or {}) do
-                    local sk = renderer.session.loader.getSkill(skId)
-                    if sk then table.insert(entries, sk.name) end
+                    local sk = loader.getSkill(skId)
+                    if sk then
+                        table.insert(entries, sk.name)
+                        table.insert(helps, sk.description or "")
+                    end
                 end
                 if #entries == 0 then entries = { "(No skills)" } end
             else
-                title = monster.name:upper() .. "'S TURN"
-                entries = renderer.session.loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
+                entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
+                helps = loader.getTermList("battle.help_monster", {
+                    "Strike with a basic attack.",
+                    "Use one of this creature's skills.",
+                    "Brace to reduce incoming damage.",
+                    "Attempt to escape the battle.",
+                })
             end
         end
 
-        local spacing = layoutVal("menuChoiceSpacing")
-        local padY = layoutVal("commandWindowPadY")
-        local winX = ui.toPx(layoutVal("commandWindowTileX"))
-        local winW = ui.toPx(layoutVal("commandWindowTileW"))
-        local winH = padY + #entries * spacing + 6
-        local winY = consoleY - winH
-        ui.drawPanel(winX, winY, winW, winH)
-        ui.drawString(title, winX + textX, winY + 4, {1, 0.85, 0.5, 1}, "left", winW - textX * 2)
+        local barH = ui.toPx(layoutVal("commandBarTileH"))
+        local barY = consoleY - barH
+        local barW = ui.toPx(layoutVal("consoleTileW"))
+        ui.drawPanel(0, barY, barW, barH)
+        local rowY = barY + layoutVal("commandBarTextYOffset")
+        local slot = (barW - textX * 2) / math.max(1, #entries)
         for i, label in ipairs(entries) do
             local isDim = (label == "(No skills)")
             local color = isDim and {0.5, 0.5, 0.5, 1}
                 or ((i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1})
             local prefix = (not isDim and i == selectedIndex) and "> " or "  "
-            ui.drawString(prefix .. label, winX + textX, winY + padY + (i - 1) * spacing, color)
+            ui.drawString(prefix .. label, textX + math.floor((i - 1) * slot), rowY, color)
+        end
+
+        -- Help window: same panel as the battle log, describing the selected
+        -- command or skill (owner feedback 10.07.2026).
+        local helpText = helps[selectedIndex] or ""
+        if helpText ~= "" then
+            ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
+            ui.drawString(helpText, layoutVal("logTextX"), layoutVal("logTextY"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
         end
     end
 
-    -- Draw Summoner HP/MP stats on bottom left (B.1: added HP display)
+    -- B.1/B.6: summoner status — the same shared block the HUD uses
     local session = renderer.session
-    local summoner = session.summoner
-    ui.drawString(summonerName(), layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset"), {1, 0.85, 0.5, 1})
-    local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
-    local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
-    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {0.9, 0.3, 0.3, 1}
-    ui.drawString("HP: " .. math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 10, hpColor)
-    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 18, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
-    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset") + 8, {0.6, 0.8, 1, 1})
-    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset") + 8, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
-    
+    drawSummonerStatus(consoleY)
+
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0
     local showHighlight = false
@@ -1002,15 +1080,32 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
 
     -- B.9: dedicated victory window (combatState set by battle.handleTransition;
-    -- SPACE dismisses it and leaves the battle)
-    if combatState == "victory" then
+    -- SPACE dismisses it and leaves the battle). Shows the battle's gold and
+    -- base EXP grant, plus per-member animated EXP gauges with To Next.
+    if combatState == "victory" and victoryInfo then
+        if victoryAnim.source ~= victoryInfo then
+            victoryAnim.source = victoryInfo
+            victoryAnim.members = {}
+            for i, m in ipairs(victoryInfo.members or {}) do
+                victoryAnim.members[i] = { level = m.fromLevel, exp = m.fromExp }
+            end
+        end
         local vx, vy = ui.toPx(layoutVal("victoryPanelTileX")), ui.toPx(layoutVal("victoryPanelTileY"))
         local vw, vh = ui.toPx(layoutVal("victoryPanelTileW")), ui.toPx(layoutVal("victoryPanelTileH"))
         ui.drawPanel(vx, vy, vw, vh, session.loader.getTerm("battle.victory_title", "VICTORY!"))
+        local contentX = vx + 10
         local ty = vy + 22
-        for _, line in ipairs((victoryInfo and victoryInfo.lines) or {}) do
-            ui.drawString(line, vx + 10, ty, {1, 1, 1, 1}, "left", vw - 20)
-            ty = ty + layoutVal("victoryLineSpacing")
+        ui.drawString("Gold +" .. (victoryInfo.gold or 0) .. "   EXP +" .. (victoryInfo.exp or 0), contentX, ty, {1, 0.9, 0.4, 1})
+        ty = ty + layoutVal("victoryLineSpacing")
+        local expPerLevel = victoryInfo.expPerLevel or 15
+        for i, m in ipairs(victoryInfo.members or {}) do
+            local a = victoryAnim.members[i] or { level = m.toLevel, exp = m.toExp }
+            local needed = a.level * expPerLevel
+            local rowY = ty + (i - 1) * layoutVal("victoryRowHeight")
+            local leveled = a.level > m.fromLevel
+            ui.drawString(m.name .. "  Lv " .. a.level .. (leveled and "  LEVEL UP!" or ""), contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+            ui.drawBar(contentX, rowY + 9, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
+            ui.drawString("To Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX + layoutVal("victoryGaugeWidth") + 8, rowY + 6, {0.7, 0.7, 0.7, 1})
         end
         ui.drawString("[SPACE]", vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
     end

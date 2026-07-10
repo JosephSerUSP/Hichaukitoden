@@ -36,6 +36,18 @@
       "Skill",
       "Defend",
       "Flee"
+    ],
+    "help_summoner": [
+      "Strike with a basic attack.",
+      "Cast a spell from the grimoire.",
+      "Use an item from the inventory.",
+      "Attempt to escape the battle."
+    ],
+    "help_monster": [
+      "Strike with a basic attack.",
+      "Use one of this creature's skills.",
+      "Brace to reduce incoming damage.",
+      "Attempt to escape the battle."
     ]
   },
   "menu": {
