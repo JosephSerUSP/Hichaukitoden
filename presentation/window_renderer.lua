@@ -388,4 +388,85 @@ function wr.draw(state, sceneData, ctx)
     end
 end
 
+-- ---------------------------------------------------------------------------
+-- E5: materialize the current window state as plain data for the headless
+-- scene preview (`lovec . preview-scene <id>`). Same resolution code paths
+-- as wr.draw — list sources expanded to formatted row strings, {expr} text
+-- interpolated, live cursor evaluated — but no drawing. Per-window failures
+-- become an `error` field on that window instead of crashing the preview.
+-- ---------------------------------------------------------------------------
+function wr.resolveState(state, sceneData, ctx)
+    local result = {
+        tileSize = ui.tileSize,
+        focused = state and state.focusedWindow or nil,
+        windows = {},
+    }
+    if not state or not state.winState then return result end
+
+    local listCache = {}
+    local env = buildEnv(state, sceneData, ctx, listCache)
+    for _, id in ipairs(state.windowOrder or {}) do
+        local win = state.winState[id]
+        if win and win.open and win.listId then
+            local ok, rows = pcall(resolveRows, win, state, sceneData, ctx, env)
+            local entry = { rows = {}, cursor = 1 }
+            if ok then entry.rows = rows else entry.error = tostring(rows) end
+            listCache[id] = entry
+        end
+    end
+    for id, cached in pairs(listCache) do
+        local ok, cur = pcall(liveCursor, state.winState[id], env)
+        cached.cursor = ok and cur or 1
+    end
+
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+    for _, id in ipairs(state.windowOrder or {}) do
+        local win = state.winState[id]
+        if win then
+            local layout = layouts[id] or {}
+            local entry = {
+                id = id,
+                open = win.open == true,
+                hasLayout = layouts[id] ~= nil,
+                x = layout.x or 0,
+                y = layout.y or 0,
+                width = layout.width or 8,
+                height = layout.height or 4,
+                style = layout.style or "panel",
+                listId = win.listId,
+            }
+            local okT, title = pcall(interpolate, layout.title, env)
+            if layout.title ~= nil then entry.title = okT and title or ("<error: " .. tostring(title) .. ">") end
+            if win.text ~= nil then
+                local okX, text = pcall(interpolate, win.text, env)
+                entry.text = okX and text or nil
+                if not okX then entry.error = tostring(text) end
+            end
+            local cached = listCache[id]
+            if cached then
+                entry.cursor = cached.cursor
+                if cached.error then entry.error = cached.error end
+                entry.rows = {}
+                local format = win.format or "{name}"
+                for _, row in ipairs(cached.rows) do
+                    local rEnv = rowEnv(env, row)
+                    local okR, textR = pcall(interpolate, format, rEnv)
+                    local highlighted = false
+                    if win.highlight and win.highlight ~= "" then
+                        local okH, hv = pcall(formula.eval, win.highlight, rEnv)
+                        highlighted = okH and hv == true
+                    end
+                    table.insert(entry.rows, {
+                        text = okR and textR or ("<error: " .. tostring(textR) .. ">"),
+                        highlighted = highlighted,
+                        icon = row.icon or 0,
+                    })
+                end
+            end
+            table.insert(result.windows, entry)
+        end
+    end
+    return result
+end
+
 return wr

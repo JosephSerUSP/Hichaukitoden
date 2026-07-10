@@ -39,6 +39,17 @@ const allFileVersions = () => {
     return versions;
 };
 
+// E5: console-capable LOVE binary for the headless scene preview. On
+// Windows only lovec.exe attaches a console, so stdout capture needs it;
+// fall back to LOVE_EXE when no lovec sibling exists.
+const previewExe = (() => {
+    const lovec = LOVE_EXE.replace(/love\.exe$/i, 'lovec.exe');
+    try {
+        if (lovec !== LOVE_EXE && fs.existsSync(lovec)) return lovec;
+    } catch (e) { /* fall through */ }
+    return LOVE_EXE;
+})();
+
 const server = http.createServer((req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -162,6 +173,43 @@ const server = http.createServer((req, res) => {
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(templates));
+    } else if (req.method === 'GET' && req.url.startsWith('/preview-scene')) {
+        // E5: invoke the engine's headless preview against the SAVED data
+        // files and return the materialized window state. The preview
+        // reflects the last save, not unsaved editor state — the UI states
+        // that caveat. Failures are structured JSON (the canvas renders
+        // them), never a 500 that kills the tab.
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
+        const sceneId = parsedUrl.searchParams.get('id');
+        const fail = (msg) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: msg }));
+        };
+        if (!sceneId || !/^[\w-]+$/.test(sceneId)) return fail('missing or invalid scene id');
+        if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
+        // Argument list form (no shell): sceneId can't be used for injection.
+        const { execFile } = require('child_process');
+        execFile(previewExe, ['.', 'preview-scene', sceneId], {
+            cwd: PROJECT_DIR,
+            timeout: 15000,
+            windowsHide: true,
+            maxBuffer: 4 * 1024 * 1024
+        }, (err, stdout) => {
+            const text = String(stdout || '');
+            const begin = text.indexOf('PREVIEW BEGIN');
+            const end = text.indexOf('PREVIEW END');
+            if (begin === -1 || end === -1 || end < begin) {
+                return fail('preview produced no output' + (err ? ' (' + err.message + ')' : ''));
+            }
+            const jsonText = text.slice(begin + 'PREVIEW BEGIN'.length, end).trim();
+            try {
+                JSON.parse(jsonText); // validate before relaying
+            } catch (e) {
+                return fail('preview output was not valid JSON: ' + e.message);
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(jsonText);
+        });
     } else if (req.method === 'GET' && req.url === '/api/graphs') {
         const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
         if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {

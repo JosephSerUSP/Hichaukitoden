@@ -814,6 +814,9 @@
 
             container.appendChild(configBody);
 
+            // --- E5: visual preview canvas (headless engine preview) ---
+            renderScenePreviewPanel(container, scene, () => renderUnifiedFlowsEditor(container.parentElement.parentElement, header));
+
             // --- Hook tabs ---
             const hookNames = SCENE_HOOK_NAMES;
             if (!activeUnifiedPhase || !hookNames.includes(activeUnifiedPhase)) {

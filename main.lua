@@ -66,6 +66,8 @@ activeSession = nil
 
 local isTestBattle = false
 local isValidateMode = false
+local isPreviewSceneMode = false
+local previewSceneId = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -126,12 +128,13 @@ end
 -- each scene in the registry via scene_host, capturing the normalized UI
 -- event log. Events are logged in `window|action|target|value` format between
 -- UI GOLDEN BEGIN/END markers (matching the pattern used by capture scripts).
-local function runGoldenUI()
+-- Deterministic mock session shared by the golden-ui harness and the E5
+-- scene preview: fixed seed, starting party, crafting ingredients in
+-- inventory so list-driven scenes have real content to show.
+local function makeHarnessSession()
     math.randomseed(12345)
-
     local vSession = session.GameSession.new(loader)
     vSession:initializeStartingParty()
-
     -- Give inventory items so crafting scenes have ingredients to select
     for _, item in ipairs(loader.items or {}) do
         if item.meta and item.meta.craftKind then
@@ -139,6 +142,47 @@ local function runGoldenUI()
         end
     end
     vSession:addItem(1, 5) -- HP Tonic
+    return vSession
+end
+
+-- E5: headless scene preview (`lovec . preview-scene <id>`). Pushes the
+-- scene with the mock session, runs on_enter through the real interpreter,
+-- and prints the MATERIALIZED window state (window_renderer.resolveState:
+-- geometry + resolved rows/text/cursor) as one JSON document between
+-- PREVIEW BEGIN/END markers. Errors become an { error } payload, never a
+-- crash — a broken scene is when the author needs the preview most.
+local function runPreviewScene(sceneId)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local vSession = makeHarnessSession()
+        local sceneDef
+        for _, sc in ipairs(loader.scenes or {}) do
+            if tostring(sc.id) == tostring(sceneId) then sceneDef = sc break end
+        end
+        if not sceneDef then
+            payload = { error = "scene not found: " .. tostring(sceneId) }
+            return
+        end
+        local sh = require("engine.scene_host")
+        local ctx = { session = vSession, loader = loader, party = vSession.party, events = {} }
+        sh.init(nil)
+        sh.push(sceneDef.id, ctx) -- push runs on_enter when given a ctx
+        local wr = require("presentation.window_renderer")
+        payload = wr.resolveState(sh.getCurrentState(), sceneDef, ctx)
+        payload.sceneId = sceneDef.id
+        payload.sceneName = sceneDef.name or ""
+        payload.gameWidth = gameWidth
+        payload.gameHeight = gameHeight
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+local function runGoldenUI()
+    local vSession = makeHarnessSession()
 
     local scene_host = require("engine.scene_host")
     local interpreter = require("engine.interpreter")
@@ -1019,9 +1063,21 @@ function love.load(arg)
                 isGoldenMode = true
             elseif val == "golden-ui" then
                 isGoldenUIMode = true
+            elseif val == "preview-scene" then
+                isPreviewSceneMode = true
+                previewSceneId = arg[i + 1]
+                i = i + 1
             end
             i = i + 1
         end
+    end
+
+    -- E5: headless scene preview for the editor canvas, then quit.
+    if isPreviewSceneMode then
+        loader.init()
+        runPreviewScene(previewSceneId)
+        love.event.quit(0)
+        return
     end
 
     -- Headless data validation: check database cross-references and simulate
