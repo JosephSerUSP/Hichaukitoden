@@ -178,6 +178,74 @@ local function getSpriteFrame(ss)
     local rate = ss.fps or (ss.speed and 4 * ss.speed or 4)
     return math.floor(smallSpriteAnimTimer * rate) % ss.numFrames
 end
+-- E8: battle animation constants (seed of the future Animation System).
+-- Values come from data/system.json battle_screen.animations; the defaults
+-- below stay in sync with that block and only apply if the data is missing.
+local ANIM_DEFAULTS = {
+    flashDuration = 0.35,
+    flashColorAction = {0.8, 1.0, 1.0},
+    flashColorDamage = {1.0, 0.2, 0.2},
+    shakeDuration = 0.3,
+    shakeAmplitude = 2,
+    shakeFrequency = 30,
+    deadTint = {0.45, 0.35, 0.55, 1},
+}
+
+local function animVal(key)
+    local block = config.battle_screen and config.battle_screen.animations
+    local v = block and block[key]
+    if v == nil then v = ANIM_DEFAULTS[key] end
+    return v
+end
+
+-- E8: damage feedback state for smallBattlers (party grid + summoner),
+-- keyed by battler object so grid slots and the summoner share one path.
+local smallAnims = {}
+
+-- E8: shared sprite-cell draw for the party grid and the summoner status
+-- block (previously two copies). Handles the dead display (deadTint, frame
+-- 1, no animation), the damage flash and the horizontal shake.
+-- Returns true when a sprite was drawn.
+local function drawSmallSpriteCell(battler, x, y, spriteSize)
+    local spriteKey = (battler.actorData and (battler.actorData.smallSprite or battler.actorData.spriteKey)) or battler.spriteKey
+    if not spriteKey then return false end
+    local ss = getSmallSprite(spriteKey)
+    if not (ss and ss.img) then return false end
+
+    local dead = battler.isDead and battler:isDead()
+    local frame = dead and 0 or getSpriteFrame(ss)
+    local anim = smallAnims[battler]
+
+    local drawX = x
+    if not dead and anim and anim.shakeTimer and anim.shakeTimer > 0 then
+        local dur = animVal("shakeDuration")
+        local decay = dur > 0 and (anim.shakeTimer / dur) or 0
+        drawX = x + animVal("shakeAmplitude") * decay
+            * math.sin(anim.shakeTimer * animVal("shakeFrequency") * 2 * math.pi)
+    end
+
+    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+    local drawScale = spriteSize / ss.cellW
+    if dead then
+        local tint = animVal("deadTint")
+        love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
+    else
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+    love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+
+    if not dead and anim and anim.flashTimer and anim.flashTimer > 0 then
+        local dur = animVal("flashDuration")
+        local col = animVal("flashColorDamage")
+        love.graphics.setBlendMode("add")
+        love.graphics.setColor(col[1], col[2], col[3], dur > 0 and (anim.flashTimer / dur) or 0)
+        love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+        love.graphics.setBlendMode("alpha")
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+    return true
+end
+
 local function getPortrait(id)
     if not id or id == "" then return nil end
     -- Battlers without a spriteKey fall back to their numeric actor id
@@ -362,17 +430,8 @@ local function drawSummonerStatus(baseY)
     local spriteSize = 24
 
     -- Draw summoner's small sprite if available (same as party grid)
-    local spriteKey = summoner and ((summoner.actorData and (summoner.actorData.smallSprite or summoner.actorData.spriteKey)) or summoner.spriteKey)
-    if spriteKey then
-        local ss = getSmallSprite(spriteKey)
-        if ss and ss.img then
-            local frame = getSpriteFrame(ss)
-            local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
-            local drawScale = spriteSize / ss.cellW
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(ss.img, quad, x, nameY, 0, drawScale, drawScale)
-            spriteOffsetX = spriteSize + 2  -- push content right
-        end
+    if summoner and drawSmallSpriteCell(summoner, x, nameY, spriteSize) then
+        spriteOffsetX = spriteSize + 2  -- push content right
     end
 
     -- Use same yOff logic as party grid for vertical alignment
@@ -453,6 +512,7 @@ end
 
 function renderer.initBattleAnims(enemies)
     battleAnims = {}
+    smallAnims = {}
     for i, enemy in ipairs(enemies) do
         battleAnims[i] = { slideTimer = 0.35, deathTimer = -1, dead = false, flashTimer = 0, flashType = "" }
     end
@@ -467,9 +527,19 @@ end
 
 function renderer.triggerActionFlash(enemyIdx, flashType)
     if battleAnims[enemyIdx] then
-        battleAnims[enemyIdx].flashTimer = 0.35
+        battleAnims[enemyIdx].flashTimer = animVal("flashDuration")
         battleAnims[enemyIdx].flashType = flashType or "action"
     end
+end
+
+-- E8: damage feedback (flash + shake) for a party smallBattler or the
+-- summoner. Keyed by the battler object; drawn by drawSmallSpriteCell.
+function renderer.triggerSmallDamage(target)
+    if not target then return end
+    smallAnims[target] = {
+        flashTimer = animVal("flashDuration"),
+        shakeTimer = animVal("shakeDuration"),
+    }
 end
 
 function renderer.update(dt)
@@ -501,6 +571,13 @@ function renderer.update(dt)
         end
         if anim.flashTimer and anim.flashTimer > 0 then
             anim.flashTimer = math.max(0, anim.flashTimer - dt)
+        end
+    end
+    for target, anim in pairs(smallAnims) do
+        anim.flashTimer = math.max(0, (anim.flashTimer or 0) - dt)
+        anim.shakeTimer = math.max(0, (anim.shakeTimer or 0) - dt)
+        if anim.flashTimer <= 0 and anim.shakeTimer <= 0 then
+            smallAnims[target] = nil
         end
     end
     
@@ -884,18 +961,9 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
 
             --@@ SPRITE: 24px animated small battler drawn at slot top-left
-            local spriteKey = (c.actorData and (c.actorData.smallSprite or c.actorData.spriteKey)) or c.spriteKey
             local spriteOffsetX = 0
-            if spriteKey then
-                local ss = getSmallSprite(spriteKey)
-                if ss and ss.img then
-                    local frame = getSpriteFrame(ss)
-                    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
-                    local drawScale = spriteSize / ss.cellW
-                    love.graphics.setColor(1, 1, 1, 1)
-                    love.graphics.draw(ss.img, quad, slot.x, slot.y, 0, drawScale, drawScale)
-                    spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
-                end
+            if drawSmallSpriteCell(c, slot.x, slot.y, spriteSize) then
+                spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
             end
 
             local prefix = isSel and ">" or " "
@@ -1011,11 +1079,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             -- Apply action/damage flash overlay
             if anim.flashTimer and anim.flashTimer > 0 then
                 love.graphics.setBlendMode("add")
-                if anim.flashType == "action" then
-                    love.graphics.setColor(0.8, 1.0, 1.0, anim.flashTimer / 0.35)
-                else
-                    love.graphics.setColor(1.0, 0.2, 0.2, anim.flashTimer / 0.35)
-                end
+                local flashDur = animVal("flashDuration")
+                local flashCol = animVal(anim.flashType == "action" and "flashColorAction" or "flashColorDamage")
+                love.graphics.setColor(flashCol[1], flashCol[2], flashCol[3], flashDur > 0 and (anim.flashTimer / flashDur) or 0)
                 if portrait then
                     love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
                 else

@@ -255,11 +255,17 @@ function battle.advanceLog()
             renderer.addDamagePopup(text, popupX, popupY, color)
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
             if v.battle then
+                local isEnemy = false
                 for idx, enemy in ipairs(v.battle.enemies) do
                     if enemy == ev.target then
                         renderer.triggerActionFlash(idx, "damage")
+                        isEnemy = true
                         break
                     end
+                end
+                -- E8: party smallBattlers and the summoner flash/shake too
+                if not isEnemy then
+                    renderer.triggerSmallDamage(ev.target)
                 end
             end
         elseif ev.type == "heal" then

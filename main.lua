@@ -1908,6 +1908,16 @@ function love.keypressed(key, scancode, isrepeat)
                     if x and y then
                         local col = isCrit and getPopupFormat("critColor") or (isHeal and getPopupFormat("healColor") or getPopupFormat("damageColor"))
                         renderer.addDamagePopup(txt, x, y, col)
+                        -- E8: exercise smallBattler damage feedback in test mode
+                        if not isHeal then
+                            local isEnemy = false
+                            for _, e in ipairs(b.enemies) do
+                                if e == target then isEnemy = true break end
+                            end
+                            if not isEnemy then
+                                renderer.triggerSmallDamage(target)
+                            end
+                        end
                     end
                 end
             end
