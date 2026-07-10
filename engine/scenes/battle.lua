@@ -460,16 +460,33 @@ end
 function battle.handleTransition(action)
     local v = battle.getState()
     local b = v.battle
-    if action ~= "select" or not b or v.combatState ~= "log"
+    if action ~= "select" or not b then return false end
+
+    -- B.9: the victory window is showing; this select dismisses it
+    if v.combatState == "victory" then
+        scene_host.goto_scene("map")
+        return true
+    end
+
+    if v.combatState ~= "log"
         or v.eventQueueIndex <= #(v.eventsQueue or {}) then return false end
 
     if b:isVictory() then
+        -- B.9: grant rewards, then show the dedicated victory window instead
+        -- of leaving immediately. Rewards are diffed around the flow run so
+        -- the window can report them without new engine event types.
+        local s = sess()
+        local goldBefore = s.gold
+        local before = {}
+        for _, c in ipairs(s.party) do
+            before[c] = { level = c.level, exp = c.exp }
+        end
         if flow.has("battle.victory") then
-            flow.run("battle.victory", { session = sess(), battle = b, party = sess().party, enemies = b.enemies })
+            flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
         else
             local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
-            sess().gold = sess().gold + goldGain
-            for _, c in ipairs(sess().party) do
+            s.gold = s.gold + goldGain
+            for _, c in ipairs(s.party) do
                 if not c:isDead() then
                     c:gainExp(conf("combat", "victoryExp", 5), sess())
                     local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", sess())
@@ -477,7 +494,29 @@ function battle.handleTransition(action)
                 end
             end
         end
-        scene_host.goto_scene("map")
+        -- Reward lines for the window. gainExp rolls exp over on level-up,
+        -- so total gained = exp delta + the thresholds of each level crossed.
+        local expPerLevel = conf("growth", "expPerLevel", 15)
+        local lines = { "Gold +" .. (s.gold - goldBefore) }
+        for _, c in ipairs(s.party) do
+            local snap = before[c]
+            if snap then
+                local gained = c.exp - snap.exp
+                for lvl = snap.level, c.level - 1 do
+                    gained = gained + lvl * expPerLevel
+                end
+                if gained > 0 or c.level > snap.level then
+                    local cname = c.name or (c.actorData and c.actorData.name) or "?"
+                    local line = cname .. " +" .. gained .. " EXP"
+                    if c.level > snap.level then
+                        line = line .. "  LEVEL UP! (Lv " .. c.level .. ")"
+                    end
+                    table.insert(lines, line)
+                end
+            end
+        end
+        v.victory = { lines = lines }
+        v.combatState = "victory"
     elseif b:isDefeat() then
         local doReset = true
         if flow.has("battle.defeat") then

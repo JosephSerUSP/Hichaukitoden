@@ -53,7 +53,8 @@
         0.6,
         1
       ]
-    ]
+    ],
+    "textRevealDelay": 0.02
   },
   "physics": {
     "gravity": 480,

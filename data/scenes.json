@@ -1194,7 +1194,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.combatState == 'log'",
+          "condition": "v.combatState == 'log' or v.combatState == 'victory'",
           "then": [
             {
               "cmd": "BATTLE_TRANSITION",

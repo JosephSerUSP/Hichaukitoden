@@ -46,15 +46,24 @@ local BATTLE_LAYOUT = {
     logTextLimit = 224,
     logSpaceX = 200,
     logSpaceY = 23,
+    logLineSpacing = 10,        -- B.8: second log line offset
+    commandWindowTileX = 0,     -- B.7: battler command window (own panel,
+    commandWindowTileW = 12,    --      flush above the status console)
+    commandWindowPadY = 12,     --      px above first row / below last row
+    victoryPanelTileX = 6,      -- B.9: victory window
+    victoryPanelTileY = 4,
+    victoryPanelTileW = 20,
+    victoryPanelTileH = 13,
+    victoryLineSpacing = 12,
     consoleTileX = 0,
     consoleTileW = 32,
     consoleTileH = 12,
     consoleTextTileX = 1,
     menuChoiceSpacing = 16,
     summonerStatusX = 8,
-    summonerNameYOffset = 48,
-    summonerMpTextYOffset = 64,
-    summonerMpBarYOffset = 80,
+    summonerNameYOffset = 8,   -- B.6: top-aligned with the party grid front row
+    summonerMpTextYOffset = 26,
+    summonerMpBarYOffset = 34,
     summonerMpBarWidth = 80,
     summonerMpBarHeight = 4,
     partyGridColWidth = 64,
@@ -81,6 +90,23 @@ local damagePopups = {}
 local portraitCache = {}
 local smallSpriteCache = {}  -- B.5: small sprite sheet cache
 local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
+
+-- B.0: per-character text reveal (battle log line + dialogue TEXT nodes).
+-- Elapsed advances in renderer.update; each tracker resets when its source
+-- string/node changes. ui.textRevealDelay <= 0 disables the effect.
+local battleLogReveal = { text = nil, elapsed = 0 }
+local dialogueReveal = { node = nil, elapsed = 0 }
+
+local function revealDelay()
+    return (config.ui and config.ui.textRevealDelay) or 0
+end
+
+-- Number of characters of `text` currently visible for `elapsed` seconds.
+local function revealedCount(text, elapsed)
+    local delay = revealDelay()
+    if delay <= 0 then return #text end
+    return math.min(#text, math.floor(elapsed / delay))
+end
 
 -- B.5: Load a small sprite sheet.
 -- Default format: 24*N x 24 pixels, cell count = width / height.
@@ -425,6 +451,11 @@ function renderer.update(dt)
     
     -- B.5: Advance small sprite animation timer (shared, drives all party sprite animations)
     smallSpriteAnimTimer = smallSpriteAnimTimer + dt
+
+    -- B.0: advance text-reveal timers (reset happens at the draw sites when
+    -- the tracked line/node changes)
+    battleLogReveal.elapsed = battleLogReveal.elapsed + dt
+    dialogueReveal.elapsed = dialogueReveal.elapsed + dt
 end
 
 function renderer.addDamagePopup(text, x, y, color)
@@ -650,7 +681,14 @@ function renderer.drawDialogue(walker, selectIdx)
     end
     
     if node.type == "TEXT" then
-        ui.drawString(node.content or "", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
+        -- B.0: reveal the text character by character (ui.textRevealDelay)
+        if dialogueReveal.node ~= node then
+            dialogueReveal.node = node
+            dialogueReveal.elapsed = 0
+        end
+        local content = node.content or ""
+        local shown = content:sub(1, revealedCount(content, dialogueReveal.elapsed))
+        ui.drawString(shown, winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
     elseif node.type == "CHOICE" then
         ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
@@ -785,7 +823,7 @@ function renderer.getBattlerCoords(battleState, session, target)
     return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
 
-function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx)
+function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx, victoryInfo)
     renderer.activeBattle = battleState
     
     -- Draw 3D dungeon view behind battle scene
@@ -857,86 +895,86 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
     end
     
-    -- Slim dialogue at the top of the screen during Battle Resolution
+    -- Slim dialogue at the top of the screen during Battle Resolution.
+    -- B.8: two lines — the previous entry dimmed above the latest one.
+    -- B.0: the latest line reveals character by character.
     if combatState == "log" then
         ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
         local latestLog = combatLog[#combatLog] or ""
-        ui.drawString(latestLog, layoutVal("logTextX"), layoutVal("logTextY"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+        local previousLog = combatLog[#combatLog - 1] or ""
+        if battleLogReveal.text ~= latestLog then
+            battleLogReveal.text = latestLog
+            battleLogReveal.elapsed = 0
+        end
+        local shown = latestLog:sub(1, revealedCount(latestLog, battleLogReveal.elapsed))
+        ui.drawString(previousLog, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
+        ui.drawString(shown, layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
         ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
-    -- Bottom Command console
+    -- Bottom status console: summoner status (left, B.1/B.6) + party grid
+    -- (right). Battler commands no longer live inside it (B.7).
     local consoleY = ui.toPx(layoutVal("consoleTileY"))
     local consoleH = ui.toPx(layoutVal("consoleTileH"))
     local textX = ui.toPx(layoutVal("consoleTextTileX"))
     local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
-    
+
     ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
-    
+
+    -- B.7: the battler command menu is its own window that opens flush above
+    -- the status console during input and closes outside it.
     if combatState == "input" then
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
         local isSummoner = (not memberInfo or memberInfo.type == "summoner")
-        
+
+        local title
+        local entries = {}
         if isSummoner then
-            ui.drawString(summonerName() .. "'S TURN (Inst.)", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = renderer.session.loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
             if spellSelect then
-                ui.drawString("CAST SPELL (MP: " .. renderer.session.mp .. ")", textX, headerY, {0.5, 0.8, 1, 1})
+                title = "CAST SPELL (MP: " .. renderer.session.mp .. ")"
                 -- Real spell names + MP costs from summoner.spells / skills.json
                 -- (this list was previously hardcoded and out of sync)
-                local spells = {}
                 for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
                     if type(spellId) == "table" then spellId = spellId.id end
                     local sk = renderer.session.loader.getSkill(spellId)
                     if sk then
-                        table.insert(spells, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
+                        table.insert(entries, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
                     end
                 end
-                for i, spellName in ipairs(spells) do
-                    local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                    local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. spellName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
-                end
             else
-                for i, actName in ipairs(actions) do
-                    local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                    local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
-                end
+                title = summonerName() .. "'S TURN (Inst.)"
+                entries = renderer.session.loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
             end
         else
-            -- Monster Turn
             local monster = memberInfo.actor
-            ui.drawString(monster.name:upper() .. "'S TURN", textX, headerY, {1, 0.85, 0.5, 1})
-            local actions = renderer.session.loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
             if spellSelect then
-                ui.drawString("USE SKILL", textX, headerY, {0.5, 0.8, 1, 1})
-                local skillsList = {}
+                title = "USE SKILL"
                 for _, skId in ipairs(monster.skills or {}) do
                     local sk = renderer.session.loader.getSkill(skId)
-                    if sk then table.insert(skillsList, sk) end
+                    if sk then table.insert(entries, sk.name) end
                 end
-                if #skillsList == 0 then
-                    ui.drawString("  (No skills)", textX, headerY + layoutVal("menuChoiceSpacing"), {0.5, 0.5, 0.5, 1})
-                else
-                    for i, sk in ipairs(skillsList) do
-                        local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                        local prefix = (i == selectedIndex) and "> " or "  "
-                        ui.drawString(prefix .. sk.name, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
-                    end
-                end
+                if #entries == 0 then entries = { "(No skills)" } end
             else
-                for i, actName in ipairs(actions) do
-                    local color = (i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                    local prefix = (i == selectedIndex) and "> " or "  "
-                    ui.drawString(prefix .. actName, textX, headerY + i * layoutVal("menuChoiceSpacing"), color)
-                end
+                title = monster.name:upper() .. "'S TURN"
+                entries = renderer.session.loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
             end
         end
-    else
-        -- Log state console title
-        ui.drawString(summonerName() .. "'S PARTY", textX, headerY, {1, 0.85, 0.5, 1})
-        ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + layoutVal("menuChoiceSpacing"), {0.6, 0.6, 0.6, 1})
+
+        local spacing = layoutVal("menuChoiceSpacing")
+        local padY = layoutVal("commandWindowPadY")
+        local winX = ui.toPx(layoutVal("commandWindowTileX"))
+        local winW = ui.toPx(layoutVal("commandWindowTileW"))
+        local winH = padY + #entries * spacing + 6
+        local winY = consoleY - winH
+        ui.drawPanel(winX, winY, winW, winH)
+        ui.drawString(title, winX + textX, winY + 4, {1, 0.85, 0.5, 1}, "left", winW - textX * 2)
+        for i, label in ipairs(entries) do
+            local isDim = (label == "(No skills)")
+            local color = isDim and {0.5, 0.5, 0.5, 1}
+                or ((i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+            local prefix = (not isDim and i == selectedIndex) and "> " or "  "
+            ui.drawString(prefix .. label, winX + textX, winY + padY + (i - 1) * spacing, color)
+        end
     end
 
     -- Draw Summoner HP/MP stats on bottom left (B.1: added HP display)
@@ -962,7 +1000,21 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
     end
     renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
-    
+
+    -- B.9: dedicated victory window (combatState set by battle.handleTransition;
+    -- SPACE dismisses it and leaves the battle)
+    if combatState == "victory" then
+        local vx, vy = ui.toPx(layoutVal("victoryPanelTileX")), ui.toPx(layoutVal("victoryPanelTileY"))
+        local vw, vh = ui.toPx(layoutVal("victoryPanelTileW")), ui.toPx(layoutVal("victoryPanelTileH"))
+        ui.drawPanel(vx, vy, vw, vh, session.loader.getTerm("battle.victory_title", "VICTORY!"))
+        local ty = vy + 22
+        for _, line in ipairs((victoryInfo and victoryInfo.lines) or {}) do
+            ui.drawString(line, vx + 10, ty, {1, 1, 1, 1}, "left", vw - 20)
+            ty = ty + layoutVal("victoryLineSpacing")
+        end
+        ui.drawString("[SPACE]", vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
+    end
+
     -- Draw active damage popups
     love.graphics.push("all")
     for _, p in ipairs(damagePopups) do
@@ -1347,17 +1399,19 @@ function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     
     ui.drawPanel(ui.toPx(2) + ox, ui.toPx(3), ui.toPx(28), ui.toPx(15), "EQUIP: " .. c.name:upper())
     
-    local eq1 = c.equipment[1]
-    local eq2 = c.equipment[2]
-    local eq3 = c.equipment[3]
-    
-    local slot1Text = "WPN: " .. (eq1 and eq1.name or "[ EMPTY ]")
-    local slot2Text = "AMR: " .. (eq2 and eq2.name or "[ EMPTY ]")
-    local slot3Text = "ACC: " .. (eq3 and eq3.name or "[ EMPTY ]")
-    
-    ui.drawString((selectedSlotIdx == 1 and "> " or "  ") .. slot1Text, ui.toPx(3) + ox, ui.toPx(6), selectedSlotIdx == 1 and {1, 1, 0.5, 1} or {1, 1, 1, 1}, "left", ui.toPx(15))
-    ui.drawString((selectedSlotIdx == 2 and "> " or "  ") .. slot2Text, ui.toPx(3) + ox, ui.toPx(8.5), selectedSlotIdx == 2 and {1, 1, 0.5, 1} or {1, 1, 1, 1}, "left", ui.toPx(15))
-    ui.drawString((selectedSlotIdx == 3 and "> " or "  ") .. slot3Text, ui.toPx(3) + ox, ui.toPx(11), selectedSlotIdx == 3 and {1, 1, 0.5, 1} or {1, 1, 1, 1}, "left", ui.toPx(15))
+    -- B.3: slot rows show the equipped item's icon
+    local function slotRow(idx, label, eq, y)
+        local sel = (selectedSlotIdx == idx)
+        local color = sel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        ui.drawString(sel and ">" or " ", ui.toPx(3) + ox, y, color)
+        if eq and eq.icon and eq.icon > 0 then
+            ui.drawIcon(eq.icon, ui.toPx(4) + ox, y - 1)
+        end
+        ui.drawString(label .. ": " .. (eq and eq.name or "[ EMPTY ]"), ui.toPx(5.75) + ox, y, color, "left", ui.toPx(15))
+    end
+    slotRow(1, "WPN", c.equipment[1], ui.toPx(6))
+    slotRow(2, "AMR", c.equipment[2], ui.toPx(8.5))
+    slotRow(3, "ACC", c.equipment[3], ui.toPx(11))
     
     -- Draw stats on the right (x = 18 tiles)
     local atk = traits.getParam(c, "atk", session)

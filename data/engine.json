@@ -1234,9 +1234,9 @@
     "consoleTextTileX": 1,
     "menuChoiceSpacing": 8,
     "summonerStatusX": 8,
-    "summonerNameYOffset": 48,
-    "summonerMpTextYOffset": 64,
-    "summonerMpBarYOffset": 80,
+    "summonerNameYOffset": 8,
+    "summonerMpTextYOffset": 26,
+    "summonerMpBarYOffset": 34,
     "summonerMpBarWidth": 80,
     "summonerMpBarHeight": 4,
     "partyGridColWidth": 64,
@@ -1248,7 +1248,16 @@
     "partyGridHpBarYOffset": 22,
     "partyGridHpBarWidth": 52,
     "partyGridHpBarHeight": 3,
-    "partyGridEmptyYOffset": 8
+    "partyGridEmptyYOffset": 8,
+    "logLineSpacing": 10,
+    "commandWindowTileX": 0,
+    "commandWindowTileW": 12,
+    "commandWindowPadY": 14,
+    "victoryPanelTileX": 6,
+    "victoryPanelTileY": 4,
+    "victoryPanelTileW": 20,
+    "victoryPanelTileH": 13,
+    "victoryLineSpacing": 12
   },
   "effectTypes": [
     {
