@@ -1479,11 +1479,91 @@
         "key": "down"
       },
       {
-        "key": "up"
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
       }
     ],
     "hooks": {
       "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "name": "step",
+          "value": 0
+        },
         {
           "cmd": "SET_VAR",
           "name": "idx",
@@ -1500,29 +1580,87 @@
           "text": "GAME OVER"
         },
         {
-          "cmd": "OPEN_WINDOW",
-          "windowId": "game_over_menu"
+          "cmd": "WAIT",
+          "duration": 1.4
+        }
+      ],
+      "on_frame": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.step == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "step",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "game_over_message"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "game_over_message",
+              "term": "game_over.message",
+              "text": "The party has fallen..."
+            },
+            {
+              "cmd": "WAIT",
+              "duration": 1.0
+            }
+          ]
         },
         {
-          "cmd": "SET_TEXT",
-          "windowId": "game_over_menu",
-          "term": "game_over.return_to_title",
-          "text": "Return to Title"
-        },
-        {
-          "cmd": "SET_CURSOR",
-          "windowId": "game_over_menu",
-          "index": 1
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.step == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "step",
+              "value": 2
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "game_over_menu"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "game_over_menu",
+              "term": "game_over.return_to_title",
+              "text": "Return to Title"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "game_over_menu",
+              "index": 1
+            }
+          ]
         }
       ],
       "on_select": [
         {
-          "cmd": "RESET_SESSION"
-        },
-        {
-          "cmd": "SCENE_EVENT",
-          "kind": "goto",
-          "scene": "title"
+          "cmd": "IF",
+          "condition": "v.step == 2",
+          "then": [
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "title"
+            }
+          ]
         }
       ]
     }

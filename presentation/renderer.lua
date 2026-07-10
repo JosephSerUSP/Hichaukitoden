@@ -188,7 +188,7 @@ local ANIM_DEFAULTS = {
     shakeDuration = 0.3,
     shakeAmplitude = 2,
     shakeFrequency = 30,
-    deadTint = {0.45, 0.35, 0.55, 1},
+    deadTint = {0.28, 0.26, 0.32, 1},
 }
 
 local function animVal(key)
@@ -1274,7 +1274,11 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             local leveled = a.level > m.fromLevel
             -- Name on left, "Next: X" right-justified to gauge end, same line
             ui.drawString(m.name .. "  Lv " .. a.level .. (leveled and "  LV UP!" or ""), contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-            ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
+            -- "Next:" shares the line with the name; hide it while "LV UP!"
+            -- is showing or the two overlap (owner feedback 10.07.2026).
+            if not leveled then
+                ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
+            end
             -- Gauge at full width below the name line
             ui.drawBar(contentX, rowY + 10, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
         end
