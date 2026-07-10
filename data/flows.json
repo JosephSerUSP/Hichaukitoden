@@ -68,11 +68,12 @@
     "defeat": [
       {
         "cmd": "COMMENT",
-        "text": "Party wiped: signal the reset-to-title transition. main.lua performs the actual scene switch and session reset (task A5e)."
+        "text": "Party wiped: signal the transition to the Game Over scene (E9). The scene's on_select hook resets the session via RESET_SESSION."
       },
       {
         "cmd": "SCENE_EVENT",
-        "kind": "defeat"
+        "kind": "defeat",
+        "scene": "game_over"
       }
     ],
     "escaped": [

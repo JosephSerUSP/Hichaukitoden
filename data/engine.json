@@ -1005,6 +1005,10 @@
         {
           "key": "kind",
           "type": "text"
+        },
+        {
+          "key": "scene",
+          "type": "text"
         }
       ],
       "contexts": [
@@ -1013,6 +1017,17 @@
       ],
       "interactive": false,
       "description": "Emits a scene_change event that main.lua consumes; the interpreter never switches scenes itself."
+    },
+    {
+      "id": "RESET_SESSION",
+      "category": "Advanced",
+      "label": "Reset Session",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Discards the current session and starts a fresh one with the starting party (game over / new game)."
     },
     {
       "id": "SCRIPT",
@@ -1112,6 +1127,10 @@
         },
         {
           "key": "text",
+          "type": "text"
+        },
+        {
+          "key": "term",
           "type": "text"
         }
       ],
@@ -1540,6 +1559,22 @@
       "title": null
     },
     "title_menu": {
+      "x": 0,
+      "y": 14,
+      "width": 32,
+      "height": 4,
+      "style": "list",
+      "title": null
+    },
+    "game_over_frame": {
+      "x": 0,
+      "y": 6,
+      "width": 32,
+      "height": 6,
+      "style": "frame",
+      "title": null
+    },
+    "game_over_menu": {
       "x": 0,
       "y": 14,
       "width": 32,

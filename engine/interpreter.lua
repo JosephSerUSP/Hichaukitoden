@@ -544,7 +544,16 @@ handlers.SET_LIST = function(cmd, ctx)
 end
 
 handlers.SET_TEXT = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_text", windowId = cmd.windowId, text = cmd.text })
+    -- Optional terms.json lookup (E9): "term" names the entry, "text" is the
+    -- fallback — same contract as EMIT_TEXT.
+    local text = cmd.text
+    if cmd.term then
+        local loader = ctx.loader or (ctx.session and ctx.session.loader)
+        if loader and loader.getTerm then
+            text = loader.getTerm(cmd.term, cmd.text or cmd.term)
+        end
+    end
+    table.insert(ctx.events, { type = "set_text", windowId = cmd.windowId, text = text })
 end
 
 handlers.SET_CURSOR = function(cmd, ctx)
@@ -567,6 +576,19 @@ end
 
 handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
+end
+
+-- E9: rebuild the global session from scratch (data-authored game over →
+-- "Return to Title"). Generic on purpose: any scene hook can start a fresh
+-- run. The renderer is re-pointed because it caches the session reference.
+handlers.RESET_SESSION = function(cmd, ctx)
+    local sessionModule = require("engine.session")
+    local fresh = sessionModule.GameSession.new(ctx.loader or (ctx.session and ctx.session.loader))
+    fresh:initializeStartingParty()
+    _G.activeSession = fresh
+    ctx.session = fresh
+    local ok, renderer = pcall(require, "presentation.renderer")
+    if ok and renderer and renderer.init then renderer.init(fresh) end
 end
 
 handlers.SCENE_EVENT = function(cmd, ctx)

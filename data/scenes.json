@@ -1365,5 +1365,63 @@
         }
       ]
     }
+  },
+  {
+    "id": "game_over",
+    "name": "Game Over",
+    "kind": "menu",
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      }
+    ],
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "name": "idx",
+          "value": 1
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "game_over_frame"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "game_over_frame",
+          "term": "game_over.title",
+          "text": "GAME OVER"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "game_over_menu"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "game_over_menu",
+          "term": "game_over.return_to_title",
+          "text": "Return to Title"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "game_over_menu",
+          "index": 1
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "RESET_SESSION"
+        },
+        {
+          "cmd": "SCENE_EVENT",
+          "kind": "goto",
+          "scene": "title"
+        }
+      ]
+    }
   }
 ]

@@ -112,6 +112,11 @@
     "decide_not_to_replace": "[Recruit] You decide not to replace anyone.",
     "replace_member": "[Recruit] You replace {0} with {1}."
   },
+  "game_over": {
+    "title": "GAME OVER",
+    "message": "The party has fallen...",
+    "return_to_title": "Return to Title"
+  },
   "shrine": {
     "silent": "[Shrine] This shrine is silent.",
     "hp_change": "[Shrine] Your party's HP changes by {0}.",

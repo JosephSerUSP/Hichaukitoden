@@ -530,17 +530,22 @@ function battle.handleTransition(action)
         v.victoryStage = 0
         v.combatState = "victory"
     elseif b:isDefeat() then
-        local doReset = true
+        -- E9: defeat routes to the data-authored Game Over scene. The session
+        -- reset happens there (RESET_SESSION on the player's choice), not as
+        -- a side effect of losing.
+        local toGameOver = true
+        local targetScene = "game_over"
         if flow.has("battle.defeat") then
-            doReset = false
+            toGameOver = false
             for _, ev in ipairs(flow.run("battle.defeat", { session = sess(), battle = b })) do
-                if ev.type == "scene_change" and ev.kind == "defeat" then doReset = true end
+                if ev.type == "scene_change" and ev.kind == "defeat" then
+                    toGameOver = true
+                    if ev.scene then targetScene = ev.scene end
+                end
             end
         end
-        if doReset then
-            _G.activeSession = session.GameSession.new(ldr())
-            sess():initializeStartingParty()
-            renderer.init(sess())
+        if toGameOver then
+            scene_host.goto_scene(targetScene, { session = sess(), loader = ldr(), party = sess().party })
         end
     elseif v.escaped then
         local toMap = true
