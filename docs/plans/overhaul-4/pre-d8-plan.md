@@ -1,6 +1,6 @@
 # Pre-D8: Battle Scene Refactoring Prerequisites
 
-**Status:** 📋 Analysis complete — tasks not started
+**Status:** D09–D11 complete; D12/D8 visual work remains
 **Dependencies:** D4 (crafting hooks) completed and G1-validated
 **Target:** Clean battle architecture before D8 hooks conversion + 9 UI feedback items
 
@@ -295,12 +295,12 @@ Pre-D8-B (state extraction) + Pre-D8-C (function extraction) are tightly coupled
 
 **Goal:** Move battle keypressed logic from main.lua to hooks + `engine/scenes/battle.lua`.
 
-**Acceptance:**
-- [ ] Battle input logic removed from main.lua's `handleKeyPressed`
-- [ ] New hooks in scenes.json for battle: on_select, on_cancel, on_up, on_down, on_frame
-- [ ] Hooks call into `engine/scenes/battle.lua` helpers (CALC_BATTLE_ACTION or similar)
-- [ ] G1 validate passes
-- [ ] G2 golden battle.log byte-identical (or justified changes)
+**Acceptance (complete 10.07.2026):**
+- [x] Battle input logic removed from main.lua's `handleKeyPressed`
+- [x] New battle hooks: on_select, on_cancel, on_up, on_down (no `on_frame` is needed for player-paced input)
+- [x] Hooks call `engine/scenes/battle.lua` helpers
+- [x] G1 validate passes
+- [x] G2 golden battle.log byte-identical
 
 **Files:** `engine/scenes/battle.lua`, `data/scenes.json`, `main.lua`
 

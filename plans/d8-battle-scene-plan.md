@@ -7,6 +7,21 @@
 
 ---
 
+## Current Baseline (10.07.2026)
+
+- D09/D10 are complete: the battle scene is registered and battle state/helpers
+  live in `engine/scenes/battle.lua`.
+- D11 is complete: input, log advancement, and battle-end transitions dispatch
+  through battle hooks/helpers; G1 and G2 were green with `battle.log`
+  untouched.
+- Already-landed visual items to preserve: small animated battler sprites in
+  the party grid, enemy `spriteKey` portraits, displaced element icons, and
+  the summoner HP/MP display.
+- Remaining visual work: standalone commands window, two-line battle log,
+  text character delay, and dedicated victory window.
+
+---
+
 ## Overview
 
 Convert the Battle scene loops into data hooks in `scenes.json`. This is the most entangled scene in the codebase and requires regenerating `tools/golden/battle.log` with line-by-line justification for every change.
@@ -31,15 +46,15 @@ Unlike D4–D7 (which could skip UI-golden regeneration because they were new fe
 
 ## Phase 2: Battle UI Overhaul (feedback items)
 
-### 2a. Enemy Sprites (B.2)
+### 2a. Enemy Sprites (B.2) — complete
 - Fix enemy sprite rendering to use `spriteKey` instead of default red square
 - Ensure all actor IDs with sprite keys resolve correctly
 
-### 2b. Creature Element Icons (B.4)
+### 2b. Creature Element Icons (B.4) — complete
 - Displace element icons by 3px in X and Y directions
 - Check `renderer.lua` element icon drawing code
 
-### 2c. Summoner HP in Battle UI (B.1)
+### 2c. Summoner HP in Battle UI (B.1) — complete
 - Add Summoner's HP display to the battle status window
 - Position: top, left of front row creature slots (B.6)
 

@@ -1168,7 +1168,7 @@
         {
           "cmd": "SET_VAR",
           "name": "spellSelect",
-          "value": 0
+          "value": "false"
         }
       ],
       "on_select": [
