@@ -1,4 +1,4 @@
-const http = require('http');
+ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
@@ -181,11 +181,13 @@ const server = http.createServer((req, res) => {
         // them), never a 500 that kills the tab.
         const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
         const sceneId = parsedUrl.searchParams.get('id');
+        console.log(`[preview-scene] handler invoked — req.url="${req.url}" sceneId="${sceneId}"`);
         const fail = (msg) => {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: msg }));
         };
         if (!sceneId || !/^[\w-]+$/.test(sceneId)) return fail('missing or invalid scene id');
+        console.log(`[preview-scene] previewExe="${previewExe}" exists=${fs.existsSync(previewExe)}`);
         if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
         // Argument list form (no shell): sceneId can't be used for injection.
         const { execFile } = require('child_process');

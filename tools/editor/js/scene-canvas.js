@@ -180,7 +180,12 @@
             const fetchPreview = async () => {
                 try {
                     const res = await fetch(`${API_URL}/preview-scene?id=${encodeURIComponent(scene.id)}`);
-                    scenePreviewCache[scene.id] = await res.json();
+                    if (!res.ok) {
+                        const body = await res.text().catch(() => '(unreadable)');
+                        scenePreviewCache[scene.id] = { error: `preview request failed: HTTP ${res.status} ${res.statusText} — ${body}` };
+                    } else {
+                        scenePreviewCache[scene.id] = await res.json();
+                    }
                 } catch (err) {
                     scenePreviewCache[scene.id] = { error: 'preview request failed: ' + err.message };
                 }
