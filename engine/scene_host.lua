@@ -140,7 +140,11 @@ function scene_host.runHook(hookName, ctx)
 
     -- Save old events list to avoid accumulating transition events across nested hook/push calls
     local oldEvents = ctx.events
+    local oldHookHandled = ctx.hookHandled
+    local oldHookFallback = ctx.hookFallback
     ctx.events = {}
+    ctx.hookHandled = false
+    ctx.hookFallback = false
 
     local events = interpreter.runImmediate(cmds, ctx)
 
@@ -181,7 +185,10 @@ function scene_host.runHook(hookName, ctx)
         end
     end
 
-    return true
+    local fallback = ctx.hookFallback
+    ctx.hookHandled = oldHookHandled
+    ctx.hookFallback = oldHookFallback
+    return not fallback
 end
 
 function scene_host.push(id, ctx)

@@ -458,6 +458,54 @@
       "description": "Sets a flow-local variable, readable as v.name in formulas."
     },
     {
+      "id": "BATTLE_INPUT",
+      "category": "Battle",
+      "label": "Battle Input",
+      "params": [
+        {
+          "key": "action",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Routes a battle scene input action to its battle helper."
+    },
+    {
+      "id": "BATTLE_LOG",
+      "category": "Battle",
+      "label": "Battle Log",
+      "params": [
+        {
+          "key": "action",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Routes a battle log action to its battle helper."
+    },
+    {
+      "id": "BATTLE_TRANSITION",
+      "category": "Battle",
+      "label": "Battle Transition",
+      "params": [
+        {
+          "key": "action",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Routes a completed battle log action to its battle helper."
+    },
+    {
       "id": "SET_FLAG",
       "category": "Flow Control",
       "label": "Set Flag",

@@ -1170,6 +1170,56 @@
           "name": "spellSelect",
           "value": 0
         }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            { "cmd": "BATTLE_INPUT", "action": "select" }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'log'",
+          "then": [
+            { "cmd": "BATTLE_LOG", "action": "select" }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'log'",
+          "then": [
+            { "cmd": "BATTLE_TRANSITION", "action": "select" }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            { "cmd": "BATTLE_INPUT", "action": "cancel" }
+          ]
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            { "cmd": "BATTLE_INPUT", "action": "up" }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            { "cmd": "BATTLE_INPUT", "action": "down" }
+          ]
+        }
       ]
     }
   },

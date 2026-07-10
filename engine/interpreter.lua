@@ -205,6 +205,23 @@ end
 
 handlers.COMMENT = function() end
 
+-- Scene-only bridge for the battle's legacy input semantics.  The scene hook
+-- selects the input phase; the helper owns the actual command decisions.
+handlers.BATTLE_INPUT = function(cmd, ctx)
+    ctx.hookHandled = true
+    require("engine.scenes.battle").handleInput(cmd.action)
+end
+
+handlers.BATTLE_LOG = function(cmd, ctx)
+    ctx.hookHandled = require("engine.scenes.battle").handleLogInput(cmd.action)
+    ctx.hookFallback = not ctx.hookHandled
+end
+
+handlers.BATTLE_TRANSITION = function(cmd, ctx)
+    ctx.hookHandled = require("engine.scenes.battle").handleTransition(cmd.action)
+    ctx.hookFallback = not ctx.hookHandled
+end
+
 handlers.SET_VAR = function(cmd, ctx)
     ctx.v[cmd.name] = evalFormula(cmd.value, ctx)
 end
