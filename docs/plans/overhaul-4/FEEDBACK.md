@@ -1,3 +1,19 @@
+HUMAN FEEDBACK (09.07.2026)
+
+EDITOR / ARCHITECTURE:
+1. The "Flows" tab should be renamed to — and thought of architecturally as — the "Scenes" tab.
+2. The Kind field in that tab shows "Crafting" for every scene, and "crafting" is the only
+   possible option in the dropdown. (Confirmed hardcoded: makeSelect(['crafting'], ...) in
+   tools/editor/js/engine-editor.js.)
+3. Scene commands must not be hyper-specific/obtuse. CALC_CRAFT_YIELD should NOT be its own
+   command — it should be a Script Call instead. Script Calls are acceptable in "extra"
+   (user-authored, non-built-in) scenes; this amends SPEC S6's zero-SCRIPT rule for
+   scenes.json, which now applies to built-in scenes only.
+4. Item Creation (crafting) is the sample "extra" scene. It must have NOTHING hardcoded for
+   it at all — including no "crafting" scene kind in the engine or editor.
+
+---
+
 HUMAN FEEDBACK (08.07.2026 at 7.11 AM)
 
 GAME:

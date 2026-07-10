@@ -42,6 +42,7 @@ function formula.battlerView(battler, session)
         mat = traits.getParam(battler, "mat", session) or 10,
         mdf = traits.getParam(battler, "mdf", session) or 10,
         mpd = traits.getParam(battler, "mpd", session) or 1,
+        asp = traits.getParam(battler, "asp", session) or 10,
         meta = battler.meta or {}
     }
 end

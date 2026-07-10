@@ -1,6 +1,6 @@
 {
   "1": {
-    "name": "Stairs Down",
+    "name": "Teleport",
     "minimapColor": [
       0,
       0.8,
@@ -18,7 +18,7 @@
             "label": "Yes",
             "commands": [
               {
-                "type": "DESCEND"
+                "type": "TELEPORT"
               }
             ]
           },

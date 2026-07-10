@@ -1,16 +1,12 @@
-function createIconField(container, labelText, value, onChange) {
+function createIconField(container, labelText, value, onChange, compact) {
     const group = document.createElement('div');
-    group.className = 'form-group';
-    group.style.display = 'flex';
-    group.style.alignItems = 'center';
-    group.style.gap = '8px';
 
     const lbl = document.createElement('label');
     lbl.textContent = labelText;
-    lbl.style.marginBottom = '0';
-    lbl.style.minWidth = '80px';
+    lbl.style.marginBottom = '2px';
     group.appendChild(lbl);
 
+    // Swatch is double-clickable to open the icon picker
     const swatch = document.createElement('div');
     swatch.style.width = '24px';
     swatch.style.height = '24px';
@@ -18,10 +14,13 @@ function createIconField(container, labelText, value, onChange) {
     swatch.style.backgroundSize = '240px auto';
     swatch.style.border = '1px solid #ccc';
     swatch.style.imageRendering = 'pixelated';
+    swatch.style.flexShrink = '0';
+    swatch.style.cursor = 'pointer';
+    swatch.title = 'Double-click to pick icon';
 
     function updateSwatch(id) {
         if (!id || id <= 0) {
-            swatch.style.backgroundPosition = '-0px -0px'; // Maybe a fallback or clear
+            swatch.style.backgroundPosition = '-0px -0px';
             return;
         }
         const col = (id - 1) % 10;
@@ -29,29 +28,24 @@ function createIconField(container, labelText, value, onChange) {
         swatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
     }
     updateSwatch(value);
-    group.appendChild(swatch);
 
-    const idLabel = document.createElement('span');
-    idLabel.textContent = `ID: ${value || 0}`;
-    idLabel.style.minWidth = '40px';
-    group.appendChild(idLabel);
-
-    const btn = document.createElement('button');
-    btn.className = 'win-btn outset-bevel';
-    btn.textContent = 'Pick...';
-    btn.onclick = (e) => {
+    swatch.ondblclick = (e) => {
         e.preventDefault();
         openIconPicker(value || 0, (newId) => {
             value = newId;
             updateSwatch(newId);
-            idLabel.textContent = `ID: ${newId}`;
             onChange(newId);
-            // Trigger dirty by dispatching a change event that state.js listens to
-            const evt = new Event('change', { bubbles: true });
-            btn.dispatchEvent(evt);
         });
     };
-    group.appendChild(btn);
+
+    group.appendChild(swatch);
+
+    if (compact) {
+        // Compact mode: sits flush next to sibling fields (no form-group, no flex:1)
+        group.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; flex-shrink: 0; margin-right: 0;';
+    } else {
+        group.className = 'form-group';
+    }
 
     container.appendChild(group);
 }

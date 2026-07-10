@@ -1,0 +1,8 @@
+UI GOLDEN BEGIN
+scene|title|name|Title Screen
+title_frame|open_window||
+title_frame|set_text||\c[6]HICHAUKITODEN
+title_menu|open_window||
+title_menu|set_text||Press ENTER to start
+title_menu|set_cursor||1
+UI GOLDEN END

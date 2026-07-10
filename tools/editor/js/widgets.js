@@ -4,15 +4,20 @@
 
         window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
             const group = document.createElement('div');
-            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+            group.className = 'form-group';
 
             const lbl = document.createElement('label');
             lbl.textContent = labelText;
+            lbl.style.marginBottom = '2px';
             group.appendChild(lbl);
 
-            // Thumbnail wrapper
+            // Thumbnail-row: thumbnail + path label
+            const thumbRow = document.createElement('div');
+            thumbRow.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+
             const thumbWrap = document.createElement('div');
-            thumbWrap.style.cssText = 'width: 32px; height: 32px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; margin-right: 4px; vertical-align: middle; flex-shrink: 0;';
+            thumbWrap.style.cssText = 'width: 48px; height: 48px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer;';
+            thumbWrap.title = 'Double-click to select image';
 
             const img = document.createElement('img');
             img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
@@ -27,10 +32,9 @@
 
             function updateThumb(path) {
                 if (path) {
-                    // standardize path
                     path = path.replace(/\\/g, '/');
                     if (isBareKey && !path.includes('/')) {
-                        img.src = '/assets/portraits/' + path + '.png';
+                        img.src = '/assets/' + defaultDir + '/' + path + '.png';
                     } else {
                         img.src = '/' + path;
                     }
@@ -45,35 +49,20 @@
 
             thumbWrap.appendChild(img);
             thumbWrap.appendChild(noneTxt);
-            group.appendChild(thumbWrap);
+            thumbRow.appendChild(thumbWrap);
 
-            const input = document.createElement('input');
-            input.className = 'form-control inset-bevel';
-            input.value = value || '';
-            input.style.flex = '1';
-            if (defaultDir === 'portraits') {
-                input.setAttribute('list', 'portrait-keys-list');
-            }
-            input.oninput = () => {
-                updateThumb(input.value);
-                onChange(input.value);
-            };
-            group.appendChild(input);
+            group.appendChild(thumbRow);
 
-            const btn = document.createElement('button');
-            btn.className = 'win98-btn';
-            btn.textContent = '...';
-            btn.onclick = () => openAssetPicker(defaultDir, path => {
+            // Double-click on thumbnail opens asset picker
+            thumbWrap.ondblclick = () => openAssetPicker(defaultDir, path => {
                 if (isBareKey) {
                     const parts = path.replace(/\\/g, '/').split('/');
                     const filename = parts.pop();
                     path = filename.replace(/\.[^/.]+$/, ""); // remove extension
                 }
-                input.value = path;
                 updateThumb(path);
                 onChange(path);
             });
-            group.appendChild(btn);
 
             container.appendChild(group);
         };
@@ -81,6 +70,11 @@
         function openAssetPicker(defaultDir, callback) {
             activeAssetCallback = callback;
             document.getElementById('asset-picker-selected').value = '';
+            // Clear preview
+            const prevImg = document.getElementById('asset-preview-img');
+            const prevNone = document.getElementById('asset-preview-none');
+            if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
+            if (prevNone) prevNone.style.display = 'block';
 
             fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
@@ -148,6 +142,14 @@
                     document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
                     card.style.border = '2px solid var(--win-blue)';
                     document.getElementById('asset-picker-selected').value = f;
+                    // Update the full-resolution preview
+                    const prevImg = document.getElementById('asset-preview-img');
+                    const prevNone = document.getElementById('asset-preview-none');
+                    if (prevImg && prevNone) {
+                        prevImg.src = '/' + f;
+                        prevImg.style.display = 'block';
+                        prevNone.style.display = 'none';
+                    }
                 };
 
                 grid.appendChild(card);
@@ -750,7 +752,7 @@
 
         // Renders a schema-typed widget; returns false to fall through to the
         // generic renderer.
-        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, useBlockLayout = false) {
+        function renderSchemaField(container, schema, value, key, currentPath, targetRoot, useBlockLayout = true) {
             const widget = schema.widget || (typeof value === 'number' ? 'number' : null);
 
             if (widget === 'itemSelect' || widget === 'skillSelect' || widget === 'commonEventSelect') {
@@ -1217,15 +1219,23 @@
             }
 
             if (activeDbTab === 'actors') {
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                // Name + Role side by side
+                const nameRoleRow = document.createElement('div');
+                nameRoleRow.className = 'form-row';
+                createFormField(nameRoleRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
 
                 const roleGroup = document.createElement('div');
-                roleGroup.className = 'form-group field-inline';
+                roleGroup.className = 'form-group';
+                roleGroup.style.flex = '1';
                 const roleLbl = document.createElement('label');
                 roleLbl.textContent = 'Role';
                 roleGroup.appendChild(roleLbl);
                 roleGroup.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
-                formPanel.appendChild(roleGroup);
+                nameRoleRow.appendChild(roleGroup);
+                formPanel.appendChild(nameRoleRow);
+
+                // Biography (renamed from Flavor Text) under Name/Role
+                createFormField(formPanel, 'Biography', item.flavor || '', val => { item.flavor = val; });
 
                 const statsRow = document.createElement('div');
                 statsRow.className = 'form-row';
@@ -1241,24 +1251,32 @@
                 formPanel.appendChild(growthRow);
 
                 ensurePortraitKeys();
-                window.createSpriteField(formPanel, 'Sprite Key (assets/portraits)', item.spriteKey || '', (path) => {
+                // Sprite fields in a horizontal row
+                const spriteRow = document.createElement('div');
+                spriteRow.className = 'form-row';
+                window.createSpriteField(spriteRow, 'Sprite Key', item.spriteKey || '', (path) => {
                     item.spriteKey = path;
                     setDirty(true);
                 }, false, 'portraits', true);
-
-                buildElementSlotsEditor(formPanel, item);
-                createFormField(formPanel, 'Flavor Text', item.flavor || '', val => { item.flavor = val; });
+                window.createSpriteField(spriteRow, 'Small Sprite', item.smallSprite || '', (path) => {
+                    item.smallSprite = path;
+                    setDirty(true);
+                }, false, 'smallBattlers', true);
+                formPanel.appendChild(spriteRow);
 
                 createCheckboxField(formPanel, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
                 createCheckboxField(formPanel, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
 
-                const twoCol = document.createElement('div');
-                twoCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px;';
+                // Three-column grid: Skills, Passives, Traits
+                const threeCol = document.createElement('div');
+                threeCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
                 const skillsCol = document.createElement('div');
                 const passivesCol = document.createElement('div');
-                twoCol.appendChild(skillsCol);
-                twoCol.appendChild(passivesCol);
-                formPanel.appendChild(twoCol);
+                const traitsCol = document.createElement('div');
+                threeCol.appendChild(skillsCol);
+                threeCol.appendChild(passivesCol);
+                threeCol.appendChild(traitsCol);
+                formPanel.appendChild(threeCol);
 
                 buildIdListEditor(skillsCol, 'Skills',
                     Object.keys(dbPayload.skills || {}),
@@ -1268,16 +1286,38 @@
                     Object.keys(dbPayload.passives || {}),
                     id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
                     () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
+                buildTraitsEditor(traitsCol, item, 'Innate Traits');
 
-                buildTraitsEditor(formPanel, item, 'Innate Traits');
-                buildDropsEditor(formPanel, item);
-                buildEvolutionsEditor(formPanel, item);
+                // Three-column grid: Elements, Item Drops, Evolutions
+                const threeColBottom = document.createElement('div');
+                threeColBottom.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
+                const elementsCol = document.createElement('div');
+                const dropsCol = document.createElement('div');
+                const evolutionsCol = document.createElement('div');
+                threeColBottom.appendChild(elementsCol);
+                threeColBottom.appendChild(dropsCol);
+                threeColBottom.appendChild(evolutionsCol);
+                formPanel.appendChild(threeColBottom);
+
+                buildElementSlotsEditor(elementsCol, item);
+                buildDropsEditor(dropsCol, item);
+                buildEvolutionsEditor(evolutionsCol, item);
 
             } else if (activeDbTab === 'items') {
-                createFormField(formPanel, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; }, true);
+                createFormField(topRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
+
+                // Type, Scope/EquipSlot, Buy Cost side by side
+                const itemRow = document.createElement('div');
+                itemRow.className = 'form-row';
 
                 const typeGroup = document.createElement('div');
                 typeGroup.className = 'form-group';
+                typeGroup.style.flex = '1';
                 const typeLbl = document.createElement('label');
                 typeLbl.textContent = 'Type';
                 typeGroup.appendChild(typeLbl);
@@ -1285,28 +1325,21 @@
                     item.type = v;
                     loadFormForItem(item); // re-render: equipment shows equip fields
                 }));
-                formPanel.appendChild(typeGroup);
-
-                createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
-
-                const attrRow = document.createElement('div');
-                attrRow.className = 'form-row';
-                createFormField(attrRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
-                createIconField(attrRow, 'Icon', item.icon || 0, val => { item.icon = parseInt(val) || 0; });
-                formPanel.appendChild(attrRow);
+                itemRow.appendChild(typeGroup);
 
                 if (item.type === 'equipment') {
                     const eqGroup = document.createElement('div');
                     eqGroup.className = 'form-group';
+                    eqGroup.style.flex = '1';
                     const eqLbl = document.createElement('label');
                     eqLbl.textContent = 'Equip Slot';
                     eqGroup.appendChild(eqLbl);
                     eqGroup.appendChild(makeSelect(['Weapon', 'Armor', 'Accessory'], item.equipType || 'Weapon', v => { item.equipType = v; }));
-                    formPanel.appendChild(eqGroup);
-                    buildTraitsEditor(formPanel, item, 'Equipment Traits');
+                    itemRow.appendChild(eqGroup);
                 } else {
                     const scopeGroup = document.createElement('div');
                     scopeGroup.className = 'form-group';
+                    scopeGroup.style.flex = '1';
                     const scopeLbl = document.createElement('label');
                     scopeLbl.textContent = 'Target Scope';
                     scopeGroup.appendChild(scopeLbl);
@@ -1314,7 +1347,17 @@
                         [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
                         item.targetScope || '',
                         v => { if (v === '') { delete item.targetScope; } else { item.targetScope = v; } }));
-                    formPanel.appendChild(scopeGroup);
+                    itemRow.appendChild(scopeGroup);
+                }
+
+                createFormField(itemRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
+                formPanel.appendChild(itemRow);
+
+                createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
+
+                if (item.type === 'equipment') {
+                    buildTraitsEditor(formPanel, item, 'Equipment Traits');
+                } else {
                     buildEffectsEditor(formPanel, item);
                 }
 
@@ -1353,10 +1396,15 @@
             } else if (activeDbTab === 'passives') {
                 const passive = dbPayload.passives[item.id];
                 if (!passive) return;
-                createFormField(formPanel, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; }, true);
+                createFormField(topRow, 'Name', passive.name || '', val => { passive.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
+
                 createFormField(formPanel, 'Description (flavor)', passive.description || '', val => { passive.description = val; });
                 createFormField(formPanel, 'Effect Summary (shown in menus)', passive.effect || '', val => { passive.effect = val; });
-                createIconField(formPanel, 'Icon', passive.icon || 0, val => { passive.icon = parseInt(val) || 0; });
                 createFormField(formPanel, 'Condition (e.g. HP < 50%)', passive.condition || '', val => {
                     if (val === '') { delete passive.condition; } else { passive.condition = val; }
                 });
@@ -1365,10 +1413,15 @@
             } else if (activeDbTab === 'states') {
                 const state = dbPayload.states[item.id];
                 if (!state) return;
-                createFormField(formPanel, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; }, true);
+                createFormField(topRow, 'Name', state.name || '', val => { state.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
+
                 const stRow = document.createElement('div');
                 stRow.className = 'form-row';
-                createIconField(stRow, 'Icon', state.icon || 0, val => { state.icon = parseInt(val) || 0; });
                 createFormField(stRow, 'Duration (turns, 9999 = permanent)', state.duration || 3, val => { state.duration = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(stRow);
                 createCheckboxField(formPanel, 'Removed when taking damage', state.removeAtDamage, v => {
@@ -1379,8 +1432,12 @@
             } else if (activeDbTab === 'elements') {
                 const elem = dbPayload.elements[item.id];
                 if (!elem) return;
-                createFormField(formPanel, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
-                createIconField(formPanel, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; });
+                const topRow = document.createElement('div');
+                topRow.className = 'form-row';
+                topRow.style.gap = '0';
+                createIconField(topRow, 'Orb Icon', elem.icon !== undefined ? elem.icon : 16, val => { elem.icon = parseInt(val) || 0; }, true);
+                createFormField(topRow, 'Name', elem.name || item.id, val => { elem.name = val; initDatabaseEditor(true); });
+                formPanel.appendChild(topRow);
 
                 const others = Object.keys(dbPayload.elements).filter(k => k !== item.id);
                 buildChecklistField(formPanel, 'Strong Against (deals bonus damage to)', others,
@@ -1781,7 +1838,7 @@
             }
         }
 
-        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = false) {
+        function createFormField(container, labelText, value, onChange, type = 'text', readOnly = false, keyId = null, useBlockLayout = true) {
             const group = document.createElement('div');
             group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
 

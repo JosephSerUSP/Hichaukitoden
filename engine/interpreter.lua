@@ -32,7 +32,7 @@ local interpreter = {}
 -- under `cmd` (the editor's cmdFieldName rule mirrors this table).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
-    DESCEND = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
     COMMENT = true,
 }
 
@@ -116,10 +116,10 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         elseif cmd.type == "RECOVER_PARTY" then
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif cmd.type == "DESCEND" then
-            local descendId = nodeId .. "_descend"
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.descend", "You descend deeper into the chasm..."), next = descendId }
-            nodes[descendId] = { type = "ACTION", action = "DESCEND_FLOOR" }
+        elseif cmd.type == "TELEPORT" then
+            local teleportId = nodeId .. "_teleport"
+            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.teleport", "You are whisked away..."), next = teleportId }
+            nodes[teleportId] = { type = "ACTION", action = "TELEPORT" }
         elseif cmd.type == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
         elseif cmd.type == "GIVE_ITEM" then
@@ -157,7 +157,7 @@ end
 ------------------------------------------------------------------
 
 local INTERACTIVE_IDS = {
-    TEXT = true, CHOICE = true, RECOVER_PARTY = true, DESCEND = true,
+    TEXT = true, CHOICE = true, RECOVER_PARTY = true, TELEPORT = true,
     BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
 }
 
@@ -170,6 +170,12 @@ local function evalFormula(expr, ctx)
         party = ctx.party, enemies = ctx.enemies,
         battle = ctx.battle and { round = ctx.battle.round } or nil,
         v = ctx.v,
+        -- Crafting scene context: ingredients and crafter stats
+        ingredient1 = ctx.ingredient1,
+        ingredient2 = ctx.ingredient2,
+        crafter = ctx.crafter,
+        alpha = ctx.alpha,
+        S = ctx.S,
     }, ctx.session)
     -- FOR_EACH loop variables (arbitrary names via `as`) shadow the fixed refs
     for name, battler in pairs(ctx.refs or {}) do
@@ -513,7 +519,11 @@ handlers.CLOSE_WINDOW = function(cmd, ctx)
 end
 
 handlers.SET_LIST = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_list", windowId = cmd.windowId, listId = cmd.listId })
+    table.insert(ctx.events, {
+        type = "set_list", windowId = cmd.windowId, listId = cmd.listId,
+        -- Optional row template/formulas consumed by the window renderer.
+        format = cmd.format, priority = cmd.priority, highlight = cmd.highlight,
+    })
 end
 
 handlers.SET_TEXT = function(cmd, ctx)
@@ -521,7 +531,13 @@ handlers.SET_TEXT = function(cmd, ctx)
 end
 
 handlers.SET_CURSOR = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_cursor", windowId = cmd.windowId, index = cmd.index })
+    local idx = evalFormula(cmd.index, ctx)
+    table.insert(ctx.events, {
+        type = "set_cursor", windowId = cmd.windowId, index = idx,
+        -- Raw formula kept so the renderer can bind the cursor to live
+        -- scene variables instead of the value at hook time.
+        indexFormula = type(cmd.index) == "string" and cmd.index or nil,
+    })
 end
 
 handlers.FOCUS_WINDOW = function(cmd, ctx)
@@ -539,7 +555,7 @@ end
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); main.lua consumes
     -- this event and performs the transition.
-    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind })
+    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene })
 end
 
 ------------------------------------------------------------------
@@ -576,6 +592,45 @@ local function buildScriptApi(ctx)
     end
     function api.setFlag(flag, val) session.flags[flag] = val and true or nil end
     function api.emit(event) table.insert(ctx.events, event) end
+    -- Generic read helpers (D13): formula evaluation and data queries, so
+    -- extra scenes can compute in SCRIPT without bespoke engine commands.
+    function api.eval(expr, env)
+        local ok, val = pcall(formulaEngine.eval, tostring(expr or ""), env or {})
+        if ok then return val end
+        return nil
+    end
+    function api.items()
+        local loader = ctx.loader or session.loader
+        local list = {}
+        for itemId, qty in pairs(session.inventory or {}) do
+            if qty > 0 then
+                local item = loader.getItem(itemId)
+                if item then
+                    table.insert(list, { id = item.id, name = item.name or "", icon = item.icon or 0, qty = qty, meta = item.meta or {} })
+                end
+            end
+        end
+        table.sort(list, function(a, b) return a.id < b.id end)
+        return list
+    end
+    function api.allItems()
+        local loader = ctx.loader or session.loader
+        local list = {}
+        for _, item in ipairs(loader.items or {}) do
+            table.insert(list, { id = item.id, name = item.name or "", icon = item.icon or 0, meta = item.meta or {} })
+        end
+        return list
+    end
+    function api.party(i)
+        local out = {}
+        for idx, m in ipairs(ctx.party or session.party or {}) do
+            local view = formulaEngine.battlerView(m, session) or {}
+            view.index = idx
+            table.insert(out, view)
+        end
+        if i ~= nil then return out[i] end
+        return out
+    end
     return api
 end
 
@@ -593,6 +648,9 @@ handlers.SCRIPT = function(cmd, ctx)
         actor = ctx.a,
         target = ctx.target or ctx.b,
         v = ctx.v,
+        -- Scene hooks expose the scene's config as read-only-by-convention
+        -- data (D13); nil outside scene contexts.
+        config = ctx.scene and ctx.scene.config or nil,
     }
 
     local env = {
@@ -616,7 +674,18 @@ handlers.SCRIPT = function(cmd, ctx)
         scriptCtx.rawLoader = loader
     end
 
-    local chunk, err = load(cmd.code or "", "SCRIPT", "t", env)
+    -- `ref` resolves a scene-local named script (scenes.json → scene.scripts),
+    -- so hooks can share one script body across call sites (D13).
+    local code = cmd.code
+    if cmd.ref ~= nil then
+        local scripts = ctx.scene and ctx.scene.scripts or {}
+        code = scripts[cmd.ref]
+        if type(code) ~= "string" then
+            error("SCRIPT ref '" .. tostring(cmd.ref) .. "' not found in scene scripts", 0)
+        end
+    end
+
+    local chunk, err = load(code or "", "SCRIPT", "t", env)
     if not chunk then
         error("SCRIPT compile error: " .. tostring(err), 0)
     end

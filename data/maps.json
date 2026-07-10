@@ -40,7 +40,7 @@
             "text": "The gate to the lower depths is sealed. Come back when you are prepared."
           },
           {
-            "type": "DESCEND"
+            "type": "TELEPORT"
           }
         ],
         "name": "Gate Guard",

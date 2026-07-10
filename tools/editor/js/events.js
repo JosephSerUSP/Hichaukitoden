@@ -221,7 +221,7 @@
         // addable/editable/nestable in every host that lists it in `contexts`.
         // The nine commands the interactive interpreter (engine/interpreter.lua
         // compile()) actually knows how to run — TEXT, CHOICE,
-        // CONDITIONAL_BRANCH, RECOVER_PARTY, DESCEND, BATTLE, GIVE_ITEM,
+        // CONDITIONAL_BRANCH, RECOVER_PARTY, TELEPORT, BATTLE, GIVE_ITEM,
         // CALL_COMMON_EVENT, COMMENT — are stored under the legacy `type` field
         // when added to a map/common host, matching what that interpreter path
         // reads; everything else (and COMMENT in battle_phase flows, matching
@@ -230,7 +230,7 @@
         // `cmd.cmd or cmd.type`.
         const INTERACTIVE_COMPILE_IDS = {
             TEXT: 1, CHOICE: 1, CONDITIONAL_BRANCH: 1, RECOVER_PARTY: 1,
-            DESCEND: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1
+            TELEPORT: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1
         };
         function cmdFieldName(id, hostCtx) {
             return (hostCtx !== 'battle_phase' && INTERACTIVE_COMPILE_IDS[id]) ? 'type' : 'cmd';
@@ -326,8 +326,8 @@
                 return `Text: "${speakerPrefix}${cmd.text}"`;
             } else if (id === 'RECOVER_PARTY') {
                 return 'Recover Party';
-            } else if (id === 'DESCEND') {
-                return 'Descend Floor';
+            } else if (id === 'TELEPORT') {
+                return 'Teleport';
             } else if (id === 'BATTLE') {
                 return 'Start Battle';
             } else if (id === 'GIVE_ITEM') {

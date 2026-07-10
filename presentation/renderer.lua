@@ -79,6 +79,49 @@ end
 
 local damagePopups = {}
 local portraitCache = {}
+local smallSpriteCache = {}  -- B.5: small sprite sheet cache
+local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
+
+-- B.5: Load a small sprite sheet.
+-- Default format: 24*N x 24 pixels, cell count = width / height.
+-- Returns { img, cellW, cellH, numFrames } or nil.
+-- B.5: Load a small sprite sheet from assets/smallBattlers/.
+-- Format: animated sprite, cell count = width/height, default 24x24 cells.
+-- The existing files use mixed case filenames (e.g. "Angel.png", "Golem.png").
+local function getSmallSprite(spriteKey)
+    if not spriteKey or spriteKey == "" then return nil end
+    local key = tostring(spriteKey)
+    if smallSpriteCache[key] then return smallSpriteCache[key] end
+
+    local paths = {
+        "assets/smallBattlers/" .. key:sub(1,1):upper() .. key:sub(2):lower() .. ".png",
+        "assets/smallBattlers/" .. key .. ".png",
+        "assets/smallBattlers/" .. key:lower() .. ".png",
+        "assets/sprites/" .. key .. ".png",
+    }
+    for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            local img = love.graphics.newImage(p)
+            img:setFilter("nearest", "nearest")
+            local w = img:getWidth()
+            local h = img:getHeight()
+            local cellH = h
+            local cellW = math.min(w, cellH)  -- default cell is square (24x24)
+            local numFrames = math.floor(w / cellW)
+            if numFrames < 1 then numFrames = 1 end
+            local result = {
+                img = img,
+                cellW = cellW,
+                cellH = cellH,
+                numFrames = numFrames
+            }
+            smallSpriteCache[key] = result
+            return result
+        end
+    end
+    smallSpriteCache[key] = nil
+    return nil
+end
 local function getPortrait(id)
     if not id or id == "" then return nil end
     -- Battlers without a spriteKey fall back to their numeric actor id
@@ -88,7 +131,8 @@ local function getPortrait(id)
     local paths = {
         "assets/portraits/" .. id .. ".png",
         "assets/portraits/NPC_" .. id .. ".png",
-        "assets/portraits/" .. id:lower() .. ".png"
+        "assets/portraits/" .. id:lower() .. ".png",
+        "assets/portraits/" .. id:sub(1,1):upper() .. id:sub(2):lower() .. ".png"
     }
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then
@@ -136,15 +180,110 @@ local function drawElementIcon(element, x, y)
         or legacyIcons[element]
         or legacyIcons.default
         or DEFAULT_ELEMENT_ICONS.default
-    ui.drawIcon(id, x, y - 2) -- y - 2 aligns 12x12 icon perfectly with text
+    -- B.4: Displaced by 3px in x, 6px in y to align with name text
+    ui.drawIcon(id, x + 3, y + 5)
 end
 
+-- Draw a single element icon at (x, y) with a uniform scale factor.
+-- The shadow offset is also scaled so it remains visually consistent.
+local function drawElementIconScaled(element, x, y, scale)
+    local loaderRef = renderer.session and renderer.session.loader
+    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
+    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
+    local id = (registryEntry and registryEntry.icon)
+        or legacyIcons[element]
+        or legacyIcons.default
+        or DEFAULT_ELEMENT_ICONS.default
+    ui.drawIconScaled(id, x, y, scale)
+end
+
+-- Draw element icons for an actor, compacted into the space of a single tile.
+--
+-- Rules:
+--   * If the actor has only one unique element → full-size icon.
+--   * If the actor has 2+ unique elements → each icon is scaled down to
+--     X = max(0.4, 1 - 0.2 * max(1, n - 3)) and arranged equidistantly
+--     within the 12×12 px tile (diagonal for 2, triangle for 3, polygon
+--     for n).
+--   * If one element type appears more often than the others (dominant),
+--     that element is drawn 0.2 larger and the rest 0.2 smaller.
+--
+-- @param  elems  array of element name strings (may contain duplicates)
+-- @param  x, y   top-left corner of the tile area
+-- @return        width consumed (always iconSize = 12)
 local function drawElementIcons(elems, x, y)
-    if not elems then return 0 end
-    for i, elem in ipairs(elems) do
-        drawElementIcon(elem, x + (i - 1) * 10, y)
+    if not elems or #elems == 0 then return 0 end
+
+    -- Count occurrences of each unique element type
+    local uniqueList = {}
+    local counts = {}
+    for _, elem in ipairs(elems) do
+        if counts[elem] then
+            counts[elem] = counts[elem] + 1
+        else
+            counts[elem] = 1
+            table.insert(uniqueList, elem)
+        end
     end
-    return #elems * 10
+
+    local n = #uniqueList
+
+    -- Single unique element → full-size icon (existing behaviour)
+    if n == 1 then
+        drawElementIcon(uniqueList[1], x, y)
+        return 12
+    end
+
+    -- Base scale: stays at 0.8 for 2–4 elements, then drops toward 0.4
+    local baseScale = math.max(0.4, 1 - 0.2 * math.max(1, n - 3))
+
+    -- Determine dominant element: one that appears strictly more than others
+    local maxCount = 0
+    for _, c in pairs(counts) do
+        if c > maxCount then maxCount = c end
+    end
+    local dominantElem = nil
+    local dominantCount = 0
+    for _, elem in ipairs(uniqueList) do
+        if counts[elem] == maxCount then
+            dominantCount = dominantCount + 1
+            dominantElem = elem
+        end
+    end
+    if dominantCount ~= 1 then dominantElem = nil end  -- tie → no dominant
+
+    -- The normal single-icon is drawn by drawElementIcon at (x+3, y+5)
+    -- with size 12×12, so its visual centre is at (x+9, y+11).  Scaled
+    -- icons must orbit this centre so they stay inside the same area.
+    local cx = x + 9
+    local cy = y + 11
+    local radius = 4
+
+    -- Starting angle: diagonal (-3π/4) for 2 icons, 12-o'clock (-π/2) for 3+
+    local startAngle = (n == 2) and (-3 * math.pi / 4) or (-math.pi / 2)
+
+    for i, elem in ipairs(uniqueList) do
+        local angle = startAngle + (i - 1) * (2 * math.pi / n)
+
+        local s = baseScale
+        if dominantElem then
+            s = elem == dominantElem and (baseScale + 0.2) or (baseScale - 0.2)
+        end
+
+        -- drawElementIconScaled(element, px, py, s) draws the 12×12 image at
+        -- (px, py) with scale s, so the centre of the drawn icon is at
+        -- (px + 6*s, py + 6*s).  Solve for px, py so that centre lands at
+        -- the orbit position (cx + cos(θ)*r,  cy + sin(θ)*r):
+        --
+        --   px = cx + cos(θ)*r - 6*s
+        --   py = cy + sin(θ)*r - 6*s
+        local px = cx + math.cos(angle) * radius - 6 * s
+        local py = cy + math.sin(angle) * radius - 6 * s
+
+        drawElementIconScaled(elem, px, py, s)
+    end
+
+    return 12   -- width consumed: one tile
 end
 
 -- The summoner's display name, taken from actor data instead of a hardcoded
@@ -276,6 +415,9 @@ function renderer.update(dt)
         session.displayedMp = session.displayedMp + (session.mp - session.displayedMp) * 8 * dt
         if math.abs(session.mp - session.displayedMp) < 0.1 then session.displayedMp = session.mp end
     end
+    
+    -- B.5: Advance small sprite animation timer (shared, drives all party sprite animations)
+    smallSpriteAnimTimer = smallSpriteAnimTimer + dt
 end
 
 function renderer.addDamagePopup(text, x, y, color)
@@ -505,6 +647,31 @@ end
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     local colW = layoutVal("partyGridColWidth")
     local rowH = layoutVal("partyGridRowHeight")
+    local spriteSize = 24  -- B.5: default small sprite cell size
+    --@@ ---- PARTY GRID (2x2) ------------------------------------------------
+    --@@ Each slot is `colW` wide (64px) and `rowH` tall (40px).
+    --@@ Grid layout: [0 1]   Each slot has:
+    --@@              [2 3]     - optional 24px sprite (top-left corner)
+    --@@                        - element icons + name (top area)
+    --@@                        - HP fraction text (mid area)
+    --@@                        - HP bar (bottom area)
+    --@@
+    --@@ VERTICAL ALIGNMENT (yOff):
+    --@@   When a small sprite IS present → yOff = -4 (content shifts UP 4px
+    --@@   because the sprite occupies the top portion of the slot).
+    --@@   When NO sprite → yOff = 4 (content shifts DOWN 4px, centering).
+    --@@
+    --@@ ELEMENT ICONS vs NAME Y:
+    --@@   Icons are drawn at: slot.y + yOff - 4   (4px above name)
+    --@@   Name is drawn at:   slot.y + yOff
+    --@@   To put them on the SAME line, change icon Y to `slot.y + yOff`
+    --@@   (remove the `- 4`).
+    --@@
+    --@@ HORIZONTAL CLAMPING (added fix):
+    --@@   slotColEndX = slot.x + colW - 2   <- column right-edge boundary
+    --@@   nameLimit = min(60, max(0, slotColEndX - nameX))  <- name won't overflow
+    --@@   barW      = min(52, max(4, slotColEndX - barX))   <- bar won't bleed
+    --@@
     local gridCoords = {
         { x = x, y = y },
         { x = x + colW, y = y },
@@ -514,19 +681,50 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     for i = 1, 4 do
         local c = session.party[i]
         local slot = gridCoords[i]
+        local slotColEndX = slot.x + colW - 2     -- column right-edge boundary
         if c then
             local maxHp = c:getMaxHp(session)
             local isSel = (showCursor and i == selectedIdx)
             local color = isSel and {1, 1, 0.5, 1} or (c:isDead() and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1})
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
-            
+
+            --@@ SPRITE: 24px animated small battler drawn at slot top-left
+            local spriteKey = (c.actorData and (c.actorData.smallSprite or c.actorData.spriteKey)) or c.spriteKey
+            local spriteOffsetX = 0
+            if spriteKey then
+                local ss = getSmallSprite(spriteKey)
+                if ss and ss.img then
+                    local frame = math.floor(smallSpriteAnimTimer * 4) % ss.numFrames
+                    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+                    local drawScale = spriteSize / ss.cellW
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(ss.img, quad, slot.x, slot.y, 0, drawScale, drawScale)
+                    spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
+                end
+            end
+
             local prefix = isSel and ">" or " "
-            local iconW = drawElementIcons(traits.getElements(c, session), slot.x, slot.y)
-            ui.drawString(prefix .. c.name, slot.x + iconW + layoutVal("partyGridNameXOffset"), slot.y, color, "left", 60)
-            
+            local yOff = spriteOffsetX > 0 and -4 or 4
+
+            --@@ LINE 1 (top): element icons + name on the SAME Y line
+            local lineY = slot.y + yOff
+            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, lineY - 4)
+            local nameX = slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset")
+            local nameClipW = math.max(1, slotColEndX - nameX)
+            -- Silently truncate name to fit within the column (~6px per char
+            -- in 8px font). No ellipsis — just clean clipping.
+            local maxNameChars = math.floor(nameClipW / 6)
+            local displayName = (prefix .. c.name):sub(1, maxNameChars)
+            ui.drawString(displayName, nameX, lineY, color, "left", 256)
+
+            --@@ LINE 2 (mid): HP fraction text "current/max"
             local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset"), slot.y + layoutVal("partyGridHpYOffset"), hpColor)
-            ui.drawBar(slot.x + layoutVal("partyGridHpBarXOffset"), slot.y + layoutVal("partyGridHpBarYOffset"), layoutVal("partyGridHpBarWidth"), layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + yOff, hpColor)
+
+            --@@ LINE 3 (bottom): HP bar (clamped so it stays inside the column)
+            local barX = slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX
+            local barW = math.min(layoutVal("partyGridHpBarWidth"), math.max(4, slotColEndX - barX))
+            ui.drawBar(barX, slot.y + layoutVal("partyGridHpBarYOffset") + yOff, barW, layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         else
             local isSel = (showCursor and i == selectedIdx)
             local prefix = isSel and ">" or " "
@@ -721,11 +919,17 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         ui.drawString(renderer.session.loader.getTerm("battle.resolving", "Resolving actions..."), textX, headerY + layoutVal("menuChoiceSpacing"), {0.6, 0.6, 0.6, 1})
     end
 
-    -- Draw Summoner MP stats on bottom left
+    -- Draw Summoner HP/MP stats on bottom left (B.1: added HP display)
     local session = renderer.session
+    local summoner = session.summoner
     ui.drawString(summonerName(), layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset"), {1, 0.85, 0.5, 1})
-    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset"), {0.6, 0.8, 1, 1})
-    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset"), layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+    local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
+    local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
+    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {0.9, 0.3, 0.3, 1}
+    ui.drawString("HP: " .. math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 10, hpColor)
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerNameYOffset") + 18, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
+    ui.drawString("MP: " .. session.mp .. "/" .. session.maxMp, layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpTextYOffset") + 8, {0.6, 0.8, 1, 1})
+    ui.drawBar(layoutVal("summonerStatusX"), consoleY + layoutVal("summonerMpBarYOffset") + 8, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), session.mp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
     
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0
@@ -923,9 +1127,14 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
         else
             local startIdx = math.max(1, rightIdx - 7)
             local drawCount = 0
+            -- Calculate dynamic spacing to fill the right panel vertically
+            local contentStartY = ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)
+            local panelInteriorBottom = ui.toPx(1) + ui.toPx(18) - 8  -- bottom border inset
+            local visibleCount = math.min(#items, startIdx + 8) - startIdx + 1
+            local itemSpacing = math.max(ui.lineHeight, math.floor((panelInteriorBottom - contentStartY) / visibleCount))
             for i = startIdx, math.min(#items, startIdx + 8) do
                 local itEntry = items[i]
-                local iy = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + drawCount * 11
+                local iy = contentStartY + drawCount * itemSpacing
                 local isSel = (i == rightIdx)
                 local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
                 local prefix = isSel and ">" or " "
@@ -989,8 +1198,14 @@ function renderer.drawStatusDetail(c, session)
     ui.drawString("HP: " .. c.hp .. " / " .. maxHp, contentX, ui.toPx(7), {1, 1, 1, 1})
     ui.drawBar(contentX + ui.toPx(9), ui.toPx(7.25), ui.toPx(17.5), 4, c.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
     
-    -- Stats Column (Left, y = ui.toPx(9.25))
-    ui.drawString("STATS", contentX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
+    -- Experience / Level Progress
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local needed = c.level * expPerLevel
+    ui.drawString("EXP: " .. c.exp .. " / " .. needed, contentX, ui.toPx(8.25), {0.6, 0.9, 0.6, 1})
+    ui.drawBar(contentX + ui.toPx(9), ui.toPx(8.5), ui.toPx(17.5), 4, c.exp, needed, {0, 0.6, 0}, {0.3, 1, 0.3})
+    
+    -- Stats Column (Left, y = ui.toPx(10.5))
+    ui.drawString("STATS", contentX, ui.toPx(10.5), {0.5, 0.8, 1, 1})
     local atk = traits.getParam(c, "atk", session)
     local def = traits.getParam(c, "def", session)
     local mat = traits.getParam(c, "mat", session)
@@ -1002,13 +1217,13 @@ function renderer.drawStatusDetail(c, session)
 
     -- Equipment Column (Right, x = contentX + 13 tiles)
     local equipX = contentX + ui.toPx(13)
-    ui.drawString("EQUIPMENT", equipX, ui.toPx(9.25), {0.5, 0.8, 1, 1})
+    ui.drawString("EQUIPMENT", equipX, ui.toPx(10.5), {0.5, 0.8, 1, 1})
     local eq1 = c.equipment[1] and c.equipment[1].name or "[ EMPTY ]"
     local eq2 = c.equipment[2] and c.equipment[2].name or "[ EMPTY ]"
     local eq3 = c.equipment[3] and c.equipment[3].name or "[ EMPTY ]"
-    ui.drawString("WPN: " .. eq1, equipX, ui.toPx(11), {0.8, 0.8, 0.8, 1})
-    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
-    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
+    ui.drawString("WPN: " .. eq1, equipX, ui.toPx(12), {0.8, 0.8, 0.8, 1})
+    ui.drawString("AMR: " .. eq2, equipX, ui.toPx(13), {0.8, 0.8, 0.8, 1})
+    ui.drawString("ACC: " .. eq3, equipX, ui.toPx(14), {0.8, 0.8, 0.8, 1})
     
     -- Passives & Skills (y = ui.toPx(17.5))
     ui.drawString("PASSIVE TRAITS", contentX, ui.toPx(17.5), {1, 0.85, 0.5, 1})
@@ -1190,12 +1405,25 @@ function renderer.drawSelectEquipMenu(rightIdx, session, slotType, c, slotIdx)
     else
         local startIdx = math.max(1, rightIdx - 8)
         local count = 0
+        -- Dynamic spacing to fill the panel vertically
+        local equipContentStart = ui.toPx(5.5)
+        local equipPanelBottom = ui.toPx(2) + ui.toPx(16) - 8
+        local equipVisibleCount = math.min(#list, startIdx + 9) - startIdx + 1
+        local equipSpacing = math.max(ui.lineHeight, math.floor((equipPanelBottom - equipContentStart) / equipVisibleCount))
         for i = startIdx, math.min(#list, startIdx + 9) do
+            local entry = list[i]
             local isSel = (i == rightIdx)
             local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
             local prefix = isSel and "> " or "  "
-            local py = ui.toPx(5.5) + count * 11
-            ui.drawString(prefix .. list[i].name, ui.toPx(4), py, color)
+            local py = equipContentStart + count * equipSpacing
+            -- Draw item icon if available
+            local textX = ui.toPx(4)
+            if entry.icon and entry.id ~= "empty" then
+                ui.drawIcon(entry.icon, textX + 1 * ui.tileSize, py - 1)
+                ui.drawString(prefix .. entry.name, textX + 3 * ui.tileSize, py, color)
+            else
+                ui.drawString(prefix .. entry.name, textX, py, color)
+            end
             count = count + 1
         end
     end

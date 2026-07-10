@@ -1,0 +1,61 @@
+UI GOLDEN BEGIN
+scene|1|name|Item Creation
+craft_header|open_window||
+discipline_panel|open_window||
+discipline_panel|set_list||config:disciplines
+discipline_panel|set_cursor||1
+discipline_detail|open_window||
+discipline_detail|set_text||Governing Stat: {config.disciplines[v.selectedDisciplineIdx].stat}
+{sel('discipline_panel').description}
+crafter_panel|set_list||party
+crafter_panel|set_cursor||1
+crafter_detail|set_text||{sel('crafter_panel').name}
+Level: {sel('crafter_panel').level}
+{config.disciplines[v.selectedDisciplineIdx].stat}: {sel('crafter_panel')[config.disciplines[v.selectedDisciplineIdx].stat]}
+ingredient_panel|set_text||{v.cursorSlot == 1 and '>' or ' '} Slot 1: {v.i1_item_id ~= 0 and v.i1Name or '--- Empty ---'}
+{v.cursorSlot == 2 and '>' or ' '} Slot 2: {v.i2_item_id ~= 0 and v.i2Name or '--- Empty ---'}
+inventory_list|set_list||inventory
+inventory_list|set_cursor||1
+detail_panel|set_text||{sel('inventory_list').name}
+Tier: {sel('inventory_list').meta.tier}
+Potency: {sel('inventory_list').meta.potency}
+Elem: {sel('inventory_list').meta.craftElement}
+confirm_panel|set_text||Crafter: {v.crafterName}
+Ingredient 1: {v.i1Name}
+Ingredient 2: {v.i2Name}
+Expected Yield: {v.yieldScore}
+Expected Tier: {v.outcomeTierName}
+{v.elementConflict and 'WARNING: Element conflict!' or ''}
+confirm_panel|set_list||static:Craft,Back
+confirm_panel|set_cursor||1
+roulette_panel|set_list||v:pool
+roulette_panel|set_cursor||0
+result_panel|set_text||You created {v.resultItemName}!
+{v.isAnomaly and 'CRITICAL ANOMALY!' or ''}
+discipline_panel|close_window||
+discipline_detail|close_window||
+crafter_panel|open_window||
+crafter_detail|open_window||
+crafter_panel|close_window||
+crafter_detail|close_window||
+ingredient_panel|open_window||
+inventory_list|open_window||
+detail_panel|open_window||
+ingredient_panel|close_window||
+inventory_list|close_window||
+detail_panel|close_window||
+confirm_panel|open_window||
+confirm_panel|close_window||
+ingredient_panel|open_window||
+inventory_list|open_window||
+detail_panel|open_window||
+ingredient_panel|close_window||
+inventory_list|close_window||
+detail_panel|close_window||
+crafter_panel|open_window||
+crafter_detail|open_window||
+crafter_panel|close_window||
+crafter_detail|close_window||
+discipline_panel|open_window||
+discipline_detail|open_window||
+UI GOLDEN END

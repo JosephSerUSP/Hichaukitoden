@@ -1,0 +1,7 @@
+UI GOLDEN BEGIN
+scene|items|name|Items
+items_left_panel|open_window||
+items_left_panel|set_list||inventory
+items_left_panel|set_cursor||1
+items_info_panel|open_window||
+UI GOLDEN END

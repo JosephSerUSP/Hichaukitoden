@@ -141,6 +141,15 @@ enough for the roulette (S7) without a coroutine VM.
 fixed — not the scene. `SCRIPT` is off-limits in shipped scene hooks; it would
 hide gaps in the vocabulary. Validator-enforced (zero-SCRIPT for `scenes.json`).
 
+> **AMENDMENT (owner feedback, 09.07.2026 — see FEEDBACK.md):** the zero-SCRIPT
+> rule applies to **built-in scenes only** (title, menu, items, status, shop,
+> battle). **Extra** (user-authored) scenes may use `SCRIPT` — it is their
+> escape hatch, and the vocabulary must stay generic rather than grow
+> hyper-specific commands (e.g. `CALC_CRAFT_YIELD` is deprecated). Item
+> Creation (crafting) is reclassified as the sample *extra* scene and must end
+> up with nothing hardcoded for it — including no `crafting` scene kind
+> (brief D13).
+
 Success criterion for each conversion: the scene's Lua shrinks to a thin host,
 behavior is unchanged (UI-golden byte-identical), and every value it reads is
 editable in the editor.

@@ -1,4 +1,0 @@
-UI GOLDEN BEGIN
-scene|1|name|Item Creation
-scene|crafting|hook|on_enter:absent
-UI GOLDEN END
