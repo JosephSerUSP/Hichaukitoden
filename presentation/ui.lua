@@ -256,9 +256,11 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
         end
     end
     
+    -- Pixel-perfect 1px outline: offset by 0.5 to align with pixel grid,
+    -- preventing the Love2D "smooth" line-style spread across 2 pixels.
     love.graphics.setColor(0.4, 0.4, 0.4, 1)
     love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
     
     love.graphics.setColor(r_old, g_old, b_old, a_old)
 end

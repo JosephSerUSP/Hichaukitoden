@@ -726,6 +726,7 @@
     "gold": 0,
     "expGrowth": 20,
     "drops": [],
-    "evolutions": []
+    "evolutions": [],
+    "smallSprite": "Nurse"
   }
 ]

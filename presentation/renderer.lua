@@ -122,16 +122,28 @@ end
 -- B.5: Load a small sprite sheet from assets/smallBattlers/.
 -- Format: animated sprite, cell count = width/height, default 24x24 cells.
 -- The existing files use mixed case filenames (e.g. "Angel.png", "Golem.png").
+-- Filename may contain [key=value] tokens to override animation parameters:
+--   [speed=N]  multiplier on the base frame rate (default 4)
+--   [fps=N]    explicit frames per second (overrides speed)
 local function getSmallSprite(spriteKey)
     if not spriteKey or spriteKey == "" then return nil end
     local key = tostring(spriteKey)
     if smallSpriteCache[key] then return smallSpriteCache[key] end
 
+    -- Parse [key=value] tokens from the key (e.g. "Summoner2[speed=2]")
+    local overrides = {}
+    local fileKey = key:gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
+        overrides[k] = tonumber(v) or v
+        return ""
+    end)
+    -- Strip any trailing/leading whitespace from the file key
+    fileKey = fileKey:gsub("^%s*(.-)%s*$", "%1")
+
     local paths = {
-        "assets/smallBattlers/" .. key:sub(1,1):upper() .. key:sub(2):lower() .. ".png",
-        "assets/smallBattlers/" .. key .. ".png",
-        "assets/smallBattlers/" .. key:lower() .. ".png",
-        "assets/sprites/" .. key .. ".png",
+        "assets/smallBattlers/" .. fileKey:sub(1,1):upper() .. fileKey:sub(2):lower() .. ".png",
+        "assets/smallBattlers/" .. fileKey .. ".png",
+        "assets/smallBattlers/" .. fileKey:lower() .. ".png",
+        "assets/sprites/" .. fileKey .. ".png",
     }
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then
@@ -147,7 +159,9 @@ local function getSmallSprite(spriteKey)
                 img = img,
                 cellW = cellW,
                 cellH = cellH,
-                numFrames = numFrames
+                numFrames = numFrames,
+                speed = overrides.speed,
+                fps = overrides.fps,
             }
             smallSpriteCache[key] = result
             return result
@@ -155,6 +169,14 @@ local function getSmallSprite(spriteKey)
     end
     smallSpriteCache[key] = nil
     return nil
+end
+
+-- Compute the current animation frame for a small sprite, respecting
+-- per-sprite overrides (speed multiplier or explicit fps from filename).
+local function getSpriteFrame(ss)
+    if not ss then return 0 end
+    local rate = ss.fps or (ss.speed and 4 * ss.speed or 4)
+    return math.floor(smallSpriteAnimTimer * rate) % ss.numFrames
 end
 local function getPortrait(id)
     if not id or id == "" then return nil end
@@ -336,15 +358,46 @@ local function drawSummonerStatus(baseY)
     local summoner = session.summoner
     local x = layoutVal("summonerStatusX")
     local nameY = baseY + layoutVal("summonerNameYOffset")
-    ui.drawString(summonerName(), x, nameY, {1, 0.85, 0.5, 1})
+    local spriteOffsetX = 0
+    local spriteSize = 24
+
+    -- Draw summoner's small sprite if available (same as party grid)
+    local spriteKey = summoner and ((summoner.actorData and (summoner.actorData.smallSprite or summoner.actorData.spriteKey)) or summoner.spriteKey)
+    if spriteKey then
+        local ss = getSmallSprite(spriteKey)
+        if ss and ss.img then
+            local frame = getSpriteFrame(ss)
+            local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+            local drawScale = spriteSize / ss.cellW
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(ss.img, quad, x, nameY, 0, drawScale, drawScale)
+            spriteOffsetX = spriteSize + 2  -- push content right
+        end
+    end
+
+    -- Use same yOff logic as party grid for vertical alignment
+    local yOff = spriteOffsetX > 0 and -4 or 4
+    local adjY = nameY + yOff   -- matches party grid's slot.y + yOff
+    local contentX = x + spriteOffsetX
+
+    -- Name (slot.y + yOff in party grid)
+    ui.drawString(summonerName(), contentX, adjY, {1, 0.85, 0.5, 1})
+
     local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
     local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
-    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {0.9, 0.3, 0.3, 1}
-    ui.drawString("HP: " .. math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, x, nameY + 10, hpColor)
-    ui.drawBar(x, nameY + 18, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
+    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1}
+
+    -- HP text: matches partyGridHpYOffset (11) from adjY
+    ui.drawString(math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, contentX, adjY + 11, hpColor)
+    -- HP bar: matches partyGridHpBarYOffset (22) from adjY → 11px gap from text top
+    ui.drawBar(contentX, adjY + 22, layoutVal("summonerMpBarWidth"), layoutVal("partyGridHpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
+
     local dispMp = session.displayedMp or session.mp
-    ui.drawString("MP: " .. math.floor(dispMp + 0.5) .. "/" .. session.maxMp, x, baseY + layoutVal("summonerMpTextYOffset") + 8, {0.6, 0.8, 1, 1})
-    ui.drawBar(x, baseY + layoutVal("summonerMpBarYOffset") + 8, layoutVal("summonerMpBarWidth"), layoutVal("summonerMpBarHeight"), dispMp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
+    -- MP text: 11px below HP bar end (HP bar at adjY+22, 3px tall → ends at adjY+25)
+    local mpTextY = adjY + 33
+    ui.drawString(math.floor(dispMp + 0.5) .. "/" .. session.maxMp, contentX, mpTextY, {1, 1, 1, 1})
+    -- MP bar: 11px gap from MP text top (same pattern as HP: textY + 11)
+    ui.drawBar(contentX, mpTextY + 11, layoutVal("summonerMpBarWidth"), layoutVal("partyGridHpBarHeight"), dispMp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
 end
 
 local townBg
@@ -836,7 +889,7 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             if spriteKey then
                 local ss = getSmallSprite(spriteKey)
                 if ss and ss.img then
-                    local frame = math.floor(smallSpriteAnimTimer * 4) % ss.numFrames
+                    local frame = getSpriteFrame(ss)
                     local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
                     local drawScale = spriteSize / ss.cellW
                     love.graphics.setColor(1, 1, 1, 1)
