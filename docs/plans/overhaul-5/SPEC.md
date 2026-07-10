@@ -226,6 +226,7 @@ two entry points (new scene, reset hook to template).
 | E4 | Preset scene gallery + shared template registry (S6) | B | G1 G3 |
 | E5 | Visual scene editor: headless preview subprocess + window canvas + right-click editing, non-map scenes (S2, S3) | A | G1 G3 |
 | E6 | Visual scene editor: Map-kind scenes (S4) | A | G1 G3 |
+| E7 | Control Variables: multi-assignment SET_VAR + editor row widget | B | G1 G2 G3 + UI-golden |
 
 E0, E1, E2, E4 are independent of each other and of E5/E6; fire in parallel
 (E0/E1/E2 all touch `events.js` — work them in parallel but *merge* serially

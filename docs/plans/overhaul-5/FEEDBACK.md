@@ -20,6 +20,10 @@ EVENTING READABILITY (small changes, big cumulative effect on the Scenes/Flows e
    developer can choose from when creating a new scene (D13 made crafting a plain,
    nothing-hardcoded "extra" scene — it's the first sample for this gallery).
 
+HUMAN FEEDBACK (10.07.2026, addendum):
+6. Change Control Variable to Control Variables: one event command that can set either one
+   or several variables at once.
+
 AUDIO (discuss, don't implement yet):
 Sound needs to be tackled eventually. There's existing music produced for an earlier
 iteration of the game, meant to be played as plain square-wave tones via the standard Web
