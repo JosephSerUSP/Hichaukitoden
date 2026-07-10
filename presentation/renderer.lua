@@ -90,8 +90,8 @@ end
 
 local damagePopups = {}
 local portraitCache = {}
-local smallSpriteCache = {}  -- B.5: small sprite sheet cache
-local smallSpriteAnimTimer = 0  -- B.5: shared animation timer
+local smallBattlerCache = {}  -- B.5: small battler sheet cache
+local smallBattlerAnimTimer = 0  -- B.5: shared animation timer
 
 -- B.0: per-character text reveal (battle log lines + dialogue TEXT nodes).
 -- Elapsed advances in renderer.update. The battle log tracker walks the log
@@ -116,19 +116,19 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
--- B.5: Load a small sprite sheet.
+-- B.5: Load a small battler sheet.
 -- Default format: 24*N x 24 pixels, cell count = width / height.
 -- Returns { img, cellW, cellH, numFrames } or nil.
--- B.5: Load a small sprite sheet from assets/smallBattlers/.
+-- B.5: Load a small battler sheet from assets/smallBattlers/.
 -- Format: animated sprite, cell count = width/height, default 24x24 cells.
 -- The existing files use mixed case filenames (e.g. "Angel.png", "Golem.png").
 -- Filename may contain [key=value] tokens to override animation parameters:
 --   [speed=N]  multiplier on the base frame rate (default 4)
 --   [fps=N]    explicit frames per second (overrides speed)
-local function getSmallSprite(spriteKey)
+local function getSmallBattler(spriteKey)
     if not spriteKey or spriteKey == "" then return nil end
     local key = tostring(spriteKey)
-    if smallSpriteCache[key] then return smallSpriteCache[key] end
+    if smallBattlerCache[key] then return smallBattlerCache[key] end
 
     -- Parse [key=value] tokens from the key (e.g. "Summoner2[speed=2]")
     local overrides = {}
@@ -163,20 +163,20 @@ local function getSmallSprite(spriteKey)
                 speed = overrides.speed,
                 fps = overrides.fps,
             }
-            smallSpriteCache[key] = result
+            smallBattlerCache[key] = result
             return result
         end
     end
-    smallSpriteCache[key] = nil
+    smallBattlerCache[key] = nil
     return nil
 end
 
--- Compute the current animation frame for a small sprite, respecting
+-- Compute the current animation frame for a small battler, respecting
 -- per-sprite overrides (speed multiplier or explicit fps from filename).
 local function getSpriteFrame(ss)
     if not ss then return 0 end
     local rate = ss.fps or (ss.speed and 4 * ss.speed or 4)
-    return math.floor(smallSpriteAnimTimer * rate) % ss.numFrames
+    return math.floor(smallBattlerAnimTimer * rate) % ss.numFrames
 end
 -- E8: battle animation constants (seed of the future Animation System).
 -- Values come from data/system.json battle_screen.animations; the defaults
@@ -198,7 +198,7 @@ local function animVal(key)
     return v
 end
 
--- E8: damage feedback state for smallBattlers (party grid + summoner),
+-- E8: damage feedback state for small battlers (party grid + summoner),
 -- keyed by battler object so grid slots and the summoner share one path.
 local smallAnims = {}
 
@@ -206,10 +206,10 @@ local smallAnims = {}
 -- block (previously two copies). Handles the dead display (deadTint, frame
 -- 1, no animation), the damage flash and the horizontal shake.
 -- Returns true when a sprite was drawn.
-local function drawSmallSpriteCell(battler, x, y, spriteSize)
-    local spriteKey = (battler.actorData and (battler.actorData.smallSprite or battler.actorData.spriteKey)) or battler.spriteKey
+local function drawSmallBattlerCell(battler, x, y, spriteSize)
+    local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
     if not spriteKey then return false end
-    local ss = getSmallSprite(spriteKey)
+    local ss = getSmallBattler(spriteKey)
     if not (ss and ss.img) then return false end
 
     local dead = battler.isDead and battler:isDead()
@@ -429,8 +429,8 @@ local function drawSummonerStatus(baseY)
     local spriteOffsetX = 0
     local spriteSize = 24
 
-    -- Draw summoner's small sprite if available (same as party grid)
-    if summoner and drawSmallSpriteCell(summoner, x, nameY, spriteSize) then
+    -- Draw summoner's small battler if available (same as party grid)
+    if summoner and drawSmallBattlerCell(summoner, x, nameY, spriteSize) then
         spriteOffsetX = spriteSize + 2  -- push content right
     end
 
@@ -532,8 +532,8 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
     end
 end
 
--- E8: damage feedback (flash + shake) for a party smallBattler or the
--- summoner. Keyed by the battler object; drawn by drawSmallSpriteCell.
+-- E8: damage feedback (flash + shake) for a party small battler or the
+-- summoner. Keyed by the battler object; drawn by drawSmallBattlerCell.
 function renderer.triggerSmallDamage(target)
     if not target then return end
     smallAnims[target] = {
@@ -607,8 +607,8 @@ function renderer.update(dt)
         if math.abs(session.mp - session.displayedMp) < 0.1 then session.displayedMp = session.mp end
     end
     
-    -- B.5: Advance small sprite animation timer (shared, drives all party sprite animations)
-    smallSpriteAnimTimer = smallSpriteAnimTimer + dt
+    -- B.5: Advance small battler animation timer (shared, drives all party sprite animations)
+    smallBattlerAnimTimer = smallBattlerAnimTimer + dt
 
     -- B.0: advance text-reveal timers (reset happens at the draw sites when
     -- the tracked line/node changes)
@@ -919,7 +919,7 @@ end
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     local colW = layoutVal("partyGridColWidth")
     local rowH = layoutVal("partyGridRowHeight")
-    local spriteSize = 24  -- B.5: default small sprite cell size
+    local spriteSize = 24  -- B.5: default small battler cell size
     --@@ ---- PARTY GRID (2x2) ------------------------------------------------
     --@@ Each slot is `colW` wide (64px) and `rowH` tall (40px).
     --@@ Grid layout: [0 1]   Each slot has:
@@ -929,7 +929,7 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     --@@                        - HP bar (bottom area)
     --@@
     --@@ VERTICAL ALIGNMENT (yOff):
-    --@@   When a small sprite IS present → yOff = -4 (content shifts UP 4px
+    --@@   When a small battler IS present → yOff = -4 (content shifts UP 4px
     --@@   because the sprite occupies the top portion of the slot).
     --@@   When NO sprite → yOff = 4 (content shifts DOWN 4px, centering).
     --@@
@@ -962,7 +962,7 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
 
             --@@ SPRITE: 24px animated small battler drawn at slot top-left
             local spriteOffsetX = 0
-            if drawSmallSpriteCell(c, slot.x, slot.y, spriteSize) then
+            if drawSmallBattlerCell(c, slot.x, slot.y, spriteSize) then
                 spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
             end
 

@@ -16,7 +16,7 @@ constants.
       and where damage popups are spawned — that call site knows the target).
 - [ ] smallBattlers **shake** when taking damage: a short horizontal offset
       oscillation on the sprite (amplitude/duration/frequency from data).
-- [ ] **Dead display:** a dead member's small sprite is tinted dark
+- [ ] **Dead display:** a dead member's small battler sprite is tinted dark
       purple/greyish, does NOT animate, and shows only frame 1. No death
       animation plays for smallBattlers.
 - [ ] All constants in data, not Lua: add a `battle_screen.animations` block

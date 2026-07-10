@@ -34,11 +34,11 @@ Unlike D4–D7 (which could skip UI-golden regeneration because they were new fe
 
 **Reference:** FEEDBACK.md item B.5
 
-- Add `smallSprite` property to Actor data schema
+- Add `smallBattler` property to Actor data schema
 - Format: animated sprite, cell count = `width / height` (rounded down)
 - Default layout: 24×24 per cell
 - Load and display in `Window_BattleStatus` and applicable menus
-- Wire up damage popup / shake effect hooks on small sprites
+- Wire up damage popup / shake effect hooks on small battler sprites
 
 **Files:** `data/actors.json`, `engine/battle.lua`, `presentation/renderer.lua`, `data/engine.json`
 
@@ -115,7 +115,7 @@ Unlike D4–D7 (which could skip UI-golden regeneration because they were new fe
 |------|-----------|
 | Battle.log is the most sensitive file in the repo | Local-only rule; line-by-line justification required per ORCHESTRATION.md §5 |
 | 9 UI feedback items add scope beyond pure conversion | Phase 1-3 are independent and can be done before Phase 4 |
-| Actor smallSprite schema change could break existing saves | Add as optional field with fallback |
+| Actor smallBattler schema change could break existing saves | Add as optional field with fallback |
 | Text delay affects game feel globally | Make delay configurable and default to 0 (opt-in) |
 | Victory window requires new hook/drawing logic | Build as standalone scene, not a battle phase |
 

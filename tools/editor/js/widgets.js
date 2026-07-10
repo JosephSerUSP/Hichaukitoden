@@ -1258,8 +1258,8 @@
                     item.spriteKey = path;
                     setDirty(true);
                 }, false, 'portraits', true);
-                window.createSpriteField(spriteRow, 'Small Sprite', item.smallSprite || '', (path) => {
-                    item.smallSprite = path;
+                window.createSpriteField(spriteRow, 'Small Battler', item.smallBattler || '', (path) => {
+                    item.smallBattler = path;
                     setDirty(true);
                 }, false, 'smallBattlers', true);
                 formPanel.appendChild(spriteRow);
