@@ -264,7 +264,7 @@
             });
 
             // Sort categories in some order, or just keep as is
-            const categoryOrder = ["Message", "Flow Control", "Party", "Battler", "Progression", "Advanced", "Other"];
+            const categoryOrder = ["Message", "Flow Control", "Variables", "Party", "Battler", "Progression", "UI", "Advanced", "Other"];
             const cats = Object.keys(groups).sort((a, b) => {
                 let idxA = categoryOrder.indexOf(a);
                 let idxB = categoryOrder.indexOf(b);
@@ -387,6 +387,29 @@
         // gets the same inline nested treatment generically, so new block
         // commands need zero editor code (SPEC S1/A6). You add commands
         // directly inside the nest, like RPG Maker.
+        // E0: single category → color map for command rows (SPEC S5 item 1).
+        // Win98 16-color accents, consistent with the inline #000080 (navy
+        // markers/hover) and #008000 (green comments) already in use.
+        // Comments keep their green via renderCommentRow, unchanged.
+        const CATEGORY_COLORS = {
+            'Message': '#000080',      // navy
+            'Flow Control': '#800080', // purple
+            'Variables': '#800000',    // win98 red (maroon)
+            'Battler': '#804000',      // brown
+            'Battle': '#804000',       // brown (battle-phase plumbing)
+            'Progression': '#008000',  // green
+            'Party': '#008000',        // green
+            'UI': '#008080',           // teal
+            'Advanced': '#404040'      // var(--win-dark-shadow)
+            // uncategorized / 'Other': default text color
+        };
+
+        function categoryColor(cmd) {
+            const def = getCmdDef(cmdId(cmd));
+            const cat = (def && def.category) || 'Other';
+            return CATEGORY_COLORS[cat] || '';
+        }
+
         // E1: even/odd row striping, applied AFTER a list renders so the
         // alternation follows each row's position within its own visible
         // list — hidden comment rows and nested block sub-lists (which
@@ -476,10 +499,15 @@
                 label.textContent = '@>' + describeCommand(cmd);
                 line.appendChild(label);
 
+                // E0: category color on the label; hover swaps it to white so
+                // colored rows stay readable on the navy highlight.
+                const catColor = readOnly ? '' : categoryColor(cmd);
+                if (catColor) label.style.color = catColor;
+
                 if (!readOnly) {
                     line.style.cursor = 'pointer';
-                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; };
+                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; label.style.color = 'white'; };
+                    line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; label.style.color = catColor; };
                     line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
 
                     const editBtn = document.createElement('button');
@@ -594,6 +622,8 @@
             headerLabel.textContent = '@>' + describeCommand(cmd);
             header.appendChild(headerLabel);
             if (!readOnly) {
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
                 const editBtn = document.createElement('button');
                 editBtn.className = 'win-btn-small outset-bevel';
                 editBtn.style.fontSize = '8px';
@@ -649,6 +679,10 @@
             const headerLabel = document.createElement('span');
             headerLabel.style.flex = '1';
             headerLabel.textContent = '@>Show Choice';
+            if (!readOnly) {
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
+            }
             header.appendChild(headerLabel);
             if (!readOnly) {
                 const delBtn = document.createElement('button');
@@ -737,6 +771,10 @@
             headerLabel.style.textOverflow = 'ellipsis';
             headerLabel.style.whiteSpace = 'nowrap';
             headerLabel.textContent = `@>If [${cmd.condition || '(no condition)'}]`;
+            if (!readOnly) {
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
+            }
             header.appendChild(headerLabel);
             if (!readOnly) {
                 const editBtn = document.createElement('button');

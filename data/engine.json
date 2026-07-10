@@ -436,7 +436,7 @@
     },
     {
       "id": "SET_VAR",
-      "category": "Flow Control",
+      "category": "Variables",
       "label": "Set Variable",
       "params": [
         {
@@ -507,7 +507,7 @@
     },
     {
       "id": "SET_FLAG",
-      "category": "Flow Control",
+      "category": "Variables",
       "label": "Set Flag",
       "params": [
         {
