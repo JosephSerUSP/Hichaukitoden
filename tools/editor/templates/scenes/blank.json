@@ -1,0 +1,10 @@
+{
+  "_template": {
+    "label": "Blank",
+    "description": "Empty menu scene: no hooks, no config. The same shape \"+ Create Scene\" used to make."
+  },
+  "name": "New Scene",
+  "kind": "menu",
+  "config": {},
+  "hooks": {}
+}

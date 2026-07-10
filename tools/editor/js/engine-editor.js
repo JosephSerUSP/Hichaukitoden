@@ -390,25 +390,74 @@
             renderSceneList();
             listCol.appendChild(listBox);
 
-            const addBtn = makeAddRowBtn('+ Create Scene', () => {
+            // E4: "+ Create Scene" opens a template gallery built from
+            // tools/editor/templates/scenes/*.json (served read-only by
+            // /api/templates/scenes). Choosing one deep-clones the template,
+            // strips its _template metadata and assigns a fresh numeric id.
+            const instantiateTemplate = (tpl) => {
                 // Numeric ids only: built-in scenes have string ids ('title',
                 // 'battle', ...) which would turn Math.max into NaN.
                 const nextId = dbPayload.scenes.reduce((max, s) => typeof s.id === 'number' ? Math.max(max, s.id) : max, 0) + 1;
-                // Plain menu scene (SPEC S2): no kind-specific starter shape.
-                // Preset templates (e.g. the crafting sample) are an
-                // overhaul-5 item (E4 preset scene gallery).
-                const newScene = {
-                    id: nextId,
-                    name: 'New Scene',
-                    kind: 'menu',
-                    config: {},
-                    hooks: {}
-                };
+                const newScene = JSON.parse(JSON.stringify(tpl));
+                delete newScene._template;
+                newScene.id = nextId;
                 dbPayload.scenes.push(newScene);
                 activeSceneId = nextId;
                 activeUnifiedPhase = null;
                 setDirty(true);
                 renderUnifiedFlowsEditor(panel, header);
+            };
+
+            const openTemplateGallery = (templates) => {
+                const overlay = document.createElement('div');
+                overlay.id = 'scene-template-gallery';
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+                const box = document.createElement('div');
+                box.style.cssText = 'min-width:320px;max-width:460px;max-height:70vh;overflow-y:auto;padding:8px;'
+                    + 'background:var(--win-gray);border:2px solid;'
+                    + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);';
+                const title = document.createElement('div');
+                title.textContent = 'Create Scene — choose a template';
+                title.style.cssText = 'font-weight:bold;margin-bottom:6px;';
+                box.appendChild(title);
+                templates.forEach(tpl => {
+                    const meta = tpl._template || {};
+                    const row = document.createElement('div');
+                    row.style.cssText = 'padding:6px;cursor:pointer;border:1px solid var(--win-shadow);margin-bottom:4px;background:var(--win-white);';
+                    const lbl = document.createElement('div');
+                    lbl.textContent = meta.label || tpl.name || 'Unnamed template';
+                    lbl.style.fontWeight = 'bold';
+                    const desc = document.createElement('div');
+                    desc.textContent = meta.description || '';
+                    desc.style.cssText = 'font-size:10px;color:var(--win-dark-shadow);margin-top:2px;';
+                    row.appendChild(lbl);
+                    row.appendChild(desc);
+                    row.onmouseover = () => { row.style.background = '#000080'; lbl.style.color = 'white'; desc.style.color = '#c0c0c0'; };
+                    row.onmouseout = () => { row.style.background = 'var(--win-white)'; lbl.style.color = ''; desc.style.color = 'var(--win-dark-shadow)'; };
+                    row.onclick = () => { overlay.remove(); instantiateTemplate(tpl); };
+                    box.appendChild(row);
+                });
+                const cancel = document.createElement('button');
+                cancel.className = 'win98-btn';
+                cancel.textContent = 'Cancel';
+                cancel.style.marginTop = '4px';
+                cancel.onclick = () => overlay.remove();
+                box.appendChild(cancel);
+                overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+            };
+
+            const addBtn = makeAddRowBtn('+ Create Scene', async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/templates/scenes`);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const templates = await res.json();
+                    if (!templates.length) throw new Error('no templates found');
+                    openTemplateGallery(templates);
+                } catch (err) {
+                    showToast('Failed to load scene templates: ' + err.message);
+                }
             });
             listCol.appendChild(addBtn);
             mainContainer.appendChild(listCol);

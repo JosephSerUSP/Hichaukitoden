@@ -143,6 +143,25 @@ const server = http.createServer((req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
+    } else if (req.method === 'GET' && req.url === '/api/templates/scenes') {
+        // E4: scene template registry — read-only JSON files, one per
+        // template, each a scenes.json entry shape (minus id) plus a
+        // _template { label, description } metadata block. Adding a preset
+        // means dropping a file here; nothing else changes.
+        const tplDir = path.join(__dirname, 'templates', 'scenes');
+        const templates = [];
+        if (fs.existsSync(tplDir) && fs.statSync(tplDir).isDirectory()) {
+            fs.readdirSync(tplDir).forEach(f => {
+                if (!f.endsWith('.json')) return;
+                try {
+                    templates.push(JSON.parse(fs.readFileSync(path.join(tplDir, f), 'utf8')));
+                } catch (e) {
+                    console.warn(`Skipping unparsable scene template ${f}: ${e.message}`);
+                }
+            });
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(templates));
     } else if (req.method === 'GET' && req.url === '/api/graphs') {
         const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
         if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {
