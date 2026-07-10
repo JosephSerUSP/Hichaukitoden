@@ -61,9 +61,9 @@
     "horizontalScatter": 0
   },
   "battle_screen": {
-    "damagePopupLife": 1.1,
+    "damagePopupLife": 1.5,
     "popup": {
-      "characterDelay": 0.4,
+      "characterDelay": 0.04,
       "damageFormat": "{0}",
       "damageColor": [
         1,

@@ -1202,7 +1202,7 @@
     "partyGridTileX": 16,
     "consoleTileY": 18,
     "headerTileOffset": 1,
-    "slotPopupOffsetX": 27,
+    "slotPopupOffsetX": 8,
     "slotPopupOffsetY": 10,
     "summonerPopupX": 50,
     "summonerPopupYOffset": 62,
