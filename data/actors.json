@@ -336,7 +336,7 @@
       }
     ],
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": []
