@@ -219,27 +219,27 @@
       {
         "code": "PARAM_PLUS",
         "dataId": "atk",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "def",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "maxHp",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "asp",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "mat",
-        "value": 999
+        "value": 99
       }
     ]
   },
@@ -300,7 +300,7 @@
     "expGrowth": 4,
     "gold": 20,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],

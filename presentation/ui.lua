@@ -257,6 +257,7 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
     end
     
     love.graphics.setColor(0.4, 0.4, 0.4, 1)
+    love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", x, y, w, h)
     
     love.graphics.setColor(r_old, g_old, b_old, a_old)

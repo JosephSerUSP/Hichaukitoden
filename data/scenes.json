@@ -1215,6 +1215,30 @@
           ]
         }
       ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "left"
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "right"
+            }
+          ]
+        }
+      ],
       "on_up": [
         {
           "cmd": "IF",

@@ -1131,7 +1131,7 @@ function love.draw()
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory)
+        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
     elseif scene_host.getCurrent() == "shop" then
         local shopState = scene_host.getCurrentState()
         local sv = shopState and shopState.v or {}

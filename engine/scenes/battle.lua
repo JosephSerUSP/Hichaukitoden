@@ -401,9 +401,10 @@ function battle.handleInput(action)
             end
         end
     else
-        if action == "up" then
+        -- Horizontal command layout: left/right to navigate, up/down as alternative
+        if action == "left" or action == "up" then
             v.selectedIndex = (v.selectedIndex - 2) % 4 + 1
-        elseif action == "down" then
+        elseif action == "right" or action == "down" then
             v.selectedIndex = v.selectedIndex % 4 + 1
         elseif action == "select" then
             if v.selectedIndex == 1 then
@@ -462,9 +463,15 @@ function battle.handleTransition(action)
     local b = v.battle
     if action ~= "select" or not b then return false end
 
-    -- B.9: the victory window is showing; this select dismisses it
+    -- B.9: the victory window is showing
     if v.combatState == "victory" then
-        scene_host.goto_scene("map")
+        if v.victoryStage == 0 then
+            -- Press ENTER starts the drain animation
+            v.victoryStage = 1
+        elseif renderer.getVictoryStage() == 2 then
+            -- Drain complete, dismiss
+            scene_host.goto_scene("map")
+        end
         return true
     end
 
@@ -514,6 +521,7 @@ function battle.handleTransition(action)
             expPerLevel = conf("growth", "expPerLevel", 15),
             members = members,
         }
+        v.victoryStage = 0
         v.combatState = "victory"
     elseif b:isDefeat() then
         local doReset = true

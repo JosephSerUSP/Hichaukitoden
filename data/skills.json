@@ -4,7 +4,7 @@
     "name": "Wind Blade",
     "target": "enemy-any",
     "element": "Green",
-    "description": "Strikes a foe with a blade of wind.",
+    "description": "[Enemy] Strikes a foe with a blade of wind.",
     "effects": [
       {
         "type": "hp_damage",
@@ -17,7 +17,7 @@
     "name": "Soothing Mote",
     "target": "ally-any",
     "element": "White",
-    "description": "Heals a small amount of HP for an ally.",
+    "description": "[Ally] Heals a small amount of HP for an ally.",
     "mpCost": 5,
     "effects": [
       {
@@ -31,7 +31,7 @@
     "name": "Bone Rush",
     "target": "enemy-any",
     "element": "Black",
-    "description": "A reckless charge.",
+    "description": "[Enemy] A reckless charge.",
     "effects": [
       {
         "type": "hp_damage",
@@ -44,7 +44,7 @@
     "name": "Holy Smite",
     "target": "enemy-any",
     "element": "White",
-    "description": "Smite evil with holy light.",
+    "description": "[Enemy] Smite evil with holy light.",
     "mpCost": 15,
     "effects": [
       {
@@ -58,7 +58,7 @@
     "name": "Divine Favor",
     "target": "ally-any",
     "element": "White",
-    "description": "Grants regeneration to an ally.",
+    "description": "[Ally] Grants regeneration to an ally.",
     "mpCost": 8,
     "effects": [
       {
@@ -74,7 +74,7 @@
     "name": "Shadow Claw",
     "target": "enemy-any",
     "element": "Black",
-    "description": "Tears at the enemy from the shadows.",
+    "description": "[Enemy] Tears at the enemy from the shadows.",
     "effects": [
       {
         "type": "hp_damage",
@@ -87,7 +87,7 @@
     "name": "Infernal Pact",
     "target": "self",
     "element": "Red",
-    "description": "Sacrifice safety for power. (Grants Berserk)",
+    "description": "[Self] Sacrifice safety for power. (Grants Berserk)",
     "effects": [
       {
         "type": "add_status",
@@ -102,7 +102,7 @@
     "name": "Wait",
     "target": "self",
     "element": "White",
-    "description": "Do nothing.",
+    "description": "[Self] Do nothing.",
     "effects": []
   },
   "flameRebirth": {
@@ -110,7 +110,7 @@
     "name": "Flame Rebirth",
     "target": "self",
     "element": "Red",
-    "description": "Rise from the ashes.",
+    "description": "[Self] Rise from the ashes.",
     "effects": []
   },
   "needleShot": {
@@ -118,7 +118,7 @@
     "name": "Needle Shot",
     "target": "enemy-any",
     "element": "Black",
-    "description": "A precise strike that injects toxins.",
+    "description": "[Enemy] A precise strike that injects toxins.",
     "effects": [
       {
         "type": "hp_damage",
@@ -137,7 +137,7 @@
     "name": "Field Surgery",
     "target": "ally-any",
     "element": "Black",
-    "description": "Emergency medical attention. It might hurt.",
+    "description": "[Ally] Emergency medical attention. It might hurt.",
     "effects": [
       {
         "type": "hp_heal",
@@ -150,7 +150,7 @@
     "name": "Drain Kiss",
     "target": "enemy-any",
     "element": "Black",
-    "description": "Steals vitality and puts the target to sleep.",
+    "description": "[Enemy] Steals vitality and puts the target to sleep.",
     "effects": [
       {
         "type": "hp_drain",
@@ -169,7 +169,7 @@
     "name": "Assassinate",
     "target": "enemy-any",
     "element": "Black",
-    "description": "A lethal strike aimed at a vital point.",
+    "description": "[Enemy] A lethal strike aimed at a vital point.",
     "effects": [
       {
         "type": "hp_damage",
@@ -182,7 +182,7 @@
     "name": "Attack",
     "target": "enemy",
     "element": null,
-    "description": "A basic physical attack.",
+    "description": "[Enemy] A basic physical attack.",
     "spCost": 0,
     "mpCost": 0,
     "speed": 0,
@@ -198,7 +198,7 @@
     "name": "Defend",
     "target": "self",
     "element": null,
-    "description": "Brace for impact, reducing incoming damage this round.",
+    "description": "[Self] Brace for impact, reducing incoming damage this round.",
     "speed": 50,
     "effects": [
       {
