@@ -391,26 +391,17 @@
             listCol.appendChild(listBox);
 
             const addBtn = makeAddRowBtn('+ Create Scene', () => {
-                const nextId = dbPayload.scenes.reduce((max, s) => Math.max(max, s.id), 0) + 1;
+                // Numeric ids only: built-in scenes have string ids ('title',
+                // 'battle', ...) which would turn Math.max into NaN.
+                const nextId = dbPayload.scenes.reduce((max, s) => typeof s.id === 'number' ? Math.max(max, s.id) : max, 0) + 1;
+                // Plain menu scene (SPEC S2): no kind-specific starter shape.
+                // Preset templates (e.g. the crafting sample) are an
+                // overhaul-5 item (E4 preset scene gallery).
                 const newScene = {
                     id: nextId,
                     name: 'New Scene',
-                    kind: 'crafting',
-                    config: {
-                        disciplines: [
-                            { kind: 'blacksmithing', label: 'Blacksmithing', stat: 'atk', description: '' }
-                        ],
-                        alpha: 0.5,
-                        yieldFormula: 'floor((i1.meta.potency + i2.meta.potency) / 2) + floor(alpha * S)',
-                        penaltyFormula: '0',
-                        anomalyFormula: '1.0',
-                        brackets: [
-                            { max: 10, tier: 0, name: 'Junk' },
-                            { max: 25, tier: 1, name: 'Standard' }
-                        ],
-                        timing: { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 },
-                        terms: { title: 'Item Creation', yieldText: 'Expected Yield: {0}', resultText: 'Crafted: {0}!' }
-                    },
+                    kind: 'menu',
+                    config: {},
                     hooks: {}
                 };
                 dbPayload.scenes.push(newScene);
@@ -677,120 +668,24 @@
             kindRow.appendChild(kindSelect);
             configBody.appendChild(kindRow);
 
-            // Crafting config fields (compact)
-            if (scene.kind === 'crafting') {
-                const fieldRow = (label, val, onChange, type, helpType) => {
-                    const row = document.createElement('div');
-                    row.className = 'form-group field-inline';
-                    row.style.marginBottom = '3px';
-                    const lbl = document.createElement('label');
-                    lbl.style.flex = '0 0 120px';
-                    lbl.style.fontSize = '10px';
-                    lbl.textContent = label;
-                    row.appendChild(lbl);
-                    const input = document.createElement('input');
-                    input.className = 'win98-input';
-                    input.style.flex = '1';
-                    input.style.fontSize = '10px';
-                    input.type = type || 'text';
-                    input.value = val !== undefined ? val : '';
-                    input.oninput = () => {
-                        onChange(type === 'number' ? parseFloat(input.value) || 0 : input.value);
-                        setDirty(true);
-                    };
-                    row.appendChild(input);
-                    if (helpType) {
-                        const btnHelp = document.createElement('button');
-                        btnHelp.className = 'win98-btn';
-                        btnHelp.style.cssText = 'min-width: 18px; width: 18px; height: 18px; margin-left: 4px; padding: 0; font-weight: bold; font-size: 9px;';
-                        btnHelp.textContent = '?';
-                        btnHelp.onclick = (e) => { e.preventDefault(); showParamHelpPopover(btnHelp, helpType); };
-                        row.appendChild(btnHelp);
-                    }
-                    configBody.appendChild(row);
-                };
-
-                fieldRow('Alpha:', scene.config.alpha, (v) => { scene.config.alpha = v; }, 'number');
-                fieldRow('Yield Formula:', scene.config.yieldFormula, (v) => { scene.config.yieldFormula = v; }, 'text', 'formula');
-                fieldRow('Penalty Formula:', scene.config.penaltyFormula, (v) => { scene.config.penaltyFormula = v; }, 'text', 'formula');
-                fieldRow('Anomaly Formula:', scene.config.anomalyFormula, (v) => { scene.config.anomalyFormula = v; }, 'text', 'formula');
-
-                // Timing compact
-                scene.config.timing = scene.config.timing || { initialDelay: 0.05, maxDelay: 0.4, delayMult: 1.25, steps: 12 };
-                const timingRow = document.createElement('div');
-                timingRow.style.cssText = 'display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap;';
-                const timingLabel = document.createElement('span');
-                timingLabel.style.cssText = 'font-size: 10px; font-weight: bold; flex: 0 0 120px;';
-                timingLabel.textContent = 'Timing:';
-                timingRow.appendChild(timingLabel);
-
-                const addTimingField = (label, key) => {
-                    const wrap = document.createElement('div');
-                    wrap.style.cssText = 'display: flex; align-items: center; gap: 2px;';
-                    const lbl = document.createElement('span');
-                    lbl.style.cssText = 'font-size: 9px;';
-                    lbl.textContent = label;
-                    wrap.appendChild(lbl);
-                    const inp = document.createElement('input');
-                    inp.type = 'number';
-                    inp.className = 'win98-input';
-                    inp.style.width = '52px';
-                    inp.style.fontSize = '10px';
-                    inp.value = scene.config.timing[key] !== undefined ? scene.config.timing[key] : '';
-                    inp.oninput = () => { scene.config.timing[key] = parseFloat(inp.value) || 0; setDirty(true); };
-                    wrap.appendChild(inp);
-                    timingRow.appendChild(wrap);
-                };
-                addTimingField('Init:', 'initialDelay');
-                addTimingField('Max:', 'maxDelay');
-                addTimingField('Mult:', 'delayMult');
-                addTimingField('Steps:', 'steps');
-                configBody.appendChild(timingRow);
-
-                // Disciplines (compact list)
-                const discRow = document.createElement('div');
-                discRow.style.cssText = 'margin: 4px 0;';
-                const discLabel = document.createElement('span');
-                discLabel.style.cssText = 'font-size: 10px; font-weight: bold; display: block; margin-bottom: 2px;';
-                discLabel.textContent = 'Disciplines:';
-                discRow.appendChild(discLabel);
-                const discBox = makeListBox();
-                const renderDiscs = () => {
-                    discBox.innerHTML = '';
-                    scene.config.disciplines = scene.config.disciplines || [];
-                    scene.config.disciplines.forEach((disc, dIdx) => {
-                        const row = document.createElement('div');
-                        row.style.cssText = 'display: flex; gap: 2px; align-items: center; margin-bottom: 2px;';
-                        const iKind = document.createElement('input');
-                        iKind.className = 'win98-input'; iKind.style.width = '60px'; iKind.style.fontSize = '9px';
-                        iKind.value = disc.kind || ''; iKind.placeholder = 'kind';
-                        iKind.oninput = () => { disc.kind = iKind.value; setDirty(true); };
-                        row.appendChild(iKind);
-                        const iLabel = document.createElement('input');
-                        iLabel.className = 'win98-input'; iLabel.style.width = '60px'; iLabel.style.fontSize = '9px';
-                        iLabel.value = disc.label || ''; iLabel.placeholder = 'label';
-                        iLabel.oninput = () => { disc.label = iLabel.value; setDirty(true); };
-                        row.appendChild(iLabel);
-                        const sStat = makeSelect(['atk','def','mat','mdf','maxHp','asp','mpd','level'], disc.stat || 'atk', (v) => { disc.stat = v; setDirty(true); });
-                        sStat.style.width = '50px'; sStat.style.height = '18px'; sStat.style.fontSize = '9px';
-                        row.appendChild(sStat);
-                        const iDesc = document.createElement('input');
-                        iDesc.className = 'win98-input'; iDesc.style.flex = '1'; iDesc.style.fontSize = '9px';
-                        iDesc.value = disc.description || ''; iDesc.placeholder = 'desc';
-                        iDesc.oninput = () => { disc.description = iDesc.value; setDirty(true); };
-                        row.appendChild(iDesc);
-                        row.appendChild(makeRowDeleteBtn(() => { scene.config.disciplines.splice(dIdx, 1); setDirty(true); renderDiscs(); }));
-                        discBox.appendChild(row);
-                    });
-                    discBox.appendChild(makeAddRowBtn('+ Discipline', () => {
-                        scene.config.disciplines.push({ kind: 'new', label: 'New', stat: 'atk', description: '' });
-                        setDirty(true); renderDiscs();
-                    }));
-                };
-                renderDiscs();
-                discRow.appendChild(discBox);
-                configBody.appendChild(discRow);
-            }
+            // Generic config editor (D13): scene config is an arbitrary
+            // property bag, edited as JSON — no kind-specific field forms.
+            const configArea = document.createElement('textarea');
+            configArea.className = 'win98-input';
+            configArea.spellcheck = false;
+            configArea.style.cssText = 'width: 100%; height: 120px; font-family: monospace; font-size: 10px; box-sizing: border-box; resize: vertical;';
+            configArea.value = JSON.stringify(scene.config, null, 2);
+            configArea.oninput = () => {
+                try {
+                    const parsed = JSON.parse(configArea.value);
+                    configArea.style.backgroundColor = '';
+                    scene.config = parsed;
+                    setDirty(true);
+                } catch (e) {
+                    configArea.style.backgroundColor = '#ffcccc';
+                }
+            };
+            configBody.appendChild(configArea);
 
             container.appendChild(configBody);
 

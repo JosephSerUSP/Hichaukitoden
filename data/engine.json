@@ -974,6 +974,10 @@
         {
           "key": "code",
           "type": "script"
+        },
+        {
+          "key": "ref",
+          "type": "text"
         }
       ],
       "contexts": [
@@ -1136,18 +1140,6 @@
       ],
       "interactive": false,
       "description": "Waits for a duration."
-    },
-    {
-      "id": "CALC_CRAFT_YIELD",
-      "category": "Crafting",
-      "label": "Calc Craft Yield",
-      "params": [],
-      "contexts": [
-        "scene"
-      ],
-      "interactive": false,
-      "deprecatedBy": "SCRIPT",
-      "description": "DEPRECATED (D13): scene-specific command slated for removal; extra scenes should compute yields via SCRIPT. Calculates crafting yield, outcome pool, and roulette state from scene v-variables."
     }
   ],
   "elementRules": {

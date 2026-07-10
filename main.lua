@@ -9,7 +9,6 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
-require("engine.scenes.crafting")
 require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
 
@@ -936,64 +935,24 @@ elseif paramDef.type == "script" then
         for _, scene in ipairs(loader.scenes or {}) do
             local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
             
-            -- Crafting-specific validation
-            if scene.kind == "crafting" then
-                check(type(scene.id) == "number", sceneDesc .. " ID must be a number for crafting scenes")
-                
-                local config = scene.config or {}
-                check(config.disciplines ~= nil, sceneDesc .. " missing disciplines config")
-                if config.disciplines then
-                    for _, disc in ipairs(config.disciplines) do
-                        check(disc.kind ~= nil, sceneDesc .. " discipline missing kind")
-                        check(disc.stat ~= nil, sceneDesc .. " discipline missing stat")
-                        local validStats = { atk = true, def = true, mat = true, mdf = true, maxHp = true, asp = true, mpd = true, level = true }
-                        check(validStats[disc.stat], sceneDesc .. " discipline uses invalid stat parameter '" .. tostring(disc.stat) .. "'")
-                    end
+            -- Generic config validation (D13): no scene-kind-specific checks.
+            -- Any config key ending in "Formula" whose value is a string must
+            -- compile against the mock scene context.
+            for key, val in pairs(scene.config or {}) do
+                if type(val) == "string" and key:match("Formula$") then
+                    local ok, _, ferr = pcall(formulaEngine.eval, val, mockCtx)
+                    check(ok and ferr == nil, sceneDesc .. " config." .. key .. " failed to compile: " .. tostring(ferr or ""))
                 end
-                
-                check(config.yieldFormula ~= nil, sceneDesc .. " missing yieldFormula")
-                if config.yieldFormula then
-                    local ok, _, ferr = pcall(formulaEngine.eval, config.yieldFormula, mockCtx)
-                    check(ok and ferr == nil, sceneDesc .. " yieldFormula failed to compile: " .. tostring(ferr or ""))
-                end
-                
-                check(config.penaltyFormula ~= nil, sceneDesc .. " missing penaltyFormula")
-                if config.penaltyFormula then
-                    local ok, _, ferr = pcall(formulaEngine.eval, config.penaltyFormula, mockCtx)
-                    check(ok and ferr == nil, sceneDesc .. " penaltyFormula failed to compile: " .. tostring(ferr or ""))
-                end
-                
-                check(config.anomalyFormula ~= nil, sceneDesc .. " missing anomalyFormula")
-                if config.anomalyFormula then
-                    local ok, _, ferr = pcall(formulaEngine.eval, config.anomalyFormula, mockCtx)
-                    check(ok and ferr == nil, sceneDesc .. " anomalyFormula failed to compile: " .. tostring(ferr or ""))
-                end
-                
-                check(config.brackets ~= nil, sceneDesc .. " missing brackets config")
-                if config.brackets then
-                    for _, br in ipairs(config.brackets) do
-                        check(br.max ~= nil, sceneDesc .. " bracket missing max value")
-                        check(br.tier ~= nil, sceneDesc .. " bracket missing tier value")
-                        check(type(br.max) == "number", sceneDesc .. " bracket max must be a number")
-                        check(type(br.tier) == "number", sceneDesc .. " bracket tier must be a number")
-                    end
-                end
+            end
 
-                if config.disciplines and config.brackets then
-                    for _, disc in ipairs(config.disciplines) do
-                        for _, br in ipairs(config.brackets) do
-                            local count = 0
-                            for _, item in ipairs(loader.items or {}) do
-                                if item.meta and item.meta.craftKind == disc.kind and item.meta.tier == br.tier then
-                                    count = count + 1
-                                end
-                            end
-                            check(count > 0, sceneDesc .. " no items match discipline '" .. tostring(disc.kind) .. "' and tier " .. tostring(br.tier))
-                        end
-                    end
+            -- Scene-local named scripts (SCRIPT ref targets) must be strings
+            -- with valid Lua syntax.
+            for name, code in pairs(scene.scripts or {}) do
+                check(type(code) == "string", sceneDesc .. " scripts." .. tostring(name) .. " must be a string")
+                if type(code) == "string" then
+                    local chunk, serr = load(code, "scene-script", "t", {})
+                    check(chunk ~= nil, sceneDesc .. " scripts." .. tostring(name) .. " syntax error: " .. tostring(serr))
                 end
-                
-                check(config.timing ~= nil, sceneDesc .. " missing timing config")
             end
 
             -- Hook validation (all scene kinds).
@@ -1005,9 +964,28 @@ elseif paramDef.type == "script" then
                 status = true, shop = true, battle = true,
             }
             local allowSceneScript = not builtinSceneIds[scene.id]
+            -- SCRIPT commands may reference a scene-local named script via
+            -- `ref` instead of inline `code`; every ref must resolve.
+            local function checkScriptRefs(cmds, where)
+                for _, cmd in ipairs(cmds or {}) do
+                    if type(cmd) == "table" then
+                        local id = cmd.cmd or cmd.type
+                        if id == "SCRIPT" then
+                            check(cmd.code ~= nil or cmd.ref ~= nil, where .. " SCRIPT has neither code nor ref")
+                            if cmd.ref ~= nil then
+                                check((scene.scripts or {})[cmd.ref] ~= nil, where .. " SCRIPT ref '" .. tostring(cmd.ref) .. "' not found in scene scripts")
+                            end
+                        end
+                        for _, k in ipairs({ "then", "else", "commands" }) do
+                            if type(cmd[k]) == "table" then checkScriptRefs(cmd[k], where) end
+                        end
+                    end
+                end
+            end
             if scene.hooks then
                 for hookName, cmds in pairs(scene.hooks) do
                     validateCommands(cmds, "scene", true, allowSceneScript, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
+                    checkScriptRefs(cmds, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
                 end
             end
         end
@@ -1124,10 +1102,6 @@ function love.update(dt)
         return
     end
 
-    if scene_host.getCurrent() == "crafting" then
-        if updateCraftingScene then updateCraftingScene(dt) end
-    end
-
     -- Shop: grant the pending item after the hook deducted gold
     if scene_host.getCurrent() == "shop" then
         local shopState = scene_host.getCurrentState()
@@ -1178,8 +1152,6 @@ function love.draw()
         else
             renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
         end
-    elseif scene_host.getCurrent() == "crafting" then
-        if drawCraftingScene then drawCraftingScene() end
     end
     end
     
@@ -1481,10 +1453,6 @@ local function handleKeyPressed(key)
         return
     end
 
-    if scene_host.getCurrent() == "crafting" then
-        if keypressedCraftingScene then keypressedCraftingScene(key) end
-        return
-    end
     if key == "escape" then
         if scene_host.getCurrent() == "title" then
             love.event.quit()
@@ -1682,7 +1650,9 @@ local function handleKeyPressed(key)
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
-                    scene_host.push("crafting", { session = activeSession, loader = loader, party = activeSession.party })
+                    -- Item Creation is an extra (data-authored) scene; address
+                    -- it by scene id, not by a dissolved kind string (D13).
+                    scene_host.push(1, { session = activeSession, loader = loader, party = activeSession.party })
                 elseif opt == "EXIT" then
                     menuSubScene = "exit_confirm"
                     menuSelectedSubIdx = 2 -- Default to NO

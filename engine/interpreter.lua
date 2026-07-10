@@ -558,20 +558,6 @@ handlers.SCENE_EVENT = function(cmd, ctx)
     table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene })
 end
 
-handlers.CALC_CRAFT_YIELD = function(cmd, ctx)
-    local sceneModule = require("engine.scenes.crafting")
-    if sceneModule.calcCraftYield then
-        sceneModule.calcCraftYield(ctx)
-    end
-    -- yield and anomaly set into ctx.v by helper
-end
-
-handlers.START_ROULETTE = function(cmd, ctx)
-    -- thin wrapper; on_frame hook drives the timing per spec
-    ctx.v.state = 5
-    ctx.v.rouletteStep = 0
-end
-
 ------------------------------------------------------------------
 -- SCRIPT (SPEC S6): sandboxed Lua escape hatch
 ------------------------------------------------------------------
@@ -606,6 +592,45 @@ local function buildScriptApi(ctx)
     end
     function api.setFlag(flag, val) session.flags[flag] = val and true or nil end
     function api.emit(event) table.insert(ctx.events, event) end
+    -- Generic read helpers (D13): formula evaluation and data queries, so
+    -- extra scenes can compute in SCRIPT without bespoke engine commands.
+    function api.eval(expr, env)
+        local ok, val = pcall(formulaEngine.eval, tostring(expr or ""), env or {})
+        if ok then return val end
+        return nil
+    end
+    function api.items()
+        local loader = ctx.loader or session.loader
+        local list = {}
+        for itemId, qty in pairs(session.inventory or {}) do
+            if qty > 0 then
+                local item = loader.getItem(itemId)
+                if item then
+                    table.insert(list, { id = item.id, name = item.name or "", icon = item.icon or 0, qty = qty, meta = item.meta or {} })
+                end
+            end
+        end
+        table.sort(list, function(a, b) return a.id < b.id end)
+        return list
+    end
+    function api.allItems()
+        local loader = ctx.loader or session.loader
+        local list = {}
+        for _, item in ipairs(loader.items or {}) do
+            table.insert(list, { id = item.id, name = item.name or "", icon = item.icon or 0, meta = item.meta or {} })
+        end
+        return list
+    end
+    function api.party(i)
+        local out = {}
+        for idx, m in ipairs(ctx.party or session.party or {}) do
+            local view = formulaEngine.battlerView(m, session) or {}
+            view.index = idx
+            table.insert(out, view)
+        end
+        if i ~= nil then return out[i] end
+        return out
+    end
     return api
 end
 
@@ -623,6 +648,9 @@ handlers.SCRIPT = function(cmd, ctx)
         actor = ctx.a,
         target = ctx.target or ctx.b,
         v = ctx.v,
+        -- Scene hooks expose the scene's config as read-only-by-convention
+        -- data (D13); nil outside scene contexts.
+        config = ctx.scene and ctx.scene.config or nil,
     }
 
     local env = {
@@ -646,7 +674,18 @@ handlers.SCRIPT = function(cmd, ctx)
         scriptCtx.rawLoader = loader
     end
 
-    local chunk, err = load(cmd.code or "", "SCRIPT", "t", env)
+    -- `ref` resolves a scene-local named script (scenes.json → scene.scripts),
+    -- so hooks can share one script body across call sites (D13).
+    local code = cmd.code
+    if cmd.ref ~= nil then
+        local scripts = ctx.scene and ctx.scene.scripts or {}
+        code = scripts[cmd.ref]
+        if type(code) ~= "string" then
+            error("SCRIPT ref '" .. tostring(cmd.ref) .. "' not found in scene scripts", 0)
+        end
+    end
+
+    local chunk, err = load(code or "", "SCRIPT", "t", env)
     if not chunk then
         error("SCRIPT compile error: " .. tostring(err), 0)
     end

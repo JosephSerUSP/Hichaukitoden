@@ -1,6 +1,6 @@
 -- Battle scene module (D10)
 --
--- Follows the same pattern as engine/scenes/crafting.lua:
+-- The scene-module pattern (D4/D10):
 --   - registerKindWindows(host) for window definitions
 --   - getState() helper reading from scene_host state
 --   - Exported functions called by main.lua thin wrappers

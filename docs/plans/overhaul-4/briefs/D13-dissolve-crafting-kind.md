@@ -21,29 +21,40 @@ renderer battle work will reuse).
 
 ## Acceptance Criteria
 
-- [ ] Generic window rendering: the D2 vocabulary (OPEN_WINDOW/SET_LIST/
+- [x] Generic window rendering: the D2 vocabulary (OPEN_WINDOW/SET_LIST/
       SET_TEXT/SET_CURSOR/FOCUS_WINDOW + `engine.json → windowLayout`) actually
-      draws windows, lists, text, and portraits — no crafting-specific draw code.
-- [ ] Inventory/list state lives in scene `v` (e.g. `v.inventory` built by
-      hooks), not in a module-local; the renderer reads what the hooks set.
-- [ ] Yield/pool computation moves into a `SCRIPT` call in the crafting scene's
-      hooks (permitted: crafting is an extra scene). The SCRIPT sandbox may
-      need small **generic** additions: read access to `scene.config`, a
-      formula-eval helper (`api.eval`), and an inventory query (`api.items`).
-      Nothing crafting-named goes into the API.
-- [ ] `CALC_CRAFT_YIELD` and `START_ROULETTE` removed from registry +
-      interpreter; scenes.json usages replaced (5 CALC + roulette usages).
-- [ ] `kind: "crafting"` removed everywhere; crafting scene becomes plain
-      `menu` kind (or kindless). Editor kind dropdown already excludes it.
-- [ ] Crafting-specific validator block replaced by generic checks (formulas
-      in `config` compile; SCRIPT counted).
+      draws windows, lists, text, and portraits — no crafting-specific draw
+      code. — DONE 09.07.2026 (D13.1/D13.2, `presentation/window_renderer.lua`).
+- [x] Inventory/list state lives in scene `v`/list sources resolved by the
+      renderer, not in a module-local — DONE 10.07.2026: the module-local
+      `inventoryItems` died with `engine/scenes/crafting.lua`; the SCRIPT
+      rebuilds the same ordering via `api.items()`, matching the renderer's
+      stable priority sort.
+- [x] Yield/pool computation moves into `SCRIPT` — DONE 10.07.2026, with the
+      generic sandbox additions: `ctx.config` (scene config, any scene),
+      `api.eval`, `api.items`, `api.allItems`, `api.party`, plus a generic
+      `SCRIPT ref` param resolving scene-local named scripts
+      (`scenes.json → scene.scripts`) so five call sites share one body.
+      Nothing crafting-named in the API.
+- [x] `CALC_CRAFT_YIELD` and `START_ROULETTE` removed from registry +
+      interpreter; the 5 scenes.json usages replaced with
+      `SCRIPT ref=calcYield` — DONE 10.07.2026. (START_ROULETTE had a handler
+      but no registry entry and no data usages; handler deleted.)
+- [x] `kind: "crafting"` removed everywhere; crafting scene is plain `menu` —
+      DONE 10.07.2026. Editor "+ Create Scene" now also creates a plain menu
+      scene (and its numeric-id computation no longer NaNs on string ids).
+- [x] Crafting-specific validator block replaced by generic checks — DONE
+      10.07.2026: any `config.*Formula` string must compile; `scene.scripts`
+      entries must be valid Lua; SCRIPT refs must resolve; SCRIPT counted.
 - [x] Golden-UI input scripts move from `main.lua sceneScripts` into scene data
       (`scene.goldenScript`) — DONE 09.07.2026 alongside collapsing the `shop`
       kind into `menu` (owner feedback: shop is not a distinct kind).
-- [ ] `engine/scenes/crafting.lua` deleted (or reduced to nothing).
-- [ ] UI-golden reference for the crafting scene regenerated with line-by-line
-      justification (events will change shape); all other scene references
-      byte-identical.
+- [x] `engine/scenes/crafting.lua` deleted — DONE 10.07.2026.
+- [x] UI-golden: NO regeneration was needed — the SCRIPT port is behaviorally
+      exact (same v-values, same RNG consumption, and neither the old
+      CALC_CRAFT_YIELD nor SCRIPT emits logged events), so `scene_1.log` and
+      all other scene references stayed byte-identical. Verified via
+      `check-ui` on 10.07.2026.
 
 **Gates:** G1, G2, G3, UI-golden.
 

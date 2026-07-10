@@ -1,5 +1,4 @@
 local interpreter = require("engine.interpreter")
-local formula = require("engine.formula")
 
 local scene_host = {}
 
@@ -9,7 +8,7 @@ local sceneStack = {}
 
 -- Window definitions registered by kind (via scene_host.register).
 -- Populated by calling registerKindWindows from scene modules.
--- Keyed by kind string (e.g. "crafting"), value is a table of window defs.
+-- Keyed by kind string (e.g. "battle"), value is a table of window defs.
 local windowDefsByKind = {}
 
 local function getSceneData(ctx, id)
@@ -60,7 +59,7 @@ function scene_host.getCurrentState()
 end
 
 -- Register window definitions for a scene kind.
--- Called by scene modules (e.g. crafting.registerKindWindows) during push.
+-- Called by scene modules (e.g. battle.registerKindWindows) during push.
 -- Stored defs are merged into the scene state's windows table on push.
 function scene_host.register(kind, windowDefs)
     windowDefsByKind[kind] = windowDefs
@@ -130,32 +129,14 @@ function scene_host.runHook(hookName, ctx)
     -- Ensure ctx.v is scoped to the scene instance
     ctx.v = state.v
 
+    -- Expose the scene definition generically so SCRIPT commands can read
+    -- scene config and scene-local named scripts (D13) — no per-kind context.
+    ctx.scene = sceneData
+
     -- Reset cascade guard: sequential IF blocks check v._guard == 0
     -- and set v._guard = 1 when they match, preventing state cascades
     -- (e.g. IF v.state==1 sets state=2, then IF v.state==2 fires immediately)
     state.v._guard = 0
-
-    -- Set up crafting-specific formula context if applicable
-    if sceneData and sceneData.kind == "crafting" and ctx.loader then
-        local loader = ctx.loader
-        if state.v.i1Id and state.v.i1Id > 0 then
-            local item = loader.getItem(state.v.i1Id)
-            if item then ctx.ingredient1 = formula.itemView(item) end
-        end
-        if state.v.i2Id and state.v.i2Id > 0 then
-            local item = loader.getItem(state.v.i2Id)
-            if item then ctx.ingredient2 = formula.itemView(item) end
-        end
-        if state.v.crafterIdx and ctx.party then
-            local crafter = ctx.party[state.v.crafterIdx]
-            if crafter then
-                ctx.crafter = formula.battlerView(crafter, ctx.session)
-            end
-        end
-        local config = sceneData.config or {}
-        ctx.alpha = config.alpha or 0.5
-        if state.v.S ~= nil then ctx.S = state.v.S end
-    end
 
     -- Save old events list to avoid accumulating transition events across nested hook/push calls
     local oldEvents = ctx.events
@@ -218,12 +199,7 @@ function scene_host.push(id, ctx)
     -- Merge registered window definitions for this scene's kind
     if sceneData and sceneData.kind then
         -- Let the scene module register its window defs first
-        if sceneData.kind == "crafting" then
-            local sceneModule = require("engine.scenes.crafting")
-            if sceneModule.registerKindWindows then
-                sceneModule.registerKindWindows(scene_host)
-            end
-        elseif sceneData.kind == "battle" then
+        if sceneData.kind == "battle" then
             local sceneModule = require("engine.scenes.battle")
             if sceneModule.registerKindWindows then
                 sceneModule.registerKindWindows(scene_host)

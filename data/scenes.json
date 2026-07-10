@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "Item Creation",
-    "kind": "crafting",
+    "kind": "menu",
     "goldenScript": [
       {
         "key": "return"
@@ -403,7 +403,8 @@
           "condition": "v._guard == 0 and v.state == 3",
           "then": [
             {
-              "cmd": "CALC_CRAFT_YIELD"
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             },
             {
               "cmd": "SET_VAR",
@@ -453,7 +454,8 @@
               "condition": "v.confirmOptionIdx == 1",
               "then": [
                 {
-                  "cmd": "CALC_CRAFT_YIELD"
+                  "cmd": "SCRIPT",
+                  "ref": "calcYield"
                 },
                 {
                   "cmd": "SET_VAR",
@@ -778,7 +780,8 @@
           "condition": "v._guard == 0 and v.state == 3",
           "then": [
             {
-              "cmd": "CALC_CRAFT_YIELD"
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             },
             {
               "cmd": "SET_VAR",
@@ -850,7 +853,8 @@
           "condition": "v._guard == 0 and v.state == 3",
           "then": [
             {
-              "cmd": "CALC_CRAFT_YIELD"
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             },
             {
               "cmd": "SET_VAR",
@@ -958,7 +962,8 @@
           "condition": "v.state == 5",
           "then": [
             {
-              "cmd": "CALC_CRAFT_YIELD"
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             }
           ]
         },
@@ -983,7 +988,10 @@
         }
       ]
     },
-    "draw": "windows"
+    "draw": "windows",
+    "scripts": {
+      "calcYield": "-- Yield / pool / roulette computation for the Item Creation extra scene.\n-- Faithful port of the former engine handler; runs in the SCRIPT sandbox.\nlocal v = ctx.v\nlocal config = ctx.config or {}\nlocal disc = (config.disciplines or {})[v.selectedDisciplineIdx or 1]\nif not disc then return end\nlocal discKind = disc.kind or \"\"\n\n-- Inventory, ordered exactly as the window renderer's priority sort:\n-- discipline-matching items first, id ascending within each group.\nlocal inv = api.items()\ntable.sort(inv, function(a, b)\n    local aKind = a.meta and a.meta.craftKind or \"\"\n    local bKind = b.meta and b.meta.craftKind or \"\"\n    if aKind == discKind and bKind ~= discKind then return true\n    elseif aKind ~= discKind and bKind == discKind then return false\n    else return a.id < b.id end\nend)\nv.invCount = #inv\nlocal party = api.party()\nv.partyCount = #party\n\nlocal i1 = inv[v.selectedIngredient1Idx]\nlocal i2 = inv[v.selectedIngredient2Idx]\nv.i1_item_id = i1 and i1.id or 0\nv.i2_item_id = i2 and i2.id or 0\nif v.i1_item_id == 0 or v.i2_item_id == 0 then\n    v.yieldScore = 0\n    v.yieldAnomalyScore = 0\n    v.isAnomaly = false\n    return\nend\n\nlocal crafter = party[v.crafterIdx or 1]\nif not crafter then return end\nlocal statName = disc.stat or \"atk\"\nlocal S = (statName == \"level\") and crafter.level or crafter[statName]\n\nlocal env = { i1 = i1, i2 = i2, ingredient1 = i1, ingredient2 = i2,\n    crafter = crafter, alpha = config.alpha or 0.5, S = S }\nlocal Y = math.floor(tonumber(api.eval(config.yieldFormula or \"0\", env)) or 0)\nlocal penalty = math.floor(tonumber(api.eval(config.penaltyFormula or \"0\", env)) or 0)\nlocal Y_final = math.max(0, Y - penalty)\nlocal anomalyMult = tonumber(api.eval(config.anomalyFormula or \"1.0\", env)) or 1.0\nlocal isCrit = (anomalyMult > 1.0)\nlocal Y_anomaly = math.floor(Y_final * anomalyMult)\n\n-- Outcome tier: name from the pre-anomaly bracket, pool tier from the final score\nlocal brackets = config.brackets or {}\nlocal tier, tierName = 0, \"Junk\"\nfor _, br in ipairs(brackets) do\n    if Y_final <= br.max then tier = br.tier; tierName = br.name; break end\nend\nif tier == 0 and Y_final > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr and Y_final > lastBr.max then tier = lastBr.tier; tierName = lastBr.name end\nend\nlocal finalScore = isCrit and Y_anomaly or Y_final\nlocal outcomeTier = 0\nfor _, br in ipairs(brackets) do\n    if finalScore <= br.max then outcomeTier = br.tier; break end\nend\nif outcomeTier == 0 and finalScore > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr then outcomeTier = lastBr.tier end\nend\n\n-- Roulette pool from the full item database; fall back to tier-0 items\nlocal pool = {}\nfor _, item in ipairs(api.allItems()) do\n    if item.meta and item.meta.craftKind == discKind and item.meta.tier == outcomeTier then\n        table.insert(pool, item)\n    end\nend\nif #pool == 0 then\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == discKind and item.meta.tier == 0 then\n            table.insert(pool, item)\n        end\n    end\nend\n\nv.yieldScore = Y_final\nv.yieldAnomalyScore = Y_anomaly\nv.penaltyValue = penalty\nv.isAnomaly = isCrit\nv.outcomeTier = outcomeTier\nv.outcomeTierName = tierName\nv.i1Name = i1.name or \"\"\nv.i2Name = i2.name or \"\"\nv.crafterName = crafter.name or \"\"\nv.elementConflict = (i1.meta and i2.meta\n    and i1.meta.craftElement and i2.meta.craftElement\n    and i1.meta.craftElement ~= \"\" and i2.meta.craftElement ~= \"\"\n    and i1.meta.craftElement ~= i2.meta.craftElement) and true or false\n\nv.poolTargetIdx = v.poolTargetIdx or 0\nif #pool > 0 then\n    v.poolSize = #pool\n    if v.poolTargetIdx == 0 then v.poolTargetIdx = random(#pool) end\n    v.poolCurrentIdx = random(#pool)\n    local targetItem = pool[v.poolTargetIdx]\n    v.resultItemId = targetItem and targetItem.id or 0\n    v.resultItemName = targetItem and targetItem.name or \"\"\n    v.pool = {}\n    for _, pitem in ipairs(pool) do\n        table.insert(v.pool, { name = pitem.name or \"\", icon = pitem.icon or 0 })\n    end\nelse\n    v.poolSize = 0\n    v.poolCurrentIdx = 0\n    v.resultItemId = 0\n    v.resultItemName = \"\"\n    v.pool = {}\nend\n\n-- Roulette completion (state 5): consume ingredients, grant the result\nif v.state == 5 then\n    local timing = config.timing or {}\n    local steps = timing.steps or 200\n    v.rouletteStep = (v.rouletteStep or 0) + 1\n    if v.rouletteStep >= steps then\n        if v.i1_item_id ~= 0 then api.takeItem(v.i1_item_id, 1) end\n        if v.i2_item_id ~= 0 then api.takeItem(v.i2_item_id, 1) end\n        local resultItem = pool[v.poolTargetIdx or 1]\n        if resultItem then api.giveItem(resultItem.id, 1) end\n        api.emit({ type = \"text\", text = \"Crafted \" .. (v.resultItemName or \"\") .. \"!\" })\n        v.state = 6\n        v.rouletteStep = 0\n    else\n        local delay = v.rouletteDelay or timing.initialDelay or 0.05\n        v.rouletteDelay = math.min(delay * (timing.delayMult or 1.25), timing.maxDelay or 10)\n    end\nend\n"
+    }
   },
   {
     "id": "title",
