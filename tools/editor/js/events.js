@@ -466,17 +466,42 @@
             document.addEventListener('mousedown', close, true);
         }
 
+        // Everything a block renderer appended after its header (markers,
+        // nested sub-lists, end marker) belongs to that block: selecting the
+        // header should visibly select — and operationally carry — the whole
+        // nested command. Called as the LAST line of each block renderer,
+        // before any sibling rows are appended.
+        function captureBlockParts(container, header) {
+            const kids = Array.from(container.children);
+            header._blockParts = kids.slice(kids.indexOf(header) + 1);
+        }
+
         function setCmdSelection(container, anchor, focus) {
             container._sel = { anchor, focus };
             const lo = Math.min(anchor, focus), hi = Math.max(anchor, focus);
             (container._cmdRows || []).forEach((row, vi) => {
-                if (vi >= lo && vi <= hi) row.dataset.selected = '1';
+                const inSel = vi >= lo && vi <= hi;
+                if (inSel) row.dataset.selected = '1';
                 else delete row.dataset.selected;
+                // A selected block header (CHOICE/IF/...) covers its whole
+                // body: tint the markers and nested sub-lists with it so
+                // "the block is selected" is visible, not just its header.
+                (row._blockParts || []).forEach(part => {
+                    if (inSel) part.dataset.blockSelected = '1';
+                    else delete part.dataset.blockSelected;
+                });
             });
         }
 
         // Wire a command row into the focus/selection/keyboard model.
-        // ctx: { commandsArray, idx, onChange, readOnly, onEdit }
+        // ctx: { commandsArray, idx, onChange, readOnly, onEdit, placeholder }
+        // Interaction model (owner feedback 10.07.2026):
+        //   single click = select; shift+click = extend range;
+        //   double click = insert a NEW command at the row's position;
+        //   Space = edit (single selection only); Delete = delete selection;
+        //   Ctrl+C/X/V = clipboard. The trailing '@>' placeholder row is a
+        //   full selection/keyboard citizen (paste/insert target at the end)
+        //   but has no command of its own to edit/copy/delete.
         function wireCommandRow(container, row, ctx) {
             row.classList.add('cmd-row');
             if (ctx.readOnly) return;
@@ -486,24 +511,39 @@
             container._cmdRows.push(row);
             row._cmdCtx = ctx;
 
-            // Rows covered by the operation: the contiguous selection when
-            // this row is inside it, otherwise just this row.
-            const opCtxs = () => {
+            const selRange = () => {
                 const sel = container._sel;
-                if (!sel) return [ctx];
-                const lo = Math.min(sel.anchor, sel.focus), hi = Math.max(sel.anchor, sel.focus);
-                if (vi < lo || vi > hi) return [ctx];
-                return container._cmdRows.slice(lo, hi + 1).map(r => r._cmdCtx);
+                if (!sel) return null;
+                return { lo: Math.min(sel.anchor, sel.focus), hi: Math.max(sel.anchor, sel.focus) };
+            };
+            const multiSelected = () => {
+                const r = selRange();
+                return r && r.hi > r.lo && vi >= r.lo && vi <= r.hi;
+            };
+
+            // Rows covered by the operation: the contiguous selection when
+            // this row is inside it, otherwise just this row. Placeholder
+            // rows carry no command, so they drop out of command ops.
+            const opCtxs = () => {
+                const r = selRange();
+                let ctxs;
+                if (!r || vi < r.lo || vi > r.hi) ctxs = [ctx];
+                else ctxs = container._cmdRows.slice(r.lo, r.hi + 1).map(el => el._cmdCtx);
+                return ctxs.filter(c => !c.placeholder);
             };
 
             const doDelete = () => {
-                opCtxs().map(c => c.idx).sort((a, b) => b - a)
+                const ctxs = opCtxs();
+                if (!ctxs.length) return;
+                ctxs.map(c => c.idx).sort((a, b) => b - a)
                     .forEach(i => ctx.commandsArray.splice(i, 1));
                 container._sel = null;
                 if (ctx.onChange) ctx.onChange();
             };
             const doCopy = () => {
-                cmdClipboard = opCtxs().map(c => cloneCmds(c.commandsArray[c.idx]));
+                const ctxs = opCtxs();
+                if (!ctxs.length) return;
+                cmdClipboard = ctxs.map(c => cloneCmds(c.commandsArray[c.idx]));
                 // Best-effort mirror to the OS clipboard; the in-memory buffer
                 // is authoritative (Clipboard API needs a secure context).
                 if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -513,33 +553,56 @@
             const doCut = () => { doCopy(); doDelete(); };
             const doPaste = () => {
                 if (!cmdClipboard || !cmdClipboard.length) return;
-                ctx.commandsArray.splice(ctx.idx + 1, 0, ...cloneCmds(cmdClipboard));
+                // Placeholder = insert at its position (the end); a command
+                // row pastes after itself.
+                const at = ctx.placeholder ? ctx.idx : ctx.idx + 1;
+                ctx.commandsArray.splice(at, 0, ...cloneCmds(cmdClipboard));
                 if (ctx.onChange) ctx.onChange();
             };
             const doDuplicate = () => {
+                if (ctx.placeholder) return;
                 ctx.commandsArray.splice(ctx.idx + 1, 0, cloneCmds(ctx.commandsArray[ctx.idx]));
                 if (ctx.onChange) ctx.onChange();
             };
+            // Insert a new command at this row's position (double click /
+            // placeholder confirm) — pushes this row down, RPG-Maker style.
+            const doAddHere = () => openCommandModalForAdd(ctx.commandsArray, ctx.onChange, ctx.hostCtx, ctx.idx);
 
-            row.addEventListener('mousedown', () => setCmdSelection(container, vi, vi));
+            row.addEventListener('mousedown', (e) => {
+                if (e.shiftKey) {
+                    e.preventDefault(); // no text selection on shift+click
+                    const sel = container._sel;
+                    setCmdSelection(container, sel ? sel.anchor : vi, vi);
+                } else {
+                    setCmdSelection(container, vi, vi);
+                }
+            });
+
+            row.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                doAddHere();
+            });
 
             row.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 row.focus();
-                const sel = container._sel;
-                if (!sel || vi < Math.min(sel.anchor, sel.focus) || vi > Math.max(sel.anchor, sel.focus)) {
+                const r = selRange();
+                if (!r || vi < r.lo || vi > r.hi) {
                     setCmdSelection(container, vi, vi);
                 }
+                const multi = multiSelected();
                 showCmdContextMenu(e.clientX, e.clientY, [
-                    { label: 'Edit', action: ctx.onEdit },
-                    { label: 'Duplicate', action: doDuplicate },
+                    { label: 'Insert...', action: doAddHere },
+                    { label: 'Edit', action: ctx.onEdit, disabled: ctx.placeholder || multi },
+                    { label: 'Duplicate', action: doDuplicate, disabled: ctx.placeholder },
                     '-',
-                    { label: 'Cut', action: doCut },
-                    { label: 'Copy', action: doCopy },
+                    { label: 'Cut', action: doCut, disabled: ctx.placeholder && !multi },
+                    { label: 'Copy', action: doCopy, disabled: ctx.placeholder && !multi },
                     { label: 'Paste', action: doPaste, disabled: !cmdClipboard || !cmdClipboard.length },
                     '-',
-                    { label: 'Delete', action: doDelete }
+                    { label: 'Delete', action: doDelete, disabled: ctx.placeholder && !multi }
                 ]);
             });
 
@@ -548,9 +611,10 @@
             // text inputs elsewhere.
             row.addEventListener('keydown', (e) => {
                 const rows = container._cmdRows;
-                if (e.key === ' ') {
+                if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
-                    ctx.onEdit();
+                    if (ctx.placeholder) doAddHere();      // new command at the end
+                    else if (!multiSelected()) ctx.onEdit(); // edit only single selection
                 } else if (e.key === 'Delete') {
                     e.preventDefault();
                     doDelete();
@@ -627,9 +691,14 @@
                 line.style.paddingLeft = (indent * 14) + 'px';
                 line.style.color = '#808080';
                 line.textContent = readOnly ? '<Empty Command List>' : '@>';
-                if (!readOnly) {
+                if (!readOnly && commandsArray) {
                     line.style.cursor = 'pointer';
-                    line.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
+                    // Placeholder row: selectable/focusable insert-and-paste
+                    // target (double click or Space/Enter adds here).
+                    wireCommandRow(container, line, {
+                        commandsArray, idx: 0, onChange, readOnly, hostCtx,
+                        placeholder: true, onEdit: () => {}
+                    });
                 }
                 container.appendChild(line);
                 return;
@@ -681,12 +750,11 @@
                     line.style.cursor = 'pointer';
                     line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; label.style.color = 'white'; };
                     line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; label.style.color = catColor; };
-                    line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
                 } else {
                     line.style.color = '#808080';
                 }
                 wireCommandRow(container, line, {
-                    commandsArray, idx, onChange, readOnly,
+                    commandsArray, idx, onChange, readOnly, hostCtx,
                     onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
                 });
                 container.appendChild(line);
@@ -703,7 +771,13 @@
                 trailingLine.style.color = '#808080';
                 trailingLine.style.cursor = 'pointer';
                 trailingLine.textContent = '@>';
-                trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
+                // The trailing '@>' is a placeholder row: selectable and
+                // keyboard-reachable so commands can be pasted/inserted at
+                // the end of the list (owner feedback 10.07.2026).
+                wireCommandRow(container, trailingLine, {
+                    commandsArray, idx: commandsArray.length, onChange, readOnly, hostCtx,
+                    placeholder: true, onEdit: () => {}
+                });
                 container.appendChild(trailingLine);
             }
 
@@ -732,10 +806,9 @@
 
             if (!readOnly) {
                 line.style.cursor = 'pointer';
-                line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
             }
             wireCommandRow(container, line, {
-                commandsArray, idx, onChange, readOnly,
+                commandsArray, idx, onChange, readOnly, hostCtx,
                 onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
             });
             container.appendChild(line);
@@ -770,7 +843,7 @@
                 header.style.color = '#808080';
             }
             wireCommandRow(container, header, {
-                commandsArray, idx, onChange, readOnly,
+                commandsArray, idx, onChange, readOnly, hostCtx,
                 onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
             });
             container.appendChild(header);
@@ -792,6 +865,7 @@
             });
 
             container.appendChild(makeMarkerRow(`: End ${def.label || id}`, indent));
+            captureBlockParts(container, header);
         }
 
         function renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
@@ -812,7 +886,7 @@
             }
             header.appendChild(headerLabel);
             wireCommandRow(container, header, {
-                commandsArray, idx, onChange, readOnly,
+                commandsArray, idx, onChange, readOnly, hostCtx,
                 onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
             });
             container.appendChild(header);
@@ -871,6 +945,7 @@
             }
 
             container.appendChild(makeMarkerRow(': End Choice', indent));
+            captureBlockParts(container, header);
         }
 
         function renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
@@ -894,7 +969,7 @@
             }
             header.appendChild(headerLabel);
             wireCommandRow(container, header, {
-                commandsArray, idx, onChange, readOnly,
+                commandsArray, idx, onChange, readOnly, hostCtx,
                 // Same edit flow the old inline button offered: prompt for
                 // the condition string (the generic modal doesn't know
                 // CONDITIONAL_BRANCH's flag:/hasItem: shorthand).
@@ -944,13 +1019,20 @@
             }
 
             container.appendChild(makeMarkerRow(': End Branch', indent));
+            captureBlockParts(container, header);
         }
 
-        function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
+        function openCommandModalForAdd(commandsArray, onChange, hostCtx, insertIdx) {
             populateCmdCommonEventsDropdown();
             openCommandSelector(hostCtx, (cmdId) => {
                 openAddCommandDialog((cmd) => {
-                    commandsArray.push(cmd);
+                    // insertIdx (E2 keyboard model): insert at a position,
+                    // pushing the row there down; default remains append.
+                    if (insertIdx === undefined || insertIdx === null || insertIdx >= commandsArray.length) {
+                        commandsArray.push(cmd);
+                    } else {
+                        commandsArray.splice(insertIdx, 0, cmd);
+                    }
                     if (onChange) onChange();
                 }, hostCtx, cmdId);
             });

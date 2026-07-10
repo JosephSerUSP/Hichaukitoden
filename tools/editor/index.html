@@ -630,6 +630,11 @@
         .cmd-row[data-selected="1"] span {
             color: white !important;
         }
+        /* Body of a selected block header (CHOICE/IF/... markers + nested
+           lists): lighter tint showing the whole block is selected */
+        [data-block-selected="1"] {
+            background: rgba(0, 0, 128, 0.15) !important;
+        }
     </style>
 </head>
 <body>
