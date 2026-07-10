@@ -113,10 +113,14 @@
     "replace_member": "[Recruit] You replace {0} with {1}."
   },
   "title": {
-    "subtitle": "First Person Crawler",
-    "options": ["New Game", "\\c[7]Continue", "Exit"],
+    "subtitle": "",
+    "options": [
+      "New Game",
+      "\\c[7]Continue",
+      "Exit"
+    ],
     "no_save": "No save data.",
-    "copyright": "(C) 2026 Developer"
+    "copyright": "(C) 2026 SeraphCircle"
   },
   "game_over": {
     "title": "GAME OVER",
