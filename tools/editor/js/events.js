@@ -419,6 +419,13 @@
         // ------------------------------------------------------------------
         let cmdClipboard = null; // deep-cloned command array
 
+        // After a transformative op (paste/delete/cut/duplicate/insert) the
+        // list re-renders and would lose its selection; the op records the
+        // command index that should be selected next ("the next possible
+        // line", owner feedback 10.07.2026). Keyed by the commands array —
+        // it survives the re-render, DOM containers don't.
+        let cmdRestoreTarget = null; // { array, idx }
+
         function cloneCmds(x) { return JSON.parse(JSON.stringify(x)); }
 
         function closeCmdContextMenu() {
@@ -535,9 +542,11 @@
             const doDelete = () => {
                 const ctxs = opCtxs();
                 if (!ctxs.length) return;
-                ctxs.map(c => c.idx).sort((a, b) => b - a)
-                    .forEach(i => ctx.commandsArray.splice(i, 1));
+                const indices = ctxs.map(c => c.idx).sort((a, b) => b - a);
+                indices.forEach(i => ctx.commandsArray.splice(i, 1));
                 container._sel = null;
+                // Next possible line: the one that moved into the deleted spot
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: indices[indices.length - 1] };
                 if (ctx.onChange) ctx.onChange();
             };
             const doCopy = () => {
@@ -557,16 +566,22 @@
                 // row pastes after itself.
                 const at = ctx.placeholder ? ctx.idx : ctx.idx + 1;
                 ctx.commandsArray.splice(at, 0, ...cloneCmds(cmdClipboard));
+                // Next possible line: the one right after the pasted block
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: at + cmdClipboard.length };
                 if (ctx.onChange) ctx.onChange();
             };
             const doDuplicate = () => {
                 if (ctx.placeholder) return;
                 ctx.commandsArray.splice(ctx.idx + 1, 0, cloneCmds(ctx.commandsArray[ctx.idx]));
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: ctx.idx + 2 };
                 if (ctx.onChange) ctx.onChange();
             };
             // Insert a new command at this row's position (double click /
             // placeholder confirm) — pushes this row down, RPG-Maker style.
-            const doAddHere = () => openCommandModalForAdd(ctx.commandsArray, ctx.onChange, ctx.hostCtx, ctx.idx);
+            const doAddHere = () => openCommandModalForAdd(ctx.commandsArray, () => {
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: ctx.idx + 1 };
+                if (ctx.onChange) ctx.onChange();
+            }, ctx.hostCtx, ctx.idx);
 
             row.addEventListener('mousedown', (e) => {
                 if (e.shiftKey) {
@@ -782,6 +797,28 @@
             }
 
             applyRowStriping(container);
+
+            // Consume a pending selection-restore for THIS list (matched by
+            // array identity — nested lists render before their parents, so
+            // the right container claims it). Select the row at the recorded
+            // command index, or the nearest one after it (hidden comments),
+            // falling back to the last row (usually the '@>' placeholder).
+            if (cmdRestoreTarget && cmdRestoreTarget.array === commandsArray) {
+                const targetIdx = cmdRestoreTarget.idx;
+                cmdRestoreTarget = null;
+                const rows = container._cmdRows || [];
+                let best = null;
+                rows.forEach((r, vi) => {
+                    if (best === null && r._cmdCtx.idx >= targetIdx) best = vi;
+                });
+                if (best === null && rows.length) best = rows.length - 1;
+                if (best !== null) {
+                    setCmdSelection(container, best, best);
+                    rows[best].focus();
+                }
+            }
+            // A finished top-level render means any unclaimed target is stale
+            if (indent === 0) cmdRestoreTarget = null;
         }
 
         // A standalone COMMENT row (SPEC S3): documentation only, rendered in
