@@ -617,6 +617,19 @@
             min-width: 75px;
             padding: 4px 10px;
         }
+
+        /* E2: command-list keyboard focus + selection (win98 listbox look) */
+        .cmd-row:focus {
+            outline: 1px dotted var(--win-black);
+            outline-offset: -1px;
+        }
+        .cmd-row[data-selected="1"] {
+            background: #000080 !important;
+            color: white !important;
+        }
+        .cmd-row[data-selected="1"] span {
+            color: white !important;
+        }
     </style>
 </head>
 <body>

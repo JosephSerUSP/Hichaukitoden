@@ -410,6 +410,176 @@
             return CATEGORY_COLORS[cat] || '';
         }
 
+        // ------------------------------------------------------------------
+        // E2: shared context-menu + keyboard/selection model for command rows.
+        // One primitive for every render path — replaces the per-site inline
+        // edit/delete buttons. Selection and clipboard operate on the list
+        // the focused row belongs to (per-container), so nested CHOICE/IF
+        // bodies never bleed into their parents.
+        // ------------------------------------------------------------------
+        let cmdClipboard = null; // deep-cloned command array
+
+        function cloneCmds(x) { return JSON.parse(JSON.stringify(x)); }
+
+        function closeCmdContextMenu() {
+            const m = document.getElementById('cmd-context-menu');
+            if (m) m.remove();
+        }
+
+        // Shared context-menu primitive. items: { label, action, disabled } or
+        // '-' for a separator.
+        function showCmdContextMenu(x, y, items) {
+            closeCmdContextMenu();
+            const menu = document.createElement('div');
+            menu.id = 'cmd-context-menu';
+            menu.style.cssText = 'position:fixed;z-index:10000;min-width:120px;padding:2px;font-size:11px;'
+                + 'background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);';
+            items.forEach(it => {
+                if (it === '-') {
+                    const hr = document.createElement('div');
+                    hr.style.cssText = 'height:0;margin:3px 2px;border-top:1px solid var(--win-shadow);border-bottom:1px solid var(--win-white);';
+                    menu.appendChild(hr);
+                    return;
+                }
+                const item = document.createElement('div');
+                item.textContent = it.label;
+                item.style.cssText = 'padding:2px 16px;cursor:default;' + (it.disabled ? 'color:var(--win-shadow);' : '');
+                if (!it.disabled) {
+                    item.onmouseover = () => { item.style.background = '#000080'; item.style.color = 'white'; };
+                    item.onmouseout = () => { item.style.background = ''; item.style.color = ''; };
+                    item.onmousedown = (e) => e.stopPropagation();
+                    item.onclick = () => { closeCmdContextMenu(); it.action(); };
+                }
+                menu.appendChild(item);
+            });
+            document.body.appendChild(menu);
+            const r = menu.getBoundingClientRect();
+            menu.style.left = Math.max(0, Math.min(x, window.innerWidth - r.width - 4)) + 'px';
+            menu.style.top = Math.max(0, Math.min(y, window.innerHeight - r.height - 4)) + 'px';
+            const close = (ev) => {
+                if (!menu.contains(ev.target)) {
+                    closeCmdContextMenu();
+                    document.removeEventListener('mousedown', close, true);
+                }
+            };
+            document.addEventListener('mousedown', close, true);
+        }
+
+        function setCmdSelection(container, anchor, focus) {
+            container._sel = { anchor, focus };
+            const lo = Math.min(anchor, focus), hi = Math.max(anchor, focus);
+            (container._cmdRows || []).forEach((row, vi) => {
+                if (vi >= lo && vi <= hi) row.dataset.selected = '1';
+                else delete row.dataset.selected;
+            });
+        }
+
+        // Wire a command row into the focus/selection/keyboard model.
+        // ctx: { commandsArray, idx, onChange, readOnly, onEdit }
+        function wireCommandRow(container, row, ctx) {
+            row.classList.add('cmd-row');
+            if (ctx.readOnly) return;
+            row.tabIndex = -1;
+            container._cmdRows = container._cmdRows || [];
+            const vi = container._cmdRows.length;
+            container._cmdRows.push(row);
+            row._cmdCtx = ctx;
+
+            // Rows covered by the operation: the contiguous selection when
+            // this row is inside it, otherwise just this row.
+            const opCtxs = () => {
+                const sel = container._sel;
+                if (!sel) return [ctx];
+                const lo = Math.min(sel.anchor, sel.focus), hi = Math.max(sel.anchor, sel.focus);
+                if (vi < lo || vi > hi) return [ctx];
+                return container._cmdRows.slice(lo, hi + 1).map(r => r._cmdCtx);
+            };
+
+            const doDelete = () => {
+                opCtxs().map(c => c.idx).sort((a, b) => b - a)
+                    .forEach(i => ctx.commandsArray.splice(i, 1));
+                container._sel = null;
+                if (ctx.onChange) ctx.onChange();
+            };
+            const doCopy = () => {
+                cmdClipboard = opCtxs().map(c => cloneCmds(c.commandsArray[c.idx]));
+                // Best-effort mirror to the OS clipboard; the in-memory buffer
+                // is authoritative (Clipboard API needs a secure context).
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(JSON.stringify(cmdClipboard, null, 2)).catch(() => {});
+                }
+            };
+            const doCut = () => { doCopy(); doDelete(); };
+            const doPaste = () => {
+                if (!cmdClipboard || !cmdClipboard.length) return;
+                ctx.commandsArray.splice(ctx.idx + 1, 0, ...cloneCmds(cmdClipboard));
+                if (ctx.onChange) ctx.onChange();
+            };
+            const doDuplicate = () => {
+                ctx.commandsArray.splice(ctx.idx + 1, 0, cloneCmds(ctx.commandsArray[ctx.idx]));
+                if (ctx.onChange) ctx.onChange();
+            };
+
+            row.addEventListener('mousedown', () => setCmdSelection(container, vi, vi));
+
+            row.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                row.focus();
+                const sel = container._sel;
+                if (!sel || vi < Math.min(sel.anchor, sel.focus) || vi > Math.max(sel.anchor, sel.focus)) {
+                    setCmdSelection(container, vi, vi);
+                }
+                showCmdContextMenu(e.clientX, e.clientY, [
+                    { label: 'Edit', action: ctx.onEdit },
+                    { label: 'Duplicate', action: doDuplicate },
+                    '-',
+                    { label: 'Cut', action: doCut },
+                    { label: 'Copy', action: doCopy },
+                    { label: 'Paste', action: doPaste, disabled: !cmdClipboard || !cmdClipboard.length },
+                    '-',
+                    { label: 'Delete', action: doDelete }
+                ]);
+            });
+
+            // Keyboard handlers live on the focused row itself — inherently
+            // scoped, nothing global that could steal keys from modals or
+            // text inputs elsewhere.
+            row.addEventListener('keydown', (e) => {
+                const rows = container._cmdRows;
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    ctx.onEdit();
+                } else if (e.key === 'Delete') {
+                    e.preventDefault();
+                    doDelete();
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const dir = e.key === 'ArrowUp' ? -1 : 1;
+                    if (e.shiftKey) {
+                        const sel = container._sel || { anchor: vi, focus: vi };
+                        const nf = Math.max(0, Math.min(rows.length - 1, sel.focus + dir));
+                        setCmdSelection(container, sel.anchor, nf);
+                        rows[nf].focus();
+                    } else {
+                        const ni = Math.max(0, Math.min(rows.length - 1, vi + dir));
+                        setCmdSelection(container, ni, ni);
+                        rows[ni].focus();
+                    }
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                    e.preventDefault();
+                    doCopy();
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+                    e.preventDefault();
+                    doCut();
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                    e.preventDefault();
+                    doPaste();
+                }
+            });
+        }
+
         // E1: even/odd row striping, applied AFTER a list renders so the
         // alternation follows each row's position within its own visible
         // list — hidden comment rows and nested block sub-lists (which
@@ -432,6 +602,9 @@
             container.innerHTML = '';
             // Nested sub-lists are excluded from their parent's striping pass
             container.dataset.cmdList = '1';
+            // E2: rebuild the row registry and drop any stale selection
+            container._cmdRows = [];
+            container._sel = null;
 
             if (indent === 0) {
                 const toggleRow = document.createElement('label');
@@ -509,35 +682,13 @@
                     line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; label.style.color = 'white'; };
                     line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; label.style.color = catColor; };
                     line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
-
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'win-btn-small outset-bevel';
-                    editBtn.style.fontSize = '8px';
-                    editBtn.style.padding = '0px 3px';
-                    editBtn.textContent = '✏️';
-                    editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'win-btn-small outset-bevel';
-                    delBtn.style.fontSize = '8px';
-                    delBtn.style.padding = '0px 3px';
-                    delBtn.style.color = 'red';
-                    delBtn.textContent = '×';
-                    delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        commandsArray.splice(idx, 1);
-                        if (onChange) onChange();
-                    };
-
-                    const controls = document.createElement('div');
-                    controls.style.display = 'flex';
-                    controls.style.gap = '2px';
-                    controls.appendChild(editBtn);
-                    controls.appendChild(delBtn);
-                    line.appendChild(controls);
                 } else {
                     line.style.color = '#808080';
                 }
+                wireCommandRow(container, line, {
+                    commandsArray, idx, onChange, readOnly,
+                    onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+                });
                 container.appendChild(line);
 
                 if (cmd.comment && showCommentsPref()) {
@@ -582,20 +733,11 @@
             if (!readOnly) {
                 line.style.cursor = 'pointer';
                 line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                line.appendChild(delBtn);
             }
+            wireCommandRow(container, line, {
+                commandsArray, idx, onChange, readOnly,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(line);
         }
 
@@ -624,28 +766,13 @@
             if (!readOnly) {
                 const catColor = categoryColor(cmd);
                 if (catColor) headerLabel.style.color = catColor;
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win-btn-small outset-bevel';
-                editBtn.style.fontSize = '8px';
-                editBtn.style.padding = '0px 3px';
-                editBtn.textContent = '✏️';
-                editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(editBtn);
-                header.appendChild(delBtn);
             } else {
                 header.style.color = '#808080';
             }
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
@@ -684,20 +811,10 @@
                 if (catColor) headerLabel.style.color = catColor;
             }
             header.appendChild(headerLabel);
-            if (!readOnly) {
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(delBtn);
-            }
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
@@ -776,33 +893,18 @@
                 if (catColor) headerLabel.style.color = catColor;
             }
             header.appendChild(headerLabel);
-            if (!readOnly) {
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win-btn-small outset-bevel';
-                editBtn.style.fontSize = '8px';
-                editBtn.style.padding = '0px 3px';
-                editBtn.textContent = '✏️';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly,
+                // Same edit flow the old inline button offered: prompt for
+                // the condition string (the generic modal doesn't know
+                // CONDITIONAL_BRANCH's flag:/hasItem: shorthand).
+                onEdit: () => {
                     const newCond = prompt('Condition (e.g. flag:metAlicia or hasItem:silver_blade):', cmd.condition || '');
                     if (newCond === null) return;
                     cmd.condition = newCond;
                     if (onChange) onChange();
-                };
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(editBtn);
-                header.appendChild(delBtn);
-            }
+                }
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
