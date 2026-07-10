@@ -1253,12 +1253,12 @@
     "victoryPanelTileX": 6,
     "victoryPanelTileY": 4,
     "victoryPanelTileW": 20,
-    "victoryPanelTileH": 13,
+    "victoryPanelTileH": 14,
     "victoryLineSpacing": 12,
     "commandBarTileH": 2.5,
     "commandBarTextYOffset": 6,
-    "victoryRowHeight": 16,
-    "victoryGaugeWidth": 64,
+    "victoryRowHeight": 18,
+    "victoryGaugeWidth": 120,
     "victoryGaugeHeight": 3
   },
   "effectTypes": [

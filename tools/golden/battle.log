@@ -2,8 +2,6 @@ action|High Pixie|Pixie||
 damage||Pixie|10|
 death||Pixie||
 action|Pixie|Skeleton||
-heal||Skeleton|0|
-action|Pixie|Skeleton||
 damage||Skeleton|10|
 mp_drain|High Pixie||2|
 mp_drain|Skeleton||2|
