@@ -16,7 +16,7 @@ local BATTLE_LAYOUT = {
     enemyRowWidth = 220,
     enemyStartX = 18,
     enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
-    enemyPopupY = 60,
+    enemyPopupY = 84,
     partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
     consoleTileY = 18,
     headerTileOffset = 1,
@@ -26,9 +26,9 @@ local BATTLE_LAYOUT = {
     summonerPopupYOffset = 62,
     fallbackX = 128,
     fallbackY = 70,
-    enemyY = 30,
-    enemyNameY = 90,
-    enemyHpBarY = 104,
+    enemyY = 54,
+    enemyNameY = 114,
+    enemyHpBarY = 128,
     enemyHpBarWidth = 50,
     enemyHpBarHeight = 4,
     enemySpriteSize = 56,
@@ -308,6 +308,23 @@ end
 local battleAnims = {}
 local menuTimer = 0
 
+local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
+    glyph.vy = glyph.vy + gravity * dt
+    glyph.x = glyph.x + glyph.vx * dt
+    glyph.y = glyph.y + glyph.vy * dt
+    if glyph.y >= 0 and glyph.vy > 0 then
+        glyph.y = 0
+        if glyph.bounceCount < 2 then
+            glyph.vy = -glyph.vy * bounceRetain
+            glyph.vx = glyph.vx * 0.6
+            glyph.bounceCount = glyph.bounceCount + 1
+        else
+            glyph.vy = 0
+            glyph.vx = 0
+        end
+    end
+end
+
 renderer.closing = false
 renderer.closingScene = ""
 renderer.closingTimer = 0
@@ -358,23 +375,13 @@ function renderer.update(dt)
     local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
     for i = #damagePopups, 1, -1 do
         local p = damagePopups[i]
-        p.vy = p.vy + gravity * dt
-        p.x = p.x + (p.vx or 0) * dt
-        p.y = p.y + p.vy * dt
-        
-        -- Bounce detection when falling past startY
-        if p.y >= p.startY and p.vy > 0 then
-            p.y = p.startY
-            if p.bounceCount < 2 then
-                p.vy = -p.vy * bounceRetain -- reverse velocity and reduce
-                p.vx = (p.vx or 0) * 0.6
-                p.bounceCount = p.bounceCount + 1
-            else
-                p.vy = 0
-                p.vx = 0
+        p.revealElapsed = p.revealElapsed + dt
+        for _, glyph in ipairs(p.glyphs) do
+            if not glyph.active and p.revealElapsed >= glyph.startDelay then
+                glyph.active = true
             end
+            if glyph.active then updatePopupGlyph(glyph, dt, gravity, bounceRetain) end
         end
-        
         p.life = p.life - dt
         if p.life <= 0 then table.remove(damagePopups, i) end
     end
@@ -423,16 +430,29 @@ end
 function renderer.addDamagePopup(text, x, y, color)
     local scatter = config.physics and config.physics.horizontalScatter or 40
     local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1
+    local popupConfig = config.battle_screen and config.battle_screen.popup or {}
+    local characterDelay = popupConfig.characterDelay or 0
+    local glyphs = {}
+    for i = 1, #text do
+        table.insert(glyphs, {
+            char = text:sub(i, i),
+            startDelay = (i - 1) * characterDelay,
+            active = false,
+            x = 0,
+            y = 0,
+            vy = -160,
+            vx = math.random(-scatter, scatter),
+            bounceCount = 0
+        })
+    end
     table.insert(damagePopups, {
         text = text,
         x = x,
         y = y,
-        startY = y,
         color = color or {1, 1, 1, 1},
-        vy = -160, -- launch upwards
-        vx = math.random(-scatter, scatter), -- random horizontal direction
-        bounceCount = 0,
-        life = lifeSpan
+        life = lifeSpan,
+        revealElapsed = 0,
+        glyphs = glyphs
     })
 end
 
@@ -948,7 +968,16 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     for _, p in ipairs(damagePopups) do
         local alpha = math.min(1, p.life * 2)
         local col = { p.color[1], p.color[2], p.color[3], alpha }
-        ui.drawString(p.text, p.x, p.y, col)
+        local textOffset = 0
+        local font = love.graphics.getFont()
+        for _, glyph in ipairs(p.glyphs) do
+            if p.revealElapsed >= glyph.startDelay then
+                -- Opacity is shared across the popup, not reset for each
+                -- glyph, so every character fades out in sync.
+                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col)
+            end
+            textOffset = textOffset + font:getWidth(glyph.char)
+        end
     end
     love.graphics.pop()
 end

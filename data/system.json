@@ -63,6 +63,7 @@
   "battle_screen": {
     "damagePopupLife": 1.1,
     "popup": {
+      "characterDelay": 0.4,
       "damageFormat": "{0}",
       "damageColor": [
         1,

@@ -1176,21 +1176,30 @@
           "cmd": "IF",
           "condition": "v.combatState == 'input'",
           "then": [
-            { "cmd": "BATTLE_INPUT", "action": "select" }
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "select"
+            }
           ]
         },
         {
           "cmd": "IF",
           "condition": "v.combatState == 'log'",
           "then": [
-            { "cmd": "BATTLE_LOG", "action": "select" }
+            {
+              "cmd": "BATTLE_LOG",
+              "action": "select"
+            }
           ]
         },
         {
           "cmd": "IF",
           "condition": "v.combatState == 'log'",
           "then": [
-            { "cmd": "BATTLE_TRANSITION", "action": "select" }
+            {
+              "cmd": "BATTLE_TRANSITION",
+              "action": "select"
+            }
           ]
         }
       ],
@@ -1199,7 +1208,10 @@
           "cmd": "IF",
           "condition": "v.combatState == 'input'",
           "then": [
-            { "cmd": "BATTLE_INPUT", "action": "cancel" }
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "cancel"
+            }
           ]
         }
       ],
@@ -1208,7 +1220,10 @@
           "cmd": "IF",
           "condition": "v.combatState == 'input'",
           "then": [
-            { "cmd": "BATTLE_INPUT", "action": "up" }
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "up"
+            }
           ]
         }
       ],
@@ -1217,7 +1232,10 @@
           "cmd": "IF",
           "condition": "v.combatState == 'input'",
           "then": [
-            { "cmd": "BATTLE_INPUT", "action": "down" }
+            {
+              "cmd": "BATTLE_INPUT",
+              "action": "down"
+            }
           ]
         }
       ]
