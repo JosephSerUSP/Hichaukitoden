@@ -180,6 +180,54 @@
         "trigger": "interact",
         "scriptId": 14,
         "name": "Workbench"
+      },
+      {
+        "x": 9,
+        "y": 6,
+        "name": "EV012",
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC11.png",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed",
+        "script": [
+          {
+            "cmd": "GRANT_XP",
+            "target": "summoner",
+            "amount": "1500"
+          },
+          {
+            "type": "TEXT",
+            "text": "I have granted you a great deal of EXP, summoner.",
+            "speaker": ""
+          },
+          {
+            "type": "CHOICE",
+            "options": [
+              {
+                "label": "Thank her",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "My pleasure.",
+                    "speaker": ""
+                  }
+                ]
+              },
+              {
+                "label": "Nod",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "She nods you back.",
+                    "speaker": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "id": 12
       }
     ],
     "treasures": [],
