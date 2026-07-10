@@ -387,10 +387,28 @@
         // gets the same inline nested treatment generically, so new block
         // commands need zero editor code (SPEC S1/A6). You add commands
         // directly inside the nest, like RPG Maker.
+        // E1: even/odd row striping, applied AFTER a list renders so the
+        // alternation follows each row's position within its own visible
+        // list — hidden comment rows and nested block sub-lists (which
+        // stripe themselves) never throw it off. The stripe color is kept
+        // on dataset.stripeBg so hover handlers can restore it.
+        function applyRowStriping(container) {
+            let visIdx = 0;
+            Array.from(container.children).forEach(el => {
+                if (el.tagName !== 'DIV' || el.dataset.cmdList === '1') return;
+                const stripe = (visIdx % 2 === 1) ? 'rgba(0, 0, 0, 0.07)' : '';
+                el.dataset.stripeBg = stripe;
+                el.style.background = stripe;
+                visIdx++;
+            });
+        }
+
         function renderCommandList(container, commandsArray, onChange, readOnly, indent, hostCtx) {
             indent = indent || 0;
             hostCtx = hostCtx || 'map';
             container.innerHTML = '';
+            // Nested sub-lists are excluded from their parent's striping pass
+            container.dataset.cmdList = '1';
 
             if (indent === 0) {
                 const toggleRow = document.createElement('label');
@@ -461,7 +479,7 @@
                 if (!readOnly) {
                     line.style.cursor = 'pointer';
                     line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
+                    line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; };
                     line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
 
                     const editBtn = document.createElement('button');
@@ -509,6 +527,8 @@
                 trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
                 container.appendChild(trailingLine);
             }
+
+            applyRowStriping(container);
         }
 
         // A standalone COMMENT row (SPEC S3): documentation only, rendered in
