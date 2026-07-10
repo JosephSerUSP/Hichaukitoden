@@ -1612,7 +1612,7 @@
             },
             {
               "cmd": "WAIT",
-              "duration": 1.0
+              "duration": 1
             }
           ]
         },

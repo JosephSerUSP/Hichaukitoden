@@ -18,6 +18,27 @@ const DATA_FILES = [
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
 const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
 
+// Stale-save guard: a per-file version token (mtime + size). /data hands the
+// tokens to the editor inside the payload; /save rejects with 409 when a file
+// changed on disk after the editor loaded, instead of silently overwriting
+// commits made while the editor was open.
+const fileVersion = (filename) => {
+    try {
+        const st = fs.statSync(path.join(PROJECT_DIR, 'data', filename));
+        return `${Math.floor(st.mtimeMs)}:${st.size}`;
+    } catch (e) {
+        return null;
+    }
+};
+
+const allFileVersions = () => {
+    const versions = {};
+    DATA_FILES.forEach(name => {
+        versions[name] = fileVersion(`${name}.json`);
+    });
+    return versions;
+};
+
 const server = http.createServer((req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -75,7 +96,10 @@ const server = http.createServer((req, res) => {
         DATA_FILES.forEach(name => {
             data[name] = getFileContents(`${name}.json`);
         });
- 
+        // The editor posts the whole payload back on /save, so the tokens
+        // round-trip without any bookkeeping on the client.
+        data._fileVersions = allFileVersions();
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     } else if (req.method === 'GET' && req.url.startsWith('/api/assets')) {
@@ -150,13 +174,37 @@ const server = http.createServer((req, res) => {
         req.on('end', () => {
             try {
                 const payload = JSON.parse(body);
+
+                // Stale-save guard: refuse the whole save if any file the
+                // payload would write changed on disk since the editor loaded
+                // its tokens (git checkout, another editor, a commit...).
+                const clientVersions = payload._fileVersions;
+                if (clientVersions && typeof clientVersions === 'object') {
+                    const stale = DATA_FILES.filter(name =>
+                        payload[name] &&
+                        clientVersions[name] !== undefined &&
+                        clientVersions[name] !== null &&
+                        clientVersions[name] !== fileVersion(`${name}.json`)
+                    );
+                    if (stale.length > 0) {
+                        console.warn(`SAVE REJECTED (stale): ${stale.join(', ')} changed on disk since the editor loaded`);
+                        res.writeHead(409, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({
+                            success: false,
+                            staleFiles: stale,
+                            message: `Save blocked: ${stale.map(n => n + '.json').join(', ')} changed on disk after the editor loaded. Reload the editor (browser refresh) to pick up the new data, or your save would overwrite it.`
+                        }));
+                        return;
+                    }
+                }
+
                 const saveFile = (filename, content) => {
                     if (content) {
                         const filePath = path.join(PROJECT_DIR, 'data', filename);
                         fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
                     }
                 };
- 
+
                 DATA_FILES.forEach(name => {
                     saveFile(`${name}.json`, payload[name]);
                 });
@@ -175,7 +223,9 @@ const server = http.createServer((req, res) => {
                 notifyReq.end();
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true, message: 'Saved successfully!' }));
+                // Fresh tokens so the editor's next save validates against
+                // the files it just wrote.
+                res.end(JSON.stringify({ success: true, message: 'Saved successfully!', versions: allFileVersions() }));
             } catch (err) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, message: err.message }));

@@ -1,5 +1,8 @@
 
-        const API_URL = 'http://127.0.0.1:8080';
+        // Same-origin when served by the editor server (works with the PORT
+        // env override / autoPort — talking to a hardcoded 8080 can hit a
+        // stale second instance); the fixed default only remains for file://.
+        const API_URL = location.protocol.startsWith('http') ? '' : 'http://127.0.0.1:8080';
         let dbPayload = {};
         let isDirty = false;
 
