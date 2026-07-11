@@ -1673,55 +1673,55 @@
       "title": "Info"
     },
     "items_left_panel": {
-      "x": 0,
-      "y": 1,
-      "width": 18,
-      "height": 28,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 19,
+      "height": 14.5,
       "style": "list",
       "title": "Items",
       "emptyText": "No items.",
       "visibleRows": 24
     },
     "items_info_panel": {
-      "x": 18,
-      "y": 1,
-      "width": 14,
-      "height": 28,
+      "x": 20,
+      "y": 4.5,
+      "width": 11.5,
+      "height": 14.5,
       "style": "panel",
       "title": "Info",
       "lineSpacing": 1.5
     },
     "status_panel": {
-      "x": 10,
-      "y": 1,
-      "width": 22,
-      "height": 28,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 20.5,
+      "height": 14.5,
       "style": "panel",
       "title": "Status",
       "lineSpacing": 1.5
     },
     "shop_header": {
       "x": 0,
-      "y": 3.5,
+      "y": 0,
       "width": 32,
-      "height": 3,
+      "height": 4,
       "style": "frame",
       "title": "Shop"
     },
     "shop_list": {
-      "x": 0,
-      "y": 6.5,
-      "width": 20,
-      "height": 13,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 19,
+      "height": 14.5,
       "style": "list",
       "title": "Items",
       "emptyText": "No items available."
     },
     "shop_info": {
       "x": 20,
-      "y": 6.5,
-      "width": 12,
-      "height": 13,
+      "y": 4.5,
+      "width": 11.5,
+      "height": 14.5,
       "style": "panel",
       "title": "Item Info"
     },
@@ -1804,9 +1804,9 @@
     },
     "status_party": {
       "x": 0,
-      "y": 1,
-      "width": 10,
-      "height": 28,
+      "y": 19.5,
+      "width": 32,
+      "height": 10.5,
       "style": "list",
       "title": "Party"
     },
@@ -1817,6 +1817,38 @@
       "height": 12,
       "style": "list",
       "title": "Use on whom?"
+    },
+    "help": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 4,
+      "style": "frame",
+      "title": "help"
+    },
+    "party": {
+      "x": 0,
+      "y": 19.5,
+      "width": 32,
+      "height": 10.5,
+      "style": "list",
+      "title": "Party"
+    },
+    "helpo": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 4,
+      "style": "panel",
+      "title": "help"
+    },
+    "statusPortrait": {
+      "x": 21.5,
+      "y": 4.5,
+      "width": 10,
+      "height": 14.5,
+      "style": "panel",
+      "title": null
     }
   }
 }

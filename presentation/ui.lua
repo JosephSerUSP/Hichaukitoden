@@ -166,7 +166,7 @@ function ui.drawPanel(x, y, w, h, title)
     -- Draw title header if specified
     if title then
         love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + 12, y + 7)
+        ui.drawString(title, x + ui.tileSize * 0.5, y)
     end
     
     love.graphics.pop()
