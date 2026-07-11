@@ -99,8 +99,6 @@ local menuSelectedSubIdx = 1
 local selectedItemIdToUse = nil
 local selectedCreatureIndex = 1
 local selectedSlotIndex = 1
-statusInspectMode = false
-statusInspectIdx = 1
 
 local inputCooldown = 0
 
@@ -1858,9 +1856,11 @@ local function handleKeyPressed(key)
                     local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
                     local opt = mainOpts[menuSelectedIdx]
                     if opt == "STATUS" then
-                        menuSubScene = "status_detail"
-                        statusInspectMode = false
-                        statusInspectIdx = 1
+                        -- Status is a declarative scene now; seed its cursor
+                        -- with the member picked in the menu's party column.
+                        scene_host.push("status", { session = activeSession, loader = loader, party = activeSession.party })
+                        local stState = scene_host.getCurrentState()
+                        if stState then stState.v.idx = selectedCreatureIndex end
                     else
                         menuSubScene = "equip_passive"
                         menuSelectedSubIdx = 1
@@ -1985,47 +1985,6 @@ local function handleKeyPressed(key)
                 end
                 menuSubScene = "equip_passive"
                 menuSelectedSubIdx = selectedSlotIndex
-            end
-            
-        elseif menuSubScene == "status_detail" then
-            local c = activeSession.party[selectedCreatureIndex]
-            local numPassives = c and #(c.actorData.passives or {}) or 0
-            local numSkills = c and #(c.actorData.skills or {}) or 0
-            local totalTraits = numPassives + numSkills
-            
-            if statusInspectMode then
-                if key == "escape" or key == "space" or key == "return" then
-                    statusInspectMode = false
-                elseif key == "up" or key == "w" then
-                    if totalTraits > 0 then
-                        statusInspectIdx = (statusInspectIdx - 2) % totalTraits + 1
-                    end
-                elseif key == "down" or key == "s" then
-                    if totalTraits > 0 then
-                        statusInspectIdx = statusInspectIdx % totalTraits + 1
-                    end
-                end
-            else
-                if key == "escape" then
-                    renderer.startClosing("status_detail", "menu", "party_select")
-                elseif key == "space" or key == "return" or key == "tab" then
-                    if totalTraits > 0 then
-                        statusInspectMode = true
-                        statusInspectIdx = 1
-                    end
-                elseif key == "left" or key == "a" or key == "up" or key == "w" then
-                    local nextIdx = selectedCreatureIndex
-                    repeat
-                        nextIdx = (nextIdx - 2) % 4 + 1
-                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
-                    selectedCreatureIndex = nextIdx
-                elseif key == "right" or key == "d" or key == "down" or key == "s" then
-                    local nextIdx = selectedCreatureIndex
-                    repeat
-                        nextIdx = nextIdx % 4 + 1
-                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
-                    selectedCreatureIndex = nextIdx
-                end
             end
             
         elseif menuSubScene == "exit_confirm" then

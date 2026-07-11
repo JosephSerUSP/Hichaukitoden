@@ -1665,12 +1665,13 @@
       "title": "Item Info"
     },
     "status_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 32,
-      "height": 20.5,
+      "x": 10,
+      "y": 1,
+      "width": 22,
+      "height": 28,
       "style": "panel",
-      "title": "Status"
+      "title": "Status",
+      "lineSpacing": 1.5
     },
     "shop_header": {
       "x": 0,
@@ -1771,6 +1772,14 @@
       "y": 19.5,
       "width": 32,
       "height": 10.5,
+      "style": "list",
+      "title": "Party"
+    },
+    "status_party": {
+      "x": 0,
+      "y": 1,
+      "width": 10,
+      "height": 28,
       "style": "list",
       "title": "Party"
     }

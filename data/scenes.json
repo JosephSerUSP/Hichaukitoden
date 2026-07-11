@@ -1244,7 +1244,53 @@
         },
         {
           "cmd": "OPEN_WINDOW",
+          "windowId": "status_party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "status_party",
+          "listId": "party",
+          "format": "{name}  Lv {level}"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "status_party",
+          "index": "v.idx"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
           "windowId": "status_panel"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "status_panel",
+          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nHP {sel('status_party').hp} / {sel('status_party').maxHp}      EXP {sel('status_party').exp} / {sel('status_party').expNeeded}\n\nATK {sel('status_party').atk}    DEF {sel('status_party').def}\nMAT {sel('status_party').mat}    MDF {sel('status_party').mdf}\nASP {sel('status_party').asp}    MPD {sel('status_party').mpd}\n\nWPN  {sel('status_party').weapon}\nAMR  {sel('status_party').armor}\nACC  {sel('status_party').accessory}\n\nPASSIVES  {sel('status_party').passiveText}\nSKILLS  {sel('status_party').skillText}\nSTATES  {sel('status_party').stateText}"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx < party.count",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
         }
       ],
       "on_cancel": [
@@ -1254,7 +1300,19 @@
         }
       ]
     },
-    "config": {}
+    "config": {},
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "escape"
+      }
+    ]
   },
   {
     "id": "battle",
