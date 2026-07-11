@@ -1562,17 +1562,17 @@
       "title": "Crafting..."
     },
     "title_frame": {
-      "x": 0,
-      "y": 6,
-      "width": 32,
-      "height": 6,
+      "x": -1,
+      "y": 15.5,
+      "width": 34,
+      "height": 3.5,
       "style": "frame",
       "title": null
     },
     "title_menu": {
-      "x": 10,
-      "y": 14,
-      "width": 12,
+      "x": 23.5,
+      "y": 19.5,
+      "width": 7.5,
       "height": 6,
       "style": "list",
       "visibleRows": 3,
@@ -1588,9 +1588,9 @@
     },
     "title_footer": {
       "x": 0,
-      "y": 27,
+      "y": 26.5,
       "width": 32,
-      "height": 3,
+      "height": 3.5,
       "style": "frame",
       "contentY": 1,
       "title": null
