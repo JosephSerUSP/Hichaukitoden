@@ -1404,22 +1404,48 @@
           "windowId": "shop_header"
         },
         {
+          "cmd": "SET_TEXT",
+          "windowId": "shop_header",
+          "text": "{v.shopName}   Gold: {session.gold} G   [ESC: leave]"
+        },
+        {
           "cmd": "OPEN_WINDOW",
           "windowId": "shop_list"
         },
         {
           "cmd": "SET_LIST",
           "windowId": "shop_list",
-          "listId": "shop_items"
+          "listId": "v:items",
+          "format": "{name}   {cost} G"
         },
         {
           "cmd": "SET_CURSOR",
           "windowId": "shop_list",
-          "index": 1
+          "index": "v.idx"
         },
         {
           "cmd": "OPEN_WINDOW",
           "windowId": "shop_info"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "shop_info",
+          "text": "{sel('shop_list').description}\n\nPrice: {sel('shop_list').cost} G"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "shop_party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "shop_party",
+          "listId": "party",
+          "format": "{name}   Lv {level}   {hp}/{maxHp} HP"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "shop_party",
+          "index": 0
         }
       ],
       "on_up": [
@@ -1472,7 +1498,8 @@
         }
       ]
     },
-    "config": {}
+    "config": {},
+    "draw": "windows"
   },
   {
     "id": "game_over",

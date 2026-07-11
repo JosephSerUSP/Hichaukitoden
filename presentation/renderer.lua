@@ -1314,60 +1314,8 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.pop()
 end
 
-function renderer.drawShop(shopTitle, selectedIdx, shopItems)
-    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local progress
-    if renderer.closing and renderer.closingScene == "shop" then
-        progress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
-    else
-        progress = math.min(1, menuTimer / slideDur)
-    end
-    local ease = 1 - (1 - progress) * (1 - progress)
-    local ox = (1 - ease) * ui.toPx(32.5)
-
-    -- Draw shop background
-    viewport_3d.draw(renderer.session)
-    
-    -- Draw shop title and item list
-    ui.drawPanel(ui.toPx(1) + ox, ui.toPx(1), ui.toPx(30), ui.toPx(15))
-    
-    local titleText = "SHOP: " .. tostring(shopTitle):upper()
-    ui.drawString(titleText, ui.toPx(2) + ox, ui.toPx(2), {1, 0.85, 0.5, 1})
-    
-    if #shopItems == 0 then
-        ui.drawString("No items available.", ui.toPx(3) + ox, ui.toPx(5), {0.6, 0.6, 0.6, 1})
-    else
-        -- Draw items list
-        local start = math.max(1, selectedIdx - 4)
-        local count = 0
-        for i = start, math.min(#shopItems, start + 4) do
-            local item = shopItems[i]
-            local itemY = (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + count * ui.lineHeight
-            local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-            local prefix = (i == selectedIdx) and "> " or "  "
-            
-            -- Draw icon
-            if item.icon then
-                ui.drawIcon(item.icon, ui.toPx(2.5) + ox, itemY + 1)
-            end
-            
-            ui.drawString(prefix .. item.name, ui.toPx(4.25) + ox, itemY, color)
-            ui.drawString(item.cost .. " G", ui.toPx(22.5) + ox, itemY, color, "right", ui.toPx(7.5))
-            count = count + 1
-        end
-        
-        -- Draw description for the selected item
-        local selItem = shopItems[selectedIdx]
-        if selItem then
-            ui.drawString(selItem.description or "", ui.toPx(2) + ox, ui.toPx(14), {0.8, 0.8, 0.8, 1})
-        end
-    end
-    
-    ui.drawString("[ESC/BACK to exit]", ui.toPx(16.25) + ox, ui.toPx(2), {0.6, 0.6, 0.6, 1}, "right", ui.toPx(13.75))
-    
-    local bottomY = ui.toPx(18) + (1 - ease) * ui.toPx(14)
-    drawHUD(0, bottomY, ui.toPx(32), ui.toPx(12))
-end
+-- drawShop deleted: the shop is a declarative scene now ("draw": "windows"
+-- in scenes.json) — the generic window renderer draws it from its hooks.
 
 local function drawDarkGradient()
     for i = 0, 24 do

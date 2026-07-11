@@ -168,6 +168,37 @@ local function runPreviewScene(sceneId)
         local ctx = { session = vSession, loader = loader, party = vSession.party, events = {} }
         sh.init(nil)
         sh.push(sceneDef.id, ctx) -- push runs on_enter when given a ctx
+
+        -- The shop scene's v-state is seeded by openShop in-game; give the
+        -- preview the equivalent (first shop by sorted key, deterministic)
+        -- so its windows show real content instead of an empty list.
+        if tostring(sceneDef.id) == "shop" then
+            local st = sh.getCurrentState()
+            if st and (st.v.items == nil or #st.v.items == 0) then
+                local keys = {}
+                for k in pairs(loader.shops or {}) do table.insert(keys, tostring(k)) end
+                table.sort(keys)
+                local shopData = keys[1] and loader.shops[keys[1]]
+                if shopData then
+                    st.v.shopName = shopData.name or "Shop"
+                    st.v.items = {}
+                    for _, shopItem in ipairs(shopData.items or {}) do
+                        local itemData = loader.getItem(shopItem.id)
+                        if itemData then
+                            table.insert(st.v.items, {
+                                id = itemData.id,
+                                name = itemData.name or "",
+                                icon = itemData.icon or 0,
+                                description = itemData.description or "",
+                                cost = shopItem.price or itemData.cost or 0,
+                            })
+                        end
+                    end
+                    st.v.count = #st.v.items
+                end
+            end
+        end
+
         local wr = require("presentation.window_renderer")
         payload = wr.resolveState(sh.getCurrentState(), sceneDef, ctx)
         payload.sceneId = sceneDef.id
@@ -206,23 +237,6 @@ local function runPreviewScene(sceneId)
                     local id = tostring(sceneDef.id)
                     if id == "menu" then
                         renderer.drawMainMenu(1, 1, 1, vSession, "main")
-                        payload.frameKind = "legacy"
-                    elseif id == "shop" then
-                        -- Same shop-items construction as openShop, first
-                        -- shop in the database, no condition filtering.
-                        local shopName, items = "Shop", {}
-                        for _, shopData in pairs(loader.shops or {}) do
-                            shopName = shopData.name or shopName
-                            for _, shopItem in ipairs(shopData.items or {}) do
-                                local itemData = loader.getItem(shopItem.id)
-                                if itemData then
-                                    table.insert(items, setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData }))
-                                end
-                            end
-                            break
-                        end
-                        pcall(viewport_3d.init)
-                        renderer.drawShop(shopName, 1, items)
                         payload.frameKind = "legacy"
                     else
                         local wrMod = require("presentation.window_renderer")
@@ -1294,10 +1308,6 @@ function love.draw()
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
-    elseif scene_host.getCurrent() == "shop" then
-        local shopState = scene_host.getCurrentState()
-        local sv = shopState and shopState.v or {}
-        renderer.drawShop(sv.shopName, sv.idx or 1, sv.items or {})
     elseif scene_host.getCurrent() == "menu" then
         if scene_host.getPrevious() == "town" then
             renderer.drawTown(townSelectedIdx)
@@ -1400,10 +1410,17 @@ local function openShop(shopId)
             if allowed then
                 local itemData = loader.getItem(shopItem.id)
                 if itemData then
-                    -- Honor the per-shop price override set in the editor;
-                    -- everything else reads through to the item database entry.
-                    local entry = setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData })
-                    table.insert(items, entry)
+                    -- Plain table (not an __index proxy): the shop scene's
+                    -- v:items list source copies row fields with pairs(),
+                    -- which cannot see metatable fields. Price honors the
+                    -- per-shop override set in the editor.
+                    table.insert(items, {
+                        id = itemData.id,
+                        name = itemData.name or "",
+                        icon = itemData.icon or 0,
+                        description = itemData.description or "",
+                        cost = shopItem.price or itemData.cost or 0,
+                    })
                 end
             end
         end

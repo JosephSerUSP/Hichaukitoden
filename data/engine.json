@@ -1684,15 +1684,16 @@
       "x": 0,
       "y": 6.5,
       "width": 20,
-      "height": 17.5,
+      "height": 13,
       "style": "list",
-      "title": "Items"
+      "title": "Items",
+      "emptyText": "No items available."
     },
     "shop_info": {
       "x": 20,
       "y": 6.5,
       "width": 12,
-      "height": 17.5,
+      "height": 13,
       "style": "panel",
       "title": "Item Info"
     },
@@ -1764,6 +1765,14 @@
       "style": "frame",
       "title": "Crafting Success!",
       "contentY": 5
+    },
+    "shop_party": {
+      "x": 0,
+      "y": 19.5,
+      "width": 32,
+      "height": 10.5,
+      "style": "list",
+      "title": "Party"
     }
   }
 }
