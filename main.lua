@@ -179,9 +179,15 @@ local function runPreviewScene(sceneId)
         -- the REAL presentation stack — windowskin, font, spacing — exactly
         -- like the golden-ui draw smoke does, and embed the PNG as base64.
         -- The JSON metadata above remains the hit-testing/edit model; the
-        -- image is what the author sees. Scenes without "draw": "windows"
-        -- have no declarative frame; the canvas falls back to the schematic.
-        if sceneDef.draw == "windows" then
+        -- image is what the author sees. frameKind tells the editor which
+        -- path produced it:
+        --   "windows"     scene_host.draw ("draw": "windows" scenes)
+        --   "legacy"      the same legacy renderer call love.draw makes for
+        --                 this built-in id (menu/shop), with neutral state
+        --   "declarative" the hook-declared windows via the window renderer
+        --                 (built-in stubs like items/status whose real
+        --                 in-game look is still legacy code inside the menu)
+        do
             local okDraw, imgOrErr = pcall(function()
                 local ui = require("presentation.ui")
                 ui.init()
@@ -189,7 +195,41 @@ local function runPreviewScene(sceneId)
                 love.graphics.setCanvas(previewCanvas)
                 love.graphics.clear(0, 0, 0, 1)
                 love.graphics.setColor(1, 1, 1, 1)
-                sh.draw(ctx)
+                if sh.draw(ctx) then
+                    payload.frameKind = "windows"
+                else
+                    renderer.init(vSession)
+                    -- Settle the menu slide-in animation so panels are in
+                    -- their resting position, exactly as after ~2s in-game.
+                    renderer.update(1)
+                    renderer.update(1)
+                    local id = tostring(sceneDef.id)
+                    if id == "menu" then
+                        renderer.drawMainMenu(1, 1, 1, vSession, "main")
+                        payload.frameKind = "legacy"
+                    elseif id == "shop" then
+                        -- Same shop-items construction as openShop, first
+                        -- shop in the database, no condition filtering.
+                        local shopName, items = "Shop", {}
+                        for _, shopData in pairs(loader.shops or {}) do
+                            shopName = shopData.name or shopName
+                            for _, shopItem in ipairs(shopData.items or {}) do
+                                local itemData = loader.getItem(shopItem.id)
+                                if itemData then
+                                    table.insert(items, setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData }))
+                                end
+                            end
+                            break
+                        end
+                        pcall(viewport_3d.init)
+                        renderer.drawShop(shopName, 1, items)
+                        payload.frameKind = "legacy"
+                    else
+                        local wrMod = require("presentation.window_renderer")
+                        wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
+                        payload.frameKind = "declarative"
+                    end
+                end
                 love.graphics.setCanvas()
                 local fileData = previewCanvas:newImageData():encode("png")
                 return love.data.encode("string", "base64", fileData)
@@ -197,6 +237,7 @@ local function runPreviewScene(sceneId)
             if okDraw then
                 payload.image = imgOrErr
             else
+                love.graphics.setCanvas()
                 payload.imageError = tostring(imgOrErr)
             end
         end
