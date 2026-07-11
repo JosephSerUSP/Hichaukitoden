@@ -98,6 +98,20 @@
         const TILE_SIZE = 24;
         let mapCanvas = null;
         let ctx = null;
+
+        // E6: the unified Scenes tab can host the map surface in a canvas of
+        // its own. While one is set (and still attached to the document),
+        // every map render/interaction path targets it; the standalone
+        // workspace #map-canvas is the fallback, so all existing entry
+        // points keep working untouched.
+        let embeddedMapCanvas = null;
+        function getMapCanvas() {
+            if (embeddedMapCanvas && document.body.contains(embeddedMapCanvas)) return embeddedMapCanvas;
+            return document.getElementById('map-canvas');
+        }
+        function releaseEmbeddedMapCanvas() {
+            embeddedMapCanvas = null;
+        }
         let selectedEvent = null;
         let dragOffset = { x: 0, y: 0 };
         let mouseX = 0, mouseY = 0;
@@ -123,7 +137,7 @@
             if (canvas && !mapCanvas) {
                 mapCanvas = canvas;
                 ctx = canvas.getContext('2d');
-                initCanvasEvents();
+                initCanvasEvents(canvas);
             }
             renderGridCells();
             document.querySelectorAll('.map-tree-item').forEach(el => {
@@ -138,8 +152,8 @@
         function renderGridCells() {
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
-
-            const canvas = document.getElementById('map-canvas');
+            // (E6) target the embedded Scenes-tab canvas when one is active
+            const canvas = getMapCanvas();
             if (!canvas) return;
             ctx = canvas.getContext('2d');
 
@@ -240,8 +254,8 @@
             }
         }
 
-        function initCanvasEvents() {
-            const canvas = document.getElementById('map-canvas');
+        function initCanvasEvents(canvasArg) {
+            const canvas = canvasArg || getMapCanvas();
             if (!canvas) return;
 
             canvas.addEventListener('contextmenu', (e) => {
@@ -356,7 +370,7 @@
                 }
             }
             if (editingMode === 'event' && eventCopyBuffer && e.ctrlKey && e.key === 'v') {
-                const canvas = document.getElementById('map-canvas');
+                const canvas = getMapCanvas();
                 if (!canvas) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
@@ -370,53 +384,73 @@
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
 
-            const menu = document.getElementById('canvas-context-menu');
-            menu.innerHTML = '';
-
-            const addItem = (label, onClick, danger) => {
-                const item = document.createElement('div');
-                item.className = 'context-menu-item';
-                item.style.padding = '4px 8px';
-                item.style.cursor = 'default';
-                item.style.display = 'flex';
-                item.style.alignItems = 'center';
-                item.style.gap = '6px';
-                if (danger) item.style.color = '#cc0000';
-                item.textContent = label;
-                item.onclick = () => { menu.style.display = 'none'; onClick(); };
-                menu.appendChild(item);
-            };
-            const addSeparator = () => {
-                const sep = document.createElement('div');
-                sep.style.borderTop = '1px solid #808080';
-                sep.style.margin = '2px 0';
-                menu.appendChild(sep);
-            };
-
+            // E6: shared context-menu primitive (same one the command list
+            // and scene canvas use) — replaces the bespoke
+            // #canvas-context-menu popup so map/window editing look alike.
+            const items = [];
             if (editingMode === 'event') {
                 const existingEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
                 if (existingEvent) {
-                    addItem('✏️ Edit Event...', () => openEventModal(x, y));
-                    addItem('📋 Copy Event', () => { selectedEvent = existingEvent; eventCopyBuffer = JSON.stringify(existingEvent); });
-                    addItem('❌ Delete Event', () => {
+                    items.push({ label: '✏️ Edit Event...', action: () => openEventModal(x, y) });
+                    items.push({ label: '📋 Copy Event', action: () => { selectedEvent = existingEvent; eventCopyBuffer = JSON.stringify(existingEvent); } });
+                    items.push({ label: '❌ Delete Event', action: () => {
                         map.events = map.events.filter(ev => ev !== existingEvent);
                         setDirty(true);
                         renderGridCells();
-                    }, true);
+                    } });
                 } else {
-                    addItem('➕ Add Event Here...', () => openEventModal(x, y));
-                    if (eventCopyBuffer) {
-                        addItem('📋 Paste Event', () => pasteEventAt(x, y));
-                    }
+                    items.push({ label: '➕ Add Event Here...', action: () => openEventModal(x, y) });
+                    items.push({ label: '📋 Paste Event', action: () => pasteEventAt(x, y), disabled: !eventCopyBuffer });
                 }
-                addSeparator();
+                items.push('-');
             }
+            items.push({ label: '🚩 Set Player Start Position Here', action: () => setPlayerStartPosition(x, y) });
+            showCmdContextMenu(e.clientX, e.clientY, items);
+        }
 
-            addItem('🚩 Set Player Start Position Here', () => setPlayerStartPosition(x, y));
+        // E6: embed the map editing surface in the unified Scenes tab —
+        // the SAME rendering and interaction code as the standalone map
+        // workspace, drawing into a Scenes-tab-local canvas. Editor-side
+        // unification only: the engine's map scene KIND is a future round
+        // (docs/plans/overhaul-4/future-map-kind.md), so there are no map
+        // hooks/windows to overlay yet.
+        function renderMapSceneView(container, mapIdx) {
+            currentMapIndex = mapIdx;
+            selectedEvent = null;
+            editingMode = 'event'; // event tools are the point here
+            const map = dbPayload.maps[mapIdx];
+            if (!map) return;
 
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
-            menu.style.display = 'block';
+            const box = document.createElement('fieldset');
+            box.style.cssText = 'padding: 6px; margin-bottom: 6px;';
+            const legend = document.createElement('legend');
+            legend.textContent = 'Map — ' + (map.title || ('Map ' + mapIdx));
+            box.appendChild(legend);
+
+            const hint = document.createElement('div');
+            hint.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 4px;';
+            hint.textContent = 'Right-click a tile for event tools (edit/copy/paste/delete, player start); double-click adds/edits an event; drag moves one. Tile painting lives in the map workspace with its palette.';
+            box.appendChild(hint);
+
+            const scroll = document.createElement('div');
+            scroll.style.cssText = 'max-height: 480px; max-width: 100%; overflow: auto; border: 1px solid var(--win-shadow);';
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'display: block; cursor: crosshair; background-color: #ffffff;';
+            scroll.appendChild(canvas);
+            box.appendChild(scroll);
+            container.appendChild(box);
+
+            embeddedMapCanvas = canvas;
+            initCanvasEvents(canvas);
+            // The Scenes tab attaches this container AFTER building it, and
+            // getMapCanvas() only honors an attached embedded canvas — so
+            // paint once it's actually in the document (bounded retry).
+            let paintTries = 0;
+            const paintWhenAttached = () => {
+                if (document.body.contains(canvas)) { renderGridCells(); return; }
+                if (++paintTries < 30) requestAnimationFrame(paintWhenAttached);
+            };
+            requestAnimationFrame(paintWhenAttached);
         }
 
         window.addEventListener('mousemove', (e) => {
