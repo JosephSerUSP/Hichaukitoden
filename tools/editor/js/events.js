@@ -321,6 +321,16 @@
         // format, same add/edit/delete affordances).
         function describeCommand(cmd) {
             const id = cmdId(cmd);
+            if (id === 'SET_VAR') {
+                // E7: single form reads as before; multi form summarizes its
+                // rows (truncated) under the Control Variables label.
+                if (Array.isArray(cmd.assignments) && cmd.assignments.length > 0) {
+                    const rows = cmd.assignments.map(a => `${a.name} = ${a.value}`);
+                    const shown = rows.slice(0, 3).join(', ') + (rows.length > 3 ? `, … +${rows.length - 3} more` : '');
+                    return 'Control Variables: ' + shown;
+                }
+                return `Set Variable: ${cmd.name} = ${cmd.value}`;
+            }
             if (id === 'TEXT') {
                 const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
                 return `Text: "${speakerPrefix}${cmd.text}"`;
@@ -583,6 +593,37 @@
                 if (ctx.onChange) ctx.onChange();
             }, ctx.hostCtx, ctx.idx);
 
+            // E7: merge a selected run of SET_VARs into one Control
+            // Variables command (rows keep their order; existing multi
+            // forms are flattened in).
+            const mergeableSetVars = () => {
+                const ctxs = opCtxs();
+                if (ctxs.length < 2) return null;
+                return ctxs.every(c => cmdId(c.commandsArray[c.idx]) === 'SET_VAR') ? ctxs : null;
+            };
+            const doMergeSetVars = () => {
+                const ctxs = mergeableSetVars();
+                if (!ctxs) return;
+                const field = ctxs[0].commandsArray[ctxs[0].idx].cmd !== undefined ? 'cmd' : 'type';
+                const assignments = [];
+                ctxs.forEach(c => {
+                    const cc = c.commandsArray[c.idx];
+                    if (Array.isArray(cc.assignments) && cc.assignments.length > 0) {
+                        assignments.push(...cloneCmds(cc.assignments));
+                    } else {
+                        assignments.push({ name: cc.name, value: cc.value });
+                    }
+                });
+                const first = Math.min(...ctxs.map(c => c.idx));
+                ctxs.map(c => c.idx).sort((a, b) => b - a).forEach(i => ctx.commandsArray.splice(i, 1));
+                const merged = { assignments };
+                merged[field] = 'SET_VAR';
+                ctx.commandsArray.splice(first, 0, merged);
+                container._sel = null;
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: first + 1 };
+                if (ctx.onChange) ctx.onChange();
+            };
+
             row.addEventListener('mousedown', (e) => {
                 if (e.shiftKey) {
                     e.preventDefault(); // no text selection on shift+click
@@ -608,17 +649,22 @@
                     setCmdSelection(container, vi, vi);
                 }
                 const multi = multiSelected();
-                showCmdContextMenu(e.clientX, e.clientY, [
+                const menuItems = [
                     { label: 'Insert...', action: doAddHere },
                     { label: 'Edit', action: ctx.onEdit, disabled: ctx.placeholder || multi },
                     { label: 'Duplicate', action: doDuplicate, disabled: ctx.placeholder },
+                ];
+                if (multi && mergeableSetVars()) {
+                    menuItems.push({ label: 'Merge into Control Variables', action: doMergeSetVars });
+                }
+                showCmdContextMenu(e.clientX, e.clientY, menuItems.concat([
                     '-',
                     { label: 'Cut', action: doCut, disabled: ctx.placeholder && !multi },
                     { label: 'Copy', action: doCopy, disabled: ctx.placeholder && !multi },
                     { label: 'Paste', action: doPaste, disabled: !cmdClipboard || !cmdClipboard.length },
                     '-',
                     { label: 'Delete', action: doDelete, disabled: ctx.placeholder && !multi }
-                ]);
+                ]));
             });
 
             // Keyboard handlers live on the focused row itself — inherently
@@ -1251,6 +1297,54 @@
                 input = makeSelect(opts, currentValue, () => {}, null);
             } else if (paramDef.type === 'term' && window.cmdParamWidgets && window.cmdParamWidgets.term) {
                 input = window.cmdParamWidgets.term(currentValue, () => {});
+            } else if (paramDef.type === 'assignments') {
+                // E7: generic repeatable name/value row widget for any
+                // list-of-pairs param (SET_VAR's multi form today). Exposes
+                // _getRows() for applyCmdDialog; empty rows are dropped so a
+                // command left without rows stays in its single form.
+                input = document.createElement('div');
+                input.style.cssText = 'display: flex; flex-direction: column; gap: 3px;';
+                const rowsBox = document.createElement('div');
+                rowsBox.style.cssText = 'display: flex; flex-direction: column; gap: 3px;';
+                input.appendChild(rowsBox);
+                const addRow = (name, value) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const nameInp = document.createElement('input');
+                    nameInp.className = 'win98-input';
+                    nameInp.style.width = '110px';
+                    nameInp.placeholder = 'variable name';
+                    nameInp.value = name || '';
+                    const eq = document.createElement('span');
+                    eq.textContent = '=';
+                    const valInp = document.createElement('input');
+                    valInp.className = 'win98-input';
+                    valInp.style.flex = '1';
+                    valInp.placeholder = 'formula, e.g. v.a * 2';
+                    valInp.title = 'Rows evaluate in order — later formulas can read earlier rows via v.';
+                    valInp.value = value != null ? value : '';
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'win-btn-small outset-bevel';
+                    delBtn.style.cssText = 'font-size: 8px; padding: 0px 3px; color: red;';
+                    delBtn.textContent = '×';
+                    delBtn.onclick = (e) => { e.preventDefault(); row.remove(); };
+                    row.appendChild(nameInp);
+                    row.appendChild(eq);
+                    row.appendChild(valInp);
+                    row.appendChild(delBtn);
+                    row._assignment = () => ({ name: nameInp.value.trim(), value: valInp.value });
+                    rowsBox.appendChild(row);
+                };
+                (Array.isArray(currentValue) ? currentValue : []).forEach(a => addRow(a && a.name, a && a.value));
+                const addBtn = document.createElement('button');
+                addBtn.className = 'win98-btn';
+                addBtn.style.cssText = 'font-size: 10px; align-self: flex-start;';
+                addBtn.textContent = '+ Row';
+                addBtn.onclick = (e) => { e.preventDefault(); addRow('', ''); };
+                input.appendChild(addBtn);
+                input._getRows = () => Array.from(rowsBox.children)
+                    .map(r => r._assignment && r._assignment())
+                    .filter(a => a && a.name !== '');
             } else {
                 input = document.createElement('input');
                 input.type = 'text';
@@ -1374,12 +1468,24 @@
                     cmd[p.key] = el.checked;
                 } else if (p.type === 'number') {
                     cmd[p.key] = el.value === '' ? undefined : parseFloat(el.value);
+                } else if (p.type === 'assignments') {
+                    // E7: only written when rows exist — a single-form
+                    // command stays single-form (no silent migration).
+                    const rows = el._getRows ? el._getRows() : [];
+                    if (rows.length > 0) cmd[p.key] = rows;
                 } else if (p.key === 'commonEventId') {
                     cmd[p.key] = parseInt(el.value);
                 } else {
                     cmd[p.key] = el.value;
                 }
             });
+
+            // E7: the multi form ignores name/value; drop them so saved data
+            // carries one shape, not two.
+            if (Array.isArray(cmd.assignments) && cmd.assignments.length > 0) {
+                delete cmd.name;
+                delete cmd.value;
+            }
 
             const comment = document.getElementById('cmd-input-comment').value.trim();
             if (comment) { cmd.comment = comment; }

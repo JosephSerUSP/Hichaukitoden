@@ -693,6 +693,27 @@ runValidation = function()
             "' with no handler in engine/interpreter.lua (stub commands are not allowed)")
     end
 
+    -- Mock context shared by every formula-compiling param check (the
+    -- 'formula' type and E7's 'assignments' list-of-pairs type).
+    local function buildFormulaMockCtx()
+        return {
+                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
+                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, _guard = 0 },
+                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
+                        ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
+                        alpha = 0.5,
+                        S = 10
+        }
+    end
+
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
@@ -738,28 +759,40 @@ runValidation = function()
                     if val ~= nil then
 
                 if paramDef.type == "formula" then
-                    local mockCtx = {
-                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
-                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, _guard = 0 },
-                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
-                        ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
-                        alpha = 0.5,
-                        S = 10
-                    }
+                    local mockCtx = buildFormulaMockCtx()
                     local formulaEngine = require("engine.formula")
                     if type(val) == "string" and (val:match("^flag:") or val:match("^hasItem:")) then
                         -- Allow legacy condition strings
                     else
                         local ok, _, ferr = pcall(formulaEngine.eval, val, mockCtx)
                         check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' failed to compile formula '" .. tostring(val) .. "': " .. tostring(ferr))
+                    end
+                elseif paramDef.type == "assignments" then
+                    -- E7: list of { name, value } pairs; every value must
+                    -- compile as a formula and every name be a non-empty
+                    -- string. Rows are checked IN ORDER against one shared
+                    -- mock context, assigning each result into mock v — the
+                    -- same semantics the handler runs with, so later rows
+                    -- reading earlier ones validate correctly. Any future
+                    -- list-of-pairs command inherits this.
+                    check(type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a list of {name, value} rows")
+                    if type(val) == "table" then
+                        local formulaEngine = require("engine.formula")
+                        local mockCtx = buildFormulaMockCtx()
+                        for ai, a in ipairs(val) do
+                            check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
+                                ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
+                            if type(a) == "table" then
+                                local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
+                                check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
+                                if type(a.name) == "string" and a.name ~= "" then
+                                    -- Feed the row's result (or a neutral 1)
+                                    -- forward for later rows' formulas.
+                                    if ok and result ~= nil then mockCtx.v[a.name] = result
+                                    else mockCtx.v[a.name] = 1 end
+                                end
+                            end
+                        end
                     end
                 elseif paramDef.type == "commands" then
                     -- val could be a list of commands, OR for CHOICE it could be a list of options where each option has .commands

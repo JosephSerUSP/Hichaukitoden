@@ -223,6 +223,18 @@ handlers.BATTLE_TRANSITION = function(cmd, ctx)
 end
 
 handlers.SET_VAR = function(cmd, ctx)
+    -- E7 "Control Variables": optional multi-assignment form. Rows are
+    -- evaluated IN ORDER, so later values can read earlier ones via v.
+    -- When assignments is present the legacy name/value pair is ignored;
+    -- the single {name, value} shape keeps working unchanged forever.
+    if type(cmd.assignments) == "table" and #cmd.assignments > 0 then
+        for _, a in ipairs(cmd.assignments) do
+            if type(a) == "table" and a.name then
+                ctx.v[a.name] = evalFormula(a.value, ctx)
+            end
+        end
+        return
+    end
     ctx.v[cmd.name] = evalFormula(cmd.value, ctx)
 end
 

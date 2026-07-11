@@ -437,7 +437,7 @@
     {
       "id": "SET_VAR",
       "category": "Variables",
-      "label": "Set Variable",
+      "label": "Control Variables",
       "params": [
         {
           "key": "name",
@@ -446,6 +446,10 @@
         {
           "key": "value",
           "type": "formula"
+        },
+        {
+          "key": "assignments",
+          "type": "assignments"
         }
       ],
       "contexts": [
@@ -455,7 +459,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Sets a flow-local variable, readable as v.name in formulas."
+      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
     },
     {
       "id": "BATTLE_INPUT",
