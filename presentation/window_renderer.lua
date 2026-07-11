@@ -90,6 +90,7 @@ local function inventoryRows(session)
                     name = item.name or "",
                     icon = item.icon or 0,
                     qty = qty,
+                    description = item.description or "",
                     meta = item.meta or {},
                 })
             end

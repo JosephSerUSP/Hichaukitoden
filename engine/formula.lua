@@ -93,6 +93,15 @@ function formula.sessionView(session)
             or (session.loader and session.loader.system and session.loader.system.combat
                 and session.loader.system.combat.encounterChance)
             or 0.10,
+        -- Distinct non-empty inventory stacks — lets scene hooks bound an
+        -- inventory-list cursor (session.itemCount) without SCRIPT.
+        itemCount = (function()
+            local n = 0
+            for _, qty in pairs(session.inventory or {}) do
+                if qty > 0 then n = n + 1 end
+            end
+            return n
+        end)(),
     }
 end
 

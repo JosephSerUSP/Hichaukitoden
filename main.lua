@@ -96,7 +96,6 @@ local menuSelectedIdx = 1
 local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
 menuSubScene = "main"
 local menuSelectedSubIdx = 1
-local selectedItemIdToUse = nil
 local selectedCreatureIndex = 1
 local selectedSlotIndex = 1
 
@@ -714,9 +713,9 @@ runValidation = function()
                         target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
+                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3 },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, _guard = 0 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0 },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1312,9 +1311,7 @@ function love.draw()
         else
             renderer.drawMap()
         end
-        if menuSubScene == "use_target" then
-            renderer.drawTargetSelector(menuSelectedSubIdx, activeSession)
-        elseif menuSubScene == "equip_passive" then
+        if menuSubScene == "equip_passive" then
             renderer.drawEquipMenu(activeSession.party[selectedCreatureIndex], menuSelectedSubIdx, activeSession)
         elseif menuSubScene == "select_passive" then
             local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
@@ -1359,14 +1356,8 @@ local function recoverParty()
     activeSession.summoner:removeState("dead")
 end
 
--- Applies an item's data-defined effects (from items.json) to a party member.
--- Delegates to engine/effects.lua so field and battle item use share one
--- implementation.
-local function applyItemToTarget(item, target)
-    for _, eff in ipairs(item.effects or {}) do
-        effects.apply(eff, target, target, activeSession)
-    end
-end
+-- Field item use lives in the USE_ITEM command (engine/interpreter.lua) now;
+-- the items scene drives it through its hooks.
 
 -- Command compilation moved to engine/interpreter.lua (task A4); main.lua
 -- keeps only this thin glue that supplies the loader and the recoverParty
@@ -1818,8 +1809,8 @@ local function handleKeyPressed(key)
             elseif key == "space" or key == "return" then
                 local opt = mainOpts[menuSelectedIdx]
                 if opt == "ITEMS" then
-                    menuSubScene = "items_list"
-                    menuSelectedSubIdx = 1
+                    -- Items is a declarative scene now (scenes.json 'items')
+                    scene_host.push("items", { session = activeSession, loader = loader, party = activeSession.party })
                 elseif opt == "STATUS" or opt == "EQUIP" then
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
@@ -1865,73 +1856,6 @@ local function handleKeyPressed(key)
                         menuSubScene = "equip_passive"
                         menuSelectedSubIdx = 1
                     end
-                end
-            end
-            
-        elseif menuSubScene == "items_list" then
-            local items = {}
-            for itemId, qty in pairs(activeSession.inventory) do
-                local item = loader.getItem(itemId)
-                if item then table.insert(items, { item = item, qty = qty }) end
-            end
-            
-            if key == "up" or key == "w" then
-                if #items > 0 then
-                    menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #items + 1
-                end
-            elseif key == "down" or key == "s" then
-                if #items > 0 then
-                    menuSelectedSubIdx = menuSelectedSubIdx % #items + 1
-                end
-            elseif key == "escape" then
-                renderer.startClosing("items_list", "menu", "main")
-            elseif key == "space" or key == "return" then
-                local selectedEntry = items[menuSelectedSubIdx]
-                if selectedEntry then
-                    local item = selectedEntry.item
-                    if item.targetScope == "party" then
-                        -- Instantly use on the whole party
-                        for _, c in ipairs(activeSession.party) do
-                            applyItemToTarget(item, c)
-                        end
-                        activeSession:addItem(item.id, -1)
-                    else
-                        selectedItemIdToUse = item.id
-                        menuSubScene = "use_target"
-                        menuSelectedSubIdx = 1
-                    end
-                end
-            end
-            
-        elseif menuSubScene == "use_target" then
-            -- 2x2 grid navigation inputs for item target selection
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
-            elseif key == "left" or key == "a" then
-                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
-                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
-                end
-            elseif key == "right" or key == "d" then
-                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
-                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
-                end
-            elseif key == "escape" then
-                menuSubScene = "items_list"
-                menuSelectedSubIdx = 1
-                selectedItemIdToUse = nil
-            elseif key == "space" or key == "return" then
-                local target = activeSession.party[menuSelectedSubIdx]
-                if target and selectedItemIdToUse then
-                    local item = loader.getItem(selectedItemIdToUse)
-                    if item then
-                        applyItemToTarget(item, target)
-                        activeSession:addItem(item.id, -1)
-                    end
-                    menuSubScene = "items_list"
-                    menuSelectedSubIdx = 1
-                    selectedItemIdToUse = nil
                 end
             end
             
@@ -2073,9 +1997,6 @@ function love.keypressed(key, scancode, isrepeat)
     local function isMajorSubSceneTransition(oldSub, newSub)
         if oldSub == newSub then return false end
         if (oldSub == "main" and newSub == "party_select") or (oldSub == "party_select" and newSub == "main") then
-            return false
-        end
-        if (oldSub == "items_list" and newSub == "use_target") or (oldSub == "use_target" and newSub == "items_list") then
             return false
         end
         return true

@@ -1344,8 +1344,6 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
     local slideProgress
     if renderer.closing and renderer.closingScene == "menu" then
         slideProgress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
-    elseif renderer.closing and renderer.closingScene == "items_list" then
-        slideProgress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
     else
         slideProgress = math.min(1, menuTimer / slideDur)
     end
@@ -1416,50 +1414,6 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
             ui.drawString("Manage your active summon spirits and modify equipment parameters.", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.7, 0.7, 0.7, 1}, "left", ui.toPx(28))
         end
         
-    elseif subScene == "items_list" then
-        local items = {}
-        for itemId, qty in pairs(session.inventory) do
-            local item = session.loader.getItem(itemId)
-            if item then
-                table.insert(items, { item = item, qty = qty })
-            end
-        end
-        
-        if #items == 0 then
-            ui.drawString("Inventory is empty.", rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {0.5, 0.5, 0.5, 1})
-            ui.drawString("No items to describe.", textLeftMargin, bottomY + 3 * ui.tileSize, {0.6, 0.6, 0.6, 1})
-        else
-            local startIdx = math.max(1, rightIdx - 7)
-            local drawCount = 0
-            -- Calculate dynamic spacing to fill the right panel vertically
-            local contentStartY = ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)
-            local panelInteriorBottom = ui.toPx(1) + ui.toPx(18) - 8  -- bottom border inset
-            local visibleCount = math.min(#items, startIdx + 8) - startIdx + 1
-            local itemSpacing = math.max(ui.lineHeight, math.floor((panelInteriorBottom - contentStartY) / visibleCount))
-            for i = startIdx, math.min(#items, startIdx + 8) do
-                local itEntry = items[i]
-                local iy = contentStartY + drawCount * itemSpacing
-                local isSel = (i == rightIdx)
-                local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-                local prefix = isSel and ">" or " "
-                
-                if itEntry.item.icon then
-                    ui.drawIcon(itEntry.item.icon, rightX + 1.75 * ui.tileSize, iy - 1)
-                end
-                
-                ui.drawString(prefix, rightX + 0.5 * ui.tileSize, iy, color)
-                ui.drawString(itEntry.item.name, rightX + 3.5 * ui.tileSize, iy, color)
-                ui.drawString("x" .. itEntry.qty, rightX + 17.5 * ui.tileSize, iy, color, "right", ui.toPx(3))
-                drawCount = drawCount + 1
-            end
-            
-            local selItem = items[rightIdx]
-            if selItem then
-                ui.drawString(selItem.item.name:upper(), textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
-                ui.drawString(selItem.item.description or "", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.9, 0.9, 0.9, 1}, "left", ui.toPx(28))
-            end
-        end
-        
     elseif subScene == "exit_confirm" then
         ui.drawString("Exit Hichaukitoden?", rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1})
         
@@ -1474,27 +1428,6 @@ function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
 end
 
 
-function renderer.drawTargetSelector(selectedSubIdx, session)
-    -- Dark gradient background overlay
-    drawDarkGradient()
-    
-    ui.drawPanel(ui.toPx(3), ui.toPx(2), ui.toPx(26), ui.toPx(16), "SELECT TARGET")
-    ui.drawString("Use item on whom?", ui.toPx(4), ui.toPx(4.5), {1, 1, 1, 1})
-    
-    -- Reuse the 2x2 Party Grid for target selection overlay!
-    renderer.drawPartyGrid(ui.toPx(4), ui.toPx(6), selectedSubIdx, session, true)
-    
-    ui.drawPanel(ui.toPx(1), ui.toPx(19), ui.toPx(30), ui.toPx(10), "INFO")
-    local selC = session.party[selectedSubIdx]
-    if selC then
-        local maxHp = selC:getMaxHp(session)
-        ui.drawString("TARGET: " .. selC.name:upper(), ui.toPx(2), ui.toPx(19) + 23, {1, 0.85, 0.5, 1})
-        ui.drawString("Level " .. selC.level .. " | HP: " .. selC.hp .. " / " .. maxHp, ui.toPx(2), ui.toPx(19) + 37, {0.9, 0.9, 0.9, 1})
-    else
-        ui.drawString("NO TARGET SELECTION", ui.toPx(2), ui.toPx(19) + 23, {0.5, 0.5, 0.5, 1})
-    end
-    ui.drawString("[ESC to cancel]", ui.toPx(2), ui.toPx(19) + 58, {0.6, 0.6, 0.6, 1})
-end
 
 function renderer.drawEquipMenu(c, selectedSlotIdx, session)
     local slideDur = config.ui and config.ui.menuSlideDuration or 0.22

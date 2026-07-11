@@ -476,6 +476,38 @@ handlers.TAKE_ITEM = function(cmd, ctx)
     end
 end
 
+-- Field item use as data (items-scene promotion): applies an item's
+-- data-defined effects through the same effects pipeline field and battle
+-- use share, then consumes one. itemIndex is 1-based into the id-sorted
+-- non-empty inventory — the SAME ordering the window renderer's
+-- 'inventory' list source displays (keep them in sync). Items with
+-- targetScope 'party' hit every member; otherwise target is a party index.
+handlers.USE_ITEM = function(cmd, ctx)
+    local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
+    local stacks = {}
+    for itemId, qty in pairs(ctx.session.inventory or {}) do
+        if qty > 0 then table.insert(stacks, itemId) end
+    end
+    table.sort(stacks)
+    local loader = ctx.loader or ctx.session.loader
+    local item = stacks[idx] and loader.getItem(stacks[idx])
+    if not item then return end
+    if item.targetScope == "party" then
+        for _, member in ipairs(ctx.session.party) do
+            for _, eff in ipairs(item.effects or {}) do
+                emitAll(ctx, effects.apply(eff, member, member, ctx.session))
+            end
+        end
+    else
+        local target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]
+        if not target then return end
+        for _, eff in ipairs(item.effects or {}) do
+            emitAll(ctx, effects.apply(eff, target, target, ctx.session))
+        end
+    end
+    ctx.session:addItem(item.id, -1)
+end
+
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
 end
