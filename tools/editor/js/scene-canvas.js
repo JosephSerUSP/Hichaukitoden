@@ -90,6 +90,39 @@
                 return { x: l.x || 0, y: l.y || 0, width: l.width || 8, height: l.height || 4, style: l.style || 'panel', title: l.title != null ? l.title : w.title, contentY: l.contentY };
             };
 
+            // 1:1 frame (owner feedback 10.07.2026): when the engine embeds
+            // a real rendered PNG (scenes with "draw": "windows"), show THAT
+            // — actual windowskin/font/spacing — and only overlay outlines
+            // for unsaved geometry edits. The schematic below remains the
+            // fallback for scenes without a declarative frame and for
+            // error payloads. Decoded lazily and cached on the payload.
+            const frameImage = (d) => {
+                if (!d.image) return null;
+                if (d._img) return d._img;
+                if (d._imgLoading) return null;
+                d._imgLoading = true;
+                const img = new Image();
+                img.onload = () => { d._img = img; draw(); };
+                img.src = 'data:image/png;base64,' + d.image;
+                return null;
+            };
+
+            // Dashed outline where the live windowLayout differs from what
+            // the saved frame was rendered with (pending Save & Refresh).
+            const overlayGeometryEdits = (d, ts) => {
+                (d.windows || []).forEach(w => {
+                    if (!w.open) return;
+                    const g = geomOf(w);
+                    if (g.x !== w.x || g.y !== w.y || g.width !== w.width || g.height !== w.height) {
+                        ctx2d.save();
+                        ctx2d.strokeStyle = '#ffe080';
+                        ctx2d.setLineDash([4, 3]);
+                        ctx2d.strokeRect(g.x * ts + 0.5, g.y * ts + 0.5, g.width * ts - 1, g.height * ts - 1);
+                        ctx2d.restore();
+                    }
+                });
+            };
+
             const draw = () => {
                 const d = data();
                 ctx2d.fillStyle = '#000';
@@ -108,6 +141,17 @@
                     return;
                 }
                 const ts = (d.tileSize || 8) * S;
+                const img = frameImage(d);
+                if (img) {
+                    ctx2d.imageSmoothingEnabled = false;
+                    ctx2d.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    overlayGeometryEdits(d, ts);
+                    const closedIds = (d.windows || []).filter(w => !w.open).map(w => w.id);
+                    closedRow.textContent = (d.imageError ? ('Frame render error: ' + d.imageError + ' — ') : '')
+                        + (closedIds.length ? 'Closed windows: ' + closedIds.join(', ') : '');
+                    return;
+                }
+                if (d.image) return; // decoding in progress; onload redraws
                 const closed = [];
                 (d.windows || []).forEach(w => {
                     if (!w.open) { closed.push(w.id); return; }

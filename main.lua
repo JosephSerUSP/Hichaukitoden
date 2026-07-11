@@ -174,6 +174,32 @@ local function runPreviewScene(sceneId)
         payload.sceneName = sceneDef.name or ""
         payload.gameWidth = gameWidth
         payload.gameHeight = gameHeight
+
+        -- 1:1 frame (owner feedback 10.07.2026): render the scene through
+        -- the REAL presentation stack — windowskin, font, spacing — exactly
+        -- like the golden-ui draw smoke does, and embed the PNG as base64.
+        -- The JSON metadata above remains the hit-testing/edit model; the
+        -- image is what the author sees. Scenes without "draw": "windows"
+        -- have no declarative frame; the canvas falls back to the schematic.
+        if sceneDef.draw == "windows" then
+            local okDraw, imgOrErr = pcall(function()
+                local ui = require("presentation.ui")
+                ui.init()
+                local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+                love.graphics.setCanvas(previewCanvas)
+                love.graphics.clear(0, 0, 0, 1)
+                love.graphics.setColor(1, 1, 1, 1)
+                sh.draw(ctx)
+                love.graphics.setCanvas()
+                local fileData = previewCanvas:newImageData():encode("png")
+                return love.data.encode("string", "base64", fileData)
+            end)
+            if okDraw then
+                payload.image = imgOrErr
+            else
+                payload.imageError = tostring(imgOrErr)
+            end
+        end
     end)
     if not ok then payload = { error = tostring(err) } end
     print("PREVIEW BEGIN")

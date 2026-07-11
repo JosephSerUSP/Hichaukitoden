@@ -17,6 +17,7 @@
             --text-color: #000000;
             --text-muted: #808080;
             --text-empty: #b0b0b0;
+            --cool-bg: #e6e6ec;
             --font-family: 'Tahoma', 'Arial', sans-serif;
             --spritesheet-url: url('Assets/Icons.png');
         }
@@ -297,8 +298,8 @@
 
         /* --- DATABASE MODAL --- */
         .db-modal-window {
-            width: 1024px;
-            height: 680px;
+            width: 1280px;
+            height: 720px;
             display: flex;
             flex-direction: column;
             box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
@@ -342,6 +343,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background-color: var(--cool-bg);
         }
 
         .db-list-box {
@@ -377,7 +379,7 @@
             padding: 10px;
             overflow-y: auto;
             box-sizing: border-box;
-            background-color: var(--win-white);
+            background-color: var(--cool-bg);
         }
 
         /* --- BUTTONS --- */
