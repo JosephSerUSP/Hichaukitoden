@@ -386,28 +386,12 @@
                     };
                     listBox.appendChild(row);
                 });
-
-                // 3) E6: maps — the same editing surface as the map
-                // workspace, embedded here so every scene-shaped thing is
-                // reachable from one tab. Editor-side unification only; the
-                // engine map scene-kind is a future round.
-                const mapsLabel = document.createElement('div');
-                mapsLabel.style.cssText = 'padding: 4px 4px 2px; font-size: 10px; color: var(--win-dark-shadow); border-top: 1px solid var(--win-shadow); margin-top: 4px;';
-                mapsLabel.textContent = 'Maps';
-                listBox.appendChild(mapsLabel);
-                (dbPayload.maps || []).forEach((m, mi) => {
-                    const mapKey = 'map:' + mi;
-                    const row = document.createElement('div');
-                    row.className = 'tree-node-header' + (activeSceneId === mapKey ? ' active' : '');
-                    row.style.cssText = 'padding: 4px; cursor: pointer; display: flex; align-items: center; font-size: 11px;';
-                    row.textContent = '🗺 ' + (m.title || ('Map ' + mi));
-                    row.onclick = () => {
-                        activeSceneId = mapKey;
-                        activeUnifiedPhase = null;
-                        renderUnifiedFlowsEditor(panel, header);
-                    };
-                    listBox.appendChild(row);
-                });
+                // NOTE (E6 recon): maps deliberately do NOT appear here.
+                // A scene entry is BEHAVIOR (hooks, rendering rules); maps
+                // in maps.json are CONTENT edited in the map workspace.
+                // A "Map" scene entry belongs in this list only once the
+                // engine map scene-kind exists as data
+                // (docs/plans/overhaul-4/future-map-kind.md).
             };
             renderSceneList();
             listCol.appendChild(listBox);
@@ -499,14 +483,9 @@
                 return;
             }
 
-            if (typeof activeSceneId === 'string' && activeSceneId.indexOf('map:') === 0) {
-                // E6: embedded map surface (map-editor.js owns the code)
-                renderMapSceneView(editorCol, parseInt(activeSceneId.slice(4), 10));
-            } else if (activeSceneId === 'battle') {
-                releaseEmbeddedMapCanvas();
+            if (activeSceneId === 'battle') {
                 renderBattleFlowsEditor(editorCol, header);
             } else {
-                releaseEmbeddedMapCanvas();
                 const scene = getSelectedScene();
                 if (scene) {
                     renderCustomSceneEditor(editorCol, header, scene);
