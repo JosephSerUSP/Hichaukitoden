@@ -104,7 +104,7 @@
       }
     ],
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": []
@@ -139,7 +139,7 @@
         "evolvesTo": 5
       }
     ],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -392,7 +392,7 @@
     "expGrowth": 8,
     "gold": 40,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -419,7 +419,7 @@
     "expGrowth": 5,
     "gold": 10,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],

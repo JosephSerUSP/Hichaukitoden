@@ -1,0 +1,1 @@
+Upon a creature dying, their MaxHP will slowly decrease 'til it hits Zero. This can be healed, but if it hits Zero the creature is removed from the party. 
