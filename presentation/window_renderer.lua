@@ -114,6 +114,11 @@ local function partyRows(session)
         -- Portrait art key (assets/portraits), same as the battle renderer
         view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
         view.icon = view.icon or 0
+        view.dead = m.isDead and m:isDead() or false
+        -- Not read by {expr} templates; lets the row's sprite share the
+        -- same battle-triggered flash/shake state small_battlers keys by
+        -- battler identity (drawList passes this through as battlerRef).
+        view.battlerRef = m
         -- Status-scene fields (generic enrichment of the 'party' source):
         -- progression, role, equipment slots and joined passive/skill/state
         -- names as flat strings so {expr} templates can print them.
@@ -298,6 +303,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
     -- the text. Both grow the row pitch, which the scroll math follows.
     local spriteField = win.sprite
     local spriteSize = ui.toPx(layout.spriteSize or 3)
+    local cardPad = 2 -- inset of a sprite row's own windowskin card
     local hasGauge = win.gaugeValue and win.gaugeValue ~= "" and win.gaugeMax and win.gaugeMax ~= ""
     local rowPitch = ui.lineHeight
     if hasGauge then rowPitch = rowPitch + (layout.gaugeHeight or 3) + 3 end
@@ -317,17 +323,26 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
         local row = rows[i]
         local rEnv = rowEnv(env, row)
         local isSel = (i == cursor)
-        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        if not isSel and win.highlight and win.highlight ~= "" then
+        local color = isSel and COLOR_SELECTED or (row.dead and COLOR_DIM or COLOR_NORMAL)
+        if not isSel and not row.dead and win.highlight and win.highlight ~= "" then
             local hv = formula.eval(win.highlight, rEnv)
             if hv == true then color = COLOR_HIGHLIGHT end
         end
         local rowY = contentY + (i - startOffset) * rowPitch
+
+        -- A sprite-bearing row is a battler status cell: give it its own
+        -- windowskin card, same treatment the battle/map HUD gives each
+        -- party slot (owner direction 11.07.2026 — one shared look for
+        -- party status everywhere it's drawn).
+        if spriteField then
+            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad)
+        end
+
         local textX = x + ui.toPx(1)
         ui.drawString(isSel and ">" or " ", x + ui.toPx(0.5), rowY, color)
         if spriteField then
             local key = row[spriteField]
-            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize) then
+            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
                 textX = x + ui.toPx(1) + spriteSize + 3
             end
         end
@@ -340,7 +355,10 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
             local val = tonumber(formula.eval(win.gaugeValue, rEnv)) or 0
             local max = tonumber(formula.eval(win.gaugeMax, rEnv)) or 1
             local barX = textX
-            local barW = math.max(8, x + w - ui.toPx(1) - barX)
+            -- Stay inside the row's own card (not the whole window) when
+            -- one is drawn, so the bar never bleeds past its border.
+            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
+            local barW = math.max(8, rightEdge - barX)
             ui.drawBar(barX, rowY + ui.lineHeight + 1, barW, layout.gaugeHeight or 3,
                 val, max,
                 win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 })

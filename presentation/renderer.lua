@@ -117,72 +117,31 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
--- E8: battle animation constants (seed of the future Animation System).
--- Values come from data/system.json battle_screen.animations; the defaults
--- below stay in sync with that block and only apply if the data is missing.
-local ANIM_DEFAULTS = {
-    flashDuration = 0.35,
-    flashColorAction = {0.8, 1.0, 1.0},
-    flashColorDamage = {1.0, 0.2, 0.2},
-    shakeDuration = 0.3,
-    shakeAmplitude = 2,
-    shakeFrequency = 30,
-    deadTint = {0.28, 0.26, 0.32, 1},
-}
+-- Config-driven animation constants (flash/shake/dead tint) and the
+-- damage-feedback state keyed by battler identity now live in
+-- presentation/small_battlers.lua, shared with the window renderer's
+-- party-shaped list rows (owner direction 11.07.2026: one drawer, one
+-- state table, so a party member's status cell looks and behaves
+-- identically everywhere it's drawn).
+local animVal = small_battlers.animVal
 
-local function animVal(key)
-    local block = config.battle_screen and config.battle_screen.animations
-    local v = block and block[key]
-    if v == nil then v = ANIM_DEFAULTS[key] end
-    return v
-end
-
--- E8: damage feedback state for small battlers (party grid + summoner),
--- keyed by battler object so grid slots and the summoner share one path.
-local smallAnims = {}
-
--- E8: shared sprite-cell draw for the party grid and the summoner status
--- block (previously two copies). Handles the dead display (deadTint, frame
--- 1, no animation), the damage flash and the horizontal shake.
--- Returns true when a sprite was drawn.
-local function drawSmallBattlerCell(battler, x, y, spriteSize)
+-- Shared battler status cell: a windowskin panel behind the (x, y,-anchored)
+-- content region, then the animated sprite (small_battlers.draw handles
+-- dead tint / flash / shake) at (x, y). Used by BOTH the party grid slots
+-- and the summoner status box; window_renderer.lua's drawList calls the
+-- same small_battlers.draw for party-shaped list rows, so a party member's
+-- status looks and behaves identically everywhere (owner direction
+-- 11.07.2026). x/y stay the exact anchor the existing name/HP/bar math
+-- already uses — only a padded panel is newly drawn behind it. Returns
+-- the sprite's width footprint (0 if none drawn).
+local function drawBattlerStatusCell(battler, x, y, w, h, spriteSize)
+    ui.drawPanel(x - 2, y - 2, w, h)
     local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
-    if not spriteKey then return false end
-    local ss = small_battlers.get(spriteKey)
-    if not (ss and ss.img) then return false end
-
     local dead = battler.isDead and battler:isDead()
-    local frame = dead and 0 or small_battlers.frame(ss)
-    local anim = smallAnims[battler]
-
-    local drawX = x
-    if not dead and anim and anim.shakeTimer and anim.shakeTimer > 0 then
-        local dur = animVal("shakeDuration")
-        local decay = dur > 0 and (anim.shakeTimer / dur) or 0
-        drawX = x + animVal("shakeAmplitude") * decay
-            * math.sin(anim.shakeTimer * animVal("shakeFrequency") * 2 * math.pi)
+    if spriteKey and small_battlers.draw(spriteKey, x, y, spriteSize, dead, battler) then
+        return spriteSize - 2
     end
-
-    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
-    local drawScale = spriteSize / ss.cellW
-    if dead then
-        local tint = animVal("deadTint")
-        love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
-    else
-        love.graphics.setColor(1, 1, 1, 1)
-    end
-    love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
-
-    if not dead and anim and anim.flashTimer and anim.flashTimer > 0 then
-        local dur = animVal("flashDuration")
-        local col = animVal("flashColorDamage")
-        love.graphics.setBlendMode("add")
-        love.graphics.setColor(col[1], col[2], col[3], dur > 0 and (anim.flashTimer / dur) or 0)
-        love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
-        love.graphics.setBlendMode("alpha")
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-    return true
+    return 0
 end
 
 local function getPortrait(id)
@@ -365,12 +324,15 @@ local function drawSummonerStatus(baseY)
     local summoner = session.summoner
     local x = layoutVal("summonerStatusX")
     local nameY = baseY + layoutVal("summonerNameYOffset")
-    local spriteOffsetX = 0
     local spriteSize = 24
 
-    -- Draw summoner's small battler if available (same as party grid)
-    if summoner and drawSmallBattlerCell(summoner, x, nameY, spriteSize) then
-        spriteOffsetX = spriteSize + 2  -- push content right
+    -- Shared battler status cell (windowskin panel + animated sprite) —
+    -- same drawer the party grid and any scene's party rows use.
+    local cellW = spriteSize + 2 + layoutVal("summonerMpBarWidth") + 4
+    local cellH = 51
+    local spriteOffsetX = 0
+    if summoner then
+        spriteOffsetX = drawBattlerStatusCell(summoner, x, nameY, cellW, cellH, spriteSize)
     end
 
     -- Use same yOff logic as party grid for vertical alignment
@@ -451,7 +413,7 @@ end
 
 function renderer.initBattleAnims(enemies)
     battleAnims = {}
-    smallAnims = {}
+    small_battlers.resetAnims()
     for i, enemy in ipairs(enemies) do
         battleAnims[i] = { slideTimer = 0.35, deathTimer = -1, dead = false, flashTimer = 0, flashType = "" }
     end
@@ -471,14 +433,12 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
     end
 end
 
--- E8: damage feedback (flash + shake) for a party small battler or the
--- summoner. Keyed by the battler object; drawn by drawSmallBattlerCell.
+-- Damage feedback (flash + shake) for a party small battler or the
+-- summoner. Keyed by battler identity in presentation/small_battlers.lua,
+-- so the same state is visible to drawBattlerStatusCell (battle/map HUD)
+-- and window_renderer.lua's party-shaped list rows alike.
 function renderer.triggerSmallDamage(target)
-    if not target then return end
-    smallAnims[target] = {
-        flashTimer = animVal("flashDuration"),
-        shakeTimer = animVal("shakeDuration"),
-    }
+    small_battlers.triggerDamage(target)
 end
 
 function renderer.update(dt)
@@ -512,13 +472,7 @@ function renderer.update(dt)
             anim.flashTimer = math.max(0, anim.flashTimer - dt)
         end
     end
-    for target, anim in pairs(smallAnims) do
-        anim.flashTimer = math.max(0, (anim.flashTimer or 0) - dt)
-        anim.shakeTimer = math.max(0, (anim.shakeTimer or 0) - dt)
-        if anim.flashTimer <= 0 and anim.shakeTimer <= 0 then
-            smallAnims[target] = nil
-        end
-    end
+    small_battlers.updateAnims(dt)
     
     -- Smoothly interpolate party HP and Summoner MP
     local session = renderer.session
@@ -899,11 +853,10 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
             local color = isSel and {1, 1, 0.5, 1} or (c:isDead() and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1})
             local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
 
-            --@@ SPRITE: 24px animated small battler drawn at slot top-left
-            local spriteOffsetX = 0
-            if drawSmallBattlerCell(c, slot.x, slot.y, spriteSize) then
-                spriteOffsetX = spriteSize - 2   -- 22px; pushes all content right
-            end
+            --@@ SPRITE: 24px animated small battler drawn at slot top-left,
+            --@@ on the shared windowskin-backed status cell (owner
+            --@@ direction 11.07.2026 — one drawer, used everywhere).
+            local spriteOffsetX = drawBattlerStatusCell(c, slot.x, slot.y, colW - 2, rowH - 2, spriteSize)
 
             local prefix = isSel and ">" or " "
             local yOff = spriteOffsetX > 0 and -4 or 4
