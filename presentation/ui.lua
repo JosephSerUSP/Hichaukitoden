@@ -74,8 +74,9 @@ function ui.init()
     
     -- Load active font from system config
     local fontName = config.ui and config.ui.activeFont or "Lucida"
-    
-    ui.setFont(fontName)
+    local fontSize = config.ui and config.ui.fontSize or 8
+
+    ui.setFont(fontName, fontSize)
 end
 
 -- Exposed layout constants (use these instead of hardcoded numbers)
@@ -368,15 +369,19 @@ function ui.drawWindows(kind, windows, ctx)
     end
 end
 
--- Set font helper
-function ui.setFont(name)
-    if name == "PressStart2P" and love.filesystem.getInfo("assets/fonts/PressStart2P.ttf") then
-        mainFont = love.graphics.newFont("assets/fonts/PressStart2P.ttf", 8)
-    elseif name == "Silkscreen" and love.filesystem.getInfo("assets/fonts/Silkscreen.ttf") then
-        mainFont = love.graphics.newFont("assets/fonts/Silkscreen.ttf", 8)
+-- Set font helper. "Lucida" (and any name with no matching .ttf) means the
+-- LÖVE built-in default font; any other name is looked up generically at
+-- assets/fonts/<name>.ttf so new fonts only need a file dropped in, no code
+-- change here.
+function ui.setFont(name, size)
+    size = size or ui.fontSize or 8
+    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
+    if path and love.filesystem.getInfo(path) then
+        mainFont = love.graphics.newFont(path, size)
     else
-        mainFont = love.graphics.newFont(8)
+        mainFont = love.graphics.newFont(size)
     end
+    ui.fontSize = size
     love.graphics.setFont(mainFont)
 end
 

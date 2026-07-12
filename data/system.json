@@ -1,6 +1,7 @@
 {
   "ui": {
-    "activeFont": "Silkscreen",
+    "activeFont": "IBMPlexMono-Regular",
+    "fontSize": 8,
     "menuSlideDuration": 0.15,
     "moveTransitionDuration": 0.15,
     "inputCooldown": 0.3,

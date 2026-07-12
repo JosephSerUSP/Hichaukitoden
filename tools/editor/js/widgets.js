@@ -606,6 +606,86 @@
             container.appendChild(row);
         }
 
+        // ---- Active UI Font: choices + live windowskin preview ----
+        // 'Lucida' has no .ttf on disk — it's LÖVE's built-in default font,
+        // exactly mirroring presentation/ui.lua's ui.setFont fallback (any
+        // other name is looked up generically at assets/fonts/<name>.ttf).
+        const FONT_CHOICES = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver', 'VT323-Regular', 'RobotoMono-Regular', 'IBMPlexMono-Regular', 'SpaceMono-Regular'];
+        const _fontFaceCache = {};
+        function loadFontFace(name) {
+            if (name === 'Lucida') return Promise.resolve(null);
+            if (_fontFaceCache[name]) return _fontFaceCache[name];
+            const family = 'editor-preview-' + name;
+            const face = new FontFace(family, `url("${API_URL}/assets/fonts/${name}.ttf")`);
+            _fontFaceCache[name] = face.load().then(loaded => {
+                document.fonts.add(loaded);
+                return family;
+            }).catch(() => null);
+            return _fontFaceCache[name];
+        }
+
+        let _windowskinImg = null;
+        function getWindowskinImg() {
+            if (_windowskinImg) return Promise.resolve(_windowskinImg);
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => { _windowskinImg = img; resolve(img); };
+                img.onerror = () => resolve(null);
+                img.src = `${API_URL}/assets/system/PRINCESSTHEKING.png`;
+            });
+        }
+
+        // Builds a { el, render(fontName, size) } pair: a canvas showing the
+        // windowskin panel behind sample text at 3x nearest-neighbor scale,
+        // so the picker shows exactly what the chosen font/size looks like
+        // in-engine rather than the browser's own font rendering.
+        function buildFontPreview() {
+            const wrap = document.createElement('div');
+            wrap.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = 'Preview';
+            wrap.appendChild(lbl);
+
+            const S = 3;
+            const pw = 200, ph = 40;
+            const canvas = document.createElement('canvas');
+            canvas.width = pw * S;
+            canvas.height = ph * S;
+            canvas.style.cssText = `width: ${pw * S}px; height: ${ph * S}px; image-rendering: pixelated; border: 1px solid var(--win-shadow); display: block;`;
+            wrap.appendChild(canvas);
+            const ctx2d = canvas.getContext('2d');
+
+            let renderToken = 0;
+            const render = (fontName, size) => {
+                const myToken = ++renderToken;
+                Promise.all([loadFontFace(fontName), getWindowskinImg()]).then(([family, skin]) => {
+                    if (myToken !== renderToken) return; // a newer render superseded this one
+                    ctx2d.imageSmoothingEnabled = false;
+                    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+                    if (skin) {
+                        // Tile the windowskin's corner/edge-free center patch as a
+                        // stand-in background so text sits on the real panel texture.
+                        const pattern = ctx2d.createPattern(skin, 'repeat');
+                        ctx2d.save();
+                        ctx2d.scale(S, S);
+                        ctx2d.fillStyle = pattern;
+                        ctx2d.fillRect(0, 0, pw, ph);
+                        ctx2d.restore();
+                    } else {
+                        ctx2d.fillStyle = '#101018';
+                        ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    ctx2d.fillStyle = '#ffffff';
+                    ctx2d.font = `${size * S}px ${family ? `"${family}"` : 'sans-serif'}`;
+                    ctx2d.textBaseline = 'top';
+                    ctx2d.fillText('The Quick Brown Fox 0123', 4 * S, 4 * S);
+                    ctx2d.fillText('HP 42/50  ATK 10 DEF 8', 4 * S, (4 + size + 2) * S);
+                });
+            };
+
+            return { el: wrap, render };
+        }
+
         // ---- Config schema: friendly labels + typed widgets for system/engine keys ----
         // Keys not listed fall back to the generic key-name field.
         const CONFIG_SCHEMA = {
@@ -1691,36 +1771,79 @@
                     const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
                     if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot, useBlockLayout)) {
                         // rendered by a typed schema widget
+                    } else if (key === 'fontSize') {
+                        // Rendered as part of the 'activeFont' widget below —
+                        // both live in ui.lua's ui.setFont(name, size) pair.
                     } else if (key === 'activeFont') {
+                        const navTarget = () => {
+                            let target = targetRoot;
+                            for (let i = 0; i < currentPath.length - 1; i++) {
+                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
+                                target = target[currentPath[i]];
+                            }
+                            return target;
+                        };
+
                         const group = document.createElement('div');
                         group.className = 'form-group';
+                        // This widget (select + size + a 200px-wide preview canvas)
+                        // needs more room than a single narrow grid column, whatever
+                        // the parent field-group's column count happens to be.
+                        group.style.gridColumn = '1 / -1';
                         const lbl = document.createElement('label');
                         lbl.textContent = 'Active UI Font';
                         group.appendChild(lbl);
 
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 6px; align-items: center;';
+
                         const select = document.createElement('select');
                         select.className = 'form-control inset-bevel';
-                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver', 'VT323-Regular', 'RobotoMono-Regular', 'IBMPlexMono-Regular', 'SpaceMono-Regular'];
-                        fonts.forEach(f => {
+                        select.style.flex = '1';
+                        FONT_CHOICES.forEach(f => {
                             const opt = document.createElement('option');
                             opt.value = f;
                             opt.textContent = f;
                             if (value === f) opt.selected = true;
                             select.appendChild(opt);
                         });
+                        row.appendChild(select);
+
+                        const sizeInp = document.createElement('input');
+                        sizeInp.type = 'number';
+                        sizeInp.className = 'form-control inset-bevel';
+                        sizeInp.style.width = '56px';
+                        sizeInp.min = '6';
+                        sizeInp.max = '24';
+                        sizeInp.value = (navTarget().fontSize != null) ? navTarget().fontSize : 8;
+                        row.appendChild(sizeInp);
+
+                        const sizeLbl = document.createElement('span');
+                        sizeLbl.textContent = 'px';
+                        sizeLbl.style.fontSize = '10px';
+                        row.appendChild(sizeLbl);
+
+                        group.appendChild(row);
+                        container.appendChild(group);
+
+                        const preview = buildFontPreview();
+                        container.appendChild(preview.el);
+
+                        const refreshPreview = () => preview.render(select.value, parseInt(sizeInp.value, 10) || 8);
 
                         select.onchange = () => {
                             setDirty(true);
-                            let target = targetRoot;
-                            for (let i = 0; i < currentPath.length - 1; i++) {
-                                if (!target[currentPath[i]]) target[currentPath[i]] = {};
-                                target = target[currentPath[i]];
-                            }
-                            target[key] = select.value;
+                            navTarget()[key] = select.value;
+                            refreshPreview();
+                        };
+                        sizeInp.oninput = () => {
+                            setDirty(true);
+                            const n = parseInt(sizeInp.value, 10);
+                            navTarget().fontSize = isNaN(n) ? 8 : n;
+                            refreshPreview();
                         };
 
-                        group.appendChild(select);
-                        container.appendChild(group);
+                        refreshPreview();
                     } else if (key === 'dir') {
                         const group = document.createElement('div');
                         group.className = 'form-group';

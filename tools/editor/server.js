@@ -80,6 +80,8 @@ const server = http.createServer((req, res) => {
         else if (ext === '.png') contentType = 'image/png';
         else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
         else if (ext === '.json') contentType = 'application/json';
+        else if (ext === '.ttf') contentType = 'font/ttf';
+        else if (ext === '.otf') contentType = 'font/otf';
 
         fs.readFile(filePath, (err, content) => {
             if (err) {
