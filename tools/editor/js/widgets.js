@@ -610,7 +610,19 @@
         // 'Lucida' has no .ttf on disk — it's LÖVE's built-in default font,
         // exactly mirroring presentation/ui.lua's ui.setFont fallback (any
         // other name is looked up generically at assets/fonts/<name>.ttf).
-        const FONT_CHOICES = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver', 'VT323-Regular', 'RobotoMono-Regular', 'IBMPlexMono-Regular', 'SpaceMono-Regular'];
+        // The choice list itself is fetched from GET /api/fonts (a straight
+        // directory listing of assets/fonts/*.ttf|*.otf) so dropping a new
+        // font file in is the only step needed — no editor code change.
+        let _fontChoicesPromise = null;
+        function getFontChoices() {
+            if (!_fontChoicesPromise) {
+                _fontChoicesPromise = fetch(`${API_URL}/api/fonts`)
+                    .then(res => res.json())
+                    .then(d => (d && Array.isArray(d.fonts) && d.fonts.length) ? d.fonts : ['Lucida'])
+                    .catch(() => ['Lucida']);
+            }
+            return _fontChoicesPromise;
+        }
 
         // Builds a { el, render(fontName, size) } pair: a canvas fed by
         // GET /preview-font, which runs the actual engine's ui.drawPanel +
@@ -1790,12 +1802,21 @@
                         const select = document.createElement('select');
                         select.className = 'form-control inset-bevel';
                         select.style.flex = '1';
-                        FONT_CHOICES.forEach(f => {
-                            const opt = document.createElement('option');
-                            opt.value = f;
-                            opt.textContent = f;
-                            if (value === f) opt.selected = true;
-                            select.appendChild(opt);
+                        // Seed with the current value alone so the field isn't empty
+                        // before /api/fonts responds; getFontChoices() below fills
+                        // in the rest and re-applies the selection.
+                        const seedOpt = document.createElement('option');
+                        seedOpt.value = value; seedOpt.textContent = value;
+                        select.appendChild(seedOpt);
+                        getFontChoices().then(choices => {
+                            select.innerHTML = '';
+                            choices.forEach(f => {
+                                const opt = document.createElement('option');
+                                opt.value = f;
+                                opt.textContent = f;
+                                if (value === f) opt.selected = true;
+                                select.appendChild(opt);
+                            });
                         });
                         row.appendChild(select);
 

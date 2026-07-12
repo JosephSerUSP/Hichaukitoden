@@ -373,14 +373,28 @@ end
 -- LÖVE built-in default font; any other name is looked up generically at
 -- assets/fonts/<name>.ttf so new fonts only need a file dropped in, no code
 -- change here.
+--
+-- "mono" hinting forces 1-bit (no grayscale antialiasing) glyph rasterization
+-- — without it, TrueType fonts render with soft AA edges that read as a
+-- blurry smear at the tiny 6-12px sizes this UI uses; only PressStart2P and
+-- Silkscreen happened to look crisp before because their design docs bake
+-- pixel alignment in at specific sizes. "mono" makes every font crisp at
+-- every size, matching those two.
 function ui.setFont(name, size)
     size = size or ui.fontSize or 8
     local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
+    local ok, font
     if path and love.filesystem.getInfo(path) then
-        mainFont = love.graphics.newFont(path, size)
-    else
-        mainFont = love.graphics.newFont(size)
+        ok, font = pcall(love.graphics.newFont, path, size, "mono")
     end
+    if not ok or not font then
+        ok, font = pcall(love.graphics.newFont, size, "mono")
+    end
+    if not ok or not font then
+        font = love.graphics.newFont(size)
+    end
+    mainFont = font
+    mainFont:setFilter("nearest", "nearest")
     ui.fontSize = size
     love.graphics.setFont(mainFont)
 end

@@ -156,6 +156,21 @@ const server = http.createServer((req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
+    } else if (req.method === 'GET' && req.url === '/api/fonts') {
+        // Font picker choices, read straight off disk so dropping a new
+        // .ttf/.otf into assets/fonts/ is the only step needed — no editor
+        // code change. "Lucida" is prepended as the pseudo-entry with no
+        // file, mirroring presentation/ui.lua's built-in-font fallback.
+        const fontsDir = path.join(PROJECT_DIR, 'assets', 'fonts');
+        let names = [];
+        try {
+            names = fs.readdirSync(fontsDir)
+                .filter(f => /\.(ttf|otf)$/i.test(f))
+                .map(f => f.replace(/\.(ttf|otf)$/i, ''))
+                .sort((a, b) => a.localeCompare(b));
+        } catch (e) { /* no fonts dir yet — just Lucida */ }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ fonts: ['Lucida', ...names] }));
     } else if (req.method === 'GET' && req.url === '/api/templates/scenes') {
         // E4: scene template registry — read-only JSON files, one per
         // template, each a scenes.json entry shape (minus id) plus a
