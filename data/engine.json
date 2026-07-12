@@ -167,6 +167,10 @@
     {
       "token": "session.itemCount",
       "description": "Distinct non-empty inventory stacks (bounds an inventory-list cursor)."
+    },
+    {
+      "token": "(list rows)",
+      "description": "SET_LIST sprite/gaugeValue/gaugeMax evaluate against each row's fields (e.g. hp, maxHp, spriteKey)."
     }
   ],
   "metaKeys": [
@@ -1147,13 +1151,25 @@
         {
           "key": "highlight",
           "type": "text"
+        },
+        {
+          "key": "sprite",
+          "type": "text"
+        },
+        {
+          "key": "gaugeValue",
+          "type": "text"
+        },
+        {
+          "key": "gaugeMax",
+          "type": "text"
         }
       ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Sets a window's list. listId sources: inventory, party, config:<key>, v:<key>, static:a,b. Optional: format row template (\"{name} (x{qty})\"), priority/highlight row formulas."
+      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row."
     },
     {
       "id": "SET_TEXT",
@@ -1679,8 +1695,7 @@
       "height": 14.5,
       "style": "list",
       "title": "Items",
-      "emptyText": "No items.",
-      "visibleRows": 24
+      "emptyText": "No items."
     },
     "items_info_panel": {
       "x": 20,
@@ -1848,7 +1863,8 @@
       "width": 10,
       "height": 14.5,
       "style": "panel",
-      "title": null
+      "title": null,
+      "portrait": "sel('status_party').portraitKey"
     }
   }
 }

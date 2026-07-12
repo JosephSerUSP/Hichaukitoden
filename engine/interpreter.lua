@@ -585,6 +585,12 @@ handlers.SET_LIST = function(cmd, ctx)
         type = "set_list", windowId = cmd.windowId, listId = cmd.listId,
         -- Optional row template/formulas consumed by the window renderer.
         format = cmd.format, priority = cmd.priority, highlight = cmd.highlight,
+        -- Row widgets (vocabulary extension 11.07.2026): sprite names a row
+        -- field holding a small-battler sheet key; gaugeValue/gaugeMax are
+        -- row-scoped formulas drawn as a bar under each row.
+        sprite = cmd.sprite,
+        gaugeValue = cmd.gaugeValue, gaugeMax = cmd.gaugeMax,
+        gaugeColor = cmd.gaugeColor, gaugeFill = cmd.gaugeFill,
     })
 end
 

@@ -5,6 +5,7 @@ local battleSystem = require("engine.battle")
 local director = require("engine.director")
 local traits = require("engine.traits")
 local config = require("engine.config")
+local small_battlers = require("presentation.small_battlers")
 
 local renderer = {}
 
@@ -90,8 +91,8 @@ end
 
 local damagePopups = {}
 local portraitCache = {}
-local smallBattlerCache = {}  -- B.5: small battler sheet cache
-local smallBattlerAnimTimer = 0  -- B.5: shared animation timer
+-- B.5 small battler cache/animation clock live in presentation/small_battlers.lua
+-- (shared with the generic window renderer's sprite list rows)
 
 -- B.0: per-character text reveal (battle log lines + dialogue TEXT nodes).
 -- Elapsed advances in renderer.update. The battle log tracker walks the log
@@ -116,68 +117,6 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
--- B.5: Load a small battler sheet.
--- Default format: 24*N x 24 pixels, cell count = width / height.
--- Returns { img, cellW, cellH, numFrames } or nil.
--- B.5: Load a small battler sheet from assets/smallBattlers/.
--- Format: animated sprite, cell count = width/height, default 24x24 cells.
--- The existing files use mixed case filenames (e.g. "Angel.png", "Golem.png").
--- Filename may contain [key=value] tokens to override animation parameters:
---   [speed=N]  multiplier on the base frame rate (default 4)
---   [fps=N]    explicit frames per second (overrides speed)
-local function getSmallBattler(spriteKey)
-    if not spriteKey or spriteKey == "" then return nil end
-    local key = tostring(spriteKey)
-    if smallBattlerCache[key] then return smallBattlerCache[key] end
-
-    -- Parse [key=value] tokens from the key (e.g. "Summoner2[speed=2]")
-    local overrides = {}
-    local fileKey = key:gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
-        overrides[k] = tonumber(v) or v
-        return ""
-    end)
-    -- Strip any trailing/leading whitespace from the file key
-    fileKey = fileKey:gsub("^%s*(.-)%s*$", "%1")
-
-    local paths = {
-        "assets/smallBattlers/" .. fileKey:sub(1,1):upper() .. fileKey:sub(2):lower() .. ".png",
-        "assets/smallBattlers/" .. fileKey .. ".png",
-        "assets/smallBattlers/" .. fileKey:lower() .. ".png",
-        "assets/sprites/" .. fileKey .. ".png",
-    }
-    for _, p in ipairs(paths) do
-        if love.filesystem.getInfo(p) then
-            local img = love.graphics.newImage(p)
-            img:setFilter("nearest", "nearest")
-            local w = img:getWidth()
-            local h = img:getHeight()
-            local cellH = h
-            local cellW = math.min(w, cellH)  -- default cell is square (24x24)
-            local numFrames = math.floor(w / cellW)
-            if numFrames < 1 then numFrames = 1 end
-            local result = {
-                img = img,
-                cellW = cellW,
-                cellH = cellH,
-                numFrames = numFrames,
-                speed = overrides.speed,
-                fps = overrides.fps,
-            }
-            smallBattlerCache[key] = result
-            return result
-        end
-    end
-    smallBattlerCache[key] = nil
-    return nil
-end
-
--- Compute the current animation frame for a small battler, respecting
--- per-sprite overrides (speed multiplier or explicit fps from filename).
-local function getSpriteFrame(ss)
-    if not ss then return 0 end
-    local rate = ss.fps or (ss.speed and 4 * ss.speed or 4)
-    return math.floor(smallBattlerAnimTimer * rate) % ss.numFrames
-end
 -- E8: battle animation constants (seed of the future Animation System).
 -- Values come from data/system.json battle_screen.animations; the defaults
 -- below stay in sync with that block and only apply if the data is missing.
@@ -209,11 +148,11 @@ local smallAnims = {}
 local function drawSmallBattlerCell(battler, x, y, spriteSize)
     local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
     if not spriteKey then return false end
-    local ss = getSmallBattler(spriteKey)
+    local ss = small_battlers.get(spriteKey)
     if not (ss and ss.img) then return false end
 
     local dead = battler.isDead and battler:isDead()
-    local frame = dead and 0 or getSpriteFrame(ss)
+    local frame = dead and 0 or small_battlers.frame(ss)
     local anim = smallAnims[battler]
 
     local drawX = x
@@ -608,7 +547,7 @@ function renderer.update(dt)
     end
     
     -- B.5: Advance small battler animation timer (shared, drives all party sprite animations)
-    smallBattlerAnimTimer = smallBattlerAnimTimer + dt
+    small_battlers.update(dt)
 
     -- B.0: advance text-reveal timers (reset happens at the draw sites when
     -- the tracked line/node changes)

@@ -1232,7 +1232,7 @@
         {
           "cmd": "SET_TEXT",
           "windowId": "items_info_panel",
-          "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}\n\n[ENTER: use   ESC: back]"
+          "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}"
         },
         {
           "cmd": "OPEN_WINDOW",
@@ -1241,6 +1241,25 @@
         {
           "cmd": "OPEN_WINDOW",
           "windowId": "party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "party",
+          "listId": "party",
+          "format": "{name}   Lv {level}   {hp}/{maxHp} HP",
+          "sprite": "spriteKey",
+          "gaugeValue": "hp",
+          "gaugeMax": "maxHp"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "party",
+          "index": 0
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "help",
+          "text": "UP/DOWN: select    ENTER: use    ESC: back"
         }
       ],
       "on_up": [
@@ -1319,7 +1338,10 @@
               "cmd": "SET_LIST",
               "windowId": "items_target",
               "listId": "party",
-              "format": "{name}   {hp}/{maxHp} HP"
+              "format": "{name}   {hp}/{maxHp} HP",
+              "sprite": "spriteKey",
+              "gaugeValue": "hp",
+              "gaugeMax": "maxHp"
             },
             {
               "cmd": "SET_CURSOR",
@@ -1448,7 +1470,10 @@
           "cmd": "SET_LIST",
           "windowId": "status_party",
           "listId": "party",
-          "format": "{name}  Lv {level}"
+          "format": "{name}  Lv {level}",
+          "sprite": "spriteKey",
+          "gaugeValue": "hp",
+          "gaugeMax": "maxHp"
         },
         {
           "cmd": "SET_CURSOR",
@@ -1462,7 +1487,7 @@
         {
           "cmd": "SET_TEXT",
           "windowId": "status_panel",
-          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nHP {sel('status_party').hp} / {sel('status_party').maxHp}      EXP {sel('status_party').exp} / {sel('status_party').expNeeded}\n\nATK {sel('status_party').atk}    DEF {sel('status_party').def}\nMAT {sel('status_party').mat}    MDF {sel('status_party').mdf}\nASP {sel('status_party').asp}    MPD {sel('status_party').mpd}\n\nWPN  {sel('status_party').weapon}\nAMR  {sel('status_party').armor}\nACC  {sel('status_party').accessory}\n\nPASSIVES  {sel('status_party').passiveText}\nSKILLS  {sel('status_party').skillText}\nSTATES  {sel('status_party').stateText}"
+          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nHP {sel('status_party').hp}/{sel('status_party').maxHp}    EXP {sel('status_party').exp}/{sel('status_party').expNeeded}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}   AMR {sel('status_party').armor}\nACC {sel('status_party').accessory}\nPASSIVES {sel('status_party').passiveText}\nSKILLS {sel('status_party').skillText}   STATES {sel('status_party').stateText}"
         },
         {
           "cmd": "OPEN_WINDOW",
@@ -1471,6 +1496,11 @@
         {
           "cmd": "OPEN_WINDOW",
           "windowId": "statusPortrait"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "help",
+          "text": "UP/DOWN: select member    ESC: back"
         }
       ],
       "on_up": [
@@ -1704,7 +1734,10 @@
           "cmd": "SET_LIST",
           "windowId": "shop_party",
           "listId": "party",
-          "format": "{name}   Lv {level}   {hp}/{maxHp} HP"
+          "format": "{name}   Lv {level}   {hp}/{maxHp} HP",
+          "sprite": "spriteKey",
+          "gaugeValue": "hp",
+          "gaugeMax": "maxHp"
         },
         {
           "cmd": "SET_CURSOR",

@@ -94,6 +94,11 @@ local function applyWindowEvent(state, ev)
             w.format = ev.format
             w.priority = ev.priority
             w.highlight = ev.highlight
+            w.sprite = ev.sprite
+            w.gaugeValue = ev.gaugeValue
+            w.gaugeMax = ev.gaugeMax
+            w.gaugeColor = ev.gaugeColor
+            w.gaugeFill = ev.gaugeFill
         end
     elseif ev.type == "set_text" then
         local w = ensure(ev.windowId)

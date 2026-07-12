@@ -25,6 +25,7 @@
 
 local ui = require("presentation.ui")
 local formula = require("engine.formula")
+local small_battlers = require("presentation.small_battlers")
 
 local wr = {}
 
@@ -108,7 +109,10 @@ local function partyRows(session)
     for i, m in ipairs(session and session.party or {}) do
         local view = formula.battlerView(m, session) or {}
         view.index = i
-        view.spriteKey = m.actorData and m.actorData.spriteKey or nil
+        -- Same sheet-key choice as renderer.drawSmallBattlerCell
+        view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+        -- Portrait art key (assets/portraits), same as the battle renderer
+        view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
         view.icon = view.icon or 0
         -- Status-scene fields (generic enrichment of the 'party' source):
         -- progression, role, equipment slots and joined passive/skill/state
@@ -287,7 +291,20 @@ end
 
 local function drawList(win, layout, rows, cursor, env, x, y, w, h)
     local contentY = y + ui.toPx(layout.contentY or 2)
-    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / ui.lineHeight))
+
+    -- Row widgets (vocabulary extension 11.07.2026): win.sprite names a row
+    -- field carrying a small-battler sheet key drawn at the row's left;
+    -- win.gaugeValue/gaugeMax are row-scoped formulas drawn as a bar under
+    -- the text. Both grow the row pitch, which the scroll math follows.
+    local spriteField = win.sprite
+    local spriteSize = ui.toPx(layout.spriteSize or 3)
+    local hasGauge = win.gaugeValue and win.gaugeValue ~= "" and win.gaugeMax and win.gaugeMax ~= ""
+    local rowPitch = ui.lineHeight
+    if hasGauge then rowPitch = rowPitch + (layout.gaugeHeight or 3) + 3 end
+    if spriteField then rowPitch = math.max(rowPitch, spriteSize + 2) end
+    if layout.rowPitch then rowPitch = ui.toPx(layout.rowPitch) end
+
+    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / rowPitch))
     if #rows == 0 then
         local emptyText = layout.emptyText or "No entries."
         ui.drawString(emptyText, x + ui.toPx(0.5), contentY, COLOR_DIM)
@@ -298,20 +315,36 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
     local format = win.format or "{name}"
     for i = startOffset, endOffset do
         local row = rows[i]
+        local rEnv = rowEnv(env, row)
         local isSel = (i == cursor)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
         if not isSel and win.highlight and win.highlight ~= "" then
-            local hv = formula.eval(win.highlight, rowEnv(env, row))
+            local hv = formula.eval(win.highlight, rEnv)
             if hv == true then color = COLOR_HIGHLIGHT end
         end
-        local rowY = contentY + (i - startOffset) * ui.lineHeight
+        local rowY = contentY + (i - startOffset) * rowPitch
         local textX = x + ui.toPx(1)
         ui.drawString(isSel and ">" or " ", x + ui.toPx(0.5), rowY, color)
-        if row.icon and row.icon > 0 then
-            ui.drawIcon(row.icon, x + ui.toPx(1.5), rowY - 2)
-            textX = x + ui.toPx(3.5)
+        if spriteField then
+            local key = row[spriteField]
+            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize) then
+                textX = x + ui.toPx(1) + spriteSize + 3
+            end
         end
-        ui.drawString(interpolate(format, rowEnv(env, row)), textX, rowY, color)
+        if row.icon and row.icon > 0 then
+            ui.drawIcon(row.icon, textX + ui.toPx(0.5), rowY - 2)
+            textX = textX + ui.toPx(2.5)
+        end
+        ui.drawString(interpolate(format, rEnv), textX, rowY, color)
+        if hasGauge then
+            local val = tonumber(formula.eval(win.gaugeValue, rEnv)) or 0
+            local max = tonumber(formula.eval(win.gaugeMax, rEnv)) or 1
+            local barX = textX
+            local barW = math.max(8, x + w - ui.toPx(1) - barX)
+            ui.drawBar(barX, rowY + ui.lineHeight + 1, barW, layout.gaugeHeight or 3,
+                val, max,
+                win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 })
+        end
     end
 end
 
