@@ -55,6 +55,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, mock: buildMockSpecFromState(id) })
                 });
+                if (!res.ok) {
+                    const body = (await res.text()).slice(0, 120);
+                    windowPreviewCache[id] = { error: res.status === 404
+                        ? 'preview endpoint missing (HTTP 404) — restart the editor server so it picks up /preview-window.'
+                        : `preview request failed: HTTP ${res.status} ${body}` };
+                    return;
+                }
                 windowPreviewCache[id] = await res.json();
             } catch (err) {
                 windowPreviewCache[id] = { error: 'preview request failed: ' + err.message };
@@ -71,7 +78,13 @@
                 return dbPayload.engine.windowLayout;
             };
 
+            // setEngineTab appends a persistent header to this container, so we
+            // must NOT innerHTML-clear it; instead swap only our own body node.
+            const prev = container.querySelector('#windows-tab-root');
+            if (prev) prev.remove();
+
             const mainRow = document.createElement('div');
+            mainRow.id = 'windows-tab-root';
             mainRow.style.cssText = 'display: flex; gap: 8px; align-items: flex-start;';
 
             // --- Left: window list ---
@@ -106,7 +119,6 @@
                         wl()[id] = { x: 0, y: 0, width: p.width, height: p.height, style: p.style, title: null };
                         setDirty(true);
                         activeWindowId = id;
-                        container.innerHTML = '';
                         renderWindowsTab(container, header);
                     }
                 })));
@@ -125,7 +137,6 @@
                 editorCol.appendChild(hint);
             } else {
                 renderWindowEditorPane(editorCol, activeWindowId, () => {
-                    container.innerHTML = '';
                     renderWindowsTab(container, header);
                 });
             }
