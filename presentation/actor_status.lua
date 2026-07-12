@@ -183,7 +183,7 @@ function actor_status.draw(battler, x, y, isSelected, session)
 
     -- Windowskin panel behind the whole cell, then the animated sprite
     -- (dead tint / flash / shake handled by small_battlers.draw).
-    ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2)
+    ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2, nil, isSelected)
     local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
     local spriteOffsetX = 0
     if spriteKey and small_battlers.draw(spriteKey, x, y + ui.lineHeight, spriteSize, dead, battler) then

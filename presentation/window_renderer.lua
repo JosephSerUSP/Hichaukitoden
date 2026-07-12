@@ -473,7 +473,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         -- party slot (owner direction 11.07.2026 — one shared look for
         -- party status everywhere it's drawn).
         if spriteField then
-            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad)
+            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, nil, isSel)
         end
 
         local textX = contentX + ui.toPx(0.5)
@@ -530,7 +530,10 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     end
 end
 
--- Horizontal option row (confirm style): options spread across the width.
+-- Horizontal option row (confirm/command style): options spread across the
+-- width. The active choice gets a small WSkin_Highlight backdrop behind its
+-- text (ui.drawPanel's `highlight` param), same idea as the actor_status
+-- cell highlight — one shared way to mark "this is the current selection".
 local function drawOptions(rows, cursor, env, x, y, w)
     local n = #rows
     if n == 0 then return end
@@ -539,7 +542,11 @@ local function drawOptions(rows, cursor, env, x, y, w)
         local isSel = (i == cursor)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
         local label = (isSel and "> " or "  ") .. (row.name or "")
-        ui.drawString(label, x + math.floor((i - 1) * slot) + ui.toPx(2), y, color)
+        local slotX = x + math.floor((i - 1) * slot)
+        if isSel then
+            ui.drawPanel(slotX + ui.toPx(0.5), y - ui.toPx(0.5), math.floor(slot) - ui.toPx(1), ui.lineHeight + ui.toPx(1), nil, true)
+        end
+        ui.drawString(label, slotX + ui.toPx(2), y, color)
     end
 end
 

@@ -5,6 +5,7 @@ local ui = {}
 local iconset
 local iconSize = 12
 local windowskin
+local windowskinHighlight
 local mainFont
 
 -- Parse string and replace \eventName and \c[x]
@@ -71,6 +72,11 @@ function ui.init()
         windowskin = love.graphics.newImage("assets/system/PRINCESSTHEKING.png")
         windowskin:setFilter("nearest", "nearest")
     end
+
+    if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
+        windowskinHighlight = love.graphics.newImage("assets/system/WSkin_Highlight.png")
+        windowskinHighlight:setFilter("nearest", "nearest")
+    end
     
     -- Load active font from system config
     local fontName = config.ui and config.ui.activeFont or "Lucida"
@@ -105,11 +111,15 @@ end
 -- Layout specifications:
 -- First 32x32: seamlessly tiling background
 -- Next 32x32 (x=32..64, y=0..32): 8px borders
-function ui.drawPanel(x, y, w, h, title)
+-- `highlight` swaps in WSkin_Highlight.png (same quad layout) to mark the
+-- active choice — the selected party member's cell, the selected command
+-- row, etc. Falls back to the normal windowskin if the asset is missing.
+function ui.drawPanel(x, y, w, h, title, highlight)
     love.graphics.push("all")
-    
-    if windowskin then
-        local wsW, wsH = windowskin:getDimensions()
+
+    local skin = (highlight and windowskinHighlight) or windowskin
+    if skin then
+        local wsW, wsH = skin:getDimensions()
         
         -- 1. Draw Background (from x=0, y=0, w=32, h=32) tiled seamlessly
         local bgW, bgH = 32, 32
@@ -128,7 +138,7 @@ function ui.drawPanel(x, y, w, h, title)
                 local drawW = math.min(bgW, endX - bx)
                 local drawH = math.min(bgH, endY - by)
                 local tileQuad = love.graphics.newQuad(0, 0, drawW, drawH, wsW, wsH)
-                love.graphics.draw(windowskin, tileQuad, bx, by)
+                love.graphics.draw(skin, tileQuad, bx, by)
             end
         end
         love.graphics.setScissor(sx, sy, sw, sh) -- restore scissor
@@ -139,30 +149,30 @@ function ui.drawPanel(x, y, w, h, title)
         
         -- Top side edge (x=40, y=0, w=16, h=8)
         local topQuad = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, topQuad, x + 8, y, 0, edgeW / 16, 1)
-        
+        love.graphics.draw(skin, topQuad, x + 8, y, 0, edgeW / 16, 1)
+
         -- Bottom side edge (x=40, y=24, w=16, h=8)
         local botQuad = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
-        
+        love.graphics.draw(skin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
+
         -- Left side edge (x=32, y=8, w=8, h=16)
         local leftQuad = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
-        
+        love.graphics.draw(skin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
+
         -- Right side edge (x=56, y=8, w=8, h=16)
         local rightQuad = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
-        
+        love.graphics.draw(skin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
+
         -- 3. Draw 8px Corners
         local tlQuad = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
         local trQuad = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
         local blQuad = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
         local brQuad = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
-        
-        love.graphics.draw(windowskin, tlQuad, x, y)
-        love.graphics.draw(windowskin, trQuad, x + w - 8, y)
-        love.graphics.draw(windowskin, blQuad, x, y + h - 8)
-        love.graphics.draw(windowskin, brQuad, x + w - 8, y + h - 8)
+
+        love.graphics.draw(skin, tlQuad, x, y)
+        love.graphics.draw(skin, trQuad, x + w - 8, y)
+        love.graphics.draw(skin, blQuad, x, y + h - 8)
+        love.graphics.draw(skin, brQuad, x + w - 8, y + h - 8)
     else
         -- Fallback
         love.graphics.setColor(0, 0, 0, 0.4)

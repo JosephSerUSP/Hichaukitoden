@@ -446,12 +446,14 @@ local function drawMinimap(x, y, size)
     love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
--- Render HUD/Party details in the bottom panel — the same summoner status
--- block and party grid geometry as the battle console.
-local function drawHUD(x, y, w, h)
-    ui.drawPanel(x, y, w, h)
+-- Summoner status corner readout for exploration. The party grid itself is
+-- now the persistent declarative "party" window (map scene, window_renderer)
+-- drawn separately by main.lua's love.draw — drawing it again here would be
+-- the exact old-HUD-under-new-window duplication bug (owner report
+-- 12.07.2026). drawSummonerStatus draws its own self-contained panel, so no
+-- outer ui.drawPanel wrapper is needed.
+local function drawHUD(y)
     drawSummonerStatus(y)
-    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), y + ui.toPx(layoutVal("headerTileOffset")), 0, renderer.session, false)
 end
 
 -- Renders the Title Scene
@@ -498,8 +500,8 @@ function renderer.drawTown(selectedIdx)
         local prefix = (i == selectedIdx) and "> " or "  "
         ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight, color)
     end
-    
-    drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
+
+    drawHUD(ui.toPx(18))
 end
 
 -- Renders the Map Scene
@@ -534,8 +536,12 @@ function renderer.drawMap()
         ui.drawPanel(60, 105, 136, 26)
         ui.drawString(label, 64, 112, {1, 1, 0.5, 1}, "center", 128)
     end
-    
-    drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
+
+    -- Summoner status only — the party grid itself is the persistent
+    -- declarative "party" window (map scene) drawn separately by main.lua,
+    -- so it no longer sits at the old y=18 baseline (that's the new
+    -- window's turf now; drawing here too was the duplicate-HUD bug).
+    drawHUD(ui.toPx(6))
 end
 
 -- Renders the Dialogue / Graph Walker Scene
@@ -585,8 +591,8 @@ function renderer.drawDialogue(walker, selectIdx)
             ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight, color)
         end
     end
-    
-    drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
+
+    drawHUD(ui.toPx(18))
 end
 
 -- The 2x2 party grid is now a thin arrangement loop: every party member's
