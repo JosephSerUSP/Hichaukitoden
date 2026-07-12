@@ -508,6 +508,42 @@ handlers.USE_ITEM = function(cmd, ctx)
     ctx.session:addItem(item.id, -1)
 end
 
+-- Equip flow as data (status-scene equip): slot is 1=Weapon, 2=Armor,
+-- 3=Accessory. itemIndex is 1-based into the SAME ordering the window
+-- renderer's 'equipment' list source displays: index 1 is always
+-- [ UNEQUIP ], then the inventory's matching equipment id-ascending (keep
+-- them in sync). Previous gear returns to the inventory, like the legacy
+-- select_passive handler did.
+handlers.EQUIP_ITEM = function(cmd, ctx)
+    local slot = tonumber((evalFormula(cmd.slot, ctx))) or 1
+    local slotType = ({ "Weapon", "Armor", "Accessory" })[slot]
+    local member = ctx.session.party[tonumber((evalFormula(cmd.target, ctx))) or 1]
+    if not slotType or not member then return end
+    local idx = tonumber((evalFormula(cmd.itemIndex, ctx))) or 1
+    local loader = ctx.loader or ctx.session.loader
+    local prev = member.equipment[slot]
+    if idx == 1 then
+        if prev then ctx.session:addItem(prev.id, 1) end
+        member.equipment[slot] = nil
+        return
+    end
+    local matching = {}
+    for itemId, qty in pairs(ctx.session.inventory or {}) do
+        if qty > 0 then
+            local item = loader.getItem(itemId)
+            if item and item.type == "equipment" and item.equipType == slotType then
+                table.insert(matching, item)
+            end
+        end
+    end
+    table.sort(matching, function(a, b) return a.id < b.id end)
+    local item = matching[idx - 1]
+    if not item then return end
+    if prev then ctx.session:addItem(prev.id, 1) end
+    member.equipment[slot] = item
+    ctx.session:addItem(item.id, -1)
+end
+
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
 end
@@ -591,6 +627,9 @@ handlers.SET_LIST = function(cmd, ctx)
         sprite = cmd.sprite,
         gaugeValue = cmd.gaugeValue, gaugeMax = cmd.gaugeMax,
         gaugeColor = cmd.gaugeColor, gaugeFill = cmd.gaugeFill,
+        -- Equip vocabulary: slot/member are formulas the 'equipment' and
+        -- 'equipSlots' list sources re-evaluate at draw time.
+        slot = cmd.slot, member = cmd.member,
     })
 end
 

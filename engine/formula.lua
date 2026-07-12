@@ -102,6 +102,23 @@ function formula.sessionView(session)
             end
             return n
         end)(),
+        -- Matching-gear stacks per equip slot (1=Weapon 2=Armor
+        -- 3=Accessory) — lets the status scene's equip picker bound its
+        -- cursor: the 'equipment' list has equipCount[slot] + 1 rows
+        -- (the extra row is [ UNEQUIP ]).
+        equipCount = (function()
+            local counts = { 0, 0, 0 }
+            local slotOf = { Weapon = 1, Armor = 2, Accessory = 3 }
+            local loader = session.loader
+            for itemId, qty in pairs(session.inventory or {}) do
+                if qty > 0 and loader then
+                    local item = loader.getItem(itemId)
+                    local s = item and item.type == "equipment" and slotOf[item.equipType]
+                    if s then counts[s] = counts[s] + 1 end
+                end
+            end
+            return counts
+        end)(),
     }
 end
 

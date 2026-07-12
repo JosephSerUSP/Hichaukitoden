@@ -416,6 +416,9 @@ local function runGoldenUI()
         local currentCtx = {
             session = vSession,
             loader = loader,
+            -- Hooks see the same ctx shape gameplay pushes (party.count
+            -- formulas were silently false without this).
+            party = vSession.party,
             events = {}
         }
 
@@ -849,9 +852,9 @@ runValidation = function()
                         target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3 },
+                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1 },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1219,7 +1222,7 @@ elseif paramDef.type == "script" then
                 resultItemName = "",
                 -- Common menu variables (D6 scenes)
                 opt = 1, subIdx = 1, idx = 1, count = 1,
-                selectedIdx = 1, _guard = 0
+                selectedIdx = 1, _guard = 0, eqIdx = 1
             }
         }
         
@@ -1477,14 +1480,7 @@ function love.draw()
         else
             renderer.drawMap()
         end
-        if menuSubScene == "equip_passive" then
-            renderer.drawEquipMenu(activeSession.party[selectedCreatureIndex], menuSelectedSubIdx, activeSession)
-        elseif menuSubScene == "select_passive" then
-            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
-            renderer.drawSelectEquipMenu(menuSelectedSubIdx, activeSession, slotType, activeSession.party[selectedCreatureIndex], selectedSlotIndex)
-        else
-            renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
-        end
+        renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
     end
     end
     
@@ -1966,7 +1962,7 @@ local function handleKeyPressed(key)
         
     elseif scene_host.getCurrent() == "menu" then
         if menuSubScene == "main" then
-            local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
+            local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "CRAFTING", "EXIT" })
             local numOpts = #mainOpts
             if key == "up" or key == "w" then
                 menuSelectedIdx = (menuSelectedIdx - 2) % numOpts + 1
@@ -1977,7 +1973,7 @@ local function handleKeyPressed(key)
                 if opt == "ITEMS" then
                     -- Items is a declarative scene now (scenes.json 'items')
                     scene_host.push("items", { session = activeSession, loader = loader, party = activeSession.party })
-                elseif opt == "STATUS" or opt == "EQUIP" then
+                elseif opt == "STATUS" then
                     menuSubScene = "party_select"
                     menuSelectedSubIdx = 1
                 elseif opt == "CRAFTING" then
@@ -2010,73 +2006,15 @@ local function handleKeyPressed(key)
             elseif key == "space" or key == "return" then
                 if activeSession.party[menuSelectedSubIdx] then
                     selectedCreatureIndex = menuSelectedSubIdx
-                    local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
-                    local opt = mainOpts[menuSelectedIdx]
-                    if opt == "STATUS" then
-                        -- Status is a declarative scene now; seed its cursor
-                        -- with the member picked in the menu's party column.
-                        scene_host.push("status", { session = activeSession, loader = loader, party = activeSession.party })
-                        local stState = scene_host.getCurrentState()
-                        if stState then stState.v.idx = selectedCreatureIndex end
-                    else
-                        menuSubScene = "equip_passive"
-                        menuSelectedSubIdx = 1
-                    end
+                    -- Status is a declarative scene now (equip lives inside
+                    -- it); seed its cursor with the member picked in the
+                    -- menu's party column.
+                    scene_host.push("status", { session = activeSession, loader = loader, party = activeSession.party })
+                    local stState = scene_host.getCurrentState()
+                    if stState then stState.v.idx = selectedCreatureIndex end
                 end
             end
-            
-        elseif menuSubScene == "equip_passive" then
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % 3 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx % 3 + 1
-            elseif key == "escape" then
-                renderer.startClosing("equip_passive", "menu", "party_select")
-            elseif key == "space" or key == "return" then
-                selectedSlotIndex = menuSelectedSubIdx
-                menuSubScene = "select_passive"
-                menuSelectedSubIdx = 1
-            end
-            
-        elseif menuSubScene == "select_passive" then
-            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
-            local list = {}
-            table.insert(list, { id = "empty", name = "[ UNEQUIP ]", description = "Unequip current gear." })
-            for itemId, qty in pairs(activeSession.inventory) do
-                local item = loader.getItem(itemId)
-                if item and item.type == "equipment" and item.equipType == slotType then
-                    table.insert(list, item)
-                end
-            end
-            
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #list + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx % #list + 1
-            elseif key == "escape" then
-                renderer.startClosing("select_passive", "menu", "equip_passive")
-            elseif key == "space" or key == "return" then
-                local choice = list[menuSelectedSubIdx]
-                local targetCreature = activeSession.party[selectedCreatureIndex]
-                if targetCreature and choice then
-                    local prevItem = targetCreature.equipment[selectedSlotIndex]
-                    if choice.id == "empty" then
-                        if prevItem then
-                            activeSession:addItem(prevItem.id, 1)
-                        end
-                        targetCreature.equipment[selectedSlotIndex] = nil
-                    else
-                        if prevItem then
-                            activeSession:addItem(prevItem.id, 1)
-                        end
-                        targetCreature.equipment[selectedSlotIndex] = choice
-                        activeSession:addItem(choice.id, -1)
-                    end
-                end
-                menuSubScene = "equip_passive"
-                menuSelectedSubIdx = selectedSlotIndex
-            end
-            
+
         elseif menuSubScene == "exit_confirm" then
             if key == "up" or key == "w" or key == "down" or key == "s" then
                 menuSelectedSubIdx = menuSelectedSubIdx == 1 and 2 or 1

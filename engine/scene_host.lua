@@ -99,6 +99,8 @@ local function applyWindowEvent(state, ev)
             w.gaugeMax = ev.gaugeMax
             w.gaugeColor = ev.gaugeColor
             w.gaugeFill = ev.gaugeFill
+            w.slot = ev.slot
+            w.member = ev.member
         end
     elseif ev.type == "set_text" then
         local w = ensure(ev.windowId)

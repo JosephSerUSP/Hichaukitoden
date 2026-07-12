@@ -54,9 +54,13 @@
     "main_options": [
       "ITEMS",
       "STATUS",
-      "EQUIP",
       "CRAFTING",
       "EXIT"
+    ],
+    "equip_slots": [
+      "WPN",
+      "AMR",
+      "ACC"
     ]
   },
   "events": {

@@ -16,6 +16,11 @@
 --   "config:<key>"     array from the scene's config (entry fields exposed)
 --   "v:<key>"          array stored in scene v by hooks/SCRIPT
 --   "static:a,b,c"     inline comma-separated labels
+--   "equipSlots"       a member's 3 gear slots (fields: index, name, item, icon)
+--   "equipment"        inventory gear matching a slot's type, [ UNEQUIP ] first
+--                      (fields: id, name, icon, qty, description, preview)
+-- The equip sources read the window's SET_LIST slot/member formulas at draw
+-- time (slot: 1=Weapon 2=Armor 3=Accessory, member: party index).
 --
 -- Row templates/formulas (SET_LIST format/highlight/priority) are evaluated
 -- with the row's fields merged over the scene env, so "{name} (x{qty})" and
@@ -203,6 +208,99 @@ local function staticRows(spec)
     return rows
 end
 
+local SLOT_TYPES = { "Weapon", "Armor", "Accessory" }
+
+-- "ATK:3->5  DEF:2->4" summary of what trial-equipping `newItem` (nil =
+-- unequip) into the member's slot would change — the legacy
+-- getStatPreview logic, moved here so equip pickers stay data-authored.
+local function equipPreviewString(member, slot, newItem, session)
+    local traits = require("engine.traits")
+    local function snapshot()
+        return {
+            hp = member:getMaxHp(session),
+            atk = traits.getParam(member, "atk", session),
+            def = traits.getParam(member, "def", session),
+            mat = traits.getParam(member, "mat", session),
+            mdf = traits.getParam(member, "mdf", session),
+        }
+    end
+    local prev = member.equipment[slot]
+    local before = snapshot()
+    member.equipment[slot] = newItem
+    local after = snapshot()
+    member.equipment[slot] = prev
+    local changes = {}
+    for _, f in ipairs({ { "hp", "HP" }, { "atk", "ATK" }, { "def", "DEF" }, { "mat", "MAT" }, { "mdf", "MDF" } }) do
+        if before[f[1]] ~= after[f[1]] then
+            table.insert(changes, string.format("%s:%d->%d", f[2], before[f[1]], after[f[1]]))
+        end
+    end
+    if #changes == 0 then return "No changes." end
+    return table.concat(changes, "  ")
+end
+
+-- Evaluate the window's slot/member SET_LIST formulas against the live env.
+local function equipContext(win, env, session)
+    local slot = tonumber((formula.eval(win.slot, env))) or 1
+    local memberIdx = tonumber((formula.eval(win.member, env))) or 1
+    return slot, session and session.party and session.party[memberIdx] or nil
+end
+
+local function equipSlotRows(session, win, env)
+    local _, member = equipContext(win, env, session)
+    local loader = session and session.loader
+    local labels = (loader and loader.getTermList) and loader.getTermList("menu.equip_slots", { "WPN", "AMR", "ACC" }) or { "WPN", "AMR", "ACC" }
+    local rows = {}
+    for i = 1, 3 do
+        local eq = member and member.equipment[i] or nil
+        table.insert(rows, {
+            index = i,
+            name = labels[i] or SLOT_TYPES[i],
+            item = eq and eq.name or "[ EMPTY ]",
+            icon = eq and eq.icon or 0,
+            description = eq and eq.description or "",
+        })
+    end
+    return rows
+end
+
+-- Ordering contract: row 1 is [ UNEQUIP ], then matching inventory gear
+-- id-ascending — interpreter EQUIP_ITEM resolves itemIndex against the
+-- SAME list (keep them in sync). `preview` is live per member/slot.
+local function equipmentRows(session, win, env)
+    local slot, member = equipContext(win, env, session)
+    local slotType = SLOT_TYPES[slot]
+    local rows = {}
+    if not session or not slotType then return rows end
+    local unequipPreview = member and equipPreviewString(member, slot, nil, session) or ""
+    table.insert(rows, {
+        id = "empty", name = "[ UNEQUIP ]", icon = 0, qty = 0,
+        description = "Unequip the item in this slot.",
+        preview = unequipPreview,
+    })
+    local matching = {}
+    for itemId, qty in pairs(session.inventory or {}) do
+        if qty > 0 then
+            local item = session.loader.getItem(itemId)
+            if item and item.type == "equipment" and item.equipType == slotType then
+                table.insert(matching, { item = item, qty = qty })
+            end
+        end
+    end
+    table.sort(matching, function(a, b) return a.item.id < b.item.id end)
+    for _, m in ipairs(matching) do
+        table.insert(rows, {
+            id = m.item.id,
+            name = m.item.name or "",
+            icon = m.item.icon or 0,
+            qty = m.qty,
+            description = m.item.description or "",
+            preview = member and equipPreviewString(member, slot, m.item, session) or "",
+        })
+    end
+    return rows
+end
+
 -- Resolve a window's list into rows, applying priority sort and format.
 local function resolveRows(win, state, sceneData, ctx, env)
     local src = win.listId or ""
@@ -211,6 +309,10 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = inventoryRows(ctx.session)
     elseif src == "party" then
         rows = partyRows(ctx.session)
+    elseif src == "equipSlots" then
+        rows = equipSlotRows(ctx.session, win, env)
+    elseif src == "equipment" then
+        rows = equipmentRows(ctx.session, win, env)
     elseif src:sub(1, 7) == "config:" then
         rows = configRows(sceneData, src:sub(8))
     elseif src:sub(1, 2) == "v:" then

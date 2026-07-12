@@ -905,6 +905,30 @@
       "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with targetScope 'party' hit every member, otherwise target is a party index."
     },
     {
+      "id": "EQUIP_ITEM",
+      "category": "Progression",
+      "label": "Equip Item",
+      "params": [
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "target",
+          "type": "formula"
+        },
+        {
+          "key": "itemIndex",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Equips gear on a party member. slot: 1=Weapon 2=Armor 3=Accessory; target is a party index; itemIndex is 1-based into the window renderer's 'equipment' list order (1 = unequip, then matching inventory gear id-ascending). Previous gear returns to the inventory."
+    },
+    {
       "id": "GIVE_ITEM_ID",
       "category": "Progression",
       "label": "Give Specific Item",
@@ -1163,13 +1187,21 @@
         {
           "key": "gaugeMax",
           "type": "text"
+        },
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "member",
+          "type": "formula"
         }
       ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row."
+      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row. slot/member are draw-time formulas for the 'equipSlots' and 'equipment' sources (slot: 1=Weapon 2=Armor 3=Accessory, member: party index)."
     },
     {
       "id": "SET_TEXT",
@@ -1903,6 +1935,31 @@
       "style": "panel",
       "title": null,
       "portrait": "sel('status_party').portraitKey"
+    },
+    "equip_slots": {
+      "x": 4,
+      "y": 5,
+      "width": 14,
+      "height": 8,
+      "style": "list",
+      "title": "EQUIP"
+    },
+    "equip_list": {
+      "x": 10,
+      "y": 4,
+      "width": 18,
+      "height": 12,
+      "style": "list",
+      "title": "SELECT"
+    },
+    "equip_info": {
+      "x": 0,
+      "y": 16,
+      "width": 32,
+      "height": 8,
+      "style": "panel",
+      "title": "INFO",
+      "lineSpacing": 1
     }
   }
 }
