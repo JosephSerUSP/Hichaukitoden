@@ -4,15 +4,8 @@ status_party|open_window||
 status_party|set_list||party
 status_party|set_cursor||1
 status_panel|open_window||
-status_panel|set_text||{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}
-HP {sel('status_party').hp}/{sel('status_party').maxHp}    EXP {sel('status_party').exp}/{sel('status_party').expNeeded}
-ATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}
-MDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}
-WPN {sel('status_party').weapon}   AMR {sel('status_party').armor}
-ACC {sel('status_party').accessory}
-PASSIVES {sel('status_party').passiveText}
-SKILLS {sel('status_party').skillText}   STATES {sel('status_party').stateText}
+status_panel|set_text||
 help|open_window||
 statusPortrait|open_window||
-help|set_text||UP/DOWN: select member    ESC: back
+help|set_text||UP/DOWN: select member    LEFT/RIGHT: page    ESC: back
 UI GOLDEN END
