@@ -61,6 +61,15 @@
             return hits;
         }
 
+        // E12: one-shot hint so the Windows tab's "View in Scene" link can
+        // land with the right window already selected — set right before
+        // switching to the Scenes tab and navigating to a scene; consumed
+        // (and cleared) the next time this scene's canvas renders.
+        let pendingWindowSelect = null;
+        function requestSceneCanvasSelect(windowId) {
+            pendingWindowSelect = windowId;
+        }
+
         function renderScenePreviewPanel(container, scene, refreshEditor) {
             const wl = () => {
                 dbPayload.engine.windowLayout = dbPayload.engine.windowLayout || {};
@@ -108,7 +117,8 @@
 
             const ctx2d = canvas.getContext('2d');
             const data = () => scenePreviewCache[scene.id];
-            let selectedId = null;
+            let selectedId = pendingWindowSelect;
+            pendingWindowSelect = null;
 
             // Live geometry: unsaved windowLayout edits override the payload
             const geomOf = (w) => {

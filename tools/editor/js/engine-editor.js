@@ -279,6 +279,9 @@
                 dbPayload.flows = dbPayload.flows || {};
                 dbPayload.scenes = dbPayload.scenes || [];
                 renderUnifiedFlowsEditor(panel, header);
+            } else if (tabName === 'windows') {
+                header.textContent = 'Windows';
+                renderWindowsTab(panel, header);
             }
         }
 
