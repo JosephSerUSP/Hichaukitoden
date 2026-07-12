@@ -1580,10 +1580,10 @@
   "windowLayout": {
     "headerSpacing": 0,
     "discipline_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
+      "x": 0.5,
+      "y": 4,
+      "width": 11,
+      "height": 16.5,
       "style": "list",
       "title": "Select Discipline"
     },
@@ -1697,10 +1697,10 @@
       "title": null
     },
     "menu_left_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 10,
-      "height": 20.5,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 9.5,
+      "height": 13.5,
       "style": "list",
       "title": "Menu",
       "anim": {
@@ -1711,10 +1711,10 @@
       }
     },
     "menu_right_panel": {
-      "x": 10,
-      "y": 3.5,
-      "width": 14,
-      "height": 20.5,
+      "x": 10.5,
+      "y": 4.5,
+      "width": 21,
+      "height": 13.5,
       "style": "partyGrid",
       "title": "Party",
       "anim": {
@@ -1725,10 +1725,10 @@
       }
     },
     "menu_info_panel": {
-      "x": 24,
-      "y": 3.5,
-      "width": 8,
-      "height": 20.5,
+      "x": 0,
+      "y": 18.5,
+      "width": 32,
+      "height": 11.5,
       "style": "panel",
       "title": "Info",
       "lineSpacing": 1,
@@ -1888,9 +1888,9 @@
     },
     "discipline_detail": {
       "x": 12,
-      "y": 3.5,
-      "width": 20,
-      "height": 20.5,
+      "y": 4,
+      "width": 19.5,
+      "height": 16.5,
       "style": "panel",
       "title": "Details"
     },
