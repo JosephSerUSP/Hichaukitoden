@@ -558,6 +558,45 @@ local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     ui.drawString(row.name or "", x, contentY + ui.toPx(4.5), COLOR_SELECTED, "center", w)
 end
 
+-- Open animation (menu conversion vocabulary): layout.anim.open =
+-- { slide = "left"|"right"|"up"|"down", duration = seconds } eases the
+-- window in from that screen edge when it opens. Purely presentational —
+-- window state, hooks and golden logs are unaffected. The clock is keyed
+-- by the runtime win table, so re-opening a closed window replays the
+-- animation. There is no close animation: a scene that wants a slide-out
+-- can stage it with hooks (CLOSE_WINDOW + WAIT before the pop), like the
+-- game_over intro does in reverse.
+local openClocks = setmetatable({}, { __mode = "k" })
+
+local function openAnimOffset(win, layout)
+    local anim = layout.anim and layout.anim.open
+    if not anim then
+        openClocks[win] = nil
+        return 0, 0
+    end
+    local now = love.timer.getTime()
+    local t0 = openClocks[win]
+    if not t0 then
+        t0 = now
+        openClocks[win] = t0
+    end
+    local dur = tonumber(anim.duration) or 0.22
+    local p = dur <= 0 and 1 or math.min(1, (now - t0) / dur)
+    local ease = 1 - (1 - p) * (1 - p)
+    local rest = 1 - ease
+    if rest <= 0 then return 0, 0 end
+    local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
+    local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
+    local screenW, screenH = ui.toPx(32), ui.toPx(30)
+    local slide = anim.slide or "left"
+    if slide == "left" then return -rest * (x + w), 0
+    elseif slide == "right" then return rest * (screenW - x), 0
+    elseif slide == "up" then return 0, -rest * (y + h)
+    elseif slide == "down" then return 0, rest * (screenH - y)
+    end
+    return 0, 0
+end
+
 local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache)
     layout = resolvePageLayout(layout, env)
     local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
@@ -565,6 +604,13 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     local style = layout.style or "panel"
     local title = layout.title
     if title then title = interpolate(title, env) end
+
+    local animDx, animDy = openAnimOffset(win, layout)
+    local animated = animDx ~= 0 or animDy ~= 0
+    if animated then
+        love.graphics.push()
+        love.graphics.translate(animDx, animDy)
+    end
 
     ui.drawPanel(x, y, w, h, title)
 
@@ -609,6 +655,10 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
             drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
         end
     end
+
+    if animated then
+        love.graphics.pop()
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -639,6 +689,10 @@ function wr.draw(state, sceneData, ctx)
         if win and win.open then
             local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
             drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache)
+        elseif win then
+            -- Closed windows drop their open-anim clock so re-opening
+            -- replays the slide.
+            openClocks[win] = nil
         end
     end
 end
