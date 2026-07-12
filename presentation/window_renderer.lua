@@ -26,6 +26,7 @@
 local ui = require("presentation.ui")
 local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
+local actor_status = require("presentation.actor_status")
 
 local wr = {}
 
@@ -366,6 +367,30 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
     end
 end
 
+-- "partyGrid" style (owner direction 11.07.2026): arranges one
+-- actor_status.draw cell per row, wrapped into a grid (layout.gridColumns,
+-- default 2 — reproduces the battle/map HUD's 2x2 for a 4-member party).
+-- Rows come from the SAME 'party' list source as the old sprite+gauge list
+-- rows, but here each one draws through the exact function
+-- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
+-- partyRows keeps a reference to) — so a party member's status is one
+-- single thing, not a re-implementation per screen.
+local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session)
+    local colW, rowH = actor_status.cellSize(session)
+    local cols = layout.gridColumns or 2
+    local contentX = x + ui.toPx(layout.contentX or 0.5)
+    local contentY = y + ui.toPx(layout.contentY or 2)
+    for i, row in ipairs(rows) do
+        if row.battlerRef then
+            local col = (i - 1) % cols
+            local rowIdx = math.floor((i - 1) / cols)
+            local cx = contentX + col * colW
+            local cy = contentY + rowIdx * rowH
+            actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
+        end
+    end
+end
+
 -- Horizontal option row (confirm style): options spread across the width.
 local function drawOptions(rows, cursor, env, x, y, w)
     local n = #rows
@@ -427,6 +452,11 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
         local cached = listCache[id]
         if cached then
             drawRoulette(win, layout, cached.rows, cached.cursor, env, x, y, w, h)
+        end
+    elseif style == "partyGrid" then
+        local cached = listCache[id]
+        if cached then
+            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session)
         end
     else -- "panel", "frame" and any unknown style: text content
         if win.text then

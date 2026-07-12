@@ -6,87 +6,17 @@ local director = require("engine.director")
 local traits = require("engine.traits")
 local config = require("engine.config")
 local small_battlers = require("presentation.small_battlers")
+local battle_layout = require("presentation.battle_layout")
+local actor_status = require("presentation.actor_status")
 
 local renderer = {}
 
--- Battle-scene layout defaults shared by drawBattle and getBattlerCoords,
--- per the BIBLE rule that coordinate mappings must never be duplicated.
--- Values can be overridden from data/engine.json (battleLayout), editable
--- in the Engine editor.
-local BATTLE_LAYOUT = {
-    enemyRowWidth = 220,
-    enemyStartX = 18,
-    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
-    enemyPopupY = 84,
-    partyGridTileX = 16,    -- drawPartyGrid origin inside the console (tiles)
-    consoleTileY = 18,
-    headerTileOffset = 1,
-    slotPopupOffsetX = 27,
-    slotPopupOffsetY = 10,
-    summonerPopupX = 50,
-    summonerPopupYOffset = 62,
-    fallbackX = 128,
-    fallbackY = 70,
-    enemyY = 54,
-    enemyNameY = 114,
-    enemyHpBarY = 128,
-    enemyHpBarWidth = 50,
-    enemyHpBarHeight = 4,
-    enemySpriteSize = 56,
-    enemyFallbackSize = 50,
-    enemySlideOffset = 280,
-    enemyDeathYOffset = 20,
-    viewportOverlayW = 256,
-    viewportOverlayH = 140,
-    logPanelX = 10,
-    logPanelY = 6,
-    logPanelWidth = 236,
-    logPanelHeight = 32,
-    logTextX = 16,
-    logTextY = 12,
-    logTextLimit = 224,
-    logSpaceX = 200,
-    logSpaceY = 23,
-    logLineSpacing = 10,        -- B.8: second log line offset
-    commandBarTileH = 2.5,      -- B.7: single-line full-width command bar
-    commandBarTextYOffset = 6,  --      flush above the status console
-    victoryPanelTileX = 6,      -- B.9: victory window
-    victoryPanelTileY = 4,
-    victoryPanelTileW = 20,
-    victoryPanelTileH = 14,
-    victoryLineSpacing = 12,
-    victoryRowHeight = 18,      -- B.9: per-member EXP gauge rows
-    victoryGaugeWidth = 120,    -- nearly full panel interior width
-    victoryGaugeHeight = 3,
-    consoleTileX = 0,
-    consoleTileW = 32,
-    consoleTileH = 12,
-    consoleTextTileX = 1,
-    menuChoiceSpacing = 16,
-    summonerStatusX = 8,
-    summonerNameYOffset = 8,   -- B.6: top-aligned with the party grid front row
-    summonerMpTextYOffset = 26,
-    summonerMpBarYOffset = 34,
-    summonerMpBarWidth = 80,
-    summonerMpBarHeight = 4,
-    partyGridColWidth = 64,
-    partyGridRowHeight = 40,
-    partyGridNameXOffset = 1,
-    partyGridHpXOffset = 8,
-    partyGridHpYOffset = 11,
-    partyGridHpBarXOffset = 8,
-    partyGridHpBarYOffset = 22,
-    partyGridHpBarWidth = 52,
-    partyGridHpBarHeight = 3,
-    partyGridEmptyYOffset = 8
-}
-
--- Battle layout accessor: engine.json override -> built-in default
+-- Battle layout accessor: engine.json override -> built-in default.
+-- Defaults + override lookup live in presentation/battle_layout.lua,
+-- shared with actor_status.lua (breaks the require cycle that would
+-- otherwise exist between the two modules).
 local function layoutVal(key)
-    local loaderRef = renderer.session and renderer.session.loader
-    local overrides = loaderRef and loaderRef.engine and loaderRef.engine.battleLayout
-    if overrides and overrides[key] ~= nil then return overrides[key] end
-    return BATTLE_LAYOUT[key]
+    return battle_layout.get(renderer.session, key)
 end
 
 local damagePopups = {}
@@ -183,129 +113,6 @@ local function drawSlicedPortrait(portraitId, x, y, targetW, targetH)
     else
         love.graphics.draw(portrait, x, y, 0, targetW / w, targetH / h)
     end
-end
-
--- Element orb icon ids come from system.json (ui.elementIcons); the table
--- below is only the fallback for older data files.
-local DEFAULT_ELEMENT_ICONS = {
-    Black = 15, White = 14, Green = 12, Red = 11, Blue = 13, Yellow = 17,
-    default = 16
-}
-
-local function drawElementIcon(element, x, y)
-    -- Icon comes from the element registry (data/elements.json); legacy
-    -- ui.elementIcons config and the built-in table remain as fallbacks.
-    local loaderRef = renderer.session and renderer.session.loader
-    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
-    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
-    local id = (registryEntry and registryEntry.icon)
-        or legacyIcons[element]
-        or legacyIcons.default
-        or DEFAULT_ELEMENT_ICONS.default
-    -- B.4: Displaced by 3px in x, 6px in y to align with name text
-    ui.drawIcon(id, x + 3, y + 5)
-end
-
--- Draw a single element icon at (x, y) with a uniform scale factor.
--- The shadow offset is also scaled so it remains visually consistent.
-local function drawElementIconScaled(element, x, y, scale)
-    local loaderRef = renderer.session and renderer.session.loader
-    local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
-    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
-    local id = (registryEntry and registryEntry.icon)
-        or legacyIcons[element]
-        or legacyIcons.default
-        or DEFAULT_ELEMENT_ICONS.default
-    ui.drawIconScaled(id, x, y, scale)
-end
-
--- Draw element icons for an actor, compacted into the space of a single tile.
---
--- Rules:
---   * If the actor has only one unique element → full-size icon.
---   * If the actor has 2+ unique elements → each icon is scaled down to
---     X = max(0.4, 1 - 0.2 * max(1, n - 3)) and arranged equidistantly
---     within the 12×12 px tile (diagonal for 2, triangle for 3, polygon
---     for n).
---   * If one element type appears more often than the others (dominant),
---     that element is drawn 0.2 larger and the rest 0.2 smaller.
---
--- @param  elems  array of element name strings (may contain duplicates)
--- @param  x, y   top-left corner of the tile area
--- @return        width consumed (always iconSize = 12)
-local function drawElementIcons(elems, x, y)
-    if not elems or #elems == 0 then return 0 end
-
-    -- Count occurrences of each unique element type
-    local uniqueList = {}
-    local counts = {}
-    for _, elem in ipairs(elems) do
-        if counts[elem] then
-            counts[elem] = counts[elem] + 1
-        else
-            counts[elem] = 1
-            table.insert(uniqueList, elem)
-        end
-    end
-
-    local n = #uniqueList
-
-    -- Single unique element → full-size icon (existing behaviour)
-    if n == 1 then
-        drawElementIcon(uniqueList[1], x, y)
-        return 12
-    end
-
-    -- Base scale: stays at 0.8 for 2–4 elements, then drops toward 0.4
-    local baseScale = math.max(0.4, 1 - 0.2 * math.max(1, n - 3))
-
-    -- Determine dominant element: one that appears strictly more than others
-    local maxCount = 0
-    for _, c in pairs(counts) do
-        if c > maxCount then maxCount = c end
-    end
-    local dominantElem = nil
-    local dominantCount = 0
-    for _, elem in ipairs(uniqueList) do
-        if counts[elem] == maxCount then
-            dominantCount = dominantCount + 1
-            dominantElem = elem
-        end
-    end
-    if dominantCount ~= 1 then dominantElem = nil end  -- tie → no dominant
-
-    -- The normal single-icon is drawn by drawElementIcon at (x+3, y+5)
-    -- with size 12×12, so its visual centre is at (x+9, y+11).  Scaled
-    -- icons must orbit this centre so they stay inside the same area.
-    local cx = x + 9
-    local cy = y + 11
-    local radius = 4
-
-    -- Starting angle: diagonal (-3π/4) for 2 icons, 12-o'clock (-π/2) for 3+
-    local startAngle = (n == 2) and (-3 * math.pi / 4) or (-math.pi / 2)
-
-    for i, elem in ipairs(uniqueList) do
-        local angle = startAngle + (i - 1) * (2 * math.pi / n)
-
-        local s = baseScale
-        if dominantElem then
-            s = elem == dominantElem and (baseScale + 0.2) or (baseScale - 0.2)
-        end
-
-        -- drawElementIconScaled(element, px, py, s) draws the 12×12 image at
-        -- (px, py) with scale s, so the centre of the drawn icon is at
-        -- (px + 6*s, py + 6*s).  Solve for px, py so that centre lands at
-        -- the orbit position (cx + cos(θ)*r,  cy + sin(θ)*r):
-        --
-        --   px = cx + cos(θ)*r - 6*s
-        --   py = cy + sin(θ)*r - 6*s
-        local px = cx + math.cos(angle) * radius - 6 * s
-        local py = cy + math.sin(angle) * radius - 6 * s
-
-        drawElementIconScaled(elem, px, py, s)
-    end
-
-    return 12   -- width consumed: one tile
 end
 
 -- The summoner's display name, taken from actor data instead of a hardcoded
@@ -809,34 +616,13 @@ function renderer.drawDialogue(walker, selectIdx)
     drawHUD(0, ui.toPx(18), ui.toPx(32), ui.toPx(12))
 end
 
+-- The 2x2 party grid is now a thin arrangement loop: every party member's
+-- cell content (sprite, icons, name, HP text, HP bar, windowskin panel) is
+-- drawn by actor_status.draw — the SAME function any scene's party list
+-- uses (owner direction 11.07.2026: one actor-status thing, called once
+-- per member, everywhere a party is shown).
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
-    local colW = layoutVal("partyGridColWidth")
-    local rowH = layoutVal("partyGridRowHeight")
-    local spriteSize = 24  -- B.5: default small battler cell size
-    --@@ ---- PARTY GRID (2x2) ------------------------------------------------
-    --@@ Each slot is `colW` wide (64px) and `rowH` tall (40px).
-    --@@ Grid layout: [0 1]   Each slot has:
-    --@@              [2 3]     - optional 24px sprite (top-left corner)
-    --@@                        - element icons + name (top area)
-    --@@                        - HP fraction text (mid area)
-    --@@                        - HP bar (bottom area)
-    --@@
-    --@@ VERTICAL ALIGNMENT (yOff):
-    --@@   When a small battler IS present → yOff = -4 (content shifts UP 4px
-    --@@   because the sprite occupies the top portion of the slot).
-    --@@   When NO sprite → yOff = 4 (content shifts DOWN 4px, centering).
-    --@@
-    --@@ ELEMENT ICONS vs NAME Y:
-    --@@   Icons are drawn at: slot.y + yOff - 4   (4px above name)
-    --@@   Name is drawn at:   slot.y + yOff
-    --@@   To put them on the SAME line, change icon Y to `slot.y + yOff`
-    --@@   (remove the `- 4`).
-    --@@
-    --@@ HORIZONTAL CLAMPING (added fix):
-    --@@   slotColEndX = slot.x + colW - 2   <- column right-edge boundary
-    --@@   nameLimit = min(60, max(0, slotColEndX - nameX))  <- name won't overflow
-    --@@   barW      = min(52, max(4, slotColEndX - barX))   <- bar won't bleed
-    --@@
+    local colW, rowH = actor_status.cellSize(session)
     local gridCoords = {
         { x = x, y = y },
         { x = x + colW, y = y },
@@ -846,44 +632,11 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
     for i = 1, 4 do
         local c = session.party[i]
         local slot = gridCoords[i]
-        local slotColEndX = slot.x + colW - 2     -- column right-edge boundary
+        local isSel = (showCursor and i == selectedIdx)
         if c then
-            local maxHp = c:getMaxHp(session)
-            local isSel = (showCursor and i == selectedIdx)
-            local color = isSel and {1, 1, 0.5, 1} or (c:isDead() and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1})
-            local hpColor = c:isDead() and {0.5, 0.5, 0.5, 1} or {0.9, 0.9, 0.9, 1}
-
-            --@@ SPRITE: 24px animated small battler drawn at slot top-left,
-            --@@ on the shared windowskin-backed status cell (owner
-            --@@ direction 11.07.2026 — one drawer, used everywhere).
-            local spriteOffsetX = drawBattlerStatusCell(c, slot.x, slot.y, colW - 2, rowH - 2, spriteSize)
-
-            local prefix = isSel and ">" or " "
-            local yOff = spriteOffsetX > 0 and -4 or 4
-
-            --@@ LINE 1 (top): element icons + name on the SAME Y line
-            local lineY = slot.y + yOff
-            local iconW = drawElementIcons(traits.getElements(c, session), slot.x + spriteOffsetX, lineY - 4)
-            local nameX = slot.x + spriteOffsetX + iconW + layoutVal("partyGridNameXOffset")
-            local nameClipW = math.max(1, slotColEndX - nameX)
-            -- Silently truncate name to fit within the column (~6px per char
-            -- in 8px font). No ellipsis — just clean clipping.
-            local maxNameChars = math.floor(nameClipW / 6)
-            local displayName = (prefix .. c.name):sub(1, maxNameChars)
-            ui.drawString(displayName, nameX, lineY, color, "left", 256)
-
-            --@@ LINE 2 (mid): HP fraction text "current/max"
-            local dispHp = c.displayedHp or c.hp
-            ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, slot.x + layoutVal("partyGridHpXOffset") + spriteOffsetX, slot.y + layoutVal("partyGridHpYOffset") + yOff, hpColor)
-
-            --@@ LINE 3 (bottom): HP bar (clamped so it stays inside the column)
-            local barX = slot.x + layoutVal("partyGridHpBarXOffset") + spriteOffsetX
-            local barW = math.min(layoutVal("partyGridHpBarWidth"), math.max(4, slotColEndX - barX))
-            ui.drawBar(barX, slot.y + layoutVal("partyGridHpBarYOffset") + yOff, barW, layoutVal("partyGridHpBarHeight"), dispHp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            actor_status.draw(c, slot.x, slot.y, isSel, session)
         else
-            local isSel = (showCursor and i == selectedIdx)
-            local prefix = isSel and ">" or " "
-            ui.drawString(prefix .. "- EMPTY -", slot.x, slot.y + layoutVal("partyGridEmptyYOffset"), {0.3, 0.3, 0.3, 1})
+            actor_status.drawEmpty(slot.x, slot.y, isSel, session)
         end
     end
 end
@@ -985,7 +738,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
-            local enemyIconW = drawElementIcons(traits.getElements(enemy, renderer.session), ex, layoutVal("enemyNameY") - 4)
+            local enemyIconW = actor_status.drawElementIcons(traits.getElements(enemy, renderer.session), ex, layoutVal("enemyNameY") - 4, renderer.session)
             ui.drawString(enemy.name, ex + enemyIconW, layoutVal("enemyNameY"), {1, 1, 1, 1})
             ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         end

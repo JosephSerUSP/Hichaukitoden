@@ -1245,11 +1245,7 @@
         {
           "cmd": "SET_LIST",
           "windowId": "party",
-          "listId": "party",
-          "format": "{name}   Lv {level}   {hp}/{maxHp} HP",
-          "sprite": "spriteKey",
-          "gaugeValue": "hp",
-          "gaugeMax": "maxHp"
+          "listId": "party"
         },
         {
           "cmd": "SET_CURSOR",
@@ -1337,11 +1333,7 @@
             {
               "cmd": "SET_LIST",
               "windowId": "items_target",
-              "listId": "party",
-              "format": "{name}   {hp}/{maxHp} HP",
-              "sprite": "spriteKey",
-              "gaugeValue": "hp",
-              "gaugeMax": "maxHp"
+              "listId": "party"
             },
             {
               "cmd": "SET_CURSOR",
@@ -1469,11 +1461,7 @@
         {
           "cmd": "SET_LIST",
           "windowId": "status_party",
-          "listId": "party",
-          "format": "{name}  Lv {level}",
-          "sprite": "spriteKey",
-          "gaugeValue": "hp",
-          "gaugeMax": "maxHp"
+          "listId": "party"
         },
         {
           "cmd": "SET_CURSOR",
@@ -1733,11 +1721,7 @@
         {
           "cmd": "SET_LIST",
           "windowId": "shop_party",
-          "listId": "party",
-          "format": "{name}   Lv {level}   {hp}/{maxHp} HP",
-          "sprite": "spriteKey",
-          "gaugeValue": "hp",
-          "gaugeMax": "maxHp"
+          "listId": "party"
         },
         {
           "cmd": "SET_CURSOR",

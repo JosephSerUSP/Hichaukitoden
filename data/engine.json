@@ -1814,7 +1814,7 @@
       "y": 19.5,
       "width": 32,
       "height": 10.5,
-      "style": "list",
+      "style": "partyGrid",
       "title": "Party"
     },
     "status_party": {
@@ -1822,7 +1822,7 @@
       "y": 19.5,
       "width": 32,
       "height": 10.5,
-      "style": "list",
+      "style": "partyGrid",
       "title": "Party"
     },
     "items_target": {
@@ -1830,7 +1830,7 @@
       "y": 8,
       "width": 20,
       "height": 12,
-      "style": "list",
+      "style": "partyGrid",
       "title": "Use on whom?"
     },
     "help": {
@@ -1846,7 +1846,7 @@
       "y": 19.5,
       "width": 32,
       "height": 10.5,
-      "style": "list",
+      "style": "partyGrid",
       "title": "Party"
     },
     "helpo": {
