@@ -292,8 +292,12 @@ local function drawLayoutGauges(gauges, env, x, y)
     for _, gauge in ipairs(gauges or {}) do
         local gx = x + ui.toPx(gauge.x or 1)
         local gy = y + ui.toPx(gauge.y or 1)
-        local value = tonumber(formula.eval(gauge.value or "0", env)) or 0
-        local maximum = tonumber(formula.eval(gauge.max or "1", env)) or 1
+        -- Extra parens truncate formula.eval's (value, err) pair to just
+        -- value — without them, a failed eval spills its error STRING into
+        -- tonumber's 2nd argument (base), which only accepts a number, and
+        -- crashes instead of degrading to the fallback.
+        local value = tonumber((formula.eval(gauge.value or "0", env))) or 0
+        local maximum = tonumber((formula.eval(gauge.max or "1", env))) or 1
         ui.drawString(interpolate(gauge.label or "", env), gx, gy, COLOR_NORMAL)
         ui.drawBar(gx, gy + ui.lineHeight, ui.toPx(gauge.width or 18), gauge.height or 3,
             value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 })
@@ -302,7 +306,7 @@ end
 
 local function resolvePageLayout(layout, env)
     if not layout.pages then return layout end
-    local page = math.floor(tonumber(formula.eval(layout.pageFormula or "1", env)) or 1)
+    local page = math.floor(tonumber((formula.eval(layout.pageFormula or "1", env))) or 1)
     local pageLayout = layout.pages[page] or layout.pages[1] or {}
     local resolved = {}
     for key, value in pairs(layout) do resolved[key] = value end
@@ -384,8 +388,11 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         end
         ui.drawString(interpolate(format, rEnv), textX, rowY, color)
         if hasGauge then
-            local val = tonumber(formula.eval(win.gaugeValue, rEnv)) or 0
-            local max = tonumber(formula.eval(win.gaugeMax, rEnv)) or 1
+            -- (extra parens: see drawLayoutGauges — truncates eval's
+            -- (value, err) pair so a failed formula degrades to 0/1
+            -- instead of crashing tonumber's base argument)
+            local val = tonumber((formula.eval(win.gaugeValue, rEnv))) or 0
+            local max = tonumber((formula.eval(win.gaugeMax, rEnv))) or 1
             local barX = textX
             -- Stay inside the row's own card (not the whole window) when
             -- one is drawn, so the bar never bleeds past its border.

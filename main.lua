@@ -68,6 +68,9 @@ local isTestBattle = false
 local isValidateMode = false
 local isPreviewSceneMode = false
 local previewSceneId = nil
+local isPreviewWindowMode = false
+local previewWindowId = nil
+local previewWindowMockSpec = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -251,6 +254,101 @@ local function runPreviewScene(sceneId)
                 love.graphics.setCanvas()
                 payload.imageError = tostring(imgOrErr)
             end
+        end
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- E12: headless SINGLE-WINDOW preview (`lovec . preview-window <windowId>
+-- [mockSpecJSON]`) for the reusable-window editor tab. A raw windowLayout
+-- entry has no scene — no hooks ever run — so this bypasses scene_host
+-- entirely and builds a minimal one-window state directly from an
+-- editor-supplied mock spec (list source / sample text / cursor), never
+-- written to any data file. wr.draw/wr.resolveState are already generic
+-- over state.winState/windowOrder (D13's "no scene-specific code" rule
+-- paying off) so NO window_renderer.lua changes were needed to support
+-- this — same resolution/render code path as the per-scene preview.
+--
+-- mockSpec fields (all optional): listId, format, priority, highlight,
+-- sprite, gaugeValue, gaugeMax, gaugeColor, gaugeFill, text, cursor,
+-- v (seeds flow-local vars for {v.x} expressions), config (seeds a
+-- scene-config-shaped table for "config:key" list sources), siblings
+-- (optional: { windowId = <mockWin fields>, ... } — a window that reads
+-- sel('otherWindow') sees nil in true isolation, since sel() resolves
+-- against whatever's in this preview's own state; listing just the
+-- window(s) it depends on here resolves that WITHOUT turning this into a
+-- full scene preview — only the windows the author explicitly listed
+-- exist).
+local function buildMockWin(spec)
+    return {
+        open = true,
+        listId = spec.listId,
+        format = spec.format,
+        priority = spec.priority,
+        highlight = spec.highlight,
+        sprite = spec.sprite,
+        gaugeValue = spec.gaugeValue,
+        gaugeMax = spec.gaugeMax,
+        gaugeColor = spec.gaugeColor,
+        gaugeFill = spec.gaugeFill,
+        text = spec.text,
+        cursor = spec.cursor or 1,
+    }
+end
+
+local function runPreviewWindow(windowId, mockSpecJSON)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local spec = {}
+        if mockSpecJSON and mockSpecJSON ~= "" then
+            local decoded = json.decode(mockSpecJSON)
+            if type(decoded) == "table" then spec = decoded end
+        end
+
+        local vSession = makeHarnessSession()
+        local winState = { [windowId] = buildMockWin(spec) }
+        local windowOrder = { windowId }
+        for siblingId, siblingSpec in pairs(spec.siblings or {}) do
+            winState[siblingId] = buildMockWin(siblingSpec)
+            table.insert(windowOrder, siblingId)
+        end
+        local state = {
+            v = spec.v or {},
+            winState = winState,
+            windowOrder = windowOrder,
+        }
+        -- Not a real scene: only .config is read (by the "config:key" list
+        -- source), so a bare table with that one field is sufficient.
+        local sceneData = { config = spec.config or {} }
+        local ctx = { session = vSession, loader = loader, party = vSession.party, events = {} }
+
+        local wr = require("presentation.window_renderer")
+        payload = wr.resolveState(state, sceneData, ctx)
+        payload.windowId = windowId
+        payload.gameWidth = gameWidth
+        payload.gameHeight = gameHeight
+
+        local okDraw, imgOrErr = pcall(function()
+            local ui = require("presentation.ui")
+            ui.init()
+            local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+            love.graphics.setCanvas(previewCanvas)
+            love.graphics.clear(0, 0, 0, 1)
+            love.graphics.setColor(1, 1, 1, 1)
+            wr.draw(state, sceneData, ctx)
+            love.graphics.setCanvas()
+            local fileData = previewCanvas:newImageData():encode("png")
+            return love.data.encode("string", "base64", fileData)
+        end)
+        if okDraw then
+            payload.image = imgOrErr
+        else
+            love.graphics.setCanvas()
+            payload.imageError = tostring(imgOrErr)
         end
     end)
     if not ok then payload = { error = tostring(err) } end
@@ -1178,6 +1276,14 @@ function love.load(arg)
                 isPreviewSceneMode = true
                 previewSceneId = arg[i + 1]
                 i = i + 1
+            elseif val == "preview-window" then
+                -- mockSpecJSON is always passed (the server supplies "{}"
+                -- when there's no mock binding) so parsing never has to
+                -- guess whether the next arg is data or another flag.
+                isPreviewWindowMode = true
+                previewWindowId = arg[i + 1]
+                previewWindowMockSpec = arg[i + 2]
+                i = i + 2
             end
             i = i + 1
         end
@@ -1187,6 +1293,14 @@ function love.load(arg)
     if isPreviewSceneMode then
         loader.init()
         runPreviewScene(previewSceneId)
+        love.event.quit(0)
+        return
+    end
+
+    -- E12: headless single-window preview for the Windows tab, then quit.
+    if isPreviewWindowMode then
+        loader.init()
+        runPreviewWindow(previewWindowId, previewWindowMockSpec)
         love.event.quit(0)
         return
     end
