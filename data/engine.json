@@ -1703,7 +1703,7 @@
       "width": 11.5,
       "height": 13.5,
       "style": "panel",
-      "title": "Info",
+      "title": null,
       "lineSpacing": 1.5
     },
     "status_panel": {
@@ -1713,7 +1713,44 @@
       "height": 13.5,
       "style": "panel",
       "title": null,
-      "lineSpacing": 1.5
+      "pageFormula": "v.page or 1",
+      "pages": [
+        {
+          "contentY": 6,
+          "lineSpacing": 1.25,
+          "gauges": [
+            {
+              "label": "HP  {sel('status_party').hp}/{sel('status_party').maxHp}",
+              "value": "sel('status_party').hp",
+              "max": "sel('status_party').maxHp",
+              "x": 1,
+              "y": 1,
+              "width": 18
+            },
+            {
+              "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
+              "value": "sel('status_party').exp",
+              "max": "sel('status_party').expNeeded",
+              "x": 1,
+              "y": 3.25,
+              "width": 18,
+              "color": [0.1, 0.2, 0.5],
+              "fill": [0.3, 0.6, 1]
+            }
+          ],
+          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}\nAMR {sel('status_party').armor}\nACC {sel('status_party').accessory}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.25,
+          "text": "{sel('status_party').name}   Skills & Passives\n\nSKILLS\n{sel('status_party').skillText}\n\nPASSIVES\n{sel('status_party').passiveText}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.5,
+          "text": "{sel('status_party').name}\n{sel('status_party').role}\n\n{sel('status_party').biography}"
+        }
+      ]
     },
     "shop_header": {
       "x": 0,
@@ -1738,7 +1775,7 @@
       "width": 11.5,
       "height": 13.5,
       "style": "panel",
-      "title": "Item Info"
+      "title": null
     },
     "battle_log_window": {
       "x": 0,

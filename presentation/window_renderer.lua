@@ -126,6 +126,7 @@ local function partyRows(session)
         view.exp = m.exp or 0
         view.expNeeded = (m.level or 1) * expPerLevel
         view.role = (m.actorData and m.actorData.role) or "CREATURE"
+        view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
         local eq = m.equipment or {}
         view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
         view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
@@ -284,31 +285,49 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
     end
 end
 
--- Content needs room beneath a visible title, but an untitled window should
--- start at the panel's normal inner padding instead of reserving a phantom
--- header. Layouts may still explicitly opt into any other offset.
-local function contentOffset(layout, title)
-    if layout.contentY ~= nil then return layout.contentY end
-    return (title and title ~= "") and 2 or 1
+-- Layout-authored gauges let a panel present live values without a
+-- scene-specific renderer.  Labels support the same {formula} interpolation
+-- as ordinary window text; values and maxima are formula expressions.
+local function drawLayoutGauges(gauges, env, x, y)
+    for _, gauge in ipairs(gauges or {}) do
+        local gx = x + ui.toPx(gauge.x or 1)
+        local gy = y + ui.toPx(gauge.y or 1)
+        local value = tonumber(formula.eval(gauge.value or "0", env)) or 0
+        local maximum = tonumber(formula.eval(gauge.max or "1", env)) or 1
+        ui.drawString(interpolate(gauge.label or "", env), gx, gy, COLOR_NORMAL)
+        ui.drawBar(gx, gy + ui.lineHeight, ui.toPx(gauge.width or 18), gauge.height or 3,
+            value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 })
+    end
 end
 
-local function contentInsetX(layout)
-    return layout.contentX or layout.textX or 1
+local function resolvePageLayout(layout, env)
+    if not layout.pages then return layout end
+    local page = math.floor(tonumber(formula.eval(layout.pageFormula or "1", env)) or 1)
+    local pageLayout = layout.pages[page] or layout.pages[1] or {}
+    local resolved = {}
+    for key, value in pairs(layout) do resolved[key] = value end
+    for key, value in pairs(pageLayout) do resolved[key] = value end
+    return resolved
 end
 
-local function drawPortrait(layout, env, x, y)
+local function contentOrigin(layout, title, x, y)
+    return ui.panelContentOrigin(x, y, title, layout.contentX or layout.textX, layout.contentY)
+end
+
+local function drawPortrait(layout, env, x, y, title)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
     if type(key) ~= "string" or key == "" then return end
     local img = getImage("assets/portraits/" .. key .. ".png")
     if img then
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(img, x + ui.toPx(layout.portraitX or 1), y + ui.toPx(layout.portraitY or 2), 0, 1, 1)
+        local contentX, contentY = contentOrigin(layout, title, x, y)
+        love.graphics.draw(img, x + ui.toPx(layout.portraitX or 1), layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY, 0, 1, 1)
     end
 end
 
 local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
-    local contentY = y + ui.toPx(contentOffset(layout, title))
+    local contentX, contentY = contentOrigin(layout, title, x, y)
 
     -- Row widgets (vocabulary extension 11.07.2026): win.sprite names a row
     -- field carrying a small-battler sheet key drawn at the row's left;
@@ -326,7 +345,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
     local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / rowPitch))
     if #rows == 0 then
         local emptyText = layout.emptyText or "No entries."
-        ui.drawString(emptyText, x + ui.toPx(0.5), contentY, COLOR_DIM)
+        ui.drawString(emptyText, contentX, contentY, COLOR_DIM)
         return
     end
     local startOffset = math.max(1, math.min(cursor - 3, #rows - visible + 1))
@@ -351,12 +370,12 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad)
         end
 
-        local textX = x + ui.toPx(1)
-        ui.drawString(isSel and ">" or " ", x + ui.toPx(0.5), rowY, color)
+        local textX = contentX + ui.toPx(0.5)
+        ui.drawString(isSel and ">" or " ", contentX, rowY, color)
         if spriteField then
             local key = row[spriteField]
             if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
-                textX = x + ui.toPx(1) + spriteSize + 3
+            textX = contentX + ui.toPx(0.5) + spriteSize + 3
             end
         end
         if row.icon and row.icon > 0 then
@@ -390,8 +409,7 @@ end
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
     local colW, rowH = actor_status.cellSize(session)
     local cols = layout.gridColumns or 2
-    local contentX = x + ui.toPx(contentInsetX(layout))
-    local contentY = y + ui.toPx(contentOffset(layout, title))
+    local contentX, contentY = contentOrigin(layout, title, x, y)
     for i, row in ipairs(rows) do
         if row.battlerRef then
             local col = (i - 1) % cols
@@ -416,21 +434,23 @@ local function drawOptions(rows, cursor, env, x, y, w)
     end
 end
 
-local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h)
+local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     if #rows == 0 or cursor < 1 or cursor > #rows then return end
     local row = rows[cursor]
     local cx = x + w / 2
-    local iconY = y + ui.toPx(3)
+    local _, contentY = contentOrigin(layout, title, x, y)
+    local iconY = contentY + ui.toPx(1)
     love.graphics.setColor(1, 1, 0.5, 0.5 + 0.5 * math.sin(love.timer.getTime() * 15))
     love.graphics.rectangle("line", cx - ui.iconSize / 2 - 4, iconY - 4, ui.iconSize + 8, ui.iconSize + 8)
     love.graphics.setColor(1, 1, 1, 1)
     if row.icon and row.icon > 0 then
         ui.drawIcon(row.icon, cx - ui.iconSize / 2, iconY)
     end
-    ui.drawString(row.name or "", x, y + ui.toPx(6.5), COLOR_SELECTED, "center", w)
+    ui.drawString(row.name or "", x, contentY + ui.toPx(4.5), COLOR_SELECTED, "center", w)
 end
 
 local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache)
+    layout = resolvePageLayout(layout, env)
     local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
     local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
     local style = layout.style or "panel"
@@ -439,22 +459,25 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
 
     ui.drawPanel(x, y, w, h, title)
 
-    local contentY = y + ui.toPx(contentOffset(layout, title))
+    local contentX, contentY = contentOrigin(layout, title, x, y)
     local lineSpacing = ui.toPx(layout.lineSpacing or 2)
 
-    drawPortrait(layout, env, x, y)
+    drawPortrait(layout, env, x, y, title)
+    drawLayoutGauges(layout.gauges, env, x, y)
+
+    local text = layout.text ~= nil and layout.text or win.text
 
     if style == "list" then
         local cached = listCache[id]
         if cached then
             drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
         end
-        if win.text then
-            drawTextLines(win.text, env, x + ui.toPx(contentInsetX(layout)), contentY, lineSpacing, w - ui.toPx(2))
+        if text then
+            drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
         end
     elseif style == "confirm" then
-        if win.text then
-            drawTextLines(win.text, env, x + ui.toPx(2), contentY, lineSpacing, w - ui.toPx(4))
+        if text then
+            drawTextLines(text, env, x + ui.toPx(2), contentY, lineSpacing, w - ui.toPx(4))
         end
         local cached = listCache[id]
         if cached then
@@ -463,7 +486,7 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     elseif style == "roulette" then
         local cached = listCache[id]
         if cached then
-            drawRoulette(win, layout, cached.rows, cached.cursor, env, x, y, w, h)
+            drawRoulette(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
         end
     elseif style == "partyGrid" then
         local cached = listCache[id]
@@ -471,10 +494,10 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
             drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title)
         end
     else -- "panel", "frame" and any unknown style: text content
-        if win.text then
+        if text then
             local align = (style == "frame") and "center" or "left"
-            local tx = (style == "frame") and x or (x + ui.toPx(contentInsetX(layout)))
-            drawTextLines(win.text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
+            local tx = (style == "frame") and x or contentX
+            drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
         end
     end
 end
@@ -546,7 +569,7 @@ function wr.resolveState(state, sceneData, ctx)
     for _, id in ipairs(state.windowOrder or {}) do
         local win = state.winState[id]
         if win then
-            local layout = layouts[id] or {}
+            local layout = resolvePageLayout(layouts[id] or {}, env)
             local entry = {
                 id = id,
                 open = win.open == true,
@@ -560,8 +583,9 @@ function wr.resolveState(state, sceneData, ctx)
             }
             local okT, title = pcall(interpolate, layout.title, env)
             if layout.title ~= nil then entry.title = okT and title or ("<error: " .. tostring(title) .. ">") end
-            if win.text ~= nil then
-                local okX, text = pcall(interpolate, win.text, env)
+            local windowText = layout.text ~= nil and layout.text or win.text
+            if windowText ~= nil then
+                local okX, text = pcall(interpolate, windowText, env)
                 entry.text = okX and text or nil
                 if not okX then entry.error = tostring(text) end
             end

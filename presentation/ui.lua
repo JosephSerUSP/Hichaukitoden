@@ -91,6 +91,15 @@ function ui.toPx(tiles)
     return tiles * ui.tileSize
 end
 
+-- Shared content origin for every window renderer.  A title earns one extra
+-- tile of vertical breathing room; an untitled panel starts at the normal
+-- one-tile inset.  Individual layouts can override either coordinate.
+function ui.panelContentOrigin(x, y, title, contentX, contentY)
+    local hasTitle = title and title ~= ""
+    return x + ui.toPx(contentX ~= nil and contentX or 1),
+        y + ui.toPx(contentY ~= nil and contentY or (hasTitle and 2 or 1))
+end
+
 -- Draw RPG Maker 2003 styled windowskin panel
 -- Layout specifications:
 -- First 32x32: seamlessly tiling background

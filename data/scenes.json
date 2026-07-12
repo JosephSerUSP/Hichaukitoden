@@ -113,6 +113,11 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
+          "name": "page",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "state",
           "value": 1
         },
@@ -1451,6 +1456,11 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
+          "name": "page",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "idx",
           "value": 1
         },
@@ -1475,7 +1485,7 @@
         {
           "cmd": "SET_TEXT",
           "windowId": "status_panel",
-          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nHP {sel('status_party').hp}/{sel('status_party').maxHp}    EXP {sel('status_party').exp}/{sel('status_party').expNeeded}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}   AMR {sel('status_party').armor}\nACC {sel('status_party').accessory}\nPASSIVES {sel('status_party').passiveText}\nSKILLS {sel('status_party').skillText}   STATES {sel('status_party').stateText}"
+          "text": ""
         },
         {
           "cmd": "OPEN_WINDOW",
@@ -1488,7 +1498,7 @@
         {
           "cmd": "SET_TEXT",
           "windowId": "help",
-          "text": "UP/DOWN: select member    ESC: back"
+          "text": "UP/DOWN: select member    LEFT/RIGHT: page    ESC: back"
         }
       ],
       "on_up": [
@@ -1513,6 +1523,46 @@
               "cmd": "SET_VAR",
               "name": "idx",
               "value": "v.idx + 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "(v.page or 1) > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "page",
+              "value": "(v.page or 1) - 1"
+            }
+          ],
+          "else": [
+            {
+              "cmd": "SET_VAR",
+              "name": "page",
+              "value": 3
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "(v.page or 1) < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "page",
+              "value": "(v.page or 1) + 1"
+            }
+          ],
+          "else": [
+            {
+              "cmd": "SET_VAR",
+              "name": "page",
+              "value": 1
             }
           ]
         }
