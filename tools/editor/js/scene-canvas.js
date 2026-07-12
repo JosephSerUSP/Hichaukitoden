@@ -47,6 +47,20 @@
             return hits;
         }
 
+        // E12: same scan, across EVERY scene — a windowLayout entry can be
+        // shared by more than one scene now (partyGrid windows especially),
+        // so Remove-Window warnings and the Windows tab's "View in Scene"
+        // link both need every reference, not just one scene's.
+        function scanAllScenesForWindowRefs(windowId) {
+            const hits = [];
+            (dbPayload.scenes || []).forEach(scene => {
+                scanForWindowRefs(scene, windowId).forEach(ref => {
+                    hits.push(Object.assign({ sceneId: scene.id, sceneName: scene.name || String(scene.id) }, ref));
+                });
+            });
+            return hits;
+        }
+
         function renderScenePreviewPanel(container, scene, refreshEditor) {
             const wl = () => {
                 dbPayload.engine.windowLayout = dbPayload.engine.windowLayout || {};
@@ -501,9 +515,11 @@
             // ---- Right-click menu --------------------------------------
 
             const removeWindow = (id) => {
-                const refs = scanForWindowRefs(scene, id);
+                // Cross-scene scan (E12): a shared windowLayout entry can be
+                // referenced by more than just the scene currently open.
+                const refs = scanAllScenesForWindowRefs(id);
                 if (refs.length > 0) {
-                    const hooks = [...new Set(refs.map(r => `${r.hook} (${r.cmd})`))];
+                    const hooks = [...new Set(refs.map(r => `${r.sceneName} → ${r.hook} (${r.cmd})`))];
                     if (!confirm(`'${id}' is still referenced by ${refs.length} command(s):\n  ${hooks.join('\n  ')}\n\nRemove the windowLayout entry anyway? The commands will point at a missing window.`)) return;
                 }
                 delete wl()[id];

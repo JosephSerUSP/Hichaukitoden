@@ -212,6 +212,63 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(jsonText);
         });
+    } else if (req.method === 'POST' && req.url === '/preview-window') {
+        // E12: invoke the engine's headless SINGLE-WINDOW preview against
+        // the SAVED windowLayout registry (same staleness caveat as
+        // /preview-scene: reflects the last save). POST because the mock
+        // spec (list source, sample text, sibling windows for sel()) can
+        // be nontrivially sized — a GET query string would be fragile.
+        // Body: { id: "windowId", mock: { ...mockSpec, see main.lua
+        // runPreviewWindow } }. Failures are structured JSON, never a 500.
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            const fail = (msg) => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: msg }));
+            };
+            let parsed;
+            try {
+                parsed = JSON.parse(body || '{}');
+            } catch (e) {
+                return fail('request body was not valid JSON: ' + e.message);
+            }
+            const windowId = parsed.id;
+            if (!windowId || !/^[\w-]+$/.test(windowId)) return fail('missing or invalid window id');
+            if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
+
+            let mockJson;
+            try {
+                mockJson = JSON.stringify(parsed.mock || {});
+            } catch (e) {
+                return fail('mock spec could not be serialized: ' + e.message);
+            }
+
+            // Argument list form (no shell): mockJson can't be used for
+            // injection regardless of its content.
+            const { execFile } = require('child_process');
+            execFile(previewExe, ['.', 'preview-window', windowId, mockJson], {
+                cwd: PROJECT_DIR,
+                timeout: 15000,
+                windowsHide: true,
+                maxBuffer: 4 * 1024 * 1024
+            }, (err, stdout) => {
+                const text = String(stdout || '');
+                const begin = text.indexOf('PREVIEW BEGIN');
+                const end = text.indexOf('PREVIEW END');
+                if (begin === -1 || end === -1 || end < begin) {
+                    return fail('preview produced no output' + (err ? ' (' + err.message + ')' : ''));
+                }
+                const jsonText = text.slice(begin + 'PREVIEW BEGIN'.length, end).trim();
+                try {
+                    JSON.parse(jsonText); // validate before relaying
+                } catch (e) {
+                    return fail('preview output was not valid JSON: ' + e.message);
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(jsonText);
+            });
+        });
     } else if (req.method === 'GET' && req.url === '/api/graphs') {
         const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
         if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {
