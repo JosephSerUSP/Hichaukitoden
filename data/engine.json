@@ -1049,6 +1049,10 @@
         {
           "key": "scene",
           "type": "text"
+        },
+        {
+          "key": "vars",
+          "type": "assignments"
         }
       ],
       "contexts": [
@@ -1056,7 +1060,18 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Emits a scene_change event that main.lua consumes; the interpreter never switches scenes itself."
+      "description": "Emits a scene_change event that scene_host consumes; the interpreter never switches scenes itself. Optional vars ({name, value} rows, evaluated against the pushing scene right now) are applied to the pushed scene's v right after its own on_enter runs, e.g. to hand it a chosen party member index."
+    },
+    {
+      "id": "FALLBACK",
+      "category": "Advanced",
+      "label": "Fall Through to Legacy Input",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Marks this hook invocation as unhandled so the legacy input underneath it runs instead (e.g. map movement on up/down/left/right when no menu overlay is open). Any hook key otherwise intercepts its key unconditionally."
     },
     {
       "id": "LOAD_MAP",
@@ -1987,6 +2002,51 @@
       "height": 8,
       "style": "panel",
       "title": "INFO",
+      "lineSpacing": 1
+    },
+    "map_command": {
+      "x": 0,
+      "y": 15,
+      "width": 32,
+      "height": 3.5,
+      "style": "command",
+      "title": null,
+      "anim": {
+        "open": {
+          "slide": "up",
+          "duration": 0.18
+        }
+      }
+    },
+    "map_command_help": {
+      "x": 0,
+      "y": 11.5,
+      "width": 32,
+      "height": 3.5,
+      "style": "panel",
+      "title": null
+    },
+    "map_member_popup": {
+      "x": 8,
+      "y": 8,
+      "width": 16,
+      "height": 10.5,
+      "style": "list",
+      "title": null,
+      "anim": {
+        "open": {
+          "slide": "down",
+          "duration": 0.15
+        }
+      }
+    },
+    "map_confirm": {
+      "x": 4,
+      "y": 6,
+      "width": 24,
+      "height": 8,
+      "style": "confirm",
+      "title": "CONFIRM",
       "lineSpacing": 1
     }
   }

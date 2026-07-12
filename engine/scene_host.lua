@@ -187,8 +187,20 @@ function scene_host.runHook(hookName, ctx)
             scene_host.pop(ctx)
         elseif ev.kind == "push" and ev.scene then
             scene_host.push(ev.scene, ctx)
+            if ev.vars then
+                local pushed = sceneStack[#sceneStack]
+                if pushed then
+                    for k, val in pairs(ev.vars) do pushed.v[k] = val end
+                end
+            end
         elseif ev.kind == "goto" and ev.scene then
             scene_host.goto_scene(ev.scene, ctx)
+            if ev.vars then
+                local pushed = sceneStack[#sceneStack]
+                if pushed then
+                    for k, val in pairs(ev.vars) do pushed.v[k] = val end
+                end
+            end
         end
     end
 

@@ -205,6 +205,15 @@ end
 
 handlers.COMMENT = function() end
 
+-- Lets a scene hook opt OUT of handling a key for a particular branch, so
+-- the legacy input still underneath it (map movement, dungeon interact)
+-- runs instead. Needed because any existing hook key intercepts its key
+-- unconditionally otherwise (scene_host.runHook has no other way to say
+-- "I looked, but this press isn't mine").
+handlers.FALLBACK = function(cmd, ctx)
+    ctx.hookFallback = true
+end
+
 -- Scene-only bridge for the battle's legacy input semantics.  The scene hook
 -- selects the input phase; the helper owns the actual command decisions.
 handlers.BATTLE_INPUT = function(cmd, ctx)
@@ -694,9 +703,23 @@ handlers.RESET_SESSION = function(cmd, ctx)
 end
 
 handlers.SCENE_EVENT = function(cmd, ctx)
-    -- The interpreter never switches scenes itself (S2); main.lua consumes
-    -- this event and performs the transition.
-    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene })
+    -- The interpreter never switches scenes itself (S2); scene_host consumes
+    -- this event and performs the transition. Optional `vars` (same
+    -- {name, value} shape as SET_VAR assignments) are resolved NOW, against
+    -- the PUSHING scene's v/session/party — the only point where that
+    -- context is still live — then applied to the pushed scene's v right
+    -- after its own on_enter runs (scene_host.push), so a scene can hand a
+    -- specific target (e.g. which party member) to the scene it opens.
+    local vars = nil
+    if type(cmd.vars) == "table" then
+        vars = {}
+        for _, a in ipairs(cmd.vars) do
+            if type(a) == "table" and a.name then
+                vars[a.name] = evalFormula(a.value, ctx)
+            end
+        end
+    end
+    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene, vars = vars })
 end
 
 ------------------------------------------------------------------

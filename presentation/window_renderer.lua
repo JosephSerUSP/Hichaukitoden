@@ -638,6 +638,16 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
         if cached then
             drawOptions(cached.rows, cached.cursor, env, x, y + h - ui.toPx(2.5), w)
         end
+    elseif style == "command" then
+        -- Single-line horizontal option bar (the same primitive "confirm"
+        -- uses for its yes/no row), for scenes that offer a flat list of
+        -- global actions rather than a vertical list. A companion window
+        -- typically binds its text to {sel('this_id').help} for a
+        -- description of the highlighted entry.
+        local cached = listCache[id]
+        if cached then
+            drawOptions(cached.rows, cached.cursor, env, x, contentY, w)
+        end
     elseif style == "roulette" then
         local cached = listCache[id]
         if cached then

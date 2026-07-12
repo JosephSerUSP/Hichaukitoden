@@ -98,8 +98,6 @@ local dialogueSelectIdx = 1
 
 -- Menu State
 
-local selectedCreatureIndex = 1
-local selectedSlotIndex = 1
 
 local inputCooldown = 0
 
@@ -844,7 +842,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1 },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1212,7 +1210,10 @@ elseif paramDef.type == "script" then
                 resultItemName = "",
                 -- Common menu variables (D6 scenes)
                 opt = 1, subIdx = 1, idx = 1, count = 1,
-                selectedIdx = 1, _guard = 0, eqIdx = 1
+                selectedIdx = 1, _guard = 0, eqIdx = 1,
+                -- Map scene's cursor/overlay state
+                mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1,
+                memberIdx = 1, popupIdx = 1, confirmIdx = 1
             }
         }
         
@@ -1445,6 +1446,15 @@ function love.draw()
         renderer.drawTown(townSelectedIdx)
     elseif scene_host.getCurrent() == "map" then
         renderer.drawMap()
+        -- The map's world is legacy-drawn (draw ~= "windows"), but its
+        -- party bar / command overlay / member popup are data-authored
+        -- windows layered on top via the generic renderer, same as any
+        -- draw:"windows" scene.
+        local mapState = scene_host.getCurrentState()
+        local mapSceneData = loader.getScene("map")
+        if mapState and mapSceneData then
+            require("presentation.window_renderer").draw(mapState, mapSceneData, { session = activeSession, loader = loader })
+        end
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
     elseif scene_host.getCurrent() == "battle" then
@@ -1753,13 +1763,10 @@ local function handleKeyPressed(key)
 
     if key == "escape" then
         -- E10: title ESC is handled by the scene's on_cancel hook (moves the
-        -- cursor to Exit instead of instant-quitting).
-        if scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
-            -- Open Main Menu instead of exiting! The menu is a declarative
-            -- scene (scenes.json 'menu'); its hooks handle all input.
-            scene_host.push("menu", { session = activeSession, loader = loader, party = activeSession.party })
-            return
-        elseif scene_host.getCurrent() == "dialogue" then
+        -- cursor to Exit instead of instant-quitting). Map's ESC (opening
+        -- the party cursor + command overlay) is likewise fully handled by
+        -- the map scene's own on_cancel hook above — nothing left to do here.
+        if scene_host.getCurrent() == "dialogue" then
             scene_host.goto_scene("map")
             return
         end
@@ -1793,6 +1800,14 @@ local function handleKeyPressed(key)
         end
         
     elseif scene_host.getCurrent() == "map" then
+        -- Strafe (q/e) has no scene_host hook mapping, so it isn't caught
+        -- by the map scene's FALLBACK dance above; guard it here directly
+        -- so it can't move the party while the cursor/command overlay
+        -- (v.mode ~= 0) is open.
+        local mapState = scene_host.getCurrentState()
+        if (key == "q" or key == "e") and mapState and mapState.v.mode and mapState.v.mode ~= 0 then
+            return
+        end
         local moved = false
         if key == "up" or key == "w" then
             moved = exploration.moveForward(activeSession)
