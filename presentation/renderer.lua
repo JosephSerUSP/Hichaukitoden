@@ -180,7 +180,6 @@ end
 
 -- Battle animation state per enemy: { slideTimer, deathTimer, dead, flashTimer, flashType }
 local battleAnims = {}
-local menuTimer = 0
 
 local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
     glyph.vy = glyph.vy + gravity * dt
@@ -197,25 +196,6 @@ local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
             glyph.vx = 0
         end
     end
-end
-
-renderer.closing = false
-renderer.closingScene = ""
-renderer.closingTimer = 0
-renderer.closingTargetScene = ""
-renderer.closingTargetSubScene = ""
-
-function renderer.startClosing(closingScene, targetScene, targetSubScene)
-    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    renderer.closing = true
-    renderer.closingScene = closingScene
-    renderer.closingTimer = slideDur
-    renderer.closingTargetScene = targetScene
-    renderer.closingTargetSubScene = targetSubScene or ""
-end
-
-function renderer.resetMenuTimer()
-    menuTimer = 0
 end
 
 function renderer.initBattleAnims(enemies)
@@ -249,11 +229,6 @@ function renderer.triggerSmallDamage(target)
 end
 
 function renderer.update(dt)
-    -- The closing animation timer is owned by love.update in main.lua (it
-    -- performs the scene switch and sets the input cooldown). Decrementing it
-    -- here too made the two race: when this copy hit zero first, the scene
-    -- never switched and the menu popped back open.
-
     local gravity = config.physics and config.physics.gravity or 480
     local bounceRetain = config.physics and config.physics.bounceVelocityRetain or 0.45
     for i = #damagePopups, 1, -1 do
@@ -284,8 +259,6 @@ function renderer.update(dt)
     -- Smoothly interpolate party HP and Summoner MP
     local session = renderer.session
     if session then
-        menuTimer = menuTimer + dt
-        
         if renderer.activeBattle then
             for _, enemy in ipairs(renderer.activeBattle.enemies) do
                 if not enemy.displayedHp then enemy.displayedHp = enemy.hp end
@@ -961,117 +934,5 @@ end
 
 -- drawShop deleted: the shop is a declarative scene now ("draw": "windows"
 -- in scenes.json) — the generic window renderer draws it from its hooks.
-
-local function drawDarkGradient()
-    for i = 0, 24 do
-        local y1 = (i / 24) * 244
-        local y2 = ((i + 1) / 24) * 244
-        local t = i / 24
-        local r = 0.01 * (1 - t) + 0.00 * t
-        local g = 0.02 * (1 - t) + 0.01 * t
-        local b = 0.06 * (1 - t) + 0.02 * t
-        local a = 0.92 * (1 - t) + 0.78 * t
-        love.graphics.setColor(r, g, b, a)
-        love.graphics.rectangle("fill", 0, y1, 256, y2 - y1)
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
-function renderer.drawMainMenu(mainIdx, activeCol, rightIdx, session, subScene)
-    -- Dark gradient background overlay
-    drawDarkGradient()
-
-    -- status_detail removed: STATUS is a declarative scene now
-    -- (scenes.json 'status'), pushed by the menu instead of a sub-scene.
-    
-    -- Quadratic ease-out slide-in animation
-    local slideDur = config.ui and config.ui.menuSlideDuration or 0.22
-    local slideProgress
-    if renderer.closing and renderer.closingScene == "menu" then
-        slideProgress = math.max(0, math.min(1, renderer.closingTimer / slideDur))
-    else
-        slideProgress = math.min(1, menuTimer / slideDur)
-    end
-    local ease = 1 - (1 - slideProgress) * (1 - slideProgress)
-    
-    local leftX = ui.toPx(1) - (1 - ease) * ui.toPx(10)
-    local rightX = ui.toPx(10) + (1 - ease) * ui.toPx(24)
-    local bottomY = ui.toPx(20) + (1 - ease) * ui.toPx(12)
-    
-    -- 1. Draw Left Menu Column
-    ui.drawPanel(leftX, ui.toPx(1), ui.toPx(8), ui.toPx(18), "MENU")
-    local mainOpts = session.loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "CRAFTING", "EXIT" })
-    for i, opt in ipairs(mainOpts) do
-        local isSel = (subScene == "main" and i == mainIdx)
-        local color = isSel and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local prefix = isSel and ">" or " "
-        ui.drawString(prefix .. opt, leftX + 0.5 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)) + (i - 1) * ui.lineHeight, color)
-    end
-    
-    -- Gold and Floor stats inside left menu column below the options
-    local statsY = math.max(12.5, 4.0 + #mainOpts * 2.0)
-    ui.drawString("GOLD", leftX + 0.5 * ui.tileSize, ui.toPx(statsY), {0.6, 0.6, 0.6, 1})
-    ui.drawString(session.gold .. " G", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 1.0), {1, 0.9, 0.3, 1})
-    
-    local mapTitle = "Town"
-    if session.currentMapData then
-        mapTitle = session.currentMapData.title or "1"
-    end
-    ui.drawString("FLOOR", leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 2.25), {0.6, 0.6, 0.6, 1})
-    ui.drawString(mapTitle, leftX + 0.5 * ui.tileSize, ui.toPx(statsY + 3.25), {1, 1, 1, 1}, "left", ui.toPx(6.75))
-    
-    -- 2. Draw Bottom Description Panel
-    ui.drawPanel(ui.toPx(1), bottomY, ui.toPx(30), ui.toPx(9.5), "INFO")
-    
-    -- 3. Draw Right Details Panel based on selection
-    local panelTitle = mainOpts[mainIdx]
-    if subScene == "party_select" then
-        panelTitle = "SELECT UNIT"
-    elseif subScene == "exit_confirm" then
-        panelTitle = "CONFIRM"
-    end
-    ui.drawPanel(rightX, ui.toPx(1), ui.toPx(21), ui.toPx(18), panelTitle)
-    
-    local textLeftMargin = ui.toPx(2)
-    if subScene == "main" or subScene == "party_select" then
-        -- Displays unit grid by default when browsing the main menu!
-        local showCursor = (subScene == "party_select")
-        renderer.drawPartyGrid(rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), rightIdx, session, showCursor)
-        
-        local selCreature = session.party[rightIdx]
-        if selCreature then
-            local maxHp = selCreature:getMaxHp(session)
-            ui.drawString(selCreature.name:upper() .. " (L" .. selCreature.level .. ") - HP: " .. selCreature.hp .. "/" .. maxHp, textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
-            
-            local atk = traits.getParam(selCreature, "atk", session)
-            local def = traits.getParam(selCreature, "def", session)
-            local mat = traits.getParam(selCreature, "mat", session)
-            local mdf = traits.getParam(selCreature, "mdf", session)
-            local statText = string.format("ATK:%-2d  DEF:%-2d  MAT:%-2d  MDF:%-2d", atk, def, mat, mdf)
-            ui.drawString(statText, textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.8, 0.9, 1, 1})
-            
-            local states = {}
-            for _, stateInfo in ipairs(selCreature.states) do table.insert(states, stateInfo.id:upper()) end
-            local stateStr = #states > 0 and table.concat(states, ", ") or "NORMAL"
-            ui.drawString("STATUS: " .. stateStr, textLeftMargin, bottomY + 6.5 * ui.tileSize, {1, 1, 1, 1})
-        else
-            ui.drawString(summonerName() .. "'S CREATURES", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.85, 0.5, 1})
-            ui.drawString("Manage your active summon spirits and modify equipment parameters.", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.7, 0.7, 0.7, 1}, "left", ui.toPx(28))
-        end
-        
-    elseif subScene == "exit_confirm" then
-        ui.drawString("Exit Hichaukitoden?", rightX + 1 * ui.tileSize, (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1})
-        
-        local isYes = (rightIdx == 1)
-        local isNo = (rightIdx == 2)
-        ui.drawString((isYes and "> " or "  ") .. "YES (Quit to Desktop)", rightX + 1 * ui.tileSize, ui.toPx(6.75), isYes and {1, 0.5, 0.5, 1} or {1, 1, 1, 1})
-        ui.drawString((isNo and "> " or "  ") .. "NO (Resume Game)", rightX + 1 * ui.tileSize, ui.toPx(8.5), isNo and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-        
-        ui.drawString("EXIT GAME", textLeftMargin, bottomY + 3 * ui.tileSize, {1, 0.5, 0.5, 1})
-        ui.drawString("Select YES and press ENTER to safely quit the game. Select NO or press ESC to resume.", textLeftMargin, bottomY + 4.75 * ui.tileSize, {0.9, 0.9, 0.9, 1}, "left", ui.toPx(28))
-    end
-end
-
-
 
 return renderer

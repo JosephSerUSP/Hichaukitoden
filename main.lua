@@ -98,10 +98,6 @@ local dialogueSelectIdx = 1
 
 -- Menu State
 
-local menuSelectedIdx = 1
-local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
-menuSubScene = "main"
-local menuSelectedSubIdx = 1
 local selectedCreatureIndex = 1
 local selectedSlotIndex = 1
 
@@ -237,15 +233,9 @@ local function runPreviewScene(sceneId)
                     -- their resting position, exactly as after ~2s in-game.
                     renderer.update(1)
                     renderer.update(1)
-                    local id = tostring(sceneDef.id)
-                    if id == "menu" then
-                        renderer.drawMainMenu(1, 1, 1, vSession, "main")
-                        payload.frameKind = "legacy"
-                    else
-                        local wrMod = require("presentation.window_renderer")
-                        wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
-                        payload.frameKind = "declarative"
-                    end
+                    local wrMod = require("presentation.window_renderer")
+                    wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
+                    payload.frameKind = "declarative"
                 end
                 love.graphics.setCanvas()
                 local fileData = previewCanvas:newImageData():encode("png")
@@ -1425,20 +1415,6 @@ function love.update(dt)
         inputCooldown = inputCooldown - dt
     end
     
-    -- Exiting scene transition (slide-out animation)
-    if renderer.closing then
-        renderer.closingTimer = renderer.closingTimer - dt
-        if renderer.closingTimer <= 0 then
-            renderer.closing = false
-            currentScene = renderer.closingTargetScene
-            if renderer.closingTargetSubScene ~= "" then
-                menuSubScene = renderer.closingTargetSubScene
-            end
-            renderer.resetMenuTimer()
-            inputCooldown = conf("ui", "inputCooldown", 0.30)
-        end
-    end
-    
     local ctx = { session = activeSession, loader = loader }
     if scene_host.update(dt, ctx) then
         return
@@ -1474,13 +1450,6 @@ function love.draw()
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
-    elseif scene_host.getCurrent() == "menu" then
-        if scene_host.getPrevious() == "town" then
-            renderer.drawTown(townSelectedIdx)
-        else
-            renderer.drawMap()
-        end
-        renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
     end
     end
     
@@ -1776,7 +1745,6 @@ end
 -- Action handling for key presses
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
-    if renderer.closing then return end
 
     local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then
@@ -1787,29 +1755,10 @@ local function handleKeyPressed(key)
         -- E10: title ESC is handled by the scene's on_cancel hook (moves the
         -- cursor to Exit instead of instant-quitting).
         if scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
-            -- Open Main Menu instead of exiting!
-
-            menuSelectedIdx = 1
-            menuSubScene = "main"
-            renderer.resetMenuTimer()
+            -- Open Main Menu instead of exiting! The menu is a declarative
+            -- scene (scenes.json 'menu'); its hooks handle all input.
             scene_host.push("menu", { session = activeSession, loader = loader, party = activeSession.party })
             return
-        elseif scene_host.getCurrent() == "menu" then
-            -- Only the top-level menu is handled here; submenus each have
-            -- their own escape branch below that steps back exactly one
-            -- level (intercepting them here used to close the whole menu).
-            if menuSubScene == "main" then
-                if menuActiveCol == 2 then
-                    menuActiveCol = 1
-                    menuSelectedSubIdx = 1
-                else
-                    local currentId = scene_host.getPrevious()
-                    if currentId then
-                        renderer.startClosing("menu", currentId)
-                    end
-                end
-                return
-            end
         elseif scene_host.getCurrent() == "dialogue" then
             scene_host.goto_scene("map")
             return
@@ -1960,77 +1909,6 @@ local function handleKeyPressed(key)
             end
         end
         
-    elseif scene_host.getCurrent() == "menu" then
-        if menuSubScene == "main" then
-            local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "CRAFTING", "EXIT" })
-            local numOpts = #mainOpts
-            if key == "up" or key == "w" then
-                menuSelectedIdx = (menuSelectedIdx - 2) % numOpts + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedIdx = menuSelectedIdx % numOpts + 1
-            elseif key == "space" or key == "return" then
-                local opt = mainOpts[menuSelectedIdx]
-                if opt == "ITEMS" then
-                    -- Items is a declarative scene now (scenes.json 'items')
-                    scene_host.push("items", { session = activeSession, loader = loader, party = activeSession.party })
-                elseif opt == "STATUS" then
-                    menuSubScene = "party_select"
-                    menuSelectedSubIdx = 1
-                elseif opt == "CRAFTING" then
-                    -- Item Creation is an extra (data-authored) scene; address
-                    -- it by scene id, not by a dissolved kind string (D13).
-                    scene_host.push(1, { session = activeSession, loader = loader, party = activeSession.party })
-                elseif opt == "EXIT" then
-                    menuSubScene = "exit_confirm"
-                    menuSelectedSubIdx = 2 -- Default to NO
-                end
-            end
-            
-        elseif menuSubScene == "party_select" then
-            -- 2x2 grid navigation inputs for selecting creatures in the party
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
-            elseif key == "left" or key == "a" then
-                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
-                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
-                end
-            elseif key == "right" or key == "d" then
-                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
-                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
-                end
-            elseif key == "escape" then
-                menuSubScene = "main"
-                menuSelectedSubIdx = 1
-            elseif key == "space" or key == "return" then
-                if activeSession.party[menuSelectedSubIdx] then
-                    selectedCreatureIndex = menuSelectedSubIdx
-                    -- Status is a declarative scene now (equip lives inside
-                    -- it); seed its cursor with the member picked in the
-                    -- menu's party column.
-                    scene_host.push("status", { session = activeSession, loader = loader, party = activeSession.party })
-                    local stState = scene_host.getCurrentState()
-                    if stState then stState.v.idx = selectedCreatureIndex end
-                end
-            end
-
-        elseif menuSubScene == "exit_confirm" then
-            if key == "up" or key == "w" or key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx == 1 and 2 or 1
-            elseif key == "escape" then
-                menuSubScene = "main"
-                menuSelectedSubIdx = 1
-            elseif key == "space" or key == "return" then
-                if menuSelectedSubIdx == 1 then
-                    love.event.quit()
-                else
-                    menuSubScene = "main"
-                    menuSelectedSubIdx = 1
-                end
-            end
-        end
-        
     end
 end
 
@@ -2093,24 +1971,7 @@ function love.keypressed(key, scancode, isrepeat)
         return
     end
     
-    local oldScene = scene_host.getCurrent()
-    local oldSub = menuSubScene
-    
     handleKeyPressed(key)
-    
-    local function isMajorSubSceneTransition(oldSub, newSub)
-        if oldSub == newSub then return false end
-        if (oldSub == "main" and newSub == "party_select") or (oldSub == "party_select" and newSub == "main") then
-            return false
-        end
-        return true
-    end
-
-    if scene_host.getCurrent() ~= oldScene or (scene_host.getCurrent() == "menu" and isMajorSubSceneTransition(oldSub, menuSubScene)) then
-        if not renderer.closing then
-            renderer.resetMenuTimer()
-        end
-    end
 end
 
 function love.resize(w, h)

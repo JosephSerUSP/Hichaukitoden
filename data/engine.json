@@ -1702,23 +1702,51 @@
       "width": 10,
       "height": 20.5,
       "style": "list",
-      "title": "Menu"
+      "title": "Menu",
+      "anim": {
+        "open": {
+          "slide": "left",
+          "duration": 0.22
+        }
+      }
     },
     "menu_right_panel": {
       "x": 10,
       "y": 3.5,
-      "width": 10,
+      "width": 14,
       "height": 20.5,
-      "style": "list",
-      "title": "Party"
+      "style": "partyGrid",
+      "title": "Party",
+      "anim": {
+        "open": {
+          "slide": "right",
+          "duration": 0.22
+        }
+      }
     },
     "menu_info_panel": {
-      "x": 20,
+      "x": 24,
       "y": 3.5,
-      "width": 12,
+      "width": 8,
       "height": 20.5,
       "style": "panel",
-      "title": "Info"
+      "title": "Info",
+      "lineSpacing": 1,
+      "anim": {
+        "open": {
+          "slide": "right",
+          "duration": 0.22
+        }
+      }
+    },
+    "menu_confirm": {
+      "x": 4,
+      "y": 10,
+      "width": 24,
+      "height": 8,
+      "style": "confirm",
+      "title": "CONFIRM",
+      "lineSpacing": 1
     },
     "items_left_panel": {
       "x": 0.5,

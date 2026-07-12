@@ -61,6 +61,11 @@
       "WPN",
       "AMR",
       "ACC"
+    ],
+    "exit_prompt": "Quit Hichaukitoden and exit to the desktop?",
+    "exit_options": [
+      "YES",
+      "NO"
     ]
   },
   "events": {

@@ -88,6 +88,8 @@ function formula.sessionView(session)
         mp = session.mp or 0,
         maxMp = session.maxMp or 0,
         floor = session.currentFloor or session.floor or 1,
+        -- Display name of the current map (menu FLOOR readout).
+        mapTitle = (session.currentMapData and session.currentMapData.title) or "Town",
         mapSafe = (session.currentMapData and session.currentMapData.safe) and true or false,
         encounterRate = (session.currentMapData and session.currentMapData.encounterRate)
             or (session.loader and session.loader.system and session.loader.system.combat
