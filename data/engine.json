@@ -1570,7 +1570,7 @@
       "height": 5,
       "style": "panel",
       "title": "Select Ingredients",
-      "lineSpacing": 1
+      "lineSpacing": 0
     },
     "inventory_list": {
       "x": 0,
@@ -1614,10 +1614,10 @@
       "title": null
     },
     "title_menu": {
-      "x": 23.5,
-      "y": 19.5,
-      "width": 7.5,
-      "height": 6,
+      "x": 23,
+      "y": 20,
+      "width": 8.5,
+      "height": 5.5,
       "style": "list",
       "visibleRows": 3,
       "title": null
@@ -1704,7 +1704,7 @@
       "height": 13.5,
       "style": "panel",
       "title": null,
-      "lineSpacing": 1.5
+      "lineSpacing": 1
     },
     "status_panel": {
       "x": 0.5,
@@ -1717,7 +1717,7 @@
       "pages": [
         {
           "contentY": 6,
-          "lineSpacing": 1.25,
+          "lineSpacing": 1,
           "gauges": [
             {
               "label": "HP  {sel('status_party').hp}/{sel('status_party').maxHp}",
@@ -1732,10 +1732,18 @@
               "value": "sel('status_party').exp",
               "max": "sel('status_party').expNeeded",
               "x": 1,
-              "y": 3.25,
+              "y": 3,
               "width": 18,
-              "color": [0.1, 0.2, 0.5],
-              "fill": [0.3, 0.6, 1]
+              "color": [
+                0.1,
+                0.2,
+                0.5
+              ],
+              "fill": [
+                0.3,
+                0.6,
+                1
+              ]
             }
           ],
           "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}\nAMR {sel('status_party').armor}\nACC {sel('status_party').accessory}"
@@ -1750,7 +1758,8 @@
           "lineSpacing": 1.5,
           "text": "{sel('status_party').name}\n{sel('status_party').role}\n\n{sel('status_party').biography}"
         }
-      ]
+      ],
+      "gauges": []
     },
     "shop_header": {
       "x": 0,
@@ -1885,14 +1894,6 @@
       "height": 11.5,
       "style": "partyGrid",
       "title": null
-    },
-    "helpo": {
-      "x": 0,
-      "y": 0,
-      "width": 32,
-      "height": 4,
-      "style": "panel",
-      "title": "help"
     },
     "statusPortrait": {
       "x": 21.5,
