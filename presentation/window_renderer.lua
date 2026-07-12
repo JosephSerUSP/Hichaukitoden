@@ -284,6 +284,18 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
     end
 end
 
+-- Content needs room beneath a visible title, but an untitled window should
+-- start at the panel's normal inner padding instead of reserving a phantom
+-- header. Layouts may still explicitly opt into any other offset.
+local function contentOffset(layout, title)
+    if layout.contentY ~= nil then return layout.contentY end
+    return (title and title ~= "") and 2 or 1
+end
+
+local function contentInsetX(layout)
+    return layout.contentX or layout.textX or 1
+end
+
 local function drawPortrait(layout, env, x, y)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
@@ -295,8 +307,8 @@ local function drawPortrait(layout, env, x, y)
     end
 end
 
-local function drawList(win, layout, rows, cursor, env, x, y, w, h)
-    local contentY = y + ui.toPx(layout.contentY or 2)
+local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
+    local contentY = y + ui.toPx(contentOffset(layout, title))
 
     -- Row widgets (vocabulary extension 11.07.2026): win.sprite names a row
     -- field carrying a small-battler sheet key drawn at the row's left;
@@ -375,11 +387,11 @@ end
 -- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
 -- partyRows keeps a reference to) — so a party member's status is one
 -- single thing, not a re-implementation per screen.
-local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session)
+local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
     local colW, rowH = actor_status.cellSize(session)
     local cols = layout.gridColumns or 2
-    local contentX = x + ui.toPx(layout.contentX or 0.5)
-    local contentY = y + ui.toPx(layout.contentY or 2)
+    local contentX = x + ui.toPx(contentInsetX(layout))
+    local contentY = y + ui.toPx(contentOffset(layout, title))
     for i, row in ipairs(rows) do
         if row.battlerRef then
             local col = (i - 1) % cols
@@ -427,7 +439,7 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
 
     ui.drawPanel(x, y, w, h, title)
 
-    local contentY = y + ui.toPx(layout.contentY or 2)
+    local contentY = y + ui.toPx(contentOffset(layout, title))
     local lineSpacing = ui.toPx(layout.lineSpacing or 2)
 
     drawPortrait(layout, env, x, y)
@@ -435,10 +447,10 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     if style == "list" then
         local cached = listCache[id]
         if cached then
-            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h)
+            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
         end
         if win.text then
-            drawTextLines(win.text, env, x + ui.toPx(0.5), contentY, lineSpacing, w - ui.toPx(1))
+            drawTextLines(win.text, env, x + ui.toPx(contentInsetX(layout)), contentY, lineSpacing, w - ui.toPx(2))
         end
     elseif style == "confirm" then
         if win.text then
@@ -456,12 +468,12 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     elseif style == "partyGrid" then
         local cached = listCache[id]
         if cached then
-            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session)
+            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title)
         end
     else -- "panel", "frame" and any unknown style: text content
         if win.text then
             local align = (style == "frame") and "center" or "left"
-            local tx = (style == "frame") and x or (x + ui.toPx(layout.textX or 0.5))
+            local tx = (style == "frame") and x or (x + ui.toPx(contentInsetX(layout)))
             drawTextLines(win.text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
         end
     end

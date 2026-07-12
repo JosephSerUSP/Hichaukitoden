@@ -172,7 +172,9 @@ function actor_status.draw(battler, x, y, isSelected, session)
     if not battler then return end
     local colW, rowH = actor_status.cellSize(session)
     local spriteSize = 24 -- B.5: default small battler cell size
-    local slotColEndX = x + colW - 2 -- column right-edge boundary
+    -- drawPanel starts at x - 2 and leaves a 4px border on each side. Keep
+    -- text and gauges inside its right-hand interior edge (exclusive).
+    local slotContentEndX = x + colW - 8
 
     local maxHp = battler:getMaxHp(session)
     local dead = battler:isDead()
@@ -184,18 +186,18 @@ function actor_status.draw(battler, x, y, isSelected, session)
     ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2)
     local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
     local spriteOffsetX = 0
-    if spriteKey and small_battlers.draw(spriteKey, x, y, spriteSize, dead, battler) then
-        spriteOffsetX = spriteSize - 2 -- 22px; pushes all content right
+    if spriteKey and small_battlers.draw(spriteKey, x, y + ui.lineHeight, spriteSize, dead, battler) then
+        spriteOffsetX = spriteSize - 2 -- 22px; content on lines 2–3 starts after it
     end
 
     local prefix = isSelected and ">" or " "
-    local yOff = spriteOffsetX > 0 and -4 or 4
 
-    -- LINE 1 (top): element icons + name on the SAME Y line
-    local lineY = y + yOff
-    local iconW = drawElementIcons(traits.getElements(battler, session), x + spriteOffsetX, lineY - 4, session)
-    local nameX = x + spriteOffsetX + iconW + layoutVal(session, "partyGridNameXOffset")
-    local nameClipW = math.max(1, slotColEndX - nameX)
+    -- LINE 1: the name gets the full top line. The small battler begins on
+    -- line 2, leaving this row clear even when the actor has a sprite.
+    local lineY = y
+    local iconW = drawElementIcons(traits.getElements(battler, session), x, lineY - 4, session)
+    local nameX = x + iconW + layoutVal(session, "partyGridNameXOffset")
+    local nameClipW = math.max(1, slotContentEndX - nameX)
     -- Silently truncate name to fit within the column (~6px per char in
     -- 8px font). No ellipsis — just clean clipping.
     local maxNameChars = math.floor(nameClipW / 6)
@@ -204,12 +206,12 @@ function actor_status.draw(battler, x, y, isSelected, session)
 
     -- LINE 2 (mid): HP fraction text "current/max"
     local dispHp = battler.displayedHp or battler.hp
-    ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, x + layoutVal(session, "partyGridHpXOffset") + spriteOffsetX, y + layoutVal(session, "partyGridHpYOffset") + yOff, hpColor)
+    ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, x + layoutVal(session, "partyGridHpXOffset") + spriteOffsetX, y + layoutVal(session, "partyGridHpYOffset"), hpColor)
 
-    -- LINE 3 (bottom): HP bar (clamped so it stays inside the column)
+    -- LINE 3 (bottom): HP bar, constrained to the panel interior.
     local barX = x + layoutVal(session, "partyGridHpBarXOffset") + spriteOffsetX
-    local barW = math.min(layoutVal(session, "partyGridHpBarWidth"), math.max(4, slotColEndX - barX))
-    ui.drawBar(barX, y + layoutVal(session, "partyGridHpBarYOffset") + yOff, barW, layoutVal(session, "partyGridHpBarHeight"), dispHp, maxHp, { 0.8, 0, 0 }, { 1, 0.3, 0.3 })
+    local barW = math.min(layoutVal(session, "partyGridHpBarWidth"), math.max(4, slotContentEndX - barX))
+    ui.drawBar(barX, y + layoutVal(session, "partyGridHpBarYOffset"), barW, layoutVal(session, "partyGridHpBarHeight"), dispHp, maxHp, { 0.8, 0, 0 }, { 1, 0.3, 0.3 })
 end
 
 -- Placeholder for an empty party slot — matches drawPartyGrid's original

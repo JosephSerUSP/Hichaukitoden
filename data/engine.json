@@ -1273,7 +1273,7 @@
     "enemyStartX": 22,
     "enemyPopupOffsetX": 28,
     "enemyPopupY": 84,
-    "partyGridTileX": 16,
+    "partyGridTileX": 15,
     "consoleTileY": 18,
     "headerTileOffset": 1,
     "slotPopupOffsetX": 8,
@@ -1313,7 +1313,7 @@
     "summonerMpBarYOffset": 34,
     "summonerMpBarWidth": 80,
     "summonerMpBarHeight": 4,
-    "partyGridColWidth": 64,
+    "partyGridColWidth": 68,
     "partyGridRowHeight": 40,
     "partyGridNameXOffset": 1,
     "partyGridHpXOffset": 8,
@@ -1692,16 +1692,16 @@
       "x": 0.5,
       "y": 4.5,
       "width": 19,
-      "height": 14.5,
+      "height": 13.5,
       "style": "list",
-      "title": "Items",
+      "title": null,
       "emptyText": "No items."
     },
     "items_info_panel": {
       "x": 20,
       "y": 4.5,
       "width": 11.5,
-      "height": 14.5,
+      "height": 13.5,
       "style": "panel",
       "title": "Info",
       "lineSpacing": 1.5
@@ -1710,9 +1710,9 @@
       "x": 0.5,
       "y": 4.5,
       "width": 20.5,
-      "height": 14.5,
+      "height": 13.5,
       "style": "panel",
-      "title": "Status",
+      "title": null,
       "lineSpacing": 1.5
     },
     "shop_header": {
@@ -1721,22 +1721,22 @@
       "width": 32,
       "height": 4,
       "style": "frame",
-      "title": "Shop"
+      "title": null
     },
     "shop_list": {
       "x": 0.5,
       "y": 4.5,
       "width": 19,
-      "height": 14.5,
+      "height": 13.5,
       "style": "list",
-      "title": "Items",
+      "title": null,
       "emptyText": "No items available."
     },
     "shop_info": {
       "x": 20,
       "y": 4.5,
       "width": 11.5,
-      "height": 14.5,
+      "height": 13.5,
       "style": "panel",
       "title": "Item Info"
     },
@@ -1811,19 +1811,19 @@
     },
     "shop_party": {
       "x": 0,
-      "y": 19.5,
+      "y": 18.5,
       "width": 32,
-      "height": 10.5,
+      "height": 11.5,
       "style": "partyGrid",
-      "title": "Party"
+      "title": null
     },
     "status_party": {
       "x": 0,
-      "y": 19.5,
+      "y": 18.5,
       "width": 32,
-      "height": 10.5,
+      "height": 11.5,
       "style": "partyGrid",
-      "title": "Party"
+      "title": null
     },
     "items_target": {
       "x": 6,
@@ -1839,15 +1839,15 @@
       "width": 32,
       "height": 4,
       "style": "frame",
-      "title": "help"
+      "title": null
     },
     "party": {
       "x": 0,
-      "y": 19.5,
+      "y": 18.5,
       "width": 32,
-      "height": 10.5,
+      "height": 11.5,
       "style": "partyGrid",
-      "title": "Party"
+      "title": null
     },
     "helpo": {
       "x": 0,
@@ -1861,7 +1861,7 @@
       "x": 21.5,
       "y": 4.5,
       "width": 10,
-      "height": 14.5,
+      "height": 13.5,
       "style": "panel",
       "title": null,
       "portrait": "sel('status_party').portraitKey"
