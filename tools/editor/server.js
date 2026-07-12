@@ -271,6 +271,43 @@ const server = http.createServer((req, res) => {
                 res.end(jsonText);
             });
         });
+    } else if (req.method === 'GET' && req.url.startsWith('/preview-font')) {
+        // Font picker preview: invokes the engine's real ui.drawPanel +
+        // ui.drawString path with a candidate font/size, never touching
+        // data/system.json — so the editor shows exactly what the engine
+        // will render instead of a browser-side approximation.
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
+        const fontName = parsedUrl.searchParams.get('name') || '';
+        const fontSize = parsedUrl.searchParams.get('size') || '8';
+        const fail = (msg) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: msg }));
+        };
+        if (!/^[\w-]*$/.test(fontName)) return fail('invalid font name');
+        if (!/^\d+$/.test(fontSize)) return fail('invalid font size');
+        if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
+        const { execFile } = require('child_process');
+        execFile(previewExe, ['.', 'preview-font', fontName, fontSize], {
+            cwd: PROJECT_DIR,
+            timeout: 15000,
+            windowsHide: true,
+            maxBuffer: 4 * 1024 * 1024
+        }, (err, stdout) => {
+            const text = String(stdout || '');
+            const begin = text.indexOf('PREVIEW BEGIN');
+            const end = text.indexOf('PREVIEW END');
+            if (begin === -1 || end === -1 || end < begin) {
+                return fail('preview produced no output' + (err ? ' (' + err.message + ')' : ''));
+            }
+            const jsonText = text.slice(begin + 'PREVIEW BEGIN'.length, end).trim();
+            try {
+                JSON.parse(jsonText);
+            } catch (e) {
+                return fail('preview output was not valid JSON: ' + e.message);
+            }
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(jsonText);
+        });
     } else if (req.method === 'GET' && req.url === '/api/graphs') {
         const graphsDir = path.join(PROJECT_DIR, 'data', 'graphs');
         if (fs.existsSync(graphsDir) && fs.statSync(graphsDir).isDirectory()) {

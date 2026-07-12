@@ -71,6 +71,9 @@ local previewSceneId = nil
 local isPreviewWindowMode = false
 local previewWindowId = nil
 local previewWindowMockSpec = nil
+local isPreviewFontMode = false
+local previewFontName = nil
+local previewFontSize = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -350,6 +353,41 @@ local function runPreviewWindow(windowId, mockSpecJSON)
             love.graphics.setCanvas()
             payload.imageError = tostring(imgOrErr)
         end
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- Font picker preview (`lovec . preview-font <name> <size>`): draws a real
+-- ui.drawPanel + ui.drawString sample using the actual engine 9-slice
+-- windowskin and the requested font, so the editor's picker shows exactly
+-- what the game will render instead of an approximation. name/size are
+-- NOT written to config — this only overrides the in-memory font for the
+-- one screenshot.
+local function runPreviewFont(name, size)
+    local json = require("data.json")
+    local payload = {}
+    local ok, err = pcall(function()
+        local ui = require("presentation.ui")
+        ui.init()
+        ui.setFont(name, size)
+
+        local pw, ph = 240, 64
+        local previewCanvas = love.graphics.newCanvas(pw, ph)
+        love.graphics.setCanvas(previewCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        ui.drawPanel(4, 4, pw - 8, ph - 8)
+        ui.drawString("The Quick Brown Fox 0123", 12, 16)
+        ui.drawString("HP 42/50  ATK 10  DEF 8", 12, 16 + ui.lineHeight + 4)
+        love.graphics.setCanvas()
+
+        local fileData = previewCanvas:newImageData():encode("png")
+        payload.image = love.data.encode("string", "base64", fileData)
+        payload.width = pw
+        payload.height = ph
     end)
     if not ok then payload = { error = tostring(err) } end
     print("PREVIEW BEGIN")
@@ -1284,6 +1322,11 @@ function love.load(arg)
                 previewWindowId = arg[i + 1]
                 previewWindowMockSpec = arg[i + 2]
                 i = i + 2
+            elseif val == "preview-font" then
+                isPreviewFontMode = true
+                previewFontName = arg[i + 1]
+                previewFontSize = arg[i + 2]
+                i = i + 2
             end
             i = i + 1
         end
@@ -1301,6 +1344,15 @@ function love.load(arg)
     if isPreviewWindowMode then
         loader.init()
         runPreviewWindow(previewWindowId, previewWindowMockSpec)
+        love.event.quit(0)
+        return
+    end
+
+    -- Font picker preview: renders the REAL ui.drawPanel/ui.drawString path
+    -- with a candidate font+size, then quits. Never touches data/system.json.
+    if isPreviewFontMode then
+        loader.init()
+        runPreviewFont(previewFontName, tonumber(previewFontSize))
         love.event.quit(0)
         return
     end

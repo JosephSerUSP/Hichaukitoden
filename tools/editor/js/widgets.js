@@ -606,39 +606,18 @@
             container.appendChild(row);
         }
 
-        // ---- Active UI Font: choices + live windowskin preview ----
+        // ---- Active UI Font: choices + live in-engine preview ----
         // 'Lucida' has no .ttf on disk — it's LÖVE's built-in default font,
         // exactly mirroring presentation/ui.lua's ui.setFont fallback (any
         // other name is looked up generically at assets/fonts/<name>.ttf).
         const FONT_CHOICES = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver', 'VT323-Regular', 'RobotoMono-Regular', 'IBMPlexMono-Regular', 'SpaceMono-Regular'];
-        const _fontFaceCache = {};
-        function loadFontFace(name) {
-            if (name === 'Lucida') return Promise.resolve(null);
-            if (_fontFaceCache[name]) return _fontFaceCache[name];
-            const family = 'editor-preview-' + name;
-            const face = new FontFace(family, `url("${API_URL}/assets/fonts/${name}.ttf")`);
-            _fontFaceCache[name] = face.load().then(loaded => {
-                document.fonts.add(loaded);
-                return family;
-            }).catch(() => null);
-            return _fontFaceCache[name];
-        }
 
-        let _windowskinImg = null;
-        function getWindowskinImg() {
-            if (_windowskinImg) return Promise.resolve(_windowskinImg);
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => { _windowskinImg = img; resolve(img); };
-                img.onerror = () => resolve(null);
-                img.src = `${API_URL}/assets/system/PRINCESSTHEKING.png`;
-            });
-        }
-
-        // Builds a { el, render(fontName, size) } pair: a canvas showing the
-        // windowskin panel behind sample text at 3x nearest-neighbor scale,
-        // so the picker shows exactly what the chosen font/size looks like
-        // in-engine rather than the browser's own font rendering.
+        // Builds a { el, render(fontName, size) } pair: a canvas fed by
+        // GET /preview-font, which runs the actual engine's ui.drawPanel +
+        // ui.drawString (the real 9-slice windowskin, not an approximation
+        // of it) headlessly and returns a screenshot. Same technique and
+        // the same 2x nearest-neighbor scale as the Scenes/Windows tabs'
+        // canvases, so the picker shows exactly what the game will render.
         function buildFontPreview() {
             const wrap = document.createElement('div');
             wrap.className = 'form-group';
@@ -646,41 +625,52 @@
             lbl.textContent = 'Preview';
             wrap.appendChild(lbl);
 
-            const S = 3;
-            const pw = 200, ph = 40;
+            const S = 2;
             const canvas = document.createElement('canvas');
-            canvas.width = pw * S;
-            canvas.height = ph * S;
-            canvas.style.cssText = `width: ${pw * S}px; height: ${ph * S}px; image-rendering: pixelated; border: 1px solid var(--win-shadow); display: block;`;
+            canvas.style.cssText = 'image-rendering: pixelated; border: 1px solid var(--win-shadow); display: block; background: #000;';
             wrap.appendChild(canvas);
             const ctx2d = canvas.getContext('2d');
 
             let renderToken = 0;
-            const render = (fontName, size) => {
+            let debounceTimer = null;
+            const doRender = (fontName, size) => {
                 const myToken = ++renderToken;
-                Promise.all([loadFontFace(fontName), getWindowskinImg()]).then(([family, skin]) => {
-                    if (myToken !== renderToken) return; // a newer render superseded this one
-                    ctx2d.imageSmoothingEnabled = false;
-                    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
-                    if (skin) {
-                        // Tile the windowskin's corner/edge-free center patch as a
-                        // stand-in background so text sits on the real panel texture.
-                        const pattern = ctx2d.createPattern(skin, 'repeat');
-                        ctx2d.save();
-                        ctx2d.scale(S, S);
-                        ctx2d.fillStyle = pattern;
-                        ctx2d.fillRect(0, 0, pw, ph);
-                        ctx2d.restore();
-                    } else {
-                        ctx2d.fillStyle = '#101018';
-                        ctx2d.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                    ctx2d.fillStyle = '#ffffff';
-                    ctx2d.font = `${size * S}px ${family ? `"${family}"` : 'sans-serif'}`;
-                    ctx2d.textBaseline = 'top';
-                    ctx2d.fillText('The Quick Brown Fox 0123', 4 * S, 4 * S);
-                    ctx2d.fillText('HP 42/50  ATK 10 DEF 8', 4 * S, (4 + size + 2) * S);
-                });
+                fetch(`${API_URL}/preview-font?name=${encodeURIComponent(fontName)}&size=${encodeURIComponent(size)}`)
+                    .then(res => res.json())
+                    .then(d => {
+                        if (myToken !== renderToken) return; // a newer render superseded this one
+                        if (d.error || !d.image) {
+                            canvas.width = 240 * S; canvas.height = 64 * S;
+                            ctx2d.fillStyle = '#000'; ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx2d.fillStyle = '#ff6060'; ctx2d.font = '11px monospace';
+                            ctx2d.fillText(d.error || 'preview failed', 6, 16);
+                            return;
+                        }
+                        const img = new Image();
+                        img.onload = () => {
+                            if (myToken !== renderToken) return;
+                            canvas.width = d.width * S;
+                            canvas.height = d.height * S;
+                            canvas.style.width = (d.width * S) + 'px';
+                            canvas.style.height = (d.height * S) + 'px';
+                            ctx2d.imageSmoothingEnabled = false;
+                            ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx2d.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = 'data:image/png;base64,' + d.image;
+                    })
+                    .catch(err => {
+                        if (myToken !== renderToken) return;
+                        ctx2d.fillStyle = '#ff6060'; ctx2d.font = '11px monospace';
+                        ctx2d.fillText('preview request failed: ' + err.message, 6, 16);
+                    });
+            };
+
+            // Debounced so rapid size-input keystrokes don't spawn a lovec
+            // process per keypress.
+            const render = (fontName, size) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => doRender(fontName, size), 250);
             };
 
             return { el: wrap, render };
