@@ -202,6 +202,29 @@
             topRow.appendChild(actionsRow);
             box.appendChild(topRow);
 
+            // Canvas on the left (fixed, 2x nearest-neighbor), scrollable
+            // input dock filling the space to its right — mirrors the
+            // Scenes tab's flexRow+dock layout.
+            const flexRow = document.createElement('div');
+            flexRow.style.cssText = 'display: flex; gap: 8px; align-items: flex-start;';
+            box.appendChild(flexRow);
+
+            const gw = 256, gh = 240, S = 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = gw * S;
+            canvas.height = gh * S;
+            canvas.style.cssText = `width: ${gw * S}px; height: ${gh * S}px; image-rendering: pixelated; border: 1px solid var(--win-shadow); background: #000; display: block; flex: 0 0 auto;`;
+            flexRow.appendChild(canvas);
+
+            const dock = document.createElement('div');
+            dock.style.cssText = 'flex: 1 1 auto; min-width: 220px; max-height: ' + (gh * S) + 'px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;';
+            flexRow.appendChild(dock);
+
+            const canvasHint = document.createElement('div');
+            canvasHint.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow);';
+            canvasHint.textContent = 'Drag to move, drag an edge/corner to resize. This window only — siblings (if any) render for context but aren\'t editable here.';
+            box.appendChild(canvasHint);
+
             // --- Mock binding controls ---
             const mockBox = document.createElement('fieldset');
             mockBox.style.cssText = 'padding: 6px;';
@@ -286,19 +309,7 @@
             refreshBtn.textContent = 'Save & Refresh Preview';
             refreshBtn.onclick = async () => { await saveData(); await refreshPreviewAndCanvas(); };
             mockBox.appendChild(refreshBtn);
-            box.appendChild(mockBox);
-
-            // --- Canvas ---
-            const gw = 256, gh = 240, S = 2;
-            const canvas = document.createElement('canvas');
-            canvas.width = gw * S;
-            canvas.height = gh * S;
-            canvas.style.cssText = 'border: 1px solid var(--win-shadow); background: #000; display: block; margin-top: 4px;';
-            box.appendChild(canvas);
-            const canvasHint = document.createElement('div');
-            canvasHint.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow);';
-            canvasHint.textContent = 'Drag to move, drag an edge/corner to resize. This window only — siblings (if any) render for context but aren\'t editable here.';
-            box.appendChild(canvasHint);
+            dock.appendChild(mockBox);
 
             const ctx2d = canvas.getContext('2d');
             const data = () => windowPreviewCache[id];
@@ -498,13 +509,13 @@
                     if (fieldRefs[k] && document.activeElement !== fieldRefs[k]) fieldRefs[k].value = layout[k];
                 });
             }
-            box.appendChild(propBox);
+            dock.appendChild(propBox);
 
             // --- Gauges editor ---
-            box.appendChild(buildGaugeListEditor(layout, drawCanvas));
+            dock.appendChild(buildGaugeListEditor(layout, drawCanvas));
 
             // --- Pages editor ---
-            box.appendChild(buildPageListEditor(layout, drawCanvas));
+            dock.appendChild(buildPageListEditor(layout, drawCanvas));
 
             container.appendChild(box);
             drawCanvas();
