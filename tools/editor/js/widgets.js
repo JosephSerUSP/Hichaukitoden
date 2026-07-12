@@ -1700,7 +1700,7 @@
 
                         const select = document.createElement('select');
                         select.className = 'form-control inset-bevel';
-                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
+                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver', 'VT323-Regular', 'RobotoMono-Regular', 'IBMPlexMono-Regular', 'SpaceMono-Regular'];
                         fonts.forEach(f => {
                             const opt = document.createElement('option');
                             opt.value = f;
