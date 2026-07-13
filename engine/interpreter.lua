@@ -214,22 +214,6 @@ handlers.FALLBACK = function(cmd, ctx)
     ctx.hookFallback = true
 end
 
--- Scene-only bridge for the battle's legacy input semantics.  The scene hook
--- selects the input phase; the helper owns the actual command decisions.
-handlers.BATTLE_INPUT = function(cmd, ctx)
-    ctx.hookHandled = true
-    require("engine.scenes.battle").handleInput(cmd.action)
-end
-
-handlers.BATTLE_LOG = function(cmd, ctx)
-    ctx.hookHandled = require("engine.scenes.battle").handleLogInput(cmd.action)
-    ctx.hookFallback = not ctx.hookHandled
-end
-
-handlers.BATTLE_TRANSITION = function(cmd, ctx)
-    ctx.hookHandled = require("engine.scenes.battle").handleTransition(cmd.action)
-    ctx.hookFallback = not ctx.hookHandled
-end
 
 handlers.SET_VAR = function(cmd, ctx)
     -- E7 "Control Variables": optional multi-assignment form. Rows are
@@ -795,6 +779,37 @@ local function buildScriptApi(ctx)
         if i ~= nil then return out[i] end
         return out
     end
+    api.getSkill = function(id)
+        local l = ctx.loader or session.loader
+        return l and l.getSkill(id)
+    end
+    api.getItem = function(id)
+        local l = ctx.loader or session.loader
+        return l and l.getItem(id)
+    end
+    api.getTerm = function(key, fallback)
+        local l = ctx.loader or session.loader
+        return l and l.getTerm(key, fallback) or fallback
+    end
+    api.formatTerm = function(key, fallback, ...)
+        local l = ctx.loader or session.loader
+        return l and l.formatTerm(key, fallback, ...) or fallback
+    end
+    api.systemConfig = require("engine.config")
+    api.battle = {
+        commitAction = function(index, action)
+            require("engine.scenes.battle").commitAction(index, action)
+        end,
+        showMessage = function(msg)
+            require("engine.scenes.battle").showMessage(msg)
+        end,
+        advanceLog = function()
+            require("engine.scenes.battle").advanceLog()
+        end,
+        handleTransition = function(action)
+            return require("engine.scenes.battle").handleTransition(action)
+        end
+    }
     return api
 end
 
@@ -828,6 +843,7 @@ handlers.SCRIPT = function(cmd, ctx)
         ipairs = ipairs,
         tostring = tostring,
         tonumber = tonumber,
+        type = type,
         select = select,
         unpack = unpack,
         print = print,

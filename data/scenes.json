@@ -2679,8 +2679,13 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "select"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         },
@@ -2689,8 +2694,22 @@
           "condition": "v.combatState == 'log'",
           "then": [
             {
-              "cmd": "BATTLE_LOG",
-              "action": "select"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleLogInput"
+            },
+            {
+              "cmd": "IF",
+              "condition": "not v.hookHandled",
+              "then": [
+                {
+                  "cmd": "FALLBACK"
+                }
+              ]
             }
           ]
         },
@@ -2699,8 +2718,22 @@
           "condition": "v.combatState == 'log' or v.combatState == 'victory'",
           "then": [
             {
-              "cmd": "BATTLE_TRANSITION",
-              "action": "select"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleTransition"
+            },
+            {
+              "cmd": "IF",
+              "condition": "not v.hookHandled",
+              "then": [
+                {
+                  "cmd": "FALLBACK"
+                }
+              ]
             }
           ]
         }
@@ -2711,8 +2744,13 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "cancel"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'cancel'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         }
@@ -2723,8 +2761,13 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "left"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'left'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         }
@@ -2735,8 +2778,13 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "right"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'right'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         }
@@ -2747,8 +2795,13 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "up"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'up'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         }
@@ -2759,12 +2812,22 @@
           "condition": "v.combatState == 'input'",
           "then": [
             {
-              "cmd": "BATTLE_INPUT",
-              "action": "down"
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'down'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
             }
           ]
         }
       ]
+    },
+    "scripts": {
+      "handleInput": "\nlocal v = ctx.v\nlocal b = v.battle\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\nlocal isSummoner = (memberInfo.type == \"summoner\")\nif v.spellSelect then\n    local options = {}\n    if isSummoner then\n        for _, spellId in ipairs(api.systemConfig.summoner and api.systemConfig.summoner.spells or {}) do\n            if type(spellId) == \"table\" then spellId = spellId.id end\n            local sk = api.getSkill(spellId)\n            if sk then table.insert(options, sk) end\n        end\n    else\n        for _, skId in ipairs(memberInfo.actor.skills or {}) do\n            local sk = api.getSkill(skId)\n            if sk then table.insert(options, sk) end\n        end\n    end\n    \n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.spellSelect = false\n        v.selectedIndex = 2\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            local allowed = not isSummoner or (ctx.session.mp >= (choice.mpCost or choice.mp or 0))\n            if allowed then\n                local spell = api.getSkill(choice.id)\n                local target = b.allies[#b.allies]\n                if spell and (spell.target == \"enemy-any\" or spell.target == \"enemy\") then\n                    for _, e in ipairs(b.enemies) do\n                        if not e:isDead() then target = e break end\n                    end\n                else\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                end\n                api.battle.commitAction(memberInfo.index, { type = isSummoner and \"spell\" or \"skill\", id = choice.id, target = target })\n            else\n                api.battle.showMessage(api.getTerm(\"battle.not_enough_mp\", \"Not enough MP!\"))\n            end\n        end\n    end\nelse\n    if v.action == \"left\" or v.action == \"up\" then\n        v.selectedIndex = (v.selectedIndex - 2) % 4 + 1\n    elseif v.action == \"right\" or v.action == \"down\" then\n        v.selectedIndex = v.selectedIndex % 4 + 1\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            local target = b.enemies[1]\n            for _, e in ipairs(b.enemies) do\n                if not e:isDead() then target = e break end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"attack\", target = target })\n        elseif v.selectedIndex == 2 then\n            v.spellSelect = true\n            v.selectedIndex = 1\n        elseif v.selectedIndex == 3 then\n            if isSummoner then\n                local battleItemId = api.systemConfig.combat and api.systemConfig.combat.battleItem or 1\n                local battleItem = api.getItem(battleItemId)\n                if battleItem and ctx.session:hasItem(battleItemId, 1) then\n                    local target = b.allies[#b.allies]\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                    api.battle.commitAction(memberInfo.index, { type = \"item\", id = battleItemId, target = target })\n                else\n                    api.battle.showMessage(api.formatTerm(\"battle.no_item_left\", \"No \" .. tostring(battleItem and battleItem.name or battleItemId) .. \"s left!\"))\n                end\n            else\n                api.battle.commitAction(memberInfo.index, { type = \"defend\" })\n            end\n        elseif v.selectedIndex == 4 then\n            api.battle.commitAction(memberInfo.index, { type = \"flee\" })\n        end\n    end\nend\n",
+      "handleLogInput": "\nlocal v = ctx.v\nif v.action == \"select\" and v.eventQueueIndex <= #(v.eventsQueue or {}) then\n    api.battle.advanceLog()\n    v.hookHandled = true\nelse\n    v.hookHandled = false\nend\n",
+      "handleTransition": "\nlocal v = ctx.v\nif v.action ~= \"select\" or not v.battle then \n    v.hookHandled = false\n    return \nend\nv.hookHandled = api.battle.handleTransition(v.action)\n"
     }
   },
   {

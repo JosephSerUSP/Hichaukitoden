@@ -470,54 +470,6 @@
       "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
     },
     {
-      "id": "BATTLE_INPUT",
-      "category": "Battle",
-      "label": "Battle Input",
-      "params": [
-        {
-          "key": "action",
-          "type": "text"
-        }
-      ],
-      "contexts": [
-        "scene"
-      ],
-      "interactive": false,
-      "description": "Routes a battle scene input action to its battle helper."
-    },
-    {
-      "id": "BATTLE_LOG",
-      "category": "Battle",
-      "label": "Battle Log",
-      "params": [
-        {
-          "key": "action",
-          "type": "text"
-        }
-      ],
-      "contexts": [
-        "scene"
-      ],
-      "interactive": false,
-      "description": "Routes a battle log action to its battle helper."
-    },
-    {
-      "id": "BATTLE_TRANSITION",
-      "category": "Battle",
-      "label": "Battle Transition",
-      "params": [
-        {
-          "key": "action",
-          "type": "text"
-        }
-      ],
-      "contexts": [
-        "scene"
-      ],
-      "interactive": false,
-      "description": "Routes a completed battle log action to its battle helper."
-    },
-    {
       "id": "SET_FLAG",
       "category": "Variables",
       "label": "Set Flag",
