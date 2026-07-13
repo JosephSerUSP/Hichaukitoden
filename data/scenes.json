@@ -1260,10 +1260,6 @@
               "value": 0
             },
             {
-              "name": "focus",
-              "value": "'cmd'"
-            },
-            {
               "name": "cmdIdx",
               "value": 1
             },
@@ -1300,17 +1296,17 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'party'",
+          "condition": "v.mode == 4 and v.partyIdx - 2 >= 1",
           "then": [
             {
               "cmd": "SET_VAR",
-              "name": "focus",
-              "value": "'cmd'"
+              "name": "partyIdx",
+              "value": "v.partyIdx - 2"
             },
             {
               "cmd": "SET_CURSOR",
               "windowId": "party",
-              "index": 0
+              "index": "v.partyIdx"
             }
           ]
         },
@@ -1349,12 +1345,12 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'cmd' and party.count > 0",
+          "condition": "v.mode == 4 and v.partyIdx + 2 <= party.count",
           "then": [
             {
               "cmd": "SET_VAR",
-              "name": "focus",
-              "value": "'party'"
+              "name": "partyIdx",
+              "value": "v.partyIdx + 2"
             },
             {
               "cmd": "SET_CURSOR",
@@ -1398,23 +1394,23 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'cmd'",
+          "condition": "v.mode == 1",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 2"
+              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 3"
             }
           ]
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'party' and party.count > 0",
+          "condition": "v.mode == 4 and v.partyIdx % 2 == 0",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "partyIdx",
-              "value": "v.partyIdx > 1 and v.partyIdx - 1 or party.count"
+              "value": "v.partyIdx - 1"
             },
             {
               "cmd": "SET_CURSOR",
@@ -1447,23 +1443,23 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'cmd'",
+          "condition": "v.mode == 1",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx < 2 and v.cmdIdx + 1 or 1"
+              "value": "v.cmdIdx < 3 and v.cmdIdx + 1 or 1"
             }
           ]
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 and v.focus == 'party' and party.count > 0",
+          "condition": "v.mode == 4 and v.partyIdx % 2 == 1 and v.partyIdx + 1 <= party.count",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "partyIdx",
-              "value": "v.partyIdx < party.count and v.partyIdx + 1 or 1"
+              "value": "v.partyIdx + 1"
             },
             {
               "cmd": "SET_CURSOR",
@@ -1496,7 +1492,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 1 and v.focus == 'cmd' and v.cmdIdx == 1",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1512,7 +1508,33 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 1 and v.focus == 'cmd' and v.cmdIdx == 2",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 2 and party.count > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "Select a party member.    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 3",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1553,7 +1575,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 1 and v.focus == 'party' and party.count > 0",
+          "condition": "v._guard == 0 and v.mode == 4 and party.count > 0",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1603,7 +1625,7 @@
             {
               "cmd": "SET_VAR",
               "name": "mode",
-              "value": 1
+              "value": 4
             },
             {
               "cmd": "CLOSE_WINDOW",
@@ -1634,7 +1656,7 @@
             {
               "cmd": "SET_VAR",
               "name": "mode",
-              "value": 1
+              "value": 4
             },
             {
               "cmd": "CLOSE_WINDOW",
@@ -1669,7 +1691,7 @@
             {
               "cmd": "SET_VAR",
               "name": "mode",
-              "value": 1
+              "value": 4
             },
             {
               "cmd": "CLOSE_WINDOW",
@@ -1756,11 +1778,37 @@
             {
               "cmd": "SET_VAR",
               "name": "mode",
-              "value": 1
+              "value": 4
             },
             {
               "cmd": "CLOSE_WINDOW",
               "windowId": "map_member_popup"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": 0
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "{sel('map_command').help}"
             }
           ]
         },
@@ -1809,11 +1857,6 @@
             },
             {
               "cmd": "SET_VAR",
-              "name": "focus",
-              "value": "'cmd'"
-            },
-            {
-              "cmd": "SET_VAR",
               "name": "cmdIdx",
               "value": 1
             },
@@ -1851,6 +1894,10 @@
           "help": "Use an item from the inventory."
         },
         {
+          "name": "PARTY",
+          "help": "Select a party member."
+        },
+        {
           "name": "EXIT",
           "help": "Quit Hichaukitoden and return to the desktop."
         }
@@ -1878,10 +1925,16 @@
         "key": "right"
       },
       {
-        "key": "return"
+        "key": "right"
+      },
+      {
+        "key": "left"
       },
       {
         "key": "return"
+      },
+      {
+        "key": "escape"
       },
       {
         "key": "escape"

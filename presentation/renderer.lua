@@ -55,25 +55,6 @@ end
 -- identically everywhere it's drawn).
 local animVal = small_battlers.animVal
 
--- Shared battler status cell: a windowskin panel behind the (x, y,-anchored)
--- content region, then the animated sprite (small_battlers.draw handles
--- dead tint / flash / shake) at (x, y). Used by BOTH the party grid slots
--- and the summoner status box; window_renderer.lua's drawList calls the
--- same small_battlers.draw for party-shaped list rows, so a party member's
--- status looks and behaves identically everywhere (owner direction
--- 11.07.2026). x/y stay the exact anchor the existing name/HP/bar math
--- already uses — only a padded panel is newly drawn behind it. Returns
--- the sprite's width footprint (0 if none drawn).
-local function drawBattlerStatusCell(battler, x, y, w, h, spriteSize)
-    ui.drawPanel(x - 2, y - 2, w, h)
-    local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
-    local dead = battler.isDead and battler:isDead()
-    if spriteKey and small_battlers.draw(spriteKey, x, y, spriteSize, dead, battler) then
-        return spriteSize - 2
-    end
-    return 0
-end
-
 local function getPortrait(id)
     if not id or id == "" then return nil end
     -- Battlers without a spriteKey fall back to their numeric actor id
@@ -113,58 +94,6 @@ local function drawSlicedPortrait(portraitId, x, y, targetW, targetH)
     else
         love.graphics.draw(portrait, x, y, 0, targetW / w, targetH / h)
     end
-end
-
--- The summoner's display name, taken from actor data instead of a hardcoded
--- string so renaming the protagonist in the editor updates every UI panel.
-local function summonerName()
-    local s = renderer.session and renderer.session.summoner
-    return (s and s.name or "Alex"):upper()
-end
-
--- Summoner status block (name, HP, MP with bars), shared by the battle
--- console and the out-of-battle HUD so the layout is identical in and out
--- of battle and HP is visible everywhere (owner feedback 10.07.2026).
--- baseY is the top of the containing panel; offsets come from battleLayout.
-local function drawSummonerStatus(baseY)
-    local session = renderer.session
-    local summoner = session.summoner
-    local x = layoutVal("summonerStatusX")
-    local nameY = baseY + layoutVal("summonerNameYOffset")
-    local spriteSize = 24
-
-    -- Shared battler status cell (windowskin panel + animated sprite) —
-    -- same drawer the party grid and any scene's party rows use.
-    local cellW = spriteSize + 2 + layoutVal("summonerMpBarWidth") + 4
-    local cellH = 51
-    local spriteOffsetX = 0
-    if summoner then
-        spriteOffsetX = drawBattlerStatusCell(summoner, x, nameY, cellW, cellH, spriteSize)
-    end
-
-    -- Use same yOff logic as party grid for vertical alignment
-    local yOff = spriteOffsetX > 0 and -4 or 4
-    local adjY = nameY + yOff   -- matches party grid's slot.y + yOff
-    local contentX = x + spriteOffsetX
-
-    -- Name (slot.y + yOff in party grid)
-    ui.drawString(summonerName(), contentX, adjY, {1, 0.85, 0.5, 1})
-
-    local maxHpSummoner = summoner and summoner:getMaxHp(session) or 0
-    local hpDisplay = summoner and (summoner.displayedHp or summoner.hp) or 0
-    local hpColor = (summoner and summoner:isDead()) and {0.5, 0.5, 0.5, 1} or {1, 1, 1, 1}
-
-    -- HP text: matches partyGridHpYOffset (11) from adjY
-    ui.drawString(math.floor(hpDisplay + 0.5) .. "/" .. maxHpSummoner, contentX, adjY + 11, hpColor)
-    -- HP bar: matches partyGridHpBarYOffset (22) from adjY → 11px gap from text top
-    ui.drawBar(contentX, adjY + 22, layoutVal("summonerMpBarWidth"), layoutVal("partyGridHpBarHeight"), hpDisplay, maxHpSummoner, {0.8, 0, 0}, {1, 0.3, 0.3})
-
-    local dispMp = session.displayedMp or session.mp
-    -- MP text: 11px below HP bar end (HP bar at adjY+22, 3px tall → ends at adjY+25)
-    local mpTextY = adjY + 33
-    ui.drawString(math.floor(dispMp + 0.5) .. "/" .. session.maxMp, contentX, mpTextY, {1, 1, 1, 1})
-    -- MP bar: 11px gap from MP text top (same pattern as HP: textY + 11)
-    ui.drawBar(contentX, mpTextY + 11, layoutVal("summonerMpBarWidth"), layoutVal("partyGridHpBarHeight"), dispMp, session.maxMp, {0, 0.4, 0.8}, {0.2, 0.7, 1})
 end
 
 local townBg
@@ -220,10 +149,9 @@ function renderer.triggerActionFlash(enemyIdx, flashType)
     end
 end
 
--- Damage feedback (flash + shake) for a party small battler or the
--- summoner. Keyed by battler identity in presentation/small_battlers.lua,
--- so the same state is visible to drawBattlerStatusCell (battle/map HUD)
--- and window_renderer.lua's party-shaped list rows alike.
+-- Damage feedback (flash + shake) for a battler. Keyed by battler identity
+-- in presentation/small_battlers.lua, so the same state is visible to
+-- actor_status.draw and window_renderer.lua's party-shaped list rows alike.
 function renderer.triggerSmallDamage(target)
     small_battlers.triggerDamage(target)
 end
@@ -446,16 +374,6 @@ local function drawMinimap(x, y, size)
     love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
--- Summoner status corner readout for exploration. The party grid itself is
--- now the persistent declarative "party" window (map scene, window_renderer)
--- drawn separately by main.lua's love.draw — drawing it again here would be
--- the exact old-HUD-under-new-window duplication bug (owner report
--- 12.07.2026). drawSummonerStatus draws its own self-contained panel, so no
--- outer ui.drawPanel wrapper is needed.
-local function drawHUD(y)
-    drawSummonerStatus(y)
-end
-
 -- Renders the Title Scene
 function renderer.drawTitle()
     love.graphics.clear(0.05, 0.05, 0.1, 1)
@@ -500,8 +418,6 @@ function renderer.drawTown(selectedIdx)
         local prefix = (i == selectedIdx) and "> " or "  "
         ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight, color)
     end
-
-    drawHUD(ui.toPx(18))
 end
 
 -- Renders the Map Scene
@@ -536,12 +452,6 @@ function renderer.drawMap()
         ui.drawPanel(60, 105, 136, 26)
         ui.drawString(label, 64, 112, {1, 1, 0.5, 1}, "center", 128)
     end
-
-    -- Summoner status only — the party grid itself is the persistent
-    -- declarative "party" window (map scene) drawn separately by main.lua,
-    -- so it no longer sits at the old y=18 baseline (that's the new
-    -- window's turf now; drawing here too was the duplicate-HUD bug).
-    drawHUD(ui.toPx(6))
 end
 
 -- Renders the Dialogue / Graph Walker Scene
@@ -591,8 +501,6 @@ function renderer.drawDialogue(walker, selectIdx)
             ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight, color)
         end
     end
-
-    drawHUD(ui.toPx(18))
 end
 
 -- The 2x2 party grid is now a thin arrangement loop: every party member's
@@ -835,9 +743,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
     end
 
-    -- B.1/B.6: summoner status — the same shared block the HUD uses
     local session = renderer.session
-    drawSummonerStatus(consoleY)
 
     -- Draw party stats in a 2x2 grid on right side of bottom console
     local highlightIdx = 0

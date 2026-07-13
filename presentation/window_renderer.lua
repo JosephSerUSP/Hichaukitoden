@@ -550,6 +550,24 @@ local function drawOptions(rows, cursor, env, x, y, w)
     end
 end
 
+-- "command" style: each entry is its own bordered slot (owner direction
+-- 13.07.2026), not free-floating text in one shared bar. Slots fill the
+-- window's whole x/y/w/h bounding box evenly, each with a small gap.
+local function drawCommandSlots(rows, cursor, env, x, y, w, h)
+    local n = #rows
+    if n == 0 then return end
+    local gap = ui.toPx(0.5)
+    local slotW = (w - gap * (n + 1)) / n
+    for i, row in ipairs(rows) do
+        local isSel = (i == cursor)
+        local sx = x + gap + (i - 1) * (slotW + gap)
+        ui.drawPanel(sx, y, slotW, h, nil, isSel)
+        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+        local label = (isSel and "> " or "") .. (row.name or "")
+        ui.drawString(label, sx, y + h / 2 - ui.lineHeight / 2, color, "center", slotW)
+    end
+end
+
 local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     if #rows == 0 or cursor < 1 or cursor > #rows then return end
     local row = rows[cursor]
@@ -565,21 +583,51 @@ local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     ui.drawString(row.name or "", x, contentY + ui.toPx(4.5), COLOR_SELECTED, "center", w)
 end
 
--- Open animation (menu conversion vocabulary): layout.anim.open =
--- { slide = "left"|"right"|"up"|"down", duration = seconds } eases the
--- window in from that screen edge when it opens. Purely presentational —
--- window state, hooks and golden logs are unaffected. The clock is keyed
--- by the runtime win table, so re-opening a closed window replays the
--- animation. There is no close animation: a scene that wants a slide-out
--- can stage it with hooks (CLOSE_WINDOW + WAIT before the pop), like the
--- game_over intro does in reverse.
+-- Open animation: layout.anim.open = { duration = seconds, anchor =
+-- "cellOf:<windowId>" (optional) } grows the window from a point to its
+-- full size when it opens. Purely presentational — window state, hooks and
+-- golden logs are unaffected. The clock is keyed by the runtime win table,
+-- so re-opening a closed window replays the animation. There is no close
+-- animation: a scene that wants one can stage it with hooks (CLOSE_WINDOW +
+-- WAIT before the pop), like the game_over intro does in reverse.
+--
+-- Owner direction 13.07.2026: the windowskin frame/tiles must never be
+-- graphically scaled (love.graphics.scale on a 9-sliced texture stretches
+-- the corner/edge quads into visible artifacts) — only the window's real
+-- x/y/w/h dimensions animate. ui.drawPanel already tiles correctly at any
+-- size, so growing the REAL rect fed into it keeps every frame crisp.
+-- Content (text/lists) stays laid out at the window's resting size and is
+-- simply revealed via scissor as the box grows, rather than reflowing.
 local openClocks = setmetatable({}, { __mode = "k" })
 
-local function openAnimOffset(win, layout)
+-- Resolves an anchor spec to a pixel point the window grows FROM. Currently
+-- supports "cellOf:<windowId>": the center of that window's currently
+-- selected partyGrid cell (e.g. the map's member popup opens from whichever
+-- party member was chosen, not the screen center) — reusable by any future
+-- popup anchored to a grid selection, not scene-specific.
+local function resolveAnchor(spec, ctx, listCache, layouts)
+    local targetId = type(spec) == "string" and spec:match("^cellOf:(.+)$")
+    if not targetId then return nil end
+    local cached = listCache[targetId]
+    local targetLayout = layouts[targetId]
+    if not cached or not targetLayout or not cached.rows[cached.cursor] then return nil end
+    local cols = targetLayout.gridColumns or 2
+    local colW, rowH = actor_status.cellSize(ctx.session)
+    local contentX, contentY = contentOrigin(targetLayout, targetLayout.title, ui.toPx(targetLayout.x or 0), ui.toPx(targetLayout.y or 0))
+    local idx = cached.cursor
+    local col = (idx - 1) % cols
+    local row = math.floor((idx - 1) / cols)
+    return contentX + col * colW + colW / 2, contentY + row * rowH + rowH / 2
+end
+
+-- Returns the animated (px, py, pw, ph) rect to actually draw the panel
+-- border at, and whether animation is still in progress (caller scissors
+-- content to this rect while true).
+local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
     local anim = layout.anim and layout.anim.open
     if not anim then
         openClocks[win] = nil
-        return 0, 0
+        return x, y, w, h, false
     end
     local now = love.timer.getTime()
     local t0 = openClocks[win]
@@ -589,38 +637,23 @@ local function openAnimOffset(win, layout)
     end
     local dur = tonumber(anim.duration) or 0.22
     local p = dur <= 0 and 1 or math.min(1, (now - t0) / dur)
+    if p >= 1 then return x, y, w, h, false end
     local ease = 1 - (1 - p) * (1 - p)
-    local rest = 1 - ease
-    if rest <= 0 then return 0, 0 end
-    local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
-    local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
-    local screenW, screenH = ui.toPx(32), ui.toPx(30)
-    local slide = anim.slide or "left"
-    if slide == "left" then return -rest * (x + w), 0
-    elseif slide == "right" then return rest * (screenW - x), 0
-    elseif slide == "up" then return 0, -rest * (y + h)
-    elseif slide == "down" then return 0, rest * (screenH - y)
-    end
-    return 0, 0
+    local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+    ax = ax or (x + w / 2)
+    ay = ay or (y + h / 2)
+    local realCx, realCy = x + w / 2, y + h / 2
+    local cx = ax + (realCx - ax) * ease
+    local cy = ay + (realCy - ay) * ease
+    local pw, ph = w * ease, h * ease
+    return cx - pw / 2, cy - ph / 2, pw, ph, true
 end
 
-local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache)
-    layout = resolvePageLayout(layout, env)
-    local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
-    local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
-    local style = layout.style or "panel"
-    local title = layout.title
-    if title then title = interpolate(title, env) end
-
-    local animDx, animDy = openAnimOffset(win, layout)
-    local animated = animDx ~= 0 or animDy ~= 0
-    if animated then
-        love.graphics.push()
-        love.graphics.translate(animDx, animDy)
-    end
-
-    ui.drawPanel(x, y, w, h, title)
-
+-- Style-specific content: called once per window per frame, either directly
+-- (resting state) or inside a scissor clipped to the animated open rect
+-- (while opening) -- content is always laid out at the REAL final x/y/w/h so
+-- it never reflows, it's simply revealed as the box grows.
+local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     local contentX, contentY = contentOrigin(layout, title, x, y)
     local lineSpacing = ui.toPx(layout.lineSpacing or 2)
 
@@ -646,14 +679,13 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
             drawOptions(cached.rows, cached.cursor, env, x, y + h - ui.toPx(2.5), w)
         end
     elseif style == "command" then
-        -- Single-line horizontal option bar (the same primitive "confirm"
-        -- uses for its yes/no row), for scenes that offer a flat list of
-        -- global actions rather than a vertical list. A companion window
-        -- typically binds its text to {sel('this_id').help} for a
-        -- description of the highlighted entry.
+        -- Each entry is its own bordered slot (owner direction 13.07.2026)
+        -- rather than free-floating text in one shared bar -- no outer
+        -- panel is drawn for this style, the slots themselves are the
+        -- window's whole visible surface.
         local cached = listCache[id]
         if cached then
-            drawOptions(cached.rows, cached.cursor, env, x, contentY, w)
+            drawCommandSlots(cached.rows, cached.cursor, env, x, y, w, h)
         end
     elseif style == "roulette" then
         local cached = listCache[id]
@@ -672,9 +704,26 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
             drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
         end
     end
+end
 
-    if animated then
-        love.graphics.pop()
+local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache, layouts)
+    layout = resolvePageLayout(layout, env)
+    local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
+    local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
+    local style = layout.style or "panel"
+    local title = layout.title
+    if title then title = interpolate(title, env) end
+
+    local px, py, pw, ph, animating = openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
+    if animating then
+        local sx, sy, sw, sh = love.graphics.getScissor()
+        love.graphics.intersectScissor(px, py, pw, ph)
+        if style ~= "command" then ui.drawPanel(px, py, pw, ph, title) end
+        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
+        if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
+    else
+        if style ~= "command" then ui.drawPanel(x, y, w, h, title) end
+        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     end
 end
 
@@ -701,14 +750,14 @@ function wr.draw(state, sceneData, ctx)
         cached.cursor = liveCursor(state.winState[id], env)
     end
 
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
     for _, id in ipairs(state.windowOrder or {}) do
         local win = state.winState[id]
         if win and win.open then
-            local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
-            drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache)
+            drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache, layouts)
         elseif win then
             -- Closed windows drop their open-anim clock so re-opening
-            -- replays the slide.
+            -- replays the animation.
             openClocks[win] = nil
         end
     end
