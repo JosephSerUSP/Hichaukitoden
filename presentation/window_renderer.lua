@@ -645,7 +645,13 @@ local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
     local realCx, realCy = x + w / 2, y + h / 2
     local cx = ax + (realCx - ax) * ease
     local cy = ay + (realCy - ay) * ease
-    local pw, ph = w * ease, h * ease
+    -- ui.drawPanel assumes at least ~16px to fit its 4px-inset tiled
+    -- background and 8px corner quads; below that its own internal
+    -- scissor math goes negative and crashes. Floor both dimensions so
+    -- the panel is never asked to draw smaller than it can handle — the
+    -- box "pops in" at that floor size on the very first frame or two,
+    -- then continues growing, which reads as fine at these durations.
+    local pw, ph = math.max(16, w * ease), math.max(16, h * ease)
     return cx - pw / 2, cy - ph / 2, pw, ph, true
 end
 
