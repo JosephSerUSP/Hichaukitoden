@@ -620,6 +620,20 @@ local function resolveAnchor(spec, ctx, listCache, layouts)
     return contentX + col * colW + colW / 2, contentY + row * rowH + rowH / 2
 end
 
+-- When a window anchors to a grid cell, its RESTING position also relates
+-- to that cell (owner direction 13.07.2026: "not dead center of the
+-- screen") — centered horizontally over the cell, sitting just above it,
+-- clamped to stay on screen. Falls back to the window's own layout.x/y
+-- when there's no anchor (or it can't resolve, e.g. nothing selected yet).
+local function anchoredRestPosition(ax, ay, x, y, w, h)
+    if not ax then return x, y end
+    local screenW, screenH = ui.toPx(32), ui.toPx(30)
+    local gap = ui.toPx(0.5)
+    local rx = math.max(0, math.min(screenW - w, ax - w / 2))
+    local ry = math.max(0, math.min(screenH - h, ay - h - gap))
+    return rx, ry
+end
+
 -- Returns the animated (px, py, pw, ph) rect to actually draw the panel
 -- border at, and whether animation is still in progress (caller scissors
 -- content to this rect while true).
@@ -640,11 +654,10 @@ local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
     if p >= 1 then return x, y, w, h, false end
     local ease = 1 - (1 - p) * (1 - p)
     local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
-    ax = ax or (x + w / 2)
-    ay = ay or (y + h / 2)
+    local growFromX, growFromY = ax or (x + w / 2), ay or (y + h / 2)
     local realCx, realCy = x + w / 2, y + h / 2
-    local cx = ax + (realCx - ax) * ease
-    local cy = ay + (realCy - ay) * ease
+    local cx = growFromX + (realCx - growFromX) * ease
+    local cy = growFromY + (realCy - growFromY) * ease
     -- ui.drawPanel assumes at least ~16px to fit its 4px-inset tiled
     -- background and 8px corner quads; below that its own internal
     -- scissor math goes negative and crashes. Floor both dimensions so
@@ -719,6 +732,12 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     local style = layout.style or "panel"
     local title = layout.title
     if title then title = interpolate(title, env) end
+
+    local anim = layout.anim and layout.anim.open
+    if anim and anim.anchor then
+        local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+        x, y = anchoredRestPosition(ax, ay, x, y, w, h)
+    end
 
     local px, py, pw, ph, animating = openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
     if animating then
