@@ -3,12 +3,12 @@ scene|map|name|Map
 party|open_window||
 party|set_list||party
 party|set_cursor||0
-map_command_help|open_window||
-map_command_help|set_text||{sel('map_command').help}
+help|open_window||
+help|set_text||{sel('map_command').help}
 map_confirm|open_window||
 map_confirm|set_text||Quit Hichaukitoden and exit to the desktop?
 map_confirm|set_list||term:menu.exit_options
 map_confirm|set_cursor||2
 map_command|close_window||
-map_command_help|close_window||
+help|close_window||
 UI GOLDEN END

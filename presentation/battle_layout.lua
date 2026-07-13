@@ -13,7 +13,11 @@ local BATTLE_LAYOUT = {
     enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
     enemyPopupY = 84,
     partyGridTileX = 15,    -- drawPartyGrid origin inside the console (tiles)
-    consoleTileY = 18,
+    -- consoleTileY/H match engine.json windowLayout.party exactly (y18.5,
+    -- h11.5) so the bottom console sits at the SAME position as the shared
+    -- declarative "party" window every other converted scene uses (owner
+    -- direction 12.07.2026).
+    consoleTileY = 18.5,
     headerTileOffset = 1,
     slotPopupOffsetX = 27,
     slotPopupOffsetY = 10,
@@ -32,15 +36,20 @@ local BATTLE_LAYOUT = {
     enemyDeathYOffset = 20,
     viewportOverlayW = 256,
     viewportOverlayH = 140,
-    logPanelX = 10,
-    logPanelY = 6,
-    logPanelWidth = 236,
+    -- Log/help panel geometry matches engine.json windowLayout.help exactly
+    -- (x0,y0,w32,h4 in tiles -> 0,0,256,32 px) so battle's command-help text
+    -- sits in the SAME top window every other converted scene uses (owner
+    -- direction 12.07.2026) -- a values sync, not a live engine.json read;
+    -- battle's drawing stays fully legacy pending the Summoner rework.
+    logPanelX = 0,
+    logPanelY = 0,
+    logPanelWidth = 256,
     logPanelHeight = 32,
-    logTextX = 16,
-    logTextY = 12,
-    logTextLimit = 224,
-    logSpaceX = 200,
-    logSpaceY = 23,
+    logTextX = 8,
+    logTextY = 8,
+    logTextLimit = 240,
+    logSpaceX = 216,
+    logSpaceY = 17,
     logLineSpacing = 10,        -- B.8: second log line offset
     commandBarTileH = 2.5,      -- B.7: single-line full-width command bar
     commandBarTextYOffset = 6,  --      flush above the status console
@@ -54,7 +63,7 @@ local BATTLE_LAYOUT = {
     victoryGaugeHeight = 3,
     consoleTileX = 0,
     consoleTileW = 32,
-    consoleTileH = 12,
+    consoleTileH = 11.5,
     consoleTextTileX = 1,
     menuChoiceSpacing = 16,
     summonerStatusX = 8,

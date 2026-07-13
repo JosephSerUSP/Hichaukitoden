@@ -1789,7 +1789,7 @@
             },
             {
               "cmd": "CLOSE_WINDOW",
-              "windowId": "map_command_help"
+              "windowId": "help"
             }
           ]
         },
@@ -1833,11 +1833,11 @@
             },
             {
               "cmd": "OPEN_WINDOW",
-              "windowId": "map_command_help"
+              "windowId": "help"
             },
             {
               "cmd": "SET_TEXT",
-              "windowId": "map_command_help",
+              "windowId": "help",
               "text": "{sel('map_command').help}"
             }
           ]

@@ -2018,14 +2018,6 @@
         }
       }
     },
-    "map_command_help": {
-      "x": 0,
-      "y": 11.5,
-      "width": 32,
-      "height": 3.5,
-      "style": "panel",
-      "title": null
-    },
     "map_member_popup": {
       "x": 8,
       "y": 8,
