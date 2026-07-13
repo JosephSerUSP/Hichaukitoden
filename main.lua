@@ -72,7 +72,6 @@ local isPreviewWindowMode = false
 local previewWindowId = nil
 local previewWindowMockSpec = nil
 local isPreviewFontMode = false
-local isTestDialogueFreezeMode = false
 local previewFontName = nil
 local previewFontSize = nil
 local isGoldenMode = false
@@ -1323,8 +1322,6 @@ function love.load(arg)
                 previewFontName = arg[i + 1]
                 previewFontSize = arg[i + 2]
                 i = i + 2
-            elseif val == "test-dialogue-freeze" then
-                isTestDialogueFreezeMode = true
             end
             i = i + 1
         end
@@ -1352,71 +1349,6 @@ function love.load(arg)
         loader.init()
         runPreviewFont(previewFontName, tonumber(previewFontSize))
         love.event.quit(0)
-        return
-    end
-
-    -- DIAGNOSTIC (not shipped): faithfully replicate a real interact-trigger
-    -- dialogue on map id 1, advance it to completion, return to map, then
-    -- probe post-state -- to repro the reported "dialogue breaks the map"
-    -- freeze with a REAL session/map instead of the golden harness's mock.
-    if isTestDialogueFreezeMode then
-        loader.init()
-        local ok, err = pcall(function()
-            activeSession = session.GameSession.new(loader)
-            activeSession:initializeStartingParty()
-            exploration.loadMap(activeSession, 1)
-            renderer.init(activeSession)
-            local ctx = { session = activeSession, loader = loader, party = activeSession.party, events = {} }
-            scene_host.init(nil)
-            scene_host.push("map", ctx)
-            print("after map push: mode=", scene_host.getCurrentState().v.mode)
-
-            -- Scenario A: the "Recovery Light" commonEvent (id 7) -- an
-            -- ACTION/RUN_IMMEDIATE node chain (RECOVER_PARTY then TEXT),
-            -- exactly what a step-triggered event compiles to via
-            -- compileCommands/handleDialogueAction's dynamic-node-injection
-            -- path. My earlier test only used a plain TEXT script and
-            -- missed this entirely.
-            local ce = loader.commonEvents["7"]
-            print("commonEvent 7:", ce and ce.name)
-            local graphNodes = {}
-            local firstId = interpreter.compile(graphNodes, ce.commands, "ce7", nil, { loader = loader, session = activeSession, recoverParty = recoverParty })
-            local graph = { nodes = graphNodes, start = firstId }
-            activeWalker = director.GraphWalker.new(activeSession, graph)
-            scene_host.goto_scene("dialogue", ctx)
-            print("after goto dialogue: current=", scene_host.getCurrent())
-            handleDialogueAction()
-
-            local steps = 0
-            while activeWalker:getCurrentNode() and steps < 20 do
-                local node = activeWalker:getCurrentNode()
-                print("  node", steps, "type=", node.type, "content=", node.content)
-                activeWalker:advance()
-                handleDialogueAction()
-                steps = steps + 1
-            end
-            print("dialogue advanced", steps, "steps, node now=", activeWalker:getCurrentNode())
-
-            if not activeWalker:getCurrentNode() then
-                scene_host.goto_scene("map")
-            end
-            print("after return to map: current=", scene_host.getCurrent(), "mode=", scene_host.getCurrentState().v.mode)
-
-            local ctx2 = { session = activeSession, loader = loader, party = activeSession.party, events = {} }
-            for _, k in ipairs({ "up", "down", "left", "right", "return", "escape" }) do
-                local handled = scene_host.keypressed(k, ctx2)
-                print("post-dialogue keypress", k, "handled=", handled, "mode=", scene_host.getCurrentState().v.mode)
-            end
-
-            local cnv = love.graphics.newCanvas(gameWidth, gameHeight)
-            love.graphics.setCanvas(cnv)
-            renderer.drawMap()
-            require("presentation.window_renderer").draw(scene_host.getCurrentState(), loader.getScene("map"), ctx2)
-            love.graphics.setCanvas()
-            print("draw path OK")
-        end)
-        print("TEST-DIALOGUE-FREEZE ok=", ok, "err=", err)
-        love.event.quit(ok and 0 or 1)
         return
     end
 
@@ -1544,7 +1476,7 @@ function love.draw()
     love.graphics.draw(canvas, scaleX, scaleY, 0, scale, scale)
 end
 
-handleDialogueAction = nil -- DIAGNOSTIC: temporarily global, was: local handleDialogueAction -- forward declaration
+local handleDialogueAction -- forward declaration
 local triggerBattle -- forward declaration
 local rebuildBattleLivingMembers -- forward declaration
 

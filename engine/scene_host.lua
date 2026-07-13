@@ -11,6 +11,22 @@ local sceneStack = {}
 -- Keyed by kind string (e.g. "battle"), value is a table of window defs.
 local windowDefsByKind = {}
 
+-- Fallback ctx for push/goto_scene call sites that omit it (there are many
+-- across main.lua's legacy code, all pre-dating scenes with real hooks — a
+-- scene without hooks tolerated a missing ctx silently since on_enter was a
+-- no-op either way). Now that "map" has a real on_enter, a missing ctx means
+-- v.mode/etc never get initialized, and every subsequent hook call falls
+-- through NO branch (nil doesn't match any state check) with
+-- hookHandled/hookFallback both left false — runHook returns "handled" for
+-- every keypress despite doing nothing, freezing all input. love.update
+-- refreshes this every frame with a real { session, loader } ctx, so it's
+-- never more than one frame stale.
+local lastCtx = nil
+
+function scene_host.rememberCtx(ctx)
+    if ctx then lastCtx = ctx end
+end
+
 local function getSceneData(ctx, id)
     if not ctx or not ctx.loader or not ctx.loader.scenes then return nil end
     -- Two-pass matching: first pass prefers exact id/name match,
@@ -211,6 +227,7 @@ function scene_host.runHook(hookName, ctx)
 end
 
 function scene_host.push(id, ctx)
+    ctx = ctx or lastCtx
     table.insert(sceneStack, {
         id = resolveSceneId(id),
         v = {},
@@ -246,6 +263,7 @@ function scene_host.push(id, ctx)
 end
 
 function scene_host.pop(ctx)
+    ctx = ctx or lastCtx
     if #sceneStack > 0 then
         if ctx then
             scene_host.runHook("on_exit", ctx)
@@ -260,6 +278,7 @@ function scene_host.goto_scene(id, ctx)
 end
 
 function scene_host.update(dt, ctx)
+    scene_host.rememberCtx(ctx)
     if #sceneStack > 0 then
         local state = sceneStack[#sceneStack]
         if state.waitTimer and state.waitTimer > 0 then
