@@ -49,18 +49,6 @@ function battle.getState()
     return state and state.v or {}
 end
 
--- Convenience: read a single key with default
-function battle.get(key, default)
-    local v = battle.getState()
-    return v[key] ~= nil and v[key] or default
-end
-
--- Convenience: set a key in scene state
-function battle.set(key, value)
-    local state = scene_host.getCurrentState()
-    if state then state.v[key] = value end
-end
-
 -- Config accessor with fallback
 local function conf(group, key, default)
     local g = config[group]
@@ -344,123 +332,15 @@ function battle.commitAction(memberIndex, action)
 end
 
 -------------------------------------------------------------------------------
--- Handles one command-selection input while the battle is in input mode
--------------------------------------------------------------------------------
-function battle.handleInput(action)
-    local v = battle.getState()
-    local b = v.battle
-    local memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]
-    if not memberInfo then
-        v.combatState = "log"
-        return
-    end
-
-    local isSummoner = (memberInfo.type == "summoner")
-    if v.spellSelect then
-        local options = {}
-        if isSummoner then
-            for _, spellId in ipairs(conf("summoner", "spells", {})) do
-                if type(spellId) == "table" then spellId = spellId.id end
-                local sk = ldr().getSkill(spellId)
-                if sk then table.insert(options, sk) end
-            end
-        else
-            for _, skId in ipairs(memberInfo.actor.skills or {}) do
-                local sk = ldr().getSkill(skId)
-                if sk then table.insert(options, sk) end
-            end
-        end
-
-        if action == "up" then
-            if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end
-        elseif action == "down" then
-            if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end
-        elseif action == "cancel" then
-            v.spellSelect = false
-            v.selectedIndex = 2
-        elseif action == "select" then
-            local choice = options[v.selectedIndex]
-            if choice then
-                local allowed = not isSummoner or (sess().mp >= (choice.mpCost or choice.mp or 0))
-                if allowed then
-                    local spell = ldr().getSkill(choice.id)
-                    local target = sess().summoner
-                    if spell and (spell.target == "enemy-any" or spell.target == "enemy") then
-                        for _, e in ipairs(b.enemies) do
-                            if not e:isDead() then target = e break end
-                        end
-                    else
-                        local lowestHp = 9999
-                        for _, c in ipairs(sess().party) do
-                            if not c:isDead() and c.hp < lowestHp then
-                                lowestHp = c.hp
-                                target = c
-                            end
-                        end
-                    end
-                    battle.commitAction(memberInfo.index, {
-                        type = isSummoner and "spell" or "skill", id = choice.id, target = target
-                    })
-                else
-                    battle.showMessage(ldr().getTerm("battle.not_enough_mp", "Not enough MP!"))
-                end
-            end
-        end
-    else
-        -- Horizontal command layout: left/right to navigate, up/down as alternative
-        if action == "left" or action == "up" then
-            v.selectedIndex = (v.selectedIndex - 2) % 4 + 1
-        elseif action == "right" or action == "down" then
-            v.selectedIndex = v.selectedIndex % 4 + 1
-        elseif action == "select" then
-            if v.selectedIndex == 1 then
-                local target = b.enemies[1]
-                for _, e in ipairs(b.enemies) do
-                    if not e:isDead() then target = e break end
-                end
-                battle.commitAction(memberInfo.index, { type = "attack", target = target })
-            elseif v.selectedIndex == 2 then
-                v.spellSelect = true
-                v.selectedIndex = 1
-            elseif v.selectedIndex == 3 then
-                if isSummoner then
-                    local battleItemId = conf("combat", "battleItem", 1)
-                    local battleItem = ldr().getItem(battleItemId)
-                    if battleItem and sess():hasItem(battleItemId, 1) then
-                        local target = sess().summoner
-                        local lowestHp = 9999
-                        for _, c in ipairs(sess().party) do
-                            if not c:isDead() and c.hp < lowestHp then
-                                lowestHp = c.hp
-                                target = c
-                            end
-                        end
-                        battle.commitAction(memberInfo.index, { type = "item", id = battleItemId, target = target })
-                    else
-                        battle.showMessage(ldr().formatTerm("battle.no_item_left", "No {0}s left!", (battleItem and battleItem.name or battleItemId)))
-                    end
-                else
-                    battle.commitAction(memberInfo.index, { type = "defend" })
-                end
-            elseif v.selectedIndex == 4 then
-                battle.commitAction(memberInfo.index, { type = "flee" })
-            end
-        end
-    end
-end
-
--------------------------------------------------------------------------------
--- Handles player-paced advancement of the battle event log
--------------------------------------------------------------------------------
-function battle.handleLogInput(action)
-    local v = battle.getState()
-    if action == "select" and v.eventQueueIndex <= #(v.eventsQueue or {}) then
-        battle.advanceLog()
-        return true
-    end
-    return false
-end
-
+-- NOTE: command-selection input ("handleInput") and log advancement
+-- ("handleLogInput") are NOT defined here. They live as scene-local named
+-- scripts in data/scenes.json (battle scene → scripts), run via
+-- SCRIPT { ref = ... } from the battle hooks. The Lua copies that used to
+-- sit here were dead code left behind by that conversion and had already
+-- diverged from the authoritative script versions — do not re-add them.
+-- What remains in this module is the state machinery those scripts call
+-- through the interpreter's api.battle bridge (commitAction, advanceLog,
+-- showMessage, handleTransition).
 -------------------------------------------------------------------------------
 -- Handles battle completion: victory, defeat, escape, or the next round
 -------------------------------------------------------------------------------

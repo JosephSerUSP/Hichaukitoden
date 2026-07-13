@@ -362,7 +362,7 @@
     "expGrowth": 8,
     "gold": 40,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],

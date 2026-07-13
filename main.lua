@@ -82,15 +82,9 @@ local runValidation
 -- Scene States Cache
 local townSelectedIdx = 1
 
--- Battle State
-local activeBattle
-local battleCombatLog = {}
-local battleCombatState = "input" -- "input" or "log"
-local battleSelectedIndex = 1
-local battleSpellSelect = false
-local battleEventsQueue = {}
-local battleEventQueueIndex = 1
-local battleEscaped = false
+-- Battle State now lives entirely in scene_host (engine/scenes/battle.lua,
+-- accessed via v.*). The former main.lua battle globals were removed after
+-- the battle->scene migration; nothing referenced them.
 
 -- Dialogue State
 local activeWalker
@@ -100,11 +94,6 @@ local dialogueSelectIdx = 1
 
 
 local inputCooldown = 0
-
--- Interactive Battle Input variables
-local battleLivingMembers = {}
-local battleActiveMemberIndex = 1
-local battleCollectedActions = {}
 
 local server = require("engine.server")
 config = require("engine.config")
@@ -1478,7 +1467,6 @@ end
 
 local handleDialogueAction -- forward declaration
 local triggerBattle -- forward declaration
-local rebuildBattleLivingMembers -- forward declaration
 
 local function isSafeMap()
     if activeSession and activeSession.currentMapData then
@@ -1715,11 +1703,6 @@ local function triggerDialogue(graphName)
     end
 end
 
--- Rebuilds the list of party members that still get to act this round
-rebuildBattleLivingMembers = function()
-    require("engine.scenes.battle").rebuildLivingMembers()
-end
-
 triggerBattle = function()
     require("engine.scenes.battle").triggerBattle()
 end
@@ -1731,26 +1714,6 @@ end
 -- Map a battler to screen coordinates on the battle scene.
 local function getTargetCoords(target)
     return require("engine.scenes.battle").getTargetCoords(target)
-end
-
--- Resolves combat rounds with dynamic state backup/restore for sequential action rendering
-local function resolveBattleRound()
-    return require("engine.scenes.battle").resolveRound()
-end
-
--- Advances the combat logs queue by one event and formats it
-local function advanceBattleLog()
-    require("engine.scenes.battle").advanceLog()
-end
-
--- Records the chosen action for the active member; resolves the round once everyone has acted
-local function commitBattleAction(memberIndex, action)
-    require("engine.scenes.battle").commitAction(memberIndex, action)
-end
-
--- Interrupts input to show a one-line battle message
-local function showBattleMessage(text)
-    require("engine.scenes.battle").showMessage(text)
 end
 
 -- Action handling for key presses

@@ -241,12 +241,12 @@ function scene_host.push(id, ctx)
 
     -- Merge registered window definitions for this scene's kind
     if sceneData and sceneData.kind then
-        -- Let the scene module register its window defs first
-        if sceneData.kind == "battle" then
-            local sceneModule = require("engine.scenes.battle")
-            if sceneModule.registerKindWindows then
-                sceneModule.registerKindWindows(scene_host)
-            end
+        -- Let the scene module (engine/scenes/<kind>.lua, if one exists)
+        -- register its window defs first. Resolved generically by kind —
+        -- no per-kind hardcoding (D13); kinds without a module are fine.
+        local ok, sceneModule = pcall(require, "engine.scenes." .. sceneData.kind)
+        if ok and type(sceneModule) == "table" and sceneModule.registerKindWindows then
+            sceneModule.registerKindWindows(scene_host)
         end
         -- Merge any stored window definitions into the scene state
         local kindDefs = windowDefsByKind[sceneData.kind]
