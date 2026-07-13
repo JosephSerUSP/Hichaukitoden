@@ -415,8 +415,11 @@ function renderer.drawTown(selectedIdx)
     local townOptions = (config.town and config.town.options) or {}
     for i, opt in ipairs(townOptions) do
         local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local prefix = (i == selectedIdx) and "> " or "  "
-        ui.drawString(prefix .. (opt.label or "???"), ui.toPx(2), ui.toPx(2) + i * ui.lineHeight, color)
+        local optY = ui.toPx(2) + i * ui.lineHeight
+        if i == selectedIdx then
+            small_battlers.draw("Cursor", ui.toPx(2) + 2, optY, 8)
+        end
+        ui.drawString(opt.label or "???", ui.toPx(2) + 12, optY, color)
     end
 end
 
@@ -497,8 +500,11 @@ function renderer.drawDialogue(walker, selectIdx)
         ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         for i, opt in ipairs(node.options or {}) do
             local color = (i == selectIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-            local prefix = (i == selectIdx) and "> " or "  "
-            ui.drawString(prefix .. opt.label, winX + ui.toPx(1), ui.toPx(5) + i * ui.lineHeight, color)
+            local optY = ui.toPx(5) + i * ui.lineHeight
+            if i == selectIdx then
+                small_battlers.draw("Cursor", winX + ui.toPx(1) + 2, optY, 8)
+            end
+            ui.drawString(opt.label, winX + ui.toPx(1) + 12, optY, color)
         end
     end
 end
@@ -730,8 +736,11 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             local isDim = (label == "(No skills)")
             local color = isDim and {0.5, 0.5, 0.5, 1}
                 or ((i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-            local prefix = (not isDim and i == selectedIndex) and "> " or "  "
-            ui.drawString(prefix .. label, textX + math.floor((i - 1) * slot), rowY, color)
+            local drawX = textX + math.floor((i - 1) * slot)
+            if not isDim and i == selectedIndex then
+                small_battlers.draw("Cursor", drawX + 2, rowY, 8)
+            end
+            ui.drawString(label, drawX + 12, rowY, color)
         end
 
         -- Help window: same panel as the battle log, describing the selected

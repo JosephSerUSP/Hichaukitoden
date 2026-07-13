@@ -477,7 +477,9 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         end
 
         local textX = contentX + ui.toPx(0.5)
-        ui.drawString(isSel and ">" or " ", contentX, rowY, color)
+        if isSel then
+            small_battlers.draw("Cursor", contentX - 6, rowY, 8)
+        end
         if spriteField then
             local key = row[spriteField]
             if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
@@ -541,12 +543,12 @@ local function drawOptions(rows, cursor, env, x, y, w)
     for i, row in ipairs(rows) do
         local isSel = (i == cursor)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        local label = (isSel and "> " or "  ") .. (row.name or "")
         local slotX = x + math.floor((i - 1) * slot)
         if isSel then
             ui.drawPanel(slotX + ui.toPx(0.5), y - ui.toPx(0.5), math.floor(slot) - ui.toPx(1), ui.lineHeight + ui.toPx(1), nil, true)
+            small_battlers.draw("Cursor", slotX + ui.toPx(1), y, 8)
         end
-        ui.drawString(label, slotX + ui.toPx(2), y, color)
+        ui.drawString(row.name or "", slotX + ui.toPx(2), y, color)
     end
 end
 
@@ -563,8 +565,14 @@ local function drawCommandSlots(rows, cursor, env, x, y, w, h)
         local sx = x + gap + (i - 1) * (slotW + gap)
         ui.drawPanel(sx, y, slotW, h, nil, isSel)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        local label = (isSel and "> " or "") .. (row.name or "")
-        ui.drawString(label, sx, y + h / 2 - ui.lineHeight / 2, color, "center", slotW)
+        local label = row.name or ""
+        local textY = y + h / 2 - ui.lineHeight / 2
+        if isSel then
+            local textW = love.graphics.getFont():getWidth(label)
+            local textX = sx + (slotW - textW) / 2
+            small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+        end
+        ui.drawString(label, sx, textY, color, "center", slotW)
     end
 end
 

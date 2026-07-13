@@ -730,6 +730,7 @@ local function buildScriptApi(ctx)
     function api.takeItem(id, n)
         if session:hasItem(id, 1) then session:addItem(id, -(n or 1)) end
     end
+    function api.hasItem(id, n) return session:hasItem(id, n or 1) end
     function api.gainGold(n) session.gold = math.max(0, session.gold + math.floor(n or 0)) end
     function api.grantXp(target, n) if target then target:gainExp(math.floor(n or 0), session) end end
     function api.addState(target, id, dur)

@@ -86,6 +86,8 @@ function small_battlers.get(spriteKey)
         "assets/smallBattlers/" .. fileKey .. ".png",
         "assets/smallBattlers/" .. fileKey:lower() .. ".png",
         "assets/sprites/" .. fileKey .. ".png",
+        "assets/system/" .. fileKey .. ".png",
+        "assets/system/" .. fileKey:sub(1, 1):upper() .. fileKey:sub(2):lower() .. ".png",
     }
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then

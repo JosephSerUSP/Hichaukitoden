@@ -190,7 +190,9 @@ function actor_status.draw(battler, x, y, isSelected, session)
         spriteOffsetX = spriteSize - 2 -- 22px; content on lines 2–3 starts after it
     end
 
-    local prefix = isSelected and ">" or " "
+    if isSelected then
+        small_battlers.draw("Cursor", x - 6, y, 8)
+    end
 
     -- LINE 1: the name gets the full top line. The small battler begins on
     -- line 2, leaving this row clear even when the actor has a sprite.
@@ -201,7 +203,7 @@ function actor_status.draw(battler, x, y, isSelected, session)
     -- Silently truncate name to fit within the column (~6px per char in
     -- 8px font). No ellipsis — just clean clipping.
     local maxNameChars = math.floor(nameClipW / 6)
-    local displayName = (prefix .. battler.name):sub(1, maxNameChars)
+    local displayName = (battler.name):sub(1, maxNameChars)
     ui.drawString(displayName, nameX, lineY, color, "left", 256)
 
     -- LINE 2 (mid): HP fraction text "current/max"
@@ -218,8 +220,11 @@ end
 -- "- EMPTY -" text exactly (no panel, so an empty slot doesn't visually
 -- compete with occupied ones).
 function actor_status.drawEmpty(x, y, isSelected, session)
-    local prefix = isSelected and ">" or " "
-    ui.drawString(prefix .. "- EMPTY -", x, y + layoutVal(session, "partyGridEmptyYOffset"), { 0.3, 0.3, 0.3, 1 })
+    local emptyY = y + layoutVal(session, "partyGridEmptyYOffset")
+    if isSelected then
+        small_battlers.draw("Cursor", x - 6, emptyY, 8)
+    end
+    ui.drawString("- EMPTY -", x + 6, emptyY, { 0.3, 0.3, 0.3, 1 })
 end
 
 return actor_status
