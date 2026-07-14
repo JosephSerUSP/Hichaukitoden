@@ -163,6 +163,21 @@ function actor_status.cellSize(session)
     return layoutVal(session, "partyGridColWidth"), layoutVal(session, "partyGridRowHeight")
 end
 
+-- Shared party-grid slot arithmetic: the top-left (x, y) of the cell for a
+-- 1-based member `index`, wrapping into `cols` columns (default 2 - the
+-- battle/map HUD's 2x2). Every party-grid layout goes through this - the
+-- direct-draw grid (renderer.drawPartyGrid), the data-driven window
+-- "partyGrid" style (window_renderer), and the damage-popup coordinate
+-- lookup (renderer.getBattlerCoords) - so cell size and wrapping can never
+-- drift between where a cell is drawn and where its popup spawns.
+function actor_status.gridSlot(originX, originY, index, session, cols)
+    cols = cols or 2
+    local colW, rowH = actor_status.cellSize(session)
+    local col = (index - 1) % cols
+    local row = math.floor((index - 1) / cols)
+    return originX + col * colW, originY + row * rowH
+end
+
 -- Draws ONE party member's status cell at (x, y) — top-left anchor, cell
 -- size from actor_status.cellSize(). This is verbatim the battle/map HUD's
 -- party-grid slot rendering: windowskin panel, animated sprite (dead tint

@@ -54,3 +54,16 @@ selection (navy) and striping still read correctly, and zero console errors.
 > NUL padding to files (this is what corrupted main.lua / scene_host.lua /
 > events.js). After any edit, worth a quick check:
 > `git ls-files | while read f; do grep -qP '\x00' "$f" && echo "NULs: $f"; done`
+
+### 2026-07-13 — Party-grid layout consolidation (needs G2 + G3)
+Added one shared helper `actor_status.gridSlot(originX, originY, index,
+session, cols)` and routed all four party-grid cell-position sites through
+it: `renderer.drawPartyGrid`, `renderer.getBattlerCoords` (damage-popup
+coords), and both `window_renderer` sites (`drawPartyGridStyle` and the
+`cellOf:` anchor in `resolveAnchor`). Removes three copies of the `% cols` /
+`floor(/cols)` arithmetic. **Behavior-preserving** — every site already
+resolved to `actor_status.cellSize()` (= partyGridColWidth/RowHeight), so the
+numbers are unchanged.
+**Run:** `G2-golden.bat` — must still print `Golden log matches.` (byte-
+identical; do NOT regenerate the log). Then `G3-editor.bat` for a visual
+sanity check of the party HUD / battle console / target grid.

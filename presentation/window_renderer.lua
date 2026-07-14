@@ -518,15 +518,11 @@ end
 -- partyRows keeps a reference to) — so a party member's status is one
 -- single thing, not a re-implementation per screen.
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
-    local colW, rowH = actor_status.cellSize(session)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
     for i, row in ipairs(rows) do
         if row.battlerRef then
-            local col = (i - 1) % cols
-            local rowIdx = math.floor((i - 1) / cols)
-            local cx = contentX + col * colW
-            local cy = contentY + rowIdx * rowH
+            local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
             actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
         end
     end
@@ -623,9 +619,10 @@ local function resolveAnchor(spec, ctx, listCache, layouts)
     local colW, rowH = actor_status.cellSize(ctx.session)
     local contentX, contentY = contentOrigin(targetLayout, targetLayout.title, ui.toPx(targetLayout.x or 0), ui.toPx(targetLayout.y or 0))
     local idx = cached.cursor
-    local col = (idx - 1) % cols
-    local row = math.floor((idx - 1) / cols)
-    return contentX + col * colW + colW / 2, contentY + row * rowH + rowH / 2
+    -- Shared slot arithmetic (actor_status.gridSlot); +half a cell centers
+    -- the anchor on the selected grid cell.
+    local cx, cy = actor_status.gridSlot(contentX, contentY, idx, ctx.session, cols)
+    return cx + colW / 2, cy + rowH / 2
 end
 
 -- When a window anchors to a grid cell, its RESTING position also relates

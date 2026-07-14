@@ -515,21 +515,14 @@ end
 -- uses (owner direction 11.07.2026: one actor-status thing, called once
 -- per member, everywhere a party is shown).
 function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
-    local colW, rowH = actor_status.cellSize(session)
-    local gridCoords = {
-        { x = x, y = y },
-        { x = x + colW, y = y },
-        { x = x, y = y + rowH },
-        { x = x + colW, y = y + rowH }
-    }
     for i = 1, 4 do
         local c = session.party[i]
-        local slot = gridCoords[i]
+        local slotX, slotY = actor_status.gridSlot(x, y, i, session)
         local isSel = (showCursor and i == selectedIdx)
         if c then
-            actor_status.draw(c, slot.x, slot.y, isSel, session)
+            actor_status.draw(c, slotX, slotY, isSel, session)
         else
-            actor_status.drawEmpty(slot.x, slot.y, isSel, session)
+            actor_status.drawEmpty(slotX, slotY, isSel, session)
         end
     end
 end
@@ -549,13 +542,10 @@ function renderer.getBattlerCoords(battleState, session, target)
 
         local gridX = ui.toPx(layoutVal("partyGridTileX"))
         local gridY = ui.toPx(layoutVal("consoleTileY")) + ui.toPx(layoutVal("headerTileOffset"))
-        -- Same 2x2 slot arithmetic as drawPartyGrid
+        -- Shared 2x2 slot arithmetic (matches drawPartyGrid exactly)
         for idx, c in ipairs(session.party) do
             if c == target then
-                local col = (idx - 1) % 2
-                local row = math.floor((idx - 1) / 2)
-                local slotX = gridX + col * layoutVal("partyGridColWidth")
-                local slotY = gridY + row * layoutVal("partyGridRowHeight")
+                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session)
                 return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
         end
