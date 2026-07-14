@@ -70,13 +70,15 @@ end
 -- Rebuilds the list of party members that still get to act this round
 -------------------------------------------------------------------------------
 function battle.rebuildLivingMembers()
+    -- overhaul-6 F1: the summoner is not a battle participant; living
+    -- members are the active party creatures only, indexed 1-4 to match
+    -- Battle:resolveRound's collectedActions slots directly (no +1 offset).
     local v = battle.getState()
     local living = {}
-    table.insert(living, { type = "summoner", actor = sess().summoner, index = 1 })
     for i = 1, 4 do
         local c = sess().party[i]
         if c and not c:isDead() then
-            table.insert(living, { type = "monster", actor = c, index = i + 1 })
+            table.insert(living, { type = "monster", actor = c, index = i })
         end
     end
     v.livingMembers = living
@@ -251,7 +253,8 @@ function battle.advanceLog()
                         break
                     end
                 end
-                -- E8: party smallBattlers and the summoner flash/shake too
+                -- E8: party smallBattlers flash/shake too (overhaul-6 F1:
+                -- the summoner is never a damage target in battle anymore)
                 if not isEnemy then
                     renderer.triggerSmallDamage(ev.target)
                 end

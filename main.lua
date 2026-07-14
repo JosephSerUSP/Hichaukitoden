@@ -528,42 +528,42 @@ local function runGolden()
 
     print("GOLDEN BEGIN")
 
+    -- overhaul-6 F1: the summoner is not a battle participant. All actions
+    -- are indexed 1-4 directly by active-creature slot (no more +1 offset
+    -- for a summoner-first instant action). This fixture uses a 3-member
+    -- party (High Pixie, Skeleton, Angel).
+
     -- Round 1: all attack
     local actionsR1 = {}
-    actionsR1[1] = { type = "attack", target = enemies[1] } -- Summoner
     for i=1, 3 do
         if vSession.party[i] then
-            actionsR1[i+1] = { type = "attack", target = enemies[1] }
+            actionsR1[i] = { type = "attack", target = enemies[1] }
         end
     end
     logEvents(vBattle:resolveRound(actionsR1))
 
-    -- Round 2: spell + defend + attacks
+    -- Round 2: spell (party[1] on itself) + defend (party[2]) + attack (party[3])
     local actionsR2 = {}
     local sysSpells = loader.system and loader.system.summoner and loader.system.summoner.spells or {}
     local firstSpell = sysSpells[1]
     if type(firstSpell) == "table" then firstSpell = firstSpell.id end
 
-    if firstSpell then
+    if firstSpell and vSession.party[1] then
         actionsR2[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
-    else
+    elseif vSession.party[1] then
         actionsR2[1] = { type = "attack", target = enemies[2] }
     end
 
-    if vSession.party[1] then actionsR2[2] = { type = "defend", target = vSession.party[1] } end
-    if vSession.party[2] then actionsR2[3] = { type = "attack", target = enemies[2] } end
-    if vSession.party[3] then actionsR2[4] = { type = "attack", target = enemies[2] } end
+    if vSession.party[2] then actionsR2[2] = { type = "defend", target = vSession.party[2] } end
+    if vSession.party[3] then actionsR2[3] = { type = "attack", target = enemies[2] } end
 
     logEvents(vBattle:resolveRound(actionsR2))
 
-    -- Round 3: flee
+    -- Round 3: flee (party[1]) + attacks (party[2], party[3])
     local actionsR3 = {}
-    actionsR3[1] = { type = "flee" }
-    for i=1, 3 do
-        if vSession.party[i] then
-            actionsR3[i+1] = { type = "attack", target = enemies[2] }
-        end
-    end
+    if vSession.party[1] then actionsR3[1] = { type = "flee" } end
+    if vSession.party[2] then actionsR3[2] = { type = "attack", target = enemies[2] } end
+    if vSession.party[3] then actionsR3[3] = { type = "attack", target = enemies[2] } end
     logEvents(vBattle:resolveRound(actionsR3))
 
     -- One victory resolution against a 1-HP enemy
@@ -581,7 +581,6 @@ local function runGolden()
     local vBattleVic = battleSystem.Battle.new(vSessionVic, enemiesVic)
     local actionsVic = {}
     actionsVic[1] = { type = "attack", target = enemiesVic[1] }
-    actionsVic[2] = { type = "attack", target = enemiesVic[1] }
     logEvents(vBattleVic:resolveRound(actionsVic))
 
     print("GOLDEN END")

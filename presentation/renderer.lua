@@ -549,9 +549,6 @@ function renderer.getBattlerCoords(battleState, session, target)
                 return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
         end
-        if target == session.summoner then
-            return layoutVal("summonerPopupX"), ui.toPx(layoutVal("consoleTileY")) + layoutVal("summonerPopupYOffset")
-        end
     end
     return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
@@ -656,8 +653,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
-    -- Bottom status console: summoner status (left, B.1/B.6) + party grid
-    -- (right). Battler commands no longer live inside it (B.7).
+    -- Bottom status console: party grid. Battler commands no longer live
+    -- inside it (B.7). The summoner is not a battle participant
+    -- (overhaul-6 F1) and has no status display here.
     local consoleY = ui.toPx(layoutVal("consoleTileY"))
     local consoleH = ui.toPx(layoutVal("consoleTileH"))
     local textX = ui.toPx(layoutVal("consoleTextTileX"))
@@ -669,51 +667,30 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     -- the full width, flush above the status console; it opens during input
     -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
     if combatState == "input" then
+        -- overhaul-6 F1: the summoner is not a battle participant; every
+        -- living member is an active creature with its own skill list.
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        local isSummoner = (not memberInfo or memberInfo.type == "summoner")
         local loader = renderer.session.loader
 
         local entries, helps = {}, {}
-        if isSummoner then
-            if spellSelect then
-                -- Real spell names + MP costs from summoner.spells / skills.json
-                for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
-                    if type(spellId) == "table" then spellId = spellId.id end
-                    local sk = loader.getSkill(spellId)
-                    if sk then
-                        table.insert(entries, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
-                        table.insert(helps, sk.description or "")
-                    end
+        local monster = memberInfo and memberInfo.actor
+        if spellSelect then
+            for _, skId in ipairs((monster and monster.skills) or {}) do
+                local sk = loader.getSkill(skId)
+                if sk then
+                    table.insert(entries, sk.name)
+                    table.insert(helps, sk.description or "")
                 end
-            else
-                entries = loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
-                helps = loader.getTermList("battle.help_summoner", {
-                    "Strike with a basic attack.",
-                    "Cast a spell from the grimoire.",
-                    "Use an item from the inventory.",
-                    "Attempt to escape the battle.",
-                })
             end
+            if #entries == 0 then entries = { "(No skills)" } end
         else
-            local monster = memberInfo.actor
-            if spellSelect then
-                for _, skId in ipairs(monster.skills or {}) do
-                    local sk = loader.getSkill(skId)
-                    if sk then
-                        table.insert(entries, sk.name)
-                        table.insert(helps, sk.description or "")
-                    end
-                end
-                if #entries == 0 then entries = { "(No skills)" } end
-            else
-                entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
-                helps = loader.getTermList("battle.help_monster", {
-                    "Strike with a basic attack.",
-                    "Use one of this creature's skills.",
-                    "Brace to reduce incoming damage.",
-                    "Attempt to escape the battle.",
-                })
-            end
+            entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
+            helps = loader.getTermList("battle.help_monster", {
+                "Strike with a basic attack.",
+                "Use one of this creature's skills.",
+                "Brace to reduce incoming damage.",
+                "Attempt to escape the battle.",
+            })
         end
 
         local barH = ui.toPx(layoutVal("commandBarTileH"))
@@ -748,9 +725,11 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     local highlightIdx = 0
     local showHighlight = false
     if combatState == "input" then
+        -- overhaul-6 F1: memberInfo.index is the party slot (1-4) directly,
+        -- no summoner-offset adjustment needed anymore.
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        if memberInfo and memberInfo.type == "monster" then
-            highlightIdx = memberInfo.index - 1
+        if memberInfo then
+            highlightIdx = memberInfo.index
             showHighlight = true
         end
     end

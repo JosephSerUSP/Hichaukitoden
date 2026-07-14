@@ -128,7 +128,9 @@ function GameSession.new(loader)
     self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     
-    -- Party composition: 1-4 active creatures, 5 is summoner, 6+ are reserve
+    -- Party composition: 1-4 active creatures. The summoner is tracked
+    -- separately (self.summoner) and does not occupy a party slot; reserve
+    -- creatures (overhaul-6 F3) are future work, not yet represented here.
     self.party = {}
     
     return self
@@ -168,14 +170,16 @@ function GameSession:hasItem(itemId, amount)
 end
 
 function GameSession:getActiveParty()
-    -- Returns list of creatures active in combat (slots 1 to 4) plus the summoner (slot 5)
+    -- Returns the creatures active in combat (slots 1 to 4). The summoner
+    -- is not a battle participant (overhaul-6 F1) -- they keep a Battler
+    -- object for their name/level/equipment/MP-adjacent data, used outside
+    -- battle (shop level-gates, RECOVER_PARTY, etc.), but never fights.
     local active = {}
     for i = 1, 4 do
         if self.party[i] then
             table.insert(active, self.party[i])
         end
     end
-    table.insert(active, self.summoner)
     return active
 end
 
