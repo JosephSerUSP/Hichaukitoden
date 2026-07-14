@@ -32,13 +32,15 @@ rewrote).
       disappears during dialog!"). The shared HUD IS the existing declarative
       `"party"` window (`style:"partyGrid"`, `data/engine.json` windowLayout)
       — there is exactly ONE party HUD, no second/legacy one. The 2x2 actor
-      grid stays at the window's natural LEFT position; the MP readout
-      (`window_renderer.drawMpReadout`, using the interpolated
-      `session.displayedMp`) sits in the freed RIGHT portion. Keeping the grid
-      at its natural position also keeps the map party popup (anchored to the
-      grid cells via `cellOf:party`) in sync with the sprites. Every scene
-      draws this same window: Map via its scene state, and battle/dialogue/town
-      via `main.lua`'s `drawSharedPartyHud`.
+      grid stays at the window's natural LEFT position; a thin MP gauge (same
+      thickness as the party HP bars) sits on the sliver UNDER the grid, with
+      an "MP" label to its left and the current MP value shown numerically to
+      its right (gauge width = 2 status-panel widths minus the label + number
+      widths). The whole readout is shifted up 3px. Keeping the grid at its
+      natural position also keeps the map party popup (anchored to the grid
+      cells via `cellOf:party`) in sync with the sprites. Every scene draws
+      this same window: Map via its scene state, and battle/dialogue/town via
+      `main.lua`'s `drawSharedPartyHud`.
 - [x] No new balancing — costs/rates/thresholds unchanged. No value changes
       were needed.
 
@@ -50,14 +52,19 @@ rewrote).
   after the owner flagged that a SECOND (legacy) party HUD was overlapping the
   existing declarative one in the Scenes editor. Resolution: unify on the ONE
   declarative `"party"` window instead of adding a parallel HUD.
-  - `presentation/window_renderer.lua`: added `drawMpReadout(x, y, session,
-    areaW)` (uses the smoothly-interpolated `session.displayedMp`) and modified
+  - `presentation/window_renderer.lua`: added `drawMpReadout` and modified
     `drawPartyGridStyle` so the 2x2 actor grid stays at `contentX` (its natural
-    left position) and the MP readout is drawn in the freed RIGHT portion of the
-    window. This keeps the map party popup — which anchors to the grid cells via
-    `cellOf:party` (computed at the same `contentX`) — in sync with the sprites,
-    and matches the owner's requested layout (actors left, MP right). This is the
-    single source of the shared HUD's visuals.
+    left position) and a thin MP gauge (thickness = `partyGridHpBarHeight`, same
+    as the party HP bars) is drawn on the sliver under the grid, with an "MP"
+    label to its left and the current MP value shown numerically to its right.
+    Gauge width = 2 status-panel widths (`cols * partyGridColWidth`) minus the
+    measured label + MP-number widths, so label + gauge + number span exactly
+    the grid width. The whole readout is shifted up 3px. `ui.measureText`
+    (monospace font width) was added to `presentation/ui.lua`; `battle_layout`
+    is required for the HP-bar thickness. This keeps the map party popup — which
+    anchors to the grid cells via `cellOf:party` (computed at the same
+    `contentX`) — in sync with the sprites. This is the single source of the
+    shared HUD's visuals.
   - `main.lua`: added `drawSharedPartyHud()` — builds a minimal
     `{ winState = { party = { open = true, listId = "party" } }, windowOrder =
     { "party" } }` state and calls `window_renderer.draw(state, nil, { session,

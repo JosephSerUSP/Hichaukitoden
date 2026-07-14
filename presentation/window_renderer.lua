@@ -32,6 +32,7 @@ local ui = require("presentation.ui")
 local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
 local actor_status = require("presentation.actor_status")
+local battle_layout = require("presentation.battle_layout")
 
 local wr = {}
 
@@ -517,19 +518,16 @@ end
 -- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
 -- partyRows keeps a reference to) — so a party member's status is one
 -- single thing, not a re-implementation per screen.
--- F2 (overhaul-6): shared MP readout drawn inside the declarative party window,
--- in the RIGHT portion beside the 2x2 actor grid (so the map party popup —
--- anchored to the grid cells via cellOf:party — stays in sync with the
--- sprites). Uses session.displayedMp when available. areaW = readout width.
-local function drawMpReadout(x, y, session, areaW)
-    areaW = areaW or 96
+-- F2 (overhaul-6): shared MP readout — a thin gauge on the sliver UNDER the 2x2
+-- actor grid (same thickness as the party HP bars), with the current MP value
+-- shown numerically to its right. gaugeW is the gauge's pixel width; the number
+-- sits immediately after it, so gauge + number span exactly the 2-panel width.
+local function drawMpReadout(session, gaugeX, gaugeY, gaugeW, numX, numY, mpBarH)
     local mp = math.floor(session.displayedMp or session.mp or 0)
     local maxMp = math.floor(session.maxMp or mp or 1)
     if maxMp <= 0 then maxMp = 1 end
-    local barW = areaW - 12
-    ui.drawString("MP", x, y, {1, 1, 1, 1})
-    ui.drawBar(x, y + 12, barW, 5, mp, maxMp, {0.30, 0.60, 1.0}, {0.65, 0.90, 1.0})
-    ui.drawString(mp .. "/" .. maxMp, x, y + 20, {0.80, 0.90, 1.0, 1})
+    ui.drawBar(gaugeX, gaugeY, gaugeW, mpBarH, mp, maxMp, {0.30, 0.60, 1.0}, {0.65, 0.90, 1.0})
+    ui.drawString(tostring(mp), numX, numY, {0.80, 0.90, 1.0, 1})
 end
 
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
@@ -537,14 +535,29 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local contentX, contentY = contentOrigin(layout, title, x, y)
     -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
     -- (contentX) so the map party popup — anchored to the grid cells via
-    -- cellOf:party — lines up with the sprites. The shared MP readout is drawn
-    -- in the freed RIGHT portion of the window instead of shifting the grid.
+    -- cellOf:party — lines up with the sprites. The shared MP gauge is drawn on
+    -- the thin sliver under the grid (same thickness as the party HP bars),
+    -- with the current MP value shown numerically to its right.
     local colW = actor_status.cellSize(session)
-    local gridRight = contentX + cols * colW
-    local w = ui.toPx(layout.width or 32)
-    local mpAreaW = 96
-    local mpX = math.max(gridRight + 8, x + w - mpAreaW - 8)
-    drawMpReadout(mpX, y + 8, session, mpAreaW)
+    local gridW = cols * colW
+    local h = ui.toPx(layout.height or 12)
+    local mpBarH = battle_layout.get(session, "partyGridHpBarHeight") or 3
+    local mpNum = tostring(math.floor(session.displayedMp or session.mp or 0))
+    local mpNumW = ui.measureText(mpNum)
+    local gap = 4
+    local label = "MP"
+    local labelW = ui.measureText(label)
+    local labelGap = 4
+    -- F2 (overhaul-6): the gauge AND the numeric value both shift up 3px; an
+    -- "MP" label sits to the LEFT of the gauge, and the gauge length is reduced
+    -- by the label width so label + gauge + number still span the grid width.
+    local numberY = y + h - ui.fontSize - 3
+    local gaugeY = numberY + math.floor((ui.fontSize - mpBarH) / 2)
+    local gaugeX = contentX + labelW + labelGap
+    local gaugeW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
+    local numberX = gaugeX + gaugeW + gap
+    ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, 1})
+    drawMpReadout(session, gaugeX, gaugeY, gaugeW, numberX, numberY, mpBarH)
     for i, row in ipairs(rows) do
         if row.battlerRef then
             local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)

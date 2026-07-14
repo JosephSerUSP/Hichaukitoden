@@ -7,6 +7,7 @@ local iconSize = 12
 local windowskin
 local windowskinHighlight
 local mainFont
+local popupFont
 
 -- Parse string and replace \eventName and \c[x]
 local function parseRichText(text, defaultColor, eventName)
@@ -83,6 +84,13 @@ function ui.init()
     local fontSize = config.ui and config.ui.fontSize or 8
 
     ui.setFont(fontName, fontSize)
+
+    -- Load active popup font from system config
+    local popupFontName = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font
+    local popupFontSize = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.fontSize
+    if popupFontName then
+        ui.loadPopupFont(popupFontName, popupFontSize)
+    end
 end
 
 -- Exposed layout constants (use these instead of hardcoded numbers)
@@ -193,7 +201,7 @@ function ui.drawPanel(x, y, w, h, title, highlight)
 end
 
 -- Draw text with drop shadow (crisp monochrome)
-function ui.drawString(text, x, y, color, alignment, limit, eventName)
+function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
     local r, g, b, a = love.graphics.getColor()
     local currentFont = love.graphics.getFont()
     
@@ -202,7 +210,8 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     limit = limit or 256
     
     -- Set active font explicitly to ensure properties apply
-    if mainFont then love.graphics.setFont(mainFont) end
+    local drawFont = font or mainFont
+    if drawFont then love.graphics.setFont(drawFont) end
     
     local parsedText = text or ""
     if eventName and eventName ~= "" then
@@ -379,6 +388,23 @@ function ui.drawWindows(kind, windows, ctx)
     end
 end
 
+function ui.loadFont(name, size)
+    size = size or 8
+    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
+    local ok, font
+    if path and love.filesystem.getInfo(path) then
+        ok, font = pcall(love.graphics.newFont, path, size, "mono")
+    end
+    if not ok or not font then
+        ok, font = pcall(love.graphics.newFont, size, "mono")
+    end
+    if not ok or not font then
+        font = love.graphics.newFont(size)
+    end
+    font:setFilter("nearest", "nearest")
+    return font
+end
+
 -- Set font helper. "Lucida" (and any name with no matching .ttf) means the
 -- LÖVE built-in default font; any other name is looked up generically at
 -- assets/fonts/<name>.ttf so new fonts only need a file dropped in, no code
@@ -392,21 +418,23 @@ end
 -- every size, matching those two.
 function ui.setFont(name, size)
     size = size or ui.fontSize or 8
-    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
-    local ok, font
-    if path and love.filesystem.getInfo(path) then
-        ok, font = pcall(love.graphics.newFont, path, size, "mono")
-    end
-    if not ok or not font then
-        ok, font = pcall(love.graphics.newFont, size, "mono")
-    end
-    if not ok or not font then
-        font = love.graphics.newFont(size)
-    end
-    mainFont = font
-    mainFont:setFilter("nearest", "nearest")
+    mainFont = ui.loadFont(name, size)
     ui.fontSize = size
     love.graphics.setFont(mainFont)
+end
+
+function ui.loadPopupFont(name, size)
+    popupFont = ui.loadFont(name, size)
+end
+
+function ui.getPopupFont()
+    return popupFont
+end
+
+-- Measure rendered width of text in the active UI font (monospace).
+function ui.measureText(text)
+    if mainFont then return mainFont:getWidth(text) end
+    return #tostring(text) * (ui.fontSize or 8)
 end
 
 return ui

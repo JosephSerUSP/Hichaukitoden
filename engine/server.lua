@@ -85,6 +85,9 @@ function server.update(dt)
                     if config.ui and config.ui.activeFont then
                         ui.setFont(config.ui.activeFont, config.ui.fontSize)
                     end
+                    if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font then
+                        ui.loadPopupFont(config.battle_screen.popup.font, config.battle_screen.popup.fontSize)
+                    end
                     
                     sendResponse(client, "200 OK", "application/json", json.encode({ success = true, message = "Reloaded config and database" }))
                 elseif method == "GET" and path == "/data" then
@@ -154,6 +157,9 @@ function server.update(dt)
                             local ui = require("presentation.ui")
                             if config.ui and config.ui.activeFont then
                                 ui.setFont(config.ui.activeFont)
+                            end
+                            if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font then
+                                ui.loadPopupFont(config.battle_screen.popup.font, config.battle_screen.popup.fontSize)
                             end
                             
                             success = true

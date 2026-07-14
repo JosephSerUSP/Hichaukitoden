@@ -809,16 +809,17 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
 
     -- Draw active damage popups
     love.graphics.push("all")
+    local popupFont = ui.getPopupFont()
     for _, p in ipairs(damagePopups) do
         local alpha = math.min(1, p.life * 2)
         local col = { p.color[1], p.color[2], p.color[3], alpha }
         local textOffset = 0
-        local font = love.graphics.getFont()
+        local font = popupFont or love.graphics.getFont()
         for _, glyph in ipairs(p.glyphs) do
             if p.revealElapsed >= glyph.startDelay then
                 -- Opacity is shared across the popup, not reset for each
                 -- glyph, so every character fades out in sync.
-                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col)
+                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, popupFont)
             end
             textOffset = textOffset + font:getWidth(glyph.char)
         end
