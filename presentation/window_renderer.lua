@@ -517,9 +517,34 @@ end
 -- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
 -- partyRows keeps a reference to) — so a party member's status is one
 -- single thing, not a re-implementation per screen.
+-- F2 (overhaul-6): shared MP readout drawn inside the declarative party window,
+-- in the RIGHT portion beside the 2x2 actor grid (so the map party popup —
+-- anchored to the grid cells via cellOf:party — stays in sync with the
+-- sprites). Uses session.displayedMp when available. areaW = readout width.
+local function drawMpReadout(x, y, session, areaW)
+    areaW = areaW or 96
+    local mp = math.floor(session.displayedMp or session.mp or 0)
+    local maxMp = math.floor(session.maxMp or mp or 1)
+    if maxMp <= 0 then maxMp = 1 end
+    local barW = areaW - 12
+    ui.drawString("MP", x, y, {1, 1, 1, 1})
+    ui.drawBar(x, y + 12, barW, 5, mp, maxMp, {0.30, 0.60, 1.0}, {0.65, 0.90, 1.0})
+    ui.drawString(mp .. "/" .. maxMp, x, y + 20, {0.80, 0.90, 1.0, 1})
+end
+
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
+    -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
+    -- (contentX) so the map party popup — anchored to the grid cells via
+    -- cellOf:party — lines up with the sprites. The shared MP readout is drawn
+    -- in the freed RIGHT portion of the window instead of shifting the grid.
+    local colW = actor_status.cellSize(session)
+    local gridRight = contentX + cols * colW
+    local w = ui.toPx(layout.width or 32)
+    local mpAreaW = 96
+    local mpX = math.max(gridRight + 8, x + w - mpAreaW - 8)
+    drawMpReadout(mpX, y + 8, session, mpAreaW)
     for i, row in ipairs(rows) do
         if row.battlerRef then
             local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)

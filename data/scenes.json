@@ -2294,7 +2294,8 @@
               "windowId": "help",
               "text": "UP/DOWN: slot    ENTER: change    ESC: back"
             }
-          ]
+          ],
+          "else": []
         }
       ],
       "on_up": [

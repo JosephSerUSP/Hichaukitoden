@@ -184,7 +184,7 @@ function renderer.update(dt)
     end
     small_battlers.updateAnims(dt)
     
-    -- Smoothly interpolate party HP and Summoner MP
+    -- Smoothly interpolate party HP and the shared party MP pool
     local session = renderer.session
     if session then
         if renderer.activeBattle then
@@ -553,6 +553,10 @@ function renderer.getBattlerCoords(battleState, session, target)
     return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
 
+-- F2 (overhaul-6): the shared party HUD (console + MP + 2x2 grid) is now the
+-- declarative "party" window in presentation/window_renderer.lua, drawn for
+-- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
+
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
     renderer.activeBattle = battleState
     
@@ -661,8 +665,6 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     local textX = ui.toPx(layoutVal("consoleTextTileX"))
     local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
 
-    ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
-
     -- B.7: the battler command menu is its own single-line window spanning
     -- the full width, flush above the status console; it opens during input
     -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
@@ -733,7 +735,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             showHighlight = true
         end
     end
-    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
+    -- F2 (overhaul-6): the shared party HUD (console + MP + 2x2 grid) is the
+    -- declarative "party" window, drawn by main.lua's drawSharedPartyHud so
+    -- every scene uses the ONE shared HUD (no legacy duplicate).
 
     -- B.9: dedicated victory window (combatState set by battle.handleTransition;
     -- Shows the battle's gold and base EXP grant, plus per-member animated EXP

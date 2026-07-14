@@ -1420,6 +1420,21 @@ function love.update(dt)
     end
 end
 
+-- F2 (overhaul-6): every scene draws the SAME declarative "party" window
+-- (console + MP readout + 2x2 grid) via the generic window renderer. There is
+-- no second/legacy party HUD anywhere. The Map scene already draws it through
+-- its own scene state; battle/dialogue/town build a minimal party-only state
+-- here so the ONE shared HUD appears in every scene (owner direction:
+-- "there should be no place where the declarative one isn't used").
+local function drawSharedPartyHud()
+    local wr = require("presentation.window_renderer")
+    local state = {
+        winState = { party = { open = true, listId = "party" } },
+        windowOrder = { "party" },
+    }
+    wr.draw(state, nil, { session = activeSession, loader = loader })
+end
+
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0, 1)
@@ -1433,6 +1448,7 @@ function love.draw()
         renderer.drawTitle()
     elseif scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
+        drawSharedPartyHud()
     elseif scene_host.getCurrent() == "map" then
         renderer.drawMap()
         -- The map's world is legacy-drawn (draw ~= "windows"), but its
@@ -1446,9 +1462,11 @@ function love.draw()
         end
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
+        drawSharedPartyHud()
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
+        drawSharedPartyHud()
     end
     end
     
