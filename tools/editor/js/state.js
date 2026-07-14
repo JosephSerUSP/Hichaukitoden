@@ -47,6 +47,7 @@
             ['map-properties-modal', () => closeMapPropertiesModal()],
             ['event-modal', () => closeEventModal()],
             ['db-modal', () => closeDatabaseModal()],
+            ['engine-modal', () => closeEngineModal()],
             ['toast-modal', () => closeToast()]
         ];
 

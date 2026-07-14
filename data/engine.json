@@ -1944,6 +1944,62 @@
           "duration": 0.18
         }
       }
+    },
+    "reserve_title": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 2
+    },
+    "reserve_help": {
+      "x": 0,
+      "y": 13.5,
+      "width": 32,
+      "height": 4.5
+    },
+    "reserve_party": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "partyGrid",
+      "gridColumns": 2
+    },
+    "reserve_roster": {
+      "x": 0,
+      "y": 2,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "gridColumns": 4,
+      "hideMp": true
+    },
+    "reserve_popup": {
+      "x": 12,
+      "y": 12,
+      "width": 8,
+      "height": 5,
+      "style": "command",
+      "anim": {
+        "open": {
+          "duration": 0.2
+        }
+      },
+      "vertical": true
+    },
+    "reserve_summon_list": {
+      "x": 8,
+      "y": 4,
+      "width": 16,
+      "height": 20,
+      "style": "list"
+    },
+    "reserve_confirm": {
+      "x": 8,
+      "y": 10,
+      "width": 16,
+      "height": 6,
+      "style": "confirm"
     }
   }
 }

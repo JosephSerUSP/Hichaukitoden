@@ -399,10 +399,13 @@ function ui.loadFont(name, size)
         ok, font = pcall(love.graphics.newFont, size, "mono")
     end
     if not ok or not font then
-        font = love.graphics.newFont(size)
+        ok, font = pcall(love.graphics.newFont, size)
     end
-    font:setFilter("nearest", "nearest")
-    return font
+    if ok and font then
+        font:setFilter("nearest", "nearest")
+        return font
+    end
+    return nil
 end
 
 -- Set font helper. "Lucida" (and any name with no matching .ttf) means the
@@ -418,9 +421,12 @@ end
 -- every size, matching those two.
 function ui.setFont(name, size)
     size = size or ui.fontSize or 8
-    mainFont = ui.loadFont(name, size)
-    ui.fontSize = size
-    love.graphics.setFont(mainFont)
+    local loaded = ui.loadFont(name, size)
+    if loaded then
+        mainFont = loaded
+        ui.fontSize = size
+        love.graphics.setFont(mainFont)
+    end
 end
 
 function ui.loadPopupFont(name, size)

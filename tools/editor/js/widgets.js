@@ -700,6 +700,8 @@
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
             'physics.horizontalScatter':   { label: 'Popup Horizontal Scatter (px)', min: 0 },
             'battle_screen.damagePopupLife': { label: 'Damage Popup Lifetime (s)', step: 0.1, min: 0 },
+            'battle_screen.popup.font': { label: 'Popup Font' },
+            'battle_screen.popup.fontSize': { label: 'Popup Font Size (px)' },
             'battle_screen.popup.damageFormat': { label: 'Damage Popup Format', type: 'text' },
             'battle_screen.popup.damageColor': { label: 'Damage Popup Color', widget: 'color' },
             'battle_screen.popup.healFormat': { label: 'Heal Popup Format', type: 'text' },
@@ -748,6 +750,10 @@
             'dungeon.exitSprite':          { label: 'Exit Stairs Sprite', widget: 'assetPath', dir: 'sprites' },
             'dungeon.exitScriptId':        { label: 'Exit Stairs Common Event', widget: 'commonEventSelect' },
             'summoner.startMp':            { label: 'Starting MP' },
+            'summoner.summonCostBase':     { label: 'Summon Base Cost (MP)' },
+            'summoner.summonCostPerLevel': { label: 'Summon Cost / Level (MP)' },
+            'summoner.summonCostPerTier':  { label: 'Summon Cost / Tier (MP)' },
+            'summoner.sacrificeMpRefundRate': { label: 'Sacrifice Refund Rate (Multiplier)', step: 0.1 },
             'summoner.spells':             { label: 'Summoner Spells', widget: 'skillChecklist' },
             'spawn.x':                     { label: 'Town Spawn X' },
             'spawn.y':                     { label: 'Town Spawn Y' },
@@ -1347,6 +1353,9 @@
                 formPanel.appendChild(spriteRow);
 
                 createCheckboxField(formPanel, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
+                createCheckboxField(formPanel, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; });
+                createFormField(formPanel, 'Tier', item.tier, v => { item.tier = parseFloat(v); }, 'number');
+                createFormField(formPanel, 'Discipline (Item Creation)', item.discipline, v => { item.discipline = v; }, 'text');
                 createCheckboxField(formPanel, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
 
                 // Three-column grid: Skills, Passives, Traits
@@ -1776,7 +1785,7 @@
                     } else if (key === 'fontSize') {
                         // Rendered as part of the 'activeFont' widget below —
                         // both live in ui.lua's ui.setFont(name, size) pair.
-                    } else if (key === 'activeFont') {
+                    } else if (key === 'activeFont' || key === 'font') {
                         const navTarget = () => {
                             let target = targetRoot;
                             for (let i = 0; i < currentPath.length - 1; i++) {
@@ -1793,7 +1802,7 @@
                         // the parent field-group's column count happens to be.
                         group.style.gridColumn = '1 / -1';
                         const lbl = document.createElement('label');
-                        lbl.textContent = 'Active UI Font';
+                        lbl.textContent = key === 'activeFont' ? 'Active UI Font' : 'Popup Font';
                         group.appendChild(lbl);
 
                         const row = document.createElement('div');

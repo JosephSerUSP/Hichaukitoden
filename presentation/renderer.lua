@@ -806,8 +806,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
         end
     end
+end
 
-    -- Draw active damage popups
+function renderer.drawDamagePopups()
     love.graphics.push("all")
     local popupFont = ui.getPopupFont()
     for _, p in ipairs(damagePopups) do

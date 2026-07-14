@@ -797,6 +797,66 @@ local function buildScriptApi(ctx)
         return l and l.formatTerm(key, fallback, ...) or fallback
     end
     api.systemConfig = require("engine.config")
+    function api.allActors()
+        local l = ctx.loader or session.loader
+        local list = {}
+        for _, actor in ipairs(l and l.actors or {}) do
+            table.insert(list, {
+                id = actor.id,
+                name = actor.name or "",
+                icon = actor.icon or 0,
+                unlocked = actor.unlocked or false,
+                tier = actor.tier or 1,
+                discipline = actor.discipline or "None",
+                meta = actor.meta or {}
+            })
+        end
+        return list
+    end
+    function api.summon(actorId, isReserve, index)
+        local actorData = session.loader.getActor(actorId)
+        if actorData then
+            local battler = require("engine.session").Battler.new(actorData, session.dungeonFloor or 1)
+            battler.hp = battler:getMaxHp(session)
+            local arr = isReserve and session.reserve or session.party
+            arr[index] = battler
+        end
+    end
+    function api.sacrifice(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        arr[index] = nil
+    end
+    function api.swap(idx1, isReserve1, idx2, isReserve2)
+        local arr1 = isReserve1 and session.reserve or session.party
+        local arr2 = isReserve2 and session.reserve or session.party
+        arr1[idx1], arr2[idx2] = arr2[idx2], arr1[idx1]
+    end
+    function api.changeMp(amount)
+        session.mp = math.max(0, math.min(session.maxMp or 9999, session.mp + amount))
+    end
+    function api.getMp()
+        return session.mp
+    end
+    function api.dungeonFloor()
+        return session.dungeonFloor or 1
+    end
+    function api.reserve(i)
+        local out = {}
+        for idx = 1, 8 do
+            local m = session.reserve and session.reserve[idx]
+            if m then
+                local view = formulaEngine.battlerView(m, session) or {}
+                view.index = idx
+                view.name = m.name or ""
+                view.actorData = m.actorData or {}
+                table.insert(out, view)
+            else
+                table.insert(out, { index = idx, empty = true, name = "--Empty--" })
+            end
+        end
+        if i ~= nil then return out[i] end
+        return out
+    end
     api.battle = {
         commitAction = function(index, action)
             require("engine.scenes.battle").commitAction(index, action)

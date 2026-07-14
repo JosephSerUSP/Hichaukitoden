@@ -128,10 +128,10 @@ function GameSession.new(loader)
     self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     
-    -- Party composition: 1-4 active creatures. The summoner is tracked
-    -- separately (self.summoner) and does not occupy a party slot; reserve
-    -- creatures (overhaul-6 F3) are future work, not yet represented here.
+    -- Party composition: 1-4 active creatures.
     self.party = {}
+    -- Reserve roster: up to 8 inactive creatures.
+    self.reserve = {}
     
     return self
 end
@@ -181,6 +181,28 @@ function GameSession:getActiveParty()
         end
     end
     return active
+end
+
+function GameSession:swapParty(idx1, isReserve1, idx2, isReserve2)
+    local arr1 = isReserve1 and self.reserve or self.party
+    local arr2 = isReserve2 and self.reserve or self.party
+    arr1[idx1], arr2[idx2] = arr2[idx2], arr1[idx1]
+end
+
+function GameSession:summon(actorData, level, reserveIndex)
+    if reserveIndex > 8 then return false end
+    local battler = Battler.new(actorData, level)
+    battler.hp = battler:getMaxHp(self)
+    self.reserve[reserveIndex] = battler
+    return true
+end
+
+function GameSession:sacrifice(isReserve, index)
+    local arr = isReserve and self.reserve or self.party
+    local battler = arr[index]
+    if not battler then return nil end
+    arr[index] = nil
+    return battler
 end
 
 session.GameSession = GameSession

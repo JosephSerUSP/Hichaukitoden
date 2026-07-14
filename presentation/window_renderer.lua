@@ -113,47 +113,99 @@ local function partyRows(session)
     local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     local loader = session and session.loader
     local rows = {}
-    for i, m in ipairs(session and session.party or {}) do
-        local view = formula.battlerView(m, session) or {}
-        view.index = i
-        -- Same sheet-key choice as renderer.drawSmallBattlerCell
-        view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
-        -- Portrait art key (assets/portraits), same as the battle renderer
-        view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
-        view.icon = view.icon or 0
-        view.dead = m.isDead and m:isDead() or false
-        -- Not read by {expr} templates; lets the row's sprite share the
-        -- same battle-triggered flash/shake state small_battlers keys by
-        -- battler identity (drawList passes this through as battlerRef).
-        view.battlerRef = m
-        -- Status-scene fields (generic enrichment of the 'party' source):
-        -- progression, role, equipment slots and joined passive/skill/state
-        -- names as flat strings so {expr} templates can print them.
-        view.exp = m.exp or 0
-        view.expNeeded = (m.level or 1) * expPerLevel
-        view.role = (m.actorData and m.actorData.role) or "CREATURE"
-        view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
-        local eq = m.equipment or {}
-        view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
-        view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
-        view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
-        local function joinNames(ids, getter)
-            local names = {}
-            for _, id in ipairs(ids or {}) do
-                local entry = getter and getter(id)
-                table.insert(names, (entry and entry.name) or tostring(id))
+    for i = 1, 4 do
+        local m = session and session.party and session.party[i]
+        if m then
+            local view = formula.battlerView(m, session) or {}
+            view.index = i
+            -- Same sheet-key choice as renderer.drawSmallBattlerCell
+            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+            -- Portrait art key (assets/portraits), same as the battle renderer
+            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
+            view.icon = view.icon or 0
+            view.dead = m.isDead and m:isDead() or false
+            -- Not read by {expr} templates; lets the row's sprite share the
+            -- same battle-triggered flash/shake state small_battlers keys by
+            -- battler identity (drawList passes this through as battlerRef).
+            view.battlerRef = m
+            -- Status-scene fields (generic enrichment of the 'party' source):
+            -- progression, role, equipment slots and joined passive/skill/state
+            -- names as flat strings so {expr} templates can print them.
+            view.exp = m.exp or 0
+            view.expNeeded = (m.level or 1) * expPerLevel
+            view.role = (m.actorData and m.actorData.role) or "CREATURE"
+            view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+            local eq = m.equipment or {}
+            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
+            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
+            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+            local function joinNames(ids, getter)
+                local names = {}
+                for _, id in ipairs(ids or {}) do
+                    local entry = getter and getter(id)
+                    table.insert(names, (entry and entry.name) or tostring(id))
+                end
+                return #names > 0 and table.concat(names, ", ") or "None"
             end
-            return #names > 0 and table.concat(names, ", ") or "None"
+            view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
+            view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
+            local stateNames = {}
+            for _, st in ipairs(m.states or {}) do
+                local def = loader and loader.getState and loader.getState(st.id)
+                table.insert(stateNames, (def and def.name) or tostring(st.id))
+            end
+            view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
+            table.insert(rows, view)
+        else
+            table.insert(rows, { index = i, empty = true, name = "--Empty--" })
         end
-        view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
-        view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
-        local stateNames = {}
-        for _, st in ipairs(m.states or {}) do
-            local def = loader and loader.getState and loader.getState(st.id)
-            table.insert(stateNames, (def and def.name) or tostring(st.id))
+    end
+    return rows
+end
+
+local function reserveRows(session)
+    local config = require("engine.config")
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local loader = session and session.loader
+    local rows = {}
+    for i = 1, 8 do
+        local m = session and session.reserve and session.reserve[i]
+        if m then
+            local view = formula.battlerView(m, session) or {}
+            view.index = i
+            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
+            view.icon = view.icon or 0
+            view.dead = m.isDead and m:isDead() or false
+            view.battlerRef = m
+            view.exp = m.exp or 0
+            view.expNeeded = (m.level or 1) * expPerLevel
+            view.role = (m.actorData and m.actorData.role) or "CREATURE"
+            view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+            local eq = m.equipment or {}
+            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
+            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
+            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+            local function joinNames(ids, getter)
+                local names = {}
+                for _, id in ipairs(ids or {}) do
+                    local entry = getter and getter(id)
+                    table.insert(names, (entry and entry.name) or tostring(id))
+                end
+                return #names > 0 and table.concat(names, ", ") or "None"
+            end
+            view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
+            view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
+            local stateNames = {}
+            for _, st in ipairs(m.states or {}) do
+                local def = loader and loader.getState and loader.getState(st.id)
+                table.insert(stateNames, (def and def.name) or tostring(st.id))
+            end
+            view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
+            table.insert(rows, view)
+        else
+            table.insert(rows, { index = i, empty = true, name = "--Empty--" })
         end
-        view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
-        table.insert(rows, view)
     end
     return rows
 end
@@ -310,6 +362,8 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = inventoryRows(ctx.session)
     elseif src == "party" then
         rows = partyRows(ctx.session)
+    elseif src == "reserve" then
+        rows = reserveRows(ctx.session)
     elseif src == "equipSlots" then
         rows = equipSlotRows(ctx.session, win, env)
     elseif src == "equipment" then
@@ -556,12 +610,23 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local gaugeX = contentX + labelW + labelGap
     local gaugeW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
     local numberX = gaugeX + gaugeW + gap
-    ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, 1})
-    drawMpReadout(session, gaugeX, gaugeY, gaugeW, numberX, numberY, mpBarH)
+    if not layout.hideMp then
+        ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, 1})
+        drawMpReadout(session, gaugeX, gaugeY, gaugeW, numberX, numberY, mpBarH)
+    end
     for i, row in ipairs(rows) do
+        local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
         if row.battlerRef then
-            local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
             actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
+        else
+            local colW, rowH = actor_status.cellSize(session)
+            ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, i == cursor)
+            if i == cursor then
+                small_battlers.draw("Cursor", cx - 6, cy, 8)
+            end
+            local text = "--Empty--"
+            local textW = ui.measureText(text)
+            ui.drawString(text, cx + (colW - textW) / 2, cy + (rowH - ui.lineHeight) / 2, { 0.4, 0.4, 0.4, 1 })
         end
     end
 end
@@ -589,24 +654,44 @@ end
 -- "command" style: each entry is its own bordered slot (owner direction
 -- 13.07.2026), not free-floating text in one shared bar. Slots fill the
 -- window's whole x/y/w/h bounding box evenly, each with a small gap.
-local function drawCommandSlots(rows, cursor, env, x, y, w, h)
+-- Supports vertical stacking if layout.vertical is true.
+local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     local n = #rows
     if n == 0 then return end
     local gap = ui.toPx(0.5)
-    local slotW = (w - gap * (n + 1)) / n
-    for i, row in ipairs(rows) do
-        local isSel = (i == cursor)
-        local sx = x + gap + (i - 1) * (slotW + gap)
-        ui.drawPanel(sx, y, slotW, h, nil, isSel)
-        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        local label = row.name or ""
-        local textY = y + h / 2 - ui.lineHeight / 2
-        if isSel then
-            local textW = love.graphics.getFont():getWidth(label)
-            local textX = sx + (slotW - textW) / 2
-            small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+    local isVertical = layout and (layout.vertical or layout.direction == "vertical")
+    if isVertical then
+        local slotH = (h - gap * (n + 1)) / n
+        for i, row in ipairs(rows) do
+            local isSel = (i == cursor)
+            local sy = y + gap + (i - 1) * (slotH + gap)
+            ui.drawPanel(x, sy, w, slotH, nil, isSel)
+            local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+            local label = row.name or ""
+            local textY = sy + slotH / 2 - ui.lineHeight / 2
+            if isSel then
+                local textW = love.graphics.getFont():getWidth(label)
+                local textX = x + (w - textW) / 2
+                small_battlers.draw("Cursor", textX - 10, sy + slotH / 2 - 4, 8)
+            end
+            ui.drawString(label, x, textY, color, "center", w)
         end
-        ui.drawString(label, sx, textY, color, "center", slotW)
+    else
+        local slotW = (w - gap * (n + 1)) / n
+        for i, row in ipairs(rows) do
+            local isSel = (i == cursor)
+            local sx = x + gap + (i - 1) * (slotW + gap)
+            ui.drawPanel(sx, y, slotW, h, nil, isSel)
+            local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+            local label = row.name or ""
+            local textY = y + h / 2 - ui.lineHeight / 2
+            if isSel then
+                local textW = love.graphics.getFont():getWidth(label)
+                local textX = sx + (slotW - textW) / 2
+                small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+            end
+            ui.drawString(label, sx, textY, color, "center", slotW)
+        end
     end
 end
 
@@ -747,7 +832,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         -- window's whole visible surface.
         local cached = listCache[id]
         if cached then
-            drawCommandSlots(cached.rows, cached.cursor, env, x, y, w, h)
+            drawCommandSlots(layout, cached.rows, cached.cursor, env, x, y, w, h)
         end
     elseif style == "roulette" then
         local cached = listCache[id]
