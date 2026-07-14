@@ -1431,8 +1431,16 @@ end
 -- "there should be no place where the declarative one isn't used").
 local function drawSharedPartyHud()
     local wr = require("presentation.window_renderer")
+    local cursor = 0
+    if scene_host.getCurrent() == "battle" then
+        local bv = require("engine.scenes.battle").getState()
+        if bv and bv.combatState == "input" then
+            local memberInfo = bv.livingMembers and bv.livingMembers[bv.activeMemberIdx or 1]
+            cursor = memberInfo and memberInfo.index or 0
+        end
+    end
     local state = {
-        winState = { party = { open = true, listId = "party" } },
+        winState = { party = { open = true, listId = "party", cursor = cursor } },
         windowOrder = { "party" },
     }
     wr.draw(state, nil, { session = activeSession, loader = loader })

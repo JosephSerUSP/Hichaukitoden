@@ -540,12 +540,24 @@ function renderer.getBattlerCoords(battleState, session, target)
             end
         end
 
-        local gridX = ui.toPx(layoutVal("partyGridTileX"))
-        local gridY = ui.toPx(layoutVal("consoleTileY")) + ui.toPx(layoutVal("headerTileOffset"))
+        -- Read layout coordinates dynamically from the "party" window configuration
+        local loaderRef = session and session.loader
+        local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+        local partyLayout = layouts and layouts.party or {}
+        local px = partyLayout.x or 0
+        local py = partyLayout.y or 18
+        local title = partyLayout.title
+        local contentX = partyLayout.contentX or partyLayout.textX or 1
+        local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+        local gridX = ui.toPx(px + contentX)
+        local gridY = ui.toPx(py + contentY)
+        local cols = partyLayout.gridColumns or 2
+
         -- Shared 2x2 slot arithmetic (matches drawPartyGrid exactly)
         for idx, c in ipairs(session.party) do
             if c == target then
-                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session)
+                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session, cols)
                 return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
         end
