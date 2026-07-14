@@ -809,8 +809,9 @@
 
                 if (!readOnly) {
                     line.style.cursor = 'pointer';
-                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; label.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = line.dataset.stripeBg || ''; line.style.color = ''; label.style.color = catColor; };
+                    // Hover feedback is shared CSS (.cmd-row[tabindex]:hover in
+                    // index.html) so block headers highlight identically — no
+                    // per-row inline handler that only covers the plain path.
                 } else {
                     line.style.color = '#808080';
                 }

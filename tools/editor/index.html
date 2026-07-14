@@ -625,6 +625,18 @@
             outline: 1px dotted var(--win-black);
             outline-offset: -1px;
         }
+        /* Shared hover feedback for every interactive command row. Scoped to
+           [tabindex] so read-only rows (which never get a tabindex) stay inert,
+           and so block headers (CHOICE/IF/generic) highlight identically to
+           plain rows instead of relying on a per-path inline handler. */
+        .cmd-row[tabindex]:hover {
+            background: #000080 !important;
+            color: white !important;
+            cursor: pointer;
+        }
+        .cmd-row[tabindex]:hover span {
+            color: white !important;
+        }
         .cmd-row[data-selected="1"] {
             background: #000080 !important;
             color: white !important;
