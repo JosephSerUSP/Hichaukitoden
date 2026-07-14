@@ -16,6 +16,11 @@
 --   "config:<key>"     array from the scene's config (entry fields exposed)
 --   "v:<key>"          array stored in scene v by hooks/SCRIPT
 --   "static:a,b,c"     inline comma-separated labels
+--   "equipSlots"       a member's 3 gear slots (fields: index, name, item, icon)
+--   "equipment"        inventory gear matching a slot's type, [ UNEQUIP ] first
+--                      (fields: id, name, icon, qty, description, preview)
+-- The equip sources read the window's SET_LIST slot/member formulas at draw
+-- time (slot: 1=Weapon 2=Armor 3=Accessory, member: party index).
 --
 -- Row templates/formulas (SET_LIST format/highlight/priority) are evaluated
 -- with the row's fields merged over the scene env, so "{name} (x{qty})" and
@@ -25,6 +30,8 @@
 
 local ui = require("presentation.ui")
 local formula = require("engine.formula")
+local small_battlers = require("presentation.small_battlers")
+local actor_status = require("presentation.actor_status")
 
 local wr = {}
 
@@ -90,6 +97,7 @@ local function inventoryRows(session)
                     name = item.name or "",
                     icon = item.icon or 0,
                     qty = qty,
+                    description = item.description or "",
                     meta = item.meta or {},
                 })
             end
@@ -100,12 +108,50 @@ local function inventoryRows(session)
 end
 
 local function partyRows(session)
+    local config = require("engine.config")
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local loader = session and session.loader
     local rows = {}
     for i, m in ipairs(session and session.party or {}) do
         local view = formula.battlerView(m, session) or {}
         view.index = i
-        view.spriteKey = m.actorData and m.actorData.spriteKey or nil
+        -- Same sheet-key choice as renderer.drawSmallBattlerCell
+        view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+        -- Portrait art key (assets/portraits), same as the battle renderer
+        view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
         view.icon = view.icon or 0
+        view.dead = m.isDead and m:isDead() or false
+        -- Not read by {expr} templates; lets the row's sprite share the
+        -- same battle-triggered flash/shake state small_battlers keys by
+        -- battler identity (drawList passes this through as battlerRef).
+        view.battlerRef = m
+        -- Status-scene fields (generic enrichment of the 'party' source):
+        -- progression, role, equipment slots and joined passive/skill/state
+        -- names as flat strings so {expr} templates can print them.
+        view.exp = m.exp or 0
+        view.expNeeded = (m.level or 1) * expPerLevel
+        view.role = (m.actorData and m.actorData.role) or "CREATURE"
+        view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+        local eq = m.equipment or {}
+        view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
+        view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
+        view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+        local function joinNames(ids, getter)
+            local names = {}
+            for _, id in ipairs(ids or {}) do
+                local entry = getter and getter(id)
+                table.insert(names, (entry and entry.name) or tostring(id))
+            end
+            return #names > 0 and table.concat(names, ", ") or "None"
+        end
+        view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
+        view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
+        local stateNames = {}
+        for _, st in ipairs(m.states or {}) do
+            local def = loader and loader.getState and loader.getState(st.id)
+            table.insert(stateNames, (def and def.name) or tostring(st.id))
+        end
+        view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
         table.insert(rows, view)
     end
     return rows
@@ -143,10 +189,114 @@ local function vRows(state, key)
     return rows
 end
 
+-- E10: rows from a terms.json list entry (e.g. "term:title.options"), so
+-- menu labels stay owner-editable without touching scene data.
+local function termRows(loader, path)
+    local rows = {}
+    local labels = (loader and loader.getTermList) and loader.getTermList(path, {}) or {}
+    for _, label in ipairs(labels) do
+        table.insert(rows, { name = tostring(label) })
+    end
+    return rows
+end
+
 local function staticRows(spec)
     local rows = {}
     for label in tostring(spec):gmatch("[^,]+") do
         table.insert(rows, { name = label })
+    end
+    return rows
+end
+
+local SLOT_TYPES = { "Weapon", "Armor", "Accessory" }
+
+-- "ATK:3->5  DEF:2->4" summary of what trial-equipping `newItem` (nil =
+-- unequip) into the member's slot would change — the legacy
+-- getStatPreview logic, moved here so equip pickers stay data-authored.
+local function equipPreviewString(member, slot, newItem, session)
+    local traits = require("engine.traits")
+    local function snapshot()
+        return {
+            hp = member:getMaxHp(session),
+            atk = traits.getParam(member, "atk", session),
+            def = traits.getParam(member, "def", session),
+            mat = traits.getParam(member, "mat", session),
+            mdf = traits.getParam(member, "mdf", session),
+        }
+    end
+    local prev = member.equipment[slot]
+    local before = snapshot()
+    member.equipment[slot] = newItem
+    local after = snapshot()
+    member.equipment[slot] = prev
+    local changes = {}
+    for _, f in ipairs({ { "hp", "HP" }, { "atk", "ATK" }, { "def", "DEF" }, { "mat", "MAT" }, { "mdf", "MDF" } }) do
+        if before[f[1]] ~= after[f[1]] then
+            table.insert(changes, string.format("%s:%d->%d", f[2], before[f[1]], after[f[1]]))
+        end
+    end
+    if #changes == 0 then return "No changes." end
+    return table.concat(changes, "  ")
+end
+
+-- Evaluate the window's slot/member SET_LIST formulas against the live env.
+local function equipContext(win, env, session)
+    local slot = tonumber((formula.eval(win.slot, env))) or 1
+    local memberIdx = tonumber((formula.eval(win.member, env))) or 1
+    return slot, session and session.party and session.party[memberIdx] or nil
+end
+
+local function equipSlotRows(session, win, env)
+    local _, member = equipContext(win, env, session)
+    local loader = session and session.loader
+    local labels = (loader and loader.getTermList) and loader.getTermList("menu.equip_slots", { "WPN", "AMR", "ACC" }) or { "WPN", "AMR", "ACC" }
+    local rows = {}
+    for i = 1, 3 do
+        local eq = member and member.equipment[i] or nil
+        table.insert(rows, {
+            index = i,
+            name = labels[i] or SLOT_TYPES[i],
+            item = eq and eq.name or "[ EMPTY ]",
+            icon = eq and eq.icon or 0,
+            description = eq and eq.description or "",
+        })
+    end
+    return rows
+end
+
+-- Ordering contract: row 1 is [ UNEQUIP ], then matching inventory gear
+-- id-ascending — interpreter EQUIP_ITEM resolves itemIndex against the
+-- SAME list (keep them in sync). `preview` is live per member/slot.
+local function equipmentRows(session, win, env)
+    local slot, member = equipContext(win, env, session)
+    local slotType = SLOT_TYPES[slot]
+    local rows = {}
+    if not session or not slotType then return rows end
+    local unequipPreview = member and equipPreviewString(member, slot, nil, session) or ""
+    table.insert(rows, {
+        id = "empty", name = "[ UNEQUIP ]", icon = 0, qty = 0,
+        description = "Unequip the item in this slot.",
+        preview = unequipPreview,
+    })
+    local matching = {}
+    for itemId, qty in pairs(session.inventory or {}) do
+        if qty > 0 then
+            local item = session.loader.getItem(itemId)
+            if item and item.type == "equipment" and item.equipType == slotType then
+                table.insert(matching, { item = item, qty = qty })
+            end
+        end
+    end
+    table.sort(matching, function(a, b) return a.item.id < b.item.id end)
+    for _, m in ipairs(matching) do
+        table.insert(rows, {
+            id = m.item.id,
+            name = m.item.name or "",
+            icon = m.item.icon or 0,
+            qty = m.qty,
+            description = m.item.description or "",
+            preview = member and equipPreviewString(member, slot, m.item, session) or "",
+        })
     end
     return rows
 end
@@ -159,12 +309,18 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = inventoryRows(ctx.session)
     elseif src == "party" then
         rows = partyRows(ctx.session)
+    elseif src == "equipSlots" then
+        rows = equipSlotRows(ctx.session, win, env)
+    elseif src == "equipment" then
+        rows = equipmentRows(ctx.session, win, env)
     elseif src:sub(1, 7) == "config:" then
         rows = configRows(sceneData, src:sub(8))
     elseif src:sub(1, 2) == "v:" then
         rows = vRows(state, src:sub(3))
     elseif src:sub(1, 7) == "static:" then
         rows = staticRows(src:sub(8))
+    elseif src:sub(1, 5) == "term:" then
+        rows = termRows(ctx.loader or (ctx.session and ctx.session.loader), src:sub(6))
     else
         rows = {}
     end
@@ -231,23 +387,71 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
     end
 end
 
-local function drawPortrait(layout, env, x, y)
+-- Layout-authored gauges let a panel present live values without a
+-- scene-specific renderer.  Labels support the same {formula} interpolation
+-- as ordinary window text; values and maxima are formula expressions.
+local function drawLayoutGauges(gauges, env, x, y)
+    for _, gauge in ipairs(gauges or {}) do
+        local gx = x + ui.toPx(gauge.x or 1)
+        local gy = y + ui.toPx(gauge.y or 1)
+        -- Extra parens truncate formula.eval's (value, err) pair to just
+        -- value — without them, a failed eval spills its error STRING into
+        -- tonumber's 2nd argument (base), which only accepts a number, and
+        -- crashes instead of degrading to the fallback.
+        local value = tonumber((formula.eval(gauge.value or "0", env))) or 0
+        local maximum = tonumber((formula.eval(gauge.max or "1", env))) or 1
+        ui.drawString(interpolate(gauge.label or "", env), gx, gy, COLOR_NORMAL)
+        ui.drawBar(gx, gy + ui.lineHeight, ui.toPx(gauge.width or 18), gauge.height or 3,
+            value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 })
+    end
+end
+
+local function resolvePageLayout(layout, env)
+    if not layout.pages then return layout end
+    local page = math.floor(tonumber((formula.eval(layout.pageFormula or "1", env))) or 1)
+    local pageLayout = layout.pages[page] or layout.pages[1] or {}
+    local resolved = {}
+    for key, value in pairs(layout) do resolved[key] = value end
+    for key, value in pairs(pageLayout) do resolved[key] = value end
+    return resolved
+end
+
+local function contentOrigin(layout, title, x, y)
+    return ui.panelContentOrigin(x, y, title, layout.contentX or layout.textX, layout.contentY)
+end
+
+local function drawPortrait(layout, env, x, y, title)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
     if type(key) ~= "string" or key == "" then return end
     local img = getImage("assets/portraits/" .. key .. ".png")
     if img then
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(img, x + ui.toPx(layout.portraitX or 1), y + ui.toPx(layout.portraitY or 2), 0, 1, 1)
+        local contentX, contentY = contentOrigin(layout, title, x, y)
+        love.graphics.draw(img, x + ui.toPx(layout.portraitX or 1), layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY, 0, 1, 1)
     end
 end
 
-local function drawList(win, layout, rows, cursor, env, x, y, w, h)
-    local contentY = y + ui.toPx(layout.contentY or 2)
-    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / ui.lineHeight))
+local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
+    local contentX, contentY = contentOrigin(layout, title, x, y)
+
+    -- Row widgets (vocabulary extension 11.07.2026): win.sprite names a row
+    -- field carrying a small-battler sheet key drawn at the row's left;
+    -- win.gaugeValue/gaugeMax are row-scoped formulas drawn as a bar under
+    -- the text. Both grow the row pitch, which the scroll math follows.
+    local spriteField = win.sprite
+    local spriteSize = ui.toPx(layout.spriteSize or 3)
+    local cardPad = 2 -- inset of a sprite row's own windowskin card
+    local hasGauge = win.gaugeValue and win.gaugeValue ~= "" and win.gaugeMax and win.gaugeMax ~= ""
+    local rowPitch = ui.lineHeight
+    if hasGauge then rowPitch = rowPitch + (layout.gaugeHeight or 3) + 3 end
+    if spriteField then rowPitch = math.max(rowPitch, spriteSize + 2) end
+    if layout.rowPitch then rowPitch = ui.toPx(layout.rowPitch) end
+
+    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / rowPitch))
     if #rows == 0 then
         local emptyText = layout.emptyText or "No entries."
-        ui.drawString(emptyText, x + ui.toPx(0.5), contentY, COLOR_DIM)
+        ui.drawString(emptyText, contentX, contentY, COLOR_DIM)
         return
     end
     local startOffset = math.max(1, math.min(cursor - 3, #rows - visible + 1))
@@ -255,24 +459,79 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h)
     local format = win.format or "{name}"
     for i = startOffset, endOffset do
         local row = rows[i]
+        local rEnv = rowEnv(env, row)
         local isSel = (i == cursor)
-        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        if not isSel and win.highlight and win.highlight ~= "" then
-            local hv = formula.eval(win.highlight, rowEnv(env, row))
+        local color = isSel and COLOR_SELECTED or (row.dead and COLOR_DIM or COLOR_NORMAL)
+        if not isSel and not row.dead and win.highlight and win.highlight ~= "" then
+            local hv = formula.eval(win.highlight, rEnv)
             if hv == true then color = COLOR_HIGHLIGHT end
         end
-        local rowY = contentY + (i - startOffset) * ui.lineHeight
-        local textX = x + ui.toPx(1)
-        ui.drawString(isSel and ">" or " ", x + ui.toPx(0.5), rowY, color)
-        if row.icon and row.icon > 0 then
-            ui.drawIcon(row.icon, x + ui.toPx(1.5), rowY - 2)
-            textX = x + ui.toPx(3.5)
+        local rowY = contentY + (i - startOffset) * rowPitch
+
+        -- A sprite-bearing row is a battler status cell: give it its own
+        -- windowskin card, same treatment the battle/map HUD gives each
+        -- party slot (owner direction 11.07.2026 — one shared look for
+        -- party status everywhere it's drawn).
+        if spriteField then
+            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, nil, isSel)
         end
-        ui.drawString(interpolate(format, rowEnv(env, row)), textX, rowY, color)
+
+        local textX = contentX + ui.toPx(0.5)
+        if isSel then
+            small_battlers.draw("Cursor", contentX - 6, rowY, 8)
+        end
+        if spriteField then
+            local key = row[spriteField]
+            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
+            textX = contentX + ui.toPx(0.5) + spriteSize + 3
+            end
+        end
+        if row.icon and row.icon > 0 then
+            ui.drawIcon(row.icon, textX + ui.toPx(0.5), rowY - 2)
+            textX = textX + ui.toPx(2.5)
+        end
+        ui.drawString(interpolate(format, rEnv), textX, rowY, color)
+        if hasGauge then
+            -- (extra parens: see drawLayoutGauges — truncates eval's
+            -- (value, err) pair so a failed formula degrades to 0/1
+            -- instead of crashing tonumber's base argument)
+            local val = tonumber((formula.eval(win.gaugeValue, rEnv))) or 0
+            local max = tonumber((formula.eval(win.gaugeMax, rEnv))) or 1
+            local barX = textX
+            -- Stay inside the row's own card (not the whole window) when
+            -- one is drawn, so the bar never bleeds past its border.
+            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
+            local barW = math.max(8, rightEdge - barX)
+            ui.drawBar(barX, rowY + ui.lineHeight + 1, barW, layout.gaugeHeight or 3,
+                val, max,
+                win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 })
+        end
     end
 end
 
--- Horizontal option row (confirm style): options spread across the width.
+-- "partyGrid" style (owner direction 11.07.2026): arranges one
+-- actor_status.draw cell per row, wrapped into a grid (layout.gridColumns,
+-- default 2 — reproduces the battle/map HUD's 2x2 for a 4-member party).
+-- Rows come from the SAME 'party' list source as the old sprite+gauge list
+-- rows, but here each one draws through the exact function
+-- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
+-- partyRows keeps a reference to) — so a party member's status is one
+-- single thing, not a re-implementation per screen.
+local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
+    local cols = layout.gridColumns or 2
+    local contentX, contentY = contentOrigin(layout, title, x, y)
+    for i, row in ipairs(rows) do
+        if row.battlerRef then
+            local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
+            actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
+        end
+    end
+end
+
+-- Horizontal option row (confirm/command style): options spread across the
+-- width. The active choice gets a small WSkin_Highlight backdrop behind its
+-- text (ui.drawPanel's `highlight` param), same idea as the actor_status
+-- cell highlight — one shared way to mark "this is the current selection".
 local function drawOptions(rows, cursor, env, x, y, w)
     local n = #rows
     if n == 0 then return end
@@ -280,66 +539,221 @@ local function drawOptions(rows, cursor, env, x, y, w)
     for i, row in ipairs(rows) do
         local isSel = (i == cursor)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        local label = (isSel and "> " or "  ") .. (row.name or "")
-        ui.drawString(label, x + math.floor((i - 1) * slot) + ui.toPx(2), y, color)
+        local slotX = x + math.floor((i - 1) * slot)
+        if isSel then
+            ui.drawPanel(slotX + ui.toPx(0.5), y - ui.toPx(0.5), math.floor(slot) - ui.toPx(1), ui.lineHeight + ui.toPx(1), nil, true)
+            small_battlers.draw("Cursor", slotX + ui.toPx(1), y, 8)
+        end
+        ui.drawString(row.name or "", slotX + ui.toPx(2), y, color)
     end
 end
 
-local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h)
+-- "command" style: each entry is its own bordered slot (owner direction
+-- 13.07.2026), not free-floating text in one shared bar. Slots fill the
+-- window's whole x/y/w/h bounding box evenly, each with a small gap.
+local function drawCommandSlots(rows, cursor, env, x, y, w, h)
+    local n = #rows
+    if n == 0 then return end
+    local gap = ui.toPx(0.5)
+    local slotW = (w - gap * (n + 1)) / n
+    for i, row in ipairs(rows) do
+        local isSel = (i == cursor)
+        local sx = x + gap + (i - 1) * (slotW + gap)
+        ui.drawPanel(sx, y, slotW, h, nil, isSel)
+        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+        local label = row.name or ""
+        local textY = y + h / 2 - ui.lineHeight / 2
+        if isSel then
+            local textW = love.graphics.getFont():getWidth(label)
+            local textX = sx + (slotW - textW) / 2
+            small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+        end
+        ui.drawString(label, sx, textY, color, "center", slotW)
+    end
+end
+
+local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     if #rows == 0 or cursor < 1 or cursor > #rows then return end
     local row = rows[cursor]
     local cx = x + w / 2
-    local iconY = y + ui.toPx(3)
+    local _, contentY = contentOrigin(layout, title, x, y)
+    local iconY = contentY + ui.toPx(1)
     love.graphics.setColor(1, 1, 0.5, 0.5 + 0.5 * math.sin(love.timer.getTime() * 15))
     love.graphics.rectangle("line", cx - ui.iconSize / 2 - 4, iconY - 4, ui.iconSize + 8, ui.iconSize + 8)
     love.graphics.setColor(1, 1, 1, 1)
     if row.icon and row.icon > 0 then
         ui.drawIcon(row.icon, cx - ui.iconSize / 2, iconY)
     end
-    ui.drawString(row.name or "", x, y + ui.toPx(6.5), COLOR_SELECTED, "center", w)
+    ui.drawString(row.name or "", x, contentY + ui.toPx(4.5), COLOR_SELECTED, "center", w)
 end
 
-local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache)
+-- Open animation: layout.anim.open = { duration = seconds, anchor =
+-- "cellOf:<windowId>" (optional) } grows the window from a point to its
+-- full size when it opens. Purely presentational — window state, hooks and
+-- golden logs are unaffected. The clock is keyed by the runtime win table,
+-- so re-opening a closed window replays the animation. There is no close
+-- animation: a scene that wants one can stage it with hooks (CLOSE_WINDOW +
+-- WAIT before the pop), like the game_over intro does in reverse.
+--
+-- Owner direction 13.07.2026: the windowskin frame/tiles must never be
+-- graphically scaled (love.graphics.scale on a 9-sliced texture stretches
+-- the corner/edge quads into visible artifacts) — only the window's real
+-- x/y/w/h dimensions animate. ui.drawPanel already tiles correctly at any
+-- size, so growing the REAL rect fed into it keeps every frame crisp.
+-- Content (text/lists) stays laid out at the window's resting size and is
+-- simply revealed via scissor as the box grows, rather than reflowing.
+local openClocks = setmetatable({}, { __mode = "k" })
+
+-- Resolves an anchor spec to a pixel point the window grows FROM. Currently
+-- supports "cellOf:<windowId>": the center of that window's currently
+-- selected partyGrid cell (e.g. the map's member popup opens from whichever
+-- party member was chosen, not the screen center) — reusable by any future
+-- popup anchored to a grid selection, not scene-specific.
+local function resolveAnchor(spec, ctx, listCache, layouts)
+    local targetId = type(spec) == "string" and spec:match("^cellOf:(.+)$")
+    if not targetId then return nil end
+    local cached = listCache[targetId]
+    local targetLayout = layouts[targetId]
+    if not cached or not targetLayout or not cached.rows[cached.cursor] then return nil end
+    local cols = targetLayout.gridColumns or 2
+    local colW, rowH = actor_status.cellSize(ctx.session)
+    local contentX, contentY = contentOrigin(targetLayout, targetLayout.title, ui.toPx(targetLayout.x or 0), ui.toPx(targetLayout.y or 0))
+    local idx = cached.cursor
+    -- Shared slot arithmetic (actor_status.gridSlot); +half a cell centers
+    -- the anchor on the selected grid cell.
+    local cx, cy = actor_status.gridSlot(contentX, contentY, idx, ctx.session, cols)
+    return cx + colW / 2, cy + rowH / 2
+end
+
+-- When a window anchors to a grid cell, its RESTING position also relates
+-- to that cell (owner direction 13.07.2026: "not dead center of the
+-- screen") — centered horizontally over the cell, sitting just above it,
+-- clamped to stay on screen. Falls back to the window's own layout.x/y
+-- when there's no anchor (or it can't resolve, e.g. nothing selected yet).
+local function anchoredRestPosition(ax, ay, x, y, w, h)
+    if not ax then return x, y end
+    local screenW, screenH = ui.toPx(32), ui.toPx(30)
+    local gap = ui.toPx(0.5)
+    local rx = math.max(0, math.min(screenW - w, ax - w / 2))
+    local ry = math.max(0, math.min(screenH - h, ay - h - gap))
+    return rx, ry
+end
+
+-- Returns the animated (px, py, pw, ph) rect to actually draw the panel
+-- border at, and whether animation is still in progress (caller scissors
+-- content to this rect while true).
+local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
+    local anim = layout.anim and layout.anim.open
+    if not anim then
+        openClocks[win] = nil
+        return x, y, w, h, false
+    end
+    local now = love.timer.getTime()
+    local t0 = openClocks[win]
+    if not t0 then
+        t0 = now
+        openClocks[win] = t0
+    end
+    local dur = tonumber(anim.duration) or 0.22
+    local p = dur <= 0 and 1 or math.min(1, (now - t0) / dur)
+    if p >= 1 then return x, y, w, h, false end
+    local ease = 1 - (1 - p) * (1 - p)
+    local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+    local growFromX, growFromY = ax or (x + w / 2), ay or (y + h / 2)
+    local realCx, realCy = x + w / 2, y + h / 2
+    local cx = growFromX + (realCx - growFromX) * ease
+    local cy = growFromY + (realCy - growFromY) * ease
+    -- ui.drawPanel assumes at least ~16px to fit its 4px-inset tiled
+    -- background and 8px corner quads; below that its own internal
+    -- scissor math goes negative and crashes. Floor both dimensions so
+    -- the panel is never asked to draw smaller than it can handle — the
+    -- box "pops in" at that floor size on the very first frame or two,
+    -- then continues growing, which reads as fine at these durations.
+    local pw, ph = math.max(16, w * ease), math.max(16, h * ease)
+    return cx - pw / 2, cy - ph / 2, pw, ph, true
+end
+
+-- Style-specific content: called once per window per frame, either directly
+-- (resting state) or inside a scissor clipped to the animated open rect
+-- (while opening) -- content is always laid out at the REAL final x/y/w/h so
+-- it never reflows, it's simply revealed as the box grows.
+local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
+    local contentX, contentY = contentOrigin(layout, title, x, y)
+    local lineSpacing = ui.toPx(layout.lineSpacing or 2)
+
+    drawPortrait(layout, env, x, y, title)
+    drawLayoutGauges(layout.gauges, env, x, y)
+
+    local text = layout.text ~= nil and layout.text or win.text
+
+    if style == "list" then
+        local cached = listCache[id]
+        if cached then
+            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
+        end
+        if text then
+            drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
+        end
+    elseif style == "confirm" then
+        if text then
+            drawTextLines(text, env, x + ui.toPx(2), contentY, lineSpacing, w - ui.toPx(4))
+        end
+        local cached = listCache[id]
+        if cached then
+            drawOptions(cached.rows, cached.cursor, env, x, y + h - ui.toPx(2.5), w)
+        end
+    elseif style == "command" then
+        -- Each entry is its own bordered slot (owner direction 13.07.2026)
+        -- rather than free-floating text in one shared bar -- no outer
+        -- panel is drawn for this style, the slots themselves are the
+        -- window's whole visible surface.
+        local cached = listCache[id]
+        if cached then
+            drawCommandSlots(cached.rows, cached.cursor, env, x, y, w, h)
+        end
+    elseif style == "roulette" then
+        local cached = listCache[id]
+        if cached then
+            drawRoulette(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
+        end
+    elseif style == "partyGrid" then
+        local cached = listCache[id]
+        if cached then
+            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title)
+        end
+    else -- "panel", "frame" and any unknown style: text content
+        if text then
+            local align = (style == "frame") and "center" or "left"
+            local tx = (style == "frame") and x or contentX
+            drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
+        end
+    end
+end
+
+local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache, layouts)
+    layout = resolvePageLayout(layout, env)
     local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
     local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
     local style = layout.style or "panel"
     local title = layout.title
     if title then title = interpolate(title, env) end
 
-    ui.drawPanel(x, y, w, h, title)
+    local anim = layout.anim and layout.anim.open
+    if anim and anim.anchor then
+        local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+        x, y = anchoredRestPosition(ax, ay, x, y, w, h)
+    end
 
-    local contentY = y + ui.toPx(layout.contentY or 2)
-    local lineSpacing = ui.toPx(layout.lineSpacing or 2)
-
-    drawPortrait(layout, env, x, y)
-
-    if style == "list" then
-        local cached = listCache[id]
-        if cached then
-            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h)
-        end
-        if win.text then
-            drawTextLines(win.text, env, x + ui.toPx(0.5), contentY, lineSpacing, w - ui.toPx(1))
-        end
-    elseif style == "confirm" then
-        if win.text then
-            drawTextLines(win.text, env, x + ui.toPx(2), contentY, lineSpacing, w - ui.toPx(4))
-        end
-        local cached = listCache[id]
-        if cached then
-            drawOptions(cached.rows, cached.cursor, env, x, y + h - ui.toPx(2.5), w)
-        end
-    elseif style == "roulette" then
-        local cached = listCache[id]
-        if cached then
-            drawRoulette(win, layout, cached.rows, cached.cursor, env, x, y, w, h)
-        end
-    else -- "panel", "frame" and any unknown style: text content
-        if win.text then
-            local align = (style == "frame") and "center" or "left"
-            local tx = (style == "frame") and x or (x + ui.toPx(layout.textX or 0.5))
-            drawTextLines(win.text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
-        end
+    local px, py, pw, ph, animating = openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
+    if animating then
+        local sx, sy, sw, sh = love.graphics.getScissor()
+        love.graphics.intersectScissor(px, py, pw, ph)
+        if style ~= "command" then ui.drawPanel(px, py, pw, ph, title) end
+        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
+        if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
+    else
+        if style ~= "command" then ui.drawPanel(x, y, w, h, title) end
+        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     end
 end
 
@@ -366,13 +780,99 @@ function wr.draw(state, sceneData, ctx)
         cached.cursor = liveCursor(state.winState[id], env)
     end
 
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
     for _, id in ipairs(state.windowOrder or {}) do
         local win = state.winState[id]
         if win and win.open then
-            local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
-            drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache)
+            drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache, layouts)
+        elseif win then
+            -- Closed windows drop their open-anim clock so re-opening
+            -- replays the animation.
+            openClocks[win] = nil
         end
     end
+end
+
+-- ---------------------------------------------------------------------------
+-- E5: materialize the current window state as plain data for the headless
+-- scene preview (`lovec . preview-scene <id>`). Same resolution code paths
+-- as wr.draw — list sources expanded to formatted row strings, {expr} text
+-- interpolated, live cursor evaluated — but no drawing. Per-window failures
+-- become an `error` field on that window instead of crashing the preview.
+-- ---------------------------------------------------------------------------
+function wr.resolveState(state, sceneData, ctx)
+    local result = {
+        tileSize = ui.tileSize,
+        focused = state and state.focusedWindow or nil,
+        windows = {},
+    }
+    if not state or not state.winState then return result end
+
+    local listCache = {}
+    local env = buildEnv(state, sceneData, ctx, listCache)
+    for _, id in ipairs(state.windowOrder or {}) do
+        local win = state.winState[id]
+        if win and win.open and win.listId then
+            local ok, rows = pcall(resolveRows, win, state, sceneData, ctx, env)
+            local entry = { rows = {}, cursor = 1 }
+            if ok then entry.rows = rows else entry.error = tostring(rows) end
+            listCache[id] = entry
+        end
+    end
+    for id, cached in pairs(listCache) do
+        local ok, cur = pcall(liveCursor, state.winState[id], env)
+        cached.cursor = ok and cur or 1
+    end
+
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+    for _, id in ipairs(state.windowOrder or {}) do
+        local win = state.winState[id]
+        if win then
+            local layout = resolvePageLayout(layouts[id] or {}, env)
+            local entry = {
+                id = id,
+                open = win.open == true,
+                hasLayout = layouts[id] ~= nil,
+                x = layout.x or 0,
+                y = layout.y or 0,
+                width = layout.width or 8,
+                height = layout.height or 4,
+                style = layout.style or "panel",
+                listId = win.listId,
+            }
+            local okT, title = pcall(interpolate, layout.title, env)
+            if layout.title ~= nil then entry.title = okT and title or ("<error: " .. tostring(title) .. ">") end
+            local windowText = layout.text ~= nil and layout.text or win.text
+            if windowText ~= nil then
+                local okX, text = pcall(interpolate, windowText, env)
+                entry.text = okX and text or nil
+                if not okX then entry.error = tostring(text) end
+            end
+            local cached = listCache[id]
+            if cached then
+                entry.cursor = cached.cursor
+                if cached.error then entry.error = cached.error end
+                entry.rows = {}
+                local format = win.format or "{name}"
+                for _, row in ipairs(cached.rows) do
+                    local rEnv = rowEnv(env, row)
+                    local okR, textR = pcall(interpolate, format, rEnv)
+                    local highlighted = false
+                    if win.highlight and win.highlight ~= "" then
+                        local okH, hv = pcall(formula.eval, win.highlight, rEnv)
+                        highlighted = okH and hv == true
+                    end
+                    table.insert(entry.rows, {
+                        text = okR and textR or ("<error: " .. tostring(textR) .. ">"),
+                        highlighted = highlighted,
+                        icon = row.icon or 0,
+                    })
+                end
+            end
+            table.insert(result.windows, entry)
+        end
+    end
+    return result
 end
 
 return wr

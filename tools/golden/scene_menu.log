@@ -1,9 +1,0 @@
-UI GOLDEN BEGIN
-scene|menu|name|Main Menu
-menu_left_panel|open_window||
-menu_left_panel|set_list||menu_options
-menu_left_panel|set_cursor||1
-menu_right_panel|open_window||
-menu_right_panel|set_list||party
-menu_info_panel|open_window||
-UI GOLDEN END

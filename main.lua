@@ -66,6 +66,14 @@ activeSession = nil
 
 local isTestBattle = false
 local isValidateMode = false
+local isPreviewSceneMode = false
+local previewSceneId = nil
+local isPreviewWindowMode = false
+local previewWindowId = nil
+local previewWindowMockSpec = nil
+local isPreviewFontMode = false
+local previewFontName = nil
+local previewFontSize = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -74,15 +82,9 @@ local runValidation
 -- Scene States Cache
 local townSelectedIdx = 1
 
--- Battle State
-local activeBattle
-local battleCombatLog = {}
-local battleCombatState = "input" -- "input" or "log"
-local battleSelectedIndex = 1
-local battleSpellSelect = false
-local battleEventsQueue = {}
-local battleEventQueueIndex = 1
-local battleEscaped = false
+-- Battle State now lives entirely in scene_host (engine/scenes/battle.lua,
+-- accessed via v.*). The former main.lua battle globals were removed after
+-- the battle->scene migration; nothing referenced them.
 
 -- Dialogue State
 local activeWalker
@@ -90,22 +92,8 @@ local dialogueSelectIdx = 1
 
 -- Menu State
 
-local menuSelectedIdx = 1
-local menuActiveCol = 1 -- 1 = Left menu column, 2 = Right panel details
-menuSubScene = "main"
-local menuSelectedSubIdx = 1
-local selectedItemIdToUse = nil
-local selectedCreatureIndex = 1
-local selectedSlotIndex = 1
-statusInspectMode = false
-statusInspectIdx = 1
 
 local inputCooldown = 0
-
--- Interactive Battle Input variables
-local battleLivingMembers = {}
-local battleActiveMemberIndex = 1
-local battleCollectedActions = {}
 
 local server = require("engine.server")
 config = require("engine.config")
@@ -126,12 +114,13 @@ end
 -- each scene in the registry via scene_host, capturing the normalized UI
 -- event log. Events are logged in `window|action|target|value` format between
 -- UI GOLDEN BEGIN/END markers (matching the pattern used by capture scripts).
-local function runGoldenUI()
+-- Deterministic mock session shared by the golden-ui harness and the E5
+-- scene preview: fixed seed, starting party, crafting ingredients in
+-- inventory so list-driven scenes have real content to show.
+local function makeHarnessSession()
     math.randomseed(12345)
-
     local vSession = session.GameSession.new(loader)
     vSession:initializeStartingParty()
-
     -- Give inventory items so crafting scenes have ingredients to select
     for _, item in ipairs(loader.items or {}) do
         if item.meta and item.meta.craftKind then
@@ -139,6 +128,252 @@ local function runGoldenUI()
         end
     end
     vSession:addItem(1, 5) -- HP Tonic
+    return vSession
+end
+
+-- E5: headless scene preview (`lovec . preview-scene <id>`). Pushes the
+-- scene with the mock session, runs on_enter through the real interpreter,
+-- and prints the MATERIALIZED window state (window_renderer.resolveState:
+-- geometry + resolved rows/text/cursor) as one JSON document between
+-- PREVIEW BEGIN/END markers. Errors become an { error } payload, never a
+-- crash — a broken scene is when the author needs the preview most.
+local function runPreviewScene(sceneId)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local vSession = makeHarnessSession()
+        local sceneDef
+        for _, sc in ipairs(loader.scenes or {}) do
+            if tostring(sc.id) == tostring(sceneId) then sceneDef = sc break end
+        end
+        if not sceneDef then
+            payload = { error = "scene not found: " .. tostring(sceneId) }
+            return
+        end
+        local sh = require("engine.scene_host")
+        local ctx = { session = vSession, loader = loader, party = vSession.party, events = {} }
+        sh.init(nil)
+        sh.push(sceneDef.id, ctx) -- push runs on_enter when given a ctx
+
+        -- The shop scene's v-state is seeded by openShop in-game; give the
+        -- preview the equivalent (first shop by sorted key, deterministic)
+        -- so its windows show real content instead of an empty list.
+        if tostring(sceneDef.id) == "shop" then
+            local st = sh.getCurrentState()
+            if st and (st.v.items == nil or #st.v.items == 0) then
+                local keys = {}
+                for k in pairs(loader.shops or {}) do table.insert(keys, tostring(k)) end
+                table.sort(keys)
+                local shopData = keys[1] and loader.shops[keys[1]]
+                if shopData then
+                    st.v.shopName = shopData.name or "Shop"
+                    st.v.items = {}
+                    for _, shopItem in ipairs(shopData.items or {}) do
+                        local itemData = loader.getItem(shopItem.id)
+                        if itemData then
+                            table.insert(st.v.items, {
+                                id = itemData.id,
+                                name = itemData.name or "",
+                                icon = itemData.icon or 0,
+                                description = itemData.description or "",
+                                cost = shopItem.price or itemData.cost or 0,
+                            })
+                        end
+                    end
+                    st.v.count = #st.v.items
+                end
+            end
+        end
+
+        local wr = require("presentation.window_renderer")
+        payload = wr.resolveState(sh.getCurrentState(), sceneDef, ctx)
+        payload.sceneId = sceneDef.id
+        payload.sceneName = sceneDef.name or ""
+        payload.gameWidth = gameWidth
+        payload.gameHeight = gameHeight
+
+        -- 1:1 frame (owner feedback 10.07.2026): render the scene through
+        -- the REAL presentation stack — windowskin, font, spacing — exactly
+        -- like the golden-ui draw smoke does, and embed the PNG as base64.
+        -- The JSON metadata above remains the hit-testing/edit model; the
+        -- image is what the author sees. frameKind tells the editor which
+        -- path produced it:
+        --   "windows"     scene_host.draw ("draw": "windows" scenes)
+        --   "legacy"      the same legacy renderer call love.draw makes for
+        --                 this built-in id (menu/shop), with neutral state
+        --   "declarative" the hook-declared windows via the window renderer
+        --                 (built-in stubs like items/status whose real
+        --                 in-game look is still legacy code inside the menu)
+        do
+            local okDraw, imgOrErr = pcall(function()
+                local ui = require("presentation.ui")
+                ui.init()
+                local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+                love.graphics.setCanvas(previewCanvas)
+                love.graphics.clear(0, 0, 0, 1)
+                love.graphics.setColor(1, 1, 1, 1)
+                if sh.draw(ctx) then
+                    payload.frameKind = "windows"
+                else
+                    renderer.init(vSession)
+                    -- Settle the menu slide-in animation so panels are in
+                    -- their resting position, exactly as after ~2s in-game.
+                    renderer.update(1)
+                    renderer.update(1)
+                    local wrMod = require("presentation.window_renderer")
+                    wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
+                    payload.frameKind = "declarative"
+                end
+                love.graphics.setCanvas()
+                local fileData = previewCanvas:newImageData():encode("png")
+                return love.data.encode("string", "base64", fileData)
+            end)
+            if okDraw then
+                payload.image = imgOrErr
+            else
+                love.graphics.setCanvas()
+                payload.imageError = tostring(imgOrErr)
+            end
+        end
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- E12: headless SINGLE-WINDOW preview (`lovec . preview-window <windowId>
+-- [mockSpecJSON]`) for the reusable-window editor tab. A raw windowLayout
+-- entry has no scene — no hooks ever run — so this bypasses scene_host
+-- entirely and builds a minimal one-window state directly from an
+-- editor-supplied mock spec (list source / sample text / cursor), never
+-- written to any data file. wr.draw/wr.resolveState are already generic
+-- over state.winState/windowOrder (D13's "no scene-specific code" rule
+-- paying off) so NO window_renderer.lua changes were needed to support
+-- this — same resolution/render code path as the per-scene preview.
+--
+-- mockSpec fields (all optional): listId, format, priority, highlight,
+-- sprite, gaugeValue, gaugeMax, gaugeColor, gaugeFill, text, cursor,
+-- v (seeds flow-local vars for {v.x} expressions), config (seeds a
+-- scene-config-shaped table for "config:key" list sources), siblings
+-- (optional: { windowId = <mockWin fields>, ... } — a window that reads
+-- sel('otherWindow') sees nil in true isolation, since sel() resolves
+-- against whatever's in this preview's own state; listing just the
+-- window(s) it depends on here resolves that WITHOUT turning this into a
+-- full scene preview — only the windows the author explicitly listed
+-- exist).
+local function buildMockWin(spec)
+    return {
+        open = true,
+        listId = spec.listId,
+        format = spec.format,
+        priority = spec.priority,
+        highlight = spec.highlight,
+        sprite = spec.sprite,
+        gaugeValue = spec.gaugeValue,
+        gaugeMax = spec.gaugeMax,
+        gaugeColor = spec.gaugeColor,
+        gaugeFill = spec.gaugeFill,
+        text = spec.text,
+        cursor = spec.cursor or 1,
+    }
+end
+
+local function runPreviewWindow(windowId, mockSpecJSON)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local spec = {}
+        if mockSpecJSON and mockSpecJSON ~= "" then
+            local decoded = json.decode(mockSpecJSON)
+            if type(decoded) == "table" then spec = decoded end
+        end
+
+        local vSession = makeHarnessSession()
+        local winState = { [windowId] = buildMockWin(spec) }
+        local windowOrder = { windowId }
+        for siblingId, siblingSpec in pairs(spec.siblings or {}) do
+            winState[siblingId] = buildMockWin(siblingSpec)
+            table.insert(windowOrder, siblingId)
+        end
+        local state = {
+            v = spec.v or {},
+            winState = winState,
+            windowOrder = windowOrder,
+        }
+        -- Not a real scene: only .config is read (by the "config:key" list
+        -- source), so a bare table with that one field is sufficient.
+        local sceneData = { config = spec.config or {} }
+        local ctx = { session = vSession, loader = loader, party = vSession.party, events = {} }
+
+        local wr = require("presentation.window_renderer")
+        payload = wr.resolveState(state, sceneData, ctx)
+        payload.windowId = windowId
+        payload.gameWidth = gameWidth
+        payload.gameHeight = gameHeight
+
+        local okDraw, imgOrErr = pcall(function()
+            local ui = require("presentation.ui")
+            ui.init()
+            local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+            love.graphics.setCanvas(previewCanvas)
+            love.graphics.clear(0, 0, 0, 1)
+            love.graphics.setColor(1, 1, 1, 1)
+            wr.draw(state, sceneData, ctx)
+            love.graphics.setCanvas()
+            local fileData = previewCanvas:newImageData():encode("png")
+            return love.data.encode("string", "base64", fileData)
+        end)
+        if okDraw then
+            payload.image = imgOrErr
+        else
+            love.graphics.setCanvas()
+            payload.imageError = tostring(imgOrErr)
+        end
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- Font picker preview (`lovec . preview-font <name> <size>`): draws a real
+-- ui.drawPanel + ui.drawString sample using the actual engine 9-slice
+-- windowskin and the requested font, so the editor's picker shows exactly
+-- what the game will render instead of an approximation. name/size are
+-- NOT written to config — this only overrides the in-memory font for the
+-- one screenshot.
+local function runPreviewFont(name, size)
+    local json = require("data.json")
+    local payload = {}
+    local ok, err = pcall(function()
+        local ui = require("presentation.ui")
+        ui.init()
+        ui.setFont(name, size)
+
+        local pw, ph = 240, 64
+        local previewCanvas = love.graphics.newCanvas(pw, ph)
+        love.graphics.setCanvas(previewCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        ui.drawPanel(4, 4, pw - 8, ph - 8)
+        ui.drawString("The Quick Brown Fox 0123", 12, 16)
+        ui.drawString("HP 42/50  ATK 10  DEF 8", 12, 16 + ui.lineHeight + 4)
+        love.graphics.setCanvas()
+
+        local fileData = previewCanvas:newImageData():encode("png")
+        payload.image = love.data.encode("string", "base64", fileData)
+        payload.width = pw
+        payload.height = ph
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+local function runGoldenUI()
+    local vSession = makeHarnessSession()
 
     local scene_host = require("engine.scene_host")
     local interpreter = require("engine.interpreter")
@@ -158,6 +393,9 @@ local function runGoldenUI()
         local currentCtx = {
             session = vSession,
             loader = loader,
+            -- Hooks see the same ctx shape gameplay pushes (party.count
+            -- formulas were silently false without this).
+            party = vSession.party,
             events = {}
         }
 
@@ -582,6 +820,27 @@ runValidation = function()
             "' with no handler in engine/interpreter.lua (stub commands are not allowed)")
     end
 
+    -- Mock context shared by every formula-compiling param check (the
+    -- 'formula' type and E7's 'assignments' list-of-pairs type).
+    local function buildFormulaMockCtx()
+        return {
+                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
+                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1 },
+                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
+                        ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
+                        alpha = 0.5,
+                        S = 10
+        }
+    end
+
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
@@ -627,28 +886,40 @@ runValidation = function()
                     if val ~= nil then
 
                 if paramDef.type == "formula" then
-                    local mockCtx = {
-                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1 },
-                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, _guard = 0 },
-                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
-                        ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
-                        alpha = 0.5,
-                        S = 10
-                    }
+                    local mockCtx = buildFormulaMockCtx()
                     local formulaEngine = require("engine.formula")
                     if type(val) == "string" and (val:match("^flag:") or val:match("^hasItem:")) then
                         -- Allow legacy condition strings
                     else
                         local ok, _, ferr = pcall(formulaEngine.eval, val, mockCtx)
                         check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' failed to compile formula '" .. tostring(val) .. "': " .. tostring(ferr))
+                    end
+                elseif paramDef.type == "assignments" then
+                    -- E7: list of { name, value } pairs; every value must
+                    -- compile as a formula and every name be a non-empty
+                    -- string. Rows are checked IN ORDER against one shared
+                    -- mock context, assigning each result into mock v — the
+                    -- same semantics the handler runs with, so later rows
+                    -- reading earlier ones validate correctly. Any future
+                    -- list-of-pairs command inherits this.
+                    check(type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a list of {name, value} rows")
+                    if type(val) == "table" then
+                        local formulaEngine = require("engine.formula")
+                        local mockCtx = buildFormulaMockCtx()
+                        for ai, a in ipairs(val) do
+                            check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
+                                ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
+                            if type(a) == "table" then
+                                local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
+                                check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
+                                if type(a.name) == "string" and a.name ~= "" then
+                                    -- Feed the row's result (or a neutral 1)
+                                    -- forward for later rows' formulas.
+                                    if ok and result ~= nil then mockCtx.v[a.name] = result
+                                    else mockCtx.v[a.name] = 1 end
+                                end
+                            end
+                        end
                     end
                 elseif paramDef.type == "commands" then
                     -- val could be a list of commands, OR for CHOICE it could be a list of options where each option has .commands
@@ -928,7 +1199,11 @@ elseif paramDef.type == "script" then
                 resultItemName = "",
                 -- Common menu variables (D6 scenes)
                 opt = 1, subIdx = 1, idx = 1, count = 1,
-                selectedIdx = 1, _guard = 0
+                selectedIdx = 1, _guard = 0, eqIdx = 1,
+                -- Map scene's cursor/overlay state
+                mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1,
+                memberIdx = 1, popupIdx = 1, confirmIdx = 1,
+                seededCrafterIdx = 1
             }
         }
         
@@ -1019,9 +1294,51 @@ function love.load(arg)
                 isGoldenMode = true
             elseif val == "golden-ui" then
                 isGoldenUIMode = true
+            elseif val == "preview-scene" then
+                isPreviewSceneMode = true
+                previewSceneId = arg[i + 1]
+                i = i + 1
+            elseif val == "preview-window" then
+                -- mockSpecJSON is always passed (the server supplies "{}"
+                -- when there's no mock binding) so parsing never has to
+                -- guess whether the next arg is data or another flag.
+                isPreviewWindowMode = true
+                previewWindowId = arg[i + 1]
+                previewWindowMockSpec = arg[i + 2]
+                i = i + 2
+            elseif val == "preview-font" then
+                isPreviewFontMode = true
+                previewFontName = arg[i + 1]
+                previewFontSize = arg[i + 2]
+                i = i + 2
             end
             i = i + 1
         end
+    end
+
+    -- E5: headless scene preview for the editor canvas, then quit.
+    if isPreviewSceneMode then
+        loader.init()
+        runPreviewScene(previewSceneId)
+        love.event.quit(0)
+        return
+    end
+
+    -- E12: headless single-window preview for the Windows tab, then quit.
+    if isPreviewWindowMode then
+        loader.init()
+        runPreviewWindow(previewWindowId, previewWindowMockSpec)
+        love.event.quit(0)
+        return
+    end
+
+    -- Font picker preview: renders the REAL ui.drawPanel/ui.drawString path
+    -- with a candidate font+size, then quits. Never touches data/system.json.
+    if isPreviewFontMode then
+        loader.init()
+        runPreviewFont(previewFontName, tonumber(previewFontSize))
+        love.event.quit(0)
+        return
     end
 
     -- Headless data validation: check database cross-references and simulate
@@ -1059,7 +1376,13 @@ function love.load(arg)
     
     -- Initialize renderer graphics
     renderer.init(activeSession)
-    
+
+    -- E10: the boot-time scene_host.init("title") ran before the loader was
+    -- ready, so the title scene's on_enter (which builds its windows) could
+    -- not run. Re-enter it now that session and loader exist.
+    scene_host.init(nil)
+    scene_host.push("title", { session = activeSession, loader = loader, party = activeSession.party })
+
     -- Initialize 3D viewport textures
     viewport_3d.init()
     
@@ -1081,20 +1404,6 @@ function love.update(dt)
     
     if inputCooldown > 0 then
         inputCooldown = inputCooldown - dt
-    end
-    
-    -- Exiting scene transition (slide-out animation)
-    if renderer.closing then
-        renderer.closingTimer = renderer.closingTimer - dt
-        if renderer.closingTimer <= 0 then
-            renderer.closing = false
-            currentScene = renderer.closingTargetScene
-            if renderer.closingTargetSubScene ~= "" then
-                menuSubScene = renderer.closingTargetSubScene
-            end
-            renderer.resetMenuTimer()
-            inputCooldown = conf("ui", "inputCooldown", 0.30)
-        end
     end
     
     local ctx = { session = activeSession, loader = loader }
@@ -1127,31 +1436,20 @@ function love.draw()
         renderer.drawTown(townSelectedIdx)
     elseif scene_host.getCurrent() == "map" then
         renderer.drawMap()
+        -- The map's world is legacy-drawn (draw ~= "windows"), but its
+        -- party bar / command overlay / member popup are data-authored
+        -- windows layered on top via the generic renderer, same as any
+        -- draw:"windows" scene.
+        local mapState = scene_host.getCurrentState()
+        local mapSceneData = loader.getScene("map")
+        if mapState and mapSceneData then
+            require("presentation.window_renderer").draw(mapState, mapSceneData, { session = activeSession, loader = loader })
+        end
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
-    elseif scene_host.getCurrent() == "shop" then
-        local shopState = scene_host.getCurrentState()
-        local sv = shopState and shopState.v or {}
-        renderer.drawShop(sv.shopName, sv.idx or 1, sv.items or {})
-    elseif scene_host.getCurrent() == "menu" then
-        if scene_host.getPrevious() == "town" then
-            renderer.drawTown(townSelectedIdx)
-        else
-            renderer.drawMap()
-        end
-        if menuSubScene == "use_target" then
-            renderer.drawTargetSelector(menuSelectedSubIdx, activeSession)
-        elseif menuSubScene == "equip_passive" then
-            renderer.drawEquipMenu(activeSession.party[selectedCreatureIndex], menuSelectedSubIdx, activeSession)
-        elseif menuSubScene == "select_passive" then
-            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
-            renderer.drawSelectEquipMenu(menuSelectedSubIdx, activeSession, slotType, activeSession.party[selectedCreatureIndex], selectedSlotIndex)
-        else
-            renderer.drawMainMenu(menuSelectedIdx, menuActiveCol, menuSelectedSubIdx, activeSession, menuSubScene)
-        end
+        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
     end
     end
     
@@ -1169,7 +1467,6 @@ end
 
 local handleDialogueAction -- forward declaration
 local triggerBattle -- forward declaration
-local rebuildBattleLivingMembers -- forward declaration
 
 local function isSafeMap()
     if activeSession and activeSession.currentMapData then
@@ -1189,14 +1486,8 @@ local function recoverParty()
     activeSession.summoner:removeState("dead")
 end
 
--- Applies an item's data-defined effects (from items.json) to a party member.
--- Delegates to engine/effects.lua so field and battle item use share one
--- implementation.
-local function applyItemToTarget(item, target)
-    for _, eff in ipairs(item.effects or {}) do
-        effects.apply(eff, target, target, activeSession)
-    end
-end
+-- Field item use lives in the USE_ITEM command (engine/interpreter.lua) now;
+-- the items scene drives it through its hooks.
 
 -- Command compilation moved to engine/interpreter.lua (task A4); main.lua
 -- keeps only this thin glue that supplies the loader and the recoverParty
@@ -1238,10 +1529,17 @@ local function openShop(shopId)
             if allowed then
                 local itemData = loader.getItem(shopItem.id)
                 if itemData then
-                    -- Honor the per-shop price override set in the editor;
-                    -- everything else reads through to the item database entry.
-                    local entry = setmetatable({ cost = shopItem.price or itemData.cost }, { __index = itemData })
-                    table.insert(items, entry)
+                    -- Plain table (not an __index proxy): the shop scene's
+                    -- v:items list source copies row fields with pairs(),
+                    -- which cannot see metatable fields. Price honors the
+                    -- per-shop override set in the editor.
+                    table.insert(items, {
+                        id = itemData.id,
+                        name = itemData.name or "",
+                        icon = itemData.icon or 0,
+                        description = itemData.description or "",
+                        cost = shopItem.price or itemData.cost or 0,
+                    })
                 end
             end
         end
@@ -1405,11 +1703,6 @@ local function triggerDialogue(graphName)
     end
 end
 
--- Rebuilds the list of party members that still get to act this round
-rebuildBattleLivingMembers = function()
-    require("engine.scenes.battle").rebuildLivingMembers()
-end
-
 triggerBattle = function()
     require("engine.scenes.battle").triggerBattle()
 end
@@ -1423,30 +1716,9 @@ local function getTargetCoords(target)
     return require("engine.scenes.battle").getTargetCoords(target)
 end
 
--- Resolves combat rounds with dynamic state backup/restore for sequential action rendering
-local function resolveBattleRound()
-    return require("engine.scenes.battle").resolveRound()
-end
-
--- Advances the combat logs queue by one event and formats it
-local function advanceBattleLog()
-    require("engine.scenes.battle").advanceLog()
-end
-
--- Records the chosen action for the active member; resolves the round once everyone has acted
-local function commitBattleAction(memberIndex, action)
-    require("engine.scenes.battle").commitAction(memberIndex, action)
-end
-
--- Interrupts input to show a one-line battle message
-local function showBattleMessage(text)
-    require("engine.scenes.battle").showMessage(text)
-end
-
 -- Action handling for key presses
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
-    if renderer.closing then return end
 
     local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then
@@ -1454,50 +1726,19 @@ local function handleKeyPressed(key)
     end
 
     if key == "escape" then
-        if scene_host.getCurrent() == "title" then
-            love.event.quit()
-        elseif scene_host.getCurrent() == "town" or scene_host.getCurrent() == "map" then
-            -- Open Main Menu instead of exiting!
-
-            menuSelectedIdx = 1
-            menuSubScene = "main"
-            renderer.resetMenuTimer()
-            scene_host.push("menu", { session = activeSession, loader = loader, party = activeSession.party })
-            return
-        elseif scene_host.getCurrent() == "menu" then
-            -- Only the top-level menu is handled here; submenus each have
-            -- their own escape branch below that steps back exactly one
-            -- level (intercepting them here used to close the whole menu).
-            if menuSubScene == "main" then
-                if menuActiveCol == 2 then
-                    menuActiveCol = 1
-                    menuSelectedSubIdx = 1
-                else
-                    local currentId = scene_host.getPrevious()
-                    if currentId then
-                        renderer.startClosing("menu", currentId)
-                    end
-                end
-                return
-            end
-        elseif scene_host.getCurrent() == "dialogue" then
+        -- E10: title ESC is handled by the scene's on_cancel hook (moves the
+        -- cursor to Exit instead of instant-quitting). Map's ESC (opening
+        -- the party cursor + command overlay) is likewise fully handled by
+        -- the map scene's own on_cancel hook above — nothing left to do here.
+        if scene_host.getCurrent() == "dialogue" then
             scene_host.goto_scene("map")
             return
         end
     end
     
-    if scene_host.getCurrent() == "title" then
-        if key == "return" or key == "space" then
-            -- Initialize session if not exists
-            if not activeSession then
-                activeSession = session.GameSession.new(loader)
-                activeSession:initializeStartingParty()
-            end
-            exploration.loadMap(activeSession, 1) -- Load Town Map (mapIdx = 1)
-            scene_host.goto_scene("map")
-        end
-        
-    elseif scene_host.getCurrent() == "town" then
+    -- E10: title input is fully handled by the title scene's data hooks
+    -- (scene_host.keypressed above), so no legacy title branch remains.
+    if scene_host.getCurrent() == "town" then
         -- Town menu entries come from system.town.options (label + action),
         -- editable from the editor's System tab.
         local townOptions = conf("town", "options", {})
@@ -1523,6 +1764,14 @@ local function handleKeyPressed(key)
         end
         
     elseif scene_host.getCurrent() == "map" then
+        -- Strafe (q/e) has no scene_host hook mapping, so it isn't caught
+        -- by the map scene's FALLBACK dance above; guard it here directly
+        -- so it can't move the party while the cursor/command overlay
+        -- (v.mode ~= 0) is open.
+        local mapState = scene_host.getCurrentState()
+        if (key == "q" or key == "e") and mapState and mapState.v.mode and mapState.v.mode ~= 0 then
+            return
+        end
         local moved = false
         if key == "up" or key == "w" then
             moved = exploration.moveForward(activeSession)
@@ -1610,11 +1859,17 @@ local function handleKeyPressed(key)
         if node then
             if node.type == "TEXT" then
                 if key == "space" or key == "return" then
-                    activeWalker:advance()
-                    dialogueSelectIdx = 1
-                    handleDialogueAction()
-                    if not activeWalker:getCurrentNode() then
-                        scene_host.goto_scene("map")
+                    -- B.0: a confirm press while text is revealing completes
+                    -- it; only a second press advances the dialogue.
+                    if renderer.isDialogueRevealing() then
+                        renderer.finishDialogueReveal()
+                    else
+                        activeWalker:advance()
+                        dialogueSelectIdx = 1
+                        handleDialogueAction()
+                        if not activeWalker:getCurrentNode() then
+                            scene_host.goto_scene("map")
+                        end
                     end
                 end
             elseif node.type == "CHOICE" then
@@ -1633,425 +1888,6 @@ local function handleKeyPressed(key)
             end
         end
         
-    elseif scene_host.getCurrent() == "menu" then
-        if menuSubScene == "main" then
-            local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
-            local numOpts = #mainOpts
-            if key == "up" or key == "w" then
-                menuSelectedIdx = (menuSelectedIdx - 2) % numOpts + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedIdx = menuSelectedIdx % numOpts + 1
-            elseif key == "space" or key == "return" then
-                local opt = mainOpts[menuSelectedIdx]
-                if opt == "ITEMS" then
-                    menuSubScene = "items_list"
-                    menuSelectedSubIdx = 1
-                elseif opt == "STATUS" or opt == "EQUIP" then
-                    menuSubScene = "party_select"
-                    menuSelectedSubIdx = 1
-                elseif opt == "CRAFTING" then
-                    -- Item Creation is an extra (data-authored) scene; address
-                    -- it by scene id, not by a dissolved kind string (D13).
-                    scene_host.push(1, { session = activeSession, loader = loader, party = activeSession.party })
-                elseif opt == "EXIT" then
-                    menuSubScene = "exit_confirm"
-                    menuSelectedSubIdx = 2 -- Default to NO
-                end
-            end
-            
-        elseif menuSubScene == "party_select" then
-            -- 2x2 grid navigation inputs for selecting creatures in the party
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
-            elseif key == "left" or key == "a" then
-                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
-                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
-                end
-            elseif key == "right" or key == "d" then
-                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
-                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
-                end
-            elseif key == "escape" then
-                menuSubScene = "main"
-                menuSelectedSubIdx = 1
-            elseif key == "space" or key == "return" then
-                if activeSession.party[menuSelectedSubIdx] then
-                    selectedCreatureIndex = menuSelectedSubIdx
-                    local mainOpts = loader.getTermList("menu.main_options", { "ITEMS", "STATUS", "EQUIP", "EXIT" })
-                    local opt = mainOpts[menuSelectedIdx]
-                    if opt == "STATUS" then
-                        menuSubScene = "status_detail"
-                        statusInspectMode = false
-                        statusInspectIdx = 1
-                    else
-                        menuSubScene = "equip_passive"
-                        menuSelectedSubIdx = 1
-                    end
-                end
-            end
-            
-        elseif menuSubScene == "items_list" then
-            local items = {}
-            for itemId, qty in pairs(activeSession.inventory) do
-                local item = loader.getItem(itemId)
-                if item then table.insert(items, { item = item, qty = qty }) end
-            end
-            
-            if key == "up" or key == "w" then
-                if #items > 0 then
-                    menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #items + 1
-                end
-            elseif key == "down" or key == "s" then
-                if #items > 0 then
-                    menuSelectedSubIdx = menuSelectedSubIdx % #items + 1
-                end
-            elseif key == "escape" then
-                renderer.startClosing("items_list", "menu", "main")
-            elseif key == "space" or key == "return" then
-                local selectedEntry = items[menuSelectedSubIdx]
-                if selectedEntry then
-                    local item = selectedEntry.item
-                    if item.targetScope == "party" then
-                        -- Instantly use on the whole party
-                        for _, c in ipairs(activeSession.party) do
-                            applyItemToTarget(item, c)
-                        end
-                        activeSession:addItem(item.id, -1)
-                    else
-                        selectedItemIdToUse = item.id
-                        menuSubScene = "use_target"
-                        menuSelectedSubIdx = 1
-                    end
-                end
-            end
-            
-        elseif menuSubScene == "use_target" then
-            -- 2x2 grid navigation inputs for item target selection
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 3) % 4 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = (menuSelectedSubIdx + 1) % 4 + 1
-            elseif key == "left" or key == "a" then
-                if menuSelectedSubIdx == 2 then menuSelectedSubIdx = 1
-                elseif menuSelectedSubIdx == 4 then menuSelectedSubIdx = 3
-                end
-            elseif key == "right" or key == "d" then
-                if menuSelectedSubIdx == 1 then menuSelectedSubIdx = 2
-                elseif menuSelectedSubIdx == 3 then menuSelectedSubIdx = 4
-                end
-            elseif key == "escape" then
-                menuSubScene = "items_list"
-                menuSelectedSubIdx = 1
-                selectedItemIdToUse = nil
-            elseif key == "space" or key == "return" then
-                local target = activeSession.party[menuSelectedSubIdx]
-                if target and selectedItemIdToUse then
-                    local item = loader.getItem(selectedItemIdToUse)
-                    if item then
-                        applyItemToTarget(item, target)
-                        activeSession:addItem(item.id, -1)
-                    end
-                    menuSubScene = "items_list"
-                    menuSelectedSubIdx = 1
-                    selectedItemIdToUse = nil
-                end
-            end
-            
-        elseif menuSubScene == "equip_passive" then
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % 3 + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx % 3 + 1
-            elseif key == "escape" then
-                renderer.startClosing("equip_passive", "menu", "party_select")
-            elseif key == "space" or key == "return" then
-                selectedSlotIndex = menuSelectedSubIdx
-                menuSubScene = "select_passive"
-                menuSelectedSubIdx = 1
-            end
-            
-        elseif menuSubScene == "select_passive" then
-            local slotType = (selectedSlotIndex == 1) and "Weapon" or (selectedSlotIndex == 2 and "Armor" or "Accessory")
-            local list = {}
-            table.insert(list, { id = "empty", name = "[ UNEQUIP ]", description = "Unequip current gear." })
-            for itemId, qty in pairs(activeSession.inventory) do
-                local item = loader.getItem(itemId)
-                if item and item.type == "equipment" and item.equipType == slotType then
-                    table.insert(list, item)
-                end
-            end
-            
-            if key == "up" or key == "w" then
-                menuSelectedSubIdx = (menuSelectedSubIdx - 2) % #list + 1
-            elseif key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx % #list + 1
-            elseif key == "escape" then
-                renderer.startClosing("select_passive", "menu", "equip_passive")
-            elseif key == "space" or key == "return" then
-                local choice = list[menuSelectedSubIdx]
-                local targetCreature = activeSession.party[selectedCreatureIndex]
-                if targetCreature and choice then
-                    local prevItem = targetCreature.equipment[selectedSlotIndex]
-                    if choice.id == "empty" then
-                        if prevItem then
-                            activeSession:addItem(prevItem.id, 1)
-                        end
-                        targetCreature.equipment[selectedSlotIndex] = nil
-                    else
-                        if prevItem then
-                            activeSession:addItem(prevItem.id, 1)
-                        end
-                        targetCreature.equipment[selectedSlotIndex] = choice
-                        activeSession:addItem(choice.id, -1)
-                    end
-                end
-                menuSubScene = "equip_passive"
-                menuSelectedSubIdx = selectedSlotIndex
-            end
-            
-        elseif menuSubScene == "status_detail" then
-            local c = activeSession.party[selectedCreatureIndex]
-            local numPassives = c and #(c.actorData.passives or {}) or 0
-            local numSkills = c and #(c.actorData.skills or {}) or 0
-            local totalTraits = numPassives + numSkills
-            
-            if statusInspectMode then
-                if key == "escape" or key == "space" or key == "return" then
-                    statusInspectMode = false
-                elseif key == "up" or key == "w" then
-                    if totalTraits > 0 then
-                        statusInspectIdx = (statusInspectIdx - 2) % totalTraits + 1
-                    end
-                elseif key == "down" or key == "s" then
-                    if totalTraits > 0 then
-                        statusInspectIdx = statusInspectIdx % totalTraits + 1
-                    end
-                end
-            else
-                if key == "escape" then
-                    renderer.startClosing("status_detail", "menu", "party_select")
-                elseif key == "space" or key == "return" or key == "tab" then
-                    if totalTraits > 0 then
-                        statusInspectMode = true
-                        statusInspectIdx = 1
-                    end
-                elseif key == "left" or key == "a" or key == "up" or key == "w" then
-                    local nextIdx = selectedCreatureIndex
-                    repeat
-                        nextIdx = (nextIdx - 2) % 4 + 1
-                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
-                    selectedCreatureIndex = nextIdx
-                elseif key == "right" or key == "d" or key == "down" or key == "s" then
-                    local nextIdx = selectedCreatureIndex
-                    repeat
-                        nextIdx = nextIdx % 4 + 1
-                    until activeSession.party[nextIdx] or nextIdx == selectedCreatureIndex
-                    selectedCreatureIndex = nextIdx
-                end
-            end
-            
-        elseif menuSubScene == "exit_confirm" then
-            if key == "up" or key == "w" or key == "down" or key == "s" then
-                menuSelectedSubIdx = menuSelectedSubIdx == 1 and 2 or 1
-            elseif key == "escape" then
-                menuSubScene = "main"
-                menuSelectedSubIdx = 1
-            elseif key == "space" or key == "return" then
-                if menuSelectedSubIdx == 1 then
-                    love.event.quit()
-                else
-                    menuSubScene = "main"
-                    menuSelectedSubIdx = 1
-                end
-            end
-        end
-        
-    elseif scene_host.getCurrent() == "battle" then
-        local bv = require("engine.scenes.battle").getState()
-        local b = bv.battle
-        
-        if bv.combatState == "input" then
-            local memberInfo = (bv.livingMembers or {})[bv.activeMemberIdx or 1]
-            if not memberInfo then
-                bv.combatState = "log"
-                return
-            end
-            
-            local isSummoner = (memberInfo.type == "summoner")
-            
-            if bv.spellSelect then
-                -- Get skills/spells list
-                local options = {}
-                if isSummoner then
-                    for _, spellId in ipairs(conf("summoner", "spells", {})) do
-                        if type(spellId) == "table" then spellId = spellId.id end
-                        local sk = loader.getSkill(spellId)
-                        if sk then table.insert(options, sk) end
-                    end
-                else
-                    for _, skId in ipairs(memberInfo.actor.skills or {}) do
-                        local sk = loader.getSkill(skId)
-                        if sk then table.insert(options, sk) end
-                    end
-                end
-                
-                if key == "up" or key == "w" then
-                    if #options > 0 then
-                        bv.selectedIndex = (bv.selectedIndex - 2) % #options + 1
-                    end
-                elseif key == "down" or key == "s" then
-                    if #options > 0 then
-                        bv.selectedIndex = bv.selectedIndex % #options + 1
-                    end
-                elseif key == "escape" then
-                    bv.spellSelect = false
-                    bv.selectedIndex = 2
-                elseif key == "space" or key == "return" then
-                    local choice = options[bv.selectedIndex]
-                    if choice then
-                        local allowed = true
-                        if isSummoner then
-                            allowed = (activeSession.mp >= (choice.mpCost or choice.mp or 0))
-                        end
-                        
-                        if allowed then
-                            local spell = loader.getSkill(choice.id)
-                            local target = activeSession.summoner
-                            if spell and (spell.target == "enemy-any" or spell.target == "enemy") then
-                                for _, e in ipairs(b.enemies) do
-                                    if not e:isDead() then target = e break end
-                                end
-                            else
-                                local lowestHp = 9999
-                                for _, c in ipairs(activeSession.party) do
-                                    if not c:isDead() and c.hp < lowestHp then
-                                        lowestHp = c.hp
-                                        target = c
-                                    end
-                                end
-                            end
-                            
-                            require("engine.scenes.battle").commitAction(memberInfo.index, {
-                                type = isSummoner and "spell" or "skill",
-                                id = choice.id,
-                                target = target
-                            })
-                        else
-                            require("engine.scenes.battle").showMessage(loader.getTerm("battle.not_enough_mp", "Not enough MP!"))
-                        end
-                    end
-                end
-            else
-                -- Main commands: Attack (1), Spell/Skill (2), Item/Defend (3), Flee (4)
-                if key == "up" or key == "w" then
-                    bv.selectedIndex = (bv.selectedIndex - 2) % 4 + 1
-                elseif key == "down" or key == "s" then
-                    bv.selectedIndex = bv.selectedIndex % 4 + 1
-                elseif key == "space" or key == "return" then
-                    if bv.selectedIndex == 1 then
-                        local target = b.enemies[1]
-                        for _, e in ipairs(b.enemies) do
-                            if not e:isDead() then target = e break end
-                        end
-                        require("engine.scenes.battle").commitAction(memberInfo.index, {
-                            type = "attack",
-                            target = target
-                        })
-                    elseif bv.selectedIndex == 2 then
-                        bv.spellSelect = true
-                        bv.selectedIndex = 1
-                    elseif bv.selectedIndex == 3 then
-                        if isSummoner then
-                            local battleItemId = conf("combat", "battleItem", 1)
-                            local battleItem = loader.getItem(battleItemId)
-                            if battleItem and activeSession:hasItem(battleItemId, 1) then
-                                local target = activeSession.summoner
-                                local lowestHp = 9999
-                                for _, c in ipairs(activeSession.party) do
-                                    if not c:isDead() and c.hp < lowestHp then
-                                        lowestHp = c.hp
-                                        target = c
-                                    end
-                                end
-                                require("engine.scenes.battle").commitAction(memberInfo.index, {
-                                    type = "item",
-                                    id = battleItemId,
-                                    target = target
-                                })
-                            else
-                                require("engine.scenes.battle").showMessage(loader.formatTerm("battle.no_item_left", "No {0}s left!", (battleItem and battleItem.name or battleItemId)))
-                            end
-                        else
-                            require("engine.scenes.battle").commitAction(memberInfo.index, { type = "defend" })
-                        end
-                    elseif bv.selectedIndex == 4 then
-                        require("engine.scenes.battle").commitAction(memberInfo.index, { type = "flee" })
-                    end
-                end
-            end
-            
-        elseif bv.combatState == "log" then
-            if key == "space" or key == "return" then
-                if bv.eventQueueIndex <= #(bv.eventsQueue or {}) then
-                    require("engine.scenes.battle").advanceLog()
-                else
-                    if b:isVictory() then
-                        if flow.has("battle.victory") then
-                            flow.run("battle.victory", {
-                                session = activeSession,
-                                battle = b,
-                                party = activeSession.party,
-                                enemies = b.enemies,
-                            })
-                        else
-                            local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
-                            activeSession.gold = activeSession.gold + goldGain
-                            for _, c in ipairs(activeSession.party) do
-                                if not c:isDead() then
-                                    c:gainExp(conf("combat", "victoryExp", 5), activeSession)
-                                    local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", activeSession)
-                                    if regenVal > 0 then
-                                        c.hp = math.min(c:getMaxHp(activeSession), c.hp + regenVal)
-                                    end
-                                end
-                            end
-                        end
-                        scene_host.goto_scene("map")
-                    elseif b:isDefeat() then
-                        local doReset = true
-                        if flow.has("battle.defeat") then
-                            doReset = false
-                            for _, ev in ipairs(flow.run("battle.defeat", { session = activeSession, battle = b })) do
-                                if ev.type == "scene_change" and ev.kind == "defeat" then doReset = true end
-                            end
-                        end
-                        if doReset then
-                            activeSession = session.GameSession.new(loader)
-                            activeSession:initializeStartingParty()
-                            renderer.init(activeSession)
-                        end
-                    else
-                        if bv.escaped then
-                            local toMap = true
-                            if flow.has("battle.escaped") then
-                                toMap = false
-                                for _, ev in ipairs(flow.run("battle.escaped", { session = activeSession, battle = b })) do
-                                    if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
-                                end
-                            end
-                            if toMap then scene_host.goto_scene("map") end
-                        else
-                            require("engine.scenes.battle").rebuildLivingMembers()
-                            bv.combatState = "input"
-                            bv.selectedIndex = 1
-                            bv.spellSelect = false
-                        end
-                    end
-                end
-            end
-        end
     end
 end
 
@@ -2086,6 +1922,16 @@ function love.keypressed(key, scancode, isrepeat)
                     if x and y then
                         local col = isCrit and getPopupFormat("critColor") or (isHeal and getPopupFormat("healColor") or getPopupFormat("damageColor"))
                         renderer.addDamagePopup(txt, x, y, col)
+                        -- E8: exercise smallBattler damage feedback in test mode
+                        if not isHeal then
+                            local isEnemy = false
+                            for _, e in ipairs(b.enemies) do
+                                if e == target then isEnemy = true break end
+                            end
+                            if not isEnemy then
+                                renderer.triggerSmallDamage(target)
+                            end
+                        end
                     end
                 end
             end
@@ -2104,27 +1950,7 @@ function love.keypressed(key, scancode, isrepeat)
         return
     end
     
-    local oldScene = scene_host.getCurrent()
-    local oldSub = menuSubScene
-    
     handleKeyPressed(key)
-    
-    local function isMajorSubSceneTransition(oldSub, newSub)
-        if oldSub == newSub then return false end
-        if (oldSub == "main" and newSub == "party_select") or (oldSub == "party_select" and newSub == "main") then
-            return false
-        end
-        if (oldSub == "items_list" and newSub == "use_target") or (oldSub == "use_target" and newSub == "items_list") then
-            return false
-        end
-        return true
-    end
-
-    if scene_host.getCurrent() ~= oldScene or (scene_host.getCurrent() == "menu" and isMajorSubSceneTransition(oldSub, menuSubScene)) then
-        if not renderer.closing then
-            renderer.resetMenuTimer()
-        end
-    end
 end
 
 function love.resize(w, h)

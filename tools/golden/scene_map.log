@@ -1,0 +1,11 @@
+UI GOLDEN BEGIN
+scene|map|name|Map
+party|open_window||
+party|set_list||party
+party|set_cursor||0
+help|open_window||
+help|set_text||{sel('map_command').help}
+party|set_cursor||1
+help|set_text||Select a party member.    ESC: back
+help|close_window||
+UI GOLDEN END

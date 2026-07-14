@@ -83,7 +83,7 @@ function server.update(dt)
                     -- Hot-reload active UI font
                     local ui = require("presentation.ui")
                     if config.ui and config.ui.activeFont then
-                        ui.setFont(config.ui.activeFont)
+                        ui.setFont(config.ui.activeFont, config.ui.fontSize)
                     end
                     
                     sendResponse(client, "200 OK", "application/json", json.encode({ success = true, message = "Reloaded config and database" }))

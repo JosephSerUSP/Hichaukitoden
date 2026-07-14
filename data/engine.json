@@ -163,6 +163,14 @@
     {
       "token": "ingredient1.meta.key",
       "description": "Reads meta key on ingredient 1 (item metadata, also on ingredient2)."
+    },
+    {
+      "token": "session.itemCount",
+      "description": "Distinct non-empty inventory stacks (bounds an inventory-list cursor)."
+    },
+    {
+      "token": "(list rows)",
+      "description": "SET_LIST sprite/gaugeValue/gaugeMax evaluate against each row's fields (e.g. hp, maxHp, spriteKey)."
     }
   ],
   "metaKeys": [
@@ -436,8 +444,8 @@
     },
     {
       "id": "SET_VAR",
-      "category": "Flow Control",
-      "label": "Set Variable",
+      "category": "Variables",
+      "label": "Control Variables",
       "params": [
         {
           "key": "name",
@@ -446,6 +454,10 @@
         {
           "key": "value",
           "type": "formula"
+        },
+        {
+          "key": "assignments",
+          "type": "assignments"
         }
       ],
       "contexts": [
@@ -455,11 +467,11 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Sets a flow-local variable, readable as v.name in formulas."
+      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
     },
     {
       "id": "SET_FLAG",
-      "category": "Flow Control",
+      "category": "Variables",
       "label": "Set Flag",
       "params": [
         {
@@ -616,6 +628,10 @@
         {
           "key": "amount",
           "type": "formula"
+        },
+        {
+          "key": "trait",
+          "type": "text"
         }
       ],
       "contexts": [
@@ -624,7 +640,7 @@
         "common"
       ],
       "interactive": false,
-      "description": "Heals via effects.apply, capped at max HP."
+      "description": "Heals via effects.apply, capped at max HP. With a trait code, heals silently by the target's rate for that trait (absorbed TRAIT_HEAL)."
     },
     {
       "id": "ADD_STATE",
@@ -750,26 +766,6 @@
       "description": "Runs the regen/poison/duration-decay block for all battlers."
     },
     {
-      "id": "TRAIT_HEAL",
-      "category": "Battler",
-      "label": "Trait Heal",
-      "params": [
-        {
-          "key": "target",
-          "type": "battlerRef"
-        },
-        {
-          "key": "trait",
-          "type": "text"
-        }
-      ],
-      "contexts": [
-        "battle_phase"
-      ],
-      "interactive": false,
-      "description": "Heals the target by its rate for the named trait (e.g. POST_BATTLE_HEAL)."
-    },
-    {
       "id": "EMIT_TEXT",
       "category": "Message",
       "label": "Emit Text",
@@ -839,6 +835,50 @@
       ],
       "interactive": false,
       "description": "Removes items from the inventory (fails soft)."
+    },
+    {
+      "id": "USE_ITEM",
+      "category": "Progression",
+      "label": "Use Item",
+      "params": [
+        {
+          "key": "itemIndex",
+          "type": "formula"
+        },
+        {
+          "key": "target",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with targetScope 'party' hit every member, otherwise target is a party index."
+    },
+    {
+      "id": "EQUIP_ITEM",
+      "category": "Progression",
+      "label": "Equip Item",
+      "params": [
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "target",
+          "type": "formula"
+        },
+        {
+          "key": "itemIndex",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Equips gear on a party member. slot: 1=Weapon 2=Armor 3=Accessory; target is a party index; itemIndex is 1-based into the window renderer's 'equipment' list order (1 = unequip, then matching inventory gear id-ascending). Previous gear returns to the inventory."
     },
     {
       "id": "GIVE_ITEM_ID",
@@ -957,6 +997,14 @@
         {
           "key": "kind",
           "type": "text"
+        },
+        {
+          "key": "scene",
+          "type": "text"
+        },
+        {
+          "key": "vars",
+          "type": "assignments"
         }
       ],
       "contexts": [
@@ -964,7 +1012,56 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Emits a scene_change event that main.lua consumes; the interpreter never switches scenes itself."
+      "description": "Emits a scene_change event that scene_host consumes; the interpreter never switches scenes itself. Optional vars ({name, value} rows, evaluated against the pushing scene right now) are applied to the pushed scene's v right after its own on_enter runs, e.g. to hand it a chosen party member index."
+    },
+    {
+      "id": "FALLBACK",
+      "category": "Advanced",
+      "label": "Fall Through to Legacy Input",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Marks this hook invocation as unhandled so the legacy input underneath it runs instead (e.g. map movement on up/down/left/right when no menu overlay is open). Any hook key otherwise intercepts its key unconditionally."
+    },
+    {
+      "id": "LOAD_MAP",
+      "category": "Progression",
+      "label": "Load Map",
+      "params": [
+        {
+          "key": "mapId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Loads the map with the given index into the session (title New Game, warps)."
+    },
+    {
+      "id": "QUIT_GAME",
+      "category": "Advanced",
+      "label": "Quit Game",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Quits the game (title Exit)."
+    },
+    {
+      "id": "RESET_SESSION",
+      "category": "Advanced",
+      "label": "Reset Session",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Discards the current session and starts a fresh one with the starting party (game over / new game)."
     },
     {
       "id": "SCRIPT",
@@ -1045,13 +1142,33 @@
         {
           "key": "highlight",
           "type": "text"
+        },
+        {
+          "key": "sprite",
+          "type": "text"
+        },
+        {
+          "key": "gaugeValue",
+          "type": "text"
+        },
+        {
+          "key": "gaugeMax",
+          "type": "text"
+        },
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "member",
+          "type": "formula"
         }
       ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Sets a window's list. listId sources: inventory, party, config:<key>, v:<key>, static:a,b. Optional: format row template (\"{name} (x{qty})\"), priority/highlight row formulas."
+      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row. slot/member are draw-time formulas for the 'equipSlots' and 'equipment' sources (slot: 1=Weapon 2=Armor 3=Accessory, member: party index)."
     },
     {
       "id": "SET_TEXT",
@@ -1064,6 +1181,10 @@
         },
         {
           "key": "text",
+          "type": "text"
+        },
+        {
+          "key": "term",
           "type": "text"
         }
       ],
@@ -1148,24 +1269,24 @@
   },
   "battleLayout": {
     "enemyRowWidth": 220,
-    "enemyStartX": 18,
+    "enemyStartX": 22,
     "enemyPopupOffsetX": 28,
-    "enemyPopupY": 60,
-    "partyGridTileX": 16,
+    "enemyPopupY": 84,
+    "partyGridTileX": 15,
     "consoleTileY": 18,
     "headerTileOffset": 1,
-    "slotPopupOffsetX": 27,
+    "slotPopupOffsetX": 8,
     "slotPopupOffsetY": 10,
     "summonerPopupX": 50,
     "summonerPopupYOffset": 62,
     "fallbackX": 128,
     "fallbackY": 70,
-    "enemyY": 30,
-    "enemyNameY": 90,
-    "enemyHpBarY": 104,
-    "enemyHpBarWidth": 50,
+    "enemyY": 44,
+    "enemyNameY": 101,
+    "enemyHpBarY": 113,
+    "enemyHpBarWidth": 64,
     "enemyHpBarHeight": 4,
-    "enemySpriteSize": 56,
+    "enemySpriteSize": 64,
     "enemyFallbackSize": 50,
     "enemySlideOffset": 280,
     "enemyDeathYOffset": 20,
@@ -1186,12 +1307,12 @@
     "consoleTextTileX": 1,
     "menuChoiceSpacing": 8,
     "summonerStatusX": 8,
-    "summonerNameYOffset": 48,
-    "summonerMpTextYOffset": 64,
-    "summonerMpBarYOffset": 80,
+    "summonerNameYOffset": 8,
+    "summonerMpTextYOffset": 26,
+    "summonerMpBarYOffset": 34,
     "summonerMpBarWidth": 80,
     "summonerMpBarHeight": 4,
-    "partyGridColWidth": 64,
+    "partyGridColWidth": 68,
     "partyGridRowHeight": 40,
     "partyGridNameXOffset": 1,
     "partyGridHpXOffset": 8,
@@ -1200,7 +1321,18 @@
     "partyGridHpBarYOffset": 22,
     "partyGridHpBarWidth": 52,
     "partyGridHpBarHeight": 3,
-    "partyGridEmptyYOffset": 8
+    "partyGridEmptyYOffset": 8,
+    "logLineSpacing": 10,
+    "victoryPanelTileX": 6,
+    "victoryPanelTileY": 4,
+    "victoryPanelTileW": 20,
+    "victoryPanelTileH": 14,
+    "victoryLineSpacing": 12,
+    "commandBarTileH": 2.5,
+    "commandBarTextYOffset": 6,
+    "victoryRowHeight": 18,
+    "victoryGaugeWidth": 120,
+    "victoryGaugeHeight": 3
   },
   "effectTypes": [
     {
@@ -1415,10 +1547,10 @@
   "windowLayout": {
     "headerSpacing": 0,
     "discipline_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
+      "x": 0.5,
+      "y": 4,
+      "width": 11,
+      "height": 16.5,
       "style": "list",
       "title": "Select Discipline"
     },
@@ -1437,7 +1569,7 @@
       "height": 5,
       "style": "panel",
       "title": "Select Ingredients",
-      "lineSpacing": 1
+      "lineSpacing": 0
     },
     "inventory_list": {
       "x": 0,
@@ -1473,6 +1605,40 @@
       "title": "Crafting..."
     },
     "title_frame": {
+      "x": -1,
+      "y": 15.5,
+      "width": 34,
+      "height": 3.5,
+      "style": "frame",
+      "title": null
+    },
+    "title_menu": {
+      "x": 23,
+      "y": 20,
+      "width": 8.5,
+      "height": 5.5,
+      "style": "list",
+      "visibleRows": 3,
+      "title": null
+    },
+    "title_notice": {
+      "x": 8,
+      "y": 22,
+      "width": 16,
+      "height": 3,
+      "style": "frame",
+      "title": null
+    },
+    "title_footer": {
+      "x": 0,
+      "y": 26.5,
+      "width": 32,
+      "height": 3.5,
+      "style": "frame",
+      "contentY": 1,
+      "title": null
+    },
+    "game_over_frame": {
       "x": 0,
       "y": 6,
       "width": 32,
@@ -1480,85 +1646,120 @@
       "style": "frame",
       "title": null
     },
-    "title_menu": {
+    "game_over_message": {
       "x": 0,
-      "y": 14,
+      "y": 13,
+      "width": 32,
+      "height": 3,
+      "style": "frame",
+      "contentY": 1,
+      "title": null
+    },
+    "game_over_menu": {
+      "x": 0,
+      "y": 17,
       "width": 32,
       "height": 4,
       "style": "list",
       "title": null
     },
-    "menu_left_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 10,
-      "height": 20.5,
-      "style": "list",
-      "title": "Menu"
-    },
-    "menu_right_panel": {
-      "x": 10,
-      "y": 3.5,
-      "width": 10,
-      "height": 20.5,
-      "style": "list",
-      "title": "Party"
-    },
-    "menu_info_panel": {
-      "x": 20,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
-      "style": "panel",
-      "title": "Info"
-    },
     "items_left_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 20,
-      "height": 20.5,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 19,
+      "height": 13.5,
       "style": "list",
-      "title": "Items"
+      "title": null,
+      "emptyText": "No items."
     },
     "items_info_panel": {
       "x": 20,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
+      "y": 4.5,
+      "width": 11.5,
+      "height": 13.5,
       "style": "panel",
-      "title": "Item Info"
+      "title": null,
+      "lineSpacing": 1
     },
     "status_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 32,
-      "height": 20.5,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 20.5,
+      "height": 13.5,
       "style": "panel",
-      "title": "Status"
+      "title": null,
+      "pageFormula": "v.page or 1",
+      "pages": [
+        {
+          "contentY": 6,
+          "lineSpacing": 1,
+          "gauges": [
+            {
+              "label": "HP  {sel('status_party').hp}/{sel('status_party').maxHp}",
+              "value": "sel('status_party').hp",
+              "max": "sel('status_party').maxHp",
+              "x": 1,
+              "y": 1,
+              "width": 18
+            },
+            {
+              "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
+              "value": "sel('status_party').exp",
+              "max": "sel('status_party').expNeeded",
+              "x": 1,
+              "y": 3,
+              "width": 18,
+              "color": [
+                0.1,
+                0.2,
+                0.5
+              ],
+              "fill": [
+                0.3,
+                0.6,
+                1
+              ]
+            }
+          ],
+          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}\nAMR {sel('status_party').armor}\nACC {sel('status_party').accessory}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.25,
+          "text": "{sel('status_party').name}   Skills & Passives\n\nSKILLS\n{sel('status_party').skillText}\n\nPASSIVES\n{sel('status_party').passiveText}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.5,
+          "text": "{sel('status_party').name}\n{sel('status_party').role}\n\n{sel('status_party').biography}"
+        }
+      ],
+      "gauges": []
     },
     "shop_header": {
       "x": 0,
-      "y": 3.5,
+      "y": 0,
       "width": 32,
-      "height": 3,
+      "height": 4,
       "style": "frame",
-      "title": "Shop"
+      "title": null
     },
     "shop_list": {
-      "x": 0,
-      "y": 6.5,
-      "width": 20,
-      "height": 17.5,
+      "x": 0.5,
+      "y": 4.5,
+      "width": 19,
+      "height": 13.5,
       "style": "list",
-      "title": "Items"
+      "title": null,
+      "emptyText": "No items available."
     },
     "shop_info": {
       "x": 20,
-      "y": 6.5,
-      "width": 12,
-      "height": 17.5,
+      "y": 4.5,
+      "width": 11.5,
+      "height": 13.5,
       "style": "panel",
-      "title": "Item Info"
+      "title": null
     },
     "battle_log_window": {
       "x": 0,
@@ -1602,9 +1803,9 @@
     },
     "discipline_detail": {
       "x": 12,
-      "y": 3.5,
-      "width": 20,
-      "height": 20.5,
+      "y": 4,
+      "width": 19.5,
+      "height": 16.5,
       "style": "panel",
       "title": "Details"
     },
@@ -1628,6 +1829,121 @@
       "style": "frame",
       "title": "Crafting Success!",
       "contentY": 5
+    },
+    "shop_party": {
+      "x": 0,
+      "y": 18.5,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "title": null
+    },
+    "status_party": {
+      "x": 0,
+      "y": 18.5,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "title": null
+    },
+    "items_target": {
+      "x": 6,
+      "y": 8,
+      "width": 20,
+      "height": 12,
+      "style": "partyGrid",
+      "title": "Use on whom?"
+    },
+    "help": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 4,
+      "style": "frame",
+      "title": null
+    },
+    "party": {
+      "x": 0,
+      "y": 18.5,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "title": null
+    },
+    "statusPortrait": {
+      "x": 21.5,
+      "y": 4.5,
+      "width": 10,
+      "height": 13.5,
+      "style": "panel",
+      "title": null,
+      "portrait": "sel('status_party').portraitKey"
+    },
+    "equip_slots": {
+      "x": 4,
+      "y": 5,
+      "width": 14,
+      "height": 8,
+      "style": "list",
+      "title": "EQUIP"
+    },
+    "equip_list": {
+      "x": 10,
+      "y": 4,
+      "width": 18,
+      "height": 12,
+      "style": "list",
+      "title": "SELECT"
+    },
+    "equip_info": {
+      "x": 0,
+      "y": 16,
+      "width": 32,
+      "height": 8,
+      "style": "panel",
+      "title": "INFO",
+      "lineSpacing": 1
+    },
+    "map_command": {
+      "x": 0,
+      "y": 16,
+      "width": 32,
+      "height": 2.5,
+      "style": "command",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.18
+        }
+      }
+    },
+    "map_member_popup": {
+      "x": 10,
+      "y": 9,
+      "width": 12,
+      "height": 7,
+      "style": "list",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.15,
+          "anchor": "cellOf:party"
+        }
+      }
+    },
+    "map_confirm": {
+      "x": 4,
+      "y": 6,
+      "width": 24,
+      "height": 8,
+      "style": "confirm",
+      "title": "CONFIRM",
+      "lineSpacing": 1,
+      "anim": {
+        "open": {
+          "duration": 0.18
+        }
+      }
     }
   }
 }

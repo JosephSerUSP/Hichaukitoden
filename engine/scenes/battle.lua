@@ -10,7 +10,7 @@
 --   v.combatLog          combat log list
 --   v.combatState        "input" or "log"
 --   v.selectedIndex      command cursor position
---   v.spellSelect        boolean (0/1), spell/skill submenu active
+--   v.spellSelect        boolean, spell/skill submenu active
 --   v.eventsQueue        battle events queue from resolveRound
 --   v.eventQueueIndex    current position in events queue
 --   v.escaped            boolean, true when flee succeeded
@@ -47,18 +47,6 @@ end
 function battle.getState()
     local state = scene_host.getCurrentState()
     return state and state.v or {}
-end
-
--- Convenience: read a single key with default
-function battle.get(key, default)
-    local v = battle.getState()
-    return v[key] ~= nil and v[key] or default
-end
-
--- Convenience: set a key in scene state
-function battle.set(key, value)
-    local state = scene_host.getCurrentState()
-    if state then state.v[key] = value end
 end
 
 -- Config accessor with fallback
@@ -145,7 +133,7 @@ function battle.triggerBattle()
     v.eventQueueIndex = 1
     v.combatState = "input"
     v.selectedIndex = 1
-    v.spellSelect = 0
+    v.spellSelect = false
     v.escaped = false
 
     battle.rebuildLivingMembers()
@@ -176,7 +164,7 @@ function battle.triggerTestBattle()
     v.eventQueueIndex = 1
     v.combatState = "input"
     v.selectedIndex = 1
-    v.spellSelect = 0
+    v.spellSelect = false
 
     battle.rebuildLivingMembers()
     renderer.initBattleAnims(enemyList)
@@ -255,11 +243,17 @@ function battle.advanceLog()
             renderer.addDamagePopup(text, popupX, popupY, color)
             ev.target.hp = math.max(0, ev.target.hp - ev.value)
             if v.battle then
+                local isEnemy = false
                 for idx, enemy in ipairs(v.battle.enemies) do
                     if enemy == ev.target then
                         renderer.triggerActionFlash(idx, "damage")
+                        isEnemy = true
                         break
                     end
+                end
+                -- E8: party smallBattlers and the summoner flash/shake too
+                if not isEnemy then
+                    renderer.triggerSmallDamage(ev.target)
                 end
             end
         elseif ev.type == "heal" then
@@ -325,7 +319,7 @@ function battle.commitAction(memberIndex, action)
     v.collectedActions[memberIndex] = action
     v.activeMemberIdx = (v.activeMemberIdx or 1) + 1
     v.selectedIndex = 1
-    v.spellSelect = 0
+    v.spellSelect = false
 
     if v.activeMemberIdx > #(v.livingMembers or {}) then
         v.escaped = false
@@ -335,6 +329,120 @@ function battle.commitAction(memberIndex, action)
         battle.advanceLog()
         v.combatState = "log"
     end
+end
+
+-------------------------------------------------------------------------------
+-- NOTE: command-selection input ("handleInput") and log advancement
+-- ("handleLogInput") are NOT defined here. They live as scene-local named
+-- scripts in data/scenes.json (battle scene → scripts), run via
+-- SCRIPT { ref = ... } from the battle hooks. The Lua copies that used to
+-- sit here were dead code left behind by that conversion and had already
+-- diverged from the authoritative script versions — do not re-add them.
+-- What remains in this module is the state machinery those scripts call
+-- through the interpreter's api.battle bridge (commitAction, advanceLog,
+-- showMessage, handleTransition).
+-------------------------------------------------------------------------------
+-- Handles battle completion: victory, defeat, escape, or the next round
+-------------------------------------------------------------------------------
+function battle.handleTransition(action)
+    local v = battle.getState()
+    local b = v.battle
+    if action ~= "select" or not b then return false end
+
+    -- B.9: the victory window is showing
+    if v.combatState == "victory" then
+        if v.victoryStage == 0 then
+            -- Press ENTER starts the drain animation
+            v.victoryStage = 1
+        elseif renderer.getVictoryStage() == 2 then
+            -- Drain complete, dismiss
+            scene_host.goto_scene("map")
+        end
+        return true
+    end
+
+    if v.combatState ~= "log"
+        or v.eventQueueIndex <= #(v.eventsQueue or {}) then return false end
+
+    if b:isVictory() then
+        -- B.9: grant rewards, then show the dedicated victory window instead
+        -- of leaving immediately. Rewards are diffed around the flow run so
+        -- the window can report them without new engine event types.
+        local s = sess()
+        local goldBefore = s.gold
+        local before = {}
+        for _, c in ipairs(s.party) do
+            before[c] = { level = c.level, exp = c.exp }
+        end
+        if flow.has("battle.victory") then
+            flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
+        else
+            local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
+            s.gold = s.gold + goldGain
+            for _, c in ipairs(s.party) do
+                if not c:isDead() then
+                    c:gainExp(conf("combat", "victoryExp", 5), sess())
+                    local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", sess())
+                    if regenVal > 0 then c.hp = math.min(c:getMaxHp(sess()), c.hp + regenVal) end
+                end
+            end
+        end
+        -- Structured reward data for the window: gold delta, the battle's
+        -- base EXP grant, and per-member before/after level+exp so the
+        -- renderer can animate each EXP gauge (rollover handled there).
+        local members = {}
+        for _, c in ipairs(s.party) do
+            local snap = before[c]
+            if snap then
+                table.insert(members, {
+                    name = c.name or (c.actorData and c.actorData.name) or "?",
+                    fromLevel = snap.level, fromExp = snap.exp,
+                    toLevel = c.level, toExp = c.exp,
+                })
+            end
+        end
+        v.victory = {
+            gold = s.gold - goldBefore,
+            exp = conf("combat", "victoryExp", 5),
+            expPerLevel = conf("growth", "expPerLevel", 15),
+            members = members,
+        }
+        v.victoryStage = 0
+        v.combatState = "victory"
+    elseif b:isDefeat() then
+        -- E9: defeat routes to the data-authored Game Over scene. The session
+        -- reset happens there (RESET_SESSION on the player's choice), not as
+        -- a side effect of losing.
+        local toGameOver = true
+        local targetScene = "game_over"
+        if flow.has("battle.defeat") then
+            toGameOver = false
+            for _, ev in ipairs(flow.run("battle.defeat", { session = sess(), battle = b })) do
+                if ev.type == "scene_change" and ev.kind == "defeat" then
+                    toGameOver = true
+                    if ev.scene then targetScene = ev.scene end
+                end
+            end
+        end
+        if toGameOver then
+            scene_host.goto_scene(targetScene, { session = sess(), loader = ldr(), party = sess().party })
+        end
+    elseif v.escaped then
+        local toMap = true
+        if flow.has("battle.escaped") then
+            toMap = false
+            for _, ev in ipairs(flow.run("battle.escaped", { session = sess(), battle = b })) do
+                if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
+            end
+        end
+        if toMap then scene_host.goto_scene("map") end
+    else
+        battle.rebuildLivingMembers()
+        v.combatState = "input"
+        v.selectedIndex = 1
+        v.spellSelect = false
+    end
+    return true
 end
 
 -------------------------------------------------------------------------------

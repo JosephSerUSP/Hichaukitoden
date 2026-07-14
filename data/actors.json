@@ -6,7 +6,7 @@
     "role": "Healer",
     "maxHp": 9,
     "spriteKey": "pixie",
-    "smallSprite": "pixie",
+    "smallBattler": "pixie",
     "passives": [
       "postBattleHeal",
       "sense"
@@ -47,7 +47,7 @@
     "role": "Healer",
     "maxHp": 15,
     "spriteKey": "highPixie",
-    "smallSprite": "pixie",
+    "smallBattler": "pixie",
     "passives": [
       "postBattleHeal"
     ],
@@ -79,7 +79,7 @@
     "role": "Attacker",
     "maxHp": 11,
     "spriteKey": "skeleton",
-    "smallSprite": "Skeleton",
+    "smallBattler": "Skeleton",
     "passives": [
       "undeadFortitude"
     ],
@@ -104,7 +104,7 @@
       }
     ],
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": []
@@ -116,7 +116,7 @@
     "role": "Support",
     "maxHp": 12,
     "spriteKey": "angel",
-    "smallSprite": "Angel",
+    "smallBattler": "Angel",
     "passives": [
       "holyAura"
     ],
@@ -139,7 +139,7 @@
         "evolvesTo": 5
       }
     ],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -152,7 +152,7 @@
     "role": "Support",
     "maxHp": 16,
     "spriteKey": "archangel",
-    "smallSprite": "Angel",
+    "smallBattler": "Angel",
     "passives": [
       "holyAura"
     ],
@@ -184,7 +184,7 @@
     "role": "Attacker",
     "maxHp": 12,
     "spriteKey": "demon",
-    "smallSprite": "Demon",
+    "smallBattler": "Demon",
     "passives": [
       "chaosPact"
     ],
@@ -219,27 +219,27 @@
       {
         "code": "PARAM_PLUS",
         "dataId": "atk",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "def",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "maxHp",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "asp",
-        "value": 999
+        "value": 99
       },
       {
         "code": "PARAM_PLUS",
         "dataId": "mat",
-        "value": 999
+        "value": 99
       }
     ]
   },
@@ -250,7 +250,7 @@
     "role": "Attacker",
     "maxHp": 22,
     "spriteKey": "incubus",
-    "smallSprite": "Demon",
+    "smallBattler": "Demon",
     "passives": [
       "chaosPact",
       "etherealBody"
@@ -283,7 +283,7 @@
     "role": "Healer",
     "maxHp": 14,
     "spriteKey": "nurse",
-    "smallSprite": "Nurse",
+    "smallBattler": "Nurse",
     "passives": [
       "symbiosis"
     ],
@@ -300,7 +300,7 @@
     "expGrowth": 4,
     "gold": 20,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -313,7 +313,7 @@
     "role": "Attacker",
     "maxHp": 8,
     "spriteKey": "imp",
-    "smallSprite": "Imp",
+    "smallBattler": "Imp",
     "passives": [
       "mischief"
     ],
@@ -336,7 +336,7 @@
       }
     ],
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": []
@@ -348,7 +348,7 @@
     "role": "Tank",
     "maxHp": 15,
     "spriteKey": "golem",
-    "smallSprite": "Golem",
+    "smallBattler": "Golem",
     "passives": [
       "rearGuard",
       "goldDigger"
@@ -362,7 +362,7 @@
     "expGrowth": 8,
     "gold": 40,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -375,7 +375,7 @@
     "role": "Tank",
     "maxHp": 15,
     "spriteKey": "ghoul",
-    "smallSprite": "Ghoul",
+    "smallBattler": "Ghoul",
     "passives": [
       "goldDigger"
     ],
@@ -392,7 +392,7 @@
     "expGrowth": 8,
     "gold": 40,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -405,7 +405,7 @@
     "role": "Debuffer",
     "maxHp": 18,
     "spriteKey": "ooze",
-    "smallSprite": "Ooze",
+    "smallBattler": "Ooze",
     "passives": [
       "rearGuard"
     ],
@@ -419,7 +419,7 @@
     "expGrowth": 5,
     "gold": 10,
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
@@ -432,7 +432,7 @@
     "role": "Attacker",
     "maxHp": 10,
     "spriteKey": "bat",
-    "smallSprite": "Imp",
+    "smallBattler": "Imp",
     "passives": [
       "nightVision",
       "initiative"
@@ -460,7 +460,7 @@
     "role": "Caster",
     "maxHp": 12,
     "spriteKey": "wisp",
-    "smallSprite": "pixie",
+    "smallBattler": "pixie",
     "passives": [
       "etherealBody"
     ],
@@ -493,7 +493,7 @@
     "role": "None",
     "maxHp": 5,
     "spriteKey": "egg",
-    "smallSprite": "Ooze",
+    "smallBattler": "Ooze",
     "elements": [],
     "skills": [
       "attack",
@@ -519,7 +519,7 @@
     "level": 10,
     "role": "Reviver",
     "spriteKey": "phoenix",
-    "smallSprite": "Angel",
+    "smallBattler": "Angel",
     "maxHp": 25,
     "passives": [
       "rebirth"
@@ -549,7 +549,7 @@
     "role": "Parasite",
     "maxHp": 12,
     "spriteKey": "larva",
-    "smallSprite": "Ooze",
+    "smallBattler": "Ooze",
     "passives": [
       "parasite"
     ],
@@ -581,7 +581,7 @@
     "role": "Vampire",
     "maxHp": 55,
     "spriteKey": "vampire",
-    "smallSprite": "Demon",
+    "smallBattler": "Demon",
     "passives": [],
     "elements": [
       "Red",
@@ -609,7 +609,7 @@
     "role": "Attacker",
     "maxHp": 19,
     "spriteKey": "flauros",
-    "smallSprite": "Demon",
+    "smallBattler": "Demon",
     "passives": [
       "initiative",
       "chaosPact"
@@ -646,7 +646,7 @@
     "role": "Support",
     "maxHp": 7,
     "spriteKey": "candle",
-    "smallSprite": "pixie",
+    "smallBattler": "pixie",
     "passives": [
       "nightVision"
     ],
@@ -704,7 +704,7 @@
       }
     ],
     "spriteKey": "ShadowStalker",
-    "smallSprite": "Ghoul",
+    "smallBattler": "Ghoul",
     "gold": 14,
     "expGrowth": 10,
     "drops": [],
@@ -726,6 +726,7 @@
     "gold": 0,
     "expGrowth": 20,
     "drops": [],
-    "evolutions": []
+    "evolutions": [],
+    "smallBattler": "Nurse"
   }
 ]

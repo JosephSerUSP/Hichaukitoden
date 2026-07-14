@@ -17,6 +17,7 @@
             --text-color: #000000;
             --text-muted: #808080;
             --text-empty: #b0b0b0;
+            --cool-bg: #e6e6ec;
             --font-family: 'Tahoma', 'Arial', sans-serif;
             --spritesheet-url: url('Assets/Icons.png');
         }
@@ -297,8 +298,8 @@
 
         /* --- DATABASE MODAL --- */
         .db-modal-window {
-            width: 1024px;
-            height: 680px;
+            width: 1280px;
+            height: 720px;
             display: flex;
             flex-direction: column;
             box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
@@ -342,6 +343,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            background-color: var(--cool-bg);
         }
 
         .db-list-box {
@@ -377,7 +379,7 @@
             padding: 10px;
             overflow-y: auto;
             box-sizing: border-box;
-            background-color: var(--win-white);
+            background-color: var(--cool-bg);
         }
 
         /* --- BUTTONS --- */
@@ -617,6 +619,36 @@
             min-width: 75px;
             padding: 4px 10px;
         }
+
+        /* E2: command-list keyboard focus + selection (win98 listbox look) */
+        .cmd-row:focus {
+            outline: 1px dotted var(--win-black);
+            outline-offset: -1px;
+        }
+        /* Shared hover feedback for every interactive command row. Scoped to
+           [tabindex] so read-only rows (which never get a tabindex) stay inert,
+           and so block headers (CHOICE/IF/generic) highlight identically to
+           plain rows instead of relying on a per-path inline handler. */
+        .cmd-row[tabindex]:hover {
+            background: #000080 !important;
+            color: white !important;
+            cursor: pointer;
+        }
+        .cmd-row[tabindex]:hover span {
+            color: white !important;
+        }
+        .cmd-row[data-selected="1"] {
+            background: #000080 !important;
+            color: white !important;
+        }
+        .cmd-row[data-selected="1"] span {
+            color: white !important;
+        }
+        /* Body of a selected block header (CHOICE/IF/... markers + nested
+           lists): lighter tint showing the whole block is selected */
+        [data-block-selected="1"] {
+            background: rgba(0, 0, 128, 0.15) !important;
+        }
     </style>
 </head>
 <body>
@@ -806,6 +838,7 @@
                     <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
                     <button id="engine-tab-metaKeys" class="db-tab-btn" onclick="setEngineTab('metaKeys')">Meta Keys</button>
                     <button id="engine-tab-flows" class="db-tab-btn" onclick="setEngineTab('flows')">Scenes</button>
+                    <button id="engine-tab-windows" class="db-tab-btn" onclick="setEngineTab('windows')">Windows</button>
                 </div>
                 <div id="engine-form-panel" class="db-form-panel inset-panel" style="flex: 1; overflow-y: auto;"></div>
             </div>
@@ -1244,6 +1277,8 @@
     <script src="js/engine-editor.js"></script>
     <script src="js/map-editor.js"></script>
     <script src="js/events.js"></script>
+    <script src="js/scene-canvas.js"></script>
+    <script src="js/window-editor.js"></script>
     <script src="js/icon-picker.js"></script>
     <script src="js/icon-field.js"></script>
 </body>

@@ -227,6 +227,18 @@ two entry points (new scene, reset hook to template).
 | E5 | Visual scene editor: headless preview subprocess + window canvas + right-click editing, non-map scenes (S2, S3) | A | G1 G3 |
 | E6 | Visual scene editor: Map-kind scenes (S4) | A | G1 G3 |
 | E7 | Control Variables: multi-assignment SET_VAR + editor row widget | B | G1 G2 G3 + UI-golden |
+| E8 | smallBattler damage flash/shake + dead display; flash constants → data | C | G1 G2 + smoke |
+| E9 | Game Over scene (data-authored) + defeat flow cleanup | C | G1 G2 G3 + UI-golden |
+| E10 | Title New Game / Continue / Exit selector (data-authored) | C | G1 G3 + UI-golden |
+| E11 | HEAL absorbs TRAIT_HEAL (delete command, migrate victory flow) | C | G1 **G2 byte-identical** G3 |
+
+Track C (E8–E11) is the 10.07.2026 post-playtest batch — battle/system
+polish, independent of Tracks A and B. E8/E10 are independent; E9 and E10
+both touch the title/defeat navigation surface — merge serially. E11 is
+local-only (golden-sensitive migration). Two recorded directions with no
+briefs yet: the Animation System & editor tab (`future-animation-system.md`,
+likely overhaul-6's flagship — E8 seeds its data), and save/load scenes
+(E10's Continue stays disabled until a future round delivers them).
 
 E0, E1, E2, E4 are independent of each other and of E5/E6; fire in parallel
 (E0/E1/E2 all touch `events.js` — work them in parallel but *merge* serially

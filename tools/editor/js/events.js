@@ -264,7 +264,7 @@
             });
 
             // Sort categories in some order, or just keep as is
-            const categoryOrder = ["Message", "Flow Control", "Party", "Battler", "Progression", "Advanced", "Other"];
+            const categoryOrder = ["Message", "Flow Control", "Variables", "Party", "Battler", "Progression", "UI", "Advanced", "Other"];
             const cats = Object.keys(groups).sort((a, b) => {
                 let idxA = categoryOrder.indexOf(a);
                 let idxB = categoryOrder.indexOf(b);
@@ -321,6 +321,16 @@
         // format, same add/edit/delete affordances).
         function describeCommand(cmd) {
             const id = cmdId(cmd);
+            if (id === 'SET_VAR') {
+                // E7: single form reads as before; multi form summarizes its
+                // rows (truncated) under the Control Variables label.
+                if (Array.isArray(cmd.assignments) && cmd.assignments.length > 0) {
+                    const rows = cmd.assignments.map(a => `${a.name} = ${a.value}`);
+                    const shown = rows.slice(0, 3).join(', ') + (rows.length > 3 ? `, … +${rows.length - 3} more` : '');
+                    return 'Control Variables: ' + shown;
+                }
+                return `Set Variable: ${cmd.name} = ${cmd.value}`;
+            }
             if (id === 'TEXT') {
                 const speakerPrefix = cmd.speaker ? (cmd.speaker + ': ') : '';
                 return `Text: "${speakerPrefix}${cmd.text}"`;
@@ -387,10 +397,339 @@
         // gets the same inline nested treatment generically, so new block
         // commands need zero editor code (SPEC S1/A6). You add commands
         // directly inside the nest, like RPG Maker.
+        // E0: single category → color map for command rows (SPEC S5 item 1).
+        // Win98 16-color accents, consistent with the inline #000080 (navy
+        // markers/hover) and #008000 (green comments) already in use.
+        // Comments keep their green via renderCommentRow, unchanged.
+        const CATEGORY_COLORS = {
+            'Message': '#000080',      // navy
+            'Flow Control': '#800080', // purple
+            'Variables': '#800000',    // win98 red (maroon)
+            'Battler': '#804000',      // brown
+            'Battle': '#804000',       // brown (battle-phase plumbing)
+            'Progression': '#008000',  // green
+            'Party': '#008000',        // green
+            'UI': '#008080',           // teal
+            'Advanced': '#404040'      // var(--win-dark-shadow)
+            // uncategorized / 'Other': default text color
+        };
+
+        function categoryColor(cmd) {
+            const def = getCmdDef(cmdId(cmd));
+            const cat = (def && def.category) || 'Other';
+            return CATEGORY_COLORS[cat] || '';
+        }
+
+        // ------------------------------------------------------------------
+        // E2: shared context-menu + keyboard/selection model for command rows.
+        // One primitive for every render path — replaces the per-site inline
+        // edit/delete buttons. Selection and clipboard operate on the list
+        // the focused row belongs to (per-container), so nested CHOICE/IF
+        // bodies never bleed into their parents.
+        // ------------------------------------------------------------------
+        let cmdClipboard = null; // deep-cloned command array
+
+        // After a transformative op (paste/delete/cut/duplicate/insert) the
+        // list re-renders and would lose its selection; the op records the
+        // command index that should be selected next ("the next possible
+        // line", owner feedback 10.07.2026). Keyed by the commands array —
+        // it survives the re-render, DOM containers don't.
+        let cmdRestoreTarget = null; // { array, idx }
+
+        function cloneCmds(x) { return JSON.parse(JSON.stringify(x)); }
+
+        function closeCmdContextMenu() {
+            const m = document.getElementById('cmd-context-menu');
+            if (m) m.remove();
+        }
+
+        // Shared context-menu primitive. items: { label, action, disabled } or
+        // '-' for a separator.
+        function showCmdContextMenu(x, y, items) {
+            closeCmdContextMenu();
+            const menu = document.createElement('div');
+            menu.id = 'cmd-context-menu';
+            menu.style.cssText = 'position:fixed;z-index:10000;min-width:120px;padding:2px;font-size:11px;'
+                + 'background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);';
+            items.forEach(it => {
+                if (it === '-') {
+                    const hr = document.createElement('div');
+                    hr.style.cssText = 'height:0;margin:3px 2px;border-top:1px solid var(--win-shadow);border-bottom:1px solid var(--win-white);';
+                    menu.appendChild(hr);
+                    return;
+                }
+                const item = document.createElement('div');
+                item.textContent = it.label;
+                item.style.cssText = 'padding:2px 16px;cursor:default;' + (it.disabled ? 'color:var(--win-shadow);' : '');
+                if (!it.disabled) {
+                    item.onmouseover = () => { item.style.background = '#000080'; item.style.color = 'white'; };
+                    item.onmouseout = () => { item.style.background = ''; item.style.color = ''; };
+                    item.onmousedown = (e) => e.stopPropagation();
+                    item.onclick = () => { closeCmdContextMenu(); it.action(); };
+                }
+                menu.appendChild(item);
+            });
+            document.body.appendChild(menu);
+            const r = menu.getBoundingClientRect();
+            menu.style.left = Math.max(0, Math.min(x, window.innerWidth - r.width - 4)) + 'px';
+            menu.style.top = Math.max(0, Math.min(y, window.innerHeight - r.height - 4)) + 'px';
+            const close = (ev) => {
+                if (!menu.contains(ev.target)) {
+                    closeCmdContextMenu();
+                    document.removeEventListener('mousedown', close, true);
+                }
+            };
+            document.addEventListener('mousedown', close, true);
+        }
+
+        // Everything a block renderer appended after its header (markers,
+        // nested sub-lists, end marker) belongs to that block: selecting the
+        // header should visibly select — and operationally carry — the whole
+        // nested command. Called as the LAST line of each block renderer,
+        // before any sibling rows are appended.
+        function captureBlockParts(container, header) {
+            const kids = Array.from(container.children);
+            header._blockParts = kids.slice(kids.indexOf(header) + 1);
+        }
+
+        function setCmdSelection(container, anchor, focus) {
+            container._sel = { anchor, focus };
+            const lo = Math.min(anchor, focus), hi = Math.max(anchor, focus);
+            (container._cmdRows || []).forEach((row, vi) => {
+                const inSel = vi >= lo && vi <= hi;
+                if (inSel) row.dataset.selected = '1';
+                else delete row.dataset.selected;
+                // A selected block header (CHOICE/IF/...) covers its whole
+                // body: tint the markers and nested sub-lists with it so
+                // "the block is selected" is visible, not just its header.
+                (row._blockParts || []).forEach(part => {
+                    if (inSel) part.dataset.blockSelected = '1';
+                    else delete part.dataset.blockSelected;
+                });
+            });
+        }
+
+        // Wire a command row into the focus/selection/keyboard model.
+        // ctx: { commandsArray, idx, onChange, readOnly, onEdit, placeholder }
+        // Interaction model (owner feedback 10.07.2026):
+        //   single click = select; shift+click = extend range;
+        //   double click = insert a NEW command at the row's position;
+        //   Space = edit (single selection only); Delete = delete selection;
+        //   Ctrl+C/X/V = clipboard. The trailing '@>' placeholder row is a
+        //   full selection/keyboard citizen (paste/insert target at the end)
+        //   but has no command of its own to edit/copy/delete.
+        function wireCommandRow(container, row, ctx) {
+            row.classList.add('cmd-row');
+            if (ctx.readOnly) return;
+            row.tabIndex = -1;
+            container._cmdRows = container._cmdRows || [];
+            const vi = container._cmdRows.length;
+            container._cmdRows.push(row);
+            row._cmdCtx = ctx;
+
+            const selRange = () => {
+                const sel = container._sel;
+                if (!sel) return null;
+                return { lo: Math.min(sel.anchor, sel.focus), hi: Math.max(sel.anchor, sel.focus) };
+            };
+            const multiSelected = () => {
+                const r = selRange();
+                return r && r.hi > r.lo && vi >= r.lo && vi <= r.hi;
+            };
+
+            // Rows covered by the operation: the contiguous selection when
+            // this row is inside it, otherwise just this row. Placeholder
+            // rows carry no command, so they drop out of command ops.
+            const opCtxs = () => {
+                const r = selRange();
+                let ctxs;
+                if (!r || vi < r.lo || vi > r.hi) ctxs = [ctx];
+                else ctxs = container._cmdRows.slice(r.lo, r.hi + 1).map(el => el._cmdCtx);
+                return ctxs.filter(c => !c.placeholder);
+            };
+
+            const doDelete = () => {
+                const ctxs = opCtxs();
+                if (!ctxs.length) return;
+                const indices = ctxs.map(c => c.idx).sort((a, b) => b - a);
+                indices.forEach(i => ctx.commandsArray.splice(i, 1));
+                container._sel = null;
+                // Next possible line: the one that moved into the deleted spot
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: indices[indices.length - 1] };
+                if (ctx.onChange) ctx.onChange();
+            };
+            const doCopy = () => {
+                const ctxs = opCtxs();
+                if (!ctxs.length) return;
+                cmdClipboard = ctxs.map(c => cloneCmds(c.commandsArray[c.idx]));
+                // Best-effort mirror to the OS clipboard; the in-memory buffer
+                // is authoritative (Clipboard API needs a secure context).
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(JSON.stringify(cmdClipboard, null, 2)).catch(() => {});
+                }
+            };
+            const doCut = () => { doCopy(); doDelete(); };
+            const doPaste = () => {
+                if (!cmdClipboard || !cmdClipboard.length) return;
+                // Placeholder = insert at its position (the end); a command
+                // row pastes after itself.
+                const at = ctx.placeholder ? ctx.idx : ctx.idx + 1;
+                ctx.commandsArray.splice(at, 0, ...cloneCmds(cmdClipboard));
+                // Next possible line: the one right after the pasted block
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: at + cmdClipboard.length };
+                if (ctx.onChange) ctx.onChange();
+            };
+            const doDuplicate = () => {
+                if (ctx.placeholder) return;
+                ctx.commandsArray.splice(ctx.idx + 1, 0, cloneCmds(ctx.commandsArray[ctx.idx]));
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: ctx.idx + 2 };
+                if (ctx.onChange) ctx.onChange();
+            };
+            // Insert a new command at this row's position (double click /
+            // placeholder confirm) — pushes this row down, RPG-Maker style.
+            const doAddHere = () => openCommandModalForAdd(ctx.commandsArray, () => {
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: ctx.idx + 1 };
+                if (ctx.onChange) ctx.onChange();
+            }, ctx.hostCtx, ctx.idx);
+
+            // E7: merge a selected run of SET_VARs into one Control
+            // Variables command (rows keep their order; existing multi
+            // forms are flattened in).
+            const mergeableSetVars = () => {
+                const ctxs = opCtxs();
+                if (ctxs.length < 2) return null;
+                return ctxs.every(c => cmdId(c.commandsArray[c.idx]) === 'SET_VAR') ? ctxs : null;
+            };
+            const doMergeSetVars = () => {
+                const ctxs = mergeableSetVars();
+                if (!ctxs) return;
+                const field = ctxs[0].commandsArray[ctxs[0].idx].cmd !== undefined ? 'cmd' : 'type';
+                const assignments = [];
+                ctxs.forEach(c => {
+                    const cc = c.commandsArray[c.idx];
+                    if (Array.isArray(cc.assignments) && cc.assignments.length > 0) {
+                        assignments.push(...cloneCmds(cc.assignments));
+                    } else {
+                        assignments.push({ name: cc.name, value: cc.value });
+                    }
+                });
+                const first = Math.min(...ctxs.map(c => c.idx));
+                ctxs.map(c => c.idx).sort((a, b) => b - a).forEach(i => ctx.commandsArray.splice(i, 1));
+                const merged = { assignments };
+                merged[field] = 'SET_VAR';
+                ctx.commandsArray.splice(first, 0, merged);
+                container._sel = null;
+                cmdRestoreTarget = { array: ctx.commandsArray, idx: first + 1 };
+                if (ctx.onChange) ctx.onChange();
+            };
+
+            row.addEventListener('mousedown', (e) => {
+                if (e.shiftKey) {
+                    e.preventDefault(); // no text selection on shift+click
+                    const sel = container._sel;
+                    setCmdSelection(container, sel ? sel.anchor : vi, vi);
+                } else {
+                    setCmdSelection(container, vi, vi);
+                }
+            });
+
+            row.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                doAddHere();
+            });
+
+            row.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                row.focus();
+                const r = selRange();
+                if (!r || vi < r.lo || vi > r.hi) {
+                    setCmdSelection(container, vi, vi);
+                }
+                const multi = multiSelected();
+                const menuItems = [
+                    { label: 'Insert...', action: doAddHere },
+                    { label: 'Edit', action: ctx.onEdit, disabled: ctx.placeholder || multi },
+                    { label: 'Duplicate', action: doDuplicate, disabled: ctx.placeholder },
+                ];
+                if (multi && mergeableSetVars()) {
+                    menuItems.push({ label: 'Merge into Control Variables', action: doMergeSetVars });
+                }
+                showCmdContextMenu(e.clientX, e.clientY, menuItems.concat([
+                    '-',
+                    { label: 'Cut', action: doCut, disabled: ctx.placeholder && !multi },
+                    { label: 'Copy', action: doCopy, disabled: ctx.placeholder && !multi },
+                    { label: 'Paste', action: doPaste, disabled: !cmdClipboard || !cmdClipboard.length },
+                    '-',
+                    { label: 'Delete', action: doDelete, disabled: ctx.placeholder && !multi }
+                ]));
+            });
+
+            // Keyboard handlers live on the focused row itself — inherently
+            // scoped, nothing global that could steal keys from modals or
+            // text inputs elsewhere.
+            row.addEventListener('keydown', (e) => {
+                const rows = container._cmdRows;
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    if (ctx.placeholder) doAddHere();      // new command at the end
+                    else if (!multiSelected()) ctx.onEdit(); // edit only single selection
+                } else if (e.key === 'Delete') {
+                    e.preventDefault();
+                    doDelete();
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const dir = e.key === 'ArrowUp' ? -1 : 1;
+                    if (e.shiftKey) {
+                        const sel = container._sel || { anchor: vi, focus: vi };
+                        const nf = Math.max(0, Math.min(rows.length - 1, sel.focus + dir));
+                        setCmdSelection(container, sel.anchor, nf);
+                        rows[nf].focus();
+                    } else {
+                        const ni = Math.max(0, Math.min(rows.length - 1, vi + dir));
+                        setCmdSelection(container, ni, ni);
+                        rows[ni].focus();
+                    }
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                    e.preventDefault();
+                    doCopy();
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+                    e.preventDefault();
+                    doCut();
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                    e.preventDefault();
+                    doPaste();
+                }
+            });
+        }
+
+        // E1: even/odd row striping, applied AFTER a list renders so the
+        // alternation follows each row's position within its own visible
+        // list — hidden comment rows and nested block sub-lists (which
+        // stripe themselves) never throw it off. The stripe color is kept
+        // on dataset.stripeBg so hover handlers can restore it.
+        function applyRowStriping(container) {
+            let visIdx = 0;
+            Array.from(container.children).forEach(el => {
+                if (el.tagName !== 'DIV' || el.dataset.cmdList === '1') return;
+                const stripe = (visIdx % 2 === 1) ? 'rgba(0, 0, 0, 0.07)' : '';
+                el.dataset.stripeBg = stripe;
+                el.style.background = stripe;
+                visIdx++;
+            });
+        }
+
         function renderCommandList(container, commandsArray, onChange, readOnly, indent, hostCtx) {
             indent = indent || 0;
             hostCtx = hostCtx || 'map';
             container.innerHTML = '';
+            // Nested sub-lists are excluded from their parent's striping pass
+            container.dataset.cmdList = '1';
+            // E2: rebuild the row registry and drop any stale selection
+            container._cmdRows = [];
+            container._sel = null;
 
             if (indent === 0) {
                 const toggleRow = document.createElement('label');
@@ -413,9 +752,14 @@
                 line.style.paddingLeft = (indent * 14) + 'px';
                 line.style.color = '#808080';
                 line.textContent = readOnly ? '<Empty Command List>' : '@>';
-                if (!readOnly) {
+                if (!readOnly && commandsArray) {
                     line.style.cursor = 'pointer';
-                    line.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
+                    // Placeholder row: selectable/focusable insert-and-paste
+                    // target (double click or Space/Enter adds here).
+                    wireCommandRow(container, line, {
+                        commandsArray, idx: 0, onChange, readOnly, hostCtx,
+                        placeholder: true, onEdit: () => {}
+                    });
                 }
                 container.appendChild(line);
                 return;
@@ -458,40 +802,23 @@
                 label.textContent = '@>' + describeCommand(cmd);
                 line.appendChild(label);
 
+                // E0: category color on the label; hover swaps it to white so
+                // colored rows stay readable on the navy highlight.
+                const catColor = readOnly ? '' : categoryColor(cmd);
+                if (catColor) label.style.color = catColor;
+
                 if (!readOnly) {
                     line.style.cursor = 'pointer';
-                    line.onmouseover = () => { line.style.background = '#000080'; line.style.color = 'white'; };
-                    line.onmouseout = () => { line.style.background = ''; line.style.color = ''; };
-                    line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
-
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'win-btn-small outset-bevel';
-                    editBtn.style.fontSize = '8px';
-                    editBtn.style.padding = '0px 3px';
-                    editBtn.textContent = '✏️';
-                    editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'win-btn-small outset-bevel';
-                    delBtn.style.fontSize = '8px';
-                    delBtn.style.padding = '0px 3px';
-                    delBtn.style.color = 'red';
-                    delBtn.textContent = '×';
-                    delBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        commandsArray.splice(idx, 1);
-                        if (onChange) onChange();
-                    };
-
-                    const controls = document.createElement('div');
-                    controls.style.display = 'flex';
-                    controls.style.gap = '2px';
-                    controls.appendChild(editBtn);
-                    controls.appendChild(delBtn);
-                    line.appendChild(controls);
+                    // Hover feedback is shared CSS (.cmd-row[tabindex]:hover in
+                    // index.html) so block headers highlight identically — no
+                    // per-row inline handler that only covers the plain path.
                 } else {
                     line.style.color = '#808080';
                 }
+                wireCommandRow(container, line, {
+                    commandsArray, idx, onChange, readOnly, hostCtx,
+                    onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+                });
                 container.appendChild(line);
 
                 if (cmd.comment && showCommentsPref()) {
@@ -506,9 +833,39 @@
                 trailingLine.style.color = '#808080';
                 trailingLine.style.cursor = 'pointer';
                 trailingLine.textContent = '@>';
-                trailingLine.onclick = () => openCommandModalForAdd(commandsArray, onChange, hostCtx);
+                // The trailing '@>' is a placeholder row: selectable and
+                // keyboard-reachable so commands can be pasted/inserted at
+                // the end of the list (owner feedback 10.07.2026).
+                wireCommandRow(container, trailingLine, {
+                    commandsArray, idx: commandsArray.length, onChange, readOnly, hostCtx,
+                    placeholder: true, onEdit: () => {}
+                });
                 container.appendChild(trailingLine);
             }
+
+            applyRowStriping(container);
+
+            // Consume a pending selection-restore for THIS list (matched by
+            // array identity — nested lists render before their parents, so
+            // the right container claims it). Select the row at the recorded
+            // command index, or the nearest one after it (hidden comments),
+            // falling back to the last row (usually the '@>' placeholder).
+            if (cmdRestoreTarget && cmdRestoreTarget.array === commandsArray) {
+                const targetIdx = cmdRestoreTarget.idx;
+                cmdRestoreTarget = null;
+                const rows = container._cmdRows || [];
+                let best = null;
+                rows.forEach((r, vi) => {
+                    if (best === null && r._cmdCtx.idx >= targetIdx) best = vi;
+                });
+                if (best === null && rows.length) best = rows.length - 1;
+                if (best !== null) {
+                    setCmdSelection(container, best, best);
+                    rows[best].focus();
+                }
+            }
+            // A finished top-level render means any unclaimed target is stale
+            if (indent === 0) cmdRestoreTarget = null;
         }
 
         // A standalone COMMENT row (SPEC S3): documentation only, rendered in
@@ -533,21 +890,11 @@
 
             if (!readOnly) {
                 line.style.cursor = 'pointer';
-                line.onclick = () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx);
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                line.appendChild(delBtn);
             }
+            wireCommandRow(container, line, {
+                commandsArray, idx, onChange, readOnly, hostCtx,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(line);
         }
 
@@ -574,28 +921,15 @@
             headerLabel.textContent = '@>' + describeCommand(cmd);
             header.appendChild(headerLabel);
             if (!readOnly) {
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win-btn-small outset-bevel';
-                editBtn.style.fontSize = '8px';
-                editBtn.style.padding = '0px 3px';
-                editBtn.textContent = '✏️';
-                editBtn.onclick = (e) => { e.stopPropagation(); openCommandModalForEdit(commandsArray, idx, onChange, hostCtx); };
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(editBtn);
-                header.appendChild(delBtn);
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
             } else {
                 header.style.color = '#808080';
             }
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly, hostCtx,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
@@ -615,6 +949,7 @@
             });
 
             container.appendChild(makeMarkerRow(`: End ${def.label || id}`, indent));
+            captureBlockParts(container, header);
         }
 
         function renderChoiceBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
@@ -629,21 +964,15 @@
             const headerLabel = document.createElement('span');
             headerLabel.style.flex = '1';
             headerLabel.textContent = '@>Show Choice';
-            header.appendChild(headerLabel);
             if (!readOnly) {
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(delBtn);
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
             }
+            header.appendChild(headerLabel);
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly, hostCtx,
+                onEdit: () => openCommandModalForEdit(commandsArray, idx, onChange, hostCtx)
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
@@ -700,6 +1029,7 @@
             }
 
             container.appendChild(makeMarkerRow(': End Choice', indent));
+            captureBlockParts(container, header);
         }
 
         function renderConditionalBlock(container, commandsArray, idx, cmd, onChange, readOnly, indent, hostCtx) {
@@ -717,34 +1047,23 @@
             headerLabel.style.textOverflow = 'ellipsis';
             headerLabel.style.whiteSpace = 'nowrap';
             headerLabel.textContent = `@>If [${cmd.condition || '(no condition)'}]`;
-            header.appendChild(headerLabel);
             if (!readOnly) {
-                const editBtn = document.createElement('button');
-                editBtn.className = 'win-btn-small outset-bevel';
-                editBtn.style.fontSize = '8px';
-                editBtn.style.padding = '0px 3px';
-                editBtn.textContent = '✏️';
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
+                const catColor = categoryColor(cmd);
+                if (catColor) headerLabel.style.color = catColor;
+            }
+            header.appendChild(headerLabel);
+            wireCommandRow(container, header, {
+                commandsArray, idx, onChange, readOnly, hostCtx,
+                // Same edit flow the old inline button offered: prompt for
+                // the condition string (the generic modal doesn't know
+                // CONDITIONAL_BRANCH's flag:/hasItem: shorthand).
+                onEdit: () => {
                     const newCond = prompt('Condition (e.g. flag:metAlicia or hasItem:silver_blade):', cmd.condition || '');
                     if (newCond === null) return;
                     cmd.condition = newCond;
                     if (onChange) onChange();
-                };
-                const delBtn = document.createElement('button');
-                delBtn.className = 'win-btn-small outset-bevel';
-                delBtn.style.fontSize = '8px';
-                delBtn.style.padding = '0px 3px';
-                delBtn.style.color = 'red';
-                delBtn.textContent = '×';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    commandsArray.splice(idx, 1);
-                    if (onChange) onChange();
-                };
-                header.appendChild(editBtn);
-                header.appendChild(delBtn);
-            }
+                }
+            });
             container.appendChild(header);
 
             if (cmd.comment && showCommentsPref()) {
@@ -784,13 +1103,20 @@
             }
 
             container.appendChild(makeMarkerRow(': End Branch', indent));
+            captureBlockParts(container, header);
         }
 
-        function openCommandModalForAdd(commandsArray, onChange, hostCtx) {
+        function openCommandModalForAdd(commandsArray, onChange, hostCtx, insertIdx) {
             populateCmdCommonEventsDropdown();
             openCommandSelector(hostCtx, (cmdId) => {
                 openAddCommandDialog((cmd) => {
-                    commandsArray.push(cmd);
+                    // insertIdx (E2 keyboard model): insert at a position,
+                    // pushing the row there down; default remains append.
+                    if (insertIdx === undefined || insertIdx === null || insertIdx >= commandsArray.length) {
+                        commandsArray.push(cmd);
+                    } else {
+                        commandsArray.splice(insertIdx, 0, cmd);
+                    }
                     if (onChange) onChange();
                 }, hostCtx, cmdId);
             });
@@ -972,6 +1298,54 @@
                 input = makeSelect(opts, currentValue, () => {}, null);
             } else if (paramDef.type === 'term' && window.cmdParamWidgets && window.cmdParamWidgets.term) {
                 input = window.cmdParamWidgets.term(currentValue, () => {});
+            } else if (paramDef.type === 'assignments') {
+                // E7: generic repeatable name/value row widget for any
+                // list-of-pairs param (SET_VAR's multi form today). Exposes
+                // _getRows() for applyCmdDialog; empty rows are dropped so a
+                // command left without rows stays in its single form.
+                input = document.createElement('div');
+                input.style.cssText = 'display: flex; flex-direction: column; gap: 3px;';
+                const rowsBox = document.createElement('div');
+                rowsBox.style.cssText = 'display: flex; flex-direction: column; gap: 3px;';
+                input.appendChild(rowsBox);
+                const addRow = (name, value) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    const nameInp = document.createElement('input');
+                    nameInp.className = 'win98-input';
+                    nameInp.style.width = '110px';
+                    nameInp.placeholder = 'variable name';
+                    nameInp.value = name || '';
+                    const eq = document.createElement('span');
+                    eq.textContent = '=';
+                    const valInp = document.createElement('input');
+                    valInp.className = 'win98-input';
+                    valInp.style.flex = '1';
+                    valInp.placeholder = 'formula, e.g. v.a * 2';
+                    valInp.title = 'Rows evaluate in order — later formulas can read earlier rows via v.';
+                    valInp.value = value != null ? value : '';
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'win-btn-small outset-bevel';
+                    delBtn.style.cssText = 'font-size: 8px; padding: 0px 3px; color: red;';
+                    delBtn.textContent = '×';
+                    delBtn.onclick = (e) => { e.preventDefault(); row.remove(); };
+                    row.appendChild(nameInp);
+                    row.appendChild(eq);
+                    row.appendChild(valInp);
+                    row.appendChild(delBtn);
+                    row._assignment = () => ({ name: nameInp.value.trim(), value: valInp.value });
+                    rowsBox.appendChild(row);
+                };
+                (Array.isArray(currentValue) ? currentValue : []).forEach(a => addRow(a && a.name, a && a.value));
+                const addBtn = document.createElement('button');
+                addBtn.className = 'win98-btn';
+                addBtn.style.cssText = 'font-size: 10px; align-self: flex-start;';
+                addBtn.textContent = '+ Row';
+                addBtn.onclick = (e) => { e.preventDefault(); addRow('', ''); };
+                input.appendChild(addBtn);
+                input._getRows = () => Array.from(rowsBox.children)
+                    .map(r => r._assignment && r._assignment())
+                    .filter(a => a && a.name !== '');
             } else {
                 input = document.createElement('input');
                 input.type = 'text';
@@ -1095,12 +1469,24 @@
                     cmd[p.key] = el.checked;
                 } else if (p.type === 'number') {
                     cmd[p.key] = el.value === '' ? undefined : parseFloat(el.value);
+                } else if (p.type === 'assignments') {
+                    // E7: only written when rows exist — a single-form
+                    // command stays single-form (no silent migration).
+                    const rows = el._getRows ? el._getRows() : [];
+                    if (rows.length > 0) cmd[p.key] = rows;
                 } else if (p.key === 'commonEventId') {
                     cmd[p.key] = parseInt(el.value);
                 } else {
                     cmd[p.key] = el.value;
                 }
             });
+
+            // E7: the multi form ignores name/value; drop them so saved data
+            // carries one shape, not two.
+            if (Array.isArray(cmd.assignments) && cmd.assignments.length > 0) {
+                delete cmd.name;
+                delete cmd.value;
+            }
 
             const comment = document.getElementById('cmd-input-comment').value.trim();
             if (comment) { cmd.comment = comment; }

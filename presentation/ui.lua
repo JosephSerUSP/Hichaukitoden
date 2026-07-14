@@ -5,6 +5,7 @@ local ui = {}
 local iconset
 local iconSize = 12
 local windowskin
+local windowskinHighlight
 local mainFont
 
 -- Parse string and replace \eventName and \c[x]
@@ -71,11 +72,17 @@ function ui.init()
         windowskin = love.graphics.newImage("assets/system/PRINCESSTHEKING.png")
         windowskin:setFilter("nearest", "nearest")
     end
+
+    if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
+        windowskinHighlight = love.graphics.newImage("assets/system/WSkin_Highlight.png")
+        windowskinHighlight:setFilter("nearest", "nearest")
+    end
     
     -- Load active font from system config
     local fontName = config.ui and config.ui.activeFont or "Lucida"
-    
-    ui.setFont(fontName)
+    local fontSize = config.ui and config.ui.fontSize or 8
+
+    ui.setFont(fontName, fontSize)
 end
 
 -- Exposed layout constants (use these instead of hardcoded numbers)
@@ -91,15 +98,28 @@ function ui.toPx(tiles)
     return tiles * ui.tileSize
 end
 
+-- Shared content origin for every window renderer.  A title earns one extra
+-- tile of vertical breathing room; an untitled panel starts at the normal
+-- one-tile inset.  Individual layouts can override either coordinate.
+function ui.panelContentOrigin(x, y, title, contentX, contentY)
+    local hasTitle = title and title ~= ""
+    return x + ui.toPx(contentX ~= nil and contentX or 1),
+        y + ui.toPx(contentY ~= nil and contentY or (hasTitle and 2 or 1))
+end
+
 -- Draw RPG Maker 2003 styled windowskin panel
 -- Layout specifications:
 -- First 32x32: seamlessly tiling background
 -- Next 32x32 (x=32..64, y=0..32): 8px borders
-function ui.drawPanel(x, y, w, h, title)
+-- `highlight` swaps in WSkin_Highlight.png (same quad layout) to mark the
+-- active choice — the selected party member's cell, the selected command
+-- row, etc. Falls back to the normal windowskin if the asset is missing.
+function ui.drawPanel(x, y, w, h, title, highlight)
     love.graphics.push("all")
-    
-    if windowskin then
-        local wsW, wsH = windowskin:getDimensions()
+
+    local skin = (highlight and windowskinHighlight) or windowskin
+    if skin then
+        local wsW, wsH = skin:getDimensions()
         
         -- 1. Draw Background (from x=0, y=0, w=32, h=32) tiled seamlessly
         local bgW, bgH = 32, 32
@@ -118,7 +138,7 @@ function ui.drawPanel(x, y, w, h, title)
                 local drawW = math.min(bgW, endX - bx)
                 local drawH = math.min(bgH, endY - by)
                 local tileQuad = love.graphics.newQuad(0, 0, drawW, drawH, wsW, wsH)
-                love.graphics.draw(windowskin, tileQuad, bx, by)
+                love.graphics.draw(skin, tileQuad, bx, by)
             end
         end
         love.graphics.setScissor(sx, sy, sw, sh) -- restore scissor
@@ -129,30 +149,30 @@ function ui.drawPanel(x, y, w, h, title)
         
         -- Top side edge (x=40, y=0, w=16, h=8)
         local topQuad = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, topQuad, x + 8, y, 0, edgeW / 16, 1)
-        
+        love.graphics.draw(skin, topQuad, x + 8, y, 0, edgeW / 16, 1)
+
         -- Bottom side edge (x=40, y=24, w=16, h=8)
         local botQuad = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
-        love.graphics.draw(windowskin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
-        
+        love.graphics.draw(skin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
+
         -- Left side edge (x=32, y=8, w=8, h=16)
         local leftQuad = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
-        
+        love.graphics.draw(skin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
+
         -- Right side edge (x=56, y=8, w=8, h=16)
         local rightQuad = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(windowskin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
-        
+        love.graphics.draw(skin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
+
         -- 3. Draw 8px Corners
         local tlQuad = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
         local trQuad = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
         local blQuad = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
         local brQuad = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
-        
-        love.graphics.draw(windowskin, tlQuad, x, y)
-        love.graphics.draw(windowskin, trQuad, x + w - 8, y)
-        love.graphics.draw(windowskin, blQuad, x, y + h - 8)
-        love.graphics.draw(windowskin, brQuad, x + w - 8, y + h - 8)
+
+        love.graphics.draw(skin, tlQuad, x, y)
+        love.graphics.draw(skin, trQuad, x + w - 8, y)
+        love.graphics.draw(skin, blQuad, x, y + h - 8)
+        love.graphics.draw(skin, brQuad, x + w - 8, y + h - 8)
     else
         -- Fallback
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -166,7 +186,7 @@ function ui.drawPanel(x, y, w, h, title)
     -- Draw title header if specified
     if title then
         love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + 12, y + 7)
+        ui.drawString(title, x + ui.tileSize * 0.5, y)
     end
     
     love.graphics.pop()
@@ -256,8 +276,11 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
         end
     end
     
+    -- Pixel-perfect 1px outline: offset by 0.5 to align with pixel grid,
+    -- preventing the Love2D "smooth" line-style spread across 2 pixels.
     love.graphics.setColor(0.4, 0.4, 0.4, 1)
-    love.graphics.rectangle("line", x, y, w, h)
+    love.graphics.setLineWidth(1)
+    love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
     
     love.graphics.setColor(r_old, g_old, b_old, a_old)
 end
@@ -356,15 +379,33 @@ function ui.drawWindows(kind, windows, ctx)
     end
 end
 
--- Set font helper
-function ui.setFont(name)
-    if name == "PressStart2P" and love.filesystem.getInfo("assets/fonts/PressStart2P.ttf") then
-        mainFont = love.graphics.newFont("assets/fonts/PressStart2P.ttf", 8)
-    elseif name == "Silkscreen" and love.filesystem.getInfo("assets/fonts/Silkscreen.ttf") then
-        mainFont = love.graphics.newFont("assets/fonts/Silkscreen.ttf", 8)
-    else
-        mainFont = love.graphics.newFont(8)
+-- Set font helper. "Lucida" (and any name with no matching .ttf) means the
+-- LÖVE built-in default font; any other name is looked up generically at
+-- assets/fonts/<name>.ttf so new fonts only need a file dropped in, no code
+-- change here.
+--
+-- "mono" hinting forces 1-bit (no grayscale antialiasing) glyph rasterization
+-- — without it, TrueType fonts render with soft AA edges that read as a
+-- blurry smear at the tiny 6-12px sizes this UI uses; only PressStart2P and
+-- Silkscreen happened to look crisp before because their design docs bake
+-- pixel alignment in at specific sizes. "mono" makes every font crisp at
+-- every size, matching those two.
+function ui.setFont(name, size)
+    size = size or ui.fontSize or 8
+    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
+    local ok, font
+    if path and love.filesystem.getInfo(path) then
+        ok, font = pcall(love.graphics.newFont, path, size, "mono")
     end
+    if not ok or not font then
+        ok, font = pcall(love.graphics.newFont, size, "mono")
+    end
+    if not ok or not font then
+        font = love.graphics.newFont(size)
+    end
+    mainFont = font
+    mainFont:setFilter("nearest", "nearest")
+    ui.fontSize = size
     love.graphics.setFont(mainFont)
 end
 

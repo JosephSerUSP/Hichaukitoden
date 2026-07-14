@@ -39,7 +39,7 @@ function Battle:getAIAction(enemy)
     -- Select target
     local target
     if skill.target == "enemy" or skill.target == "enemy-any" then
-        -- Attack a random ally creature.
+        -- Attack a random ally creature (enemy targets the player's party).
         -- Summoner is only targetable if all active creatures are dead!
         local livingAllies = {}
         for i = 1, 4 do
@@ -55,10 +55,24 @@ function Battle:getAIAction(enemy)
             -- Target the summoner if no creatures are left
             target = self.session.summoner
         end
+    elseif skill.target == "ally-any" then
+        -- Target a random fellow enemy (ally of the caster)
+        local livingEnemies = {}
+        for _, e in ipairs(self.enemies) do
+            if e ~= enemy and not e:isDead() then
+                table.insert(livingEnemies, e)
+            end
+        end
+        if #livingEnemies > 0 then
+            target = livingEnemies[math.random(#livingEnemies)]
+        else
+            -- Fall back to self if no other living enemies
+            target = enemy
+        end
     elseif skill.target == "self" then
         target = enemy
     else
-        -- Default to random enemy
+        -- Default to random ally creature
         local livingAllies = {}
         for _, ally in ipairs(self.allies) do
             if not ally:isDead() then

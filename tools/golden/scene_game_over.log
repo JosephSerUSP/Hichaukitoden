@@ -1,0 +1,5 @@
+UI GOLDEN BEGIN
+scene|game_over|name|Game Over
+game_over_frame|open_window||
+game_over_frame|set_text||GAME OVER
+UI GOLDEN END

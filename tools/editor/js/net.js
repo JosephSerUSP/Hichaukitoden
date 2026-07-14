@@ -54,6 +54,9 @@
                 });
                 const result = await res.json();
                 if (result.success) {
+                    // Stale-save guard: adopt the fresh on-disk tokens so the
+                    // next save validates against what was just written.
+                    if (result.versions) dbPayload._fileVersions = result.versions;
                     setDirty(false);
                     // Fields inside the Database modal are live-bound, so a
                     // successful save means there's nothing left to "discard" if

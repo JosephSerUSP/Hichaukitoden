@@ -113,6 +113,11 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
+          "name": "page",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "state",
           "value": 1
         },
@@ -195,6 +200,11 @@
           "cmd": "SET_VAR",
           "name": "poolCurrentIdx",
           "value": 0
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "seededCrafterIdx",
+          "value": "v.seededCrafterIdx or 0"
         },
         {
           "cmd": "OPEN_WINDOW",
@@ -297,7 +307,73 @@
       "on_select": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1",
+          "condition": "v._guard == 0 and v.state == 1 and (v.seededCrafterIdx or 0) > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "crafterIdx",
+              "value": "v.seededCrafterIdx"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 3
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "selectedIngredient1Idx",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "selectedIngredient2Idx",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "cursorSlot",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "i1_item_id",
+              "value": 0
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "i2_item_id",
+              "value": 0
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "discipline_panel"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "discipline_detail"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "ingredient_panel"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "inventory_list"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "detail_panel"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and (v.seededCrafterIdx or 0) == 0",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -646,7 +722,43 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
+          "condition": "v._guard == 0 and v.state == 3 and (v.seededCrafterIdx or 0) > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "ingredient_panel"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "inventory_list"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "detail_panel"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "discipline_panel"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "discipline_detail"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3 and (v.seededCrafterIdx or 0) == 0",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -997,11 +1109,26 @@
     "id": "title",
     "name": "Title Screen",
     "kind": "menu",
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "escape"
+      }
+    ],
     "hooks": {
       "on_enter": [
         {
           "cmd": "SET_VAR",
-          "name": "selectedIdx",
+          "name": "idx",
           "value": 1
         },
         {
@@ -1018,69 +1145,801 @@
           "windowId": "title_menu"
         },
         {
+          "cmd": "SET_LIST",
+          "windowId": "title_menu",
+          "listId": "term:title.options"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "title_menu",
+          "index": "v.idx"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "title_footer"
+        },
+        {
           "cmd": "SET_TEXT",
-          "windowId": "title_menu",
-          "text": "Press ENTER to start"
-        },
-        {
-          "cmd": "SET_CURSOR",
-          "windowId": "title_menu",
-          "index": 1
+          "windowId": "title_footer",
+          "term": "title.copyright",
+          "text": "(C) 2026 Developer"
         }
-      ]
-    }
-  },
-  {
-    "id": "menu",
-    "name": "Main Menu",
-    "kind": "menu",
-    "hooks": {
-      "on_enter": [
+      ],
+      "on_up": [
         {
-          "cmd": "SET_VAR",
-          "name": "opt",
-          "value": 1
-        },
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
         {
-          "cmd": "SET_VAR",
-          "name": "subIdx",
-          "value": 1
-        },
-        {
-          "cmd": "OPEN_WINDOW",
-          "windowId": "menu_left_panel"
-        },
-        {
-          "cmd": "SET_LIST",
-          "windowId": "menu_left_panel",
-          "listId": "menu_options"
-        },
-        {
-          "cmd": "SET_CURSOR",
-          "windowId": "menu_left_panel",
-          "index": 1
-        },
-        {
-          "cmd": "OPEN_WINDOW",
-          "windowId": "menu_right_panel"
-        },
-        {
-          "cmd": "SET_LIST",
-          "windowId": "menu_right_panel",
-          "listId": "party"
-        },
-        {
-          "cmd": "OPEN_WINDOW",
-          "windowId": "menu_info_panel"
+          "cmd": "IF",
+          "condition": "v.idx < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
         }
       ],
       "on_cancel": [
         {
-          "cmd": "SCENE_EVENT",
-          "kind": "pop"
+          "cmd": "SET_VAR",
+          "name": "idx",
+          "value": 3
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 1",
+          "then": [
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "LOAD_MAP",
+              "mapId": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "map"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 2",
+          "then": [
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "title_notice"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "title_notice",
+              "term": "title.no_save",
+              "text": "No save data."
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.idx == 3",
+          "then": [
+            {
+              "cmd": "QUIT_GAME"
+            }
+          ]
         }
       ]
-    }
+    },
+    "config": {}
+  },
+  {
+    "id": "map",
+    "name": "Map",
+    "kind": "map",
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "assignments": [
+            {
+              "name": "mode",
+              "value": 0
+            },
+            {
+              "name": "cmdIdx",
+              "value": 1
+            },
+            {
+              "name": "partyIdx",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "party",
+          "index": 0
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 0",
+          "then": [
+            {
+              "cmd": "FALLBACK"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 4 and v.partyIdx - 2 >= 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "partyIdx",
+              "value": "v.partyIdx - 2"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 2 and v.popupIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": "v.popupIdx - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 0",
+          "then": [
+            {
+              "cmd": "FALLBACK"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 4 and v.partyIdx + 2 <= party.count",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "partyIdx",
+              "value": "v.partyIdx + 2"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 2 and v.popupIdx < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": "v.popupIdx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 0",
+          "then": [
+            {
+              "cmd": "FALLBACK"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cmdIdx",
+              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 3"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 4 and v.partyIdx % 2 == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "partyIdx",
+              "value": "v.partyIdx - 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 0",
+          "then": [
+            {
+              "cmd": "FALLBACK"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cmdIdx",
+              "value": "v.cmdIdx < 3 and v.cmdIdx + 1 or 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 4 and v.partyIdx % 2 == 1 and v.partyIdx + 1 <= party.count",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "partyIdx",
+              "value": "v.partyIdx + 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 0",
+          "then": [
+            {
+              "cmd": "FALLBACK"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "items"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 2 and party.count > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": "v.partyIdx"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "Select a party member.    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 3
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": 2
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "map_confirm"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "map_confirm",
+              "term": "menu.exit_prompt",
+              "text": "Quit Hichaukitoden and exit to the desktop?"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "map_confirm",
+              "listId": "term:menu.exit_options"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "map_confirm",
+              "index": "v.confirmIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 4 and party.count > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "memberIdx",
+              "value": "v.partyIdx"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "map_member_popup",
+              "listId": "config:unitCommands"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "map_member_popup",
+              "index": "v.popupIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "status",
+              "vars": [
+                {
+                  "name": "idx",
+                  "value": "v.memberIdx"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "status",
+              "vars": [
+                {
+                  "name": "idx",
+                  "value": "v.memberIdx"
+                },
+                {
+                  "name": "entry",
+                  "value": "'equip'"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "1",
+              "vars": [
+                {
+                  "name": "seededCrafterIdx",
+                  "value": "v.memberIdx"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 3 and v.confirmIdx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "QUIT_GAME"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 3 and v.confirmIdx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_confirm"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_confirm"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": 0
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "{sel('map_command').help}"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 0
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": 0
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_command"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "help"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "cmdIdx",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "map_command"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "map_command",
+              "listId": "config:fieldCommands"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "map_command",
+              "index": "v.cmdIdx"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "help"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "{sel('map_command').help}"
+            }
+          ]
+        }
+      ]
+    },
+    "config": {
+      "fieldCommands": [
+        {
+          "name": "ITEMS",
+          "help": "Use an item from the inventory."
+        },
+        {
+          "name": "PARTY",
+          "help": "Select a party member."
+        },
+        {
+          "name": "EXIT",
+          "help": "Quit Hichaukitoden and return to the desktop."
+        }
+      ],
+      "unitCommands": [
+        {
+          "name": "STATUS",
+          "help": "View this creature's stats, skills and biography."
+        },
+        {
+          "name": "EQUIP",
+          "help": "Change this creature's weapon, armor or accessory."
+        },
+        {
+          "name": "ITEM CREATION",
+          "help": "Have this creature attempt to create an item."
+        }
+      ]
+    },
+    "goldenScript": [
+      {
+        "key": "escape"
+      },
+      {
+        "key": "right"
+      },
+      {
+        "key": "right"
+      },
+      {
+        "key": "left"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      }
+    ]
   },
   {
     "id": "items",
@@ -1090,13 +1949,20 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
-          "name": "idx",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "count",
-          "value": 0
+          "assignments": [
+            {
+              "name": "idx",
+              "value": 1
+            },
+            {
+              "name": "targetIdx",
+              "value": 1
+            },
+            {
+              "name": "state",
+              "value": 1
+            }
+          ]
         },
         {
           "cmd": "OPEN_WINDOW",
@@ -1105,25 +1971,231 @@
         {
           "cmd": "SET_LIST",
           "windowId": "items_left_panel",
-          "listId": "inventory"
+          "listId": "inventory",
+          "format": "{name} (x{qty})"
         },
         {
           "cmd": "SET_CURSOR",
           "windowId": "items_left_panel",
-          "index": 1
+          "index": "v.idx"
         },
         {
           "cmd": "OPEN_WINDOW",
           "windowId": "items_info_panel"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "items_info_panel",
+          "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "help"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "party",
+          "index": 0
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "help",
+          "text": "UP/DOWN: select    ENTER: use    ESC: back"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 2 and v.targetIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "targetIdx",
+              "value": "v.targetIdx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and v.idx < session.itemCount",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 2 and v.targetIdx < party.count",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "targetIdx",
+              "value": "v.targetIdx + 1"
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and session.itemCount > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "targetIdx",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "items_target"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "items_target",
+              "listId": "party"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "items_target",
+              "index": "v.targetIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "USE_ITEM",
+              "itemIndex": "v.idx",
+              "target": "v.targetIdx"
+            },
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "state",
+                  "value": 1
+                },
+                {
+                  "name": "idx",
+                  "value": "max(1, min(v.idx, session.itemCount))"
+                }
+              ]
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "items_target"
+            }
+          ]
         }
       ],
       "on_cancel": [
         {
-          "cmd": "SCENE_EVENT",
-          "kind": "pop"
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "items_target"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
         }
       ]
-    }
+    },
+    "config": {},
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      }
+    ]
   },
   {
     "id": "status",
@@ -1133,21 +2205,451 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
+          "name": "page",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "idx",
           "value": 1
         },
         {
+          "cmd": "SET_VAR",
+          "name": "state",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "slot",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "eqIdx",
+          "value": 1
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "status_party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "status_party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "status_party",
+          "index": "v.idx"
+        },
+        {
           "cmd": "OPEN_WINDOW",
           "windowId": "status_panel"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "status_panel",
+          "text": ""
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "help"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "statusPortrait"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "help",
+          "text": "UP/DOWN: select member    LEFT/RIGHT: page    ENTER: equip    ESC: back"
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.entry == 'equip'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "equip_slots"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "equip_slots",
+              "listId": "equipSlots",
+              "member": "v.idx",
+              "format": "{name}: {item}"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "equip_slots",
+              "index": "v.slot"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: slot    ENTER: change    ESC: back"
+            }
+          ]
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 2 and v.slot > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "slot",
+              "value": "v.slot - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 3 and v.eqIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "eqIdx",
+              "value": "v.eqIdx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and v.idx < party.count",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 2 and v.slot < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "slot",
+              "value": "v.slot + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 3 and v.eqIdx < session.equipCount[v.slot] + 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "eqIdx",
+              "value": "v.eqIdx + 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "(v.page or 1) > 1",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "page",
+                  "value": "(v.page or 1) - 1"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "page",
+                  "value": 3
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "(v.page or 1) < 3",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "page",
+                  "value": "(v.page or 1) + 1"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "page",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and party.count > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "slot",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "equip_slots"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "equip_slots",
+              "listId": "equipSlots",
+              "member": "v.idx",
+              "format": "{name}: {item}"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "equip_slots",
+              "index": "v.slot"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: slot    ENTER: change    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 3
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "eqIdx",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "equip_list"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "equip_list",
+              "listId": "equipment",
+              "slot": "v.slot",
+              "member": "v.idx",
+              "format": "{name}"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "equip_list",
+              "index": "v.eqIdx"
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "equip_info"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "equip_info",
+              "text": "{sel('equip_list').name}\n{sel('equip_list').description}\n\nPREVIEW: {sel('equip_list').preview}"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: select    ENTER: equip    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "EQUIP_ITEM",
+              "slot": "v.slot",
+              "target": "v.idx",
+              "itemIndex": "v.eqIdx"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "equip_list"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "equip_info"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: slot    ENTER: change    ESC: back"
+            }
+          ]
         }
       ],
       "on_cancel": [
         {
-          "cmd": "SCENE_EVENT",
-          "kind": "pop"
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "equip_list"
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "equip_info"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: slot    ENTER: change    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "equip_slots"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "help",
+              "text": "UP/DOWN: select member    LEFT/RIGHT: page    ENTER: equip    ESC: back"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
         }
       ]
-    }
+    },
+    "config": {},
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      }
+    ]
   },
   {
     "id": "battle",
@@ -1168,9 +2670,164 @@
         {
           "cmd": "SET_VAR",
           "name": "spellSelect",
-          "value": 0
+          "value": "false"
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'log'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleLogInput"
+            },
+            {
+              "cmd": "IF",
+              "condition": "not v.hookHandled",
+              "then": [
+                {
+                  "cmd": "FALLBACK"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'log' or v.combatState == 'victory'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'select'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleTransition"
+            },
+            {
+              "cmd": "IF",
+              "condition": "not v.hookHandled",
+              "then": [
+                {
+                  "cmd": "FALLBACK"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'cancel'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'left'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'right'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'up'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.combatState == 'input'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "action",
+              "value": "'down'"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "handleInput"
+            }
+          ]
         }
       ]
+    },
+    "scripts": {
+      "handleInput": "\nlocal v = ctx.v\nlocal b = v.battle\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\nlocal isSummoner = (memberInfo.type == \"summoner\")\nif v.spellSelect then\n    local options = {}\n    if isSummoner then\n        for _, spellId in ipairs(api.systemConfig.summoner and api.systemConfig.summoner.spells or {}) do\n            if type(spellId) == \"table\" then spellId = spellId.id end\n            local sk = api.getSkill(spellId)\n            if sk then table.insert(options, sk) end\n        end\n    else\n        for _, skId in ipairs(memberInfo.actor.skills or {}) do\n            local sk = api.getSkill(skId)\n            if sk then table.insert(options, sk) end\n        end\n    end\n    \n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.spellSelect = false\n        v.selectedIndex = 2\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            local allowed = not isSummoner or (ctx.session.mp >= (choice.mpCost or choice.mp or 0))\n            if allowed then\n                local spell = api.getSkill(choice.id)\n                local target = b.allies[#b.allies]\n                if spell and (spell.target == \"enemy-any\" or spell.target == \"enemy\") then\n                    for _, e in ipairs(b.enemies) do\n                        if not e:isDead() then target = e break end\n                    end\n                else\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                end\n                api.battle.commitAction(memberInfo.index, { type = isSummoner and \"spell\" or \"skill\", id = choice.id, target = target })\n            else\n                api.battle.showMessage(api.getTerm(\"battle.not_enough_mp\", \"Not enough MP!\"))\n            end\n        end\n    end\nelse\n    if v.action == \"left\" or v.action == \"up\" then\n        v.selectedIndex = (v.selectedIndex - 2) % 4 + 1\n    elseif v.action == \"right\" or v.action == \"down\" then\n        v.selectedIndex = v.selectedIndex % 4 + 1\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            local target = b.enemies[1]\n            for _, e in ipairs(b.enemies) do\n                if not e:isDead() then target = e break end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"attack\", target = target })\n        elseif v.selectedIndex == 2 then\n            v.spellSelect = true\n            v.selectedIndex = 1\n        elseif v.selectedIndex == 3 then\n            if isSummoner then\n                local battleItemId = api.systemConfig.combat and api.systemConfig.combat.battleItem or 1\n                local battleItem = api.getItem(battleItemId)\n                if battleItem and api.hasItem(battleItemId, 1) then\n                    local target = b.allies[#b.allies]\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                    api.battle.commitAction(memberInfo.index, { type = \"item\", id = battleItemId, target = target })\n                else\n                    api.battle.showMessage(api.formatTerm(\"battle.no_item_left\", \"No \" .. tostring(battleItem and battleItem.name or battleItemId) .. \"s left!\"))\n                end\n            else\n                api.battle.commitAction(memberInfo.index, { type = \"defend\" })\n            end\n        elseif v.selectedIndex == 4 then\n            api.battle.commitAction(memberInfo.index, { type = \"flee\" })\n        end\n    end\nend\n",
+      "handleLogInput": "\nlocal v = ctx.v\nif v.action == \"select\" and v.eventQueueIndex <= #(v.eventsQueue or {}) then\n    api.battle.advanceLog()\n    v.hookHandled = true\nelse\n    v.hookHandled = false\nend\n",
+      "handleTransition": "\nlocal v = ctx.v\nif v.action ~= \"select\" or not v.battle then \n    v.hookHandled = false\n    return \nend\nv.hookHandled = api.battle.handleTransition(v.action)\n"
     }
   },
   {
@@ -1205,22 +2862,47 @@
           "windowId": "shop_header"
         },
         {
+          "cmd": "SET_TEXT",
+          "windowId": "shop_header",
+          "text": "{v.shopName}   Gold: {session.gold} G   [ESC: leave]"
+        },
+        {
           "cmd": "OPEN_WINDOW",
           "windowId": "shop_list"
         },
         {
           "cmd": "SET_LIST",
           "windowId": "shop_list",
-          "listId": "shop_items"
+          "listId": "v:items",
+          "format": "{name}   {cost} G"
         },
         {
           "cmd": "SET_CURSOR",
           "windowId": "shop_list",
-          "index": 1
+          "index": "v.idx"
         },
         {
           "cmd": "OPEN_WINDOW",
           "windowId": "shop_info"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "shop_info",
+          "text": "{sel('shop_list').description}\n\nPrice: {sel('shop_list').cost} G"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "shop_party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "shop_party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "shop_party",
+          "index": 0
         }
       ],
       "on_up": [
@@ -1272,6 +2954,205 @@
           ]
         }
       ]
-    }
+    },
+    "config": {},
+    "draw": "windows"
+  },
+  {
+    "id": "game_over",
+    "name": "Game Over",
+    "kind": "menu",
+    "draw": "windows",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "down"
+      }
+    ],
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "name": "step",
+          "value": 0
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "idx",
+          "value": 1
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "game_over_frame"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "game_over_frame",
+          "term": "game_over.title",
+          "text": "GAME OVER"
+        },
+        {
+          "cmd": "WAIT",
+          "duration": 1.4
+        }
+      ],
+      "on_frame": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.step == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "step",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "game_over_message"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "game_over_message",
+              "term": "game_over.message",
+              "text": "The party has fallen..."
+            },
+            {
+              "cmd": "WAIT",
+              "duration": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.step == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "step",
+              "value": 2
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "game_over_menu"
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "game_over_menu",
+              "term": "game_over.return_to_title",
+              "text": "Return to Title"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "game_over_menu",
+              "index": 1
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v.step == 2",
+          "then": [
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "title"
+            }
+          ]
+        }
+      ]
+    },
+    "config": {}
   }
 ]

@@ -279,6 +279,9 @@
                 dbPayload.flows = dbPayload.flows || {};
                 dbPayload.scenes = dbPayload.scenes || [];
                 renderUnifiedFlowsEditor(panel, header);
+            } else if (tabName === 'windows') {
+                header.textContent = 'Windows';
+                renderWindowsTab(panel, header);
             }
         }
 
@@ -386,29 +389,84 @@
                     };
                     listBox.appendChild(row);
                 });
+                // NOTE (E6 recon): maps deliberately do NOT appear here.
+                // A scene entry is BEHAVIOR (hooks, rendering rules); maps
+                // in maps.json are CONTENT edited in the map workspace.
+                // A "Map" scene entry belongs in this list only once the
+                // engine map scene-kind exists as data
+                // (docs/plans/overhaul-4/future-map-kind.md).
             };
             renderSceneList();
             listCol.appendChild(listBox);
 
-            const addBtn = makeAddRowBtn('+ Create Scene', () => {
+            // E4: "+ Create Scene" opens a template gallery built from
+            // tools/editor/templates/scenes/*.json (served read-only by
+            // /api/templates/scenes). Choosing one deep-clones the template,
+            // strips its _template metadata and assigns a fresh numeric id.
+            const instantiateTemplate = (tpl) => {
                 // Numeric ids only: built-in scenes have string ids ('title',
                 // 'battle', ...) which would turn Math.max into NaN.
                 const nextId = dbPayload.scenes.reduce((max, s) => typeof s.id === 'number' ? Math.max(max, s.id) : max, 0) + 1;
-                // Plain menu scene (SPEC S2): no kind-specific starter shape.
-                // Preset templates (e.g. the crafting sample) are an
-                // overhaul-5 item (E4 preset scene gallery).
-                const newScene = {
-                    id: nextId,
-                    name: 'New Scene',
-                    kind: 'menu',
-                    config: {},
-                    hooks: {}
-                };
+                const newScene = JSON.parse(JSON.stringify(tpl));
+                delete newScene._template;
+                newScene.id = nextId;
                 dbPayload.scenes.push(newScene);
                 activeSceneId = nextId;
                 activeUnifiedPhase = null;
                 setDirty(true);
                 renderUnifiedFlowsEditor(panel, header);
+            };
+
+            const openTemplateGallery = (templates) => {
+                const overlay = document.createElement('div');
+                overlay.id = 'scene-template-gallery';
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+                const box = document.createElement('div');
+                box.style.cssText = 'min-width:320px;max-width:460px;max-height:70vh;overflow-y:auto;padding:8px;'
+                    + 'background:var(--win-gray);border:2px solid;'
+                    + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);';
+                const title = document.createElement('div');
+                title.textContent = 'Create Scene — choose a template';
+                title.style.cssText = 'font-weight:bold;margin-bottom:6px;';
+                box.appendChild(title);
+                templates.forEach(tpl => {
+                    const meta = tpl._template || {};
+                    const row = document.createElement('div');
+                    row.style.cssText = 'padding:6px;cursor:pointer;border:1px solid var(--win-shadow);margin-bottom:4px;background:var(--win-white);';
+                    const lbl = document.createElement('div');
+                    lbl.textContent = meta.label || tpl.name || 'Unnamed template';
+                    lbl.style.fontWeight = 'bold';
+                    const desc = document.createElement('div');
+                    desc.textContent = meta.description || '';
+                    desc.style.cssText = 'font-size:10px;color:var(--win-dark-shadow);margin-top:2px;';
+                    row.appendChild(lbl);
+                    row.appendChild(desc);
+                    row.onmouseover = () => { row.style.background = '#000080'; lbl.style.color = 'white'; desc.style.color = '#c0c0c0'; };
+                    row.onmouseout = () => { row.style.background = 'var(--win-white)'; lbl.style.color = ''; desc.style.color = 'var(--win-dark-shadow)'; };
+                    row.onclick = () => { overlay.remove(); instantiateTemplate(tpl); };
+                    box.appendChild(row);
+                });
+                const cancel = document.createElement('button');
+                cancel.className = 'win98-btn';
+                cancel.textContent = 'Cancel';
+                cancel.style.marginTop = '4px';
+                cancel.onclick = () => overlay.remove();
+                box.appendChild(cancel);
+                overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+            };
+
+            const addBtn = makeAddRowBtn('+ Create Scene', async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/templates/scenes`);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const templates = await res.json();
+                    if (!templates.length) throw new Error('no templates found');
+                    openTemplateGallery(templates);
+                } catch (err) {
+                    showToast('Failed to load scene templates: ' + err.message);
+                }
             });
             listCol.appendChild(addBtn);
             mainContainer.appendChild(listCol);
@@ -608,6 +666,82 @@
 
         // Edits a custom scene: compact config panel + hook tabs with
         // renderCommandList(hostCtx='scene').
+        // E3: picker over E4's scene-template registry, offering each
+        // template's individual hooks (for the hook being edited) or its
+        // entire hook set. Pure consumer — the registry schema/loader is E4's.
+        function openHookTemplatePicker(templates, hookName, handlers) {
+            const overlay = document.createElement('div');
+            overlay.id = 'hook-template-picker';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+            const box = document.createElement('div');
+            box.style.cssText = 'min-width:340px;max-width:480px;max-height:70vh;overflow-y:auto;padding:8px;'
+                + 'background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);';
+            const title = document.createElement('div');
+            title.textContent = `Load '${hookName}' from a template`;
+            title.style.cssText = 'font-weight:bold;margin-bottom:6px;';
+            box.appendChild(title);
+
+            const makeRow = (text, sub, action) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding:4px 6px;cursor:pointer;background:var(--win-white);border:1px solid var(--win-shadow);margin-bottom:3px;';
+                const main = document.createElement('div');
+                main.textContent = text;
+                row.appendChild(main);
+                if (sub) {
+                    const s = document.createElement('div');
+                    s.textContent = sub;
+                    s.style.cssText = 'font-size:10px;color:var(--win-dark-shadow);';
+                    row.appendChild(s);
+                }
+                row.onmouseover = () => { row.style.background = '#000080'; row.style.color = 'white'; };
+                row.onmouseout = () => { row.style.background = 'var(--win-white)'; row.style.color = ''; };
+                row.onclick = () => { overlay.remove(); action(); };
+                return row;
+            };
+
+            templates.forEach(tpl => {
+                const meta = tpl._template || {};
+                const label = meta.label || tpl.name || 'Unnamed';
+                const hooks = tpl.hooks || {};
+                const hookNames = Object.keys(hooks).filter(h => (hooks[h] || []).length > 0);
+                const head = document.createElement('div');
+                head.textContent = label;
+                head.style.cssText = 'font-weight:bold;margin:6px 0 3px;';
+                box.appendChild(head);
+                if (hooks[hookName] && hooks[hookName].length > 0) {
+                    box.appendChild(makeRow(
+                        `${hookName} (${hooks[hookName].length} commands)`,
+                        'Replace only the hook being edited',
+                        () => handlers.onHook(`${label} · ${hookName}`, hooks[hookName])
+                    ));
+                }
+                if (hookNames.length > 0) {
+                    box.appendChild(makeRow(
+                        `Entire hook set (${hookNames.join(', ')})`,
+                        'Replace ALL of this scene\'s hooks',
+                        () => handlers.onSet(label, hooks)
+                    ));
+                } else {
+                    box.appendChild(makeRow(
+                        'Empty hook set',
+                        'Clear all hooks (blank template)',
+                        () => handlers.onSet(label, {})
+                    ));
+                }
+            });
+
+            const cancel = document.createElement('button');
+            cancel.className = 'win98-btn';
+            cancel.textContent = 'Cancel';
+            cancel.style.marginTop = '4px';
+            cancel.onclick = () => overlay.remove();
+            box.appendChild(cancel);
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        }
+
         function renderCustomSceneEditor(container, header, scene) {
             scene.config = scene.config || {};
             scene.hooks = scene.hooks || {};
@@ -689,6 +823,9 @@
 
             container.appendChild(configBody);
 
+            // --- E5: visual preview canvas (headless engine preview) ---
+            renderScenePreviewPanel(container, scene, () => renderUnifiedFlowsEditor(container.parentElement.parentElement, header));
+
             // --- Hook tabs ---
             const hookNames = SCENE_HOOK_NAMES;
             if (!activeUnifiedPhase || !hookNames.includes(activeUnifiedPhase)) {
@@ -746,6 +883,41 @@
                 renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
             };
             bottomRow.appendChild(clearBtn);
+
+            // E3: load a hook (or the whole hook set) from E4's template
+            // registry. Custom scenes have no legacy fallback to revert to
+            // (that path is renderBattleFlowsEditor's "Remove Override",
+            // built-in phases only) — templates are their reset source.
+            const tplBtn = document.createElement('button');
+            tplBtn.className = 'win98-btn';
+            tplBtn.style.cssText = 'font-size: 10px;';
+            tplBtn.textContent = 'Load from Template...';
+            tplBtn.onclick = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/templates/scenes`);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const templates = await res.json();
+                    openHookTemplatePicker(templates, activeUnifiedPhase, {
+                        onHook: (label, cmds) => {
+                            const cur = scene.hooks[activeUnifiedPhase] || [];
+                            if (cur.length > 0 && !confirm(`Replace the current '${activeUnifiedPhase}' hook (${cur.length} command${cur.length === 1 ? '' : 's'}) with "${label}"? This cannot be undone.`)) return;
+                            scene.hooks[activeUnifiedPhase] = JSON.parse(JSON.stringify(cmds));
+                            setDirty(true);
+                            renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
+                        },
+                        onSet: (label, hooks) => {
+                            const nonEmpty = Object.keys(scene.hooks || {}).filter(h => (scene.hooks[h] || []).length > 0);
+                            if (nonEmpty.length > 0 && !confirm(`Replace ALL hooks of this scene (${nonEmpty.join(', ')}) with the full "${label}" hook set? This cannot be undone.`)) return;
+                            scene.hooks = JSON.parse(JSON.stringify(hooks));
+                            setDirty(true);
+                            renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
+                        }
+                    });
+                } catch (err) {
+                    showToast('Failed to load scene templates: ' + err.message);
+                }
+            };
+            bottomRow.appendChild(tplBtn);
 
             // JSON toggle for the hook commands
             const jsonBtn = document.createElement('button');

@@ -88,11 +88,39 @@ function formula.sessionView(session)
         mp = session.mp or 0,
         maxMp = session.maxMp or 0,
         floor = session.currentFloor or session.floor or 1,
+        -- Display name of the current map (menu FLOOR readout).
+        mapTitle = (session.currentMapData and session.currentMapData.title) or "Town",
         mapSafe = (session.currentMapData and session.currentMapData.safe) and true or false,
         encounterRate = (session.currentMapData and session.currentMapData.encounterRate)
             or (session.loader and session.loader.system and session.loader.system.combat
                 and session.loader.system.combat.encounterChance)
             or 0.10,
+        -- Distinct non-empty inventory stacks — lets scene hooks bound an
+        -- inventory-list cursor (session.itemCount) without SCRIPT.
+        itemCount = (function()
+            local n = 0
+            for _, qty in pairs(session.inventory or {}) do
+                if qty > 0 then n = n + 1 end
+            end
+            return n
+        end)(),
+        -- Matching-gear stacks per equip slot (1=Weapon 2=Armor
+        -- 3=Accessory) — lets the status scene's equip picker bound its
+        -- cursor: the 'equipment' list has equipCount[slot] + 1 rows
+        -- (the extra row is [ UNEQUIP ]).
+        equipCount = (function()
+            local counts = { 0, 0, 0 }
+            local slotOf = { Weapon = 1, Armor = 2, Accessory = 3 }
+            local loader = session.loader
+            for itemId, qty in pairs(session.inventory or {}) do
+                if qty > 0 and loader then
+                    local item = loader.getItem(itemId)
+                    local s = item and item.type == "equipment" and slotOf[item.equipType]
+                    if s then counts[s] = counts[s] + 1 end
+                end
+            end
+            return counts
+        end)(),
     }
 end
 

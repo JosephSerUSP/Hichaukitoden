@@ -4,4 +4,17 @@ items_left_panel|open_window||
 items_left_panel|set_list||inventory
 items_left_panel|set_cursor||1
 items_info_panel|open_window||
+items_info_panel|set_text||{sel('items_left_panel').name}
+Owned: x{sel('items_left_panel').qty}
+
+{sel('items_left_panel').description}
+help|open_window||
+party|open_window||
+party|set_list||party
+party|set_cursor||0
+help|set_text||UP/DOWN: select    ENTER: use    ESC: back
+items_target|open_window||
+items_target|set_list||party
+items_target|set_cursor||1
+items_target|close_window||
 UI GOLDEN END

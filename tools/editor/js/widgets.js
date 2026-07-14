@@ -606,6 +606,88 @@
             container.appendChild(row);
         }
 
+        // ---- Active UI Font: choices + live in-engine preview ----
+        // 'Lucida' has no .ttf on disk — it's LÖVE's built-in default font,
+        // exactly mirroring presentation/ui.lua's ui.setFont fallback (any
+        // other name is looked up generically at assets/fonts/<name>.ttf).
+        // The choice list itself is fetched from GET /api/fonts (a straight
+        // directory listing of assets/fonts/*.ttf|*.otf) so dropping a new
+        // font file in is the only step needed — no editor code change.
+        let _fontChoicesPromise = null;
+        function getFontChoices() {
+            if (!_fontChoicesPromise) {
+                _fontChoicesPromise = fetch(`${API_URL}/api/fonts`)
+                    .then(res => res.json())
+                    .then(d => (d && Array.isArray(d.fonts) && d.fonts.length) ? d.fonts : ['Lucida'])
+                    .catch(() => ['Lucida']);
+            }
+            return _fontChoicesPromise;
+        }
+
+        // Builds a { el, render(fontName, size) } pair: a canvas fed by
+        // GET /preview-font, which runs the actual engine's ui.drawPanel +
+        // ui.drawString (the real 9-slice windowskin, not an approximation
+        // of it) headlessly and returns a screenshot. Same technique and
+        // the same 2x nearest-neighbor scale as the Scenes/Windows tabs'
+        // canvases, so the picker shows exactly what the game will render.
+        function buildFontPreview() {
+            const wrap = document.createElement('div');
+            wrap.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = 'Preview';
+            wrap.appendChild(lbl);
+
+            const S = 2;
+            const canvas = document.createElement('canvas');
+            canvas.style.cssText = 'image-rendering: pixelated; border: 1px solid var(--win-shadow); display: block; background: #000;';
+            wrap.appendChild(canvas);
+            const ctx2d = canvas.getContext('2d');
+
+            let renderToken = 0;
+            let debounceTimer = null;
+            const doRender = (fontName, size) => {
+                const myToken = ++renderToken;
+                fetch(`${API_URL}/preview-font?name=${encodeURIComponent(fontName)}&size=${encodeURIComponent(size)}`)
+                    .then(res => res.json())
+                    .then(d => {
+                        if (myToken !== renderToken) return; // a newer render superseded this one
+                        if (d.error || !d.image) {
+                            canvas.width = 240 * S; canvas.height = 64 * S;
+                            ctx2d.fillStyle = '#000'; ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx2d.fillStyle = '#ff6060'; ctx2d.font = '11px monospace';
+                            ctx2d.fillText(d.error || 'preview failed', 6, 16);
+                            return;
+                        }
+                        const img = new Image();
+                        img.onload = () => {
+                            if (myToken !== renderToken) return;
+                            canvas.width = d.width * S;
+                            canvas.height = d.height * S;
+                            canvas.style.width = (d.width * S) + 'px';
+                            canvas.style.height = (d.height * S) + 'px';
+                            ctx2d.imageSmoothingEnabled = false;
+                            ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx2d.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = 'data:image/png;base64,' + d.image;
+                    })
+                    .catch(err => {
+                        if (myToken !== renderToken) return;
+                        ctx2d.fillStyle = '#ff6060'; ctx2d.font = '11px monospace';
+                        ctx2d.fillText('preview request failed: ' + err.message, 6, 16);
+                    });
+            };
+
+            // Debounced so rapid size-input keystrokes don't spawn a lovec
+            // process per keypress.
+            const render = (fontName, size) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => doRender(fontName, size), 250);
+            };
+
+            return { el: wrap, render };
+        }
+
         // ---- Config schema: friendly labels + typed widgets for system/engine keys ----
         // Keys not listed fall back to the generic key-name field.
         const CONFIG_SCHEMA = {
@@ -1258,8 +1340,8 @@
                     item.spriteKey = path;
                     setDirty(true);
                 }, false, 'portraits', true);
-                window.createSpriteField(spriteRow, 'Small Sprite', item.smallSprite || '', (path) => {
-                    item.smallSprite = path;
+                window.createSpriteField(spriteRow, 'Small Battler', item.smallBattler || '', (path) => {
+                    item.smallBattler = path;
                     setDirty(true);
                 }, false, 'smallBattlers', true);
                 formPanel.appendChild(spriteRow);
@@ -1691,36 +1773,88 @@
                     const schemaEntry = CONFIG_SCHEMA[currentPath.join('.')];
                     if (schemaEntry && renderSchemaField(container, schemaEntry, value, key, currentPath, targetRoot, useBlockLayout)) {
                         // rendered by a typed schema widget
+                    } else if (key === 'fontSize') {
+                        // Rendered as part of the 'activeFont' widget below —
+                        // both live in ui.lua's ui.setFont(name, size) pair.
                     } else if (key === 'activeFont') {
-                        const group = document.createElement('div');
-                        group.className = 'form-group';
-                        const lbl = document.createElement('label');
-                        lbl.textContent = 'Active UI Font';
-                        group.appendChild(lbl);
-
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        const fonts = ['Lucida', 'Silkscreen', 'PressStart2P', 'Silver'];
-                        fonts.forEach(f => {
-                            const opt = document.createElement('option');
-                            opt.value = f;
-                            opt.textContent = f;
-                            if (value === f) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = () => {
-                            setDirty(true);
+                        const navTarget = () => {
                             let target = targetRoot;
                             for (let i = 0; i < currentPath.length - 1; i++) {
                                 if (!target[currentPath[i]]) target[currentPath[i]] = {};
                                 target = target[currentPath[i]];
                             }
-                            target[key] = select.value;
+                            return target;
                         };
 
-                        group.appendChild(select);
+                        const group = document.createElement('div');
+                        group.className = 'form-group';
+                        // This widget (select + size + a 200px-wide preview canvas)
+                        // needs more room than a single narrow grid column, whatever
+                        // the parent field-group's column count happens to be.
+                        group.style.gridColumn = '1 / -1';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = 'Active UI Font';
+                        group.appendChild(lbl);
+
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display: flex; gap: 6px; align-items: center;';
+
+                        const select = document.createElement('select');
+                        select.className = 'form-control inset-bevel';
+                        select.style.flex = '1';
+                        // Seed with the current value alone so the field isn't empty
+                        // before /api/fonts responds; getFontChoices() below fills
+                        // in the rest and re-applies the selection.
+                        const seedOpt = document.createElement('option');
+                        seedOpt.value = value; seedOpt.textContent = value;
+                        select.appendChild(seedOpt);
+                        getFontChoices().then(choices => {
+                            select.innerHTML = '';
+                            choices.forEach(f => {
+                                const opt = document.createElement('option');
+                                opt.value = f;
+                                opt.textContent = f;
+                                if (value === f) opt.selected = true;
+                                select.appendChild(opt);
+                            });
+                        });
+                        row.appendChild(select);
+
+                        const sizeInp = document.createElement('input');
+                        sizeInp.type = 'number';
+                        sizeInp.className = 'form-control inset-bevel';
+                        sizeInp.style.width = '56px';
+                        sizeInp.min = '6';
+                        sizeInp.max = '24';
+                        sizeInp.value = (navTarget().fontSize != null) ? navTarget().fontSize : 8;
+                        row.appendChild(sizeInp);
+
+                        const sizeLbl = document.createElement('span');
+                        sizeLbl.textContent = 'px';
+                        sizeLbl.style.fontSize = '10px';
+                        row.appendChild(sizeLbl);
+
+                        group.appendChild(row);
                         container.appendChild(group);
+
+                        const preview = buildFontPreview();
+                        container.appendChild(preview.el);
+
+                        const refreshPreview = () => preview.render(select.value, parseInt(sizeInp.value, 10) || 8);
+
+                        select.onchange = () => {
+                            setDirty(true);
+                            navTarget()[key] = select.value;
+                            refreshPreview();
+                        };
+                        sizeInp.oninput = () => {
+                            setDirty(true);
+                            const n = parseInt(sizeInp.value, 10);
+                            navTarget().fontSize = isNaN(n) ? 8 : n;
+                            refreshPreview();
+                        };
+
+                        refreshPreview();
                     } else if (key === 'dir') {
                         const group = document.createElement('div');
                         group.className = 'form-group';

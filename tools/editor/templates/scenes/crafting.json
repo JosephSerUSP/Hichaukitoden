@@ -1,0 +1,997 @@
+{
+  "_template": {
+    "label": "Crafting",
+    "description": "Item Creation clone (kind menu, SCRIPT yield logic, window-driven UI). Reuses the stock Item Creation windowLayout entries in engine.json (discipline_panel, inventory_list, ...) - do not delete those while a scene from this template exists."
+  },
+  "name": "New Crafting Scene",
+  "kind": "menu",
+  "goldenScript": [
+    {
+      "key": "return"
+    },
+    {
+      "key": "down"
+    },
+    {
+      "key": "return"
+    },
+    {
+      "key": "down"
+    },
+    {
+      "key": "return"
+    },
+    {
+      "key": "right"
+    },
+    {
+      "key": "down"
+    },
+    {
+      "key": "return"
+    },
+    {
+      "key": "escape"
+    },
+    {
+      "key": "escape"
+    },
+    {
+      "key": "escape"
+    }
+  ],
+  "config": {
+    "disciplines": [
+      {
+        "kind": "blacksmithing",
+        "label": "Blacksmithing",
+        "stat": "atk",
+        "description": "Forge weapons and armor using ATK."
+      },
+      {
+        "kind": "tinkering",
+        "label": "Tinkering",
+        "stat": "asp",
+        "description": "Assemble accessories using ASP."
+      },
+      {
+        "kind": "alchemy",
+        "label": "Alchemy",
+        "stat": "mat",
+        "description": "Brew potions and ink using MAT."
+      },
+      {
+        "kind": "cooking",
+        "label": "Cooking",
+        "stat": "maxHp",
+        "description": "Cook foods using Max HP."
+      }
+    ],
+    "alpha": 0.5,
+    "yieldFormula": "floor((ingredient1.meta.potency + ingredient2.meta.potency) / 2) + floor(alpha * S)",
+    "penaltyFormula": "((ingredient1.meta.craftElement ~= ingredient2.meta.craftElement and ingredient1.meta.craftElement ~= '' and ingredient2.meta.craftElement ~= '') and 15 or 0) + (S < (ingredient1.meta.tier + ingredient2.meta.tier) * 6 and 20 or 0)",
+    "anomalyFormula": "random() < 0.05 and 1.5 or 1.0",
+    "brackets": [
+      {
+        "max": 10,
+        "tier": 0,
+        "name": "Junk"
+      },
+      {
+        "max": 25,
+        "tier": 1,
+        "name": "Standard"
+      },
+      {
+        "max": 45,
+        "tier": 2,
+        "name": "Superior"
+      },
+      {
+        "max": 999,
+        "tier": 3,
+        "name": "Rare"
+      }
+    ],
+    "timing": {
+      "initialDelay": 0.005,
+      "maxDelay": 10,
+      "delayMult": 1,
+      "steps": 200
+    },
+    "terms": {
+      "title": "Item Creation",
+      "selectDiscipline": "Select Discipline:",
+      "selectCrafter": "Select Crafter:",
+      "selectIngredients": "Select Ingredients:",
+      "yieldText": "Expected Yield: {0}",
+      "anomalyText": "CRITICAL ANOMALY DETECTED!",
+      "craftBtn": "Craft",
+      "cancelBtn": "Back",
+      "resultText": "Crafted: {0}!"
+    }
+  },
+  "hooks": {
+    "on_enter": [
+      {
+        "cmd": "SET_VAR",
+        "name": "state",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "selectedDisciplineIdx",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "selectedCrafterIdx",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "selectedIngredient1Idx",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "selectedIngredient2Idx",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "cursorSlot",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "confirmOptionIdx",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "i1_item_id",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "i2_item_id",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "crafterIdx",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "rouletteStep",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "rouletteDelay",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "yieldScore",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "yieldAnomalyScore",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "isAnomaly",
+        "value": "false"
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "resultShown",
+        "value": 0
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "poolCurrentIdx",
+        "value": 0
+      },
+      {
+        "cmd": "OPEN_WINDOW",
+        "windowId": "craft_header"
+      },
+      {
+        "cmd": "OPEN_WINDOW",
+        "windowId": "discipline_panel"
+      },
+      {
+        "cmd": "SET_LIST",
+        "windowId": "discipline_panel",
+        "listId": "config:disciplines",
+        "format": "{label}"
+      },
+      {
+        "cmd": "SET_CURSOR",
+        "windowId": "discipline_panel",
+        "index": "v.selectedDisciplineIdx"
+      },
+      {
+        "cmd": "OPEN_WINDOW",
+        "windowId": "discipline_detail"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "discipline_detail",
+        "text": "Governing Stat: {config.disciplines[v.selectedDisciplineIdx].stat}\n{sel('discipline_panel').description}"
+      },
+      {
+        "cmd": "SET_LIST",
+        "windowId": "crafter_panel",
+        "listId": "party",
+        "format": "{name}"
+      },
+      {
+        "cmd": "SET_CURSOR",
+        "windowId": "crafter_panel",
+        "index": "v.selectedCrafterIdx"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "crafter_detail",
+        "text": "{sel('crafter_panel').name}\nLevel: {sel('crafter_panel').level}\n{config.disciplines[v.selectedDisciplineIdx].stat}: {sel('crafter_panel')[config.disciplines[v.selectedDisciplineIdx].stat]}"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "ingredient_panel",
+        "text": "{v.cursorSlot == 1 and '>' or ' '} Slot 1: {v.i1_item_id ~= 0 and v.i1Name or '--- Empty ---'}\n{v.cursorSlot == 2 and '>' or ' '} Slot 2: {v.i2_item_id ~= 0 and v.i2Name or '--- Empty ---'}"
+      },
+      {
+        "cmd": "SET_LIST",
+        "windowId": "inventory_list",
+        "listId": "inventory",
+        "format": "{name} (x{qty})",
+        "priority": "meta.craftKind == config.disciplines[v.selectedDisciplineIdx].kind",
+        "highlight": "meta.craftKind == config.disciplines[v.selectedDisciplineIdx].kind"
+      },
+      {
+        "cmd": "SET_CURSOR",
+        "windowId": "inventory_list",
+        "index": "v.cursorSlot == 1 and v.selectedIngredient1Idx or v.selectedIngredient2Idx"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "detail_panel",
+        "text": "{sel('inventory_list').name}\nTier: {sel('inventory_list').meta.tier}\nPotency: {sel('inventory_list').meta.potency}\nElem: {sel('inventory_list').meta.craftElement}"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "confirm_panel",
+        "text": "Crafter: {v.crafterName}\nIngredient 1: {v.i1Name}\nIngredient 2: {v.i2Name}\nExpected Yield: {v.yieldScore}\nExpected Tier: {v.outcomeTierName}\n{v.elementConflict and 'WARNING: Element conflict!' or ''}"
+      },
+      {
+        "cmd": "SET_LIST",
+        "windowId": "confirm_panel",
+        "listId": "static:Craft,Back"
+      },
+      {
+        "cmd": "SET_CURSOR",
+        "windowId": "confirm_panel",
+        "index": "v.confirmOptionIdx"
+      },
+      {
+        "cmd": "SET_LIST",
+        "windowId": "roulette_panel",
+        "listId": "v:pool"
+      },
+      {
+        "cmd": "SET_CURSOR",
+        "windowId": "roulette_panel",
+        "index": "v.poolCurrentIdx"
+      },
+      {
+        "cmd": "SET_TEXT",
+        "windowId": "result_panel",
+        "text": "You created {v.resultItemName}!\n{v.isAnomaly and 'CRITICAL ANOMALY!' or ''}"
+      }
+    ],
+    "on_select": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 1",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedCrafterIdx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "discipline_panel"
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "discipline_detail"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "crafter_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "crafter_detail"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 2",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "crafterIdx",
+            "value": "v.selectedCrafterIdx"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 3
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedIngredient1Idx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedIngredient2Idx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "cursorSlot",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "i1_item_id",
+            "value": 0
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "i2_item_id",
+            "value": 0
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "crafter_panel"
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "crafter_detail"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "ingredient_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "inventory_list"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "detail_panel"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SCRIPT",
+            "ref": "calcYield"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "IF",
+            "condition": "v.i1_item_id ~= 0 and v.i2_item_id ~= 0",
+            "then": [
+              {
+                "cmd": "SET_VAR",
+                "name": "state",
+                "value": 4
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "confirmOptionIdx",
+                "value": 1
+              },
+              {
+                "cmd": "CLOSE_WINDOW",
+                "windowId": "ingredient_panel"
+              },
+              {
+                "cmd": "CLOSE_WINDOW",
+                "windowId": "inventory_list"
+              },
+              {
+                "cmd": "CLOSE_WINDOW",
+                "windowId": "detail_panel"
+              },
+              {
+                "cmd": "OPEN_WINDOW",
+                "windowId": "confirm_panel"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 4",
+        "then": [
+          {
+            "cmd": "IF",
+            "condition": "v.confirmOptionIdx == 1",
+            "then": [
+              {
+                "cmd": "SCRIPT",
+                "ref": "calcYield"
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "state",
+                "value": 5
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "rouletteStep",
+                "value": 0
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "rouletteDelay",
+                "value": 0.005
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "_guard",
+                "value": 1
+              },
+              {
+                "cmd": "CLOSE_WINDOW",
+                "windowId": "confirm_panel"
+              },
+              {
+                "cmd": "OPEN_WINDOW",
+                "windowId": "roulette_panel"
+              }
+            ],
+            "else": [
+              {
+                "cmd": "SET_VAR",
+                "name": "state",
+                "value": 3
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "cursorSlot",
+                "value": 2
+              },
+              {
+                "cmd": "SET_VAR",
+                "name": "_guard",
+                "value": 1
+              },
+              {
+                "cmd": "CLOSE_WINDOW",
+                "windowId": "confirm_panel"
+              },
+              {
+                "cmd": "OPEN_WINDOW",
+                "windowId": "ingredient_panel"
+              },
+              {
+                "cmd": "OPEN_WINDOW",
+                "windowId": "inventory_list"
+              },
+              {
+                "cmd": "OPEN_WINDOW",
+                "windowId": "detail_panel"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 6",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "resultShown",
+            "value": 0
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedDisciplineIdx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedCrafterIdx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedIngredient1Idx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedIngredient2Idx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "cursorSlot",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "confirmOptionIdx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "i1_item_id",
+            "value": 0
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "i2_item_id",
+            "value": 0
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "result_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "discipline_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "discipline_detail"
+          }
+        ]
+      }
+    ],
+    "on_cancel": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 1",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "SCENE_EVENT",
+            "kind": "pop"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 2",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "crafter_panel"
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "crafter_detail"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "discipline_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "discipline_detail"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "ingredient_panel"
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "inventory_list"
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "detail_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "crafter_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "crafter_detail"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 4",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 3
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "cursorSlot",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "confirm_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "ingredient_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "inventory_list"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "detail_panel"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 5",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 4
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "roulette_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "confirm_panel"
+          }
+        ]
+      }
+    ],
+    "on_up": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 1",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedDisciplineIdx",
+            "value": "(v.selectedDisciplineIdx - 2) % 4 + 1"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 2",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedCrafterIdx",
+            "value": "(v.selectedCrafterIdx - 2) % (v.partyCount or 4) + 1"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SCRIPT",
+            "ref": "calcYield"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "IF",
+            "condition": "v.invCount > 0",
+            "then": [
+              {
+                "cmd": "IF",
+                "condition": "v.cursorSlot == 1",
+                "then": [
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "selectedIngredient1Idx",
+                    "value": "(v.selectedIngredient1Idx - 2) % v.invCount + 1"
+                  }
+                ],
+                "else": [
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "selectedIngredient2Idx",
+                    "value": "(v.selectedIngredient2Idx - 2) % v.invCount + 1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "on_down": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 1",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedDisciplineIdx",
+            "value": "v.selectedDisciplineIdx % 4 + 1"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 2",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "selectedCrafterIdx",
+            "value": "v.selectedCrafterIdx % (v.partyCount or 4) + 1"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SCRIPT",
+            "ref": "calcYield"
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          },
+          {
+            "cmd": "IF",
+            "condition": "v.invCount > 0",
+            "then": [
+              {
+                "cmd": "IF",
+                "condition": "v.cursorSlot == 1",
+                "then": [
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "selectedIngredient1Idx",
+                    "value": "v.selectedIngredient1Idx % v.invCount + 1"
+                  }
+                ],
+                "else": [
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "selectedIngredient2Idx",
+                    "value": "v.selectedIngredient2Idx % v.invCount + 1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "on_left": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "cursorSlot",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 4",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "confirmOptionIdx",
+            "value": 1
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "on_right": [
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 3",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "cursorSlot",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v._guard == 0 and v.state == 4",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "confirmOptionIdx",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "_guard",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "on_frame": [
+      {
+        "cmd": "IF",
+        "condition": "v.state == 5",
+        "then": [
+          {
+            "cmd": "SCRIPT",
+            "ref": "calcYield"
+          }
+        ]
+      },
+      {
+        "cmd": "IF",
+        "condition": "v.state == 6 and (v.resultShown or 0) == 0",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "resultShown",
+            "value": 1
+          },
+          {
+            "cmd": "CLOSE_WINDOW",
+            "windowId": "roulette_panel"
+          },
+          {
+            "cmd": "OPEN_WINDOW",
+            "windowId": "result_panel"
+          }
+        ]
+      }
+    ]
+  },
+  "draw": "windows",
+  "scripts": {
+    "calcYield": "-- Yield / pool / roulette computation for the Item Creation extra scene.\n-- Faithful port of the former engine handler; runs in the SCRIPT sandbox.\nlocal v = ctx.v\nlocal config = ctx.config or {}\nlocal disc = (config.disciplines or {})[v.selectedDisciplineIdx or 1]\nif not disc then return end\nlocal discKind = disc.kind or \"\"\n\n-- Inventory, ordered exactly as the window renderer's priority sort:\n-- discipline-matching items first, id ascending within each group.\nlocal inv = api.items()\ntable.sort(inv, function(a, b)\n    local aKind = a.meta and a.meta.craftKind or \"\"\n    local bKind = b.meta and b.meta.craftKind or \"\"\n    if aKind == discKind and bKind ~= discKind then return true\n    elseif aKind ~= discKind and bKind == discKind then return false\n    else return a.id < b.id end\nend)\nv.invCount = #inv\nlocal party = api.party()\nv.partyCount = #party\n\nlocal i1 = inv[v.selectedIngredient1Idx]\nlocal i2 = inv[v.selectedIngredient2Idx]\nv.i1_item_id = i1 and i1.id or 0\nv.i2_item_id = i2 and i2.id or 0\nif v.i1_item_id == 0 or v.i2_item_id == 0 then\n    v.yieldScore = 0\n    v.yieldAnomalyScore = 0\n    v.isAnomaly = false\n    return\nend\n\nlocal crafter = party[v.crafterIdx or 1]\nif not crafter then return end\nlocal statName = disc.stat or \"atk\"\nlocal S = (statName == \"level\") and crafter.level or crafter[statName]\n\nlocal env = { i1 = i1, i2 = i2, ingredient1 = i1, ingredient2 = i2,\n    crafter = crafter, alpha = config.alpha or 0.5, S = S }\nlocal Y = math.floor(tonumber(api.eval(config.yieldFormula or \"0\", env)) or 0)\nlocal penalty = math.floor(tonumber(api.eval(config.penaltyFormula or \"0\", env)) or 0)\nlocal Y_final = math.max(0, Y - penalty)\nlocal anomalyMult = tonumber(api.eval(config.anomalyFormula or \"1.0\", env)) or 1.0\nlocal isCrit = (anomalyMult > 1.0)\nlocal Y_anomaly = math.floor(Y_final * anomalyMult)\n\n-- Outcome tier: name from the pre-anomaly bracket, pool tier from the final score\nlocal brackets = config.brackets or {}\nlocal tier, tierName = 0, \"Junk\"\nfor _, br in ipairs(brackets) do\n    if Y_final <= br.max then tier = br.tier; tierName = br.name; break end\nend\nif tier == 0 and Y_final > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr and Y_final > lastBr.max then tier = lastBr.tier; tierName = lastBr.name end\nend\nlocal finalScore = isCrit and Y_anomaly or Y_final\nlocal outcomeTier = 0\nfor _, br in ipairs(brackets) do\n    if finalScore <= br.max then outcomeTier = br.tier; break end\nend\nif outcomeTier == 0 and finalScore > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr then outcomeTier = lastBr.tier end\nend\n\n-- Roulette pool from the full item database; fall back to tier-0 items\nlocal pool = {}\nfor _, item in ipairs(api.allItems()) do\n    if item.meta and item.meta.craftKind == discKind and item.meta.tier == outcomeTier then\n        table.insert(pool, item)\n    end\nend\nif #pool == 0 then\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == discKind and item.meta.tier == 0 then\n            table.insert(pool, item)\n        end\n    end\nend\n\nv.yieldScore = Y_final\nv.yieldAnomalyScore = Y_anomaly\nv.penaltyValue = penalty\nv.isAnomaly = isCrit\nv.outcomeTier = outcomeTier\nv.outcomeTierName = tierName\nv.i1Name = i1.name or \"\"\nv.i2Name = i2.name or \"\"\nv.crafterName = crafter.name or \"\"\nv.elementConflict = (i1.meta and i2.meta\n    and i1.meta.craftElement and i2.meta.craftElement\n    and i1.meta.craftElement ~= \"\" and i2.meta.craftElement ~= \"\"\n    and i1.meta.craftElement ~= i2.meta.craftElement) and true or false\n\nv.poolTargetIdx = v.poolTargetIdx or 0\nif #pool > 0 then\n    v.poolSize = #pool\n    if v.poolTargetIdx == 0 then v.poolTargetIdx = random(#pool) end\n    v.poolCurrentIdx = random(#pool)\n    local targetItem = pool[v.poolTargetIdx]\n    v.resultItemId = targetItem and targetItem.id or 0\n    v.resultItemName = targetItem and targetItem.name or \"\"\n    v.pool = {}\n    for _, pitem in ipairs(pool) do\n        table.insert(v.pool, { name = pitem.name or \"\", icon = pitem.icon or 0 })\n    end\nelse\n    v.poolSize = 0\n    v.poolCurrentIdx = 0\n    v.resultItemId = 0\n    v.resultItemName = \"\"\n    v.pool = {}\nend\n\n-- Roulette completion (state 5): consume ingredients, grant the result\nif v.state == 5 then\n    local timing = config.timing or {}\n    local steps = timing.steps or 200\n    v.rouletteStep = (v.rouletteStep or 0) + 1\n    if v.rouletteStep >= steps then\n        if v.i1_item_id ~= 0 then api.takeItem(v.i1_item_id, 1) end\n        if v.i2_item_id ~= 0 then api.takeItem(v.i2_item_id, 1) end\n        local resultItem = pool[v.poolTargetIdx or 1]\n        if resultItem then api.giveItem(resultItem.id, 1) end\n        api.emit({ type = \"text\", text = \"Crafted \" .. (v.resultItemName or \"\") .. \"!\" })\n        v.state = 6\n        v.rouletteStep = 0\n    else\n        local delay = v.rouletteDelay or timing.initialDelay or 0.05\n        v.rouletteDelay = math.min(delay * (timing.delayMult or 1.25), timing.maxDelay or 10)\n    end\nend\n"
+  }
+}

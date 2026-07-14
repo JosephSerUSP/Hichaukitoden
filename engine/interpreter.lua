@@ -205,7 +205,29 @@ end
 
 handlers.COMMENT = function() end
 
+-- Lets a scene hook opt OUT of handling a key for a particular branch, so
+-- the legacy input still underneath it (map movement, dungeon interact)
+-- runs instead. Needed because any existing hook key intercepts its key
+-- unconditionally otherwise (scene_host.runHook has no other way to say
+-- "I looked, but this press isn't mine").
+handlers.FALLBACK = function(cmd, ctx)
+    ctx.hookFallback = true
+end
+
+
 handlers.SET_VAR = function(cmd, ctx)
+    -- E7 "Control Variables": optional multi-assignment form. Rows are
+    -- evaluated IN ORDER, so later values can read earlier ones via v.
+    -- When assignments is present the legacy name/value pair is ignored;
+    -- the single {name, value} shape keeps working unchanged forever.
+    if type(cmd.assignments) == "table" and #cmd.assignments > 0 then
+        for _, a in ipairs(cmd.assignments) do
+            if type(a) == "table" and a.name then
+                ctx.v[a.name] = evalFormula(a.value, ctx)
+            end
+        end
+        return
+    end
     ctx.v[cmd.name] = evalFormula(cmd.value, ctx)
 end
 
@@ -314,6 +336,18 @@ end
 handlers.HEAL = function(cmd, ctx)
     local target = resolveRef(cmd.target, ctx)
     if not target then return end
+    -- E11: absorbed TRAIT_HEAL. With a trait code the heal amount is the
+    -- target's rate for that trait, applied silently (no heal event) and
+    -- skipping dead targets and zero rates — exact former TRAIT_HEAL
+    -- semantics, so the golden victory flow stays byte-identical.
+    if cmd.trait then
+        if target:isDead() then return end
+        local rate = traits.getRate(target, cmd.trait, ctx.session)
+        if rate > 0 then
+            target.hp = math.min(traits.getParam(target, "maxHp", ctx.session), target.hp + rate)
+        end
+        return
+    end
     local amount = evalFormula(cmd.amount, ctx)
     local source = ctx.a or target
     emitAll(ctx, effects.apply({ type = "hp_heal", formula = tostring(amount) }, source, target, ctx.session))
@@ -391,17 +425,6 @@ handlers.STATE_TICKS = function(cmd, ctx)
     end
 end
 
--- Generalizes the hardcoded POST_BATTLE_HEAL block in main.lua victory
--- handling: heal the target by its rate for the named trait.
-handlers.TRAIT_HEAL = function(cmd, ctx)
-    local target = resolveRef(cmd.target, ctx)
-    if not target or target:isDead() then return end
-    local rate = traits.getRate(target, cmd.trait or "POST_BATTLE_HEAL", ctx.session)
-    if rate > 0 then
-        target.hp = math.min(traits.getParam(target, "maxHp", ctx.session), target.hp + rate)
-    end
-end
-
 handlers.EMIT_TEXT = function(cmd, ctx)
     local loader = ctx.loader or ctx.session.loader
     local args = {}
@@ -444,6 +467,74 @@ handlers.TAKE_ITEM = function(cmd, ctx)
     if ctx.session:hasItem(cmd.item, 1) then
         ctx.session:addItem(cmd.item, -(cmd.count or 1))
     end
+end
+
+-- Field item use as data (items-scene promotion): applies an item's
+-- data-defined effects through the same effects pipeline field and battle
+-- use share, then consumes one. itemIndex is 1-based into the id-sorted
+-- non-empty inventory — the SAME ordering the window renderer's
+-- 'inventory' list source displays (keep them in sync). Items with
+-- targetScope 'party' hit every member; otherwise target is a party index.
+handlers.USE_ITEM = function(cmd, ctx)
+    local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
+    local stacks = {}
+    for itemId, qty in pairs(ctx.session.inventory or {}) do
+        if qty > 0 then table.insert(stacks, itemId) end
+    end
+    table.sort(stacks)
+    local loader = ctx.loader or ctx.session.loader
+    local item = stacks[idx] and loader.getItem(stacks[idx])
+    if not item then return end
+    if item.targetScope == "party" then
+        for _, member in ipairs(ctx.session.party) do
+            for _, eff in ipairs(item.effects or {}) do
+                emitAll(ctx, effects.apply(eff, member, member, ctx.session))
+            end
+        end
+    else
+        local target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]
+        if not target then return end
+        for _, eff in ipairs(item.effects or {}) do
+            emitAll(ctx, effects.apply(eff, target, target, ctx.session))
+        end
+    end
+    ctx.session:addItem(item.id, -1)
+end
+
+-- Equip flow as data (status-scene equip): slot is 1=Weapon, 2=Armor,
+-- 3=Accessory. itemIndex is 1-based into the SAME ordering the window
+-- renderer's 'equipment' list source displays: index 1 is always
+-- [ UNEQUIP ], then the inventory's matching equipment id-ascending (keep
+-- them in sync). Previous gear returns to the inventory, like the legacy
+-- select_passive handler did.
+handlers.EQUIP_ITEM = function(cmd, ctx)
+    local slot = tonumber((evalFormula(cmd.slot, ctx))) or 1
+    local slotType = ({ "Weapon", "Armor", "Accessory" })[slot]
+    local member = ctx.session.party[tonumber((evalFormula(cmd.target, ctx))) or 1]
+    if not slotType or not member then return end
+    local idx = tonumber((evalFormula(cmd.itemIndex, ctx))) or 1
+    local loader = ctx.loader or ctx.session.loader
+    local prev = member.equipment[slot]
+    if idx == 1 then
+        if prev then ctx.session:addItem(prev.id, 1) end
+        member.equipment[slot] = nil
+        return
+    end
+    local matching = {}
+    for itemId, qty in pairs(ctx.session.inventory or {}) do
+        if qty > 0 then
+            local item = loader.getItem(itemId)
+            if item and item.type == "equipment" and item.equipType == slotType then
+                table.insert(matching, item)
+            end
+        end
+    end
+    table.sort(matching, function(a, b) return a.id < b.id end)
+    local item = matching[idx - 1]
+    if not item then return end
+    if prev then ctx.session:addItem(prev.id, 1) end
+    member.equipment[slot] = item
+    ctx.session:addItem(item.id, -1)
 end
 
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
@@ -523,11 +614,29 @@ handlers.SET_LIST = function(cmd, ctx)
         type = "set_list", windowId = cmd.windowId, listId = cmd.listId,
         -- Optional row template/formulas consumed by the window renderer.
         format = cmd.format, priority = cmd.priority, highlight = cmd.highlight,
+        -- Row widgets (vocabulary extension 11.07.2026): sprite names a row
+        -- field holding a small-battler sheet key; gaugeValue/gaugeMax are
+        -- row-scoped formulas drawn as a bar under each row.
+        sprite = cmd.sprite,
+        gaugeValue = cmd.gaugeValue, gaugeMax = cmd.gaugeMax,
+        gaugeColor = cmd.gaugeColor, gaugeFill = cmd.gaugeFill,
+        -- Equip vocabulary: slot/member are formulas the 'equipment' and
+        -- 'equipSlots' list sources re-evaluate at draw time.
+        slot = cmd.slot, member = cmd.member,
     })
 end
 
 handlers.SET_TEXT = function(cmd, ctx)
-    table.insert(ctx.events, { type = "set_text", windowId = cmd.windowId, text = cmd.text })
+    -- Optional terms.json lookup (E9): "term" names the entry, "text" is the
+    -- fallback — same contract as EMIT_TEXT.
+    local text = cmd.text
+    if cmd.term then
+        local loader = ctx.loader or (ctx.session and ctx.session.loader)
+        if loader and loader.getTerm then
+            text = loader.getTerm(cmd.term, cmd.text or cmd.term)
+        end
+    end
+    table.insert(ctx.events, { type = "set_text", windowId = cmd.windowId, text = text })
 end
 
 handlers.SET_CURSOR = function(cmd, ctx)
@@ -552,10 +661,49 @@ handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
 end
 
+-- E10: load a map by index (title New Game, future warps). Same call the
+-- legacy title key handler made (exploration.loadMap).
+handlers.LOAD_MAP = function(cmd, ctx)
+    local exploration = require("engine.exploration")
+    exploration.loadMap(ctx.session, tonumber(evalFormula(cmd.mapId, ctx)) or 1)
+end
+
+-- E10: quit the game (title Exit). No-op outside a LOVE runtime.
+handlers.QUIT_GAME = function(cmd, ctx)
+    if love and love.event then love.event.quit() end
+end
+
+-- E9: rebuild the global session from scratch (data-authored game over →
+-- "Return to Title"). Generic on purpose: any scene hook can start a fresh
+-- run. The renderer is re-pointed because it caches the session reference.
+handlers.RESET_SESSION = function(cmd, ctx)
+    local sessionModule = require("engine.session")
+    local fresh = sessionModule.GameSession.new(ctx.loader or (ctx.session and ctx.session.loader))
+    fresh:initializeStartingParty()
+    _G.activeSession = fresh
+    ctx.session = fresh
+    local ok, renderer = pcall(require, "presentation.renderer")
+    if ok and renderer and renderer.init then renderer.init(fresh) end
+end
+
 handlers.SCENE_EVENT = function(cmd, ctx)
-    -- The interpreter never switches scenes itself (S2); main.lua consumes
-    -- this event and performs the transition.
-    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene })
+    -- The interpreter never switches scenes itself (S2); scene_host consumes
+    -- this event and performs the transition. Optional `vars` (same
+    -- {name, value} shape as SET_VAR assignments) are resolved NOW, against
+    -- the PUSHING scene's v/session/party — the only point where that
+    -- context is still live — then applied to the pushed scene's v right
+    -- after its own on_enter runs (scene_host.push), so a scene can hand a
+    -- specific target (e.g. which party member) to the scene it opens.
+    local vars = nil
+    if type(cmd.vars) == "table" then
+        vars = {}
+        for _, a in ipairs(cmd.vars) do
+            if type(a) == "table" and a.name then
+                vars[a.name] = evalFormula(a.value, ctx)
+            end
+        end
+    end
+    table.insert(ctx.events, { type = "scene_change", kind = cmd.kind, scene = cmd.scene, vars = vars })
 end
 
 ------------------------------------------------------------------
@@ -582,6 +730,7 @@ local function buildScriptApi(ctx)
     function api.takeItem(id, n)
         if session:hasItem(id, 1) then session:addItem(id, -(n or 1)) end
     end
+    function api.hasItem(id, n) return session:hasItem(id, n or 1) end
     function api.gainGold(n) session.gold = math.max(0, session.gold + math.floor(n or 0)) end
     function api.grantXp(target, n) if target then target:gainExp(math.floor(n or 0), session) end end
     function api.addState(target, id, dur)
@@ -631,6 +780,37 @@ local function buildScriptApi(ctx)
         if i ~= nil then return out[i] end
         return out
     end
+    api.getSkill = function(id)
+        local l = ctx.loader or session.loader
+        return l and l.getSkill(id)
+    end
+    api.getItem = function(id)
+        local l = ctx.loader or session.loader
+        return l and l.getItem(id)
+    end
+    api.getTerm = function(key, fallback)
+        local l = ctx.loader or session.loader
+        return l and l.getTerm(key, fallback) or fallback
+    end
+    api.formatTerm = function(key, fallback, ...)
+        local l = ctx.loader or session.loader
+        return l and l.formatTerm(key, fallback, ...) or fallback
+    end
+    api.systemConfig = require("engine.config")
+    api.battle = {
+        commitAction = function(index, action)
+            require("engine.scenes.battle").commitAction(index, action)
+        end,
+        showMessage = function(msg)
+            require("engine.scenes.battle").showMessage(msg)
+        end,
+        advanceLog = function()
+            require("engine.scenes.battle").advanceLog()
+        end,
+        handleTransition = function(action)
+            return require("engine.scenes.battle").handleTransition(action)
+        end
+    }
     return api
 end
 
@@ -664,6 +844,7 @@ handlers.SCRIPT = function(cmd, ctx)
         ipairs = ipairs,
         tostring = tostring,
         tonumber = tonumber,
+        type = type,
         select = select,
         unpack = unpack,
         print = print,

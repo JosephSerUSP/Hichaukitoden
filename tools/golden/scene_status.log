@@ -1,4 +1,24 @@
 UI GOLDEN BEGIN
 scene|status|name|Status
+status_party|open_window||
+status_party|set_list||party
+status_party|set_cursor||1
 status_panel|open_window||
+status_panel|set_text||
+help|open_window||
+statusPortrait|open_window||
+help|set_text||UP/DOWN: select member    LEFT/RIGHT: page    ENTER: equip    ESC: back
+equip_slots|open_window||
+equip_slots|set_list||equipSlots
+equip_slots|set_cursor||1
+help|set_text||UP/DOWN: slot    ENTER: change    ESC: back
+equip_list|open_window||
+equip_list|set_list||equipment
+equip_list|set_cursor||1
+equip_info|open_window||
+equip_info|set_text||{sel('equip_list').name}
+{sel('equip_list').description}
+
+PREVIEW: {sel('equip_list').preview}
+help|set_text||UP/DOWN: select    ENTER: equip    ESC: back
 UI GOLDEN END

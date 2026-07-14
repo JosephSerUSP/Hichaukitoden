@@ -1,6 +1,7 @@
 {
   "ui": {
-    "activeFont": "Silkscreen",
+    "activeFont": "04B_03__",
+    "fontSize": 8,
     "menuSlideDuration": 0.15,
     "moveTransitionDuration": 0.15,
     "inputCooldown": 0.3,
@@ -53,7 +54,8 @@
         0.6,
         1
       ]
-    ]
+    ],
+    "textRevealDelay": 0.02
   },
   "physics": {
     "gravity": 480,
@@ -61,8 +63,9 @@
     "horizontalScatter": 0
   },
   "battle_screen": {
-    "damagePopupLife": 1.1,
+    "damagePopupLife": 1.5,
     "popup": {
+      "characterDelay": 0.04,
       "damageFormat": "{0}",
       "damageColor": [
         1,
@@ -96,6 +99,29 @@
         0.77,
         0.62,
         1,
+        1
+      ]
+    },
+    "victoryExpPerSecond": 40,
+    "animations": {
+      "flashDuration": 0.35,
+      "flashColorAction": [
+        0.8,
+        1,
+        1
+      ],
+      "flashColorDamage": [
+        1,
+        0.2,
+        0.2
+      ],
+      "shakeDuration": 0.3,
+      "shakeAmplitude": 2,
+      "shakeFrequency": 30,
+      "deadTint": [
+        0.28,
+        0.26,
+        0.32,
         1
       ]
     }

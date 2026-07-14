@@ -123,7 +123,7 @@
             if (canvas && !mapCanvas) {
                 mapCanvas = canvas;
                 ctx = canvas.getContext('2d');
-                initCanvasEvents();
+                initCanvasEvents(canvas);
             }
             renderGridCells();
             document.querySelectorAll('.map-tree-item').forEach(el => {
@@ -138,7 +138,6 @@
         function renderGridCells() {
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
-
             const canvas = document.getElementById('map-canvas');
             if (!canvas) return;
             ctx = canvas.getContext('2d');
@@ -240,8 +239,8 @@
             }
         }
 
-        function initCanvasEvents() {
-            const canvas = document.getElementById('map-canvas');
+        function initCanvasEvents(canvas) {
+            canvas = canvas || document.getElementById('map-canvas');
             if (!canvas) return;
 
             canvas.addEventListener('contextmenu', (e) => {
@@ -370,54 +369,30 @@
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
 
-            const menu = document.getElementById('canvas-context-menu');
-            menu.innerHTML = '';
-
-            const addItem = (label, onClick, danger) => {
-                const item = document.createElement('div');
-                item.className = 'context-menu-item';
-                item.style.padding = '4px 8px';
-                item.style.cursor = 'default';
-                item.style.display = 'flex';
-                item.style.alignItems = 'center';
-                item.style.gap = '6px';
-                if (danger) item.style.color = '#cc0000';
-                item.textContent = label;
-                item.onclick = () => { menu.style.display = 'none'; onClick(); };
-                menu.appendChild(item);
-            };
-            const addSeparator = () => {
-                const sep = document.createElement('div');
-                sep.style.borderTop = '1px solid #808080';
-                sep.style.margin = '2px 0';
-                menu.appendChild(sep);
-            };
-
+            // E6: shared context-menu primitive (same one the command list
+            // and scene canvas use) — replaces the bespoke
+            // #canvas-context-menu popup so map/window editing look alike.
+            const items = [];
             if (editingMode === 'event') {
                 const existingEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
                 if (existingEvent) {
-                    addItem('✏️ Edit Event...', () => openEventModal(x, y));
-                    addItem('📋 Copy Event', () => { selectedEvent = existingEvent; eventCopyBuffer = JSON.stringify(existingEvent); });
-                    addItem('❌ Delete Event', () => {
+                    items.push({ label: '✏️ Edit Event...', action: () => openEventModal(x, y) });
+                    items.push({ label: '📋 Copy Event', action: () => { selectedEvent = existingEvent; eventCopyBuffer = JSON.stringify(existingEvent); } });
+                    items.push({ label: '❌ Delete Event', action: () => {
                         map.events = map.events.filter(ev => ev !== existingEvent);
                         setDirty(true);
                         renderGridCells();
-                    }, true);
+                    } });
                 } else {
-                    addItem('➕ Add Event Here...', () => openEventModal(x, y));
-                    if (eventCopyBuffer) {
-                        addItem('📋 Paste Event', () => pasteEventAt(x, y));
-                    }
+                    items.push({ label: '➕ Add Event Here...', action: () => openEventModal(x, y) });
+                    items.push({ label: '📋 Paste Event', action: () => pasteEventAt(x, y), disabled: !eventCopyBuffer });
                 }
-                addSeparator();
+                items.push('-');
             }
-
-            addItem('🚩 Set Player Start Position Here', () => setPlayerStartPosition(x, y));
-
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
-            menu.style.display = 'block';
+            items.push({ label: '🚩 Set Player Start Position Here', action: () => setPlayerStartPosition(x, y) });
+            showCmdContextMenu(e.clientX, e.clientY, items);
         }
+
 
         window.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
