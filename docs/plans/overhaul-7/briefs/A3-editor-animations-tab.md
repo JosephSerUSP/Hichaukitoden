@@ -13,13 +13,18 @@ options with effort estimates, don't choose unilaterally.
 - [ ] New Animations tab in `tools/editor` following the registry pattern
       (like Effect Types / Trait Codes): system entries pre-seeded,
       always present, non-deletable; assignable entries CRUD.
-- [ ] Per-`kind` field rendering via existing `widgets.js` patterns;
-      color fields reuse existing color widgets; unknown `kind` values in
-      loaded data render read-only rather than breaking the tab.
-- [ ] Live preview pane animates a dummy battler sprite per the entry.
-      Path (engine bridge vs. JS reimplementation) chosen by owner and
-      documented. Fidelity bar: timing and color visibly match in-game
-      results for the 4 ported entries.
+- [ ] Entries edit as a track list: add/remove/reorder typed tracks, each
+      with its own field set via existing `widgets.js` patterns — tint
+      colors via color widgets, particle emitter params, `mask: "target"`
+      toggle, per-axis scale inputs, blend-mode dropdown. Unknown track
+      types in loaded data render read-only rather than breaking the tab.
+- [ ] Live preview pane animates a dummy battler sprite per the entry,
+      reusing the ENGINE via the E5/E12 bridge precedent (`preview-anim`
+      CLI mode + server endpoint; frame-sequence PNGs acceptable v1) —
+      particles/masking/blend make a JS reimplementation unrealistic.
+      Approach confirmed with owner before building; documented.
+      Fidelity bar: timing, color, blend, and masking visibly match
+      in-game results for the ported system entries.
 - [ ] Skills and items editors gain an `animation` picker: dropdown of
       assignable entries + "(default)"; writes/clears the field.
 - [ ] Editor save round-trips animations.json without reordering or

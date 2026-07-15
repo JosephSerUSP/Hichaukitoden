@@ -10,9 +10,23 @@ animation player; dissolves hardcoded renderer animation constants into it.
 
 ## Acceptance Criteria
 - [ ] `data/animations.json` per SPEC S2 schema: `class` system/assignable,
-      `kind` discriminator (`flash`, `shake`, `tint_fade`, `text_flow`,
-      `slide`), unknown kinds fail soft (one log line, skip). Readers
-      ignore unrecognized optional fields.
+      entries composed of typed TRACKS (`tint`, `blend`, `transform` with
+      independent x/y scale, `shake`, `particles`, `text_flow`), each with
+      t0/duration/easing. Unknown track types fail soft (one log line,
+      skip track). Readers ignore unrecognized optional fields.
+- [ ] Particles track built on LÖVE `ParticleSystem` (texture ref or
+      colored-quad fallback; rate, lifetime, spread/velocity, gravity,
+      color-over-life, blend mode). `mask: "target"` clips particles to
+      the target sprite's silhouette via stencil test against sprite
+      alpha; absent → unclipped. At least one demo assignable entry
+      exercises particles + masking together.
+- [ ] Transform track supports per-axis scaling about the sprite anchor;
+      SPRITE scaling only — the o5 rule stands: never graphics-scale a
+      windowskin.
+- [ ] The ported `system.death` entry is expressed as tracks
+      (blend add + tint purple/fade + transform y-offset), reproducing
+      today's `renderer.lua` ~L690 composite. If any ported entry can't
+      be expressed in tracks, fix the schema, don't special-case.
 - [ ] All reserved system ids present and validated by G1:
       `system.damage_flash`, `system.damage_shake`, `system.death`,
       `system.small_damage`, `system.enemy_slide_in`, `system.heal`.

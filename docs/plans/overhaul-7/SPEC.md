@@ -96,25 +96,57 @@ layering violation, stop and report. S-series affects UI-golden traces
 Create `data/animations.json` and an engine-side animation player;
 dissolve the hardcoded renderer constants into it.
 
-- **Schema (v1, extensible):** a list of entries
-  `{ id, kind, class, tracks..., … }` where:
+- **Schema (v1, extensible): entries compose typed TRACKS, not one
+  monolithic kind.** Grounding: the existing death animation
+  (`renderer.lua` ~L690) is already a composite — additive blend + purple
+  tint + y-offset + alpha fade running together. The schema must express
+  that as data. An entry is
+  `{ id, class, duration, tracks: [ {type, ...}, ... ], sound? }` where:
   - `class`: `"system"` or `"assignable"`. System entries use reserved ids
     (`system.damage_flash`, `system.damage_shake`, `system.death`,
     `system.small_damage`, `system.enemy_slide_in`, `system.heal`);
     validator requires all reserved ids present. Assignable entries are
     free-form ids referenced by skills/items (A2).
-  - `kind` discriminates the payload: v1 ships `flash`, `shake`, `tint_fade`
-    (death), `text_flow` (absorbs `healing_sparkle`), `slide`. Unknown
-    kinds must fail soft (log once, skip) so future kinds (sprite-sheet
-    effects, projectiles) don't crash old engine builds.
-  - Common fields: `duration` (ms), `color`, `amplitude`, `easing`
-    (string id, v1: `linear`/`ease_out`), `targetPart`, `sound` (optional,
-    id into sounds.json — wire only if PLAY_SE plumbing already reaches
-    the battle layer; do not build new audio paths, per o4 S9 discipline).
+  - **Track types (v1):**
+    - `tint` — color + alpha over time (flash overlays, death purple,
+      fade-out). Fields: color from/to, alpha from/to.
+    - `blend` — sets the target's blend mode for the track's span
+      (`alpha`/`add`; leave room for `multiply`/`subtract` later). The
+      death and flash effects both use `add` today.
+    - `transform` — offset x/y, **scale x/y independently** (owner ask:
+      squash/stretch on either or both axes; scale is about the sprite's
+      anchor point, and it is SPRITE scaling — never windowskin scaling,
+      per the o5 scale-anim rule), rotation reserved for later.
+    - `shake` — amplitude + frequency (absorbs `damage_shake` and the
+      smallBattler shake).
+    - `particles` — an emitter: particle texture ref (or 1–4px colored
+      quads for v1 if no texture given), emission rate, lifetime, spread/
+      velocity, gravity, color-over-life, blend mode. Built on LÖVE's
+      `ParticleSystem`. Optional `mask: "target"` clips emitted particles
+      to the target battler's sprite silhouette (stencil test against the
+      sprite's alpha) — owner ask: "a given particle only shows within
+      the target". `mask` absent → particles unclipped.
+    - `text_flow` — absorbs `healing_sparkle` (sequence string, interval,
+      targetPart).
+  - Each track has `t0`/`duration` (ms, relative to entry start) and
+    `easing` (string id, v1: `linear`/`ease_out`), so tracks can stagger.
+    Unknown track types must fail soft (log once, skip track) so future
+    types (sprite-sheet frames, projectiles, screen-space effects) don't
+    crash old engine builds.
+  - `sound` (optional, id into sounds.json — wire only if PLAY_SE
+    plumbing already reaches the battle layer; do not build new audio
+    paths, per o4 S9 discipline).
+  - Ported system entries double as the schema's proof: `system.death` =
+    blend(add) + tint(purple→fade) + transform(y-offset); flash =
+    blend(add) + tint; shake = shake track. If a ported entry can't be
+    expressed in tracks, the schema is wrong — fix the schema, don't
+    special-case the entry.
 - **Player module** (`presentation/animation_player.lua` or similar): owns
-  active-animation instances `{entryId, target, t0}`; renderer call sites
-  ask it for the current offset/tint/alpha of a battler instead of keeping
-  their own timers. Existing inline timers in `renderer.lua` and the
+  active-animation instances `{entryId, target, t0}` and their live
+  ParticleSystems; renderer call sites ask it for the target's current
+  transform (offset, scale x/y), tint, and blend mode instead of keeping
+  their own timers, and call a `drawEffects(target)` pass for particles/
+  text_flow (with stencil masking applied when the track asks for it). Existing inline timers in `renderer.lua` and the
   `battle_screen.animations` block values migrate INTO animations.json
   entries; `small_battlers.lua` reads the system entries.
 - **`data/animations.lua` is deleted** once its 4 entries are ported;
@@ -145,15 +177,24 @@ dissolve the hardcoded renderer constants into it.
 
 - New tab in `tools/editor` following the registry pattern: system entries
   pre-seeded, always present, not deletable; assignable entries CRUD.
-- Fields render per `kind` (widgets.js patterns); color fields reuse the
-  existing color widgets; `sound` uses the sounds picker if one exists.
-- **Live preview**: a preview pane that runs the entry against a dummy
-  battler sprite. Prefer reusing the engine via the existing editor↔engine
-  bridge (`tools/editor/server.js` / engine `server.lua`) if a preview
-  channel exists; otherwise a faithful JS re-implementation of the v1
-  kinds is acceptable — document which path was taken and why. Fidelity
-  bar: timing and color must visibly match the in-game result for the 4
-  ported entries.
+- Entries edit as a **track list**: add/remove/reorder typed tracks, each
+  rendering its own field set per track type (widgets.js patterns) —
+  tint colors via the existing color widgets, particle emitter params,
+  the `mask: "target"` toggle, per-axis scale inputs, blend-mode dropdown.
+  `sound` uses the sounds picker if one exists. Unknown track types in
+  loaded data render read-only, never break the tab.
+- **Live preview** (owner: first-class requirement): a preview pane that
+  runs the entry against a dummy battler sprite. With particles, stencil
+  masking, and blend modes in the schema, a faithful JS re-implementation
+  is no longer realistic — **the preview should reuse the engine** via
+  the existing editor↔engine bridge, following the E5/E12 precedent
+  (`preview-scene`/`preview-window` CLI modes + server endpoints): a
+  `preview-anim <id> <mockJSON>` mode that plays the entry on a dummy
+  battler and returns frames (an animated sequence of PNGs at fixed
+  timestamps is acceptable v1; a live-rendering channel is the stretch
+  goal). Confirm the approach with the owner before building; document
+  what shipped. Fidelity bar: timing, color, blend, and masking must
+  visibly match the in-game result for the ported system entries.
 - Skills/items editors gain an `animation` picker (dropdown of assignable
   entries + "(default)").
 
@@ -239,7 +280,9 @@ Owner-supervised (touches `engine/scenes/battle.lua`).
   behavior semantics equivalent to today (random within legal set) except
   where the old code was buggy; flag bugs, don't redesign.
 - No battle/map scene window conversion (S8).
-- No sprite-sheet/projectile animation kinds — schema leaves the door
-  open, v1 does not implement them.
+- No sprite-sheet-frame or projectile track types — schema leaves the
+  door open, v1 does not implement them. (Particles ARE in scope — owner
+  ask, 15.07.2026.) No screen/map-level animation tracks either (the
+  direction note's "perhaps"): battler-scoped only this round.
 - No new interpreter commands unless a brief strictly needs one; check
   `PLAY_ANIM` first.
