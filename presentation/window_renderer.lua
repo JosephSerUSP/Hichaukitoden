@@ -631,6 +631,78 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     end
 end
 
+-- Reserve scene (overhaul-6 F3): while picking a Swap target (v.mode == 4),
+-- the source slot is shown as a black silhouette and a ghost of it floats
+-- above, drifting in a sine wave between a -2 and -6 offset (up-left diagonal,
+-- a bit faster). The shadow scales down as the ghost drifts away, selling the
+-- "floating" illusion. Works for both an occupied source (ghost of the creature
+-- panel) and an empty source (ghost of the empty slot panel).
+local swapGhostCanvas = nil
+local swapGhostKey = nil
+local function drawSwapIndicator(state, sceneData, ctx)
+    local v = state.v
+    if not v or v.mode ~= 4 then return end
+    local session = ctx.session
+    if not session then return end
+    local isReserve = v.swapSourceIsReserve
+    local srcIdx = v.swapSourceIndex
+    if not srcIdx then return end
+    local arr = isReserve and session.reserve or session.party
+    local battler = arr and arr[srcIdx]
+
+    local srcWinId = isReserve and "reserve_roster" or "reserve_party"
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+    local layout = layouts[srcWinId] or {}
+    local x = ui.toPx(layout.x or 0)
+    local y = ui.toPx(layout.y or 0)
+    local contentX, contentY = contentOrigin(layout, nil, x, y)
+    local cols = layout.gridColumns or 2
+    local cx, cy = actor_status.gridSlot(contentX, contentY, srcIdx, session, cols)
+
+    local colW, rowH = actor_status.cellSize(session)
+    colW, rowH = math.floor(colW), math.floor(rowH)
+
+    -- Cache the ghost (creature panel or empty slot) on an offscreen canvas.
+    -- Both branches render the panel at canvas (0,0) so the draw position is
+    -- exact. The slot's own draw calls set opaque colors, so a global alpha
+    -- would not propagate without the canvas.
+    local creatureId = battler and (battler.actorData and battler.actorData.id or battler.name) or "empty"
+    local key = srcWinId .. ":" .. tostring(srcIdx) .. ":" .. tostring(creatureId)
+    if key ~= swapGhostKey or not swapGhostCanvas then
+        swapGhostCanvas = love.graphics.newCanvas(colW, rowH)
+        swapGhostKey = key
+        love.graphics.push("all")
+        love.graphics.setCanvas(swapGhostCanvas)
+        love.graphics.clear(0, 0, 0, 0)
+        if battler then
+            actor_status.draw(battler, 2, 2, false, session)
+        else
+            ui.drawPanel(0, 0, colW - 2, rowH - 2, nil, true)
+        end
+        love.graphics.setCanvas()
+        love.graphics.pop()
+    end
+
+    local panelX, panelY = cx - 2, cy - 2
+    local w, h = colW - 2, rowH - 2
+    local t = love.timer.getTime()
+    local mag = 4 + 2 * math.sin(t * 4) -- oscillates 2..6 (a bit faster)
+
+    -- The source slot is still drawn by the grid. Fill it pure black so it
+    -- reads as the empty "picked up" slot, and float a full-opacity ghost of
+    -- it above in a gentle sine wave.
+    love.graphics.push("all")
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("fill", panelX, panelY, w, h)
+    love.graphics.pop()
+
+    -- The ghost floats above at full opacity, drifting in the same sine wave.
+    love.graphics.push("all")
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(swapGhostCanvas, panelX - mag, panelY - mag)
+    love.graphics.pop()
+end
+
 -- Horizontal option row (confirm/command style): options spread across the
 -- width. The active choice gets a small WSkin_Highlight backdrop behind its
 -- text (ui.drawPanel's `highlight` param), same idea as the actor_status
@@ -913,6 +985,13 @@ function wr.draw(state, sceneData, ctx)
             -- replays the animation.
             openClocks[win] = nil
         end
+    end
+
+    -- Reserve scene (overhaul-6 F3): while picking a Swap target (v.mode == 4),
+    -- the source slot is dimmed and a full-opacity ghost of its panel floats
+    -- above it (sine drift), as a "select target slot" cue.
+    if sceneData.id == "reserve" then
+        drawSwapIndicator(state, sceneData, ctx)
     end
 end
 

@@ -771,14 +771,36 @@ local function buildScriptApi(ctx)
         return list
     end
     function api.party(i)
+        local src = ctx.party or session.party or {}
+        if i ~= nil then
+            -- Slot-indexed access: return the occupant of slot i (1..4) or nil.
+            -- Resolves by explicit index (not ipairs) so a sparse party array
+            -- (a gap left by a removed creature) still maps correctly -- without
+            -- this, an occupied slot past a gap reads as empty and the Reserve
+            -- menu could offer Summon into it, silently overwriting the creature.
+            local m = src[i]
+            if m then
+                local view = formulaEngine.battlerView(m, session) or {}
+                view.index = i
+                return view
+            end
+            return nil
+        end
         local out = {}
-        for idx, m in ipairs(ctx.party or session.party or {}) do
+        for idx, m in ipairs(src) do
             local view = formulaEngine.battlerView(m, session) or {}
             view.index = idx
             table.insert(out, view)
         end
-        if i ~= nil then return out[i] end
         return out
+    end
+    function api.partyCount()
+        local src = ctx.party or session.party or {}
+        local n = 0
+        for _, m in pairs(src) do
+            if m then n = n + 1 end
+        end
+        return n
     end
     api.getSkill = function(id)
         local l = ctx.loader or session.loader
@@ -815,12 +837,17 @@ local function buildScriptApi(ctx)
     end
     function api.summon(actorId, isReserve, index)
         local actorData = session.loader.getActor(actorId)
-        if actorData then
-            local battler = require("engine.session").Battler.new(actorData, session.dungeonFloor or 1)
-            battler.hp = battler:getMaxHp(session)
-            local arr = isReserve and session.reserve or session.party
-            arr[index] = battler
-        end
+        if not actorData then return false end
+        -- Never overwrite an occupied slot: Summon targets an EMPTY slot only
+        -- (the Reserve menu offers it solely for empty slots). Returning false
+        -- here is the engine-level safety net so a creature already in the
+        -- target slot can never be silently destroyed by a Summon.
+        local arr = isReserve and session.reserve or session.party
+        if arr[index] then return false end
+        local battler = require("engine.session").Battler.new(actorData, session.dungeonFloor or 1)
+        battler.hp = battler:getMaxHp(session)
+        arr[index] = battler
+        return true
     end
     function api.sacrifice(isReserve, index)
         local arr = isReserve and session.reserve or session.party
