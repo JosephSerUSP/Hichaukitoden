@@ -6,6 +6,7 @@ local iconset
 local iconSize = 12
 local windowskin
 local windowskinHighlight
+local targetSkin
 local mainFont
 local popupFont
 
@@ -77,6 +78,11 @@ function ui.init()
     if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
         windowskinHighlight = love.graphics.newImage("assets/system/WSkin_Highlight.png")
         windowskinHighlight:setFilter("nearest", "nearest")
+    end
+
+    if love.filesystem.getInfo("assets/system/UI_Target.png") then
+        targetSkin = love.graphics.newImage("assets/system/UI_Target.png")
+        targetSkin:setFilter("nearest", "nearest")
     end
     
     -- Load active font from system config
@@ -197,6 +203,60 @@ function ui.drawPanel(x, y, w, h, title, highlight)
         ui.drawString(title, x + ui.tileSize * 0.5, y)
     end
     
+    love.graphics.pop()
+end
+
+-- Draw RPG Maker 2003 styled targeting reticle using UI_Target.png
+-- Layout specifications:
+-- 32x32 image with 8px corners and 16px edges.
+-- The reticle size alternates between the base target size and target size + 2.
+function ui.drawTargetReticle(x, y, w, h)
+    love.graphics.push("all")
+    local skin = targetSkin or windowskin
+    if skin then
+        local wsW, wsH = skin:getDimensions()
+        
+        -- Oscillation offset: alternates between 0 and 2 every ~0.125 seconds
+        local t = love.timer.getTime()
+        local offset = math.floor(t * 8) % 2 == 0 and 0 or 2
+        
+        local rx = x - offset / 2
+        local ry = y - offset / 2
+        local rw = w + offset
+        local rh = h + offset
+        
+        local edgeW = rw - 16
+        local edgeH = rh - 16
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        
+        -- Top side edge (x=8, y=0, w=16, h=8)
+        local topQuad = love.graphics.newQuad(8, 0, 16, 8, wsW, wsH)
+        love.graphics.draw(skin, topQuad, rx + 8, ry, 0, edgeW / 16, 1)
+
+        -- Bottom side edge (x=8, y=24, w=16, h=8)
+        local botQuad = love.graphics.newQuad(8, 24, 16, 8, wsW, wsH)
+        love.graphics.draw(skin, botQuad, rx + 8, ry + rh - 8, 0, edgeW / 16, 1)
+
+        -- Left side edge (x=0, y=8, w=8, h=16)
+        local leftQuad = love.graphics.newQuad(0, 8, 8, 16, wsW, wsH)
+        love.graphics.draw(skin, leftQuad, rx, ry + 8, 0, 1, edgeH / 16)
+
+        -- Right side edge (x=24, y=8, w=8, h=16)
+        local rightQuad = love.graphics.newQuad(24, 8, 8, 16, wsW, wsH)
+        love.graphics.draw(skin, rightQuad, rx + rw - 8, ry + 8, 0, 1, edgeH / 16)
+
+        -- Draw 8px Corners
+        local tlQuad = love.graphics.newQuad(0, 0, 8, 8, wsW, wsH)
+        local trQuad = love.graphics.newQuad(24, 0, 8, 8, wsW, wsH)
+        local blQuad = love.graphics.newQuad(0, 24, 8, 8, wsW, wsH)
+        local brQuad = love.graphics.newQuad(24, 24, 8, 8, wsW, wsH)
+
+        love.graphics.draw(skin, tlQuad, rx, ry)
+        love.graphics.draw(skin, trQuad, rx + rw - 8, ry)
+        love.graphics.draw(skin, blQuad, rx, ry + rh - 8)
+        love.graphics.draw(skin, brQuad, rx + rw - 8, ry + rh - 8)
+    end
     love.graphics.pop()
 end
 

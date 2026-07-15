@@ -1478,6 +1478,7 @@ function love.draw()
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
         drawSharedPartyHud()
+        renderer.drawTargetReticles(bv.battle, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
     end
     end
     

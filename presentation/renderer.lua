@@ -569,6 +569,97 @@ end
 -- declarative "party" window in presentation/window_renderer.lua, drawn for
 -- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
 
+local function getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" then return {} end
+    local session = renderer.session
+    if not session then return {} end
+    
+    local memberInfo = livingMembers and livingMembers[activeMemberIdx]
+    if not memberInfo then return {} end
+    local monster = memberInfo.actor
+
+    if spellSelect then
+        -- Hovering a skill
+        local options = {}
+        for _, skId in ipairs(monster.skills or {}) do
+            local sk = session.loader.getSkill(skId)
+            if sk then table.insert(options, sk) end
+        end
+        local choice = options[selectedIndex]
+        if not choice then return {} end
+
+        if choice.target == "enemy" or choice.target == "enemy-any" then
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        elseif choice.target == "self" then
+            return { monster }
+        else
+            -- ally-any: target the ally with the lowest HP
+            local lowestHp = 9999
+            local target = nil
+            for _, c in ipairs(session.party) do
+                if c and not c:isDead() and c.hp < lowestHp then
+                    lowestHp = c.hp
+                    target = c
+                end
+            end
+            if target then return { target } end
+        end
+    elseif itemSelect then
+        -- Hovering an item
+        local items = {}
+        local inv = session.inventory or {}
+        local stacks = {}
+        for itemId, qty in pairs(inv) do
+            if qty > 0 then table.insert(stacks, itemId) end
+        end
+        table.sort(stacks)
+        for _, id in ipairs(stacks) do
+            local it = session.loader.getItem(id)
+            if it then table.insert(items, it) end
+        end
+        local choice = items[selectedIndex]
+        if not choice then return {} end
+
+        if choice.targetScope == "party" then
+            -- Targets the entire party
+            local targets = {}
+            for _, c in ipairs(session.party) do
+                if c and not c:isDead() then
+                    table.insert(targets, c)
+                end
+            end
+            return targets
+        elseif choice.targetScope == "enemy" or choice.targetScope == "enemy-any" then
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        else
+            -- Default single ally target
+            return { monster }
+        end
+    else
+        -- Main menu option
+        if selectedIndex == 1 then
+            -- Attack targets the first living enemy
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        elseif selectedIndex == 3 then
+            -- Defend targets self
+            return { monster }
+        end
+    end
+    return {}
+end
+
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
     renderer.activeBattle = battleState
     
@@ -837,6 +928,75 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local prompt = (victoryAnim.stage == 0) and "[ENTER]" or (victoryAnim.stage == 2 and "[SPACE]" or "")
         if prompt ~= "" then
             ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
+        end
+    end
+end
+
+function renderer.drawTargetReticles(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" or not battleState then return end
+    
+    local session = renderer.session
+    if not session then return end
+    
+    local targets = getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    for _, target in ipairs(targets) do
+        local tx, ty, tw, th
+        
+        -- Is it an enemy?
+        local isEnemy = false
+        local enemyIdx = nil
+        for idx, enemy in ipairs(battleState.enemies) do
+            if enemy == target then
+                isEnemy = true
+                enemyIdx = idx
+                break
+            end
+        end
+        
+        if isEnemy then
+            local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+            local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+            local ey = layoutVal("enemyY")
+            local portrait = getPortrait(target.spriteKey or target.id)
+            tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
+            th = tw
+            tx = ex
+            ty = ey
+        else
+            -- It's a party member
+            local allyIdx = nil
+            for idx, c in ipairs(session.party) do
+                if c == target then
+                    allyIdx = idx
+                    break
+                end
+            end
+            
+            if allyIdx then
+                local loaderRef = session.loader
+                local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+                local partyLayout = layouts and layouts.party or {}
+                local px = partyLayout.x or 0
+                local py = partyLayout.y or 18
+                local title = partyLayout.title
+                local contentX = partyLayout.contentX or partyLayout.textX or 1
+                local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+                local gridX = ui.toPx(px + contentX)
+                local gridY = ui.toPx(py + contentY)
+                local cols = partyLayout.gridColumns or 2
+                local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
+                
+                local colW, rowH = actor_status.cellSize(session)
+                tx = slotX - 2
+                ty = slotY - 2
+                tw = colW - 2
+                th = rowH - 2
+            end
+        end
+        
+        if tx and ty and tw and th then
+            ui.drawTargetReticle(tx, ty, tw, th)
         end
     end
 end
