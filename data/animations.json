@@ -50,7 +50,7 @@
     "class": "system",
     "duration": 350,
     "tracks": [
-      { "type": "transform", "t0": 0, "duration": 350, "fromX": 280, "toX": 0, "easing": "linear" }
+      { "type": "transform", "t0": 0, "duration": 350, "fromX": 280, "toX": 0, "easing": "ease_out" }
     ]
   },
   "system.heal": {
