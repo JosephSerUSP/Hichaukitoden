@@ -120,11 +120,39 @@
             let selectedId = pendingWindowSelect;
             pendingWindowSelect = null;
 
-            // Live geometry: unsaved windowLayout edits override the payload
+            // Live geometry: unsaved windowLayout edits override the payload.
+            // S1w: for data-authored windows (scene.windows), edits go to the
+            // window def's rect directly, bypassing engine.json windowLayout.
+            const liveRectOf = (id) => {
+                const sceneWindows = scene.windows;
+                if (sceneWindows && sceneWindows.length > 0) {
+                    const dw = sceneWindows.find(x => x.id === id);
+                    if (dw && dw.rect) return dw.rect;
+                }
+                return null;
+            };
             const geomOf = (w) => {
                 const l = wl()[w.id];
-                if (!l) return { x: w.x, y: w.y, width: w.width, height: w.height, style: w.style, title: w.title, missing: !w.hasLayout };
+                if (!l) {
+                    // S1w: check for data-authored window rect.
+                    const live = liveRectOf(w.id);
+                    if (live) return { x: live.x, y: live.y, width: live.w, height: live.h, style: w.style || 'panel', title: w.title, missing: false };
+                    return { x: w.x, y: w.y, width: w.width, height: w.height, style: w.style, title: w.title, missing: !w.hasLayout };
+                }
                 return { x: l.x || 0, y: l.y || 0, width: l.width || 8, height: l.height || 4, style: l.style || 'panel', title: l.title != null ? l.title : w.title, contentY: l.contentY };
+            };
+
+            // S1w: helper to write rect edits back to the right place.
+            const applyRectEdit = (id, key, value) => {
+                const sceneWindows = scene.windows;
+                if (sceneWindows && sceneWindows.length > 0) {
+                    const dw = sceneWindows.find(x => x.id === id);
+                    if (dw && dw.rect) {
+                        dw.rect[key] = value;
+                        return true;
+                    }
+                }
+                return false;
             };
 
             const frameImage = (d) => {
@@ -278,7 +306,14 @@
                 head.textContent = w.id + (layout ? '' : '  (no windowLayout entry)');
                 dock.appendChild(head);
 
-                if (layout) {
+                // S1w: for data-authored windows, the rect lives in scene.windows
+                // entries rather than engine.json windowLayout. The inspector dock
+                // reads/writes the right source.
+                const sceneWindows = scene.windows;
+                const isDataAuthored = sceneWindows && sceneWindows.length > 0 && sceneWindows.find(x => x.id === w.id);
+                const rectSource = isDataAuthored ? (isDataAuthored.rect || {}) : layout;
+
+                if (layout || isDataAuthored) {
                     const grid = document.createElement('div');
                     grid.style.cssText = 'display: grid; grid-template-columns: 52px 70px 52px 70px; gap: 3px; align-items: center; margin-bottom: 4px;';
                     const numField = (key) => {
@@ -289,10 +324,23 @@
                         inp.step = '0.5';
                         inp.className = 'win98-input';
                         inp.style.width = '64px';
-                        inp.value = layout[key] != null ? layout[key] : '';
+                        // Map scene.rect keys (x,y,w,h) to layout keys (x,y,width,height).
+                        const layoutKey = key === 'width' ? 'width' : key === 'height' ? 'height' : key;
+                        const rectKey = key;
+                        inp.value = isDataAuthored
+                            ? (isDataAuthored.rect ? isDataAuthored.rect[rectKey] : 0)
+                            : (layout[key] != null ? layout[key] : '');
                         inp.oninput = () => {
                             const n = parseFloat(inp.value);
-                            if (!isNaN(n)) { layout[key] = n; setDirty(true); draw(); }
+                            if (isNaN(n)) return;
+                            if (isDataAuthored) {
+                                if (!isDataAuthored.rect) isDataAuthored.rect = { x: 0, y: 0, w: 8, h: 4 };
+                                isDataAuthored.rect[rectKey] = n;
+                            } else {
+                                layout[key] = n;
+                            }
+                            setDirty(true);
+                            draw();
                         };
                         grid.appendChild(lbl);
                         grid.appendChild(inp);
@@ -309,12 +357,17 @@
                     const styleLbl = document.createElement('span');
                     styleLbl.textContent = 'style';
                     styleLbl.style.width = '52px';
-                    const styleSel = makeSelect(['list', 'panel', 'frame', 'confirm', 'roulette'], layout.style || 'panel', (v) => {
-                        layout.style = v;
+                    const currentStyle = isDataAuthored ? (isDataAuthored.style || 'panel') : (layout.style || 'panel');
+                    const styleSel = makeSelect(['list', 'panel', 'frame', 'confirm', 'roulette', 'partyGrid'], currentStyle, (v) => {
+                        if (isDataAuthored) { isDataAuthored.style = v; } else { layout.style = v; }
                         setDirty(true);
                         draw();
                     }, null);
-                    styleSel.onchange = () => { layout.style = styleSel.value; setDirty(true); draw(); };
+                    styleSel.onchange = () => {
+                        const v = styleSel.value;
+                        if (isDataAuthored) { isDataAuthored.style = v; } else { layout.style = v; }
+                        setDirty(true); draw();
+                    };
                     styleRow.appendChild(styleLbl);
                     styleRow.appendChild(styleSel);
                     dock.appendChild(styleRow);
@@ -327,9 +380,12 @@
                     const titleInp = document.createElement('input');
                     titleInp.className = 'win98-input';
                     titleInp.style.flex = '1';
-                    titleInp.value = layout.title != null ? layout.title : '';
+                    titleInp.value = isDataAuthored
+                        ? (isDataAuthored.title != null ? isDataAuthored.title : '')
+                        : (layout.title != null ? layout.title : '');
                     titleInp.oninput = () => {
-                        layout.title = titleInp.value.trim() === '' ? null : titleInp.value;
+                        const v = titleInp.value.trim() === '' ? null : titleInp.value;
+                        if (isDataAuthored) { isDataAuthored.title = v; } else { layout.title = v; }
                         setDirty(true);
                         draw();
                     };
@@ -369,6 +425,107 @@
                 if (w.error) lines.push('ERROR: ' + w.error);
                 contents.textContent = lines.join('\n');
                 dock.appendChild(contents);
+
+                // S1w: if the scene has a data-authored windows array, show
+                // content block editor in the inspector dock.
+                // (sceneWindows is already declared above in this function scope)
+                if (sceneWindows && sceneWindows.length > 0) {
+                    const dataWin = sceneWindows.find(x => x.id === w.id);
+                    if (dataWin) {
+                        const contentBox = document.createElement('fieldset');
+                        contentBox.style.cssText = 'padding: 4px; margin-top: 6px;';
+                        const contentLegend = document.createElement('legend');
+                        contentLegend.textContent = 'Content Blocks (scene data)';
+                        contentBox.appendChild(contentLegend);
+
+                        (dataWin.content || []).forEach((block, bi) => {
+                            const blockDiv = document.createElement('div');
+                            blockDiv.style.cssText = 'border: 1px solid var(--win-shadow); padding: 4px; margin-bottom: 4px; font-size: 10px;';
+                            const typeLabel = document.createElement('div');
+                            typeLabel.style.cssText = 'font-weight: bold; color: var(--win-highlight);';
+                            typeLabel.textContent = '[' + block.type + ']';
+                            blockDiv.appendChild(typeLabel);
+
+                            if (block.type === 'text') {
+                                const ta = document.createElement('textarea');
+                                ta.className = 'win98-input';
+                                ta.style.cssText = 'width: 100%; height: 40px; font-family: monospace; font-size: 10px; box-sizing: border-box; resize: vertical; margin-top: 2px;';
+                                ta.value = block.text || '';
+                                ta.oninput = () => { block.text = ta.value; setDirty(true); };
+                                blockDiv.appendChild(ta);
+                            } else if (block.type === 'list') {
+                                const grid = document.createElement('div');
+                                grid.style.cssText = 'display: grid; grid-template-columns: 60px 1fr; gap: 2px; margin-top: 2px;';
+                                const addField = (label, key) => {
+                                    const lbl = document.createElement('span');
+                                    lbl.textContent = label;
+                                    const inp = document.createElement('input');
+                                    inp.className = 'win98-input';
+                                    inp.style.width = '100%';
+                                    inp.value = block[key] || '';
+                                    inp.oninput = () => { block[key] = inp.value; setDirty(true); };
+                                    grid.appendChild(lbl);
+                                    grid.appendChild(inp);
+                                };
+                                addField('listId', 'listId');
+                                addField('format', 'format');
+                                addField('cursor', 'cursor');
+                                blockDiv.appendChild(grid);
+                            } else if (block.type === 'gauge') {
+                                const grid = document.createElement('div');
+                                grid.style.cssText = 'display: grid; grid-template-columns: 60px 1fr; gap: 2px; margin-top: 2px;';
+                                const addField = (label, key) => {
+                                    const lbl = document.createElement('span');
+                                    lbl.textContent = label;
+                                    const inp = document.createElement('input');
+                                    inp.className = 'win98-input';
+                                    inp.style.width = '100%';
+                                    inp.value = block[key] || '';
+                                    inp.oninput = () => { block[key] = inp.value; setDirty(true); };
+                                    grid.appendChild(lbl);
+                                    grid.appendChild(inp);
+                                };
+                                addField('label', 'label');
+                                addField('value', 'value');
+                                addField('max', 'max');
+                                addField('width', 'width');
+                                blockDiv.appendChild(grid);
+                            }
+
+                            contentBox.appendChild(blockDiv);
+                        });
+
+                        // Button to add a new content block
+                        const addBlockBtn = document.createElement('button');
+                        addBlockBtn.className = 'win98-btn';
+                        addBlockBtn.style.cssText = 'font-size: 10px; margin-top: 4px;';
+                        addBlockBtn.textContent = '+ Add Block';
+                        addBlockBtn.onclick = () => {
+                            showCmdContextMenu(addBlockBtn.getBoundingClientRect().left, addBlockBtn.getBoundingClientRect().bottom, [
+                                { label: 'Text block', action: () => { dataWin.content.push({ type: 'text', text: '' }); setDirty(true); renderDock(); } },
+                                { label: 'List block', action: () => { dataWin.content.push({ type: 'list', listId: '', format: '{name}' }); setDirty(true); renderDock(); } },
+                                { label: 'Gauge block', action: () => { dataWin.content.push({ type: 'gauge', label: '', value: '0', max: '1' }); setDirty(true); renderDock(); } },
+                            ]);
+                        };
+                        contentBox.appendChild(addBlockBtn);
+
+                        // Button to delete the last block
+                        if (dataWin.content.length > 0) {
+                            const delBlockBtn = document.createElement('button');
+                            delBlockBtn.className = 'win98-btn';
+                            delBlockBtn.style.cssText = 'font-size: 10px; margin-top: 2px; margin-left: 4px;';
+                            delBlockBtn.textContent = 'Remove Last Block';
+                            delBlockBtn.onclick = () => {
+                                dataWin.content.pop();
+                                setDirty(true);
+                                renderDock();
+                            };
+                            contentBox.appendChild(delBlockBtn);
+                        }
+
+                        dock.appendChild(contentBox);
+                    }
+                }
             };
 
             const syncDockFields = () => {
@@ -525,8 +682,22 @@
             // ---- Right-click menu --------------------------------------
 
             const removeWindow = (id) => {
-                // Cross-scene scan (E12): a shared windowLayout entry can be
-                // referenced by more than just the scene currently open.
+                // S1w: if the window is data-authored (scene.windows), remove
+                // it from the scene data rather than from engine.json.
+                const sceneWindows = scene.windows;
+                if (sceneWindows && sceneWindows.length > 0) {
+                    const idx = sceneWindows.findIndex(w => w.id === id);
+                    if (idx !== -1) {
+                        if (!confirm(`Remove window '${id}' from the scene's data-authored windows array?`)) return;
+                        sceneWindows.splice(idx, 1);
+                        if (selectedId === id) selectedId = null;
+                        setDirty(true);
+                        draw();
+                        renderDock();
+                        return;
+                    }
+                }
+                // Fall back to engine.json windowLayout path.
                 const refs = scanAllScenesForWindowRefs(id);
                 if (refs.length > 0) {
                     const hooks = [...new Set(refs.map(r => `${r.sceneName} → ${r.hook} (${r.cmd})`))];

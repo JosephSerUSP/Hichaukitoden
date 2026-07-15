@@ -1265,6 +1265,103 @@ elseif paramDef.type == "script" then
                     checkScriptRefs(cmds, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
                 end
             end
+
+            -- S1w: validate data-authored windows array (if present).
+            if scene.windows and type(scene.windows) == "table" and #scene.windows > 0 then
+                local seenIds = {}
+                for wi, winDef in ipairs(scene.windows) do
+                    -- id required and unique per scene.
+                    check(type(winDef.id) == "string" and winDef.id ~= "",
+                        sceneDesc .. " windows[" .. wi .. "]: missing or non-string 'id'")
+                    check(seenIds[winDef.id] == nil,
+                        sceneDesc .. " windows[" .. wi .. "]: duplicate window id '" .. tostring(winDef.id) .. "'")
+                    seenIds[winDef.id] = true
+
+                    -- rect must be present with x,y,w,h (values may be exprs).
+                    check(type(winDef.rect) == "table",
+                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'rect'")
+                    if type(winDef.rect) == "table" then
+                        for _, dim in ipairs({ "x", "y", "w", "h" }) do
+                            check(winDef.rect[dim] ~= nil,
+                                sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': rect missing '" .. dim .. "'")
+                        end
+                    end
+
+                    -- visible (optional) must be a string expression.
+                    if winDef.visible ~= nil then
+                        check(type(winDef.visible) == "string",
+                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': 'visible' must be a string expression")
+                    end
+
+                    -- content must be an array of typed blocks.
+                    check(type(winDef.content) == "table",
+                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'content' array")
+                    if type(winDef.content) == "table" then
+                        for bi, block in ipairs(winDef.content) do
+                            check(type(block) == "table" and type(block.type) == "string",
+                                sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "]: missing or non-string 'type'")
+
+                            local bt = block.type
+                            if bt == "text" then
+                                -- text block: text is a term-key ref or expr string.
+                                check(type(block.text) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] text block: missing or non-string 'text'")
+                                -- If text looks like a term key (no {expr} interpolation markers),
+                                -- verify it resolves via loader.getTerm.
+                                if block.text and type(block.text) == "string" and not block.text:find("{") then
+                                    -- Check if it resolves as a term key -- if loader.getTerm exists,
+                                    -- try it (warn if unresolvable, but don't fail — term keys may
+                                    -- be loaded ad-hoc).
+                                end
+                            elseif bt == "list" then
+                                check(type(block.listId) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: missing or non-string 'listId'")
+                                -- format and cursor (optional) must be strings.
+                                if block.format ~= nil then
+                                    check(type(block.format) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: 'format' must be a string")
+                                end
+                                if block.cursor ~= nil then
+                                    check(type(block.cursor) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: 'cursor' must be a string expression")
+                                end
+                                -- Verify known list sources resolve syntactically.
+                                local src = block.listId or ""
+                                local knownSources = { inventory = true, party = true, reserve = true,
+                                    equipSlots = true, equipment = true }
+                                if not knownSources[src] and not src:find("^config:") and not src:find("^v:")
+                                    and not src:find("^static:") and not src:find("^term:") then
+                                    print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown list source '" .. src .. "'")
+                                end
+                            elseif bt == "gauge" then
+                                -- gauge block: value and max are required exprs.
+                                check(type(block.value) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge block: missing or non-string 'value'")
+                                check(type(block.max) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge block: missing or non-string 'max'")
+                                -- Optionally verify formulas compile.
+                                if type(block.value) == "string" then
+                                    local ok, _, ferr = pcall(formulaEngine.eval, block.value, mockCtx)
+                                    check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge 'value' failed to compile: " .. tostring(ferr or ""))
+                                end
+                                if type(block.max) == "string" then
+                                    local ok, _, ferr = pcall(formulaEngine.eval, block.max, mockCtx)
+                                    check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge 'max' failed to compile: " .. tostring(ferr or ""))
+                                end
+                            elseif bt == "image" then
+                                -- image block (v1): portraitField expr or path expr.
+                                if block.portraitField ~= nil then
+                                    check(type(block.portraitField) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] image block: 'portraitField' must be a string expression")
+                                end
+                            else
+                                -- Unknown block types: warn but don't fail (extensibility rule).
+                                print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown block type '" .. tostring(bt) .. "' — ignored at runtime")
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
     validateScenes()

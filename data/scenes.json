@@ -2173,6 +2173,75 @@
     },
     "config": {},
     "draw": "windows",
+    "windows": [
+      {
+        "id": "items_left_panel",
+        "rect": { "x": 0.5, "y": 4.5, "w": 19, "h": 13 },
+        "visible": "v.state == 1",
+        "style": "list",
+        "title": null,
+        "emptyText": "No items.",
+        "content": [
+          {
+            "type": "list",
+            "listId": "inventory",
+            "format": "{name} (x{qty})",
+            "cursor": "v.idx"
+          }
+        ]
+      },
+      {
+        "id": "items_info_panel",
+        "rect": { "x": 20, "y": 4.5, "w": 11.5, "h": 13 },
+        "visible": "v.state == 1",
+        "style": "panel",
+        "title": null,
+        "lineSpacing": 1,
+        "content": [
+          {
+            "type": "text",
+            "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}"
+          }
+        ]
+      },
+      {
+        "id": "help",
+        "rect": { "x": 0, "y": 0, "w": 32, "h": 4 },
+        "visible": "v.state == 1",
+        "style": "frame",
+        "title": null,
+        "content": [
+          {
+            "type": "text",
+            "text": "UP/DOWN: select    ENTER: use    ESC: back"
+          }
+        ]
+      },
+      {
+        "id": "party",
+        "rect": { "x": 0, "y": 18, "w": 32, "h": 12 },
+        "visible": "v.state == 1",
+        "style": "partyGrid",
+        "title": null,
+        "cursor": 0,
+        "content": []
+      },
+      {
+        "id": "items_target",
+        "rect": { "x": 6, "y": 8, "w": 20, "h": 12 },
+        "visible": "v.state == 2",
+        "style": "partyGrid",
+        "title": "Use on whom?",
+        "content": [
+          {
+            "type": "list",
+            "listId": "party",
+            "format": "{name}",
+            "cursor": "v.targetIdx"
+          }
+        ]
+      }
+    ],
     "goldenScript": [
       {
         "key": "down"
