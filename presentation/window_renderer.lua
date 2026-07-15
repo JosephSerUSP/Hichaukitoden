@@ -960,6 +960,9 @@ end
 -- uses the same sandboxed env as scene hooks (v.*, config, sel(), formula
 -- engine).  Unknown content-block types fail soft (log once, skip block);
 -- unknown optional fields in window defs are ignored (extensibility rule).
+--
+-- S2w: reserve scene swap indicator (black silhouette + floating ghost) is
+-- drawn AFTER the windows pass, so the effect survives data-authored windows.
 -- ---------------------------------------------------------------------------
 
 -- Per-type warning-once guard so unknown content block types don't spam.
@@ -1064,6 +1067,8 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 win.gaugeMax = block.gaugeMax
                 win.highlight = block.highlight
                 win.priority = block.priority
+                win.slot = block.slot
+                win.member = block.member
                 -- pull rows from pre-resolved cache
                 local cached = listCache[winDef.id]
                 if cached then
@@ -1130,6 +1135,10 @@ function wr.draw(state, sceneData, ctx)
     -- silently ignored (extensibility rule).
     if sceneData and sceneData.windows and #sceneData.windows > 0 then
         wr.drawWindowFromData(sceneData, state, ctx)
+        -- S2w: reserve swap indicator must survive data-authored windows.
+        if sceneData and sceneData.id == "reserve" then
+            drawSwapIndicator(state, sceneData, ctx)
+        end
         return
     end
 
@@ -1178,8 +1187,20 @@ end
 -- as wr.draw — list sources expanded to formatted row strings, {expr} text
 -- interpolated, live cursor evaluated — but no drawing. Per-window failures
 -- become an `error` field on that window instead of crashing the preview.
+--
+-- S2w: for data-authored scenes (scene.windows) whose hooks no longer emit
+-- OPEN_WINDOW commands (those are redundant with the declarative windows
+-- array), winState is empty — delegate to resolveDataState so the preview
+-- reads directly from the scene's windows array with real v-state.
 -- ---------------------------------------------------------------------------
 function wr.resolveState(state, sceneData, ctx)
+    -- S2w: delegate to resolveDataState when the scene is data-authored but
+    -- has no winState (hooks were cleaned of redundant window commands).
+    if sceneData and sceneData.windows and #sceneData.windows > 0
+        and state and (not state.winState or #state.winState == 0) then
+        return wr.resolveDataState(sceneData, ctx, state)
+    end
+
     local result = {
         tileSize = ui.tileSize,
         focused = state and state.focusedWindow or nil,
@@ -1260,15 +1281,18 @@ end
 -- array instead of runtime winState.  Used by the scene preview endpoint
 -- when a scene has a `windows` array.
 -- ---------------------------------------------------------------------------
-function wr.resolveDataState(sceneData, ctx)
+function wr.resolveDataState(sceneData, ctx, state)
     local result = {
         tileSize = ui.tileSize,
+        focused = state and state.focusedWindow or nil,
         windows = {},
     }
     if not sceneData or not sceneData.windows then return result end
 
     local listCache = {}
-    local state = { v = {}, winState = {}, windowOrder = {} }
+    -- Use caller-supplied state (with real v from hook execution) when
+    -- available; fall back to an empty state for ad-hoc/preview use.
+    state = state or { v = {}, winState = {}, windowOrder = {} }
     local env = buildEnv(state, sceneData, ctx, listCache)
 
     -- Pre-resolve lists for sel().
@@ -1291,6 +1315,8 @@ function wr.resolveDataState(sceneData, ctx)
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
                 priority = listBlock.priority,
+                slot = listBlock.slot,
+                member = listBlock.member,
             }
             local ok, rows = pcall(resolveRows, syntheticWin, state, sceneData, ctx, env)
             local cur = 1
