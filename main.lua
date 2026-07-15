@@ -1269,6 +1269,43 @@ elseif paramDef.type == "script" then
     end
     validateScenes()
 
+    -- overhaul-7 A1: validate animation system reserved IDs
+    local animation_player = require("presentation.animation_player")
+    local RESERVED_SYSTEM_IDS = {
+        "system.damage_flash",
+        "system.damage_shake",
+        "system.death",
+        "system.small_damage",
+        "system.enemy_slide_in",
+        "system.heal",
+    }
+    for _, reservedId in ipairs(RESERVED_SYSTEM_IDS) do
+        check(animation_player.getEntry(reservedId) ~= nil,
+            "animation system: missing reserved entry '" .. reservedId .. "' in data/animations.json")
+    end
+    -- Check that all system-class entries have valid track structures
+    -- (at minimum: each track has a known type and numeric duration)
+    local VALID_TRACK_TYPES = {
+        tint = true, blend = true, transform = true,
+        shake = true, particles = true, text_flow = true,
+    }
+    for id, entry in pairs(loader.animations or {}) do
+        if entry.class == "system" then
+            check(type(entry.tracks) == "table",
+                "animation system: entry '" .. tostring(id) .. "' missing tracks array")
+            for ti, track in ipairs(entry.tracks or {}) do
+                check(type(track) == "table",
+                    "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " is not a table")
+                if type(track) == "table" then
+                    check(VALID_TRACK_TYPES[track.type],
+                        "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " has unknown type '" .. tostring(track.type) .. "'")
+                    check(type(track.duration) == "number",
+                        "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " missing numeric duration")
+                end
+            end
+        end
+    end
+
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
     print("[validator] total deprecated usages: " .. deprecatedUsageCount)
 

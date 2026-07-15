@@ -1,0 +1,72 @@
+{
+  "system.damage_flash": {
+    "id": "system.damage_flash",
+    "class": "system",
+    "duration": 350,
+    "tracks": [
+      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
+      { "type": "tint", "t0": 0, "duration": 350, "color": [1.0, 0.2, 0.2], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" }
+    ]
+  },
+  "system.action_flash": {
+    "id": "system.action_flash",
+    "class": "system",
+    "duration": 350,
+    "tracks": [
+      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
+      { "type": "tint", "t0": 0, "duration": 350, "color": [0.8, 1.0, 1.0], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" }
+    ]
+  },
+  "system.damage_shake": {
+    "id": "system.damage_shake",
+    "class": "system",
+    "duration": 300,
+    "tracks": [
+      { "type": "shake", "t0": 0, "duration": 300, "amplitude": 2, "frequency": 30, "easing": "ease_out" }
+    ]
+  },
+  "system.death": {
+    "id": "system.death",
+    "class": "system",
+    "duration": 900,
+    "tracks": [
+      { "type": "blend", "t0": 0, "duration": 900, "mode": "add", "easing": "linear" },
+      { "type": "tint", "t0": 0, "duration": 900, "color": [0.6, 0.0, 0.9], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" },
+      { "type": "transform", "t0": 0, "duration": 900, "fromY": 0, "toY": 20, "easing": "linear" }
+    ]
+  },
+  "system.small_damage": {
+    "id": "system.small_damage",
+    "class": "system",
+    "duration": 350,
+    "tracks": [
+      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
+      { "type": "tint", "t0": 0, "duration": 350, "color": [1.0, 0.2, 0.2], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" },
+      { "type": "shake", "t0": 0, "duration": 300, "amplitude": 2, "frequency": 30, "easing": "ease_out" }
+    ]
+  },
+  "system.enemy_slide_in": {
+    "id": "system.enemy_slide_in",
+    "class": "system",
+    "duration": 350,
+    "tracks": [
+      { "type": "transform", "t0": 0, "duration": 350, "fromX": 280, "toX": 0, "easing": "linear" }
+    ]
+  },
+  "system.heal": {
+    "id": "system.heal",
+    "class": "system",
+    "duration": 1000,
+    "tracks": [
+      { "type": "text_flow", "t0": 0, "duration": 1000, "sequence": "⋆｡°✩", "interval": 50, "color": [0.667, 1.0, 0.667], "targetPart": "hp_gauge", "easing": "linear" }
+    ]
+  },
+  "demo.particles_mask": {
+    "id": "demo.particles_mask",
+    "class": "assignable",
+    "duration": 1500,
+    "tracks": [
+      { "type": "particles", "t0": 0, "duration": 1500, "rate": 20, "lifetime": 0.8, "spread": 80, "velocity": 60, "gravity": 40, "colorOverLife": [[1, 0.2, 0.2, 1], [1, 0.8, 0.2, 0.6], [1, 1, 1, 0]], "blendMode": "add", "mask": "target", "easing": "linear" }
+    ]
+  }
+}

@@ -8,6 +8,7 @@ local config = require("engine.config")
 local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
 local actor_status = require("presentation.actor_status")
+local animation_player = require("presentation.animation_player")
 
 local renderer = {}
 
@@ -47,13 +48,10 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
--- Config-driven animation constants (flash/shake/dead tint) and the
--- damage-feedback state keyed by battler identity now live in
--- presentation/small_battlers.lua, shared with the window renderer's
--- party-shaped list rows (owner direction 11.07.2026: one drawer, one
--- state table, so a party member's status cell looks and behaves
--- identically everywhere it's drawn).
-local animVal = small_battlers.animVal
+-- overhaul-7 A1: animation constants and timing are owned by
+-- presentation/animation_player.lua using data/animations.json entries.
+-- The small_battlers module still provides the dead-tint constant for
+-- game-state dead display and the animVal stub for backward compat.
 
 local function getPortrait(id)
     if not id or id == "" then return nil end
@@ -107,8 +105,12 @@ function renderer.init(session)
     damagePopups = {}
 end
 
--- Battle animation state per enemy: { slideTimer, deathTimer, dead, flashTimer, flashType }
-local battleAnims = {}
+-- overhaul-7 A1: per-enemy animation state is now owned by
+-- presentation/animation_player.lua. The `deadEnemyFlags` table tracks
+-- which enemies are game-state dead (separate from animation effects).
+-- Animation timers, tints, blend modes, and transforms are queried from
+-- the animation player at draw time.
+local deadEnemyFlags = {}
 
 local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
     glyph.vy = glyph.vy + gravity * dt
@@ -128,24 +130,26 @@ local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
 end
 
 function renderer.initBattleAnims(enemies)
-    battleAnims = {}
-    small_battlers.resetAnims()
+    animation_player.reset()
+    deadEnemyFlags = {}
     for i, enemy in ipairs(enemies) do
-        battleAnims[i] = { slideTimer = 0.35, deathTimer = -1, dead = false, flashTimer = 0, flashType = "" }
+        animation_player.play("system.enemy_slide_in", enemy)
     end
 end
 
 function renderer.triggerDeathAnim(enemyIdx)
-    if battleAnims[enemyIdx] then
-        battleAnims[enemyIdx].deathTimer = 0.9
-        battleAnims[enemyIdx].dead = true
+    local enemy = renderer.activeBattle and renderer.activeBattle.enemies[enemyIdx]
+    if enemy then
+        deadEnemyFlags[enemy] = true
+        animation_player.play("system.death", enemy)
     end
 end
 
 function renderer.triggerActionFlash(enemyIdx, flashType)
-    if battleAnims[enemyIdx] then
-        battleAnims[enemyIdx].flashTimer = animVal("flashDuration")
-        battleAnims[enemyIdx].flashType = flashType or "action"
+    local enemy = renderer.activeBattle and renderer.activeBattle.enemies[enemyIdx]
+    if enemy then
+        local entryId = (flashType == "action") and "system.action_flash" or "system.damage_flash"
+        animation_player.play(entryId, enemy)
     end
 end
 
@@ -171,17 +175,9 @@ function renderer.update(dt)
         p.life = p.life - dt
         if p.life <= 0 then table.remove(damagePopups, i) end
     end
-    for _, anim in ipairs(battleAnims) do
-        if anim.slideTimer > 0 then
-            anim.slideTimer = math.max(0, anim.slideTimer - dt)
-        end
-        if anim.deathTimer > 0 then
-            anim.deathTimer = math.max(0, anim.deathTimer - dt)
-        end
-        if anim.flashTimer and anim.flashTimer > 0 then
-            anim.flashTimer = math.max(0, anim.flashTimer - dt)
-        end
-    end
+    -- overhaul-7 A1: animation player owns all battler animation timing
+    animation_player.update(dt)
+    animation_player.updateParticles(dt)
     small_battlers.updateAnims(dt)
     
     -- Smoothly interpolate party HP and the shared party MP pool
@@ -671,51 +667,56 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
     
-    -- Render enemies portraits in viewport with slide-in and death animations
+    -- Render enemies portraits in viewport with animations driven by the
+    -- animation player (overhaul-7 A1): slide-in, damage/action flash,
+    -- death effect — all from data/animations.json entries.
     local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
-        local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
         local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
         local ey = layoutVal("enemyY")
         
-        -- Slide-in offset: start offscreen right, slide to position
-        local slideOff = 0
-        if anim.slideTimer > 0 then
-            slideOff = layoutVal("enemySlideOffset") * (anim.slideTimer / 0.35)
-        end
-        local drawX = ex + slideOff
+        -- Query animation player for current transform, tint, blend
+        local xf = animation_player.getTransform(enemy)
+        local tint = animation_player.getTint(enemy)
+        local blend = animation_player.getBlendMode(enemy)
+        local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
+        local isDead = deadEnemyFlags[enemy]
         
-        if anim.dead and anim.deathTimer >= 0 then
-            -- Death animation: additive blend, purple tint, fade to black
-            local t = anim.deathTimer / 0.9  -- 1.0 = just died, 0.0 = done
-            local alpha = t
-            love.graphics.setBlendMode("add")
-            if portrait then
-                love.graphics.setColor(0.6 * alpha, 0, 0.9 * alpha, alpha)
-                love.graphics.draw(portrait, drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
+        local drawX = ex + xf.offsetX
+        local drawY = ey + xf.offsetY
+        
+        if isDeathPlaying then
+            -- Death animation: use tint/blend/transform from animation player
+            if blend then love.graphics.setBlendMode(blend) end
+            if tint then
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
             else
-                love.graphics.setColor(0.6*alpha, 0, 0.9*alpha, alpha)
-                love.graphics.rectangle("fill", drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
+                love.graphics.setColor(0.6, 0, 0.9, 1)
+            end
+            if portrait then
+                love.graphics.draw(portrait, drawX, drawY, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
+            else
+                love.graphics.setColor(tint and (tint.color[1] * tint.alpha) or 0.6, tint and (tint.color[2] * tint.alpha) or 0, tint and (tint.color[3] * tint.alpha) or 0.9, tint and tint.alpha or 1)
+                love.graphics.rectangle("fill", drawX, drawY, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             love.graphics.setBlendMode("alpha")
-        elseif not anim.dead then
+        elseif not isDead then
+            -- Normal (alive) drawing
             if portrait then
                 love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
+                love.graphics.draw(portrait, drawX, ey, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
             else
                 love.graphics.setColor(0.8, 0.1, 0.1, 1)
                 love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
             end
             
-            -- Apply action/damage flash overlay
-            if anim.flashTimer and anim.flashTimer > 0 then
-                love.graphics.setBlendMode("add")
-                local flashDur = animVal("flashDuration")
-                local flashCol = animVal(anim.flashType == "action" and "flashColorAction" or "flashColorDamage")
-                love.graphics.setColor(flashCol[1], flashCol[2], flashCol[3], flashDur > 0 and (anim.flashTimer / flashDur) or 0)
+            -- Flash overlay via animation player tint/blend
+            if tint and blend then
+                love.graphics.setBlendMode(blend)
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
                 if portrait then
-                    love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
+                    love.graphics.draw(portrait, drawX, ey, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
                 else
                     love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
                 end
@@ -729,6 +730,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             ui.drawString(enemy.name, ex + enemyIconW, layoutVal("enemyNameY"), {1, 1, 1, 1})
             ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         end
+        -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
     
     -- Slim dialogue at the top of the screen during Battle Resolution.

@@ -104,29 +104,7 @@
         1
       ]
     },
-    "victoryExpPerSecond": 40,
-    "animations": {
-      "flashDuration": 0.35,
-      "flashColorAction": [
-        0.8,
-        1,
-        1
-      ],
-      "flashColorDamage": [
-        1,
-        0.2,
-        0.2
-      ],
-      "shakeDuration": 0.3,
-      "shakeAmplitude": 2,
-      "shakeFrequency": 30,
-      "deadTint": [
-        0.28,
-        0.26,
-        0.32,
-        1
-      ]
-    }
+    "victoryExpPerSecond": 40
   },
   "combat": {
     "baseFleeChance": 0.4,
