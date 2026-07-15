@@ -738,5 +738,20 @@
       "potency": 50,
       "craftElement": "Red"
     }
+  },
+  {
+    "id": 38,
+    "name": "Chrysalis Sigil",
+    "type": "quest",
+    "cost": 0,
+    "icon": 65,
+    "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
+    "category": "promotion_key",
+    "meta": {
+      "tier": 3,
+      "craftKind": "alchemy",
+      "potency": 50,
+      "craftElement": "White"
+    }
   }
 ]

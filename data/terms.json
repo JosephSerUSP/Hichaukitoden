@@ -35,6 +35,7 @@
       "Attack",
       "Skill",
       "Defend",
+      "Item",
       "Flee"
     ],
     "help_summoner": [
@@ -47,6 +48,7 @@
       "Strike with a basic attack.",
       "Use one of this creature's skills.",
       "Brace to reduce incoming damage.",
+      "Use an item from the inventory.",
       "Attempt to escape the battle."
     ]
   },

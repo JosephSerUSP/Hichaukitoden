@@ -858,6 +858,84 @@ local function buildScriptApi(ctx)
         local arr2 = isReserve2 and session.reserve or session.party
         arr1[idx1], arr2[idx2] = arr2[idx2], arr1[idx1]
     end
+
+    -- overhaul-6 F6: Promotion. A creature is promotable when it has an
+    -- evolution whose `level` threshold it has reached and whose `evolvesTo`
+    -- actor exists. Cost is read from the evolution entry: absent = free,
+    -- {mp = N} = MP, {item = id} = a promotion-key item (category
+    -- "promotion_key" in items.json). api.promote performs the evolution,
+    -- keeping level/exp/states/equipment and swapping in the new actorData.
+    function api.canPromote(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        if not b or not b.actorData then return false end
+        for _, e in ipairs(b.actorData.evolutions or {}) do
+            if e.level and b.level >= e.level and e.evolvesTo and session.loader.getActor(e.evolvesTo) then
+                return true
+            end
+        end
+        return false
+    end
+
+    function api.promoteInfo(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        if not b or not b.actorData then return false, "" end
+        for _, e in ipairs(b.actorData.evolutions or {}) do
+            if e.level and b.level >= e.level and e.evolvesTo and session.loader.getActor(e.evolvesTo) then
+                local cost = e.cost
+                local txt = ""
+                if cost then
+                    if cost.mp then txt = "  Cost: " .. tostring(cost.mp) .. " MP" end
+                    if cost.item then
+                        local it = session.loader.getItem(cost.item)
+                        txt = txt .. "  Needs: " .. (it and (it.name .. " x1") or ("item#" .. tostring(cost.item)))
+                    end
+                else
+                    txt = "  (free)"
+                end
+                return true, txt
+            end
+        end
+        return false, ""
+    end
+
+    function api.promote(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        if not b or not b.actorData then return false end
+        local target = nil
+        local cost = nil
+        for _, e in ipairs(b.actorData.evolutions or {}) do
+            if e.level and b.level >= e.level and e.evolvesTo then
+                target = e.evolvesTo
+                cost = e.cost
+                break
+            end
+        end
+        if not target then return false end
+        local actorData = session.loader.getActor(target)
+        if not actorData then return false end
+        if cost then
+            if cost.mp and session.mp < cost.mp then return false end
+            if cost.item and not session:hasItem(cost.item, 1) then return false end
+            if cost.mp then session.mp = session.mp - cost.mp end
+            if cost.item then session:addItem(cost.item, -1) end
+        end
+        -- Evolve: keep progression (level/exp/states/equipment), swap actorData.
+        local lvl = b.level
+        local exp = b.exp
+        local states = b.states
+        local equip = b.equipment
+        local newB = require("engine.session").Battler.new(actorData, lvl)
+        newB.exp = exp
+        newB.states = states or {}
+        newB.equipment = equip or { nil, nil, nil }
+        newB.hp = b.hp > 0 and math.min(newB:getMaxHp(session), b.hp) or newB:getMaxHp(session)
+        arr[index] = newB
+        return true
+    end
+
     function api.changeMp(amount)
         session.mp = math.max(0, math.min(session.maxMp or 9999, session.mp + amount))
     end

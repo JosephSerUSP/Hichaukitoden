@@ -990,7 +990,7 @@ function wr.draw(state, sceneData, ctx)
     -- Reserve scene (overhaul-6 F3): while picking a Swap target (v.mode == 4),
     -- the source slot is dimmed and a full-opacity ghost of its panel floats
     -- above it (sine drift), as a "select target slot" cue.
-    if sceneData.id == "reserve" then
+    if sceneData and sceneData.id == "reserve" then
         drawSwapIndicator(state, sceneData, ctx)
     end
 end

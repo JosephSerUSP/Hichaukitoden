@@ -1476,7 +1476,7 @@ function love.draw()
         drawSharedPartyHud()
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
+        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
         drawSharedPartyHud()
     end
     end

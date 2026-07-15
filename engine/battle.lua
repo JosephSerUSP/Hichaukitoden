@@ -159,6 +159,7 @@ function Battle:resolveRound(collectedActions)
             local chosenAct = collectedActions and collectedActions[i]
             local skill
             local target
+            local itemAct = nil
 
             if chosenAct then
                 if chosenAct.type == "spell" or chosenAct.type == "skill" then
@@ -171,6 +172,12 @@ function Battle:resolveRound(collectedActions)
                     skill = self.session.loader.getSkill(defendId)
                         or { name = "Defend", speed = 50, effects = {} }
                     target = ally
+                elseif chosenAct.type == "item" then
+                    -- F7: Item joins the creature's command list. The item is
+                    -- resolved in the execution loop via applyItem; it spends
+                    -- this creature's turn like any other action.
+                    itemAct = chosenAct
+                    target = chosenAct.target
                 else
                     skill = getAttackSkill(self.session)
                     target = chosenAct.target
@@ -185,13 +192,14 @@ function Battle:resolveRound(collectedActions)
             
             if target then
                 local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + ally.level * (config.combat and config.combat.speedPerLevel or 0.5)
-                local actSpeed = skill.speed or 0
+                local actSpeed = skill and (skill.speed or 0) or (config.combat and config.combat.battleItemSpeed or 50)
                 local totalSpeed = baseSpeed + actSpeed
                 table.insert(queue, {
                     actor = ally,
                     skill = skill,
                     target = target,
-                    speed = totalSpeed
+                    speed = totalSpeed,
+                    item = itemAct,
                 })
             end
         end
@@ -219,17 +227,26 @@ function Battle:resolveRound(collectedActions)
     -- 3. Execute actions in speed order
     for _, turn in ipairs(queue) do
         if not turn.actor:isDead() and not turn.target:isDead() then
-            table.insert(roundEvents, {
-                type = "action",
-                actor = turn.actor,
-                skill = turn.skill,
-                target = turn.target
-            })
-            
-            for _, eff in ipairs(turn.skill.effects or {}) do
-                local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
+            if turn.item then
+                -- F7: apply the used item's effects and consume it. This
+                -- spends the creature's turn exactly like a skill would.
+                local evs = self:applyItem(turn.item, turn.actor, turn.target)
                 for _, ev in ipairs(evs) do
                     table.insert(roundEvents, ev)
+                end
+            else
+                table.insert(roundEvents, {
+                    type = "action",
+                    actor = turn.actor,
+                    skill = turn.skill,
+                    target = turn.target
+                })
+                
+                for _, eff in ipairs(turn.skill.effects or {}) do
+                    local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
+                    for _, ev in ipairs(evs) do
+                        table.insert(roundEvents, ev)
+                    end
                 end
             end
             
@@ -352,6 +369,51 @@ function Battle:resolveRound(collectedActions)
     
     self.round = self.round + 1
     return roundEvents
+end
+
+function Battle:applyItem(action, actor, target)
+    local events = {}
+    local session = self.session
+    local loader = session.loader
+
+    -- Resolve the item by its 1-based index into the id-sorted non-empty
+    -- inventory — the SAME ordering api.items()/USE_ITEM use, so the index
+    -- committed from the battle command menu maps here correctly.
+    local stacks = {}
+    for itemId, qty in pairs(session.inventory or {}) do
+        if qty > 0 then table.insert(stacks, itemId) end
+    end
+    table.sort(stacks)
+    local item = stacks[action.itemIndex] and loader.getItem(stacks[action.itemIndex])
+    if not item then return events end
+
+    table.insert(events, {
+        type = "text",
+        text = loader.formatTerm("battle.uses_item", "{0} uses {1}!", actor.name, item.name or "?"),
+    })
+
+    if item.targetScope == "party" then
+        for _, member in ipairs(self.allies) do
+            if not member:isDead() then
+                for _, eff in ipairs(item.effects or {}) do
+                    for _, ev in ipairs(effects.apply(eff, member, member, session)) do
+                        table.insert(events, ev)
+                    end
+                end
+            end
+        end
+    else
+        for _, eff in ipairs(item.effects or {}) do
+            for _, ev in ipairs(effects.apply(eff, target, target, session)) do
+                table.insert(events, ev)
+            end
+        end
+    end
+
+    -- Consume one. Persists: session.inventory is outside the per-round
+    -- hp/state/mp backup/restore the scene host does around resolveRound.
+    session:addItem(item.id, -1)
+    return events
 end
 
 function Battle:isVictory()

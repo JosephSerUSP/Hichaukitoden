@@ -323,6 +323,7 @@ function battle.commitAction(memberIndex, action)
     v.activeMemberIdx = (v.activeMemberIdx or 1) + 1
     v.selectedIndex = 1
     v.spellSelect = false
+    v.itemSelect = false
 
     if v.activeMemberIdx > #(v.livingMembers or {}) then
         v.escaped = false

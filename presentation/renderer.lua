@@ -569,7 +569,7 @@ end
 -- declarative "party" window in presentation/window_renderer.lua, drawn for
 -- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
 
-function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
+function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
     renderer.activeBattle = battleState
     
     -- Draw 3D dungeon view behind battle scene
@@ -682,7 +682,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
     if combatState == "input" then
         -- overhaul-6 F1: the summoner is not a battle participant; every
-        -- living member is an active creature with its own skill list.
+        -- living member is an active creature with its own command list
+        -- (Attack/Skill/Defend/Item/Flee). F7 adds Item as a per-creature
+        -- command: selecting it opens an inventory submenu here.
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
         local loader = renderer.session.loader
 
@@ -697,12 +699,31 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                 end
             end
             if #entries == 0 then entries = { "(No skills)" } end
+        elseif itemSelect then
+            -- F7: inventory submenu. List is the id-sorted non-empty
+            -- inventory, matching USE_ITEM's ordering and battle.lua's
+            -- applyItem so the highlighted row maps to the committed index.
+            local inv = renderer.session and renderer.session.inventory or {}
+            local stacks = {}
+            for itemId, qty in pairs(inv) do
+                if qty > 0 then table.insert(stacks, itemId) end
+            end
+            table.sort(stacks)
+            for _, id in ipairs(stacks) do
+                local it = loader.getItem(id)
+                if it then
+                    table.insert(entries, (it.name or "?") .. " x" .. tostring(inv[id]))
+                    table.insert(helps, it.description or "")
+                end
+            end
+            if #entries == 0 then entries = { "(No items)" } end
         else
-            entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
+            entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Item", "Flee" })
             helps = loader.getTermList("battle.help_monster", {
                 "Strike with a basic attack.",
                 "Use one of this creature's skills.",
                 "Brace to reduce incoming damage.",
+                "Use an item from the inventory.",
                 "Attempt to escape the battle.",
             })
         end
