@@ -287,6 +287,49 @@ function animation_player.getBlendMode(target)
     return nil
 end
 
+local function getNodeTransform(entry, inst, trackIndex, elapsedSec)
+    local track = entry.tracks[trackIndex]
+    local parentIdx = nil
+    if track.parent then
+        for idx, tr in ipairs(entry.tracks) do
+            if tr.id == track.parent then
+                parentIdx = idx
+                break
+            end
+        end
+    end
+
+    local base = { offsetX = 0, offsetY = 0, scaleX = 1, scaleY = 1 }
+    if parentIdx then
+        local parentTf = getNodeTransform(entry, inst, parentIdx, elapsedSec)
+        if track.inheritPosition ~= "never" then
+            base.offsetX = parentTf.offsetX
+            base.offsetY = parentTf.offsetY
+        end
+        if track.inheritScale ~= "never" then
+            base.scaleX = parentTf.scaleX
+            base.scaleY = parentTf.scaleY
+        end
+    end
+
+    if track.type == "transform" then
+        local t0Sec = (track.t0 or 0) / 1000
+        local durSec = (track.duration or 0) / 1000
+        local trackEnd = t0Sec + durSec
+        if elapsedSec >= t0Sec and elapsedSec < trackEnd then
+            local t = durSec > 0 and (elapsedSec - t0Sec) / durSec or 1
+            local ease = easingFn(track.easing)
+            local tf = evalTransform(track, ease(t))
+            base.offsetX = base.offsetX + tf.offsetX
+            base.offsetY = base.offsetY + tf.offsetY
+            base.scaleX = base.scaleX * tf.scaleX
+            base.scaleY = base.scaleY * tf.scaleY
+        end
+    end
+
+    return base
+end
+
 -- Returns { offsetX, offsetY, scaleX, scaleY } with accumulated values
 -- from all active transform tracks. Defaults: offset (0,0), scale (1,1).
 function animation_player.getTransform(target)
@@ -416,10 +459,17 @@ function animation_player.getParticleSystems(target)
                     end
                     local ps = inst.particleSystems[ti]
                     if ps then
+                        local parentTf = nil
+                        if track.parent then
+                            parentTf = getNodeTransform(entry, inst, ti, inst.elapsed)
+                        end
                         table.insert(result, {
                             ps = ps,
                             mask = track.mask,
                             blendMode = track.blendMode or "alpha",
+                            x = track.x or 0,
+                            y = track.y or 0,
+                            parentTransform = parentTf,
                         })
                     end
                 end
@@ -448,11 +498,21 @@ function animation_player._createParticleSystem(track)
     end
 
     local ps = love.graphics.newParticleSystem(texture, 256)
+    if track.quadWidth and track.quadHeight and track.quadCount then
+        local w = texture:getWidth()
+        local h = texture:getHeight()
+        local quads = {}
+        for i = 0, track.quadCount - 1 do
+            table.insert(quads, love.graphics.newQuad(i * track.quadWidth, 0, track.quadWidth, track.quadHeight, w, h))
+        end
+        ps:setQuads(quads)
+    end
     ps:setEmissionRate(track.rate or 10)
     ps:setParticleLifetime(track.lifetime or 0.5, (track.lifetime or 0.5) * 1.5)
     ps:setSpread(math.rad(track.spread or 45))
     ps:setSpeed(track.velocity or 50, (track.velocity or 50) * 1.5)
-    ps:setGravity(track.gravity or 0)
+    local g = track.gravity or 0
+    ps:setLinearAcceleration(0, g, 0, g)
     ps:setColors(unpack(track.colorOverLife or { { 1, 1, 1, 1 }, { 1, 1, 1, 0 } }))
     ps:setSizes(1, 0.5)
     ps:start()
@@ -479,6 +539,12 @@ function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn)
     for _, sys in ipairs(systems) do
         local ps = sys.ps
         local blendMode = sys.blendMode
+        local px = drawX + (sys.x or 0)
+        local py = drawY + (sys.y or 0)
+        if sys.parentTransform then
+            px = px + sys.parentTransform.offsetX
+            py = py + sys.parentTransform.offsetY
+        end
         if sys.mask == "target" and battlerDrawFn then
             -- Stencil mask: render the battler sprite to the stencil buffer,
             -- then draw particles only where the stencil is set.
@@ -487,11 +553,11 @@ function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn)
             end, "increment", 1, false)
             love.graphics.setStencilTest("greater", 0)
             love.graphics.setBlendMode(blendMode)
-            love.graphics.draw(ps, drawX, drawY)
+            love.graphics.draw(ps, px, py)
             love.graphics.setStencilTest()
         else
             love.graphics.setBlendMode(blendMode)
-            love.graphics.draw(ps, drawX, drawY)
+            love.graphics.draw(ps, px, py)
         end
         love.graphics.setBlendMode("alpha")
     end

@@ -3313,7 +3313,7 @@
           {
             "type": "list",
             "listId": "static:Return to Title",
-            "cursor": 1
+            "cursor": "1"
           }
         ]
       }

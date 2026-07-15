@@ -13,7 +13,7 @@ const PROJECT_DIR = path.resolve(__dirname, '../..');
 const DATA_FILES = [
     'actors', 'elements', 'events', 'items', 'maps', 'quests', 'shops',
     'sounds', 'terms', 'themes', 'system', 'commonEvents',
-    'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes'
+    'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes', 'animations'
 ];
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
 const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
@@ -265,6 +265,57 @@ const server = http.createServer((req, res) => {
             // injection regardless of its content.
             const { execFile } = require('child_process');
             execFile(previewExe, ['.', 'preview-window', windowId, mockJson], {
+                cwd: PROJECT_DIR,
+                timeout: 15000,
+                windowsHide: true,
+                maxBuffer: 4 * 1024 * 1024
+            }, (err, stdout) => {
+                const text = String(stdout || '');
+                const begin = text.indexOf('PREVIEW BEGIN');
+                const end = text.indexOf('PREVIEW END');
+                if (begin === -1 || end === -1 || end < begin) {
+                    return fail('preview produced no output' + (err ? ' (' + err.message + ')' : ''));
+                }
+                const jsonText = text.slice(begin + 'PREVIEW BEGIN'.length, end).trim();
+                try {
+                    JSON.parse(jsonText); // validate before relaying
+                } catch (e) {
+                    return fail('preview output was not valid JSON: ' + e.message);
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(jsonText);
+            });
+        });
+    } else if (req.method === 'POST' && req.url === '/preview-anim') {
+        // A3: invoke the engine's headless preview for animations.
+        // Body: { id: "animId", sprite: "spritePath", data: { ... } }.
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            const fail = (msg) => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: msg }));
+            };
+            let parsed;
+            try {
+                parsed = JSON.parse(body || '{}');
+            } catch (e) {
+                return fail('request body was not valid JSON: ' + e.message);
+            }
+            const animId = parsed.id;
+            const spritePath = parsed.sprite || 'assets/smallBattlers/pixie.png';
+            if (!animId) return fail('missing animation id');
+            if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
+
+            let mockJson;
+            try {
+                mockJson = JSON.stringify(parsed.data || {});
+            } catch (e) {
+                return fail('animation data could not be serialized: ' + e.message);
+            }
+
+            const { execFile } = require('child_process');
+            execFile(previewExe, ['.', 'preview-anim', animId, mockJson, spritePath], {
                 cwd: PROJECT_DIR,
                 timeout: 15000,
                 windowsHide: true,

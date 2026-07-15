@@ -81,8 +81,8 @@
                     .sort((a, b) => parseInt(a.id) - parseInt(b.id));
             }
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
-                // String-keyed collections (skills/passives/states/elements/roles)
+                  || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
+                // String-keyed collections (skills/passives/states/elements/roles/animations)
                 if (!dbPayload[activeDbTab]) dbPayload[activeDbTab] = {};
                 items = Object.keys(dbPayload[activeDbTab])
                     .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }))
@@ -132,7 +132,7 @@
             else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
             else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
+                  || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
                 maxVal = Object.keys(dbPayload[activeDbTab] || {}).length;
             }
 
@@ -226,7 +226,7 @@
                     }
                 }
             } else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                    || activeDbTab === 'elements' || activeDbTab === 'roles') {
+                    || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
                 // String-keyed collections: grow with generated unique ids,
                 // shrink by dropping the alphabetically-last entries
                 const coll = dbPayload[activeDbTab] = dbPayload[activeDbTab] || {};
@@ -235,9 +235,10 @@
                     passives: n => ({ id: n, name: `New Passive`, description: '', effect: '', icon: 1, traits: [] }),
                     states: n => ({ id: n, name: `New State`, icon: 1, duration: 3, traits: [] }),
                     elements: n => ({ name: `New Element`, icon: 16, strongAgainst: [], weakAgainst: [] }),
-                    roles: n => ({ name: `New Role`, description: '' })
+                    roles: n => ({ name: `New Role`, description: '' }),
+                    animations: n => ({ id: n, class: 'assignable', duration: 1000, tracks: [] })
                 };
-                const prefixes = { skills: 'newSkill', passives: 'newPassive', states: 'newState', elements: 'NewElement', roles: 'NewRole' };
+                const prefixes = { skills: 'newSkill', passives: 'newPassive', states: 'newState', elements: 'NewElement', roles: 'NewRole', animations: 'newAnimation' };
                 const prefix = prefixes[activeDbTab];
                 let currentLen = Object.keys(coll).length;
                 let counter = 1;
@@ -245,12 +246,22 @@
                     let id = prefix + counter;
                     while (coll[id]) { counter++; id = prefix + counter; }
                     coll[id] = defaults[activeDbTab](id);
-                    coll[id].name += ' ' + counter;
+                    if (activeDbTab !== 'animations') {
+                        coll[id].name += ' ' + counter;
+                    }
                     currentLen++;
                 }
                 if (currentLen > newMax) {
                     const keys = Object.keys(coll).sort((a, b) => a.localeCompare(b));
-                    keys.slice(newMax).forEach(k => delete coll[k]);
+                    if (activeDbTab === 'animations') {
+                        // Safe delete: protect system entries, only delete assignable ones
+                        const assignableKeys = keys.filter(k => coll[k].class !== 'system');
+                        const numToDelete = currentLen - newMax;
+                        const toDelete = assignableKeys.slice(-numToDelete);
+                        toDelete.forEach(k => delete coll[k]);
+                    } else {
+                        keys.slice(newMax).forEach(k => delete coll[k]);
+                    }
                 }
             }
 

@@ -131,6 +131,114 @@ local function makeHarnessSession()
     return vSession
 end
 
+local function runPreviewAnim(animId, animJson, spritePath)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local animDef = {}
+        if animJson and animJson ~= "" then
+            local decoded = json.decode(animJson)
+            if type(decoded) == "table" then animDef = decoded end
+        end
+
+        -- Ensure loader animations contains the previewed anim definition
+        loader.animations = loader.animations or {}
+        loader.animations[animId] = animDef
+
+        -- Reload animation player
+        local animation_player = require("presentation.animation_player")
+        animation_player.load(loader.animations)
+
+        -- Load dummy battler sprite
+        local texture
+        if spritePath and spritePath ~= "" then
+            if love.filesystem.getInfo(spritePath) then
+                texture = love.graphics.newImage(spritePath)
+            end
+        end
+        if not texture then
+            texture = love.graphics.newImage("assets/smallBattlers/pixie.png") -- fallback
+        end
+
+        local dummyTarget = { name = "dummy" }
+
+        -- Run rendering steps at 20 FPS (0.05s intervals)
+        local step = 0.05
+        local durationMs = animDef.duration or 1000
+        local duration = durationMs / 1000
+        local elapsed = 0
+        local frames = {}
+
+        local previewCanvas = love.graphics.newCanvas(240, 240)
+        local ui = require("presentation.ui")
+        ui.init()
+
+        animation_player.reset()
+        animation_player.play(animId, dummyTarget)
+
+        while elapsed <= duration do
+            love.graphics.setCanvas({ previewCanvas, stencil = true })
+            love.graphics.clear(0, 0, 0, 0) -- transparent background for animation frames
+            love.graphics.setColor(1, 1, 1, 1)
+
+            -- Query active transform, tint, blend and shake
+            local tf = animation_player.getTransform(dummyTarget)
+            local tint = animation_player.getTint(dummyTarget)
+            local blendMode = animation_player.getBlendMode(dummyTarget) or "alpha"
+            local shakeX = animation_player.getShakeOffset(dummyTarget)
+
+            -- Center dummy sprite in a 240x240 canvas (anchor bottom-center)
+            local sprW = texture:getWidth()
+            local sprH = texture:getHeight()
+            local drawX = 120 + tf.offsetX + shakeX
+            local drawY = 160 + tf.offsetY -- draw baseline at Y=160
+
+            love.graphics.setBlendMode(blendMode)
+            if tint then
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
+            else
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+
+            -- Sprite drawing function for stencil test
+            local function drawSprite()
+                love.graphics.draw(texture, drawX, drawY, 0, tf.scaleX, tf.scaleY, sprW / 2, sprH)
+            end
+            drawSprite()
+
+            -- Draw particles
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite)
+
+            -- Reset graphics state
+            love.graphics.setBlendMode("alpha")
+            love.graphics.setColor(1, 1, 1, 1)
+
+            -- Encode frame to PNG base64
+            love.graphics.setCanvas()
+            local fileData = previewCanvas:newImageData():encode("png")
+            local b64 = love.data.encode("string", "base64", fileData)
+            table.insert(frames, b64)
+
+            -- Advance time
+            animation_player.update(step)
+            animation_player.updateParticles(step)
+            elapsed = elapsed + step
+        end
+
+        payload = {
+            animId = animId,
+            frames = frames,
+            gameWidth = 240,
+            gameHeight = 240
+        }
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
 -- E5: headless scene preview (`lovec . preview-scene <id>`). Pushes the
 -- scene with the mock session, runs on_enter through the real interpreter,
 -- and prints the MATERIALIZED window state (window_renderer.resolveState:
@@ -209,7 +317,7 @@ local function runPreviewScene(sceneId)
                 local ui = require("presentation.ui")
                 ui.init()
                 local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
-                love.graphics.setCanvas(previewCanvas)
+                love.graphics.setCanvas({ previewCanvas, stencil = true })
                 love.graphics.clear(0, 0, 0, 1)
                 love.graphics.setColor(1, 1, 1, 1)
                 if sh.draw(ctx) then
@@ -316,7 +424,7 @@ local function runPreviewWindow(windowId, mockSpecJSON)
             local ui = require("presentation.ui")
             ui.init()
             local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
-            love.graphics.setCanvas(previewCanvas)
+            love.graphics.setCanvas({ previewCanvas, stencil = true })
             love.graphics.clear(0, 0, 0, 1)
             love.graphics.setColor(1, 1, 1, 1)
             wr.draw(state, sceneData, ctx)
@@ -1442,6 +1550,12 @@ function love.load(arg)
                 previewWindowId = arg[i + 1]
                 previewWindowMockSpec = arg[i + 2]
                 i = i + 2
+            elseif val == "preview-anim" then
+                isPreviewAnimMode = true
+                previewAnimId = arg[i + 1]
+                previewAnimJson = arg[i + 2]
+                previewAnimSprite = arg[i + 3]
+                i = i + 3
             elseif val == "preview-font" then
                 isPreviewFontMode = true
                 previewFontName = arg[i + 1]
@@ -1473,6 +1587,14 @@ function love.load(arg)
     if isPreviewFontMode then
         loader.init()
         runPreviewFont(previewFontName, tonumber(previewFontSize))
+        love.event.quit(0)
+        return
+    end
+
+    -- A3: headless animation preview, then quit.
+    if isPreviewAnimMode then
+        loader.init()
+        runPreviewAnim(previewAnimId, previewAnimJson, previewAnimSprite)
         love.event.quit(0)
         return
     end

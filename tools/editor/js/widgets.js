@@ -431,6 +431,471 @@
             container.appendChild(group);
         }
 
+        // Editable list of animation track rows
+        function buildTracksEditor(container, anim) {
+            anim.tracks = anim.tracks || [];
+            const originalSetDirty = window.setDirty || (typeof setDirty !== 'undefined' ? setDirty : () => {});
+            const localSetDirty = (val) => {
+                originalSetDirty(val);
+                if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+            };
+            const setDirty = localSetDirty;
+
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = 'Tracks';
+            group.appendChild(lbl);
+
+            const box = makeListBox();
+            box.style.maxHeight = '400px';
+            box.style.overflowY = 'auto';
+
+            const rgb01ToHex = c => '#' + (c || [1, 1, 1]).slice(0, 3)
+                .map(v => Math.round((v || 0) * 255).toString(16).padStart(2, '0')).join('');
+            const hexToRgb01 = hex => [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) / 255 * 100) / 100);
+
+            const render = () => {
+                box.innerHTML = '';
+                anim.tracks.forEach((tr, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'border: 1px solid var(--win-shadow); padding: 6px; margin-bottom: 8px; background: var(--win-gray); display: flex; flex-direction: column; gap: 4px;';
+
+                    const topRow = document.createElement('div');
+                    topRow.style.cssText = 'display: flex; gap: 6px; align-items: center; flex-wrap: wrap;';
+
+                    const t0Lbl = document.createElement('span');
+                    t0Lbl.textContent = 't0:';
+                    t0Lbl.style.fontSize = '10px';
+                    topRow.appendChild(t0Lbl);
+
+                    const t0Input = document.createElement('input');
+                    t0Input.type = 'number';
+                    t0Input.className = 'win98-input';
+                    t0Input.style.width = '50px';
+                    t0Input.value = tr.t0 !== undefined ? tr.t0 : 0;
+                    t0Input.oninput = () => { tr.t0 = parseInt(t0Input.value) || 0; setDirty(true); };
+                    topRow.appendChild(t0Input);
+
+                    const durLbl = document.createElement('span');
+                    durLbl.textContent = 'Dur:';
+                    durLbl.style.fontSize = '10px';
+                    topRow.appendChild(durLbl);
+
+                    const durInput = document.createElement('input');
+                    durInput.type = 'number';
+                    durInput.className = 'win98-input';
+                    durInput.style.width = '50px';
+                    durInput.value = tr.duration !== undefined ? tr.duration : 100;
+                    durInput.oninput = () => { tr.duration = parseInt(durInput.value) || 0; setDirty(true); };
+                    topRow.appendChild(durInput);
+
+                    const typeLbl = document.createElement('span');
+                    typeLbl.textContent = 'Type:';
+                    typeLbl.style.fontSize = '10px';
+                    topRow.appendChild(typeLbl);
+
+                    const trackTypes = [
+                        { value: 'tint', label: 'Tint' },
+                        { value: 'blend', label: 'Blend Mode' },
+                        { value: 'transform', label: 'Transform' },
+                        { value: 'shake', label: 'Shake' },
+                        { value: 'particles', label: 'Particles' },
+                        { value: 'text_flow', label: 'Text Flow' }
+                    ];
+                    
+                    const isKnownType = trackTypes.some(tt => tt.value === tr.type);
+                    
+                    const typeSelect = makeSelect(trackTypes, tr.type, val => {
+                        tr.type = val;
+                        Object.keys(tr).forEach(k => {
+                            if (k !== 'type' && k !== 't0' && k !== 'duration' && k !== 'easing') {
+                                delete tr[k];
+                            }
+                        });
+                        if (val === 'tint') {
+                            tr.color = [1, 1, 1];
+                            tr.fromAlpha = 1;
+                            tr.toAlpha = 0;
+                        } else if (val === 'blend') {
+                            tr.mode = 'add';
+                        } else if (val === 'transform') {
+                            tr.fromX = 0; tr.toX = 0; tr.fromY = 0; tr.toY = 0;
+                        } else if (val === 'shake') {
+                            tr.amplitude = 2;
+                            tr.frequency = 30;
+                        } else if (val === 'particles') {
+                            tr.rate = 10; tr.lifetime = 0.5; tr.spread = 45; tr.velocity = 50; tr.gravity = 0;
+                        } else if (val === 'text_flow') {
+                            tr.sequence = '...'; tr.interval = 100; tr.color = [1, 1, 1]; tr.targetPart = 'hp_gauge';
+                        }
+                        setDirty(true);
+                        render();
+                    });
+                    
+                    if (!isKnownType) {
+                        typeSelect.disabled = true;
+                        typeSelect.innerHTML = `<option value="${tr.type}">${tr.type} (Unknown)</option>`;
+                    }
+                    
+                    topRow.appendChild(typeSelect);
+
+                    const easeLbl = document.createElement('span');
+                    easeLbl.textContent = 'Ease:';
+                    easeLbl.style.fontSize = '10px';
+                    topRow.appendChild(easeLbl);
+
+                    const easingOpts = [
+                        { value: 'linear', label: 'Linear' },
+                        { value: 'ease_out', label: 'Ease Out' }
+                    ];
+                    const easeSelect = makeSelect(easingOpts, tr.easing || 'linear', val => {
+                        tr.easing = val;
+                        setDirty(true);
+                    });
+                    if (!isKnownType) {
+                        easeSelect.disabled = true;
+                    }
+                    topRow.appendChild(easeSelect);
+
+                    const controls = document.createElement('div');
+                    controls.style.cssText = 'display: flex; gap: 2px; margin-left: auto;';
+
+                    const upBtn = document.createElement('button');
+                    upBtn.className = 'win98-btn';
+                    upBtn.textContent = '▲';
+                    upBtn.style.padding = '0 3px';
+                    upBtn.disabled = idx === 0;
+                    upBtn.onclick = (e) => {
+                        e.preventDefault();
+                        anim.tracks.splice(idx, 1);
+                        anim.tracks.splice(idx - 1, 0, tr);
+                        setDirty(true);
+                        render();
+                    };
+                    controls.appendChild(upBtn);
+
+                    const dnBtn = document.createElement('button');
+                    dnBtn.className = 'win98-btn';
+                    dnBtn.textContent = '▼';
+                    dnBtn.style.padding = '0 3px';
+                    dnBtn.disabled = idx === anim.tracks.length - 1;
+                    dnBtn.onclick = (e) => {
+                        e.preventDefault();
+                        anim.tracks.splice(idx, 1);
+                        anim.tracks.splice(idx + 1, 0, tr);
+                        setDirty(true);
+                        render();
+                    };
+                    controls.appendChild(dnBtn);
+
+                    controls.appendChild(makeRowDeleteBtn(() => {
+                        anim.tracks.splice(idx, 1);
+                        setDirty(true);
+                        render();
+                    }));
+
+                    topRow.appendChild(controls);
+                    row.appendChild(topRow);
+
+                    if (isKnownType) {
+                        const paramRow = document.createElement('div');
+                        paramRow.style.cssText = 'display: flex; gap: 8px; align-items: center; padding: 4px; background: var(--win-white); border: 1px inset var(--win-shadow); flex-wrap: wrap;';
+
+                        if (tr.type === 'tint') {
+                            const colPick = document.createElement('input');
+                            colPick.type = 'color';
+                            colPick.value = rgb01ToHex(tr.color);
+                            colPick.oninput = () => {
+                                tr.color = hexToRgb01(colPick.value);
+                                setDirty(true);
+                            };
+                            paramRow.appendChild(colPick);
+
+                            const faLbl = document.createElement('span');
+                            faLbl.textContent = 'Alpha Start:';
+                            faLbl.style.fontSize = '10px';
+                            paramRow.appendChild(faLbl);
+
+                            const faInput = document.createElement('input');
+                            faInput.type = 'number';
+                            faInput.step = '0.1';
+                            faInput.className = 'win98-input';
+                            faInput.style.width = '40px';
+                            faInput.value = tr.fromAlpha !== undefined ? tr.fromAlpha : 1;
+                            faInput.oninput = () => { tr.fromAlpha = parseFloat(faInput.value) || 0; setDirty(true); };
+                            paramRow.appendChild(faInput);
+
+                            const taLbl = document.createElement('span');
+                            taLbl.textContent = 'End:';
+                            taLbl.style.fontSize = '10px';
+                            paramRow.appendChild(taLbl);
+
+                            const taInput = document.createElement('input');
+                            taInput.type = 'number';
+                            taInput.step = '0.1';
+                            taInput.className = 'win98-input';
+                            taInput.style.width = '40px';
+                            taInput.value = tr.toAlpha !== undefined ? tr.toAlpha : 0;
+                            taInput.oninput = () => { tr.toAlpha = parseFloat(taInput.value) || 0; setDirty(true); };
+                            paramRow.appendChild(taInput);
+
+                        } else if (tr.type === 'blend') {
+                            const modeSelect = makeSelect([
+                                { value: 'add', label: 'Add' },
+                                { value: 'alpha', label: 'Alpha' }
+                            ], tr.mode || 'add', val => {
+                                tr.mode = val;
+                                setDirty(true);
+                            });
+                            paramRow.appendChild(modeSelect);
+
+                        } else if (tr.type === 'transform') {
+                            const addCoord = (lblText, key) => {
+                                const l = document.createElement('span');
+                                l.textContent = lblText + ':';
+                                l.style.fontSize = '10px';
+                                paramRow.appendChild(l);
+                                const inp = document.createElement('input');
+                                inp.type = 'number';
+                                inp.className = 'win98-input';
+                                inp.style.width = '35px';
+                                inp.value = tr[key] !== undefined ? tr[key] : 0;
+                                inp.dataset.trackIndex = idx;
+                                inp.dataset.paramKey = key;
+                                inp.oninput = () => {
+                                    tr[key] = parseInt(inp.value) || 0;
+                                    setDirty(true);
+                                    if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                                };
+                                paramRow.appendChild(inp);
+                            };
+                            addCoord('fromX', 'fromX');
+                            addCoord('toX', 'toX');
+                            addCoord('fromY', 'fromY');
+                            addCoord('toY', 'toY');
+                            
+                            const addScale = (lblText, key) => {
+                                const l = document.createElement('span');
+                                l.textContent = lblText + ':';
+                                l.style.fontSize = '10px';
+                                paramRow.appendChild(l);
+                                const inp = document.createElement('input');
+                                inp.type = 'number';
+                                inp.step = '0.1';
+                                inp.className = 'win98-input';
+                                inp.style.width = '35px';
+                                inp.value = tr[key] !== undefined ? tr[key] : 1.0;
+                                inp.oninput = () => { tr[key] = parseFloat(inp.value) || 1.0; setDirty(true); };
+                                paramRow.appendChild(inp);
+                            };
+                            addScale('fromSX', 'fromScaleX');
+                            addScale('toSX', 'toScaleX');
+                            addScale('fromSY', 'fromScaleY');
+                            addScale('toSY', 'toScaleY');
+
+                        } else if (tr.type === 'shake') {
+                            const ampLbl = document.createElement('span');
+                            ampLbl.textContent = 'Amplitude:';
+                            ampLbl.style.fontSize = '10px';
+                            paramRow.appendChild(ampLbl);
+
+                            const ampInput = document.createElement('input');
+                            ampInput.type = 'number';
+                            ampInput.className = 'win98-input';
+                            ampInput.style.width = '40px';
+                            ampInput.value = tr.amplitude !== undefined ? tr.amplitude : 2;
+                            ampInput.oninput = () => { tr.amplitude = parseInt(ampInput.value) || 0; setDirty(true); };
+                            paramRow.appendChild(ampInput);
+
+                            const freqLbl = document.createElement('span');
+                            freqLbl.textContent = 'Freq:';
+                            freqLbl.style.fontSize = '10px';
+                            paramRow.appendChild(freqLbl);
+
+                            const freqInput = document.createElement('input');
+                            freqInput.type = 'number';
+                            freqInput.className = 'win98-input';
+                            freqInput.style.width = '40px';
+                            freqInput.value = tr.frequency !== undefined ? tr.frequency : 30;
+                            freqInput.oninput = () => { tr.frequency = parseInt(freqInput.value) || 0; setDirty(true); };
+                            paramRow.appendChild(freqInput);
+
+                        } else if (tr.type === 'particles') {
+                            const addPartParam = (lblText, key, def) => {
+                                const l = document.createElement('span');
+                                l.textContent = lblText + ':';
+                                l.style.fontSize = '9px';
+                                paramRow.appendChild(l);
+                                const inp = document.createElement('input');
+                                inp.type = 'number';
+                                inp.className = 'win98-input';
+                                inp.style.width = '35px';
+                                inp.value = tr[key] !== undefined ? tr[key] : def;
+                                inp.dataset.trackIndex = idx;
+                                inp.dataset.paramKey = key;
+                                inp.oninput = () => {
+                                    tr[key] = parseFloat(inp.value) || 0;
+                                    setDirty(true);
+                                    if ((key === 'x' || key === 'y') && anim.drawOverlayHandles) {
+                                        anim.drawOverlayHandles();
+                                    }
+                                };
+                                paramRow.appendChild(inp);
+                            };
+                            addPartParam('Rate', 'rate', 10);
+                            addPartParam('Life', 'lifetime', 0.5);
+                            addPartParam('Spread', 'spread', 45);
+                            addPartParam('Vel', 'velocity', 50);
+                            addPartParam('Grav', 'gravity', 0);
+                            addPartParam('X', 'x', 0);
+                            addPartParam('Y', 'y', 0);
+
+                            addPartParam('QWidth', 'quadWidth', '');
+                            addPartParam('QHeight', 'quadHeight', '');
+                            addPartParam('QCount', 'quadCount', '');
+
+                            const maskLbl = document.createElement('span');
+                            maskLbl.textContent = 'Mask Target:';
+                            maskLbl.style.fontSize = '9px';
+                            paramRow.appendChild(maskLbl);
+
+                            const maskChk = document.createElement('input');
+                            maskChk.type = 'checkbox';
+                            maskChk.checked = tr.mask === 'target';
+                            maskChk.onchange = () => {
+                                if (maskChk.checked) tr.mask = 'target';
+                                else delete tr.mask;
+                                setDirty(true);
+                            };
+                            paramRow.appendChild(maskChk);
+
+                            const texLbl = document.createElement('span');
+                            texLbl.textContent = 'Texture:';
+                            texLbl.style.fontSize = '9px';
+                            paramRow.appendChild(texLbl);
+
+                            const texInput = document.createElement('input');
+                            texInput.type = 'text';
+                            texInput.className = 'win98-input';
+                            texInput.style.width = '100px';
+                            texInput.value = tr.particleTexture || '';
+                            texInput.oninput = () => {
+                                tr.particleTexture = texInput.value || undefined;
+                                setDirty(true);
+                            };
+                            paramRow.appendChild(texInput);
+
+                            const browseBtn = document.createElement('button');
+                            browseBtn.className = 'win98-btn';
+                            browseBtn.textContent = '...';
+                            browseBtn.style.padding = '0 4px';
+                            browseBtn.onclick = (e) => {
+                                e.preventDefault();
+                                openAssetPicker('animation', (filepath) => {
+                                    texInput.value = filepath.replace(/\\/g, '/');
+                                    tr.particleTexture = texInput.value;
+                                    setDirty(true);
+                                });
+                            };
+                            paramRow.appendChild(browseBtn);
+
+                            const colOverLbl = document.createElement('span');
+                            colOverLbl.textContent = 'Colors:';
+                            colOverLbl.style.fontSize = '9px';
+                            paramRow.appendChild(colOverLbl);
+
+                            const colOverLife = document.createElement('input');
+                            colOverLife.type = 'text';
+                            colOverLife.className = 'win98-input';
+                            colOverLife.style.width = '120px';
+                            colOverLife.value = JSON.stringify(tr.colorOverLife || [[1, 1, 1, 1], [1, 1, 1, 0]]);
+                            colOverLife.oninput = () => {
+                                try {
+                                    tr.colorOverLife = JSON.parse(colOverLife.value);
+                                    setDirty(true);
+                                    colOverLife.style.backgroundColor = '';
+                                } catch (e) {
+                                    colOverLife.style.backgroundColor = '#ffcccc';
+                                }
+                            };
+                            paramRow.appendChild(colOverLife);
+
+                        } else if (tr.type === 'text_flow') {
+                            const seqLbl = document.createElement('span');
+                            seqLbl.textContent = 'Sequence:';
+                            seqLbl.style.fontSize = '10px';
+                            paramRow.appendChild(seqLbl);
+
+                            const seqInput = document.createElement('input');
+                            seqInput.type = 'text';
+                            seqInput.className = 'win98-input';
+                            seqInput.style.width = '60px';
+                            seqInput.value = tr.sequence || '';
+                            seqInput.oninput = () => { tr.sequence = seqInput.value; setDirty(true); };
+                            paramRow.appendChild(seqInput);
+
+                            const intLbl = document.createElement('span');
+                            intLbl.textContent = 'Interval:';
+                            intLbl.style.fontSize = '10px';
+                            paramRow.appendChild(intLbl);
+
+                            const intInput = document.createElement('input');
+                            intInput.type = 'number';
+                            intInput.className = 'win98-input';
+                            intInput.style.width = '45px';
+                            intInput.value = tr.interval || 100;
+                            intInput.oninput = () => { tr.interval = parseInt(intInput.value) || 100; setDirty(true); };
+                            paramRow.appendChild(intInput);
+
+                            const colPick = document.createElement('input');
+                            colPick.type = 'color';
+                            colPick.value = rgb01ToHex(tr.color);
+                            colPick.oninput = () => {
+                                tr.color = hexToRgb01(colPick.value);
+                                setDirty(true);
+                            };
+                            paramRow.appendChild(colPick);
+
+                            const partLbl = document.createElement('span');
+                            partLbl.textContent = 'Part:';
+                            partLbl.style.fontSize = '10px';
+                            paramRow.appendChild(partLbl);
+
+                            const partSelect = makeSelect([
+                                { value: 'hp_gauge', label: 'HP Gauge' },
+                                { value: 'mp_gauge', label: 'MP Gauge' },
+                                { value: 'top', label: 'Top / Head' }
+                            ], tr.targetPart || 'hp_gauge', val => {
+                                tr.targetPart = val;
+                                setDirty(true);
+                            });
+                            paramRow.appendChild(partSelect);
+                        }
+
+                        row.appendChild(paramRow);
+                    } else {
+                        const unknownRow = document.createElement('div');
+                        unknownRow.style.cssText = 'padding: 4px; background: var(--win-white); border: 1px inset var(--win-shadow); font-family: monospace; font-size: 10px; color: var(--win-dark-shadow);';
+                        unknownRow.textContent = JSON.stringify(tr);
+                        row.appendChild(unknownRow);
+                    }
+
+                    box.appendChild(row);
+                });
+
+                box.appendChild(makeAddRowBtn('+ Add Track', () => {
+                    anim.tracks.push({ type: 'tint', t0: 0, duration: 500, color: [1, 1, 1], fromAlpha: 1, toAlpha: 0, easing: 'linear' });
+                    setDirty(true);
+                    render();
+                }));
+            };
+
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         // Checkbox list bound to an array of ids (actor skills/passives)
         function buildChecklistField(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter) {
             const group = document.createElement('div');
@@ -1444,6 +1909,27 @@
                 createFormField(itemRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(itemRow);
 
+                if (item.type !== 'equipment') {
+                    const animGroup = document.createElement('div');
+                    animGroup.className = 'form-group';
+                    const aLbl = document.createElement('label');
+                    aLbl.textContent = 'Animation';
+                    animGroup.appendChild(aLbl);
+                    const animOpts = [{ value: '', label: '(default)' }];
+                    if (dbPayload.animations) {
+                        Object.keys(dbPayload.animations).forEach(id => {
+                            const animObj = dbPayload.animations[id];
+                            if (animObj.class === 'assignable') {
+                                animOpts.push({ value: id, label: id });
+                            }
+                        });
+                    }
+                    animGroup.appendChild(makeSelect(animOpts, item.animation || '', v => {
+                        if (v === '') { delete item.animation; } else { item.animation = v; }
+                    }));
+                    formPanel.appendChild(animGroup);
+                }
+
                 createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
 
                 if (item.type === 'equipment') {
@@ -1475,6 +1961,25 @@
                     if (v === '') { skill.element = null; } else { skill.element = v; }
                 }));
                 formPanel.appendChild(elGroup);
+
+                const animGroup = document.createElement('div');
+                animGroup.className = 'form-group';
+                const aLbl = document.createElement('label');
+                aLbl.textContent = 'Animation';
+                animGroup.appendChild(aLbl);
+                const animOpts = [{ value: '', label: '(default)' }];
+                if (dbPayload.animations) {
+                    Object.keys(dbPayload.animations).forEach(id => {
+                        const animObj = dbPayload.animations[id];
+                        if (animObj.class === 'assignable') {
+                            animOpts.push({ value: id, label: id });
+                        }
+                    });
+                }
+                animGroup.appendChild(makeSelect(animOpts, skill.animation || '', v => {
+                    if (v === '') { delete skill.animation; } else { skill.animation = v; }
+                }));
+                formPanel.appendChild(animGroup);
 
                 const costRow = document.createElement('div');
                 costRow.className = 'form-row';
@@ -1549,6 +2054,1092 @@
                     note.textContent = 'The engine locates the player character by the "Summoner" role — keep exactly one actor with it.';
                     formPanel.appendChild(note);
                 }
+
+            } else if (activeDbTab === 'animations') {
+                const anim = dbPayload.animations[item.id];
+                if (!anim) return;
+
+                // Playback Cleanup at start of rendering new form
+                if (formPanel._playbackCleanup) {
+                    formPanel._playbackCleanup();
+                    delete formPanel._playbackCleanup;
+                }
+
+                // Ensure all tracks have unique ids and names
+                anim.tracks = anim.tracks || [];
+                anim.tracks.forEach((t, i) => {
+                    if (!t.id) {
+                        t.id = 'node_' + Math.random().toString(36).substr(2, 5) + '_' + i;
+                    }
+                    if (!t.name) {
+                        t.name = 'Node ' + (i + 1) + ' (' + t.type + ')';
+                    }
+                });
+
+                let activeNodeId = sessionStorage.getItem('hkt_active_node_id_' + anim.id) || (anim.tracks[0] ? anim.tracks[0].id : null);
+                if (activeNodeId && !anim.tracks.some(t => t.id === activeNodeId)) {
+                    activeNodeId = anim.tracks[0] ? anim.tracks[0].id : null;
+                }
+
+                // Create a container with columns to fit Tree, Properties, and Preview side-by-side
+                const container = document.createElement('div');
+                container.style.cssText = 'display: flex; gap: 16px; align-items: flex-start; width: 100%;';
+
+                const timelineCol = document.createElement('div');
+                timelineCol.style.cssText = 'width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;';
+
+                const propsCol = document.createElement('div');
+                propsCol.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; border: 2px outset var(--win-white); padding: 8px; background: var(--win-gray); box-sizing: border-box;';
+
+                const previewCol = document.createElement('div');
+                previewCol.style.cssText = 'width: 260px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;';
+
+                // Helpers for collapsible panels
+                const createCollapsibleGroup = (parent, titleText, isInitiallyOpen = true) => {
+                    const group = document.createElement('div');
+                    group.style.cssText = 'border: 1px solid var(--win-shadow); background: var(--win-gray); display: flex; flex-direction: column; margin-bottom: 6px;';
+
+                    const header = document.createElement('div');
+                    header.style.cssText = 'background: var(--win-blue); color: #fff; padding: 4px 8px; font-weight: bold; font-size: 11px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;';
+                    header.innerHTML = `<span>${titleText}</span><span class="toggle-icon">${isInitiallyOpen ? '▼' : '▶'}</span>`;
+                    group.appendChild(header);
+
+                    const content = document.createElement('div');
+                    content.style.cssText = `padding: 8px; display: ${isInitiallyOpen ? 'flex' : 'none'}; flex-direction: column; gap: 6px; background: var(--win-gray);`;
+                    group.appendChild(content);
+
+                    header.onclick = () => {
+                        const isOpen = content.style.display !== 'none';
+                        content.style.display = isOpen ? 'none' : 'flex';
+                        header.querySelector('.toggle-icon').textContent = isOpen ? '▶' : '▼';
+                    };
+
+                    parent.appendChild(group);
+                    return content;
+                };
+
+                // Render Timeline Track List
+                const renderTimelineList = () => {
+                    timelineCol.innerHTML = '';
+                    
+                    const header = document.createElement('div');
+                    header.style.cssText = 'font-weight: bold; margin-bottom: 4px;';
+                    header.textContent = 'Tracks Timeline';
+                    timelineCol.appendChild(header);
+
+                    const toolbar = document.createElement('div');
+                    toolbar.style.cssText = 'display: flex; gap: 4px; margin-bottom: 6px;';
+
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'win98-btn';
+                    addBtn.textContent = '+ Add Track';
+                    addBtn.style.flex = '1';
+                    addBtn.onclick = (e) => {
+                        e.preventDefault();
+                        const newId = 'node_' + Math.random().toString(36).substr(2, 5);
+                        anim.tracks.push({
+                            id: newId,
+                            name: 'Track ' + (anim.tracks.length + 1),
+                            type: 'transform',
+                            t0: 0,
+                            duration: 500,
+                            easing: 'linear'
+                        });
+                        activeNodeId = newId;
+                        sessionStorage.setItem('hkt_active_node_id_' + anim.id, newId);
+                        setDirty(true);
+                        renderAll();
+                    };
+                    toolbar.appendChild(addBtn);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'win98-btn';
+                    delBtn.textContent = 'Delete';
+                    delBtn.style.flex = '1';
+                    delBtn.disabled = !activeNodeId;
+                    delBtn.onclick = (e) => {
+                        e.preventDefault();
+                        if (!activeNodeId) return;
+                        const idx = anim.tracks.findIndex(t => t.id === activeNodeId);
+                        if (idx !== -1) {
+                            const deletedId = activeNodeId;
+                            anim.tracks.splice(idx, 1);
+                            anim.tracks.forEach(t => {
+                                if (t.parent === deletedId) t.parent = null;
+                            });
+                            activeNodeId = anim.tracks[0] ? anim.tracks[0].id : null;
+                            if (activeNodeId) {
+                                sessionStorage.setItem('hkt_active_node_id_' + anim.id, activeNodeId);
+                            } else {
+                                sessionStorage.removeItem('hkt_active_node_id_' + anim.id);
+                            }
+                            setDirty(true);
+                            renderAll();
+                        }
+                    };
+                    toolbar.appendChild(delBtn);
+                    timelineCol.appendChild(toolbar);
+
+                    const listContainer = document.createElement('div');
+                    listContainer.style.cssText = 'border: 2px inset var(--win-shadow); background: var(--win-white); overflow-y: auto; height: 350px; padding: 4px; display: flex; flex-direction: column; gap: 4px;';
+                    
+                    anim.tracks.forEach(tr => {
+                        const row = document.createElement('div');
+                        row.setAttribute('data-track-id', tr.id);
+                        row.style.cssText = 'padding: 6px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--win-shadow); background: var(--win-gray); box-shadow: 1px 1px 0px #fff inset;';
+                        
+                        if (tr.id === activeNodeId) {
+                            row.style.background = 'var(--win-blue)';
+                            row.style.color = '#fff';
+                            row.style.borderColor = 'var(--win-dark-shadow)';
+                            row.style.boxShadow = 'none';
+                        } else {
+                            row.onmouseenter = () => { row.style.background = '#f0f0f0'; };
+                            row.onmouseleave = () => { if (tr.id !== activeNodeId) row.style.background = 'var(--win-gray)'; };
+                        }
+
+                        const topRow = document.createElement('div');
+                        topRow.style.cssText = 'display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 11px;';
+                        
+                        const typeLabel = document.createElement('span');
+                        typeLabel.textContent = (tr.type === 'particles' ? '✨ ' : tr.type === 'transform' ? '⬜ ' : '📝 ') + tr.type.toUpperCase();
+                        typeLabel.style.fontSize = '9px';
+                        typeLabel.style.opacity = '0.7';
+                        topRow.appendChild(typeLabel);
+
+                        const nameSpan = document.createElement('span');
+                        nameSpan.className = 'track-name-label';
+                        nameSpan.textContent = tr.name || tr.id;
+                        nameSpan.style.cssText = 'flex: 1; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 6px;';
+                        topRow.appendChild(nameSpan);
+
+                        row.appendChild(topRow);
+
+                        const bottomRow = document.createElement('div');
+                        bottomRow.className = 'track-time-label';
+                        bottomRow.style.cssText = 'font-size: 9px; opacity: 0.8;';
+                        bottomRow.textContent = `t = ${tr.t0 || 0}ms (${tr.duration || 0}ms)`;
+                        row.appendChild(bottomRow);
+
+                        row.onclick = () => {
+                            activeNodeId = tr.id;
+                            sessionStorage.setItem('hkt_active_node_id_' + anim.id, tr.id);
+                            renderAll();
+                        };
+
+                        listContainer.appendChild(row);
+                    });
+
+                    timelineCol.appendChild(listContainer);
+                };
+
+                // Active Node Properties Panel
+                const renderActiveNodeProps = () => {
+                    propsCol.innerHTML = '';
+
+                    const header = document.createElement('div');
+                    header.style.cssText = 'font-weight: bold; border-bottom: 1px solid var(--win-shadow); padding-bottom: 4px; margin-bottom: 6px;';
+                    header.textContent = 'Active Track Settings';
+                    propsCol.appendChild(header);
+
+                    const tr = anim.tracks.find(t => t.id === activeNodeId);
+                    if (!tr) {
+                        const placeholder = document.createElement('div');
+                        placeholder.style.cssText = 'color: #777; text-align: center; padding: 20px;';
+                        placeholder.textContent = 'No track selected. Add or select a track from the timeline.';
+                        propsCol.appendChild(placeholder);
+                        return;
+                    }
+
+                    // Section 1: Node Settings
+                    const settingsGroup = createCollapsibleGroup(propsCol, 'Track Configuration', true);
+                    
+                    createFormField(settingsGroup, 'Name', tr.name || '', val => {
+                        tr.name = val;
+                        setDirty(true);
+                        const labelEl = timelineCol.querySelector(`[data-track-id="${tr.id}"] .track-name-label`);
+                        if (labelEl) labelEl.textContent = val || tr.id;
+                    });
+
+                    // Type Select
+                    const typeGroup = document.createElement('div');
+                    typeGroup.className = 'form-group';
+                    const typeLbl = document.createElement('label');
+                    typeLbl.textContent = 'Type:';
+                    typeGroup.appendChild(typeLbl);
+                    const trackTypes = [
+                        { value: 'transform', label: 'Transform' },
+                        { value: 'particles', label: 'Particles' },
+                        { value: 'tint', label: 'Tint' },
+                        { value: 'blend', label: 'Blend Mode' },
+                        { value: 'shake', label: 'Shake' },
+                        { value: 'text_flow', label: 'Text Flow' }
+                    ];
+                    const typeSelect = makeSelect(trackTypes, tr.type, val => {
+                        tr.type = val;
+                        // Clean properties
+                        Object.keys(tr).forEach(k => {
+                            if (k !== 'id' && k !== 'name' && k !== 'parent' && k !== 'type' && k !== 't0' && k !== 'duration' && k !== 'easing' && k !== 'inheritPosition' && k !== 'inheritScale') {
+                                delete tr[k];
+                            }
+                        });
+                        // Defaults
+                        if (val === 'tint') {
+                            tr.color = [1, 1, 1];
+                            tr.fromAlpha = 1;
+                            tr.toAlpha = 0;
+                        } else if (val === 'blend') {
+                            tr.mode = 'add';
+                        } else if (val === 'transform') {
+                            tr.fromX = 0; tr.toX = 0; tr.fromY = 0; tr.toY = 0;
+                        } else if (val === 'shake') {
+                            tr.amplitude = 2;
+                            tr.frequency = 30;
+                        } else if (val === 'particles') {
+                            tr.rate = 10; tr.lifetime = 0.5; tr.spread = 45; tr.velocity = 50; tr.gravity = 0; tr.x = 0; tr.y = 0;
+                        } else if (val === 'text_flow') {
+                            tr.sequence = '...'; tr.interval = 100; tr.color = [1, 1, 1]; tr.targetPart = 'hp_gauge';
+                        }
+                        setDirty(true);
+                        renderAll();
+                    });
+                    typeGroup.appendChild(typeSelect);
+                    settingsGroup.appendChild(typeGroup);
+
+                    // Parent Select (Optional parenting)
+                    const parentGroup = document.createElement('div');
+                    parentGroup.className = 'form-group';
+                    const parentLbl = document.createElement('label');
+                    parentLbl.textContent = 'Parent Track (Optional):';
+                    parentGroup.appendChild(parentLbl);
+                    const parentOptions = [{ value: '', label: '(None)' }];
+                    anim.tracks.forEach(t => {
+                        if (t.id !== tr.id) {
+                            parentOptions.push({ value: t.id, label: t.name || t.id });
+                        }
+                    });
+                    const parentSelect = makeSelect(parentOptions, tr.parent || '', val => {
+                        tr.parent = val || null;
+                        setDirty(true);
+                        if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                    });
+                    parentGroup.appendChild(parentSelect);
+                    settingsGroup.appendChild(parentGroup);
+
+                    if (tr.parent) {
+                        // Inherit Position
+                        const inhPosGroup = document.createElement('div');
+                        inhPosGroup.className = 'form-group';
+                        const inhPosLbl = document.createElement('label');
+                        inhPosLbl.textContent = 'Inherit Position:';
+                        inhPosGroup.appendChild(inhPosLbl);
+                        const inhPosSelect = makeSelect([
+                            { value: 'always', label: 'Always' },
+                            { value: 'never', label: 'Never' }
+                        ], tr.inheritPosition || 'always', val => {
+                            tr.inheritPosition = val;
+                            setDirty(true);
+                            if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                        });
+                        inhPosGroup.appendChild(inhPosSelect);
+                        settingsGroup.appendChild(inhPosGroup);
+
+                        // Inherit Scale
+                        const inhScaleGroup = document.createElement('div');
+                        inhScaleGroup.className = 'form-group';
+                        const inhScaleLbl = document.createElement('label');
+                        inhScaleLbl.textContent = 'Inherit Scale:';
+                        inhScaleGroup.appendChild(inhScaleLbl);
+                        const inhScaleSelect = makeSelect([
+                            { value: 'always', label: 'Always' },
+                            { value: 'never', label: 'Never' }
+                        ], tr.inheritScale || 'always', val => {
+                            tr.inheritScale = val;
+                            setDirty(true);
+                            if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                        });
+                        inhScaleGroup.appendChild(inhScaleSelect);
+                        settingsGroup.appendChild(inhScaleGroup);
+                    }
+
+                    // Section 2: Timing & Parameters
+                    const paramsGroup = createCollapsibleGroup(propsCol, 'Timing & Coordinates', true);
+
+                    createFormField(paramsGroup, 'Start Time t0 (ms)', tr.t0 !== undefined ? tr.t0 : 0, val => {
+                        tr.t0 = parseInt(val) || 0;
+                        setDirty(true);
+                        const timeEl = timelineCol.querySelector(`[data-track-id="${tr.id}"] .track-time-label`);
+                        if (timeEl) timeEl.textContent = `t = ${tr.t0}ms (${tr.duration || 0}ms)`;
+                        if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                    }, 'number');
+
+                    createFormField(paramsGroup, 'Duration (ms)', tr.duration !== undefined ? tr.duration : 100, val => {
+                        tr.duration = parseInt(val) || 0;
+                        setDirty(true);
+                        const timeEl = timelineCol.querySelector(`[data-track-id="${tr.id}"] .track-time-label`);
+                        if (timeEl) timeEl.textContent = `t = ${tr.t0 || 0}ms (${tr.duration}ms)`;
+                        if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                    }, 'number');
+
+                    // Easing
+                    const easeGroup = document.createElement('div');
+                    easeGroup.className = 'form-group';
+                    const easeLbl = document.createElement('label');
+                    easeLbl.textContent = 'Easing:';
+                    easeGroup.appendChild(easeLbl);
+                    const easeSelect = makeSelect([
+                        { value: 'linear', label: 'Linear' },
+                        { value: 'ease_out', label: 'Ease Out' }
+                    ], tr.easing || 'linear', val => {
+                        tr.easing = val;
+                        setDirty(true);
+                        if (window.onAnimationTrackChanged) window.onAnimationTrackChanged();
+                    });
+                    easeGroup.appendChild(easeSelect);
+                    paramsGroup.appendChild(easeGroup);
+
+                    // Custom properties based on Type
+                    if (tr.type === 'transform') {
+                        const rowCoords = document.createElement('div');
+                        rowCoords.className = 'form-row';
+                        createFormField(rowCoords, 'Start X (fromX)', tr.fromX !== undefined ? tr.fromX : 0, val => {
+                            tr.fromX = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'fromX');
+                        createFormField(rowCoords, 'End X (toX)', tr.toX !== undefined ? tr.toX : 0, val => {
+                            tr.toX = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'toX');
+                        paramsGroup.appendChild(rowCoords);
+
+                        const rowCoordsY = document.createElement('div');
+                        rowCoordsY.className = 'form-row';
+                        createFormField(rowCoordsY, 'Start Y (fromY)', tr.fromY !== undefined ? tr.fromY : 0, val => {
+                            tr.fromY = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'fromY');
+                        createFormField(rowCoordsY, 'End Y (toY)', tr.toY !== undefined ? tr.toY : 0, val => {
+                            tr.toY = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'toY');
+                        paramsGroup.appendChild(rowCoordsY);
+
+                        const rowScale = document.createElement('div');
+                        rowScale.className = 'form-row';
+                        createFormField(rowScale, 'Start Scale X', tr.fromScaleX !== undefined ? tr.fromScaleX : 1.0, val => {
+                            tr.fromScaleX = parseFloat(val) || 1.0;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowScale, 'End Scale X', tr.toScaleX !== undefined ? tr.toScaleX : 1.0, val => {
+                            tr.toScaleX = parseFloat(val) || 1.0;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowScale);
+
+                        const rowScaleY = document.createElement('div');
+                        rowScaleY.className = 'form-row';
+                        createFormField(rowScaleY, 'Start Scale Y', tr.fromScaleY !== undefined ? tr.fromScaleY : 1.0, val => {
+                            tr.fromScaleY = parseFloat(val) || 1.0;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowScaleY, 'End Scale Y', tr.toScaleY !== undefined ? tr.toScaleY : 1.0, val => {
+                            tr.toScaleY = parseFloat(val) || 1.0;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowScaleY);
+
+                    } else if (tr.type === 'particles') {
+                        const rowCoords = document.createElement('div');
+                        rowCoords.className = 'form-row';
+                        createFormField(rowCoords, 'Offset X', tr.x !== undefined ? tr.x : 0, val => {
+                            tr.x = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'x');
+                        createFormField(rowCoords, 'Offset Y', tr.y !== undefined ? tr.y : 0, val => {
+                            tr.y = parseInt(val) || 0;
+                            setDirty(true);
+                            if (anim.drawOverlayHandles) anim.drawOverlayHandles();
+                        }, 'number', false, 'y');
+                        paramsGroup.appendChild(rowCoords);
+
+                        const rowRate = document.createElement('div');
+                        rowRate.className = 'form-row';
+                        createFormField(rowRate, 'Emission Rate', tr.rate !== undefined ? tr.rate : 10, val => {
+                            tr.rate = parseFloat(val) || 10;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowRate, 'Particle Lifetime', tr.lifetime !== undefined ? tr.lifetime : 0.5, val => {
+                            tr.lifetime = parseFloat(val) || 0.5;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowRate);
+
+                        const rowSpread = document.createElement('div');
+                        rowSpread.className = 'form-row';
+                        createFormField(rowSpread, 'Spread Angle (deg)', tr.spread !== undefined ? tr.spread : 45, val => {
+                            tr.spread = parseFloat(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowSpread, 'Velocity', tr.velocity !== undefined ? tr.velocity : 50, val => {
+                            tr.velocity = parseFloat(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowSpread);
+
+                        createFormField(paramsGroup, 'Gravity Acceleration', tr.gravity !== undefined ? tr.gravity : 0, val => {
+                            tr.gravity = parseFloat(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+
+                        // Section 3: Visual Settings (Particles specific)
+                        const visualGroup = createCollapsibleGroup(propsCol, 'Particle Visuals & Textures', true);
+
+                        // Particle texture
+                        const texGroup = document.createElement('div');
+                        texGroup.className = 'form-group';
+                        const texLbl = document.createElement('label');
+                        texLbl.textContent = 'Particle Texture:';
+                        texGroup.appendChild(texLbl);
+
+                        const texRow = document.createElement('div');
+                        texRow.style.cssText = 'display: flex; gap: 4px;';
+                        const texInput = document.createElement('input');
+                        texInput.type = 'text';
+                        texInput.className = 'win98-input';
+                        texInput.style.flex = '1';
+                        texInput.value = tr.particleTexture || '';
+                        texInput.oninput = () => {
+                            tr.particleTexture = texInput.value || undefined;
+                            setDirty(true);
+                        };
+                        texRow.appendChild(texInput);
+
+                        const browseBtn = document.createElement('button');
+                        browseBtn.className = 'win98-btn';
+                        browseBtn.textContent = '...';
+                        browseBtn.style.padding = '0 6px';
+                        browseBtn.onclick = (e) => {
+                            e.preventDefault();
+                            openAssetPicker('animation', (filepath) => {
+                                const clean = filepath.replace(/\\/g, '/');
+                                texInput.value = clean;
+                                tr.particleTexture = clean;
+                                setDirty(true);
+                            });
+                        };
+                        texRow.appendChild(browseBtn);
+                        texGroup.appendChild(texRow);
+                        visualGroup.appendChild(texGroup);
+
+                        // Quads slicing
+                        const rowQuads = document.createElement('div');
+                        rowQuads.className = 'form-row';
+                        createFormField(rowQuads, 'Quad Width', tr.quadWidth !== undefined ? tr.quadWidth : '', val => {
+                            if (val === '') delete tr.quadWidth;
+                            else tr.quadWidth = parseInt(val) || undefined;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowQuads, 'Quad Height', tr.quadHeight !== undefined ? tr.quadHeight : '', val => {
+                            if (val === '') delete tr.quadHeight;
+                            else tr.quadHeight = parseInt(val) || undefined;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowQuads, 'Quad Count', tr.quadCount !== undefined ? tr.quadCount : '', val => {
+                            if (val === '') delete tr.quadCount;
+                            else tr.quadCount = parseInt(val) || undefined;
+                            setDirty(true);
+                        }, 'number');
+                        visualGroup.appendChild(rowQuads);
+
+                        // Mask Target checkbox
+                        createCheckboxField(visualGroup, 'Mask to Target Battler Sprite', tr.mask === 'target', v => {
+                            if (v) tr.mask = 'target';
+                            else delete tr.mask;
+                            setDirty(true);
+                        });
+
+                        // Colors Over Life
+                        createFormField(visualGroup, 'Colors Over Life (JSON Array)', JSON.stringify(tr.colorOverLife || [[1, 1, 1, 1], [1, 1, 1, 0]]), val => {
+                            try {
+                                tr.colorOverLife = JSON.parse(val);
+                                setDirty(true);
+                            } catch (e) {}
+                        });
+
+                    } else if (tr.type === 'tint') {
+                        const rgb01ToHex = c => '#' + (c || [1, 1, 1]).slice(0, 3)
+                            .map(v => Math.round((v || 0) * 255).toString(16).padStart(2, '0')).join('');
+                        const hexToRgb01 = hex => [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) / 255 * 100) / 100);
+
+                        const colGroup = document.createElement('div');
+                        colGroup.className = 'form-group';
+                        const colLbl = document.createElement('label');
+                        colLbl.textContent = 'Tint Color:';
+                        colGroup.appendChild(colLbl);
+
+                        const colPick = document.createElement('input');
+                        colPick.type = 'color';
+                        colPick.value = rgb01ToHex(tr.color);
+                        colPick.oninput = () => {
+                            tr.color = hexToRgb01(colPick.value);
+                            setDirty(true);
+                        };
+                        colGroup.appendChild(colPick);
+                        paramsGroup.appendChild(colGroup);
+
+                        const rowAlpha = document.createElement('div');
+                        rowAlpha.className = 'form-row';
+                        createFormField(rowAlpha, 'Start Alpha', tr.fromAlpha !== undefined ? tr.fromAlpha : 1, val => {
+                            tr.fromAlpha = parseFloat(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowAlpha, 'End Alpha', tr.toAlpha !== undefined ? tr.toAlpha : 0, val => {
+                            tr.toAlpha = parseFloat(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowAlpha);
+
+                    } else if (tr.type === 'blend') {
+                        const blendGroup = document.createElement('div');
+                        blendGroup.className = 'form-group';
+                        const blendLbl = document.createElement('label');
+                        blendLbl.textContent = 'Blend Mode:';
+                        blendGroup.appendChild(blendLbl);
+                        const blendSelect = makeSelect([
+                            { value: 'add', label: 'Add' },
+                            { value: 'alpha', label: 'Alpha' }
+                        ], tr.mode || 'add', val => {
+                            tr.mode = val;
+                            setDirty(true);
+                        });
+                        blendGroup.appendChild(blendSelect);
+                        paramsGroup.appendChild(blendGroup);
+
+                    } else if (tr.type === 'shake') {
+                        const rowShake = document.createElement('div');
+                        rowShake.className = 'form-row';
+                        createFormField(rowShake, 'Amplitude (px)', tr.amplitude !== undefined ? tr.amplitude : 2, val => {
+                            tr.amplitude = parseInt(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        createFormField(rowShake, 'Frequency (Hz)', tr.frequency !== undefined ? tr.frequency : 30, val => {
+                            tr.frequency = parseInt(val) || 0;
+                            setDirty(true);
+                        }, 'number');
+                        paramsGroup.appendChild(rowShake);
+
+                    } else if (tr.type === 'text_flow') {
+                        const rgb01ToHex = c => '#' + (c || [1, 1, 1]).slice(0, 3)
+                            .map(v => Math.round((v || 0) * 255).toString(16).padStart(2, '0')).join('');
+                        const hexToRgb01 = hex => [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) / 255 * 100) / 100);
+
+                        createFormField(paramsGroup, 'Text Sequence', tr.sequence || '', val => {
+                            tr.sequence = val;
+                            setDirty(true);
+                        });
+
+                        createFormField(paramsGroup, 'Character Interval (ms)', tr.interval || 100, val => {
+                            tr.interval = parseInt(val) || 100;
+                            setDirty(true);
+                        }, 'number');
+
+                        const colGroup = document.createElement('div');
+                        colGroup.className = 'form-group';
+                        const colLbl = document.createElement('label');
+                        colLbl.textContent = 'Text Color:';
+                        colGroup.appendChild(colLbl);
+
+                        const colPick = document.createElement('input');
+                        colPick.type = 'color';
+                        colPick.value = rgb01ToHex(tr.color);
+                        colPick.oninput = () => {
+                            tr.color = hexToRgb01(colPick.value);
+                            setDirty(true);
+                        };
+                        colGroup.appendChild(colPick);
+                        paramsGroup.appendChild(colGroup);
+
+                        const targetPartGroup = document.createElement('div');
+                        targetPartGroup.className = 'form-group';
+                        const targetPartLbl = document.createElement('label');
+                        targetPartLbl.textContent = 'Target Placement:';
+                        targetPartGroup.appendChild(targetPartLbl);
+                        const targetPartSelect = makeSelect([
+                            { value: 'hp_gauge', label: 'HP Gauge' },
+                            { value: 'mp_gauge', label: 'MP Gauge' },
+                            { value: 'top', label: 'Top / Head' }
+                        ], tr.targetPart || 'hp_gauge', val => {
+                            tr.targetPart = val;
+                            setDirty(true);
+                        });
+                        targetPartGroup.appendChild(targetPartSelect);
+                        paramsGroup.appendChild(targetPartGroup);
+                    }
+                };
+
+                const renderAll = () => {
+                    renderTimelineList();
+                    renderActiveNodeProps();
+                    if (drawOverlayHandles) drawOverlayHandles();
+                };
+
+                // Render left-side globals (ID, Class, Duration) above the tree
+                const globalsWrap = document.createElement('div');
+                globalsWrap.style.cssText = 'width: 100%; border: 2px outset var(--win-white); padding: 8px; background: var(--win-gray); margin-bottom: 12px; display: flex; gap: 12px;';
+
+                createFormField(globalsWrap, 'Animation ID', anim.id, val => {
+                    const oldId = anim.id;
+                    if (val && val !== oldId && !dbPayload.animations[val]) {
+                        dbPayload.animations[val] = anim;
+                        anim.id = val;
+                        delete dbPayload.animations[oldId];
+                        activeDbItemId = val;
+                        initDatabaseEditor(true);
+                    }
+                }, 'text', anim.class === 'system');
+
+                createFormField(globalsWrap, 'Class', anim.class || 'assignable', null, 'text', true);
+
+                createFormField(globalsWrap, 'Duration (ms)', anim.duration || 1000, val => {
+                    anim.duration = parseInt(val) || 1000;
+                }, 'number');
+
+                formPanel.appendChild(globalsWrap);
+
+                // Right Column: Live Preview Panel
+                const previewGroup = document.createElement('div');
+                previewGroup.className = 'form-group';
+                previewGroup.style.cssText = 'border: 2px outset var(--win-white); padding: 8px; background: var(--win-gray);';
+
+                const prevTitle = document.createElement('div');
+                prevTitle.style.cssText = 'font-weight: bold; margin-bottom: 6px;';
+                prevTitle.textContent = 'Live Animation Preview';
+                previewGroup.appendChild(prevTitle);
+
+                // Notice bar for sync/desync
+                const noticeBar = document.createElement('div');
+                noticeBar.style.cssText = 'padding: 4px; font-size: 10px; margin-bottom: 8px; border: 1px solid var(--win-shadow); font-weight: bold; text-align: center;';
+                previewGroup.appendChild(noticeBar);
+
+                // Sprite Picker
+                const sprLabel = document.createElement('label');
+                sprLabel.textContent = 'Preview Sprite:';
+                previewGroup.appendChild(sprLabel);
+
+                const sprRow = document.createElement('div');
+                sprRow.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 8px;';
+
+                const sprInput = document.createElement('input');
+                sprInput.type = 'text';
+                sprInput.className = 'win98-input';
+                sprInput.style.flex = '1';
+                sprInput.value = sessionStorage.getItem('hkt_preview_sprite') || 'assets/smallBattlers/pixie.png';
+                sprInput.oninput = () => {
+                    sessionStorage.setItem('hkt_preview_sprite', sprInput.value);
+                    setPreviewDesynced(true);
+                };
+
+                const sprBrowse = document.createElement('button');
+                sprBrowse.className = 'win98-btn';
+                sprBrowse.textContent = '...';
+                sprBrowse.style.padding = '0 6px';
+                sprBrowse.onclick = (e) => {
+                    e.preventDefault();
+                    openAssetPicker('smallBattlers', (filepath) => {
+                        const cleanPath = filepath.replace(/\\/g, '/');
+                        sprInput.value = cleanPath;
+                        sessionStorage.setItem('hkt_preview_sprite', cleanPath);
+                        setPreviewDesynced(true);
+                    });
+                };
+
+                sprRow.appendChild(sprInput);
+                sprRow.appendChild(sprBrowse);
+                previewGroup.appendChild(sprRow);
+
+                // Preview screen (image + SVG overlay for editing)
+                const imgWrap = document.createElement('div');
+                imgWrap.style.cssText = 'width: 240px; height: 240px; border: 2px inset var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; margin: 8px auto; position: relative; overflow: hidden; user-select: none;';
+                
+                const previewImg = document.createElement('img');
+                previewImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; display: none; pointer-events: none;';
+                imgWrap.appendChild(previewImg);
+
+                const noPreviewTxt = document.createElement('div');
+                noPreviewTxt.style.cssText = 'color: #888; font-size: 11px; text-align: center; pointer-events: none;';
+                noPreviewTxt.textContent = 'Bake required';
+                imgWrap.appendChild(noPreviewTxt);
+
+                // SVG overlay for handles
+                const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svgOverlay.id = 'preview-svg';
+                svgOverlay.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto;';
+                imgWrap.appendChild(svgOverlay);
+
+                previewGroup.appendChild(imgWrap);
+
+                // Scrubber / Slider
+                const scrubber = document.createElement('input');
+                scrubber.type = 'range';
+                scrubber.className = 'win98-slider';
+                scrubber.style.cssText = 'width: 100%; margin-bottom: 6px;';
+                scrubber.min = '0';
+                scrubber.max = '0';
+                scrubber.value = '0';
+                scrubber.disabled = true;
+                previewGroup.appendChild(scrubber);
+
+                // Timeline Controls
+                const ctrlRow = document.createElement('div');
+                ctrlRow.style.cssText = 'display: flex; gap: 4px; align-items: center; justify-content: space-between; margin-bottom: 8px;';
+
+                const frameLabel = document.createElement('span');
+                frameLabel.textContent = 'Frame: 0 / 0';
+                frameLabel.style.cssText = 'font-size: 10px; min-width: 75px; font-family: monospace;';
+                ctrlRow.appendChild(frameLabel);
+
+                const playbackBtns = document.createElement('div');
+                playbackBtns.style.cssText = 'display: flex; gap: 2px;';
+
+                const prevFrameBtn = document.createElement('button');
+                prevFrameBtn.className = 'win98-btn';
+                prevFrameBtn.textContent = '◀';
+                prevFrameBtn.style.padding = '0 5px';
+                prevFrameBtn.disabled = true;
+                playbackBtns.appendChild(prevFrameBtn);
+
+                const playBtn = document.createElement('button');
+                playBtn.className = 'win98-btn';
+                playBtn.textContent = 'Play';
+                playBtn.style.padding = '0 10px';
+                playBtn.disabled = true;
+                playbackBtns.appendChild(playBtn);
+
+                const nextFrameBtn = document.createElement('button');
+                nextFrameBtn.className = 'win98-btn';
+                nextFrameBtn.textContent = '▶';
+                nextFrameBtn.style.padding = '0 5px';
+                nextFrameBtn.disabled = true;
+                playbackBtns.appendChild(nextFrameBtn);
+
+                const stopBtn = document.createElement('button');
+                stopBtn.className = 'win98-btn';
+                stopBtn.textContent = 'Stop';
+                stopBtn.style.padding = '0 10px';
+                stopBtn.disabled = true;
+                playbackBtns.appendChild(stopBtn);
+
+                ctrlRow.appendChild(playbackBtns);
+                previewGroup.appendChild(ctrlRow);
+
+                // Bake button
+                const bakeBtn = document.createElement('button');
+                bakeBtn.className = 'win98-btn';
+                bakeBtn.textContent = 'Bake / Render Preview';
+                bakeBtn.style.cssText = 'width: 100%; padding: 6px; font-weight: bold;';
+                previewGroup.appendChild(bakeBtn);
+
+                // Playback states
+                let bakedFrames = [];
+                let currentFrameIdx = 0;
+                let isPlaying = false;
+                let playbackInterval = null;
+                let previewDesynced = true;
+
+                const updateNoticeBar = () => {
+                    if (previewDesynced) {
+                        noticeBar.textContent = '⚠️ Preview desynced. Re-bake required.';
+                        noticeBar.style.backgroundColor = '#ffeecc';
+                        noticeBar.style.color = '#8a5a00';
+                        noticeBar.style.borderColor = '#ddbb88';
+                    } else {
+                        noticeBar.textContent = '✅ Preview up to date';
+                        noticeBar.style.backgroundColor = '#ddffdd';
+                        noticeBar.style.color = '#006600';
+                        noticeBar.style.borderColor = '#99cc99';
+                    }
+                };
+
+                const setPreviewDesynced = (val) => {
+                    previewDesynced = val;
+                    updateNoticeBar();
+                };
+
+                // Assign global callback for the tracks editor to mark desync on any track modification
+                window.onAnimationTrackChanged = () => {
+                    setPreviewDesynced(true);
+                };
+
+                const updateFrameView = () => {
+                    if (bakedFrames.length === 0) {
+                        previewImg.style.display = 'none';
+                        noPreviewTxt.style.display = 'block';
+                        noPreviewTxt.textContent = 'Bake required';
+                        frameLabel.textContent = 'Frame: 0 / 0';
+                        return;
+                    }
+
+                    noPreviewTxt.style.display = 'none';
+                    previewImg.style.display = 'block';
+                    previewImg.src = 'data:image/png;base64,' + bakedFrames[currentFrameIdx];
+                    frameLabel.textContent = `Frame: ${currentFrameIdx + 1} / ${bakedFrames.length}`;
+                    scrubber.value = currentFrameIdx;
+                };
+
+                const stopPlayback = () => {
+                    if (playbackInterval) {
+                        clearInterval(playbackInterval);
+                        playbackInterval = null;
+                    }
+                    isPlaying = false;
+                    playBtn.textContent = 'Play';
+                    currentFrameIdx = 0;
+                    updateFrameView();
+                };
+
+                const pausePlayback = () => {
+                    if (playbackInterval) {
+                        clearInterval(playbackInterval);
+                        playbackInterval = null;
+                    }
+                    isPlaying = false;
+                    playBtn.textContent = 'Play';
+                };
+
+                const playPlayback = () => {
+                    if (bakedFrames.length === 0) return;
+                    isPlaying = true;
+                    playBtn.textContent = 'Pause';
+                    playbackInterval = setInterval(() => {
+                        currentFrameIdx = (currentFrameIdx + 1) % bakedFrames.length;
+                        updateFrameView();
+                    }, 50); // 20 FPS
+                };
+
+                playBtn.onclick = (e) => {
+                    e.preventDefault();
+                    if (isPlaying) {
+                        pausePlayback();
+                    } else {
+                        playPlayback();
+                    }
+                };
+
+                stopBtn.onclick = (e) => {
+                    e.preventDefault();
+                    stopPlayback();
+                };
+
+                prevFrameBtn.onclick = (e) => {
+                    e.preventDefault();
+                    pausePlayback();
+                    if (bakedFrames.length > 0) {
+                        currentFrameIdx = (currentFrameIdx - 1 + bakedFrames.length) % bakedFrames.length;
+                        updateFrameView();
+                    }
+                };
+
+                nextFrameBtn.onclick = (e) => {
+                    e.preventDefault();
+                    pausePlayback();
+                    if (bakedFrames.length > 0) {
+                        currentFrameIdx = (currentFrameIdx + 1) % bakedFrames.length;
+                        updateFrameView();
+                    }
+                };
+
+                scrubber.oninput = () => {
+                    pausePlayback();
+                    currentFrameIdx = parseInt(scrubber.value);
+                    updateFrameView();
+                };
+
+                bakeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    stopPlayback();
+                    noPreviewTxt.textContent = 'Rendering...';
+                    previewImg.style.display = 'none';
+                    noPreviewTxt.style.display = 'block';
+                    bakeBtn.disabled = true;
+
+                    fetch('/preview-anim', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: anim.id,
+                            sprite: sprInput.value,
+                            data: anim
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(resData => {
+                        bakeBtn.disabled = false;
+                        if (resData.error) {
+                            noPreviewTxt.textContent = 'Error: ' + resData.error;
+                            return;
+                        }
+                        bakedFrames = resData.frames || [];
+                        if (bakedFrames.length === 0) {
+                            noPreviewTxt.textContent = 'No frames returned';
+                            return;
+                        }
+
+                        scrubber.disabled = false;
+                        scrubber.max = bakedFrames.length - 1;
+                        playBtn.disabled = false;
+                        prevFrameBtn.disabled = false;
+                        nextFrameBtn.disabled = false;
+                        stopBtn.disabled = false;
+
+                        setPreviewDesynced(false);
+                        currentFrameIdx = 0;
+                        updateFrameView();
+                        
+                        playPlayback();
+                    })
+                    .catch(err => {
+                        bakeBtn.disabled = false;
+                        noPreviewTxt.textContent = 'Bake failed';
+                    });
+                };
+
+                // SVG interactive drag handles drawing
+                const createSvgHandle = (svg, x, y, color, label, onDrag) => {
+                    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    g.style.cursor = 'pointer';
+
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', 6);
+                    circle.setAttribute('fill', color);
+                    circle.setAttribute('stroke', '#ffffff');
+                    circle.setAttribute('stroke-width', '1.5');
+                    g.appendChild(circle);
+
+                    const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    txt.setAttribute('x', x);
+                    txt.setAttribute('y', y - 10);
+                    txt.setAttribute('text-anchor', 'middle');
+                    txt.setAttribute('fill', '#ffffff');
+                    txt.style.fontSize = '9px';
+                    txt.style.fontFamily = 'monospace';
+                    txt.style.textShadow = '1px 1px 1px #000000';
+                    txt.textContent = label;
+                    g.appendChild(txt);
+
+                    svg.appendChild(g);
+
+                    const onMouseMove = (e) => {
+                        const rect = svg.getBoundingClientRect();
+                        const mx = e.clientX - rect.left;
+                        const my = e.clientY - rect.top;
+                        const clampedX = Math.max(0, Math.min(240, mx));
+                        const clampedY = Math.max(0, Math.min(240, my));
+                        onDrag(clampedX, clampedY);
+                    };
+
+                    const onMouseUp = () => {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    g.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    });
+                };
+
+                const drawOverlayHandles = () => {
+                    svgOverlay.innerHTML = '';
+
+                    const tr = anim.tracks.find(t => t.id === activeNodeId);
+                    if (!tr) return;
+
+                    const idx = anim.tracks.findIndex(t => t.id === activeNodeId);
+                    const trackNum = idx + 1;
+                    if (tr.type === 'transform') {
+                        const startX = 120 + (tr.fromX || 0);
+                        const startY = 120 + (tr.fromY || 0);
+                        createSvgHandle(svgOverlay, startX, startY, '#ff3333', `T${trackNum} Start`, (mx, my) => {
+                            tr.fromX = Math.round(mx - 120);
+                            tr.fromY = Math.round(my - 120);
+                            setDirty(true);
+                            
+                            const fieldX = document.getElementById('field-fromX');
+                            const fieldY = document.getElementById('field-fromY');
+                            if (fieldX) fieldX.value = tr.fromX;
+                            if (fieldY) fieldY.value = tr.fromY;
+                            
+                            drawOverlayHandles();
+                        });
+
+                        const endX = 120 + (tr.toX || 0);
+                        const endY = 120 + (tr.toY || 0);
+                        createSvgHandle(svgOverlay, endX, endY, '#3333ff', `T${trackNum} End`, (mx, my) => {
+                            tr.toX = Math.round(mx - 120);
+                            tr.toY = Math.round(my - 120);
+                            setDirty(true);
+                            
+                            const fieldX = document.getElementById('field-toX');
+                            const fieldY = document.getElementById('field-toY');
+                            if (fieldX) fieldX.value = tr.toX;
+                            if (fieldY) fieldY.value = tr.toY;
+                            
+                            drawOverlayHandles();
+                        });
+
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', startX);
+                        line.setAttribute('y1', startY);
+                        line.setAttribute('x2', endX);
+                        line.setAttribute('y2', endY);
+                        line.setAttribute('stroke', '#8888ff');
+                        line.setAttribute('stroke-dasharray', '4');
+                        line.setAttribute('stroke-width', '1.5');
+                        svgOverlay.appendChild(line);
+
+                    } else if (tr.type === 'particles') {
+                        const x = 120 + (tr.x || 0);
+                        const y = 120 + (tr.y || 0);
+                        createSvgHandle(svgOverlay, x, y, '#33cc33', `T${trackNum} Emitter`, (mx, my) => {
+                            tr.x = Math.round(mx - 120);
+                            tr.y = Math.round(my - 120);
+                            setDirty(true);
+                            
+                            const fieldX = document.getElementById('field-x');
+                            const fieldY = document.getElementById('field-y');
+                            if (fieldX) fieldX.value = tr.x;
+                            if (fieldY) fieldY.value = tr.y;
+                            
+                            drawOverlayHandles();
+                        });
+                    }
+                };
+
+                anim.drawOverlayHandles = drawOverlayHandles;
+
+                // Render everything initially
+                renderAll();
+
+                formPanel._playbackCleanup = () => {
+                    stopPlayback();
+                    window.onAnimationTrackChanged = null;
+                };
+
+                previewCol.appendChild(previewGroup);
+
+                container.appendChild(timelineCol);
+                container.appendChild(propsCol);
+                container.appendChild(previewCol);
+                formPanel.appendChild(container);
 
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};
