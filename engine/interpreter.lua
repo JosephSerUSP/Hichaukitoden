@@ -966,6 +966,9 @@ local function buildScriptApi(ctx)
         commitAction = function(index, action)
             require("engine.scenes.battle").commitAction(index, action)
         end,
+        undoAction = function()
+            return require("engine.scenes.battle").undoAction()
+        end,
         showMessage = function(msg)
             require("engine.scenes.battle").showMessage(msg)
         end,

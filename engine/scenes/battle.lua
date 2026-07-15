@@ -336,6 +336,47 @@ function battle.commitAction(memberIndex, action)
 end
 
 -------------------------------------------------------------------------------
+-- Undoes the last committed action
+-------------------------------------------------------------------------------
+function battle.undoAction()
+    local v = battle.getState()
+    if not v.activeMemberIdx or v.activeMemberIdx <= 1 then return false end
+
+    v.activeMemberIdx = v.activeMemberIdx - 1
+    
+    local memberInfo = (v.livingMembers or {})[v.activeMemberIdx]
+    if not memberInfo then return false end
+    
+    local memberIndex = memberInfo.index
+    local prevAction = v.collectedActions and v.collectedActions[memberIndex]
+    if v.collectedActions then
+        v.collectedActions[memberIndex] = nil
+    end
+
+    v.spellSelect = false
+    v.itemSelect = false
+    if prevAction then
+        if prevAction.type == "attack" then
+            v.selectedIndex = 1
+        elseif prevAction.type == "skill" or prevAction.type == "spell" then
+            v.selectedIndex = 2
+        elseif prevAction.type == "defend" then
+            v.selectedIndex = 3
+        elseif prevAction.type == "item" then
+            v.selectedIndex = 4
+        elseif prevAction.type == "flee" then
+            v.selectedIndex = 5
+        else
+            v.selectedIndex = 1
+        end
+    else
+        v.selectedIndex = 1
+    end
+    return true
+end
+
+
+-------------------------------------------------------------------------------
 -- NOTE: command-selection input ("handleInput") and log advancement
 -- ("handleLogInput") are NOT defined here. They live as scene-local named
 -- scripts in data/scenes.json (battle scene → scripts), run via
