@@ -18,7 +18,7 @@ function Battle.new(session, enemies)
     local self = setmetatable({}, Battle)
     self.session = session
     self.enemies = enemies
-    self.allies = session:getActiveParty() -- Note: includes summoner at index 5
+    self.allies = session:getActiveParty() -- the 4 active creatures; no summoner (overhaul-6 F1)
     self.round = 1
     self.log = {}
     return self
@@ -40,7 +40,6 @@ function Battle:getAIAction(enemy)
     local target
     if skill.target == "enemy" or skill.target == "enemy-any" then
         -- Attack a random ally creature (enemy targets the player's party).
-        -- Summoner is only targetable if all active creatures are dead!
         local livingAllies = {}
         for i = 1, 4 do
             local ally = self.allies[i]
@@ -48,13 +47,12 @@ function Battle:getAIAction(enemy)
                 table.insert(livingAllies, ally)
             end
         end
-        
-        if #livingAllies > 0 then
-            target = livingAllies[math.random(#livingAllies)]
-        else
-            -- Target the summoner if no creatures are left
-            target = self.session.summoner
+
+        if #livingAllies == 0 then
+            -- No valid target left; battle should already read as defeat.
+            return nil
         end
+        target = livingAllies[math.random(#livingAllies)]
     elseif skill.target == "ally-any" then
         -- Target a random fellow enemy (ally of the caster)
         local livingEnemies = {}
@@ -79,9 +77,10 @@ function Battle:getAIAction(enemy)
                 table.insert(livingAllies, ally)
             end
         end
+        if #livingAllies == 0 then return nil end
         target = livingAllies[math.random(#livingAllies)]
     end
-    
+
     return {
         actor = enemy,
         skill = skill,
@@ -90,100 +89,78 @@ function Battle:getAIAction(enemy)
 end
 
 -- Resolve one round of battle
--- summonerAction can be: { type = "spell", id = "cure", target = ... }, { type = "item", id = 1 (numeric item id), target = ... }, { type = "flee" }, { type = "formation" } or nil
-function Battle:resolveRound(summonerAction)
+-- collectedActions: 1-indexed by ally slot (1-4), each entry either nil or
+-- { type = "spell"/"skill", id = ..., target = ... }, { type = "defend" },
+-- { type = "attack", target = ... }, or { type = "flee" }.
+-- (overhaul-6 F1: the summoner no longer has an instant "acts first" slot;
+-- Flee is now any active creature's action -- the first one committed for
+-- the round triggers the party's flee attempt, same odds/penalty as before.)
+function Battle:resolveRound(collectedActions)
     local roundEvents = {}
-    
-    -- 1. Execute Summoner's action first (Instant!)
-    local sumAct = summonerAction and summonerAction[1]
-    if sumAct then
-        if sumAct.type == "spell" then
-            local spell = self.session.loader.getSkill(sumAct.id)
-            if spell and self.session.mp >= (spell.mpCost or 0) then
-                self.session.mp = self.session.mp - (spell.mpCost or 0)
-                table.insert(roundEvents, {
-                    type = "text",
-                    text = self.session.loader.formatTerm("battle.casts_spell", "{0} casts {1}!", self.session.summoner.name, spell.name)
-                })
-                for _, eff in ipairs(spell.effects or {}) do
-                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session, { element = spell.element })
-                    for _, ev in ipairs(evs) do
-                        table.insert(roundEvents, ev)
-                    end
-                end
-            end
-        elseif sumAct.type == "item" then
-            if self.session:hasItem(sumAct.id, 1) then
-                self.session:addItem(sumAct.id, -1)
-                local item = self.session.loader.getItem(sumAct.id)
-                table.insert(roundEvents, {
-                    type = "text",
-                    text = self.session.loader.formatTerm("battle.uses_item", "{0} uses {1}!", self.session.summoner.name, item.name)
-                })
-                for _, eff in ipairs(item.effects or {}) do
-                    local evs = effects.apply(eff, self.session.summoner, sumAct.target, self.session)
-                    for _, ev in ipairs(evs) do
-                        table.insert(roundEvents, ev)
-                    end
-                end
-            end
-        elseif sumAct.type == "flee" then
-            if flow.has("battle.flee_attempt") then
-                local flowEvents = flow.run("battle.flee_attempt", {
-                    session = self.session,
-                    battle = self,
-                })
-                local escaped = false
-                for _, ev in ipairs(flowEvents) do
-                    table.insert(roundEvents, ev)
-                    if ev.type == "flee_success" then escaped = true end
-                end
-                if escaped then return roundEvents end
-            else
-                -- Legacy block: runs only when the phase is removed from
-                -- flows.json (SPEC S4 fallback rule)
-                local roll = math.random()
-                local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
-                -- Add flee bonus from coward/fleeChanceBonus passive
-                for _, ally in ipairs(self.allies) do
-                    if not ally:isDead() then
-                        baseFlee = baseFlee + traits.getRate(ally, "FLEE_CHANCE_BONUS", self.session)
-                    end
-                end
 
-                if roll < baseFlee then
-                    table.insert(roundEvents, { type = "flee_success" })
-                    return roundEvents
-                else
-                    table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
-                    -- Lose some gold as penalty
-                    local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
-                    local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
-                    local goldLoss = math.random(goldLossMin, goldLossMax)
-                    self.session.gold = math.max(0, self.session.gold - goldLoss)
+    -- 1. Flee: if any creature chose it this round, resolve immediately
+    -- (before the speed-ordered queue runs) and skip the rest of the round.
+    local fleeing = false
+    for i = 1, 4 do
+        local act = collectedActions and collectedActions[i]
+        if act and act.type == "flee" then fleeing = true break end
+    end
+    if fleeing then
+        if flow.has("battle.flee_attempt") then
+            local flowEvents = flow.run("battle.flee_attempt", {
+                session = self.session,
+                battle = self,
+            })
+            local escaped = false
+            for _, ev in ipairs(flowEvents) do
+                table.insert(roundEvents, ev)
+                if ev.type == "flee_success" then escaped = true end
+            end
+            if escaped then return roundEvents end
+        else
+            -- Legacy block: runs only when the phase is removed from
+            -- flows.json (SPEC S4 fallback rule)
+            local roll = math.random()
+            local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
+            -- Add flee bonus from coward/fleeChanceBonus passive
+            for _, ally in ipairs(self.allies) do
+                if not ally:isDead() then
+                    baseFlee = baseFlee + traits.getRate(ally, "FLEE_CHANCE_BONUS", self.session)
                 end
+            end
+
+            if roll < baseFlee then
+                table.insert(roundEvents, { type = "flee_success" })
+                return roundEvents
+            else
+                table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
+                -- Lose some gold as penalty
+                local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
+                local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
+                local goldLoss = math.random(goldLossMin, goldLossMax)
+                self.session.gold = math.max(0, self.session.gold - goldLoss)
             end
         end
     end
-    
+
     -- Check if combat ends immediately
     if self:isVictory() then
         table.insert(roundEvents, { type = "victory" })
         return roundEvents
     end
-    
+
     -- 2. Build the turn queue for all creatures
     local queue = {}
-    
+
     -- Ally creatures
     for i = 1, 4 do
         local ally = self.allies[i]
         if ally and not ally:isDead() then
-            -- Retrieve the player-chosen action for this slot (i + 1)
-            local chosenAct = summonerAction and summonerAction[i + 1]
+            local chosenAct = collectedActions and collectedActions[i]
             local skill
             local target
-            
+            local itemAct = nil
+
             if chosenAct then
                 if chosenAct.type == "spell" or chosenAct.type == "skill" then
                     skill = self.session.loader.getSkill(chosenAct.id) or getAttackSkill(self.session)
@@ -195,6 +172,12 @@ function Battle:resolveRound(summonerAction)
                     skill = self.session.loader.getSkill(defendId)
                         or { name = "Defend", speed = 50, effects = {} }
                     target = ally
+                elseif chosenAct.type == "item" then
+                    -- F7: Item joins the creature's command list. The item is
+                    -- resolved in the execution loop via applyItem; it spends
+                    -- this creature's turn like any other action.
+                    itemAct = chosenAct
+                    target = chosenAct.target
                 else
                     skill = getAttackSkill(self.session)
                     target = chosenAct.target
@@ -209,13 +192,14 @@ function Battle:resolveRound(summonerAction)
             
             if target then
                 local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + ally.level * (config.combat and config.combat.speedPerLevel or 0.5)
-                local actSpeed = skill.speed or 0
+                local actSpeed = skill and (skill.speed or 0) or (config.combat and config.combat.battleItemSpeed or 50)
                 local totalSpeed = baseSpeed + actSpeed
                 table.insert(queue, {
                     actor = ally,
                     skill = skill,
                     target = target,
-                    speed = totalSpeed
+                    speed = totalSpeed,
+                    item = itemAct,
                 })
             end
         end
@@ -243,17 +227,26 @@ function Battle:resolveRound(summonerAction)
     -- 3. Execute actions in speed order
     for _, turn in ipairs(queue) do
         if not turn.actor:isDead() and not turn.target:isDead() then
-            table.insert(roundEvents, {
-                type = "action",
-                actor = turn.actor,
-                skill = turn.skill,
-                target = turn.target
-            })
-            
-            for _, eff in ipairs(turn.skill.effects or {}) do
-                local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
+            if turn.item then
+                -- F7: apply the used item's effects and consume it. This
+                -- spends the creature's turn exactly like a skill would.
+                local evs = self:applyItem(turn.item, turn.actor, turn.target)
                 for _, ev in ipairs(evs) do
                     table.insert(roundEvents, ev)
+                end
+            else
+                table.insert(roundEvents, {
+                    type = "action",
+                    actor = turn.actor,
+                    skill = turn.skill,
+                    target = turn.target
+                })
+                
+                for _, eff in ipairs(turn.skill.effects or {}) do
+                    local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
+                    for _, ev in ipairs(evs) do
+                        table.insert(roundEvents, ev)
+                    end
                 end
             end
             
@@ -378,6 +371,51 @@ function Battle:resolveRound(summonerAction)
     return roundEvents
 end
 
+function Battle:applyItem(action, actor, target)
+    local events = {}
+    local session = self.session
+    local loader = session.loader
+
+    -- Resolve the item by its 1-based index into the id-sorted non-empty
+    -- inventory — the SAME ordering api.items()/USE_ITEM use, so the index
+    -- committed from the battle command menu maps here correctly.
+    local stacks = {}
+    for itemId, qty in pairs(session.inventory or {}) do
+        if qty > 0 then table.insert(stacks, itemId) end
+    end
+    table.sort(stacks)
+    local item = stacks[action.itemIndex] and loader.getItem(stacks[action.itemIndex])
+    if not item then return events end
+
+    table.insert(events, {
+        type = "text",
+        text = loader.formatTerm("battle.uses_item", "{0} uses {1}!", actor.name, item.name or "?"),
+    })
+
+    if item.targetScope == "party" then
+        for _, member in ipairs(self.allies) do
+            if not member:isDead() then
+                for _, eff in ipairs(item.effects or {}) do
+                    for _, ev in ipairs(effects.apply(eff, member, member, session)) do
+                        table.insert(events, ev)
+                    end
+                end
+            end
+        end
+    else
+        for _, eff in ipairs(item.effects or {}) do
+            for _, ev in ipairs(effects.apply(eff, target, target, session)) do
+                table.insert(events, ev)
+            end
+        end
+    end
+
+    -- Consume one. Persists: session.inventory is outside the per-round
+    -- hp/state/mp backup/restore the scene host does around resolveRound.
+    session:addItem(item.id, -1)
+    return events
+end
+
 function Battle:isVictory()
     for _, enemy in ipairs(self.enemies) do
         if not enemy:isDead() then return false end
@@ -386,9 +424,8 @@ function Battle:isVictory()
 end
 
 function Battle:isDefeat()
-    -- If the summoner is dead or all active creatures are dead
-    if self.session.summoner:isDead() then return true end
-    
+    -- Defeat when all 4 active creatures are dead (the summoner is not a
+    -- battle participant -- overhaul-6 F1).
     local monstersAlive = false
     for i = 1, 4 do
         if self.allies[i] and not self.allies[i]:isDead() then
@@ -404,7 +441,6 @@ function Battle:getAllActiveBattlers()
     for i = 1, 4 do
         if self.allies[i] then table.insert(list, self.allies[i]) end
     end
-    table.insert(list, self.session.summoner)
     for _, enemy in ipairs(self.enemies) do
         table.insert(list, enemy)
     end

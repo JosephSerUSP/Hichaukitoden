@@ -78,6 +78,10 @@ end
 local function drawElementIcons(elems, x, y, session)
     if not elems or #elems == 0 then return 0 end
 
+    -- Shift all element icons up by 3px (applies to both the single-icon
+    -- and multi-element orbit cases below, keeping them aligned).
+    y = y - 3
+
     -- Count occurrences of each unique element type
     local uniqueList = {}
     local counts = {}
@@ -121,7 +125,9 @@ local function drawElementIcons(elems, x, y, session)
     -- icons must orbit this centre so they stay inside the same area.
     local cx = x + 9
     local cy = y + 11
-    local radius = 4
+    -- Orbit radius kept small so the scaled icons overlap slightly instead
+    -- of sitting apart (multi-element case).
+    local radius = 2
 
     -- Starting angle: diagonal (-3π/4) for 2 icons, 12-o'clock (-π/2) for 3+
     local startAngle = (n == 2) and (-3 * math.pi / 4) or (-math.pi / 2)

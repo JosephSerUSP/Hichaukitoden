@@ -1318,6 +1318,11 @@
               "cmd": "SET_VAR",
               "name": "popupIdx",
               "value": "v.popupIdx - 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "map_member_popup",
+              "index": "v.popupIdx"
             }
           ]
         },
@@ -1345,7 +1350,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 4 and v.partyIdx + 2 <= party.count",
+          "condition": "v.mode == 4 and v.partyIdx + 2 <= 4",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1367,6 +1372,11 @@
               "cmd": "SET_VAR",
               "name": "popupIdx",
               "value": "v.popupIdx + 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "map_member_popup",
+              "index": "v.popupIdx"
             }
           ]
         },
@@ -1399,7 +1409,7 @@
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 3"
+              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 4"
             }
           ]
         },
@@ -1448,13 +1458,13 @@
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx < 3 and v.cmdIdx + 1 or 1"
+              "value": "v.cmdIdx < 4 and v.cmdIdx + 1 or 1"
             }
           ]
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 4 and v.partyIdx % 2 == 1 and v.partyIdx + 1 <= party.count",
+          "condition": "v.mode == 4 and v.partyIdx % 2 == 1 and v.partyIdx + 1 <= 4",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1542,6 +1552,22 @@
               "value": 1
             },
             {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "reserve"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
               "cmd": "SET_VAR",
               "name": "mode",
               "value": 3
@@ -1575,41 +1601,11 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 4 and party.count > 0",
+          "condition": "v._guard == 0 and v.mode == 4",
           "then": [
             {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "memberIdx",
-              "value": "v.partyIdx"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "popupIdx",
-              "value": 1
-            },
-            {
-              "cmd": "OPEN_WINDOW",
-              "windowId": "map_member_popup"
-            },
-            {
-              "cmd": "SET_LIST",
-              "windowId": "map_member_popup",
-              "listId": "config:unitCommands"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "map_member_popup",
-              "index": "v.popupIdx"
+              "cmd": "SCRIPT",
+              "ref": "selectPartyMember"
             }
           ]
         },
@@ -1898,6 +1894,10 @@
           "help": "Select a party member."
         },
         {
+          "name": "RESERVE",
+          "help": "Manage your reserve roster, summon, or sacrifice creatures."
+        },
+        {
           "name": "EXIT",
           "help": "Quit Hichaukitoden and return to the desktop."
         }
@@ -1916,6 +1916,9 @@
           "help": "Have this creature attempt to create an item."
         }
       ]
+    },
+    "scripts": {
+      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n"
     },
     "goldenScript": [
       {
@@ -2294,7 +2297,8 @@
               "windowId": "help",
               "text": "UP/DOWN: slot    ENTER: change    ESC: back"
             }
-          ]
+          ],
+          "else": []
         }
       ],
       "on_up": [
@@ -2825,7 +2829,7 @@
       ]
     },
     "scripts": {
-      "handleInput": "\nlocal v = ctx.v\nlocal b = v.battle\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\nlocal isSummoner = (memberInfo.type == \"summoner\")\nif v.spellSelect then\n    local options = {}\n    if isSummoner then\n        for _, spellId in ipairs(api.systemConfig.summoner and api.systemConfig.summoner.spells or {}) do\n            if type(spellId) == \"table\" then spellId = spellId.id end\n            local sk = api.getSkill(spellId)\n            if sk then table.insert(options, sk) end\n        end\n    else\n        for _, skId in ipairs(memberInfo.actor.skills or {}) do\n            local sk = api.getSkill(skId)\n            if sk then table.insert(options, sk) end\n        end\n    end\n    \n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.spellSelect = false\n        v.selectedIndex = 2\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            local allowed = not isSummoner or (ctx.session.mp >= (choice.mpCost or choice.mp or 0))\n            if allowed then\n                local spell = api.getSkill(choice.id)\n                local target = b.allies[#b.allies]\n                if spell and (spell.target == \"enemy-any\" or spell.target == \"enemy\") then\n                    for _, e in ipairs(b.enemies) do\n                        if not e:isDead() then target = e break end\n                    end\n                else\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                end\n                api.battle.commitAction(memberInfo.index, { type = isSummoner and \"spell\" or \"skill\", id = choice.id, target = target })\n            else\n                api.battle.showMessage(api.getTerm(\"battle.not_enough_mp\", \"Not enough MP!\"))\n            end\n        end\n    end\nelse\n    if v.action == \"left\" or v.action == \"up\" then\n        v.selectedIndex = (v.selectedIndex - 2) % 4 + 1\n    elseif v.action == \"right\" or v.action == \"down\" then\n        v.selectedIndex = v.selectedIndex % 4 + 1\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            local target = b.enemies[1]\n            for _, e in ipairs(b.enemies) do\n                if not e:isDead() then target = e break end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"attack\", target = target })\n        elseif v.selectedIndex == 2 then\n            v.spellSelect = true\n            v.selectedIndex = 1\n        elseif v.selectedIndex == 3 then\n            if isSummoner then\n                local battleItemId = api.systemConfig.combat and api.systemConfig.combat.battleItem or 1\n                local battleItem = api.getItem(battleItemId)\n                if battleItem and api.hasItem(battleItemId, 1) then\n                    local target = b.allies[#b.allies]\n                    local lowestHp = 9999\n                    for _, c in ipairs(api.party()) do\n                        if c.hp > 0 and c.hp < lowestHp then\n                            lowestHp = c.hp\n                            target = b.allies[c.index]\n                        end\n                    end\n                    api.battle.commitAction(memberInfo.index, { type = \"item\", id = battleItemId, target = target })\n                else\n                    api.battle.showMessage(api.formatTerm(\"battle.no_item_left\", \"No \" .. tostring(battleItem and battleItem.name or battleItemId) .. \"s left!\"))\n                end\n            else\n                api.battle.commitAction(memberInfo.index, { type = \"defend\" })\n            end\n        elseif v.selectedIndex == 4 then\n            api.battle.commitAction(memberInfo.index, { type = \"flee\" })\n        end\n    end\nend\n",
+      "handleInput": "local v = ctx.v\nlocal b = v.battle\nlocal memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]\nif not memberInfo then\n    v.combatState = \"log\"\n    return\nend\n\n-- overhaul-6 F1: the summoner is not a battle participant; every living\n-- member is an active creature with its own command list\n-- (Attack/Skill/Defend/Item/Flee). F7 adds Item as a per-creature command:\n-- selecting it opens an inventory submenu; using an item spends that\n-- creature's turn.\nif v.spellSelect then\n    local options = {}\n    for _, skId in ipairs(memberInfo.actor.skills or {}) do\n        local sk = api.getSkill(skId)\n        if sk then table.insert(options, sk) end\n    end\n\n    if v.action == \"up\" then\n        if #options > 0 then v.selectedIndex = (v.selectedIndex - 2) % #options + 1 end\n    elseif v.action == \"down\" then\n        if #options > 0 then v.selectedIndex = v.selectedIndex % #options + 1 end\n    elseif v.action == \"cancel\" then\n        v.spellSelect = false\n        v.selectedIndex = 2\n    elseif v.action == \"select\" then\n        local choice = options[v.selectedIndex]\n        if choice then\n            local spell = api.getSkill(choice.id)\n            local target = b.allies[#b.allies]\n            if spell and (spell.target == \"enemy-any\" or spell.target == \"enemy\") then\n                for _, e in ipairs(b.enemies) do\n                    if not e:isDead() then target = e break end\n                end\n            else\n                local lowestHp = 9999\n                for _, c in ipairs(api.party()) do\n                    if c.hp > 0 and c.hp < lowestHp then\n                        lowestHp = c.hp\n                        target = b.allies[c.index]\n                    end\n                end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"skill\", id = choice.id, target = target })\n        end\n    end\nelseif v.itemSelect then\n    -- F7: inventory submenu. The list is the id-sorted non-empty inventory\n    -- (api.items()), matching USE_ITEM's ordering and battle.lua:applyItem,\n    -- so the highlighted row's 1-based index is the committed itemIndex.\n    local items = api.items()\n    if v.action == \"up\" then\n        if #items > 0 then v.selectedIndex = (v.selectedIndex - 2) % #items + 1 end\n    elseif v.action == \"down\" then\n        if #items > 0 then v.selectedIndex = v.selectedIndex % #items + 1 end\n    elseif v.action == \"cancel\" then\n        v.itemSelect = false\n        v.selectedIndex = 4\n    elseif v.action == \"select\" then\n        local choice = items[v.selectedIndex]\n        if choice then\n            local item = api.getItem(choice.id)\n            local target = memberInfo.actor\n            if item and (item.targetScope == \"enemy\" or item.targetScope == \"enemy-any\") then\n                target = b.enemies[1]\n                for _, e in ipairs(b.enemies) do\n                    if not e:isDead() then target = e break end\n                end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"item\", itemIndex = v.selectedIndex, target = target })\n        end\n    end\nelse\n    if v.action == \"left\" or v.action == \"up\" then\n        v.selectedIndex = (v.selectedIndex - 2) % 5 + 1\n    elseif v.action == \"right\" or v.action == \"down\" then\n        v.selectedIndex = v.selectedIndex % 5 + 1\n    elseif v.action == \"cancel\" then\n        api.battle.undoAction()\n    elseif v.action == \"select\" then\n        if v.selectedIndex == 1 then\n            local target = b.enemies[1]\n            for _, e in ipairs(b.enemies) do\n                if not e:isDead() then target = e break end\n            end\n            api.battle.commitAction(memberInfo.index, { type = \"attack\", target = target })\n        elseif v.selectedIndex == 2 then\n            v.spellSelect = true\n            v.selectedIndex = 1\n        elseif v.selectedIndex == 3 then\n            api.battle.commitAction(memberInfo.index, { type = \"defend\" })\n        elseif v.selectedIndex == 4 then\n            v.itemSelect = true\n            v.selectedIndex = 1\n        elseif v.selectedIndex == 5 then\n            api.battle.commitAction(memberInfo.index, { type = \"flee\" })\n        end\n    end\nend\n",
       "handleLogInput": "\nlocal v = ctx.v\nif v.action == \"select\" and v.eventQueueIndex <= #(v.eventsQueue or {}) then\n    api.battle.advanceLog()\n    v.hookHandled = true\nelse\n    v.hookHandled = false\nend\n",
       "handleTransition": "\nlocal v = ctx.v\nif v.action ~= \"select\" or not v.battle then \n    v.hookHandled = false\n    return \nend\nv.hookHandled = api.battle.handleTransition(v.action)\n"
     }
@@ -3154,5 +3158,626 @@
       ]
     },
     "config": {}
+  },
+  {
+    "id": "reserve",
+    "name": "Reserve",
+    "kind": "menu",
+    "config": {
+      "terms": {
+        "title": "Reserve Roster",
+        "help": "Select a slot to swap, summon, or sacrifice.  Arrows: move  ESC: back"
+      }
+    },
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "name": "mode",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "cursorIdx",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "focusArea",
+          "value": "'party'"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "reserve_title"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "reserve_title",
+          "text": "{config.terms.title}"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "reserve_help"
+        },
+        {
+          "cmd": "SET_TEXT",
+          "windowId": "reserve_help",
+          "text": "{config.terms.help}"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "reserve_party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "reserve_party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "reserve_party",
+          "index": "v.focusArea == 'party' and v.cursorIdx or 0"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "reserve_roster"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "reserve_roster",
+          "listId": "reserve"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "reserve_roster",
+          "index": "v.focusArea == 'reserve' and v.cursorIdx or 0"
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "_guard",
+          "value": 0
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 1 or v.mode == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cursorIdx",
+              "value": "v.cursorIdx > 1 and v.cursorIdx - 1 or v.cursorIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_party",
+              "index": "v.focusArea == 'party' and v.cursorIdx or 0"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_roster",
+              "index": "v.focusArea == 'reserve' and v.cursorIdx or 0"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5 or v.mode == 7",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_confirm",
+              "index": "v.confirmIdx"
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'party'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cursorIdx",
+              "value": "v.cursorIdx < 4 and v.cursorIdx + 1 or v.cursorIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_party",
+              "index": "v.cursorIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'reserve'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cursorIdx",
+              "value": "v.cursorIdx < 8 and v.cursorIdx + 1 or v.cursorIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_roster",
+              "index": "v.cursorIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5 or v.mode == 7",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_confirm",
+              "index": "v.confirmIdx"
+            }
+          ]
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'party'",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "v.cursorIdx > 2",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx - 2"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_party",
+                  "index": "v.cursorIdx"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "focusArea",
+                  "value": "'reserve'"
+                },
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx + 4"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_roster",
+                  "index": "v.cursorIdx"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_party",
+                  "index": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'reserve'",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "v.cursorIdx > 4",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx - 4"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_roster",
+                  "index": "v.cursorIdx"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 6",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "summonIdx",
+              "value": "v.summonIdx > 1 and v.summonIdx - 1 or v.summonIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_summon_list",
+              "index": "v.summonIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": "v.popupIdx > 1 and v.popupIdx - 1 or v.popupIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_popup",
+              "index": "v.popupIdx"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'party'",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "v.cursorIdx <= 2",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx + 2"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_party",
+                  "index": "v.cursorIdx"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'reserve'",
+          "then": [
+            {
+              "cmd": "IF",
+              "condition": "v.cursorIdx <= 4",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx + 4"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_roster",
+                  "index": "v.cursorIdx"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "focusArea",
+                  "value": "'party'"
+                },
+                {
+                  "cmd": "SET_VAR",
+                  "name": "cursorIdx",
+                  "value": "v.cursorIdx - 4"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_party",
+                  "index": "v.cursorIdx"
+                },
+                {
+                  "cmd": "SET_CURSOR",
+                  "windowId": "reserve_roster",
+                  "index": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 6",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "summonIdx",
+              "value": "v.summonIdx < #v.summonPool and v.summonIdx + 1 or v.summonIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_summon_list",
+              "index": "v.summonIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": "v.popupIdx < v.popupCount and v.popupIdx + 1 or v.popupIdx"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_popup",
+              "index": "v.popupIdx"
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "popupIdx",
+              "value": 1
+            },
+            {
+              "cmd": "OPEN_WINDOW",
+              "windowId": "reserve_popup"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "setupReservePopup"
+            },
+            {
+              "cmd": "SET_LIST",
+              "windowId": "reserve_popup",
+              "listId": "v:popupOptions"
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "reserve_popup",
+              "index": "v.popupIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executeReservePopup"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executeSwap"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executeSacrifice"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 6",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executeSummon"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 7",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executePromote"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "reserve_popup"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "SET_TEXT",
+              "windowId": "reserve_help",
+              "text": "{config.terms.help}"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "reserve_confirm"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 6",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "reserve_summon_list"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 7",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 1
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "reserve_confirm"
+            }
+          ]
+        }
+      ],
+      "on_frame": [
+        {
+          "cmd": "SET_VAR",
+          "name": "_guard",
+          "value": 0
+        }
+      ]
+    },
+    "scripts": {
+      "setupReservePopup": "\nlocal v = ctx.v\nlocal focusArea = v.focusArea\nlocal cursorIdx = v.cursorIdx\nlocal member = (focusArea == 'party') and api.party(cursorIdx) or api.reserve(cursorIdx)\nlocal options = {}\n\nif member and member.empty then\n    member = nil\nend\n\nv.popupTargetIsReserve = (focusArea == 'reserve')\nv.popupTargetIndex = cursorIdx\nv.popupMemberName = member and (member.name or \"Unknown\") or nil\nv.popupMemberRef = member\n\nif member then\n    table.insert(options, {name = \"Swap\"})\n    table.insert(options, {name = \"Sacrifice\"})\n    if api.canPromote(v.popupTargetIsReserve, v.popupTargetIndex) then\n        table.insert(options, {name = \"Promote\"})\n    end\nelse\n    table.insert(options, {name = \"Summon\"})\n    table.insert(options, {name = \"Swap\"})\nend\ntable.insert(options, {name = \"Cancel\"})\n\nv.popupCount = #options\nv.popupOptions = options\n",
+      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Sacrifice\" then\n    v.mode = 5\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_confirm\" })\n    local config = api.systemConfig\n    local refundRate = config.summoner.sacrificeMpRefundRate or 0.5\n    local member = v.popupTargetIsReserve and api.reserve(v.popupTargetIndex) or api.party(v.popupTargetIndex)\n    local cost = 0\n    if member and member.actorData then\n        local baseCost = config.summoner.summonCostBase or 10\n        local costPerLvl = config.summoner.summonCostPerLevel or 5\n        local costPerTier = config.summoner.summonCostPerTier or 15\n        cost = baseCost + (member.actorData.tier or 1) * costPerTier + (member.level or 1) * costPerLvl\n    end\n    local refund = math.floor(cost * refundRate)\n    v.sacrificeRefund = refund\n    \n    local disc = member and member.actorData and member.actorData.discipline or \"None\"\n    v.sacrificeDiscipline = disc\n    api.emit({ type = \"set_text\", windowId = \"reserve_confirm\", text = \"Sacrifice \" .. tostring(v.popupMemberName) .. \" for \" .. tostring(refund) .. \" MP?\" })\n    v.confirmIdx = 1\n    v.confirmOptions = { {name=\"Yes\"}, {name=\"No\"} }\n    api.emit({ type = \"set_list\", windowId = \"reserve_confirm\", listId = \"v:confirmOptions\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_confirm\", index = \"v.confirmIdx\" })\nelseif opt == \"Promote\" then\n    v.mode = 7\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_confirm\" })\n    local eligible, costText = api.promoteInfo(v.popupTargetIsReserve, v.popupTargetIndex)\n    api.emit({ type = \"set_text\", windowId = \"reserve_confirm\", text = \"Promote \" .. tostring(v.popupMemberName) .. \"?\" .. costText })\n    v.confirmIdx = 1\n    v.confirmOptions = { {name=\"Yes\"}, {name=\"No\"} }\n    api.emit({ type = \"set_list\", windowId = \"reserve_confirm\", listId = \"v:confirmOptions\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_confirm\", index = \"v.confirmIdx\" })\nelseif opt == \"Summon\" then\n    v.mode = 6\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_summon_list\" })\n    -- Build summon pool\n    local pool = {}\n    local config = api.systemConfig\n    local baseCost = config.summoner.summonCostBase or 10\n    local costPerLvl = config.summoner.summonCostPerLevel or 5\n    local costPerTier = config.summoner.summonCostPerTier or 15\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then\n            local cost = baseCost + (actor.tier or 1) * costPerTier + api.dungeonFloor() * costPerLvl\n            table.insert(pool, { name = actor.name, icon = actor.icon or 0, actorId = actor.id, cost = cost, text = actor.name .. \" (\" .. cost .. \" MP)\" })\n        end\n    end\n    v.summonPool = pool\n    v.summonIdx = 1\n    api.emit({ type = \"set_list\", windowId = \"reserve_summon_list\", listId = \"v:summonPool\", format = \"{text}\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_summon_list\", index = \"v.summonIdx\" })\nend\n",
+      "executeSummon": "\nlocal v = ctx.v\nlocal pool = v.summonPool\nif pool and pool[v.summonIdx] then\n    local entry = pool[v.summonIdx]\n    local target = v.popupTargetIsReserve and api.reserve(v.popupTargetIndex) or api.party(v.popupTargetIndex)\n    if target and not target.empty and target.actorData then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"That slot is occupied!\" })\n    elseif api.getMp() >= entry.cost then\n        api.changeMp(-entry.cost)\n        api.summon(entry.actorId, v.popupTargetIsReserve, v.popupTargetIndex)\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Summoned \" .. entry.name .. \"!\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Not enough MP!\" })\n    end\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_summon_list\" })\n",
+      "executeSacrifice": "\nlocal v = ctx.v\nlocal opt = v.confirmOptions[v.confirmIdx].name\nif opt == \"Yes\" then\n    if not v.popupTargetIsReserve and api.partyCount() <= 1 then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot sacrifice your last creature!\" })\n        v.mode = 1\n        api.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n        return\n    end\n    api.sacrifice(v.popupTargetIsReserve, v.popupTargetIndex)\n    api.changeMp(v.sacrificeRefund)\n    \n    -- Reward item based on discipline\n    local disc = v.sacrificeDiscipline or \"None\"\n    local pool = {}\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == disc then\n            table.insert(pool, item)\n        end\n    end\n    local rewardText = \"\"\n    if #pool > 0 then\n        local reward = pool[math.random(#pool)]\n        api.giveItem(reward.id, 1)\n        rewardText = \" Got \" .. tostring(reward.name) .. \"!\"\n    end\n    \n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Sacrificed \" .. v.popupMemberName .. \"! Refunded \" .. v.sacrificeRefund .. \" MP.\" .. rewardText })\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n",
+      "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot leave the party empty!\" })\n    v.mode = 1\n    return\nend\nv.mode = 1\napi.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"{config.terms.help}\" })\n",
+      "executePromote": "local v = ctx.v\nlocal opt = v.confirmOptions[v.confirmIdx].name\nif opt == \"Yes\" then\n    local ok = api.promote(v.popupTargetIsReserve, v.popupTargetIndex)\n    if ok then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = tostring(v.popupMemberName) .. \" evolved into a stronger form!\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Promotion failed (cost not met or no evolution available).\" })\n    end\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n"
+    },
+    "overlay": true,
+    "draw": "windows"
   }
 ]

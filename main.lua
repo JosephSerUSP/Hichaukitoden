@@ -528,42 +528,42 @@ local function runGolden()
 
     print("GOLDEN BEGIN")
 
+    -- overhaul-6 F1: the summoner is not a battle participant. All actions
+    -- are indexed 1-4 directly by active-creature slot (no more +1 offset
+    -- for a summoner-first instant action). This fixture uses a 3-member
+    -- party (High Pixie, Skeleton, Angel).
+
     -- Round 1: all attack
     local actionsR1 = {}
-    actionsR1[1] = { type = "attack", target = enemies[1] } -- Summoner
     for i=1, 3 do
         if vSession.party[i] then
-            actionsR1[i+1] = { type = "attack", target = enemies[1] }
+            actionsR1[i] = { type = "attack", target = enemies[1] }
         end
     end
     logEvents(vBattle:resolveRound(actionsR1))
 
-    -- Round 2: spell + defend + attacks
+    -- Round 2: spell (party[1] on itself) + defend (party[2]) + attack (party[3])
     local actionsR2 = {}
     local sysSpells = loader.system and loader.system.summoner and loader.system.summoner.spells or {}
     local firstSpell = sysSpells[1]
     if type(firstSpell) == "table" then firstSpell = firstSpell.id end
 
-    if firstSpell then
+    if firstSpell and vSession.party[1] then
         actionsR2[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
-    else
+    elseif vSession.party[1] then
         actionsR2[1] = { type = "attack", target = enemies[2] }
     end
 
-    if vSession.party[1] then actionsR2[2] = { type = "defend", target = vSession.party[1] } end
-    if vSession.party[2] then actionsR2[3] = { type = "attack", target = enemies[2] } end
-    if vSession.party[3] then actionsR2[4] = { type = "attack", target = enemies[2] } end
+    if vSession.party[2] then actionsR2[2] = { type = "defend", target = vSession.party[2] } end
+    if vSession.party[3] then actionsR2[3] = { type = "attack", target = enemies[2] } end
 
     logEvents(vBattle:resolveRound(actionsR2))
 
-    -- Round 3: flee
+    -- Round 3: flee (party[1]) + attacks (party[2], party[3])
     local actionsR3 = {}
-    actionsR3[1] = { type = "flee" }
-    for i=1, 3 do
-        if vSession.party[i] then
-            actionsR3[i+1] = { type = "attack", target = enemies[2] }
-        end
-    end
+    if vSession.party[1] then actionsR3[1] = { type = "flee" } end
+    if vSession.party[2] then actionsR3[2] = { type = "attack", target = enemies[2] } end
+    if vSession.party[3] then actionsR3[3] = { type = "attack", target = enemies[2] } end
     logEvents(vBattle:resolveRound(actionsR3))
 
     -- One victory resolution against a 1-HP enemy
@@ -581,7 +581,6 @@ local function runGolden()
     local vBattleVic = battleSystem.Battle.new(vSessionVic, enemiesVic)
     local actionsVic = {}
     actionsVic[1] = { type = "attack", target = enemiesVic[1] }
-    actionsVic[2] = { type = "attack", target = enemiesVic[1] }
     logEvents(vBattleVic:resolveRound(actionsVic))
 
     print("GOLDEN END")
@@ -831,7 +830,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1 },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {} },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1203,7 +1202,10 @@ elseif paramDef.type == "script" then
                 -- Map scene's cursor/overlay state
                 mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1,
                 memberIdx = 1, popupIdx = 1, confirmIdx = 1,
-                seededCrafterIdx = 1
+                seededCrafterIdx = 1,
+                -- Reserve scene variables
+                focusArea = "party", cursorIdx = 1, summonIdx = 1,
+                summonPool = {}
             }
         }
         
@@ -1236,7 +1238,7 @@ elseif paramDef.type == "script" then
             -- (owner feedback 09.07.2026, FEEDBACK.md).
             local builtinSceneIds = {
                 title = true, menu = true, items = true,
-                status = true, shop = true, battle = true,
+                status = true, shop = true,
             }
             local allowSceneScript = not builtinSceneIds[scene.id]
             -- SCRIPT commands may reference a scene-local named script via
@@ -1421,6 +1423,29 @@ function love.update(dt)
     end
 end
 
+-- F2 (overhaul-6): every scene draws the SAME declarative "party" window
+-- (console + MP readout + 2x2 grid) via the generic window renderer. There is
+-- no second/legacy party HUD anywhere. The Map scene already draws it through
+-- its own scene state; battle/dialogue/town build a minimal party-only state
+-- here so the ONE shared HUD appears in every scene (owner direction:
+-- "there should be no place where the declarative one isn't used").
+local function drawSharedPartyHud()
+    local wr = require("presentation.window_renderer")
+    local cursor = 0
+    if scene_host.getCurrent() == "battle" then
+        local bv = require("engine.scenes.battle").getState()
+        if bv and bv.combatState == "input" then
+            local memberInfo = bv.livingMembers and bv.livingMembers[bv.activeMemberIdx or 1]
+            cursor = memberInfo and memberInfo.index or 0
+        end
+    end
+    local state = {
+        winState = { party = { open = true, listId = "party", cursor = cursor } },
+        windowOrder = { "party" },
+    }
+    wr.draw(state, nil, { session = activeSession, loader = loader })
+end
+
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0, 1)
@@ -1434,6 +1459,7 @@ function love.draw()
         renderer.drawTitle()
     elseif scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
+        drawSharedPartyHud()
     elseif scene_host.getCurrent() == "map" then
         renderer.drawMap()
         -- The map's world is legacy-drawn (draw ~= "windows"), but its
@@ -1447,11 +1473,16 @@ function love.draw()
         end
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
+        drawSharedPartyHud()
     elseif scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
+        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
+        drawSharedPartyHud()
+        renderer.drawTargetReticles(bv.battle, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
     end
     end
+    
+    renderer.drawDamagePopups()
     
     if server.isActive() then
         love.graphics.setColor(0.1, 0.4, 0.8, 0.8)

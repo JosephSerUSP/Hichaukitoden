@@ -6,7 +6,9 @@ local iconset
 local iconSize = 12
 local windowskin
 local windowskinHighlight
+local targetSkin
 local mainFont
+local popupFont
 
 -- Parse string and replace \eventName and \c[x]
 local function parseRichText(text, defaultColor, eventName)
@@ -77,12 +79,24 @@ function ui.init()
         windowskinHighlight = love.graphics.newImage("assets/system/WSkin_Highlight.png")
         windowskinHighlight:setFilter("nearest", "nearest")
     end
+
+    if love.filesystem.getInfo("assets/system/UI_Target.png") then
+        targetSkin = love.graphics.newImage("assets/system/UI_Target.png")
+        targetSkin:setFilter("nearest", "nearest")
+    end
     
     -- Load active font from system config
     local fontName = config.ui and config.ui.activeFont or "Lucida"
     local fontSize = config.ui and config.ui.fontSize or 8
 
     ui.setFont(fontName, fontSize)
+
+    -- Load active popup font from system config
+    local popupFontName = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font
+    local popupFontSize = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.fontSize
+    if popupFontName then
+        ui.loadPopupFont(popupFontName, popupFontSize)
+    end
 end
 
 -- Exposed layout constants (use these instead of hardcoded numbers)
@@ -192,8 +206,62 @@ function ui.drawPanel(x, y, w, h, title, highlight)
     love.graphics.pop()
 end
 
+-- Draw RPG Maker 2003 styled targeting reticle using UI_Target.png
+-- Layout specifications:
+-- 32x32 image with 8px corners and 16px edges.
+-- The reticle size alternates between the base target size and target size + 2.
+function ui.drawTargetReticle(x, y, w, h)
+    love.graphics.push("all")
+    local skin = targetSkin or windowskin
+    if skin then
+        local wsW, wsH = skin:getDimensions()
+        
+        -- Oscillation offset: alternates between 0 and 2 every ~0.125 seconds
+        local t = love.timer.getTime()
+        local offset = math.floor(t * 8) % 2 == 0 and 0 or 2
+        
+        local rx = x - offset / 2
+        local ry = y - offset / 2
+        local rw = w + offset
+        local rh = h + offset
+        
+        local edgeW = rw - 16
+        local edgeH = rh - 16
+        
+        love.graphics.setColor(1, 1, 1, 1)
+        
+        -- Top side edge (x=8, y=0, w=16, h=8)
+        local topQuad = love.graphics.newQuad(8, 0, 16, 8, wsW, wsH)
+        love.graphics.draw(skin, topQuad, rx + 8, ry, 0, edgeW / 16, 1)
+
+        -- Bottom side edge (x=8, y=24, w=16, h=8)
+        local botQuad = love.graphics.newQuad(8, 24, 16, 8, wsW, wsH)
+        love.graphics.draw(skin, botQuad, rx + 8, ry + rh - 8, 0, edgeW / 16, 1)
+
+        -- Left side edge (x=0, y=8, w=8, h=16)
+        local leftQuad = love.graphics.newQuad(0, 8, 8, 16, wsW, wsH)
+        love.graphics.draw(skin, leftQuad, rx, ry + 8, 0, 1, edgeH / 16)
+
+        -- Right side edge (x=24, y=8, w=8, h=16)
+        local rightQuad = love.graphics.newQuad(24, 8, 8, 16, wsW, wsH)
+        love.graphics.draw(skin, rightQuad, rx + rw - 8, ry + 8, 0, 1, edgeH / 16)
+
+        -- Draw 8px Corners
+        local tlQuad = love.graphics.newQuad(0, 0, 8, 8, wsW, wsH)
+        local trQuad = love.graphics.newQuad(24, 0, 8, 8, wsW, wsH)
+        local blQuad = love.graphics.newQuad(0, 24, 8, 8, wsW, wsH)
+        local brQuad = love.graphics.newQuad(24, 24, 8, 8, wsW, wsH)
+
+        love.graphics.draw(skin, tlQuad, rx, ry)
+        love.graphics.draw(skin, trQuad, rx + rw - 8, ry)
+        love.graphics.draw(skin, blQuad, rx, ry + rh - 8)
+        love.graphics.draw(skin, brQuad, rx + rw - 8, ry + rh - 8)
+    end
+    love.graphics.pop()
+end
+
 -- Draw text with drop shadow (crisp monochrome)
-function ui.drawString(text, x, y, color, alignment, limit, eventName)
+function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
     local r, g, b, a = love.graphics.getColor()
     local currentFont = love.graphics.getFont()
     
@@ -202,7 +270,8 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName)
     limit = limit or 256
     
     -- Set active font explicitly to ensure properties apply
-    if mainFont then love.graphics.setFont(mainFont) end
+    local drawFont = font or mainFont
+    if drawFont then love.graphics.setFont(drawFont) end
     
     local parsedText = text or ""
     if eventName and eventName ~= "" then
@@ -379,6 +448,26 @@ function ui.drawWindows(kind, windows, ctx)
     end
 end
 
+function ui.loadFont(name, size)
+    size = size or 8
+    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
+    local ok, font
+    if path and love.filesystem.getInfo(path) then
+        ok, font = pcall(love.graphics.newFont, path, size, "mono")
+    end
+    if not ok or not font then
+        ok, font = pcall(love.graphics.newFont, size, "mono")
+    end
+    if not ok or not font then
+        ok, font = pcall(love.graphics.newFont, size)
+    end
+    if ok and font then
+        font:setFilter("nearest", "nearest")
+        return font
+    end
+    return nil
+end
+
 -- Set font helper. "Lucida" (and any name with no matching .ttf) means the
 -- LÖVE built-in default font; any other name is looked up generically at
 -- assets/fonts/<name>.ttf so new fonts only need a file dropped in, no code
@@ -392,21 +481,26 @@ end
 -- every size, matching those two.
 function ui.setFont(name, size)
     size = size or ui.fontSize or 8
-    local path = name and name ~= "Lucida" and ("assets/fonts/" .. name .. ".ttf")
-    local ok, font
-    if path and love.filesystem.getInfo(path) then
-        ok, font = pcall(love.graphics.newFont, path, size, "mono")
+    local loaded = ui.loadFont(name, size)
+    if loaded then
+        mainFont = loaded
+        ui.fontSize = size
+        love.graphics.setFont(mainFont)
     end
-    if not ok or not font then
-        ok, font = pcall(love.graphics.newFont, size, "mono")
-    end
-    if not ok or not font then
-        font = love.graphics.newFont(size)
-    end
-    mainFont = font
-    mainFont:setFilter("nearest", "nearest")
-    ui.fontSize = size
-    love.graphics.setFont(mainFont)
+end
+
+function ui.loadPopupFont(name, size)
+    popupFont = ui.loadFont(name, size)
+end
+
+function ui.getPopupFont()
+    return popupFont
+end
+
+-- Measure rendered width of text in the active UI font (monospace).
+function ui.measureText(text)
+    if mainFont then return mainFont:getWidth(text) end
+    return #tostring(text) * (ui.fontSize or 8)
 end
 
 return ui

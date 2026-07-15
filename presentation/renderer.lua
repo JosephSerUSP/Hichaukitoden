@@ -184,7 +184,7 @@ function renderer.update(dt)
     end
     small_battlers.updateAnims(dt)
     
-    -- Smoothly interpolate party HP and Summoner MP
+    -- Smoothly interpolate party HP and the shared party MP pool
     local session = renderer.session
     if session then
         if renderer.activeBattle then
@@ -540,23 +540,127 @@ function renderer.getBattlerCoords(battleState, session, target)
             end
         end
 
-        local gridX = ui.toPx(layoutVal("partyGridTileX"))
-        local gridY = ui.toPx(layoutVal("consoleTileY")) + ui.toPx(layoutVal("headerTileOffset"))
+        -- Read layout coordinates dynamically from the "party" window configuration
+        local loaderRef = session and session.loader
+        local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+        local partyLayout = layouts and layouts.party or {}
+        local px = partyLayout.x or 0
+        local py = partyLayout.y or 18
+        local title = partyLayout.title
+        local contentX = partyLayout.contentX or partyLayout.textX or 1
+        local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+        local gridX = ui.toPx(px + contentX)
+        local gridY = ui.toPx(py + contentY)
+        local cols = partyLayout.gridColumns or 2
+
         -- Shared 2x2 slot arithmetic (matches drawPartyGrid exactly)
         for idx, c in ipairs(session.party) do
             if c == target then
-                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session)
+                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session, cols)
                 return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
             end
-        end
-        if target == session.summoner then
-            return layoutVal("summonerPopupX"), ui.toPx(layoutVal("consoleTileY")) + layoutVal("summonerPopupYOffset")
         end
     end
     return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
 
-function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
+-- F2 (overhaul-6): the shared party HUD (console + MP + 2x2 grid) is now the
+-- declarative "party" window in presentation/window_renderer.lua, drawn for
+-- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
+
+local function getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" then return {} end
+    local session = renderer.session
+    if not session then return {} end
+    
+    local memberInfo = livingMembers and livingMembers[activeMemberIdx]
+    if not memberInfo then return {} end
+    local monster = memberInfo.actor
+
+    if spellSelect then
+        -- Hovering a skill
+        local options = {}
+        for _, skId in ipairs(monster.skills or {}) do
+            local sk = session.loader.getSkill(skId)
+            if sk then table.insert(options, sk) end
+        end
+        local choice = options[selectedIndex]
+        if not choice then return {} end
+
+        if choice.target == "enemy" or choice.target == "enemy-any" then
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        elseif choice.target == "self" then
+            return { monster }
+        else
+            -- ally-any: target the ally with the lowest HP
+            local lowestHp = 9999
+            local target = nil
+            for _, c in ipairs(session.party) do
+                if c and not c:isDead() and c.hp < lowestHp then
+                    lowestHp = c.hp
+                    target = c
+                end
+            end
+            if target then return { target } end
+        end
+    elseif itemSelect then
+        -- Hovering an item
+        local items = {}
+        local inv = session.inventory or {}
+        local stacks = {}
+        for itemId, qty in pairs(inv) do
+            if qty > 0 then table.insert(stacks, itemId) end
+        end
+        table.sort(stacks)
+        for _, id in ipairs(stacks) do
+            local it = session.loader.getItem(id)
+            if it then table.insert(items, it) end
+        end
+        local choice = items[selectedIndex]
+        if not choice then return {} end
+
+        if choice.targetScope == "party" then
+            -- Targets the entire party
+            local targets = {}
+            for _, c in ipairs(session.party) do
+                if c and not c:isDead() then
+                    table.insert(targets, c)
+                end
+            end
+            return targets
+        elseif choice.targetScope == "enemy" or choice.targetScope == "enemy-any" then
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        else
+            -- Default single ally target
+            return { monster }
+        end
+    else
+        -- Main menu option
+        if selectedIndex == 1 then
+            -- Attack targets the first living enemy
+            for _, e in ipairs(battleState.enemies) do
+                if not e:isDead() then
+                    return { e }
+                end
+            end
+        elseif selectedIndex == 3 then
+            -- Defend targets self
+            return { monster }
+        end
+    end
+    return {}
+end
+
+function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
     renderer.activeBattle = battleState
     
     -- Draw 3D dungeon view behind battle scene
@@ -656,64 +760,63 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
     end
     
-    -- Bottom status console: summoner status (left, B.1/B.6) + party grid
-    -- (right). Battler commands no longer live inside it (B.7).
+    -- Bottom status console: party grid. Battler commands no longer live
+    -- inside it (B.7). The summoner is not a battle participant
+    -- (overhaul-6 F1) and has no status display here.
     local consoleY = ui.toPx(layoutVal("consoleTileY"))
     local consoleH = ui.toPx(layoutVal("consoleTileH"))
     local textX = ui.toPx(layoutVal("consoleTextTileX"))
     local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
 
-    ui.drawPanel(ui.toPx(layoutVal("consoleTileX")), consoleY, ui.toPx(layoutVal("consoleTileW")), consoleH)
-
     -- B.7: the battler command menu is its own single-line window spanning
     -- the full width, flush above the status console; it opens during input
     -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
     if combatState == "input" then
+        -- overhaul-6 F1: the summoner is not a battle participant; every
+        -- living member is an active creature with its own command list
+        -- (Attack/Skill/Defend/Item/Flee). F7 adds Item as a per-creature
+        -- command: selecting it opens an inventory submenu here.
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        local isSummoner = (not memberInfo or memberInfo.type == "summoner")
         local loader = renderer.session.loader
 
         local entries, helps = {}, {}
-        if isSummoner then
-            if spellSelect then
-                -- Real spell names + MP costs from summoner.spells / skills.json
-                for _, spellId in ipairs((config.summoner and config.summoner.spells) or {}) do
-                    if type(spellId) == "table" then spellId = spellId.id end
-                    local sk = loader.getSkill(spellId)
-                    if sk then
-                        table.insert(entries, sk.name .. " (" .. (sk.mpCost or 0) .. "MP)")
-                        table.insert(helps, sk.description or "")
-                    end
+        local monster = memberInfo and memberInfo.actor
+        if spellSelect then
+            for _, skId in ipairs((monster and monster.skills) or {}) do
+                local sk = loader.getSkill(skId)
+                if sk then
+                    table.insert(entries, sk.name)
+                    table.insert(helps, sk.description or "")
                 end
-            else
-                entries = loader.getTermList("battle.commands_summoner", { "Attack", "Spell", "Item", "Flee" })
-                helps = loader.getTermList("battle.help_summoner", {
-                    "Strike with a basic attack.",
-                    "Cast a spell from the grimoire.",
-                    "Use an item from the inventory.",
-                    "Attempt to escape the battle.",
-                })
             end
+            if #entries == 0 then entries = { "(No skills)" } end
+        elseif itemSelect then
+            -- F7: inventory submenu. List is the id-sorted non-empty
+            -- inventory, matching USE_ITEM's ordering and battle.lua's
+            -- applyItem so the highlighted row maps to the committed index.
+            local inv = renderer.session and renderer.session.inventory or {}
+            local stacks = {}
+            for itemId, qty in pairs(inv) do
+                if qty > 0 then table.insert(stacks, itemId) end
+            end
+            table.sort(stacks)
+            for _, id in ipairs(stacks) do
+                local it = loader.getItem(id)
+                if it then
+                    table.insert(entries, (it.name or "?") .. " x" .. tostring(inv[id]))
+                    table.insert(helps, it.description or "")
+                end
+            end
+            if #entries == 0 then entries = { "(No items)" } end
         else
-            local monster = memberInfo.actor
-            if spellSelect then
-                for _, skId in ipairs(monster.skills or {}) do
-                    local sk = loader.getSkill(skId)
-                    if sk then
-                        table.insert(entries, sk.name)
-                        table.insert(helps, sk.description or "")
-                    end
-                end
-                if #entries == 0 then entries = { "(No skills)" } end
-            else
-                entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Flee" })
-                helps = loader.getTermList("battle.help_monster", {
-                    "Strike with a basic attack.",
-                    "Use one of this creature's skills.",
-                    "Brace to reduce incoming damage.",
-                    "Attempt to escape the battle.",
-                })
-            end
+            entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Item", "Flee" })
+            helps = loader.getTermList("battle.help_monster", {
+                "Strike with a basic attack.",
+                "Use one of this creature's skills.",
+                "Brace to reduce incoming damage.",
+                "Use an item from the inventory.",
+                "Attempt to escape the battle.",
+            })
         end
 
         local barH = ui.toPx(layoutVal("commandBarTileH"))
@@ -748,13 +851,17 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     local highlightIdx = 0
     local showHighlight = false
     if combatState == "input" then
+        -- overhaul-6 F1: memberInfo.index is the party slot (1-4) directly,
+        -- no summoner-offset adjustment needed anymore.
         local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        if memberInfo and memberInfo.type == "monster" then
-            highlightIdx = memberInfo.index - 1
+        if memberInfo then
+            highlightIdx = memberInfo.index
             showHighlight = true
         end
     end
-    renderer.drawPartyGrid(ui.toPx(layoutVal("partyGridTileX")), headerY, highlightIdx, session, showHighlight)
+    -- F2 (overhaul-6): the shared party HUD (console + MP + 2x2 grid) is the
+    -- declarative "party" window, drawn by main.lua's drawSharedPartyHud so
+    -- every scene uses the ONE shared HUD (no legacy duplicate).
 
     -- B.9: dedicated victory window (combatState set by battle.handleTransition;
     -- Shows the battle's gold and base EXP grant, plus per-member animated EXP
@@ -823,19 +930,90 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
         end
     end
+end
 
-    -- Draw active damage popups
+function renderer.drawTargetReticles(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" or not battleState then return end
+    
+    local session = renderer.session
+    if not session then return end
+    
+    local targets = getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    for _, target in ipairs(targets) do
+        local tx, ty, tw, th
+        
+        -- Is it an enemy?
+        local isEnemy = false
+        local enemyIdx = nil
+        for idx, enemy in ipairs(battleState.enemies) do
+            if enemy == target then
+                isEnemy = true
+                enemyIdx = idx
+                break
+            end
+        end
+        
+        if isEnemy then
+            local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+            local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+            local ey = layoutVal("enemyY")
+            local portrait = getPortrait(target.spriteKey or target.id)
+            tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
+            th = tw
+            tx = ex
+            ty = ey
+        else
+            -- It's a party member
+            local allyIdx = nil
+            for idx, c in ipairs(session.party) do
+                if c == target then
+                    allyIdx = idx
+                    break
+                end
+            end
+            
+            if allyIdx then
+                local loaderRef = session.loader
+                local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+                local partyLayout = layouts and layouts.party or {}
+                local px = partyLayout.x or 0
+                local py = partyLayout.y or 18
+                local title = partyLayout.title
+                local contentX = partyLayout.contentX or partyLayout.textX or 1
+                local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+                local gridX = ui.toPx(px + contentX)
+                local gridY = ui.toPx(py + contentY)
+                local cols = partyLayout.gridColumns or 2
+                local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
+                
+                local colW, rowH = actor_status.cellSize(session)
+                tx = slotX - 2
+                ty = slotY - 2
+                tw = colW - 2
+                th = rowH - 2
+            end
+        end
+        
+        if tx and ty and tw and th then
+            ui.drawTargetReticle(tx, ty, tw, th)
+        end
+    end
+end
+
+function renderer.drawDamagePopups()
     love.graphics.push("all")
+    local popupFont = ui.getPopupFont()
     for _, p in ipairs(damagePopups) do
         local alpha = math.min(1, p.life * 2)
         local col = { p.color[1], p.color[2], p.color[3], alpha }
         local textOffset = 0
-        local font = love.graphics.getFont()
+        local font = popupFont or love.graphics.getFont()
         for _, glyph in ipairs(p.glyphs) do
             if p.revealElapsed >= glyph.startDelay then
                 -- Opacity is shared across the popup, not reset for each
                 -- glyph, so every character fades out in sync.
-                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col)
+                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, popupFont)
             end
             textOffset = textOffset + font:getWidth(glyph.char)
         end

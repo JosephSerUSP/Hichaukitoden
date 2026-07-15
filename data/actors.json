@@ -31,14 +31,17 @@
     ],
     "evolutions": [
       {
-        "level": 6,
+        "level": 1,
         "evolvesTo": 2
       }
     ],
     "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 2,
@@ -70,7 +73,10 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 3,
@@ -107,7 +113,10 @@
     "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 4,
@@ -143,7 +152,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 5,
@@ -175,7 +187,10 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 6,
@@ -241,7 +256,10 @@
         "dataId": "mat",
         "value": 99
       }
-    ]
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 7,
@@ -274,7 +292,10 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 8,
@@ -304,7 +325,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 9,
@@ -339,7 +363,10 @@
     "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 10,
@@ -366,7 +393,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 11,
@@ -396,7 +426,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 12,
@@ -423,7 +456,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 13,
@@ -451,7 +487,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 14,
@@ -484,7 +523,10 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 15,
@@ -511,7 +553,10 @@
     "isRecruitable": false,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 16,
@@ -540,7 +585,10 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 17,
@@ -572,7 +620,10 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 18,
@@ -600,7 +651,10 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": []
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 19,
@@ -637,7 +691,10 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 20,
@@ -677,7 +734,10 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": []
+    "traits": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 21,
@@ -708,7 +768,10 @@
     "gold": 14,
     "expGrowth": 10,
     "drops": [],
-    "evolutions": []
+    "evolutions": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   },
   {
     "id": 22,
@@ -727,6 +790,9 @@
     "expGrowth": 20,
     "drops": [],
     "evolutions": [],
-    "smallBattler": "Nurse"
+    "smallBattler": "Nurse",
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy"
   }
 ]

@@ -32,6 +32,7 @@ local ui = require("presentation.ui")
 local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
 local actor_status = require("presentation.actor_status")
+local battle_layout = require("presentation.battle_layout")
 
 local wr = {}
 
@@ -112,47 +113,99 @@ local function partyRows(session)
     local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     local loader = session and session.loader
     local rows = {}
-    for i, m in ipairs(session and session.party or {}) do
-        local view = formula.battlerView(m, session) or {}
-        view.index = i
-        -- Same sheet-key choice as renderer.drawSmallBattlerCell
-        view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
-        -- Portrait art key (assets/portraits), same as the battle renderer
-        view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
-        view.icon = view.icon or 0
-        view.dead = m.isDead and m:isDead() or false
-        -- Not read by {expr} templates; lets the row's sprite share the
-        -- same battle-triggered flash/shake state small_battlers keys by
-        -- battler identity (drawList passes this through as battlerRef).
-        view.battlerRef = m
-        -- Status-scene fields (generic enrichment of the 'party' source):
-        -- progression, role, equipment slots and joined passive/skill/state
-        -- names as flat strings so {expr} templates can print them.
-        view.exp = m.exp or 0
-        view.expNeeded = (m.level or 1) * expPerLevel
-        view.role = (m.actorData and m.actorData.role) or "CREATURE"
-        view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
-        local eq = m.equipment or {}
-        view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
-        view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
-        view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
-        local function joinNames(ids, getter)
-            local names = {}
-            for _, id in ipairs(ids or {}) do
-                local entry = getter and getter(id)
-                table.insert(names, (entry and entry.name) or tostring(id))
+    for i = 1, 4 do
+        local m = session and session.party and session.party[i]
+        if m then
+            local view = formula.battlerView(m, session) or {}
+            view.index = i
+            -- Same sheet-key choice as renderer.drawSmallBattlerCell
+            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+            -- Portrait art key (assets/portraits), same as the battle renderer
+            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
+            view.icon = view.icon or 0
+            view.dead = m.isDead and m:isDead() or false
+            -- Not read by {expr} templates; lets the row's sprite share the
+            -- same battle-triggered flash/shake state small_battlers keys by
+            -- battler identity (drawList passes this through as battlerRef).
+            view.battlerRef = m
+            -- Status-scene fields (generic enrichment of the 'party' source):
+            -- progression, role, equipment slots and joined passive/skill/state
+            -- names as flat strings so {expr} templates can print them.
+            view.exp = m.exp or 0
+            view.expNeeded = (m.level or 1) * expPerLevel
+            view.role = (m.actorData and m.actorData.role) or "CREATURE"
+            view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+            local eq = m.equipment or {}
+            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
+            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
+            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+            local function joinNames(ids, getter)
+                local names = {}
+                for _, id in ipairs(ids or {}) do
+                    local entry = getter and getter(id)
+                    table.insert(names, (entry and entry.name) or tostring(id))
+                end
+                return #names > 0 and table.concat(names, ", ") or "None"
             end
-            return #names > 0 and table.concat(names, ", ") or "None"
+            view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
+            view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
+            local stateNames = {}
+            for _, st in ipairs(m.states or {}) do
+                local def = loader and loader.getState and loader.getState(st.id)
+                table.insert(stateNames, (def and def.name) or tostring(st.id))
+            end
+            view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
+            table.insert(rows, view)
+        else
+            table.insert(rows, { index = i, empty = true, name = "--Empty--" })
         end
-        view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
-        view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
-        local stateNames = {}
-        for _, st in ipairs(m.states or {}) do
-            local def = loader and loader.getState and loader.getState(st.id)
-            table.insert(stateNames, (def and def.name) or tostring(st.id))
+    end
+    return rows
+end
+
+local function reserveRows(session)
+    local config = require("engine.config")
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local loader = session and session.loader
+    local rows = {}
+    for i = 1, 8 do
+        local m = session and session.reserve and session.reserve[i]
+        if m then
+            local view = formula.battlerView(m, session) or {}
+            view.index = i
+            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
+            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
+            view.icon = view.icon or 0
+            view.dead = m.isDead and m:isDead() or false
+            view.battlerRef = m
+            view.exp = m.exp or 0
+            view.expNeeded = (m.level or 1) * expPerLevel
+            view.role = (m.actorData and m.actorData.role) or "CREATURE"
+            view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+            local eq = m.equipment or {}
+            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
+            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
+            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+            local function joinNames(ids, getter)
+                local names = {}
+                for _, id in ipairs(ids or {}) do
+                    local entry = getter and getter(id)
+                    table.insert(names, (entry and entry.name) or tostring(id))
+                end
+                return #names > 0 and table.concat(names, ", ") or "None"
+            end
+            view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
+            view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
+            local stateNames = {}
+            for _, st in ipairs(m.states or {}) do
+                local def = loader and loader.getState and loader.getState(st.id)
+                table.insert(stateNames, (def and def.name) or tostring(st.id))
+            end
+            view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
+            table.insert(rows, view)
+        else
+            table.insert(rows, { index = i, empty = true, name = "--Empty--" })
         end
-        view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
-        table.insert(rows, view)
     end
     return rows
 end
@@ -309,6 +362,8 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = inventoryRows(ctx.session)
     elseif src == "party" then
         rows = partyRows(ctx.session)
+    elseif src == "reserve" then
+        rows = reserveRows(ctx.session)
     elseif src == "equipSlots" then
         rows = equipSlotRows(ctx.session, win, env)
     elseif src == "equipment" then
@@ -517,15 +572,135 @@ end
 -- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
 -- partyRows keeps a reference to) — so a party member's status is one
 -- single thing, not a re-implementation per screen.
+-- F2 (overhaul-6): shared MP readout — a thin gauge on the sliver UNDER the 2x2
+-- actor grid (same thickness as the party HP bars), with the current MP value
+-- shown numerically to its right. gaugeW is the gauge's pixel width; the number
+-- sits immediately after it, so gauge + number span exactly the 2-panel width.
+local function drawMpReadout(session, gaugeX, gaugeY, gaugeW, numX, numY, mpBarH)
+    local mp = math.floor(session.displayedMp or session.mp or 0)
+    local maxMp = math.floor(session.maxMp or mp or 1)
+    if maxMp <= 0 then maxMp = 1 end
+    ui.drawBar(gaugeX, gaugeY, gaugeW, mpBarH, mp, maxMp, {0.30, 0.60, 1.0}, {0.65, 0.90, 1.0})
+    ui.drawString(tostring(mp), numX, numY, {0.80, 0.90, 1.0, 1})
+end
+
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
+    -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
+    -- (contentX) so the map party popup — anchored to the grid cells via
+    -- cellOf:party — lines up with the sprites. The shared MP gauge is drawn on
+    -- the thin sliver under the grid (same thickness as the party HP bars),
+    -- with the current MP value shown numerically to its right.
+    local colW = actor_status.cellSize(session)
+    local gridW = cols * colW
+    local h = ui.toPx(layout.height or 12)
+    local mpBarH = battle_layout.get(session, "partyGridHpBarHeight") or 3
+    local mpNum = tostring(math.floor(session.displayedMp or session.mp or 0))
+    local mpNumW = ui.measureText(mpNum)
+    local gap = 4
+    local label = "MP"
+    local labelW = ui.measureText(label)
+    local labelGap = 4
+    -- F2 (overhaul-6): the gauge AND the numeric value both shift up 3px; an
+    -- "MP" label sits to the LEFT of the gauge, and the gauge length is reduced
+    -- by the label width so label + gauge + number still span the grid width.
+    local numberY = y + h - ui.fontSize - 3
+    local gaugeY = numberY + math.floor((ui.fontSize - mpBarH) / 2)
+    local gaugeX = contentX + labelW + labelGap
+    local gaugeW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
+    local numberX = gaugeX + gaugeW + gap
+    if not layout.hideMp then
+        ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, 1})
+        drawMpReadout(session, gaugeX, gaugeY, gaugeW, numberX, numberY, mpBarH)
+    end
     for i, row in ipairs(rows) do
+        local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
         if row.battlerRef then
-            local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
             actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
+        else
+            local colW, rowH = actor_status.cellSize(session)
+            ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, i == cursor)
+            if i == cursor then
+                small_battlers.draw("Cursor", cx - 6, cy, 8)
+            end
+            local text = "--Empty--"
+            local textW = ui.measureText(text)
+            ui.drawString(text, cx + (colW - textW) / 2, cy + (rowH - ui.lineHeight) / 2, { 0.4, 0.4, 0.4, 1 })
         end
     end
+end
+
+-- Reserve scene (overhaul-6 F3): while picking a Swap target (v.mode == 4),
+-- the source slot is shown as a black silhouette and a ghost of it floats
+-- above, drifting in a sine wave between a -2 and -6 offset (up-left diagonal,
+-- a bit faster). The shadow scales down as the ghost drifts away, selling the
+-- "floating" illusion. Works for both an occupied source (ghost of the creature
+-- panel) and an empty source (ghost of the empty slot panel).
+local swapGhostCanvas = nil
+local swapGhostKey = nil
+local function drawSwapIndicator(state, sceneData, ctx)
+    local v = state.v
+    if not v or v.mode ~= 4 then return end
+    local session = ctx.session
+    if not session then return end
+    local isReserve = v.swapSourceIsReserve
+    local srcIdx = v.swapSourceIndex
+    if not srcIdx then return end
+    local arr = isReserve and session.reserve or session.party
+    local battler = arr and arr[srcIdx]
+
+    local srcWinId = isReserve and "reserve_roster" or "reserve_party"
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+    local layout = layouts[srcWinId] or {}
+    local x = ui.toPx(layout.x or 0)
+    local y = ui.toPx(layout.y or 0)
+    local contentX, contentY = contentOrigin(layout, nil, x, y)
+    local cols = layout.gridColumns or 2
+    local cx, cy = actor_status.gridSlot(contentX, contentY, srcIdx, session, cols)
+
+    local colW, rowH = actor_status.cellSize(session)
+    colW, rowH = math.floor(colW), math.floor(rowH)
+
+    -- Cache the ghost (creature panel or empty slot) on an offscreen canvas.
+    -- Both branches render the panel at canvas (0,0) so the draw position is
+    -- exact. The slot's own draw calls set opaque colors, so a global alpha
+    -- would not propagate without the canvas.
+    local creatureId = battler and (battler.actorData and battler.actorData.id or battler.name) or "empty"
+    local key = srcWinId .. ":" .. tostring(srcIdx) .. ":" .. tostring(creatureId)
+    if key ~= swapGhostKey or not swapGhostCanvas then
+        swapGhostCanvas = love.graphics.newCanvas(colW, rowH)
+        swapGhostKey = key
+        love.graphics.push("all")
+        love.graphics.setCanvas(swapGhostCanvas)
+        love.graphics.clear(0, 0, 0, 0)
+        if battler then
+            actor_status.draw(battler, 2, 2, false, session)
+        else
+            ui.drawPanel(0, 0, colW - 2, rowH - 2, nil, true)
+        end
+        love.graphics.setCanvas()
+        love.graphics.pop()
+    end
+
+    local panelX, panelY = cx - 2, cy - 2
+    local w, h = colW - 2, rowH - 2
+    local t = love.timer.getTime()
+    local mag = 4 + 2 * math.sin(t * 4) -- oscillates 2..6 (a bit faster)
+
+    -- The source slot is still drawn by the grid. Fill it pure black so it
+    -- reads as the empty "picked up" slot, and float a full-opacity ghost of
+    -- it above in a gentle sine wave.
+    love.graphics.push("all")
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle("fill", panelX, panelY, w, h)
+    love.graphics.pop()
+
+    -- The ghost floats above at full opacity, drifting in the same sine wave.
+    love.graphics.push("all")
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(swapGhostCanvas, panelX - mag, panelY - mag)
+    love.graphics.pop()
 end
 
 -- Horizontal option row (confirm/command style): options spread across the
@@ -551,24 +726,44 @@ end
 -- "command" style: each entry is its own bordered slot (owner direction
 -- 13.07.2026), not free-floating text in one shared bar. Slots fill the
 -- window's whole x/y/w/h bounding box evenly, each with a small gap.
-local function drawCommandSlots(rows, cursor, env, x, y, w, h)
+-- Supports vertical stacking if layout.vertical is true.
+local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     local n = #rows
     if n == 0 then return end
     local gap = ui.toPx(0.5)
-    local slotW = (w - gap * (n + 1)) / n
-    for i, row in ipairs(rows) do
-        local isSel = (i == cursor)
-        local sx = x + gap + (i - 1) * (slotW + gap)
-        ui.drawPanel(sx, y, slotW, h, nil, isSel)
-        local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-        local label = row.name or ""
-        local textY = y + h / 2 - ui.lineHeight / 2
-        if isSel then
-            local textW = love.graphics.getFont():getWidth(label)
-            local textX = sx + (slotW - textW) / 2
-            small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+    local isVertical = layout and (layout.vertical or layout.direction == "vertical")
+    if isVertical then
+        local slotH = (h - gap * (n + 1)) / n
+        for i, row in ipairs(rows) do
+            local isSel = (i == cursor)
+            local sy = y + gap + (i - 1) * (slotH + gap)
+            ui.drawPanel(x, sy, w, slotH, nil, isSel)
+            local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+            local label = row.name or ""
+            local textY = sy + slotH / 2 - ui.lineHeight / 2
+            if isSel then
+                local textW = love.graphics.getFont():getWidth(label)
+                local textX = x + (w - textW) / 2
+                small_battlers.draw("Cursor", textX - 10, sy + slotH / 2 - 4, 8)
+            end
+            ui.drawString(label, x, textY, color, "center", w)
         end
-        ui.drawString(label, sx, textY, color, "center", slotW)
+    else
+        local slotW = (w - gap * (n + 1)) / n
+        for i, row in ipairs(rows) do
+            local isSel = (i == cursor)
+            local sx = x + gap + (i - 1) * (slotW + gap)
+            ui.drawPanel(sx, y, slotW, h, nil, isSel)
+            local color = isSel and COLOR_SELECTED or COLOR_NORMAL
+            local label = row.name or ""
+            local textY = y + h / 2 - ui.lineHeight / 2
+            if isSel then
+                local textW = love.graphics.getFont():getWidth(label)
+                local textX = sx + (slotW - textW) / 2
+                small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
+            end
+            ui.drawString(label, sx, textY, color, "center", slotW)
+        end
     end
 end
 
@@ -709,7 +904,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         -- window's whole visible surface.
         local cached = listCache[id]
         if cached then
-            drawCommandSlots(cached.rows, cached.cursor, env, x, y, w, h)
+            drawCommandSlots(layout, cached.rows, cached.cursor, env, x, y, w, h)
         end
     elseif style == "roulette" then
         local cached = listCache[id]
@@ -790,6 +985,13 @@ function wr.draw(state, sceneData, ctx)
             -- replays the animation.
             openClocks[win] = nil
         end
+    end
+
+    -- Reserve scene (overhaul-6 F3): while picking a Swap target (v.mode == 4),
+    -- the source slot is dimmed and a full-opacity ghost of its panel floats
+    -- above it (sine drift), as a "select target slot" cue.
+    if sceneData and sceneData.id == "reserve" then
+        drawSwapIndicator(state, sceneData, ctx)
     end
 end
 

@@ -70,13 +70,15 @@ end
 -- Rebuilds the list of party members that still get to act this round
 -------------------------------------------------------------------------------
 function battle.rebuildLivingMembers()
+    -- overhaul-6 F1: the summoner is not a battle participant; living
+    -- members are the active party creatures only, indexed 1-4 to match
+    -- Battle:resolveRound's collectedActions slots directly (no +1 offset).
     local v = battle.getState()
     local living = {}
-    table.insert(living, { type = "summoner", actor = sess().summoner, index = 1 })
     for i = 1, 4 do
         local c = sess().party[i]
         if c and not c:isDead() then
-            table.insert(living, { type = "monster", actor = c, index = i + 1 })
+            table.insert(living, { type = "monster", actor = c, index = i })
         end
     end
     v.livingMembers = living
@@ -251,7 +253,8 @@ function battle.advanceLog()
                         break
                     end
                 end
-                -- E8: party smallBattlers and the summoner flash/shake too
+                -- E8: party smallBattlers flash/shake too (overhaul-6 F1:
+                -- the summoner is never a damage target in battle anymore)
                 if not isEnemy then
                     renderer.triggerSmallDamage(ev.target)
                 end
@@ -320,6 +323,7 @@ function battle.commitAction(memberIndex, action)
     v.activeMemberIdx = (v.activeMemberIdx or 1) + 1
     v.selectedIndex = 1
     v.spellSelect = false
+    v.itemSelect = false
 
     if v.activeMemberIdx > #(v.livingMembers or {}) then
         v.escaped = false
@@ -330,6 +334,47 @@ function battle.commitAction(memberIndex, action)
         v.combatState = "log"
     end
 end
+
+-------------------------------------------------------------------------------
+-- Undoes the last committed action
+-------------------------------------------------------------------------------
+function battle.undoAction()
+    local v = battle.getState()
+    if not v.activeMemberIdx or v.activeMemberIdx <= 1 then return false end
+
+    v.activeMemberIdx = v.activeMemberIdx - 1
+    
+    local memberInfo = (v.livingMembers or {})[v.activeMemberIdx]
+    if not memberInfo then return false end
+    
+    local memberIndex = memberInfo.index
+    local prevAction = v.collectedActions and v.collectedActions[memberIndex]
+    if v.collectedActions then
+        v.collectedActions[memberIndex] = nil
+    end
+
+    v.spellSelect = false
+    v.itemSelect = false
+    if prevAction then
+        if prevAction.type == "attack" then
+            v.selectedIndex = 1
+        elseif prevAction.type == "skill" or prevAction.type == "spell" then
+            v.selectedIndex = 2
+        elseif prevAction.type == "defend" then
+            v.selectedIndex = 3
+        elseif prevAction.type == "item" then
+            v.selectedIndex = 4
+        elseif prevAction.type == "flee" then
+            v.selectedIndex = 5
+        else
+            v.selectedIndex = 1
+        end
+    else
+        v.selectedIndex = 1
+    end
+    return true
+end
+
 
 -------------------------------------------------------------------------------
 -- NOTE: command-selection input ("handleInput") and log advancement

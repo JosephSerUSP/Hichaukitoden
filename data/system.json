@@ -65,6 +65,8 @@
   "battle_screen": {
     "damagePopupLife": 1.5,
     "popup": {
+      "font": "DotGothic16-Regular",
+      "fontSize": 16,
       "characterDelay": 0.04,
       "damageFormat": "{0}",
       "damageColor": [
@@ -210,6 +212,10 @@
   },
   "summoner": {
     "startMp": 820,
+    "summonCostBase": 10,
+    "summonCostPerLevel": 5,
+    "summonCostPerTier": 15,
+    "sacrificeMpRefundRate": 0.5,
     "spells": [
       "soothingMote",
       "divineFavor",

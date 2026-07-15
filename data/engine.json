@@ -1667,7 +1667,7 @@
       "x": 0.5,
       "y": 4.5,
       "width": 19,
-      "height": 13.5,
+      "height": 13,
       "style": "list",
       "title": null,
       "emptyText": "No items."
@@ -1676,7 +1676,7 @@
       "x": 20,
       "y": 4.5,
       "width": 11.5,
-      "height": 13.5,
+      "height": 13,
       "style": "panel",
       "title": null,
       "lineSpacing": 1
@@ -1685,7 +1685,7 @@
       "x": 0.5,
       "y": 4.5,
       "width": 20.5,
-      "height": 13.5,
+      "height": 13,
       "style": "panel",
       "title": null,
       "pageFormula": "v.page or 1",
@@ -1748,7 +1748,7 @@
       "x": 0.5,
       "y": 4.5,
       "width": 19,
-      "height": 13.5,
+      "height": 13,
       "style": "list",
       "title": null,
       "emptyText": "No items available."
@@ -1757,7 +1757,7 @@
       "x": 20,
       "y": 4.5,
       "width": 11.5,
-      "height": 13.5,
+      "height": 13,
       "style": "panel",
       "title": null
     },
@@ -1832,17 +1832,17 @@
     },
     "shop_party": {
       "x": 0,
-      "y": 18.5,
+      "y": 18,
       "width": 32,
-      "height": 11.5,
+      "height": 12,
       "style": "partyGrid",
       "title": null
     },
     "status_party": {
       "x": 0,
-      "y": 18.5,
+      "y": 18,
       "width": 32,
-      "height": 11.5,
+      "height": 12,
       "style": "partyGrid",
       "title": null
     },
@@ -1864,9 +1864,9 @@
     },
     "party": {
       "x": 0,
-      "y": 18.5,
+      "y": 18,
       "width": 32,
-      "height": 11.5,
+      "height": 12,
       "style": "partyGrid",
       "title": null
     },
@@ -1874,7 +1874,7 @@
       "x": 21.5,
       "y": 4.5,
       "width": 10,
-      "height": 13.5,
+      "height": 13,
       "style": "panel",
       "title": null,
       "portrait": "sel('status_party').portraitKey"
@@ -1944,6 +1944,62 @@
           "duration": 0.18
         }
       }
+    },
+    "reserve_title": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 2
+    },
+    "reserve_help": {
+      "x": 0,
+      "y": 13.5,
+      "width": 32,
+      "height": 4.5
+    },
+    "reserve_party": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "partyGrid",
+      "gridColumns": 2
+    },
+    "reserve_roster": {
+      "x": 0,
+      "y": 2,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "gridColumns": 4,
+      "hideMp": true
+    },
+    "reserve_popup": {
+      "x": 12,
+      "y": 12,
+      "width": 11,
+      "height": 9,
+      "style": "command",
+      "anim": {
+        "open": {
+          "duration": 0.2
+        }
+      },
+      "vertical": true
+    },
+    "reserve_summon_list": {
+      "x": 8,
+      "y": 4,
+      "width": 16,
+      "height": 20,
+      "style": "list"
+    },
+    "reserve_confirm": {
+      "x": 8,
+      "y": 10,
+      "width": 16,
+      "height": 6,
+      "style": "confirm"
     }
   }
 }
