@@ -391,47 +391,59 @@ function animation_player.getShakeOffset(target)
 end
 
 ---------------------------------------------------------------------------
--- Text flow drawing
+-- Screen flash & gradient map
 ---------------------------------------------------------------------------
 
--- Returns a list of { char, x, y, color } for text_flow tracks that have
--- visible characters at the current elapsed time. The caller positions
--- these relative to the target's screen position.
--- Returns nil if no text_flow is active.
-function animation_player.getTextFlowGlyphs(target, targetScreenX, targetScreenY)
+-- Generic "most-recently-started active track of a type" scanner used by the
+-- screen-flash and gradient-map queries. Returns the track and its eased t.
+local function activeTrackOfType(target, typeName)
     local list = instances[target]
     if not list then return nil end
-    local glyphs = {}
-    for _, inst in ipairs(list) do
+    for i = #list, 1, -1 do
+        local inst = list[i]
         local entry = inst.entry
         if entry and entry.tracks then
-            local elapsedMs = inst.elapsed * 1000
+            local elapsedSec = inst.elapsed
             for _, track in ipairs(entry.tracks) do
-                if track.type == "text_flow" then
-                    local t0Ms = track.t0 or 0
-                    local durMs = track.duration or 1000
-                    local trackEndMs = t0Ms + durMs
-                    if elapsedMs >= t0Ms and elapsedMs < trackEndMs then
-                        local seq = track.sequence or ""
-                        local interval = track.interval or 50
-                        local relativeElapsed = elapsedMs - t0Ms
-                        local numChars = math.min(#seq, math.floor(relativeElapsed / interval) + 1)
-                        local color = track.color or { 1, 1, 1 }
-                        for i = 1, numChars do
-                            table.insert(glyphs, {
-                                char = seq:sub(i, i),
-                                x = targetScreenX + (i - 1) * 6,
-                                y = targetScreenY - 8,
-                                color = color,
-                            })
-                        end
+                if track.type == typeName then
+                    local t0Sec = (track.t0 or 0) / 1000
+                    local durSec = (track.duration or 0) / 1000
+                    if elapsedSec >= t0Sec and elapsedSec < t0Sec + durSec then
+                        local t = durSec > 0 and (elapsedSec - t0Sec) / durSec or 1
+                        return track, easingFn(track.easing)(t)
                     end
                 end
             end
         end
     end
-    if #glyphs == 0 then return nil end
-    return glyphs
+    return nil
+end
+
+-- Full-screen colored overlay. Returns { color = {r,g,b}, alpha = n } for the
+-- active screen_flash track (alpha interpolates from→to), or nil.
+function animation_player.getScreenFlash(target)
+    local track, t = activeTrackOfType(target, "screen_flash")
+    if not track then return nil end
+    local fromA = track.fromAlpha or 1
+    local toA = track.toAlpha or 0
+    return {
+        color = track.color or { 1, 1, 1 },
+        alpha = fromA + (toA - fromA) * t,
+    }
+end
+
+-- Animated luminance→gradient remap of the sprite. Returns
+-- { low = {r,g,b}, high = {r,g,b}, intensity = n } or nil.
+function animation_player.getGradientMap(target)
+    local track, t = activeTrackOfType(target, "gradient_map")
+    if not track then return nil end
+    local fromI = track.fromIntensity ~= nil and track.fromIntensity or 1
+    local toI = track.toIntensity ~= nil and track.toIntensity or 1
+    return {
+        low = track.lowColor or { 0, 0, 0 },
+        high = track.highColor or { 1, 1, 1 },
+        intensity = fromI + (toI - fromI) * t,
+    }
 end
 
 ---------------------------------------------------------------------------
@@ -452,7 +464,7 @@ function animation_player.getParticleSystems(target)
                 if track.type == "particles" then
                     -- Create particle system if not yet created for this track
                     if not inst.particleSystems[ti] then
-                        local ps = animation_player._createParticleSystem(track)
+                        local ps = animation_player._createParticleSystem(track, entry)
                         if ps then
                             inst.particleSystems[ti] = ps
                         end
@@ -469,6 +481,7 @@ function animation_player.getParticleSystems(target)
                             blendMode = track.blendMode or "alpha",
                             x = track.x or 0,
                             y = track.y or 0,
+                            layer = track.layer or "front",
                             parentTransform = parentTf,
                         })
                     end
@@ -480,10 +493,50 @@ function animation_player.getParticleSystems(target)
     return result
 end
 
+-- Internal: sum the accelerations contributed by all `force_field` tracks in
+-- an entry, mapped onto LÖVE's acceleration channels. Force fields are
+-- entry-global: they affect every particle track unless that track opts out
+-- with `ignoreForces = true`. Returns linX, linY, radial, tangential, damping.
+--
+-- field mapping:
+--   gravity → linear acceleration vector (angle degrees, default 90 = down)
+--   attract → radial acceleration (positive strength pulls inward)
+--   vortex  → tangential acceleration (orbit around the emitter)
+--   drag    → linear damping (constant deceleration)
+local function aggregateForces(entry, particleTrack)
+    local linX, linY, radial, tangential, damping = 0, 0, 0, 0, 0
+    if not entry or not entry.tracks or particleTrack.ignoreForces then
+        return linX, linY, radial, tangential, damping
+    end
+    for _, tr in ipairs(entry.tracks) do
+        if tr.type == "force_field" then
+            local s = tr.strength or 0
+            local field = tr.field or "gravity"
+            if field == "gravity" then
+                local a = math.rad(tr.angle or 90)
+                linX = linX + math.cos(a) * s
+                linY = linY + math.sin(a) * s
+            elseif field == "attract" then
+                radial = radial - s
+            elseif field == "vortex" then
+                tangential = tangential + s
+            elseif field == "drag" then
+                damping = damping + s
+            end
+        end
+    end
+    return linX, linY, radial, tangential, damping
+end
+
 -- Internal: create a LÖVE ParticleSystem from a particles track definition.
--- `track` fields: rate, lifetime, spread, velocity, gravity, colorOverLife,
--- blendMode, particleTexture (optional — falls back to 2px white quad).
-function animation_player._createParticleSystem(track)
+-- `entry` (optional) lets the system pick up sibling force_field tracks.
+-- Emission fields: direction (deg, 0=right/CW), spread, speed (alias
+-- velocity), speedMax, rate, lifetime, lifetimeVariation. Motion: gravity
+-- (self), plus aggregated force fields. Look: colorOverLife, sizeStart,
+-- sizeEnd, sizeVariation, spin, rotation. Cells: cellW/cellH/cellStart/
+-- cellCount/cellMode/cellLoops (row-major over the sheet), or the legacy
+-- single-row quadWidth/quadHeight/quadCount. particleTexture optional.
+function animation_player._createParticleSystem(track, entry)
     -- Try loading a particle texture if specified
     local texture
     if track.particleTexture then
@@ -491,30 +544,63 @@ function animation_player._createParticleSystem(track)
             texture = love.graphics.newImage(track.particleTexture)
         end
     end
-    -- Fallback: create a small white image for colored particles
+    -- Fallback: a small OPAQUE white dot that colorOverLife tints. (A bare
+    -- newImageData is transparent black, which renders nothing — the source
+    -- of "default-texture particles are invisible".)
     if not texture then
-        texture = love.graphics.newImage(love.image.newImageData(2, 2))
-        -- Default white; the particle color/colorOverLife tints it
+        local dot = love.image.newImageData(2, 2)
+        dot:mapPixel(function() return 1, 1, 1, 1 end)
+        texture = love.graphics.newImage(dot)
     end
 
-    local ps = love.graphics.newParticleSystem(texture, 256)
-    if track.quadWidth and track.quadHeight and track.quadCount then
-        local w = texture:getWidth()
-        local h = texture:getHeight()
+    local ps = love.graphics.newParticleSystem(texture, 512)
+
+    -- Cells / flipbook. New row-major grid fields take precedence; the legacy
+    -- single-row quad* fields are read as a fallback so old data still plays.
+    local cellW = track.cellW or track.quadWidth
+    local cellH = track.cellH or track.quadHeight
+    local cellCount = track.cellCount or track.quadCount
+    if cellW and cellH and cellCount and cellCount > 0 then
+        local w, h = texture:getDimensions()
+        local cols = math.max(1, math.floor(w / cellW))
+        local start = track.cellStart or 0
+        local loops = (track.cellMode == "loop") and math.max(1, track.cellLoops or 1) or 1
         local quads = {}
-        for i = 0, track.quadCount - 1 do
-            table.insert(quads, love.graphics.newQuad(i * track.quadWidth, 0, track.quadWidth, track.quadHeight, w, h))
+        for _ = 1, loops do
+            for i = 0, cellCount - 1 do
+                local idx = start + i
+                local cx = (idx % cols) * cellW
+                local cy = math.floor(idx / cols) * cellH
+                table.insert(quads, love.graphics.newQuad(cx, cy, cellW, cellH, w, h))
+            end
         end
         ps:setQuads(quads)
     end
+
+    if track.direction then ps:setDirection(math.rad(track.direction)) end
     ps:setEmissionRate(track.rate or 10)
-    ps:setParticleLifetime(track.lifetime or 0.5, (track.lifetime or 0.5) * 1.5)
+    local life = track.lifetime or 0.5
+    ps:setParticleLifetime(life, life * (track.lifetimeVariation or 1.5))
     ps:setSpread(math.rad(track.spread or 45))
-    ps:setSpeed(track.velocity or 50, (track.velocity or 50) * 1.5)
-    local g = track.gravity or 0
-    ps:setLinearAcceleration(0, g, 0, g)
+    local speed = track.speed or track.velocity or 50
+    ps:setSpeed(speed, track.speedMax or speed * 1.5)
+
+    -- Forces: the track's own gravity plus the entry's force_field tracks.
+    local linX, linY, radial, tangential, damping = aggregateForces(entry, track)
+    linY = linY + (track.gravity or 0)
+    ps:setLinearAcceleration(linX, linY, linX, linY)
+    if radial ~= 0 then ps:setRadialAcceleration(radial, radial) end
+    if tangential ~= 0 then ps:setTangentialAcceleration(tangential, tangential) end
+    if damping ~= 0 then ps:setLinearDamping(damping, damping) end
+
+    if track.spin then ps:setSpin(math.rad(track.spin), math.rad(track.spin)) end
+    if track.rotation then ps:setRotation(0, math.rad(track.rotation)) end
+
     ps:setColors(unpack(track.colorOverLife or { { 1, 1, 1, 1 }, { 1, 1, 1, 0 } }))
-    ps:setSizes(1, 0.5)
+    local sizeStart = track.sizeStart or 1
+    local sizeEnd = track.sizeEnd ~= nil and track.sizeEnd or 0.5
+    ps:setSizes(sizeStart, sizeEnd)
+    if track.sizeVariation then ps:setSizeVariation(track.sizeVariation) end
     ps:start()
     return ps
 end
@@ -523,7 +609,23 @@ end
 function animation_player.updateParticles(dt)
     for target, list in pairs(instances) do
         for _, inst in ipairs(list) do
-            for _, ps in pairs(inst.particleSystems or {}) do
+            local entry = inst.entry
+            for ti, ps in pairs(inst.particleSystems or {}) do
+                -- Gate emission to the track's [t0, t0+duration] window so
+                -- particles only spawn while the track is active. Existing
+                -- particles keep living/fading after the window (rate 0);
+                -- before t0 nothing spawns. Rate must be set BEFORE update()
+                -- because emission happens during update.
+                local track = entry and entry.tracks and entry.tracks[ti]
+                if track then
+                    local t0 = (track.t0 or 0) / 1000
+                    local tEnd = t0 + (track.duration or 0) / 1000
+                    if inst.elapsed >= t0 and inst.elapsed < tEnd then
+                        ps:setEmissionRate(track.rate or 10)
+                    else
+                        ps:setEmissionRate(0)
+                    end
+                end
                 ps:update(dt)
             end
         end
@@ -533,10 +635,14 @@ end
 -- Draw particles for a target at the given screen position.
 -- If mask is "target", the particles are clipped to the battler's sprite
 -- using stencil testing against its alpha channel.
-function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn)
+-- `layerFilter` (optional): "back" or "front" draws only that layer, so the
+-- caller can render back-layer particles before the sprite and front-layer
+-- ones after. nil draws all.
+function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn, layerFilter)
     local systems = animation_player.getParticleSystems(target)
     if not systems then return end
     for _, sys in ipairs(systems) do
+        if not (layerFilter and (sys.layer or "front") ~= layerFilter) then
         local ps = sys.ps
         local blendMode = sys.blendMode
         local px = drawX + (sys.x or 0)
@@ -560,6 +666,7 @@ function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn)
             love.graphics.draw(ps, px, py)
         end
         love.graphics.setBlendMode("alpha")
+        end
     end
 end
 

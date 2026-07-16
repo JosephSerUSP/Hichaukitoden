@@ -85,8 +85,12 @@
                 // String-keyed collections (skills/passives/states/elements/roles/animations)
                 if (!dbPayload[activeDbTab]) dbPayload[activeDbTab] = {};
                 items = Object.keys(dbPayload[activeDbTab])
-                    .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
+                    .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }));
+                // Animations keep insertion order (new entries append to the
+                // bottom); the engine keys by id so JSON order is cosmetic.
+                if (activeDbTab !== 'animations') {
+                    items.sort((a, b) => a.name.localeCompare(b.name));
+                }
             }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
@@ -116,12 +120,29 @@
             });
 
             // Toggle change max visibility (system doesn't need expandable count)
-            const changeMaxBtn = document.querySelector('.db-items-column button');
+            const changeMaxBtn = document.getElementById('db-change-max-btn');
             if (activeDbTab === 'system' || activeDbTab === 'terms') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
             }
+            // Animations get a dedicated append button; Change Maximum stays as
+            // a fallback but the "＋ New Animation" flow is the intended path.
+            const newAnimBtn = document.getElementById('db-new-anim-btn');
+            if (newAnimBtn) newAnimBtn.style.display = activeDbTab === 'animations' ? 'block' : 'none';
+        }
+
+        // Append a fresh assignable animation with a unique placeholder id and
+        // select it. The id is renamed in the editor's header field.
+        function createNewAnimation() {
+            const coll = dbPayload.animations = dbPayload.animations || {};
+            let counter = 1;
+            let id = 'newAnimation' + counter;
+            while (coll[id]) { counter++; id = 'newAnimation' + counter; }
+            coll[id] = { id: id, class: 'assignable', duration: 1000, tracks: [] };
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
         }
 
         // --- CHANGE MAXIMUM LOGIC ---

@@ -149,16 +149,34 @@ local function runPreviewAnim(animId, animJson, spritePath)
         local animation_player = require("presentation.animation_player")
         animation_player.load(loader.animations)
 
-        -- Load dummy battler sprite
+        -- Load dummy battler sprite. Parse [k=v] tokens (fps/speed) the same
+        -- way presentation/small_battlers does, then strip them to get the
+        -- real file path — so animated sheets preview animated.
+        local spriteOverrides = {}
+        local cleanPath = (spritePath or ""):gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
+            spriteOverrides[k] = tonumber(v) or v
+            return ""
+        end)
+        cleanPath = cleanPath:gsub("^%s*(.-)%s*$", "%1")
+
         local texture
-        if spritePath and spritePath ~= "" then
-            if love.filesystem.getInfo(spritePath) then
-                texture = love.graphics.newImage(spritePath)
-            end
+        if cleanPath ~= "" and love.filesystem.getInfo(cleanPath) then
+            texture = love.graphics.newImage(cleanPath)
         end
         if not texture then
             texture = love.graphics.newImage("assets/smallBattlers/pixie.png") -- fallback
         end
+        texture:setFilter("nearest", "nearest")
+
+        -- Frame slicing: square cells laid out in a row (matches the
+        -- small_battlers convention). Idle animation advances by the sheet's
+        -- fps (or speed*4, default 4) and loops across the preview.
+        local texW, texH = texture:getDimensions()
+        local cellH = texH
+        local cellW = math.min(texW, cellH)
+        local numFrames = math.max(1, math.floor(texW / cellW))
+        local spriteRate = spriteOverrides.fps or (spriteOverrides.speed and 4 * spriteOverrides.speed) or 4
+        local spriteQuad = love.graphics.newQuad(0, 0, cellW, cellH, texW, texH)
 
         local dummyTarget = { name = "dummy" }
 
@@ -173,12 +191,31 @@ local function runPreviewAnim(animId, animJson, spritePath)
         local ui = require("presentation.ui")
         ui.init()
 
+        -- Gradient-map shader: remap sprite luminance to a low→high color
+        -- ramp, mixed with the original by `intensity`. Alpha is preserved so
+        -- transparent sprite pixels stay transparent.
+        local gradientShader = love.graphics.newShader([[
+            extern vec3 lowColor;
+            extern vec3 highColor;
+            extern number intensity;
+            vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
+                vec4 px = Texel(tex, tc);
+                number lum = dot(px.rgb, vec3(0.299, 0.587, 0.114));
+                vec3 mapped = mix(lowColor, highColor, lum);
+                vec3 outc = mix(px.rgb, mapped, intensity);
+                return vec4(outc, px.a) * color;
+            }
+        ]])
+
         animation_player.reset()
         animation_player.play(animId, dummyTarget)
 
         while elapsed <= duration do
             love.graphics.setCanvas({ previewCanvas, stencil = true })
-            love.graphics.clear(0, 0, 0, 0) -- transparent background for animation frames
+            -- Opaque black, not transparent: additive blend tracks contribute
+            -- no alpha, so on a transparent canvas blend-heavy animations
+            -- (damage flash, death) would encode as fully invisible pixels.
+            love.graphics.clear(0, 0, 0, 1)
             love.graphics.setColor(1, 1, 1, 1)
 
             -- Query active transform, tint, blend and shake
@@ -187,28 +224,52 @@ local function runPreviewAnim(animId, animJson, spritePath)
             local blendMode = animation_player.getBlendMode(dummyTarget) or "alpha"
             local shakeX = animation_player.getShakeOffset(dummyTarget)
 
-            -- Center dummy sprite in a 240x240 canvas (anchor bottom-center)
-            local sprW = texture:getWidth()
-            local sprH = texture:getHeight()
+            -- Center dummy sprite in a 240x240 canvas (anchor bottom-center).
+            -- Pick the current animation frame from the sheet.
+            local frame = math.floor(elapsed * spriteRate) % numFrames
+            spriteQuad:setViewport(frame * cellW, 0, cellW, cellH)
             local drawX = 120 + tf.offsetX + shakeX
             local drawY = 160 + tf.offsetY -- draw baseline at Y=160
 
+            -- Sprite drawing function for stencil test
+            local function drawSprite()
+                love.graphics.draw(texture, spriteQuad, drawX, drawY, 0, tf.scaleX, tf.scaleY, cellW / 2, cellH)
+            end
+
+            -- Back-layer particles render behind the sprite.
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "back")
+
+            -- Sprite, optionally through the gradient-map shader.
+            local gm = animation_player.getGradientMap(dummyTarget)
             love.graphics.setBlendMode(blendMode)
             if tint then
                 love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
             else
                 love.graphics.setColor(1, 1, 1, 1)
             end
-
-            -- Sprite drawing function for stencil test
-            local function drawSprite()
-                love.graphics.draw(texture, drawX, drawY, 0, tf.scaleX, tf.scaleY, sprW / 2, sprH)
+            if gm then
+                gradientShader:send("lowColor", { gm.low[1], gm.low[2], gm.low[3] })
+                gradientShader:send("highColor", { gm.high[1], gm.high[2], gm.high[3] })
+                gradientShader:send("intensity", gm.intensity)
+                love.graphics.setShader(gradientShader)
+                drawSprite()
+                love.graphics.setShader()
+            else
+                drawSprite()
             end
-            drawSprite()
 
-            -- Draw particles
+            -- Front-layer particles render on top of the sprite.
             love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite)
+            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "front")
+
+            -- Full-screen flash overlay, above everything.
+            local flash = animation_player.getScreenFlash(dummyTarget)
+            if flash then
+                love.graphics.setBlendMode("alpha")
+                love.graphics.setColor(flash.color[1], flash.color[2], flash.color[3], flash.alpha)
+                love.graphics.rectangle("fill", 0, 0, 240, 240)
+            end
 
             -- Reset graphics state
             love.graphics.setBlendMode("alpha")
