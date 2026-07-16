@@ -782,6 +782,7 @@ local function buildScriptApi(ctx)
             if m then
                 local view = formulaEngine.battlerView(m, session) or {}
                 view.index = i
+                view.actorData = m.actorData or {}
                 return view
             end
             return nil
@@ -790,6 +791,7 @@ local function buildScriptApi(ctx)
         for idx, m in ipairs(src) do
             local view = formulaEngine.battlerView(m, session) or {}
             view.index = idx
+            view.actorData = m.actorData or {}
             table.insert(out, view)
         end
         return out

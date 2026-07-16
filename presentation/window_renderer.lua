@@ -1107,8 +1107,10 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             win.cursor = win._resolvedCursor
         end
         -- If the window def has its own cursor formula (e.g. party grid with
-        -- cursor hidden as 0), use it.
-        if winDef.cursor ~= nil and win.listId == nil then
+        -- cursor hidden as 0), use it as fallback when the content block
+        -- doesn't specify one. PartyGrid windows that define cursor at the
+        -- def level but have a listId in content need this fallback path.
+        if winDef.cursor ~= nil and win.cursorFormula == nil then
             win.cursorFormula = tostring(winDef.cursor)
         end
 

@@ -1373,6 +1373,17 @@
               "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
         }
       ],
       "on_down": [
@@ -1403,7 +1414,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 2 and v.popupIdx < 3",
+          "condition": "v.mode == 2 and v.popupIdx < 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1420,6 +1431,17 @@
         {
           "cmd": "IF",
           "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1476,6 +1498,17 @@
               "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
         }
       ],
       "on_right": [
@@ -1518,6 +1551,17 @@
         {
           "cmd": "IF",
           "condition": "v.mode == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.mode == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1745,6 +1789,46 @@
         },
         {
           "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "setupSacrifice"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "reserve"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
           "condition": "v._guard == 0 and v.mode == 3 and v.confirmIdx == 1",
           "then": [
             {
@@ -1776,9 +1860,64 @@
               "windowId": "map_confirm"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 5 and v.confirmIdx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "executeSacrificeConfirm"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 5 and v.confirmIdx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_confirm"
+            }
+          ]
         }
       ],
       "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_confirm"
+            }
+          ]
+        },
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.mode == 3",
@@ -1951,11 +2090,21 @@
         {
           "name": "ITEM CREATION",
           "help": "Have this creature attempt to create an item."
+        },
+        {
+          "name": "SACRIFICE",
+          "help": "Sacrifice this creature to recover MP and gain materials."
+        },
+        {
+          "name": "SWAP",
+          "help": "Swap this creature with one from the reserve roster."
         }
       ]
     },
     "scripts": {
-      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n"
+      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n",
+      "setupSacrifice": "\nlocal v = ctx.v\nlocal member = api.party(v.memberIdx)\nif member and not member.empty then\n    v.mode = 5\n    v.confirmIdx = 1\n    local config = api.systemConfig\n    local refundRate = config.summoner.sacrificeMpRefundRate or 0.5\n    local baseCost = config.summoner.summonCostBase or 10\n    local costPerLvl = config.summoner.summonCostPerLevel or 5\n    local costPerTier = config.summoner.summonCostPerTier or 15\n    local cost = baseCost + (member.actorData.tier or 1) * costPerTier + (member.level or 1) * costPerLvl\n    local refund = math.floor(cost * refundRate)\n    v.sacrificeRefund = refund\n    api.emit({ type = \"close_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"map_confirm\" })\n    api.emit({ type = \"set_text\", windowId = \"map_confirm\", text = \"Sacrifice \" .. tostring(member.name) .. \" for \" .. tostring(refund) .. \" MP?\" })\n    api.emit({ type = \"set_list\", windowId = \"map_confirm\", listId = \"static:Yes,No\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_confirm\", index = v.confirmIdx })\nend\n",
+      "executeSacrificeConfirm": "\nlocal v = ctx.v\nlocal member = api.party(v.memberIdx)\nif not v.popupTargetIsReserve and api.partyCount() <= 1 then\n    api.emit({ type = \"set_text\", windowId = \"help\", text = \"Cannot sacrifice your last creature!\" })\n    v.mode = 4\n    api.emit({ type = \"close_window\", windowId = \"map_confirm\" })\n    return\nend\napi.sacrifice(false, v.memberIdx)\napi.changeMp(v.sacrificeRefund)\napi.emit({ type = \"set_text\", windowId = \"help\", text = \"Sacrificed \" .. tostring(member and member.name or \"?\") .. \"! Refunded \" .. tostring(v.sacrificeRefund) .. \" MP.\" })\nv.mode = 4\napi.emit({ type = \"close_window\", windowId = \"map_confirm\" })\n"
     },
     "goldenScript": [
       {
@@ -3355,7 +3504,18 @@
       "on_left": [
         {
           "cmd": "IF",
-          "condition": "v.mode == 1 or v.mode == 4",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'party'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "cursorIdx",
+              "value": "v.cursorIdx > 1 and v.cursorIdx - 1 or v.cursorIdx"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'reserve'",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -3849,12 +4009,12 @@
         },
         "style": "partyGrid",
         "gridColumns": 2,
-        "cursor": "v.focusArea == 'party' and v.cursorIdx or 0",
         "content": [
           {
             "type": "list",
             "listId": "party",
-            "format": "{name}"
+            "format": "{name}",
+            "cursor": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'party' and v.cursorIdx or 0"
           }
         ]
       },
@@ -3869,12 +4029,12 @@
         "style": "partyGrid",
         "gridColumns": 4,
         "hideMp": true,
-        "cursor": "v.focusArea == 'reserve' and v.cursorIdx or 0",
         "content": [
           {
             "type": "list",
             "listId": "reserve",
-            "format": "{name}"
+            "format": "{name}",
+            "cursor": "(v.mode == 1 or v.mode == 4) and v.focusArea == 'reserve' and v.cursorIdx or 0"
           }
         ]
       },
