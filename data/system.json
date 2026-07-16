@@ -193,7 +193,6 @@
     "summonCostBase": 10,
     "summonCostPerLevel": 5,
     "summonCostPerTier": 15,
-    "sacrificeMpRefundRate": 0.5,
     "spells": [
       "soothingMote",
       "divineFavor",

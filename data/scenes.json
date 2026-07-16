@@ -2018,7 +2018,7 @@
         },
         {
           "name": "SACRIFICE",
-          "help": "Sacrifice this creature to recover MP and gain materials."
+          "help": "Sacrifice this creature to bank its EXP and gain materials."
         },
         {
           "name": "SWAP",
