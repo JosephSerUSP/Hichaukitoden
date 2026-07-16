@@ -1,0 +1,4 @@
+UI GOLDEN BEGIN
+scene|dialogue|name|Dialogue
+scene|dialogue|hook|on_enter:absent
+UI GOLDEN END

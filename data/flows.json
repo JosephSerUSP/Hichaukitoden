@@ -28,8 +28,8 @@
             "as": "ally",
             "do": [
               {
-                "cmd": "DRAIN_MP",
-                "amount": "ally.mpd",
+                "cmd": "CHANGE_MP",
+                "amount": "-(ally.mpd)",
                 "actor": "ally"
               }
             ]
@@ -241,22 +241,22 @@
         "state": "regen"
       },
       {
-        "cmd": "DRAIN_MP",
+        "cmd": "CHANGE_MP",
+        "amount": "-1"
+      },
+      {
+        "cmd": "CHANGE_MP",
         "amount": "1"
       },
       {
-        "cmd": "RESTORE_MP",
-        "amount": "1"
-      },
-      {
-        "cmd": "GIVE_ITEM_ID",
+        "cmd": "CHANGE_ITEM",
         "item": 1,
         "count": 1
       },
       {
-        "cmd": "TAKE_ITEM",
+        "cmd": "CHANGE_ITEM",
         "item": 1,
-        "count": 1
+        "count": -1
       },
       {
         "cmd": "EMIT_TEXT",

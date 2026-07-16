@@ -1,0 +1,4 @@
+UI GOLDEN BEGIN
+scene|town|name|Town
+scene|town|hook|on_enter:absent
+UI GOLDEN END
