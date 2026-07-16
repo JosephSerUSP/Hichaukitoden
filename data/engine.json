@@ -1830,22 +1830,6 @@
       "title": "Crafting Success!",
       "contentY": 5
     },
-    "shop_party": {
-      "x": 0,
-      "y": 18,
-      "width": 32,
-      "height": 12,
-      "style": "partyGrid",
-      "title": null
-    },
-    "status_party": {
-      "x": 0,
-      "y": 18,
-      "width": 32,
-      "height": 12,
-      "style": "partyGrid",
-      "title": null
-    },
     "items_target": {
       "x": 6,
       "y": 8,
