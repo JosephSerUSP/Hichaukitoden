@@ -193,12 +193,22 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
 
     local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
     local drawScale = size / ss.cellW
+
+    local function drawSprite()
+        love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+    end
+
+    if not dead and battlerRef then
+        love.graphics.setColor(1, 1, 1, 1)
+        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "back")
+    end
+
     if dead then
         love.graphics.setColor(DEAD_TINT[1], DEAD_TINT[2], DEAD_TINT[3], DEAD_TINT[4] or 1)
     else
         love.graphics.setColor(1, 1, 1, 1)
     end
-    love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+    drawSprite()
 
     -- Damage-feedback flash overlay from animation player
     if not dead and battlerRef then
@@ -207,10 +217,16 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
         if tint and blend then
             love.graphics.setBlendMode(blend)
             love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
-            love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+            drawSprite()
             love.graphics.setBlendMode("alpha")
         end
     end
+
+    if not dead and battlerRef then
+        love.graphics.setColor(1, 1, 1, 1)
+        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "front")
+    end
+
     love.graphics.setColor(1, 1, 1, 1)
     return true
 end

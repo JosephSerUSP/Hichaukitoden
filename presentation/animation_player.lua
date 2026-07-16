@@ -585,6 +585,37 @@ function animation_player._createParticleSystem(track, entry)
     local speed = track.speed or track.velocity or 50
     ps:setSpeed(speed, track.speedMax or speed * 1.5)
 
+    -- Emission Area / Spawn shape
+    if track.spawnShape and track.spawnShape ~= "point" then
+        local dist = "none"
+        if track.spawnShape == "line" then
+            dist = "uniform"
+        elseif track.spawnShape == "rectangle" then
+            dist = "uniform"
+        elseif track.spawnShape == "circle" then
+            dist = "ellipse"
+        elseif track.spawnShape == "ring" then
+            dist = "borderellipse"
+        elseif track.spawnShape == "borderrectangle" then
+            dist = "borderrectangle"
+        elseif track.spawnShape == "normal" then
+            dist = "normal"
+        end
+
+        if dist ~= "none" then
+            local rx = track.spawnRadiusX or 0
+            local ry = track.spawnRadiusY or 0
+            if track.spawnShape == "line" then
+                ry = 0
+            end
+            local angle = math.rad(track.spawnAngle or 0)
+            local outward = (track.spawnDirectionOutward == true)
+            pcall(function()
+                ps:setEmissionArea(dist, rx, ry, angle, outward)
+            end)
+        end
+    end
+
     -- Forces: the track's own gravity plus the entry's force_field tracks.
     local linX, linY, radial, tangential, damping = aggregateForces(entry, track)
     linY = linY + (track.gravity or 0)

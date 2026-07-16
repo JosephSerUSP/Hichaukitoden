@@ -26,6 +26,7 @@ local renderer = require("presentation.renderer")
 local session = require("engine.session")
 local config = require("engine.config")
 local loader = require("data.loader")
+local animation_player = require("presentation.animation_player")
 
 local battle = {}
 
@@ -227,8 +228,14 @@ function battle.advanceLog()
 
         if ev.type == "text" then
             desc = ev.text
+            if ev.animation then
+                animation_player.play(ev.animation, ev.itemTarget or ev.target)
+            end
         elseif ev.type == "action" then
             desc = ldr().formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
+            if ev.animation then
+                animation_player.play(ev.animation, ev.target)
+            end
             if v.battle then
                 for idx, enemy in ipairs(v.battle.enemies) do
                     if enemy == ev.actor then

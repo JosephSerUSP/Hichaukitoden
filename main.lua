@@ -968,6 +968,18 @@ runValidation = function()
         check(escErr ~= nil, "formula sandbox allowed access to os.*")
     end
 
+    -- Validate skill and item animations (Task A2)
+    for id, skill in pairs(loader.skills or {}) do
+        if skill.animation then
+            check(loader.animations and loader.animations[skill.animation] ~= nil, "skill '" .. tostring(id) .. "' references missing animation '" .. tostring(skill.animation) .. "'")
+        end
+    end
+    for _, item in ipairs(loader.items or {}) do
+        if item.animation then
+            check(loader.animations and loader.animations[item.animation] ~= nil, "item '" .. tostring(item.id) .. "' references missing animation '" .. tostring(item.animation) .. "'")
+        end
+    end
+
     -- Unified Event Engine Validator (SPEC A7)
     local scriptUsageCount = 0
     local deprecatedUsageCount = 0
@@ -1554,6 +1566,7 @@ elseif paramDef.type == "script" then
     local VALID_TRACK_TYPES = {
         tint = true, blend = true, transform = true,
         shake = true, particles = true, text_flow = true,
+        gradient_map = true, screen_flash = true,
     }
     for id, entry in pairs(loader.animations or {}) do
         if entry.class == "system" then
@@ -2067,6 +2080,7 @@ end
 -- Action handling for key presses
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
+    if not activeSession then return end
 
     local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then

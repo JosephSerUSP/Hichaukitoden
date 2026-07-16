@@ -4,6 +4,7 @@
     "name": "Wind Blade",
     "target": "enemy-any",
     "element": "Green",
+    "animation": "skill.wind_blade",
     "description": "[Enemy] Strikes a foe with a blade of wind.",
     "effects": [
       {
@@ -44,6 +45,7 @@
     "name": "Holy Smite",
     "target": "enemy-any",
     "element": "White",
+    "animation": "skill.holy_smite",
     "description": "[Enemy] Smite evil with holy light.",
     "mpCost": 15,
     "effects": [
@@ -110,6 +112,7 @@
     "name": "Flame Rebirth",
     "target": "self",
     "element": "Red",
+    "animation": "skill.flame_rebirth",
     "description": "[Self] Rise from the ashes.",
     "effects": []
   },
@@ -150,6 +153,7 @@
     "name": "Drain Kiss",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.drain_kiss",
     "description": "[Enemy] Steals vitality and puts the target to sleep.",
     "effects": [
       {

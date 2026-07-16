@@ -239,7 +239,8 @@ function Battle:resolveRound(collectedActions)
                     type = "action",
                     actor = turn.actor,
                     skill = turn.skill,
-                    target = turn.target
+                    target = turn.target,
+                    animation = turn.skill and turn.skill.animation or nil,
                 })
                 
                 for _, eff in ipairs(turn.skill.effects or {}) do
@@ -390,6 +391,8 @@ function Battle:applyItem(action, actor, target)
     table.insert(events, {
         type = "text",
         text = loader.formatTerm("battle.uses_item", "{0} uses {1}!", actor.name, item.name or "?"),
+        animation = item.animation,
+        itemTarget = target,
     })
 
     if item.targetScope == "party" then

@@ -4,8 +4,27 @@
     "class": "system",
     "duration": 350,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 350, "color": [1.0, 0.2, 0.2], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 350,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 350,
+        "color": [
+          1,
+          0.2,
+          0.2
+        ],
+        "fromAlpha": 1,
+        "toAlpha": 0,
+        "easing": "linear",
+        "id": "trk_k8z76o"
+      }
     ]
   },
   "system.action_flash": {
@@ -13,8 +32,26 @@
     "class": "system",
     "duration": 350,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 350, "color": [0.8, 1.0, 1.0], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 350,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 350,
+        "color": [
+          0.8,
+          1,
+          1
+        ],
+        "fromAlpha": 1,
+        "toAlpha": 0,
+        "easing": "linear"
+      }
     ]
   },
   "system.damage_shake": {
@@ -22,7 +59,14 @@
     "class": "system",
     "duration": 300,
     "tracks": [
-      { "type": "shake", "t0": 0, "duration": 300, "amplitude": 2, "frequency": 30, "easing": "ease_out" }
+      {
+        "type": "shake",
+        "t0": 0,
+        "duration": 300,
+        "amplitude": 2,
+        "frequency": 30,
+        "easing": "ease_out"
+      }
     ]
   },
   "system.death": {
@@ -30,9 +74,34 @@
     "class": "system",
     "duration": 900,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 900, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 900, "color": [0.6, 0.0, 0.9], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" },
-      { "type": "transform", "t0": 0, "duration": 900, "fromY": 0, "toY": 20, "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 900,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 900,
+        "color": [
+          0.6,
+          0,
+          0.9
+        ],
+        "fromAlpha": 1,
+        "toAlpha": 0,
+        "easing": "linear"
+      },
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 900,
+        "fromY": 0,
+        "toY": 20,
+        "easing": "linear"
+      }
     ]
   },
   "system.small_damage": {
@@ -40,9 +109,34 @@
     "class": "system",
     "duration": 350,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 350, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 350, "color": [1.0, 0.2, 0.2], "fromAlpha": 1.0, "toAlpha": 0.0, "easing": "linear" },
-      { "type": "shake", "t0": 0, "duration": 300, "amplitude": 2, "frequency": 30, "easing": "ease_out" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 350,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 350,
+        "color": [
+          1,
+          0.2,
+          0.2
+        ],
+        "fromAlpha": 1,
+        "toAlpha": 0,
+        "easing": "linear"
+      },
+      {
+        "type": "shake",
+        "t0": 0,
+        "duration": 300,
+        "amplitude": 2,
+        "frequency": 30,
+        "easing": "ease_out"
+      }
     ]
   },
   "system.enemy_slide_in": {
@@ -50,7 +144,14 @@
     "class": "system",
     "duration": 350,
     "tracks": [
-      { "type": "transform", "t0": 0, "duration": 350, "fromX": 280, "toX": 0, "easing": "ease_out" }
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 350,
+        "fromX": 280,
+        "toX": 0,
+        "easing": "ease_out"
+      }
     ]
   },
   "system.heal": {
@@ -58,7 +159,97 @@
     "class": "system",
     "duration": 1000,
     "tracks": [
-      { "type": "particles", "t0": 0, "duration": 800, "direction": 270, "speed": 40, "spread": 55, "rate": 26, "lifetime": 1.0, "gravity": -30, "sizeStart": 1.0, "sizeEnd": 0.0, "colorOverLife": [[0.667, 1.0, 0.667, 1], [0.4, 0.9, 0.5, 0]], "blendMode": "add", "easing": "linear" }
+      {
+        "type": "particles",
+        "t0": 100,
+        "duration": 100,
+        "direction": 270,
+        "speed": 94,
+        "spread": 306,
+        "rate": 557,
+        "lifetime": 0.3,
+        "gravity": 9,
+        "sizeStart": 1,
+        "sizeEnd": 0,
+        "colorOverLife": [
+          [
+            0.667,
+            1,
+            0.667,
+            1
+          ],
+          [
+            0.4,
+            0.9,
+            0.5,
+            1
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "ease_out",
+        "id": "trk_njui0s",
+        "layer": "front",
+        "speedMax": 6,
+        "x": 0,
+        "y": -12
+      },
+      {
+        "type": "gradient_map",
+        "t0": 0,
+        "duration": 100,
+        "easing": "ease_out",
+        "lowColor": [
+          0.35,
+          1,
+          0
+        ],
+        "highColor": [
+          0,
+          0.46,
+          0.22
+        ],
+        "fromIntensity": 1,
+        "toIntensity": 0,
+        "id": "trk_ft6fr1"
+      },
+      {
+        "type": "gradient_map",
+        "t0": 100,
+        "duration": 100,
+        "easing": "ease_out",
+        "lowColor": [
+          0.35,
+          1,
+          0
+        ],
+        "highColor": [
+          0,
+          0.46,
+          0.22
+        ],
+        "fromIntensity": 1,
+        "toIntensity": 0,
+        "id": "trk_a950x7"
+      },
+      {
+        "type": "gradient_map",
+        "t0": 200,
+        "duration": 550,
+        "easing": "ease_out",
+        "lowColor": [
+          0.35,
+          1,
+          0
+        ],
+        "highColor": [
+          0,
+          0.46,
+          0.22
+        ],
+        "fromIntensity": 1,
+        "toIntensity": 0,
+        "id": "trk_gibwoz"
+      }
     ]
   },
   "demo.particles_mask": {
@@ -66,7 +257,39 @@
     "class": "assignable",
     "duration": 1500,
     "tracks": [
-      { "type": "particles", "t0": 0, "duration": 1500, "rate": 20, "lifetime": 0.8, "spread": 80, "velocity": 60, "gravity": 40, "colorOverLife": [[1, 0.2, 0.2, 1], [1, 0.8, 0.2, 0.6], [1, 1, 1, 0]], "blendMode": "add", "mask": "target", "easing": "linear" }
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 1500,
+        "rate": 20,
+        "lifetime": 0.8,
+        "spread": 80,
+        "velocity": 60,
+        "gravity": 40,
+        "colorOverLife": [
+          [
+            1,
+            0.2,
+            0.2,
+            1
+          ],
+          [
+            1,
+            0.8,
+            0.2,
+            0.6
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "mask": "target",
+        "easing": "linear"
+      }
     ]
   },
   "skill.wind_blade": {
@@ -74,9 +297,62 @@
     "class": "assignable",
     "duration": 400,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 400, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 300, "color": [0.6, 1.0, 0.7], "fromAlpha": 0.7, "toAlpha": 0.0, "easing": "ease_out" },
-      { "type": "particles", "t0": 0, "duration": 250, "direction": 0, "speed": 220, "spread": 25, "rate": 40, "lifetime": 0.25, "sizeStart": 1.5, "sizeEnd": 0.4, "particleTexture": "assets/animation/WindSlash[32x32][5f].png", "cellW": 32, "cellH": 32, "cellStart": 0, "cellCount": 5, "cellMode": "once", "colorOverLife": [[0.7, 1.0, 0.7, 1], [0.4, 0.9, 0.5, 0]], "blendMode": "add", "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 400,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 300,
+        "color": [
+          0.6,
+          1,
+          0.7
+        ],
+        "fromAlpha": 0.7,
+        "toAlpha": 0,
+        "easing": "ease_out",
+        "id": "trk_luv041"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 250,
+        "direction": 0,
+        "speed": 220,
+        "spread": 25,
+        "rate": 40,
+        "lifetime": 0.25,
+        "sizeStart": 1.5,
+        "sizeEnd": 0.4,
+        "particleTexture": "assets/animation/WindSlash[32x32][5f].png",
+        "cellW": 32,
+        "cellH": 32,
+        "cellStart": 0,
+        "cellCount": 5,
+        "cellMode": "once",
+        "colorOverLife": [
+          [
+            0.7,
+            1,
+            0.7,
+            1
+          ],
+          [
+            0.4,
+            0.9,
+            0.5,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear",
+        "id": "trk_mjinhv"
+      }
     ]
   },
   "skill.holy_smite": {
@@ -84,10 +360,99 @@
     "class": "assignable",
     "duration": 700,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 700, "mode": "add", "easing": "linear" },
-      { "type": "tint", "t0": 0, "duration": 500, "color": [1.0, 1.0, 0.85], "fromAlpha": 0.9, "toAlpha": 0.0, "easing": "ease_out" },
-      { "type": "particles", "t0": 0, "duration": 400, "x": 0, "y": -50, "direction": 90, "speed": 140, "spread": 18, "rate": 30, "lifetime": 0.4, "sizeStart": 1.5, "sizeEnd": 0.5, "particleTexture": "assets/animation/HolyBurst[32x32][8f].png", "cellW": 32, "cellH": 32, "cellStart": 0, "cellCount": 8, "cellMode": "once", "colorOverLife": [[1, 1, 0.8, 1], [1, 0.9, 0.5, 0]], "blendMode": "add", "easing": "linear" },
-      { "type": "particles", "t0": 300, "duration": 300, "direction": 0, "speed": 120, "spread": 360, "rate": 60, "lifetime": 0.3, "sizeStart": 1.2, "sizeEnd": 0, "particleTexture": "assets/animation/HolyBurst[32x32][8f].png", "cellW": 32, "cellH": 32, "cellStart": 0, "cellCount": 8, "cellMode": "once", "colorOverLife": [[1, 1, 0.9, 1], [1, 0.8, 0.3, 0]], "blendMode": "add", "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 700,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 500,
+        "color": [
+          1,
+          1,
+          0.85
+        ],
+        "fromAlpha": 0.9,
+        "toAlpha": 0,
+        "easing": "ease_out",
+        "id": "trk_luq5cx"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 400,
+        "x": 0,
+        "y": -50,
+        "direction": 90,
+        "speed": 140,
+        "spread": 18,
+        "rate": 30,
+        "lifetime": 0.4,
+        "sizeStart": 1.5,
+        "sizeEnd": 0.5,
+        "particleTexture": "assets/animation/HolyBurst[32x32][8f].png",
+        "cellW": 32,
+        "cellH": 32,
+        "cellStart": 0,
+        "cellCount": 8,
+        "cellMode": "once",
+        "colorOverLife": [
+          [
+            1,
+            1,
+            0.8,
+            1
+          ],
+          [
+            1,
+            0.9,
+            0.5,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear",
+        "id": "trk_z7tmtn"
+      },
+      {
+        "type": "particles",
+        "t0": 300,
+        "duration": 300,
+        "direction": 0,
+        "speed": 120,
+        "spread": 360,
+        "rate": 60,
+        "lifetime": 0.3,
+        "sizeStart": 1.2,
+        "sizeEnd": 0,
+        "particleTexture": "assets/animation/HolyBurst[32x32][8f].png",
+        "cellW": 32,
+        "cellH": 32,
+        "cellStart": 0,
+        "cellCount": 8,
+        "cellMode": "once",
+        "colorOverLife": [
+          [
+            1,
+            1,
+            0.9,
+            1
+          ],
+          [
+            1,
+            0.8,
+            0.3,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear",
+        "id": "trk_gk3tmi"
+      }
     ]
   },
   "skill.flame_rebirth": {
@@ -95,9 +460,63 @@
     "class": "assignable",
     "duration": 900,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 900, "mode": "add", "easing": "linear" },
-      { "type": "particles", "t0": 0, "duration": 800, "direction": 270, "speed": 60, "spread": 40, "rate": 50, "lifetime": 0.8, "gravity": -40, "sizeStart": 2.0, "sizeEnd": 0.5, "particleTexture": "assets/animation/FlameLoop[16x16][8f].png", "cellW": 16, "cellH": 16, "cellStart": 0, "cellCount": 8, "cellMode": "loop", "cellLoops": 2, "colorOverLife": [[1, 0.9, 0.3, 1], [1, 0.4, 0.1, 0.7], [0.5, 0.1, 0.1, 0]], "blendMode": "add", "easing": "linear" },
-      { "type": "force_field", "t0": 0, "duration": 900, "field": "vortex", "strength": 90, "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 900,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 800,
+        "direction": 270,
+        "speed": 60,
+        "spread": 40,
+        "rate": 50,
+        "lifetime": 0.8,
+        "gravity": -40,
+        "sizeStart": 2,
+        "sizeEnd": 0.5,
+        "particleTexture": "assets/animation/FlameLoop[16x16][8f].png",
+        "cellW": 16,
+        "cellH": 16,
+        "cellStart": 0,
+        "cellCount": 8,
+        "cellMode": "loop",
+        "cellLoops": 2,
+        "colorOverLife": [
+          [
+            1,
+            0.9,
+            0.3,
+            1
+          ],
+          [
+            1,
+            0.4,
+            0.1,
+            0.7
+          ],
+          [
+            0.5,
+            0.1,
+            0.1,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "force_field",
+        "t0": 0,
+        "duration": 900,
+        "field": "vortex",
+        "strength": 90,
+        "easing": "linear"
+      }
     ]
   },
   "skill.drain_kiss": {
@@ -105,9 +524,56 @@
     "class": "assignable",
     "duration": 800,
     "tracks": [
-      { "type": "blend", "t0": 0, "duration": 800, "mode": "add", "easing": "linear" },
-      { "type": "particles", "t0": 0, "duration": 600, "direction": 0, "speed": 50, "spread": 360, "rate": 40, "lifetime": 0.7, "sizeStart": 1.0, "sizeEnd": 0.4, "particleTexture": "assets/animation/DrainMote[16x16][6f].png", "cellW": 16, "cellH": 16, "cellStart": 0, "cellCount": 6, "cellMode": "loop", "cellLoops": 2, "colorOverLife": [[1, 0.3, 0.8, 1], [0.6, 0.1, 0.5, 0]], "blendMode": "add", "easing": "linear" },
-      { "type": "force_field", "t0": 0, "duration": 800, "field": "attract", "strength": 120, "easing": "linear" }
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 800,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 600,
+        "direction": 0,
+        "speed": 50,
+        "spread": 360,
+        "rate": 40,
+        "lifetime": 0.7,
+        "sizeStart": 1,
+        "sizeEnd": 0.4,
+        "particleTexture": "assets/animation/DrainMote[16x16][6f].png",
+        "cellW": 16,
+        "cellH": 16,
+        "cellStart": 0,
+        "cellCount": 6,
+        "cellMode": "loop",
+        "cellLoops": 2,
+        "colorOverLife": [
+          [
+            1,
+            0.3,
+            0.8,
+            1
+          ],
+          [
+            0.6,
+            0.1,
+            0.5,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "force_field",
+        "t0": 0,
+        "duration": 800,
+        "field": "attract",
+        "strength": 120,
+        "easing": "linear"
+      }
     ]
   },
   "item.heal_tonic": {
@@ -115,7 +581,41 @@
     "class": "assignable",
     "duration": 1000,
     "tracks": [
-      { "type": "particles", "t0": 0, "duration": 900, "direction": 270, "speed": 40, "spread": 50, "rate": 24, "lifetime": 1.0, "gravity": -30, "sizeStart": 1.0, "sizeEnd": 0.0, "particleTexture": "assets/animation/HealSpark[16x16][8f].png", "cellW": 16, "cellH": 16, "cellStart": 0, "cellCount": 8, "cellMode": "once", "colorOverLife": [[0.7, 1.0, 0.7, 1], [0.4, 0.9, 0.5, 0]], "blendMode": "add", "easing": "linear" }
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 900,
+        "direction": 270,
+        "speed": 40,
+        "spread": 50,
+        "rate": 24,
+        "lifetime": 1,
+        "gravity": -30,
+        "sizeStart": 1,
+        "sizeEnd": 0,
+        "particleTexture": "assets/animation/HealSpark[16x16][8f].png",
+        "cellW": 16,
+        "cellH": 16,
+        "cellStart": 0,
+        "cellCount": 8,
+        "cellMode": "once",
+        "colorOverLife": [
+          [
+            0.7,
+            1,
+            0.7,
+            1
+          ],
+          [
+            0.4,
+            0.9,
+            0.5,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      }
     ]
   }
 }

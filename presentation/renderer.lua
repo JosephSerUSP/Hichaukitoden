@@ -686,6 +686,25 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local drawX = ex + xf.offsetX
         local drawY = ey + xf.offsetY
         
+        local currentY = isDeathPlaying and drawY or ey
+        local spriteW = layoutVal("enemySpriteSize")
+        local spriteH = layoutVal("enemySpriteSize")
+        local partX = drawX + spriteW / 2
+        local partY = currentY + spriteH
+
+        local function drawEnemySprite()
+            if portrait then
+                love.graphics.draw(portrait, drawX, currentY, 0, xf.scaleX * spriteW/portrait:getWidth(), xf.scaleY * spriteH/portrait:getHeight())
+            else
+                love.graphics.rectangle("fill", drawX, currentY, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
+            end
+        end
+
+        if not isDead then
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "back")
+        end
+
         if isDeathPlaying then
             -- Death animation: use tint/blend/transform from animation player
             if blend then love.graphics.setBlendMode(blend) end
@@ -694,36 +713,25 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             else
                 love.graphics.setColor(0.6, 0, 0.9, 1)
             end
-            if portrait then
-                love.graphics.draw(portrait, drawX, drawY, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
-            else
-                love.graphics.setColor(tint and (tint.color[1] * tint.alpha) or 0.6, tint and (tint.color[2] * tint.alpha) or 0, tint and (tint.color[3] * tint.alpha) or 0.9, tint and tint.alpha or 1)
-                love.graphics.rectangle("fill", drawX, drawY, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
-            end
+            drawEnemySprite()
             love.graphics.setBlendMode("alpha")
         elseif not isDead then
             -- Normal (alive) drawing
-            if portrait then
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(portrait, drawX, ey, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
-            else
-                love.graphics.setColor(0.8, 0.1, 0.1, 1)
-                love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
-            end
+            love.graphics.setColor(1, 1, 1, 1)
+            drawEnemySprite()
             
             -- Flash overlay via animation player tint/blend
             if tint and blend then
                 love.graphics.setBlendMode(blend)
                 love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
-                if portrait then
-                    love.graphics.draw(portrait, drawX, ey, 0, xf.scaleX * layoutVal("enemySpriteSize")/portrait:getWidth(), xf.scaleY * layoutVal("enemySpriteSize")/portrait:getHeight())
-                else
-                    love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
-                end
+                drawEnemySprite()
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
             end
             
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "front")
+
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
             local enemyIconW = actor_status.drawElementIcons(traits.getElements(enemy, renderer.session), ex, layoutVal("enemyNameY") - 4, renderer.session)

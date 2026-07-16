@@ -31,7 +31,7 @@
 
         const TYPE_DEFAULTS = {
             transform:    { fromX: 0, toX: 0, fromY: 0, toY: 0 },
-            particles:    { direction: 270, speed: 50, spread: 45, rate: 20, lifetime: 0.6, gravity: 0, x: 0, y: 0, sizeStart: 1, sizeEnd: 0, layer: 'front' },
+            particles:    { direction: 270, speed: 50, spread: 45, rate: 20, lifetime: 0.6, gravity: 0, x: 0, y: 0, sizeStart: 1, sizeEnd: 0, layer: 'front', spawnShape: 'point', spawnRadiusX: 0, spawnRadiusY: 0, spawnAngle: 0, spawnDirectionOutward: false },
             force_field:  { field: 'gravity', strength: 60, angle: 90 },
             tint:         { color: [1, 1, 1], fromAlpha: 1, toAlpha: 0 },
             blend:        { mode: 'add' },
@@ -67,7 +67,12 @@
             cellStart: 'Index of the first cell to play (row-major, 0-based).',
             cellCount: 'How many cells the flipbook plays.',
             cellMode: 'once = spread the cells across the particle life; loop = repeat them.',
-            cellLoops: 'How many times to repeat the cells across the particle life (loop mode).'
+            cellLoops: 'How many times to repeat the cells across the particle life (loop mode).',
+            spawnShape: 'Shape of the emission area. "Point" spawns at one spot, others spawn randomly within a boundary.',
+            spawnRadiusX: 'Horizontal radius or half-width of the spawn shape.',
+            spawnRadiusY: 'Vertical radius or half-height of the spawn shape (ignored/hidden for point/line).',
+            spawnAngle: 'Rotation angle of the spawn shape in degrees.',
+            spawnDirectionOutward: 'If checked, particles fly outward from the center of the shape instead of in the emitter\'s direction.'
         };
 
         // Particle starter presets (applied over the emitter/look fields; id,
@@ -531,6 +536,78 @@
                         tr.y = Math.round(my - STAGE_ORIGIN.y);
                         drawOverlayHandles();
                     }, done);
+
+                    // Custom spawn shapes visualization & handles
+                    if (tr.spawnShape && tr.spawnShape !== 'point') {
+                        const rx = tr.spawnRadiusX !== undefined ? tr.spawnRadiusX : 20;
+                        const ry = tr.spawnRadiusY !== undefined ? tr.spawnRadiusY : (tr.spawnShape === 'line' ? 0 : 20);
+                        const angRad = (tr.spawnAngle || 0) * Math.PI / 180;
+
+                        const addSvgChild = (parent, name, attrs) => {
+                            const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+                            Object.keys(attrs).forEach(k => {
+                                if (attrs[k] !== undefined) el.setAttribute(k, attrs[k]);
+                            });
+                            parent.appendChild(el);
+                            return el;
+                        };
+
+                        // Create group rotated around the emitter origin
+                        const shapeGroup = svgEl('g', {
+                            transform: `translate(${ex * SCALE}, ${ey * SCALE}) rotate(${tr.spawnAngle || 0})`
+                        });
+
+                        const strokeStyle = {
+                            fill: 'none',
+                            stroke: '#3399ff',
+                            'stroke-dasharray': '3,3',
+                            'stroke-width': 1.5,
+                            opacity: 0.8
+                        };
+
+                        if (tr.spawnShape === 'line') {
+                            addSvgChild(shapeGroup, 'line', {
+                                x1: -rx * SCALE, y1: 0,
+                                x2: rx * SCALE, y2: 0,
+                                ...strokeStyle
+                            });
+                        } else if (tr.spawnShape === 'rectangle' || tr.spawnShape === 'borderrectangle') {
+                            addSvgChild(shapeGroup, 'rect', {
+                                x: -rx * SCALE, y: -ry * SCALE,
+                                width: 2 * rx * SCALE,
+                                height: 2 * ry * SCALE,
+                                ...strokeStyle
+                            });
+                        } else if (tr.spawnShape === 'circle' || tr.spawnShape === 'ring' || tr.spawnShape === 'normal') {
+                            addSvgChild(shapeGroup, 'ellipse', {
+                                cx: 0, cy: 0,
+                                rx: rx * SCALE, ry: ry * SCALE,
+                                ...strokeStyle
+                            });
+                        }
+
+                        // Handle for Rx
+                        const rxX = ex + rx * Math.cos(angRad);
+                        const rxY = ey + rx * Math.sin(angRad);
+                        mkSvgHandle(rxX, rxY, '#3399ff', 'rx', (mx, my) => {
+                            const ddx = mx - ex, ddy = my - ey;
+                            let newRx = ddx * Math.cos(angRad) + ddy * Math.sin(angRad);
+                            tr.spawnRadiusX = Math.max(0, Math.round(newRx));
+                            drawOverlayHandles();
+                        }, done);
+
+                        // Handle for Ry (only if not a line)
+                        if (tr.spawnShape !== 'line') {
+                            const ryX = ex - ry * Math.sin(angRad);
+                            const ryY = ey + ry * Math.cos(angRad);
+                            mkSvgHandle(ryX, ryY, '#3399ff', 'ry', (mx, my) => {
+                                const ddx = mx - ex, ddy = my - ey;
+                                let newRy = -ddx * Math.sin(angRad) + ddy * Math.cos(angRad);
+                                tr.spawnRadiusY = Math.max(0, Math.round(newRy));
+                                drawOverlayHandles();
+                            }, done);
+                        }
+                    }
                 } else if (tr.type === 'force_field') {
                     const cx = STAGE_ORIGIN.x, cy = STAGE_ORIGIN.y;
                     const strength = tr.strength || 0;
@@ -1137,6 +1214,43 @@
                         { value: 'back', label: 'Behind sprite' }
                     ], tr.layer || 'front', val => { tr.layer = val; markChange(); }, 2, 'layer');
                     noteRow(emit, 'The green arrow on the viewer shows Direction; dashed lines show Spread.');
+
+                    const spawnArea = section(inspectorCol, 'Spawn area');
+                    selectCell(spawnArea, 'Shape', [
+                        { value: 'point', label: 'Point' },
+                        { value: 'line', label: 'Line' },
+                        { value: 'rectangle', label: 'Rectangle' },
+                        { value: 'circle', label: 'Circle / Ellipse' },
+                        { value: 'ring', label: 'Ring (border)' },
+                        { value: 'borderrectangle', label: 'Rectangle Border' },
+                        { value: 'normal', label: 'Normal (Gaussian)' }
+                    ], tr.spawnShape || 'point', val => {
+                        tr.spawnShape = val;
+                        if (val !== 'point') {
+                            if (tr.spawnRadiusX === undefined || tr.spawnRadiusX === 0) tr.spawnRadiusX = 20;
+                            if (tr.spawnRadiusY === undefined || tr.spawnRadiusY === 0) tr.spawnRadiusY = (val === 'line' ? 0 : 20);
+                            if (tr.spawnAngle === undefined) tr.spawnAngle = 0;
+                        }
+                        markChange();
+                        renderInspector();
+                        drawOverlayHandles();
+                    }, 2, 'spawnShape');
+
+                    if (tr.spawnShape && tr.spawnShape !== 'point') {
+                        const radiusXLbl = tr.spawnShape === 'line' ? 'Line half-len' : 'Radius X';
+                        numCell(spawnArea, radiusXLbl, tr, 'spawnRadiusX', 20, { int: true, min: 0, handles: true });
+
+                        if (tr.spawnShape !== 'line') {
+                            numCell(spawnArea, 'Radius Y', tr, 'spawnRadiusY', 20, { int: true, min: 0, handles: true });
+                        }
+
+                        numCell(spawnArea, 'Angle °', tr, 'spawnAngle', 0, { int: true, handles: true });
+
+                        checkCell(spawnArea, 'Move outward from center', !!tr.spawnDirectionOutward, v => {
+                            if (v) tr.spawnDirectionOutward = true; else delete tr.spawnDirectionOutward;
+                            markChange();
+                        }, 2, 'spawnDirectionOutward');
+                    }
 
                     const size = section(inspectorCol, 'Size & spin');
                     numCell(size, 'Size start', tr, 'sizeStart', 1, { step: '0.1' });

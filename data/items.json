@@ -4,6 +4,7 @@
     "name": "HP Tonic",
     "type": "consumable",
     "cost": 10,
+    "animation": "item.heal_tonic",
     "description": "Heals one member to full HP.",
     "icon": 52,
     "meta": {
