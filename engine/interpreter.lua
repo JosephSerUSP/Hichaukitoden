@@ -837,7 +837,7 @@ local function buildScriptApi(ctx)
         end
         return list
     end
-    function api.summon(actorId, isReserve, index)
+    function api.summon(actorId, isReserve, index, level)
         local actorData = session.loader.getActor(actorId)
         if not actorData then return false end
         -- Never overwrite an occupied slot: Summon targets an EMPTY slot only
@@ -846,7 +846,7 @@ local function buildScriptApi(ctx)
         -- target slot can never be silently destroyed by a Summon.
         local arr = isReserve and session.reserve or session.party
         if arr[index] then return false end
-        local battler = require("engine.session").Battler.new(actorData, session.dungeonFloor or 1)
+        local battler = require("engine.session").Battler.new(actorData, level or actorData.level or 1)
         battler.hp = battler:getMaxHp(session)
         arr[index] = battler
         return true
@@ -854,6 +854,109 @@ local function buildScriptApi(ctx)
     function api.sacrifice(isReserve, index)
         local arr = isReserve and session.reserve or session.party
         arr[index] = nil
+    end
+
+    -- EXP Bank: shared pool accrued by sacrifices, spent to summon above
+    -- base level. Curve math lives in engine/session.lua (expCurveCost) so
+    -- summon pricing and sacrifice yields conserve training value.
+    function api.getExpBank()
+        return session.expBank or 0
+    end
+    function api.changeExpBank(amount)
+        session.expBank = math.max(0, (session.expBank or 0) + math.floor(amount or 0))
+    end
+    -- EXP the bank charges to summon this actor at targetLevel (0 at or
+    -- below its base level).
+    function api.summonExpCost(actorId, targetLevel)
+        local actorData = session.loader.getActor(actorId)
+        if not actorData then return 0 end
+        local base = actorData.level or 1
+        if not targetLevel or targetLevel <= base then return 0 end
+        return require("engine.session").expCurveCost(base, targetLevel)
+    end
+    -- Stat/skill preview for a NOT-yet-summoned actor at a given level:
+    -- builds a throwaway Battler so traits/params resolve exactly as the
+    -- real summon would.
+    function api.actorPreview(actorId, level)
+        local actorData = session.loader.getActor(actorId)
+        if not actorData then return nil end
+        local b = require("engine.session").Battler.new(actorData, level or actorData.level or 1)
+        b.hp = b:getMaxHp(session)
+        local view = formulaEngine.battlerView(b, session) or {}
+        view.name = b.name or ""
+        view.actorData = actorData
+        local skillNames = {}
+        for _, sid in ipairs(b.skills or {}) do
+            local sk = session.loader.getSkill(sid)
+            table.insert(skillNames, { name = (sk and sk.name) or tostring(sid) })
+        end
+        view.skillList = skillNames
+        return view
+    end
+
+    -- Sacrifice yields. Preview is non-mutating (the ritual scene shows it
+    -- before confirming); execute removes the creature, deposits EXP and
+    -- rolls the reward table. Yield = totalExp × summoner.sacrificeExpRate
+    -- × (1 + SACRIFICE_EXP_RATE trait sum). Rewards come from the actor's
+    -- sacrificeRewards table, falling back to
+    -- summoner.defaultSacrificeRewards; entries: {itemId, chance, count,
+    -- minLevel}.
+    local function sacrificeRewardTable(b)
+        local rewards = (b.actorData and b.actorData.sacrificeRewards)
+        if not rewards or #rewards == 0 then
+            local sys = session.loader and session.loader.system
+            rewards = sys and sys.summoner and sys.summoner.defaultSacrificeRewards or {}
+        end
+        local eligible = {}
+        for _, r in ipairs(rewards) do
+            if not r.minLevel or (b.level or 1) >= r.minLevel then
+                table.insert(eligible, r)
+            end
+        end
+        return eligible
+    end
+    local function sacrificeExpYield(b)
+        local sys = session.loader and session.loader.system
+        local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
+        local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
+        return math.floor(b:totalExp() * rate * (1 + traitBonus))
+    end
+    function api.sacrificePreview(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        if not b then return nil end
+        local rewards = {}
+        for _, r in ipairs(sacrificeRewardTable(b)) do
+            local item = session.loader.getItem(r.itemId)
+            table.insert(rewards, {
+                itemId = r.itemId,
+                name = (item and item.name) or ("item#" .. tostring(r.itemId)),
+                chance = r.chance or 1,
+                count = r.count or 1,
+            })
+        end
+        return { exp = sacrificeExpYield(b), rewards = rewards, name = b.name or "" }
+    end
+    function api.executeSacrifice(isReserve, index)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        if not b then return nil end
+        local exp = sacrificeExpYield(b)
+        local granted = {}
+        for _, r in ipairs(sacrificeRewardTable(b)) do
+            if math.random() < (r.chance or 1) then
+                session:addItem(r.itemId, r.count or 1)
+                local item = session.loader.getItem(r.itemId)
+                table.insert(granted, {
+                    itemId = r.itemId,
+                    name = (item and item.name) or ("item#" .. tostring(r.itemId)),
+                    count = r.count or 1,
+                })
+            end
+        end
+        arr[index] = nil
+        session.expBank = math.max(0, (session.expBank or 0) + exp)
+        return { exp = exp, items = granted, name = b.name or "" }
     end
     function api.swap(idx1, isReserve1, idx2, isReserve2)
         local arr1 = isReserve1 and session.reserve or session.party

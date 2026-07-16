@@ -1373,17 +1373,6 @@
               "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
         }
       ],
       "on_down": [
@@ -1431,17 +1420,6 @@
         {
           "cmd": "IF",
           "condition": "v.mode == 3",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1498,17 +1476,6 @@
               "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
         }
       ],
       "on_right": [
@@ -1551,17 +1518,6 @@
         {
           "cmd": "IF",
           "condition": "v.mode == 3",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1797,8 +1753,32 @@
               "value": 1
             },
             {
-              "cmd": "SCRIPT",
-              "ref": "setupSacrifice"
+              "cmd": "SET_VAR",
+              "name": "mode",
+              "value": 4
+            },
+            {
+              "cmd": "CLOSE_WINDOW",
+              "windowId": "map_member_popup"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "ritual",
+              "vars": [
+                {
+                  "name": "ritualMode",
+                  "value": "'sacrifice'"
+                },
+                {
+                  "name": "targetIsReserve",
+                  "value": "false"
+                },
+                {
+                  "name": "targetIndex",
+                  "value": "v.memberIdx"
+                }
+              ]
             }
           ]
         },
@@ -1860,64 +1840,9 @@
               "windowId": "map_confirm"
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 5 and v.confirmIdx == 1",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SCRIPT",
-              "ref": "executeSacrificeConfirm"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 5 and v.confirmIdx == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 4
-            },
-            {
-              "cmd": "CLOSE_WINDOW",
-              "windowId": "map_confirm"
-            }
-          ]
         }
       ],
       "on_cancel": [
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 5",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 4
-            },
-            {
-              "cmd": "CLOSE_WINDOW",
-              "windowId": "map_confirm"
-            }
-          ]
-        },
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.mode == 3",
@@ -2102,9 +2027,7 @@
       ]
     },
     "scripts": {
-      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n",
-      "setupSacrifice": "\nlocal v = ctx.v\nlocal member = api.party(v.memberIdx)\nif member and not member.empty then\n    v.mode = 5\n    v.confirmIdx = 1\n    local config = api.systemConfig\n    local refundRate = config.summoner.sacrificeMpRefundRate or 0.5\n    local baseCost = config.summoner.summonCostBase or 10\n    local costPerLvl = config.summoner.summonCostPerLevel or 5\n    local costPerTier = config.summoner.summonCostPerTier or 15\n    local cost = baseCost + (member.actorData.tier or 1) * costPerTier + (member.level or 1) * costPerLvl\n    local refund = math.floor(cost * refundRate)\n    v.sacrificeRefund = refund\n    api.emit({ type = \"close_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"map_confirm\" })\n    api.emit({ type = \"set_text\", windowId = \"map_confirm\", text = \"Sacrifice \" .. tostring(member.name) .. \" for \" .. tostring(refund) .. \" MP?\" })\n    api.emit({ type = \"set_list\", windowId = \"map_confirm\", listId = \"static:Yes,No\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_confirm\", index = v.confirmIdx })\nend\n",
-      "executeSacrificeConfirm": "\nlocal v = ctx.v\nlocal member = api.party(v.memberIdx)\nif not v.popupTargetIsReserve and api.partyCount() <= 1 then\n    api.emit({ type = \"set_text\", windowId = \"help\", text = \"Cannot sacrifice your last creature!\" })\n    v.mode = 4\n    api.emit({ type = \"close_window\", windowId = \"map_confirm\" })\n    return\nend\napi.sacrifice(false, v.memberIdx)\napi.changeMp(v.sacrificeRefund)\napi.emit({ type = \"set_text\", windowId = \"help\", text = \"Sacrificed \" .. tostring(member and member.name or \"?\") .. \"! Refunded \" .. tostring(v.sacrificeRefund) .. \" MP.\" })\nv.mode = 4\napi.emit({ type = \"close_window\", windowId = \"map_confirm\" })\n"
+      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n"
     },
     "goldenScript": [
       {
@@ -3523,17 +3446,6 @@
               "value": "v.cursorIdx > 1 and v.cursorIdx - 1 or v.cursorIdx"
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5 or v.mode == 7",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
         }
       ],
       "on_right": [
@@ -3556,17 +3468,6 @@
               "cmd": "SET_VAR",
               "name": "cursorIdx",
               "value": "v.cursorIdx < 8 and v.cursorIdx + 1 or v.cursorIdx"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 5 or v.mode == 7",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
         }
@@ -3635,17 +3536,6 @@
                   "index": "v.cursorIdx"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.mode == 6",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "summonIdx",
-              "value": "v.summonIdx > 1 and v.summonIdx - 1 or v.summonIdx"
             }
           ]
         },
@@ -3730,17 +3620,6 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.mode == 6",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "summonIdx",
-              "value": "v.summonIdx < #v.summonPool and v.summonIdx + 1 or v.summonIdx"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
           "condition": "v.mode == 2",
           "then": [
             {
@@ -3789,6 +3668,96 @@
             {
               "cmd": "SCRIPT",
               "ref": "executeReservePopup"
+            },
+            {
+              "cmd": "IF",
+              "condition": "v.ritualPush == 'summon'",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "ritualPush",
+                  "value": "''"
+                },
+                {
+                  "cmd": "SCENE_EVENT",
+                  "kind": "push",
+                  "scene": "ritual",
+                  "vars": [
+                    {
+                      "name": "ritualMode",
+                      "value": "'summon'"
+                    },
+                    {
+                      "name": "targetIsReserve",
+                      "value": "v.popupTargetIsReserve"
+                    },
+                    {
+                      "name": "targetIndex",
+                      "value": "v.popupTargetIndex"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "cmd": "IF",
+              "condition": "v.ritualPush == 'promote'",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "ritualPush",
+                  "value": "''"
+                },
+                {
+                  "cmd": "SCENE_EVENT",
+                  "kind": "push",
+                  "scene": "ritual",
+                  "vars": [
+                    {
+                      "name": "ritualMode",
+                      "value": "'promote'"
+                    },
+                    {
+                      "name": "targetIsReserve",
+                      "value": "v.popupTargetIsReserve"
+                    },
+                    {
+                      "name": "targetIndex",
+                      "value": "v.popupTargetIndex"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "cmd": "IF",
+              "condition": "v.ritualPush == 'sacrifice'",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "ritualPush",
+                  "value": "''"
+                },
+                {
+                  "cmd": "SCENE_EVENT",
+                  "kind": "push",
+                  "scene": "ritual",
+                  "vars": [
+                    {
+                      "name": "ritualMode",
+                      "value": "'sacrifice'"
+                    },
+                    {
+                      "name": "targetIsReserve",
+                      "value": "v.popupTargetIsReserve"
+                    },
+                    {
+                      "name": "targetIndex",
+                      "value": "v.popupTargetIndex"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -3804,51 +3773,6 @@
             {
               "cmd": "SCRIPT",
               "ref": "executeSwap"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 5",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SCRIPT",
-              "ref": "executeSacrifice"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 6",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SCRIPT",
-              "ref": "executeSummon"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 7",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SCRIPT",
-              "ref": "executePromote"
             }
           ]
         }
@@ -3900,54 +3824,6 @@
               "value": 1
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 5",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 6",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 7",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 1
-            }
-          ]
         }
       ],
       "on_frame": [
@@ -3960,11 +3836,8 @@
     },
     "scripts": {
       "setupReservePopup": "\nlocal v = ctx.v\nlocal focusArea = v.focusArea\nlocal cursorIdx = v.cursorIdx\nlocal member = (focusArea == 'party') and api.party(cursorIdx) or api.reserve(cursorIdx)\nlocal options = {}\n\nif member and member.empty then\n    member = nil\nend\n\nv.popupTargetIsReserve = (focusArea == 'reserve')\nv.popupTargetIndex = cursorIdx\nv.popupMemberName = member and (member.name or \"Unknown\") or nil\nv.popupMemberRef = member\n\nif member then\n    table.insert(options, {name = \"Swap\"})\n    table.insert(options, {name = \"Sacrifice\"})\n    if api.canPromote(v.popupTargetIsReserve, v.popupTargetIndex) then\n        table.insert(options, {name = \"Promote\"})\n    end\nelse\n    table.insert(options, {name = \"Summon\"})\n    table.insert(options, {name = \"Swap\"})\nend\ntable.insert(options, {name = \"Cancel\"})\n\nv.popupCount = #options\nv.popupOptions = options\n",
-      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Sacrifice\" then\n    v.mode = 5\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_confirm\" })\n    local config = api.systemConfig\n    local refundRate = config.summoner.sacrificeMpRefundRate or 0.5\n    local member = v.popupTargetIsReserve and api.reserve(v.popupTargetIndex) or api.party(v.popupTargetIndex)\n    local cost = 0\n    if member and member.actorData then\n        local baseCost = config.summoner.summonCostBase or 10\n        local costPerLvl = config.summoner.summonCostPerLevel or 5\n        local costPerTier = config.summoner.summonCostPerTier or 15\n        cost = baseCost + (member.actorData.tier or 1) * costPerTier + (member.level or 1) * costPerLvl\n    end\n    local refund = math.floor(cost * refundRate)\n    v.sacrificeRefund = refund\n    \n    local disc = member and member.actorData and member.actorData.discipline or \"None\"\n    v.sacrificeDiscipline = disc\n    api.emit({ type = \"set_text\", windowId = \"reserve_confirm\", text = \"Sacrifice \" .. tostring(v.popupMemberName) .. \" for \" .. tostring(refund) .. \" MP?\" })\n    v.confirmIdx = 1\n    v.confirmOptions = { {name=\"Yes\"}, {name=\"No\"} }\n    api.emit({ type = \"set_list\", windowId = \"reserve_confirm\", listId = \"v:confirmOptions\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_confirm\", index = \"v.confirmIdx\" })\nelseif opt == \"Promote\" then\n    v.mode = 7\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_confirm\" })\n    local eligible, costText = api.promoteInfo(v.popupTargetIsReserve, v.popupTargetIndex)\n    api.emit({ type = \"set_text\", windowId = \"reserve_confirm\", text = \"Promote \" .. tostring(v.popupMemberName) .. \"?\" .. costText })\n    v.confirmIdx = 1\n    v.confirmOptions = { {name=\"Yes\"}, {name=\"No\"} }\n    api.emit({ type = \"set_list\", windowId = \"reserve_confirm\", listId = \"v:confirmOptions\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_confirm\", index = \"v.confirmIdx\" })\nelseif opt == \"Summon\" then\n    v.mode = 6\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"open_window\", windowId = \"reserve_summon_list\" })\n    -- Build summon pool\n    local pool = {}\n    local config = api.systemConfig\n    local baseCost = config.summoner.summonCostBase or 10\n    local costPerLvl = config.summoner.summonCostPerLevel or 5\n    local costPerTier = config.summoner.summonCostPerTier or 15\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then\n            local cost = baseCost + (actor.tier or 1) * costPerTier + api.dungeonFloor() * costPerLvl\n            table.insert(pool, { name = actor.name, icon = actor.icon or 0, actorId = actor.id, cost = cost, text = actor.name .. \" (\" .. cost .. \" MP)\" })\n        end\n    end\n    v.summonPool = pool\n    v.summonIdx = 1\n    api.emit({ type = \"set_list\", windowId = \"reserve_summon_list\", listId = \"v:summonPool\", format = \"{text}\" })\n    api.emit({ type = \"set_cursor\", windowId = \"reserve_summon_list\", index = \"v.summonIdx\" })\nend\n",
-      "executeSummon": "\nlocal v = ctx.v\nlocal pool = v.summonPool\nif pool and pool[v.summonIdx] then\n    local entry = pool[v.summonIdx]\n    local target = v.popupTargetIsReserve and api.reserve(v.popupTargetIndex) or api.party(v.popupTargetIndex)\n    if target and not target.empty and target.actorData then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"That slot is occupied!\" })\n    elseif api.getMp() >= entry.cost then\n        api.changeMp(-entry.cost)\n        api.summon(entry.actorId, v.popupTargetIsReserve, v.popupTargetIndex)\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Summoned \" .. entry.name .. \"!\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Not enough MP!\" })\n    end\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_summon_list\" })\n",
-      "executeSacrifice": "\nlocal v = ctx.v\nlocal opt = v.confirmOptions[v.confirmIdx].name\nif opt == \"Yes\" then\n    if not v.popupTargetIsReserve and api.partyCount() <= 1 then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot sacrifice your last creature!\" })\n        v.mode = 1\n        api.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n        return\n    end\n    api.sacrifice(v.popupTargetIsReserve, v.popupTargetIndex)\n    api.changeMp(v.sacrificeRefund)\n    \n    -- Reward item based on discipline\n    local disc = v.sacrificeDiscipline or \"None\"\n    local pool = {}\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == disc then\n            table.insert(pool, item)\n        end\n    end\n    local rewardText = \"\"\n    if #pool > 0 then\n        local reward = pool[math.random(#pool)]\n        api.giveItem(reward.id, 1)\n        rewardText = \" Got \" .. tostring(reward.name) .. \"!\"\n    end\n    \n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Sacrificed \" .. v.popupMemberName .. \"! Refunded \" .. v.sacrificeRefund .. \" MP.\" .. rewardText })\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n",
-      "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot leave the party empty!\" })\n    v.mode = 1\n    return\nend\nv.mode = 1\napi.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"{config.terms.help}\" })\n",
-      "executePromote": "local v = ctx.v\nlocal opt = v.confirmOptions[v.confirmIdx].name\nif opt == \"Yes\" then\n    local ok = api.promote(v.popupTargetIsReserve, v.popupTargetIndex)\n    if ok then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = tostring(v.popupMemberName) .. \" evolved into a stronger form!\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Promotion failed (cost not met or no evolution available).\" })\n    end\nend\nv.mode = 1\napi.emit({ type = \"close_window\", windowId = \"reserve_confirm\" })\n"
+      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Sacrifice\" then\n    v.ritualPush = \"sacrifice\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Promote\" then\n    v.ritualPush = \"promote\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Summon\" then\n    v.ritualPush = \"summon\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nend\n",
+      "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot leave the party empty!\" })\n    v.mode = 1\n    return\nend\nv.mode = 1\napi.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"{config.terms.help}\" })\n"
     },
     "overlay": true,
     "draw": "windows",
@@ -4057,48 +3930,6 @@
             "cursor": "v.popupIdx"
           }
         ]
-      },
-      {
-        "id": "reserve_summon_list",
-        "rect": {
-          "x": 8,
-          "y": 4,
-          "w": 16,
-          "h": 20
-        },
-        "style": "list",
-        "visible": "v.mode == 6",
-        "content": [
-          {
-            "type": "list",
-            "listId": "v:summonPool",
-            "format": "{name}   {cost} MP",
-            "cursor": "v.summonIdx"
-          }
-        ]
-      },
-      {
-        "id": "reserve_confirm",
-        "rect": {
-          "x": 8,
-          "y": 10,
-          "w": 16,
-          "h": 6
-        },
-        "style": "confirm",
-        "visible": "v.mode == 5 or v.mode == 7",
-        "content": [
-          {
-            "type": "text",
-            "text": "Are you sure?"
-          },
-          {
-            "type": "list",
-            "listId": "v:confirmOptions",
-            "format": "{name}",
-            "cursor": "v.confirmIdx"
-          }
-        ]
       }
     ]
   },
@@ -4117,5 +3948,459 @@
     "config": {
       "note": "Legacy-drawn (renderer.drawDialogue). Reached via scene_host.goto_scene(\"dialogue\") from map step events, town options, and triggerDialogue() so any scene can hand off to a conversation graph."
     }
+  },
+  {
+    "id": "ritual",
+    "name": "Ritual",
+    "kind": "menu",
+    "draw": "windows",
+    "config": {
+      "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex."
+    },
+    "scripts": {
+      "setupRitual": "\nlocal v = ctx.v\nv._guard = 1\nv.state = 1\nv.done = 0\nv.confirmIdx = 1\nv.confirmOptions = { {name = \"Yes\"}, {name = \"No\"} }\nif v.ritualMode == nil then v.ritualMode = \"summon\" end\nif v.targetIsReserve == nil then v.targetIsReserve = true end\nv.targetIndex = v.targetIndex or 1\nif v.ritualMode == \"summon\" then\n    local pool = {}\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then\n            table.insert(pool, { id = actor.id, name = actor.name, tier = actor.tier })\n        end\n    end\n    v.pool = pool\n    v.poolIdx = 1\n    v._lastPoolIdx = 0\nelse\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if member and member.empty then member = nil end\n    v.memberName = member and member.name or \"?\"\n    v.pool = { { name = v.memberName } }\n    v.poolIdx = 1\nend\n",
+      "refreshRitual": "\nlocal v = ctx.v\nlocal sm = api.systemConfig.summoner or {}\nlocal function statLine(p)\n    return \"HP \" .. p.maxHp .. \"  ATK \" .. p.atk .. \"  DEF \" .. p.def .. \"\\nMAT \" .. p.mat .. \"  MDF \" .. p.mdf .. \"  ASP \" .. p.asp\nend\nif v.ritualMode == \"summon\" then\n    v.titleText = \"SUMMON\"\n    local entry = v.pool[v.poolIdx]\n    if not entry then return end\n    if v.poolIdx ~= v._lastPoolIdx then\n        local basePv = api.actorPreview(entry.id)\n        v.baseLevel = basePv and basePv.level or 1\n        v.level = v.baseLevel\n        v._lastPoolIdx = v.poolIdx\n    end\n    local pv = api.actorPreview(entry.id, v.level)\n    local skills = {}\n    for _, s in ipairs(pv.skillList or {}) do table.insert(skills, s.name) end\n    v.previewText = pv.name .. \"   Lv \" .. v.level .. \"  (Tier \" .. (entry.tier or 1) .. \")\\n\\n\"\n        .. statLine(pv) .. \"\\n\\nSkills: \" .. table.concat(skills, \", \")\n    v.mpCost = (sm.summonCostBase or 10) + (entry.tier or 1) * (sm.summonCostPerTier or 15) + v.level * (sm.summonCostPerLevel or 5)\n    v.expCost = api.summonExpCost(entry.id, v.level)\n    v.costText = \"MP Cost: \" .. v.mpCost .. \" / \" .. api.getMp()\n        .. \"\\nEXP Cost: \" .. v.expCost .. \"   (Bank: \" .. api.getExpBank() .. \")\"\n    v.helpText = \"UP/DOWN: creature   LEFT/RIGHT: level   ENTER: summon   ESC: back\"\nelseif v.ritualMode == \"promote\" then\n    v.titleText = \"PROMOTE\"\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if not member or member.empty then\n        v.previewText = \"No creature.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n        return\n    end\n    local evolveTo = nil\n    for _, e in ipairs((member.actorData and member.actorData.evolutions) or {}) do\n        if e.level and member.level >= e.level and e.evolvesTo then evolveTo = e.evolvesTo break end\n    end\n    if evolveTo then\n        local pv = api.actorPreview(evolveTo, member.level)\n        local skills = {}\n        for _, s in ipairs(pv.skillList or {}) do table.insert(skills, s.name) end\n        v.previewText = member.name .. \"  Lv \" .. member.level .. \"  evolves into:\\n\\n\"\n            .. pv.name .. \"\\n\\n\" .. statLine(pv) .. \"\\n\\nSkills: \" .. table.concat(skills, \", \")\n        local ok, costText = api.promoteInfo(v.targetIsReserve, v.targetIndex)\n        v.costText = \"Cost:\" .. (costText ~= \"\" and costText or \" (free)\")\n        v.helpText = \"ENTER: promote   ESC: back\"\n    else\n        v.previewText = member.name .. \" has no available promotion.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n    end\nelse\n    v.titleText = \"SACRIFICE\"\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    local p = api.sacrificePreview(v.targetIsReserve, v.targetIndex)\n    if not p or not member or member.empty then\n        v.previewText = \"No creature.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n        return\n    end\n    v.previewText = member.name .. \"   Lv \" .. member.level .. \"\\n\\n\" .. statLine(member)\n    local lines = { \"EXP Yield: \" .. p.exp .. \"   (Bank: \" .. api.getExpBank() .. \")\" }\n    for _, r in ipairs(p.rewards or {}) do\n        table.insert(lines, r.name .. \" x\" .. r.count .. \"  (\" .. math.floor((r.chance or 1) * 100) .. \"%)\")\n    end\n    v.costText = table.concat(lines, \"\\n\")\n    v.helpText = \"ENTER: sacrifice   ESC: back\"\nend\n",
+      "stepLevel": "\nlocal v = ctx.v\nif v.ritualMode ~= \"summon\" or v.state ~= 1 then return end\nlocal entry = v.pool and v.pool[v.poolIdx]\nif not entry then return end\nlocal dir = v._stepDir or 0\nlocal newLevel = (v.level or 1) + dir\nif newLevel < (v.baseLevel or 1) then newLevel = v.baseLevel or 1 end\nif newLevel > 99 then newLevel = 99 end\nif dir > 0 and api.summonExpCost(entry.id, newLevel) > api.getExpBank() then\n    return\nend\nv.level = newLevel\n",
+      "confirmRitual": "\nlocal v = ctx.v\nv._guard = 1\nif v.ritualMode == \"summon\" then\n    local entry = v.pool[v.poolIdx]\n    local target = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if target and not target.empty then\n        v.resultText = \"That slot is occupied!\"\n        v.state = 1\n        v.helpText = v.resultText .. \"   ESC: back\"\n    elseif api.getMp() < (v.mpCost or 0) then\n        v.resultText = \"Not enough MP!\"\n        v.state = 1\n        v.helpText = v.resultText\n    elseif api.getExpBank() < (v.expCost or 0) then\n        v.resultText = \"Not enough banked EXP!\"\n        v.state = 1\n        v.helpText = v.resultText\n    else\n        api.changeMp(-(v.mpCost or 0))\n        api.changeExpBank(-(v.expCost or 0))\n        api.summon(entry.id, v.targetIsReserve, v.targetIndex, v.level)\n        v.resultText = \"Summoned \" .. entry.name .. \" at Lv \" .. tostring(v.level) .. \"!\"\n        v.state = 3\n    end\nelseif v.ritualMode == \"promote\" then\n    local ok = api.promote(v.targetIsReserve, v.targetIndex)\n    if ok then\n        v.resultText = tostring(v.memberName) .. \" evolved into a stronger form!\"\n        v.state = 3\n    else\n        v.resultText = \"Promotion failed (cost not met or no evolution available).\"\n        v.state = 1\n        v.helpText = v.resultText\n    end\nelse\n    if not v.targetIsReserve and api.partyCount() <= 1 then\n        v.resultText = \"Cannot sacrifice your last creature!\"\n        v.state = 1\n        v.helpText = v.resultText\n    else\n        local r = api.executeSacrifice(v.targetIsReserve, v.targetIndex)\n        if r then\n            local txt = \"Sacrificed \" .. r.name .. \"!  +\" .. r.exp .. \" EXP banked.\"\n            for _, it in ipairs(r.items or {}) do\n                txt = txt .. \"\\nGot \" .. it.name .. \" x\" .. it.count .. \"!\"\n            end\n            v.resultText = txt\n            v.state = 3\n        else\n            v.resultText = \"Nothing to sacrifice.\"\n            v.state = 1\n            v.helpText = v.resultText\n        end\n    end\nend\n"
+    },
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SCRIPT",
+          "ref": "setupRitual"
+        },
+        {
+          "cmd": "SCRIPT",
+          "ref": "refreshRitual"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'summon' and v.poolIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "poolIdx",
+              "value": "v.poolIdx - 1"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'summon' and v.poolIdx < #v.pool",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "poolIdx",
+              "value": "v.poolIdx + 1"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'summon'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_stepDir",
+              "value": -1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "stepLevel"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'summon'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_stepDir",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "stepLevel"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2 and v.confirmIdx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "confirmRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2 and v.confirmIdx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
+        }
+      ]
+    },
+    "windows": [
+      {
+        "id": "ritual_title",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "w": 32,
+          "h": 2
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.titleText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_list",
+        "rect": {
+          "x": 0,
+          "y": 2,
+          "w": 11,
+          "h": 22
+        },
+        "style": "list",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:pool",
+            "format": "{name}",
+            "cursor": "v.state == 1 and v.ritualMode == 'summon' and v.poolIdx or 0"
+          }
+        ]
+      },
+      {
+        "id": "ritual_preview",
+        "rect": {
+          "x": 11,
+          "y": 2,
+          "w": 21,
+          "h": 15
+        },
+        "style": "panel",
+        "title": "PREVIEW",
+        "lineSpacing": 1,
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.previewText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_cost",
+        "rect": {
+          "x": 11,
+          "y": 17,
+          "w": 21,
+          "h": 7
+        },
+        "style": "panel",
+        "title": "COST / YIELD",
+        "lineSpacing": 1,
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.costText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_help",
+        "rect": {
+          "x": 0,
+          "y": 24,
+          "w": 32,
+          "h": 6
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.helpText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_confirm",
+        "rect": {
+          "x": 8,
+          "y": 10,
+          "w": 16,
+          "h": 7
+        },
+        "style": "confirm",
+        "visible": "v.state == 2",
+        "content": [
+          {
+            "type": "text",
+            "text": "Are you sure?"
+          },
+          {
+            "type": "list",
+            "listId": "v:confirmOptions",
+            "format": "{name}",
+            "cursor": "v.confirmIdx"
+          }
+        ]
+      },
+      {
+        "id": "ritual_result",
+        "rect": {
+          "x": 4,
+          "y": 10,
+          "w": 24,
+          "h": 9
+        },
+        "style": "confirm",
+        "visible": "v.state == 3",
+        "lineSpacing": 1,
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.resultText}\n\nENTER: close"
+          }
+        ]
+      }
+    ],
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "right"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      }
+    ]
   }
 ]

@@ -41,7 +41,14 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 1,
+        "chance": 0.8,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 2,
@@ -116,7 +123,20 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 6,
+        "chance": 0.5,
+        "count": 1
+      },
+      {
+        "itemId": 25,
+        "chance": 0.25,
+        "count": 1,
+        "minLevel": 5
+      }
+    ]
   },
   {
     "id": 4,
@@ -259,7 +279,20 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 5,
+        "chance": 0.6,
+        "count": 1
+      },
+      {
+        "itemId": 5,
+        "chance": 0.4,
+        "count": 2,
+        "minLevel": 8
+      }
+    ]
   },
   {
     "id": 7,

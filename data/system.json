@@ -198,6 +198,14 @@
       "soothingMote",
       "divineFavor",
       "holySmite"
+    ],
+    "sacrificeExpRate": 0.8,
+    "defaultSacrificeRewards": [
+      {
+        "itemId": 1,
+        "chance": 0.5,
+        "count": 1
+      }
     ]
   },
   "spawn": {
