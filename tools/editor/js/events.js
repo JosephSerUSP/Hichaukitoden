@@ -1495,7 +1495,6 @@
             if (activeCmdCallback) activeCmdCallback(cmd);
         }
 
-        function initEventModalTemplates() {}
         wireModalDirtyTracking('map-properties-modal', () => { mapPropsDirty = true; });
         wireModalDirtyTracking('event-modal', () => { eventModalDirty = true; });
         wireModalDirtyTracking('cmd-modal', () => { cmdDialogDirty = true; });

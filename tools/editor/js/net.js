@@ -7,7 +7,6 @@
 
                 initMapEditor();
                 initDatabaseEditor();
-                initEventModalTemplates();
                 initSystemTab();
 
                 document.getElementById('status-db').textContent = 'Database: Connected';
