@@ -52,7 +52,7 @@ end
 -- overhaul-7 A1: animation constants and timing are owned by
 -- presentation/animation_player.lua using data/animations.json entries.
 -- The small_battlers module still provides the dead-tint constant for
--- game-state dead display and the animVal stub for backward compat.
+-- game-state dead display.
 
 local function getPortrait(id)
     if not id or id == "" then return nil end

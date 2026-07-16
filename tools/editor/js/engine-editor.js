@@ -332,17 +332,6 @@
             const listBox = makeListBox();
             listBox.style.flex = '1';
 
-            function unifiedSceneId(sc) {
-                // 'battle' for the built-in flow, or the numeric id for custom scenes
-                return sc === 'battle' ? 'battle' : sc.id;
-            }
-
-            function sceneLabel(sc) {
-                if (sc === 'battle') return '⚔︁EBattle';
-                return '🛠 ' + (sc.name || 'Unnamed');
-            }
-
-            function isBattleSelected() { return activeSceneId === 'battle'; }
             function getSelectedScene() {
                 if (activeSceneId === 'battle') return null;
                 return dbPayload.scenes.find(s => s.id === activeSceneId);
