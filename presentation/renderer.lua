@@ -371,28 +371,6 @@ local function drawMinimap(x, y, size)
     love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
--- Renders the Title Scene
-function renderer.drawTitle()
-    love.graphics.clear(0.05, 0.05, 0.1, 1)
-    
-    -- Decorative retro background lines
-    love.graphics.setColor(0.1, 0.15, 0.25, 0.3)
-    for i = 0, 15 do
-        love.graphics.line(0, i * 16, 256, i * 16 + 50)
-    end
-    
-    ui.drawPanel(20, 30, 216, 60)
-    ui.drawString("HICHAUKITODEN", 28, 48, {1, 0.9, 0.3, 1}, "center", 200)
-    ui.drawString("First Person Crawler", 28, 66, {0.7, 0.8, 1, 0.8}, "center", 200)
-    
-    -- Menu options
-    ui.drawPanel(50, 110, 156, 80)
-    ui.drawString("Press ENTER to start", 58, 130, {1, 1, 1, 1}, "center", 140)
-    ui.drawString("Press ESC to exit", 58, 154, {0.7, 0.7, 0.7, 1}, "center", 140)
-    
-    -- Copyright
-    ui.drawString("(C) 2026 Developer", 10, 226, {0.4, 0.4, 0.4, 1})
-end
 
 -- Renders the Town Scene
 function renderer.drawTown(selectedIdx)

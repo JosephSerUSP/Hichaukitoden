@@ -1135,7 +1135,7 @@ elseif paramDef.type == "script" then
                         elseif paramDef.type == "state" then
                             check(loader.getState(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing state '" .. tostring(val) .. "'")
                         elseif paramDef.type == "item" then
-                            check(loader.getItem(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing item '" .. tostring(val) .. "'")
+                            check(val == "random" or loader.getItem(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing item '" .. tostring(val) .. "'")
                         elseif paramDef.type == "scope" then
                             local validScopes = { enemies=true, living_enemies=true, allies=true, living_allies=true, party=true, slot_allies=true }
                             check(validScopes[val], ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' has invalid scope '" .. tostring(val) .. "'")
@@ -1778,9 +1778,7 @@ function love.draw()
     if scene_host.draw(ctx) then
         -- scene host handles drawing (currently does nothing for D1, but returns true if it has hooks)
     else
-        if scene_host.getCurrent() == "title" then
-        renderer.drawTitle()
-    elseif scene_host.getCurrent() == "town" then
+        if scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
         drawSharedPartyHud()
     elseif scene_host.getCurrent() == "map" then
