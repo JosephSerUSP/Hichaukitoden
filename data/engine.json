@@ -854,7 +854,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with targetScope 'party' hit every member, otherwise target is a party index."
+      "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with target 'party' hit every member, otherwise target is a party index."
     },
     {
       "id": "EQUIP_ITEM",

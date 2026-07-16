@@ -1505,8 +1505,11 @@
                     scopeGroup.appendChild(scopeLbl);
                     scopeGroup.appendChild(makeSelect(
                         [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
-                        item.targetScope || '',
-                        v => { if (v === '') { delete item.targetScope; } else { item.targetScope = v; } }));
+                        item.target || item.targetScope || '',
+                        v => {
+                            delete item.targetScope; // old field name, migrate off it on save
+                            if (v === '') { delete item.target; } else { item.target = v; }
+                        }));
                     itemRow.appendChild(scopeGroup);
                 }
 

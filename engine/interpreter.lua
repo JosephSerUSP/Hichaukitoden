@@ -474,7 +474,7 @@ end
 -- use share, then consumes one. itemIndex is 1-based into the id-sorted
 -- non-empty inventory — the SAME ordering the window renderer's
 -- 'inventory' list source displays (keep them in sync). Items with
--- targetScope 'party' hit every member; otherwise target is a party index.
+-- target 'party' hit every member; otherwise target is a party index.
 handlers.USE_ITEM = function(cmd, ctx)
     local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
     local stacks = {}
@@ -485,7 +485,10 @@ handlers.USE_ITEM = function(cmd, ctx)
     local loader = ctx.loader or ctx.session.loader
     local item = stacks[idx] and loader.getItem(stacks[idx])
     if not item then return end
-    if item.targetScope == "party" then
+    -- targetScope is the old field name (see engine/battle.lua's same
+    -- fallback); no item in data/items.json still uses it, kept only so a
+    -- hand-authored item using the old name doesn't silently misbehave.
+    if (item.target or item.targetScope) == "party" then
         for _, member in ipairs(ctx.session.party) do
             for _, eff in ipairs(item.effects or {}) do
                 emitAll(ctx, effects.apply(eff, member, member, ctx.session))
