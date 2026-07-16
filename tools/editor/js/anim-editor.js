@@ -102,6 +102,19 @@
             const n = parseFloat(val);
             return isFinite(n) ? n : def;
         };
+        const getPreviewNum = (val, def = 0) => {
+            if (typeof val === 'number') return val;
+            if (Array.isArray(val)) return val[0];
+            if (typeof val === 'string') {
+                const n = parseFloat(val);
+                if (isFinite(n)) return n;
+                const match = val.match(/random\s*\(\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)/);
+                if (match) return parseFloat(match[1]);
+                const matchSingle = val.match(/random\s*\(\s*(-?\d+\.?\d*)\s*\)/);
+                if (matchSingle) return 0;
+            }
+            return def;
+        };
         const rgb01ToHex = c => '#' + (c || [1, 1, 1]).slice(0, 3)
             .map(v => Math.round((v || 0) * 255).toString(16).padStart(2, '0')).join('');
         const hexToRgb01 = hex => [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) / 255 * 100) / 100);
@@ -490,10 +503,10 @@
                 const done = () => { markChange(); renderInspector(); };
 
                 if (tr.type === 'transform') {
-                    const sx = STAGE_ORIGIN.x + (tr.fromX || 0);
-                    const sy = STAGE_ORIGIN.y + (tr.fromY || 0);
-                    const ex = STAGE_ORIGIN.x + (tr.toX || 0);
-                    const ey = STAGE_ORIGIN.y + (tr.toY || 0);
+                    const sx = STAGE_ORIGIN.x + getPreviewNum(tr.fromX || 0);
+                    const sy = STAGE_ORIGIN.y + getPreviewNum(tr.fromY || 0);
+                    const ex = STAGE_ORIGIN.x + getPreviewNum(tr.toX || 0);
+                    const ey = STAGE_ORIGIN.y + getPreviewNum(tr.toY || 0);
                     svgEl('line', { x1: sx * SCALE, y1: sy * SCALE, x2: ex * SCALE, y2: ey * SCALE, stroke: '#8888ff', 'stroke-dasharray': 4, 'stroke-width': 1.5 });
                     mkSvgHandle(sx, sy, '#ff3333', 'from', (mx, my) => {
                         tr.fromX = Math.round(mx - STAGE_ORIGIN.x);
@@ -506,14 +519,12 @@
                         drawOverlayHandles();
                     }, done);
                 } else if (tr.type === 'particles') {
-                    const ex = STAGE_ORIGIN.x + (tr.x || 0);
-                    const ey = STAGE_ORIGIN.y + (tr.y || 0);
-                    // Direction arrow whose length tracks Speed; drag the tip
-                    // to set BOTH direction and speed.
-                    const speed = tr.speed !== undefined ? tr.speed : (tr.velocity || 50);
+                    const ex = STAGE_ORIGIN.x + getPreviewNum(tr.x || 0);
+                    const ey = STAGE_ORIGIN.y + getPreviewNum(tr.y || 0);
+                    const speed = getPreviewNum(tr.speed !== undefined ? tr.speed : (tr.velocity || 50));
                     const len = Math.max(8, Math.min(110, speed * 0.35));
-                    const dir = tr.direction || 0;
-                    const half = (tr.spread || 0) / 2;
+                    const dir = getPreviewNum(tr.direction || 0);
+                    const half = getPreviewNum(tr.spread || 0) / 2;
                     if (half > 0 && half < 180) {
                         [dir - half, dir + half].forEach(d => {
                             const a = d * Math.PI / 180;
@@ -539,9 +550,10 @@
 
                     // Custom spawn shapes visualization & handles
                     if (tr.spawnShape && tr.spawnShape !== 'point') {
-                        const rx = tr.spawnRadiusX !== undefined ? tr.spawnRadiusX : 20;
-                        const ry = tr.spawnRadiusY !== undefined ? tr.spawnRadiusY : (tr.spawnShape === 'line' ? 0 : 20);
-                        const angRad = (tr.spawnAngle || 0) * Math.PI / 180;
+                        const rx = getPreviewNum(tr.spawnRadiusX !== undefined ? tr.spawnRadiusX : 20);
+                        const ry = getPreviewNum(tr.spawnRadiusY !== undefined ? tr.spawnRadiusY : (tr.spawnShape === 'line' ? 0 : 20));
+                        const spawnAngleVal = getPreviewNum(tr.spawnAngle || 0);
+                        const angRad = spawnAngleVal * Math.PI / 180;
 
                         const addSvgChild = (parent, name, attrs) => {
                             const el = document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -554,7 +566,7 @@
 
                         // Create group rotated around the emitter origin
                         const shapeGroup = svgEl('g', {
-                            transform: `translate(${ex * SCALE}, ${ey * SCALE}) rotate(${tr.spawnAngle || 0})`
+                            transform: `translate(${ex * SCALE}, ${ey * SCALE}) rotate(${spawnAngleVal})`
                         });
 
                         const strokeStyle = {
@@ -965,20 +977,46 @@
             const numCell = (grid, label, obj, key, def, opts) => {
                 opts = opts || {};
                 const inp = document.createElement('input');
-                inp.type = 'number';
+                inp.type = 'text';
                 inp.className = 'win98-input drag-num';
                 const stepSize = opts.step ? parseFloat(opts.step) : 1;
-                if (opts.step) inp.step = opts.step;
+                
+                const getValStr = (v) => {
+                    if (Array.isArray(v)) return JSON.stringify(v);
+                    return v !== undefined ? String(v) : '';
+                };
+                
                 inp.value = opts.frames
                     ? fmtF(obj[key] !== undefined ? obj[key] : def)
-                    : (obj[key] !== undefined ? obj[key] : def);
+                    : getValStr(obj[key]);
+                if (inp.value === '') {
+                    inp.value = opts.frames ? fmtF(def) : String(def);
+                }
+
                 const applyValue = (rawStr) => {
                     if (opts.blankable && rawStr === '') { delete obj[key]; markChange(); if (opts.handles) drawOverlayHandles(); return; }
-                    let v = num(rawStr, opts.frames ? msToF(def) : def);
-                    if (opts.frames) v = Math.max(opts.min !== undefined ? opts.min : 0, fToMs(v));
-                    else if (opts.int) v = Math.round(v);
-                    else if (opts.min !== undefined) v = Math.max(opts.min, v);
-                    obj[key] = v;
+                    
+                    let parsed = null;
+                    if (rawStr.trim().startsWith('[') && rawStr.trim().endsWith(']')) {
+                        try {
+                            parsed = JSON.parse(rawStr);
+                        } catch (e) {}
+                    }
+                    
+                    if (Array.isArray(parsed)) {
+                        obj[key] = parsed;
+                    } else {
+                        const n = parseFloat(rawStr);
+                        if (isFinite(n) && String(n) === rawStr.trim()) {
+                            let v = n;
+                            if (opts.frames) v = Math.max(opts.min !== undefined ? opts.min : 0, fToMs(v));
+                            else if (opts.int) v = Math.round(v);
+                            else if (opts.min !== undefined) v = Math.max(opts.min, v);
+                            obj[key] = v;
+                        } else {
+                            obj[key] = rawStr;
+                        }
+                    }
                     markChange();
                     if (opts.retime) { renderTimeline(); updateFrameView(); }
                     if (opts.handles) drawOverlayHandles();

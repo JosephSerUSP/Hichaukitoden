@@ -51,7 +51,28 @@ local function easeOut(t)
     -- Quadratic ease-out: fast start, slow end
     return 1 - (1 - t) * (1 - t)
 end
-
+local function evalNum(val)
+    if type(val) == "number" then
+        return val
+    elseif type(val) == "table" then
+        if #val >= 2 then
+            return love.math.random() * (val[2] - val[1]) + val[1]
+        elseif #val == 1 then
+            return val[1]
+        end
+    elseif type(val) == "string" then
+        local min, max = val:match("random%s*%(%s*([%-%.%d]+)%s*,%s*([%-%.%d]+)%s*%)")
+        if min and max then
+            return love.math.random() * (tonumber(max) - tonumber(min)) + tonumber(min)
+        end
+        local maxSingle = val:match("random%s*%(%s*([%-%.%d]+)%s*%)")
+        if maxSingle then
+            return love.math.random() * tonumber(maxSingle)
+        end
+        return tonumber(val) or 0
+    end
+    return 0
+end
 local function easingFn(name)
     if name == "ease_out" then return easeOut end
     return easeLinear
@@ -157,6 +178,23 @@ function animation_player.play(entryId, target, delayMs)
     return true
 end
 
+local function releaseInstanceParticles(inst)
+    if inst.particleSystems then
+        for _, psOrList in pairs(inst.particleSystems) do
+            if type(psOrList) == "userdata" and psOrList.release then
+                psOrList:release()
+            elseif type(psOrList) == "table" then
+                for _, ps in ipairs(psOrList) do
+                    if type(ps) == "userdata" and ps.release then
+                        ps:release()
+                    end
+                end
+            end
+        end
+        inst.particleSystems = {}
+    end
+end
+
 -- Registers a callback to be run when all active animations on a target finish.
 -- Executes immediately if no animations are active.
 function animation_player.onComplete(target, callback)
@@ -173,14 +211,14 @@ end
 -- Stop ALL animations on a target (e.g. when an enemy dies permanently
 -- or a battler leaves the field). Also clears particle systems.
 function animation_player.stop(target)
+    local list = instances[target]
+    if list then
+        for _, inst in ipairs(list) do
+            releaseInstanceParticles(inst)
+        end
+    end
     instances[target] = nil
     completionCallbacks[target] = nil
-    if particleSystems[target] then
-        for _, ps in ipairs(particleSystems[target]) do
-            ps:release()
-        end
-        particleSystems[target] = nil
-    end
 end
 
 -- Stop a specific animation on a target.
@@ -189,6 +227,7 @@ function animation_player.stopAnimation(target, entryId)
     if not list then return end
     for i = #list, 1, -1 do
         if list[i].entryId == entryId then
+            releaseInstanceParticles(list[i])
             table.remove(list, i)
         end
     end
@@ -206,14 +245,12 @@ end
 
 -- Clear ALL animation state (new battle, scene transition).
 function animation_player.reset()
-    -- Release all particle systems
-    for target, pss in pairs(particleSystems) do
-        for _, ps in ipairs(pss) do
-            ps:release()
+    for _, list in pairs(instances) do
+        for _, inst in ipairs(list) do
+            releaseInstanceParticles(inst)
         end
     end
     instances = {}
-    particleSystems = {}
     completionCallbacks = {}
 end
 
@@ -226,10 +263,23 @@ function animation_player.update(dt)
             local inst = list[i]
             inst.elapsed = inst.elapsed + dt
             local durSec = (inst.entry.duration or 0) / 1000
-            if inst.elapsed >= durSec then
-                -- Animation complete — remove it
-                table.remove(list, i)
-                anyFinished = true
+            
+            local infinite = inst.entry.duration == -1 or inst.entry.loopForever
+            local loop = inst.entry.loop
+            
+            if infinite then
+                -- Never finishes automatically
+            elseif loop then
+                if inst.elapsed >= durSec then
+                    inst.elapsed = durSec > 0 and (inst.elapsed % durSec) or 0
+                end
+            else
+                if inst.elapsed >= durSec then
+                    -- Animation complete — remove it
+                    releaseInstanceParticles(inst)
+                    table.remove(list, i)
+                    anyFinished = true
+                end
             end
         end
         if #list == 0 then
@@ -491,6 +541,9 @@ end
 -- Creates and returns LOVE ParticleSystems for active particle tracks on
 -- the given target. The caller should draw them with appropriate
 -- positioning and stencil masking. Returns a list of { ps, mask, blendMode }.
+-- Creates and returns LOVE ParticleSystems for active particle tracks on
+-- the given target. The caller should draw them with appropriate
+-- positioning and stencil masking. Returns a list of { ps, mask, blendMode }.
 function animation_player.getParticleSystems(target)
     local list = instances[target]
     if not list then return nil end
@@ -507,21 +560,29 @@ function animation_player.getParticleSystems(target)
                             inst.particleSystems[ti] = ps
                         end
                     end
-                    local ps = inst.particleSystems[ti]
-                    if ps then
+                    local psOrList = inst.particleSystems[ti]
+                    if psOrList then
                         local parentTf = nil
                         if track.parent then
                             parentTf = getNodeTransform(entry, inst, ti, inst.elapsed)
                         end
-                        table.insert(result, {
-                            ps = ps,
-                            mask = track.mask,
-                            blendMode = track.blendMode or "alpha",
-                            x = track.x or 0,
-                            y = track.y or 0,
-                            layer = track.layer or "front",
-                            parentTransform = parentTf,
-                        })
+                        local systems = {}
+                        if type(psOrList) == "userdata" and psOrList.release then
+                            table.insert(systems, psOrList)
+                        elseif type(psOrList) == "table" then
+                            systems = psOrList
+                        end
+                        for _, ps in ipairs(systems) do
+                            table.insert(result, {
+                                ps = ps,
+                                mask = track.mask,
+                                blendMode = track.blendMode or "alpha",
+                                x = 0,
+                                y = 0,
+                                layer = track.layer or "front",
+                                parentTransform = parentTf,
+                            })
+                        end
                     end
                 end
             end
@@ -535,12 +596,6 @@ end
 -- an entry, mapped onto LÖVE's acceleration channels. Force fields are
 -- entry-global: they affect every particle track unless that track opts out
 -- with `ignoreForces = true`. Returns linX, linY, radial, tangential, damping.
---
--- field mapping:
---   gravity → linear acceleration vector (angle degrees, default 90 = down)
---   attract → radial acceleration (positive strength pulls inward)
---   vortex  → tangential acceleration (orbit around the emitter)
---   drag    → linear damping (constant deceleration)
 local function aggregateForces(entry, particleTrack)
     local linX, linY, radial, tangential, damping = 0, 0, 0, 0, 0
     if not entry or not entry.tracks or particleTrack.ignoreForces then
@@ -566,35 +621,10 @@ local function aggregateForces(entry, particleTrack)
     return linX, linY, radial, tangential, damping
 end
 
--- Internal: create a LÖVE ParticleSystem from a particles track definition.
--- `entry` (optional) lets the system pick up sibling force_field tracks.
--- Emission fields: direction (deg, 0=right/CW), spread, speed (alias
--- velocity), speedMax, rate, lifetime, lifetimeVariation. Motion: gravity
--- (self), plus aggregated force fields. Look: colorOverLife, sizeStart,
--- sizeEnd, sizeVariation, spin, rotation. Cells: cellW/cellH/cellStart/
--- cellCount/cellMode/cellLoops (row-major over the sheet), or the legacy
--- single-row quadWidth/quadHeight/quadCount. particleTexture optional.
-function animation_player._createParticleSystem(track, entry)
-    -- Try loading a particle texture if specified
-    local texture
-    if track.particleTexture then
-        if love.filesystem.getInfo(track.particleTexture) then
-            texture = love.graphics.newImage(track.particleTexture)
-        end
-    end
-    -- Fallback: a small OPAQUE white dot that colorOverLife tints. (A bare
-    -- newImageData is transparent black, which renders nothing — the source
-    -- of "default-texture particles are invisible".)
-    if not texture then
-        local dot = love.image.newImageData(2, 2)
-        dot:mapPixel(function() return 1, 1, 1, 1 end)
-        texture = love.graphics.newImage(dot)
-    end
-
+local function createSinglePS(texture, track, entry, singleCellIdx)
     local ps = love.graphics.newParticleSystem(texture, 512)
 
-    -- Cells / flipbook. New row-major grid fields take precedence; the legacy
-    -- single-row quad* fields are read as a fallback so old data still plays.
+    -- Cells / flipbook
     local cellW = track.cellW or track.quadWidth
     local cellH = track.cellH or track.quadHeight
     local cellCount = track.cellCount or track.quadCount
@@ -602,26 +632,33 @@ function animation_player._createParticleSystem(track, entry)
         local w, h = texture:getDimensions()
         local cols = math.max(1, math.floor(w / cellW))
         local start = track.cellStart or 0
-        local loops = (track.cellMode == "loop") and math.max(1, track.cellLoops or 1) or 1
         local quads = {}
-        for _ = 1, loops do
-            for i = 0, cellCount - 1 do
-                local idx = start + i
-                local cx = (idx % cols) * cellW
-                local cy = math.floor(idx / cols) * cellH
-                table.insert(quads, love.graphics.newQuad(cx, cy, cellW, cellH, w, h))
+        if singleCellIdx then
+            local idx = start + singleCellIdx
+            local cx = (idx % cols) * cellW
+            local cy = math.floor(idx / cols) * cellH
+            table.insert(quads, love.graphics.newQuad(cx, cy, cellW, cellH, w, h))
+        else
+            local loops = (track.cellMode == "loop") and math.max(1, track.cellLoops or 1) or 1
+            for _ = 1, loops do
+                for i = 0, cellCount - 1 do
+                    local idx = start + i
+                    local cx = (idx % cols) * cellW
+                    local cy = math.floor(idx / cols) * cellH
+                    table.insert(quads, love.graphics.newQuad(cx, cy, cellW, cellH, w, h))
+                end
             end
         end
         ps:setQuads(quads)
     end
 
-    if track.direction then ps:setDirection(math.rad(track.direction)) end
+    if track.direction then ps:setDirection(math.rad(evalNum(track.direction))) end
     ps:setEmissionRate(track.rate or 10)
     local life = track.lifetime or 0.5
     ps:setParticleLifetime(life, life * (track.lifetimeVariation or 1.5))
-    ps:setSpread(math.rad(track.spread or 45))
-    local speed = track.speed or track.velocity or 50
-    ps:setSpeed(speed, track.speedMax or speed * 1.5)
+    ps:setSpread(math.rad(evalNum(track.spread or 45)))
+    local speed = evalNum(track.speed or track.velocity or 50)
+    ps:setSpeed(speed, evalNum(track.speedMax or speed * 1.5))
 
     -- Emission Area / Spawn shape
     if track.spawnShape and track.spawnShape ~= "point" then
@@ -641,12 +678,12 @@ function animation_player._createParticleSystem(track, entry)
         end
 
         if dist ~= "none" then
-            local rx = track.spawnRadiusX or 0
-            local ry = track.spawnRadiusY or 0
+            local rx = evalNum(track.spawnRadiusX or 0)
+            local ry = evalNum(track.spawnRadiusY or 0)
             if track.spawnShape == "line" then
                 ry = 0
             end
-            local angle = math.rad(track.spawnAngle or 0)
+            local angle = math.rad(evalNum(track.spawnAngle or 0))
             local outward = (track.spawnDirectionOutward == true)
             pcall(function()
                 ps:setEmissionArea(dist, rx, ry, angle, outward)
@@ -674,28 +711,83 @@ function animation_player._createParticleSystem(track, entry)
     return ps
 end
 
+-- Internal: create a LÖVE ParticleSystem from a particles track definition.
+function animation_player._createParticleSystem(track, entry)
+    local texture
+    if track.particleTexture then
+        if love.filesystem.getInfo(track.particleTexture) then
+            texture = love.graphics.newImage(track.particleTexture)
+        end
+    end
+    if not texture then
+        local dot = love.image.newImageData(2, 2)
+        dot:mapPixel(function() return 1, 1, 1, 1 end)
+        texture = love.graphics.newImage(dot)
+    end
+
+    local cellW = track.cellW or track.quadWidth
+    local cellH = track.cellH or track.quadHeight
+    local cellCount = track.cellCount or track.quadCount
+
+    if track.cellMode == "random" and cellW and cellH and cellCount and cellCount > 0 then
+        local list = {}
+        for i = 0, cellCount - 1 do
+            local ps = createSinglePS(texture, track, entry, i)
+            table.insert(list, ps)
+        end
+        return list
+    else
+        return createSinglePS(texture, track, entry)
+    end
+end
+
 -- Update all particle systems. Called from renderer.update.
 function animation_player.updateParticles(dt)
     for target, list in pairs(instances) do
         for _, inst in ipairs(list) do
             local entry = inst.entry
-            for ti, ps in pairs(inst.particleSystems or {}) do
-                -- Gate emission to the track's [t0, t0+duration] window so
-                -- particles only spawn while the track is active. Existing
-                -- particles keep living/fading after the window (rate 0);
-                -- before t0 nothing spawns. Rate must be set BEFORE update()
-                -- because emission happens during update.
+            for ti, psOrList in pairs(inst.particleSystems or {}) do
                 local track = entry and entry.tracks and entry.tracks[ti]
                 if track then
                     local t0 = (track.t0 or 0) / 1000
                     local tEnd = t0 + (track.duration or 0) / 1000
-                    if inst.elapsed >= t0 and inst.elapsed < tEnd then
-                        ps:setEmissionRate(track.rate or 10)
-                    else
-                        ps:setEmissionRate(0)
+                    
+                    local systems = {}
+                    if type(psOrList) == "userdata" and psOrList.release then
+                        table.insert(systems, psOrList)
+                    elseif type(psOrList) == "table" then
+                        systems = psOrList
+                    end
+                    
+                    local active = inst.elapsed >= t0 and inst.elapsed < tEnd
+                    local rate = track.rate or 10
+                    if type(psOrList) == "table" and #systems > 0 then
+                        rate = rate / #systems
+                    end
+                    
+                    for _, ps in ipairs(systems) do
+                        if active then
+                            ps:setEmissionRate(rate)
+                            
+                            -- Evaluate dynamic fields!
+                            local ox = evalNum(track.x or 0)
+                            local oy = evalNum(track.y or 0)
+                            ps:setPosition(ox, oy)
+                            
+                            if track.direction then
+                                ps:setDirection(math.rad(evalNum(track.direction)))
+                            end
+                            local speed = evalNum(track.speed or track.velocity or 50)
+                            ps:setSpeed(speed, evalNum(track.speedMax or speed * 1.5))
+                            if track.spread then
+                                ps:setSpread(math.rad(evalNum(track.spread)))
+                            end
+                        else
+                            ps:setEmissionRate(0)
+                        end
+                        ps:update(dt)
                     end
                 end
-                ps:update(dt)
             end
         end
     end
