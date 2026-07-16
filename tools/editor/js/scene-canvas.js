@@ -61,6 +61,28 @@
             return hits;
         }
 
+        // A data-authored scene (draw: "windows") declares its windows inline
+        // in scene.windows[] rather than opening a windowLayout entry via a
+        // hook command — so scanForWindowRefs, which only walks scene.hooks,
+        // cannot see them. Any surface that asks "does a scene use this
+        // window?" needs BOTH scans: the hook scan above for legacy
+        // OPEN_WINDOW-style scenes, and this one for converted scenes.
+        function scanAllScenesForInlineWindowDefs(windowId) {
+            const hits = [];
+            (dbPayload.scenes || []).forEach(scene => {
+                (scene.windows || []).forEach(winDef => {
+                    if (winDef && winDef.id === windowId) {
+                        hits.push({
+                            sceneId: scene.id,
+                            sceneName: scene.name || String(scene.id),
+                            winDef
+                        });
+                    }
+                });
+            });
+            return hits;
+        }
+
         // E12: one-shot hint so the Windows tab's "View in Scene" link can
         // land with the right window already selected — set right before
         // switching to the Scenes tab and navigating to a scene; consumed
