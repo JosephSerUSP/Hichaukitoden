@@ -9,6 +9,7 @@ local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
 local actor_status = require("presentation.actor_status")
 local animation_player = require("presentation.animation_player")
+local gradient_shader  = require("presentation.gradient_shader")
 
 local renderer = {}
 
@@ -565,94 +566,38 @@ end
 -- declarative "party" window in presentation/window_renderer.lua, drawn for
 -- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
 
-local function getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+local function getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
     if combatState ~= "input" then return {} end
     local session = renderer.session
-    if not session then return {} end
+    if not session or not bv then return {} end
     
     local memberInfo = livingMembers and livingMembers[activeMemberIdx]
     if not memberInfo then return {} end
     local monster = memberInfo.actor
 
-    if spellSelect then
-        -- Hovering a skill
-        local options = {}
-        for _, skId in ipairs(monster.skills or {}) do
-            local sk = session.loader.getSkill(skId)
-            if sk then table.insert(options, sk) end
-        end
-        local choice = options[selectedIndex]
-        if not choice then return {} end
-
-        if choice.target == "enemy" or choice.target == "enemy-any" then
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        elseif choice.target == "self" then
-            return { monster }
+    -- Unified targeting selector mode (T2)
+    if bv.targetSelect then
+        local pending = bv.pendingAction
+        if not pending then return {} end
+        
+        local targeting = require("engine.targeting")
+        local spec = pending.targetSpec
+        local exp = targeting.expand(spec)
+        
+        local candidates = targeting.getCandidates(monster, spec, bv.battle, pending.skill or pending.item)
+        if #candidates == 0 then return {} end
+        
+        if exp.count == "all" then
+            return candidates
         else
-            -- ally-any: target the ally with the lowest HP
-            local lowestHp = 9999
-            local target = nil
-            for _, c in ipairs(session.party) do
-                if c and not c:isDead() and c.hp < lowestHp then
-                    lowestHp = c.hp
-                    target = c
-                end
-            end
-            if target then return { target } end
-        end
-    elseif itemSelect then
-        -- Hovering an item
-        local items = {}
-        local inv = session.inventory or {}
-        local stacks = {}
-        for itemId, qty in pairs(inv) do
-            if qty > 0 then table.insert(stacks, itemId) end
-        end
-        table.sort(stacks)
-        for _, id in ipairs(stacks) do
-            local it = session.loader.getItem(id)
-            if it then table.insert(items, it) end
-        end
-        local choice = items[selectedIndex]
-        if not choice then return {} end
-
-        if choice.targetScope == "party" then
-            -- Targets the entire party
-            local targets = {}
-            for _, c in ipairs(session.party) do
-                if c and not c:isDead() then
-                    table.insert(targets, c)
-                end
-            end
-            return targets
-        elseif choice.targetScope == "enemy" or choice.targetScope == "enemy-any" then
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        else
-            -- Default single ally target
-            return { monster }
-        end
-    else
-        -- Main menu option
-        if selectedIndex == 1 then
-            -- Attack targets the first living enemy
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        elseif selectedIndex == 3 then
-            -- Defend targets self
-            return { monster }
+            local idx = bv.targetIndex or 1
+            if idx < 1 then idx = 1 end
+            if idx > #candidates then idx = #candidates end
+            bv.targetIndex = idx
+            return { candidates[idx] }
         end
     end
+
     return {}
 end
 
@@ -676,27 +621,43 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
         local ey = layoutVal("enemyY")
         
-        -- Query animation player for current transform, tint, blend
-        local xf = animation_player.getTransform(enemy)
-        local tint = animation_player.getTint(enemy)
+        -- Query animation player for current transform, tint, blend, gradient
+        local xf    = animation_player.getTransform(enemy)
+        local tint  = animation_player.getTint(enemy)
         local blend = animation_player.getBlendMode(enemy)
         local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
         local isDead = deadEnemyFlags[enemy]
-        
-        local drawX = ex + xf.offsetX
-        local drawY = ey + xf.offsetY
-        
-        local currentY = isDeathPlaying and drawY or ey
+
         local spriteW = layoutVal("enemySpriteSize")
         local spriteH = layoutVal("enemySpriteSize")
-        local partX = drawX + spriteW / 2
-        local partY = currentY + spriteH
 
+        -- Anchor at bottom-center of the sprite slot (matches preview).
+        -- ex/ey is the top-left of the slot; anchorX/Y is the bottom-center.
+        local anchorX = ex + spriteW / 2
+        local anchorY = ey + spriteH
+
+        -- Transform offsets are relative to that anchor.
+        local drawX = anchorX + xf.offsetX
+        local drawY = anchorY + xf.offsetY
+
+        local partX = drawX
+        local partY = drawY
+
+        -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
         local function drawEnemySprite()
             if portrait then
-                love.graphics.draw(portrait, drawX, currentY, 0, xf.scaleX * spriteW/portrait:getWidth(), xf.scaleY * spriteH/portrait:getHeight())
+                local sx = xf.scaleX * spriteW / portrait:getWidth()
+                local sy = xf.scaleY * spriteH / portrait:getHeight()
+                -- ox/oy: draw with bottom-center as the pivot so scale/offset
+                -- animate from the same anchor the preview uses.
+                love.graphics.draw(portrait, drawX, drawY, 0, sx, sy,
+                    portrait:getWidth() / 2, portrait:getHeight())
             else
-                love.graphics.rectangle("fill", drawX, currentY, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
+                local fw = layoutVal("enemyFallbackSize")
+                love.graphics.rectangle("fill",
+                    drawX - fw * xf.scaleX / 2,
+                    drawY - fw * xf.scaleY,
+                    fw * xf.scaleX, fw * xf.scaleY)
             end
         end
 
@@ -706,21 +667,21 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
 
         if isDeathPlaying then
-            -- Death animation: use tint/blend/transform from animation player
+            -- Death animation: tint/blend/transform/gradient from animation player
             if blend then love.graphics.setBlendMode(blend) end
             if tint then
                 love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
             else
                 love.graphics.setColor(0.6, 0, 0.9, 1)
             end
-            drawEnemySprite()
+            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
             love.graphics.setBlendMode("alpha")
         elseif not isDead then
-            -- Normal (alive) drawing
+            -- Normal draw with gradient map
             love.graphics.setColor(1, 1, 1, 1)
-            drawEnemySprite()
-            
-            -- Flash overlay via animation player tint/blend
+            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
+
+            -- Tint flash overlay
             if tint and blend then
                 love.graphics.setBlendMode(blend)
                 love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
@@ -728,7 +689,7 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
             end
-            
+
             love.graphics.setColor(1, 1, 1, 1)
             animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "front")
 
@@ -942,20 +903,20 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     end
 end
 
-function renderer.drawTargetReticles(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
-    if combatState ~= "input" or not battleState then return end
+function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" or not bv then return end
     
     local session = renderer.session
     if not session then return end
     
-    local targets = getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    local targets = getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
     for _, target in ipairs(targets) do
         local tx, ty, tw, th
         
         -- Is it an enemy?
         local isEnemy = false
         local enemyIdx = nil
-        for idx, enemy in ipairs(battleState.enemies) do
+        for idx, enemy in ipairs(bv.battle.enemies) do
             if enemy == target then
                 isEnemy = true
                 enemyIdx = idx
@@ -964,7 +925,7 @@ function renderer.drawTargetReticles(battleState, combatState, selectedIndex, sp
         end
         
         if isEnemy then
-            local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+            local spacing = layoutVal("enemyRowWidth") / #bv.battle.enemies
             local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
             local ey = layoutVal("enemyY")
             local portrait = getPortrait(target.spriteKey or target.id)

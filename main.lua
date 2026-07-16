@@ -191,21 +191,8 @@ local function runPreviewAnim(animId, animJson, spritePath)
         local ui = require("presentation.ui")
         ui.init()
 
-        -- Gradient-map shader: remap sprite luminance to a low→high color
-        -- ramp, mixed with the original by `intensity`. Alpha is preserved so
-        -- transparent sprite pixels stay transparent.
-        local gradientShader = love.graphics.newShader([[
-            extern vec3 lowColor;
-            extern vec3 highColor;
-            extern number intensity;
-            vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
-                vec4 px = Texel(tex, tc);
-                number lum = dot(px.rgb, vec3(0.299, 0.587, 0.114));
-                vec3 mapped = mix(lowColor, highColor, lum);
-                vec3 outc = mix(px.rgb, mapped, intensity);
-                return vec4(outc, px.a) * color;
-            }
-        ]])
+        -- Gradient-map shader: shared module (same shader used in battle).
+        local gradient_shader = require("presentation.gradient_shader")
 
         animation_player.reset()
         animation_player.play(animId, dummyTarget)
@@ -240,24 +227,15 @@ local function runPreviewAnim(animId, animJson, spritePath)
             love.graphics.setColor(1, 1, 1, 1)
             animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "back")
 
-            -- Sprite, optionally through the gradient-map shader.
-            local gm = animation_player.getGradientMap(dummyTarget)
+            -- Sprite through tint + gradient-map shader (if active).
             love.graphics.setBlendMode(blendMode)
             if tint then
                 love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
             else
                 love.graphics.setColor(1, 1, 1, 1)
             end
-            if gm then
-                gradientShader:send("lowColor", { gm.low[1], gm.low[2], gm.low[3] })
-                gradientShader:send("highColor", { gm.high[1], gm.high[2], gm.high[3] })
-                gradientShader:send("intensity", gm.intensity)
-                love.graphics.setShader(gradientShader)
-                drawSprite()
-                love.graphics.setShader()
-            else
-                drawSprite()
-            end
+            gradient_shader.drawWithGradient(dummyTarget, drawSprite, animation_player)
+
 
             -- Front-layer particles render on top of the sprite.
             love.graphics.setColor(1, 1, 1, 1)
@@ -977,6 +955,21 @@ runValidation = function()
     for _, item in ipairs(loader.items or {}) do
         if item.animation then
             check(loader.animations and loader.animations[item.animation] ~= nil, "item '" .. tostring(item.id) .. "' references missing animation '" .. tostring(item.animation) .. "'")
+        end
+    end
+
+    -- Validate skill and item targeting specs (Tasks T1 & T2)
+    local targeting = require("engine.targeting")
+    for id, skill in pairs(loader.skills or {}) do
+        if skill.target then
+            local ok, exp = pcall(targeting.expand, skill.target)
+            check(ok and exp and exp.side and exp.count and exp.mode and exp.state, "skill '" .. tostring(id) .. "' has invalid target spec '" .. tostring(skill.target) .. "'")
+        end
+    end
+    for _, item in ipairs(loader.items or {}) do
+        if item.target then
+            local ok, exp = pcall(targeting.expand, item.target)
+            check(ok and exp and exp.side and exp.count and exp.mode and exp.state, "item '" .. tostring(item.id) .. "' has invalid target spec '" .. tostring(item.target) .. "'")
         end
     end
 
@@ -1808,7 +1801,7 @@ function love.draw()
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
         drawSharedPartyHud()
-        renderer.drawTargetReticles(bv.battle, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
+        renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
     end
     end
     

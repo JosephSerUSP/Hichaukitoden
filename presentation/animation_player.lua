@@ -25,11 +25,16 @@ local entries = {}
 
 -- Active animation instances, keyed by target object.
 -- Each target maps to a list of { entryId, entry, elapsed, particleSystems }
+-- so multiple animations can stack on one target.-- Active animation instances, keyed by target object.
+-- Each target maps to a list of { entryId, entry, elapsed, particleSystems }
 -- so multiple animations can stack on one target.
 local instances = {}
 
 -- ParticleSystem instances that need update/draw, keyed by target
 local particleSystems = {}
+
+-- Completion callbacks, keyed by target
+local completionCallbacks = {}
 
 -- Log-once set for unknown track types
 local unknownTrackWarnings = {}
@@ -111,6 +116,7 @@ end
 
 -- Load animation entries (called once from data/loader.lua or scene init).
 -- `data` is the parsed JSON table (animations.json).
+-- Completion callbacks, keyed by target
 function animation_player.load(data)
     entries = {}
     unknownTrackWarnings = {}
@@ -120,14 +126,15 @@ function animation_player.load(data)
 end
 
 -- Get an animation entry by id. Returns nil for unknown ids.
+-- Completion callbacks, keyed by target
 function animation_player.getEntry(entryId)
     return entries[entryId]
 end
 
 -- Start an animation on a target. `target` can be any object used as a key
 -- (enemy battler, party member, etc.). Returns true if the animation was
--- found and started, false if entryId is unknown.
-function animation_player.play(entryId, target)
+-- found and started, false if entryId is unknown. Optionally delays start by delayMs.
+function animation_player.play(entryId, target, delayMs)
     local entry = entries[entryId]
     if not entry then
         if not unknownTrackWarnings[entryId] then
@@ -143,17 +150,31 @@ function animation_player.play(entryId, target)
     table.insert(instances[target], {
         entryId = entryId,
         entry = entry,
-        elapsed = 0,
+        elapsed = -(delayMs or 0) / 1000,
         done = false,
         particleSystems = {},
     })
     return true
 end
 
+-- Registers a callback to be run when all active animations on a target finish.
+-- Executes immediately if no animations are active.
+function animation_player.onComplete(target, callback)
+    if not animation_player.isAnyActive(target) then
+        callback()
+    else
+        if not completionCallbacks[target] then
+            completionCallbacks[target] = {}
+        end
+        table.insert(completionCallbacks[target], callback)
+    end
+end
+
 -- Stop ALL animations on a target (e.g. when an enemy dies permanently
 -- or a battler leaves the field). Also clears particle systems.
 function animation_player.stop(target)
     instances[target] = nil
+    completionCallbacks[target] = nil
     if particleSystems[target] then
         for _, ps in ipairs(particleSystems[target]) do
             ps:release()
@@ -173,6 +194,13 @@ function animation_player.stopAnimation(target, entryId)
     end
     if #list == 0 then
         instances[target] = nil
+        local callbacks = completionCallbacks[target]
+        if callbacks then
+            completionCallbacks[target] = nil
+            for _, cb in ipairs(callbacks) do
+                pcall(cb)
+            end
+        end
     end
 end
 
@@ -186,12 +214,14 @@ function animation_player.reset()
     end
     instances = {}
     particleSystems = {}
+    completionCallbacks = {}
 end
 
 -- Advance all active animations by dt seconds. Called from
 -- renderer.update or equivalent update loop.
 function animation_player.update(dt)
     for target, list in pairs(instances) do
+        local anyFinished = false
         for i = #list, 1, -1 do
             local inst = list[i]
             inst.elapsed = inst.elapsed + dt
@@ -199,10 +229,18 @@ function animation_player.update(dt)
             if inst.elapsed >= durSec then
                 -- Animation complete — remove it
                 table.remove(list, i)
+                anyFinished = true
             end
         end
         if #list == 0 then
             instances[target] = nil
+            local callbacks = completionCallbacks[target]
+            if callbacks then
+                completionCallbacks[target] = nil
+                for _, cb in ipairs(callbacks) do
+                    pcall(cb)
+                end
+            end
         end
     end
 end

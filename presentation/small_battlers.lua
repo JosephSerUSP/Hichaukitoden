@@ -32,6 +32,7 @@ local DEAD_TINT = { 0.28, 0.26, 0.32, 1 }
 -- and the draw function queries the player for current tint/blend/shake.
 
 local animation_player = require("presentation.animation_player")
+local gradient_shader  = require("presentation.gradient_shader")
 
 -- Kept for backward compat: renderer.lua still references small_battlers.animVal
 -- in its enemy-flash draw path. The stub delegates to the animation player's
@@ -184,18 +185,25 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
 
     local frame = dead and 0 or small_battlers.frame(ss)
 
-    -- Damage-feedback shake from animation player
+    -- Damage-feedback shake and transform from animation player
     local drawX = x
+    local drawY = y
+    local scaleX = 1
+    local scaleY = 1
     if not dead and battlerRef then
         local shakeOff = animation_player.getShakeOffset(battlerRef)
-        drawX = x + shakeOff
+        local xf = animation_player.getTransform(battlerRef)
+        drawX = x + shakeOff + xf.offsetX
+        drawY = y + xf.offsetY
+        scaleX = xf.scaleX
+        scaleY = xf.scaleY
     end
 
     local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
     local drawScale = size / ss.cellW
 
     local function drawSprite()
-        love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
+        love.graphics.draw(ss.img, quad, drawX, drawY, 0, drawScale * scaleX, drawScale * scaleY)
     end
 
     if not dead and battlerRef then
@@ -205,10 +213,11 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
 
     if dead then
         love.graphics.setColor(DEAD_TINT[1], DEAD_TINT[2], DEAD_TINT[3], DEAD_TINT[4] or 1)
+        drawSprite()
     else
         love.graphics.setColor(1, 1, 1, 1)
+        gradient_shader.drawWithGradient(battlerRef, drawSprite, animation_player)
     end
-    drawSprite()
 
     -- Damage-feedback flash overlay from animation player
     if not dead and battlerRef then

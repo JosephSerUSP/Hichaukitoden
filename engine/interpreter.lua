@@ -966,6 +966,9 @@ local function buildScriptApi(ctx)
         commitAction = function(index, action)
             require("engine.scenes.battle").commitAction(index, action)
         end,
+        startTargetSelection = function(pendingAction)
+            require("engine.scenes.battle").startTargetSelection(pendingAction)
+        end,
         undoAction = function()
             return require("engine.scenes.battle").undoAction()
         end,
@@ -979,6 +982,7 @@ local function buildScriptApi(ctx)
             return require("engine.scenes.battle").handleTransition(action)
         end
     }
+    api.targeting = require("engine.targeting")
     return api
 end
 

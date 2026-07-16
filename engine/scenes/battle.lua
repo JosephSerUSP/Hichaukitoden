@@ -233,8 +233,9 @@ function battle.advanceLog()
             end
         elseif ev.type == "action" then
             desc = ldr().formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
+            animation_player.play("system.action_flash", ev.actor)
             if ev.animation then
-                animation_player.play(ev.animation, ev.target)
+                animation_player.play(ev.animation, ev.target, 500)
             end
             if v.battle then
                 for idx, enemy in ipairs(v.battle.enemies) do
@@ -246,58 +247,68 @@ function battle.advanceLog()
             end
         elseif ev.type == "damage" then
             desc = ldr().formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
-            local fmt = conf("battle_screen", "popup", {}).damageFormat or "-{0}"
-            local text = fmt:gsub("{0}", tostring(ev.value))
-            local color = conf("battle_screen", "popup", {}).damageColor or {1, 0.2, 0.2, 1}
-            renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target.hp = math.max(0, ev.target.hp - ev.value)
-            if v.battle then
-                local isEnemy = false
-                for idx, enemy in ipairs(v.battle.enemies) do
-                    if enemy == ev.target then
-                        renderer.triggerActionFlash(idx, "damage")
-                        isEnemy = true
-                        break
+            animation_player.onComplete(ev.target, function()
+                local fmt = conf("battle_screen", "popup", {}).damageFormat or "-{0}"
+                local text = fmt:gsub("{0}", tostring(ev.value))
+                local color = conf("battle_screen", "popup", {}).damageColor or {1, 0.2, 0.2, 1}
+                renderer.addDamagePopup(text, popupX, popupY, color)
+                ev.target.hp = math.max(0, ev.target.hp - ev.value)
+                if v.battle then
+                    local isEnemy = false
+                    for idx, enemy in ipairs(v.battle.enemies) do
+                        if enemy == ev.target then
+                            renderer.triggerActionFlash(idx, "damage")
+                            isEnemy = true
+                            break
+                        end
+                    end
+                    -- E8: party smallBattlers flash/shake too (overhaul-6 F1:
+                    -- the summoner is never a damage target in battle anymore)
+                    if not isEnemy then
+                        renderer.triggerSmallDamage(ev.target)
                     end
                 end
-                -- E8: party smallBattlers flash/shake too (overhaul-6 F1:
-                -- the summoner is never a damage target in battle anymore)
-                if not isEnemy then
-                    renderer.triggerSmallDamage(ev.target)
-                end
-            end
+            end)
         elseif ev.type == "heal" then
             desc = ldr().formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
-            local fmt = conf("battle_screen", "popup", {}).healFormat or "+{0}"
-            local text = fmt:gsub("{0}", tostring(ev.value))
-            local color = conf("battle_screen", "popup", {}).healColor or {0.2, 1, 0.2, 1}
-            renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target.hp = math.min(ev.target:getMaxHp(sess()), ev.target.hp + ev.value)
+            animation_player.onComplete(ev.target, function()
+                local fmt = conf("battle_screen", "popup", {}).healFormat or "+{0}"
+                local text = fmt:gsub("{0}", tostring(ev.value))
+                local color = conf("battle_screen", "popup", {}).healColor or {0.2, 1, 0.2, 1}
+                renderer.addDamagePopup(text, popupX, popupY, color)
+                ev.target.hp = math.min(ev.target:getMaxHp(sess()), ev.target.hp + ev.value)
+            end)
         elseif ev.type == "death" then
             desc = ldr().formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
-            local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
-            local color = conf("battle_screen", "popup", {}).deadColor or {0.6, 0.6, 0.6, 1}
-            renderer.addDamagePopup(fmt, popupX, popupY, color)
-            ev.target:addState("dead")
-            ev.target.hp = 0
-            if v.battle then
-                for idx, enemy in ipairs(v.battle.enemies) do
-                    if enemy == ev.target then
-                        renderer.triggerDeathAnim(idx)
-                        break
+            animation_player.onComplete(ev.target, function()
+                local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
+                local color = conf("battle_screen", "popup", {}).deadColor or {0.6, 0.6, 0.6, 1}
+                renderer.addDamagePopup(fmt, popupX, popupY, color)
+                ev.target:addState("dead")
+                ev.target.hp = 0
+                if v.battle then
+                    for idx, enemy in ipairs(v.battle.enemies) do
+                        if enemy == ev.target then
+                            renderer.triggerDeathAnim(idx)
+                            break
+                        end
                     end
                 end
-            end
+            end)
         elseif ev.type == "state_add" then
             desc = ldr().formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
-            local fmt = conf("battle_screen", "popup", {}).stateFormat or "{0}"
-            local text = fmt:gsub("{0}", ev.state:upper())
-            local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
-            renderer.addDamagePopup(text, popupX, popupY, color)
-            ev.target:addState(ev.state)
+            animation_player.onComplete(ev.target, function()
+                local fmt = conf("battle_screen", "popup", {}).stateFormat or "{0}"
+                local text = fmt:gsub("{0}", ev.state:upper())
+                local color = conf("battle_screen", "popup", {}).stateColor or {0.8, 0.4, 1.0, 1}
+                renderer.addDamagePopup(text, popupX, popupY, color)
+                ev.target:addState(ev.state)
+            end)
         elseif ev.type == "state_remove" then
             desc = ldr().formatTerm("battle.status_wore_off", "- {0}'s {1} wore off.", ev.target.name, ev.state:upper())
-            ev.target:removeState(ev.state)
+            animation_player.onComplete(ev.target, function()
+                ev.target:removeState(ev.state)
+            end)
         elseif ev.type == "mp_drain" then
             desc = ldr().formatTerm("battle.consumes_mp", "- {0} consumes {1} MP.", ev.actor.name, ev.value)
             sess().mp = math.max(0, sess().mp - ev.value)
@@ -317,6 +328,55 @@ function battle.advanceLog()
         else
             battle.advanceLog() -- skip empty and try next
         end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- Enters target selection mode for choose-mode specs, or commits immediately
+-------------------------------------------------------------------------------
+function battle.startTargetSelection(pendingAction)
+    local v = battle.getState()
+    local memberInfo = (v.livingMembers or {})[v.activeMemberIdx or 1]
+    if not memberInfo then return end
+
+    local spec = "enemy"
+    if pendingAction.type == "skill" then
+        local sk = ldr().getSkill(pendingAction.id)
+        spec = sk and sk.target or "enemy"
+    elseif pendingAction.type == "item" then
+        local items = {}
+        for itemId, qty in pairs(sess().inventory or {}) do
+            if qty > 0 then table.insert(items, itemId) end
+        end
+        table.sort(items)
+        local itemId = items[pendingAction.itemIndex]
+        local item = itemId and ldr().getItem(itemId)
+        spec = item and (item.target or item.targetScope) or "ally"
+    end
+
+    local targeting = require("engine.targeting")
+    local expanded = targeting.expand(spec)
+
+    if expanded.mode == "choose" then
+        v.targetSelect = true
+        v.targetIndex = 1
+        v.pendingAction = pendingAction
+        v.pendingAction.targetSpec = spec
+        v.prevSelectedIndex = v.selectedIndex
+        v.selectedIndex = 1
+    else
+        local target = memberInfo.actor
+        if expanded.side == "enemy" then
+            for _, e in ipairs(v.battle.enemies) do
+                if not e:isDead() then target = e break end
+            end
+        end
+        battle.commitAction(memberInfo.index, {
+            type = pendingAction.type,
+            id = pendingAction.id,
+            itemIndex = pendingAction.itemIndex,
+            target = target
+        })
     end
 end
 

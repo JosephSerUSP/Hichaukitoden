@@ -73,7 +73,7 @@
         "value": 50
       }
     ],
-    "targetScope": "party",
+    "target": "party",
     "meta": {
       "tier": 2,
       "potency": 25,
