@@ -691,9 +691,9 @@ handlers.SCENE_EVENT = function(cmd, ctx)
     -- this event and performs the transition. Optional `vars` (same
     -- {name, value} shape as SET_VAR assignments) are resolved NOW, against
     -- the PUSHING scene's v/session/party — the only point where that
-    -- context is still live — then applied to the pushed scene's v right
-    -- after its own on_enter runs (scene_host.push), so a scene can hand a
-    -- specific target (e.g. which party member) to the scene it opens.
+    -- context is still live — then seeded into the pushed scene's v BEFORE
+    -- its on_enter runs (scene_host.push), so the target scene's setup
+    -- hooks can read them (e.g. the ritual scene's ritualMode/targetIndex).
     local vars = nil
     if type(cmd.vars) == "table" then
         vars = {}
@@ -982,42 +982,48 @@ local function buildScriptApi(ctx)
         return false
     end
 
-    function api.promoteInfo(isReserve, index)
-        local arr = isReserve and session.reserve or session.party
-        local b = arr and arr[index]
-        if not b or not b.actorData then return false, "" end
+    -- Nth ELIGIBLE evolution entry (level reached, target actor exists) for
+    -- a battler; choice defaults to 1. Shared by promoteInfo/promote so the
+    -- ritual scene's path picker and the executed promotion always agree.
+    local function eligibleEvolution(b, choice)
+        if not b or not b.actorData then return nil end
+        local n = 0
         for _, e in ipairs(b.actorData.evolutions or {}) do
             if e.level and b.level >= e.level and e.evolvesTo and session.loader.getActor(e.evolvesTo) then
-                local cost = e.cost
-                local txt = ""
-                if cost then
-                    if cost.mp then txt = "  Cost: " .. tostring(cost.mp) .. " MP" end
-                    if cost.item then
-                        local it = session.loader.getItem(cost.item)
-                        txt = txt .. "  Needs: " .. (it and (it.name .. " x1") or ("item#" .. tostring(cost.item)))
-                    end
-                else
-                    txt = "  (free)"
-                end
-                return true, txt
+                n = n + 1
+                if n == (choice or 1) then return e end
             end
+        end
+        return nil
+    end
+
+    function api.promoteInfo(isReserve, index, choice)
+        local arr = isReserve and session.reserve or session.party
+        local b = arr and arr[index]
+        local e = b and eligibleEvolution(b, choice)
+        if e then
+            local cost = e.cost
+            local txt = ""
+            if cost then
+                if cost.mp then txt = "  Cost: " .. tostring(cost.mp) .. " MP" end
+                if cost.item then
+                    local it = session.loader.getItem(cost.item)
+                    txt = txt .. "  Needs: " .. (it and (it.name .. " x1") or ("item#" .. tostring(cost.item)))
+                end
+            else
+                txt = "  (free)"
+            end
+            return true, txt
         end
         return false, ""
     end
 
-    function api.promote(isReserve, index)
+    function api.promote(isReserve, index, choice)
         local arr = isReserve and session.reserve or session.party
         local b = arr and arr[index]
-        if not b or not b.actorData then return false end
-        local target = nil
-        local cost = nil
-        for _, e in ipairs(b.actorData.evolutions or {}) do
-            if e.level and b.level >= e.level and e.evolvesTo then
-                target = e.evolvesTo
-                cost = e.cost
-                break
-            end
-        end
+        local e = b and eligibleEvolution(b, choice)
+        local target = e and e.evolvesTo or nil
+        local cost = e and e.cost or nil
         if not target then return false end
         local actorData = session.loader.getActor(target)
         if not actorData then return false end

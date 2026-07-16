@@ -3931,6 +3931,35 @@
           }
         ]
       }
+    ],
+    "goldenScript": [
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "e"
+      },
+      {
+        "key": "e"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      }
     ]
   },
   {
@@ -3955,13 +3984,13 @@
     "kind": "menu",
     "draw": "windows",
     "config": {
-      "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex."
+      "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex. Page 1 = stats/costs, page 2 = portrait/flavor (Q/E/Tab)."
     },
     "scripts": {
-      "setupRitual": "\nlocal v = ctx.v\nv._guard = 1\nv.state = 1\nv.done = 0\nv.confirmIdx = 1\nv.confirmOptions = { {name = \"Yes\"}, {name = \"No\"} }\nif v.ritualMode == nil then v.ritualMode = \"summon\" end\nif v.targetIsReserve == nil then v.targetIsReserve = true end\nv.targetIndex = v.targetIndex or 1\nif v.ritualMode == \"summon\" then\n    local pool = {}\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then\n            table.insert(pool, { id = actor.id, name = actor.name, tier = actor.tier })\n        end\n    end\n    v.pool = pool\n    v.poolIdx = 1\n    v._lastPoolIdx = 0\nelse\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if member and member.empty then member = nil end\n    v.memberName = member and member.name or \"?\"\n    v.pool = { { name = v.memberName } }\n    v.poolIdx = 1\nend\n",
-      "refreshRitual": "\nlocal v = ctx.v\nlocal sm = api.systemConfig.summoner or {}\nlocal function statLine(p)\n    return \"HP \" .. p.maxHp .. \"  ATK \" .. p.atk .. \"  DEF \" .. p.def .. \"\\nMAT \" .. p.mat .. \"  MDF \" .. p.mdf .. \"  ASP \" .. p.asp\nend\nif v.ritualMode == \"summon\" then\n    v.titleText = \"SUMMON\"\n    local entry = v.pool[v.poolIdx]\n    if not entry then return end\n    if v.poolIdx ~= v._lastPoolIdx then\n        local basePv = api.actorPreview(entry.id)\n        v.baseLevel = basePv and basePv.level or 1\n        v.level = v.baseLevel\n        v._lastPoolIdx = v.poolIdx\n    end\n    local pv = api.actorPreview(entry.id, v.level)\n    local skills = {}\n    for _, s in ipairs(pv.skillList or {}) do table.insert(skills, s.name) end\n    v.previewText = pv.name .. \"   Lv \" .. v.level .. \"  (Tier \" .. (entry.tier or 1) .. \")\\n\\n\"\n        .. statLine(pv) .. \"\\n\\nSkills: \" .. table.concat(skills, \", \")\n    v.mpCost = (sm.summonCostBase or 10) + (entry.tier or 1) * (sm.summonCostPerTier or 15) + v.level * (sm.summonCostPerLevel or 5)\n    v.expCost = api.summonExpCost(entry.id, v.level)\n    v.costText = \"MP Cost: \" .. v.mpCost .. \" / \" .. api.getMp()\n        .. \"\\nEXP Cost: \" .. v.expCost .. \"   (Bank: \" .. api.getExpBank() .. \")\"\n    v.helpText = \"UP/DOWN: creature   LEFT/RIGHT: level   ENTER: summon   ESC: back\"\nelseif v.ritualMode == \"promote\" then\n    v.titleText = \"PROMOTE\"\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if not member or member.empty then\n        v.previewText = \"No creature.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n        return\n    end\n    local evolveTo = nil\n    for _, e in ipairs((member.actorData and member.actorData.evolutions) or {}) do\n        if e.level and member.level >= e.level and e.evolvesTo then evolveTo = e.evolvesTo break end\n    end\n    if evolveTo then\n        local pv = api.actorPreview(evolveTo, member.level)\n        local skills = {}\n        for _, s in ipairs(pv.skillList or {}) do table.insert(skills, s.name) end\n        v.previewText = member.name .. \"  Lv \" .. member.level .. \"  evolves into:\\n\\n\"\n            .. pv.name .. \"\\n\\n\" .. statLine(pv) .. \"\\n\\nSkills: \" .. table.concat(skills, \", \")\n        local ok, costText = api.promoteInfo(v.targetIsReserve, v.targetIndex)\n        v.costText = \"Cost:\" .. (costText ~= \"\" and costText or \" (free)\")\n        v.helpText = \"ENTER: promote   ESC: back\"\n    else\n        v.previewText = member.name .. \" has no available promotion.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n    end\nelse\n    v.titleText = \"SACRIFICE\"\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    local p = api.sacrificePreview(v.targetIsReserve, v.targetIndex)\n    if not p or not member or member.empty then\n        v.previewText = \"No creature.\"\n        v.costText = \"\"\n        v.helpText = \"ESC: back\"\n        return\n    end\n    v.previewText = member.name .. \"   Lv \" .. member.level .. \"\\n\\n\" .. statLine(member)\n    local lines = { \"EXP Yield: \" .. p.exp .. \"   (Bank: \" .. api.getExpBank() .. \")\" }\n    for _, r in ipairs(p.rewards or {}) do\n        table.insert(lines, r.name .. \" x\" .. r.count .. \"  (\" .. math.floor((r.chance or 1) * 100) .. \"%)\")\n    end\n    v.costText = table.concat(lines, \"\\n\")\n    v.helpText = \"ENTER: sacrifice   ESC: back\"\nend\n",
+      "setupRitual": "\nlocal v = ctx.v\nv._guard = 1\nv.state = 1\nv.page = 1\nv.confirmIdx = 1\nv.confirmOptions = { {name = \"Yes\"}, {name = \"No\"} }\nif v.ritualMode == nil then v.ritualMode = \"summon\" end\nif v.targetIsReserve == nil then v.targetIsReserve = true end\nv.targetIndex = v.targetIndex or 1\n\nlocal function actorEntry(id)\n    local pv = api.actorPreview(id)\n    local ad = pv and pv.actorData or {}\n    return {\n        id = id,\n        name = pv and pv.name or \"?\",\n        level = ad.level or 1,\n        tier = ad.tier or 1,\n        spriteKey = ad.smallBattler or ad.spriteKey or \"\",\n        portraitKey = ad.spriteKey or \"\",\n        flavor = ad.flavor or \"\",\n    }\nend\n\nif v.ritualMode == \"summon\" then\n    local pool = {}\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then table.insert(pool, actorEntry(actor.id)) end\n    end\n    v.pool = pool\n    v.poolIdx = 1\n    v._lastPoolIdx = 0\nelse\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if member and member.empty then member = nil end\n    v.memberName = member and member.name or \"?\"\nend\nif v.ritualMode == \"promote\" then\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    local paths = {}\n    if member and not member.empty then\n        for _, e in ipairs((member.actorData and member.actorData.evolutions) or {}) do\n            if e.level and member.level >= e.level and e.evolvesTo then\n                table.insert(paths, e.evolvesTo)\n            end\n        end\n    end\n    v.evoPaths = paths\n    v.evoIdx = 1\nend\n",
+      "refreshRitual": "\nlocal v = ctx.v\nlocal sm = api.systemConfig.summoner or {}\nlocal function statWide(p)\n    return \"HP \" .. p.maxHp .. \"  ATK \" .. p.atk .. \"  DEF \" .. p.def .. \"\\nMAT \" .. p.mat .. \"  MDF \" .. p.mdf .. \"  ASP \" .. p.asp\nend\nlocal function statTall(p)\n    return \"HP  \" .. p.maxHp .. \"\\nATK \" .. p.atk .. \"\\nDEF \" .. p.def .. \"\\nMAT \" .. p.mat .. \"\\nMDF \" .. p.mdf .. \"\\nASP \" .. p.asp\nend\nlocal function memberSprite(m)\n    local ad = m.actorData or {}\n    return ad.smallBattler or ad.spriteKey or \"\"\nend\n\nif v.ritualMode == \"summon\" then\n    local entry = v.pool[v.poolIdx]\n    if not entry then return end\n    if v.poolIdx ~= v._lastPoolIdx then\n        v.baseLevel = entry.level\n        v.level = entry.level\n        v._lastPoolIdx = v.poolIdx\n    end\n    local pv = api.actorPreview(entry.id, v.level)\n    local skills = {}\n    for _, s in ipairs(pv.skillList or {}) do table.insert(skills, s.name) end\n    v.subjectRow = { { name = entry.name, spriteKey = entry.spriteKey,\n        text = entry.name .. \"  Lv \" .. v.level .. \"  (Tier \" .. entry.tier .. \")\" } }\n    v.statText = statWide(pv) .. \"\\n\\nSkills: \" .. table.concat(skills, \", \")\n    v.mpCost = (sm.summonCostBase or 10) + entry.tier * (sm.summonCostPerTier or 15) + v.level * (sm.summonCostPerLevel or 5)\n    v.expCost = api.summonExpCost(entry.id, v.level)\n    v.costText = \"MP \" .. v.mpCost .. \"/\" .. api.getMp() .. \"   EXP \" .. v.expCost .. \" (Bank \" .. api.getExpBank() .. \")\\nENTER: summon   ESC: back\"\n    v.portraitKey = entry.portraitKey\n    v.flavorText = entry.name .. \"\\n\\n\" .. (entry.flavor or \"\")\n    v.titleText = \"SUMMON   E: art   L/R: level   U/D: pick\"\nelseif v.ritualMode == \"promote\" then\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if not member or member.empty then\n        v.sideText = \"No creature.\"\n        v.titleText = \"PROMOTE\"\n        v.costText = \"ESC: back\"\n        return\n    end\n    local evoId = v.evoPaths and v.evoPaths[v.evoIdx]\n    v.sideText = \"Choose an\\nevolution\\npath for\\n\" .. member.name .. \".\"\n        .. (#(v.evoPaths or {}) > 1 and \"\\n\\nL/R: path\" or \"\")\n    if evoId then\n        local pv = api.actorPreview(evoId, member.level)\n        v.fromRow = { { name = member.name, spriteKey = memberSprite(member), text = member.name } }\n        v.toRow = { { name = pv.name, spriteKey = (pv.actorData.smallBattler or pv.actorData.spriteKey or \"\"), text = pv.name } }\n        v.fromStat = \"Lv \" .. member.level .. \"\\n\" .. statTall(member)\n        v.toStat = \"Lv \" .. member.level .. \"\\n\" .. statTall(pv)\n        local ok, costText = api.promoteInfo(v.targetIsReserve, v.targetIndex, v.evoIdx)\n        v.costText = \"Cost:\" .. (costText ~= \"\" and costText or \" (free)\") .. \"\\nENTER: promote   ESC: back\"\n        v.portraitKey = pv.actorData.spriteKey or \"\"\n        v.flavorText = pv.name .. \"\\n\\n\" .. (pv.actorData.flavor or \"\")\n        v.titleText = \"PROMOTE   E: art   Path \" .. v.evoIdx .. \"/\" .. #v.evoPaths\n    else\n        v.fromRow = { { name = member.name, spriteKey = memberSprite(member), text = member.name } }\n        v.toRow = { { name = \"?\", text = \"--none--\" } }\n        v.fromStat = \"Lv \" .. member.level .. \"\\n\" .. statTall(member)\n        v.toStat = \"No available\\npromotion.\"\n        v.costText = \"ESC: back\"\n        v.portraitKey = (member.actorData or {}).spriteKey or \"\"\n        v.flavorText = \"\"\n        v.titleText = \"PROMOTE\"\n    end\nelse\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    local p = api.sacrificePreview(v.targetIsReserve, v.targetIndex)\n    v.titleText = \"SACRIFICE   E: art\"\n    if not p or not member or member.empty then\n        v.sideText = \"No creature.\"\n        v.costText = \"ESC: back\"\n        return\n    end\n    v.sideText = \"Sacrifice\\n\" .. member.name .. \" to\\nbank its EXP\\nand receive\\nmaterials.\"\n    v.subjectRow = { { name = member.name, spriteKey = memberSprite(member),\n        text = member.name .. \"  Lv \" .. member.level } }\n    local lines = { \"EXP Yield: \" .. p.exp .. \"   (Bank: \" .. api.getExpBank() .. \")\" }\n    for _, r in ipairs(p.rewards or {}) do\n        table.insert(lines, r.name .. \" x\" .. r.count .. \"  (\" .. math.floor((r.chance or 1) * 100) .. \"%)\")\n    end\n    v.statText = statWide(member) .. \"\\n\\n\" .. table.concat(lines, \"\\n\")\n    v.costText = \"ENTER sacrifice  ESC back\"\n    v.portraitKey = (member.actorData or {}).spriteKey or \"\"\n    v.flavorText = member.name .. \"\\n\\n\" .. ((member.actorData or {}).flavor or \"\")\nend\n",
       "stepLevel": "\nlocal v = ctx.v\nif v.ritualMode ~= \"summon\" or v.state ~= 1 then return end\nlocal entry = v.pool and v.pool[v.poolIdx]\nif not entry then return end\nlocal dir = v._stepDir or 0\nlocal newLevel = (v.level or 1) + dir\nif newLevel < (v.baseLevel or 1) then newLevel = v.baseLevel or 1 end\nif newLevel > 99 then newLevel = 99 end\nif dir > 0 and api.summonExpCost(entry.id, newLevel) > api.getExpBank() then\n    return\nend\nv.level = newLevel\n",
-      "confirmRitual": "\nlocal v = ctx.v\nv._guard = 1\nif v.ritualMode == \"summon\" then\n    local entry = v.pool[v.poolIdx]\n    local target = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if target and not target.empty then\n        v.resultText = \"That slot is occupied!\"\n        v.state = 1\n        v.helpText = v.resultText .. \"   ESC: back\"\n    elseif api.getMp() < (v.mpCost or 0) then\n        v.resultText = \"Not enough MP!\"\n        v.state = 1\n        v.helpText = v.resultText\n    elseif api.getExpBank() < (v.expCost or 0) then\n        v.resultText = \"Not enough banked EXP!\"\n        v.state = 1\n        v.helpText = v.resultText\n    else\n        api.changeMp(-(v.mpCost or 0))\n        api.changeExpBank(-(v.expCost or 0))\n        api.summon(entry.id, v.targetIsReserve, v.targetIndex, v.level)\n        v.resultText = \"Summoned \" .. entry.name .. \" at Lv \" .. tostring(v.level) .. \"!\"\n        v.state = 3\n    end\nelseif v.ritualMode == \"promote\" then\n    local ok = api.promote(v.targetIsReserve, v.targetIndex)\n    if ok then\n        v.resultText = tostring(v.memberName) .. \" evolved into a stronger form!\"\n        v.state = 3\n    else\n        v.resultText = \"Promotion failed (cost not met or no evolution available).\"\n        v.state = 1\n        v.helpText = v.resultText\n    end\nelse\n    if not v.targetIsReserve and api.partyCount() <= 1 then\n        v.resultText = \"Cannot sacrifice your last creature!\"\n        v.state = 1\n        v.helpText = v.resultText\n    else\n        local r = api.executeSacrifice(v.targetIsReserve, v.targetIndex)\n        if r then\n            local txt = \"Sacrificed \" .. r.name .. \"!  +\" .. r.exp .. \" EXP banked.\"\n            for _, it in ipairs(r.items or {}) do\n                txt = txt .. \"\\nGot \" .. it.name .. \" x\" .. it.count .. \"!\"\n            end\n            v.resultText = txt\n            v.state = 3\n        else\n            v.resultText = \"Nothing to sacrifice.\"\n            v.state = 1\n            v.helpText = v.resultText\n        end\n    end\nend\n"
+      "confirmRitual": "\nlocal v = ctx.v\nv._guard = 1\nif v.ritualMode == \"summon\" then\n    local entry = v.pool[v.poolIdx]\n    local target = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if target and not target.empty then\n        v.resultText = \"That slot is occupied!\"\n        v.state = 1\n    elseif api.getMp() < (v.mpCost or 0) then\n        v.resultText = \"Not enough MP!\"\n        v.state = 1\n    elseif api.getExpBank() < (v.expCost or 0) then\n        v.resultText = \"Not enough banked EXP!\"\n        v.state = 1\n    else\n        api.changeMp(-(v.mpCost or 0))\n        api.changeExpBank(-(v.expCost or 0))\n        api.summon(entry.id, v.targetIsReserve, v.targetIndex, v.level)\n        v.resultText = \"Summoned \" .. entry.name .. \"\\nat Lv \" .. tostring(v.level) .. \"!\"\n        v.state = 3\n    end\nelseif v.ritualMode == \"promote\" then\n    local ok = api.promote(v.targetIsReserve, v.targetIndex, v.evoIdx)\n    if ok then\n        v.resultText = tostring(v.memberName) .. \" evolved\\ninto a stronger form!\"\n        v.state = 3\n    else\n        v.resultText = \"Promotion failed\\n(cost not met).\"\n        v.state = 1\n    end\nelse\n    if not v.targetIsReserve and api.partyCount() <= 1 then\n        v.resultText = \"Cannot sacrifice your\\nlast creature!\"\n        v.state = 1\n    else\n        local r = api.executeSacrifice(v.targetIsReserve, v.targetIndex)\n        if r then\n            local txt = \"Sacrificed \" .. r.name .. \"!\\n+\" .. r.exp .. \" EXP banked.\"\n            for _, it in ipairs(r.items or {}) do\n                txt = txt .. \"\\nGot \" .. it.name .. \" x\" .. it.count .. \"!\"\n            end\n            v.resultText = txt\n            v.state = 3\n        else\n            v.resultText = \"Nothing to sacrifice.\"\n            v.state = 1\n        end\n    end\nend\nif v.state == 1 then\n    v.costText = v.resultText:gsub(\"\\n\", \" \") .. \"   ESC: back\"\nend\n"
     },
     "hooks": {
       "on_enter": [
@@ -3972,6 +4001,24 @@
         {
           "cmd": "SCRIPT",
           "ref": "refreshRitual"
+        }
+      ],
+      "on_page": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "page",
+              "value": "v.page == 1 and 2 or 1"
+            }
+          ]
         }
       ],
       "on_up": [
@@ -4077,6 +4124,26 @@
         },
         {
           "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'promote' and #v.evoPaths > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "evoIdx",
+              "value": "v.evoIdx > 1 and v.evoIdx - 1 or #v.evoPaths"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
           "condition": "v._guard == 0 and v.state == 2",
           "then": [
             {
@@ -4110,6 +4177,26 @@
             {
               "cmd": "SCRIPT",
               "ref": "stepLevel"
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "refreshRitual"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.ritualMode == 'promote' and #v.evoPaths > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "evoIdx",
+              "value": "v.evoIdx < #v.evoPaths and v.evoIdx + 1 or 1"
             },
             {
               "cmd": "SCRIPT",
@@ -4273,47 +4360,159 @@
         "rect": {
           "x": 0,
           "y": 2,
-          "w": 11,
-          "h": 22
+          "w": 10,
+          "h": 16
         },
         "style": "list",
+        "visible": "v.ritualMode == 'summon'",
         "content": [
           {
             "type": "list",
             "listId": "v:pool",
             "format": "{name}",
-            "cursor": "v.state == 1 and v.ritualMode == 'summon' and v.poolIdx or 0"
+            "cursor": "v.state == 1 and v.poolIdx or 0"
           }
         ]
       },
       {
-        "id": "ritual_preview",
+        "id": "ritual_side",
         "rect": {
-          "x": 11,
+          "x": 0,
           "y": 2,
-          "w": 21,
-          "h": 15
+          "w": 10,
+          "h": 16
         },
         "style": "panel",
-        "title": "PREVIEW",
+        "visible": "v.ritualMode ~= 'summon'",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.sideText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_subject",
+        "rect": {
+          "x": 10,
+          "y": 2,
+          "w": 22,
+          "h": 4.5
+        },
+        "style": "list",
+        "visible": "v.page == 1 and v.ritualMode ~= 'promote'",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:subjectRow",
+            "format": "{text}",
+            "sprite": "spriteKey",
+            "cursor": "0"
+          }
+        ]
+      },
+      {
+        "id": "ritual_stats",
+        "rect": {
+          "x": 10,
+          "y": 6.5,
+          "w": 22,
+          "h": 7
+        },
+        "style": "panel",
+        "visible": "v.page == 1 and v.ritualMode ~= 'promote'",
         "lineSpacing": 1,
         "content": [
           {
             "type": "text",
-            "text": "{v.previewText}"
+            "text": "{v.statText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_from",
+        "rect": {
+          "x": 10,
+          "y": 2,
+          "w": 11,
+          "h": 4.5
+        },
+        "style": "list",
+        "visible": "v.page == 1 and v.ritualMode == 'promote'",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:fromRow",
+            "format": "{text}",
+            "sprite": "spriteKey",
+            "cursor": "0"
+          }
+        ]
+      },
+      {
+        "id": "ritual_to",
+        "rect": {
+          "x": 21,
+          "y": 2,
+          "w": 11,
+          "h": 4.5
+        },
+        "style": "list",
+        "visible": "v.page == 1 and v.ritualMode == 'promote'",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:toRow",
+            "format": "{text}",
+            "sprite": "spriteKey",
+            "cursor": "0"
+          }
+        ]
+      },
+      {
+        "id": "ritual_from_stats",
+        "rect": {
+          "x": 10,
+          "y": 6.5,
+          "w": 11,
+          "h": 7
+        },
+        "style": "panel",
+        "visible": "v.page == 1 and v.ritualMode == 'promote'",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.fromStat}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_to_stats",
+        "rect": {
+          "x": 21,
+          "y": 6.5,
+          "w": 11,
+          "h": 7
+        },
+        "style": "panel",
+        "visible": "v.page == 1 and v.ritualMode == 'promote'",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.toStat}"
           }
         ]
       },
       {
         "id": "ritual_cost",
         "rect": {
-          "x": 11,
-          "y": 17,
-          "w": 21,
-          "h": 7
+          "x": 10,
+          "y": 13.5,
+          "w": 22,
+          "h": 4.5
         },
         "style": "panel",
-        "title": "COST / YIELD",
+        "visible": "v.page == 1",
         "lineSpacing": 1,
         "content": [
           {
@@ -4323,17 +4522,56 @@
         ]
       },
       {
-        "id": "ritual_help",
+        "id": "ritual_portrait",
         "rect": {
-          "x": 0,
-          "y": 24,
-          "w": 32,
-          "h": 6
+          "x": 10,
+          "y": 2,
+          "w": 10,
+          "h": 16
         },
+        "style": "panel",
+        "visible": "v.page == 2",
+        "content": [
+          {
+            "type": "image",
+            "portraitField": "v.portraitKey"
+          }
+        ]
+      },
+      {
+        "id": "ritual_flavor",
+        "rect": {
+          "x": 20,
+          "y": 2,
+          "w": 12,
+          "h": 16
+        },
+        "style": "panel",
+        "visible": "v.page == 2",
+        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
-            "text": "{v.helpText}"
+            "text": "{v.flavorText}"
+          }
+        ]
+      },
+      {
+        "id": "ritual_party",
+        "rect": {
+          "x": 0,
+          "y": 18,
+          "w": 32,
+          "h": 12
+        },
+        "style": "partyGrid",
+        "gridColumns": 2,
+        "content": [
+          {
+            "type": "list",
+            "listId": "party",
+            "format": "{name}",
+            "cursor": "0"
           }
         ]
       },
@@ -4341,7 +4579,7 @@
         "id": "ritual_confirm",
         "rect": {
           "x": 8,
-          "y": 10,
+          "y": 7,
           "w": 16,
           "h": 7
         },
@@ -4364,9 +4602,9 @@
         "id": "ritual_result",
         "rect": {
           "x": 4,
-          "y": 10,
+          "y": 6,
           "w": 24,
-          "h": 9
+          "h": 10
         },
         "style": "confirm",
         "visible": "v.state == 3",
@@ -4382,6 +4620,12 @@
     "goldenScript": [
       {
         "key": "down"
+      },
+      {
+        "key": "e"
+      },
+      {
+        "key": "e"
       },
       {
         "key": "right"

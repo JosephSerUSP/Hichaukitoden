@@ -303,7 +303,7 @@
         };
 
         // Hook names expected on custom scenes (from engine/scene_host.lua).
-        const SCENE_HOOK_NAMES = ['on_enter', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right', 'on_frame'];
+        const SCENE_HOOK_NAMES = ['on_enter', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right', 'on_page', 'on_frame'];
 
         function flowScenes() {
             const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');

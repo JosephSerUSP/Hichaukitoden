@@ -1010,6 +1010,12 @@ function wr.drawWindowFromData(sceneData, state, ctx)
 
     local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
 
+    -- Persistent synthetic win tables, one per window id. openClocks (the
+    -- open-animation timer) is keyed by the win TABLE, so rebuilding it every
+    -- frame reset the animation each frame and any anim.open window stayed
+    -- frozen at its 16px pop-in floor (the reserve popup "sliver" bug).
+    state._dataWins = state._dataWins or {}
+
     for _, winDef in ipairs(sceneData.windows) do
         -- Evaluate visibility expression.  Absent = visible (true).
         local visible = true
@@ -1018,7 +1024,13 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             if not ok then visible = false
             else visible = vv == true or (type(vv) == "number" and vv ~= 0) end
         end
-        if not visible then goto continue end
+        if not visible then
+            -- Drop the hidden window's anim clock so re-showing it replays
+            -- the open animation (same rule as the winState path).
+            local prev = state._dataWins[winDef.id]
+            if prev then openClocks[prev] = nil end
+            goto continue
+        end
 
         -- Resolve rect (expressions allowed per-value).
         local function resolveDim(dim, default)
@@ -1053,8 +1065,21 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         if winDef.lineSpacing ~= nil then layout.lineSpacing = winDef.lineSpacing end
         if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
 
-        -- Build the synthetic win entry from content blocks.
-        local win = { open = true, listId = nil, format = nil, text = nil, cursor = 1 }
+        -- Build the synthetic win entry from content blocks, reusing the
+        -- persistent table so per-win state keyed on it (openClocks) survives
+        -- across frames. All fields are re-derived below, so stale values
+        -- from the previous frame are explicitly cleared first.
+        local win = state._dataWins[winDef.id]
+        if not win then
+            win = {}
+            state._dataWins[winDef.id] = win
+        end
+        win.open = true
+        win.listId, win.format, win.text, win.cursor = nil, nil, nil, 1
+        win.cursorFormula, win.sprite = nil, nil
+        win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
+        win.slot, win.member = nil, nil
+        win._resolvedRows, win._resolvedCursor = nil, nil
         local gauges = {}
 
         for _, block in ipairs(winDef.content or {}) do
