@@ -1,3 +1,4 @@
 UI GOLDEN BEGIN
 scene|reserve|name|Reserve
+reserve_popup|close_window||
 UI GOLDEN END

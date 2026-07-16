@@ -5,7 +5,7 @@ xvfb-run -a love . validate golden-ui | awk '/UI GOLDEN BEGIN/{flag=1; next} /UI
 
 # Split by scene key: each block starts with "scene|<key>|..."
 awk -v outdir="tools/golden" '
-  /^scene\|/ {
+  /^scene\|[^|]+\|name\|/ {
     if (scene != "") close(outdir "/scene_" scene ".log")
     match($0, /^scene\|([^|]+)/, arr)
     scene = arr[1]
