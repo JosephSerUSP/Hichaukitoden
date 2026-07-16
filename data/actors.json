@@ -31,7 +31,7 @@
     ],
     "evolutions": [
       {
-        "level": 1,
+        "level": 6,
         "evolvesTo": 2
       }
     ],
@@ -80,10 +80,22 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 3,
+        "chance": 0.2
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 3,
+        "chance": 0.6,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 3,
@@ -172,10 +184,22 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 8,
+        "chance": 0.15
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 8,
+        "chance": 0.5,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 5,
@@ -207,10 +231,28 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 19,
+        "chance": 0.05
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 8,
+        "chance": 0.7,
+        "count": 1
+      },
+      {
+        "itemId": 19,
+        "chance": 0.2,
+        "count": 1,
+        "minLevel": 8
+      }
+    ]
   },
   {
     "id": 6,
@@ -325,10 +367,23 @@
     "isRecruitable": false,
     "isEvolved": true,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 20,
+        "chance": 0.05
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 20,
+        "chance": 0.3,
+        "count": 1,
+        "minLevel": 6
+      }
+    ]
   },
   {
     "id": 8,
@@ -358,10 +413,22 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 2,
+        "chance": 0.2
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 2,
+        "chance": 0.7,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 9,
@@ -399,7 +466,8 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 10,
@@ -426,10 +494,28 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.4
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.8,
+        "count": 1
+      },
+      {
+        "itemId": 7,
+        "chance": 0.2,
+        "count": 1,
+        "minLevel": 5
+      }
+    ]
   },
   {
     "id": 11,
@@ -459,10 +545,22 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 6,
+        "chance": 0.15
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 6,
+        "chance": 0.6,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 12,
@@ -489,10 +587,27 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.5
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.8,
+        "count": 1
+      },
+      {
+        "itemId": 1,
+        "chance": 0.3,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 13,
@@ -520,10 +635,22 @@
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "drops": [],
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.2
+      }
+    ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.5,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 14,
@@ -548,6 +675,10 @@
     "gold": 14,
     "drops": [
       {
+        "itemId": 41,
+        "chance": 0.3
+      },
+      {
         "itemId": 24,
         "chance": 0.1
       }
@@ -559,7 +690,14 @@
     "traits": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.7,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 15,
@@ -589,7 +727,8 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 16,
@@ -621,7 +760,8 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 17,
@@ -656,7 +796,8 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 18,
@@ -687,7 +828,8 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 19,
@@ -716,8 +858,8 @@
     "gold": 35,
     "drops": [
       {
-        "itemId": "obsidian_shard",
-        "chance": 0.15
+        "itemId": 39,
+        "chance": 0.3
       }
     ],
     "evolutions": [],
@@ -727,7 +869,14 @@
     "traits": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.7,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 20,
@@ -754,7 +903,7 @@
     "gold": 8,
     "drops": [
       {
-        "itemId": "melted_wax",
+        "itemId": 40,
         "chance": 0.4
       }
     ],
@@ -770,7 +919,14 @@
     "traits": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 40,
+        "chance": 0.8,
+        "count": 1
+      }
+    ]
   },
   {
     "id": 21,
@@ -804,7 +960,8 @@
     "evolutions": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   },
   {
     "id": 22,
@@ -826,6 +983,7 @@
     "smallBattler": "Nurse",
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy"
+    "discipline": "alchemy",
+    "sacrificeRewards": []
   }
 ]

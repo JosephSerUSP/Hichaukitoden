@@ -550,7 +550,8 @@
           ]
         ],
         "blendMode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_0yn8ip"
       },
       {
         "type": "force_field",
@@ -558,7 +559,8 @@
         "duration": 900,
         "field": "vortex",
         "strength": 90,
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_hlwpva"
       }
     ]
   },
@@ -659,6 +661,251 @@
           ]
         ],
         "blendMode": "add",
+        "easing": "linear"
+      }
+    ]
+  },
+  "skill.bone_rush": {
+    "id": "skill.bone_rush",
+    "class": "assignable",
+    "duration": 500,
+    "tracks": [
+      {
+        "type": "shake",
+        "t0": 0,
+        "duration": 400,
+        "amplitude": 3,
+        "frequency": 35,
+        "easing": "ease_out"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 300,
+        "color": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "fromAlpha": 0.8,
+        "toAlpha": 0,
+        "easing": "linear"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 400,
+        "rate": 30,
+        "lifetime": 0.3,
+        "spread": 90,
+        "speed": 120,
+        "gravity": 200,
+        "colorOverLife": [
+          [
+            0.9,
+            0.9,
+            0.9,
+            1
+          ],
+          [
+            0.6,
+            0.6,
+            0.6,
+            0
+          ]
+        ],
+        "blendMode": "alpha",
+        "easing": "linear"
+      }
+    ]
+  },
+  "skill.soothing_mote": {
+    "id": "skill.soothing_mote",
+    "class": "assignable",
+    "duration": 600,
+    "tracks": [
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 400,
+        "color": [
+          0.5,
+          0.9,
+          0.5
+        ],
+        "fromAlpha": 0.6,
+        "toAlpha": 0,
+        "easing": "ease_out"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 600,
+        "rate": 25,
+        "lifetime": 0.5,
+        "spread": 120,
+        "speed": 80,
+        "gravity": -60,
+        "colorOverLife": [
+          [
+            0.6,
+            1,
+            0.6,
+            1
+          ],
+          [
+            0.2,
+            0.8,
+            0.2,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      }
+    ]
+  },
+  "skill.divine_favor": {
+    "id": "skill.divine_favor",
+    "class": "assignable",
+    "duration": 700,
+    "tracks": [
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 500,
+        "color": [
+          1,
+          0.9,
+          0.4
+        ],
+        "fromAlpha": 0.7,
+        "toAlpha": 0,
+        "easing": "ease_out"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 700,
+        "rate": 35,
+        "lifetime": 0.6,
+        "spread": 60,
+        "speed": 100,
+        "gravity": -100,
+        "colorOverLife": [
+          [
+            1,
+            0.95,
+            0.6,
+            1
+          ],
+          [
+            0.8,
+            0.6,
+            0.2,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      }
+    ]
+  },
+  "skill.shadow_claw": {
+    "id": "skill.shadow_claw",
+    "class": "assignable",
+    "duration": 500,
+    "tracks": [
+      {
+        "type": "blend",
+        "t0": 0,
+        "duration": 500,
+        "mode": "add",
+        "easing": "linear"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 400,
+        "color": [
+          0.3,
+          0.05,
+          0.4
+        ],
+        "fromAlpha": 0.9,
+        "toAlpha": 0,
+        "easing": "ease_out"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 400,
+        "rate": 40,
+        "lifetime": 0.35,
+        "spread": 140,
+        "speed": 160,
+        "gravity": 10,
+        "colorOverLife": [
+          [
+            0.4,
+            0.1,
+            0.5,
+            1
+          ],
+          [
+            0.1,
+            0,
+            0.2,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "linear"
+      }
+    ]
+  },
+  "skill.needle_shot": {
+    "id": "skill.needle_shot",
+    "class": "assignable",
+    "duration": 400,
+    "tracks": [
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 300,
+        "color": [
+          0.1,
+          0.6,
+          0.1
+        ],
+        "fromAlpha": 0.8,
+        "toAlpha": 0,
+        "easing": "linear"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 400,
+        "rate": 30,
+        "lifetime": 0.4,
+        "spread": 45,
+        "speed": 150,
+        "gravity": 50,
+        "colorOverLife": [
+          [
+            0.2,
+            0.8,
+            0.2,
+            1
+          ],
+          [
+            0.05,
+            0.3,
+            0.05,
+            0
+          ]
+        ],
+        "blendMode": "alpha",
         "easing": "linear"
       }
     ]

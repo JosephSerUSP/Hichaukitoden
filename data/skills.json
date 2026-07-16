@@ -18,6 +18,7 @@
     "name": "Soothing Mote",
     "target": "ally-any",
     "element": "White",
+    "animation": "skill.soothing_mote",
     "description": "[Ally] Heals a small amount of HP for an ally.",
     "mpCost": 5,
     "effects": [
@@ -32,6 +33,7 @@
     "name": "Bone Rush",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.bone_rush",
     "description": "[Enemy] A reckless charge.",
     "effects": [
       {
@@ -60,6 +62,7 @@
     "name": "Divine Favor",
     "target": "ally-any",
     "element": "White",
+    "animation": "skill.divine_favor",
     "description": "[Ally] Grants regeneration to an ally.",
     "mpCost": 8,
     "effects": [
@@ -76,6 +79,7 @@
     "name": "Shadow Claw",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.shadow_claw",
     "description": "[Enemy] Tears at the enemy from the shadows.",
     "effects": [
       {
@@ -121,6 +125,7 @@
     "name": "Needle Shot",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.needle_shot",
     "description": "[Enemy] A precise strike that injects toxins.",
     "effects": [
       {

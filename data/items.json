@@ -65,6 +65,7 @@
     "name": "Elixir of Insight",
     "type": "consumable",
     "cost": 100,
+    "animation": "skill.divine_favor",
     "description": "Grant a small amount of XP to the party.",
     "icon": 65,
     "effects": [
@@ -589,7 +590,7 @@
     "name": "Mug of Ale",
     "type": "consumable",
     "cost": 5,
-    "icon": 220,
+    "animation": "system.heal",
     "description": "Cheap, frothy ale. Refreshes the spirit.",
     "effects": [
       {
@@ -609,7 +610,7 @@
     "name": "Pint of Stout",
     "type": "consumable",
     "cost": 12,
-    "icon": 221,
+    "animation": "system.heal",
     "description": "Dark, heavy stout. A meal in a glass.",
     "effects": [
       {
@@ -629,7 +630,7 @@
     "name": "Glass of Wine",
     "type": "consumable",
     "cost": 25,
-    "icon": 222,
+    "animation": "system.heal",
     "description": "A surprisingly decent vintage.",
     "effects": [
       {
@@ -701,6 +702,7 @@
     "name": "Ambrosia",
     "type": "consumable",
     "cost": 500,
+    "animation": "system.heal",
     "icon": 222,
     "description": "Food of the gods. Restores full HP and MP.",
     "effects": [
@@ -745,6 +747,7 @@
     "name": "Chrysalis Sigil",
     "type": "quest",
     "cost": 0,
+    "animation": "skill.divine_favor",
     "icon": 65,
     "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
     "category": "promotion_key",
@@ -753,6 +756,45 @@
       "craftKind": "alchemy",
       "potency": 50,
       "craftElement": "White"
+    }
+  },
+  {
+    "id": 39,
+    "name": "Obsidian Shard",
+    "type": "junk",
+    "cost": 15,
+    "icon": 180,
+    "description": "A sharp shard of dark volcanic glass.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "blacksmithing",
+      "craftElement": "Black"
+    }
+  },
+  {
+    "id": 40,
+    "name": "Melted Wax",
+    "type": "junk",
+    "cost": 5,
+    "icon": 220,
+    "description": "A glob of warm, pliable candle wax.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "alchemy",
+      "craftElement": "Red"
+    }
+  },
+  {
+    "id": 41,
+    "name": "Ectoplasm",
+    "type": "junk",
+    "cost": 12,
+    "icon": 55,
+    "description": "Shimmering residue left by spiritual entities.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "alchemy",
+      "craftElement": "Blue"
     }
   }
 ]
