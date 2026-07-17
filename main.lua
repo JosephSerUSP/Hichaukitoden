@@ -790,6 +790,39 @@ runValidation = function()
         check(#events > 0, "battle round produced no events")
     end
 
+    -- newgame.rollGold randomness testing
+    do
+        local newgame = require("engine.newgame")
+        local orig_random = math.random
+
+        -- Test with mocked config bounds
+        local mockLoader = { system = { newGame = { goldMin = 10, goldMax = 20 } } }
+
+        -- Force minimum
+        math.random = function(min, max) return min end
+        local goldMin = newgame.rollGold(mockLoader)
+        check(goldMin == 10, "rollGold failed: expected min 10, got " .. tostring(goldMin))
+
+        -- Force maximum
+        math.random = function(min, max) return max end
+        local goldMax = newgame.rollGold(mockLoader)
+        check(goldMax == 20, "rollGold failed: expected max 20, got " .. tostring(goldMax))
+
+        -- Test fallbacks
+        local fallbackLoader = {}
+
+        math.random = function(min, max) return min end
+        local fbMin = newgame.rollGold(fallbackLoader)
+        check(fbMin == 25, "rollGold failed: expected fallback min 25, got " .. tostring(fbMin))
+
+        math.random = function(min, max) return max end
+        local fbMax = newgame.rollGold(fallbackLoader)
+        check(fbMax == 75, "rollGold failed: expected fallback max 75, got " .. tostring(fbMax))
+
+        -- Restore original math.random
+        math.random = orig_random
+    end
+
     -- Formula sandbox: a representative reward-curve expression must compile
     -- and evaluate against a mock context (SPEC S5 / task A2).
     do
