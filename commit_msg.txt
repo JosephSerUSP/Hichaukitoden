@@ -1,0 +1,11 @@
+🧹 [Extract parameter validation into separate function]
+
+🎯 **What:** Extracted the deeply nested parameter validation conditional into a new `validateCommandParam` function and removed dead code.
+💡 **Why:** It flattens the deep nesting within `validateCommands`, making it easier to read and maintain, and removes a redundant conditional branch.
+✅ **Verification:** The full `xvfb-run love . validate` suite ran and passed, confirming no logic changed.
+✨ **Result:** Improved maintainability and reduced cognitive complexity for `validateCommands`.
+
+- [ ] I have read the SPEC Ground-rules
+- [ ] I have verified the changes
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
