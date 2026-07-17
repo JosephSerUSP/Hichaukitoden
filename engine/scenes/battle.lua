@@ -588,7 +588,7 @@ function battle.update(dt)
 
             if not isRevealing and not isAnimPlaying then
                 autoAdvanceTimer = autoAdvanceTimer + dt
-                local delay = conf("battle_screen", "autoAdvanceDelay", 0.6)
+                local delay = conf("battle_screen", "autoAdvanceDelay", 1.2)
                 if autoAdvanceTimer >= delay then
                     autoAdvanceTimer = 0
                     battle.advanceLog()
@@ -604,7 +604,7 @@ function battle.update(dt)
                 local b = v.battle
                 if not b:isVictory() and not b:isDefeat() and not v.escaped then
                     autoAdvanceTimer = autoAdvanceTimer + dt
-                    local delay = conf("battle_screen", "autoAdvanceDelay", 0.6)
+                    local delay = conf("battle_screen", "autoAdvanceDelay", 1.2)
                     if autoAdvanceTimer >= delay then
                         autoAdvanceTimer = 0
                         battle.rebuildLivingMembers()

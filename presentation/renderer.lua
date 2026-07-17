@@ -286,6 +286,10 @@ function renderer.isBattleLogRevealing(combatLog)
     return revealedCount(current, battleLogReveal.elapsed) < #current
 end
 
+function renderer.finishBattleLogReveal()
+    battleLogReveal.elapsed = math.huge
+end
+
 function renderer.addDamagePopup(text, x, y, color)
     local scatter = config.physics and config.physics.horizontalScatter or 40
     local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1

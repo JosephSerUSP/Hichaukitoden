@@ -191,9 +191,10 @@
         "type": "transform",
         "t0": 0,
         "duration": 350,
-        "fromX": 280,
+        "fromX": 64,
         "toX": 0,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "toY": 0
       }
     ]
   },

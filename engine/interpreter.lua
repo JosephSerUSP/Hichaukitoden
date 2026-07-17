@@ -1094,6 +1094,16 @@ local function buildScriptApi(ctx)
         end,
         handleTransition = function(action)
             return require("engine.scenes.battle").handleTransition(action)
+        end,
+        isLogRevealing = function()
+            local battle = require("engine.scenes.battle")
+            return require("presentation.renderer").isBattleLogRevealing(battle.getState().combatLog)
+        end,
+        finishLogReveal = function()
+            require("presentation.renderer").finishBattleLogReveal()
+        end,
+        isAnimationPlaying = function()
+            return require("presentation.animation_player").isAnythingPlaying()
         end
     }
     api.targeting = require("engine.targeting")
