@@ -31,10 +31,18 @@ end
 -- Thin wrapper kept for the existing call sites: builds the a/b context
 -- through engine/formula.lua and evaluates in its sandbox. On error the
 -- sandbox falls back to 0 (SPEC S5) where the old code returned 1.
-local function evaluateFormula(expr, a, b, session)
+-- A broken effect formula now surfaces a "text" event into the caller's
+-- event stream (parallel to interpreter.lua's evalFormula), instead of
+-- failing silently — previously only formula.lua's warnOnce console print
+-- fired, so a malformed skill/item formula was invisible in-game.
+local function evaluateFormula(expr, a, b, session, events)
     if not expr then return 0 end
     local ctx = formulaEngine.makeContext({ a = a, b = b, target = b }, session)
-    return (formulaEngine.eval(expr, ctx))
+    local val, err = formulaEngine.eval(expr, ctx)
+    if err and events then
+        table.insert(events, { type = "text", text = "[effect] formula error: " .. tostring(err) })
+    end
+    return val
 end
 
 -- context (optional): { element = "White" } — the element of the skill/item
@@ -44,7 +52,7 @@ function effects.apply(effectData, a, b, session, context)
     local ctxElement = context and context.element or nil
 
     if effectData.type == "hp_damage" then
-        local val = evaluateFormula(effectData.formula, a, b, session)
+        local val = evaluateFormula(effectData.formula, a, b, session, events)
         -- Defense reduction, then elemental affinity
         local def = traits.getParam(b, "def", session)
         local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
@@ -64,7 +72,7 @@ function effects.apply(effectData, a, b, session, context)
         end
         
     elseif effectData.type == "hp_heal" then
-        local val = evaluateFormula(effectData.formula, a, b, session)
+        local val = evaluateFormula(effectData.formula, a, b, session, events)
         local maxHp = traits.getParam(b, "maxHp", session)
         local healVal = math.min(maxHp - b.hp, math.floor(val))
         b.hp = b.hp + healVal
@@ -75,7 +83,7 @@ function effects.apply(effectData, a, b, session, context)
         })
         
     elseif effectData.type == "hp_drain" then
-        local val = evaluateFormula(effectData.formula, a, b, session)
+        local val = evaluateFormula(effectData.formula, a, b, session, events)
         local def = traits.getParam(b, "def", session)
         local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
         

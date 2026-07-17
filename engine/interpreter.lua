@@ -387,8 +387,11 @@ handlers.RESTORE_MP = function(cmd, ctx)
     ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
 end
 
--- The regen/poison/duration-decay block as one command (S2). Mirrors the
--- legacy block in engine/battle.lua resolveRound; A5b deletes that copy.
+-- The regen/poison/duration-decay block as one command (S2). This is the
+-- live implementation used by the battle.round_end flow. The matching block
+-- in engine/battle.lua resolveRound is deliberately RETAINED as the SPEC S4
+-- fallback (runs only if battle.round_end is removed from flows.json), not
+-- deleted — keep the two in sync if this logic changes.
 handlers.STATE_TICKS = function(cmd, ctx)
     local battlers = {}
     for _, b in ipairs(ctx.party or {}) do table.insert(battlers, b) end
