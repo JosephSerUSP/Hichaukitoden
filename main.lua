@@ -393,6 +393,22 @@ local function runGoldenUI()
     -- scene_host.keypressed(). Extra scenes get golden coverage by authoring
     -- a goldenScript, with no engine edits.
 
+    local function smokeTestDraw(sceneId, stepIndex, currentCtx, scene_host)
+        local okDraw, drawErr = pcall(function()
+            local smokeCanvas = love.graphics.newCanvas(256, 240)
+            love.graphics.setCanvas(smokeCanvas)
+            love.graphics.clear(0, 0, 0, 1)
+            love.graphics.setColor(1, 1, 1, 1)
+            scene_host.draw(currentCtx)
+            love.graphics.setCanvas()
+            smokeCanvas:newImageData():encode("png",
+                string.format("golden_ui_%s_%02d.png", tostring(sceneId), stepIndex))
+        end)
+        if not okDraw then
+            error("golden-ui draw smoke failed for scene '" .. tostring(sceneId) .. "': " .. tostring(drawErr), 0)
+        end
+    end
+
     for _, sceneDef in ipairs(loader.scenes or {}) do
         local sceneId = sceneDef.id
         if not sceneId then goto continue end
@@ -463,19 +479,7 @@ local function runGoldenUI()
             -- markers, so reference logs are unaffected.
             if sceneDef.draw == "windows" then
                 stepIndex = (stepIndex or 0) + 1
-                local okDraw, drawErr = pcall(function()
-                    local smokeCanvas = love.graphics.newCanvas(256, 240)
-                    love.graphics.setCanvas(smokeCanvas)
-                    love.graphics.clear(0, 0, 0, 1)
-                    love.graphics.setColor(1, 1, 1, 1)
-                    scene_host.draw(currentCtx)
-                    love.graphics.setCanvas()
-                    smokeCanvas:newImageData():encode("png",
-                        string.format("golden_ui_%s_%02d.png", tostring(sceneId), stepIndex))
-                end)
-                if not okDraw then
-                    error("golden-ui draw smoke failed for scene '" .. tostring(sceneId) .. "': " .. tostring(drawErr), 0)
-                end
+                smokeTestDraw(sceneId, stepIndex, currentCtx, scene_host)
             end
         end
 
