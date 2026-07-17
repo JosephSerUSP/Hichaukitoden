@@ -49,8 +49,6 @@ local sliceQuad = nil
 local spriteSliceQuad = nil
 local wallQx, wallQy = 0, 0
 
-local npcSprites = {}
-
 local spriteImageCache = {}
 local function getEventSprite(ev, session)
     if not ev then return nil end
@@ -84,16 +82,6 @@ function viewport_3d.init()
         tileset:setFilter("nearest", "nearest")
         sliceQuad = love.graphics.newQuad(0, 0, 1, 256, sheetW, sheetH)
         wallQx, wallQy = 0, 0
-    end
-    
-    -- Load NPC sprites NPC00 to NPC16
-    for i = 0, 16 do
-        local filename = string.format("assets/sprites/NPC%02d.png", i)
-        if love.filesystem.getInfo(filename) then
-            local img = love.graphics.newImage(filename)
-            img:setFilter("nearest", "nearest")
-            npcSprites[i] = img
-        end
     end
 end
 
