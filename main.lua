@@ -1100,6 +1100,19 @@ runValidation = function()
                     check(allowScript, ownerDesc .. " contains a SCRIPT command (S6 zero-SCRIPT rule)")
                 end
 
+                local function validateAssignmentRow(a, ai, mockCtx, formulaEngine, ownerDesc, id, paramDef)
+                    check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
+                        ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
+                    if type(a) ~= "table" then return end
+                    local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
+                    check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
+                    if type(a.name) ~= "string" or a.name == "" then return end
+                    -- Feed the row's result (or a neutral 1)
+                    -- forward for later rows' formulas.
+                    if ok and result ~= nil then mockCtx.v[a.name] = result
+                    else mockCtx.v[a.name] = 1 end
+                end
+
                 -- Validate params
                 for _, paramDef in ipairs(cmdDef.params or {}) do
                     local val = cmd[paramDef.key]
@@ -1127,18 +1140,7 @@ runValidation = function()
                         local formulaEngine = require("engine.formula")
                         local mockCtx = buildFormulaMockCtx()
                         for ai, a in ipairs(val) do
-                            check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
-                                ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
-                            if type(a) == "table" then
-                                local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
-                                check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
-                                if type(a.name) == "string" and a.name ~= "" then
-                                    -- Feed the row's result (or a neutral 1)
-                                    -- forward for later rows' formulas.
-                                    if ok and result ~= nil then mockCtx.v[a.name] = result
-                                    else mockCtx.v[a.name] = 1 end
-                                end
-                            end
+                            validateAssignmentRow(a, ai, mockCtx, formulaEngine, ownerDesc, id, paramDef)
                         end
                     end
                 elseif paramDef.type == "commands" then
