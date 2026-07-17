@@ -500,14 +500,77 @@
         }
 
         function addEncounterToMap() {
-            const actorList = (dbPayload.actors || []).map(a => `${a.id}: ${a.name}`).join('\n');
-            const actorId = parseInt(prompt(`Enter Actor ID to encounter:\n${actorList}`, dbPayload.actors && dbPayload.actors[0] ? dbPayload.actors[0].id : '1'));
-            if (!isNaN(actorId)) {
-                const weight = parseInt(prompt("Enter Spawn Weight (probability weight):", "10")) || 10;
-                mapPropsEncounters.push({ id: actorId, weight: weight });
+            const actors = dbPayload.actors || [];
+            if (!actors.length) { showToast('No actors defined — add one in the Actors tab first.'); return; }
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+            const box = document.createElement('div');
+            box.style.cssText = 'min-width:280px;padding:10px;'
+                + 'background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);'
+                + 'display:flex;flex-direction:column;gap:8px;';
+
+            const title = document.createElement('div');
+            title.textContent = 'Add Encounter';
+            title.style.cssText = 'font-weight:bold;';
+            box.appendChild(title);
+
+            const actorRow = document.createElement('div');
+            actorRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            const actorLabel = document.createElement('label');
+            actorLabel.textContent = 'Actor:';
+            actorLabel.style.cssText = 'font-size:10px;min-width:50px;';
+            const actorSelect = document.createElement('select');
+            actorSelect.className = 'win98-select';
+            actorSelect.style.flex = '1';
+            actors.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = `${a.name} (ID ${a.id})`;
+                actorSelect.appendChild(opt);
+            });
+            actorRow.appendChild(actorLabel);
+            actorRow.appendChild(actorSelect);
+            box.appendChild(actorRow);
+
+            const weightRow = document.createElement('div');
+            weightRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            const weightLabel = document.createElement('label');
+            weightLabel.textContent = 'Weight:';
+            weightLabel.style.cssText = 'font-size:10px;min-width:50px;';
+            const weightInput = document.createElement('input');
+            weightInput.type = 'number';
+            weightInput.className = 'win98-input';
+            weightInput.value = '10';
+            weightInput.style.flex = '1';
+            weightRow.appendChild(weightLabel);
+            weightRow.appendChild(weightInput);
+            box.appendChild(weightRow);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:4px;';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'win98-btn';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = () => overlay.remove();
+            const okBtn = document.createElement('button');
+            okBtn.className = 'win98-btn';
+            okBtn.textContent = 'Add';
+            okBtn.onclick = () => {
+                const weight = parseInt(weightInput.value) || 10;
+                mapPropsEncounters.push({ id: parseInt(actorSelect.value), weight: weight });
                 mapPropsDirty = true;
                 renderEncountersList(mapPropsEncounters);
-            }
+                overlay.remove();
+            };
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(okBtn);
+            box.appendChild(btnRow);
+
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
         }
 
         function removeEncounterFromMap() {
