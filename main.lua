@@ -209,24 +209,31 @@ local function runPreviewScene(sceneId)
                 local ui = require("presentation.ui")
                 ui.init()
                 local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+
+                local function finalizeCanvas()
+                    love.graphics.setCanvas()
+                    local fileData = previewCanvas:newImageData():encode("png")
+                    return love.data.encode("string", "base64", fileData)
+                end
+
                 love.graphics.setCanvas(previewCanvas)
                 love.graphics.clear(0, 0, 0, 1)
                 love.graphics.setColor(1, 1, 1, 1)
+
                 if sh.draw(ctx) then
                     payload.frameKind = "windows"
-                else
-                    renderer.init(vSession)
-                    -- Settle the menu slide-in animation so panels are in
-                    -- their resting position, exactly as after ~2s in-game.
-                    renderer.update(1)
-                    renderer.update(1)
-                    local wrMod = require("presentation.window_renderer")
-                    wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
-                    payload.frameKind = "declarative"
+                    return finalizeCanvas()
                 end
-                love.graphics.setCanvas()
-                local fileData = previewCanvas:newImageData():encode("png")
-                return love.data.encode("string", "base64", fileData)
+
+                renderer.init(vSession)
+                -- Settle the menu slide-in animation so panels are in
+                -- their resting position, exactly as after ~2s in-game.
+                renderer.update(1)
+                renderer.update(1)
+                local wrMod = require("presentation.window_renderer")
+                wrMod.draw(sh.getCurrentState(), sceneDef, ctx)
+                payload.frameKind = "declarative"
+                return finalizeCanvas()
             end)
             if okDraw then
                 payload.image = imgOrErr
