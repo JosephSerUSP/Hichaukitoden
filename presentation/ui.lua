@@ -10,6 +10,26 @@ local targetSkin
 local mainFont
 local popupFont
 
+local quadCache = {}
+local function getQuad(x, y, w, h, sw, sh)
+    local c1 = quadCache[x]
+    if not c1 then c1 = {}; quadCache[x] = c1 end
+    local c2 = c1[y]
+    if not c2 then c2 = {}; c1[y] = c2 end
+    local c3 = c2[w]
+    if not c3 then c3 = {}; c2[w] = c3 end
+    local c4 = c3[h]
+    if not c4 then c4 = {}; c3[h] = c4 end
+    local c5 = c4[sw]
+    if not c5 then c5 = {}; c4[sw] = c5 end
+    local q = c5[sh]
+    if not q then
+        q = love.graphics.newQuad(x, y, w, h, sw, sh)
+        c5[sh] = q
+    end
+    return q
+end
+
 -- Parse string and replace \eventName and \c[x]
 local function parseRichText(text, defaultColor, eventName)
     local result = text or ""
@@ -151,7 +171,7 @@ function ui.drawPanel(x, y, w, h, title, highlight)
             for bx = startX, endX - 1, bgW do
                 local drawW = math.min(bgW, endX - bx)
                 local drawH = math.min(bgH, endY - by)
-                local tileQuad = love.graphics.newQuad(0, 0, drawW, drawH, wsW, wsH)
+                local tileQuad = getQuad(0, 0, drawW, drawH, wsW, wsH)
                 love.graphics.draw(skin, tileQuad, bx, by)
             end
         end
@@ -162,26 +182,26 @@ function ui.drawPanel(x, y, w, h, title, highlight)
         local edgeH = h - 16
         
         -- Top side edge (x=40, y=0, w=16, h=8)
-        local topQuad = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
+        local topQuad = getQuad(40, 0, 16, 8, wsW, wsH)
         love.graphics.draw(skin, topQuad, x + 8, y, 0, edgeW / 16, 1)
 
         -- Bottom side edge (x=40, y=24, w=16, h=8)
-        local botQuad = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
+        local botQuad = getQuad(40, 24, 16, 8, wsW, wsH)
         love.graphics.draw(skin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
 
         -- Left side edge (x=32, y=8, w=8, h=16)
-        local leftQuad = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
+        local leftQuad = getQuad(32, 8, 8, 16, wsW, wsH)
         love.graphics.draw(skin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
 
         -- Right side edge (x=56, y=8, w=8, h=16)
-        local rightQuad = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
+        local rightQuad = getQuad(56, 8, 8, 16, wsW, wsH)
         love.graphics.draw(skin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
 
         -- 3. Draw 8px Corners
-        local tlQuad = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
-        local trQuad = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
-        local blQuad = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
-        local brQuad = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
+        local tlQuad = getQuad(32, 0, 8, 8, wsW, wsH)
+        local trQuad = getQuad(56, 0, 8, 8, wsW, wsH)
+        local blQuad = getQuad(32, 24, 8, 8, wsW, wsH)
+        local brQuad = getQuad(56, 24, 8, 8, wsW, wsH)
 
         love.graphics.draw(skin, tlQuad, x, y)
         love.graphics.draw(skin, trQuad, x + w - 8, y)
@@ -231,26 +251,26 @@ function ui.drawTargetReticle(x, y, w, h)
         love.graphics.setColor(1, 1, 1, 1)
         
         -- Top side edge (x=8, y=0, w=16, h=8)
-        local topQuad = love.graphics.newQuad(8, 0, 16, 8, wsW, wsH)
+        local topQuad = getQuad(8, 0, 16, 8, wsW, wsH)
         love.graphics.draw(skin, topQuad, rx + 8, ry, 0, edgeW / 16, 1)
 
         -- Bottom side edge (x=8, y=24, w=16, h=8)
-        local botQuad = love.graphics.newQuad(8, 24, 16, 8, wsW, wsH)
+        local botQuad = getQuad(8, 24, 16, 8, wsW, wsH)
         love.graphics.draw(skin, botQuad, rx + 8, ry + rh - 8, 0, edgeW / 16, 1)
 
         -- Left side edge (x=0, y=8, w=8, h=16)
-        local leftQuad = love.graphics.newQuad(0, 8, 8, 16, wsW, wsH)
+        local leftQuad = getQuad(0, 8, 8, 16, wsW, wsH)
         love.graphics.draw(skin, leftQuad, rx, ry + 8, 0, 1, edgeH / 16)
 
         -- Right side edge (x=24, y=8, w=8, h=16)
-        local rightQuad = love.graphics.newQuad(24, 8, 8, 16, wsW, wsH)
+        local rightQuad = getQuad(24, 8, 8, 16, wsW, wsH)
         love.graphics.draw(skin, rightQuad, rx + rw - 8, ry + 8, 0, 1, edgeH / 16)
 
         -- Draw 8px Corners
-        local tlQuad = love.graphics.newQuad(0, 0, 8, 8, wsW, wsH)
-        local trQuad = love.graphics.newQuad(24, 0, 8, 8, wsW, wsH)
-        local blQuad = love.graphics.newQuad(0, 24, 8, 8, wsW, wsH)
-        local brQuad = love.graphics.newQuad(24, 24, 8, 8, wsW, wsH)
+        local tlQuad = getQuad(0, 0, 8, 8, wsW, wsH)
+        local trQuad = getQuad(24, 0, 8, 8, wsW, wsH)
+        local blQuad = getQuad(0, 24, 8, 8, wsW, wsH)
+        local brQuad = getQuad(24, 24, 8, 8, wsW, wsH)
 
         love.graphics.draw(skin, tlQuad, rx, ry)
         love.graphics.draw(skin, trQuad, rx + rw - 8, ry)
@@ -360,7 +380,7 @@ function ui.drawIcon(iconId, x, y)
     
     local col = (iconId - 1) % 10
     local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = getQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
     
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
@@ -378,7 +398,7 @@ function ui.drawIconScaled(iconId, x, y, scale)
 
     local col = (iconId - 1) % 10
     local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = getQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
 
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
