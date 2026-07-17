@@ -1061,6 +1061,33 @@ runValidation = function()
         }
     end
 
+    local function validateAssignmentsParam(val, paramDef, ownerDesc, id)
+        check(type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a list of {name, value} rows")
+        if type(val) ~= "table" then return end
+
+        local formulaEngine = require("engine.formula")
+        local mockCtx = buildFormulaMockCtx()
+
+        for ai, a in ipairs(val) do
+            check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
+                ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
+
+            if type(a) ~= "table" then goto continue end
+
+            local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
+            check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
+
+            if type(a.name) ~= "string" or a.name == "" then goto continue end
+
+            -- Feed the row's result (or a neutral 1)
+            -- forward for later rows' formulas.
+            if ok and result ~= nil then mockCtx.v[a.name] = result
+            else mockCtx.v[a.name] = 1 end
+
+            ::continue::
+        end
+    end
+
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
@@ -1122,25 +1149,7 @@ runValidation = function()
                     -- same semantics the handler runs with, so later rows
                     -- reading earlier ones validate correctly. Any future
                     -- list-of-pairs command inherits this.
-                    check(type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a list of {name, value} rows")
-                    if type(val) == "table" then
-                        local formulaEngine = require("engine.formula")
-                        local mockCtx = buildFormulaMockCtx()
-                        for ai, a in ipairs(val) do
-                            check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
-                                ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
-                            if type(a) == "table" then
-                                local ok, result, ferr = pcall(formulaEngine.eval, a.value, mockCtx)
-                                check(ok and ferr == nil, ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] value failed to compile formula '" .. tostring(a.value) .. "': " .. tostring(ferr))
-                                if type(a.name) == "string" and a.name ~= "" then
-                                    -- Feed the row's result (or a neutral 1)
-                                    -- forward for later rows' formulas.
-                                    if ok and result ~= nil then mockCtx.v[a.name] = result
-                                    else mockCtx.v[a.name] = 1 end
-                                end
-                            end
-                        end
-                    end
+                    validateAssignmentsParam(val, paramDef, ownerDesc, id)
                 elseif paramDef.type == "commands" then
                     -- val could be a list of commands, OR for CHOICE it could be a list of options where each option has .commands
                     -- Task A4b: nested lists of a NON-interactive block command
