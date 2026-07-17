@@ -9,7 +9,7 @@
       "type": "ROUTER",
       "branches": [
         {
-          "condition": "questStatus:broken_blade:active",
+          "condition": "questStatus:golden_promise:active",
           "target": "quest_blade_router"
         },
         {
@@ -155,11 +155,11 @@
       "type": "ROUTER",
       "branches": [
         {
-          "condition": "questStatus:broken_blade:completed",
+          "condition": "questStatus:golden_promise:completed",
           "target": "quest_completed_text"
         },
         {
-          "condition": "questStatus:broken_blade:active",
+          "condition": "questStatus:golden_promise:active",
           "target": "quest_active_text"
         }
       ],
@@ -168,7 +168,7 @@
     "quest_offer_text": {
       "type": "TEXT",
       "speaker": "Laura",
-      "content": "You're going deep? There's a rumor. An ancient blade, shattered in the lower levels. 'Shattered Blade'. If you find the pieces... I might be able to reforge it. Interested?",
+      "content": "You're going deep? Listen. Rumor says a rare undead down there wears a golden band. Unmarked, untarnished. I want that signet — new material for my forge, good pay for you. Interested?",
       "next": "quest_offer_choices"
     },
     "quest_offer_choices": {
@@ -187,19 +187,19 @@
     "action_offer_quest": {
       "type": "ACTION",
       "action": "OFFER_QUEST",
-      "questId": "broken_blade",
+      "questId": "golden_promise",
       "acceptNode": "quest_active_text",
       "declineNode": "talk_hub"
     },
     "quest_active_text": {
       "type": "TEXT",
       "speaker": "Laura",
-      "content": "Find the Shattered Blade. Don't come back empty-handed.",
+      "content": "Find that signet. Don't come back empty-handed.",
       "next": "quest_blade_router"
     },
     "quest_blade_router": {
       "type": "ROUTER",
-      "condition": "hasItem:26",
+      "condition": "hasItem:25",
       "trueNode": "quest_turnin_text",
       "falseNode": "quest_active_choices"
     },
@@ -215,7 +215,7 @@
     "quest_turnin_text": {
       "type": "TEXT",
       "speaker": "Laura",
-      "content": "You found it. Hmph. Not bad. The steel is old... very old. Give it here.",
+      "content": "You found it. Hmph. Not bad. The gold is pure... untouched. Give it here.",
       "next": "quest_turnin_choices"
     },
     "quest_turnin_choices": {
@@ -230,9 +230,9 @@
     "action_complete_quest": {
       "type": "ACTION",
       "action": "COMPLETE_QUEST",
-      "questId": "broken_blade",
+      "questId": "golden_promise",
       "completeNode": "quest_completed_text",
-      "takeItem": 26
+      "takeItem": 25
     },
     "quest_completed_text": {
       "type": "TEXT",

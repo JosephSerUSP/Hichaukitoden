@@ -57,6 +57,7 @@
                     // next save validates against what was just written.
                     if (result.versions) dbPayload._fileVersions = result.versions;
                     setDirty(false);
+                    validateSavedData();
                     // Fields inside the Database modal are live-bound, so a
                     // successful save means there's nothing left to "discard" if
                     // the modal is closed afterwards — refresh its snapshot.
@@ -68,6 +69,29 @@
                 }
             } catch (err) {
                 showToast('Connection failed: server offline');
+            }
+        }
+
+        // Post-save integrity sweep: asks the server to run the engine's own
+        // validator (`lovec . validate`) against what was just written and
+        // surfaces any cross-reference/schema problems. Fire-and-forget so
+        // saving never blocks on the ~2s engine boot; the save itself has
+        // already succeeded when this runs.
+        async function validateSavedData() {
+            try {
+                const res = await fetch(`${API_URL}/validate`);
+                const result = await res.json();
+                if (!result.ok) {
+                    const problems = result.problems || ['unknown validation failure'];
+                    document.getElementById('status-db').textContent =
+                        `Database: Saved — ${problems.length} validation problem${problems.length === 1 ? '' : 's'}`;
+                    showToast('Saved, but the engine validator found problems:\n\n' + problems.join('\n'));
+                } else {
+                    document.getElementById('status-db').textContent = 'Database: Saved ✓ validated';
+                }
+            } catch (err) {
+                // Server went away between save and validate — the next
+                // interaction will surface the offline state; stay quiet here.
             }
         }
 

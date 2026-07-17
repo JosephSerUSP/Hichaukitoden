@@ -911,6 +911,66 @@ runValidation = function()
         end
     end
 
+    -- Event scriptId links must resolve to a common event
+    for _, map in ipairs(loader.maps or {}) do
+        for _, ev in ipairs(map.events or {}) do
+            if ev.scriptId then
+                check(loader.commonEvents and loader.commonEvents[tostring(ev.scriptId)] ~= nil,
+                    "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) ..
+                    ") references missing common event '" .. tostring(ev.scriptId) .. "'")
+            end
+        end
+    end
+
+    -- Quest requirement/reward items must exist
+    for qId, quest in pairs(loader.quests or {}) do
+        for _, req in ipairs((quest.requirements or {}).items or {}) do
+            check(loader.getItem(req.id), "quest '" .. tostring(qId) .. "' requires missing item '" .. tostring(req.id) .. "'")
+        end
+        for _, rew in ipairs((quest.rewards or {}).items or {}) do
+            check(loader.getItem(rew.id), "quest '" .. tostring(qId) .. "' rewards missing item '" .. tostring(rew.id) .. "'")
+        end
+    end
+
+    -- Conversation graphs (data/graphs/*.json): every node link must resolve
+    -- and quest actions must reference quests.json entries. Graphs load ad
+    -- hoc at runtime (director.startConversation), so a broken link only
+    -- surfaces mid-dialogue without this sweep.
+    do
+        local json = require("data.json")
+        for _, f in ipairs(love.filesystem.getDirectoryItems("data/graphs")) do
+            if f:match("%.json$") then
+                local contents = love.filesystem.read("data/graphs/" .. f)
+                local okG, graph = pcall(json.decode, contents)
+                if check(okG and type(graph) == "table", "graph '" .. f .. "' is not valid JSON")
+                    and type(graph.nodes) == "table" then
+                    local nodes = graph.nodes
+                    check(graph.initialNode == nil or nodes[graph.initialNode] ~= nil,
+                        "graph '" .. f .. "' initialNode '" .. tostring(graph.initialNode) .. "' does not exist")
+                    for id, node in pairs(nodes) do
+                        for _, key in ipairs({ "next", "trueNode", "falseNode" }) do
+                            local link = node[key]
+                            check(link == nil or nodes[link] ~= nil,
+                                "graph '" .. f .. "' node '" .. tostring(id) .. "' links to missing node '" .. tostring(link) .. "'")
+                        end
+                        for _, opt in ipairs(node.options or {}) do
+                            check(opt.target == nil or nodes[opt.target] ~= nil,
+                                "graph '" .. f .. "' node '" .. tostring(id) .. "' choice links to missing node '" .. tostring(opt.target) .. "'")
+                        end
+                        for _, br in ipairs(node.branches or {}) do
+                            check(br.target == nil or nodes[br.target] ~= nil,
+                                "graph '" .. f .. "' node '" .. tostring(id) .. "' branch links to missing node '" .. tostring(br.target) .. "'")
+                        end
+                        if node.action == "OFFER_QUEST" or node.action == "COMPLETE_QUEST" then
+                            check(loader.quests and loader.quests[tostring(node.questId)] ~= nil,
+                                "graph '" .. f .. "' node '" .. tostring(id) .. "' references missing quest '" .. tostring(node.questId) .. "'")
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     -- Simulated battle round with a starting party
     local vSession = session.GameSession.new(loader)
     vSession:initializeStartingParty()

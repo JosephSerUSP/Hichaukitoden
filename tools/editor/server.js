@@ -490,6 +490,33 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ success: false, message: err.message }));
             }
         });
+    } else if (req.method === 'GET' && req.url === '/validate') {
+        // Runs the engine's own validator (`lovec . validate`) against the
+        // SAVED data files and relays its verdict. One validator, zero
+        // duplicated schema: the editor surfaces exactly what the game
+        // would refuse to load. Reflects the last save, like the previews.
+        const respond = (payload) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(payload));
+        };
+        if (!fs.existsSync(previewExe)) {
+            return respond({ ok: false, problems: ['validation unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)'] });
+        }
+        const { execFile } = require('child_process');
+        execFile(previewExe, ['.', 'validate'], {
+            cwd: PROJECT_DIR,
+            timeout: 60000,
+            windowsHide: true,
+            maxBuffer: 4 * 1024 * 1024
+        }, (err, stdout) => {
+            const text = String(stdout || '');
+            if (text.includes('VALIDATE OK')) return respond({ ok: true, problems: [] });
+            const idx = text.indexOf('VALIDATE FAIL:');
+            const problems = idx >= 0
+                ? text.slice(idx + 'VALIDATE FAIL:'.length).trim().split('\n').map(l => l.trim()).filter(Boolean)
+                : ['validator produced no verdict' + (err ? ' (' + err.message + ')' : '')];
+            respond({ ok: false, problems });
+        });
     } else if (req.method === 'POST' && req.url === '/play') {
         const loveCmd = `"${LOVE_EXE}" .`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {
