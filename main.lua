@@ -21,18 +21,18 @@ setmetatable(_G, {
         return rawget(t, k)
     end,
     __newindex = function(t, k, v)
-        if k == "currentScene" then
-            local curr = scene_host.getCurrent()
-            if curr ~= v then
-                -- if popping (e.g. from crafting back to menu)
-                if scene_host.getPrevious() == v then
-                    scene_host.pop()
-                else
-                    scene_host.goto_scene(v)
-                end
-            end
-        else
+        if k ~= "currentScene" then
             rawset(t, k, v)
+            return
+        end
+
+        if scene_host.getCurrent() == v then return end
+
+        -- if popping (e.g. from crafting back to menu)
+        if scene_host.getPrevious() == v then
+            scene_host.pop()
+        else
+            scene_host.goto_scene(v)
         end
     end
 })
