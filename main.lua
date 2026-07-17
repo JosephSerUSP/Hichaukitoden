@@ -958,18 +958,24 @@ runValidation = function()
         end
     end
 
-    -- Validate skill and item targeting specs (Tasks T1 & T2)
+    -- Validate skill and item targeting specs (Tasks T1 & T2).
+    -- expand() ERRORS on unrecognized specs (no silent fallthrough), so the
+    -- pcall here is the real gate: bad data fails G1, gameplay never sees it.
+    -- Skills must always carry a target — battle calls expand(skill.target)
+    -- directly, with no fallback like the item paths' `or "ally"`.
     local targeting = require("engine.targeting")
     for id, skill in pairs(loader.skills or {}) do
+        check(skill.target ~= nil, "skill '" .. tostring(id) .. "' is missing a target spec")
         if skill.target then
-            local ok, exp = pcall(targeting.expand, skill.target)
-            check(ok and exp and exp.side and exp.count and exp.mode and exp.state, "skill '" .. tostring(id) .. "' has invalid target spec '" .. tostring(skill.target) .. "'")
+            local ok, err = pcall(targeting.expand, skill.target)
+            check(ok, "skill '" .. tostring(id) .. "' has invalid target spec '" .. tostring(skill.target) .. "'" .. (ok and "" or (": " .. tostring(err))))
         end
     end
+    -- Items may omit target (the battle/field paths default to "ally").
     for _, item in ipairs(loader.items or {}) do
         if item.target then
-            local ok, exp = pcall(targeting.expand, item.target)
-            check(ok and exp and exp.side and exp.count and exp.mode and exp.state, "item '" .. tostring(item.id) .. "' has invalid target spec '" .. tostring(item.target) .. "'")
+            local ok, err = pcall(targeting.expand, item.target)
+            check(ok, "item '" .. tostring(item.id) .. "' has invalid target spec '" .. tostring(item.target) .. "'" .. (ok and "" or (": " .. tostring(err))))
         end
     end
 

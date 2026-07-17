@@ -2,12 +2,25 @@ local formula = require("engine.formula")
 
 local targeting = {}
 
+-- Field values resolve() actually implements. expand() rejects anything
+-- outside these — an unknown spec must ERROR, never silently retarget
+-- (T1 acceptance criterion: the old string-ladder's silent fallthrough to
+-- "enemy" must be impossible). The G1 validator pcall-wraps expand over
+-- every skill/item spec, so bad data fails validate, not gameplay.
+local VALID_SIDES  = { enemy = true, ally = true, self = true, any = true }
+local VALID_MODES  = { choose = true, random = true }
+local VALID_STATES = { alive = true, dead = true, any = true }
+
 -- Expand target shorthand specifications to standard schema table
 function targeting.expand(spec)
     if type(spec) == "string" then
         -- Parse shorthand like side-random-count
         local sidePart, countPart = spec:match("^([a-z]+)%-random%-(.+)$")
         if sidePart and countPart then
+            if not VALID_SIDES[sidePart] or sidePart == "self" then
+                error("targeting: unknown side '" .. sidePart .. "' in target spec '" .. spec .. "'", 2)
+            end
+            -- countPart: a number, or a formula string evaluated at resolve time
             local countVal = tonumber(countPart) or countPart
             return { side = sidePart, count = countVal, mode = "random", state = "alive" }
         end
@@ -23,9 +36,24 @@ function targeting.expand(spec)
         elseif spec == "enemy-all" then
             return { side = "enemy", count = "all", mode = "choose", state = "alive" }
         else
-            return { side = "enemy", count = 1, mode = "choose", state = "alive" }
+            error("targeting: unknown target spec '" .. spec .. "'", 2)
         end
     elseif type(spec) == "table" then
+        -- Omitted fields take schema defaults; PRESENT-but-invalid values error.
+        if spec.side ~= nil and not VALID_SIDES[spec.side] then
+            error("targeting: invalid side '" .. tostring(spec.side) .. "' in target spec table", 2)
+        end
+        if spec.mode ~= nil and not VALID_MODES[spec.mode] then
+            error("targeting: invalid mode '" .. tostring(spec.mode) .. "' in target spec table", 2)
+        end
+        if spec.state ~= nil and not VALID_STATES[spec.state] then
+            error("targeting: invalid state '" .. tostring(spec.state) .. "' in target spec table", 2)
+        end
+        local c = spec.count
+        if c ~= nil and c ~= "all" and type(c) ~= "string"
+            and not (type(c) == "number" and c >= 1) then
+            error("targeting: invalid count '" .. tostring(c) .. "' in target spec table (want a number >= 1, \"all\", or a formula string)", 2)
+        end
         return {
             side = spec.side or "enemy",
             count = spec.count or 1,
@@ -33,7 +61,7 @@ function targeting.expand(spec)
             state = spec.state or "alive"
         }
     else
-        return { side = "enemy", count = 1, mode = "choose", state = "alive" }
+        error("targeting: target spec must be a string or table, got " .. type(spec), 2)
     end
 end
 
