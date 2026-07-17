@@ -47,7 +47,7 @@ local function sendResponse(client, status, contentType, body)
     local headers = {
         "HTTP/1.1 " .. status,
         "Content-Type: " .. contentType,
-        "Access-Control-Allow-Origin: *",
+        "Access-Control-Allow-Origin: http://127.0.0.1:8080",
         "Access-Control-Allow-Methods: GET, POST, OPTIONS",
         "Access-Control-Allow-Headers: Content-Type",
         "Content-Length: " .. tostring(#body),
