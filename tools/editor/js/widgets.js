@@ -76,7 +76,7 @@
             if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
             if (prevNone) prevNone.style.display = 'block';
 
-            fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
+            fetch(`${API_URL}/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
                 .then(data => {
                     const dirSelect = document.getElementById('asset-picker-dir');
@@ -96,7 +96,7 @@
 
         function loadAssetPickerFiles() {
             const dir = document.getElementById('asset-picker-dir').value;
-            fetch(`/api/assets?dir=${encodeURIComponent(dir)}`)
+            fetch(`${API_URL}/api/assets?dir=${encodeURIComponent(dir)}`)
                 .then(r => r.json())
                 .then(data => {
                     renderAssetPickerFiles(data.files);
@@ -248,7 +248,7 @@
             defaultOpt.textContent = '(none)';
             sel.appendChild(defaultOpt);
 
-            fetch('/api/graphs')
+            fetch(`${API_URL}/api/graphs`)
                 .then(r => r.json())
                 .then(graphs => {
                     graphs.forEach(g => {
@@ -1218,7 +1218,7 @@
                 list.id = 'portrait-keys-list';
                 document.body.appendChild(list);
             }
-            fetch('/api/assets?dir=portraits')
+            fetch(`${API_URL}/api/assets?dir=portraits`)
                 .then(r => r.json())
                 .then(data => {
                     (data.files || []).forEach(f => {
