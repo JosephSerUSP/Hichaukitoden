@@ -41,8 +41,7 @@ local COLOR_NORMAL = { 1, 1, 1, 1 }
 local COLOR_HIGHLIGHT = { 0.6, 1, 0.6, 1 }
 local COLOR_DIM = { 0.6, 0.6, 0.6, 1 }
 
--- Portrait image cache (love.graphics.newImage per frame is a perf bug the
--- legacy crafting draw had; don't repeat it).
+-- Portrait image cache
 local imageCache = {}
 local function getImage(path)
     if imageCache[path] == nil then
