@@ -131,6 +131,33 @@ local function makeHarnessSession()
     return vSession
 end
 
+local function seedShopPreviewState(st, ldr)
+    if not (st and (st.v.items == nil or #st.v.items == 0)) then return end
+
+    local keys = {}
+    for k in pairs(ldr.shops or {}) do table.insert(keys, tostring(k)) end
+    table.sort(keys)
+
+    local shopData = keys[1] and ldr.shops[keys[1]]
+    if not shopData then return end
+
+    st.v.shopName = shopData.name or "Shop"
+    st.v.items = {}
+    for _, shopItem in ipairs(shopData.items or {}) do
+        local itemData = ldr.getItem(shopItem.id)
+        if itemData then
+            table.insert(st.v.items, {
+                id = itemData.id,
+                name = itemData.name or "",
+                icon = itemData.icon or 0,
+                description = itemData.description or "",
+                cost = shopItem.price or itemData.cost or 0,
+            })
+        end
+    end
+    st.v.count = #st.v.items
+end
+
 -- E5: headless scene preview (`lovec . preview-scene <id>`). Pushes the
 -- scene with the mock session, runs on_enter through the real interpreter,
 -- and prints the MATERIALIZED window state (window_renderer.resolveState:
@@ -159,30 +186,7 @@ local function runPreviewScene(sceneId)
         -- preview the equivalent (first shop by sorted key, deterministic)
         -- so its windows show real content instead of an empty list.
         if tostring(sceneDef.id) == "shop" then
-            local st = sh.getCurrentState()
-            if st and (st.v.items == nil or #st.v.items == 0) then
-                local keys = {}
-                for k in pairs(loader.shops or {}) do table.insert(keys, tostring(k)) end
-                table.sort(keys)
-                local shopData = keys[1] and loader.shops[keys[1]]
-                if shopData then
-                    st.v.shopName = shopData.name or "Shop"
-                    st.v.items = {}
-                    for _, shopItem in ipairs(shopData.items or {}) do
-                        local itemData = loader.getItem(shopItem.id)
-                        if itemData then
-                            table.insert(st.v.items, {
-                                id = itemData.id,
-                                name = itemData.name or "",
-                                icon = itemData.icon or 0,
-                                description = itemData.description or "",
-                                cost = shopItem.price or itemData.cost or 0,
-                            })
-                        end
-                    end
-                    st.v.count = #st.v.items
-                end
-            end
+            seedShopPreviewState(sh.getCurrentState(), loader)
         end
 
         local wr = require("presentation.window_renderer")
