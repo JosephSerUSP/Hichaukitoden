@@ -1435,5 +1435,35 @@
         "id": "trk_7te8w6"
       }
     ]
+  },
+  "system.reap": {
+    "id": "system.reap",
+    "class": "system",
+    "duration": 1400,
+    "tracks": [
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 1400,
+        "color": [
+          0.05,
+          0.05,
+          0.08
+        ],
+        "fromAlpha": 0,
+        "toAlpha": 1,
+        "easing": "ease_out"
+      },
+      {
+        "type": "transform",
+        "t0": 200,
+        "duration": 1200,
+        "fromY": 0,
+        "toY": 10,
+        "easing": "ease_in",
+        "toScaleX": 0.7,
+        "toScaleY": 0.05
+      }
+    ]
   }
 }

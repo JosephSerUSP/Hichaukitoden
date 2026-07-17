@@ -553,7 +553,10 @@ end
 -- removed permanently and converts to banked EXP using the same yield rule
 -- as ritual sacrifice (totalExp × summoner.sacrificeExpRate ×
 -- (1 + SACRIFICE_EXP_RATE trait)). Runs from the battle.victory and
--- battle.escaped flows.
+-- battle.escaped flows. Emits one `reap` event per fallen spirit (target
+-- kept alive as a Lua object for the presentation layer to animate and
+-- caption individually, e.g. "{name} has passed away") and auto-fields
+-- the reserve if the sweep leaves the party empty.
 handlers.REAP_FALLEN = function(cmd, ctx)
     local session = ctx.session
     local fallen = {}
@@ -575,13 +578,10 @@ handlers.REAP_FALLEN = function(cmd, ctx)
         local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
         local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
         session.expBank = math.max(0, (session.expBank or 0) + exp)
-        table.insert(ctx.events, { type = "reap", name = b.name, exp = exp })
-        table.insert(ctx.events, {
-            type = "text",
-            text = session.loader.formatTerm("battle.reaped",
-                "{0} has fallen — {1} EXP flows into the bank.", b.name or "?", exp)
-        })
+        table.insert(ctx.events, { type = "reap", target = b, exp = exp })
     end
+
+    session:autoFieldIfEmpty()
 end
 
 -- Rolls the encounter chance; on success emits an `encounter` event the map
@@ -897,6 +897,7 @@ local function buildScriptApi(ctx)
     function api.sacrifice(isReserve, index)
         local arr = isReserve and session.reserve or session.party
         arr[index] = nil
+        if not isReserve then session:autoFieldIfEmpty() end
     end
 
     -- EXP Bank: shared pool accrued by sacrifices, spent to summon above

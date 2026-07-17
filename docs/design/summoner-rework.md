@@ -45,7 +45,16 @@ should be built upon, not replaced. Execution plan:
 - **Permadeath**: a spirit at 0 HP is *downed* during battle (mid-fight
   revival by items remains possible). Any spirit still down when the
   battle ends is **permanently gone** and **auto-converts to banked EXP at
-  the sacrifice rate** (`summoner.sacrificeExpRate`).
+  the sacrifice rate** (`summoner.sacrificeExpRate`). Feedback is
+  individual and diegetic: each fallen spirit gets its own `system.reap`
+  animation on the battler, then a dedicated log line ("{name} has passed
+  away") — one per spirit, not a batch summary.
+- **Auto-field**: the fielded party is never left empty while the reserve
+  holds anyone — `GameSession:autoFieldIfEmpty()` fires after the
+  permadeath sweep and after ritual sacrifice, silently pulling from
+  reserve. (A same-turn mutual kill can end a battle in *victory* with a
+  fully-dead party — REAP_FALLEN would otherwise leave zero fielded
+  spirits walking out of the fight.)
 - **Game over** = party wiped AND reserve empty. MP reaching zero is
   survivable (exhaustion drain), never an instant loss.
 

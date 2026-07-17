@@ -307,6 +307,11 @@ local function processEvent(ev)
     elseif ev.type == "flee_success" then
         desc = ldr().getTerm("battle.flee_success", "Escaped successfully!")
         v.escaped = true
+    elseif ev.type == "reap" then
+        -- Permadeath (Summoner rework §3): one animation + one dedicated
+        -- log line per fallen spirit, individually, like "action"/"death".
+        animation_player.play("system.reap", ev.target)
+        desc = ldr().formatTerm("battle.reaped", "{0} has passed away.", ev.target.name)
     end
 
     return desc
@@ -493,6 +498,40 @@ function battle.handleTransition(action)
     if v.combatState ~= "log"
         or v.eventQueueIndex <= #(v.eventsQueue or {}) then return false end
 
+    -- Reap ("{name} has passed away") messages queued below drain through
+    -- the normal log pipeline first; once they're read, come back here to
+    -- finish whatever the flow was building toward.
+    if v.pendingAfterReap then
+        local nextState = v.pendingAfterReap
+        v.pendingAfterReap = nil
+        if nextState == "victory" then
+            v.combatState = "victory"
+        elseif nextState == "escaped" then
+            scene_host.goto_scene("map")
+        end
+        return true
+    end
+
+    -- Queues flowEvents' reap entries onto the log and switches combatState
+    -- back to "log" so the player reads each one individually before
+    -- nextState fires (see the pendingAfterReap branch above). Returns true
+    -- when there were any (caller should stop and let the log run).
+    local function queueReapEvents(flowEvents, nextState)
+        local reaped = {}
+        for _, ev in ipairs(flowEvents) do
+            if ev.type == "reap" then table.insert(reaped, ev) end
+        end
+        if #reaped == 0 then return false end
+        v.eventsQueue = v.eventsQueue or {}
+        local startIdx = #v.eventsQueue + 1
+        for _, ev in ipairs(reaped) do table.insert(v.eventsQueue, ev) end
+        v.eventQueueIndex = startIdx
+        v.pendingAfterReap = nextState
+        v.combatState = "log"
+        battle.advanceLog()
+        return true
+    end
+
     if b:isVictory() then
         -- B.9: grant rewards, then show the dedicated victory window instead
         -- of leaving immediately. Rewards are diffed around the flow run so
@@ -505,7 +544,7 @@ function battle.handleTransition(action)
         end
         -- battle.victory is a validator-required phase (no legacy fallback);
         -- it also runs the REAP_FALLEN permadeath sweep.
-        flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
+        local flowEvents = flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
         -- Structured reward data for the window: gold delta, the battle's
         -- base EXP grant, and per-member before/after level+exp so the
         -- renderer can animate each EXP gauge (rollover handled there).
@@ -527,11 +566,14 @@ function battle.handleTransition(action)
             members = members,
         }
         v.victoryStage = 0
-        v.combatState = "victory"
+        if not queueReapEvents(flowEvents, "victory") then
+            v.combatState = "victory"
+        end
     elseif b:isDefeat() then
         -- E9: defeat routes to the data-authored Game Over scene. The session
         -- reset happens there (RESET_SESSION on the player's choice), not as
-        -- a side effect of losing.
+        -- a side effect of losing. No REAP_FALLEN here: RESET_SESSION wipes
+        -- the whole session, so permadeath bookkeeping would be moot.
         local toGameOver = false
         local targetScene = "game_over"
         for _, ev in ipairs(flow.run("battle.defeat", { session = sess(), battle = b })) do
@@ -547,10 +589,13 @@ function battle.handleTransition(action)
         -- battle.escaped is a validator-required phase; it also runs the
         -- REAP_FALLEN permadeath sweep before returning to the map.
         local toMap = false
-        for _, ev in ipairs(flow.run("battle.escaped", { session = sess(), battle = b })) do
+        local flowEvents = flow.run("battle.escaped", { session = sess(), battle = b })
+        for _, ev in ipairs(flowEvents) do
             if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
         end
-        if toMap then scene_host.goto_scene("map") end
+        if not queueReapEvents(flowEvents, "escaped") and toMap then
+            scene_host.goto_scene("map")
+        end
     else
         battle.rebuildLivingMembers()
         v.combatState = "input"

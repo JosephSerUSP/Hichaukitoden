@@ -192,6 +192,51 @@ function GameSession:hasItem(itemId, amount)
     return (self.inventory[itemId] or 0) >= amount
 end
 
+function GameSession:isPartyEmpty()
+    for i = 1, 4 do
+        if self.party[i] then return false end
+    end
+    return true
+end
+
+-- Fills every empty fielded slot (1-4) from the reserve, in reserve-key
+-- order, assigning row by slot (1-2 front, 3-4 back). Shared by the
+-- Summoner rework's emergency wave (engine/battle.lua) and the general
+-- auto-field rule (SPEC: the party is never left empty while a reserve
+-- exists) so there is exactly one "pull from reserve" implementation.
+-- Returns the list of battlers moved from reserve to party (empty if the
+-- reserve had nothing to give).
+function GameSession:fillEmptySlotsFromReserve()
+    local keys = {}
+    for k, b in pairs(self.reserve or {}) do
+        if b then table.insert(keys, k) end
+    end
+    table.sort(keys)
+
+    local deployed = {}
+    local ki = 1
+    for i = 1, 4 do
+        if not self.party[i] and keys[ki] then
+            local b = self.reserve[keys[ki]]
+            self.reserve[keys[ki]] = nil
+            b.row = (i <= 2) and "front" or "back"
+            self.party[i] = b
+            table.insert(deployed, b)
+            ki = ki + 1
+        end
+    end
+    return deployed
+end
+
+-- Auto-field rule: the fielded party is never left empty while the
+-- reserve holds anyone. Called after any path that can empty the party
+-- (battle permadeath sweep, ritual sacrifice). Returns true if anyone
+-- was deployed.
+function GameSession:autoFieldIfEmpty()
+    if not self:isPartyEmpty() then return false end
+    return #self:fillEmptySlotsFromReserve() > 0
+end
+
 function GameSession:getActiveParty()
     -- Returns the creatures active in combat (slots 1 to 4). The summoner
     -- is not a battle participant (overhaul-6 F1) -- they keep a Battler

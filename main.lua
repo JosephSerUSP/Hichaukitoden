@@ -1017,9 +1017,12 @@ runValidation = function()
         for _, ev in ipairs(evs) do if ev.type == "wave" then sawWave = true end end
         check(sawWave, "emergency wave emitted no wave event")
 
-        -- REAP_FALLEN: banks wave casualties + any dead party member
+        -- REAP_FALLEN: banks wave casualties + any dead party member, emits
+        -- one reap event per fallen spirit carrying the battler as target
+        -- (the presentation layer animates/captions each individually)
         s.party[2].hp = 0
         s.party[2]:addState("dead")
+        local deadSpirit = s.party[2]
         local bankBefore = s.expBank or 0
         local okReap, reapEvs = pcall(interpreter.runImmediate,
             { { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
@@ -1029,7 +1032,26 @@ runValidation = function()
             check(#wb.fallen == 0, "REAP_FALLEN did not clear battle.fallen")
             check(s.party[2] == nil, "REAP_FALLEN left a dead spirit in the party")
             check(s.party[1] ~= nil, "REAP_FALLEN removed a living spirit")
+            check(#reapEvs == 4, "REAP_FALLEN should emit one reap event per fallen spirit (3 wave casualties + 1), got " .. tostring(#reapEvs))
+            local sawTarget = false
+            for _, ev in ipairs(reapEvs) do
+                check(ev.type == "reap", "REAP_FALLEN emitted a non-reap event: " .. tostring(ev.type))
+                if ev.target == deadSpirit then sawTarget = true end
+            end
+            check(sawTarget, "REAP_FALLEN's reap events did not carry the fallen battler as target")
         end
+
+        -- Auto-field: reaping the whole party redeploys the reserve instead
+        -- of leaving it empty (session:autoFieldIfEmpty, called by
+        -- REAP_FALLEN). Wipe the newly-fielded party and reap again with an
+        -- empty reserve to confirm the party is simply left empty then.
+        for i = 1, 4 do
+            if s.party[i] then s.party[i].hp = 0; s.party[i]:addState("dead") end
+        end
+        check(not s:isPartyEmpty(), "sanity: party should not read empty before the reap")
+        interpreter.runImmediate({ { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
+        check(s:isPartyEmpty(), "REAP_FALLEN with no reserve should leave the party empty")
+        check(not s:autoFieldIfEmpty(), "autoFieldIfEmpty deployed from an empty reserve")
 
         -- With an empty reserve the wave must refuse (defeat stands)
         check(not wb:tryDeployWave({}), "emergency wave deployed from an empty reserve")
@@ -1742,6 +1764,7 @@ elseif paramDef.type == "script" then
         "system.small_damage",
         "system.enemy_slide_in",
         "system.heal",
+        "system.reap",
     }
     for _, reservedId in ipairs(RESERVED_SYSTEM_IDS) do
         check(animation_player.getEntry(reservedId) ~= nil,

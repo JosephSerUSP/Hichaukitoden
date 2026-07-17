@@ -36,18 +36,19 @@ end
 
 -- Emergency wave (Summoner rework §3): when the whole fielded party is
 -- down and reserve spirits exist, the reserve wave deploys automatically
--- and free of MP cost. The fallen move to self.fallen for the battle-end
--- REAP_FALLEN sweep; the deployed spirits were never queued this round, so
--- the party forfeits the turn by construction. Returns true when a wave
--- deployed (defeat is averted), false when the reserve is empty.
+-- and free of MP cost via the shared session:fillEmptySlotsFromReserve
+-- (also used by the general auto-field rule). The fallen move to
+-- self.fallen for the battle-end REAP_FALLEN sweep; the deployed spirits
+-- were never queued this round, so the party forfeits the turn by
+-- construction. Returns true when a wave deployed (defeat is averted),
+-- false when the reserve is empty (party left untouched).
 function Battle:tryDeployWave(roundEvents)
     local session = self.session
-    local keys = {}
-    for k, b in pairs(session.reserve or {}) do
-        if b then table.insert(keys, k) end
+    local hasReserve = false
+    for _, b in pairs(session.reserve or {}) do
+        if b then hasReserve = true break end
     end
-    if #keys == 0 then return false end
-    table.sort(keys)
+    if not hasReserve then return false end
 
     for i = 1, 4 do
         if session.party[i] then
@@ -55,15 +56,7 @@ function Battle:tryDeployWave(roundEvents)
             session.party[i] = nil
         end
     end
-    local slot = 1
-    for _, k in ipairs(keys) do
-        if slot > 4 then break end
-        local b = session.reserve[k]
-        session.reserve[k] = nil
-        b.row = (slot <= 2) and "front" or "back"
-        session.party[slot] = b
-        slot = slot + 1
-    end
+    session:fillEmptySlotsFromReserve()
     self.allies = session:getActiveParty()
 
     table.insert(roundEvents, { type = "wave" })

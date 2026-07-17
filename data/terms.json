@@ -25,12 +25,7 @@
     "gains_xp": "- {0} gains {1} XP.",
     "recovers_mp": "- {0} MP restored.",
     "resolving": "Resolving actions...",
-    "commands_summoner": [
-      "Attack",
-      "Spell",
-      "Item",
-      "Flee"
-    ],
+    "reaped": "{0} has passed away.",
     "commands_monster": [
       "Attack",
       "Skill",
