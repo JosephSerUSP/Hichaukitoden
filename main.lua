@@ -1428,6 +1428,35 @@ elseif paramDef.type == "script" then
         end
     end
 
+    -- formula.eval execution sandbox (testing standard variables)
+    local formulaEngine = require("engine.formula")
+    local fCtx = {
+        session = { gold = 500, floor = 3 },
+        v = { mode = 1, counter = 5 },
+        a = { hp = 100, atk = 20 },
+        b = { hp = 50, def = 10 }
+    }
+
+    local function checkFormula(expr, expected, desc)
+        local val, err = formulaEngine.eval(expr, fCtx)
+        check(err == nil, "formula '" .. tostring(expr) .. "' failed: " .. tostring(err))
+        check(val == expected, "formula '" .. tostring(expr) .. "' " .. tostring(desc) .. " mismatch (expected " .. tostring(expected) .. ", got " .. tostring(val) .. ")")
+    end
+
+    checkFormula("1 + 2 * 3", 7, "basic arithmetic")
+    checkFormula("session.gold", 500, "session variable access")
+    checkFormula("v.counter * 2", 10, "flow variable access")
+    checkFormula("a.atk - b.def", 10, "battler variable arithmetic")
+    checkFormula("max(10, 20)", 20, "helper function")
+
+    local errVal, errStr = formulaEngine.eval("unknown.field", fCtx)
+    check(errStr ~= nil, "formula 'unknown.field' should return error")
+    check(errVal == 0, "formula error fallback must be 0")
+
+    local emptyVal, emptyErr = formulaEngine.eval("", fCtx)
+    check(emptyErr ~= nil, "empty formula should return error")
+    check(emptyVal == 0, "empty formula fallback must be 0")
+
     -- Traits evaluateCondition validation
     local function validateTraitsCondition()
         local battler = session.Battler.new(loader.getActor(1), 1)
