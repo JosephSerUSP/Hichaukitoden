@@ -1483,16 +1483,12 @@ elseif paramDef.type == "script" then
 
                             local bt = block.type
                             if bt == "text" then
-                                -- text block: text is a term-key ref or expr string.
+                                -- text block: a literal or {expr} template. The window
+                                -- renderer never term-resolves text content (only "term:"
+                                -- LIST sources go through loader.getTermList), so there is
+                                -- nothing further to validate here beyond the string type.
                                 check(type(block.text) == "string",
                                     sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] text block: missing or non-string 'text'")
-                                -- If text looks like a term key (no {expr} interpolation markers),
-                                -- verify it resolves via loader.getTerm.
-                                if block.text and type(block.text) == "string" and not block.text:find("{") then
-                                    -- Check if it resolves as a term key -- if loader.getTerm exists,
-                                    -- try it (warn if unresolvable, but don't fail — term keys may
-                                    -- be loaded ad-hoc).
-                                end
                             elseif bt == "list" then
                                 check(type(block.listId) == "string",
                                     sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: missing or non-string 'listId'")
@@ -1512,6 +1508,15 @@ elseif paramDef.type == "script" then
                                 if not knownSources[src] and not src:find("^config:") and not src:find("^v:")
                                     and not src:find("^static:") and not src:find("^term:") then
                                     print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown list source '" .. src .. "'")
+                                end
+                                -- "term:" sources must resolve to a real terms.json list —
+                                -- a typo'd path would otherwise render an empty list with no
+                                -- error anywhere (S1w: term-key refs resolve or G1 fails).
+                                if src:find("^term:") then
+                                    local termPath = src:sub(6)
+                                    local resolved = loader.getTermList(termPath, nil)
+                                    check(type(resolved) == "table" and #resolved > 0,
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list source '" .. src .. "' does not resolve to a non-empty list in terms.json")
                                 end
                             elseif bt == "gauge" then
                                 -- gauge block: value and max are required exprs.
