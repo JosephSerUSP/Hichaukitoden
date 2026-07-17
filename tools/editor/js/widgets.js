@@ -851,8 +851,6 @@
             'battleLayout.enemyHpBarHeight': { label: 'Enemy HP Bar Height (px)' },
             'battleLayout.enemySpriteSize': { label: 'Enemy Sprite Size (px)' },
             'battleLayout.enemyFallbackSize': { label: 'Enemy Fallback Sprite Size (px)' },
-            'battleLayout.enemySlideOffset': { label: 'Enemy Slide-in Offset (px)' },
-            'battleLayout.enemyDeathYOffset': { label: 'Enemy Death Bounce Height (px)' },
             'battleLayout.viewportOverlayW': { label: 'Viewport Overlay Width (px)' },
             'battleLayout.viewportOverlayH': { label: 'Viewport Overlay Height (px)' },
             'battleLayout.logPanelX':      { label: 'Log Panel X (px)' },

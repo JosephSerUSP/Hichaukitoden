@@ -1288,8 +1288,6 @@
     "enemyHpBarHeight": 4,
     "enemySpriteSize": 64,
     "enemyFallbackSize": 50,
-    "enemySlideOffset": 280,
-    "enemyDeathYOffset": 20,
     "viewportOverlayW": 256,
     "viewportOverlayH": 140,
     "logPanelX": 10,
