@@ -13,6 +13,9 @@ local DATA_FILES = {
     "skills", "passives", "states", "roles", "engine", "flows", "scenes"
 }
 
+local cachedData = nil
+local lastModTimes = {}
+
 function server.start()
     tcpListener = socket.bind("127.0.0.1", 8081)
     if tcpListener then
@@ -72,6 +75,8 @@ function server.update(dt)
                 if method == "OPTIONS" then
                     sendResponse(client, "200 OK", "text/plain", "")
                 elseif method == "GET" and path == "/reload" then
+                    cachedData = nil
+                    lastModTimes = {}
                     -- Reload loader caches
                     local loader = require("data.loader")
                     loader.init()
@@ -96,15 +101,31 @@ function server.update(dt)
                         return contents and json.decode(contents) or nil
                     end
 
-                    local data = {}
+                    local changed = false
                     for _, name in ipairs(DATA_FILES) do
-                        data[name] = getFileContents("data/" .. name .. ".json")
+                        local info = love.filesystem.getInfo("data/" .. name .. ".json")
+                        local modtime = info and info.modtime or 0
+                        if lastModTimes[name] ~= modtime then
+                            changed = true
+                            break
+                        end
                     end
 
-                    local responseBody = json.encode(data)
-                    sendResponse(client, "200 OK", "application/json", responseBody)
+                    if changed or not cachedData then
+                        local data = {}
+                        for _, name in ipairs(DATA_FILES) do
+                            local info = love.filesystem.getInfo("data/" .. name .. ".json")
+                            lastModTimes[name] = info and info.modtime or 0
+                            data[name] = getFileContents("data/" .. name .. ".json")
+                        end
+                        cachedData = json.encode(data)
+                    end
+
+                    sendResponse(client, "200 OK", "application/json", cachedData)
                     
                 elseif method == "POST" and path == "/save" then
+                    cachedData = nil
+                    lastModTimes = {}
                     local contentLength = 0
                     while true do
                         local headerLine = client:receive()
