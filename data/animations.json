@@ -490,7 +490,8 @@
         "t0": 0,
         "duration": 700,
         "mode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_x6l9c2"
       },
       {
         "type": "tint",
@@ -517,9 +518,9 @@
         "spread": 18,
         "rate": 30,
         "lifetime": 0.4,
-        "sizeStart": 1.5,
+        "sizeStart": 0.4,
         "sizeEnd": 0.5,
-        "particleTexture": "assets/animation/HolyBurst[32x32][8f].png",
+        "particleTexture": "assets/animation/HolyBurst[32x32][7f].png",
         "cellW": 32,
         "cellH": 32,
         "cellStart": 0,
@@ -541,7 +542,11 @@
         ],
         "blendMode": "add",
         "easing": "linear",
-        "id": "trk_z7tmtn"
+        "id": "trk_z7tmtn",
+        "spawnShape": "circle",
+        "spawnRadiusX": 9,
+        "spawnRadiusY": 2,
+        "spawnAngle": 187
       },
       {
         "type": "particles",
