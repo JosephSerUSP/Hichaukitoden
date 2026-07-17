@@ -67,6 +67,10 @@
     "popup": {
       "font": "DotGothic16-Regular",
       "fontSize": 16,
+      "numberFont": "DotGothic16-Regular",
+      "numberFontSize": 16,
+      "textFont": "04B_03__",
+      "textFontSize": 8,
       "characterDelay": 0.04,
       "damageFormat": "{0}",
       "damageColor": [

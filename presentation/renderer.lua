@@ -167,11 +167,22 @@ function renderer.update(dt)
     for i = #damagePopups, 1, -1 do
         local p = damagePopups[i]
         p.revealElapsed = p.revealElapsed + dt
-        for _, glyph in ipairs(p.glyphs) do
-            if not glyph.active and p.revealElapsed >= glyph.startDelay then
-                glyph.active = true
+        if p.revealElapsed >= (p.spawnDelay or 0) then
+            local activeElapsed = p.revealElapsed - (p.spawnDelay or 0)
+            for _, glyph in ipairs(p.glyphs) do
+                if not glyph.active and activeElapsed >= glyph.startDelay then
+                    glyph.active = true
+                end
+                if glyph.active then
+                    if p.isText then
+                        glyph.elapsed = glyph.elapsed + dt
+                        local t = math.min(1, glyph.elapsed / 0.4)
+                        glyph.y = -28 * t * (2 - t)
+                    else
+                        updatePopupGlyph(glyph, dt, gravity, bounceRetain)
+                    end
+                end
             end
-            if glyph.active then updatePopupGlyph(glyph, dt, gravity, bounceRetain) end
         end
         p.life = p.life - dt
         if p.life <= 0 then table.remove(damagePopups, i) end
@@ -290,21 +301,33 @@ function renderer.finishBattleLogReveal()
     battleLogReveal.elapsed = math.huge
 end
 
-function renderer.addDamagePopup(text, x, y, color)
+function renderer.addDamagePopup(text, x, y, color, isText)
+    isText = isText or (not text:match("^[%d%+%- ]+$"))
     local scatter = config.physics and config.physics.horizontalScatter or 40
     local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1
     local popupConfig = config.battle_screen and config.battle_screen.popup or {}
     local characterDelay = popupConfig.characterDelay or 0
+    
+    -- Find if there are existing active/pending popups at the same (x, y) coordinates
+    local sameLocCount = 0
+    for _, p in ipairs(damagePopups) do
+        if math.abs(p.x - x) < 5 and math.abs(p.y - y) < 5 then
+            sameLocCount = sameLocCount + 1
+        end
+    end
+    local spawnDelay = sameLocCount * 0.45 -- 0.45s delay per active popup at this location
+
     local glyphs = {}
     for i = 1, #text do
         table.insert(glyphs, {
             char = text:sub(i, i),
             startDelay = (i - 1) * characterDelay,
             active = false,
+            elapsed = 0,
             x = 0,
             y = 0,
             vy = -160,
-            vx = math.random(-scatter, scatter),
+            vx = isText and 0 or math.random(-scatter, scatter),
             bounceCount = 0
         })
     end
@@ -313,8 +336,10 @@ function renderer.addDamagePopup(text, x, y, color)
         x = x,
         y = y,
         color = color or {1, 1, 1, 1},
-        life = lifeSpan,
+        life = lifeSpan + spawnDelay,
         revealElapsed = 0,
+        spawnDelay = spawnDelay,
+        isText = isText,
         glyphs = glyphs
     })
 end
@@ -1017,19 +1042,22 @@ end
 
 function renderer.drawDamagePopups()
     love.graphics.push("all")
-    local popupFont = ui.getPopupFont()
     for _, p in ipairs(damagePopups) do
-        local alpha = math.min(1, p.life * 2)
-        local col = { p.color[1], p.color[2], p.color[3], alpha }
-        local textOffset = 0
-        local font = popupFont or love.graphics.getFont()
-        for _, glyph in ipairs(p.glyphs) do
-            if p.revealElapsed >= glyph.startDelay then
-                -- Opacity is shared across the popup, not reset for each
-                -- glyph, so every character fades out in sync.
-                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, popupFont)
+        if p.revealElapsed >= (p.spawnDelay or 0) then
+            local activeElapsed = p.revealElapsed - (p.spawnDelay or 0)
+            local alpha = math.min(1, p.life * 2)
+            local col = { p.color[1], p.color[2], p.color[3], alpha }
+            local textOffset = 0
+            local font = p.isText and ui.getPopupTextFont() or ui.getPopupNumberFont()
+            font = font or love.graphics.getFont()
+            for _, glyph in ipairs(p.glyphs) do
+                if activeElapsed >= glyph.startDelay then
+                    -- Opacity is shared across the popup, not reset for each
+                    -- glyph, so every character fades out in sync.
+                    ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, font)
+                end
+                textOffset = textOffset + font:getWidth(glyph.char)
             end
-            textOffset = textOffset + font:getWidth(glyph.char)
         end
     end
     love.graphics.pop()
