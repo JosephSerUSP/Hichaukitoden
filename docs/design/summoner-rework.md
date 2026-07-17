@@ -12,7 +12,7 @@ built upon, not replaced.
 - **The player IS the Summoner**: the engine locates the player character
   by the `Summoner` role (exactly one actor carries it). The party the
   player fields is summoned spirits.
-- **MP is the Summoner's central resource** (o6 F2): summoning costs MP
+  - **MP is the Summoner's central resource** (o6 F2): summoning costs MP
   (`summoner.summonCostBase/PerLevel/PerTier`), dungeon movement drains MP
   (`dungeon.moveMpDrain`), MP exhaustion deals per-turn damage
   (`combat.mpExhaustionDamage`).
@@ -32,23 +32,30 @@ built upon, not replaced.
 - What does the Summoner DO during a battle round beyond spell casting?
   (Direct a command per spirit as now? Only spells + stance while spirits
   act on AI? Something between?)
+  R: Only spells and swapping to/from reserve.
 - Is mid-battle summoning/dismissal a mechanic? (Swap a spirit for MP as
   an action? Replace fallen spirits mid-fight?)
+  R: Only swapping from reserve. No sacrifice, no summoning. 
 - Does the Summoner have a visible battler presence (targetable, HP) or
   stay off-field with MP as the only life-adjacent resource?
+  R: Off-field. 
 
 ## 3. Party / reserve flow (❓ owner)
 
 - Reserve size limits, and whether reserve spirits are reachable in
   battle (swap action?) or only between fights.
+  R: Swap action is possible. Reserve size limit should not be hardcoded (per our philosophy).
 - Do slots have positional meaning (front/back row, grid adjacency
   effects) that the new UI must expose?
+  R: Yes, front/back row should affect certain mechanics, but right now we only need this to be able to be verified /accessed in engine. 
 
 ## 4. Economy touchpoints (❓ owner)
 
 - Does the EXP Bank interact with battle (banked-EXP costs for mid-battle
   effects?) or stay a ritual-scene-only economy?
+  R: Ritual-only economy.
 - MP regeneration model in and out of battle.
+R: Items only, basically. Therefore it's important for the summoner to handle MP well and have means of exiting the dungeon swiftly. 
 
 ## 5. UI implications (derived — fill in once §2–§4 are decided)
 
