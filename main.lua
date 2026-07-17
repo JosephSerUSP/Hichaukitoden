@@ -1754,6 +1754,10 @@ function love.update(dt)
         return
     end
 
+    if scene_host.getCurrent() == "battle" then
+        require("engine.scenes.battle").update(dt)
+    end
+
     -- Shop: grant the pending item after the hook deducted gold
     if scene_host.getCurrent() == "shop" then
         local shopState = scene_host.getCurrentState()

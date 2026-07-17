@@ -279,6 +279,13 @@ function renderer.finishDialogueReveal()
     dialogueReveal.elapsed = math.huge
 end
 
+function renderer.isBattleLogRevealing(combatLog)
+    local cursor = battleLogReveal.cursor
+    if not combatLog or cursor == 0 or cursor > #combatLog then return false end
+    local current = combatLog[cursor] or ""
+    return revealedCount(current, battleLogReveal.elapsed) < #current
+end
+
 function renderer.addDamagePopup(text, x, y, color)
     local scatter = config.physics and config.physics.horizontalScatter or 40
     local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1

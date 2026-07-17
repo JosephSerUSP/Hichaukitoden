@@ -246,7 +246,6 @@ function battle.advanceLog()
                 end
             end
         elseif ev.type == "damage" then
-            desc = ldr().formatTerm("battle.takes_damage", "- {0} takes {1} damage.", ev.target.name, ev.value)
             animation_player.onComplete(ev.target, function()
                 local fmt = conf("battle_screen", "popup", {}).damageFormat or "-{0}"
                 local text = fmt:gsub("{0}", tostring(ev.value))
@@ -270,7 +269,6 @@ function battle.advanceLog()
                 end
             end)
         elseif ev.type == "heal" then
-            desc = ldr().formatTerm("battle.recovers_hp", "- {0} recovers {1} HP.", ev.target.name, ev.value)
             animation_player.onComplete(ev.target, function()
                 local fmt = conf("battle_screen", "popup", {}).healFormat or "+{0}"
                 local text = fmt:gsub("{0}", tostring(ev.value))
@@ -279,7 +277,6 @@ function battle.advanceLog()
                 ev.target.hp = math.min(ev.target:getMaxHp(sess()), ev.target.hp + ev.value)
             end)
         elseif ev.type == "death" then
-            desc = ldr().formatTerm("battle.has_fallen", "! {0} has fallen!", ev.target.name)
             animation_player.onComplete(ev.target, function()
                 local fmt = conf("battle_screen", "popup", {}).deadFormat or "DEAD"
                 local color = conf("battle_screen", "popup", {}).deadColor or {0.6, 0.6, 0.6, 1}
@@ -296,7 +293,6 @@ function battle.advanceLog()
                 end
             end)
         elseif ev.type == "state_add" then
-            desc = ldr().formatTerm("battle.got_status", "- {0} got {1} status.", ev.target.name, ev.state:upper())
             animation_player.onComplete(ev.target, function()
                 local fmt = conf("battle_screen", "popup", {}).stateFormat or "{0}"
                 local text = fmt:gsub("{0}", ev.state:upper())
@@ -305,12 +301,10 @@ function battle.advanceLog()
                 ev.target:addState(ev.state)
             end)
         elseif ev.type == "state_remove" then
-            desc = ldr().formatTerm("battle.status_wore_off", "- {0}'s {1} wore off.", ev.target.name, ev.state:upper())
             animation_player.onComplete(ev.target, function()
                 ev.target:removeState(ev.state)
             end)
         elseif ev.type == "mp_drain" then
-            desc = ldr().formatTerm("battle.consumes_mp", "- {0} consumes {1} MP.", ev.actor.name, ev.value)
             sess().mp = math.max(0, sess().mp - ev.value)
         elseif ev.type == "victory" then
             desc = ldr().getTerm("battle.victory_full", "Victory! All hostile forces vanquished.")
@@ -573,6 +567,61 @@ function battle.showMessage(text)
     v.combatLog = {}
     battle.advanceLog()
     v.combatState = "log"
+end
+
+-------------------------------------------------------------------------------
+-- Auto-advance the combat log in love.update
+-------------------------------------------------------------------------------
+local autoAdvanceTimer = 0
+
+function battle.update(dt)
+    local v = battle.getState()
+    if not v or not v.battle then
+        autoAdvanceTimer = 0
+        return
+    end
+
+    if v.combatState == "log" then
+        if v.eventQueueIndex <= #(v.eventsQueue or {}) then
+            local isRevealing = renderer.isBattleLogRevealing(v.combatLog)
+            local isAnimPlaying = animation_player.isAnythingPlaying()
+
+            if not isRevealing and not isAnimPlaying then
+                autoAdvanceTimer = autoAdvanceTimer + dt
+                local delay = conf("battle_screen", "autoAdvanceDelay", 0.6)
+                if autoAdvanceTimer >= delay then
+                    autoAdvanceTimer = 0
+                    battle.advanceLog()
+                end
+            else
+                autoAdvanceTimer = 0
+            end
+        else
+            local isRevealing = renderer.isBattleLogRevealing(v.combatLog)
+            local isAnimPlaying = animation_player.isAnythingPlaying()
+
+            if not isRevealing and not isAnimPlaying then
+                local b = v.battle
+                if not b:isVictory() and not b:isDefeat() and not v.escaped then
+                    autoAdvanceTimer = autoAdvanceTimer + dt
+                    local delay = conf("battle_screen", "autoAdvanceDelay", 0.6)
+                    if autoAdvanceTimer >= delay then
+                        autoAdvanceTimer = 0
+                        battle.rebuildLivingMembers()
+                        v.combatState = "input"
+                        v.selectedIndex = 1
+                        v.spellSelect = false
+                    end
+                else
+                    autoAdvanceTimer = 0
+                end
+            else
+                autoAdvanceTimer = 0
+            end
+        end
+    else
+        autoAdvanceTimer = 0
+    end
 end
 
 return battle

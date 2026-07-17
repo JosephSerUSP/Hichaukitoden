@@ -311,6 +311,16 @@ function animation_player.isAnyActive(target)
     return list and #list > 0 or false
 end
 
+-- Returns true if there are ANY active animations on ANY target.
+function animation_player.isAnythingPlaying()
+    for target, list in pairs(instances) do
+        if list and #list > 0 then
+            return true
+        end
+    end
+    return false
+end
+
 ---------------------------------------------------------------------------
 -- Per-target state queries
 --
