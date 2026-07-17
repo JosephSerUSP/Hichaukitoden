@@ -156,12 +156,8 @@
                 showCmdContextMenu(e.clientX, e.clientY, WINDOW_STYLE_PRESETS.map(p => ({
                     label: p.label,
                     action: () => {
-                        let id = prompt('New window id (letters/digits/underscore):', '');
-                        if (id === null) return;
-                        id = id.trim();
-                        if (!/^\w+$/.test(id)) { showToast('Invalid window id.'); return; }
-                        if (wl()[id]) { showToast(`windowLayout already has '${id}'.`); return; }
-                        wl()[id] = { x: 0, y: 0, width: p.width, height: p.height, style: p.style, title: null };
+                        const id = WindowGeom.createWindow(wl(), 0, 0, p);
+                        if (!id) return;
                         setDirty(true);
                         activeWindowId = id;
                         renderWindowsTab(container, header);
@@ -430,20 +426,8 @@
                 }
             };
 
-            const EDGE = 6;
-            const edgeAt = (px, py, ts) => {
-                const x = layout.x * ts, y = layout.y * ts, w = (layout.width || 8) * ts, h = (layout.height || 4) * ts;
-                const nearR = Math.abs(px - (x + w)) <= EDGE, nearB = Math.abs(py - (y + h)) <= EDGE;
-                const nearL = Math.abs(px - x) <= EDGE, nearT = Math.abs(py - y) <= EDGE;
-                let e = '';
-                if (nearT) e += 'n'; else if (nearB) e += 's';
-                if (nearL) e += 'w'; else if (nearR) e += 'e';
-                return e;
-            };
-            const canvasPos = (e) => {
-                const r = canvas.getBoundingClientRect();
-                return { px: e.clientX - r.left, py: e.clientY - r.top };
-            };
+            const edgeAt = (px, py, ts) => WindowGeom.edgeAt(layout, px, py, ts);
+            const canvasPos = (e) => WindowGeom.canvasPos(canvas, e);
 
             let dragState = null;
             canvas.addEventListener('mousedown', (e) => {
@@ -479,27 +463,7 @@
                     canvas.style.cursor = edge ? (edge + '-resize') : (inside ? 'move' : '');
                     return;
                 }
-                const snap = (v) => Math.round(v * 2) / 2;
-                const dx = (px - dragState.startPx) / ts, dy = (py - dragState.startPy) / ts;
-                if (Math.abs(px - dragState.startPx) + Math.abs(py - dragState.startPy) > 3) dragState.moved = true;
-                const s = dragState.start;
-                if (dragState.mode === 'move') {
-                    layout.x = snap(s.x + dx);
-                    layout.y = snap(s.y + dy);
-                } else {
-                    if (dragState.edge.includes('e')) layout.width = Math.max(2, snap(s.width + dx));
-                    if (dragState.edge.includes('s')) layout.height = Math.max(2, snap(s.height + dy));
-                    if (dragState.edge.includes('w')) {
-                        const nx = snap(s.x + dx);
-                        layout.width = Math.max(2, snap(s.width + (s.x - nx)));
-                        layout.x = nx;
-                    }
-                    if (dragState.edge.includes('n')) {
-                        const ny = snap(s.y + dy);
-                        layout.height = Math.max(2, snap(s.height + (s.y - ny)));
-                        layout.y = ny;
-                    }
-                }
+                WindowGeom.applyDrag(layout, dragState, px, py, ts);
                 drawCanvas();
                 syncFormFields();
             });

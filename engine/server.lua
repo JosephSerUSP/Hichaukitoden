@@ -156,7 +156,7 @@ function server.update(dt)
                             -- Hot-reload active UI font
                             local ui = require("presentation.ui")
                             if config.ui and config.ui.activeFont then
-                                ui.setFont(config.ui.activeFont)
+                                ui.setFont(config.ui.activeFont, config.ui.fontSize)
                             end
                             if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font then
                                 ui.loadPopupFont(config.battle_screen.popup.font, config.battle_screen.popup.fontSize)

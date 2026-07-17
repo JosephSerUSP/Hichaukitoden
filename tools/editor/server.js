@@ -429,6 +429,34 @@ const server = http.createServer((req, res) => {
                     }
                 }
 
+                // Shape guard: unlike /preview-scene, /preview-window, and
+                // /preview-font (which regex-validate their inputs), this was
+                // the direct write path to every data file the game loads at
+                // runtime with no check beyond payload[name] truthiness. A
+                // client bug that leaves e.g. a list field as the wrong type
+                // would silently overwrite data/actors.json with malformed
+                // data. Refuse to flip a file's top-level array-vs-object
+                // shape, checked for every file BEFORE any writes happen so a
+                // bad payload can't leave a partial save on disk.
+                const shapeMismatches = [];
+                DATA_FILES.forEach(name => {
+                    const content = payload[name];
+                    if (content === undefined || content === null) return;
+                    const filePath = path.join(PROJECT_DIR, 'data', `${name}.json`);
+                    let existing;
+                    try {
+                        existing = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    } catch (e) {
+                        return; // no existing file (or unparseable) — nothing to compare against
+                    }
+                    if (Array.isArray(existing) !== Array.isArray(content)) {
+                        shapeMismatches.push(`${name}.json (expected ${Array.isArray(existing) ? 'an array' : 'an object'}, got ${Array.isArray(content) ? 'an array' : 'an object'})`);
+                    }
+                });
+                if (shapeMismatches.length > 0) {
+                    throw new Error(`Save blocked: payload shape doesn't match the file on disk for ${shapeMismatches.join(', ')}.`);
+                }
+
                 const saveFile = (filename, content) => {
                     if (content) {
                         const filePath = path.join(PROJECT_DIR, 'data', filename);

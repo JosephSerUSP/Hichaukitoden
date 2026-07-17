@@ -23,6 +23,7 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local formulaEngine = require("engine.formula")
 local config = require("engine.config")
+local conditions = require("engine.conditions")
 
 local interpreter = {}
 
@@ -239,11 +240,11 @@ end
 
 handlers.IF = function(cmd, ctx)
     local branch
-    if cmd.condition and cmd.condition:match("^flag:") then
-        -- CONDITIONAL_BRANCH's string conditions stay valid alongside (S2)
-        branch = ctx.session.flags[cmd.condition:match("^flag:(.+)")] == true
-    elseif cmd.condition and cmd.condition:match("^hasItem:") then
-        branch = ctx.session:hasItem(tonumber(cmd.condition:match("^hasItem:(.+)")), 1)
+    -- CONDITIONAL_BRANCH's "flag:"/"hasItem:" string conditions stay valid
+    -- alongside formula conditions (S2); shared with director.lua's ROUTER.
+    local matched, result = conditions.evalPrefixed(cmd.condition, ctx.session)
+    if matched then
+        branch = result
     else
         local val = evalFormula(cmd.condition, ctx)
         if type(val) == "boolean" then
@@ -387,8 +388,11 @@ handlers.RESTORE_MP = function(cmd, ctx)
     ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
 end
 
--- The regen/poison/duration-decay block as one command (S2). Mirrors the
--- legacy block in engine/battle.lua resolveRound; A5b deletes that copy.
+-- The regen/poison/duration-decay block as one command (S2). This is the
+-- live implementation used by the battle.round_end flow. The matching block
+-- in engine/battle.lua resolveRound is deliberately RETAINED as the SPEC S4
+-- fallback (runs only if battle.round_end is removed from flows.json), not
+-- deleted — keep the two in sync if this logic changes.
 handlers.STATE_TICKS = function(cmd, ctx)
     local battlers = {}
     for _, b in ipairs(ctx.party or {}) do table.insert(battlers, b) end

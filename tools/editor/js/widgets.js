@@ -76,7 +76,7 @@
             if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
             if (prevNone) prevNone.style.display = 'block';
 
-            fetch(`/api/assets?dir=${encodeURIComponent(defaultDir)}`)
+            fetch(`${API_URL}/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
                 .then(data => {
                     const dirSelect = document.getElementById('asset-picker-dir');
@@ -96,7 +96,7 @@
 
         function loadAssetPickerFiles() {
             const dir = document.getElementById('asset-picker-dir').value;
-            fetch(`/api/assets?dir=${encodeURIComponent(dir)}`)
+            fetch(`${API_URL}/api/assets?dir=${encodeURIComponent(dir)}`)
                 .then(r => r.json())
                 .then(data => {
                     renderAssetPickerFiles(data.files);
@@ -248,7 +248,7 @@
             defaultOpt.textContent = '(none)';
             sel.appendChild(defaultOpt);
 
-            fetch('/api/graphs')
+            fetch(`${API_URL}/api/graphs`)
                 .then(r => r.json())
                 .then(graphs => {
                     graphs.forEach(g => {
@@ -835,13 +835,10 @@
             'battleLayout.enemyStartX':    { label: 'Enemy Row Start X (px)' },
             'battleLayout.enemyPopupOffsetX': { label: 'Enemy Popup Offset X (px)' },
             'battleLayout.enemyPopupY':    { label: 'Enemy Popup Y (px)' },
-            'battleLayout.partyGridTileX': { label: 'Party Grid X (tiles)' },
             'battleLayout.consoleTileY':   { label: 'Console Y (tiles)' },
             'battleLayout.headerTileOffset': { label: 'Console Header Offset (tiles)' },
             'battleLayout.slotPopupOffsetX': { label: 'Party Popup Offset X (px)' },
             'battleLayout.slotPopupOffsetY': { label: 'Party Popup Offset Y (px)' },
-            'battleLayout.summonerPopupX': { label: 'Summoner Popup X (px)' },
-            'battleLayout.summonerPopupYOffset': { label: 'Summoner Popup Y Offset (px)' },
             'battleLayout.fallbackX':      { label: 'Popup Fallback X (px)' },
             'battleLayout.fallbackY':      { label: 'Popup Fallback Y (px)' },
             'battleLayout.enemyY':         { label: 'Enemy Y (px)' },
@@ -867,12 +864,6 @@
             'battleLayout.consoleTileH':   { label: 'Console Height (tiles)' },
             'battleLayout.consoleTextTileX': { label: 'Console Text X (tiles)' },
             'battleLayout.menuChoiceSpacing': { label: 'Menu Choice Spacing (px)' },
-            'battleLayout.summonerStatusX': { label: 'Summoner Status X (px)' },
-            'battleLayout.summonerNameYOffset': { label: 'Summoner Name Y Offset (px)' },
-            'battleLayout.summonerMpTextYOffset': { label: 'Summoner MP Text Y Offset (px)' },
-            'battleLayout.summonerMpBarYOffset': { label: 'Summoner MP Bar Y Offset (px)' },
-            'battleLayout.summonerMpBarWidth': { label: 'Summoner MP Bar Width (px)' },
-            'battleLayout.summonerMpBarHeight': { label: 'Summoner MP Bar Height (px)' },
             'battleLayout.partyGridColWidth': { label: 'Party Grid Column Width (px)' },
             'battleLayout.partyGridRowHeight': { label: 'Party Grid Row Height (px)' },
             'battleLayout.partyGridNameXOffset': { label: 'Party Grid Name X Offset (px)' },
@@ -1227,7 +1218,7 @@
                 list.id = 'portrait-keys-list';
                 document.body.appendChild(list);
             }
-            fetch('/api/assets?dir=portraits')
+            fetch(`${API_URL}/api/assets?dir=portraits`)
                 .then(r => r.json())
                 .then(data => {
                     (data.files || []).forEach(f => {
@@ -1662,6 +1653,12 @@
 
             } else if (activeDbTab === 'animations') {
                 renderAnimationEditor(formPanel, item);
+
+            } else if (activeDbTab === 'quests') {
+                buildQuestForm(formPanel, item.id);
+
+            } else if (activeDbTab === 'themes') {
+                buildThemeForm(formPanel, item.id);
 
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};

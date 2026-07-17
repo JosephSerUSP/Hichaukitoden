@@ -1,3 +1,5 @@
+local conditions = require("engine.conditions")
+
 local director = {}
 
 local GraphWalker = {}
@@ -18,17 +20,12 @@ end
 
 function GraphWalker:evaluateCondition(condStr)
     if not condStr or condStr == "" then return true end
-    
-    if condStr:match("^flag:(.+)") then
-        local flag = condStr:match("^flag:(.+)")
-        return self.session.flags[flag] == true
-    elseif condStr:match("^hasItem:(.+)") then
-        -- Item ids are numeric; the pattern always yields a string, so convert
-        -- it back before checking the (numeric-keyed) inventory table.
-        local itemId = tonumber(condStr:match("^hasItem:(.+)"))
-        return self.session:hasItem(itemId, 1)
-    end
-    
+
+    -- Shared "flag:"/"hasItem:" grammar (see engine/conditions.lua); a
+    -- ROUTER's fallback for any non-prefixed string is false.
+    local matched, result = conditions.evalPrefixed(condStr, self.session)
+    if matched then return result end
+
     return false
 end
 

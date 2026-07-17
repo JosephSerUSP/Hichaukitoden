@@ -108,13 +108,17 @@ local function inventoryRows(session)
     return rows
 end
 
-local function partyRows(session)
+-- Shared battler-view enrichment for the 'party' and 'reserve' list sources:
+-- progression, role, equipment slots and joined passive/skill/state names as
+-- flat strings so {expr} templates can print them. maxSlots differs (4 vs 8);
+-- source array is session.party or session.reserve.
+local function battlerListRows(session, sourceArray, maxSlots)
     local config = require("engine.config")
     local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
     local loader = session and session.loader
     local rows = {}
-    for i = 1, 4 do
-        local m = session and session.party and session.party[i]
+    for i = 1, maxSlots do
+        local m = sourceArray and sourceArray[i]
         if m then
             local view = formula.battlerView(m, session) or {}
             view.index = i
@@ -128,9 +132,6 @@ local function partyRows(session)
             -- same battle-triggered flash/shake state small_battlers keys by
             -- battler identity (drawList passes this through as battlerRef).
             view.battlerRef = m
-            -- Status-scene fields (generic enrichment of the 'party' source):
-            -- progression, role, equipment slots and joined passive/skill/state
-            -- names as flat strings so {expr} templates can print them.
             view.exp = m.exp or 0
             view.expNeeded = (m.level or 1) * expPerLevel
             view.role = (m.actorData and m.actorData.role) or "CREATURE"
@@ -163,51 +164,12 @@ local function partyRows(session)
     return rows
 end
 
+local function partyRows(session)
+    return battlerListRows(session, session and session.party, 4)
+end
+
 local function reserveRows(session)
-    local config = require("engine.config")
-    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
-    local loader = session and session.loader
-    local rows = {}
-    for i = 1, 8 do
-        local m = session and session.reserve and session.reserve[i]
-        if m then
-            local view = formula.battlerView(m, session) or {}
-            view.index = i
-            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
-            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
-            view.icon = view.icon or 0
-            view.dead = m.isDead and m:isDead() or false
-            view.battlerRef = m
-            view.exp = m.exp or 0
-            view.expNeeded = (m.level or 1) * expPerLevel
-            view.role = (m.actorData and m.actorData.role) or "CREATURE"
-            view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
-            local eq = m.equipment or {}
-            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
-            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
-            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
-            local function joinNames(ids, getter)
-                local names = {}
-                for _, id in ipairs(ids or {}) do
-                    local entry = getter and getter(id)
-                    table.insert(names, (entry and entry.name) or tostring(id))
-                end
-                return #names > 0 and table.concat(names, ", ") or "None"
-            end
-            view.passiveText = joinNames(m.actorData and m.actorData.passives, loader and loader.getPassive)
-            view.skillText = joinNames(m.actorData and m.actorData.skills, loader and loader.getSkill)
-            local stateNames = {}
-            for _, st in ipairs(m.states or {}) do
-                local def = loader and loader.getState and loader.getState(st.id)
-                table.insert(stateNames, (def and def.name) or tostring(st.id))
-            end
-            view.stateText = #stateNames > 0 and table.concat(stateNames, ", ") or "Normal"
-            table.insert(rows, view)
-        else
-            table.insert(rows, { index = i, empty = true, name = "--Empty--" })
-        end
-    end
-    return rows
+    return battlerListRows(session, session and session.reserve, 8)
 end
 
 local function configRows(sceneData, key)

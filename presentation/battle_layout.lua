@@ -12,7 +12,6 @@ local BATTLE_LAYOUT = {
     enemyStartX = 18,
     enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
     enemyPopupY = 84,
-    partyGridTileX = 15,    -- drawPartyGrid origin inside the console (tiles)
     -- consoleTileY/H match engine.json windowLayout.party exactly (y18.5,
     -- h11.5) so the bottom console sits at the SAME position as the shared
     -- declarative "party" window every other converted scene uses (owner

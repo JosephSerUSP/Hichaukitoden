@@ -25,7 +25,9 @@
         const SCENE_WINDOW_PRESETS = [
             { label: 'List window', style: 'list', width: 12, height: 16 },
             { label: 'Panel window', style: 'panel', width: 16, height: 8 },
-            { label: 'Confirm window', style: 'confirm', width: 24, height: 10 }
+            { label: 'Confirm window', style: 'confirm', width: 24, height: 10 },
+            { label: 'Roulette window', style: 'roulette', width: 24, height: 10 },
+            { label: 'Party grid window', style: 'partyGrid', width: 16, height: 10 },
         ];
 
         // Deep-scan a scene's hooks for commands referencing a windowId
@@ -589,22 +591,10 @@
                 return hit;
             };
 
-            const EDGE = 6; // px threshold for resize handles
-            const edgeAt = (g, px, py, ts) => {
-                const x = g.x * ts, y = g.y * ts, wd = g.width * ts, ht = g.height * ts;
-                const nearR = Math.abs(px - (x + wd)) <= EDGE, nearB = Math.abs(py - (y + ht)) <= EDGE;
-                const nearL = Math.abs(px - x) <= EDGE, nearT = Math.abs(py - y) <= EDGE;
-                let e = '';
-                if (nearT) e += 'n'; else if (nearB) e += 's';
-                if (nearL) e += 'w'; else if (nearR) e += 'e';
-                return e;
-            };
+            const edgeAt = (g, px, py, ts) => WindowGeom.edgeAt(g, px, py, ts);
 
             let dragState = null;
-            const canvasPos = (e) => {
-                const r = canvas.getBoundingClientRect();
-                return { px: e.clientX - r.left, py: e.clientY - r.top };
-            };
+            const canvasPos = (e) => WindowGeom.canvasPos(canvas, e);
 
             canvas.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
@@ -671,27 +661,7 @@
                 }
                 const layout = wl()[dragState.id];
                 if (!layout) return;
-                const snap = (v) => Math.round(v * 2) / 2; // half-tile grid
-                const dx = (px - dragState.startPx) / ts, dy = (py - dragState.startPy) / ts;
-                if (Math.abs(px - dragState.startPx) + Math.abs(py - dragState.startPy) > 3) dragState.moved = true;
-                const s = dragState.start;
-                if (dragState.mode === 'move') {
-                    layout.x = snap(s.x + dx);
-                    layout.y = snap(s.y + dy);
-                } else {
-                    if (dragState.edge.includes('e')) layout.width = Math.max(2, snap(s.width + dx));
-                    if (dragState.edge.includes('s')) layout.height = Math.max(2, snap(s.height + dy));
-                    if (dragState.edge.includes('w')) {
-                        const nx = snap(s.x + dx);
-                        layout.width = Math.max(2, snap(s.width + (s.x - nx)));
-                        layout.x = nx;
-                    }
-                    if (dragState.edge.includes('n')) {
-                        const ny = snap(s.y + dy);
-                        layout.height = Math.max(2, snap(s.height + (s.y - ny)));
-                        layout.y = ny;
-                    }
-                }
+                WindowGeom.applyDrag(layout, dragState, px, py, ts);
                 draw();
                 syncDockFields();
             });
@@ -745,12 +715,8 @@
             };
 
             const addWindowAt = (tileX, tileY, preset) => {
-                let id = prompt(`New ${preset.label.toLowerCase()} id (letters/digits/underscore):`, '');
-                if (id === null) return;
-                id = id.trim();
-                if (!/^\w+$/.test(id)) { showToast('Invalid window id.'); return; }
-                if (wl()[id]) { showToast(`windowLayout already has '${id}'.`); return; }
-                wl()[id] = { x: tileX, y: tileY, width: preset.width, height: preset.height, style: preset.style, title: null };
+                const id = WindowGeom.createWindow(wl(), tileX, tileY, preset);
+                if (!id) return;
                 scene.hooks = scene.hooks || {};
                 scene.hooks.on_enter = scene.hooks.on_enter || [];
                 scene.hooks.on_enter.push({ cmd: 'OPEN_WINDOW', windowId: id });

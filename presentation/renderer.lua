@@ -539,6 +539,26 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
 end
 
 
+-- Reads the "party" window's grid origin (px, tiles->px converted) + column
+-- count dynamically from windowLayout, so every consumer of
+-- actor_status.gridSlot for the party grid agrees on the same origin
+-- (matches drawPartyGrid exactly).
+local function partyGridOrigin(session)
+    local loaderRef = session and session.loader
+    local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+    local partyLayout = layouts and layouts.party or {}
+    local px = partyLayout.x or 0
+    local py = partyLayout.y or 18
+    local title = partyLayout.title
+    local contentX = partyLayout.contentX or partyLayout.textX or 1
+    local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+    local gridX = ui.toPx(px + contentX)
+    local gridY = ui.toPx(py + contentY)
+    local cols = partyLayout.gridColumns or 2
+    return gridX, gridY, cols
+end
+
 -- Maps a battler to the screen position where damage popups should spawn.
 -- Used by main.lua so popup coordinates always match the drawn battle layout.
 function renderer.getBattlerCoords(battleState, session, target)
@@ -551,19 +571,7 @@ function renderer.getBattlerCoords(battleState, session, target)
             end
         end
 
-        -- Read layout coordinates dynamically from the "party" window configuration
-        local loaderRef = session and session.loader
-        local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
-        local partyLayout = layouts and layouts.party or {}
-        local px = partyLayout.x or 0
-        local py = partyLayout.y or 18
-        local title = partyLayout.title
-        local contentX = partyLayout.contentX or partyLayout.textX or 1
-        local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
-
-        local gridX = ui.toPx(px + contentX)
-        local gridY = ui.toPx(py + contentY)
-        local cols = partyLayout.gridColumns or 2
+        local gridX, gridY, cols = partyGridOrigin(session)
 
         -- Shared 2x2 slot arithmetic (matches drawPartyGrid exactly)
         for idx, c in ipairs(session.party) do
@@ -650,18 +658,7 @@ local function getBattlerRect(target, battleState, session)
         end
         
         if allyIdx then
-            local loaderRef = session.loader
-            local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
-            local partyLayout = layouts and layouts.party or {}
-            local px = partyLayout.x or 0
-            local py = partyLayout.y or 18
-            local title = partyLayout.title
-            local contentX = partyLayout.contentX or partyLayout.textX or 1
-            local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
-
-            local gridX = ui.toPx(px + contentX)
-            local gridY = ui.toPx(py + contentY)
-            local cols = partyLayout.gridColumns or 2
+            local gridX, gridY, cols = partyGridOrigin(session)
             local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
             
             local colW, rowH = actor_status.cellSize(session)
