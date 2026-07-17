@@ -373,6 +373,14 @@ local function runPreviewFont(name, size)
 end
 
 local function runGoldenUI()
+    local LOGGED_EVENT_TYPES = {
+        open_window = true,
+        close_window = true,
+        set_text = true,
+        set_list = true,
+        set_cursor = true,
+        focus_window = true
+    }
     local vSession = makeHarnessSession()
 
     local scene_host = require("engine.scene_host")
@@ -407,7 +415,7 @@ local function runGoldenUI()
             if not events then return end
             for i = loggedEventCount + 1, #events do
                 local ev = events[i]
-                if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
+                if LOGGED_EVENT_TYPES[ev.type] then
                     local w = ev.windowId or ""
                     local a = ev.type or ""
                     local t = ""
