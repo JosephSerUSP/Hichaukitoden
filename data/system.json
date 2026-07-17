@@ -197,11 +197,6 @@
     "summonCostBase": 10,
     "summonCostPerLevel": 5,
     "summonCostPerTier": 15,
-    "spells": [
-      "soothingMote",
-      "divineFavor",
-      "holySmite"
-    ],
     "sacrificeExpRate": 0.8,
     "defaultSacrificeRewards": [
       {

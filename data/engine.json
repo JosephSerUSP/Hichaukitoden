@@ -57,6 +57,10 @@
       "description": "Battler display name, for EMIT_TEXT args (also on b/target/enemy/ally)."
     },
     {
+      "token": "a.row",
+      "description": "The battler's row: \"front\" or \"back\". Assigned by fielded slot at battle start (1-2 front, 3-4 back); no combat math consumes it yet."
+    },
+    {
       "token": "session.mapSafe",
       "description": "True when the current map is flagged safe (no MP drain)."
     },
@@ -902,6 +906,17 @@
       ],
       "interactive": false,
       "description": "Adds a specific item (GIVE_ITEM stays the random-treasure command)."
+    },
+    {
+      "id": "REAP_FALLEN",
+      "category": "Advanced",
+      "label": "Reap Fallen Spirits",
+      "params": [],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Permadeath sweep: removes every party spirit still dead (plus emergency-wave casualties) and banks their EXP at the sacrifice rate. Meant for battle.victory / battle.escaped."
     },
     {
       "id": "ROLL_ENCOUNTER",

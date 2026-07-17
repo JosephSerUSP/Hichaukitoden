@@ -442,7 +442,7 @@ function battle.undoAction()
     if prevAction then
         if prevAction.type == "attack" then
             v.selectedIndex = 1
-        elseif prevAction.type == "skill" or prevAction.type == "spell" then
+        elseif prevAction.type == "skill" then
             v.selectedIndex = 2
         elseif prevAction.type == "defend" then
             v.selectedIndex = 3
@@ -503,19 +503,9 @@ function battle.handleTransition(action)
         for _, c in ipairs(s.party) do
             before[c] = { level = c.level, exp = c.exp }
         end
-        if flow.has("battle.victory") then
-            flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
-        else
-            local goldGain = math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
-            s.gold = s.gold + goldGain
-            for _, c in ipairs(s.party) do
-                if not c:isDead() then
-                    c:gainExp(conf("combat", "victoryExp", 5), sess())
-                    local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", sess())
-                    if regenVal > 0 then c.hp = math.min(c:getMaxHp(sess()), c.hp + regenVal) end
-                end
-            end
-        end
+        -- battle.victory is a validator-required phase (no legacy fallback);
+        -- it also runs the REAP_FALLEN permadeath sweep.
+        flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
         -- Structured reward data for the window: gold delta, the battle's
         -- base EXP grant, and per-member before/after level+exp so the
         -- renderer can animate each EXP gauge (rollover handled there).
@@ -542,27 +532,23 @@ function battle.handleTransition(action)
         -- E9: defeat routes to the data-authored Game Over scene. The session
         -- reset happens there (RESET_SESSION on the player's choice), not as
         -- a side effect of losing.
-        local toGameOver = true
+        local toGameOver = false
         local targetScene = "game_over"
-        if flow.has("battle.defeat") then
-            toGameOver = false
-            for _, ev in ipairs(flow.run("battle.defeat", { session = sess(), battle = b })) do
-                if ev.type == "scene_change" and ev.kind == "defeat" then
-                    toGameOver = true
-                    if ev.scene then targetScene = ev.scene end
-                end
+        for _, ev in ipairs(flow.run("battle.defeat", { session = sess(), battle = b })) do
+            if ev.type == "scene_change" and ev.kind == "defeat" then
+                toGameOver = true
+                if ev.scene then targetScene = ev.scene end
             end
         end
         if toGameOver then
             scene_host.goto_scene(targetScene, { session = sess(), loader = ldr(), party = sess().party })
         end
     elseif v.escaped then
-        local toMap = true
-        if flow.has("battle.escaped") then
-            toMap = false
-            for _, ev in ipairs(flow.run("battle.escaped", { session = sess(), battle = b })) do
-                if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
-            end
+        -- battle.escaped is a validator-required phase; it also runs the
+        -- REAP_FALLEN permadeath sweep before returning to the map.
+        local toMap = false
+        for _, ev in ipairs(flow.run("battle.escaped", { session = sess(), battle = b })) do
+            if ev.type == "scene_change" and ev.kind == "map" then toMap = true end
         end
         if toMap then scene_host.goto_scene("map") end
     else

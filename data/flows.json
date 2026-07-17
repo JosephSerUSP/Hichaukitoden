@@ -78,6 +78,9 @@
     ],
     "escaped": [
       {
+        "cmd": "REAP_FALLEN"
+      },
+      {
         "cmd": "COMMENT",
         "text": "Successful flee: signal the return-to-map transition (task A5e)."
       },
@@ -143,6 +146,13 @@
             "trait": "POST_BATTLE_HEAL"
           }
         ]
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Permadeath (Summoner rework): spirits still down at battle end are reaped and bank EXP at the sacrifice rate."
+      },
+      {
+        "cmd": "REAP_FALLEN"
       }
     ],
     "encounter_check": [

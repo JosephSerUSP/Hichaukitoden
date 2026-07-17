@@ -43,6 +43,10 @@ function formula.battlerView(battler, session)
         mdf = traits.getParam(battler, "mdf", session) or 10,
         mpd = traits.getParam(battler, "mpd", session) or 1,
         asp = traits.getParam(battler, "asp", session) or 10,
+        -- Front/back row (Summoner rework §4): engine state only for now;
+        -- exposed so formulas/conditions can read it ("front" until a
+        -- battle assigns rows by slot).
+        row = battler.row or "front",
         meta = battler.meta or {}
     }
 end

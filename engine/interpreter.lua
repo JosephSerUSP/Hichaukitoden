@@ -548,6 +548,42 @@ handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
 end
 
+-- Permadeath sweep (Summoner rework §3): every party spirit still dead at
+-- battle end — plus emergency-wave casualties parked on battle.fallen — is
+-- removed permanently and converts to banked EXP using the same yield rule
+-- as ritual sacrifice (totalExp × summoner.sacrificeExpRate ×
+-- (1 + SACRIFICE_EXP_RATE trait)). Runs from the battle.victory and
+-- battle.escaped flows.
+handlers.REAP_FALLEN = function(cmd, ctx)
+    local session = ctx.session
+    local fallen = {}
+    for i = 1, 4 do
+        local b = session.party[i]
+        if b and b:isDead() then
+            table.insert(fallen, b)
+            session.party[i] = nil
+        end
+    end
+    for _, b in ipairs((ctx.battle and ctx.battle.fallen) or {}) do
+        table.insert(fallen, b)
+    end
+    if ctx.battle then ctx.battle.fallen = {} end
+
+    local sys = session.loader and session.loader.system
+    local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
+    for _, b in ipairs(fallen) do
+        local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
+        local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
+        session.expBank = math.max(0, (session.expBank or 0) + exp)
+        table.insert(ctx.events, { type = "reap", name = b.name, exp = exp })
+        table.insert(ctx.events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.reaped",
+                "{0} has fallen — {1} EXP flows into the bank.", b.name or "?", exp)
+        })
+    end
+end
+
 -- Rolls the encounter chance; on success emits an `encounter` event the map
 -- host consumes to start a battle. One math.random() call, like the legacy
 -- step-handler roll.

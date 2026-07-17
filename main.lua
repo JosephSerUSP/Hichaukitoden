@@ -697,16 +697,13 @@ local function runGolden()
     end
     logEvents(vBattle:resolveRound(actionsR1))
 
-    -- Round 2: spell (party[1] on itself) + defend (party[2]) + attack (party[3])
+    -- Round 2: skill (High Pixie casts its own soothingMote on itself) +
+    -- defend (party[2]) + attack (party[3]). soothingMote used to arrive
+    -- here as a summoner "spell"; the mechanic is gone (Summoner rework),
+    -- but the same skill cast by its owner keeps the golden log identical.
     local actionsR2 = {}
-    local sysSpells = loader.system and loader.system.summoner and loader.system.summoner.spells or {}
-    local firstSpell = sysSpells[1]
-    if type(firstSpell) == "table" then firstSpell = firstSpell.id end
-
-    if firstSpell and vSession.party[1] then
-        actionsR2[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
-    elseif vSession.party[1] then
-        actionsR2[1] = { type = "attack", target = enemies[2] }
+    if vSession.party[1] then
+        actionsR2[1] = { type = "skill", id = "soothingMote", target = vSession.party[1] }
     end
 
     if vSession.party[2] then actionsR2[2] = { type = "defend", target = vSession.party[2] } end
@@ -895,11 +892,6 @@ runValidation = function()
     check(loader.getSkill(combat.defendSkillId or "defend"), "combat.defendSkillId references a missing skill")
     check(loader.getSkill(combat.attackSkillId or "attack"), "combat.attackSkillId references a missing skill")
     check(loader.getItem(combat.battleItem or 1), "combat.battleItem references a missing item")
-    local spells = (sys.summoner and sys.summoner.spells) or {}
-    for _, spellId in ipairs(spells) do
-        if type(spellId) == "table" then spellId = spellId.id end
-        check(loader.getSkill(spellId), "summoner spell references missing skill '" .. tostring(spellId) .. "'")
-    end
     for i, opt in ipairs((sys.town and sys.town.options) or {}) do
         check(opt.label and opt.action, "town option #" .. i .. " is missing label/action")
     end
@@ -982,19 +974,65 @@ runValidation = function()
         enemy.hp = enemy:getMaxHp(vSession)
         local vBattle = battleSystem.Battle.new(vSession, { enemy })
 
+        -- Actions are slot-indexed 1-4 (no summoner slot; the old +1 offset
+        -- and the "spell" opener died with the summoner-spell mechanic).
         local actions = {}
-        local firstSpell = spells[1]
-        if type(firstSpell) == "table" then firstSpell = firstSpell.id end
-        if firstSpell then
-            actions[1] = { type = "spell", id = firstSpell, target = vSession.party[1] }
-        end
         for i = 1, 4 do
             if vSession.party[i] then
-                actions[i + 1] = { type = (i == 1) and "defend" or "attack", target = enemy }
+                actions[i] = { type = (i == 1) and "defend" or "attack", target = enemy }
             end
         end
         local events = vBattle:resolveRound(actions)
         check(#events > 0, "battle round produced no events")
+    end
+
+    -- Summoner rework: emergency wave, row defaults, REAP_FALLEN permadeath
+    do
+        local s = session.GameSession.new(loader)
+        -- Level 3: a level-1 spirit's totalExp is 0, which would make the
+        -- bank check vacuous.
+        local function mk(id)
+            local b = session.Battler.new(loader.getActor(id), 3)
+            b.hp = b:getMaxHp(s)
+            return b
+        end
+        s.party = { mk(2), mk(3), mk(4) }
+        s.reserve = { mk(2), mk(3) }
+        local wb = battleSystem.Battle.new(s, { mk(1) })
+        check(s.party[1].row == "front" and s.party[3].row == "back",
+            "Battle.new did not assign default rows by slot (1-2 front, 3-4 back)")
+
+        -- Wipe the fielded party; the wave must deploy the whole reserve
+        for i = 1, 3 do
+            s.party[i].hp = 0
+            s.party[i]:addState("dead")
+        end
+        local evs = {}
+        check(wb:tryDeployWave(evs), "emergency wave did not deploy with reserves available")
+        check(s.party[1] and not s.party[1]:isDead() and s.party[2] and not s.party[2]:isDead(),
+            "emergency wave did not field the reserve spirits")
+        check(next(s.reserve) == nil, "emergency wave left spirits in the reserve")
+        check(#wb.fallen == 3, "emergency wave did not move the fallen party to battle.fallen")
+        local sawWave = false
+        for _, ev in ipairs(evs) do if ev.type == "wave" then sawWave = true end end
+        check(sawWave, "emergency wave emitted no wave event")
+
+        -- REAP_FALLEN: banks wave casualties + any dead party member
+        s.party[2].hp = 0
+        s.party[2]:addState("dead")
+        local bankBefore = s.expBank or 0
+        local okReap, reapEvs = pcall(interpreter.runImmediate,
+            { { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
+        check(okReap, "REAP_FALLEN failed: " .. tostring(reapEvs))
+        if okReap then
+            check((s.expBank or 0) > bankBefore, "REAP_FALLEN banked no EXP for the fallen")
+            check(#wb.fallen == 0, "REAP_FALLEN did not clear battle.fallen")
+            check(s.party[2] == nil, "REAP_FALLEN left a dead spirit in the party")
+            check(s.party[1] ~= nil, "REAP_FALLEN removed a living spirit")
+        end
+
+        -- With an empty reserve the wave must refuse (defeat stands)
+        check(not wb:tryDeployWave({}), "emergency wave deployed from an empty reserve")
     end
 
     -- newgame.rollGold randomness testing
@@ -1450,7 +1488,7 @@ elseif paramDef.type == "script" then
     -- the hosts call unconditionally must exist and execute cleanly against
     -- a fresh session (behavioral regressions are covered by the golden
     -- battle log, tools/golden/check).
-    for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.encounter_check" }) do
+    for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.escaped", "battle.encounter_check" }) do
         check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
         if flow.has(phase) then
             local s = session.GameSession.new(loader)

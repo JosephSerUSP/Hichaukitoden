@@ -21,7 +21,57 @@ function Battle.new(session, enemies)
     self.allies = session:getActiveParty() -- the 4 active creatures; no summoner (overhaul-6 F1)
     self.round = 1
     self.log = {}
+    -- Wave casualties awaiting the battle-end REAP_FALLEN sweep (Summoner
+    -- rework §3): spirits replaced by an emergency reserve wave leave the
+    -- party immediately but only convert to banked EXP when the battle ends.
+    self.fallen = {}
+    -- Front/back row state (Summoner rework §4): engine-accessible only for
+    -- now — no combat math consumes it. Default by fielded slot: 1-2 front,
+    -- 3-4 back. Spirits keep an explicitly assigned row across battles.
+    for i, ally in ipairs(self.allies) do
+        ally.row = ally.row or ((i <= 2) and "front" or "back")
+    end
     return self
+end
+
+-- Emergency wave (Summoner rework §3): when the whole fielded party is
+-- down and reserve spirits exist, the reserve wave deploys automatically
+-- and free of MP cost. The fallen move to self.fallen for the battle-end
+-- REAP_FALLEN sweep; the deployed spirits were never queued this round, so
+-- the party forfeits the turn by construction. Returns true when a wave
+-- deployed (defeat is averted), false when the reserve is empty.
+function Battle:tryDeployWave(roundEvents)
+    local session = self.session
+    local keys = {}
+    for k, b in pairs(session.reserve or {}) do
+        if b then table.insert(keys, k) end
+    end
+    if #keys == 0 then return false end
+    table.sort(keys)
+
+    for i = 1, 4 do
+        if session.party[i] then
+            table.insert(self.fallen, session.party[i])
+            session.party[i] = nil
+        end
+    end
+    local slot = 1
+    for _, k in ipairs(keys) do
+        if slot > 4 then break end
+        local b = session.reserve[k]
+        session.reserve[k] = nil
+        b.row = (slot <= 2) and "front" or "back"
+        session.party[slot] = b
+        slot = slot + 1
+    end
+    self.allies = session:getActiveParty()
+
+    table.insert(roundEvents, { type = "wave" })
+    table.insert(roundEvents, {
+        type = "text",
+        text = session.loader.getTerm("battle.reserve_wave", "The reserves surge onto the field!")
+    })
+    return true
 end
 
 -- Generate enemy actions using basic AI
@@ -84,8 +134,10 @@ end
 
 -- Resolve one round of battle
 -- collectedActions: 1-indexed by ally slot (1-4), each entry either nil or
--- { type = "spell"/"skill", id = ..., target = ... }, { type = "defend" },
+-- { type = "skill", id = ..., target = ... }, { type = "defend" },
 -- { type = "attack", target = ... }, or { type = "flee" }.
+-- (Summoner rework: no "spell" type — summoner spells are removed; the
+-- Summoner has no battle verbs of their own.)
 -- (overhaul-6 F1: the summoner no longer has an instant "acts first" slot;
 -- Flee is now any active creature's action -- the first one committed for
 -- the round triggers the party's flee attempt, same odds/penalty as before.)
@@ -156,7 +208,7 @@ function Battle:resolveRound(collectedActions)
             local itemAct = nil
 
             if chosenAct then
-                if chosenAct.type == "spell" or chosenAct.type == "skill" then
+                if chosenAct.type == "skill" then
                     skill = self.session.loader.getSkill(chosenAct.id) or getAttackSkill(self.session)
                     target = chosenAct.target
                 elseif chosenAct.type == "defend" then
@@ -258,11 +310,14 @@ function Battle:resolveRound(collectedActions)
                 end
             end
             
-            -- Check for victory/defeat mid-turn
+            -- Check for victory/defeat mid-turn. A wipe with reserves left
+            -- deploys the emergency wave instead of ending the battle; the
+            -- round continues (remaining enemy turns whose targets fell are
+            -- skipped by the target-dead check above).
             if self:isVictory() then
                 table.insert(roundEvents, { type = "victory" })
                 break
-            elseif self:isDefeat() then
+            elseif self:isDefeat() and not self:tryDeployWave(roundEvents) then
                 table.insert(roundEvents, { type = "defeat" })
                 break
             end
@@ -281,6 +336,10 @@ function Battle:resolveRound(collectedActions)
         })
         for _, ev in ipairs(flowEvents) do
             table.insert(roundEvents, ev)
+        end
+        -- Round-end ticks (poison) can wipe the party too
+        if self:isDefeat() and not self:tryDeployWave(roundEvents) then
+            table.insert(roundEvents, { type = "defeat" })
         end
         self.round = self.round + 1
         return roundEvents
@@ -375,6 +434,10 @@ function Battle:resolveRound(collectedActions)
         end
     end
     
+    -- Round-end ticks (poison) can wipe the party too
+    if self:isDefeat() and not self:tryDeployWave(roundEvents) then
+        table.insert(roundEvents, { type = "defeat" })
+    end
     self.round = self.round + 1
     return roundEvents
 end
