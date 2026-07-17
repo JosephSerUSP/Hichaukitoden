@@ -73,6 +73,81 @@
             document.getElementById('engine-modal').classList.remove('active');
         }
 
+        // Shared row-rendering skeleton for the Effect Type / Trait Code /
+        // Meta Key registry editors below: each list row is a set of small
+        // fields (built by textField/csvField/checkboxField/selectField)
+        // plus a delete button, with an "add row" button at the bottom.
+        function buildRegistryRows(box, list, fields, newEntryFactory, addLabel) {
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((entry, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    fields.forEach(f => row.appendChild(f(entry)));
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn(addLabel, () => {
+                    list.push(newEntryFactory());
+                    render();
+                }));
+            };
+            render();
+        }
+
+        function registryTextField(key, placeholder, width) {
+            return (entry) => {
+                const input = document.createElement('input');
+                input.className = 'win98-input';
+                input.placeholder = placeholder;
+                input.title = placeholder;
+                if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                input.value = entry[key] || '';
+                input.oninput = () => { entry[key] = input.value; setDirty(true); };
+                return input;
+            };
+        }
+
+        function registryCsvField(key, placeholder, width) {
+            return (entry) => {
+                const input = document.createElement('input');
+                input.className = 'win98-input';
+                input.placeholder = placeholder;
+                input.title = placeholder;
+                if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                input.value = (entry[key] || []).join(', ');
+                input.oninput = () => {
+                    entry[key] = input.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                    setDirty(true);
+                };
+                return input;
+            };
+        }
+
+        function registryCheckboxField(key, labelText) {
+            return (entry) => {
+                const wrap = document.createElement('label');
+                wrap.style.cssText = 'font-size: 10px; display: flex; align-items: center; gap: 3px;';
+                const chk = document.createElement('input');
+                chk.type = 'checkbox';
+                chk.checked = !!entry[key];
+                chk.onchange = () => { entry[key] = chk.checked; setDirty(true); };
+                wrap.appendChild(chk);
+                wrap.appendChild(document.createTextNode(labelText));
+                return wrap;
+            };
+        }
+
+        function registrySelectField(key, options, width) {
+            return (entry) => {
+                const sel = makeSelect(options, entry[key] || options[0], v => { entry[key] = v; });
+                sel.style.width = width || '80px';
+                sel.style.height = '19px';
+                sel.style.fontSize = '11px';
+                return sel;
+            };
+        }
+
         function buildEffectTypeRegistryEditor(panel) {
             dbPayload.engine.effectTypes = dbPayload.engine.effectTypes || [];
             const list = dbPayload.engine.effectTypes;
@@ -82,36 +157,12 @@
             panel.appendChild(note);
 
             const box = makeListBox();
-            const render = () => {
-                box.innerHTML = '';
-                list.forEach((et, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    const mk = (val, ph, width, onInput) => {
-                        const input = document.createElement('input');
-                        input.className = 'win98-input';
-                        input.placeholder = ph;
-                        input.title = ph;
-                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
-                        input.value = val;
-                        input.oninput = () => { onInput(input.value); setDirty(true); };
-                        return input;
-                    };
-                    row.appendChild(mk(et.id || '', 'id (Lua handler)', '110px', v => { et.id = v; }));
-                    row.appendChild(mk(et.label || '', 'Label', '110px', v => { et.label = v; }));
-                    row.appendChild(mk((et.params || []).join(', '), 'params (csv)', '120px', v => {
-                        et.params = v.split(',').map(s => s.trim()).filter(s => s !== '');
-                    }));
-                    row.appendChild(mk(et.description || '', 'Description', null, v => { et.description = v; }));
-                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Effect Type', () => {
-                    list.push({ id: 'new_effect', label: 'New Effect', params: ['value'], description: '' });
-                    render();
-                }));
-            };
-            render();
+            buildRegistryRows(box, list, [
+                registryTextField('id', 'id (Lua handler)', '110px'),
+                registryTextField('label', 'Label', '110px'),
+                registryCsvField('params', 'params (csv)', '120px'),
+                registryTextField('description', 'Description', null),
+            ], () => ({ id: 'new_effect', label: 'New Effect', params: ['value'], description: '' }), '+ Add Effect Type');
             panel.appendChild(box);
         }
 
@@ -124,42 +175,12 @@
             panel.appendChild(note);
 
             const box = makeListBox();
-            const render = () => {
-                box.innerHTML = '';
-                list.forEach((tc, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    const mk = (val, ph, width, onInput) => {
-                        const input = document.createElement('input');
-                        input.className = 'win98-input';
-                        input.placeholder = ph;
-                        input.title = ph;
-                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
-                        input.value = val;
-                        input.oninput = () => { onInput(input.value); setDirty(true); };
-                        return input;
-                    };
-                    row.appendChild(mk(tc.code || '', 'CODE', '150px', v => { tc.code = v; }));
-                    row.appendChild(mk(tc.label || '', 'Label', '110px', v => { tc.label = v; }));
-                    const chkWrap = document.createElement('label');
-                    chkWrap.style.cssText = 'font-size: 10px; display: flex; align-items: center; gap: 3px;';
-                    const chk = document.createElement('input');
-                    chk.type = 'checkbox';
-                    chk.checked = !!tc.usesDataId;
-                    chk.onchange = () => { tc.usesDataId = chk.checked; setDirty(true); };
-                    chkWrap.appendChild(chk);
-                    chkWrap.appendChild(document.createTextNode('dataId'));
-                    row.appendChild(chkWrap);
-                    row.appendChild(mk(tc.description || '', 'Description', null, v => { tc.description = v; }));
-                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Trait Code', () => {
-                    list.push({ code: 'NEW_CODE', label: 'New Trait', usesDataId: false, description: '' });
-                    render();
-                }));
-            };
-            render();
+            buildRegistryRows(box, list, [
+                registryTextField('code', 'CODE', '150px'),
+                registryTextField('label', 'Label', '110px'),
+                registryCheckboxField('usesDataId', 'dataId'),
+                registryTextField('description', 'Description', null),
+            ], () => ({ code: 'NEW_CODE', label: 'New Trait', usesDataId: false, description: '' }), '+ Add Trait Code');
             panel.appendChild(box);
         }
 
@@ -172,48 +193,12 @@
             panel.appendChild(note);
 
             const box = makeListBox();
-            const render = () => {
-                box.innerHTML = '';
-                list.forEach((mkEntry, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    const mkInput = (val, ph, width, onInput) => {
-                        const input = document.createElement('input');
-                        input.className = 'win98-input';
-                        input.placeholder = ph;
-                        input.title = ph;
-                        if (width) { input.style.width = width; } else { input.style.flex = '1'; }
-                        input.value = val;
-                        input.oninput = () => { onInput(input.value); setDirty(true); };
-                        return input;
-                    };
-                    
-                    row.appendChild(mkInput(mkEntry.key || '', 'key name', '110px', v => { mkEntry.key = v; }));
-                    
-                    const typeSelect = makeSelect(['number', 'string', 'flag'], mkEntry.type || 'number', v => {
-                        mkEntry.type = v;
-                        setDirty(true);
-                    });
-                    typeSelect.style.width = '80px';
-                    typeSelect.style.height = '19px';
-                    typeSelect.style.fontSize = '11px';
-                    row.appendChild(typeSelect);
-                    
-                    row.appendChild(mkInput((mkEntry.appliesTo || []).join(', '), 'appliesTo (csv)', '120px', v => {
-                        mkEntry.appliesTo = v.split(',').map(s => s.trim()).filter(s => s !== '');
-                    }));
-                    
-                    row.appendChild(mkInput(mkEntry.description || '', 'Description', null, v => { mkEntry.description = v; }));
-                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
-                    row.style.marginBottom = '2px';
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Meta Key', () => {
-                    list.push({ key: 'new_meta_key', type: 'number', appliesTo: ['items'], description: '' });
-                    render();
-                }));
-            };
-            render();
+            buildRegistryRows(box, list, [
+                registryTextField('key', 'key name', '110px'),
+                registrySelectField('type', ['number', 'string', 'flag'], '80px'),
+                registryCsvField('appliesTo', 'appliesTo (csv)', '120px'),
+                registryTextField('description', 'Description', null),
+            ], () => ({ key: 'new_meta_key', type: 'number', appliesTo: ['items'], description: '' }), '+ Add Meta Key');
             panel.appendChild(box);
         }
 
