@@ -625,27 +625,26 @@ runValidation = function()
     end
 
     local undeclaredWarnings = 0
+
+    local metaTypeMap = {
+        number = "number",
+        string = "string",
+        flag = "boolean"
+    }
+
     local function validateMeta(metaObj, collName, entryId)
         if not metaObj then return end
         for k, v in pairs(metaObj) do
             local reg = registeredMeta[k]
-            if reg then
-                if not reg.appliesTo[collName] then
-                    check(false, "meta key '" .. tostring(k) .. "' does not apply to collection '" .. collName .. "' (on entry '" .. tostring(entryId) .. "')")
-                else
-                    local ok = false
-                    if reg.type == "number" then
-                        ok = (type(v) == "number")
-                    elseif reg.type == "string" then
-                        ok = (type(v) == "string")
-                    elseif reg.type == "flag" then
-                        ok = (type(v) == "boolean")
-                    end
-                    check(ok, "meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "' has wrong type (expected " .. reg.type .. ", got " .. type(v) .. ")")
-                end
-            else
+            if not reg then
                 print("[validator] warning: undeclared meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "'")
                 undeclaredWarnings = undeclaredWarnings + 1
+            elseif not reg.appliesTo[collName] then
+                check(false, "meta key '" .. tostring(k) .. "' does not apply to collection '" .. collName .. "' (on entry '" .. tostring(entryId) .. "')")
+            else
+                local expectedType = metaTypeMap[reg.type]
+                local ok = (expectedType ~= nil) and (type(v) == expectedType) or false
+                check(ok, "meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "' has wrong type (expected " .. reg.type .. ", got " .. type(v) .. ")")
             end
         end
     end
