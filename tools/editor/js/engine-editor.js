@@ -23,7 +23,7 @@
             container.appendChild(launchBtn);
 
             launchBtn.onclick = () => {
-                fetch('/play-test-battle', { method: 'POST' })
+                fetch(`${API_URL}/play-test-battle`, { method: 'POST' })
                     .then(res => res.json())
                     .then(data => {
                         console.log('Launched test battle successfully.');
@@ -319,6 +319,15 @@
             return out;
         }
 
+        // E4/E3: fetches the read-only scene-template registry served by
+        // /api/templates/scenes. Shared by the "+ Create Scene" gallery and
+        // the hook editor's "Load from Template..." picker.
+        async function fetchSceneTemplates() {
+            const res = await fetch(`${API_URL}/api/templates/scenes`);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        }
+
         function renderUnifiedFlowsEditor(panel, header) {
             panel.innerHTML = '';
 
@@ -448,9 +457,7 @@
 
             const addBtn = makeAddRowBtn('+ Create Scene', async () => {
                 try {
-                    const res = await fetch(`${API_URL}/api/templates/scenes`);
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const templates = await res.json();
+                    const templates = await fetchSceneTemplates();
                     if (!templates.length) throw new Error('no templates found');
                     openTemplateGallery(templates);
                 } catch (err) {
@@ -883,9 +890,7 @@
             tplBtn.textContent = 'Load from Template...';
             tplBtn.onclick = async () => {
                 try {
-                    const res = await fetch(`${API_URL}/api/templates/scenes`);
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const templates = await res.json();
+                    const templates = await fetchSceneTemplates();
                     openHookTemplatePicker(templates, activeUnifiedPhase, {
                         onHook: (label, cmds) => {
                             const cur = scene.hooks[activeUnifiedPhase] || [];
