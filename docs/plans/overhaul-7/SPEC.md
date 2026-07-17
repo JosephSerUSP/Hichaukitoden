@@ -276,9 +276,25 @@ Owner-supervised (touches `engine/scenes/battle.lua`).
 - No audio system work beyond optional `sound` refs on animation entries
   (o4 S9 discipline stands; audio remains undecided per orchestration
   memory).
-- No AI targeting intelligence (focus fire, heal-lowest) — T1 keeps AI
+- ~~No AI targeting intelligence (focus fire, heal-lowest) — T1 keeps AI
   behavior semantics equivalent to today (random within legal set) except
-  where the old code was buggy; flag bugs, don't redesign.
+  where the old code was buggy; flag bugs, don't redesign.~~
+  **AMENDED 17.07.2026 (owner decision, post-audit):** T1 shipped two AI
+  heuristics in violation of this line — heal-lowest target priority
+  (`targeting.lua`, resolve()'s wounded-ally sort) and a heal-skip re-roll
+  in `battle.lua`'s `getAIAction` — plus one semantic change: `ally-any`'s
+  friendly group now includes the caster (pre-T1 code excluded self).
+  The 16.07 audit measured the revert: 10 of 30 battle.log lines, and the
+  S9-compliant behavior it restores is visibly degenerate — the golden
+  enemy Pixie randomly targets its own full-HP self with soothingMote and
+  heals for 0, a wasted turn, twice in the three-round fixture. The
+  self-inclusion and heal-lowest changes are complementary (self-healing
+  is legitimate; heal-lowest is what prevents the full-HP-self pick).
+  Owner reviewed the diff and chose to sanction what shipped rather than
+  spend a second battle.log regeneration restoring worse behavior. All
+  three changes are now sanctioned and baked into the T1 golden log; code
+  comments at both heuristics record this. Focus-fire and any FURTHER AI
+  intelligence remain out of scope — the prohibition stands for new work.
 - No battle/map scene window conversion (S8).
 - No sprite-sheet-frame or projectile track types — schema leaves the
   door open, v1 does not implement them. (Particles ARE in scope — owner

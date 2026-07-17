@@ -68,11 +68,11 @@ end
 -- Resolve targeting to concrete target list
 function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext)
     local exp = targeting.expand(spec)
-    
+
     -- Determine target side groups
     local allies = battleState.allies or {}
     local enemies = battleState.enemies or {}
-    
+
     -- Check if actor is an enemy
     local actorIsEnemy = false
     for _, e in ipairs(enemies) do
@@ -81,7 +81,13 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
             break
         end
     end
-    
+
+    -- NOTE: the friendly group INCLUDES the caster (here and in
+    -- getCandidates) — a deliberate T1 semantic change from the pre-T1 code,
+    -- whose ally-any branch excluded self. Owner-sanctioned 17.07.2026 (SPEC
+    -- S9 amendment): self-healing is a legitimate pick, and the heal-lowest
+    -- block below keeps the AI from the degenerate full-HP-self choice this
+    -- widening would otherwise allow.
     local friendlyGroup = actorIsEnemy and enemies or allies
     local opposingGroup = actorIsEnemy and allies or enemies
     
@@ -132,7 +138,12 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
         mode = "random"
     end
     
-    -- Heuristic 1: AI prioritizes wounded allies for healing actions
+    -- AI heal-lowest: wounded allies sorted by HP%, lowest first. Shipped in
+    -- violation of SPEC S9's original "no AI targeting intelligence" line;
+    -- owner-sanctioned retroactively 17.07.2026 (see the S9 amendment) after
+    -- measuring the revert — without this, an AI healer randomly picks its
+    -- own full-HP self and heals for 0. Baked into the T1 golden battle.log:
+    -- removing or reordering this block shifts RNG and breaks G2.
     if isAI and exp.side == "ally" and actionContext and actionContext.effects then
         local isHealAction = false
         for _, eff in ipairs(actionContext.effects) do

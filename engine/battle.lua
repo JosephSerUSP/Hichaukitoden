@@ -32,7 +32,11 @@ function Battle:getAIAction(enemy)
     local skills = enemy.skills
     if #skills == 0 then return nil end
     
-    -- Pick a random skill (with heal-skip retry heuristic)
+    -- Pick a random skill, re-rolling up to 3x if it's a heal and nobody on
+    -- this side is wounded. Shipped in violation of SPEC S9's original "no
+    -- AI targeting intelligence" line; owner-sanctioned retroactively
+    -- 17.07.2026 (see the S9 amendment). The extra math.random calls are
+    -- baked into the T1 golden battle.log — removing this breaks G2.
     local skillId = skills[math.random(#skills)]
     local skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
     
