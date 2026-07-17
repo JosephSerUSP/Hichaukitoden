@@ -25,7 +25,9 @@
         const SCENE_WINDOW_PRESETS = [
             { label: 'List window', style: 'list', width: 12, height: 16 },
             { label: 'Panel window', style: 'panel', width: 16, height: 8 },
-            { label: 'Confirm window', style: 'confirm', width: 24, height: 10 }
+            { label: 'Confirm window', style: 'confirm', width: 24, height: 10 },
+            { label: 'Roulette window', style: 'roulette', width: 24, height: 10 },
+            { label: 'Party grid window', style: 'partyGrid', width: 16, height: 10 },
         ];
 
         // Deep-scan a scene's hooks for commands referencing a windowId
