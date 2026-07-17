@@ -411,19 +411,23 @@ local function runGoldenUI()
         -- not the entire accumulated ctx.events.
         local loggedEventCount = 0
 
+        local function formatUiEvent(ev)
+            local w = ev.windowId or ""
+            local a = ev.type or ""
+            local t = ""
+            local v = ""
+            if ev.type == "set_text" then v = tostring(ev.text)
+            elseif ev.type == "set_list" then v = tostring(ev.listId)
+            elseif ev.type == "set_cursor" then v = tostring(ev.index) end
+            return string.format("%s|%s|%s|%s", w, a, t, v)
+        end
+
         local function logNewEvents(events)
             if not events then return end
             for i = loggedEventCount + 1, #events do
                 local ev = events[i]
                 if LOGGED_EVENT_TYPES[ev.type] then
-                    local w = ev.windowId or ""
-                    local a = ev.type or ""
-                    local t = ""
-                    local v = ""
-                    if ev.type == "set_text" then v = tostring(ev.text)
-                    elseif ev.type == "set_list" then v = tostring(ev.listId)
-                    elseif ev.type == "set_cursor" then v = tostring(ev.index) end
-                    table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
+                    table.insert(uiEvents, formatUiEvent(ev))
                 end
             end
             loggedEventCount = #events
