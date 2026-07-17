@@ -46,6 +46,7 @@ local tileset = nil
 local tileW, tileH = 256, 256
 local sheetW, sheetH = 1024, 1024
 local sliceQuad = nil
+local spriteSliceQuad = nil
 local wallQx, wallQy = 0, 0
 
 local npcSprites = {}
@@ -76,6 +77,8 @@ local function getEventSprite(ev, session)
 end
 
 function viewport_3d.init()
+    spriteSliceQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
+
     if love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
         tileset = love.graphics.newImage("assets/textures/dungeon_tileset.jpg")
         tileset:setFilter("nearest", "nearest")
@@ -351,8 +354,8 @@ function viewport_3d.draw(session)
                             love.graphics.setColor(brightness, brightness, brightness, 1)
                             
                             local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
-                            local quad = love.graphics.newQuad(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())
-                            love.graphics.draw(s.img, quad, stripeX, drawStartY, 0, 1, spriteHeight / s.img:getHeight())
+                            spriteSliceQuad:setViewport(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())
+                            love.graphics.draw(s.img, spriteSliceQuad, stripeX, drawStartY, 0, 1, spriteHeight / s.img:getHeight())
                         end
                     end
                 end
