@@ -1024,6 +1024,44 @@ elseif paramDef.type == "script" then
 
 
 
+    -- Test flow.run execution: simple mock of context and interpreter commands
+    do
+        local origRunImmediate = interpreter.runImmediate
+        local mockRunCalled = false
+        local mockPassedCommands = nil
+        local mockPassedCtx = nil
+        interpreter.runImmediate = function(commands, ctx)
+            mockRunCalled = true
+            mockPassedCommands = commands
+            mockPassedCtx = ctx
+            return { { type = "mock_flow_event" } }
+        end
+
+        local mockLoader = {
+            flows = {
+                _test = {
+                    mock_phase = { { cmd = "MOCK_CMD" } }
+                }
+            }
+        }
+        local mockCtx = { loader = mockLoader }
+
+        -- Valid phase
+        local evs = flow.run("_test.mock_phase", mockCtx)
+        check(mockRunCalled, "flow.run did not call interpreter.runImmediate")
+        check(mockPassedCommands and mockPassedCommands[1] and mockPassedCommands[1].cmd == "MOCK_CMD", "flow.run passed incorrect commands to interpreter")
+        check(mockPassedCtx == mockCtx, "flow.run passed incorrect context to interpreter")
+        check(evs and evs[1] and evs[1].type == "mock_flow_event", "flow.run did not return events from interpreter")
+
+        -- Invalid phase
+        mockRunCalled = false
+        local emptyEvs = flow.run("_test.missing_phase", mockCtx)
+        check(not mockRunCalled, "flow.run called interpreter for missing phase")
+        check(type(emptyEvs) == "table" and #emptyEvs == 0, "flow.run did not return empty table for missing phase")
+
+        interpreter.runImmediate = origRunImmediate
+    end
+
     -- Interpreter immediate mode: the _test flow exercises every implemented
     -- non-interactive command (SPEC S1/S2; ROLL_ENCOUNTER/SPAWN_ENEMIES land
     -- with task A5d and are registry-only for now).
