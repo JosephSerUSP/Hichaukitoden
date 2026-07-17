@@ -99,6 +99,11 @@ function small_battlers.get(spriteKey)
             local cellW = math.min(w, cellH) -- default cell is square (24x24)
             local numFrames = math.floor(w / cellW)
             if numFrames < 1 then numFrames = 1 end
+
+            local quads = {}
+            for i = 0, numFrames - 1 do
+                table.insert(quads, love.graphics.newQuad(i * cellW, 0, cellW, cellH, w, h))
+            end
             local result = {
                 img = img,
                 cellW = cellW,
@@ -106,6 +111,7 @@ function small_battlers.get(spriteKey)
                 numFrames = numFrames,
                 speed = overrides.speed,
                 fps = overrides.fps,
+                quads = quads,
             }
             cache[key] = result
             return result
@@ -142,7 +148,7 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
             * math.sin(anim.shakeTimer * animVal("shakeFrequency") * 2 * math.pi)
     end
 
-    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+    local quad = ss.quads[frame + 1]
     local drawScale = size / ss.cellW
     if dead then
         local tint = animVal("deadTint")
