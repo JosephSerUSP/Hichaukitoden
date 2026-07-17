@@ -953,9 +953,222 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
 end
 
 -- ---------------------------------------------------------------------------
+-- S1w: drawWindowFromData — generic window renderer driven entirely by a
+-- scene's `windows` array (data/scenes.json).  The windows array declares
+-- each window's id, rect (expressions), visible (expr), and an array of
+-- typed content blocks (text, list, gauge, image).  Expression evaluation
+-- uses the same sandboxed env as scene hooks (v.*, config, sel(), formula
+-- engine).  Unknown content-block types fail soft (log once, skip block);
+-- unknown optional fields in window defs are ignored (extensibility rule).
+--
+-- S2w: reserve scene swap indicator (black silhouette + floating ghost) is
+-- drawn AFTER the windows pass, so the effect survives data-authored windows.
+-- ---------------------------------------------------------------------------
+
+-- Per-type warning-once guard so unknown content block types don't spam.
+local warnedBlockTypes = {}
+
+function wr.drawWindowFromData(sceneData, state, ctx)
+    if not sceneData or not sceneData.windows then return end
+
+    -- Resolve the list cache and env once, shared by all data windows.
+    -- Build a minimal listCache so sel("window_id") works during content
+    -- block evaluation (text interpolation, gauge formulas).
+    local listCache = {}
+    local env = buildEnv(state, sceneData, ctx, listCache)
+
+    -- Pre-resolve lists for every window that has a list content block,
+    -- so sel() lookups and cursor evaluation work.
+    for _, winDef in ipairs(sceneData.windows) do
+        local listBlock = nil
+        for _, block in ipairs(winDef.content or {}) do
+            if block.type == "list" then
+                listBlock = block
+                break
+            end
+        end
+        if listBlock then
+            local syntheticWin = {
+                listId = listBlock.listId,
+                format = listBlock.format,
+                cursorFormula = listBlock.cursor,
+                cursor = 1,
+                sprite = listBlock.sprite,
+                gaugeValue = listBlock.gaugeValue,
+                gaugeMax = listBlock.gaugeMax,
+                highlight = listBlock.highlight,
+                priority = listBlock.priority,
+            }
+            local rows = resolveRows(syntheticWin, state, sceneData, ctx, env)
+            local cur = liveCursor(syntheticWin, env)
+            listCache[winDef.id] = { rows = rows, cursor = cur }
+        end
+    end
+
+    -- Rebuild env now that listCache is populated (sel() needs it).
+    env = buildEnv(state, sceneData, ctx, listCache)
+
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+
+    -- Persistent synthetic win tables, one per window id. openClocks (the
+    -- open-animation timer) is keyed by the win TABLE, so rebuilding it every
+    -- frame reset the animation each frame and any anim.open window stayed
+    -- frozen at its 16px pop-in floor (the reserve popup "sliver" bug).
+    state._dataWins = state._dataWins or {}
+
+    for _, winDef in ipairs(sceneData.windows) do
+        -- Evaluate visibility expression.  Absent = visible (true).
+        local visible = true
+        if winDef.visible then
+            local ok, vv = pcall(formula.eval, winDef.visible, env)
+            if not ok then visible = false
+            else visible = vv == true or (type(vv) == "number" and vv ~= 0) end
+        end
+        if not visible then
+            -- Drop the hidden window's anim clock so re-showing it replays
+            -- the open animation (same rule as the winState path).
+            local prev = state._dataWins[winDef.id]
+            if prev then openClocks[prev] = nil end
+            goto continue
+        end
+
+        -- Resolve rect (expressions allowed per-value).
+        local function resolveDim(dim, default)
+            if dim == nil then return default end
+            local ok, val = pcall(formula.eval, dim, env)
+            if ok then
+                local n = tonumber(val)
+                if n then return n end
+            end
+            return default
+        end
+        local x = resolveDim(winDef.rect and winDef.rect.x, 0)
+        local y = resolveDim(winDef.rect and winDef.rect.y, 0)
+        local w = resolveDim(winDef.rect and winDef.rect.w, 8)
+        local h = resolveDim(winDef.rect and winDef.rect.h, 4)
+
+        -- Build a synthetic window layout: start from engine.json windowLayout
+        -- (for shared windows like help/party that have existing style defs),
+        -- then overlay the windows array's own properties.
+        local layout = {}
+        local baseLayout = layouts[winDef.id]
+        if baseLayout then
+            for k, v in pairs(baseLayout) do layout[k] = v end
+        end
+        layout.x = x
+        layout.y = y
+        layout.width = w
+        layout.height = h
+        if winDef.style ~= nil then layout.style = winDef.style end
+        if winDef.title ~= nil then layout.title = winDef.title end
+        if winDef.emptyText ~= nil then layout.emptyText = winDef.emptyText end
+        if winDef.lineSpacing ~= nil then layout.lineSpacing = winDef.lineSpacing end
+        if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
+
+        -- Build the synthetic win entry from content blocks, reusing the
+        -- persistent table so per-win state keyed on it (openClocks) survives
+        -- across frames. All fields are re-derived below, so stale values
+        -- from the previous frame are explicitly cleared first.
+        local win = state._dataWins[winDef.id]
+        if not win then
+            win = {}
+            state._dataWins[winDef.id] = win
+        end
+        win.open = true
+        win.listId, win.format, win.text, win.cursor = nil, nil, nil, 1
+        win.cursorFormula, win.sprite = nil, nil
+        win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
+        win.slot, win.member = nil, nil
+        win._resolvedRows, win._resolvedCursor = nil, nil
+        local gauges = {}
+
+        for _, block in ipairs(winDef.content or {}) do
+            if block.type == "list" then
+                win.listId = block.listId
+                win.format = block.format
+                win.cursorFormula = block.cursor
+                win.sprite = block.sprite
+                win.gaugeValue = block.gaugeValue
+                win.gaugeMax = block.gaugeMax
+                win.highlight = block.highlight
+                win.priority = block.priority
+                win.slot = block.slot
+                win.member = block.member
+                -- pull rows from pre-resolved cache
+                local cached = listCache[winDef.id]
+                if cached then
+                    win._resolvedRows = cached.rows
+                    win._resolvedCursor = cached.cursor
+                end
+            elseif block.type == "text" then
+                win.text = block.text
+            elseif block.type == "gauge" then
+                table.insert(gauges, block)
+            elseif block.type == "image" then
+                -- image blocks are passed through as layout-level properties
+                -- for the existing drawPortrait path; future richer image
+                -- support can extend this.
+                if block.portraitField then
+                    layout.portrait = block.portraitField
+                end
+                if block.portraitX ~= nil then layout.portraitX = block.portraitX end
+                if block.portraitY ~= nil then layout.portraitY = block.portraitY end
+            else
+                -- Unknown block types fail soft (extensibility rule).
+                if not warnedBlockTypes[block.type] then
+                    print("[window_renderer] warning: unknown content block type '" .. tostring(block.type) .. "' in window '" .. tostring(winDef.id) .. "' — skipping")
+                    warnedBlockTypes[block.type] = true
+                end
+            end
+        end
+
+        -- If any gauge blocks were collected, attach them to the layout.
+        if #gauges > 0 then
+            layout.gauges = gauges
+        end
+
+        -- Override cursor from list cache if available.
+        if win._resolvedCursor then
+            win.cursor = win._resolvedCursor
+        end
+        -- If the window def has its own cursor formula (e.g. party grid with
+        -- cursor hidden as 0), use it as fallback when the content block
+        -- doesn't specify one. PartyGrid windows that define cursor at the
+        -- def level but have a listId in content need this fallback path.
+        if winDef.cursor ~= nil and win.cursorFormula == nil then
+            win.cursorFormula = tostring(winDef.cursor)
+        end
+
+        -- Use the list cache for sel() when drawing this window.
+        local winListCache = {}
+        if win._resolvedRows then
+            winListCache[winDef.id] = { rows = win._resolvedRows, cursor = win.cursor }
+        end
+
+        drawWindow(winDef.id, win, layout, state, sceneData, ctx, env, winListCache, layouts)
+
+        ::continue::
+    end
+end
+
+-- ---------------------------------------------------------------------------
 -- Entry point: draw all open windows of the scene state, in open order.
+-- If the scene has a data-authored `windows` array, uses drawWindowFromData
+-- instead of the runtime winState path.
 -- ---------------------------------------------------------------------------
 function wr.draw(state, sceneData, ctx)
+    -- S1w: scenes with a data-authored windows array draw entirely through
+    -- drawWindowFromData.  Unknown optional fields in the window def are
+    -- silently ignored (extensibility rule).
+    if sceneData and sceneData.windows and #sceneData.windows > 0 then
+        wr.drawWindowFromData(sceneData, state, ctx)
+        -- S2w: reserve swap indicator must survive data-authored windows.
+        if sceneData and sceneData.id == "reserve" then
+            drawSwapIndicator(state, sceneData, ctx)
+        end
+        return
+    end
+
     if not state or not state.winState then return end
 
     -- Resolve every open window's list once per frame (cursor + rows), so
@@ -1001,8 +1214,20 @@ end
 -- as wr.draw — list sources expanded to formatted row strings, {expr} text
 -- interpolated, live cursor evaluated — but no drawing. Per-window failures
 -- become an `error` field on that window instead of crashing the preview.
+--
+-- S2w: for data-authored scenes (scene.windows) whose hooks no longer emit
+-- OPEN_WINDOW commands (those are redundant with the declarative windows
+-- array), winState is empty — delegate to resolveDataState so the preview
+-- reads directly from the scene's windows array with real v-state.
 -- ---------------------------------------------------------------------------
 function wr.resolveState(state, sceneData, ctx)
+    -- S2w: delegate to resolveDataState when the scene is data-authored but
+    -- has no winState (hooks were cleaned of redundant window commands).
+    if sceneData and sceneData.windows and #sceneData.windows > 0
+        and state and (not state.winState or #state.winState == 0) then
+        return wr.resolveDataState(sceneData, ctx, state)
+    end
+
     local result = {
         tileSize = ui.tileSize,
         focused = state and state.focusedWindow or nil,
@@ -1074,6 +1299,135 @@ function wr.resolveState(state, sceneData, ctx)
             table.insert(result.windows, entry)
         end
     end
+    return result
+end
+
+-- ---------------------------------------------------------------------------
+-- S1w: resolveState for data-authored windows — produces the same preview
+-- metadata shape as the winState path, but reads from the scene's windows
+-- array instead of runtime winState.  Used by the scene preview endpoint
+-- when a scene has a `windows` array.
+-- ---------------------------------------------------------------------------
+function wr.resolveDataState(sceneData, ctx, state)
+    local result = {
+        tileSize = ui.tileSize,
+        focused = state and state.focusedWindow or nil,
+        windows = {},
+    }
+    if not sceneData or not sceneData.windows then return result end
+
+    local listCache = {}
+    -- Use caller-supplied state (with real v from hook execution) when
+    -- available; fall back to an empty state for ad-hoc/preview use.
+    state = state or { v = {}, winState = {}, windowOrder = {} }
+    local env = buildEnv(state, sceneData, ctx, listCache)
+
+    -- Pre-resolve lists for sel().
+    for _, winDef in ipairs(sceneData.windows) do
+        local listBlock = nil
+        for _, block in ipairs(winDef.content or {}) do
+            if block.type == "list" then
+                listBlock = block
+                break
+            end
+        end
+        if listBlock then
+            local syntheticWin = {
+                listId = listBlock.listId,
+                format = listBlock.format,
+                cursorFormula = listBlock.cursor,
+                cursor = 1,
+                sprite = listBlock.sprite,
+                gaugeValue = listBlock.gaugeValue,
+                gaugeMax = listBlock.gaugeMax,
+                highlight = listBlock.highlight,
+                priority = listBlock.priority,
+                slot = listBlock.slot,
+                member = listBlock.member,
+            }
+            local ok, rows = pcall(resolveRows, syntheticWin, state, sceneData, ctx, env)
+            local cur = 1
+            if ok then
+                local okC, curV = pcall(liveCursor, syntheticWin, env)
+                if okC then cur = curV end
+            end
+            listCache[winDef.id] = { rows = ok and rows or {}, cursor = cur }
+        end
+    end
+
+    -- Rebuild env with populated listCache.
+    env = buildEnv(state, sceneData, ctx, listCache)
+
+    for _, winDef in ipairs(sceneData.windows) do
+        local visible = true
+        if winDef.visible then
+            local ok, vv = pcall(formula.eval, winDef.visible, env)
+            if ok then
+                visible = vv == true or (type(vv) == "number" and vv ~= 0)
+            else
+                visible = false
+            end
+        end
+
+        local function resolveDim(dim, default)
+            if dim == nil then return default end
+            local ok, val = pcall(formula.eval, dim, env)
+            if ok then
+                local n = tonumber(val)
+                if n then return n end
+            end
+            return default
+        end
+
+        local x = resolveDim(winDef.rect and winDef.rect.x, 0)
+        local y = resolveDim(winDef.rect and winDef.rect.y, 0)
+        local w = resolveDim(winDef.rect and winDef.rect.w, 8)
+        local h = resolveDim(winDef.rect and winDef.rect.h, 4)
+
+        local entry = {
+            id = winDef.id,
+            open = visible,
+            style = winDef.style or "panel",
+            x = x,
+            y = y,
+            width = w,
+            height = h,
+        }
+
+        -- Collect text content from text blocks.
+        for _, block in ipairs(winDef.content or {}) do
+            if block.type == "text" and entry.text == nil then
+                local okT, text = pcall(interpolate, block.text or "", env)
+                entry.text = okT and text or ("<error: " .. tostring(text) .. ">")
+            end
+        end
+
+        local cached = listCache[winDef.id]
+        if cached then
+            entry.cursor = cached.cursor
+            entry.rows = {}
+            -- Find the list block's format for row rendering.
+            local format = "{name}"
+            for _, block in ipairs(winDef.content or {}) do
+                if block.type == "list" then
+                    entry.listId = block.listId
+                    if block.format then format = block.format end
+                    break
+                end
+            end
+            for _, row in ipairs(cached.rows) do
+                local rEnv = rowEnv(env, row)
+                local okR, textR = pcall(interpolate, format, rEnv)
+                table.insert(entry.rows, {
+                    text = okR and textR or ("<error: " .. tostring(textR) .. ">"),
+                    icon = row.icon or 0,
+                })
+            end
+        end
+
+        table.insert(result.windows, entry)
+    end
+
     return result
 end
 

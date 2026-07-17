@@ -554,6 +554,64 @@
             container.appendChild(group);
         }
 
+        // Editable list of sacrifice reward rows ({itemId, chance, count, minLevel})
+        // for actors. Empty list = the actor falls back to
+        // system.summoner.defaultSacrificeRewards.
+        function buildSacrificeRewardsEditor(container, actor) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = 'Sacrifice Rewards (item, chance 0-1, count, min level)';
+            lbl.title = 'Rolled when this creature is sacrificed. Empty = system default table.';
+            group.appendChild(lbl);
+            const box = makeListBox();
+            const itemOptions = dbPayload.items.map(it => ({ value: String(it.id), label: it.name }));
+
+            const render = () => {
+                actor.sacrificeRewards = actor.sacrificeRewards || [];
+                box.innerHTML = '';
+                actor.sacrificeRewards.forEach((reward, idx) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+                    row.appendChild(makeSelect(itemOptions, reward.itemId, v => { reward.itemId = parseInt(v); }, '1'));
+                    const chance = document.createElement('input');
+                    chance.type = 'number'; chance.step = '0.05'; chance.min = '0'; chance.max = '1';
+                    chance.className = 'win98-input'; chance.style.width = '52px';
+                    chance.title = 'Reward chance (0-1)';
+                    chance.value = reward.chance !== undefined ? reward.chance : 1;
+                    chance.oninput = () => { reward.chance = parseFloat(chance.value) || 0; setDirty(true); };
+                    row.appendChild(chance);
+                    const count = document.createElement('input');
+                    count.type = 'number'; count.min = '1';
+                    count.className = 'win98-input'; count.style.width = '44px';
+                    count.title = 'Item count';
+                    count.value = reward.count !== undefined ? reward.count : 1;
+                    count.oninput = () => { reward.count = parseInt(count.value) || 1; setDirty(true); };
+                    row.appendChild(count);
+                    const minLevel = document.createElement('input');
+                    minLevel.type = 'number'; minLevel.min = '0';
+                    minLevel.className = 'win98-input'; minLevel.style.width = '44px';
+                    minLevel.title = 'Minimum creature level for this reward (0 = always)';
+                    minLevel.value = reward.minLevel !== undefined ? reward.minLevel : 0;
+                    minLevel.oninput = () => {
+                        const v = parseInt(minLevel.value) || 0;
+                        if (v > 0) { reward.minLevel = v; } else { delete reward.minLevel; }
+                        setDirty(true);
+                    };
+                    row.appendChild(minLevel);
+                    row.appendChild(makeRowDeleteBtn(() => { actor.sacrificeRewards.splice(idx, 1); render(); }));
+                    box.appendChild(row);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Reward', () => {
+                    actor.sacrificeRewards.push({ itemId: dbPayload.items[0] ? dbPayload.items[0].id : 1, chance: 1, count: 1 });
+                    render();
+                }));
+            };
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+        }
+
         // Editable list of evolution rows ({level, evolvesTo}) for actors
         function buildEvolutionsEditor(container, actor) {
             const group = document.createElement('div');
@@ -753,7 +811,7 @@
             'summoner.summonCostBase':     { label: 'Summon Base Cost (MP)' },
             'summoner.summonCostPerLevel': { label: 'Summon Cost / Level (MP)' },
             'summoner.summonCostPerTier':  { label: 'Summon Cost / Tier (MP)' },
-            'summoner.sacrificeMpRefundRate': { label: 'Sacrifice Refund Rate (Multiplier)', step: 0.1 },
+            'summoner.sacrificeExpRate':   { label: 'Sacrifice EXP Rate (Multiplier)', step: 0.1 },
             'summoner.spells':             { label: 'Summoner Spells', widget: 'skillChecklist' },
             'spawn.x':                     { label: 'Town Spawn X' },
             'spawn.y':                     { label: 'Town Spawn Y' },
@@ -793,8 +851,6 @@
             'battleLayout.enemyHpBarHeight': { label: 'Enemy HP Bar Height (px)' },
             'battleLayout.enemySpriteSize': { label: 'Enemy Sprite Size (px)' },
             'battleLayout.enemyFallbackSize': { label: 'Enemy Fallback Sprite Size (px)' },
-            'battleLayout.enemySlideOffset': { label: 'Enemy Slide-in Offset (px)' },
-            'battleLayout.enemyDeathYOffset': { label: 'Enemy Death Bounce Height (px)' },
             'battleLayout.viewportOverlayW': { label: 'Viewport Overlay Width (px)' },
             'battleLayout.viewportOverlayH': { label: 'Viewport Overlay Height (px)' },
             'battleLayout.logPanelX':      { label: 'Log Panel X (px)' },
@@ -1214,6 +1270,12 @@
 
         function loadFormForItem(item) {
             const formPanel = document.getElementById('db-form-panel');
+            // The animation editor owns timers/listeners; tear them down
+            // whenever the form is rebuilt (including leaving the tab).
+            if (formPanel._animCleanup) {
+                formPanel._animCleanup();
+                delete formPanel._animCleanup;
+            }
             formPanel.innerHTML = '';
             formPanel.style.display = 'block'; // Reset layout
 
@@ -1394,6 +1456,11 @@
                 buildDropsEditor(dropsCol, item);
                 buildEvolutionsEditor(evolutionsCol, item);
 
+                // Sacrifice rewards row (full width below the three columns)
+                const sacrificeRow = document.createElement('div');
+                formPanel.appendChild(sacrificeRow);
+                buildSacrificeRewardsEditor(sacrificeRow, item);
+
             } else if (activeDbTab === 'items') {
                 const topRow = document.createElement('div');
                 topRow.className = 'form-row';
@@ -1436,13 +1503,37 @@
                     scopeGroup.appendChild(scopeLbl);
                     scopeGroup.appendChild(makeSelect(
                         [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
-                        item.targetScope || '',
-                        v => { if (v === '') { delete item.targetScope; } else { item.targetScope = v; } }));
+                        item.target || item.targetScope || '',
+                        v => {
+                            delete item.targetScope; // old field name, migrate off it on save
+                            if (v === '') { delete item.target; } else { item.target = v; }
+                        }));
                     itemRow.appendChild(scopeGroup);
                 }
 
                 createFormField(itemRow, 'Buy Cost (G)', item.cost || 0, val => { item.cost = parseInt(val) || 0; }, 'number');
                 formPanel.appendChild(itemRow);
+
+                if (item.type !== 'equipment') {
+                    const animGroup = document.createElement('div');
+                    animGroup.className = 'form-group';
+                    const aLbl = document.createElement('label');
+                    aLbl.textContent = 'Animation';
+                    animGroup.appendChild(aLbl);
+                    const animOpts = [{ value: '', label: '(default)' }];
+                    if (dbPayload.animations) {
+                        Object.keys(dbPayload.animations).forEach(id => {
+                            const animObj = dbPayload.animations[id];
+                            if (animObj.class === 'assignable') {
+                                animOpts.push({ value: id, label: id });
+                            }
+                        });
+                    }
+                    animGroup.appendChild(makeSelect(animOpts, item.animation || '', v => {
+                        if (v === '') { delete item.animation; } else { item.animation = v; }
+                    }));
+                    formPanel.appendChild(animGroup);
+                }
 
                 createFormField(formPanel, 'Description', item.description || '', val => { item.description = val; });
 
@@ -1475,6 +1566,25 @@
                     if (v === '') { skill.element = null; } else { skill.element = v; }
                 }));
                 formPanel.appendChild(elGroup);
+
+                const animGroup = document.createElement('div');
+                animGroup.className = 'form-group';
+                const aLbl = document.createElement('label');
+                aLbl.textContent = 'Animation';
+                animGroup.appendChild(aLbl);
+                const animOpts = [{ value: '', label: '(default)' }];
+                if (dbPayload.animations) {
+                    Object.keys(dbPayload.animations).forEach(id => {
+                        const animObj = dbPayload.animations[id];
+                        if (animObj.class === 'assignable') {
+                            animOpts.push({ value: id, label: id });
+                        }
+                    });
+                }
+                animGroup.appendChild(makeSelect(animOpts, skill.animation || '', v => {
+                    if (v === '') { delete skill.animation; } else { skill.animation = v; }
+                }));
+                formPanel.appendChild(animGroup);
 
                 const costRow = document.createElement('div');
                 costRow.className = 'form-row';
@@ -1549,6 +1659,9 @@
                     note.textContent = 'The engine locates the player character by the "Summoner" role — keep exactly one actor with it.';
                     formPanel.appendChild(note);
                 }
+
+            } else if (activeDbTab === 'animations') {
+                renderAnimationEditor(formPanel, item);
 
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};

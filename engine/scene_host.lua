@@ -202,21 +202,9 @@ function scene_host.runHook(hookName, ctx)
         if ev.kind == "pop" then
             scene_host.pop(ctx)
         elseif ev.kind == "push" and ev.scene then
-            scene_host.push(ev.scene, ctx)
-            if ev.vars then
-                local pushed = sceneStack[#sceneStack]
-                if pushed then
-                    for k, val in pairs(ev.vars) do pushed.v[k] = val end
-                end
-            end
+            scene_host.push(ev.scene, ctx, ev.vars)
         elseif ev.kind == "goto" and ev.scene then
-            scene_host.goto_scene(ev.scene, ctx)
-            if ev.vars then
-                local pushed = sceneStack[#sceneStack]
-                if pushed then
-                    for k, val in pairs(ev.vars) do pushed.v[k] = val end
-                end
-            end
+            scene_host.goto_scene(ev.scene, ctx, ev.vars)
         end
     end
 
@@ -226,7 +214,10 @@ function scene_host.runHook(hookName, ctx)
     return not fallback
 end
 
-function scene_host.push(id, ctx)
+-- vars (optional): pre-resolved values from a SCENE_EVENT push/goto, seeded
+-- into the new scene's v BEFORE on_enter so its setup hooks can read them
+-- (e.g. the ritual scene's ritualMode/targetIndex).
+function scene_host.push(id, ctx, vars)
     ctx = ctx or lastCtx
     table.insert(sceneStack, {
         id = resolveSceneId(id),
@@ -235,6 +226,10 @@ function scene_host.push(id, ctx)
         windows = {},
         focusedWindow = nil
     })
+    if vars then
+        local pushed = sceneStack[#sceneStack]
+        for k, val in pairs(vars) do pushed.v[k] = val end
+    end
 
     local state = sceneStack[#sceneStack]
     local sceneData = getSceneData(ctx, id)
@@ -272,9 +267,9 @@ function scene_host.pop(ctx)
     end
 end
 
-function scene_host.goto_scene(id, ctx)
+function scene_host.goto_scene(id, ctx, vars)
     scene_host.pop(ctx)
-    scene_host.push(id, ctx)
+    scene_host.push(id, ctx, vars)
 end
 
 function scene_host.update(dt, ctx)
@@ -323,6 +318,11 @@ function scene_host.keypressed(key, ctx)
         return scene_host.runHook("on_left", ctx)
     elseif key == "right" then
         return scene_host.runHook("on_right", ctx)
+    elseif key == "q" or key == "e" or key == "tab" then
+        -- Page-flip hook for scenes with multiple info pages (e.g. the
+        -- ritual scene's stats/art pages). Scenes that don't define it
+        -- fall through unhandled, as with any absent hook.
+        return scene_host.runHook("on_page", ctx)
     end
     -- Fallback not handled
     return false

@@ -87,6 +87,7 @@ function formula.sessionView(session)
         gold = session.gold or 0,
         mp = session.mp or 0,
         maxMp = session.maxMp or 0,
+        expBank = session.expBank or 0,
         floor = session.currentFloor or session.floor or 1,
         -- Display name of the current map (menu FLOOR readout).
         mapTitle = (session.currentMapData and session.currentMapData.title) or "Town",

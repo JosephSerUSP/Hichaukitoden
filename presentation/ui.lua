@@ -10,6 +10,8 @@ local windowskinHighlight
 local targetSkin
 local mainFont
 local popupFont
+local popupNumberFont
+local popupTextFont
 
 local panelQuads = {}
 local targetQuads = {}
@@ -116,10 +118,23 @@ function ui.init()
     ui.setFont(fontName, fontSize)
 
     -- Load active popup font from system config
-    local popupFontName = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font
-    local popupFontSize = config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.fontSize
+    local popConf = config.battle_screen and config.battle_screen.popup or {}
+    local popupFontName = popConf.font
+    local popupFontSize = popConf.fontSize
     if popupFontName then
         ui.loadPopupFont(popupFontName, popupFontSize)
+    end
+
+    local numFontName = popConf.numberFont or popupFontName
+    local numFontSize = popConf.numberFontSize or popupFontSize
+    if numFontName then
+        popupNumberFont = ui.loadFont(numFontName, numFontSize)
+    end
+
+    local textFontName = popConf.textFont or popupFontName
+    local textFontSize = popConf.textFontSize or popupFontSize
+    if textFontName then
+        popupTextFont = ui.loadFont(textFontName, textFontSize)
     end
 end
 
@@ -512,6 +527,14 @@ end
 
 function ui.getPopupFont()
     return popupFont
+end
+
+function ui.getPopupNumberFont()
+    return popupNumberFont or popupFont
+end
+
+function ui.getPopupTextFont()
+    return popupTextFont or popupFont
 end
 
 -- Measure rendered width of text in the active UI font (monospace).

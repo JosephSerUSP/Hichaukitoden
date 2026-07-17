@@ -80,6 +80,26 @@ function Battler:isDead()
     return self.hp <= 0
 end
 
+-- EXP the growth curve charges to go from fromLevel to toLevel (exclusive of
+-- residual). Same linear curve gainExp levels through: each level l costs
+-- l * growth.expPerLevel. Shared by summon pricing and sacrifice yields so
+-- the EXP Bank conserves training value.
+function session.expCurveCost(fromLevel, toLevel)
+    local expPerLevel = (config.growth and config.growth.expPerLevel) or 15
+    local total = 0
+    for l = fromLevel, toLevel - 1 do
+        total = total + l * expPerLevel
+    end
+    return total
+end
+
+-- Total training value of this battler: the curve cost from level 1 to its
+-- current level plus residual exp. Sacrifice yields are computed from this,
+-- so a creature summoned at a high level (bank-funded) returns that value.
+function Battler:totalExp()
+    return session.expCurveCost(1, self.level) + (self.exp or 0)
+end
+
 function Battler:gainExp(amount, sess)
     -- XP_RATE traits (equipment/passives) boost experience gained
     if sess then
@@ -125,6 +145,9 @@ function GameSession.new(loader)
     local startMp = loader.system and loader.system.summoner and loader.system.summoner.startMp or 820
     self.mp = startMp
     self.maxMp = startMp
+    -- EXP Bank: accrued mostly by sacrificing creatures; spent to summon
+    -- creatures above their base level.
+    self.expBank = 0
     self.summoner = Battler.new(loader.getActorByRole("Summoner"), 1)
     self.summoner.hp = self.summoner:getMaxHp(self)
     

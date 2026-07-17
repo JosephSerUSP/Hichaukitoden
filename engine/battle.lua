@@ -32,54 +32,48 @@ function Battle:getAIAction(enemy)
     local skills = enemy.skills
     if #skills == 0 then return nil end
     
-    -- Pick a random skill
+    -- Pick a random skill, re-rolling up to 3x if it's a heal and nobody on
+    -- this side is wounded. Shipped in violation of SPEC S9's original "no
+    -- AI targeting intelligence" line; owner-sanctioned retroactively
+    -- 17.07.2026 (see the S9 amendment). The extra math.random calls are
+    -- baked into the T1 golden battle.log — removing this breaks G2.
     local skillId = skills[math.random(#skills)]
     local skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
     
-    -- Select target
-    local target
-    if skill.target == "enemy" or skill.target == "enemy-any" then
-        -- Attack a random ally creature (enemy targets the player's party).
-        local livingAllies = {}
-        for i = 1, 4 do
-            local ally = self.allies[i]
-            if ally and not ally:isDead() then
-                table.insert(livingAllies, ally)
+    local retries = 3
+    while retries > 0 do
+        local isHealSkill = false
+        for _, eff in ipairs(skill.effects or {}) do
+            if eff.type == "hp_heal" or eff.type == "hp" then
+                isHealSkill = true
+                break
             end
         end
-
-        if #livingAllies == 0 then
-            -- No valid target left; battle should already read as defeat.
-            return nil
-        end
-        target = livingAllies[math.random(#livingAllies)]
-    elseif skill.target == "ally-any" then
-        -- Target a random fellow enemy (ally of the caster)
-        local livingEnemies = {}
-        for _, e in ipairs(self.enemies) do
-            if e ~= enemy and not e:isDead() then
-                table.insert(livingEnemies, e)
+        if isHealSkill then
+            local anyWounded = false
+            for _, e in ipairs(self.enemies) do
+                if not e:isDead() and e.hp < e:getMaxHp(self.session) then
+                    anyWounded = true
+                    break
+                end
             end
-        end
-        if #livingEnemies > 0 then
-            target = livingEnemies[math.random(#livingEnemies)]
+            if not anyWounded then
+                skillId = skills[math.random(#skills)]
+                skill = self.session.loader.getSkill(skillId) or getAttackSkill(self.session)
+                retries = retries - 1
+            else
+                break
+            end
         else
-            -- Fall back to self if no other living enemies
-            target = enemy
+            break
         end
-    elseif skill.target == "self" then
-        target = enemy
-    else
-        -- Default to random ally creature
-        local livingAllies = {}
-        for _, ally in ipairs(self.allies) do
-            if not ally:isDead() then
-                table.insert(livingAllies, ally)
-            end
-        end
-        if #livingAllies == 0 then return nil end
-        target = livingAllies[math.random(#livingAllies)]
     end
+    
+    -- Select target using the unified targeting module
+    local targeting = require("engine.targeting")
+    local targets = targeting.resolve(enemy, skill.target, self, nil, skill)
+    local target = targets[1]
+    if not target then return nil end
 
     return {
         actor = enemy,
@@ -184,10 +178,9 @@ function Battle:resolveRound(collectedActions)
                 end
             else
                 skill = getAttackSkill(self.session)
-                -- Target first living enemy
-                for _, enemy in ipairs(self.enemies) do
-                    if not enemy:isDead() then target = enemy break end
-                end
+                local targeting = require("engine.targeting")
+                local targets = targeting.resolve(ally, skill.target, self)
+                target = targets[1]
             end
             
             if target then
@@ -225,8 +218,18 @@ function Battle:resolveRound(collectedActions)
     end)
     
     -- 3. Execute actions in speed order
+    local targeting = require("engine.targeting")
     for _, turn in ipairs(queue) do
-        if not turn.actor:isDead() and not turn.target:isDead() then
+        local targetDead = false
+        if turn.target and turn.target.isDead and turn.target:isDead() then
+            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or turn.skill.target
+            local expanded = targeting.expand(spec)
+            if expanded.state ~= "dead" and expanded.state ~= "any" then
+                targetDead = true
+            end
+        end
+
+        if not turn.actor:isDead() and not targetDead then
             if turn.item then
                 -- F7: apply the used item's effects and consume it. This
                 -- spends the creature's turn exactly like a skill would.
@@ -235,17 +238,22 @@ function Battle:resolveRound(collectedActions)
                     table.insert(roundEvents, ev)
                 end
             else
+                local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
+                
                 table.insert(roundEvents, {
                     type = "action",
                     actor = turn.actor,
                     skill = turn.skill,
-                    target = turn.target
+                    target = turn.target or (targets[1] or turn.actor),
+                    animation = turn.skill and turn.skill.animation or nil,
                 })
                 
-                for _, eff in ipairs(turn.skill.effects or {}) do
-                    local evs = effects.apply(eff, turn.actor, turn.target, self.session, { element = turn.skill.element })
-                    for _, ev in ipairs(evs) do
-                        table.insert(roundEvents, ev)
+                for _, tgt in ipairs(targets) do
+                    for _, eff in ipairs(turn.skill.effects or {}) do
+                        local evs = effects.apply(eff, turn.actor, tgt, self.session, { element = turn.skill.element })
+                        for _, ev in ipairs(evs) do
+                            table.insert(roundEvents, ev)
+                        end
                     end
                 end
             end
@@ -390,21 +398,15 @@ function Battle:applyItem(action, actor, target)
     table.insert(events, {
         type = "text",
         text = loader.formatTerm("battle.uses_item", "{0} uses {1}!", actor.name, item.name or "?"),
+        animation = item.animation,
+        itemTarget = target,
     })
 
-    if item.targetScope == "party" then
-        for _, member in ipairs(self.allies) do
-            if not member:isDead() then
-                for _, eff in ipairs(item.effects or {}) do
-                    for _, ev in ipairs(effects.apply(eff, member, member, session)) do
-                        table.insert(events, ev)
-                    end
-                end
-            end
-        end
-    else
+    local targeting = require("engine.targeting")
+    local targets = targeting.resolve(actor, item.target or item.targetScope or "ally", self, target, item)
+    for _, tgt in ipairs(targets) do
         for _, eff in ipairs(item.effects or {}) do
-            for _, ev in ipairs(effects.apply(eff, target, target, session)) do
+            for _, ev in ipairs(effects.apply(eff, tgt, tgt, session)) do
                 table.insert(events, ev)
             end
         end

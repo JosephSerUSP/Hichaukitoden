@@ -4,6 +4,7 @@
     "name": "Wind Blade",
     "target": "enemy-any",
     "element": "Green",
+    "animation": "skill.wind_blade",
     "description": "[Enemy] Strikes a foe with a blade of wind.",
     "effects": [
       {
@@ -17,6 +18,7 @@
     "name": "Soothing Mote",
     "target": "ally-any",
     "element": "White",
+    "animation": "skill.soothing_mote",
     "description": "[Ally] Heals a small amount of HP for an ally.",
     "mpCost": 5,
     "effects": [
@@ -31,6 +33,7 @@
     "name": "Bone Rush",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.bone_rush",
     "description": "[Enemy] A reckless charge.",
     "effects": [
       {
@@ -44,6 +47,7 @@
     "name": "Holy Smite",
     "target": "enemy-any",
     "element": "White",
+    "animation": "skill.holy_smite",
     "description": "[Enemy] Smite evil with holy light.",
     "mpCost": 15,
     "effects": [
@@ -58,6 +62,7 @@
     "name": "Divine Favor",
     "target": "ally-any",
     "element": "White",
+    "animation": "skill.divine_favor",
     "description": "[Ally] Grants regeneration to an ally.",
     "mpCost": 8,
     "effects": [
@@ -74,6 +79,7 @@
     "name": "Shadow Claw",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.shadow_claw",
     "description": "[Enemy] Tears at the enemy from the shadows.",
     "effects": [
       {
@@ -110,6 +116,7 @@
     "name": "Flame Rebirth",
     "target": "self",
     "element": "Red",
+    "animation": "skill.flame_rebirth",
     "description": "[Self] Rise from the ashes.",
     "effects": []
   },
@@ -118,6 +125,7 @@
     "name": "Needle Shot",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.needle_shot",
     "description": "[Enemy] A precise strike that injects toxins.",
     "effects": [
       {
@@ -150,6 +158,7 @@
     "name": "Drain Kiss",
     "target": "enemy-any",
     "element": "Black",
+    "animation": "skill.drain_kiss",
     "description": "[Enemy] Steals vitality and puts the target to sleep.",
     "effects": [
       {
@@ -182,6 +191,7 @@
     "name": "Attack",
     "target": "enemy",
     "element": null,
+    "animation": "skill.attack",
     "description": "[Enemy] A basic physical attack.",
     "spCost": 0,
     "mpCost": 0,

@@ -8,7 +8,7 @@ ALL_MATCH=true
 # Split by scene key into per-scene temp files
 awk -v tempdir="$(dirname "$TEMP_LOG")" '
   BEGIN { scene = "" }
-  /^scene\|/ {
+  /^scene\|[^|]+\|name\|/ {
     if (scene != "") close(tempdir "/scene_" scene ".log.part")
     match($0, /^scene\|([^|]+)/, arr)
     scene = arr[1]

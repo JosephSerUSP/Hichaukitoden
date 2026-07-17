@@ -6,6 +6,12 @@
 -- behaves identically no matter where it's drawn (owner direction
 -- 11.07.2026: "it should all be calling the same thing").
 --
+-- overhaul-7 A1: damage-feedback animation (flash, shake, tint) is owned
+-- by presentation/animation_player.lua using data/animations.json entries.
+-- This module still owns the sprite cache, idle animation clock, and the
+-- dead-tint constant for game-state dead display (separate from the death
+-- animation, which plays on enemy portraits).
+--
 -- Sheet format: animated strip, cell count = width/height (default 24x24).
 -- Filenames may carry [key=value] tokens overriding animation parameters:
 --   [speed=N]  multiplier on the base frame rate (default 4)
@@ -16,51 +22,34 @@ local small_battlers = {}
 local cache = {}
 local animTimer = 0
 
-local ANIM_DEFAULTS = {
-    flashDuration = 0.35,
-    flashColorAction = { 0.8, 1.0, 1.0 },
-    flashColorDamage = { 1.0, 0.2, 0.2 },
-    shakeDuration = 0.3,
-    shakeAmplitude = 2,
-    shakeFrequency = 30,
-    deadTint = { 0.28, 0.26, 0.32, 1 },
-}
+-- Dead-tint applied when a battler's game-state is dead (not an animation —
+-- this is the static visual that replaces the sprite for dead party members
+-- in the grid). The death animation (system.death) handles enemy portraits.
+local DEAD_TINT = { 0.28, 0.26, 0.32, 1 }
 
-local function animVal(key)
-    local config = require("engine.config")
-    local block = config.battle_screen and config.battle_screen.animations
-    local v = block and block[key]
-    if v == nil then v = ANIM_DEFAULTS[key] end
-    return v
-end
-small_battlers.animVal = animVal
+-- overhaul-7 A1: animVal and the per-battler animState flash/shake tracking
+-- are deleted. Damage feedback plays via animation_player.play("system.small_damage", ref)
+-- and the draw function queries the player for current tint/blend/shake.
 
--- Per-battler-object damage feedback (flash/shake). Keyed by battler
--- identity (session objects) so battle events reach whichever draw site
--- happens to be showing that battler. Rows with no battlerRef (menu
--- scenes, where nothing triggers damage) simply never look up an entry.
-local animState = {}
+local animation_player = require("presentation.animation_player")
+local gradient_shader  = require("presentation.gradient_shader")
 
+-- Per-battler-object damage feedback is now owned by animation_player.
+-- These stubs forward to the player for backward compat during migration.
 function small_battlers.resetAnims()
-    animState = {}
+    animation_player.reset()
 end
 
 function small_battlers.triggerDamage(battlerRef)
     if not battlerRef then return end
-    animState[battlerRef] = {
-        flashTimer = animVal("flashDuration"),
-        shakeTimer = animVal("shakeDuration"),
-    }
+    animation_player.play("system.small_damage", battlerRef)
 end
 
 function small_battlers.updateAnims(dt)
-    for ref, anim in pairs(animState) do
-        anim.flashTimer = math.max(0, (anim.flashTimer or 0) - dt)
-        anim.shakeTimer = math.max(0, (anim.shakeTimer or 0) - dt)
-        if anim.flashTimer <= 0 and anim.shakeTimer <= 0 then
-            animState[ref] = nil
-        end
-    end
+    -- Animation player handles its own update; this is called from
+    -- renderer.update for backward compat. The player.update is called
+    -- separately by the renderer (which also calls small_battlers.update).
+    -- No-op here — the player's update drives everything.
 end
 
 -- Advance the shared idle-animation clock (renderer.update owns the dt feed).
@@ -128,19 +117,26 @@ end
 -- damage-feedback entry) flash/shake overlay on top. Used identically by
 -- the battle/map HUD's party grid, the summoner status box, and any
 -- scene's party-shaped list rows. Returns true when a sprite was drawn.
+-- overhaul-7 A1: damage-feedback flash/shake queries the animation player
+-- instead of the deleted inline animState table.
 function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
     local ss = small_battlers.get(spriteKey)
     if not (ss and ss.img) then return false end
 
     local frame = dead and 0 or small_battlers.frame(ss)
-    local anim = battlerRef and animState[battlerRef]
 
+    -- Damage-feedback shake and transform from animation player
     local drawX = x
-    if not dead and anim and anim.shakeTimer and anim.shakeTimer > 0 then
-        local dur = animVal("shakeDuration")
-        local decay = dur > 0 and (anim.shakeTimer / dur) or 0
-        drawX = x + animVal("shakeAmplitude") * decay
-            * math.sin(anim.shakeTimer * animVal("shakeFrequency") * 2 * math.pi)
+    local drawY = y
+    local scaleX = 1
+    local scaleY = 1
+    if not dead and battlerRef then
+        local shakeOff = animation_player.getShakeOffset(battlerRef)
+        local xf = animation_player.getTransform(battlerRef)
+        drawX = x + shakeOff + xf.offsetX
+        drawY = y + xf.offsetY
+        scaleX = xf.scaleX
+        scaleY = xf.scaleY
     end
 
     if not ss.quads[frame] then
@@ -148,22 +144,41 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
     end
     local quad = ss.quads[frame]
     local drawScale = size / ss.cellW
+
+    local function drawSprite()
+        love.graphics.draw(ss.img, quad, drawX, drawY, 0, drawScale * scaleX, drawScale * scaleY)
+    end
+
+    if not dead and battlerRef then
+        love.graphics.setColor(1, 1, 1, 1)
+        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "back")
+    end
+
     if dead then
-        local tint = animVal("deadTint")
-        love.graphics.setColor(tint[1], tint[2], tint[3], tint[4] or 1)
+        love.graphics.setColor(DEAD_TINT[1], DEAD_TINT[2], DEAD_TINT[3], DEAD_TINT[4] or 1)
+        drawSprite()
     else
         love.graphics.setColor(1, 1, 1, 1)
+        gradient_shader.drawWithGradient(battlerRef, drawSprite, animation_player)
     end
-    love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
 
-    if not dead and anim and anim.flashTimer and anim.flashTimer > 0 then
-        local dur = animVal("flashDuration")
-        local col = animVal("flashColorDamage")
-        love.graphics.setBlendMode("add")
-        love.graphics.setColor(col[1], col[2], col[3], dur > 0 and (anim.flashTimer / dur) or 0)
-        love.graphics.draw(ss.img, quad, drawX, y, 0, drawScale, drawScale)
-        love.graphics.setBlendMode("alpha")
+    -- Damage-feedback flash overlay from animation player
+    if not dead and battlerRef then
+        local tint = animation_player.getTint(battlerRef)
+        local blend = animation_player.getBlendMode(battlerRef)
+        if tint and blend then
+            love.graphics.setBlendMode(blend)
+            love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
+            drawSprite()
+            love.graphics.setBlendMode("alpha")
+        end
     end
+
+    if not dead and battlerRef then
+        love.graphics.setColor(1, 1, 1, 1)
+        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "front")
+    end
+
     love.graphics.setColor(1, 1, 1, 1)
     return true
 end

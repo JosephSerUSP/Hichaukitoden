@@ -282,8 +282,9 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "GIVE_ITEM",
-          "itemType": "random"
+          "cmd": "CHANGE_ITEM",
+          "item": "random",
+          "count": 1
         }
       ]
     }

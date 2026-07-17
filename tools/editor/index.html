@@ -296,10 +296,24 @@
             z-index: 5;
         }
 
+        /* Draggable number fields (animation editor): hide the native spinner
+           arrows — the value is scrubbed by dragging left/right instead. */
+        input.drag-num { -moz-appearance: textfield; }
+        input.drag-num::-webkit-outer-spin-button,
+        input.drag-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
         /* --- DATABASE MODAL --- */
         .db-modal-window {
-            width: 1280px;
-            height: 720px;
+            /* Bigger default than the old 1280x720, and user-resizable via the
+               bottom-right grip. Clamped so it never exceeds the viewport. */
+            width: 1600px;
+            height: 940px;
+            max-width: 98vw;
+            max-height: 96vh;
+            min-width: 900px;
+            min-height: 560px;
+            resize: both;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             box-shadow: 4px 4px 12px rgba(0,0,0,0.5);
@@ -789,6 +803,7 @@
                     <button id="db-tab-states" class="db-tab-btn" onclick="setDbTab('states')">States</button>
                     <button id="db-tab-elements" class="db-tab-btn" onclick="setDbTab('elements')">Elements</button>
                     <button id="db-tab-roles" class="db-tab-btn" onclick="setDbTab('roles')">Roles</button>
+                    <button id="db-tab-animations" class="db-tab-btn" onclick="setDbTab('animations')">Animations</button>
                     <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-commonEvents" class="db-tab-btn" onclick="setDbTab('commonEvents')">Common Events</button>
                     <button id="db-tab-terms" class="db-tab-btn" onclick="setDbTab('terms')">Terms</button>
@@ -800,7 +815,8 @@
                     <div id="db-list-box" class="db-list-box">
                         <!-- Loaded dynamically -->
                     </div>
-                    <button class="win98-btn" style="margin: 4px; font-size: 10px;" onclick="openChangeMaxDialog()">Change Maximum...</button>
+                    <button id="db-new-anim-btn" class="win98-btn" style="margin: 4px 4px 0; font-size: 10px; display: none; font-weight: bold; color: #005500;" onclick="createNewAnimation()">＋ New Animation</button>
+                    <button id="db-change-max-btn" class="win98-btn" style="margin: 4px; font-size: 10px;" onclick="openChangeMaxDialog()">Change Maximum...</button>
                 </div>
 
                 <!-- Database forms panel (right column) -->
@@ -1273,6 +1289,7 @@
         <script src="js/state.js"></script>
     <script src="js/net.js"></script>
     <script src="js/widgets.js"></script>
+    <script src="js/anim-editor.js"></script>
     <script src="js/database.js"></script>
     <script src="js/engine-editor.js"></script>
     <script src="js/map-editor.js"></script>

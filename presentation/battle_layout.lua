@@ -30,8 +30,6 @@ local BATTLE_LAYOUT = {
     enemyHpBarHeight = 4,
     enemySpriteSize = 56,
     enemyFallbackSize = 50,
-    enemySlideOffset = 280,
-    enemyDeathYOffset = 20,
     viewportOverlayW = 256,
     viewportOverlayH = 140,
     -- Log/help panel geometry matches engine.json windowLayout.help exactly

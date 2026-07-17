@@ -20,7 +20,7 @@ $currentScene = ""
 $currentLog = @()
 $sceneLogs = @{}
 foreach ($line in $log) {
-    if ($line -match "^scene\|(.+?)\|") {
+    if ($line -match "^scene\|(.+?)\|name\|") {
         if ($currentScene -ne "" -and $currentLog.Count -gt 0) {
             $sceneLogs[$currentScene] = $currentLog
         }

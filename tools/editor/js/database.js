@@ -81,12 +81,16 @@
                     .sort((a, b) => parseInt(a.id) - parseInt(b.id));
             }
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
-                // String-keyed collections (skills/passives/states/elements/roles)
+                  || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
+                // String-keyed collections (skills/passives/states/elements/roles/animations)
                 if (!dbPayload[activeDbTab]) dbPayload[activeDbTab] = {};
                 items = Object.keys(dbPayload[activeDbTab])
-                    .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
+                    .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }));
+                // Animations keep insertion order (new entries append to the
+                // bottom); the engine keys by id so JSON order is cosmetic.
+                if (activeDbTab !== 'animations') {
+                    items.sort((a, b) => a.name.localeCompare(b.name));
+                }
             }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
@@ -116,12 +120,29 @@
             });
 
             // Toggle change max visibility (system doesn't need expandable count)
-            const changeMaxBtn = document.querySelector('.db-items-column button');
+            const changeMaxBtn = document.getElementById('db-change-max-btn');
             if (activeDbTab === 'system' || activeDbTab === 'terms') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
             }
+            // Animations get a dedicated append button; Change Maximum stays as
+            // a fallback but the "＋ New Animation" flow is the intended path.
+            const newAnimBtn = document.getElementById('db-new-anim-btn');
+            if (newAnimBtn) newAnimBtn.style.display = activeDbTab === 'animations' ? 'block' : 'none';
+        }
+
+        // Append a fresh assignable animation with a unique placeholder id and
+        // select it. The id is renamed in the editor's header field.
+        function createNewAnimation() {
+            const coll = dbPayload.animations = dbPayload.animations || {};
+            let counter = 1;
+            let id = 'newAnimation' + counter;
+            while (coll[id]) { counter++; id = 'newAnimation' + counter; }
+            coll[id] = { id: id, class: 'assignable', duration: 1000, tracks: [] };
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
         }
 
         // --- CHANGE MAXIMUM LOGIC ---
@@ -132,7 +153,7 @@
             else if (activeDbTab === 'shops') maxVal = Object.keys(dbPayload.shops).length;
             else if (activeDbTab === 'commonEvents') maxVal = Object.keys(dbPayload.commonEvents || {}).length;
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                  || activeDbTab === 'elements' || activeDbTab === 'roles') {
+                  || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
                 maxVal = Object.keys(dbPayload[activeDbTab] || {}).length;
             }
 
@@ -226,7 +247,7 @@
                     }
                 }
             } else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
-                    || activeDbTab === 'elements' || activeDbTab === 'roles') {
+                    || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
                 // String-keyed collections: grow with generated unique ids,
                 // shrink by dropping the alphabetically-last entries
                 const coll = dbPayload[activeDbTab] = dbPayload[activeDbTab] || {};
@@ -235,9 +256,10 @@
                     passives: n => ({ id: n, name: `New Passive`, description: '', effect: '', icon: 1, traits: [] }),
                     states: n => ({ id: n, name: `New State`, icon: 1, duration: 3, traits: [] }),
                     elements: n => ({ name: `New Element`, icon: 16, strongAgainst: [], weakAgainst: [] }),
-                    roles: n => ({ name: `New Role`, description: '' })
+                    roles: n => ({ name: `New Role`, description: '' }),
+                    animations: n => ({ id: n, class: 'assignable', duration: 1000, tracks: [] })
                 };
-                const prefixes = { skills: 'newSkill', passives: 'newPassive', states: 'newState', elements: 'NewElement', roles: 'NewRole' };
+                const prefixes = { skills: 'newSkill', passives: 'newPassive', states: 'newState', elements: 'NewElement', roles: 'NewRole', animations: 'newAnimation' };
                 const prefix = prefixes[activeDbTab];
                 let currentLen = Object.keys(coll).length;
                 let counter = 1;
@@ -245,12 +267,22 @@
                     let id = prefix + counter;
                     while (coll[id]) { counter++; id = prefix + counter; }
                     coll[id] = defaults[activeDbTab](id);
-                    coll[id].name += ' ' + counter;
+                    if (activeDbTab !== 'animations') {
+                        coll[id].name += ' ' + counter;
+                    }
                     currentLen++;
                 }
                 if (currentLen > newMax) {
                     const keys = Object.keys(coll).sort((a, b) => a.localeCompare(b));
-                    keys.slice(newMax).forEach(k => delete coll[k]);
+                    if (activeDbTab === 'animations') {
+                        // Safe delete: protect system entries, only delete assignable ones
+                        const assignableKeys = keys.filter(k => coll[k].class !== 'system');
+                        const numToDelete = currentLen - newMax;
+                        const toDelete = assignableKeys.slice(-numToDelete);
+                        toDelete.forEach(k => delete coll[k]);
+                    } else {
+                        keys.slice(newMax).forEach(k => delete coll[k]);
+                    }
                 }
             }
 

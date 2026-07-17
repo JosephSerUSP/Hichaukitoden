@@ -21,6 +21,39 @@
             { label: 'Party grid window', style: 'partyGrid', width: 16, height: 10 },
         ];
 
+        // Which windowLayout fields a data-authored scene's inline windows[]
+        // entry overrides at draw time. MUST mirror window_renderer.lua's
+        // synthetic-layout builder (drawWindowFromData, ~L1058-1066) — if that
+        // merge rule changes, change this with it or the Windows tab starts
+        // lying about which edits do anything.
+        //
+        // x/y/width/height are overwritten UNCONDITIONALLY: the renderer reads
+        // the scene's rect and falls back to hardcoded 0/0/8/4, never to the
+        // windowLayout value — so registry geometry is dead for an inline
+        // window even when the scene omits rect entirely.
+        const SCENE_OVERRIDES_ALWAYS = ['x', 'y', 'width', 'height'];
+        // These are only overridden when the scene's entry actually sets them.
+        const SCENE_OVERRIDES_IF_SET = ['style', 'title', 'emptyText', 'lineSpacing', 'visibleRows'];
+
+        // Everything else (contentX/contentY, gridColumns, portrait*, gauges,
+        // pages/pageFormula, anim, vertical, hideMp, rowPitch, ...) has no
+        // scene-side path at all and is read only from windowLayout — so those
+        // fields stay live and editable here even for a shadowed window.
+        function computeSceneShadow(id) {
+            const defs = (typeof scanAllScenesForInlineWindowDefs === 'function')
+                ? scanAllScenesForInlineWindowDefs(id) : [];
+            const dead = new Set();
+            if (defs.length > 0) {
+                SCENE_OVERRIDES_ALWAYS.forEach(k => dead.add(k));
+                defs.forEach(({ winDef }) => {
+                    SCENE_OVERRIDES_IF_SET.forEach(k => {
+                        if (winDef[k] !== undefined) dead.add(k);
+                    });
+                });
+            }
+            return { defs, dead, isShadowed: defs.length > 0 };
+        }
+
         let activeWindowId = null;
         let windowPreviewCache = {}; // id -> preview-window payload
         let windowMockState = {};    // id -> { listId, format, sprite, gaugeValue, gaugeMax, text, cursor, siblingsJson }
@@ -96,8 +129,20 @@
             Object.keys(wl()).sort().forEach(id => {
                 const row = document.createElement('div');
                 row.className = 'tree-node-header' + (id === activeWindowId ? ' active' : '');
-                row.style.cssText = 'padding: 4px; cursor: pointer; font-size: 11px;';
-                row.textContent = id;
+                row.style.cssText = 'padding: 4px; cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; align-items: center; gap: 4px;';
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = id;
+                row.appendChild(nameSpan);
+                // Flag scene-authored windows up front, so their geometry isn't
+                // mistaken for something this tab controls.
+                const sh = computeSceneShadow(id);
+                if (sh.isShadowed) {
+                    const badge = document.createElement('span');
+                    badge.textContent = 'scene';
+                    badge.style.cssText = 'font-size: 9px; padding: 0 3px; border: 1px solid var(--win-shadow); background: #ffffe1; color: #000; flex-shrink: 0;';
+                    badge.title = 'Declared inline by: ' + sh.defs.map(d => d.sceneName).join(', ') + ' — that scene owns its position/size.';
+                    row.appendChild(badge);
+                }
                 row.onclick = () => { activeWindowId = id; renderWindowsTab(container, header); };
                 listBox.appendChild(row);
             });
@@ -165,18 +210,23 @@
             topRow.appendChild(idLabel);
 
             const refs = scanAllScenesForWindowRefs(id);
+            const shadow = computeSceneShadow(id);
             const actionsRow = document.createElement('div');
             actionsRow.style.cssText = 'display: flex; gap: 4px;';
-            const scenesUsingThis = [...new Set(refs.map(r => r.sceneId))];
-            if (scenesUsingThis.length > 0) {
+            // A scene "uses" this window either by opening it from a hook
+            // (refs) or by declaring it inline (shadow.defs) — both must count,
+            // or converted scenes look unused and View in Scene goes missing.
+            const usingScenes = [...new Set([...refs.map(r => r.sceneId), ...shadow.defs.map(d => d.sceneId)])];
+            const usingSceneNames = [...new Set([...refs.map(r => r.sceneName), ...shadow.defs.map(d => d.sceneName)])];
+            if (usingScenes.length > 0) {
                 const viewBtn = document.createElement('button');
                 viewBtn.className = 'win98-btn';
                 viewBtn.style.fontSize = '10px';
-                viewBtn.textContent = `View in Scene (${scenesUsingThis.length})`;
-                viewBtn.title = 'Scenes: ' + refs.map(r => r.sceneName).filter((v, i, a) => a.indexOf(v) === i).join(', ');
+                viewBtn.textContent = `View in Scene (${usingScenes.length})`;
+                viewBtn.title = 'Scenes: ' + usingSceneNames.join(', ');
                 viewBtn.onclick = () => {
                     requestSceneCanvasSelect(id);
-                    activeSceneId = scenesUsingThis[0];
+                    activeSceneId = usingScenes[0];
                     activeUnifiedPhase = null;
                     setEngineTab('flows');
                 };
@@ -202,6 +252,24 @@
             topRow.appendChild(actionsRow);
             box.appendChild(topRow);
 
+            // Shadow banner: without this, editing a converted scene's window
+            // here looks like it works (the tab's own preview reads
+            // windowLayout directly) while changing nothing in the real scene.
+            if (shadow.isShadowed) {
+                const sceneNames = shadow.defs.map(d => d.sceneName).join(', ');
+                const banner = document.createElement('div');
+                banner.style.cssText = 'border: 1px solid var(--win-shadow); background: #ffffe1; color: #000; padding: 6px; font-size: 10px; line-height: 1.5;';
+                const deadList = [...shadow.dead].join(', ');
+                banner.innerHTML =
+                    `<b>⚠ Authored by ${shadow.defs.length > 1 ? 'scenes' : 'scene'}: ${sceneNames}</b><br>` +
+                    `This window is declared inline in the scene, which overrides <b>${deadList}</b> at draw time. ` +
+                    `Editing ${shadow.dead.size > 1 ? 'those fields' : 'that field'} here changes nothing in the game — ` +
+                    `edit the scene's own window instead (use “View in Scene”). ` +
+                    `Fields not listed above (contentY, gauges, pages, portrait, gridColumns, anim, …) have no scene-side ` +
+                    `override and are still live here.`;
+                box.appendChild(banner);
+            }
+
             // Canvas on the left (fixed, 2x nearest-neighbor), scrollable
             // input dock filling the space to its right — mirrors the
             // Scenes tab's flexRow+dock layout.
@@ -222,7 +290,9 @@
 
             const canvasHint = document.createElement('div');
             canvasHint.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow);';
-            canvasHint.textContent = 'Drag to move, drag an edge/corner to resize. This window only — siblings (if any) render for context but aren\'t editable here.';
+            canvasHint.textContent = shadow.isShadowed
+                ? 'Preview only — this window\'s position/size come from the scene (see above), so dragging here won\'t affect the game.'
+                : 'Drag to move, drag an edge/corner to resize. This window only — siblings (if any) render for context but aren\'t editable here.';
             box.appendChild(canvasHint);
 
             // --- Mock binding controls ---
@@ -233,9 +303,9 @@
             mockBox.appendChild(mockLegend);
             const mockNote = document.createElement('div');
             mockNote.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 4px;';
-            mockNote.textContent = scenesUsingThis.length > 0
-                ? 'This window is already opened by a real scene — "View in Scene" shows its actual content. These fields are just for previewing here in isolation.'
-                : 'No scene opens this window yet. Fill these in to see realistic content while designing it.';
+            mockNote.textContent = usingScenes.length > 0
+                ? 'This window is already used by a real scene — "View in Scene" shows its actual content. These fields are just for previewing here in isolation.'
+                : 'No scene uses this window yet. Fill these in to see realistic content while designing it.';
             mockBox.appendChild(mockNote);
 
             const refreshPreviewAndCanvas = async () => {
@@ -378,6 +448,10 @@
             let dragState = null;
             canvas.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
+                // Dragging a scene-authored window would edit x/y/width/height
+                // the renderer never reads, and dirty the database for a change
+                // with no effect. The banner explains where to edit instead.
+                if (shadow.isShadowed) return;
                 const { px, py } = canvasPos(e);
                 const d = data();
                 const ts = ((d && d.tileSize) || 8) * S;
@@ -394,6 +468,7 @@
                 e.preventDefault();
             });
             canvas.addEventListener('mousemove', (e) => {
+                if (shadow.isShadowed) return; // no drag affordance for a read-only preview
                 const { px, py } = canvasPos(e);
                 const d = data();
                 const ts = ((d && d.tileSize) || 8) * S;
@@ -440,6 +515,20 @@
             propLegend.textContent = 'Properties';
             propBox.appendChild(propLegend);
 
+            // A shadowed field is disabled rather than merely annotated: the
+            // value it holds is not what the game draws, so letting it be typed
+            // into only invites edits that silently do nothing.
+            const markShadowed = (lbl, inp, key) => {
+                if (!shadow.dead.has(key)) return false;
+                lbl.style.textDecoration = 'line-through';
+                lbl.style.opacity = '0.55';
+                inp.disabled = true;
+                inp.style.opacity = '0.55';
+                inp.title = `Overridden by scene: ${shadow.defs.map(d => d.sceneName).join(', ')}. Edit it there — this value is ignored at draw time.`;
+                lbl.title = inp.title;
+                return true;
+            };
+
             const fieldRefs = {};
             const grid = document.createElement('div');
             grid.style.cssText = 'display: grid; grid-template-columns: 90px 80px 90px 80px; gap: 4px; align-items: center; font-size: 10px;';
@@ -452,6 +541,7 @@
                     const n = parseFloat(inp.value);
                     if (!isNaN(n)) { layout[key] = n; setDirty(true); drawCanvas(); }
                 };
+                markShadowed(lbl, inp, key);
                 fieldRefs[key] = inp;
                 grid.appendChild(lbl); grid.appendChild(inp);
             };
@@ -470,6 +560,7 @@
             const styleSel = makeSelect(['list', 'panel', 'frame', 'confirm', 'roulette', 'partyGrid'], layout.style || 'panel', (v) => {
                 layout.style = v; drawCanvas();
             }, null);
+            markShadowed(styleLbl, styleSel, 'style');
             styleRow.appendChild(styleLbl); styleRow.appendChild(styleSel);
             propBox.appendChild(styleRow);
 
@@ -480,6 +571,7 @@
             titleInp.className = 'win98-input'; titleInp.style.flex = '1';
             titleInp.value = layout.title != null ? layout.title : '';
             titleInp.oninput = () => { layout.title = titleInp.value.trim() === '' ? null : titleInp.value; setDirty(true); drawCanvas(); };
+            markShadowed(titleLbl, titleInp, 'title');
             titleRow.appendChild(titleLbl); titleRow.appendChild(titleInp);
             propBox.appendChild(titleRow);
 
@@ -490,6 +582,7 @@
             emptyInp.className = 'win98-input'; emptyInp.style.flex = '1';
             emptyInp.value = layout.emptyText || '';
             emptyInp.oninput = () => { layout.emptyText = emptyInp.value; setDirty(true); };
+            markShadowed(emptyLbl, emptyInp, 'emptyText');
             emptyRow.appendChild(emptyLbl); emptyRow.appendChild(emptyInp);
             propBox.appendChild(emptyRow);
 

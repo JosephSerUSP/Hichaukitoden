@@ -8,6 +8,8 @@ local config = require("engine.config")
 local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
 local actor_status = require("presentation.actor_status")
+local animation_player = require("presentation.animation_player")
+local gradient_shader  = require("presentation.gradient_shader")
 
 local renderer = {}
 
@@ -47,13 +49,10 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
--- Config-driven animation constants (flash/shake/dead tint) and the
--- damage-feedback state keyed by battler identity now live in
--- presentation/small_battlers.lua, shared with the window renderer's
--- party-shaped list rows (owner direction 11.07.2026: one drawer, one
--- state table, so a party member's status cell looks and behaves
--- identically everywhere it's drawn).
-local animVal = small_battlers.animVal
+-- overhaul-7 A1: animation constants and timing are owned by
+-- presentation/animation_player.lua using data/animations.json entries.
+-- The small_battlers module still provides the dead-tint constant for
+-- game-state dead display.
 
 local function getPortrait(id)
     if not id or id == "" then return nil end
@@ -107,8 +106,12 @@ function renderer.init(session)
     damagePopups = {}
 end
 
--- Battle animation state per enemy: { slideTimer, deathTimer, dead, flashTimer, flashType }
-local battleAnims = {}
+-- overhaul-7 A1: per-enemy animation state is now owned by
+-- presentation/animation_player.lua. The `deadEnemyFlags` table tracks
+-- which enemies are game-state dead (separate from animation effects).
+-- Animation timers, tints, blend modes, and transforms are queried from
+-- the animation player at draw time.
+local deadEnemyFlags = {}
 
 local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
     glyph.vy = glyph.vy + gravity * dt
@@ -128,24 +131,26 @@ local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
 end
 
 function renderer.initBattleAnims(enemies)
-    battleAnims = {}
-    small_battlers.resetAnims()
+    animation_player.reset()
+    deadEnemyFlags = {}
     for i, enemy in ipairs(enemies) do
-        battleAnims[i] = { slideTimer = 0.35, deathTimer = -1, dead = false, flashTimer = 0, flashType = "" }
+        animation_player.play("system.enemy_slide_in", enemy)
     end
 end
 
 function renderer.triggerDeathAnim(enemyIdx)
-    if battleAnims[enemyIdx] then
-        battleAnims[enemyIdx].deathTimer = 0.9
-        battleAnims[enemyIdx].dead = true
+    local enemy = renderer.activeBattle and renderer.activeBattle.enemies[enemyIdx]
+    if enemy then
+        deadEnemyFlags[enemy] = true
+        animation_player.play("system.death", enemy)
     end
 end
 
 function renderer.triggerActionFlash(enemyIdx, flashType)
-    if battleAnims[enemyIdx] then
-        battleAnims[enemyIdx].flashTimer = animVal("flashDuration")
-        battleAnims[enemyIdx].flashType = flashType or "action"
+    local enemy = renderer.activeBattle and renderer.activeBattle.enemies[enemyIdx]
+    if enemy then
+        local entryId = (flashType == "action") and "system.action_flash" or "system.damage_flash"
+        animation_player.play(entryId, enemy)
     end
 end
 
@@ -162,26 +167,29 @@ function renderer.update(dt)
     for i = #damagePopups, 1, -1 do
         local p = damagePopups[i]
         p.revealElapsed = p.revealElapsed + dt
-        for _, glyph in ipairs(p.glyphs) do
-            if not glyph.active and p.revealElapsed >= glyph.startDelay then
-                glyph.active = true
+        if p.revealElapsed >= (p.spawnDelay or 0) then
+            local activeElapsed = p.revealElapsed - (p.spawnDelay or 0)
+            for _, glyph in ipairs(p.glyphs) do
+                if not glyph.active and activeElapsed >= glyph.startDelay then
+                    glyph.active = true
+                end
+                if glyph.active then
+                    if p.isText then
+                        glyph.elapsed = glyph.elapsed + dt
+                        local t = math.min(1, glyph.elapsed / 0.4)
+                        glyph.y = -28 * t * (2 - t)
+                    else
+                        updatePopupGlyph(glyph, dt, gravity, bounceRetain)
+                    end
+                end
             end
-            if glyph.active then updatePopupGlyph(glyph, dt, gravity, bounceRetain) end
         end
         p.life = p.life - dt
         if p.life <= 0 then table.remove(damagePopups, i) end
     end
-    for _, anim in ipairs(battleAnims) do
-        if anim.slideTimer > 0 then
-            anim.slideTimer = math.max(0, anim.slideTimer - dt)
-        end
-        if anim.deathTimer > 0 then
-            anim.deathTimer = math.max(0, anim.deathTimer - dt)
-        end
-        if anim.flashTimer and anim.flashTimer > 0 then
-            anim.flashTimer = math.max(0, anim.flashTimer - dt)
-        end
-    end
+    -- overhaul-7 A1: animation player owns all battler animation timing
+    animation_player.update(dt)
+    animation_player.updateParticles(dt)
     small_battlers.updateAnims(dt)
     
     -- Smoothly interpolate party HP and the shared party MP pool
@@ -282,21 +290,44 @@ function renderer.finishDialogueReveal()
     dialogueReveal.elapsed = math.huge
 end
 
-function renderer.addDamagePopup(text, x, y, color)
+function renderer.isBattleLogRevealing(combatLog)
+    local cursor = battleLogReveal.cursor
+    if not combatLog or cursor == 0 or cursor > #combatLog then return false end
+    local current = combatLog[cursor] or ""
+    return revealedCount(current, battleLogReveal.elapsed) < #current
+end
+
+function renderer.finishBattleLogReveal()
+    battleLogReveal.elapsed = math.huge
+end
+
+function renderer.addDamagePopup(text, x, y, color, isText)
+    isText = isText or (not text:match("^[%d%+%- ]+$"))
     local scatter = config.physics and config.physics.horizontalScatter or 40
     local lifeSpan = config.battle_screen and config.battle_screen.damagePopupLife or 1.1
     local popupConfig = config.battle_screen and config.battle_screen.popup or {}
     local characterDelay = popupConfig.characterDelay or 0
+    
+    -- Find if there are existing active/pending popups at the same (x, y) coordinates
+    local sameLocCount = 0
+    for _, p in ipairs(damagePopups) do
+        if math.abs(p.x - x) < 5 and math.abs(p.y - y) < 5 then
+            sameLocCount = sameLocCount + 1
+        end
+    end
+    local spawnDelay = sameLocCount * 0.45 -- 0.45s delay per active popup at this location
+
     local glyphs = {}
     for i = 1, #text do
         table.insert(glyphs, {
             char = text:sub(i, i),
             startDelay = (i - 1) * characterDelay,
             active = false,
+            elapsed = 0,
             x = 0,
             y = 0,
             vy = -160,
-            vx = math.random(-scatter, scatter),
+            vx = isText and 0 or math.random(-scatter, scatter),
             bounceCount = 0
         })
     end
@@ -305,8 +336,10 @@ function renderer.addDamagePopup(text, x, y, color)
         x = x,
         y = y,
         color = color or {1, 1, 1, 1},
-        life = lifeSpan,
+        life = lifeSpan + spawnDelay,
         revealElapsed = 0,
+        spawnDelay = spawnDelay,
+        isText = isText,
         glyphs = glyphs
     })
 end
@@ -374,28 +407,6 @@ local function drawMinimap(x, y, size)
     love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
--- Renders the Title Scene
-function renderer.drawTitle()
-    love.graphics.clear(0.05, 0.05, 0.1, 1)
-    
-    -- Decorative retro background lines
-    love.graphics.setColor(0.1, 0.15, 0.25, 0.3)
-    for i = 0, 15 do
-        love.graphics.line(0, i * 16, 256, i * 16 + 50)
-    end
-    
-    ui.drawPanel(20, 30, 216, 60)
-    ui.drawString("HICHAUKITODEN", 28, 48, {1, 0.9, 0.3, 1}, "center", 200)
-    ui.drawString("First Person Crawler", 28, 66, {0.7, 0.8, 1, 0.8}, "center", 200)
-    
-    -- Menu options
-    ui.drawPanel(50, 110, 156, 80)
-    ui.drawString("Press ENTER to start", 58, 130, {1, 1, 1, 1}, "center", 140)
-    ui.drawString("Press ESC to exit", 58, 154, {0.7, 0.7, 0.7, 1}, "center", 140)
-    
-    -- Copyright
-    ui.drawString("(C) 2026 Developer", 10, 226, {0.4, 0.4, 0.4, 1})
-end
 
 -- Renders the Town Scene
 function renderer.drawTown(selectedIdx)
@@ -569,95 +580,120 @@ end
 -- declarative "party" window in presentation/window_renderer.lua, drawn for
 -- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
 
-local function getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+local function getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
     if combatState ~= "input" then return {} end
     local session = renderer.session
-    if not session then return {} end
+    if not session or not bv then return {} end
     
     local memberInfo = livingMembers and livingMembers[activeMemberIdx]
     if not memberInfo then return {} end
     local monster = memberInfo.actor
 
-    if spellSelect then
-        -- Hovering a skill
-        local options = {}
-        for _, skId in ipairs(monster.skills or {}) do
-            local sk = session.loader.getSkill(skId)
-            if sk then table.insert(options, sk) end
-        end
-        local choice = options[selectedIndex]
-        if not choice then return {} end
-
-        if choice.target == "enemy" or choice.target == "enemy-any" then
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        elseif choice.target == "self" then
-            return { monster }
+    -- Unified targeting selector mode (T2)
+    if bv.targetSelect then
+        local pending = bv.pendingAction
+        if not pending then return {} end
+        
+        local targeting = require("engine.targeting")
+        local spec = pending.targetSpec
+        local exp = targeting.expand(spec)
+        
+        local candidates = targeting.getCandidates(monster, spec, bv.battle, pending.skill or pending.item)
+        if #candidates == 0 then return {} end
+        
+        if exp.count == "all" then
+            return candidates
         else
-            -- ally-any: target the ally with the lowest HP
-            local lowestHp = 9999
-            local target = nil
-            for _, c in ipairs(session.party) do
-                if c and not c:isDead() and c.hp < lowestHp then
-                    lowestHp = c.hp
-                    target = c
-                end
-            end
-            if target then return { target } end
-        end
-    elseif itemSelect then
-        -- Hovering an item
-        local items = {}
-        local inv = session.inventory or {}
-        local stacks = {}
-        for itemId, qty in pairs(inv) do
-            if qty > 0 then table.insert(stacks, itemId) end
-        end
-        table.sort(stacks)
-        for _, id in ipairs(stacks) do
-            local it = session.loader.getItem(id)
-            if it then table.insert(items, it) end
-        end
-        local choice = items[selectedIndex]
-        if not choice then return {} end
-
-        if choice.targetScope == "party" then
-            -- Targets the entire party
-            local targets = {}
-            for _, c in ipairs(session.party) do
-                if c and not c:isDead() then
-                    table.insert(targets, c)
-                end
-            end
-            return targets
-        elseif choice.targetScope == "enemy" or choice.targetScope == "enemy-any" then
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        else
-            -- Default single ally target
-            return { monster }
-        end
-    else
-        -- Main menu option
-        if selectedIndex == 1 then
-            -- Attack targets the first living enemy
-            for _, e in ipairs(battleState.enemies) do
-                if not e:isDead() then
-                    return { e }
-                end
-            end
-        elseif selectedIndex == 3 then
-            -- Defend targets self
-            return { monster }
+            local idx = bv.targetIndex or 1
+            if idx < 1 then idx = 1 end
+            if idx > #candidates then idx = #candidates end
+            bv.targetIndex = idx
+            return { candidates[idx] }
         end
     end
+
     return {}
+end
+
+local function getBattlerRect(target, battleState, session)
+    if not battleState or not session or not target then return nil, nil, nil, nil end
+    local tx, ty, tw, th
+    
+    -- Is it an enemy?
+    local isEnemy = false
+    local enemyIdx = nil
+    for idx, enemy in ipairs(battleState.enemies) do
+        if enemy == target then
+            isEnemy = true
+            enemyIdx = idx
+            break
+        end
+    end
+    
+    if isEnemy then
+        local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+        local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+        local ey = layoutVal("enemyY")
+        local portrait = getPortrait(target.spriteKey or target.id)
+        tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
+        th = tw
+        tx = ex
+        ty = ey
+    else
+        -- It's a party member
+        local allyIdx = nil
+        for idx, c in ipairs(session.party) do
+            if c == target then
+                allyIdx = idx
+                break
+            end
+        end
+        
+        if allyIdx then
+            local loaderRef = session.loader
+            local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+            local partyLayout = layouts and layouts.party or {}
+            local px = partyLayout.x or 0
+            local py = partyLayout.y or 18
+            local title = partyLayout.title
+            local contentX = partyLayout.contentX or partyLayout.textX or 1
+            local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+            local gridX = ui.toPx(px + contentX)
+            local gridY = ui.toPx(py + contentY)
+            local cols = partyLayout.gridColumns or 2
+            local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
+            
+            local colW, rowH = actor_status.cellSize(session)
+            tx = slotX - 2
+            ty = slotY - 2
+            tw = colW - 2
+            th = rowH - 2
+        end
+    end
+    return tx, ty, tw, th
+end
+
+local function drawArrow(x1, y1, x2, y2)
+    local angle = math.atan2(y2 - y1, x2 - x1)
+    local size = 8
+    
+    -- Translucent glow line
+    love.graphics.setLineWidth(4)
+    love.graphics.setColor(1, 0.9, 0.4, 0.3)
+    love.graphics.line(x1, y1, x2, y2)
+    
+    -- Brighter inner line
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(1, 0.9, 0.4, 0.7)
+    love.graphics.line(x1, y1, x2, y2)
+    
+    -- Arrowhead
+    local ax = x2 - size * math.cos(angle - math.pi / 6)
+    local ay = y2 - size * math.sin(angle - math.pi / 6)
+    local bx = x2 - size * math.cos(angle + math.pi / 6)
+    local by = y2 - size * math.sin(angle + math.pi / 6)
+    love.graphics.polygon("fill", x2, y2, ax, ay, bx, by)
 end
 
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
@@ -671,64 +707,95 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
     love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
     
-    -- Render enemies portraits in viewport with slide-in and death animations
+    -- Render enemies portraits in viewport with animations driven by the
+    -- animation player (overhaul-7 A1): slide-in, damage/action flash,
+    -- death effect — all from data/animations.json entries.
     local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
-        local anim = battleAnims[idx] or { slideTimer = 0, deathTimer = -1, dead = false }
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
         local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
         local ey = layoutVal("enemyY")
         
-        -- Slide-in offset: start offscreen right, slide to position
-        local slideOff = 0
-        if anim.slideTimer > 0 then
-            slideOff = layoutVal("enemySlideOffset") * (anim.slideTimer / 0.35)
+        -- Query animation player for current transform, tint, blend, gradient
+        local xf    = animation_player.getTransform(enemy)
+        local tint  = animation_player.getTint(enemy)
+        local blend = animation_player.getBlendMode(enemy)
+        local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
+        local isDead = deadEnemyFlags[enemy]
+
+        local spriteW = layoutVal("enemySpriteSize")
+        local spriteH = layoutVal("enemySpriteSize")
+
+        -- Anchor at bottom-center of the sprite slot (matches preview).
+        -- ex/ey is the top-left of the slot; anchorX/Y is the bottom-center.
+        local anchorX = ex + spriteW / 2
+        local anchorY = ey + spriteH
+
+        -- Query shake offset and apply it along with transform offsets
+        local shakeOff = animation_player.getShakeOffset(enemy)
+        local drawX = anchorX + xf.offsetX + shakeOff
+        local drawY = anchorY + xf.offsetY
+
+        local partX = drawX
+        local partY = drawY
+
+        -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
+        local function drawEnemySprite()
+            if portrait then
+                local sx = xf.scaleX * spriteW / portrait:getWidth()
+                local sy = xf.scaleY * spriteH / portrait:getHeight()
+                -- ox/oy: draw with bottom-center as the pivot so scale/offset
+                -- animate from the same anchor the preview uses.
+                love.graphics.draw(portrait, drawX, drawY, 0, sx, sy,
+                    portrait:getWidth() / 2, portrait:getHeight())
+            else
+                local fw = layoutVal("enemyFallbackSize")
+                love.graphics.rectangle("fill",
+                    drawX - fw * xf.scaleX / 2,
+                    drawY - fw * xf.scaleY,
+                    fw * xf.scaleX, fw * xf.scaleY)
+            end
         end
-        local drawX = ex + slideOff
-        
-        if anim.dead and anim.deathTimer >= 0 then
-            -- Death animation: additive blend, purple tint, fade to black
-            local t = anim.deathTimer / 0.9  -- 1.0 = just died, 0.0 = done
-            local alpha = t
-            love.graphics.setBlendMode("add")
-            if portrait then
-                love.graphics.setColor(0.6 * alpha, 0, 0.9 * alpha, alpha)
-                love.graphics.draw(portrait, drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
+
+        if not isDead then
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "back")
+        end
+
+        if isDeathPlaying then
+            -- Death animation: tint/blend/transform/gradient from animation player
+            if blend then love.graphics.setBlendMode(blend) end
+            if tint then
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
             else
-                love.graphics.setColor(0.6*alpha, 0, 0.9*alpha, alpha)
-                love.graphics.rectangle("fill", drawX, ey + (1-t)*layoutVal("enemyDeathYOffset"), layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
+                love.graphics.setColor(0.6, 0, 0.9, 1)
             end
+            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
             love.graphics.setBlendMode("alpha")
-        elseif not anim.dead then
-            if portrait then
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
-            else
-                love.graphics.setColor(0.8, 0.1, 0.1, 1)
-                love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
-            end
-            
-            -- Apply action/damage flash overlay
-            if anim.flashTimer and anim.flashTimer > 0 then
-                love.graphics.setBlendMode("add")
-                local flashDur = animVal("flashDuration")
-                local flashCol = animVal(anim.flashType == "action" and "flashColorAction" or "flashColorDamage")
-                love.graphics.setColor(flashCol[1], flashCol[2], flashCol[3], flashDur > 0 and (anim.flashTimer / flashDur) or 0)
-                if portrait then
-                    love.graphics.draw(portrait, drawX, ey, 0, layoutVal("enemySpriteSize")/portrait:getWidth(), layoutVal("enemySpriteSize")/portrait:getHeight())
-                else
-                    love.graphics.rectangle("fill", drawX, ey, layoutVal("enemyFallbackSize"), layoutVal("enemyFallbackSize"))
-                end
+        elseif not isDead then
+            -- Normal draw with gradient map
+            love.graphics.setColor(1, 1, 1, 1)
+            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
+
+            -- Tint flash overlay
+            if tint and blend then
+                love.graphics.setBlendMode(blend)
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
+                drawEnemySprite()
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(1, 1, 1, 1)
             end
-            
+
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "front")
+
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
             local enemyIconW = actor_status.drawElementIcons(traits.getElements(enemy, renderer.session), ex, layoutVal("enemyNameY") - 4, renderer.session)
             ui.drawString(enemy.name, ex + enemyIconW, layoutVal("enemyNameY"), {1, 1, 1, 1})
             ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
         end
+        -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
     
     -- Slim dialogue at the top of the screen during Battle Resolution.
@@ -930,71 +997,43 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
         end
     end
+
+    -- Full-screen flash overlay (screen_flash tracks), above everything —
+    -- same compositing as the editor preview channel (main.lua's
+    -- runPreviewAnim draws it last over the whole canvas). Animations play
+    -- per-target, so scan every battler for an active flash; first hit wins
+    -- (overlapping flashes don't stack — matches the preview, which only
+    -- ever has one target). 256x240 is the game's logical resolution.
+    local flash
+    for _, e in ipairs(battleState.enemies) do
+        flash = animation_player.getScreenFlash(e)
+        if flash then break end
+    end
+    if not flash then
+        for _, a in ipairs(battleState.allies or {}) do
+            flash = animation_player.getScreenFlash(a)
+            if flash then break end
+        end
+    end
+    if flash then
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(flash.color[1], flash.color[2], flash.color[3], flash.alpha)
+        love.graphics.rectangle("fill", 0, 0, 256, 240)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
-function renderer.drawTargetReticles(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
-    if combatState ~= "input" or not battleState then return end
+function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    if combatState ~= "input" or not bv then return end
     
     local session = renderer.session
     if not session then return end
     
-    local targets = getHoveredTargets(battleState, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
-    for _, target in ipairs(targets) do
-        local tx, ty, tw, th
-        
-        -- Is it an enemy?
-        local isEnemy = false
-        local enemyIdx = nil
-        for idx, enemy in ipairs(battleState.enemies) do
-            if enemy == target then
-                isEnemy = true
-                enemyIdx = idx
-                break
-            end
-        end
-        
-        if isEnemy then
-            local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-            local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
-            local ey = layoutVal("enemyY")
-            local portrait = getPortrait(target.spriteKey or target.id)
-            tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
-            th = tw
-            tx = ex
-            ty = ey
-        else
-            -- It's a party member
-            local allyIdx = nil
-            for idx, c in ipairs(session.party) do
-                if c == target then
-                    allyIdx = idx
-                    break
-                end
-            end
-            
-            if allyIdx then
-                local loaderRef = session.loader
-                local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
-                local partyLayout = layouts and layouts.party or {}
-                local px = partyLayout.x or 0
-                local py = partyLayout.y or 18
-                local title = partyLayout.title
-                local contentX = partyLayout.contentX or partyLayout.textX or 1
-                local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+    local battleState = bv.battle
 
-                local gridX = ui.toPx(px + contentX)
-                local gridY = ui.toPx(py + contentY)
-                local cols = partyLayout.gridColumns or 2
-                local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
-                
-                local colW, rowH = actor_status.cellSize(session)
-                tx = slotX - 2
-                ty = slotY - 2
-                tw = colW - 2
-                th = rowH - 2
-            end
-        end
-        
+    local targets = getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    for _, target in ipairs(targets) do
+        local tx, ty, tw, th = getBattlerRect(target, battleState, session)
         if tx and ty and tw and th then
             ui.drawTargetReticle(tx, ty, tw, th)
         end
@@ -1003,19 +1042,22 @@ end
 
 function renderer.drawDamagePopups()
     love.graphics.push("all")
-    local popupFont = ui.getPopupFont()
     for _, p in ipairs(damagePopups) do
-        local alpha = math.min(1, p.life * 2)
-        local col = { p.color[1], p.color[2], p.color[3], alpha }
-        local textOffset = 0
-        local font = popupFont or love.graphics.getFont()
-        for _, glyph in ipairs(p.glyphs) do
-            if p.revealElapsed >= glyph.startDelay then
-                -- Opacity is shared across the popup, not reset for each
-                -- glyph, so every character fades out in sync.
-                ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, popupFont)
+        if p.revealElapsed >= (p.spawnDelay or 0) then
+            local activeElapsed = p.revealElapsed - (p.spawnDelay or 0)
+            local alpha = math.min(1, p.life * 2)
+            local col = { p.color[1], p.color[2], p.color[3], alpha }
+            local textOffset = 0
+            local font = p.isText and ui.getPopupTextFont() or ui.getPopupNumberFont()
+            font = font or love.graphics.getFont()
+            for _, glyph in ipairs(p.glyphs) do
+                if activeElapsed >= glyph.startDelay then
+                    -- Opacity is shared across the popup, not reset for each
+                    -- glyph, so every character fades out in sync.
+                    ui.drawString(glyph.char, p.x + textOffset + glyph.x, p.y + glyph.y, col, nil, nil, nil, font)
+                end
+                textOffset = textOffset + font:getWidth(glyph.char)
             end
-            textOffset = textOffset + font:getWidth(glyph.char)
         end
     end
     love.graphics.pop()

@@ -131,6 +131,153 @@ local function makeHarnessSession()
     return vSession
 end
 
+local function runPreviewAnim(animId, animJson, spritePath)
+    local json = require("data.json")
+    local payload
+    local ok, err = pcall(function()
+        local animDef = {}
+        if animJson and animJson ~= "" then
+            local decoded = json.decode(animJson)
+            if type(decoded) == "table" then animDef = decoded end
+        end
+
+        -- Ensure loader animations contains the previewed anim definition
+        loader.animations = loader.animations or {}
+        loader.animations[animId] = animDef
+
+        -- Reload animation player
+        local animation_player = require("presentation.animation_player")
+        animation_player.load(loader.animations)
+
+        -- Load dummy battler sprite. Parse [k=v] tokens (fps/speed) the same
+        -- way presentation/small_battlers does, then strip them to get the
+        -- real file path — so animated sheets preview animated.
+        local spriteOverrides = {}
+        local cleanPath = (spritePath or ""):gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
+            spriteOverrides[k] = tonumber(v) or v
+            return ""
+        end)
+        cleanPath = cleanPath:gsub("^%s*(.-)%s*$", "%1")
+
+        local texture
+        if cleanPath ~= "" and love.filesystem.getInfo(cleanPath) then
+            texture = love.graphics.newImage(cleanPath)
+        end
+        if not texture then
+            texture = love.graphics.newImage("assets/smallBattlers/pixie.png") -- fallback
+        end
+        texture:setFilter("nearest", "nearest")
+
+        -- Frame slicing: square cells laid out in a row (matches the
+        -- small_battlers convention). Idle animation advances by the sheet's
+        -- fps (or speed*4, default 4) and loops across the preview.
+        local texW, texH = texture:getDimensions()
+        local cellH = texH
+        local cellW = math.min(texW, cellH)
+        local numFrames = math.max(1, math.floor(texW / cellW))
+        local spriteRate = spriteOverrides.fps or (spriteOverrides.speed and 4 * spriteOverrides.speed) or 4
+        local spriteQuad = love.graphics.newQuad(0, 0, cellW, cellH, texW, texH)
+
+        local dummyTarget = { name = "dummy" }
+
+        -- Run rendering steps at 20 FPS (0.05s intervals)
+        local step = 0.05
+        local durationMs = animDef.duration or 1000
+        local duration = durationMs / 1000
+        local elapsed = 0
+        local frames = {}
+
+        local previewCanvas = love.graphics.newCanvas(240, 240)
+        local ui = require("presentation.ui")
+        ui.init()
+
+        -- Gradient-map shader: shared module (same shader used in battle).
+        local gradient_shader = require("presentation.gradient_shader")
+
+        animation_player.reset()
+        animation_player.play(animId, dummyTarget)
+
+        while elapsed <= duration do
+            love.graphics.setCanvas({ previewCanvas, stencil = true })
+            -- Opaque black, not transparent: additive blend tracks contribute
+            -- no alpha, so on a transparent canvas blend-heavy animations
+            -- (damage flash, death) would encode as fully invisible pixels.
+            love.graphics.clear(0, 0, 0, 1)
+            love.graphics.setColor(1, 1, 1, 1)
+
+            -- Query active transform, tint, blend and shake
+            local tf = animation_player.getTransform(dummyTarget)
+            local tint = animation_player.getTint(dummyTarget)
+            local blendMode = animation_player.getBlendMode(dummyTarget) or "alpha"
+            local shakeX = animation_player.getShakeOffset(dummyTarget)
+
+            -- Center dummy sprite in a 240x240 canvas (anchor bottom-center).
+            -- Pick the current animation frame from the sheet.
+            local frame = math.floor(elapsed * spriteRate) % numFrames
+            spriteQuad:setViewport(frame * cellW, 0, cellW, cellH)
+            local drawX = 120 + tf.offsetX + shakeX
+            local drawY = 160 + tf.offsetY -- draw baseline at Y=160
+
+            -- Sprite drawing function for stencil test
+            local function drawSprite()
+                love.graphics.draw(texture, spriteQuad, drawX, drawY, 0, tf.scaleX, tf.scaleY, cellW / 2, cellH)
+            end
+
+            -- Back-layer particles render behind the sprite.
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "back")
+
+            -- Sprite through tint + gradient-map shader (if active).
+            love.graphics.setBlendMode(blendMode)
+            if tint then
+                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
+            else
+                love.graphics.setColor(1, 1, 1, 1)
+            end
+            gradient_shader.drawWithGradient(dummyTarget, drawSprite, animation_player)
+
+
+            -- Front-layer particles render on top of the sprite.
+            love.graphics.setColor(1, 1, 1, 1)
+            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "front")
+
+            -- Full-screen flash overlay, above everything.
+            local flash = animation_player.getScreenFlash(dummyTarget)
+            if flash then
+                love.graphics.setBlendMode("alpha")
+                love.graphics.setColor(flash.color[1], flash.color[2], flash.color[3], flash.alpha)
+                love.graphics.rectangle("fill", 0, 0, 240, 240)
+            end
+
+            -- Reset graphics state
+            love.graphics.setBlendMode("alpha")
+            love.graphics.setColor(1, 1, 1, 1)
+
+            -- Encode frame to PNG base64
+            love.graphics.setCanvas()
+            local fileData = previewCanvas:newImageData():encode("png")
+            local b64 = love.data.encode("string", "base64", fileData)
+            table.insert(frames, b64)
+
+            -- Advance time
+            animation_player.update(step)
+            animation_player.updateParticles(step)
+            elapsed = elapsed + step
+        end
+
+        payload = {
+            animId = animId,
+            frames = frames,
+            gameWidth = 240,
+            gameHeight = 240
+        }
+    end)
+    if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
 -- E5: headless scene preview (`lovec . preview-scene <id>`). Pushes the
 -- scene with the mock session, runs on_enter through the real interpreter,
 -- and prints the MATERIALIZED window state (window_renderer.resolveState:
@@ -209,7 +356,7 @@ local function runPreviewScene(sceneId)
                 local ui = require("presentation.ui")
                 ui.init()
                 local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
-                love.graphics.setCanvas(previewCanvas)
+                love.graphics.setCanvas({ previewCanvas, stencil = true })
                 love.graphics.clear(0, 0, 0, 1)
                 love.graphics.setColor(1, 1, 1, 1)
                 if sh.draw(ctx) then
@@ -316,7 +463,7 @@ local function runPreviewWindow(windowId, mockSpecJSON)
             local ui = require("presentation.ui")
             ui.init()
             local previewCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
-            love.graphics.setCanvas(previewCanvas)
+            love.graphics.setCanvas({ previewCanvas, stencil = true })
             love.graphics.clear(0, 0, 0, 1)
             love.graphics.setColor(1, 1, 1, 1)
             wr.draw(state, sceneData, ctx)
@@ -840,6 +987,39 @@ runValidation = function()
         check(escErr ~= nil, "formula sandbox allowed access to os.*")
     end
 
+    -- Validate skill and item animations (Task A2)
+    for id, skill in pairs(loader.skills or {}) do
+        if skill.animation then
+            check(loader.animations and loader.animations[skill.animation] ~= nil, "skill '" .. tostring(id) .. "' references missing animation '" .. tostring(skill.animation) .. "'")
+        end
+    end
+    for _, item in ipairs(loader.items or {}) do
+        if item.animation then
+            check(loader.animations and loader.animations[item.animation] ~= nil, "item '" .. tostring(item.id) .. "' references missing animation '" .. tostring(item.animation) .. "'")
+        end
+    end
+
+    -- Validate skill and item targeting specs (Tasks T1 & T2).
+    -- expand() ERRORS on unrecognized specs (no silent fallthrough), so the
+    -- pcall here is the real gate: bad data fails G1, gameplay never sees it.
+    -- Skills must always carry a target — battle calls expand(skill.target)
+    -- directly, with no fallback like the item paths' `or "ally"`.
+    local targeting = require("engine.targeting")
+    for id, skill in pairs(loader.skills or {}) do
+        check(skill.target ~= nil, "skill '" .. tostring(id) .. "' is missing a target spec")
+        if skill.target then
+            local ok, err = pcall(targeting.expand, skill.target)
+            check(ok, "skill '" .. tostring(id) .. "' has invalid target spec '" .. tostring(skill.target) .. "'" .. (ok and "" or (": " .. tostring(err))))
+        end
+    end
+    -- Items may omit target (the battle/field paths default to "ally").
+    for _, item in ipairs(loader.items or {}) do
+        if item.target then
+            local ok, err = pcall(targeting.expand, item.target)
+            check(ok, "item '" .. tostring(item.id) .. "' has invalid target spec '" .. tostring(item.target) .. "'" .. (ok and "" or (": " .. tostring(err))))
+        end
+    end
+
     -- Unified Event Engine Validator (SPEC A7)
     local scriptUsageCount = 0
     local deprecatedUsageCount = 0
@@ -871,7 +1051,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {} },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {}, ritualMode = "summon", targetIsReserve = true, targetIndex = 1, pool = {}, poolIdx = 1, level = 1, baseLevel = 1, _stepDir = 1, mpCost = 0, expCost = 0, done = 0, titleText = "", previewText = "", costText = "", helpText = "", resultText = "", memberName = "", confirmOptions = {}, ritualPush = "", popupTargetIsReserve = true, popupTargetIndex = 1, page = 1, evoIdx = 1, evoPaths = {} },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1002,7 +1182,7 @@ elseif paramDef.type == "script" then
                         elseif paramDef.type == "state" then
                             check(loader.getState(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing state '" .. tostring(val) .. "'")
                         elseif paramDef.type == "item" then
-                            check(loader.getItem(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing item '" .. tostring(val) .. "'")
+                            check(val == "random" or loader.getItem(val), ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' references missing item '" .. tostring(val) .. "'")
                         elseif paramDef.type == "scope" then
                             local validScopes = { enemies=true, living_enemies=true, allies=true, living_allies=true, party=true, slot_allies=true }
                             check(validScopes[val], ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' has invalid scope '" .. tostring(val) .. "'")
@@ -1368,9 +1548,156 @@ elseif paramDef.type == "script" then
                     checkScriptRefs(cmds, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
                 end
             end
+
+            -- S1w: validate data-authored windows array (if present).
+            if scene.windows and type(scene.windows) == "table" and #scene.windows > 0 then
+                local seenIds = {}
+                for wi, winDef in ipairs(scene.windows) do
+                    -- id required and unique per scene.
+                    check(type(winDef.id) == "string" and winDef.id ~= "",
+                        sceneDesc .. " windows[" .. wi .. "]: missing or non-string 'id'")
+                    check(seenIds[winDef.id] == nil,
+                        sceneDesc .. " windows[" .. wi .. "]: duplicate window id '" .. tostring(winDef.id) .. "'")
+                    seenIds[winDef.id] = true
+
+                    -- rect must be present with x,y,w,h (values may be exprs).
+                    check(type(winDef.rect) == "table",
+                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'rect'")
+                    if type(winDef.rect) == "table" then
+                        for _, dim in ipairs({ "x", "y", "w", "h" }) do
+                            check(winDef.rect[dim] ~= nil,
+                                sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': rect missing '" .. dim .. "'")
+                        end
+                    end
+
+                    -- visible (optional) must be a string expression.
+                    if winDef.visible ~= nil then
+                        check(type(winDef.visible) == "string",
+                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': 'visible' must be a string expression")
+                    end
+
+                    -- content must be an array of typed blocks.
+                    check(type(winDef.content) == "table",
+                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'content' array")
+                    if type(winDef.content) == "table" then
+                        for bi, block in ipairs(winDef.content) do
+                            check(type(block) == "table" and type(block.type) == "string",
+                                sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "]: missing or non-string 'type'")
+
+                            local bt = block.type
+                            if bt == "text" then
+                                -- text block: a literal or {expr} template. The window
+                                -- renderer never term-resolves text content (only "term:"
+                                -- LIST sources go through loader.getTermList), so there is
+                                -- nothing further to validate here beyond the string type.
+                                check(type(block.text) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] text block: missing or non-string 'text'")
+                            elseif bt == "list" then
+                                check(type(block.listId) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: missing or non-string 'listId'")
+                                -- format and cursor (optional) must be strings.
+                                if block.format ~= nil then
+                                    check(type(block.format) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: 'format' must be a string")
+                                end
+                                if block.cursor ~= nil then
+                                    check(type(block.cursor) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: 'cursor' must be a string expression")
+                                end
+                                -- Verify known list sources resolve syntactically.
+                                local src = block.listId or ""
+                                local knownSources = { inventory = true, party = true, reserve = true,
+                                    equipSlots = true, equipment = true }
+                                if not knownSources[src] and not src:find("^config:") and not src:find("^v:")
+                                    and not src:find("^static:") and not src:find("^term:") then
+                                    print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown list source '" .. src .. "'")
+                                end
+                                -- "term:" sources must resolve to a real terms.json list —
+                                -- a typo'd path would otherwise render an empty list with no
+                                -- error anywhere (S1w: term-key refs resolve or G1 fails).
+                                if src:find("^term:") then
+                                    local termPath = src:sub(6)
+                                    local resolved = loader.getTermList(termPath, nil)
+                                    check(type(resolved) == "table" and #resolved > 0,
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list source '" .. src .. "' does not resolve to a non-empty list in terms.json")
+                                end
+                            elseif bt == "gauge" then
+                                -- gauge block: value and max are required exprs.
+                                check(type(block.value) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge block: missing or non-string 'value'")
+                                check(type(block.max) == "string",
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge block: missing or non-string 'max'")
+                                -- Optionally verify formulas compile.
+                                if type(block.value) == "string" then
+                                    local ok, _, ferr = pcall(formulaEngine.eval, block.value, mockCtx)
+                                    check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge 'value' failed to compile: " .. tostring(ferr or ""))
+                                end
+                                if type(block.max) == "string" then
+                                    local ok, _, ferr = pcall(formulaEngine.eval, block.max, mockCtx)
+                                    check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge 'max' failed to compile: " .. tostring(ferr or ""))
+                                end
+                            elseif bt == "image" then
+                                -- image block (v1): portraitField expr or path expr.
+                                if block.portraitField ~= nil then
+                                    check(type(block.portraitField) == "string",
+                                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] image block: 'portraitField' must be a string expression")
+                                end
+                            else
+                                -- Unknown block types: warn but don't fail (extensibility rule).
+                                print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown block type '" .. tostring(bt) .. "' — ignored at runtime")
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
     validateScenes()
+
+    -- overhaul-7 A1: validate animation system reserved IDs
+    local animation_player = require("presentation.animation_player")
+    local RESERVED_SYSTEM_IDS = {
+        "system.damage_flash",
+        "system.damage_shake",
+        "system.death",
+        "system.small_damage",
+        "system.enemy_slide_in",
+        "system.heal",
+    }
+    for _, reservedId in ipairs(RESERVED_SYSTEM_IDS) do
+        check(animation_player.getEntry(reservedId) ~= nil,
+            "animation system: missing reserved entry '" .. reservedId .. "' in data/animations.json")
+    end
+    -- Check that all system-class entries have valid track structures
+    -- (at minimum: each track has a known type and numeric duration)
+    -- Must mirror what presentation/animation_player.lua actually implements:
+    -- a system entry using an unimplemented type would silently no-op, which
+    -- is exactly what this hard check exists to prevent. (text_flow was
+    -- listed here without any player implementation — a leftover from the
+    -- dropped healing_sparkle port; force_field was implemented but missing.)
+    -- Assignable entries stay soft-validated on purpose: unknown track types
+    -- fail soft at runtime so future types can ship in data first.
+    local VALID_TRACK_TYPES = {
+        tint = true, blend = true, transform = true,
+        shake = true, particles = true, force_field = true,
+        gradient_map = true, screen_flash = true,
+    }
+    for id, entry in pairs(loader.animations or {}) do
+        if entry.class == "system" then
+            check(type(entry.tracks) == "table",
+                "animation system: entry '" .. tostring(id) .. "' missing tracks array")
+            for ti, track in ipairs(entry.tracks or {}) do
+                check(type(track) == "table",
+                    "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " is not a table")
+                if type(track) == "table" then
+                    check(VALID_TRACK_TYPES[track.type],
+                        "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " has unknown type '" .. tostring(track.type) .. "'")
+                    check(type(track.duration) == "number",
+                        "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " missing numeric duration")
+                end
+            end
+        end
+    end
 
     print("[validator] total SCRIPT usages: " .. scriptUsageCount)
     print("[validator] total deprecated usages: " .. deprecatedUsageCount)
@@ -1411,6 +1738,12 @@ function love.load(arg)
                 previewWindowId = arg[i + 1]
                 previewWindowMockSpec = arg[i + 2]
                 i = i + 2
+            elseif val == "preview-anim" then
+                isPreviewAnimMode = true
+                previewAnimId = arg[i + 1]
+                previewAnimJson = arg[i + 2]
+                previewAnimSprite = arg[i + 3]
+                i = i + 3
             elseif val == "preview-font" then
                 isPreviewFontMode = true
                 previewFontName = arg[i + 1]
@@ -1442,6 +1775,14 @@ function love.load(arg)
     if isPreviewFontMode then
         loader.init()
         runPreviewFont(previewFontName, tonumber(previewFontSize))
+        love.event.quit(0)
+        return
+    end
+
+    -- A3: headless animation preview, then quit.
+    if isPreviewAnimMode then
+        loader.init()
+        runPreviewAnim(previewAnimId, previewAnimJson, previewAnimSprite)
         love.event.quit(0)
         return
     end
@@ -1516,6 +1857,10 @@ function love.update(dt)
         return
     end
 
+    if scene_host.getCurrent() == "battle" then
+        require("engine.scenes.battle").update(dt)
+    end
+
     -- Shop: grant the pending item after the hook deducted gold
     if scene_host.getCurrent() == "shop" then
         local shopState = scene_host.getCurrentState()
@@ -1558,9 +1903,7 @@ function love.draw()
     if scene_host.draw(ctx) then
         -- scene host handles drawing (currently does nothing for D1, but returns true if it has hooks)
     else
-        if scene_host.getCurrent() == "title" then
-        renderer.drawTitle()
-    elseif scene_host.getCurrent() == "town" then
+        if scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
         drawSharedPartyHud()
     elseif scene_host.getCurrent() == "map" then
@@ -1581,7 +1924,7 @@ function love.draw()
         local bv = require("engine.scenes.battle").getState()
         renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
         drawSharedPartyHud()
-        renderer.drawTargetReticles(bv.battle, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
+        renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
     end
     end
     
@@ -1853,6 +2196,7 @@ end
 -- Action handling for key presses
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
+    if not activeSession then return end
 
     local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then
