@@ -4,6 +4,7 @@ local ui = {}
 
 local iconset
 local iconSize = 12
+local iconQuads = {}
 local windowskin
 local windowskinHighlight
 local targetSkin
@@ -366,9 +367,13 @@ end
 function ui.drawIcon(iconId, x, y)
     if not iconset or not iconId or iconId <= 0 then return end
     
-    local col = (iconId - 1) % 10
-    local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = iconQuads[iconId]
+    if not quad then
+        local col = (iconId - 1) % 10
+        local row = math.floor((iconId - 1) / 10)
+        quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+        iconQuads[iconId] = quad
+    end
     
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
@@ -384,9 +389,13 @@ function ui.drawIconScaled(iconId, x, y, scale)
     if not iconset or not iconId or iconId <= 0 then return end
     scale = scale or 1.0
 
-    local col = (iconId - 1) % 10
-    local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = iconQuads[iconId]
+    if not quad then
+        local col = (iconId - 1) % 10
+        local row = math.floor((iconId - 1) / 10)
+        quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+        iconQuads[iconId] = quad
+    end
 
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
