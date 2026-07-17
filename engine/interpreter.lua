@@ -23,6 +23,7 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local formulaEngine = require("engine.formula")
 local config = require("engine.config")
+local conditions = require("engine.conditions")
 
 local interpreter = {}
 
@@ -239,11 +240,11 @@ end
 
 handlers.IF = function(cmd, ctx)
     local branch
-    if cmd.condition and cmd.condition:match("^flag:") then
-        -- CONDITIONAL_BRANCH's string conditions stay valid alongside (S2)
-        branch = ctx.session.flags[cmd.condition:match("^flag:(.+)")] == true
-    elseif cmd.condition and cmd.condition:match("^hasItem:") then
-        branch = ctx.session:hasItem(tonumber(cmd.condition:match("^hasItem:(.+)")), 1)
+    -- CONDITIONAL_BRANCH's "flag:"/"hasItem:" string conditions stay valid
+    -- alongside formula conditions (S2); shared with director.lua's ROUTER.
+    local matched, result = conditions.evalPrefixed(cmd.condition, ctx.session)
+    if matched then
+        branch = result
     else
         local val = evalFormula(cmd.condition, ctx)
         if type(val) == "boolean" then
