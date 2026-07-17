@@ -365,12 +365,18 @@ function battle.startTargetSelection(pendingAction)
         v.prevSelectedIndex = v.selectedIndex
         v.selectedIndex = 1
     else
-        local target = memberInfo.actor
-        if expanded.side == "enemy" then
-            for _, e in ipairs(v.battle.enemies) do
-                if not e:isDead() then target = e break end
-            end
-        end
+        -- Random-mode specs: the real pick happens at round resolution —
+        -- resolve()'s random branch ignores the committed target and rolls
+        -- fresh (battle.lua:resolveRound passes it as chosenTarget, which
+        -- only choose-mode honors). What we commit here is a provisional
+        -- placeholder that keeps the turn in the queue, chosen via
+        -- getCandidates so the spec's side AND state filters are honored
+        -- (the old hand-roll assumed side=="enemy"/alive and fell back to
+        -- self for every other spec, bypassing the resolver entirely).
+        -- getCandidates consumes no battle RNG — T2's rule that the
+        -- selection path must never perturb AI rolls holds.
+        local candidates = targeting.getCandidates(memberInfo.actor, spec, v.battle)
+        local target = candidates[1] or memberInfo.actor
         battle.commitAction(memberInfo.index, {
             type = pendingAction.type,
             id = pendingAction.id,
