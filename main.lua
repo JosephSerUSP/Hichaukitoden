@@ -373,6 +373,14 @@ local function runPreviewFont(name, size)
 end
 
 local function runGoldenUI()
+    local LOGGED_EVENT_TYPES = {
+        open_window = true,
+        close_window = true,
+        set_text = true,
+        set_list = true,
+        set_cursor = true,
+        focus_window = true
+    }
     local vSession = makeHarnessSession()
 
     local scene_host = require("engine.scene_host")
@@ -407,7 +415,7 @@ local function runGoldenUI()
             if not events then return end
             for i = loggedEventCount + 1, #events do
                 local ev = events[i]
-                if ev.type == "open_window" or ev.type == "close_window" or ev.type == "set_text" or ev.type == "set_list" or ev.type == "set_cursor" or ev.type == "focus_window" then
+                if LOGGED_EVENT_TYPES[ev.type] then
                     local w = ev.windowId or ""
                     local a = ev.type or ""
                     local t = ""
@@ -782,6 +790,39 @@ runValidation = function()
         check(#events > 0, "battle round produced no events")
     end
 
+    -- newgame.rollGold randomness testing
+    do
+        local newgame = require("engine.newgame")
+        local orig_random = math.random
+
+        -- Test with mocked config bounds
+        local mockLoader = { system = { newGame = { goldMin = 10, goldMax = 20 } } }
+
+        -- Force minimum
+        math.random = function(min, max) return min end
+        local goldMin = newgame.rollGold(mockLoader)
+        check(goldMin == 10, "rollGold failed: expected min 10, got " .. tostring(goldMin))
+
+        -- Force maximum
+        math.random = function(min, max) return max end
+        local goldMax = newgame.rollGold(mockLoader)
+        check(goldMax == 20, "rollGold failed: expected max 20, got " .. tostring(goldMax))
+
+        -- Test fallbacks
+        local fallbackLoader = {}
+
+        math.random = function(min, max) return min end
+        local fbMin = newgame.rollGold(fallbackLoader)
+        check(fbMin == 25, "rollGold failed: expected fallback min 25, got " .. tostring(fbMin))
+
+        math.random = function(min, max) return max end
+        local fbMax = newgame.rollGold(fallbackLoader)
+        check(fbMax == 75, "rollGold failed: expected fallback max 75, got " .. tostring(fbMax))
+
+        -- Restore original math.random
+        math.random = orig_random
+    end
+
     -- Formula sandbox: a representative reward-curve expression must compile
     -- and evaluate against a mock context (SPEC S5 / task A2).
     do
@@ -1016,6 +1057,44 @@ elseif paramDef.type == "script" then
 
 
 
+    -- Test flow.run execution: simple mock of context and interpreter commands
+    do
+        local origRunImmediate = interpreter.runImmediate
+        local mockRunCalled = false
+        local mockPassedCommands = nil
+        local mockPassedCtx = nil
+        interpreter.runImmediate = function(commands, ctx)
+            mockRunCalled = true
+            mockPassedCommands = commands
+            mockPassedCtx = ctx
+            return { { type = "mock_flow_event" } }
+        end
+
+        local mockLoader = {
+            flows = {
+                _test = {
+                    mock_phase = { { cmd = "MOCK_CMD" } }
+                }
+            }
+        }
+        local mockCtx = { loader = mockLoader }
+
+        -- Valid phase
+        local evs = flow.run("_test.mock_phase", mockCtx)
+        check(mockRunCalled, "flow.run did not call interpreter.runImmediate")
+        check(mockPassedCommands and mockPassedCommands[1] and mockPassedCommands[1].cmd == "MOCK_CMD", "flow.run passed incorrect commands to interpreter")
+        check(mockPassedCtx == mockCtx, "flow.run passed incorrect context to interpreter")
+        check(evs and evs[1] and evs[1].type == "mock_flow_event", "flow.run did not return events from interpreter")
+
+        -- Invalid phase
+        mockRunCalled = false
+        local emptyEvs = flow.run("_test.missing_phase", mockCtx)
+        check(not mockRunCalled, "flow.run called interpreter for missing phase")
+        check(type(emptyEvs) == "table" and #emptyEvs == 0, "flow.run did not return empty table for missing phase")
+
+        interpreter.runImmediate = origRunImmediate
+    end
+
     -- Interpreter immediate mode: the _test flow exercises every implemented
     -- non-interactive command (SPEC S1/S2; ROLL_ENCOUNTER/SPAWN_ENEMIES land
     -- with task A5d and are registry-only for now).
@@ -1168,6 +1247,30 @@ elseif paramDef.type == "script" then
             effects.apply(eff, vSession.party[1], vSession.party[1], vSession)
         end
     end
+
+    -- Traits evaluateCondition validation
+    local function validateTraitsCondition()
+        local battler = session.Battler.new(loader.getActor(1), 1)
+        local maxHp = traits.getParam(battler, "maxHp", vSession)
+
+        check(traits.evaluateCondition(nil, battler, vSession) == true, "nil condition must evaluate to true")
+        check(traits.evaluateCondition("invalid", battler, vSession) == false, "invalid condition must evaluate to false")
+
+        -- HP conditions
+        battler.hp = 0 -- 0% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == true, "0% HP is < 50%")
+        check(traits.evaluateCondition("HP<50%", battler, vSession) == true, "0% HP is < 50% without spaces")
+
+        battler.hp = maxHp -- 100% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == false, "100% HP is not < 50%")
+
+        battler.hp = math.ceil(maxHp * 0.5) -- >= 50% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == false, ">= 50% HP is not < 50%")
+
+        battler.hp = math.floor(maxHp * 0.4) -- < 50% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == true, "< 50% HP is < 50%")
+    end
+    validateTraitsCondition()
 
     -- Scenes validation (C9)
     local function validateScenes()

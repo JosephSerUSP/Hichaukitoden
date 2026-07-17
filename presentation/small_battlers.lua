@@ -106,6 +106,7 @@ function small_battlers.get(spriteKey)
                 numFrames = numFrames,
                 speed = overrides.speed,
                 fps = overrides.fps,
+                quads = {},
             }
             cache[key] = result
             return result
@@ -142,7 +143,10 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
             * math.sin(anim.shakeTimer * animVal("shakeFrequency") * 2 * math.pi)
     end
 
-    local quad = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+    if not ss.quads[frame] then
+        ss.quads[frame] = love.graphics.newQuad(frame * ss.cellW, 0, ss.cellW, ss.cellH, ss.img:getWidth(), ss.img:getHeight())
+    end
+    local quad = ss.quads[frame]
     local drawScale = size / ss.cellW
     if dead then
         local tint = animVal("deadTint")

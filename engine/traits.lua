@@ -66,6 +66,7 @@ function traits.evaluateCondition(condition, battler, session)
         if (battler.hp / traits.getParam(battler, "maxHp", session)) * 100 < pct then
             return true
         end
+        return false
     end
     
     -- Default fallback

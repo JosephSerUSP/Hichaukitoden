@@ -4,11 +4,15 @@ local ui = {}
 
 local iconset
 local iconSize = 12
+local iconQuads = {}
 local windowskin
 local windowskinHighlight
 local targetSkin
 local mainFont
 local popupFont
+
+local panelQuads = {}
+local targetQuads = {}
 
 -- Parse string and replace \eventName and \c[x]
 local function parseRichText(text, defaultColor, eventName)
@@ -73,6 +77,16 @@ function ui.init()
     if love.filesystem.getInfo("assets/system/PRINCESSTHEKING.png") then
         windowskin = love.graphics.newImage("assets/system/PRINCESSTHEKING.png")
         windowskin:setFilter("nearest", "nearest")
+
+        local wsW, wsH = windowskin:getDimensions()
+        panelQuads.top = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
+        panelQuads.bot = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
+        panelQuads.left = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
+        panelQuads.right = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
+        panelQuads.tl = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
+        panelQuads.tr = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
+        panelQuads.bl = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
+        panelQuads.br = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
     end
 
     if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
@@ -83,6 +97,16 @@ function ui.init()
     if love.filesystem.getInfo("assets/system/UI_Target.png") then
         targetSkin = love.graphics.newImage("assets/system/UI_Target.png")
         targetSkin:setFilter("nearest", "nearest")
+
+        local wsW, wsH = targetSkin:getDimensions()
+        targetQuads.top = love.graphics.newQuad(8, 0, 16, 8, wsW, wsH)
+        targetQuads.bot = love.graphics.newQuad(8, 24, 16, 8, wsW, wsH)
+        targetQuads.left = love.graphics.newQuad(0, 8, 8, 16, wsW, wsH)
+        targetQuads.right = love.graphics.newQuad(24, 8, 8, 16, wsW, wsH)
+        targetQuads.tl = love.graphics.newQuad(0, 0, 8, 8, wsW, wsH)
+        targetQuads.tr = love.graphics.newQuad(24, 0, 8, 8, wsW, wsH)
+        targetQuads.bl = love.graphics.newQuad(0, 24, 8, 8, wsW, wsH)
+        targetQuads.br = love.graphics.newQuad(24, 24, 8, 8, wsW, wsH)
     end
     
     -- Load active font from system config
@@ -162,31 +186,22 @@ function ui.drawPanel(x, y, w, h, title, highlight)
         local edgeH = h - 16
         
         -- Top side edge (x=40, y=0, w=16, h=8)
-        local topQuad = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
-        love.graphics.draw(skin, topQuad, x + 8, y, 0, edgeW / 16, 1)
+        love.graphics.draw(skin, panelQuads.top, x + 8, y, 0, edgeW / 16, 1)
 
         -- Bottom side edge (x=40, y=24, w=16, h=8)
-        local botQuad = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
-        love.graphics.draw(skin, botQuad, x + 8, y + h - 8, 0, edgeW / 16, 1)
+        love.graphics.draw(skin, panelQuads.bot, x + 8, y + h - 8, 0, edgeW / 16, 1)
 
         -- Left side edge (x=32, y=8, w=8, h=16)
-        local leftQuad = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(skin, leftQuad, x, y + 8, 0, 1, edgeH / 16)
+        love.graphics.draw(skin, panelQuads.left, x, y + 8, 0, 1, edgeH / 16)
 
         -- Right side edge (x=56, y=8, w=8, h=16)
-        local rightQuad = love.graphics.newQuad(56, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(skin, rightQuad, x + w - 8, y + 8, 0, 1, edgeH / 16)
+        love.graphics.draw(skin, panelQuads.right, x + w - 8, y + 8, 0, 1, edgeH / 16)
 
         -- 3. Draw 8px Corners
-        local tlQuad = love.graphics.newQuad(32, 0, 8, 8, wsW, wsH)
-        local trQuad = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
-        local blQuad = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
-        local brQuad = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
-
-        love.graphics.draw(skin, tlQuad, x, y)
-        love.graphics.draw(skin, trQuad, x + w - 8, y)
-        love.graphics.draw(skin, blQuad, x, y + h - 8)
-        love.graphics.draw(skin, brQuad, x + w - 8, y + h - 8)
+        love.graphics.draw(skin, panelQuads.tl, x, y)
+        love.graphics.draw(skin, panelQuads.tr, x + w - 8, y)
+        love.graphics.draw(skin, panelQuads.bl, x, y + h - 8)
+        love.graphics.draw(skin, panelQuads.br, x + w - 8, y + h - 8)
     else
         -- Fallback
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -230,32 +245,26 @@ function ui.drawTargetReticle(x, y, w, h)
         
         love.graphics.setColor(1, 1, 1, 1)
         
+        -- Ensure quads are initialized for target (fallback to panelQuads if targetQuads not setup but we have targetSkin somehow, though init handles it)
+        local q = (skin == targetSkin and targetQuads.top) and targetQuads or panelQuads
+
         -- Top side edge (x=8, y=0, w=16, h=8)
-        local topQuad = love.graphics.newQuad(8, 0, 16, 8, wsW, wsH)
-        love.graphics.draw(skin, topQuad, rx + 8, ry, 0, edgeW / 16, 1)
+        love.graphics.draw(skin, q.top, rx + 8, ry, 0, edgeW / 16, 1)
 
         -- Bottom side edge (x=8, y=24, w=16, h=8)
-        local botQuad = love.graphics.newQuad(8, 24, 16, 8, wsW, wsH)
-        love.graphics.draw(skin, botQuad, rx + 8, ry + rh - 8, 0, edgeW / 16, 1)
+        love.graphics.draw(skin, q.bot, rx + 8, ry + rh - 8, 0, edgeW / 16, 1)
 
         -- Left side edge (x=0, y=8, w=8, h=16)
-        local leftQuad = love.graphics.newQuad(0, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(skin, leftQuad, rx, ry + 8, 0, 1, edgeH / 16)
+        love.graphics.draw(skin, q.left, rx, ry + 8, 0, 1, edgeH / 16)
 
         -- Right side edge (x=24, y=8, w=8, h=16)
-        local rightQuad = love.graphics.newQuad(24, 8, 8, 16, wsW, wsH)
-        love.graphics.draw(skin, rightQuad, rx + rw - 8, ry + 8, 0, 1, edgeH / 16)
+        love.graphics.draw(skin, q.right, rx + rw - 8, ry + 8, 0, 1, edgeH / 16)
 
         -- Draw 8px Corners
-        local tlQuad = love.graphics.newQuad(0, 0, 8, 8, wsW, wsH)
-        local trQuad = love.graphics.newQuad(24, 0, 8, 8, wsW, wsH)
-        local blQuad = love.graphics.newQuad(0, 24, 8, 8, wsW, wsH)
-        local brQuad = love.graphics.newQuad(24, 24, 8, 8, wsW, wsH)
-
-        love.graphics.draw(skin, tlQuad, rx, ry)
-        love.graphics.draw(skin, trQuad, rx + rw - 8, ry)
-        love.graphics.draw(skin, blQuad, rx, ry + rh - 8)
-        love.graphics.draw(skin, brQuad, rx + rw - 8, ry + rh - 8)
+        love.graphics.draw(skin, q.tl, rx, ry)
+        love.graphics.draw(skin, q.tr, rx + rw - 8, ry)
+        love.graphics.draw(skin, q.bl, rx, ry + rh - 8)
+        love.graphics.draw(skin, q.br, rx + rw - 8, ry + rh - 8)
     end
     love.graphics.pop()
 end
@@ -358,9 +367,13 @@ end
 function ui.drawIcon(iconId, x, y)
     if not iconset or not iconId or iconId <= 0 then return end
     
-    local col = (iconId - 1) % 10
-    local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = iconQuads[iconId]
+    if not quad then
+        local col = (iconId - 1) % 10
+        local row = math.floor((iconId - 1) / 10)
+        quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+        iconQuads[iconId] = quad
+    end
     
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
@@ -376,9 +389,13 @@ function ui.drawIconScaled(iconId, x, y, scale)
     if not iconset or not iconId or iconId <= 0 then return end
     scale = scale or 1.0
 
-    local col = (iconId - 1) % 10
-    local row = math.floor((iconId - 1) / 10)
-    local quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+    local quad = iconQuads[iconId]
+    if not quad then
+        local col = (iconId - 1) % 10
+        local row = math.floor((iconId - 1) / 10)
+        quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
+        iconQuads[iconId] = quad
+    end
 
     love.graphics.push("all")
     love.graphics.setColor(0, 0, 0, 0.5)
