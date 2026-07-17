@@ -470,7 +470,7 @@ function ui.drawWindows(kind, windows, ctx)
         elseif win.type == "confirm_options" then
             ui.drawString("Craft  Back", 80, 220, {1,1,1,1})
         elseif win.portrait then
-            -- Portrait at 1x scale (D4 feedback fix)
+            -- Portrait at 1x scale (intentional per D4 feedback)
             if ctx and ctx.v and ctx.v.crafter then
                 -- Placeholder for portrait draw (full sprite support in D5)
                 love.graphics.setColor(1,1,1,1)
