@@ -1169,6 +1169,30 @@ elseif paramDef.type == "script" then
         end
     end
 
+    -- Traits evaluateCondition validation
+    local function validateTraitsCondition()
+        local battler = session.Battler.new(loader.getActor(1), 1)
+        local maxHp = traits.getParam(battler, "maxHp", vSession)
+
+        check(traits.evaluateCondition(nil, battler, vSession) == true, "nil condition must evaluate to true")
+        check(traits.evaluateCondition("invalid", battler, vSession) == false, "invalid condition must evaluate to false")
+
+        -- HP conditions
+        battler.hp = 0 -- 0% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == true, "0% HP is < 50%")
+        check(traits.evaluateCondition("HP<50%", battler, vSession) == true, "0% HP is < 50% without spaces")
+
+        battler.hp = maxHp -- 100% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == false, "100% HP is not < 50%")
+
+        battler.hp = math.ceil(maxHp * 0.5) -- >= 50% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == false, ">= 50% HP is not < 50%")
+
+        battler.hp = math.floor(maxHp * 0.4) -- < 50% HP
+        check(traits.evaluateCondition("HP < 50%", battler, vSession) == true, "< 50% HP is < 50%")
+    end
+    validateTraitsCondition()
+
     -- Scenes validation (C9)
     local function validateScenes()
         local formulaEngine = require("engine.formula")
