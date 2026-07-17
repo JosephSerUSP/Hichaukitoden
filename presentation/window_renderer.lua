@@ -461,13 +461,24 @@ local function drawLayoutGauges(gauges, env, x, y)
     end
 end
 
+local pageLayoutCache = setmetatable({}, {__mode = "k"})
 local function resolvePageLayout(layout, env)
     if not layout.pages then return layout end
     local page = math.floor(tonumber((formula.eval(layout.pageFormula or "1", env))) or 1)
+
+    local cache = pageLayoutCache[layout]
+    if not cache then
+        cache = {}
+        pageLayoutCache[layout] = cache
+    end
+
+    if cache[page] then return cache[page] end
+
     local pageLayout = layout.pages[page] or layout.pages[1] or {}
     local resolved = {}
     for key, value in pairs(layout) do resolved[key] = value end
     for key, value in pairs(pageLayout) do resolved[key] = value end
+    cache[page] = resolved
     return resolved
 end
 
