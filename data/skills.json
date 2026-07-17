@@ -191,6 +191,7 @@
     "name": "Attack",
     "target": "enemy",
     "element": null,
+    "animation": "skill.attack",
     "description": "[Enemy] A basic physical attack.",
     "spCost": 0,
     "mpCost": 0,

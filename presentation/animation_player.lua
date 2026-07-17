@@ -479,7 +479,8 @@ function animation_player.getShakeOffset(target)
                     if elapsedSec >= t0Sec and elapsedSec < trackEnd then
                         local t = durSec > 0 and (elapsedSec - t0Sec) / durSec or 1
                         local shake = evalShake(track, t)
-                        return shake.amplitude * math.sin(elapsedSec * shake.frequency * 2 * math.pi)
+                        -- Scale frequency factor slightly by 2.15 to break common frame rate sampling divisors
+                        return shake.amplitude * math.sin(elapsedSec * shake.frequency * 2.15 * math.pi)
                     end
                 end
             end

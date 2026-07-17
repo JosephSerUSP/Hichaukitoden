@@ -590,6 +590,87 @@ local function getHoveredTargets(bv, combatState, selectedIndex, spellSelect, it
     return {}
 end
 
+local function getBattlerRect(target, battleState, session)
+    if not battleState or not session or not target then return nil, nil, nil, nil end
+    local tx, ty, tw, th
+    
+    -- Is it an enemy?
+    local isEnemy = false
+    local enemyIdx = nil
+    for idx, enemy in ipairs(battleState.enemies) do
+        if enemy == target then
+            isEnemy = true
+            enemyIdx = idx
+            break
+        end
+    end
+    
+    if isEnemy then
+        local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+        local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+        local ey = layoutVal("enemyY")
+        local portrait = getPortrait(target.spriteKey or target.id)
+        tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
+        th = tw
+        tx = ex
+        ty = ey
+    else
+        -- It's a party member
+        local allyIdx = nil
+        for idx, c in ipairs(session.party) do
+            if c == target then
+                allyIdx = idx
+                break
+            end
+        end
+        
+        if allyIdx then
+            local loaderRef = session.loader
+            local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
+            local partyLayout = layouts and layouts.party or {}
+            local px = partyLayout.x or 0
+            local py = partyLayout.y or 18
+            local title = partyLayout.title
+            local contentX = partyLayout.contentX or partyLayout.textX or 1
+            local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+
+            local gridX = ui.toPx(px + contentX)
+            local gridY = ui.toPx(py + contentY)
+            local cols = partyLayout.gridColumns or 2
+            local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
+            
+            local colW, rowH = actor_status.cellSize(session)
+            tx = slotX - 2
+            ty = slotY - 2
+            tw = colW - 2
+            th = rowH - 2
+        end
+    end
+    return tx, ty, tw, th
+end
+
+local function drawArrow(x1, y1, x2, y2)
+    local angle = math.atan2(y2 - y1, x2 - x1)
+    local size = 8
+    
+    -- Translucent glow line
+    love.graphics.setLineWidth(4)
+    love.graphics.setColor(1, 0.9, 0.4, 0.3)
+    love.graphics.line(x1, y1, x2, y2)
+    
+    -- Brighter inner line
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(1, 0.9, 0.4, 0.7)
+    love.graphics.line(x1, y1, x2, y2)
+    
+    -- Arrowhead
+    local ax = x2 - size * math.cos(angle - math.pi / 6)
+    local ay = y2 - size * math.sin(angle - math.pi / 6)
+    local bx = x2 - size * math.cos(angle + math.pi / 6)
+    local by = y2 - size * math.sin(angle + math.pi / 6)
+    love.graphics.polygon("fill", x2, y2, ax, ay, bx, by)
+end
+
 function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
     renderer.activeBattle = battleState
     
@@ -625,8 +706,9 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         local anchorX = ex + spriteW / 2
         local anchorY = ey + spriteH
 
-        -- Transform offsets are relative to that anchor.
-        local drawX = anchorX + xf.offsetX
+        -- Query shake offset and apply it along with transform offsets
+        local shakeOff = animation_player.getShakeOffset(enemy)
+        local drawX = anchorX + xf.offsetX + shakeOff
         local drawY = anchorY + xf.offsetY
 
         local partX = drawX
@@ -922,63 +1004,11 @@ function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect
     local session = renderer.session
     if not session then return end
     
+    local battleState = bv.battle
+
     local targets = getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
     for _, target in ipairs(targets) do
-        local tx, ty, tw, th
-        
-        -- Is it an enemy?
-        local isEnemy = false
-        local enemyIdx = nil
-        for idx, enemy in ipairs(bv.battle.enemies) do
-            if enemy == target then
-                isEnemy = true
-                enemyIdx = idx
-                break
-            end
-        end
-        
-        if isEnemy then
-            local spacing = layoutVal("enemyRowWidth") / #bv.battle.enemies
-            local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
-            local ey = layoutVal("enemyY")
-            local portrait = getPortrait(target.spriteKey or target.id)
-            tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
-            th = tw
-            tx = ex
-            ty = ey
-        else
-            -- It's a party member
-            local allyIdx = nil
-            for idx, c in ipairs(session.party) do
-                if c == target then
-                    allyIdx = idx
-                    break
-                end
-            end
-            
-            if allyIdx then
-                local loaderRef = session.loader
-                local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
-                local partyLayout = layouts and layouts.party or {}
-                local px = partyLayout.x or 0
-                local py = partyLayout.y or 18
-                local title = partyLayout.title
-                local contentX = partyLayout.contentX or partyLayout.textX or 1
-                local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
-
-                local gridX = ui.toPx(px + contentX)
-                local gridY = ui.toPx(py + contentY)
-                local cols = partyLayout.gridColumns or 2
-                local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
-                
-                local colW, rowH = actor_status.cellSize(session)
-                tx = slotX - 2
-                ty = slotY - 2
-                tw = colW - 2
-                th = rowH - 2
-            end
-        end
-        
+        local tx, ty, tw, th = getBattlerRect(target, battleState, session)
         if tx and ty and tw and th then
             ui.drawTargetReticle(tx, ty, tw, th)
         end

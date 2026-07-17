@@ -933,7 +933,8 @@
         ],
         "fromAlpha": 0.9,
         "toAlpha": 0,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_eugzbc"
       },
       {
         "type": "particles",
@@ -959,7 +960,8 @@
           ]
         ],
         "blendMode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_x7wygi"
       }
     ]
   },
@@ -1039,7 +1041,8 @@
         ],
         "fromAlpha": 0.55,
         "toAlpha": 0,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_v7kef2"
       },
       {
         "type": "tint",
@@ -1052,14 +1055,16 @@
         ],
         "fromAlpha": 0.85,
         "toAlpha": 0,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_0vgn05"
       },
       {
         "type": "blend",
         "t0": 0,
         "duration": 350,
         "mode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_qy3yz3"
       },
       {
         "type": "shake",
@@ -1067,7 +1072,8 @@
         "duration": 450,
         "amplitude": 3,
         "frequency": 42,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_56kmge"
       },
       {
         "type": "transform",
@@ -1075,7 +1081,8 @@
         "duration": 160,
         "toScaleX": 1.18,
         "toScaleY": 0.84,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_pl28id"
       },
       {
         "type": "transform",
@@ -1085,7 +1092,8 @@
         "fromScaleY": 0.84,
         "toScaleX": 1,
         "toScaleY": 1,
-        "easing": "ease_in"
+        "easing": "ease_in",
+        "id": "trk_sypxvq"
       },
       {
         "type": "particles",
@@ -1127,7 +1135,8 @@
           ]
         ],
         "blendMode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_avfi0k"
       },
       {
         "type": "force_field",
@@ -1136,7 +1145,8 @@
         "field": "gravity",
         "strength": 220,
         "angle": 90,
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_1hl625"
       }
     ]
   },
@@ -1163,7 +1173,8 @@
         "t0": 0,
         "duration": 700,
         "mode": "add",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_hpelf1"
       },
       {
         "type": "tint",
@@ -1176,7 +1187,8 @@
         ],
         "fromAlpha": 0.8,
         "toAlpha": 0,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_upqw1b"
       },
       {
         "type": "gradient_map",
@@ -1194,7 +1206,8 @@
         ],
         "fromIntensity": 0,
         "toIntensity": 1,
-        "easing": "ease_in_out"
+        "easing": "ease_in_out",
+        "id": "trk_uwn5on"
       },
       {
         "type": "shake",
@@ -1202,7 +1215,8 @@
         "duration": 350,
         "amplitude": 2,
         "frequency": 30,
-        "easing": "ease_out"
+        "easing": "ease_out",
+        "id": "trk_rwavyp"
       },
       {
         "type": "transform",
@@ -1212,7 +1226,8 @@
         "toY": -14,
         "toScaleX": 1.06,
         "toScaleY": 1.06,
-        "easing": "ease_in_out"
+        "easing": "ease_in_out",
+        "id": "trk_fovvdn"
       },
       {
         "type": "particles",
@@ -1257,7 +1272,8 @@
         "spawnRadiusX": 14,
         "spawnRadiusY": 6,
         "spawnAngle": 0,
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_aurcc1"
       },
       {
         "type": "particles",
@@ -1290,7 +1306,8 @@
         ],
         "blendMode": "add",
         "mask": "target",
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_5jsj58"
       },
       {
         "type": "force_field",
@@ -1298,7 +1315,132 @@
         "duration": 1200,
         "field": "vortex",
         "strength": 80,
-        "easing": "linear"
+        "easing": "linear",
+        "id": "trk_3h6ovd"
+      }
+    ]
+  },
+  "skill.attack": {
+    "id": "skill.attack",
+    "class": "assignable",
+    "duration": 500,
+    "tracks": [
+      {
+        "type": "shake",
+        "t0": 0,
+        "duration": 300,
+        "amplitude": 3,
+        "frequency": 30,
+        "easing": "ease_out"
+      },
+      {
+        "type": "tint",
+        "t0": 0,
+        "duration": 200,
+        "color": [
+          1,
+          0.3,
+          0.3
+        ],
+        "fromAlpha": 0.8,
+        "toAlpha": 0,
+        "easing": "linear",
+        "id": "trk_pd55e3"
+      },
+      {
+        "type": "particles",
+        "t0": 0,
+        "duration": 300,
+        "rate": 60,
+        "lifetime": 0.4,
+        "spread": 360,
+        "speed": 180,
+        "gravity": 100,
+        "sizeStart": 1.2,
+        "sizeEnd": 0.3,
+        "colorOverLife": [
+          [
+            1,
+            0.9,
+            0.4,
+            1
+          ],
+          [
+            1,
+            0.3,
+            0.1,
+            0
+          ]
+        ],
+        "blendMode": "add",
+        "easing": "ease_out",
+        "id": "trk_6nd562"
+      }
+    ]
+  },
+  "system.step_forward_party": {
+    "id": "system.step_forward_party",
+    "class": "system",
+    "duration": 850,
+    "tracks": [
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 150,
+        "fromY": 0,
+        "toY": -16,
+        "easing": "ease_out",
+        "id": "trk_349syz"
+      },
+      {
+        "type": "transform",
+        "t0": 150,
+        "duration": 500,
+        "fromY": -16,
+        "toY": -16,
+        "easing": "linear",
+        "id": "trk_q35xtz"
+      },
+      {
+        "type": "transform",
+        "t0": 650,
+        "duration": 200,
+        "fromY": -16,
+        "toY": 0,
+        "easing": "ease_out"
+      }
+    ]
+  },
+  "system.step_forward_enemy": {
+    "id": "system.step_forward_enemy",
+    "class": "system",
+    "duration": 850,
+    "tracks": [
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 150,
+        "fromY": 0,
+        "toY": 24,
+        "easing": "ease_out"
+      },
+      {
+        "type": "transform",
+        "t0": 150,
+        "duration": 500,
+        "fromY": 24,
+        "toY": 24,
+        "easing": "linear",
+        "id": "trk_xlwfrf"
+      },
+      {
+        "type": "transform",
+        "t0": 650,
+        "duration": 200,
+        "fromY": 24,
+        "toY": 0,
+        "easing": "ease_out",
+        "id": "trk_7te8w6"
       }
     ]
   }
