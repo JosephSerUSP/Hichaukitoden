@@ -1326,14 +1326,6 @@
     "duration": 500,
     "tracks": [
       {
-        "type": "shake",
-        "t0": 0,
-        "duration": 300,
-        "amplitude": 3,
-        "frequency": 30,
-        "easing": "ease_out"
-      },
-      {
         "type": "tint",
         "t0": 0,
         "duration": 200,
@@ -1350,11 +1342,11 @@
       {
         "type": "particles",
         "t0": 0,
-        "duration": 300,
-        "rate": 60,
-        "lifetime": 0.4,
+        "duration": 100,
+        "rate": 291,
+        "lifetime": 0.3,
         "spread": 360,
-        "speed": 180,
+        "speed": 87,
         "gravity": 100,
         "sizeStart": 1.2,
         "sizeEnd": 0.3,
