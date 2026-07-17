@@ -1162,7 +1162,12 @@ handlers.SCRIPT = function(cmd, ctx)
         end
     end
 
-    local chunk, err = load(code or "", "SCRIPT", "t", env)
+    local scriptCode = code or ""
+    if type(scriptCode) == "string" and string.byte(scriptCode, 1) == 27 then
+        error("SCRIPT compile error: attempt to load a bytecode chunk", 0)
+    end
+
+    local chunk, err = load(scriptCode, "SCRIPT", "t", env)
     if not chunk then
         error("SCRIPT compile error: " .. tostring(err), 0)
     end
