@@ -1562,9 +1562,16 @@ elseif paramDef.type == "script" then
     end
     -- Check that all system-class entries have valid track structures
     -- (at minimum: each track has a known type and numeric duration)
+    -- Must mirror what presentation/animation_player.lua actually implements:
+    -- a system entry using an unimplemented type would silently no-op, which
+    -- is exactly what this hard check exists to prevent. (text_flow was
+    -- listed here without any player implementation — a leftover from the
+    -- dropped healing_sparkle port; force_field was implemented but missing.)
+    -- Assignable entries stay soft-validated on purpose: unknown track types
+    -- fail soft at runtime so future types can ship in data first.
     local VALID_TRACK_TYPES = {
         tint = true, blend = true, transform = true,
-        shake = true, particles = true, text_flow = true,
+        shake = true, particles = true, force_field = true,
         gradient_map = true, screen_flash = true,
     }
     for id, entry in pairs(loader.animations or {}) do

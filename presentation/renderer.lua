@@ -879,6 +879,30 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
             ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
         end
     end
+
+    -- Full-screen flash overlay (screen_flash tracks), above everything —
+    -- same compositing as the editor preview channel (main.lua's
+    -- runPreviewAnim draws it last over the whole canvas). Animations play
+    -- per-target, so scan every battler for an active flash; first hit wins
+    -- (overlapping flashes don't stack — matches the preview, which only
+    -- ever has one target). 256x240 is the game's logical resolution.
+    local flash
+    for _, e in ipairs(battleState.enemies) do
+        flash = animation_player.getScreenFlash(e)
+        if flash then break end
+    end
+    if not flash then
+        for _, a in ipairs(battleState.allies or {}) do
+            flash = animation_player.getScreenFlash(a)
+            if flash then break end
+        end
+    end
+    if flash then
+        love.graphics.setBlendMode("alpha")
+        love.graphics.setColor(flash.color[1], flash.color[2], flash.color[3], flash.alpha)
+        love.graphics.rectangle("fill", 0, 0, 256, 240)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
 function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
