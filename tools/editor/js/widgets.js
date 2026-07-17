@@ -1654,6 +1654,12 @@
             } else if (activeDbTab === 'animations') {
                 renderAnimationEditor(formPanel, item);
 
+            } else if (activeDbTab === 'quests') {
+                buildQuestForm(formPanel, item.id);
+
+            } else if (activeDbTab === 'themes') {
+                buildThemeForm(formPanel, item.id);
+
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};
                 buildRecursiveForm(formPanel, dbPayload.terms, [], dbPayload.terms);

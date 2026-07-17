@@ -92,6 +92,18 @@
                     items.sort((a, b) => a.name.localeCompare(b.name));
                 }
             }
+            else if (activeDbTab === 'quests') {
+                // Object keyed by quest id (like commonEvents), but the keys are
+                // string slugs rather than numeric.
+                if (!dbPayload.quests) dbPayload.quests = {};
+                items = Object.keys(dbPayload.quests)
+                    .map(k => ({ id: k, name: dbPayload.quests[k].name || k }));
+            }
+            else if (activeDbTab === 'themes') {
+                // Array of { id, name, colors }.
+                if (!dbPayload.themes) dbPayload.themes = [];
+                items = dbPayload.themes.map((t, i) => ({ id: t.id || String(i), name: t.name || t.id || `Theme ${i}` }));
+            }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
 
@@ -119,9 +131,22 @@
                 listContainer.appendChild(btn);
             });
 
+            // Quests and Themes create entries via their own "+ New" button
+            // (string-keyed / self-contained array entries), not the numeric
+            // Change Maximum flow.
+            if (activeDbTab === 'quests' || activeDbTab === 'themes') {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'db-list-item';
+                addBtn.style.cssText = 'font-weight: bold; color: var(--win-highlight);';
+                addBtn.textContent = activeDbTab === 'quests' ? '＋ New Quest' : '＋ New Theme';
+                addBtn.onclick = () => activeDbTab === 'quests' ? createNewQuest() : createNewTheme();
+                listContainer.appendChild(addBtn);
+            }
+
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.getElementById('db-change-max-btn');
-            if (activeDbTab === 'system' || activeDbTab === 'terms') {
+            if (activeDbTab === 'system' || activeDbTab === 'terms'
+                || activeDbTab === 'quests' || activeDbTab === 'themes') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -143,6 +168,291 @@
             activeDbItemId = id;
             setDirty(true);
             initDatabaseEditor();
+        }
+
+        // --- QUESTS ---
+        function createNewQuest() {
+            const coll = dbPayload.quests = dbPayload.quests || {};
+            let counter = 1;
+            let id = 'new_quest_' + counter;
+            while (coll[id]) { counter++; id = 'new_quest_' + counter; }
+            coll[id] = { name: 'New Quest', giver: '', summary: '', description: '', objectives: [], rewards: {} };
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        // Renames a quest's key, preserving object insertion order so the list
+        // doesn't jump around. Quest keys are referenced by dialogue/flags, so a
+        // rename here does not chase those references — surfaced via the toast.
+        function renameQuestKey(oldKey, newKey) {
+            newKey = (newKey || '').trim();
+            if (!newKey || newKey === oldKey) return oldKey;
+            if (!/^\w+$/.test(newKey)) { showToast('Quest id must be letters/digits/underscore.'); return oldKey; }
+            if (dbPayload.quests[newKey]) { showToast(`Quest id '${newKey}' already exists.`); return oldKey; }
+            const rebuilt = {};
+            Object.keys(dbPayload.quests).forEach(k => {
+                rebuilt[k === oldKey ? newKey : k] = dbPayload.quests[k];
+            });
+            dbPayload.quests = rebuilt;
+            activeDbItemId = newKey;
+            setDirty(true);
+            showToast(`Renamed quest to '${newKey}'. Update any dialogue/flags that referenced '${oldKey}'.`);
+            initDatabaseEditor();
+            return newKey;
+        }
+
+        function deleteQuest(id) {
+            if (!confirm(`Delete quest '${id}'? This cannot be undone.`)) return;
+            delete dbPayload.quests[id];
+            activeDbItemId = '';
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        // --- THEMES ---
+        // The set of color keys the engine/editor themes use. Derived from the
+        // union of all existing themes' color keys so a new theme starts with a
+        // complete palette matching whatever the current data defines.
+        function themeColorKeys() {
+            const keys = new Set();
+            (dbPayload.themes || []).forEach(t => {
+                Object.keys(t.colors || {}).forEach(k => keys.add(k));
+            });
+            return Array.from(keys);
+        }
+
+        function createNewTheme() {
+            const arr = dbPayload.themes = dbPayload.themes || [];
+            let counter = 1;
+            let id = 'new_theme_' + counter;
+            while (arr.some(t => t.id === id)) { counter++; id = 'new_theme_' + counter; }
+            // Seed the palette from the first existing theme so a new one is
+            // immediately usable rather than blank.
+            const template = arr[0] && arr[0].colors ? arr[0].colors : {};
+            const colors = {};
+            themeColorKeys().forEach(k => { colors[k] = template[k] || '#000000'; });
+            arr.push({ id: id, name: 'New Theme', colors: colors });
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        function deleteTheme(id) {
+            if (!confirm(`Delete theme '${id}'? This cannot be undone.`)) return;
+            dbPayload.themes = (dbPayload.themes || []).filter(t => t.id !== id);
+            activeDbItemId = '';
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        // Editable list of plain strings (quest objectives, reward flags).
+        // onChange receives the mutated array; caller owns the backing array.
+        function buildStringListEditor(container, labelText, arr, placeholder) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = labelText;
+            group.appendChild(lbl);
+
+            const list = document.createElement('div');
+            const render = () => {
+                list.innerHTML = '';
+                arr.forEach((val, i) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 2px;';
+                    const inp = document.createElement('input');
+                    inp.className = 'win98-input';
+                    inp.style.flex = '1';
+                    inp.placeholder = placeholder || '';
+                    inp.value = val;
+                    inp.oninput = () => { arr[i] = inp.value; setDirty(true); };
+                    row.appendChild(inp);
+                    row.appendChild(makeRowDeleteBtn(() => { arr.splice(i, 1); render(); }));
+                    list.appendChild(row);
+                });
+                list.appendChild(makeAddRowBtn('+ Add', () => { arr.push(''); render(); }));
+            };
+            render();
+            group.appendChild(list);
+            container.appendChild(group);
+        }
+
+        // Editable list of { id, qty, [consume] } item references (quest
+        // requirements / rewards). `withConsume` adds the consume checkbox.
+        function buildItemRefListEditor(container, labelText, arr, withConsume) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            const lbl = document.createElement('label');
+            lbl.textContent = labelText;
+            group.appendChild(lbl);
+
+            const itemOpts = (dbPayload.items || []).map(it => ({ value: it.id, label: `${it.name} (#${it.id})` }));
+            const list = document.createElement('div');
+            const render = () => {
+                list.innerHTML = '';
+                arr.forEach((entry, i) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 2px;';
+
+                    const sel = makeSelect(itemOpts, entry.id, v => { entry.id = parseInt(v); });
+                    sel.style.flex = '1';
+                    row.appendChild(sel);
+
+                    const qty = document.createElement('input');
+                    qty.type = 'number';
+                    qty.className = 'win98-input';
+                    qty.style.width = '54px';
+                    qty.title = 'Quantity';
+                    qty.value = entry.qty !== undefined ? entry.qty : 1;
+                    qty.oninput = () => { entry.qty = parseInt(qty.value) || 1; setDirty(true); };
+                    row.appendChild(qty);
+
+                    if (withConsume) {
+                        const cWrap = document.createElement('label');
+                        cWrap.style.cssText = 'font-size: 10px; display: flex; align-items: center; gap: 2px;';
+                        const chk = document.createElement('input');
+                        chk.type = 'checkbox';
+                        chk.checked = !!entry.consume;
+                        chk.onchange = () => { entry.consume = chk.checked; setDirty(true); };
+                        cWrap.appendChild(chk);
+                        cWrap.appendChild(document.createTextNode('consume'));
+                        row.appendChild(cWrap);
+                    }
+
+                    row.appendChild(makeRowDeleteBtn(() => { arr.splice(i, 1); render(); }));
+                    list.appendChild(row);
+                });
+                list.appendChild(makeAddRowBtn('+ Add Item', () => {
+                    const first = (dbPayload.items || [])[0];
+                    const e = { id: first ? first.id : 1, qty: 1 };
+                    if (withConsume) e.consume = true;
+                    arr.push(e);
+                    render();
+                }));
+            };
+            render();
+            group.appendChild(list);
+            container.appendChild(group);
+        }
+
+        function buildQuestForm(formPanel, id) {
+            const q = dbPayload.quests[id];
+            if (!q) return;
+
+            createFormField(formPanel, 'Quest ID (key)', id, val => { renameQuestKey(id, val); });
+            createFormField(formPanel, 'Name', q.name || '', val => { q.name = val; initDatabaseEditor(true); });
+            createFormField(formPanel, 'Giver', q.giver || '', val => { q.giver = val; });
+            window.createSpriteField
+                ? window.createSpriteField(formPanel, 'Giver Portrait', q.portrait || '', (p) => { if (p === '') delete q.portrait; else q.portrait = p; setDirty(true); })
+                : createFormField(formPanel, 'Giver Portrait (key)', q.portrait || '', val => { if (val === '') delete q.portrait; else q.portrait = val; });
+            createFormField(formPanel, 'Summary', q.summary || '', val => { q.summary = val; });
+
+            const descGroup = document.createElement('div');
+            descGroup.className = 'form-group';
+            const descLbl = document.createElement('label');
+            descLbl.textContent = 'Description';
+            descLbl.style.marginBottom = '2px';
+            const descTa = document.createElement('textarea');
+            descTa.className = 'win98-input';
+            descTa.style.cssText = 'width: 100%; height: 60px; font-family: inherit; box-sizing: border-box; resize: vertical;';
+            descTa.value = q.description || '';
+            descTa.oninput = () => { q.description = descTa.value; setDirty(true); };
+            descGroup.appendChild(descLbl);
+            descGroup.appendChild(descTa);
+            formPanel.appendChild(descGroup);
+
+            q.objectives = q.objectives || [];
+            buildStringListEditor(formPanel, 'Objectives', q.objectives, 'Objective text');
+
+            // Requirements (items to hand in)
+            q.requirements = q.requirements || {};
+            q.requirements.items = q.requirements.items || [];
+            buildItemRefListEditor(formPanel, 'Required Items (handed in)', q.requirements.items, true);
+
+            // Rewards
+            q.rewards = q.rewards || {};
+            const rewardsFs = document.createElement('fieldset');
+            rewardsFs.style.cssText = 'padding: 6px; margin-top: 6px;';
+            const rewardsLeg = document.createElement('legend');
+            rewardsLeg.textContent = 'Rewards';
+            rewardsFs.appendChild(rewardsLeg);
+            createFormField(rewardsFs, 'Gold', q.rewards.gold || 0, val => { q.rewards.gold = parseInt(val) || 0; }, 'number');
+            createFormField(rewardsFs, 'XP', q.rewards.xp || 0, val => { q.rewards.xp = parseInt(val) || 0; }, 'number');
+            q.rewards.items = q.rewards.items || [];
+            buildItemRefListEditor(rewardsFs, 'Reward Items', q.rewards.items, false);
+            q.rewards.flags = q.rewards.flags || [];
+            buildStringListEditor(rewardsFs, 'Flags Set on Completion', q.rewards.flags, 'flag_name');
+            formPanel.appendChild(rewardsFs);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'win98-btn';
+            delBtn.style.cssText = 'margin-top: 10px; color: #cc0000;';
+            delBtn.textContent = 'Delete Quest';
+            delBtn.onclick = () => deleteQuest(id);
+            formPanel.appendChild(delBtn);
+        }
+
+        function buildThemeForm(formPanel, id) {
+            const theme = (dbPayload.themes || []).find(t => t.id === id);
+            if (!theme) return;
+
+            createFormField(formPanel, 'Theme ID', theme.id || '', val => {
+                val = (val || '').trim();
+                if (!val) return;
+                if (dbPayload.themes.some(t => t !== theme && t.id === val)) { showToast(`Theme id '${val}' already exists.`); return; }
+                theme.id = val;
+                activeDbItemId = val;
+                setDirty(true);
+                initDatabaseEditor(true);
+            });
+            createFormField(formPanel, 'Name', theme.name || '', val => { theme.name = val; initDatabaseEditor(true); });
+
+            theme.colors = theme.colors || {};
+            const fs = document.createElement('fieldset');
+            fs.style.cssText = 'padding: 6px; margin-top: 6px;';
+            const leg = document.createElement('legend');
+            leg.textContent = 'Colors';
+            fs.appendChild(leg);
+
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;';
+            Object.keys(theme.colors).forEach(key => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+                const lbl = document.createElement('span');
+                lbl.style.cssText = 'flex: 1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                lbl.textContent = key;
+                lbl.title = key;
+                const isHex = /^#[0-9a-fA-F]{6}$/.test(theme.colors[key] || '');
+                const pick = document.createElement('input');
+                pick.type = 'color';
+                pick.style.cssText = 'width: 28px; height: 20px; padding: 0; border: 1px solid var(--win-shadow);';
+                pick.value = isHex ? theme.colors[key] : '#000000';
+                const hex = document.createElement('input');
+                hex.className = 'win98-input';
+                hex.style.width = '72px';
+                hex.value = theme.colors[key] || '';
+                pick.oninput = () => { theme.colors[key] = pick.value; hex.value = pick.value; setDirty(true); };
+                hex.oninput = () => {
+                    theme.colors[key] = hex.value;
+                    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) pick.value = hex.value;
+                    setDirty(true);
+                };
+                row.appendChild(lbl);
+                row.appendChild(pick);
+                row.appendChild(hex);
+                grid.appendChild(row);
+            });
+            fs.appendChild(grid);
+            formPanel.appendChild(fs);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'win98-btn';
+            delBtn.style.cssText = 'margin-top: 10px; color: #cc0000;';
+            delBtn.textContent = 'Delete Theme';
+            delBtn.onclick = () => deleteTheme(id);
+            formPanel.appendChild(delBtn);
         }
 
         // --- CHANGE MAXIMUM LOGIC ---
