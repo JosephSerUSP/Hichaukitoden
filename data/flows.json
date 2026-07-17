@@ -145,7 +145,12 @@
         ]
       }
     ],
-    "encounter_check": []
+    "encounter_check": [
+      {
+        "cmd": "ROLL_ENCOUNTER",
+        "chance": "session.encounterRate"
+      }
+    ]
   },
   "_test": {
     "scene": [

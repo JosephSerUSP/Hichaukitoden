@@ -1386,37 +1386,18 @@ elseif paramDef.type == "script" then
 
 
 
-    -- battle.victory flow must reproduce the legacy reward block exactly:
-    -- same gold roll, same XP, same POST_BATTLE_HEAL (task A5a).
-    if flow.has("battle.victory") then
-        local function freshParty()
+    -- Flows are the single source of truth for battle outcomes: the phases
+    -- the hosts call unconditionally must exist and execute cleanly against
+    -- a fresh session (behavioral regressions are covered by the golden
+    -- battle log, tools/golden/check).
+    for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.encounter_check" }) do
+        check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
+        if flow.has(phase) then
             local s = session.GameSession.new(loader)
             s:initializeStartingParty()
             for _, c in ipairs(s.party) do c.hp = math.max(1, math.floor(c:getMaxHp(s) / 2)) end
-            return s
-        end
-        math.randomseed(4242)
-        local sFlow = freshParty()
-        flow.run("battle.victory", { session = sFlow, party = sFlow.party, enemies = {} })
-        math.randomseed(4242)
-        local sLegacy = freshParty()
-        sLegacy.gold = sLegacy.gold + math.random(conf("combat", "victoryGoldMin", 10), conf("combat", "victoryGoldMax", 30))
-        for _, c in ipairs(sLegacy.party) do
-            if not c:isDead() then
-                c:gainExp(conf("combat", "victoryExp", 5), sLegacy)
-                local regenVal = traits.getRate(c, "POST_BATTLE_HEAL", sLegacy)
-                if regenVal > 0 then
-                    c.hp = math.min(c:getMaxHp(sLegacy), c.hp + regenVal)
-                end
-            end
-        end
-        check(sFlow.gold == sLegacy.gold,
-            "battle.victory flow gold mismatch: flow=" .. sFlow.gold .. " legacy=" .. sLegacy.gold)
-        for i, c in ipairs(sFlow.party) do
-            local l = sLegacy.party[i]
-            check(c.hp == l.hp and c.exp == l.exp and c.level == l.level,
-                "battle.victory flow diverges from legacy for party member " .. i ..
-                " (hp " .. c.hp .. "/" .. l.hp .. ", exp " .. tostring(c.exp) .. "/" .. tostring(l.exp) .. ")")
+            local okPhase, phaseErr = pcall(flow.run, phase, { session = s, party = s.party, enemies = {} })
+            check(okPhase, phase .. " flow failed to execute: " .. tostring(phaseErr))
         end
     end
 
@@ -2317,17 +2298,8 @@ local function handleKeyPressed(key)
         if moved then
             local triggered = checkStepEvents()
             if not triggered and not isSafeMap() then
-                if flow.has("battle.encounter_check") then
-                    for _, ev in ipairs(flow.run("battle.encounter_check", { session = activeSession })) do
-                        if ev.type == "encounter" then triggerBattle() end
-                    end
-                else
-                    -- Legacy roll (SPEC S4 fallback rule)
-                    local chance = activeSession.currentMapData.encounterRate
-                        or conf("combat", "encounterChance", 0.10)
-                    if math.random() < chance then
-                        triggerBattle()
-                    end
+                for _, ev in ipairs(flow.run("battle.encounter_check", { session = activeSession })) do
+                    if ev.type == "encounter" then triggerBattle() end
                 end
             end
         end
