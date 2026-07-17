@@ -782,6 +782,52 @@ runValidation = function()
         check(#events > 0, "battle round produced no events")
     end
 
+    -- A6: Mock battle speed sorting test. Checks `resolveRound` orders queue by speed descending
+    do
+        local mockFastEnemyData = { id = "e_fast", name = "Fast", level = 50 }
+        local mockSlowEnemyData = { id = "e_slow", name = "Slow", level = 1 }
+
+        local testSession = session.GameSession.new(loader)
+        testSession.party = {}
+
+        local fastEnemy = session.Battler.new(mockFastEnemyData, 50)
+        fastEnemy.hp = 100
+        local slowEnemy = session.Battler.new(mockSlowEnemyData, 1)
+        slowEnemy.hp = 100
+
+        testSession.party = { fastEnemy, slowEnemy }
+
+        -- Need at least one enemy so victory condition doesn't trigger immediately
+        local mockTarget = session.Battler.new({ id = "e_target", name = "Target", level = 1 }, 1)
+        mockTarget.hp = 100
+
+        local testBattle = battleSystem.Battle.new(testSession, { mockTarget })
+
+        -- Override getAIAction to not produce actions for the target
+        function testBattle:getAIAction(enemy)
+            return nil
+        end
+
+        local testActions = {}
+        testActions[1] = { type = "attack", target = mockTarget }
+        testActions[2] = { type = "attack", target = mockTarget }
+
+        local testEvents = testBattle:resolveRound(testActions)
+
+        local actionOrder = {}
+        for _, ev in ipairs(testEvents) do
+            if ev.type == "action" then
+                table.insert(actionOrder, ev.actor.id)
+            end
+        end
+
+        check(#actionOrder == 2, "speed sort test didn't produce 2 actions, got " .. #actionOrder)
+        if #actionOrder >= 2 then
+            check(actionOrder[1] == "e_fast", "speed sort test failed: fast actor didn't act first, got " .. tostring(actionOrder[1]))
+            check(actionOrder[2] == "e_slow", "speed sort test failed: slow actor didn't act second, got " .. tostring(actionOrder[2]))
+        end
+    end
+
     -- Formula sandbox: a representative reward-curve expression must compile
     -- and evaluate against a mock context (SPEC S5 / task A2).
     do

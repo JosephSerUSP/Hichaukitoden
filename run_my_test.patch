@@ -1,0 +1,45 @@
+<<<<<<< SEARCH
+        local testEvents = testBattle:resolveRound({})
+
+        local actionOrder = {}
+        for _, ev in ipairs(testEvents) do
+            if ev.type == "action" then
+                table.insert(actionOrder, ev.actor.id)
+            end
+        end
+
+        check(#actionOrder == 2, "speed sort test didn't produce 2 actions, got " .. #actionOrder)
+        if #actionOrder >= 2 then
+            check(actionOrder[1] == "e_fast", "speed sort test failed: fast actor didn't act first, got " .. tostring(actionOrder[1]))
+            check(actionOrder[2] == "e_slow", "speed sort test failed: slow actor didn't act second, got " .. tostring(actionOrder[2]))
+        end
+    end
+=======
+        -- enemies count as allies in resolving if they are not in `self.enemies` but `self.allies` -- wait, `battleSystem.Battle.new(session, enemies)` creates allies from `session.party`. We gave it empty party!
+        -- Ah, the previous fix didn't add party correctly!
+
+        testSession.party = { fastEnemy, slowEnemy }
+        local testBattle2 = battleSystem.Battle.new(testSession, {})
+
+        -- Override AI is not needed for allies
+
+        local testActions = {}
+        testActions[1] = { type = "attack", target = fastEnemy } -- fast
+        testActions[2] = { type = "attack", target = fastEnemy } -- slow
+
+        local testEvents = testBattle2:resolveRound(testActions)
+
+        local actionOrder = {}
+        for _, ev in ipairs(testEvents) do
+            if ev.type == "action" then
+                table.insert(actionOrder, ev.actor.id)
+            end
+        end
+
+        check(#actionOrder == 2, "speed sort test didn't produce 2 actions, got " .. #actionOrder)
+        if #actionOrder >= 2 then
+            check(actionOrder[1] == "e_fast", "speed sort test failed: fast actor didn't act first, got " .. tostring(actionOrder[1]))
+            check(actionOrder[2] == "e_slow", "speed sort test failed: slow actor didn't act second, got " .. tostring(actionOrder[2]))
+        end
+    end
+>>>>>>> REPLACE
