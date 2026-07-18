@@ -1461,8 +1461,8 @@
             } else if (activeDbTab === 'quests') {
                 buildQuestForm(formPanel, item.id);
 
-            } else if (activeDbTab === 'themes') {
-                buildThemeForm(formPanel, item.id);
+            } else if (activeDbTab === 'actionSequences') {
+                buildActionSequenceForm(formPanel, item.id);
 
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};
@@ -1561,6 +1561,7 @@
                     case 'elements': case 'roles': return dbPayload[activeDbTab][item.id];
                     case 'shops': return dbPayload.shops[item.id];
                     case 'commonEvents': return dbPayload.commonEvents[item.id];
+                    case 'actionSequences': return dbPayload.actionSequences[item.id];
                     case 'terms': return dbPayload.terms;
                     case 'system': return dbPayload.system;
                     default: return null;

@@ -12,7 +12,7 @@ const PROJECT_DIR = path.resolve(__dirname, '../..');
 // DATA_FILES in engine/server.lua.
 const DATA_FILES = [
     'actors', 'elements', 'events', 'items', 'maps', 'quests', 'shops',
-    'sounds', 'terms', 'themes', 'system', 'commonEvents',
+    'sounds', 'terms', 'actionSequences', 'system', 'commonEvents',
     'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes', 'animations'
 ];
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
@@ -542,6 +542,35 @@ const server = http.createServer((req, res) => {
         console.log(`[GAME STATUS PING] Build checks: Input Cooldown & Repeat Filters are fully active.\n`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
+    } else if (req.method === 'GET' && req.url === '/api/editor-themes') {
+        try {
+            const filePath = path.join(__dirname, 'themes.json');
+            if (fs.existsSync(filePath)) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(fs.readFileSync(filePath, 'utf8'));
+            } else {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify([]));
+            }
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: e.message }));
+        }
+    } else if (req.method === 'POST' && req.url === '/api/editor-themes') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            try {
+                const themes = JSON.parse(body);
+                const filePath = path.join(__dirname, 'themes.json');
+                fs.writeFileSync(filePath, JSON.stringify(themes, null, 2), 'utf8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: e.message }));
+            }
+        });
     } else {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');

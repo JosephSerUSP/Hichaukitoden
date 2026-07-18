@@ -36,6 +36,129 @@
             return opts;
         }
 
+        function buildActionSequencePicker(container, entity) {
+            const fs = document.createElement('fieldset');
+            fs.style.cssText = 'padding: 6px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;';
+            const leg = document.createElement('legend');
+            leg.textContent = 'Action Sequence';
+            fs.appendChild(leg);
+
+            let mode = 'default';
+            if (entity.actionSequenceCommands) {
+                mode = 'custom';
+            } else if (entity.actionSequence) {
+                mode = 'common';
+            }
+
+            const rDefault = document.createElement('input');
+            rDefault.type = 'radio';
+            rDefault.name = 'seq-mode-' + entity.id;
+            rDefault.id = 'seq-default-' + entity.id;
+            rDefault.checked = (mode === 'default');
+
+            const lblDefault = document.createElement('label');
+            lblDefault.htmlFor = rDefault.id;
+            lblDefault.style.cssText = 'font-size: 10px; font-weight: bold; margin-left: 4px;';
+            lblDefault.textContent = 'Default Sequence';
+
+            const divDefault = document.createElement('div');
+            divDefault.style.cssText = 'display: flex; align-items: center;';
+            divDefault.appendChild(rDefault);
+            divDefault.appendChild(lblDefault);
+            fs.appendChild(divDefault);
+
+            const rCommon = document.createElement('input');
+            rCommon.type = 'radio';
+            rCommon.name = 'seq-mode-' + entity.id;
+            rCommon.id = 'seq-common-' + entity.id;
+            rCommon.checked = (mode === 'common');
+
+            const lblCommon = document.createElement('label');
+            lblCommon.htmlFor = rCommon.id;
+            lblCommon.style.cssText = 'font-size: 10px; font-weight: bold; margin-left: 4px;';
+            lblCommon.textContent = 'Link Shared Sequence';
+
+            const divCommonRadio = document.createElement('div');
+            divCommonRadio.style.cssText = 'display: flex; align-items: center; margin-top: 4px;';
+            divCommonRadio.appendChild(rCommon);
+            divCommonRadio.appendChild(lblCommon);
+            fs.appendChild(divCommonRadio);
+
+            const selCommon = document.createElement('select');
+            selCommon.className = 'win98-select';
+            selCommon.style.cssText = 'width: 100%; margin-top: 2px; margin-bottom: 6px;';
+            const seqKeys = Object.keys(dbPayload.actionSequences || {}).sort();
+            seqKeys.forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = dbPayload.actionSequences[k].name || k;
+                if (entity.actionSequence === k) opt.selected = true;
+                selCommon.appendChild(opt);
+            });
+            if (mode !== 'common') selCommon.disabled = true;
+            fs.appendChild(selCommon);
+
+            const rCustom = document.createElement('input');
+            rCustom.type = 'radio';
+            rCustom.name = 'seq-mode-' + entity.id;
+            rCustom.id = 'seq-custom-' + entity.id;
+            rCustom.checked = (mode === 'custom');
+
+            const lblCustom = document.createElement('label');
+            lblCustom.htmlFor = rCustom.id;
+            lblCustom.style.cssText = 'font-size: 10px; font-weight: bold; margin-left: 4px;';
+            lblCustom.textContent = 'Custom Sequence';
+
+            const divCustomRadio = document.createElement('div');
+            divCustomRadio.style.cssText = 'display: flex; align-items: center; border-top: 1px solid var(--win-shadow); padding-top: 4px;';
+            divCustomRadio.appendChild(rCustom);
+            divCustomRadio.appendChild(lblCustom);
+            fs.appendChild(divCustomRadio);
+
+            const customCmdsBox = document.createElement('div');
+            customCmdsBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; height: 160px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px; margin-top: 4px;';
+            
+            const rerenderCustomCommands = () => {
+                setDirty(true);
+                renderCommandList(customCmdsBox, entity.actionSequenceCommands, rerenderCustomCommands, false, 0, 'action_sequence');
+            };
+
+            if (mode === 'custom') {
+                entity.actionSequenceCommands = entity.actionSequenceCommands || [];
+                renderCommandList(customCmdsBox, entity.actionSequenceCommands, rerenderCustomCommands, false, 0, 'action_sequence');
+                fs.appendChild(customCmdsBox);
+            }
+
+            const updateSelection = () => {
+                if (rDefault.checked) {
+                    delete entity.actionSequence;
+                    delete entity.actionSequenceCommands;
+                    setDirty(true);
+                    loadFormForItem(entity);
+                } else if (rCommon.checked) {
+                    delete entity.actionSequenceCommands;
+                    entity.actionSequence = selCommon.value || seqKeys[0] || 'default';
+                    setDirty(true);
+                    loadFormForItem(entity);
+                } else if (rCustom.checked) {
+                    delete entity.actionSequence;
+                    entity.actionSequenceCommands = entity.actionSequenceCommands || [ { cmd: "APPLY_EFFECT" } ];
+                    setDirty(true);
+                    loadFormForItem(entity);
+                }
+            };
+
+            rDefault.onchange = updateSelection;
+            rCommon.onchange = updateSelection;
+            rCustom.onchange = updateSelection;
+            selCommon.onchange = () => {
+                entity.actionSequence = selCommon.value;
+                setDirty(true);
+            };
+
+            container.appendChild(fs);
+        }
+
         const ENTITY_FORM_SCHEMAS = {
             items: {
                 resolve: item => item,
@@ -59,6 +182,8 @@
                     { row: 'main', kind: 'number', key: 'cost', label: 'Buy Cost (G)', fallback: 0 },
                     { kind: 'animationSelect', key: 'animation', label: 'Animation',
                       when: it => it.type !== 'equipment' },
+                    { kind: 'custom', when: it => it.type !== 'equipment',
+                      build: (c, it) => buildActionSequencePicker(c, it) },
                     { kind: 'text', key: 'description', label: 'Description' },
                     { kind: 'custom', when: it => it.type === 'equipment',
                       build: (c, it) => buildTraitsEditor(c, it, 'Equipment Traits') },
@@ -77,6 +202,7 @@
                       options: () => elementOptions(true),
                       set: (sk, v) => { sk.element = (v === '') ? null : v; } },
                     { kind: 'animationSelect', key: 'animation', label: 'Animation' },
+                    { kind: 'custom', build: (c, sk) => buildActionSequencePicker(c, sk) },
                     { row: 'cost', kind: 'number', key: 'mpCost', label: 'MP Cost', fallback: 0 },
                     { row: 'cost', kind: 'number', key: 'speed', label: 'Speed Bonus', fallback: 0 },
                     { kind: 'custom', build: (c, sk) => buildEffectsEditor(c, sk) }

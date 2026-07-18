@@ -231,8 +231,7 @@
       "type": "ACTION",
       "action": "COMPLETE_QUEST",
       "questId": "golden_promise",
-      "completeNode": "quest_completed_text",
-      "takeItem": 25
+      "completeNode": "quest_completed_text"
     },
     "quest_completed_text": {
       "type": "TEXT",

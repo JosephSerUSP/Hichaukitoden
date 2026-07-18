@@ -1253,10 +1253,15 @@
         {
           "key": "animId",
           "type": "text"
+        },
+        {
+          "key": "on",
+          "type": "text"
         }
       ],
       "contexts": [
-        "scene"
+        "scene",
+        "action_sequence"
       ],
       "interactive": false,
       "description": "Plays an animation."
@@ -1272,10 +1277,44 @@
         }
       ],
       "contexts": [
-        "scene"
+        "scene",
+        "action_sequence"
       ],
       "interactive": false,
       "description": "Waits for a duration."
+    },
+    {
+      "id": "APPLY_EFFECT",
+      "category": "Advanced",
+      "label": "Apply Skill/Item Effects",
+      "params": [],
+      "contexts": [
+        "action_sequence"
+      ],
+      "interactive": false,
+      "description": "Applies the acting skill or item effects to the targets."
+    },
+    {
+      "id": "QUEST_TAKE_REQUIREMENTS",
+      "category": "Advanced",
+      "label": "Take Quest Requirements",
+      "params": [],
+      "contexts": [
+        "quest"
+      ],
+      "interactive": false,
+      "description": "Verifies and consumes the active quest's item requirements."
+    },
+    {
+      "id": "QUEST_GRANT_REWARDS",
+      "category": "Advanced",
+      "label": "Grant Quest Rewards",
+      "params": [],
+      "contexts": [
+        "quest"
+      ],
+      "interactive": false,
+      "description": "Grants the active quest's rewards (XP, Gold, Items, Flags)."
     }
   ],
   "elementRules": {

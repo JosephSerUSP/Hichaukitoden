@@ -294,8 +294,7 @@
       "type": "ACTION",
       "action": "COMPLETE_QUEST",
       "questId": "sparkling_gift",
-      "completeNode": "quest_completed_text",
-      "takeItem": 24
+      "completeNode": "quest_completed_text"
     },
     "quest_completed_text": {
       "type": "TEXT",

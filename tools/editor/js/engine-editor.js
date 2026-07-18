@@ -284,14 +284,15 @@
 
         // v1 battle phase names (SPEC S4); union'd with whatever's actually present.
         const KNOWN_PHASES_BY_SCENE = {
-            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped']
+            battle: ['encounter_check', 'battle_start', 'round_end', 'flee_attempt', 'victory', 'defeat', 'escaped'],
+            quest: ['offer', 'complete']
         };
 
         // Hook names expected on custom scenes (from engine/scene_host.lua).
         const SCENE_HOOK_NAMES = ['on_enter', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right', 'on_page', 'on_frame'];
 
         function flowScenes() {
-            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test');
+            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test' && k !== 'quest');
             return scenes.length ? scenes : ['battle'];
         }
 
@@ -327,7 +328,7 @@
             listBox.style.flex = '1';
 
             function getSelectedScene() {
-                if (activeSceneId === 'battle') return null;
+                if (activeSceneId === 'battle' || activeSceneId === 'quest') return null;
                 return dbPayload.scenes.find(s => s.id === activeSceneId);
             }
 
@@ -338,13 +339,25 @@
                 const battleRow = document.createElement('div');
                 battleRow.className = 'tree-node-header' + (activeSceneId === 'battle' ? ' active' : '');
                 battleRow.style.cssText = 'padding: 4px; cursor: pointer; display: flex; align-items: center; font-size: 11px;';
-                battleRow.textContent = '⚔︁EBattle';
+                battleRow.textContent = '⚔ Battle';
                 battleRow.onclick = () => {
                     activeSceneId = 'battle';
                     activeUnifiedPhase = null;
                     renderUnifiedFlowsEditor(panel, header);
                 };
                 listBox.appendChild(battleRow);
+
+                // 1b) Quest flow (second)
+                const questRow = document.createElement('div');
+                questRow.className = 'tree-node-header' + (activeSceneId === 'quest' ? ' active' : '');
+                questRow.style.cssText = 'padding: 4px; cursor: pointer; display: flex; align-items: center; font-size: 11px;';
+                questRow.textContent = '📜 Quests';
+                questRow.onclick = () => {
+                    activeSceneId = 'quest';
+                    activeUnifiedPhase = null;
+                    renderUnifiedFlowsEditor(panel, header);
+                };
+                listBox.appendChild(questRow);
 
                 // 2) Custom scenes
                 dbPayload.scenes.forEach(sc => {
@@ -468,7 +481,9 @@
             }
 
             if (activeSceneId === 'battle') {
-                renderBattleFlowsEditor(editorCol, header);
+                renderFlowSceneEditor(editorCol, header, 'battle', 'battle_phase');
+            } else if (activeSceneId === 'quest') {
+                renderFlowSceneEditor(editorCol, header, 'quest', 'quest');
             } else {
                 const scene = getSelectedScene();
                 if (scene) {
@@ -485,14 +500,10 @@
             panel.appendChild(mainContainer);
         }
 
-        // Edits a battle flow scene: phase tabs, each editing via
-        // renderCommandList with hostCtx 'battle_phase'.
-        function renderBattleFlowsEditor(container, header) {
-            const scenes = flowScenes();
-            // We only show 'battle' here since that's the only flow scene selected
-            // via the sidebar; but if other flow scenes exist, a dropdown could be added.
-
-            const phases = flowPhasesForScene('battle');
+        // Edits a flow scene: phase tabs, each editing via
+        // renderCommandList with hostCtx.
+        function renderFlowSceneEditor(container, header, sceneKey, hostCtx) {
+            const phases = flowPhasesForScene(sceneKey);
             if (!activeUnifiedPhase || !phases.includes(activeUnifiedPhase)) {
                 activeUnifiedPhase = phases[0];
             }
@@ -501,7 +512,7 @@
             const phaseTabs = document.createElement('div');
             phaseTabs.style.cssText = 'display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; border-bottom: 2px solid var(--win-shadow); padding-bottom: 4px;';
             phases.forEach(phase => {
-                const hasData = !!((dbPayload.flows['battle'] || {})[phase]);
+                const hasData = !!((dbPayload.flows[sceneKey] || {})[phase]);
                 const btn = document.createElement('button');
                 btn.className = 'db-tab-btn' + (phase === activeUnifiedPhase ? ' active' : '');
                 btn.style.fontSize = '10px';
@@ -513,14 +524,14 @@
 
             if (!activeUnifiedPhase) return;
 
-            dbPayload.flows['battle'] = dbPayload.flows['battle'] || {};
-            const hasData = !!dbPayload.flows['battle'][activeUnifiedPhase];
+            dbPayload.flows[sceneKey] = dbPayload.flows[sceneKey] || {};
+            const hasData = !!dbPayload.flows[sceneKey][activeUnifiedPhase];
 
             const infoRow = document.createElement('div');
             infoRow.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 4px;';
             infoRow.textContent = hasData
-                ? 'This phase has data and overrides the legacy Lua block.'
-                : 'This phase has no data yet  Ethe engine falls back to its legacy Lua block (S4). Create an override to edit it here.';
+                ? 'This phase has data and overrides the legacy/default block.'
+                : 'This phase has no data yet. Create an override to edit it here.';
             container.appendChild(infoRow);
 
             if (!hasData) {
@@ -529,7 +540,7 @@
                 activateBtn.style.cssText = 'margin-bottom: 8px; align-self: flex-start; font-size: 10px;';
                 activateBtn.textContent = '+ Create Override';
                 activateBtn.onclick = () => {
-                    dbPayload.flows['battle'][activeUnifiedPhase] = [];
+                    dbPayload.flows[sceneKey][activeUnifiedPhase] = [];
                     setDirty(true);
                     renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
                 };
@@ -537,14 +548,14 @@
                 return;
             }
 
-            const phaseCommands = dbPayload.flows['battle'][activeUnifiedPhase];
+            const phaseCommands = dbPayload.flows[sceneKey][activeUnifiedPhase];
             const listBox = document.createElement('div');
             listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 180px; max-height: 280px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px;';
             const rerenderPhase = () => {
                 setDirty(true);
-                renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase');
+                renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, hostCtx);
             };
-            renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, 'battle_phase');
+            renderCommandList(listBox, phaseCommands, rerenderPhase, false, 0, hostCtx);
             container.appendChild(listBox);
 
             // Bottom row: remove override + JSON toggle
@@ -554,9 +565,9 @@
             const removeBtn = document.createElement('button');
             removeBtn.className = 'win98-btn';
             removeBtn.style.cssText = 'font-size: 10px;';
-            removeBtn.textContent = 'Remove Override (revert to legacy)';
+            removeBtn.textContent = 'Remove Override';
             removeBtn.onclick = () => {
-                delete dbPayload.flows['battle'][activeUnifiedPhase];
+                delete dbPayload.flows[sceneKey][activeUnifiedPhase];
                 setDirty(true);
                 renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
             };
@@ -568,14 +579,12 @@
             jsonBtn.style.cssText = 'font-size: 10px; font-family: monospace;';
             jsonBtn.textContent = '{ } JSON';
             jsonBtn.onclick = () => {
-                // Show JSON editor for this phase's commands
                 const panel = container;
-                const prevInner = panel.innerHTML;
                 panel.innerHTML = '';
                 const backBtn = document.createElement('button');
                 backBtn.className = 'win98-btn';
                 backBtn.style.cssText = 'margin-bottom: 6px; font-size: 10px;';
-                backBtn.textContent = 'ↁEBack to Form';
+                backBtn.textContent = 'Back to Form';
                 backBtn.onclick = () => { renderUnifiedFlowsEditor(container.parentElement.parentElement, header); };
                 panel.appendChild(backBtn);
 
@@ -592,7 +601,7 @@
                 area.value = JSON.stringify(phaseCommands, null, 2);
 
                 const syntaxHighlight = (jsonStr) => {
-                    let escaped = jsonStr.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+                    let escaped = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     return escaped.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                         let cls = 'color: #000;';
                         if (/^"/.test(match)) {
@@ -630,7 +639,7 @@
                     try { parsed = JSON.parse(area.value); }
                     catch (e) { jsonContainer.style.backgroundColor = '#ffcccc'; return; }
                     if (Array.isArray(parsed)) {
-                        dbPayload.flows['battle'][activeUnifiedPhase] = parsed;
+                        dbPayload.flows[sceneKey][activeUnifiedPhase] = parsed;
                         setDirty(true);
                         renderUnifiedFlowsEditor(container.parentElement.parentElement, header);
                     } else {

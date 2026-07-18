@@ -699,11 +699,130 @@ handlers.FOCUS_WINDOW = function(cmd, ctx)
 end
 
 handlers.PLAY_ANIM = function(cmd, ctx)
-    table.insert(ctx.events, { type = "play_anim", animId = cmd.animId })
+    local animId = cmd.animId
+    if animId == "skill" then
+        animId = ctx.skill and ctx.skill.animation
+    elseif animId == "item" then
+        animId = ctx.item and ctx.item.animation
+    end
+    if not animId then return end
+
+    local onVal = cmd.on
+    if onVal then
+        -- Resolve targeting references (e.g. "a", "b", "target", "summoner", etc.)
+        local targets = {}
+        if onVal == "a" or onVal == "attacker" or onVal == "user" or onVal == "actor" then
+            table.insert(targets, ctx.a)
+        elseif onVal == "b" or onVal == "target" then
+            if ctx.targets then
+                for _, t in ipairs(ctx.targets) do
+                    table.insert(targets, t)
+                end
+            elseif ctx.b then
+                table.insert(targets, ctx.b)
+            end
+        else
+            -- If it's a specific ref or fallback
+            local ref = resolveRef(onVal, ctx)
+            if ref then
+                table.insert(targets, ref)
+            end
+        end
+        
+        -- Emit individual play_anim events for each target, or fallback
+        if #targets > 0 then
+            for _, t in ipairs(targets) do
+                table.insert(ctx.events, { type = "play_anim", animId = animId, on = t })
+            end
+        else
+            table.insert(ctx.events, { type = "play_anim", animId = animId })
+        end
+    else
+        table.insert(ctx.events, { type = "play_anim", animId = animId })
+    end
 end
 
 handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
+end
+
+handlers.APPLY_EFFECT = function(cmd, ctx)
+    local effects = require("engine.effects")
+    local act = ctx.skill or ctx.item
+    if not act then return end
+    
+    local isItem = (ctx.item ~= nil)
+    local element = act.element
+    
+    for _, tgt in ipairs(ctx.targets or {}) do
+        for _, eff in ipairs(act.effects or {}) do
+            local user = isItem and tgt or ctx.a
+            emitAll(ctx, effects.apply(eff, user, tgt, ctx.session, { element = element }))
+        end
+    end
+end
+
+handlers.QUEST_TAKE_REQUIREMENTS = function(cmd, ctx)
+    local quest = ctx.quest
+    if not quest then return end
+    
+    local hasAll = true
+    local reqItems = (quest.requirements and quest.requirements.items) or {}
+    
+    for _, itemReq in ipairs(reqItems) do
+        local itemId = tostring(itemReq.id)
+        local qty = tonumber(itemReq.qty) or 1
+        if not ctx.session:hasItem(itemId, qty) then
+            hasAll = false
+            break
+        end
+    end
+    
+    if not hasAll then
+        table.insert(ctx.events, { type = "quest_requirements_failed", questId = ctx.questId })
+        return
+    end
+    
+    for _, itemReq in ipairs(reqItems) do
+        if itemReq.consume ~= false then
+            local itemId = tostring(itemReq.id)
+            local qty = tonumber(itemReq.qty) or 1
+            ctx.session:addItem(itemId, -qty)
+        end
+    end
+end
+
+handlers.QUEST_GRANT_REWARDS = function(cmd, ctx)
+    local quest = ctx.quest
+    if not quest then return end
+    
+    local rewards = quest.rewards or {}
+    
+    if rewards.gold and rewards.gold > 0 then
+        ctx.session.gold = math.max(0, (ctx.session.gold or 0) + rewards.gold)
+        table.insert(ctx.events, { type = "text", text = "Gained " .. tostring(rewards.gold) .. " gold." })
+    end
+    
+    if rewards.xp and rewards.xp > 0 then
+        for _, member in ipairs(ctx.session.party or {}) do
+            member:gainExp(rewards.xp, ctx.session)
+        end
+        table.insert(ctx.events, { type = "text", text = "Party gained " .. tostring(rewards.xp) .. " XP." })
+    end
+    
+    for _, itemRew in ipairs(rewards.items or {}) do
+        local itemId = tostring(itemRew.id)
+        local qty = tonumber(itemRew.qty) or 1
+        ctx.session:addItem(itemId, qty)
+        local loader = ctx.loader or ctx.session.loader
+        local item = loader.getItem(itemId)
+        local itemName = item and item.name or ("Item " .. itemId)
+        table.insert(ctx.events, { type = "text", text = "Gained " .. itemName .. " x" .. tostring(qty) .. "." })
+    end
+    
+    for _, flag in ipairs(rewards.flags or {}) do
+        ctx.session.flags[flag] = true
+    end
 end
 
 -- E10: load a map by index (title New Game, future warps). Same call the

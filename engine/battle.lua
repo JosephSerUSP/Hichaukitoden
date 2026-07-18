@@ -2,6 +2,7 @@ local effects = require("engine.effects")
 local traits = require("engine.traits")
 local config = require("engine.config")
 local flow = require("engine.flow")
+local interpreter = require("engine.interpreter")
 
 local battle = {}
 
@@ -298,6 +299,7 @@ function Battle:resolveRound(collectedActions)
                     table.insert(roundEvents, ev)
                 end
             else
+                local loader = self.session.loader
                 local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
                 
                 table.insert(roundEvents, {
@@ -308,13 +310,35 @@ function Battle:resolveRound(collectedActions)
                     animation = turn.skill and turn.skill.animation or nil,
                 })
                 
-                for _, tgt in ipairs(targets) do
-                    for _, eff in ipairs(turn.skill.effects or {}) do
-                        local evs = effects.apply(eff, turn.actor, tgt, self.session, { element = turn.skill.element })
-                        for _, ev in ipairs(evs) do
-                            table.insert(roundEvents, ev)
-                        end
-                    end
+                local seq = nil
+                if turn.skill.actionSequence then
+                    seq = loader.actionSequences[turn.skill.actionSequence]
+                end
+                local commands = (seq and seq.commands) or turn.skill.actionSequenceCommands
+                if not commands then
+                    local defaultSeq = loader.actionSequences and loader.actionSequences["default"]
+                    commands = defaultSeq and defaultSeq.commands
+                end
+                if not commands then
+                    commands = { { cmd = "APPLY_EFFECT" } }
+                end
+                
+                local seqCtx = {
+                    a = turn.actor,
+                    target = turn.target or (targets[1] or turn.actor),
+                    targets = targets,
+                    skill = turn.skill,
+                    battle = self,
+                    session = self.session,
+                    loader = loader,
+                    events = {},
+                    refs = {}
+                }
+                
+                interpreter.runImmediate(commands, seqCtx)
+                
+                for _, ev in ipairs(seqCtx.events) do
+                    table.insert(roundEvents, ev)
                 end
             end
             
@@ -475,12 +499,36 @@ function Battle:applyItem(action, actor, target)
 
     local targeting = require("engine.targeting")
     local targets = targeting.resolve(actor, item.target or item.targetScope or "ally", self, target, item)
-    for _, tgt in ipairs(targets) do
-        for _, eff in ipairs(item.effects or {}) do
-            for _, ev in ipairs(effects.apply(eff, tgt, tgt, session)) do
-                table.insert(events, ev)
-            end
-        end
+    
+    local seq = nil
+    if item.actionSequence then
+        seq = loader.actionSequences[item.actionSequence]
+    end
+    local commands = (seq and seq.commands) or item.actionSequenceCommands
+    if not commands then
+        local defaultItemSeq = loader.actionSequences and loader.actionSequences["default_item"]
+        commands = defaultItemSeq and defaultItemSeq.commands
+    end
+    if not commands then
+        commands = { { cmd = "APPLY_EFFECT" } }
+    end
+    
+    local seqCtx = {
+        a = actor,
+        target = target or (targets[1] or actor),
+        targets = targets,
+        item = item,
+        battle = self,
+        session = session,
+        loader = loader,
+        events = {},
+        refs = {}
+    }
+    
+    interpreter.runImmediate(commands, seqCtx)
+    
+    for _, ev in ipairs(seqCtx.events) do
+        table.insert(events, ev)
     end
 
     -- Consume one. Persists: session.inventory is outside the per-round

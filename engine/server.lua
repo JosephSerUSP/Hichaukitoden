@@ -9,7 +9,7 @@ local active = false
 -- DATA_FILES in tools/editor/server.js.
 local DATA_FILES = {
     "actors", "elements", "events", "items", "maps", "quests", "shops",
-    "sounds", "terms", "themes", "system", "commonEvents",
+    "sounds", "terms", "actionSequences", "system", "commonEvents",
     "skills", "passives", "states", "roles", "engine", "flows", "scenes"
 }
 

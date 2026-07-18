@@ -159,7 +159,6 @@
       "type": "ACTION",
       "action": "COMPLETE_QUEST",
       "questId": "shattered_blade_recovery",
-      "takeItem": 26,
       "setFlag": "shattered_blade_reforged",
       "next": "quest_reward_text"
     },

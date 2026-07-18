@@ -672,12 +672,14 @@ local function runGolden()
 
     local function logEvents(events)
         for _, ev in ipairs(events) do
-            local t = ev.type or ""
-            local a = ev.actor and ev.actor.name or ""
-            local trg = ev.target and ev.target.name or ""
-            local v = ev.value or ""
-            local s = ev.state or ""
-            print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
+            if ev.type ~= "play_anim" and ev.type ~= "wait" then
+                local t = ev.type or ""
+                local a = ev.actor and ev.actor.name or ""
+                local trg = ev.target and ev.target.name or ""
+                local v = ev.value or ""
+                local s = ev.state or ""
+                print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
+            end
         end
     end
 
@@ -810,7 +812,6 @@ runValidation = function()
         quests = loader.quests,
         shops = loader.shops,
         sounds = loader.sounds,
-        themes = loader.themes,
         skills = loader.skills,
         passives = loader.passives,
         states = loader.states,
@@ -862,6 +863,12 @@ runValidation = function()
         if skill.element then
             check(loader.getElement(skill.element), "skill '" .. tostring(id) .. "' references missing element '" .. tostring(skill.element) .. "'")
         end
+        if skill.actionSequence then
+            check(loader.actionSequences[skill.actionSequence] ~= nil, "skill '" .. tostring(id) .. "' actionSequence references missing sequence '" .. tostring(skill.actionSequence) .. "'")
+        end
+        if skill.actionSequenceCommands then
+            validateCommands(skill.actionSequenceCommands, "action_sequence", true, false, "skill '" .. tostring(id) .. "' custom action sequence")
+        end
     end
 
     -- Passives/states/items: trait codes must be registered
@@ -874,6 +881,12 @@ runValidation = function()
     for _, item in ipairs(loader.items) do
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))
+        if item.actionSequence then
+            check(loader.actionSequences[item.actionSequence] ~= nil, "item '" .. tostring(item.id) .. "' actionSequence references missing sequence '" .. tostring(item.actionSequence) .. "'")
+        end
+        if item.actionSequenceCommands then
+            validateCommands(item.actionSequenceCommands, "action_sequence", true, false, "item '" .. tostring(item.id) .. "' custom action sequence")
+        end
     end
 
     -- Elements: affinity lists must point at registered elements
@@ -922,6 +935,12 @@ runValidation = function()
         for _, rew in ipairs((quest.rewards or {}).items or {}) do
             check(loader.getItem(rew.id), "quest '" .. tostring(qId) .. "' rewards missing item '" .. tostring(rew.id) .. "'")
         end
+        if quest.acceptHook then
+            validateCommands(quest.acceptHook, "quest", true, false, "quest '" .. tostring(qId) .. "' accept hook")
+        end
+        if quest.completeHook then
+            validateCommands(quest.completeHook, "quest", true, false, "quest '" .. tostring(qId) .. "' complete hook")
+        end
     end
 
     -- Conversation graphs (data/graphs/*.json): every node link must resolve
@@ -940,7 +959,7 @@ runValidation = function()
                     check(graph.initialNode == nil or nodes[graph.initialNode] ~= nil,
                         "graph '" .. f .. "' initialNode '" .. tostring(graph.initialNode) .. "' does not exist")
                     for id, node in pairs(nodes) do
-                        for _, key in ipairs({ "next", "trueNode", "falseNode" }) do
+                        for _, key in ipairs({ "next", "trueNode", "falseNode", "acceptNode", "completeNode", "declineNode" }) do
                             local link = node[key]
                             check(link == nil or nodes[link] ~= nil,
                                 "graph '" .. f .. "' node '" .. tostring(id) .. "' links to missing node '" .. tostring(link) .. "'")
@@ -1380,6 +1399,35 @@ elseif paramDef.type == "script" then
     for phaseName, cmds in pairs((loader.flows or {})._test or {}) do
         if type(cmds) == "table" then
             validateCommands(cmds, "battle_phase", true, true, "flows.json _test." .. phaseName)
+        end
+    end
+
+    -- Validate action sequences
+    check(loader.actionSequences ~= nil, "Missing actionSequences.json")
+    if loader.actionSequences then
+        check(loader.actionSequences["default"] ~= nil, "actionSequences.json must define a 'default' sequence")
+        check(loader.actionSequences["default_item"] ~= nil, "actionSequences.json must define a 'default_item' sequence")
+        for seqId, seq in pairs(loader.actionSequences) do
+            check(type(seq) == "table", "action sequence '" .. tostring(seqId) .. "' must be an object")
+            if type(seq) == "table" then
+                check(type(seq.name) == "string", "action sequence '" .. tostring(seqId) .. "' must have a string name")
+                check(type(seq.commands) == "table", "action sequence '" .. tostring(seqId) .. "' must have a commands array")
+                if type(seq.commands) == "table" then
+                    validateCommands(seq.commands, "action_sequence", true, false, "action sequence '" .. tostring(seqId) .. "'")
+                end
+            end
+        end
+    end
+
+    -- Validate quest flows
+    check(loader.flows and loader.flows.quest ~= nil, "flows.json must define a 'quest' host")
+    if loader.flows and loader.flows.quest then
+        check(loader.flows.quest.offer ~= nil, "flows.json must define a 'quest.offer' flow")
+        check(loader.flows.quest.complete ~= nil, "flows.json must define a 'quest.complete' flow")
+    end
+    for phaseName, cmds in pairs((loader.flows or {}).quest or {}) do
+        if type(cmds) == "table" then
+            validateCommands(cmds, "quest", true, false, "flows.json quest." .. phaseName)
         end
     end
 
@@ -2254,17 +2302,91 @@ handleDialogueAction = function()
         elseif node.action == "OPEN_SHOP" then
             openShop(node.shopId)
         elseif node.action == "OFFER_QUEST" then
+            local quest = loader.getQuest(node.questId)
             activeSession.flags["quest:" .. node.questId .. ":active"] = true
-            activeWalker:goToNode(node.acceptNode or node.next)
-            handleDialogueAction()
-        elseif node.action == "COMPLETE_QUEST" then
-            activeSession.flags["quest:" .. node.questId .. ":active"] = nil
-            activeSession.flags["quest:" .. node.questId .. ":completed"] = true
-            if node.takeItem then
-                activeSession:addItem(node.takeItem, -1)
+
+            local evs
+            if quest and quest.acceptHook then
+                evs = interpreter.runImmediate(quest.acceptHook, { session = activeSession, quest = quest, questId = node.questId, loader = loader })
+            else
+                evs = flow.run("quest.offer", { session = activeSession, quest = quest, questId = node.questId, loader = loader })
             end
-            activeWalker:goToNode(node.completeNode or node.next)
-            handleDialogueAction()
+
+            local targetNode = node.acceptNode or node.next
+            local texts = {}
+            for _, ev in ipairs(evs or {}) do
+                if ev.type == "text" and ev.text and ev.text ~= "" then
+                    table.insert(texts, ev.text)
+                end
+            end
+
+            if #texts > 0 then
+                local prefix = "quest_offer_" .. node.questId .. "_" .. tostring(os.clock()):gsub("%.", "_")
+                local tail = targetNode
+                for k = 1, #texts do
+                    local tid = prefix .. "_" .. k
+                    activeWalker.graph.nodes[tid] = { type = "TEXT", content = texts[k] }
+                end
+                for k = 1, #texts - 1 do
+                    activeWalker.graph.nodes[prefix .. "_" .. k].next = prefix .. "_" .. (k + 1)
+                end
+                activeWalker.graph.nodes[prefix .. "_" .. #texts].next = tail
+                activeWalker:goToNode(prefix .. "_1")
+                handleDialogueAction()
+            else
+                activeWalker:goToNode(targetNode)
+                handleDialogueAction()
+            end
+        elseif node.action == "COMPLETE_QUEST" then
+            local quest = loader.getQuest(node.questId)
+            local evs
+            if quest and quest.completeHook then
+                evs = interpreter.runImmediate(quest.completeHook, { session = activeSession, quest = quest, questId = node.questId, loader = loader })
+            else
+                evs = flow.run("quest.complete", { session = activeSession, quest = quest, questId = node.questId, loader = loader })
+            end
+
+            local failed = false
+            for _, ev in ipairs(evs or {}) do
+                if ev.type == "quest_requirements_failed" then
+                    failed = true
+                    break
+                end
+            end
+
+            local targetNode
+            if failed then
+                targetNode = node.declineNode or node.next
+            else
+                activeSession.flags["quest:" .. node.questId .. ":active"] = nil
+                activeSession.flags["quest:" .. node.questId .. ":completed"] = true
+                targetNode = node.completeNode or node.next
+            end
+
+            local texts = {}
+            for _, ev in ipairs(evs or {}) do
+                if ev.type == "text" and ev.text and ev.text ~= "" then
+                    table.insert(texts, ev.text)
+                end
+            end
+
+            if #texts > 0 then
+                local prefix = "quest_complete_" .. node.questId .. "_" .. tostring(os.clock()):gsub("%.", "_")
+                local tail = targetNode
+                for k = 1, #texts do
+                    local tid = prefix .. "_" .. k
+                    activeWalker.graph.nodes[tid] = { type = "TEXT", content = texts[k] }
+                end
+                for k = 1, #texts - 1 do
+                    activeWalker.graph.nodes[prefix .. "_" .. k].next = prefix .. "_" .. (k + 1)
+                end
+                activeWalker.graph.nodes[prefix .. "_" .. #texts].next = tail
+                activeWalker:goToNode(prefix .. "_1")
+                handleDialogueAction()
+            else
+                activeWalker:goToNode(targetNode)
+                handleDialogueAction()
+            end
         elseif node.action == "TELEPORT" then
             local maxFloor = conf("dungeon", "maxFloor", 5)
             activeSession.dungeonFloor = activeSession.dungeonFloor + 1

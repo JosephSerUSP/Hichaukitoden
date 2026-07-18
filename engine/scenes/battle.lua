@@ -241,9 +241,6 @@ local function processEvent(ev)
     elseif ev.type == "action" then
         desc = ldr().formatTerm("battle.uses_skill", "{0} uses {1} on {2}!", ev.actor.name, ev.skill.name, ev.target.name)
         animation_player.play("system.action_flash", ev.actor)
-        if ev.animation then
-            animation_player.play(ev.animation, ev.target, 500)
-        end
         if v.battle then
             for idx, enemy in ipairs(v.battle.enemies) do
                 if enemy == ev.actor then
@@ -251,6 +248,11 @@ local function processEvent(ev)
                     break
                 end
             end
+        end
+    elseif ev.type == "play_anim" then
+        local target = ev.on or ev.target or (v.battle and v.battle.enemies[1])
+        if target then
+            animation_player.play(ev.animId, target)
         end
     elseif ev.type == "damage" then
         animation_player.onComplete(ev.target, function()
@@ -376,6 +378,11 @@ function battle.advanceLog()
         v.eventQueueIndex = v.eventQueueIndex + 1
 
         local desc = processEvent(ev)
+
+        if ev.type == "wait" then
+            v.waitTimer = (ev.duration or 0) / 1000
+            return
+        end
 
         if desc ~= "" then
             local log = v.combatLog or {}
@@ -770,8 +777,22 @@ function battle.update(dt)
     end
 
     if v.combatState == "log" then
+        local isRevealing = renderer.isBattleLogRevealing(v.combatLog)
+        local isAnimPlaying = animation_player.isAnythingPlaying()
+
+        if v.waitTimer and v.waitTimer > 0 then
+            if not isRevealing and not isAnimPlaying then
+                v.waitTimer = v.waitTimer - dt
+                if v.waitTimer <= 0 then
+                    v.waitTimer = 0
+                    battle.advanceLog()
+                end
+            end
+            autoAdvanceTimer = 0
+            return
+        end
+
         if v.eventQueueIndex <= #(v.eventsQueue or {}) then
-            local isRevealing = renderer.isBattleLogRevealing(v.combatLog)
             local isAnimPlaying = animation_player.isAnythingPlaying()
 
             if not isRevealing and not isAnimPlaying then

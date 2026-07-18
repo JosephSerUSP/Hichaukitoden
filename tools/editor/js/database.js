@@ -99,10 +99,11 @@
                 items = Object.keys(dbPayload.quests)
                     .map(k => ({ id: k, name: dbPayload.quests[k].name || k }));
             }
-            else if (activeDbTab === 'themes') {
-                // Array of { id, name, colors }.
-                if (!dbPayload.themes) dbPayload.themes = [];
-                items = dbPayload.themes.map((t, i) => ({ id: t.id || String(i), name: t.name || t.id || `Theme ${i}` }));
+            else if (activeDbTab === 'actionSequences') {
+                if (!dbPayload.actionSequences) dbPayload.actionSequences = {};
+                items = Object.keys(dbPayload.actionSequences)
+                    .map(k => ({ id: k, name: dbPayload.actionSequences[k].name || k }))
+                    .sort((a, b) => a.id.localeCompare(b.id));
             }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
@@ -134,19 +135,19 @@
             // Quests and Themes create entries via their own "+ New" button
             // (string-keyed / self-contained array entries), not the numeric
             // Change Maximum flow.
-            if (activeDbTab === 'quests' || activeDbTab === 'themes') {
+            if (activeDbTab === 'quests' || activeDbTab === 'actionSequences') {
                 const addBtn = document.createElement('button');
                 addBtn.className = 'db-list-item';
                 addBtn.style.cssText = 'font-weight: bold; color: var(--win-highlight);';
-                addBtn.textContent = activeDbTab === 'quests' ? '＋ New Quest' : '＋ New Theme';
-                addBtn.onclick = () => activeDbTab === 'quests' ? createNewQuest() : createNewTheme();
+                addBtn.textContent = activeDbTab === 'quests' ? '＋ New Quest' : '＋ New Sequence';
+                addBtn.onclick = () => activeDbTab === 'quests' ? createNewQuest() : createNewActionSequence();
                 listContainer.appendChild(addBtn);
             }
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.getElementById('db-change-max-btn');
             if (activeDbTab === 'system' || activeDbTab === 'terms'
-                || activeDbTab === 'quests' || activeDbTab === 'themes') {
+                || activeDbTab === 'quests' || activeDbTab === 'actionSequences') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -210,37 +211,46 @@
             initDatabaseEditor();
         }
 
-        // --- THEMES ---
-        // The set of color keys the engine/editor themes use. Derived from the
-        // union of all existing themes' color keys so a new theme starts with a
-        // complete palette matching whatever the current data defines.
-        function themeColorKeys() {
-            const keys = new Set();
-            (dbPayload.themes || []).forEach(t => {
-                Object.keys(t.colors || {}).forEach(k => keys.add(k));
-            });
-            return Array.from(keys);
-        }
-
-        function createNewTheme() {
-            const arr = dbPayload.themes = dbPayload.themes || [];
+        // --- ACTION SEQUENCES ---
+        function createNewActionSequence() {
+            const coll = dbPayload.actionSequences = dbPayload.actionSequences || {};
             let counter = 1;
-            let id = 'new_theme_' + counter;
-            while (arr.some(t => t.id === id)) { counter++; id = 'new_theme_' + counter; }
-            // Seed the palette from the first existing theme so a new one is
-            // immediately usable rather than blank.
-            const template = arr[0] && arr[0].colors ? arr[0].colors : {};
-            const colors = {};
-            themeColorKeys().forEach(k => { colors[k] = template[k] || '#000000'; });
-            arr.push({ id: id, name: 'New Theme', colors: colors });
+            let id = 'new_sequence_' + counter;
+            while (coll[id]) { counter++; id = 'new_sequence_' + counter; }
+            coll[id] = { name: 'New Sequence', commands: [ { cmd: "APPLY_EFFECT" } ] };
             activeDbItemId = id;
             setDirty(true);
             initDatabaseEditor();
         }
 
-        function deleteTheme(id) {
-            if (!confirm(`Delete theme '${id}'? This cannot be undone.`)) return;
-            dbPayload.themes = (dbPayload.themes || []).filter(t => t.id !== id);
+        function renameActionSequenceKey(oldKey, newKey) {
+            newKey = (newKey || '').trim();
+            if (!newKey || newKey === oldKey) return oldKey;
+            if (oldKey === 'default' || oldKey === 'default_item') {
+                showToast(`Cannot rename reserved sequence '${oldKey}'.`);
+                return oldKey;
+            }
+            if (!/^\w+$/.test(newKey)) { showToast('Sequence id must be letters/digits/underscore.'); return oldKey; }
+            if (dbPayload.actionSequences[newKey]) { showToast(`Sequence id '${newKey}' already exists.`); return oldKey; }
+            const rebuilt = {};
+            Object.keys(dbPayload.actionSequences).forEach(k => {
+                rebuilt[k === oldKey ? newKey : k] = dbPayload.actionSequences[k];
+            });
+            dbPayload.actionSequences = rebuilt;
+            activeDbItemId = newKey;
+            setDirty(true);
+            showToast(`Renamed sequence to '${newKey}'. Update any skills/items that referenced '${oldKey}'.`);
+            initDatabaseEditor();
+            return newKey;
+        }
+
+        function deleteActionSequence(id) {
+            if (id === 'default' || id === 'default_item') {
+                showToast(`Cannot delete reserved sequence '${id}'.`);
+                return;
+            }
+            if (!confirm(`Delete action sequence '${id}'? This cannot be undone.`)) return;
+            delete dbPayload.actionSequences[id];
             activeDbItemId = '';
             setDirty(true);
             initDatabaseEditor();
@@ -393,66 +403,55 @@
             formPanel.appendChild(delBtn);
         }
 
-        function buildThemeForm(formPanel, id) {
-            const theme = (dbPayload.themes || []).find(t => t.id === id);
-            if (!theme) return;
+        function buildActionSequenceForm(formPanel, id) {
+            const seqData = dbPayload.actionSequences[id];
+            if (!seqData) return;
 
-            createFormField(formPanel, 'Theme ID', theme.id || '', val => {
-                val = (val || '').trim();
-                if (!val) return;
-                if (dbPayload.themes.some(t => t !== theme && t.id === val)) { showToast(`Theme id '${val}' already exists.`); return; }
-                theme.id = val;
-                activeDbItemId = val;
-                setDirty(true);
+            createFormField(formPanel, 'Sequence ID', id, val => {
+                const renamed = renameActionSequenceKey(id, val);
+                activeDbItemId = renamed;
+            });
+
+            createFormField(formPanel, 'Sequence Name', seqData.name || '', val => {
+                seqData.name = val;
                 initDatabaseEditor(true);
             });
-            createFormField(formPanel, 'Name', theme.name || '', val => { theme.name = val; initDatabaseEditor(true); });
 
-            theme.colors = theme.colors || {};
-            const fs = document.createElement('fieldset');
-            fs.style.cssText = 'padding: 6px; margin-top: 6px;';
-            const leg = document.createElement('legend');
-            leg.textContent = 'Colors';
-            fs.appendChild(leg);
+            const cmdTitle = document.createElement('div');
+            cmdTitle.style.fontWeight = 'bold';
+            cmdTitle.style.marginTop = '12px';
+            cmdTitle.style.marginBottom = '6px';
+            cmdTitle.textContent = 'Action Sequence Commands:';
+            formPanel.appendChild(cmdTitle);
 
-            const grid = document.createElement('div');
-            grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;';
-            Object.keys(theme.colors).forEach(key => {
-                const row = document.createElement('div');
-                row.style.cssText = 'display: flex; align-items: center; gap: 4px;';
-                const lbl = document.createElement('span');
-                lbl.style.cssText = 'flex: 1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-                lbl.textContent = key;
-                lbl.title = key;
-                const isHex = /^#[0-9a-fA-F]{6}$/.test(theme.colors[key] || '');
-                const pick = document.createElement('input');
-                pick.type = 'color';
-                pick.style.cssText = 'width: 28px; height: 20px; padding: 0; border: 1px solid var(--win-shadow);';
-                pick.value = isHex ? theme.colors[key] : '#000000';
-                const hex = document.createElement('input');
-                hex.className = 'win98-input';
-                hex.style.width = '72px';
-                hex.value = theme.colors[key] || '';
-                pick.oninput = () => { theme.colors[key] = pick.value; hex.value = pick.value; setDirty(true); };
-                hex.oninput = () => {
-                    theme.colors[key] = hex.value;
-                    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) pick.value = hex.value;
-                    setDirty(true);
-                };
-                row.appendChild(lbl);
-                row.appendChild(pick);
-                row.appendChild(hex);
-                grid.appendChild(row);
-            });
-            fs.appendChild(grid);
-            formPanel.appendChild(fs);
+            const listBox = document.createElement('div');
+            listBox.style.border = '1px solid var(--win-shadow)';
+            listBox.style.background = '#fff';
+            listBox.style.height = '240px';
+            listBox.style.overflowY = 'auto';
+            listBox.style.padding = '4px';
+            listBox.style.display = 'flex';
+            listBox.style.flexDirection = 'column';
+            listBox.style.gap = '2px';
+            listBox.style.fontFamily = 'monospace';
+            listBox.style.fontSize = '11px';
 
-            const delBtn = document.createElement('button');
-            delBtn.className = 'win98-btn';
-            delBtn.style.cssText = 'margin-top: 10px; color: #cc0000;';
-            delBtn.textContent = 'Delete Theme';
-            delBtn.onclick = () => deleteTheme(id);
-            formPanel.appendChild(delBtn);
+            seqData.commands = seqData.commands || [];
+            const rerenderSeqCommands = () => {
+                setDirty(true);
+                renderCommandList(listBox, seqData.commands, rerenderSeqCommands, false, 0, 'action_sequence');
+            };
+            renderCommandList(listBox, seqData.commands, rerenderSeqCommands, false, 0, 'action_sequence');
+            formPanel.appendChild(listBox);
+
+            if (id !== 'default' && id !== 'default_item') {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'win98-btn';
+                delBtn.style.cssText = 'margin-top: 10px; color: #cc0000;';
+                delBtn.textContent = 'Delete Sequence';
+                delBtn.onclick = () => deleteActionSequence(id);
+                formPanel.appendChild(delBtn);
+            }
         }
 
         // --- CHANGE MAXIMUM LOGIC ---

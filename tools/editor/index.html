@@ -18,6 +18,9 @@
             --text-muted: #808080;
             --text-empty: #b0b0b0;
             --cool-bg: #e6e6ec;
+            --selection-bg: #000080;
+            --selection-text: #ffffff;
+            --win-blue: #000080;
             --font-family: 'Tahoma', 'Arial', sans-serif;
             --spritesheet-url: url('Assets/Icons.png');
         }
@@ -119,8 +122,8 @@
         }
 
         .menu-item:hover {
-            background-color: #000080;
-            color: #fff;
+            background-color: var(--selection-bg);
+            color: var(--selection-text);
         }
 
         .dropdown-menu {
@@ -147,8 +150,8 @@
         }
 
         .dropdown-item:hover {
-            background-color: #000080;
-            color: #fff;
+            background-color: var(--selection-bg);
+            color: var(--selection-text);
         }
 
         /* --- WORKSPACE LAYOUT --- */
@@ -384,8 +387,8 @@
         }
 
         .db-list-item.active {
-            background-color: #000080;
-            color: #fff;
+            background-color: var(--selection-bg);
+            color: var(--selection-text);
         }
 
         .db-form-panel {
@@ -600,12 +603,12 @@
             background-color: #dfdfdf;
         }
         .tree-node-header.active {
-            background-color: #000080;
-            color: white;
+            background-color: var(--selection-bg);
+            color: var(--selection-text);
         }
         .context-menu-item:hover {
-            background-color: #000080;
-            color: white;
+            background-color: var(--selection-bg);
+            color: var(--selection-text);
         }
         /* Every dialog body gets the same inset as the dialog footer, so
            content never sits flush against the window edge (B5 / feedback). */
@@ -644,19 +647,19 @@
            and so block headers (CHOICE/IF/generic) highlight identically to
            plain rows instead of relying on a per-path inline handler. */
         .cmd-row[tabindex]:hover {
-            background: #000080 !important;
-            color: white !important;
+            background: var(--selection-bg) !important;
+            color: var(--selection-text) !important;
             cursor: pointer;
         }
         .cmd-row[tabindex]:hover span {
-            color: white !important;
+            color: var(--selection-text) !important;
         }
         .cmd-row[data-selected="1"] {
-            background: #000080 !important;
-            color: white !important;
+            background: var(--selection-bg) !important;
+            color: var(--selection-text) !important;
         }
         .cmd-row[data-selected="1"] span {
-            color: white !important;
+            color: var(--selection-text) !important;
         }
         /* Body of a selected block header (CHOICE/IF/... markers + nested
            lists): lighter tint showing the whole block is selected */
@@ -699,6 +702,9 @@
                     </div>
                     <div class="dropdown-item" onclick="openEngineModal()">
                         ⚙️ Engine Editor
+                    </div>
+                    <div class="dropdown-item" onclick="openStudioModal()">
+                        🎨 Studio Preferences
                     </div>
                     <div class="dropdown-item" onclick="testPlay()">
                         <span class="icon-sprite icon-play"></span> Test Play
@@ -807,7 +813,7 @@
                     <button id="db-tab-shops" class="db-tab-btn" onclick="setDbTab('shops')">Shops</button>
                     <button id="db-tab-commonEvents" class="db-tab-btn" onclick="setDbTab('commonEvents')">Common Events</button>
                     <button id="db-tab-quests" class="db-tab-btn" onclick="setDbTab('quests')">Quests</button>
-                    <button id="db-tab-themes" class="db-tab-btn" onclick="setDbTab('themes')">Themes</button>
+                    <button id="db-tab-actionSequences" class="db-tab-btn" onclick="setDbTab('actionSequences')">Action Sequences</button>
                     <button id="db-tab-terms" class="db-tab-btn" onclick="setDbTab('terms')">Terms</button>
                     <button id="db-tab-system" class="db-tab-btn" onclick="setDbTab('system')">System</button>
                 </div>
@@ -832,6 +838,39 @@
                  <button class="win98-btn win98-btn-success" onclick="saveData(); closeDatabaseModal(true)">OK</button>
                 <button id="db-apply-btn" class="win98-btn" onclick="saveData()" disabled>Apply</button>
                 <button class="win98-btn" onclick="closeDatabaseModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- STUDIO PREFERENCES MODAL --- -->
+    <div id="studio-modal" class="modal-overlay">
+        <div class="window outset-bevel" style="width: 500px; height: 500px; display: flex; flex-direction: column; max-width: 90vw; max-height: 90vh;">
+            <div class="title-bar">
+                <div class="title-bar-text">🎨 Studio Preferences</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeStudioModal()">×</button>
+                </div>
+            </div>
+            
+            <div class="window-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; gap: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                    <label style="font-weight: bold;">Active Theme:</label>
+                    <select id="studio-theme-select" class="win98-select" style="flex: 1;" onchange="onStudioThemeChange()">
+                        <!-- Loaded dynamically -->
+                    </select>
+                    <button class="win98-btn" style="font-weight: bold; color: #005500;" onclick="createStudioTheme()">＋ New</button>
+                    <button id="studio-theme-delete-btn" class="win98-btn" style="color: #cc0000;" onclick="deleteStudioTheme()">Delete</button>
+                </div>
+                
+                <div id="studio-theme-form-panel" style="flex: 1; overflow-y: auto; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: var(--cool-bg); padding: 8px; box-sizing: border-box;">
+                    <!-- Theme colors grid -->
+                </div>
+            </div>
+            
+            <div class="dialog-footer">
+                <button class="win98-btn win98-btn-success" onclick="saveStudioThemes(); closeStudioModal(true)">OK</button>
+                <button id="studio-apply-btn" class="win98-btn" onclick="saveStudioThemes()">Apply</button>
+                <button class="win98-btn" onclick="closeStudioModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1302,5 +1341,6 @@
     <script src="js/window-editor.js"></script>
     <script src="js/icon-picker.js"></script>
     <script src="js/icon-field.js"></script>
+    <script src="js/studio.js"></script>
 </body>
 </html>

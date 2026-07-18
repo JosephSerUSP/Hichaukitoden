@@ -1,0 +1,36 @@
+{
+  "default": {
+    "name": "Default Skill Sequence",
+    "commands": [
+      {
+        "cmd": "PLAY_ANIM",
+        "animId": "skill",
+        "on": "target"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 500
+      },
+      {
+        "cmd": "APPLY_EFFECT"
+      }
+    ]
+  },
+  "default_item": {
+    "name": "Default Item Sequence",
+    "commands": [
+      {
+        "cmd": "PLAY_ANIM",
+        "animId": "item",
+        "on": "target"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 500
+      },
+      {
+        "cmd": "APPLY_EFFECT"
+      }
+    ]
+  }
+}
