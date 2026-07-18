@@ -859,6 +859,10 @@ local function buildScriptApi(ctx)
         local l = ctx.loader or session.loader
         return l and l.getTerm(key, fallback) or fallback
     end
+    api.getTermList = function(key, fallback)
+        local l = ctx.loader or session.loader
+        return (l and l.getTermList and l.getTermList(key, fallback)) or fallback or {}
+    end
     api.formatTerm = function(key, fallback, ...)
         local l = ctx.loader or session.loader
         return l and l.formatTerm(key, fallback, ...) or fallback

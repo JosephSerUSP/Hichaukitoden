@@ -693,17 +693,31 @@ local function drawArrow(x1, y1, x2, y2)
     love.graphics.polygon("fill", x2, y2, ax, ay, bx, by)
 end
 
-function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx, victoryInfo, victoryStage)
+-- Summoner rework battle-windows conversion: the monolithic drawBattle is
+-- split into standalone functions, one per window, each still reading its
+-- geometry from battleLayout (data/engine.json) exactly as before — the
+-- "windows" conversion makes each region's EXISTENCE and visibility
+-- data-authored (scenes.json), not its fine pixel layout, which stays in
+-- the shared battleLayout config exactly like every other battle draw
+-- call already does (SPEC 2.1: no per-scene coordinate math). The command
+-- console is the one piece that genuinely moved to the generic "command"
+-- style window (data-listed rows via v.commandRows) since its content is
+-- now built by the battle scene's own scripts, not this module.
+
+-- Enemy row: viewport background + darken overlay + per-enemy sprites with
+-- their full animation/shader/particle treatment (unchanged from before).
+function renderer.drawEnemyRowWindow(battleState)
+    if not battleState then return end
     renderer.activeBattle = battleState
-    
+
     -- Draw 3D dungeon view behind battle scene
     viewport_3d.draw(renderer.session)
-    
+
     -- Subtle darkened overlay (not too heavy)
     love.graphics.setColor(0, 0, 0, 0.35)
     love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
-    
+
     -- Render enemies portraits in viewport with animations driven by the
     -- animation player (overhaul-7 A1): slide-in, damage/action flash,
     -- death effect — all from data/animations.json entries.
@@ -794,213 +808,111 @@ function renderer.drawBattle(battleState, combatLog, combatState, selectedIndex,
         end
         -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
-    
-    -- Slim dialogue at the top of the screen during Battle Resolution.
-    -- B.8: two lines — the previous entry dimmed above the latest one.
-    -- B.0: lines reveal character by character, strictly one at a time —
-    -- when several lines land in one log advance, each animates at the
-    -- bottom slot before the next begins (owner feedback 10.07.2026).
-    if combatState == "log" then
-        ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
-        if battleLogReveal.cursor > #combatLog then
-            -- Log was cleared (new battle / showMessage): restart
-            battleLogReveal.cursor = math.min(1, #combatLog)
-            battleLogReveal.elapsed = 0
-        elseif battleLogReveal.cursor == 0 and #combatLog > 0 then
-            battleLogReveal.cursor = 1
-            battleLogReveal.elapsed = 0
-        end
-        local current = combatLog[battleLogReveal.cursor] or ""
-        local shownCount = revealedCount(current, battleLogReveal.elapsed)
-        if shownCount >= #current and battleLogReveal.cursor < #combatLog then
-            battleLogReveal.cursor = battleLogReveal.cursor + 1
-            battleLogReveal.elapsed = 0
-            current = combatLog[battleLogReveal.cursor] or ""
-            shownCount = revealedCount(current, 0)
-        end
-        local previous = combatLog[battleLogReveal.cursor - 1] or ""
-        ui.drawString(previous, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
-        ui.drawString(current:sub(1, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
-        ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
+end
+
+-- Battle log: slim 2-line reveal panel (previous line dimmed above the
+-- currently-revealing one) + [SPACE] prompt. Visible only while
+-- v.combatState == "log" — the window's `visible` formula handles that.
+function renderer.drawBattleLogWindow(combatLog)
+    combatLog = combatLog or {}
+    ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
+    if battleLogReveal.cursor > #combatLog then
+        -- Log was cleared (new battle / showMessage): restart
+        battleLogReveal.cursor = math.min(1, #combatLog)
+        battleLogReveal.elapsed = 0
+    elseif battleLogReveal.cursor == 0 and #combatLog > 0 then
+        battleLogReveal.cursor = 1
+        battleLogReveal.elapsed = 0
     end
-    
-    -- Bottom status console: party grid. Battler commands no longer live
-    -- inside it (B.7). The summoner is not a battle participant
-    -- (overhaul-6 F1) and has no status display here.
-    local consoleY = ui.toPx(layoutVal("consoleTileY"))
-    local consoleH = ui.toPx(layoutVal("consoleTileH"))
-    local textX = ui.toPx(layoutVal("consoleTextTileX"))
-    local headerY = consoleY + ui.toPx(layoutVal("headerTileOffset"))
-
-    -- B.7: the battler command menu is its own single-line window spanning
-    -- the full width, flush above the status console; it opens during input
-    -- and closes outside it. No turn-name header (owner feedback 10.07.2026).
-    if combatState == "input" then
-        -- overhaul-6 F1: the summoner is not a battle participant; every
-        -- living member is an active creature with its own command list
-        -- (Attack/Skill/Defend/Item/Flee). F7 adds Item as a per-creature
-        -- command: selecting it opens an inventory submenu here.
-        local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        local loader = renderer.session.loader
-
-        local entries, helps = {}, {}
-        local monster = memberInfo and memberInfo.actor
-        if spellSelect then
-            for _, skId in ipairs((monster and monster.skills) or {}) do
-                local sk = loader.getSkill(skId)
-                if sk then
-                    table.insert(entries, sk.name)
-                    table.insert(helps, sk.description or "")
-                end
-            end
-            if #entries == 0 then entries = { "(No skills)" } end
-        elseif itemSelect then
-            -- F7: inventory submenu. List is the id-sorted non-empty
-            -- inventory, matching USE_ITEM's ordering and battle.lua's
-            -- applyItem so the highlighted row maps to the committed index.
-            local inv = renderer.session and renderer.session.inventory or {}
-            local stacks = {}
-            for itemId, qty in pairs(inv) do
-                if qty > 0 then table.insert(stacks, itemId) end
-            end
-            table.sort(stacks)
-            for _, id in ipairs(stacks) do
-                local it = loader.getItem(id)
-                if it then
-                    table.insert(entries, (it.name or "?") .. " x" .. tostring(inv[id]))
-                    table.insert(helps, it.description or "")
-                end
-            end
-            if #entries == 0 then entries = { "(No items)" } end
-        else
-            entries = loader.getTermList("battle.commands_monster", { "Attack", "Skill", "Defend", "Item", "Flee" })
-            helps = loader.getTermList("battle.help_monster", {
-                "Strike with a basic attack.",
-                "Use one of this creature's skills.",
-                "Brace to reduce incoming damage.",
-                "Use an item from the inventory.",
-                "Attempt to escape the battle.",
-            })
-        end
-
-        local barH = ui.toPx(layoutVal("commandBarTileH"))
-        local barY = consoleY - barH
-        local barW = ui.toPx(layoutVal("consoleTileW"))
-        ui.drawPanel(0, barY, barW, barH)
-        local rowY = barY + layoutVal("commandBarTextYOffset")
-        local slot = (barW - textX * 2) / math.max(1, #entries)
-        for i, label in ipairs(entries) do
-            local isDim = (label == "(No skills)")
-            local color = isDim and {0.5, 0.5, 0.5, 1}
-                or ((i == selectedIndex) and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-            local drawX = textX + math.floor((i - 1) * slot)
-            if not isDim and i == selectedIndex then
-                small_battlers.draw("Cursor", drawX + 2, rowY, 8)
-            end
-            ui.drawString(label, drawX + 12, rowY, color)
-        end
-
-        -- Help window: same panel as the battle log, describing the selected
-        -- command or skill (owner feedback 10.07.2026).
-        local helpText = helps[selectedIndex] or ""
-        if helpText ~= "" then
-            ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
-            ui.drawString(helpText, layoutVal("logTextX"), layoutVal("logTextY"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
-        end
+    local current = combatLog[battleLogReveal.cursor] or ""
+    local shownCount = revealedCount(current, battleLogReveal.elapsed)
+    if shownCount >= #current and battleLogReveal.cursor < #combatLog then
+        battleLogReveal.cursor = battleLogReveal.cursor + 1
+        battleLogReveal.elapsed = 0
+        current = combatLog[battleLogReveal.cursor] or ""
+        shownCount = revealedCount(current, 0)
     end
+    local previous = combatLog[battleLogReveal.cursor - 1] or ""
+    ui.drawString(previous, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
+    ui.drawString(current:sub(1, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+    ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
+end
 
-    local session = renderer.session
-
-    -- Draw party stats in a 2x2 grid on right side of bottom console
-    local highlightIdx = 0
-    local showHighlight = false
-    if combatState == "input" then
-        -- overhaul-6 F1: memberInfo.index is the party slot (1-4) directly,
-        -- no summoner-offset adjustment needed anymore.
-        local memberInfo = livingMembers and livingMembers[activeMemberIdx]
-        if memberInfo then
-            highlightIdx = memberInfo.index
-            showHighlight = true
-        end
-    end
-    -- F2 (overhaul-6): the shared party HUD (console + MP + 2x2 grid) is the
-    -- declarative "party" window, drawn by main.lua's drawSharedPartyHud so
-    -- every scene uses the ONE shared HUD (no legacy duplicate).
-
-    -- B.9: dedicated victory window (combatState set by battle.handleTransition;
-    -- Shows the battle's gold and base EXP grant, plus per-member animated EXP
-    -- gauges with To Next. Stage 0 = ready (press ENTER), 1 = draining,
-    -- 2 = done (press SPACE to dismiss).
-    if combatState == "victory" and victoryInfo then
-        if victoryAnim.source ~= victoryInfo then
-            victoryAnim.source = victoryInfo
-            victoryAnim.stage = 0
-            victoryAnim.displayedGoldDrain = victoryInfo.gold or 0
-            victoryAnim.preGold = session.gold - (victoryInfo.gold or 0)
-            victoryAnim.displayedPartyGold = victoryAnim.preGold
-            victoryAnim.members = {}
-            for i, m in ipairs(victoryInfo.members or {}) do
-                victoryAnim.members[i] = { level = m.fromLevel, exp = m.fromExp }
-            end
-        end
-        -- Sync stage from scene state (battle.handleTransition sets it)
-        if victoryAnim.stage == 0 and victoryStage == 1 then
-            victoryAnim.stage = 1
-        end
-
-        local vx, vy = ui.toPx(layoutVal("victoryPanelTileX")), ui.toPx(layoutVal("victoryPanelTileY"))
-        local vw, vh = ui.toPx(layoutVal("victoryPanelTileW")), ui.toPx(layoutVal("victoryPanelTileH"))
-        ui.drawPanel(vx, vy, vw, vh, session.loader.getTerm("battle.victory_title", "VICTORY!"))
-
-        local contentX = vx + 10
-        local gaugeEndX = contentX + layoutVal("victoryGaugeWidth")
-        local ty = vy + 22
-
-        -- Gold grant drains from X→0 while EXP value is static.
-        -- Party total gold (at bottom of window) rises from pre→post.
-        local drainGold = math.floor((victoryAnim.displayedGoldDrain or victoryInfo.gold or 0) + 0.5)
-        local drainStr = "+" .. drainGold .. "G"
-        ui.drawString(drainStr .. "  EXP +" .. (victoryInfo.exp or 0), contentX, ty, {1, 0.9, 0.4, 1})
-
-        -- Always draw member rows with gauges (pre-drain values in stage 0,
-        -- then animate during stage 1+).
-        ty = ty + layoutVal("victoryLineSpacing")
-        local expPerLevel = victoryInfo.expPerLevel or 15
-        local rowH = layoutVal("victoryRowHeight")
+-- Victory window: gold/EXP drain animation with per-member gauges. Visible
+-- only while v.combatState == "victory" (window `visible` formula).
+function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage)
+    if not victoryInfo then return end
+    if victoryAnim.source ~= victoryInfo then
+        victoryAnim.source = victoryInfo
+        victoryAnim.stage = 0
+        victoryAnim.displayedGoldDrain = victoryInfo.gold or 0
+        victoryAnim.preGold = session.gold - (victoryInfo.gold or 0)
+        victoryAnim.displayedPartyGold = victoryAnim.preGold
+        victoryAnim.members = {}
         for i, m in ipairs(victoryInfo.members or {}) do
-            local a = victoryAnim.members[i] or { level = m.fromLevel, exp = m.fromExp }
-            local needed = a.level * expPerLevel
-            local rowY = ty + (i - 1) * rowH
-            local leveled = a.level > m.fromLevel
-            -- Name on left, "Next: X" right-justified to gauge end, same line
-            ui.drawString(m.name .. "  Lv " .. a.level .. (leveled and "  LV UP!" or ""), contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-            -- "Next:" shares the line with the name; hide it while "LV UP!"
-            -- is showing or the two overlap (owner feedback 10.07.2026).
-            if not leveled then
-                ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
-            end
-            -- Gauge at full width below the name line
-            ui.drawBar(contentX, rowY + 10, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
-        end
-
-        -- Party total gold at the bottom of the window
-        local partyGold = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
-        local totalGoldY = vy + vh - 16
-        ui.drawString("Gold: " .. partyGold .. " G", contentX, totalGoldY, {1, 0.85, 0.5, 1})
-
-        -- Bottom prompt: ENTER to start drain, SPACE to dismiss when done
-        local prompt = (victoryAnim.stage == 0) and "[ENTER]" or (victoryAnim.stage == 2 and "[SPACE]" or "")
-        if prompt ~= "" then
-            ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
+            victoryAnim.members[i] = { level = m.fromLevel, exp = m.fromExp }
         end
     end
+    -- Sync stage from scene state (battle.handleTransition sets it)
+    if victoryAnim.stage == 0 and victoryStage == 1 then
+        victoryAnim.stage = 1
+    end
 
-    -- Full-screen flash overlay (screen_flash tracks), above everything —
-    -- same compositing as the editor preview channel (main.lua's
-    -- runPreviewAnim draws it last over the whole canvas). Animations play
-    -- per-target, so scan every battler for an active flash; first hit wins
-    -- (overlapping flashes don't stack — matches the preview, which only
-    -- ever has one target). 256x240 is the game's logical resolution.
+    local vx, vy = ui.toPx(layoutVal("victoryPanelTileX")), ui.toPx(layoutVal("victoryPanelTileY"))
+    local vw, vh = ui.toPx(layoutVal("victoryPanelTileW")), ui.toPx(layoutVal("victoryPanelTileH"))
+    ui.drawPanel(vx, vy, vw, vh, session.loader.getTerm("battle.victory_title", "VICTORY!"))
+
+    local contentX = vx + 10
+    local gaugeEndX = contentX + layoutVal("victoryGaugeWidth")
+    local ty = vy + 22
+
+    -- Gold grant drains from X→0 while EXP value is static.
+    -- Party total gold (at bottom of window) rises from pre→post.
+    local drainGold = math.floor((victoryAnim.displayedGoldDrain or victoryInfo.gold or 0) + 0.5)
+    local drainStr = "+" .. drainGold .. "G"
+    ui.drawString(drainStr .. "  EXP +" .. (victoryInfo.exp or 0), contentX, ty, {1, 0.9, 0.4, 1})
+
+    -- Always draw member rows with gauges (pre-drain values in stage 0,
+    -- then animate during stage 1+).
+    ty = ty + layoutVal("victoryLineSpacing")
+    local expPerLevel = victoryInfo.expPerLevel or 15
+    local rowH = layoutVal("victoryRowHeight")
+    for i, m in ipairs(victoryInfo.members or {}) do
+        local a = victoryAnim.members[i] or { level = m.fromLevel, exp = m.fromExp }
+        local needed = a.level * expPerLevel
+        local rowY = ty + (i - 1) * rowH
+        local leveled = a.level > m.fromLevel
+        -- Name on left, "Next: X" right-justified to gauge end, same line
+        ui.drawString(m.name .. "  Lv " .. a.level .. (leveled and "  LV UP!" or ""), contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+        -- "Next:" shares the line with the name; hide it while "LV UP!"
+        -- is showing or the two overlap (owner feedback 10.07.2026).
+        if not leveled then
+            ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
+        end
+        -- Gauge at full width below the name line
+        ui.drawBar(contentX, rowY + 10, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
+    end
+
+    -- Party total gold at the bottom of the window
+    local partyGold = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
+    local totalGoldY = vy + vh - 16
+    ui.drawString("Gold: " .. partyGold .. " G", contentX, totalGoldY, {1, 0.85, 0.5, 1})
+
+    -- Bottom prompt: ENTER to start drain, SPACE to dismiss when done
+    local prompt = (victoryAnim.stage == 0) and "[ENTER]" or (victoryAnim.stage == 2 and "[SPACE]" or "")
+    if prompt ~= "" then
+        ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
+    end
+end
+
+-- Full-screen flash overlay (screen_flash tracks), above everything — same
+-- compositing as the editor preview channel. Not a window: a screen-space
+-- post effect, always called directly regardless of scene draw mode (same
+-- treatment as drawDamagePopups). Animations play per-target, so scan every
+-- battler for an active flash; first hit wins (matches the preview, which
+-- only ever has one target). 256x240 is the game's logical resolution.
+function renderer.drawScreenFlashOverlay(battleState)
+    if not battleState then return end
     local flash
     for _, e in ipairs(battleState.enemies) do
         flash = animation_player.getScreenFlash(e)

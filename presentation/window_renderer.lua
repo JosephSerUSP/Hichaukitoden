@@ -33,6 +33,12 @@ local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
 local actor_status = require("presentation.actor_status")
 local battle_layout = require("presentation.battle_layout")
+-- Summoner rework battle-windows conversion: "enemyRow"/"battleLog"/
+-- "victoryPanel" styles dispatch to renderer.lua, which owns the actual
+-- draw code (animation-player-driven shaders/particles, the reveal-timer
+-- log, the drain-animated victory panel) — no circular require (renderer
+-- does not require window_renderer).
+local renderer = require("presentation.renderer")
 
 local wr = {}
 
@@ -903,6 +909,12 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         if cached then
             drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title)
         end
+    elseif style == "enemyRow" then
+        renderer.drawEnemyRowWindow(env.v and env.v.battle)
+    elseif style == "battleLog" then
+        renderer.drawBattleLogWindow(env.v and env.v.combatLog)
+    elseif style == "victoryPanel" then
+        renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory, env.v and env.v.victoryStage or 0)
     else -- "panel", "frame" and any unknown style: text content
         if text then
             local align = (style == "frame") and "center" or "left"
@@ -911,6 +923,14 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         end
     end
 end
+
+-- Styles that draw their own panel(s) (or none at all — enemyRow is a
+-- transparent viewport) instead of the generic outer ui.drawPanel at the
+-- window's rect. battleLog/victoryPanel position their panel from
+-- battleLayout, independently of the window's rect (see the Summoner
+-- rework note above drawEnemyRowWindow in renderer.lua) — drawing the
+-- generic outer panel too would double up or mismatch.
+local NO_OUTER_PANEL_STYLES = { command = true, enemyRow = true, battleLog = true, victoryPanel = true }
 
 local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache, layouts)
     layout = resolvePageLayout(layout, env)
@@ -930,11 +950,11 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     if animating then
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(px, py, pw, ph)
-        if style ~= "command" then ui.drawPanel(px, py, pw, ph, title) end
+        if not NO_OUTER_PANEL_STYLES[style] then ui.drawPanel(px, py, pw, ph, title) end
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
         if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
     else
-        if style ~= "command" then ui.drawPanel(x, y, w, h, title) end
+        if not NO_OUTER_PANEL_STYLES[style] then ui.drawPanel(x, y, w, h, title) end
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     end
 end

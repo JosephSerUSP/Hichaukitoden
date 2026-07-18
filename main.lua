@@ -2048,14 +2048,21 @@ function love.draw()
     elseif scene_host.getCurrent() == "dialogue" then
         renderer.drawDialogue(activeWalker, dialogueSelectIdx)
         drawSharedPartyHud()
-    elseif scene_host.getCurrent() == "battle" then
+    end
+    end
+
+    -- Battle is draw:"windows" (scene_host.draw handled its own windows
+    -- array above), but the shared party HUD, target reticles, and the
+    -- screen-flash overlay are cross-cutting — not any one window's
+    -- content — so they run unconditionally for battle, same treatment as
+    -- drawDamagePopups just below.
+    if scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        renderer.drawBattle(bv.battle, bv.combatLog or {}, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1, bv.victory, bv.victoryStage or 0)
         drawSharedPartyHud()
         renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
+        renderer.drawScreenFlashOverlay(bv.battle)
     end
-    end
-    
+
     renderer.drawDamagePopups()
     
     if server.isActive() then

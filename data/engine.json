@@ -1832,6 +1832,46 @@
         }
       },
       "vertical": true
+    },
+    "battle_enemies": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 17.5,
+      "style": "enemyRow",
+      "title": null
+    },
+    "battle_command": {
+      "x": 0,
+      "y": 15.5,
+      "width": 32,
+      "height": 2.5,
+      "style": "command",
+      "title": null
+    },
+    "battle_help": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "frame",
+      "title": null
+    },
+    "battle_log": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "battleLog",
+      "title": null
+    },
+    "battle_victory": {
+      "x": 6,
+      "y": 4,
+      "width": 20,
+      "height": 14,
+      "style": "victoryPanel",
+      "title": null
     }
   }
 }

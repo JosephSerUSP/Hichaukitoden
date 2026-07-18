@@ -113,6 +113,9 @@ all through shared helpers (party grid, gauges, gradient panels — SPEC
       row flag + `a.row` formula token. battle.log stayed byte-identical
       (the golden fixture's spell cast became the same skill cast by its
       owner), so no sanctioned regen was needed.
-- [ ] Shared cost/gain gauge-preview widget (windows schema feature)
-- [ ] Battle scene converted to `"draw": "windows"`
-- [ ] Legacy renderer path deleted from `main.lua` / `presentation/`
+- [x] Shared cost/gain gauge-preview widget (windows schema feature)
+- [x] Battle scene converted to `"draw": "windows"` (17.07.2026)
+- [x] Legacy renderer path deleted from `main.lua` / `presentation/`
+      (`renderer.drawBattle` and its call site removed). See
+      `battle-windows-brief.md` stage 2 for what was and wasn't visually
+      verified — owner playtest is still the outstanding item.

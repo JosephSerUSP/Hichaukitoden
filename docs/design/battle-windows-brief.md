@@ -33,29 +33,68 @@ owner). Validator gained wave/permadeath/row simulation coverage.
       only, owner reads the diff before it lands. Validator updates:
       row values check, retired spell check removed.
 
-## Stage 2 — Windows conversion (presentation only)
+## Stage 2 — Windows conversion (presentation only) — DONE 17.07.2026
 
-- [ ] **Shared cost/gain gauge preview** (windows schema feature, not a
-      window): a gauge content block accepts a preview binding that tints
-      the affected span red (often a single pixel) and optionally appends
-      slim `cost: xxxx` / `gain: xxxx` text after the gauge. Built once,
-      consumed by ritual (summon/promote/sacrifice), shops, item use —
-      any scene with a gauged resource.
-- [ ] Author the §5 window inventory (summoner-rework.md) in
-      `data/scenes.json` battle: `enemy_row`, `party_grid` (row badge +
-      slim MP gauge), `command_console` (per-spirit, no spell verb),
-      `target_overlay`, `wave_notice`, `battle_log`.
-- [ ] All geometry from `engine.json battleLayout` / shared helpers — no
-      per-scene coordinate math (SPEC §2.1). Gauges interpolate; panels
-      use gradient blends; damage popups stay in the animation system.
-- [ ] The legacy battle drawing in `presentation/renderer.lua` /
-      `battle_layout.lua` and the legacy branch in `main.lua` are
-      DELETED, not left as dead paths. `window_renderer.lua`'s SPEC S2
-      fallback flag plumbing is removed.
-- [ ] battle.log byte-identical to stage 1's baseline (presentation only
-      — if it moves, that's a layering violation: stop and report).
-      Battle UI-golden trace regenerated (sanctioned, owner-reviewed);
-      all other scenes byte-identical.
+- [x] **Shared cost/gain gauge preview** — `ui.drawBar`'s `preview` param
+      + `buildGaugePreview` in window_renderer.lua (gauge and row-scoped
+      list-gauge content blocks). Not yet consumed by battle's MP gauge
+      (still the plain shared party-HUD readout) or ritual/shops — the
+      widget exists and is validator-checked; wiring it into a specific
+      scene is a follow-up.
+- [x] battle.draw = "windows"; `data/scenes.json` battle now carries
+      `windows`: `battle_enemies` (style enemyRow), `battle_command`
+      (style command, listId `v:commandRows` populated by the new
+      `refreshConsole` scene script), `battle_help` (frame, shown during
+      input), `battle_log` (style battleLog, the reveal-timer panel),
+      `battle_victory` (style victoryPanel, the drain animation). Party
+      grid/MP, target reticles, and the screen-flash overlay stay
+      cross-cutting calls (`drawSharedPartyHud`, `drawTargetReticles`,
+      `renderer.drawScreenFlashOverlay`) run unconditionally for the
+      battle scene in `main.lua`'s `love.draw`, same treatment as damage
+      popups — not any one window's content, matching this doc's final
+      classification (target_overlay/popups were never meant to be
+      windows).
+- [x] Geometry: `enemyRow`/`battleLog`/`victoryPanel` styles dispatch to
+      new `presentation/renderer.lua` functions
+      (`drawEnemyRowWindow`/`drawBattleLogWindow`/`drawVictoryPanelWindow`)
+      that keep reading `battleLayout` (data/engine.json) exactly as
+      before — pixel-identical geometry, now existence/visibility-gated
+      by data instead of a hardcoded Lua branch. `battle_command` is the
+      one piece using genuinely new rect-driven geometry (the generic
+      "command" style).
+- [x] `renderer.drawBattle` (the old monolithic function) and its
+      `main.lua` call site are DELETED. window_renderer.lua's SPEC S2
+      fallback rule is now moot for battle (no other scenes referenced
+      it specifically; the fallback rule itself stays for future
+      conversions of other scenes).
+- [x] battle.log byte-identical (no gate-affecting change — this stage
+      was presentation-only, as required). UI-golden trace for scene
+      'battle' byte-identical too (that trace is structurally minimal —
+      it doesn't push a real v.battle — so it wasn't a meaningful visual
+      check either way; see verification notes below).
+- [ ] **Owner playtest** — a real interactive battle round, watching for:
+      command-bar bordered-slot look (intentional style change — see
+      note), party grid/MP still showing, target reticles, victory
+      drain animation, log reveal timing. Not yet done.
 
-**Gates:** G1; G2 (stage-1 sanctioned regen, then strict); G3 (battle
-regen sanctioned, others strict).
+**Verification actually performed (no owner playtest yet):** G1/G2/G3
+green; `lovec . preview-scene battle` screenshot confirms the command
+console + help panel render with correct content/highlight/cursor
+(enemy row is blank in this screenshot only because the headless preview
+harness never populates `v.battle` — a pre-existing limitation of the
+preview tool, not a bug in this conversion); `lovec . test-battle` run
+for 6s with real enemies produced zero Lua errors (exercises the
+shader/particle enemy-row path under real state). Party grid, reticles,
+and the victory drain animation were NOT visually confirmed — they are
+unchanged code paths (same functions, same call sites, still called
+unconditionally for battle), but a live playtest is the real check.
+
+**Known visual change (intentional, flag for owner review):** the
+command console now uses the shared "command" style (bordered box per
+slot, same look as e.g. the reserve swap-target picker) instead of the
+old borderless bar with a cursor icon. This is a deliberate reuse of the
+existing system-wide option-menu widget rather than a bespoke bar, per
+SPEC 2.1. Reverting to the old bare-bar look would be a small follow-up
+(a `bordered:false` flag on `drawCommandSlots`) if preferred.
+
+**Gates:** G1 VALIDATE OK; G2 byte-identical; G3 all scenes byte-identical.
