@@ -2281,6 +2281,7 @@
     },
     "config": {},
     "draw": "windows",
+    "backdrop": "map",
     "windows": [
       {
         "id": "items_left_panel",
@@ -2698,6 +2699,7 @@
     },
     "config": {},
     "draw": "windows",
+    "backdrop": "map",
     "goldenScript": [
       {
         "key": "down"
@@ -3211,6 +3213,7 @@
     },
     "config": {},
     "draw": "windows",
+    "backdrop": "map",
     "windows": [
       {
         "id": "shop_header",
@@ -3950,6 +3953,7 @@
     },
     "overlay": true,
     "draw": "windows",
+    "backdrop": "map",
     "windows": [
       {
         "id": "reserve_title",
@@ -4097,7 +4101,12 @@
     "windows": [
       {
         "id": "dialogue_name",
-        "rect": { "x": 0, "y": 16, "w": 8, "h": 2 },
+        "rect": {
+          "x": 0,
+          "y": 16,
+          "w": 8,
+          "h": 2
+        },
         "style": "panel",
         "visible": "v.dialogueSpeaker ~= nil and v.dialogueSpeaker ~= ''",
         "content": [
@@ -4109,7 +4118,12 @@
       },
       {
         "id": "dialogue_portrait",
-        "rect": { "x": 0, "y": 18, "w": 8, "h": 12 },
+        "rect": {
+          "x": 0,
+          "y": 18,
+          "w": 8,
+          "h": 12
+        },
         "style": "frame",
         "visible": "v.dialoguePortrait ~= nil and v.dialoguePortrait ~= ''",
         "content": [
@@ -4125,7 +4139,12 @@
       },
       {
         "id": "dialogue_message",
-        "rect": { "x": 8, "y": 18, "w": 24, "h": 12 },
+        "rect": {
+          "x": 8,
+          "y": 18,
+          "w": 24,
+          "h": 12
+        },
         "style": "frame",
         "align": "left",
         "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
@@ -4138,7 +4157,12 @@
       },
       {
         "id": "dialogue_choices",
-        "rect": { "x": 8, "y": 18, "w": 24, "h": 12 },
+        "rect": {
+          "x": 8,
+          "y": 18,
+          "w": 24,
+          "h": 12
+        },
         "style": "list",
         "fitRows": "bottom",
         "visible": "v.dialogueMode == 'choice'",
@@ -4158,6 +4182,7 @@
     "name": "Ritual",
     "kind": "menu",
     "draw": "windows",
+    "backdrop": "map",
     "config": {
       "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex. Page 1 = stats/costs, page 2 = portrait/flavor (Q/E/Tab)."
     },

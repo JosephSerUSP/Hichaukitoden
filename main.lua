@@ -933,13 +933,58 @@ runValidation = function()
         end
     end
 
-    -- Event scriptId links must resolve to a common event
+    -- Event scriptId links must resolve to a common event, and asset
+    -- references must resolve to real files -- a generated campaign that
+    -- invents a sprite path should fail G1, not render a blank at runtime.
+    -- Sprite keys resolve through small_battlers.resolveFile so validation
+    -- matches the exact lookup drawing will use (case variants + [fps=N]
+    -- token-bearing filenames). Actor portraits stay a warning: getPortrait
+    -- degrades gracefully and many creatures legitimately have none.
+    local sb = require("presentation.small_battlers")
+    local function checkEventAssets(map, ev, whereSuffix)
+        local where = "map '" .. tostring(map.title or map.id) .. "' event '" .. tostring(ev.name or "?") .. "'" .. whereSuffix
+        if ev.sprite and ev.sprite ~= "" then
+            check(love.filesystem.getInfo(ev.sprite) ~= nil or sb.resolveFile(ev.sprite) ~= nil,
+                where .. " sprite '" .. tostring(ev.sprite) .. "' resolves to no file")
+        end
+    end
     for _, map in ipairs(loader.maps or {}) do
         for _, ev in ipairs(map.events or {}) do
             if ev.scriptId then
                 check(loader.commonEvents and loader.commonEvents[tostring(ev.scriptId)] ~= nil,
                     "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) ..
                     ") references missing common event '" .. tostring(ev.scriptId) .. "'")
+            end
+            checkEventAssets(map, ev, "")
+            for pi, page in ipairs(ev.pages or {}) do
+                checkEventAssets(map, page, " page " .. pi)
+                if page.scriptId then
+                    check(loader.commonEvents and loader.commonEvents[tostring(page.scriptId)] ~= nil,
+                        "map '" .. tostring(map.name) .. "' event '" .. tostring(ev.name or "?") ..
+                        "' page " .. pi .. " references missing common event '" .. tostring(page.scriptId) .. "'")
+                end
+            end
+        end
+    end
+    for _, actor in ipairs(loader.actors or {}) do
+        local who = "actor '" .. tostring(actor.name or actor.id) .. "'"
+        if actor.smallBattler and actor.smallBattler ~= "" then
+            check(sb.resolveFile(actor.smallBattler) ~= nil,
+                who .. " smallBattler '" .. tostring(actor.smallBattler) .. "' resolves to no file")
+        end
+        if actor.spriteKey and actor.spriteKey ~= "" then
+            local id = tostring(actor.spriteKey)
+            local found = false
+            for _, p in ipairs({
+                "assets/portraits/" .. id .. ".png",
+                "assets/portraits/NPC_" .. id .. ".png",
+                "assets/portraits/" .. id:lower() .. ".png",
+                "assets/portraits/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png",
+            }) do
+                if love.filesystem.getInfo(p) then found = true break end
+            end
+            if not found then
+                print("[validator] warning: " .. who .. " spriteKey '" .. id .. "' has no portrait in assets/portraits")
             end
         end
     end

@@ -57,14 +57,19 @@ function small_battlers.update(dt)
     animTimer = animTimer + dt
 end
 
-function small_battlers.get(spriteKey)
+-- Resolves a sprite key to { path, tokens } WITHOUT loading the image --
+-- shared by get() below and the validator's asset-reference sweep, so
+-- "does this key resolve" is answered by the exact same logic that will
+-- later draw it. Filenames may carry the [key=value] tokens themselves
+-- (the owner convention: "pixie[fps=15].png" -- tokens live in the
+-- FILENAME, not in actor fields), so each asset dir is scanned once and
+-- indexed by stripped base name; file tokens apply as defaults under any
+-- key-supplied ones.
+function small_battlers.resolveFile(spriteKey)
     if not spriteKey or spriteKey == "" then return nil end
-    local key = tostring(spriteKey)
-    if cache[key] ~= nil then return cache[key] or nil end
 
-    -- Parse [key=value] tokens from the key (e.g. "Summoner2[speed=2]")
     local overrides = {}
-    local fileKey = key:gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
+    local fileKey = tostring(spriteKey):gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
         overrides[k] = tonumber(v) or v
         return ""
     end)
@@ -78,11 +83,6 @@ function small_battlers.get(spriteKey)
         "assets/system/" .. fileKey .. ".png",
         "assets/system/" .. fileKey:sub(1, 1):upper() .. fileKey:sub(2):lower() .. ".png",
     }
-    -- Filenames may carry the [key=value] tokens themselves (the owner
-    -- convention: "pixie[fps=15].png" -- tokens live in the FILENAME, not in
-    -- actor fields). A plain key like "pixie" must still find that file, so
-    -- scan each asset dir once and index actual filenames by their stripped
-    -- base name; file tokens apply as defaults under any key-supplied ones.
     if not small_battlers._fileIndex then
         local index = {}
         for _, dir in ipairs({ "assets/smallBattlers", "assets/sprites", "assets/system" }) do
@@ -110,6 +110,21 @@ function small_battlers.get(spriteKey)
         end
     end
     for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            return { path = p, tokens = overrides }
+        end
+    end
+    return nil
+end
+
+function small_battlers.get(spriteKey)
+    if not spriteKey or spriteKey == "" then return nil end
+    local key = tostring(spriteKey)
+    if cache[key] ~= nil then return cache[key] or nil end
+
+    local resolved = small_battlers.resolveFile(key)
+    local overrides = resolved and resolved.tokens or {}
+    for _, p in ipairs(resolved and { resolved.path } or {}) do
         if love.filesystem.getInfo(p) then
             local img = love.graphics.newImage(p)
             img:setFilter("nearest", "nearest")
