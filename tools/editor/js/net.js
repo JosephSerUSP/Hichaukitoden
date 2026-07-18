@@ -43,9 +43,33 @@
             }
         }
 
-        async function saveData() {
+        // Track IDs (trk_xxx) are editor-only UI handles assigned in-memory by
+        // the animation editor. They only need to persist when another track's
+        // `parent` references them; otherwise they're random per-session noise
+        // that churns the JSON on every save. Strip the unreferenced ones so the
+        // on-disk file stays stable (no spurious GitHub diffs) while keeping
+        // follow-track relationships intact.
+        function stripOrphanTrackIds() {
+            const anims = dbPayload && dbPayload.animations;
+            if (!anims || typeof anims !== 'object') return;
+            for (const key in anims) {
+                const anim = anims[key];
+                if (!anim || !Array.isArray(anim.tracks)) continue;
+                const referenced = new Set();
+                anim.tracks.forEach(t => {
+                    if (t && typeof t.parent === 'string' && t.parent) referenced.add(t.parent);
+                });
+                anim.tracks.forEach(t => {
+                    if (t && typeof t.id === 'string' && t.id.indexOf('trk_') === 0 && !referenced.has(t.id)) {
+                        delete t.id;
+                    }
+                });
+            }
+        }
+
             try {
                 stripEmptyMeta(dbPayload);
+                stripOrphanTrackIds();
                 const res = await fetch(`${API_URL}/save`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
