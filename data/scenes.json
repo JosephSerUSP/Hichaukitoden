@@ -4096,6 +4096,18 @@
     },
     "windows": [
       {
+        "id": "dialogue_name",
+        "rect": { "x": 0, "y": 16, "w": 8, "h": 2 },
+        "style": "panel",
+        "visible": "v.dialogueSpeaker ~= nil and v.dialogueSpeaker ~= ''",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.dialogueSpeaker}"
+          }
+        ]
+      },
+      {
         "id": "dialogue_portrait",
         "rect": { "x": 0, "y": 18, "w": 8, "h": 12 },
         "style": "frame",
@@ -4113,19 +4125,20 @@
       },
       {
         "id": "dialogue_message",
-        "rect": { "x": 8, "y": 18, "w": 24, "h": "v.dialogueMode == 'choice' and 5 or 12" },
+        "rect": { "x": 8, "y": 18, "w": 24, "h": 12 },
         "style": "frame",
+        "align": "left",
         "content": [
           {
             "type": "text",
-            "text": "{v.dialogueSpeaker}\n\n{v.dialogueText}\n\n{v.dialoguePrompt}"
+            "text": "{v.dialogueText}\n\n{v.dialoguePrompt}"
           }
         ]
       },
       {
         "id": "dialogue_choices",
-        "rect": { "x": 8, "y": 23, "w": 24, "h": 7 },
-        "style": "frame",
+        "rect": { "x": 20, "y": 10, "w": 12, "h": 8 },
+        "style": "list",
         "visible": "v.dialogueMode == 'choice'",
         "content": [
           {

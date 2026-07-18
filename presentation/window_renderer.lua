@@ -907,8 +907,11 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory, env.v and env.v.victoryStage or 0)
     else -- "panel", "frame" and any unknown style: text content
         if text then
-            local align = (style == "frame") and "center" or "left"
-            local tx = (style == "frame") and x or contentX
+            -- Explicit layout.align wins; otherwise frame keeps its historic
+            -- centered default (battle_help etc.). Centered text anchors at
+            -- the raw window x; anything else uses the padded content origin.
+            local align = layout.align or ((style == "frame") and "center" or "left")
+            local tx = (align == "center") and x or contentX
             drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
         end
     end
@@ -1061,6 +1064,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         if winDef.emptyText ~= nil then layout.emptyText = winDef.emptyText end
         if winDef.lineSpacing ~= nil then layout.lineSpacing = winDef.lineSpacing end
         if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
+        if winDef.align ~= nil then layout.align = winDef.align end
 
         -- Build the synthetic win entry from content blocks, reusing the
         -- persistent table so per-win state keyed on it (openClocks) survives

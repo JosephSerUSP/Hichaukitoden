@@ -332,6 +332,23 @@ local function runPreviewScene(sceneId)
             end
         end
 
+        -- The dialogue scene's v-state is fed per-frame by main.lua's
+        -- syncDialogueWindowState in-game; seed the preview with a
+        -- representative choice-mode state so all three windows (portrait,
+        -- message, choices) show content instead of empty frames.
+        if tostring(sceneDef.id) == "dialogue" then
+            local st = sh.getCurrentState()
+            if st and st.v.dialogueMode == nil then
+                st.v.dialogueMode = "choice"
+                st.v.dialogueSpeaker = "Alicia"
+                st.v.dialoguePortrait = "NPC_Alicia"
+                st.v.dialogueText = "Oh! H-hello! Welcome to my shop. Please look around!"
+                st.v.dialoguePrompt = ""
+                st.v.dialogueOptions = { "Buy Consumables", "Talk", "Leave" }
+                st.v.dialogueCursorIdx = 1
+            end
+        end
+
         local wr = require("presentation.window_renderer")
         payload = wr.resolveState(sh.getCurrentState(), sceneDef, ctx)
         payload.sceneId = sceneDef.id
@@ -2041,7 +2058,14 @@ local function syncDialogueWindowState()
         v.dialogueSpeaker = speaker or ""
         v.dialogueText = renderer.getRevealedDialogueText(node)
         v.dialoguePrompt = renderer.isDialogueRevealing() and "" or "[Press SPACE]"
-        v.dialoguePortrait = node.speaker or (activeWalker.graph and activeWalker.graph.portrait) or ""
+        -- Portrait PERSISTS across speakerless narration lines and CHOICE
+        -- nodes (only a new speaker/portrait replaces it); the namebox above
+        -- clears instead, since it tracks who's speaking line by line. v is
+        -- fresh per scene push, so nothing leaks between conversations.
+        local portrait = node.speaker or (activeWalker.graph and activeWalker.graph.portrait)
+        if portrait and portrait ~= "" then
+            v.dialoguePortrait = portrait
+        end
     elseif node.type == "CHOICE" then
         v.dialogueMode = "choice"
         -- Speaker/portrait intentionally left as whatever the last TEXT node

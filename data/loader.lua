@@ -101,6 +101,13 @@ function loader.getRole(id)
     return loader.roles and loader.roles[id]
 end
 
+-- Quests are keyed by string id (JSON object keys); tostring so numeric or
+-- string ids both resolve — same convention as the shops/commonEvents
+-- lookups in main.lua.
+function loader.getQuest(id)
+    return loader.quests and loader.quests[tostring(id)]
+end
+
 -- Looks up a UI/battle string from data/terms.json by dotted path
 -- (e.g. "battle.flee_success"); falls back to the engine default when the
 -- key is missing so incomplete terms files never crash the game.
