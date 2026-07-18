@@ -2059,7 +2059,7 @@ function love.draw()
     if scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
         drawSharedPartyHud()
-        renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.spellSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
+        renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.skillSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
         renderer.drawScreenFlashOverlay(bv.battle)
     end
 
