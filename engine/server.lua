@@ -98,7 +98,7 @@ function server.update(dt)
 
                     local data = {}
                     for _, name in ipairs(DATA_FILES) do
-                        data[name] = getFileContents("data/" .. name .. ".json")
+                        data[name] = getFileContents(require("data.loader").root .. "/" .. name .. ".json")
                     end
 
                     local responseBody = json.encode(data)
@@ -142,7 +142,7 @@ function server.update(dt)
                             end
                             
                             for _, name in ipairs(DATA_FILES) do
-                                saveFile("data/" .. name .. ".json", payload[name])
+                                saveFile(require("data.loader").root .. "/" .. name .. ".json", payload[name])
                             end
                             
                             -- Reload loader caches

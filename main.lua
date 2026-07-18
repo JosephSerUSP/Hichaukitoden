@@ -66,6 +66,7 @@ activeSession = nil
 
 local isTestBattle = false
 local isValidateMode = false
+local cliCampaignRoot = nil
 local isPreviewSceneMode = false
 local previewSceneId = nil
 local isPreviewWindowMode = false
@@ -1985,6 +1986,11 @@ function love.load(arg)
                 previewFontName = arg[i + 1]
                 previewFontSize = arg[i + 2]
                 i = i + 2
+            elseif val:match("^campaign=") then
+                -- Overrides the campaign.json pointer for this run (used by
+                -- the generator's validate loops): campaign=<name> loads
+                -- campaigns/<name>/ instead of the resolved default.
+                cliCampaignRoot = "campaigns/" .. val:sub(#"campaign=" + 1)
             end
             i = i + 1
         end
@@ -1992,7 +1998,7 @@ function love.load(arg)
 
     -- E5: headless scene preview for the editor canvas, then quit.
     if isPreviewSceneMode then
-        loader.init()
+        loader.init(cliCampaignRoot)
         runPreviewScene(previewSceneId)
         love.event.quit(0)
         return
@@ -2000,7 +2006,7 @@ function love.load(arg)
 
     -- E12: headless single-window preview for the Windows tab, then quit.
     if isPreviewWindowMode then
-        loader.init()
+        loader.init(cliCampaignRoot)
         runPreviewWindow(previewWindowId, previewWindowMockSpec)
         love.event.quit(0)
         return
@@ -2009,7 +2015,7 @@ function love.load(arg)
     -- Font picker preview: renders the REAL ui.drawPanel/ui.drawString path
     -- with a candidate font+size, then quits. Never touches data/system.json.
     if isPreviewFontMode then
-        loader.init()
+        loader.init(cliCampaignRoot)
         runPreviewFont(previewFontName, tonumber(previewFontSize))
         love.event.quit(0)
         return
@@ -2017,7 +2023,7 @@ function love.load(arg)
 
     -- A3: headless animation preview, then quit.
     if isPreviewAnimMode then
-        loader.init()
+        loader.init(cliCampaignRoot)
         runPreviewAnim(previewAnimId, previewAnimJson, previewAnimSprite)
         love.event.quit(0)
         return
@@ -2026,7 +2032,7 @@ function love.load(arg)
     -- Headless data validation: check database cross-references and simulate
     -- a battle round, then quit. Run via `lovec . validate` (used by CI/tools).
     if isValidateMode then
-        loader.init()
+        loader.init(cliCampaignRoot)
         local ok, err
         if isGoldenMode then
             ok, err = pcall(runGolden)
@@ -2050,7 +2056,7 @@ function love.load(arg)
     love.resize(love.graphics.getWidth(), love.graphics.getHeight())
     
     -- Initialize database loader
-    loader.init()
+    loader.init(cliCampaignRoot)
     
     -- Initialize activeSession
     activeSession = session.GameSession.new(loader)

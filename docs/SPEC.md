@@ -61,7 +61,18 @@ Last consolidated: 2026-07-17 (post overhaul-7 merge to main).
   and player paths. `expand` errors on unknown specs; the validator gates
   every spec in data.
 
-### 1.3 Extensibility (round-wide rule since o7, keep it)
+### 1.3 Campaign roots (18.07.2026, "no-move" design)
+
+- **`data/` IS the default campaign.** `campaigns/<name>/` directories are
+  drop-in alternates carrying the same file set. Nothing else moves.
+- Active root resolution (data/loader.lua `resolveRoot`): CLI arg
+  `campaign=<name>` > `campaign.json` pointer at the repo root
+  (`{"active": "<name>"}`) > `data/`. The dev server's `/data`/`/save`
+  endpoints and `engine/config.lua` follow the same root.
+- G1 validates whatever root is active. Golden logs (G2/G3) are recorded
+  against the default campaign only — run gates with `data/` active.
+
+### 1.4 Extensibility (round-wide rule since o7, keep it)
 
 Every schema tolerates unknown future fields: readers ignore keys they
 don't understand, validators warn rather than reject on unrecognized

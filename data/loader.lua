@@ -11,33 +11,63 @@ local function load_json(path)
     return json.decode(contents)
 end
 
-function loader.init()
-    loader.actors = load_json("data/actors.json")
-    loader.elements = load_json("data/elements.json")
-    loader.events = load_json("data/events.json")
-    loader.items = load_json("data/items.json")
-    loader.maps = load_json("data/maps.json")
-    loader.quests = load_json("data/quests.json")
-    loader.shops = load_json("data/shops.json")
-    loader.sounds = load_json("data/sounds.json")
-    loader.terms = load_json("data/terms.json")
-    loader.actionSequences = load_json("data/actionSequences.json")
-    loader.system = load_json("data/system.json")
-    loader.commonEvents = load_json("data/commonEvents.json")
-    loader.skills = load_json("data/skills.json")
-    loader.passives = load_json("data/passives.json")
-    loader.states = load_json("data/states.json")
-    loader.roles = load_json("data/roles.json")
-    -- Engine registries: effect types, trait codes, battle layout, element rules
-    loader.engine = load_json("data/engine.json")
-    -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
-    loader.flows = load_json("data/flows.json")
-    -- Scenes configuration
-    loader.scenes = load_json("data/scenes.json")
+-- Campaign roots (no-move design, owner decision 18.07.2026): data/ IS the
+-- default campaign; campaigns/<name>/ directories are drop-in alternates
+-- with the same file set. Which one drives this run resolves as:
+-- explicit init arg (CLI campaign=<name>) > campaign.json pointer file at
+-- the repo root ({"active": "<name>"}) > data/. Golden logs are recorded
+-- against the default campaign, so G2/G3 only gate runs where data/ is
+-- active.
+loader.root = "data"
 
+function loader.resolveRoot(explicit)
+    if explicit and explicit ~= "" then return explicit end
+    if love.filesystem.getInfo("campaign.json") then
+        local contents = love.filesystem.read("campaign.json")
+        local ok, ptr = pcall(json.decode, contents or "")
+        if ok and type(ptr) == "table" and type(ptr.active) == "string" and ptr.active ~= "" then
+            local dir = "campaigns/" .. ptr.active
+            if love.filesystem.getInfo(dir .. "/system.json") then
+                return dir
+            end
+            print("[loader] warning: campaign.json points at '" .. ptr.active ..
+                "' but " .. dir .. "/system.json is missing; using data/")
+        end
+    end
+    return "data"
+end
+
+function loader.init(root)
+    loader.root = loader.resolveRoot(root)
+    if loader.root ~= "data" then
+        print("[loader] active campaign root: " .. loader.root)
+    end
+    local function J(name) return load_json(loader.root .. "/" .. name) end
+    loader.actors = J("actors.json")
+    loader.elements = J("elements.json")
+    loader.events = J("events.json")
+    loader.items = J("items.json")
+    loader.maps = J("maps.json")
+    loader.quests = J("quests.json")
+    loader.shops = J("shops.json")
+    loader.sounds = J("sounds.json")
+    loader.terms = J("terms.json")
+    loader.actionSequences = J("actionSequences.json")
+    loader.system = J("system.json")
+    loader.commonEvents = J("commonEvents.json")
+    loader.skills = J("skills.json")
+    loader.passives = J("passives.json")
+    loader.states = J("states.json")
+    loader.roles = J("roles.json")
+    -- Engine registries: effect types, trait codes, battle layout, element rules
+    loader.engine = J("engine.json")
+    -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
+    loader.flows = J("flows.json")
+    -- Scenes configuration
+    loader.scenes = J("scenes.json")
 
     -- overhaul-7 A1: animations data loaded from JSON
-    loader.animations = load_json("data/animations.json")
+    loader.animations = J("animations.json")
     local animation_player = require("presentation.animation_player")
     animation_player.load(loader.animations)
 
