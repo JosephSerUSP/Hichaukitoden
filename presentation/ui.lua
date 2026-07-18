@@ -349,15 +349,58 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
 end
 
 -- Draw HP/MP status gauge
-function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
+-- Shared cost/gain preview for any gauge (Summoner rework: "tinting a
+-- portion of the gauge red... a single pixel", plus a slim label after
+-- it). One implementation, used by every ui.drawBar call site — MP,
+-- HP, EXP, gold, ritual/shop gauges alike (SPEC 2.1).
+--
+-- preview = {
+--   delta       signed amount pending: negative = cost (tints the top
+--               slice of the CURRENT fill, the part about to be spent),
+--               positive = gain (tints the slice of empty gauge just
+--               past current, the part about to be added).
+--   costColor / gainColor   optional overrides (default red / green).
+--   label       optional pre-formatted string ("cost: 12", "gain: 40"),
+--               drawn slim and discreet immediately after the gauge.
+-- }
+local DEFAULT_PREVIEW_COST_COLOR = { 1, 0.2, 0.2, 1 }
+local DEFAULT_PREVIEW_GAIN_COLOR = { 0.35, 1, 0.4, 1 }
+
+local function drawBarPreview(x, y, w, h, current, maxVal, preview)
+    if not preview or not preview.delta or preview.delta == 0 or maxVal <= 0 then return end
+    local delta = preview.delta
+    local innerW = w - 2
+    local pctCurrent = math.max(0, math.min(1, current / maxVal))
+    local color, spanFromPct, spanToPct
+
+    if delta < 0 then
+        color = preview.costColor or DEFAULT_PREVIEW_COST_COLOR
+        local costVal = math.min(current, -delta)
+        spanFromPct = math.max(0, (current - costVal) / maxVal)
+        spanToPct = pctCurrent
+    else
+        color = preview.gainColor or DEFAULT_PREVIEW_GAIN_COLOR
+        local gainVal = math.min(math.max(0, maxVal - current), delta)
+        spanFromPct = pctCurrent
+        spanToPct = math.min(1, (current + gainVal) / maxVal)
+    end
+
+    local spanFromPx = math.floor(innerW * spanFromPct)
+    local spanToPx = math.ceil(innerW * spanToPct)
+    local spanW = math.max(1, spanToPx - spanFromPx)
+    love.graphics.setColor(color)
+    love.graphics.rectangle("fill", x + 1 + spanFromPx, y + 1, spanW, h - 2)
+end
+
+function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
     local r_old, g_old, b_old, a_old = love.graphics.getColor()
-    
+
     love.graphics.setColor(0.1, 0.1, 0.1, 1)
     love.graphics.rectangle("fill", x, y, w, h)
-    
+
     local pct = math.max(0, math.min(1, current / maxVal))
     local fillW = math.floor((w - 2) * pct)
-    
+
     if fillW > 0 then
         for i = 0, h - 3 do
             local factor = i / (h - 2)
@@ -368,14 +411,23 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2)
             love.graphics.rectangle("fill", x + 1, y + 1 + i, fillW, 1)
         end
     end
-    
+
+    drawBarPreview(x, y, w, h, current, maxVal, preview)
+
     -- Pixel-perfect 1px outline: offset by 0.5 to align with pixel grid,
     -- preventing the Love2D "smooth" line-style spread across 2 pixels.
     love.graphics.setColor(0.4, 0.4, 0.4, 1)
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
-    
+
     love.graphics.setColor(r_old, g_old, b_old, a_old)
+
+    if preview and preview.label and preview.label ~= "" then
+        local labelColor = (preview.delta or 0) < 0
+            and (preview.costColor or DEFAULT_PREVIEW_COST_COLOR)
+            or (preview.gainColor or DEFAULT_PREVIEW_GAIN_COLOR)
+        ui.drawString(preview.label, x + w + 3, y + h - ui.fontSize, labelColor)
+    end
 end
 
 -- Draw icons from system/iconset.png

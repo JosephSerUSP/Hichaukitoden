@@ -404,6 +404,27 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
     end
 end
 
+-- Shared cost/gain preview binding for any authored gauge (Summoner
+-- rework: MP/EXP/gold previews on hover for spells, ritual, shops, items
+-- alike — one authoring surface, ui.drawBar does the actual drawing).
+-- costFormula/gainFormula are mutually exclusive per gauge; whichever
+-- evaluates non-zero wins. showLabel defaults to true ("cost: N"/"gain:
+-- N" printed slim and discreet right after the bar — SPEC 2.1: no
+-- per-window reimplementation of this).
+local function buildGaugePreview(costFormula, gainFormula, showLabel, env)
+    local cost = costFormula and tonumber((formula.eval(costFormula, env)))
+    if cost and cost ~= 0 then
+        cost = math.abs(cost)
+        return { delta = -cost, label = (showLabel ~= false) and ("cost: " .. tostring(cost)) or nil }
+    end
+    local gain = gainFormula and tonumber((formula.eval(gainFormula, env)))
+    if gain and gain ~= 0 then
+        gain = math.abs(gain)
+        return { delta = gain, label = (showLabel ~= false) and ("gain: " .. tostring(gain)) or nil }
+    end
+    return nil
+end
+
 -- Layout-authored gauges let a panel present live values without a
 -- scene-specific renderer.  Labels support the same {formula} interpolation
 -- as ordinary window text; values and maxima are formula expressions.
@@ -417,9 +438,10 @@ local function drawLayoutGauges(gauges, env, x, y)
         -- crashes instead of degrading to the fallback.
         local value = tonumber((formula.eval(gauge.value or "0", env))) or 0
         local maximum = tonumber((formula.eval(gauge.max or "1", env))) or 1
+        local preview = buildGaugePreview(gauge.previewCost, gauge.previewGain, gauge.previewLabel, env)
         ui.drawString(interpolate(gauge.label or "", env), gx, gy, COLOR_NORMAL)
         ui.drawBar(gx, gy + ui.lineHeight, ui.toPx(gauge.width or 18), gauge.height or 3,
-            value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 })
+            value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 }, preview)
     end
 end
 
@@ -519,9 +541,12 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             -- one is drawn, so the bar never bleeds past its border.
             local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
             local barW = math.max(8, rightEdge - barX)
+            local preview = isSel
+                and buildGaugePreview(win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel, rEnv)
+                or nil
             ui.drawBar(barX, rowY + ui.lineHeight + 1, barW, layout.gaugeHeight or 3,
                 val, max,
-                win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 })
+                win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 }, preview)
         end
     end
 end
@@ -1040,6 +1065,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         win.listId, win.format, win.text, win.cursor = nil, nil, nil, 1
         win.cursorFormula, win.sprite = nil, nil
         win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
+        win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel = nil, nil, nil
         win.slot, win.member = nil, nil
         win._resolvedRows, win._resolvedCursor = nil, nil
         local gauges = {}
@@ -1052,6 +1078,9 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 win.sprite = block.sprite
                 win.gaugeValue = block.gaugeValue
                 win.gaugeMax = block.gaugeMax
+                win.gaugePreviewCost = block.gaugePreviewCost
+                win.gaugePreviewGain = block.gaugePreviewGain
+                win.gaugePreviewLabel = block.gaugePreviewLabel
                 win.highlight = block.highlight
                 win.priority = block.priority
                 win.slot = block.slot

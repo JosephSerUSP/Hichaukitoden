@@ -1722,6 +1722,19 @@ elseif paramDef.type == "script" then
                                     check(type(resolved) == "table" and #resolved > 0,
                                         sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list source '" .. src .. "' does not resolve to a non-empty list in terms.json")
                                 end
+                                -- Row-scoped gauge cost/gain preview (Summoner rework):
+                                -- same shared widget as the standalone gauge block, optional
+                                -- but must compile when present.
+                                for _, previewKey in ipairs({ "gaugePreviewCost", "gaugePreviewGain" }) do
+                                    if block[previewKey] ~= nil then
+                                        check(type(block[previewKey]) == "string",
+                                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list '" .. previewKey .. "' must be a string expression")
+                                        if type(block[previewKey]) == "string" then
+                                            local ok, _, ferr = pcall(formulaEngine.eval, block[previewKey], mockCtx)
+                                            check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list '" .. previewKey .. "' failed to compile: " .. tostring(ferr or ""))
+                                        end
+                                    end
+                                end
                             elseif bt == "gauge" then
                                 -- gauge block: value and max are required exprs.
                                 check(type(block.value) == "string",
@@ -1736,6 +1749,19 @@ elseif paramDef.type == "script" then
                                 if type(block.max) == "string" then
                                     local ok, _, ferr = pcall(formulaEngine.eval, block.max, mockCtx)
                                     check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge 'max' failed to compile: " .. tostring(ferr or ""))
+                                end
+                                -- Cost/gain preview (Summoner rework): optional, but must
+                                -- compile as a formula when present. Shared by every gauge
+                                -- (MP, EXP, gold, ritual/shop) — one widget, one check.
+                                for _, previewKey in ipairs({ "previewCost", "previewGain" }) do
+                                    if block[previewKey] ~= nil then
+                                        check(type(block[previewKey]) == "string",
+                                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge '" .. previewKey .. "' must be a string expression")
+                                        if type(block[previewKey]) == "string" then
+                                            local ok, _, ferr = pcall(formulaEngine.eval, block[previewKey], mockCtx)
+                                            check(ok and ferr == nil, sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] gauge '" .. previewKey .. "' failed to compile: " .. tostring(ferr or ""))
+                                        end
+                                    end
                                 end
                             elseif bt == "image" then
                                 -- image block (v1): portraitField expr or path expr.
