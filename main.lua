@@ -1915,6 +1915,11 @@ elseif paramDef.type == "script" then
 end
 
 function love.load(arg)
+    -- Seed the RNG with the current time so normal gameplay (outside the
+    -- validation/golden/preview harnesses) gets a fresh, non-deterministic
+    -- party/inventory every run. The harnesses below reseed to a fixed value
+    -- (12345) for reproducible golden logs, so this only affects real play.
+    math.randomseed(os.time())
     scene_host.init("title")
     print("--------------------------------------------------")
     print("HICHAUKITODEN GAME LOADED (WITH INPUT COOLDOWN FIX)")
