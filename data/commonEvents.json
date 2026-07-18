@@ -324,6 +324,10 @@
     "name": "Alicia Talk Hub",
     "commands": [
       {
+        "type": "LABEL",
+        "name": "alicia_talk_hub"
+      },
+      {
         "type": "TEXT",
         "text": "(She fiddles with a loose thread on her apron, waiting for you to speak.)",
         "speaker": "Alicia"
@@ -346,8 +350,8 @@
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 15
+                        "type": "JUMP_TO_LABEL",
+                        "label": "alicia_talk_hub"
                       }
                     ]
                   },
@@ -374,8 +378,8 @@
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 15
+                        "type": "JUMP_TO_LABEL",
+                        "label": "alicia_talk_hub"
                       }
                     ]
                   },
@@ -402,8 +406,8 @@
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 15
+                        "type": "JUMP_TO_LABEL",
+                        "label": "alicia_talk_hub"
                       }
                     ]
                   },
@@ -428,8 +432,8 @@
                     "speaker": "Alicia"
                   },
                   {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 15
+                    "type": "JUMP_TO_LABEL",
+                    "label": "alicia_talk_hub"
                   }
                 ],
                 "elseCommands": [
@@ -467,8 +471,8 @@
                                     "speaker": "Alicia"
                                   },
                                   {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 15
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "alicia_talk_hub"
                                   }
                                 ]
                               }
@@ -483,8 +487,8 @@
                                 "label": "I'm still looking.",
                                 "commands": [
                                   {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 15
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "alicia_talk_hub"
                                   }
                                 ]
                               }
@@ -539,8 +543,8 @@
                                             "speaker": "Alicia"
                                           },
                                           {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 15
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "alicia_talk_hub"
                                           }
                                         ]
                                       }
@@ -555,8 +559,8 @@
                                         "label": "I'm still looking.",
                                         "commands": [
                                           {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 15
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "alicia_talk_hub"
                                           }
                                         ]
                                       }
@@ -570,8 +574,8 @@
                             "label": "Maybe later.",
                             "commands": [
                               {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 15
+                                "type": "JUMP_TO_LABEL",
+                                "label": "alicia_talk_hub"
                               }
                             ]
                           }
@@ -591,213 +595,13 @@
       }
     ]
   },
-  "16": {
-    "name": "Alicia",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "questStatus:silent_shipment:active",
-        "commands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "flag:shipment_investigated",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 30
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "TEXT",
-                "text": "Oh! Are you looking for the supply cart? I heard it! I was listening to the wind near the chasm, and I heard squeaky wheels stop suddenly. Then... goblin noises. Lots of them.",
-                "speaker": "Alicia"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Goblins? I should tell the guard.",
-                    "commands": [
-                      {
-                        "type": "SET_FLAG",
-                        "flag": "shipment_investigated",
-                        "value": true
-                      },
-                      {
-                        "type": "TEXT",
-                        "text": "Please be careful! If the goblins have the food, they'll be... energetic.",
-                        "speaker": "Alicia"
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 30
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "flag:alicia_first_met",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 30
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "TEXT",
-                "text": "Oh! H-hello—! I… I didn’t see you coming. I’m Alicia. Welcome to my shop! Uhm— please look around! And— and if you’re hungry, I can warm something up. Not for sale. Just… because.",
-                "speaker": "Alicia"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Buy Consumables",
-                    "commands": [
-                      {
-                        "type": "SET_FLAG",
-                        "flag": "alicia_first_met",
-                        "value": true
-                      },
-                      {
-                        "type": "OPEN_SHOP",
-                        "shopId": 1
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 30
-                      }
-                    ]
-                  },
-                  {
-                    "label": "You’re kind.",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "M-me? No, I’m… I’m normal. I just… I don’t like when people look empty. Like they forgot they have a body. Sorry. That sounded weird.",
-                        "speaker": "Alicia"
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "Not weird.",
-                            "commands": [
-                              {
-                                "type": "TEXT",
-                                "text": "…Thank you. People usually laugh. Or they say ‘that’s cute’ and then they don’t mean it. Anyway! Please— uhm— browse!",
-                                "speaker": "Alicia"
-                              },
-                              {
-                                "type": "CHOICE",
-                                "options": [
-                                  {
-                                    "label": "Buy Consumables",
-                                    "commands": [
-                                      {
-                                        "type": "SET_FLAG",
-                                        "flag": "alicia_first_met",
-                                        "value": true
-                                      },
-                                      {
-                                        "type": "OPEN_SHOP",
-                                        "shopId": 1
-                                      },
-                                      {
-                                        "type": "CALL_COMMON_EVENT",
-                                        "commonEventId": 30
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "label": "Talk",
-                                    "commands": [
-                                      {
-                                        "type": "SET_FLAG",
-                                        "flag": "alicia_first_met",
-                                        "value": true
-                                      },
-                                      {
-                                        "type": "CALL_COMMON_EVENT",
-                                        "commonEventId": 15
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "label": "Leave",
-                                    "commands": [
-                                      {
-                                        "type": "SET_FLAG",
-                                        "flag": "alicia_first_met",
-                                        "value": true
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Buy Consumables",
-                            "commands": [
-                              {
-                                "type": "SET_FLAG",
-                                "flag": "alicia_first_met",
-                                "value": true
-                              },
-                              {
-                                "type": "OPEN_SHOP",
-                                "shopId": 1
-                              },
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 30
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Leave",
-                            "commands": [
-                              {
-                                "type": "SET_FLAG",
-                                "flag": "alicia_first_met",
-                                "value": true
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Leave",
-                    "commands": [
-                      {
-                        "type": "SET_FLAG",
-                        "flag": "alicia_first_met",
-                        "value": true
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
   "17": {
     "name": "Laura Talk Hub",
     "commands": [
+      {
+        "type": "LABEL",
+        "name": "laura_talk_hub"
+      },
       {
         "type": "TEXT",
         "text": "(She wipes soot from her forehead, giving you a brief moment of attention.)",
@@ -821,8 +625,8 @@
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 17
+                        "type": "JUMP_TO_LABEL",
+                        "label": "laura_talk_hub"
                       }
                     ]
                   },
@@ -849,8 +653,8 @@
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 17
+                        "type": "JUMP_TO_LABEL",
+                        "label": "laura_talk_hub"
                       }
                     ]
                   },
@@ -875,8 +679,8 @@
                     "speaker": "Laura"
                   },
                   {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 17
+                    "type": "JUMP_TO_LABEL",
+                    "label": "laura_talk_hub"
                   }
                 ],
                 "elseCommands": [
@@ -914,8 +718,8 @@
                                     "speaker": "Laura"
                                   },
                                   {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 17
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "laura_talk_hub"
                                   }
                                 ]
                               }
@@ -930,8 +734,8 @@
                                 "label": "Still looking.",
                                 "commands": [
                                   {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 17
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "laura_talk_hub"
                                   }
                                 ]
                               }
@@ -986,8 +790,8 @@
                                             "speaker": "Laura"
                                           },
                                           {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 17
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "laura_talk_hub"
                                           }
                                         ]
                                       }
@@ -1002,8 +806,8 @@
                                         "label": "Still looking.",
                                         "commands": [
                                           {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 17
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "laura_talk_hub"
                                           }
                                         ]
                                       }
@@ -1017,8 +821,8 @@
                             "label": "Not my job.",
                             "commands": [
                               {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 17
+                                "type": "JUMP_TO_LABEL",
+                                "label": "laura_talk_hub"
                               }
                             ]
                           }
@@ -1038,1498 +842,13 @@
       }
     ]
   },
-  "18": {
-    "name": "Laura",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "questStatus:golden_promise:active",
-        "commands": [
-          {
-            "type": "TEXT",
-            "text": "Find that signet. Don't come back empty-handed.",
-            "speaker": "Laura"
-          },
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "hasItem:25",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "You found it. Hmph. Not bad. The gold is pure... untouched. Give it here.",
-                "speaker": "Laura"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Hand it over.",
-                    "commands": [
-                      {
-                        "type": "QUEST_COMPLETE",
-                        "questId": "golden_promise"
-                      },
-                      {
-                        "type": "TEXT",
-                        "text": "I'll need time to work on this. Check back later. And... thanks.",
-                        "speaker": "Laura"
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 17
-                      }
-                    ]
-                  }
-                ]
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Still looking.",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 17
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "flag:laura_met",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 31
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "TEXT",
-                "text": "Hmm? Oh. You're the new one. Eyes forward, don't drag your feet. The smithy is hot, and I don't have time for tourists.",
-                "speaker": "Laura"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "I need weapons.",
-                    "commands": [
-                      {
-                        "type": "SET_FLAG",
-                        "flag": "laura_met",
-                        "value": true
-                      },
-                      {
-                        "type": "OPEN_SHOP",
-                        "shopId": 2
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 31
-                      }
-                    ]
-                  },
-                  {
-                    "label": "You seem busy.",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Steel doesn't shape itself. If you're not buying or repairing, get out of the smoke.",
-                        "speaker": "Laura"
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "Understood.",
-                            "commands": [
-                              {
-                                "type": "SET_FLAG",
-                                "flag": "laura_met",
-                                "value": true
-                              },
-                              {
-                                "type": "OPEN_SHOP",
-                                "shopId": 2
-                              },
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 31
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Talk",
-                            "commands": [
-                              {
-                                "type": "SET_FLAG",
-                                "flag": "laura_met",
-                                "value": true
-                              },
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 17
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Leave",
-                            "commands": [
-                              {
-                                "type": "SET_FLAG",
-                                "flag": "laura_met",
-                                "value": true
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Leave",
-                    "commands": [
-                      {
-                        "type": "SET_FLAG",
-                        "flag": "laura_met",
-                        "value": true
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "19": {
-    "name": "Weaponsmith",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "questStatus:shattered_blade_recovery:active, hasItem:26",
-        "commands": [
-          {
-            "type": "TEXT",
-            "text": "Let me see that... Hah! Yes. The core is intact. The steel is ancient, folded a thousand times. Give me an hour."
-          },
-          {
-            "type": "QUEST_COMPLETE",
-            "questId": "shattered_blade_recovery"
-          },
-          {
-            "type": "SET_FLAG",
-            "flag": "shattered_blade_reforged",
-            "value": true
-          },
-          {
-            "type": "TEXT",
-            "text": "Done. I've added my best work to the shop inventory. Special stock, just for you. Don't dull it on a rat's skull."
-          },
-          {
-            "type": "CALL_COMMON_EVENT",
-            "commonEventId": 19
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "questStatus:shattered_blade_recovery:active",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Find that scrap metal yet? The forge is waiting."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 19
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "CONDITIONAL_BRANCH",
-                "condition": "flag:shattered_blade_reforged",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "Good to see you alive. The forge is hot, and the steel is singing today. Need anything?"
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "type": "TEXT",
-                    "text": "Blades, hammers, axes. If it kills, I sell it. If it breaks, I fix it. If you break, that’s on you."
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Buy Weapons",
-            "commands": [
-              {
-                "type": "OPEN_SHOP",
-                "shopId": 2
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 19
-              }
-            ]
-          },
-          {
-            "label": "Ask about the dungeon",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Down there? Don’t fight fair. Don’t fight pretty. Fight to leave. The only winning move is coming back with your hands still yours."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 19
-              }
-            ]
-          },
-          {
-            "label": "Ask about equipment",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "You want to know how to not die? Fine. Listen close."
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Weapons",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Swords are balanced. Axes hit hard but miss if you're clumsy. Magic weapons... well, they depend on your mind, not your muscle. Pick what fits your hand."
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 119
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Armor",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Heavy plate stops claws, but it slows you down. If you're slow, you get hit more. Sometimes dodging is better than tanking. Your choice."
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 119
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Back",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 19
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Found anything interesting?",
-            "commands": [
-              {
-                "type": "CONDITIONAL_BRANCH",
-                "condition": "questStatus:shattered_blade_recovery:completed",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "The blade is done. Check my wares if you have the coin."
-                  },
-                  {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 19
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "type": "CONDITIONAL_BRANCH",
-                    "condition": "questStatus:shattered_blade_recovery:active",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Find that scrap metal yet? The forge is waiting."
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 19
-                      }
-                    ],
-                    "elseCommands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Interesting? Maybe. Legends say a 'Shattered Blade' lies in the Cryptic Vault. Floor 4, maybe 5. It's useless scrap to you, but I could reforge it into something... lethal."
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "I'll keep an eye out.",
-                            "commands": [
-                              {
-                                "type": "QUEST_OFFER",
-                                "questId": "shattered_blade_recovery"
-                              },
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 19
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Not interested.",
-                            "commands": [
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 19
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Leave",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "20": {
-    "name": "Gate Guard",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "questStatus:silent_shipment:active",
-        "commands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "flag:shipment_investigated",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "So Alicia heard them stop near the chasm? Damn. That means goblins or worse. Thanks for the intel. I'll double the watch."
-              },
-              {
-                "type": "QUEST_COMPLETE",
-                "questId": "silent_shipment"
-              },
-              {
-                "type": "TEXT",
-                "text": "You did good work. Watch your back out there."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 33
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "TEXT",
-                "text": "Any news on the shipment? Ask Alicia, she usually hears the carts coming."
-              }
-            ]
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "CONDITIONAL_BRANCH",
-            "condition": "flag:dungeon_entered, hasItem:guild_pass",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Ready to descend again? Don't make me carry your body out."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 33
-              }
-            ],
-            "elseCommands": [
-              {
-                "type": "CONDITIONAL_BRANCH",
-                "condition": "questStatus:silent_shipment:completed",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "You did good work. Watch your back out there."
-                  },
-                  {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 33
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "type": "CONDITIONAL_BRANCH",
-                    "condition": "hasItem:guild_pass",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 33
-                      }
-                    ],
-                    "elseCommands": [
-                      {
-                        "type": "TEXT",
-                        "text": "No Guild Pass. Speak to the Guildmaster in town. And don’t try to slip past. I’ve buried faster people than you."
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "Anything strange happening?",
-                            "commands": [
-                              {
-                                "type": "TEXT",
-                                "text": "Strange? Always. But the supply shipment is late. Very late. It usually comes through the old tunnel, but it's silent."
-                              },
-                              {
-                                "type": "CHOICE",
-                                "options": [
-                                  {
-                                    "label": "I'll investigate.",
-                                    "commands": [
-                                      {
-                                        "type": "QUEST_OFFER",
-                                        "questId": "silent_shipment"
-                                      }
-                                    ]
-                                  },
-                                  {
-                                    "label": "Not my problem.",
-                                    "commands": []
-                                  }
-                                ]
-                              }
-                            ],
-                            "condition": "questStatus:silent_shipment:inactive"
-                          },
-                          {
-                            "label": "Leave",
-                            "commands": []
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "21": {
-    "name": "Auctioneer",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "Rare finds! Highest bidder takes all! …Well. Fixed price for now. But the *spirit* is the same. Spend like you’re trying to forget something."
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Browse",
-            "commands": [
-              {
-                "type": "OPEN_SHOP",
-                "shopId": 4
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 21
-              }
-            ]
-          },
-          {
-            "label": "Ask what’s ‘unidentified’ mean",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "It means you pay first and ask questions later. Just like love. Just like the dungeon. Now— are you brave, or are you smart?"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Browse",
-                    "commands": [
-                      {
-                        "type": "OPEN_SHOP",
-                        "shopId": 4
-                      },
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 21
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Back",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 21
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Leave",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "22": {
-    "name": "Yukio",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "Efficiency is key. Do not waste my time."
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "You’re a Summoner too.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "I summon because I don’t trust people to stand where I need them. Creatures are honest. They take payment and they do the job."
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Sounds lonely.",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Lonely is a luxury. You’ll learn that if you keep surviving."
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "Back",
-                            "commands": [
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 22
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Back",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 22
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Leave",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "23": {
-    "name": "Geraldo",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "Heh. You look like you’ve seen a ghost. Want to hear a story? They’re all true. That’s what makes them useless."
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Tell me.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Once, a Summoner ran out of MP and begged his own creature to stop draining him. The creature cried. Then it kept eating. The dungeon doesn’t make monsters. It just reveals who’s hungry."
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "…Lovely.",
-                    "commands": [
-                      {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 23
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Leave",
-                    "commands": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Browse",
-            "commands": [
-              {
-                "type": "OPEN_SHOP",
-                "shopId": 4
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 23
-              }
-            ]
-          },
-          {
-            "label": "Leave",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "24": {
-    "name": "Wandering Merchant",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "flag:dungeon_merchant_met",
-        "commands": [
-          {
-            "type": "TEXT",
-            "text": "A friendly face in the dark. Care for supplies? It gets expensive the deeper you go. That’s the point."
-          },
-          {
-            "type": "CHOICE",
-            "options": [
-              {
-                "label": "Show me what you have",
-                "commands": [
-                  {
-                    "type": "OPEN_SHOP",
-                    "shopId": 6
-                  },
-                  {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 24
-                  }
-                ]
-              },
-              {
-                "label": "Any advice?",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "Advice? Keep one summon slot empty. The dungeon loves to tempt you when you’re at your limit. And never ‘push one more room’ when your MP is low. That’s how you become a story."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "Back",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 24
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Close",
-                        "commands": []
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "No thanks",
-                "commands": []
-              }
-            ]
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "TEXT",
-            "text": "Oh— a living one. Don’t startle me like that. Here. I sell necessities. Not hope. Hope’s extra."
-          },
-          {
-            "type": "CHOICE",
-            "options": [
-              {
-                "label": "Show me what you have",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "dungeon_merchant_met",
-                    "value": true
-                  },
-                  {
-                    "type": "OPEN_SHOP",
-                    "shopId": 6
-                  },
-                  {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 24
-                  }
-                ]
-              },
-              {
-                "label": "Any advice?",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "dungeon_merchant_met",
-                    "value": true
-                  },
-                  {
-                    "type": "TEXT",
-                    "text": "Advice? Keep one summon slot empty. The dungeon loves to tempt you when you’re at your limit. And never ‘push one more room’ when your MP is low. That’s how you become a story."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "Back",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 24
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Close",
-                        "commands": []
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "No thanks",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "dungeon_merchant_met",
-                    "value": true
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "25": {
-    "name": "Daphne",
-    "commands": [
-      {
-        "type": "CONDITIONAL_BRANCH",
-        "condition": "flag:daphne_first_met",
-        "commands": [
-          {
-            "type": "TEXT",
-            "text": "…Don’t waste steps. Don’t waste summons. Don’t waste yourself."
-          },
-          {
-            "type": "CHOICE",
-            "options": [
-              {
-                "label": "Ask about the dungeon",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "It doesn’t want you dead. It wants you *convinced*. There’s a difference. Dead things don’t pray. Convinced things do."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "Back",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 25
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Ask about the town",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "A town is just a room with too many mirrors. Everyone here is looking for the angle that makes them forgivable."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "Back",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 25
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Leave",
-                "commands": []
-              }
-            ]
-          }
-        ],
-        "elseCommands": [
-          {
-            "type": "TEXT",
-            "text": "…You’re late."
-          },
-          {
-            "type": "CHOICE",
-            "options": [
-              {
-                "label": "Who are you?",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "daphne_first_met",
-                    "value": true
-                  },
-                  {
-                    "type": "TEXT",
-                    "text": "Daphne. I’m the part of the dungeon that learned to speak politely."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "That’s not an answer.",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "It is. You’re just not used to answers that don’t comfort you."
-                          },
-                          {
-                            "type": "CHOICE",
-                            "options": [
-                              {
-                                "label": "…",
-                                "commands": [
-                                  {
-                                    "type": "TEXT",
-                                    "text": "…Don’t waste steps. Don’t waste summons. Don’t waste yourself."
-                                  },
-                                  {
-                                    "type": "CHOICE",
-                                    "options": [
-                                      {
-                                        "label": "Ask about the dungeon",
-                                        "commands": [
-                                          {
-                                            "type": "TEXT",
-                                            "text": "It doesn’t want you dead. It wants you *convinced*. There’s a difference. Dead things don’t pray. Convinced things do."
-                                          },
-                                          {
-                                            "type": "CHOICE",
-                                            "options": [
-                                              {
-                                                "label": "Back",
-                                                "commands": [
-                                                  {
-                                                    "type": "CALL_COMMON_EVENT",
-                                                    "commonEventId": 25
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "label": "Ask about the town",
-                                        "commands": [
-                                          {
-                                            "type": "TEXT",
-                                            "text": "A town is just a room with too many mirrors. Everyone here is looking for the angle that makes them forgivable."
-                                          },
-                                          {
-                                            "type": "CHOICE",
-                                            "options": [
-                                              {
-                                                "label": "Back",
-                                                "commands": [
-                                                  {
-                                                    "type": "CALL_COMMON_EVENT",
-                                                    "commonEventId": 25
-                                                  }
-                                                ]
-                                              }
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "label": "Leave",
-                                        "commands": []
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "label": "Leave",
-                                "commands": []
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Leave",
-                        "commands": []
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Late for what?",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "daphne_first_met",
-                    "value": true
-                  },
-                  {
-                    "type": "TEXT",
-                    "text": "For the version of you that doesn’t come back."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "…",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "…Don’t waste steps. Don’t waste summons. Don’t waste yourself."
-                          },
-                          {
-                            "type": "CHOICE",
-                            "options": [
-                              {
-                                "label": "Ask about the dungeon",
-                                "commands": [
-                                  {
-                                    "type": "TEXT",
-                                    "text": "It doesn’t want you dead. It wants you *convinced*. There’s a difference. Dead things don’t pray. Convinced things do."
-                                  },
-                                  {
-                                    "type": "CHOICE",
-                                    "options": [
-                                      {
-                                        "label": "Back",
-                                        "commands": [
-                                          {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 25
-                                          }
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "label": "Ask about the town",
-                                "commands": [
-                                  {
-                                    "type": "TEXT",
-                                    "text": "A town is just a room with too many mirrors. Everyone here is looking for the angle that makes them forgivable."
-                                  },
-                                  {
-                                    "type": "CHOICE",
-                                    "options": [
-                                      {
-                                        "label": "Back",
-                                        "commands": [
-                                          {
-                                            "type": "CALL_COMMON_EVENT",
-                                            "commonEventId": 25
-                                          }
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "label": "Leave",
-                                "commands": []
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Leave",
-                        "commands": []
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "label": "Leave",
-                "commands": [
-                  {
-                    "type": "SET_FLAG",
-                    "flag": "daphne_first_met",
-                    "value": true
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "26": {
-    "name": "Drunkard",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "*hic* Whaddya want? Can'tcha see I'm... thinkin'?"
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Ask what he's thinking about.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Thinkin' 'bout... 'bout how the floor keeps movin'. An' how my mug's always empty. It's a conspiracy, I tell ya... A thirsty, wobbly conspiracy."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 26
-              }
-            ]
-          },
-          {
-            "label": "Leave him to his thoughts.",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "27": {
-    "name": "Alicia (Pub)",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "Oh! H-hello again. I... I just needed to get out of the shop for a little while. All the dust... it gets in my throat.",
-        "speaker": "Alicia"
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Is everything okay?",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Yes! Everything is... fine. Laura, she... she liked the gift. I think. She's wearing it. Under her apron, so no one else can see. It's... nice. Thank you, again. For helping me.",
-                "speaker": "Alicia"
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "You're welcome.",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "(She gives you a genuine, heartfelt smile.)",
-                        "speaker": "Alicia"
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Leave her be.",
-                    "commands": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "It's nice to see you out.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Thank you. It's... a little loud. But the tea is good. It's nice to just... sit for a moment. And not worry about what needs restocking.",
-                "speaker": "Alicia"
-              }
-            ]
-          },
-          {
-            "label": "Leave her be.",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "28": {
-    "name": "The Gambler",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "Well met, traveler. I'm a collector of sorts. A collector of... numbers.",
-        "speaker": "The Gambler"
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Sure, I'm feeling lucky.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Excellent! I'll pick a number between 1 and 10. You just have to guess if it's high or low."
-              },
-              {
-                "type": "CHOICE",
-                "options": [
-                  {
-                    "label": "Higher",
-                    "commands": [
-                      {
-                        "type": "CONDITIONAL_BRANCH",
-                        "condition": "random() < 0.5",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "You won! Here's a prize."
-                          },
-                          {
-                            "type": "GAIN_GOLD",
-                            "amount": 10
-                          },
-                          {
-                            "type": "TEXT",
-                            "text": "Come back later."
-                          }
-                        ],
-                        "elseCommands": [
-                          {
-                            "type": "TEXT",
-                            "text": "Too bad! Better luck next time."
-                          },
-                          {
-                            "type": "TEXT",
-                            "text": "Come back later."
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "label": "Lower",
-                    "commands": [
-                      {
-                        "type": "CONDITIONAL_BRANCH",
-                        "condition": "random() < 0.5",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "You won! Here's a prize."
-                          },
-                          {
-                            "type": "GAIN_GOLD",
-                            "amount": 10
-                          },
-                          {
-                            "type": "TEXT",
-                            "text": "Come back later."
-                          }
-                        ],
-                        "elseCommands": [
-                          {
-                            "type": "TEXT",
-                            "text": "Too bad! Better luck next time."
-                          },
-                          {
-                            "type": "TEXT",
-                            "text": "Come back later."
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "No thanks.",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Come back later."
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "29": {
-    "name": "The Rusty Tankard",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "The air in The Rusty Tankard is thick with the smell of cheap ale and roasted meat. Laughter and hushed whispers compete with the clinking of glasses."
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Approach the Bartender",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 34
-              }
-            ]
-          },
-          {
-            "label": "Speak to the Drunkard",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 26
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 29
-              }
-            ]
-          },
-          {
-            "label": "Look for a table",
-            "commands": [
-              {
-                "type": "CONDITIONAL_BRANCH",
-                "condition": "flag:alicia_visits_pub",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "You notice Alicia sitting by herself at a small table, nervously sipping a cup of tea. It's unusual to see her outside her shop."
-                  },
-                  {
-                    "type": "CHOICE",
-                    "options": [
-                      {
-                        "label": "Approach her",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 27
-                          },
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 29
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Leave her be",
-                        "commands": [
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 29
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "type": "CONDITIONAL_BRANCH",
-                    "condition": "random() < 0.4",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "In a dimly lit corner, you spot a familiar figure shuffling a deck of cards with practiced ease."
-                      },
-                      {
-                        "type": "CHOICE",
-                        "options": [
-                          {
-                            "label": "Approach the Gambler",
-                            "commands": [
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 28
-                              },
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 29
-                              }
-                            ]
-                          },
-                          {
-                            "label": "Ignore him",
-                            "commands": [
-                              {
-                                "type": "CALL_COMMON_EVENT",
-                                "commonEventId": 29
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ],
-                    "elseCommands": [
-                      {
-                        "type": "CONDITIONAL_BRANCH",
-                        "condition": "random() < 0.3",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "An old mercenary sits by the fire, staring into the flames. He looks like he has stories to tell."
-                          },
-                          {
-                            "type": "CHOICE",
-                            "options": [
-                              {
-                                "label": "Sit with him",
-                                "commands": [
-                                  {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 23
-                                  },
-                                  {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 29
-                                  }
-                                ]
-                              },
-                              {
-                                "label": "Leave him be",
-                                "commands": [
-                                  {
-                                    "type": "CALL_COMMON_EVENT",
-                                    "commonEventId": 29
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ],
-                        "elseCommands": [
-                          {
-                            "type": "TEXT",
-                            "text": "You find an empty table. It's nice to sit down for a moment, but there's no one interesting nearby right now."
-                          },
-                          {
-                            "type": "CALL_COMMON_EVENT",
-                            "commonEventId": 29
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Leave",
-            "commands": []
-          }
-        ]
-      }
-    ]
-  },
   "30": {
     "name": "Alicia Default Hub",
     "commands": [
+      {
+        "type": "LABEL",
+        "name": "alicia_default_hub"
+      },
       {
         "type": "TEXT",
         "text": "Oh! H-hello there! It's good to see you again. Please, look around. And— uh— drink water. People forget.",
@@ -2546,8 +865,8 @@
                 "shopId": 1
               },
               {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 30
+                "type": "JUMP_TO_LABEL",
+                "label": "alicia_default_hub"
               }
             ]
           },
@@ -2572,6 +891,10 @@
     "name": "Laura Default Hub",
     "commands": [
       {
+        "type": "LABEL",
+        "name": "laura_default_hub"
+      },
+      {
         "type": "TEXT",
         "text": "Back again? Blade dull already? Or are you just looking for warmth?",
         "speaker": "Laura"
@@ -2587,8 +910,8 @@
                 "shopId": 2
               },
               {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 31
+                "type": "JUMP_TO_LABEL",
+                "label": "laura_default_hub"
               }
             ]
           },
@@ -2612,6 +935,10 @@
   "33": {
     "name": "Gate Guard Allow Pass Hub",
     "commands": [
+      {
+        "type": "LABEL",
+        "name": "gate_guard_pass_hub"
+      },
       {
         "type": "TEXT",
         "text": "Guild Pass verified. Keep your MP above the red line. Don’t be a hero in there— heroes become stains."
@@ -2640,8 +967,8 @@
                 "text": "People come back talking about ‘treasure’. Then they stop sleeping. Then they stop talking. Then we stop calling them by name. Go."
               },
               {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 33
+                "type": "JUMP_TO_LABEL",
+                "label": "gate_guard_pass_hub"
               }
             ]
           },
@@ -2657,8 +984,8 @@
                     "text": "You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner."
                   },
                   {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 33
+                    "type": "JUMP_TO_LABEL",
+                    "label": "gate_guard_pass_hub"
                   }
                 ],
                 "elseCommands": [
@@ -2671,8 +998,8 @@
                         "text": "The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper."
                       },
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 33
+                        "type": "JUMP_TO_LABEL",
+                        "label": "gate_guard_pass_hub"
                       }
                     ],
                     "elseCommands": [
@@ -2681,8 +1008,8 @@
                         "text": "Still alive. That's progress enough for today."
                       },
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 33
+                        "type": "JUMP_TO_LABEL",
+                        "label": "gate_guard_pass_hub"
                       }
                     ]
                   }
@@ -2721,153 +1048,6 @@
           {
             "label": "Leave",
             "commands": []
-          }
-        ]
-      }
-    ]
-  },
-  "34": {
-    "name": "Pub Bartender Hub",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "The bartender nods at you as he wipes a glass with a rag that's seen better days. 'What can I get you?'",
-        "speaker": "NPC_Barkeep"
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Buy a drink",
-            "commands": [
-              {
-                "type": "OPEN_SHOP",
-                "shopId": 5
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 34
-              }
-            ]
-          },
-          {
-            "label": "Any news?",
-            "commands": [
-              {
-                "type": "CONDITIONAL_BRANCH",
-                "condition": "random() < 0.2",
-                "commands": [
-                  {
-                    "type": "TEXT",
-                    "text": "Rain's coming. My knee aches. Means the slimes on the first floor will be extra sticky."
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "type": "CONDITIONAL_BRANCH",
-                    "condition": "random() < 0.25",
-                    "commands": [
-                      {
-                        "type": "TEXT",
-                        "text": "Some fool said he saw a golden egg on the third floor. Probably just a trick of the light, or a trap."
-                      }
-                    ],
-                    "elseCommands": [
-                      {
-                        "type": "CONDITIONAL_BRANCH",
-                        "condition": "random() < 0.3333",
-                        "commands": [
-                          {
-                            "type": "TEXT",
-                            "text": "If you see a statue that looks like it's crying, don't touch it. Unless you like curses."
-                          }
-                        ],
-                        "elseCommands": [
-                          {
-                            "type": "CONDITIONAL_BRANCH",
-                            "condition": "random() < 0.5",
-                            "commands": [
-                              {
-                                "type": "TEXT",
-                                "text": "Alicia's been baking again. Smells like burnt cinnamon. Poor girl tries hard, though."
-                              }
-                            ],
-                            "elseCommands": [
-                              {
-                                "type": "TEXT",
-                                "text": "News? The dungeon's deep, the monsters are hungry, and the beer is cold. That's all the news that matters."
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 34
-              }
-            ]
-          },
-          {
-            "label": "Back",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 29
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "119": {
-    "name": "Weaponsmith Tutorial Loop",
-    "commands": [
-      {
-        "type": "TEXT",
-        "text": "You want to know how to not die? Fine. Listen close."
-      },
-      {
-        "type": "CHOICE",
-        "options": [
-          {
-            "label": "Weapons",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Swords are balanced. Axes hit hard but miss if you're clumsy. Magic weapons... well, they depend on your mind, not your muscle. Pick what fits your hand."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 119
-              }
-            ]
-          },
-          {
-            "label": "Armor",
-            "commands": [
-              {
-                "type": "TEXT",
-                "text": "Heavy plate stops claws, but it slows you down. If you're slow, you get hit more. Sometimes dodging is better than tanking. Your choice."
-              },
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 119
-              }
-            ]
-          },
-          {
-            "label": "Back",
-            "commands": [
-              {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 19
-              }
-            ]
           }
         ]
       }
