@@ -49,6 +49,20 @@ local function revealedCount(text, elapsed)
     return math.min(#text, math.floor(elapsed / delay))
 end
 
+-- Byte-count prefix that never splits a multibyte UTF-8 character: if the
+-- cut lands inside a codepoint (next byte is a continuation byte), snap
+-- back to the previous boundary. love.graphics.printf hard-errors on
+-- malformed UTF-8, and dialogue text carries em dashes/curly quotes.
+local function utf8Prefix(text, n)
+    if n >= #text then return text end
+    local nextByte = text:byte(n + 1)
+    while n > 0 and nextByte and nextByte >= 0x80 and nextByte < 0xC0 do
+        n = n - 1
+        nextByte = text:byte(n + 1)
+    end
+    return text:sub(1, n)
+end
+
 -- overhaul-7 A1: animation constants and timing are owned by
 -- presentation/animation_player.lua using data/animations.json entries.
 -- The small_battlers module still provides the dead-tint constant for
@@ -510,7 +524,7 @@ function renderer.drawDialogue(walker, selectIdx)
             dialogueReveal.elapsed = 0
         end
         local content = node.content or ""
-        local shown = content:sub(1, revealedCount(content, dialogueReveal.elapsed))
+        local shown = utf8Prefix(content, revealedCount(content, dialogueReveal.elapsed))
         ui.drawString(shown, winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
         ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
     elseif node.type == "CHOICE" then
@@ -846,7 +860,7 @@ function renderer.drawBattleLogWindow(combatLog)
     end
     local previous = combatLog[battleLogReveal.cursor - 1] or ""
     ui.drawString(previous, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
-    ui.drawString(current:sub(1, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
+    ui.drawString(utf8Prefix(current, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
     ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
 end
 

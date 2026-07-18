@@ -94,6 +94,13 @@ function GraphWalker:selectChoice(optionIndex)
         self.currentNodeId = nil
     elseif opt.target then
         self:goToNode(opt.target)
+    else
+        -- No target: the option's command list was empty and the CHOICE sat
+        -- at the end of its script, so falling through means the dialogue is
+        -- over — same as advance() walking off the graph tail. Without this,
+        -- "Leave"-style options silently no-op.
+        self.currentNode = nil
+        self.currentNodeId = nil
     end
 end
 
