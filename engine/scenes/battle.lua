@@ -550,6 +550,23 @@ function battle.handleTransition(action)
     if v.combatState ~= "log"
         or v.eventQueueIndex <= #(v.eventsQueue or {}) then return false end
 
+    -- Bug fix (owner report, 17.07.2026): a lethal hit's damage/death
+    -- mutation is deferred to animation_player.onComplete, gated behind
+    -- that event's own animation (e.g. a delayed skill-cast effect on the
+    -- target can run 1-2s past when its log LINE finishes revealing).
+    -- battle.update's auto-advance already refuses to proceed while
+    -- anything is still playing, but a player-pressed SPACE reaches this
+    -- function directly and has no such guard — so victory/defeat could
+    -- fire, and battle.victory's REAP_FALLEN could check isDead() on a
+    -- battler, BEFORE that battler's own lethal-hit callback had actually
+    -- landed: hp/dead-state still read pre-death, REAP_FALLEN misses it,
+    -- and the deferred callback finally applies moments later with
+    -- nothing left to process it — a party member stuck permanently
+    -- "dead" (hp/tint eventually update) but never reaped. Matching
+    -- battle.update's own gate here closes the race at its only other
+    -- entry point.
+    if animation_player.isAnythingPlaying() then return false end
+
     -- Reap ("{name} has passed away") messages queued below drain through
     -- the normal log pipeline first; once they're read, come back here to
     -- finish whatever the flow was building toward.
