@@ -130,11 +130,17 @@ local function updatePopupGlyph(glyph, dt, gravity, bounceRetain)
     end
 end
 
+-- Owner feedback (17.07.2026): enemies should enter with a small timing
+-- offset per slot, the same idea as damage popups' spawnDelay staggering
+-- same-location hits — a cleaner, more readable arrival than all of them
+-- sliding in on the exact same frame.
+local ENEMY_ENTRY_STAGGER_MS = 120
+
 function renderer.initBattleAnims(enemies)
     animation_player.reset()
     deadEnemyFlags = {}
     for i, enemy in ipairs(enemies) do
-        animation_player.play("system.enemy_slide_in", enemy)
+        animation_player.play("system.enemy_slide_in", enemy, (i - 1) * ENEMY_ENTRY_STAGGER_MS)
     end
 end
 
@@ -706,15 +712,21 @@ end
 
 -- Enemy row: viewport background + darken overlay + per-enemy sprites with
 -- their full animation/shader/particle treatment (unchanged from before).
-function renderer.drawEnemyRowWindow(battleState)
+-- bgFadeOverride (0..1, defeat sequence stage 0 — owner feedback
+-- 17.07.2026): when set, replaces the normal subtle 0.35 darken with an
+-- animated value ramping toward fully black, drawn BEHIND the enemy
+-- sprites (same as the normal overlay) so "the background fades" reads as
+-- its own beat, distinct from the later full-screen fade that covers the
+-- monsters too (renderer.drawDefeatFadeOverlay).
+function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
     if not battleState then return end
     renderer.activeBattle = battleState
 
     -- Draw 3D dungeon view behind battle scene
     viewport_3d.draw(renderer.session)
 
-    -- Subtle darkened overlay (not too heavy)
-    love.graphics.setColor(0, 0, 0, 0.35)
+    local bgAlpha = bgFadeOverride or 0.35
+    love.graphics.setColor(0, 0, 0, bgAlpha)
     love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
 
@@ -911,10 +923,11 @@ end
 -- treatment as drawDamagePopups). Animations play per-target, so scan every
 -- battler for an active flash; first hit wins (matches the preview, which
 -- only ever has one target). 256x240 is the game's logical resolution.
--- Defeat sequence (owner feedback, 17.07.2026): a full-canvas black fade,
--- driven by engine/scenes/battle.lua's staged v.defeatFadeAlpha. Ramps in
--- two beats (background dim, then full black covering the monsters) around
--- the party window's slide-out — see battle.update's DEFEAT_STAGE*_DUR.
+-- Defeat sequence, FINAL stage only (owner feedback, 17.07.2026): a
+-- full-canvas black fade covering everything, including the monsters --
+-- the earlier "background fades" beat is a separate, viewport-only
+-- overlay drawn behind the enemy sprites (drawEnemyRowWindow's
+-- bgFadeOverride). Driven by v.defeatFinalFade — see battle.update's DEFEAT_STAGE*_DUR.
 function renderer.drawDefeatFadeOverlay(alpha)
     if not alpha or alpha <= 0 then return end
     love.graphics.setColor(0, 0, 0, math.min(1, alpha))

@@ -119,20 +119,26 @@ end
 -- scene's party-shaped list rows. Returns true when a sprite was drawn.
 -- overhaul-7 A1: damage-feedback flash/shake queries the animation player
 -- instead of the deleted inline animState table.
--- Permadeath (Summoner rework): a dead party member normally renders as a
--- flat DEAD_TINT silhouette with no animation-player treatment at all —
--- fine for "downed, revivable mid-fight", but it meant system.reap never
--- had anything to visibly play on, since this function bailed to the flat
--- tint before ever consulting the animation player. isReaping keeps the
--- full transform/tint/particle treatment active for the duration of that
--- one animation, exactly like the enemy row's isDeathPlaying special case
--- (presentation/renderer.lua drawEnemyRowWindow) — same pattern, party side.
+-- Permadeath / emergency wave (Summoner rework): a dead party member
+-- normally renders as a flat DEAD_TINT silhouette with no animation-player
+-- treatment at all — fine for "downed, revivable mid-fight", but it meant
+-- system.reap/system.swap_out had nothing to visibly play on, since this
+-- function bailed to the flat tint before ever consulting the animation
+-- player. isFadingOut keeps the full transform/tint/particle treatment
+-- active for the duration of those animations (both play only on already-
+-- dead battlers: reap at battle end, swap_out mid-battle on the outgoing
+-- half of an emergency wave), exactly like the enemy row's isDeathPlaying
+-- special case (presentation/renderer.lua drawEnemyRowWindow) — same
+-- pattern, party side. system.swap_in needs no such case: it plays on the
+-- ALIVE incoming battler, which already gets full treatment via `not dead`.
 function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
     local ss = small_battlers.get(spriteKey)
     if not (ss and ss.img) then return false end
 
-    local isReaping = dead and battlerRef and animation_player.isPlaying(battlerRef, "system.reap")
-    local animated = (not dead) or isReaping
+    local isFadingOut = dead and battlerRef and
+        (animation_player.isPlaying(battlerRef, "system.reap")
+            or animation_player.isPlaying(battlerRef, "system.swap_out"))
+    local animated = (not dead) or isFadingOut
     local frame = animated and small_battlers.frame(ss) or 0
 
     -- Damage-feedback shake and transform from animation player
@@ -164,7 +170,7 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
         animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "back")
     end
 
-    if dead and not isReaping then
+    if dead and not isFadingOut then
         love.graphics.setColor(DEAD_TINT[1], DEAD_TINT[2], DEAD_TINT[3], DEAD_TINT[4] or 1)
         drawSprite()
     else

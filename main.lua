@@ -1013,9 +1013,23 @@ runValidation = function()
             "emergency wave did not field the reserve spirits")
         check(next(s.reserve) == nil, "emergency wave left spirits in the reserve")
         check(#wb.fallen == 3, "emergency wave did not move the fallen party to battle.fallen")
-        local sawWave = false
-        for _, ev in ipairs(evs) do if ev.type == "wave" then sawWave = true end end
-        check(sawWave, "emergency wave emitted no wave event")
+        local waveEv = nil
+        for _, ev in ipairs(evs) do if ev.type == "wave" then waveEv = ev end end
+        check(waveEv ~= nil, "emergency wave emitted no wave event")
+        if waveEv then
+            -- pending carries what the presentation layer needs to replay
+            -- the swap at log-reveal time (engine/scenes/battle.lua
+            -- processEvent's "wave" handler): per slot, the incoming
+            -- battler, its reserve key (to re-consume on replay), and the
+            -- outgoing battler it's replacing (to shrink first).
+            check(#(waveEv.pending or {}) == 2, "wave event should carry one pending entry per deployed spirit, got " .. tostring(#(waveEv.pending or {})))
+            for _, p in ipairs(waveEv.pending or {}) do
+                check(type(p.slot) == "number" and p.slot >= 1 and p.slot <= 4, "wave pending entry missing a valid slot")
+                check(p.battler ~= nil, "wave pending entry missing the incoming battler")
+                check(p.reserveKey ~= nil, "wave pending entry missing its reserveKey")
+                check(p.outgoing ~= nil, "wave pending entry should carry the outgoing battler it replaced")
+            end
+        end
 
         -- REAP_FALLEN: banks wave casualties + any dead party member, emits
         -- one reap event per fallen spirit carrying {target, slot} (the
@@ -1806,6 +1820,8 @@ elseif paramDef.type == "script" then
         "system.heal",
         "system.reap",
         "system.wave",
+        "system.swap_out",
+        "system.swap_in",
     }
     for _, reservedId in ipairs(RESERVED_SYSTEM_IDS) do
         check(animation_player.getEntry(reservedId) ~= nil,
@@ -2088,7 +2104,7 @@ function love.draw()
         end
         renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.skillSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
         renderer.drawScreenFlashOverlay(bv.battle)
-        renderer.drawDefeatFadeOverlay(bv.defeatFadeAlpha)
+        renderer.drawDefeatFadeOverlay(bv.defeatFinalFade)
     end
 
     renderer.drawDamagePopups()

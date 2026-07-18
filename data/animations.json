@@ -1485,5 +1485,35 @@
         "easing": "ease_out"
       }
     ]
+  },
+  "system.swap_out": {
+    "id": "system.swap_out",
+    "class": "system",
+    "duration": 250,
+    "tracks": [
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 250,
+        "fromScaleX": 1,
+        "toScaleX": 0,
+        "easing": "ease_out"
+      }
+    ]
+  },
+  "system.swap_in": {
+    "id": "system.swap_in",
+    "class": "system",
+    "duration": 250,
+    "tracks": [
+      {
+        "type": "transform",
+        "t0": 0,
+        "duration": 250,
+        "fromScaleX": 0,
+        "toScaleX": 1,
+        "easing": "ease_out"
+      }
+    ]
   }
 }

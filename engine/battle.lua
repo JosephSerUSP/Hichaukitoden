@@ -50,22 +50,29 @@ function Battle:tryDeployWave(roundEvents)
     end
     if not hasReserve then return false end
 
+    local outgoingBySlot = {}
     for i = 1, 4 do
         if session.party[i] then
+            outgoingBySlot[i] = session.party[i]
             table.insert(self.fallen, session.party[i])
             session.party[i] = nil
         end
     end
     local deployed = session:fillEmptySlotsFromReserve()
+    for _, d in ipairs(deployed) do
+        d.outgoing = outgoingBySlot[d.slot]
+    end
     self.allies = session:getActiveParty()
 
-    -- `deployed` rides on the event so the presentation layer can flash
-    -- the incoming spirits (system.wave) and name them — the swap needs
-    -- to read as a distinct, attention-grabbing beat, not a buried log
-    -- line, since it's standing in for a game over.
+    -- `deployed` rides on the event ({battler, slot, reserveKey, outgoing}
+    -- per entry) so the presentation layer can play the swap as a proper
+    -- per-slot flip (outgoing shrinks, incoming grows), staggered, timed
+    -- to when the log actually reveals this event rather than the instant
+    -- resolveRound ran — see engine/scenes/battle.lua's resolveRound
+    -- (party/reserve backup+restore) and processEvent's "wave" handler.
     local names = {}
-    for _, b in ipairs(deployed) do table.insert(names, b.name or "?") end
-    table.insert(roundEvents, { type = "wave", deployed = deployed })
+    for _, d in ipairs(deployed) do table.insert(names, d.battler.name or "?") end
+    table.insert(roundEvents, { type = "wave", pending = deployed })
     table.insert(roundEvents, {
         type = "text",
         text = session.loader.formatTerm("battle.reserve_wave",

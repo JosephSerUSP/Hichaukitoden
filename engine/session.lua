@@ -204,8 +204,11 @@ end
 -- Summoner rework's emergency wave (engine/battle.lua) and the general
 -- auto-field rule (SPEC: the party is never left empty while a reserve
 -- exists) so there is exactly one "pull from reserve" implementation.
--- Returns the list of battlers moved from reserve to party (empty if the
--- reserve had nothing to give).
+-- Returns a list of { battler, slot, reserveKey } records (empty if the
+-- reserve had nothing to give) — richer than a plain battler list so
+-- callers that need to defer/replay the write (the emergency wave's
+-- presentation-timed swap) have what they need; callers that just want
+-- "did anything deploy" only need #result.
 function GameSession:fillEmptySlotsFromReserve()
     local keys = {}
     for k, b in pairs(self.reserve or {}) do
@@ -217,11 +220,12 @@ function GameSession:fillEmptySlotsFromReserve()
     local ki = 1
     for i = 1, 4 do
         if not self.party[i] and keys[ki] then
-            local b = self.reserve[keys[ki]]
-            self.reserve[keys[ki]] = nil
+            local key = keys[ki]
+            local b = self.reserve[key]
+            self.reserve[key] = nil
             b.row = (i <= 2) and "front" or "back"
             self.party[i] = b
-            table.insert(deployed, b)
+            table.insert(deployed, { battler = b, slot = i, reserveKey = key })
             ki = ki + 1
         end
     end

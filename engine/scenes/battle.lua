@@ -201,6 +201,15 @@ function battle.resolveRound()
         }
     end
     local mpBackup = sess().mp
+    -- Emergency wave (Summoner rework §3): back up party/reserve SLOT
+    -- membership too, same idea as the hp/mp backups above — a same-round
+    -- swap must not silently show in the party grid before its "wave"
+    -- event is actually revealed in the log. The real writes are replayed
+    -- by processEvent's "wave" handler, timed to the swap animation.
+    local partyBackup = {}
+    for i = 1, 4 do partyBackup[i] = sess().party[i] end
+    local reserveBackup = {}
+    for k, b in pairs(sess().reserve or {}) do reserveBackup[k] = b end
 
     local events = actBattle:resolveRound(v.collectedActions)
 
@@ -210,6 +219,8 @@ function battle.resolveRound()
         b.states = bk.states
     end
     sess().mp = mpBackup
+    for i = 1, 4 do sess().party[i] = partyBackup[i] end
+    sess().reserve = reserveBackup
 
     return events
 end
@@ -309,12 +320,37 @@ local function processEvent(ev)
         v.escaped = true
     elseif ev.type == "wave" then
         -- Emergency wave (Summoner rework §3): the swap stands in for a
-        -- game over, so it needs to read as a distinct beat, not a buried
-        -- log line — an amber screen-flash on the moment the reserves
-        -- deploy, on top of the (separate, immediately-following) text
-        -- event's message.
-        for _, b in ipairs(ev.deployed or {}) do
-            animation_player.play("system.wave", b)
+        -- game over, so it needs to read as a distinct, understandable
+        -- beat, not a buried log line or a silent instant substitution.
+        -- resolveRound's wrapper reverted session.party/reserve to their
+        -- pre-round state (see battle.resolveRound), so at this exact
+        -- moment — when the log actually reveals the event, not when the
+        -- engine originally resolved it — the party grid still shows the
+        -- OLD (dead) occupants. Each slot gets its own staggered flip:
+        -- the outgoing spirit shrinks (system.swap_out), and only once
+        -- THAT finishes does the real slot write land and the incoming
+        -- spirit grow in (system.swap_in) — a per-slot "card flip", not a
+        -- screen-wide pop. An amber screen-flash marks the whole beat.
+        local STAGGER = 0.15
+        local pending = ev.pending or {}
+        if pending[1] then animation_player.play("system.wave", pending[1].battler) end
+        for i, p in ipairs(pending) do
+            local delayMs = (i - 1) * STAGGER * 1000
+            if p.outgoing then
+                animation_player.play("system.swap_out", p.outgoing, delayMs)
+                animation_player.onComplete(p.outgoing, function()
+                    sess().party[p.slot] = p.battler
+                    sess().reserve[p.reserveKey] = nil
+                    animation_player.play("system.swap_in", p.battler)
+                end)
+            else
+                -- Empty slot (reserve ran shorter than the wipe) — nothing
+                -- to shrink out, just place the incoming spirit and grow
+                -- it in on the same stagger as the others.
+                sess().party[p.slot] = p.battler
+                sess().reserve[p.reserveKey] = nil
+                animation_player.play("system.swap_in", p.battler, delayMs)
+            end
         end
     elseif ev.type == "reap" then
         -- Permadeath (Summoner rework §3): one animation + one dedicated
@@ -600,13 +636,15 @@ function battle.handleTransition(action)
         end
         if toGameOver then
             -- Staged defeat sequence (owner feedback, 17.07.2026): background
-            -- fade -> party window slides out downward -> monsters fade to
-            -- full black -> THEN hand off to game_over. battle.update drives
-            -- the stages; the actual scene transition happens once it's done.
+            -- fades to fully black -> a dramatic pause -> party window
+            -- slides out downward -> immediately (no pause) a second fade
+            -- covers everything else (monsters included) to full black ->
+            -- THEN hand off to game_over. battle.update drives the stages.
             v.defeatTargetScene = targetScene
             v.defeatTimer = 0
             v.defeatStage = 0
-            v.defeatFadeAlpha = 0
+            v.defeatBgFade = 0
+            v.defeatFinalFade = 0
             v.defeatSlideT = 0
             v.combatState = "defeat_sequence"
         end
@@ -647,13 +685,22 @@ end
 -------------------------------------------------------------------------------
 local autoAdvanceTimer = 0
 
--- Defeat sequence stage durations (seconds): background fade to a partial
--- dim, then the party window slides out (dim holds), then a second fade
--- sweeps the rest of the way to full black (monsters included) before the
--- cut to game_over.
-local DEFEAT_STAGE0_DUR = 0.5
-local DEFEAT_STAGE1_DUR = 0.5
-local DEFEAT_STAGE2_DUR = 0.8
+-- Quadratic ease-out (matches presentation/animation_player.lua's track
+-- easing so this hand-rolled sequence reads consistently with the rest of
+-- the animation system): fast start, slow settle.
+local function easeOut(t)
+    t = math.max(0, math.min(1, t))
+    return 1 - (1 - t) * (1 - t)
+end
+
+-- Defeat sequence stage durations (seconds), owner-directed 17.07.2026:
+-- background fades to fully black, THEN a dramatic pause, THEN the party
+-- window slides out (no pause before this), THEN immediately (no pause)
+-- a second fade sweeps everything else (monsters included) to full black.
+local DEFEAT_STAGE0_DUR = 0.6  -- background fade to 100%
+local DEFEAT_STAGE1_DUR = 0.7  -- dramatic pause, held black background
+local DEFEAT_STAGE2_DUR = 0.45 -- party window slide-out
+local DEFEAT_STAGE3_DUR = 0.6  -- final fade to full black (monsters)
 
 function battle.update(dt)
     local v = battle.getState()
@@ -665,20 +712,36 @@ function battle.update(dt)
     if v.combatState == "defeat_sequence" then
         v.defeatTimer = (v.defeatTimer or 0) + dt
         local t = v.defeatTimer
-        if t < DEFEAT_STAGE0_DUR then
+        local S0, S1, S2, S3 = DEFEAT_STAGE0_DUR, DEFEAT_STAGE1_DUR, DEFEAT_STAGE2_DUR, DEFEAT_STAGE3_DUR
+        if t < S0 then
+            -- Background fades to fully black.
             v.defeatStage = 0
-            v.defeatFadeAlpha = (t / DEFEAT_STAGE0_DUR) * 0.5
+            v.defeatBgFade = easeOut(t / S0)
+            v.defeatFinalFade = 0
             v.defeatSlideT = 0
-        elseif t < DEFEAT_STAGE0_DUR + DEFEAT_STAGE1_DUR then
+        elseif t < S0 + S1 then
+            -- Dramatic pause: everything holds (background already black,
+            -- windows/monsters still visible on top of it).
             v.defeatStage = 1
-            v.defeatFadeAlpha = 0.5
-            v.defeatSlideT = (t - DEFEAT_STAGE0_DUR) / DEFEAT_STAGE1_DUR
-        elseif t < DEFEAT_STAGE0_DUR + DEFEAT_STAGE1_DUR + DEFEAT_STAGE2_DUR then
+            v.defeatBgFade = 1
+            v.defeatFinalFade = 0
+            v.defeatSlideT = 0
+        elseif t < S0 + S1 + S2 then
+            -- Party window slides straight down and off-screen.
             v.defeatStage = 2
-            v.defeatFadeAlpha = 0.5 + ((t - DEFEAT_STAGE0_DUR - DEFEAT_STAGE1_DUR) / DEFEAT_STAGE2_DUR) * 0.5
+            v.defeatBgFade = 1
+            v.defeatFinalFade = 0
+            v.defeatSlideT = easeOut((t - S0 - S1) / S2)
+        elseif t < S0 + S1 + S2 + S3 then
+            -- No pause after the slide: a second fade immediately sweeps
+            -- over everything else (the monsters) to full black.
+            v.defeatStage = 3
+            v.defeatBgFade = 1
+            v.defeatFinalFade = easeOut((t - S0 - S1 - S2) / S3)
             v.defeatSlideT = 1
         else
-            v.defeatFadeAlpha = 1
+            v.defeatBgFade = 1
+            v.defeatFinalFade = 1
             v.defeatSlideT = 1
             if v.defeatTargetScene then
                 local target = v.defeatTargetScene
