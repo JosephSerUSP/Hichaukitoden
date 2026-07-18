@@ -13,6 +13,51 @@ local popupFont
 local popupNumberFont
 local popupTextFont
 
+-- Shared portrait resolution (renderer.lua's legacy drawDialogue and the
+-- data-authored window_renderer both need it): speaker/portrait keys in
+-- data are inconsistent about the "NPC_" prefix (some conversations write
+-- "Alicia", others "NPC_Barkeep" outright), so every caller tries the same
+-- small set of filename variants rather than each guessing its own subset.
+local portraitImageCache = {}
+function ui.resolvePortraitImage(id)
+    if not id or id == "" then return nil end
+    id = tostring(id)
+    if portraitImageCache[id] then return portraitImageCache[id] end
+
+    local paths = {
+        "assets/portraits/" .. id .. ".png",
+        "assets/portraits/NPC_" .. id .. ".png",
+        "assets/portraits/" .. id:lower() .. ".png",
+        "assets/portraits/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png"
+    }
+    for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            local img = love.graphics.newImage(p)
+            img:setFilter("nearest", "nearest")
+            portraitImageCache[id] = img
+            return img
+        end
+    end
+    return nil
+end
+
+-- Every NPC portrait asset is a 640x192 sheet (5 128x192 expression
+-- columns); drawing it unsliced squashes the whole sheet into the target
+-- box. Slices the neutral (first) column and scales it to targetW/targetH.
+-- Single-image portraits (width <= 128) draw as-is, scaled the same way.
+function ui.drawSlicedPortrait(img, x, y, targetW, targetH)
+    if not img then return end
+    local w = img:getWidth()
+    local h = img:getHeight()
+    if w > 128 then
+        local fw = 128
+        local quad = love.graphics.newQuad(0, 0, fw, h, w, h)
+        love.graphics.draw(img, quad, x, y, 0, targetW / fw, targetH / h)
+    else
+        love.graphics.draw(img, x, y, 0, targetW / w, targetH / h)
+    end
+end
+
 local panelQuads = {}
 local targetQuads = {}
 

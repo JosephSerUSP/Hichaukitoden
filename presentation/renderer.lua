@@ -22,7 +22,6 @@ local function layoutVal(key)
 end
 
 local damagePopups = {}
-local portraitCache = {}
 -- B.5 small battler cache/animation clock live in presentation/small_battlers.lua
 -- (shared with the generic window renderer's sprite list rows)
 
@@ -68,45 +67,11 @@ end
 -- The small_battlers module still provides the dead-tint constant for
 -- game-state dead display.
 
+-- Delegates to the shared resolver in ui.lua (also used by
+-- window_renderer's data-authored portrait blocks) so both drawing paths
+-- try the same "NPC_" prefix / case-variant filename fallbacks.
 local function getPortrait(id)
-    if not id or id == "" then return nil end
-    -- Battlers without a spriteKey fall back to their numeric actor id
-    id = tostring(id)
-    if portraitCache[id] then return portraitCache[id] end
-    
-    local paths = {
-        "assets/portraits/" .. id .. ".png",
-        "assets/portraits/NPC_" .. id .. ".png",
-        "assets/portraits/" .. id:lower() .. ".png",
-        "assets/portraits/" .. id:sub(1,1):upper() .. id:sub(2):lower() .. ".png"
-    }
-    for _, p in ipairs(paths) do
-        if love.filesystem.getInfo(p) then
-            local img = love.graphics.newImage(p)
-            img:setFilter("nearest", "nearest")
-            portraitCache[id] = img
-            return img
-        end
-    end
-    return nil
-end
-
-local function drawSlicedPortrait(portraitId, x, y, targetW, targetH)
-    local portrait = getPortrait(portraitId)
-    if not portrait then return end
-    
-    local w = portrait:getWidth()
-    local h = portrait:getHeight()
-    
-    -- If it's a sheet (width > 128)
-    if w > 128 then
-        local fw = 128
-        local col = 0 -- default neutral column
-        local quad = love.graphics.newQuad(col * fw, 0, fw, h, w, h)
-        love.graphics.draw(portrait, quad, x, y, 0, targetW / fw, targetH / h)
-    else
-        love.graphics.draw(portrait, x, y, 0, targetW / w, targetH / h)
-    end
+    return ui.resolvePortraitImage(id)
 end
 
 local townBg
@@ -488,56 +453,18 @@ function renderer.drawMap()
     end
 end
 
--- Renders the Dialogue / Graph Walker Scene
-function renderer.drawDialogue(walker, selectIdx)
-    -- Render background under dialogue
-    viewport_3d.draw(renderer.session)
-    
-    local node = walker:getCurrentNode()
-    if not node then return end
-    
-    -- Draw portrait if speaker has one
-    local portraitId = node.speaker or walker.graph.portrait
-    if portraitId then
-        love.graphics.setColor(1, 1, 1, 1)
-        drawSlicedPortrait(portraitId, ui.toPx(1), ui.toPx(2), ui.toPx(10), ui.toPx(14))
+-- Character-by-character reveal for the current dialogue TEXT node's
+-- content, shared by the windows-drawn dialogue scene (main.lua's v-sync
+-- reads this every frame) and renderer.isDialogueRevealing/
+-- finishDialogueReveal, which all key off the same dialogueReveal tracker.
+function renderer.getRevealedDialogueText(node)
+    if not node or node.type ~= "TEXT" then return "" end
+    if dialogueReveal.node ~= node then
+        dialogueReveal.node = node
+        dialogueReveal.elapsed = 0
     end
-    
-    -- Dialogue window
-    local winX = portraitId and ui.toPx(12) or ui.toPx(1)
-    local winW = portraitId and ui.toPx(19) or ui.toPx(30)
-    ui.drawPanel(winX, ui.toPx(1), winW, ui.toPx(16))
-    
-    -- Speaker name
-    local speakerName = node.speaker
-    if speakerName and speakerName ~= "" then
-        -- Parse \eventName if present
-        local rName = string.gsub(walker.eventName or "??", "%%", "%%%%")
-        speakerName = string.gsub(speakerName, "\\eventName", rName)
-        ui.drawString(speakerName, winX + ui.toPx(1), ui.toPx(2), {1, 0.9, 0.4, 1})
-    end
-    
-    if node.type == "TEXT" then
-        -- B.0: reveal the text character by character (ui.textRevealDelay)
-        if dialogueReveal.node ~= node then
-            dialogueReveal.node = node
-            dialogueReveal.elapsed = 0
-        end
-        local content = node.content or ""
-        local shown = utf8Prefix(content, revealedCount(content, dialogueReveal.elapsed))
-        ui.drawString(shown, winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
-        ui.drawString("[Press SPACE]", winX + ui.toPx(1), ui.toPx(14), {0.6, 0.6, 0.6, 1}, "right", winW - ui.toPx(3))
-    elseif node.type == "CHOICE" then
-        ui.drawString(node.content or "Choose option:", winX + ui.toPx(1), (ui.toPx(4) + (config.windowLayout and config.windowLayout.headerSpacing or 0)), {1, 1, 1, 1}, "left", winW - ui.toPx(2), walker.eventName)
-        for i, opt in ipairs(node.options or {}) do
-            local color = (i == selectIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-            local optY = ui.toPx(5) + i * ui.lineHeight
-            if i == selectIdx then
-                small_battlers.draw("Cursor", winX + ui.toPx(1) + 2, optY, 8)
-            end
-            ui.drawString(opt.label, winX + ui.toPx(1) + 12, optY, color)
-        end
-    end
+    local content = node.content or ""
+    return utf8Prefix(content, revealedCount(content, dialogueReveal.elapsed))
 end
 
 -- The 2x2 party grid is now a thin arrangement loop: every party member's

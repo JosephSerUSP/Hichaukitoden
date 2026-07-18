@@ -47,22 +47,6 @@ local COLOR_NORMAL = { 1, 1, 1, 1 }
 local COLOR_HIGHLIGHT = { 0.6, 1, 0.6, 1 }
 local COLOR_DIM = { 0.6, 0.6, 0.6, 1 }
 
--- Portrait image cache (love.graphics.newImage per frame is a perf bug the
--- legacy crafting draw had; don't repeat it).
-local imageCache = {}
-local function getImage(path)
-    if imageCache[path] == nil then
-        if love.filesystem.getInfo(path) then
-            local img = love.graphics.newImage(path)
-            img:setFilter("nearest", "nearest")
-            imageCache[path] = img
-        else
-            imageCache[path] = false
-        end
-    end
-    return imageCache[path] or nil
-end
-
 -- ---------------------------------------------------------------------------
 -- Expression helpers
 -- ---------------------------------------------------------------------------
@@ -469,11 +453,17 @@ local function drawPortrait(layout, env, x, y, title)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
     if type(key) ~= "string" or key == "" then return end
-    local img = getImage("assets/portraits/" .. key .. ".png")
+    local img = ui.resolvePortraitImage(key)
     if img then
         love.graphics.setColor(1, 1, 1, 1)
         local contentX, contentY = contentOrigin(layout, title, x, y)
-        love.graphics.draw(img, x + ui.toPx(layout.portraitX or 1), layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY, 0, 1, 1)
+        local drawX = x + ui.toPx(layout.portraitX or 1)
+        local drawY = layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY
+        if layout.portraitW and layout.portraitH then
+            ui.drawSlicedPortrait(img, drawX, drawY, ui.toPx(layout.portraitW), ui.toPx(layout.portraitH))
+        else
+            love.graphics.draw(img, drawX, drawY, 0, 1, 1)
+        end
     end
 end
 
@@ -1124,6 +1114,14 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 end
                 if block.portraitX ~= nil then layout.portraitX = block.portraitX end
                 if block.portraitY ~= nil then layout.portraitY = block.portraitY end
+                -- Optional box-fit size (tile units). Without these, drawPortrait
+                -- keeps its old 1:1, unsliced draw exactly as before -- existing
+                -- callers (e.g. the ritual scene's portrait toggle) are
+                -- unaffected. Portrait sheets are 640x192 (5 128x192 columns);
+                -- box-fit sizing slices the neutral first column via
+                -- ui.drawSlicedPortrait.
+                if block.portraitW ~= nil then layout.portraitW = block.portraitW end
+                if block.portraitH ~= nil then layout.portraitH = block.portraitH end
             else
                 -- Unknown block types fail soft (extensibility rule).
                 if not warnedBlockTypes[block.type] then

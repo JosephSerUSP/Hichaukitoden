@@ -4086,12 +4086,57 @@
     "id": "dialogue",
     "name": "Dialogue",
     "kind": "menu",
+    "draw": "windows",
+    "backdrop": "map",
     "config": {
-      "note": "Legacy-drawn (renderer.drawDialogue). Reached via scene_host.goto_scene(\"dialogue\") from map step events, town options, and triggerDialogue() so any scene can hand off to a conversation graph."
+      "note": "Windows-drawn. Reached via scene_host.goto_scene(\"dialogue\") from map step/interact events and CALL_COMMON_EVENT chains. main.lua's handleKeyPressed dialogue branch drives GraphWalker advance/selectChoice directly (unchanged); a per-frame sync in love.update mirrors the active node into v.dialogue* fields these windows bind to, docked over the same footprint the party HUD uses elsewhere so dialogue doesn't take over the whole screen."
     },
     "hooks": {
       "on_enter": []
-    }
+    },
+    "windows": [
+      {
+        "id": "dialogue_portrait",
+        "rect": { "x": 0, "y": 18, "w": 8, "h": 12 },
+        "style": "frame",
+        "visible": "v.dialoguePortrait ~= nil and v.dialoguePortrait ~= ''",
+        "content": [
+          {
+            "type": "image",
+            "portraitField": "v.dialoguePortrait",
+            "portraitX": 1,
+            "portraitY": 1,
+            "portraitW": 6,
+            "portraitH": 10
+          }
+        ]
+      },
+      {
+        "id": "dialogue_message",
+        "rect": { "x": 8, "y": 18, "w": 24, "h": "v.dialogueMode == 'choice' and 5 or 12" },
+        "style": "frame",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.dialogueSpeaker}\n\n{v.dialogueText}\n\n{v.dialoguePrompt}"
+          }
+        ]
+      },
+      {
+        "id": "dialogue_choices",
+        "rect": { "x": 8, "y": 23, "w": 24, "h": 7 },
+        "style": "frame",
+        "visible": "v.dialogueMode == 'choice'",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:dialogueOptions",
+            "format": "{name}",
+            "cursor": "v.dialogueCursorIdx"
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "ritual",

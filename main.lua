@@ -2015,6 +2015,48 @@ function love.load(arg)
     end
 end
 
+-- Mirrors the live GraphWalker's current node into the dialogue scene's
+-- v table every frame, so the windows-drawn dialogue scene (data/scenes.json
+-- "dialogue") can bind to it via ordinary formula/list content blocks.
+-- handleKeyPressed still drives activeWalker/dialogueSelectIdx directly
+-- (unchanged) -- this only feeds the draw side. dialogueText re-reads the
+-- reveal-in-progress substring every frame via renderer.getRevealedDialogueText
+-- (same dialogueReveal tracker isDialogueRevealing/finishDialogueReveal use),
+-- so the typewriter effect keeps working under the new draw path.
+local function syncDialogueWindowState()
+    local state = scene_host.getCurrentState()
+    if not state or not activeWalker then return end
+    state.v = state.v or {}
+    local v = state.v
+    local node = activeWalker:getCurrentNode()
+    if not node then return end
+
+    if node.type == "TEXT" then
+        v.dialogueMode = "text"
+        local speaker = node.speaker
+        if speaker and speaker ~= "" then
+            local rName = string.gsub(activeWalker.eventName or "??", "%%", "%%%%")
+            speaker = string.gsub(speaker, "\\eventName", rName)
+        end
+        v.dialogueSpeaker = speaker or ""
+        v.dialogueText = renderer.getRevealedDialogueText(node)
+        v.dialoguePrompt = renderer.isDialogueRevealing() and "" or "[Press SPACE]"
+        v.dialoguePortrait = node.speaker or (activeWalker.graph and activeWalker.graph.portrait) or ""
+    elseif node.type == "CHOICE" then
+        v.dialogueMode = "choice"
+        -- Speaker/portrait intentionally left as whatever the last TEXT node
+        -- set -- the question that led to these choices stays visible above
+        -- them, same as the legacy renderer kept the same window open.
+        v.dialoguePrompt = ""
+        local opts = {}
+        for _, opt in ipairs(node.options or {}) do
+            table.insert(opts, opt.label)
+        end
+        v.dialogueOptions = opts
+        v.dialogueCursorIdx = dialogueSelectIdx
+    end
+end
+
 function love.update(dt)
     renderer.update(dt)
     server.update(dt)
@@ -2033,6 +2075,10 @@ function love.update(dt)
 
     if scene_host.getCurrent() == "battle" then
         require("engine.scenes.battle").update(dt)
+    end
+
+    if scene_host.getCurrent() == "dialogue" then
+        syncDialogueWindowState()
     end
 
     -- Shop: grant the pending item after the hook deducted gold
@@ -2091,9 +2137,6 @@ function love.draw()
         if mapState and mapSceneData then
             require("presentation.window_renderer").draw(mapState, mapSceneData, { session = activeSession, loader = loader })
         end
-    elseif scene_host.getCurrent() == "dialogue" then
-        renderer.drawDialogue(activeWalker, dialogueSelectIdx)
-        drawSharedPartyHud()
     end
     end
 

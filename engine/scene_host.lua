@@ -285,6 +285,19 @@ function scene_host.update(dt, ctx)
     return scene_host.runHook("on_frame", ctx)
 end
 
+-- Menu-style windows scenes reached from exploring (dialogue, shop, status,
+-- ...) can opt into showing the 3D map behind their windows instead of a
+-- blank canvas ("backdrop": "map" in scenes.json) — a VN-style overlay
+-- rather than a scene swap. Guarded on real map state existing: the
+-- deterministic golden-ui harness session never calls exploration.loadMap,
+-- so this silently no-ops there rather than erroring the smoke test.
+local function drawBackdrop(sceneData, ctx)
+    if sceneData.backdrop ~= "map" then return end
+    local session = ctx.session
+    if not (session and session.currentMapData and session.mapGrid) then return end
+    require("presentation.viewport_3d").draw(session)
+end
+
 function scene_host.draw(ctx)
     -- Declarative drawing is opt-in per scene ("draw": "windows" in
     -- scenes.json). Scenes without the flag fall back to legacy Lua drawing
@@ -293,6 +306,7 @@ function scene_host.draw(ctx)
     local state = sceneStack[#sceneStack]
     local sceneData = getSceneData(ctx, state.id)
     if not sceneData or sceneData.draw ~= "windows" then return false end
+    drawBackdrop(sceneData, ctx)
     local window_renderer = require("presentation.window_renderer")
     window_renderer.draw(state, sceneData, ctx)
     return true
