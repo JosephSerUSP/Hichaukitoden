@@ -912,7 +912,49 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             -- the raw window x; anything else uses the padded content origin.
             local align = layout.align or ((style == "frame") and "center" or "left")
             local tx = (align == "center") and x or contentX
-            drawTextLines(text, env, tx, contentY, lineSpacing, w - ui.toPx(1), align)
+
+            -- Small-window centering rule (owner feedback 18.07.2026):
+            -- padding applies on ALL sides, and when the content can't fit
+            -- with symmetric padding on an axis, it centers on that axis
+            -- instead of hugging top/left and crowding the far edge. Counts
+            -- explicit lines only -- printf-wrapped long text (message box)
+            -- keeps its top anchor.
+            local rendered = interpolate(text, env)
+            local lineCount = 0
+            local maxLineW = 0
+            for chunk in (rendered .. "\n"):gmatch("(.-)\n") do
+                lineCount = lineCount + 1
+                local lw = ui.measureText(chunk)
+                if lw > maxLineW then maxLineW = lw end
+            end
+            -- Trailing blank lines from template padding don't push layout.
+            while lineCount > 1 and rendered:sub(-1) == "\n" do
+                lineCount = lineCount - 1
+                rendered = rendered:sub(1, -2)
+            end
+            local padY = contentY - y
+            local ty = contentY
+            local textH = (lineCount - 1) * lineSpacing + ui.lineHeight
+            if textH > h - 2 * padY then
+                ty = y + math.max(2, math.floor((h - textH) / 2))
+            end
+            local padX = contentX - x
+            if align ~= "center" and maxLineW > w - 2 * padX then
+                align = "center"
+                tx = x
+            end
+            drawTextLines(text, env, tx, ty, lineSpacing, w - ui.toPx(1), align)
+        end
+    end
+
+    -- Animated waiting-for-input marker (owner feedback 18.07.2026): any
+    -- window can declare a waitInput formula; while truthy, the shared
+    -- UI_WaitingForInput strip animates at the window's bottom-right,
+    -- replacing textual "[Press SPACE]"-style prompts.
+    if layout.waitInput then
+        local ok, wv = pcall(formula.eval, layout.waitInput, env)
+        if ok and (wv == true or (type(wv) == "number" and wv ~= 0)) then
+            small_battlers.draw("UI_WaitingForInput[fps=30]", x + w - 16, y + h - 8, 12)
         end
     end
 end
@@ -1065,6 +1107,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         if winDef.lineSpacing ~= nil then layout.lineSpacing = winDef.lineSpacing end
         if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
         if winDef.align ~= nil then layout.align = winDef.align end
+        if winDef.waitInput ~= nil then layout.waitInput = winDef.waitInput end
 
         -- Build the synthetic win entry from content blocks, reusing the
         -- persistent table so per-win state keyed on it (openClocks) survives
@@ -1156,6 +1199,30 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         local winListCache = {}
         if win._resolvedRows then
             winListCache[winDef.id] = { rows = win._resolvedRows, cursor = win.cursor }
+        end
+
+        -- Adaptive height (owner feedback 18.07.2026): fitRows shrinks a
+        -- list window to its actual row count (rect h stays the numeric MAX,
+        -- keeping the editor's geometry math working). "bottom" re-anchors
+        -- so the window hugs its rect's bottom edge -- the dialogue choice
+        -- strip grows upward from the dialog box's bottom.
+        if winDef.fitRows and win._resolvedRows then
+            local rowCount = #win._resolvedRows
+            if rowCount > 0 then
+                -- Mirror drawList's scroll math exactly (visible rows =
+                -- (h - toPx(3)) / rowPitch), or the shrunk window would
+                -- clip rows it was sized for.
+                local pitch = layout.rowPitch and ui.toPx(layout.rowPitch) or ui.lineHeight
+                local fitPx = rowCount * pitch + ui.toPx(3)
+                local maxPx = ui.toPx(layout.height)
+                if fitPx < maxPx then
+                    local shrinkTiles = (maxPx - fitPx) / ui.toPx(1)
+                    layout.height = layout.height - shrinkTiles
+                    if winDef.fitRows == "bottom" then
+                        layout.y = layout.y + shrinkTiles
+                    end
+                end
+            end
         end
 
         drawWindow(winDef.id, win, layout, state, sceneData, ctx, env, winListCache, layouts)

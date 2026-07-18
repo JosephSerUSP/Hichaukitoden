@@ -78,6 +78,37 @@ function small_battlers.get(spriteKey)
         "assets/system/" .. fileKey .. ".png",
         "assets/system/" .. fileKey:sub(1, 1):upper() .. fileKey:sub(2):lower() .. ".png",
     }
+    -- Filenames may carry the [key=value] tokens themselves (the owner
+    -- convention: "pixie[fps=15].png" -- tokens live in the FILENAME, not in
+    -- actor fields). A plain key like "pixie" must still find that file, so
+    -- scan each asset dir once and index actual filenames by their stripped
+    -- base name; file tokens apply as defaults under any key-supplied ones.
+    if not small_battlers._fileIndex then
+        local index = {}
+        for _, dir in ipairs({ "assets/smallBattlers", "assets/sprites", "assets/system" }) do
+            for _, f in ipairs(love.filesystem.getDirectoryItems(dir) or {}) do
+                if f:match("%.png$") then
+                    local tokens = {}
+                    local base = f:gsub("%.png$", ""):gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
+                        tokens[k] = tonumber(v) or v
+                        return ""
+                    end)
+                    base = base:gsub("^%s*(.-)%s*$", "%1"):lower()
+                    if index[base] == nil then
+                        index[base] = { path = dir .. "/" .. f, tokens = tokens }
+                    end
+                end
+            end
+        end
+        small_battlers._fileIndex = index
+    end
+    local indexed = small_battlers._fileIndex[fileKey:lower()]
+    if indexed then
+        table.insert(paths, indexed.path)
+        for k, v in pairs(indexed.tokens) do
+            if overrides[k] == nil then overrides[k] = v end
+        end
+    end
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then
             local img = love.graphics.newImage(p)

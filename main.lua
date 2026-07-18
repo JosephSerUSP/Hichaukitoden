@@ -343,7 +343,7 @@ local function runPreviewScene(sceneId)
                 st.v.dialogueSpeaker = "Alicia"
                 st.v.dialoguePortrait = "NPC_Alicia"
                 st.v.dialogueText = "Oh! H-hello! Welcome to my shop. Please look around!"
-                st.v.dialoguePrompt = ""
+                st.v.dialogueWaiting = false
                 st.v.dialogueOptions = { "Buy Consumables", "Talk", "Leave" }
                 st.v.dialogueCursorIdx = 1
             end
@@ -2042,11 +2042,18 @@ end
 -- so the typewriter effect keeps working under the new draw path.
 local function syncDialogueWindowState()
     local state = scene_host.getCurrentState()
-    if not state or not activeWalker then return end
+    if not state then return end
+    -- Dead-walker guard: a dialogue whose walker has ended (or was lost)
+    -- with the scene still current would otherwise soft-lock -- there is no
+    -- ESC exit from dialogue by design. Returning from a pushed scene
+    -- (shop) with the conversation finished behind it lands here too.
+    local node = activeWalker and activeWalker:getCurrentNode()
+    if not node then
+        scene_host.goto_scene("map")
+        return
+    end
     state.v = state.v or {}
     local v = state.v
-    local node = activeWalker:getCurrentNode()
-    if not node then return end
 
     if node.type == "TEXT" then
         v.dialogueMode = "text"
@@ -2057,7 +2064,9 @@ local function syncDialogueWindowState()
         end
         v.dialogueSpeaker = speaker or ""
         v.dialogueText = renderer.getRevealedDialogueText(node)
-        v.dialoguePrompt = renderer.isDialogueRevealing() and "" or "[Press SPACE]"
+        -- Drives the animated waiting-for-input marker on the message
+        -- window (waitInput formula), replacing the old "[Press SPACE]".
+        v.dialogueWaiting = not renderer.isDialogueRevealing()
         -- Portrait PERSISTS across speakerless narration lines and CHOICE
         -- nodes (only a new speaker/portrait replaces it); the namebox above
         -- clears instead, since it tracks who's speaking line by line. v is
@@ -2071,13 +2080,40 @@ local function syncDialogueWindowState()
         -- Speaker/portrait intentionally left as whatever the last TEXT node
         -- set -- the question that led to these choices stays visible above
         -- them, same as the legacy renderer kept the same window open.
-        v.dialoguePrompt = ""
+        v.dialogueWaiting = false
         local opts = {}
         for _, opt in ipairs(node.options or {}) do
             table.insert(opts, opt.label)
         end
         v.dialogueOptions = opts
         v.dialogueCursorIdx = dialogueSelectIdx
+
+        -- RPG Maker rule: the choice strip grows up from the dialog box's
+        -- bottom (fitRows), and when the retained TEXT wouldn't fit in what
+        -- remains above it, the text clears to make room. Geometry comes
+        -- from the scene's own window defs so layout edits stay data-only;
+        -- wrapped-line count is an estimate (measure/width), biased to
+        -- clearing early rather than overlapping.
+        local text = v.dialogueText or ""
+        if text ~= "" then
+            local ui = require("presentation.ui")
+            local sceneDef = loader.getScene("dialogue")
+            local msgDef
+            for _, wd in ipairs((sceneDef and sceneDef.windows) or {}) do
+                if wd.id == "dialogue_message" then msgDef = wd end
+            end
+            local boxH = ui.toPx((msgDef and msgDef.rect and msgDef.rect.h) or 12)
+            local boxW = ui.toPx((msgDef and msgDef.rect and msgDef.rect.w) or 24)
+            local stripH = #opts * ui.lineHeight + ui.toPx(3)
+            local availH = boxH - stripH - 12
+            local lines = 0
+            for chunk in (text .. "\n"):gmatch("(.-)\n") do
+                lines = lines + math.max(1, math.ceil(ui.measureText(chunk) / math.max(1, boxW - 24)))
+            end
+            if lines * ui.lineHeight > availH then
+                v.dialogueText = ""
+            end
+        end
     end
 end
 
@@ -2335,6 +2371,13 @@ handleDialogueAction = function()
             end
         elseif node.action == "OPEN_SHOP" then
             openShop(node.shopId)
+            -- Advance PAST the shop node now, while the shop scene sits on
+            -- top: when it pops, the dialogue is already resting on the next
+            -- node (typically the jump back to the hub CHOICE). Without this
+            -- the walker stayed parked on the consumed ACTION node forever --
+            -- no key could advance it, leaving the scene dead on return.
+            activeWalker:advance()
+            handleDialogueAction()
         elseif node.action == "OFFER_QUEST" then
             local quest = loader.getQuest(node.questId)
             activeSession.flags["quest:" .. node.questId .. ":active"] = true
@@ -2528,17 +2571,14 @@ local function handleKeyPressed(key)
         return
     end
 
-    if key == "escape" then
-        -- E10: title ESC is handled by the scene's on_cancel hook (moves the
-        -- cursor to Exit instead of instant-quitting). Map's ESC (opening
-        -- the party cursor + command overlay) is likewise fully handled by
-        -- the map scene's own on_cancel hook above — nothing left to do here.
-        if scene_host.getCurrent() == "dialogue" then
-            scene_host.goto_scene("map")
-            return
-        end
-    end
-    
+    -- E10: title ESC is handled by the scene's on_cancel hook (moves the
+    -- cursor to Exit instead of instant-quitting). Map's ESC (opening the
+    -- party cursor + command overlay) is likewise fully handled by the map
+    -- scene's own on_cancel hook above. Dialogue deliberately has NO escape
+    -- exit: conversations advance only through their own TEXT/CHOICE flow
+    -- (RPG Maker convention), and the dead-walker guard in love.update
+    -- returns to the map if a dialogue ever ends up with no current node.
+
     -- E10: title input is fully handled by the title scene's data hooks
     -- (scene_host.keypressed above), so no legacy title branch remains.
     if scene_host.getCurrent() == "town" then
