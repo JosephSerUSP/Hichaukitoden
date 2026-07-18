@@ -86,7 +86,8 @@
           0.69
         ],
         "fromIntensity": 1,
-        "toIntensity": 1
+        "toIntensity": 1,
+        "id": "trk_n3ki3o"
       }
     ]
   },
@@ -1462,7 +1463,8 @@
         "toY": 10,
         "easing": "ease_in",
         "toScaleX": 0.7,
-        "toScaleY": 0.05
+        "toScaleY": 0.05,
+        "id": "trk_yzayam"
       }
     ]
   },
