@@ -10,7 +10,7 @@
 --   v.combatLog          combat log list
 --   v.combatState        "input" or "log"
 --   v.selectedIndex      command cursor position
---   v.spellSelect        boolean, spell/skill submenu active
+--   v.skillSelect        boolean, spell/skill submenu active
 --   v.eventsQueue        battle events queue from resolveRound
 --   v.eventQueueIndex    current position in events queue
 --   v.escaped            boolean, true when flee succeeded
@@ -136,7 +136,7 @@ function battle.triggerBattle()
     v.eventQueueIndex = 1
     v.combatState = "input"
     v.selectedIndex = 1
-    v.spellSelect = false
+    v.skillSelect = false
     v.escaped = false
 
     battle.rebuildLivingMembers()
@@ -167,7 +167,7 @@ function battle.triggerTestBattle()
     v.eventQueueIndex = 1
     v.combatState = "input"
     v.selectedIndex = 1
-    v.spellSelect = false
+    v.skillSelect = false
 
     battle.rebuildLivingMembers()
     renderer.initBattleAnims(enemyList)
@@ -411,7 +411,7 @@ function battle.commitAction(memberIndex, action)
     v.collectedActions[memberIndex] = action
     v.activeMemberIdx = (v.activeMemberIdx or 1) + 1
     v.selectedIndex = 1
-    v.spellSelect = false
+    v.skillSelect = false
     v.itemSelect = false
 
     if v.activeMemberIdx > #(v.livingMembers or {}) then
@@ -442,7 +442,7 @@ function battle.undoAction()
         v.collectedActions[memberIndex] = nil
     end
 
-    v.spellSelect = false
+    v.skillSelect = false
     v.itemSelect = false
     if prevAction then
         if prevAction.type == "attack" then
@@ -600,7 +600,7 @@ function battle.handleTransition(action)
         battle.rebuildLivingMembers()
         v.combatState = "input"
         v.selectedIndex = 1
-        v.spellSelect = false
+        v.skillSelect = false
     end
     return true
 end
@@ -658,7 +658,7 @@ function battle.update(dt)
                         battle.rebuildLivingMembers()
                         v.combatState = "input"
                         v.selectedIndex = 1
-                        v.spellSelect = false
+                        v.skillSelect = false
                     end
                 else
                     autoAdvanceTimer = 0

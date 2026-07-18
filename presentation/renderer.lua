@@ -588,7 +588,7 @@ end
 -- declarative "party" window in presentation/window_renderer.lua, drawn for
 -- every scene by main.lua's drawSharedPartyHud — no legacy party HUD remains.
 
-local function getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+local function getHoveredTargets(bv, combatState, selectedIndex, skillSelect, itemSelect, livingMembers, activeMemberIdx)
     if combatState ~= "input" then return {} end
     local session = renderer.session
     if not session or not bv then return {} end
@@ -932,7 +932,7 @@ function renderer.drawScreenFlashOverlay(battleState)
     end
 end
 
-function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+function renderer.drawTargetReticles(bv, combatState, selectedIndex, skillSelect, itemSelect, livingMembers, activeMemberIdx)
     if combatState ~= "input" or not bv then return end
     
     local session = renderer.session
@@ -940,7 +940,7 @@ function renderer.drawTargetReticles(bv, combatState, selectedIndex, spellSelect
     
     local battleState = bv.battle
 
-    local targets = getHoveredTargets(bv, combatState, selectedIndex, spellSelect, itemSelect, livingMembers, activeMemberIdx)
+    local targets = getHoveredTargets(bv, combatState, selectedIndex, skillSelect, itemSelect, livingMembers, activeMemberIdx)
     for _, target in ipairs(targets) do
         local tx, ty, tw, th = getBattlerRect(target, battleState, session)
         if tx and ty and tw and th then
