@@ -26,6 +26,39 @@ function conditions.evalPrefixed(condStr, session)
         return true, session:hasItem(tonumber(itemStr), 1)
     end
 
+    local questId, questStatus = condStr:match("^questStatus:([%w_]+):([%w_]+)")
+    if questId then
+        -- Quest lifecycle is tracked as two flags ("quest:<id>:active" /
+        -- "quest:<id>:completed"), set by the QUEST_OFFER/QUEST_COMPLETE
+        -- ACTION handlers in main.lua. "inactive" means neither flag is set
+        -- yet (quest never offered).
+        local active = session.flags["quest:" .. questId .. ":active"] == true
+        local completed = session.flags["quest:" .. questId .. ":completed"] == true
+        if questStatus == "active" then return true, active end
+        if questStatus == "completed" then return true, completed end
+        if questStatus == "inactive" then return true, not (active or completed) end
+        return true, false
+    end
+
+    -- Comma-separated conditions AND together (e.g. "flag:a, hasItem:5"),
+    -- as long as every part resolves through a known prefix above; if any
+    -- part doesn't match, the whole string falls through to the caller's
+    -- own fallback rather than partially matching.
+    if condStr:find(",") then
+        local allMatched = true
+        local allTrue = true
+        for part in condStr:gmatch("[^,]+") do
+            local trimmed = part:match("^%s*(.-)%s*$")
+            local matched, result = conditions.evalPrefixed(trimmed, session)
+            if not matched then
+                allMatched = false
+                break
+            end
+            if not result then allTrue = false end
+        end
+        if allMatched then return true, allTrue end
+    end
+
     return false
 end
 

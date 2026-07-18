@@ -238,33 +238,6 @@
             return sel;
         };
 
-        function createGraphPicker(current, onChange, flex) {
-            const sel = document.createElement('select');
-            sel.className = 'win98-select';
-            if (flex) sel.style.flex = flex;
-
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = '(none)';
-            sel.appendChild(defaultOpt);
-
-            fetch(`${API_URL}/api/graphs`)
-                .then(r => r.json())
-                .then(graphs => {
-                    graphs.forEach(g => {
-                        const opt = document.createElement('option');
-                        opt.value = g;
-                        opt.textContent = g;
-                        if (current === g) opt.selected = true;
-                        sel.appendChild(opt);
-                    });
-                })
-                .catch(e => console.error('Failed to load graphs', e));
-
-            sel.onchange = () => { onChange(sel.value); setDirty(true); };
-            return sel;
-        }
-
         function createMapPicker(current, onChange, flex) {
             const mapOpts = dbPayload.maps ? dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) })) : [];
             return makeSelect(mapOpts, current, onChange, flex);
@@ -813,8 +786,10 @@
             'summoner.summonCostPerTier':  { label: 'Summon Cost / Tier (MP)' },
             'summoner.sacrificeExpRate':   { label: 'Sacrifice EXP Rate (Multiplier)', step: 0.1,
                                              help: 'Also the rate at which permadeath converts fallen spirits to banked EXP.' },
-            'spawn.x':                     { label: 'Town Spawn X' },
-            'spawn.y':                     { label: 'Town Spawn Y' },
+            'spawn.mapId':                 { label: 'Spawn Map ID',
+                                             help: 'Which map New Game loads into. Set via right-click in the Map painter, or type a map id here.' },
+            'spawn.x':                     { label: 'Spawn X' },
+            'spawn.y':                     { label: 'Spawn Y' },
             'newGame.goldMin':             { label: 'Starting Gold (min)' },
             'newGame.goldMax':             { label: 'Starting Gold (max)' },
             'newGame.guaranteedItem.id':   { label: 'Guaranteed Item', widget: 'itemSelect' },
@@ -1021,7 +996,6 @@
                 group.appendChild(lbl);
                 const box = makeListBox();
                 const arr = value;
-                const graphNames = ['npc_weapon_shop', 'npc_alicia', 'npc_drunkard'];
                 const render = () => {
                     box.innerHTML = '';
                     arr.forEach((opt, idx) => {
@@ -1041,15 +1015,12 @@
                         }));
                         if (opt.action === 'enter_dungeon') {
                             row.appendChild(createMapPicker(opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
-                        } else {
-                            const graph = createGraphPicker(opt.graph || '', v => { opt.graph = v; }, '1');
-                            row.appendChild(graph);
                         }
                         row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
                         box.appendChild(row);
                     });
                     box.appendChild(makeAddRowBtn('+ Add Option', () => {
-                        arr.push({ label: 'New Option', action: 'dialogue', graph: graphNames[0] });
+                        arr.push({ label: 'New Option', action: 'dialogue' });
                         render();
                     }));
                 };

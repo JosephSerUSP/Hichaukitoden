@@ -219,9 +219,10 @@
                 }
             });
 
-            // 3. Draw Player spawn indicator
-            const isSpawn = dbPayload.system && dbPayload.system.spawn &&
-                            currentMapIndex === 0;
+            // 3. Draw Player spawn indicator (only on the map spawn.mapId points at)
+            const currentMap = dbPayload.maps[currentMapIndex];
+            const isSpawn = dbPayload.system && dbPayload.system.spawn && currentMap &&
+                            dbPayload.system.spawn.mapId === currentMap.id;
             if (isSpawn) {
                 const sx = parseInt(dbPayload.system.spawn.x);
                 const sy = parseInt(dbPayload.system.spawn.y);
@@ -415,6 +416,8 @@
             if (!dbPayload.system) dbPayload.system = {};
             if (!dbPayload.system.spawn) dbPayload.system.spawn = {};
 
+            const map = dbPayload.maps[currentMapIndex];
+            dbPayload.system.spawn.mapId = map ? map.id : dbPayload.system.spawn.mapId;
             dbPayload.system.spawn.x = x;
             dbPayload.system.spawn.y = y;
 

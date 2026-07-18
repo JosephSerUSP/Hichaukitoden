@@ -943,44 +943,6 @@ runValidation = function()
         end
     end
 
-    -- Conversation graphs (data/graphs/*.json): every node link must resolve
-    -- and quest actions must reference quests.json entries. Graphs load ad
-    -- hoc at runtime (director.startConversation), so a broken link only
-    -- surfaces mid-dialogue without this sweep.
-    do
-        local json = require("data.json")
-        for _, f in ipairs(love.filesystem.getDirectoryItems("data/graphs")) do
-            if f:match("%.json$") then
-                local contents = love.filesystem.read("data/graphs/" .. f)
-                local okG, graph = pcall(json.decode, contents)
-                if check(okG and type(graph) == "table", "graph '" .. f .. "' is not valid JSON")
-                    and type(graph.nodes) == "table" then
-                    local nodes = graph.nodes
-                    check(graph.initialNode == nil or nodes[graph.initialNode] ~= nil,
-                        "graph '" .. f .. "' initialNode '" .. tostring(graph.initialNode) .. "' does not exist")
-                    for id, node in pairs(nodes) do
-                        for _, key in ipairs({ "next", "trueNode", "falseNode", "acceptNode", "completeNode", "declineNode" }) do
-                            local link = node[key]
-                            check(link == nil or nodes[link] ~= nil,
-                                "graph '" .. f .. "' node '" .. tostring(id) .. "' links to missing node '" .. tostring(link) .. "'")
-                        end
-                        for _, opt in ipairs(node.options or {}) do
-                            check(opt.target == nil or nodes[opt.target] ~= nil,
-                                "graph '" .. f .. "' node '" .. tostring(id) .. "' choice links to missing node '" .. tostring(opt.target) .. "'")
-                        end
-                        for _, br in ipairs(node.branches or {}) do
-                            check(br.target == nil or nodes[br.target] ~= nil,
-                                "graph '" .. f .. "' node '" .. tostring(id) .. "' branch links to missing node '" .. tostring(br.target) .. "'")
-                        end
-                        if node.action == "OFFER_QUEST" or node.action == "COMPLETE_QUEST" then
-                            check(loader.quests and loader.quests[tostring(node.questId)] ~= nil,
-                                "graph '" .. f .. "' node '" .. tostring(id) .. "' references missing quest '" .. tostring(node.questId) .. "'")
-                        end
-                    end
-                end
-            end
-        end
-    end
 
     -- Simulated battle round with a starting party
     local vSession = session.GameSession.new(loader)
@@ -2475,17 +2437,6 @@ local function checkStepEvents()
     return false
 end
 
--- Triggers a conversation graph
-local function triggerDialogue(graphName)
-    local walker = director.startConversation(activeSession, graphName)
-    if walker then
-        activeWalker = walker
-        dialogueSelectIdx = 1
-        scene_host.goto_scene("dialogue")
-        handleDialogueAction()
-    end
-end
-
 triggerBattle = function()
     require("engine.scenes.battle").triggerBattle()
 end
@@ -2538,11 +2489,8 @@ local function handleKeyPressed(key)
                     activeSession.dungeonFloor = 1
                     exploration.loadMap(activeSession, opt.mapId or 2)
                     scene_host.goto_scene("map")
-                elseif opt.action == "dialogue" then
-                    triggerDialogue(opt.graph)
                 elseif opt.action == "rest" then
                     recoverParty()
-                    if opt.graph then triggerDialogue(opt.graph) end
                 end
             end
         end

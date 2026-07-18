@@ -34,7 +34,7 @@ local interpreter = {}
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
-    COMMENT = true,
+    COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
 }
 
 local function cmdId(cmd)
@@ -96,15 +96,32 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         elseif cmd.type == "CHOICE" then
             local options = {}
             for oi, opt in ipairs(cmd.options or {}) do
-                -- Older data files used "script" for option sub-commands
-                local optFirst = interpreter.compile(nodes, opt.commands or opt.script, nodeId .. "_opt" .. oi, nextId, ctx)
-                table.insert(options, {
-                    label = opt.label,
-                    setFlag = opt.setFlag,
-                    target = optFirst or nextId
-                })
+                -- Optional per-option visibility gate (flag:/hasItem:/
+                -- questStatus:), same grammar as CONDITIONAL_BRANCH; an
+                -- option with an unmatched/false condition is left out of
+                -- the compiled list entirely.
+                local show = true
+                if opt.condition then
+                    local matched, result = conditions.evalPrefixed(opt.condition, ctx.session)
+                    show = (not matched) or result
+                end
+                if show then
+                    -- Older data files used "script" for option sub-commands
+                    local optFirst = interpreter.compile(nodes, opt.commands or opt.script, nodeId .. "_opt" .. oi, nextId, ctx)
+                    table.insert(options, {
+                        label = opt.label,
+                        setFlag = opt.setFlag,
+                        target = optFirst or nextId
+                    })
+                end
             end
             nodes[nodeId] = { type = "CHOICE", options = options }
+        elseif cmd.type == "OPEN_SHOP" then
+            nodes[nodeId] = { type = "ACTION", action = "OPEN_SHOP", shopId = cmd.shopId, next = nextId }
+        elseif cmd.type == "QUEST_OFFER" then
+            nodes[nodeId] = { type = "ACTION", action = "OFFER_QUEST", questId = cmd.questId, next = nextId }
+        elseif cmd.type == "QUEST_COMPLETE" then
+            nodes[nodeId] = { type = "ACTION", action = "COMPLETE_QUEST", questId = cmd.questId, next = nextId }
         elseif cmd.type == "CONDITIONAL_BRANCH" then
             local trueFirst = interpreter.compile(nodes, cmd.commands, nodeId .. "_then", nextId, ctx)
             local falseFirst = interpreter.compile(nodes, cmd.elseCommands, nodeId .. "_else", nextId, ctx)
@@ -826,10 +843,15 @@ handlers.QUEST_GRANT_REWARDS = function(cmd, ctx)
 end
 
 -- E10: load a map by index (title New Game, future warps). Same call the
--- legacy title key handler made (exploration.loadMap).
+-- legacy title key handler made (exploration.loadMap). Omitting mapId
+-- defers to system.spawn.mapId, so "where New Game starts" is data-editable
+-- without touching this command.
 handlers.LOAD_MAP = function(cmd, ctx)
     local exploration = require("engine.exploration")
-    exploration.loadMap(ctx.session, tonumber(evalFormula(cmd.mapId, ctx)) or 1)
+    local sys = ctx.session.loader and ctx.session.loader.system
+    local spawnMapId = sys and sys.spawn and sys.spawn.mapId
+    local mapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx)) or spawnMapId or 1
+    exploration.loadMap(ctx.session, mapId)
 end
 
 -- E10: quit the game (title Exit). No-op outside a LOVE runtime.

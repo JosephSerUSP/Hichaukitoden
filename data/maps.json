@@ -36,11 +36,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "The gate to the lower depths is sealed. Come back when you are prepared."
-          },
-          {
-            "type": "TELEPORT"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 20
           }
         ],
         "name": "Gate Guard",
@@ -56,9 +53,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "Welcome to the Weapon Shop! How can I help you?",
-            "speaker": "\\eventName"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 19
           }
         ],
         "name": "Weapon Shop"
@@ -69,8 +65,13 @@
         "y": 5,
         "sprite": "assets/sprites/NPC07.png",
         "trigger": "interact",
-        "scriptId": 4,
-        "name": "NPC 3"
+        "name": "Yukio",
+        "script": [
+          {
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 22
+          }
+        ]
       },
       {
         "id": 4,
@@ -80,9 +81,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "Welcome! Keep an eye on your summoner's MP, it depletes as you move.",
-            "speaker": "\\eventName"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 18
           }
         ],
         "name": "Laura"
@@ -121,9 +121,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "I have prepared some items for your journey. Check the database.",
-            "speaker": "\\eventName"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 16
           }
         ],
         "name": "Alicia"
@@ -136,9 +135,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "The drinks here are cheap. Feel free to rest.",
-            "speaker": "\\eventName"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 29
           }
         ],
         "name": "Pub Owner"
@@ -151,9 +149,8 @@
         "trigger": "interact",
         "script": [
           {
-            "type": "TEXT",
-            "text": "Welcome to the summoners auction house!",
-            "speaker": "\\eventName"
+            "type": "CALL_COMMON_EVENT",
+            "commonEventId": 21
           }
         ],
         "name": "Auctioneer"
@@ -367,6 +364,26 @@
         "y": 5,
         "spawn": "Random",
         "sprite": "assets/sprites/NPC14.png"
+      },
+      {
+        "id": 6,
+        "x": 8,
+        "y": 5,
+        "spawn": "Fixed",
+        "sprite": "assets/sprites/NPC15.png",
+        "trigger": "interact",
+        "name": "Wandering Merchant",
+        "scriptId": 24
+      },
+      {
+        "id": 7,
+        "x": 12,
+        "y": 12,
+        "spawn": "Fixed",
+        "sprite": "assets/sprites/NPC16.png",
+        "trigger": "interact",
+        "name": "Daphne",
+        "scriptId": 25
       }
     ],
     "treasures": [

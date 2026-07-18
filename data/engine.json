@@ -389,6 +389,57 @@
       "description": "Teleport the party to another location."
     },
     {
+      "id": "OPEN_SHOP",
+      "category": "Progression",
+      "label": "Open Shop",
+      "params": [
+        {
+          "key": "shopId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Opens the shop scene stocked from data/shops.json for the given shop id."
+    },
+    {
+      "id": "QUEST_OFFER",
+      "category": "Advanced",
+      "label": "Offer Quest",
+      "params": [
+        {
+          "key": "questId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Marks a quest active (quest:<id>:active flag) and runs the quest.offer flow (or the quest's acceptHook, if it has one)."
+    },
+    {
+      "id": "QUEST_COMPLETE",
+      "category": "Advanced",
+      "label": "Complete Quest",
+      "params": [
+        {
+          "key": "questId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Runs the quest.complete flow (or the quest's completeHook): takes item requirements and grants rewards, then marks the quest completed (quest:<id>:completed flag)."
+    },
+    {
       "id": "BATTLE",
       "category": "Progression",
       "label": "Start Battle",
@@ -1054,7 +1105,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Loads the map with the given index into the session (title New Game, warps)."
+      "description": "Loads the map with the given index into the session (title New Game, warps). If mapId is omitted, defaults to system.spawn.mapId."
     },
     {
       "id": "QUIT_GAME",

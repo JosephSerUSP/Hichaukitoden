@@ -1,4 +1,5 @@
 local conditions = require("engine.conditions")
+local formulaEngine = require("engine.formula")
 
 local director = {}
 
@@ -21,12 +22,19 @@ end
 function GraphWalker:evaluateCondition(condStr)
     if not condStr or condStr == "" then return true end
 
-    -- Shared "flag:"/"hasItem:" grammar (see engine/conditions.lua); a
-    -- ROUTER's fallback for any non-prefixed string is false.
+    -- Shared "flag:"/"hasItem:"/"questStatus:" grammar (see
+    -- engine/conditions.lua); anything else falls back to the sandboxed
+    -- formula language (mirrors engine/interpreter.lua's IF handler), which
+    -- is how compiled CONDITIONAL_BRANCH conditions express randomness,
+    -- e.g. "random() < 0.2".
     local matched, result = conditions.evalPrefixed(condStr, self.session)
     if matched then return result end
 
-    return false
+    local fctx = formulaEngine.makeContext({}, self.session)
+    local val, err = formulaEngine.eval(condStr, fctx)
+    if err then return false end
+    if type(val) == "boolean" then return val end
+    return val ~= 0 and val ~= nil
 end
 
 function GraphWalker:getCurrentNode()
@@ -90,20 +98,5 @@ function GraphWalker:selectChoice(optionIndex)
 end
 
 director.GraphWalker = GraphWalker
-
--- Helper to load graph by name using loader
-function director.startConversation(session, graphName)
-    local path = "data/graphs/" .. graphName .. ".json"
-    local contents = love.filesystem.read(path)
-    if not contents then
-        print("Warning: Conversation graph not found: " .. path)
-        return nil
-    end
-    local json = require("data.json")
-    local graphData = json.decode(contents)
-    local walker = GraphWalker.new(session, graphData)
-    walker.eventName = graphData.name
-    return walker
-end
 
 return director

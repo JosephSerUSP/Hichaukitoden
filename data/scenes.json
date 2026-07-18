@@ -1249,8 +1249,7 @@
               "cmd": "RESET_SESSION"
             },
             {
-              "cmd": "LOAD_MAP",
-              "mapId": 1
+              "cmd": "LOAD_MAP"
             },
             {
               "cmd": "SCENE_EVENT",
