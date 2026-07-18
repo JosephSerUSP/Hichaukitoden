@@ -8,11 +8,17 @@ local session = {}
 local Battler = {}
 Battler.__index = Battler
 
-function Battler.new(actorData, level)
+function Battler.new(actorData, level, isAlly)
     local self = setmetatable({}, Battler)
     self.actorData = actorData
     self.id = actorData.id
     self.name = actorData.name
+    if isAlly and actorData.role ~= "Summoner" then
+        local list = actorData.names
+        if list and #list > 0 then
+            self.name = list[math.random(#list)]
+        end
+    end
     self.meta = actorData.meta or {}
     self.level = level or actorData.level or 1
     self.spriteKey = actorData.spriteKey  -- B.2: propagate sprite key for enemy rendering
@@ -172,7 +178,7 @@ function GameSession:initializeStartingParty()
     for i, m in ipairs(members) do
         local actorData = self.loader.getActor(m.id)
         if actorData then
-            local battler = Battler.new(actorData, m.level)
+            local battler = Battler.new(actorData, m.level, true)
             battler.hp = battler:getMaxHp(self)
             table.insert(self.party, battler)
         end

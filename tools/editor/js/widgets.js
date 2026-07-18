@@ -1452,6 +1452,12 @@
                 formPanel.appendChild(sacrificeRow);
                 buildSacrificeRewardsEditor(sacrificeRow, item);
 
+                // Custom names row
+                const namesRow = document.createElement('div');
+                formPanel.appendChild(namesRow);
+                item.names = item.names || [];
+                buildStringListEditor(namesRow, 'Possible Custom Names (Allies)', item.names, 'e.g. Sparky');
+
             } else if (ENTITY_FORM_SCHEMAS[activeDbTab]) {
                 if (!buildEntityForm(formPanel, item, ENTITY_FORM_SCHEMAS[activeDbTab])) return;
 

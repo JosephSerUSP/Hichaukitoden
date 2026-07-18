@@ -35,6 +35,7 @@ function loader.init()
     -- Scenes configuration
     loader.scenes = load_json("data/scenes.json")
 
+
     -- overhaul-7 A1: animations data loaded from JSON
     loader.animations = load_json("data/animations.json")
     local animation_player = require("presentation.animation_player")

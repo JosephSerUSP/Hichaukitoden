@@ -13,6 +13,10 @@
       },
       {
         "cmd": "APPLY_EFFECT"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 700
       }
     ]
   },
@@ -30,6 +34,10 @@
       },
       {
         "cmd": "APPLY_EFFECT"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 700
       }
     ]
   }

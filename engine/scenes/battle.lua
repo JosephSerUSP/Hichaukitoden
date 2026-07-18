@@ -393,9 +393,14 @@ function battle.advanceLog()
             while v.eventQueueIndex <= #(v.eventsQueue or {}) do
                 local nextEv = v.eventsQueue[v.eventQueueIndex]
                 if nextEv.type == "damage" or nextEv.type == "heal" or nextEv.type == "death" or 
-                   nextEv.type == "state_add" or nextEv.type == "state_remove" or nextEv.type == "mp_drain" then
+                   nextEv.type == "state_add" or nextEv.type == "state_remove" or nextEv.type == "mp_drain" or
+                   nextEv.type == "play_anim" then
                     v.eventQueueIndex = v.eventQueueIndex + 1
                     processEvent(nextEv)
+                elseif nextEv.type == "wait" then
+                    v.eventQueueIndex = v.eventQueueIndex + 1
+                    processEvent(nextEv)
+                    break
                 else
                     break
                 end
