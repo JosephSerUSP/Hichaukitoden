@@ -63,6 +63,7 @@
     "horizontalScatter": 0
   },
   "battle_screen": {
+    "autoAdvanceDelay": 0.15,
     "damagePopupLife": 1.5,
     "popup": {
       "font": "DotGothic16-Regular",

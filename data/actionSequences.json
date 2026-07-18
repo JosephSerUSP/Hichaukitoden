@@ -3,8 +3,13 @@
     "name": "Default Skill Sequence",
     "commands": [
       {
+        "cmd": "PLAY_ANIM",
+        "animId": "skill",
+        "on": "a"
+      },
+      {
         "cmd": "WAIT",
-        "duration": 0
+        "duration": 150
       },
       {
         "cmd": "PLAY_ANIM",
@@ -28,8 +33,13 @@
     "name": "Default Item Sequence",
     "commands": [
       {
+        "cmd": "PLAY_ANIM",
+        "animId": "item",
+        "on": "a"
+      },
+      {
         "cmd": "WAIT",
-        "duration": 50
+        "duration": 150
       },
       {
         "cmd": "PLAY_ANIM",
