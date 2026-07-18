@@ -550,38 +550,40 @@ end
 
 -- Permadeath sweep (Summoner rework §3): every party spirit still dead at
 -- battle end — plus emergency-wave casualties parked on battle.fallen — is
--- removed permanently and converts to banked EXP using the same yield rule
--- as ritual sacrifice (totalExp × summoner.sacrificeExpRate ×
+-- gone permanently and converts to banked EXP using the same yield rule as
+-- ritual sacrifice (totalExp × summoner.sacrificeExpRate ×
 -- (1 + SACRIFICE_EXP_RATE trait)). Runs from the battle.victory and
--- battle.escaped flows. Emits one `reap` event per fallen spirit (target
--- kept alive as a Lua object for the presentation layer to animate and
--- caption individually, e.g. "{name} has passed away") and auto-fields
--- the reserve if the sweep leaves the party empty.
+-- battle.escaped flows. EXP banking happens now (pure bookkeeping, nothing
+-- to watch); the actual party[slot] removal does NOT happen here — it's
+-- deferred to the presentation layer, one battler at a time, only once
+-- that battler's system.reap animation finishes playing (see
+-- engine/scenes/battle.lua processEvent's "reap" branch). Emits one `reap`
+-- event per fallen spirit, carrying `slot` for battlers still fielded
+-- (nil for wave casualties, already off-field) so the deferred removal
+-- knows which party index to clear.
 handlers.REAP_FALLEN = function(cmd, ctx)
     local session = ctx.session
     local fallen = {}
     for i = 1, 4 do
         local b = session.party[i]
         if b and b:isDead() then
-            table.insert(fallen, b)
-            session.party[i] = nil
+            table.insert(fallen, { battler = b, slot = i })
         end
     end
     for _, b in ipairs((ctx.battle and ctx.battle.fallen) or {}) do
-        table.insert(fallen, b)
+        table.insert(fallen, { battler = b, slot = nil })
     end
     if ctx.battle then ctx.battle.fallen = {} end
 
     local sys = session.loader and session.loader.system
     local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
-    for _, b in ipairs(fallen) do
+    for _, f in ipairs(fallen) do
+        local b = f.battler
         local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
         local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
         session.expBank = math.max(0, (session.expBank or 0) + exp)
-        table.insert(ctx.events, { type = "reap", target = b, exp = exp })
+        table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot })
     end
-
-    session:autoFieldIfEmpty()
 end
 
 -- Rolls the encounter chance; on success emits an `encounter` event the map

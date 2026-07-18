@@ -911,6 +911,17 @@ end
 -- treatment as drawDamagePopups). Animations play per-target, so scan every
 -- battler for an active flash; first hit wins (matches the preview, which
 -- only ever has one target). 256x240 is the game's logical resolution.
+-- Defeat sequence (owner feedback, 17.07.2026): a full-canvas black fade,
+-- driven by engine/scenes/battle.lua's staged v.defeatFadeAlpha. Ramps in
+-- two beats (background dim, then full black covering the monsters) around
+-- the party window's slide-out — see battle.update's DEFEAT_STAGE*_DUR.
+function renderer.drawDefeatFadeOverlay(alpha)
+    if not alpha or alpha <= 0 then return end
+    love.graphics.setColor(0, 0, 0, math.min(1, alpha))
+    love.graphics.rectangle("fill", 0, 0, 256, 240)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 function renderer.drawScreenFlashOverlay(battleState)
     if not battleState then return end
     local flash

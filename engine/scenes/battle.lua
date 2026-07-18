@@ -307,11 +307,27 @@ local function processEvent(ev)
     elseif ev.type == "flee_success" then
         desc = ldr().getTerm("battle.flee_success", "Escaped successfully!")
         v.escaped = true
+    elseif ev.type == "wave" then
+        -- Emergency wave (Summoner rework §3): the swap stands in for a
+        -- game over, so it needs to read as a distinct beat, not a buried
+        -- log line — an amber screen-flash on the moment the reserves
+        -- deploy, on top of the (separate, immediately-following) text
+        -- event's message.
+        for _, b in ipairs(ev.deployed or {}) do
+            animation_player.play("system.wave", b)
+        end
     elseif ev.type == "reap" then
         -- Permadeath (Summoner rework §3): one animation + one dedicated
         -- log line per fallen spirit, individually, like "action"/"death".
+        -- The actual party[slot] removal is deferred until the animation
+        -- finishes (onComplete), so the spirit visibly fades in the party
+        -- grid instead of vanishing the instant the log line appears.
         animation_player.play("system.reap", ev.target)
         desc = ldr().formatTerm("battle.reaped", "{0} has passed away.", ev.target.name)
+        animation_player.onComplete(ev.target, function()
+            if ev.slot then sess().party[ev.slot] = nil end
+            sess():autoFieldIfEmpty()
+        end)
     end
 
     return desc
@@ -583,7 +599,16 @@ function battle.handleTransition(action)
             end
         end
         if toGameOver then
-            scene_host.goto_scene(targetScene, { session = sess(), loader = ldr(), party = sess().party })
+            -- Staged defeat sequence (owner feedback, 17.07.2026): background
+            -- fade -> party window slides out downward -> monsters fade to
+            -- full black -> THEN hand off to game_over. battle.update drives
+            -- the stages; the actual scene transition happens once it's done.
+            v.defeatTargetScene = targetScene
+            v.defeatTimer = 0
+            v.defeatStage = 0
+            v.defeatFadeAlpha = 0
+            v.defeatSlideT = 0
+            v.combatState = "defeat_sequence"
         end
     elseif v.escaped then
         -- battle.escaped is a validator-required phase; it also runs the
@@ -622,10 +647,45 @@ end
 -------------------------------------------------------------------------------
 local autoAdvanceTimer = 0
 
+-- Defeat sequence stage durations (seconds): background fade to a partial
+-- dim, then the party window slides out (dim holds), then a second fade
+-- sweeps the rest of the way to full black (monsters included) before the
+-- cut to game_over.
+local DEFEAT_STAGE0_DUR = 0.5
+local DEFEAT_STAGE1_DUR = 0.5
+local DEFEAT_STAGE2_DUR = 0.8
+
 function battle.update(dt)
     local v = battle.getState()
     if not v or not v.battle then
         autoAdvanceTimer = 0
+        return
+    end
+
+    if v.combatState == "defeat_sequence" then
+        v.defeatTimer = (v.defeatTimer or 0) + dt
+        local t = v.defeatTimer
+        if t < DEFEAT_STAGE0_DUR then
+            v.defeatStage = 0
+            v.defeatFadeAlpha = (t / DEFEAT_STAGE0_DUR) * 0.5
+            v.defeatSlideT = 0
+        elseif t < DEFEAT_STAGE0_DUR + DEFEAT_STAGE1_DUR then
+            v.defeatStage = 1
+            v.defeatFadeAlpha = 0.5
+            v.defeatSlideT = (t - DEFEAT_STAGE0_DUR) / DEFEAT_STAGE1_DUR
+        elseif t < DEFEAT_STAGE0_DUR + DEFEAT_STAGE1_DUR + DEFEAT_STAGE2_DUR then
+            v.defeatStage = 2
+            v.defeatFadeAlpha = 0.5 + ((t - DEFEAT_STAGE0_DUR - DEFEAT_STAGE1_DUR) / DEFEAT_STAGE2_DUR) * 0.5
+            v.defeatSlideT = 1
+        else
+            v.defeatFadeAlpha = 1
+            v.defeatSlideT = 1
+            if v.defeatTargetScene then
+                local target = v.defeatTargetScene
+                v.defeatTargetScene = nil
+                scene_host.goto_scene(target, { session = sess(), loader = ldr(), party = sess().party })
+            end
+        end
         return
     end
 

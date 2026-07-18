@@ -26,6 +26,7 @@
     "recovers_mp": "- {0} MP restored.",
     "resolving": "Resolving actions...",
     "reaped": "{0} has passed away.",
+    "reserve_wave": "The party has fallen! The reserves rush in -- {0} will not act this round.",
     "commands_monster": [
       "Attack",
       "Skill",

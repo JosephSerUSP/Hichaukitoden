@@ -1465,5 +1465,25 @@
         "toScaleY": 0.05
       }
     ]
+  },
+  "system.wave": {
+    "id": "system.wave",
+    "class": "system",
+    "duration": 500,
+    "tracks": [
+      {
+        "type": "screen_flash",
+        "t0": 0,
+        "duration": 500,
+        "color": [
+          1,
+          0.75,
+          0.2
+        ],
+        "fromAlpha": 0.5,
+        "toAlpha": 0,
+        "easing": "ease_out"
+      }
+    ]
   }
 }

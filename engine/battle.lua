@@ -56,13 +56,21 @@ function Battle:tryDeployWave(roundEvents)
             session.party[i] = nil
         end
     end
-    session:fillEmptySlotsFromReserve()
+    local deployed = session:fillEmptySlotsFromReserve()
     self.allies = session:getActiveParty()
 
-    table.insert(roundEvents, { type = "wave" })
+    -- `deployed` rides on the event so the presentation layer can flash
+    -- the incoming spirits (system.wave) and name them — the swap needs
+    -- to read as a distinct, attention-grabbing beat, not a buried log
+    -- line, since it's standing in for a game over.
+    local names = {}
+    for _, b in ipairs(deployed) do table.insert(names, b.name or "?") end
+    table.insert(roundEvents, { type = "wave", deployed = deployed })
     table.insert(roundEvents, {
         type = "text",
-        text = session.loader.getTerm("battle.reserve_wave", "The reserves surge onto the field!")
+        text = session.loader.formatTerm("battle.reserve_wave",
+            "The party has fallen! The reserves rush in -- {0} will not act this round.",
+            table.concat(names, ", "))
     })
     return true
 end

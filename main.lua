@@ -1018,8 +1018,11 @@ runValidation = function()
         check(sawWave, "emergency wave emitted no wave event")
 
         -- REAP_FALLEN: banks wave casualties + any dead party member, emits
-        -- one reap event per fallen spirit carrying the battler as target
-        -- (the presentation layer animates/captions each individually)
+        -- one reap event per fallen spirit carrying {target, slot} (the
+        -- presentation layer animates/captions each individually and only
+        -- THEN clears party[slot], once that spirit's system.reap animation
+        -- finishes — see engine/scenes/battle.lua processEvent's "reap"
+        -- branch). REAP_FALLEN itself must NOT mutate party membership.
         s.party[2].hp = 0
         s.party[2]:addState("dead")
         local deadSpirit = s.party[2]
@@ -1027,30 +1030,41 @@ runValidation = function()
         local okReap, reapEvs = pcall(interpreter.runImmediate,
             { { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
         check(okReap, "REAP_FALLEN failed: " .. tostring(reapEvs))
+        local slotOfDeadSpirit = nil
         if okReap then
             check((s.expBank or 0) > bankBefore, "REAP_FALLEN banked no EXP for the fallen")
             check(#wb.fallen == 0, "REAP_FALLEN did not clear battle.fallen")
-            check(s.party[2] == nil, "REAP_FALLEN left a dead spirit in the party")
+            check(s.party[2] == deadSpirit, "REAP_FALLEN must not remove party members itself -- that's deferred to animation completion")
             check(s.party[1] ~= nil, "REAP_FALLEN removed a living spirit")
             check(#reapEvs == 4, "REAP_FALLEN should emit one reap event per fallen spirit (3 wave casualties + 1), got " .. tostring(#reapEvs))
             local sawTarget = false
             for _, ev in ipairs(reapEvs) do
                 check(ev.type == "reap", "REAP_FALLEN emitted a non-reap event: " .. tostring(ev.type))
-                if ev.target == deadSpirit then sawTarget = true end
+                if ev.target == deadSpirit then sawTarget = true; slotOfDeadSpirit = ev.slot end
             end
             check(sawTarget, "REAP_FALLEN's reap events did not carry the fallen battler as target")
+            check(slotOfDeadSpirit == 2, "REAP_FALLEN's reap event for the still-fielded spirit should carry its party slot")
         end
 
+        -- Simulate the presentation layer's deferred removal (what
+        -- animation_player.onComplete's callback does once system.reap
+        -- finishes): only THEN does the spirit actually leave the party.
+        if slotOfDeadSpirit then s.party[slotOfDeadSpirit] = nil end
+        check(s.party[2] == nil, "deferred removal did not clear the party slot")
+
         -- Auto-field: reaping the whole party redeploys the reserve instead
-        -- of leaving it empty (session:autoFieldIfEmpty, called by
-        -- REAP_FALLEN). Wipe the newly-fielded party and reap again with an
-        -- empty reserve to confirm the party is simply left empty then.
+        -- of leaving it empty. Wipe the newly-fielded party, reap (deferred
+        -- removal again), then check auto-field with an empty reserve
+        -- simply leaves the party empty.
         for i = 1, 4 do
             if s.party[i] then s.party[i].hp = 0; s.party[i]:addState("dead") end
         end
         check(not s:isPartyEmpty(), "sanity: party should not read empty before the reap")
-        interpreter.runImmediate({ { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
-        check(s:isPartyEmpty(), "REAP_FALLEN with no reserve should leave the party empty")
+        local reapEvs2 = interpreter.runImmediate({ { cmd = "REAP_FALLEN" } }, { session = s, battle = wb, loader = loader })
+        for _, ev in ipairs(reapEvs2) do
+            if ev.slot then s.party[ev.slot] = nil end
+        end
+        check(s:isPartyEmpty(), "REAP_FALLEN with no reserve should leave the party empty once removals are applied")
         check(not s:autoFieldIfEmpty(), "autoFieldIfEmpty deployed from an empty reserve")
 
         -- With an empty reserve the wave must refuse (defeat stands)
@@ -1791,6 +1805,7 @@ elseif paramDef.type == "script" then
         "system.enemy_slide_in",
         "system.heal",
         "system.reap",
+        "system.wave",
     }
     for _, reservedId in ipairs(RESERVED_SYSTEM_IDS) do
         check(animation_player.getEntry(reservedId) ~= nil,
@@ -2058,9 +2073,22 @@ function love.draw()
     -- drawDamagePopups just below.
     if scene_host.getCurrent() == "battle" then
         local bv = require("engine.scenes.battle").getState()
-        drawSharedPartyHud()
+        -- Defeat sequence stage 1 (owner feedback, 17.07.2026): the party
+        -- window slides straight down and off-screen while everything else
+        -- holds. defeatSlideT ramps 0->1 over that one stage only (battle.lua
+        -- battle.update); 0 outside the sequence, so this is a no-op then.
+        local slideT = bv.defeatSlideT or 0
+        if slideT > 0 then
+            love.graphics.push()
+            love.graphics.translate(0, slideT * gameHeight)
+            drawSharedPartyHud()
+            love.graphics.pop()
+        else
+            drawSharedPartyHud()
+        end
         renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.skillSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
         renderer.drawScreenFlashOverlay(bv.battle)
+        renderer.drawDefeatFadeOverlay(bv.defeatFadeAlpha)
     end
 
     renderer.drawDamagePopups()
