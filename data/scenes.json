@@ -2353,7 +2353,14 @@
         "style": "partyGrid",
         "title": null,
         "cursor": 0,
-        "content": []
+        "content": [
+          {
+            "type": "list",
+            "listId": "party",
+            "format": "{name}",
+            "cursor": "0"
+          }
+        ]
       },
       {
         "id": "items_target",
