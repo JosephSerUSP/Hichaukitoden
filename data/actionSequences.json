@@ -3,20 +3,24 @@
     "name": "Default Skill Sequence",
     "commands": [
       {
+        "cmd": "WAIT",
+        "duration": 0
+      },
+      {
         "cmd": "PLAY_ANIM",
         "animId": "skill",
         "on": "target"
       },
       {
         "cmd": "WAIT",
-        "duration": 500
+        "duration": 200
       },
       {
         "cmd": "APPLY_EFFECT"
       },
       {
         "cmd": "WAIT",
-        "duration": 700
+        "duration": 200
       }
     ]
   },
@@ -24,20 +28,24 @@
     "name": "Default Item Sequence",
     "commands": [
       {
+        "cmd": "WAIT",
+        "duration": 50
+      },
+      {
         "cmd": "PLAY_ANIM",
         "animId": "item",
         "on": "target"
       },
       {
         "cmd": "WAIT",
-        "duration": 500
+        "duration": 200
       },
       {
         "cmd": "APPLY_EFFECT"
       },
       {
         "cmd": "WAIT",
-        "duration": 700
+        "duration": 200
       }
     ]
   }
