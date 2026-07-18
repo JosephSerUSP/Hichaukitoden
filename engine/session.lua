@@ -8,17 +8,11 @@ local session = {}
 local Battler = {}
 Battler.__index = Battler
 
-function Battler.new(actorData, level, isAlly)
+function Battler.new(actorData, level)
     local self = setmetatable({}, Battler)
     self.actorData = actorData
     self.id = actorData.id
     self.name = actorData.name
-    if isAlly and actorData.role ~= "Summoner" then
-        local list = actorData.names
-        if list and #list > 0 then
-            self.name = list[math.random(#list)]
-        end
-    end
     self.meta = actorData.meta or {}
     self.level = level or actorData.level or 1
     self.spriteKey = actorData.spriteKey  -- B.2: propagate sprite key for enemy rendering
@@ -165,6 +159,18 @@ function GameSession.new(loader)
     return self
 end
 
+-- Recruited allies (never the Summoner) draw a random name from
+-- actorData.names when one is defined, so starting parties don't all use
+-- the same handful of default names.
+local function randomAllyName(actorData)
+    if actorData.role == "Summoner" then return actorData.name end
+    local list = actorData.names
+    if list and #list > 0 then
+        return list[math.random(#list)]
+    end
+    return actorData.name
+end
+
 function GameSession:initializeStartingParty()
     -- All starting gold/inventory/party rules come from system.newGame
     self.gold = newgame.rollGold(self.loader)
@@ -178,7 +184,8 @@ function GameSession:initializeStartingParty()
     for i, m in ipairs(members) do
         local actorData = self.loader.getActor(m.id)
         if actorData then
-            local battler = Battler.new(actorData, m.level, true)
+            local battler = Battler.new(actorData, m.level)
+            battler.name = randomAllyName(actorData)
             battler.hp = battler:getMaxHp(self)
             table.insert(self.party, battler)
         end

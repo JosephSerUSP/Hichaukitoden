@@ -36,6 +36,9 @@
             if (obj.meta && typeof obj.meta === 'object' && Object.keys(obj.meta).length === 0) {
                 delete obj.meta;
             }
+            if (Array.isArray(obj.names) && obj.names.length === 0) {
+                delete obj.names;
+            }
             for (const key in obj) {
                 if (Object.prototype.hasOwnProperty.call(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
                     stripEmptyMeta(obj[key]);

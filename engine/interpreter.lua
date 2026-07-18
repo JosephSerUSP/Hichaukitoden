@@ -1207,7 +1207,7 @@ local function buildScriptApi(ctx)
         local exp = b.exp
         local states = b.states
         local equip = b.equipment
-        local newB = require("engine.session").Battler.new(actorData, lvl, true)
+        local newB = require("engine.session").Battler.new(actorData, lvl)
         newB.name = b.name
         newB.exp = exp
         newB.states = states or {}

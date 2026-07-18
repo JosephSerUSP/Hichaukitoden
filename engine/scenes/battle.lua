@@ -400,6 +400,7 @@ function battle.advanceLog()
                 elseif nextEv.type == "wait" then
                     v.eventQueueIndex = v.eventQueueIndex + 1
                     processEvent(nextEv)
+                    v.waitTimer = (nextEv.duration or 0) / 1000
                     break
                 else
                     break
