@@ -67,6 +67,7 @@
             }
         }
 
+        async function saveData() {
             try {
                 stripEmptyMeta(dbPayload);
                 stripOrphanTrackIds();
