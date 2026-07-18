@@ -4078,6 +4078,9 @@
     "kind": "menu",
     "config": {
       "note": "Legacy-drawn (renderer.drawTown). Entries come from system.town.options. Currently unreachable in-game; kept as a placeholder for a future VN-style hub scene."
+    },
+    "hooks": {
+      "on_enter": []
     }
   },
   {
@@ -4086,6 +4089,9 @@
     "kind": "menu",
     "config": {
       "note": "Legacy-drawn (renderer.drawDialogue). Reached via scene_host.goto_scene(\"dialogue\") from map step events, town options, and triggerDialogue() so any scene can hand off to a conversation graph."
+    },
+    "hooks": {
+      "on_enter": []
     }
   },
   {

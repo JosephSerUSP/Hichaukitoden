@@ -1798,10 +1798,10 @@
       "height": 2
     },
     "reserve_help": {
-      "x": 0,
-      "y": 13.5,
-      "width": 32,
-      "height": 4.5
+      "x": 0.5,
+      "y": 14,
+      "width": 31,
+      "height": 3.5
     },
     "reserve_party": {
       "x": 0,
