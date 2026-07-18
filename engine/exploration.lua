@@ -1,6 +1,43 @@
 local config = require("engine.config")
+local conditions = require("engine.conditions")
+local formulaEngine = require("engine.formula")
 
 local exploration = {}
+
+-- RPG Maker-style event pages: `ev.pages` is an ordered list of
+-- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
+-- LAST page whose condition passes wins (so authors order pages
+-- least-to-most specific, same convention as RPG Maker), overriding
+-- whichever fields it defines onto a copy of the base event; an
+-- unconditioned page always matches, so it's the natural final fallback.
+-- An event with no pages resolves to itself unchanged. condition accepts
+-- the same flag:/hasItem:/questStatus: grammar as CONDITIONAL_BRANCH,
+-- falling back to a formula (mirrors engine/director.lua's ROUTER).
+function exploration.resolvePage(ev, session)
+    if not ev or not ev.pages or #ev.pages == 0 then return ev end
+    local effective = ev
+    for _, page in ipairs(ev.pages) do
+        local result = true
+        if page.condition and page.condition ~= "" then
+            local matched
+            matched, result = conditions.evalPrefixed(page.condition, session)
+            if not matched then
+                local fctx = formulaEngine.makeContext({}, session)
+                local val, err = formulaEngine.eval(page.condition, fctx)
+                result = (not err) and val ~= false and val ~= 0 and val ~= nil
+            end
+        end
+        if result then
+            local merged = {}
+            for k, v in pairs(ev) do merged[k] = v end
+            for k, v in pairs(page) do
+                if k ~= "condition" then merged[k] = v end
+            end
+            effective = merged
+        end
+    end
+    return effective
+end
 
 -- Dungeon-generation settings from data/system.json (with engine defaults)
 local function dungeonConf(key, default)

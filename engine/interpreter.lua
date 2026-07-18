@@ -35,6 +35,7 @@ local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
+    LABEL = true, JUMP_TO_LABEL = true,
 }
 
 local function cmdId(cmd)
@@ -144,6 +145,22 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
         elseif cmd.type == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
+        elseif cmd.type == "LABEL" then
+            -- Marks a jump target (RPG Maker-style). A no-op passthrough,
+            -- like COMMENT, but records its node id under cmd.name so any
+            -- JUMP_TO_LABEL anywhere in this same compile tree can target it
+            -- (resolved in a post-pass — see interpreter.compileTop — since
+            -- a forward jump's label may not exist yet at this point in the
+            -- single top-to-bottom compile walk).
+            ctx.labels = ctx.labels or {}
+            ctx.labels[cmd.name] = nodeId
+            nodes[nodeId] = { type = "ROUTER", condition = "", trueNode = nextId, falseNode = nextId }
+        elseif cmd.type == "JUMP_TO_LABEL" then
+            -- Unconditional jump to a LABEL node anywhere in this compile
+            -- tree (including across CHOICE options/branches). Target is
+            -- unresolved until interpreter.compileTop's post-pass fills in
+            -- trueNode/falseNode -- _pendingLabel must not survive past that.
+            nodes[nodeId] = { type = "ROUTER", condition = "", _pendingLabel = cmd.label }
         elseif cmdId(cmd) == "COMMENT" then
             -- Documentation only (SPEC S3): compiles to nothing. Keep the
             -- chain intact by letting the previous node's nextId point past
@@ -157,12 +174,44 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
     return firstId
 end
 
+-- Rewrites every JUMP_TO_LABEL placeholder (_pendingLabel) left by compile()
+-- into a resolved trueNode/falseNode, now that the full tree (and every
+-- LABEL in it) has been walked. Errors on an unknown label rather than
+-- silently dead-ending the dialogue.
+local function resolveLabelJumps(nodes, ctx)
+    for _, node in pairs(nodes) do
+        if node._pendingLabel then
+            local target = (ctx.labels or {})[node._pendingLabel]
+            if not target then
+                error("JUMP_TO_LABEL: unknown label '" .. tostring(node._pendingLabel) .. "'")
+            end
+            node.trueNode = target
+            node.falseNode = target
+            node._pendingLabel = nil
+        end
+    end
+end
+
+-- The only entry points that should call interpreter.compile directly are
+-- this function and main.lua's compileCommands wrapper (CALL_COMMON_EVENT
+-- injection) -- both are top-level compiles of one complete command tree,
+-- so label scope is naturally bounded to one event/common-event's script.
+-- Internal recursion (CHOICE options, CONDITIONAL_BRANCH) must NOT resolve
+-- labels early, since sibling branches may still hold the label compile()
+-- hasn't reached yet.
+function interpreter.compileTop(nodes, commands, prefix, tailNodeId, ctx)
+    ctx.labels = ctx.labels or {}
+    local firstId = interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
+    resolveLabelJumps(nodes, ctx)
+    return firstId
+end
+
 -- Builds a dialogue graph for a command list. The caller owns walker
 -- creation and scene switching (that is presentation glue, not semantics).
 function interpreter.buildGraph(eventTitle, commands, ctx)
     if not commands or #commands == 0 then return nil end
     local nodes = {}
-    local startNode = interpreter.compile(nodes, commands, "node", nil, ctx)
+    local startNode = interpreter.compileTop(nodes, commands, "node", nil, ctx)
     return {
         initialNode = startNode,
         name = eventTitle,

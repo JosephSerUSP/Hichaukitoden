@@ -1,5 +1,6 @@
 local viewport_3d = {}
 local ui = require("presentation.ui")
+local exploration = require("engine.exploration")
 
 -- Direction vectors (matching exploration.lua)
 local DIRS = {
@@ -52,6 +53,7 @@ local wallQx, wallQy = 0, 0
 local spriteImageCache = {}
 local function getEventSprite(ev, session)
     if not ev then return nil end
+    ev = exploration.resolvePage(ev, session)
     -- Sprite precedence: the map event's own sprite, else the default sprite
     -- of the common event it links to (template-style inheritance).
     local path = ev.sprite

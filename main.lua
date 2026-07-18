@@ -2168,7 +2168,7 @@ local function interpreterCtx()
 end
 
 local function compileCommands(nodes, commands, prefix, tailNodeId)
-    return interpreter.compile(nodes, commands, prefix, tailNodeId, interpreterCtx())
+    return interpreter.compileTop(nodes, commands, prefix, tailNodeId, interpreterCtx())
 end
 
 local function openShop(shopId)
@@ -2415,7 +2415,8 @@ end
 local function checkStepEvents()
     local px, py = activeSession.playerX - 1, activeSession.playerY - 1
     if activeSession.currentMapData.events then
-        for _, ev in ipairs(activeSession.currentMapData.events) do
+        for _, rawEv in ipairs(activeSession.currentMapData.events) do
+            local ev = exploration.resolvePage(rawEv, activeSession)
             if ev.x == px and ev.y == py and ev.trigger == "step" then
                 local commands = nil
                 if ev.scriptId then
@@ -2543,9 +2544,9 @@ local function handleKeyPressed(key)
             -- Check for coordinate-based events from the map's JSON array
             local eventObj = nil
             if activeSession.currentMapData.events then
-                for _, ev in ipairs(activeSession.currentMapData.events) do
-                    if ev.x == tx - 1 and ev.y == ty - 1 then
-                        eventObj = ev
+                for _, rawEv in ipairs(activeSession.currentMapData.events) do
+                    if rawEv.x == tx - 1 and rawEv.y == ty - 1 then
+                        eventObj = exploration.resolvePage(rawEv, activeSession)
                         break
                     end
                 end

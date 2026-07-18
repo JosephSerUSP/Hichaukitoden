@@ -482,6 +482,40 @@
       "description": "Runs a common event's commands inline."
     },
     {
+      "id": "LABEL",
+      "category": "Flow Control",
+      "label": "Label",
+      "params": [
+        {
+          "key": "name",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Marks a jump target for JUMP_TO_LABEL elsewhere in this event/common event's command list. No effect on its own."
+    },
+    {
+      "id": "JUMP_TO_LABEL",
+      "category": "Flow Control",
+      "label": "Jump to Label",
+      "params": [
+        {
+          "key": "label",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Unconditionally jumps to the matching LABEL anywhere in this same event/common event (including inside other CHOICE options or branches). Does not cross CALL_COMMON_EVENT boundaries."
+    },
+    {
       "id": "COMMENT",
       "category": "Other",
       "label": "Comment",

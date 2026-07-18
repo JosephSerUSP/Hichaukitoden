@@ -1365,6 +1365,12 @@
                 } else if (paramDef.key === 'trait') {
                     input.placeholder = 'e.g. POST_BATTLE_HEAL';
                     input.title = 'A trait code from the Engine window’s Trait Codes registry.';
+                } else if (cmdTypeId === 'LABEL' && paramDef.key === 'name') {
+                    input.placeholder = 'label name, e.g. hub';
+                    input.title = 'A JUMP_TO_LABEL anywhere in this same event/common event can target this name.';
+                } else if (cmdTypeId === 'JUMP_TO_LABEL' && paramDef.key === 'label') {
+                    input.placeholder = 'label name to jump to, e.g. hub';
+                    input.title = 'Must match a LABEL command\'s name somewhere in this same event/common event.';
                 } else if (paramDef.type === 'formula') {
                     input.placeholder = 'e.g. random(1, 6) + session.floor';
                     input.title = 'A formula over the sandboxed context — see the ⓘ button for every token.';
