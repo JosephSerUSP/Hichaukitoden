@@ -128,7 +128,9 @@ function server.update(dt)
                                 if tbl then
                                     local encoded = json.encode(tbl)
                                     -- Write to project source directory using absolute path
-                                    local absPath = love.filesystem.getSourceDirectory() .. "/" .. fpath
+                                    -- getSource(), not getSourceDirectory(): the latter does not exist
+                                    -- in LOVE 11 and crashed this path the first time /save was hit.
+                                    local absPath = love.filesystem.getSource() .. "/" .. fpath
                                     local file, err = io.open(absPath, "w")
                                     if file then
                                         file:write(encoded)
