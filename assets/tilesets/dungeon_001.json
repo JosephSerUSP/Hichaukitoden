@@ -1,4 +1,5 @@
 {
-    "wallRows": [0, 1, 3],
-    "doorRow": 2
+    "wallRows": [0, 1],
+    "doorRow": 2,
+    "ceilingRow": 3
 }
