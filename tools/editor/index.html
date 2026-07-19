@@ -861,18 +861,23 @@
                 <div id="light-palette-section" style="display: none;">
                     <div class="sidebar-title">Light Mode</div>
                     <p style="font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 0 0 6px;">
-                        Paints brightness onto the map's grid corners (not cells) — walls and floors
-                        interpolate between the dots you place. Not available on procedural maps.
+                        Paints an RGB color onto the map's grid corners (not cells) — walls and floors
+                        interpolate a gradient between the corners you place. Not available on procedural maps.
                     </p>
-                    <div class="field-row-stacked">
-                        <label>Brightness: <span id="light-level-value">100%</span></label>
+                    <div class="field-row-stacked" style="display: flex; align-items: center; gap: 6px;">
+                        <label style="white-space: nowrap;">Tint Color:</label>
+                        <input type="color" id="light-color-picker" value="#ffffff"
+                               style="flex: 1; height: 22px;" oninput="setLightColor(this.value)" />
+                    </div>
+                    <div class="field-row-stacked" style="margin-top: 6px;">
+                        <label>Intensity: <span id="light-level-value">100%</span></label>
                         <input type="range" id="light-level-slider" min="0" max="100" value="100"
                                style="width: 100%;" oninput="setLightLevel(this.value)" />
                     </div>
                     <div class="field-row-stacked" style="margin-top: 6px;">
-                        <label>Brush Radius (vertices):</label>
-                        <input type="number" id="light-brush-radius" class="win98-input" min="0" max="6" value="0"
-                               oninput="setLightRadius(this.value)" />
+                        <label>Brush Radius: <span id="light-radius-value">0</span> vertices</label>
+                        <input type="range" id="light-brush-radius" min="0" max="6" value="0"
+                               style="width: 100%;" oninput="setLightRadius(this.value)" />
                     </div>
                     <button class="win98-btn" style="width: 100%; margin-top: 8px;" onclick="clearMapLight()">
                         Reset Map to Full Brightness

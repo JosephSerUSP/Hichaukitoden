@@ -248,21 +248,45 @@
                 ctx.fillText('👤', sx * TILE_SIZE + TILE_SIZE / 2, sy * TILE_SIZE + TILE_SIZE / 2);
             }
 
-            // 4. Light layer overlay: one dot per grid CORNER (not cell),
-            // grayscale = brightness. Only drawn while actively editing light
-            // so it doesn't clutter the Map/Event layers.
+            // 4. Light layer overlay: a bilinearly-interpolated gradient fill
+            // between grid CORNERS (not cells) previewing exactly what the
+            // raycaster samples per wall-slice column, plus small handle dots
+            // at each corner for precise click targeting. Only drawn while
+            // actively editing light so it doesn't clutter the Map/Event layers.
             if (editingMode === 'light' && map.layout && map.layout.length) {
                 const lh = map.layout.length, lw = map.layout[0].length;
+                const SUB = 4; // subdivisions per cell edge; mirrors the engine's per-pixel bilerp at display resolution
+                const step = TILE_SIZE / SUB;
+
+                for (let y = 0; y < lh; y++) {
+                    for (let x = 0; x < lw; x++) {
+                        const c00 = lightAt(map, x, y);
+                        const c10 = lightAt(map, x + 1, y);
+                        const c01 = lightAt(map, x, y + 1);
+                        const c11 = lightAt(map, x + 1, y + 1);
+                        for (let j = 0; j < SUB; j++) {
+                            const fy = (j + 0.5) / SUB;
+                            for (let i = 0; i < SUB; i++) {
+                                const fx = (i + 0.5) / SUB;
+                                const top = [0, 1, 2].map(k => c00[k] + (c10[k] - c00[k]) * fx);
+                                const bot = [0, 1, 2].map(k => c01[k] + (c11[k] - c01[k]) * fx);
+                                const col = top.map((v, k) => Math.round(Math.max(0, Math.min(1, v + (bot[k] - v) * fy)) * 255));
+                                ctx.fillStyle = `rgba(${col[0]},${col[1]},${col[2]},0.6)`;
+                                ctx.fillRect(x * TILE_SIZE + i * step, y * TILE_SIZE + j * step, step + 0.5, step + 0.5);
+                            }
+                        }
+                    }
+                }
+
                 for (let vy = 0; vy <= lh; vy++) {
                     for (let vx = 0; vx <= lw; vx++) {
-                        const v = map.light && map.light[vy] && map.light[vy][vx] !== undefined
-                            ? map.light[vy][vx] : 1.0;
-                        const c = Math.round(Math.max(0, Math.min(1, v)) * 255);
+                        const v = lightAt(map, vx, vy);
+                        const col = v.map(c => Math.round(Math.max(0, Math.min(1, c)) * 255));
                         ctx.beginPath();
-                        ctx.arc(vx * TILE_SIZE, vy * TILE_SIZE, 5, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(${c},${c},${c},0.95)`;
+                        ctx.arc(vx * TILE_SIZE, vy * TILE_SIZE, 4, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
                         ctx.fill();
-                        ctx.strokeStyle = 'rgba(255,140,0,0.9)';
+                        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
                         ctx.lineWidth = 1;
                         ctx.stroke();
                     }
@@ -479,31 +503,53 @@
 
         // --- LIGHT LAYER ("vertex colorer") ---
         // Paints map.light: a (layout height + 1) x (layout width + 1) grid of
-        // 0..1 floats over the map's grid *corners*, bilinearly sampled by the
-        // raycaster per wall-slice column. See docs/design/raycaster-tileset-lighting.md
-        // and engine/main.lua's validator (dimension check against layout size).
-        let lightBrushLevel = 1.0;
+        // [r,g,b] triples (each 0..1) over the map's grid *corners*, bilinearly
+        // sampled per-channel by the raycaster per wall-slice column. See
+        // docs/design/raycaster-tileset-lighting.md and engine/main.lua's
+        // validator (dimension + per-vertex shape checks against layout size).
+        let lightBrushColor = [1, 1, 1]; // set by the color picker, hex -> 0..1 via hexToRgb01 (events.js)
+        let lightBrushIntensity = 1.0;
         let lightBrushRadius = 0;
 
+        // Composed paint value: picked color scaled by intensity, so white +
+        // 100% reproduces the old pure-brightness behavior, and a warm color
+        // at a lower intensity paints a dim torch-colored pool.
+        function currentLightPaintColor() {
+            return lightBrushColor.map(c => Math.max(0, Math.min(1, c * lightBrushIntensity)));
+        }
+
+        function setLightColor(hex) {
+            lightBrushColor = hexToRgb01(hex);
+        }
+
         function setLightLevel(v) {
-            lightBrushLevel = Math.max(0, Math.min(100, parseInt(v) || 0)) / 100;
-            document.getElementById('light-level-value').textContent = Math.round(lightBrushLevel * 100) + '%';
+            lightBrushIntensity = Math.max(0, Math.min(100, parseInt(v) || 0)) / 100;
+            document.getElementById('light-level-value').textContent = Math.round(lightBrushIntensity * 100) + '%';
         }
 
         function setLightRadius(v) {
             lightBrushRadius = Math.max(0, Math.min(6, parseInt(v) || 0));
+            document.getElementById('light-radius-value').textContent = lightBrushRadius;
         }
 
-        // Lazily creates map.light filled with full brightness (1.0), sized to
-        // match what the validator expects: layout height/width + 1 (vertices,
-        // not cells). Procedural maps have no fixed layout, so no light grid.
+        // Lazily creates map.light filled with full-white brightness ([1,1,1]),
+        // sized to match what the validator expects: layout height/width + 1
+        // (vertices, not cells). Procedural maps have no fixed layout, so no
+        // light grid.
         function ensureMapLight(map) {
             if (!map.layout || !map.layout.length) return null;
             if (map.light) return map.light;
             const h = map.layout.length + 1;
             const w = map.layout[0].length + 1;
-            map.light = Array.from({ length: h }, () => new Array(w).fill(1.0));
+            map.light = Array.from({ length: h }, () => Array.from({ length: w }, () => [1, 1, 1]));
             return map.light;
+        }
+
+        // A vertex's stored color, or full white if unset/absent (matches the
+        // engine's default-brightness-1.0 behavior for maps without a light grid).
+        function lightAt(map, vx, vy) {
+            const v = map.light && map.light[vy] && map.light[vy][vx];
+            return Array.isArray(v) ? v : [1, 1, 1];
         }
 
         function paintLightAt(vx, vy) {
@@ -513,11 +559,12 @@
             if (vx < 0 || vx > w || vy < 0 || vy > h) return;
 
             const light = ensureMapLight(map);
+            const color = currentLightPaintColor();
             for (let dy = -lightBrushRadius; dy <= lightBrushRadius; dy++) {
                 for (let dx = -lightBrushRadius; dx <= lightBrushRadius; dx++) {
                     const tx = vx + dx, ty = vy + dy;
                     if (tx < 0 || tx > w || ty < 0 || ty > h) continue;
-                    light[ty][tx] = lightBrushLevel;
+                    light[ty][tx] = color.slice();
                 }
             }
             setDirty(true);

@@ -113,20 +113,29 @@ local function doorVariant(mapX, mapY)
     return cellHash(mapX, mapY, 83492791, 39916801) % ATLAS_DOOR_VARIANTS
 end
 
--- Bilinear-interpolated vertex brightness. session.currentMapData.light, if
--- present, is a (mapW+1) x (mapH+1) grid of 0..1 floats keyed [row][col]
--- (1-indexed, row = y, col = x) covering the map's grid *corners*. Absent
--- light data (older/generated maps) yields flat full brightness, i.e. no
--- change from current behavior.
+-- Bilinear-interpolated vertex color. session.currentMapData.light, if
+-- present, is a (mapW+1) x (mapH+1) grid of [r,g,b] triples (each 0..1)
+-- keyed [row][col] (1-indexed, row = y, col = x) covering the map's grid
+-- *corners* -- painted via the map editor's Light layer ("vertex colorer",
+-- docs/design/raycaster-tileset-lighting.md). Absent light data (older/
+-- generated maps, or vertices past the grid edge) yields flat full white,
+-- i.e. no tinting at all -- matches pre-lighting behavior exactly.
+local DEFAULT_LIGHT = { 1.0, 1.0, 1.0 }
+local function lightCellAt(light, x, y)
+    local row = light[y]
+    return (row and row[x]) or DEFAULT_LIGHT
+end
 local function sampleLight(light, x, y, fx, fy)
-    if not light then return 1.0 end
-    local r0, r1 = light[y], light[y + 1]
-    if not r0 or not r1 then return 1.0 end
-    local v00, v10 = r0[x] or 1.0, r0[x + 1] or 1.0
-    local v01, v11 = r1[x] or 1.0, r1[x + 1] or 1.0
-    local top = v00 + (v10 - v00) * fx
-    local bot = v01 + (v11 - v01) * fx
-    return top + (bot - top) * fy
+    if not light then return 1.0, 1.0, 1.0 end
+    local c00, c10 = lightCellAt(light, x, y), lightCellAt(light, x + 1, y)
+    local c01, c11 = lightCellAt(light, x, y + 1), lightCellAt(light, x + 1, y + 1)
+    local r = c00[1] + (c10[1] - c00[1]) * fx
+    local g = c00[2] + (c10[2] - c00[2]) * fx
+    local b = c00[3] + (c10[3] - c00[3]) * fx
+    local r2 = c01[1] + (c11[1] - c01[1]) * fx
+    local g2 = c01[2] + (c11[2] - c01[2]) * fx
+    local b2 = c01[3] + (c11[3] - c01[3]) * fx
+    return r + (r2 - r) * fy, g + (g2 - g) * fy, b + (b2 - b) * fy
 end
 
 local spriteImageCache = {}
@@ -251,10 +260,10 @@ function viewport_3d.draw(session)
     local light = mapData and mapData.light
 
     -- Player-cell vertex light, used to tint the ceiling/floor as a single
-    -- value (the gradients aren't raycast per-pixel, so they can't sample a
+    -- color (the gradients aren't raycast per-pixel, so they can't sample a
     -- per-column light like walls do). See docs/design/raycaster-tileset-lighting.md.
     local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
-    local ambient = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
+    local ambR, ambG, ambB = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
 
     local atlas = resolveTileset(mapData)
 
@@ -268,13 +277,13 @@ function viewport_3d.draw(session)
     else
         -- Ceiling gradient: Moody dark purple/indigo fade
         drawVerticalGradient(0, 0, screenWpx, halfH,
-            {0.09 * ambient, 0.06 * ambient, 0.14 * ambient},
-            {0.02 * ambient, 0.01 * ambient, 0.04 * ambient})
+            {0.09 * ambR, 0.06 * ambG, 0.14 * ambB},
+            {0.02 * ambR, 0.01 * ambG, 0.04 * ambB})
     end
     -- Floor gradient: Cold dark stone grey fade
     drawVerticalGradient(0, halfH, screenWpx, halfH,
-        {0.03 * ambient, 0.03 * ambient, 0.03 * ambient},
-        {0.14 * ambient, 0.12 * ambient, 0.10 * ambient})
+        {0.03 * ambR, 0.03 * ambG, 0.03 * ambB},
+        {0.14 * ambR, 0.12 * ambG, 0.10 * ambB})
 
     local doorLookup = buildDoorLookup(session)
 
@@ -398,7 +407,8 @@ function viewport_3d.draw(session)
         local hitWX = cx + 1 + perpWallDist * rx
         local hitWY = cy + 1 + perpWallDist * ry
         local vx0, vy0 = math.floor(hitWX), math.floor(hitWY)
-        brightness = brightness * sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
+        local litR, litG, litB = sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
+        litR, litG, litB = brightness * litR, brightness * litG, brightness * litB
 
         -- Render textured slice or fallback color slice
         if atlas then
@@ -412,14 +422,14 @@ function viewport_3d.draw(session)
                 originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
             end
             sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
-            love.graphics.setColor(brightness, brightness, brightness, 1)
+            love.graphics.setColor(litR, litG, litB, 1)
             love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
         else
             -- Retro flat-shaded colors if tileset is missing
             local r = (side == 0) and 0.4 or 0.3
             local g = (side == 0) and 0.45 or 0.35
             local b = (side == 0) and 0.55 or 0.45
-            love.graphics.setColor(r * brightness, g * brightness, b * brightness, 1)
+            love.graphics.setColor(r * litR, g * litG, b * litB, 1)
             love.graphics.line(x, drawStart, x, drawEnd)
         end
     end

@@ -110,29 +110,44 @@ gets ceiling), not per-cell — matches how the reference games use it.
 ## Vertex lighting
 
 Feasible without a real lighting engine, because wall slices are already
-independently-drawn columns that can be tinted per-column.
+independently-drawn columns that can be tinted per-column. Colored, not
+just grayscale-brightness — an `{r,g,b}` triple per vertex, so painted
+light can carry hue (warm torch pools vs. cool moonlight), not just
+intensity.
 
-- **Storage**: a 2D float grid over map *vertices* (grid corners, not
-  cells), sized `(mapW + 1) × (mapH + 1)`, values 0–1 brightness, stored
-  directly in `maps.json` as a plain array of arrays. No separate image
-  asset — JSON is fine at map scale.
+- **Storage**: a grid over map *vertices* (grid corners, not cells), sized
+  `(mapW + 1) × (mapH + 1)`, each entry an `[r, g, b]` triple (each 0–1),
+  stored directly in `maps.json` as a plain array of arrays of triples. No
+  separate image asset — JSON is fine at map scale. Absent/unset vertices
+  default to `[1,1,1]` (full white = no tint), so a map without `light` at
+  all renders identically to before this feature existed.
 - **Sampling**: at render time, for each wall slice, bilinearly interpolate
-  the 4 surrounding vertex brightness values using the same fractional hit
-  position (`wallX`) already computed for texture sampling in
-  `viewport_3d.lua`, then `love.graphics.setColor(b, b, b, 1)` before
-  drawing that slice. Floor/ceiling gradient color stops get the same
-  per-column tinting, driven by the player-cell's interpolated brightness.
+  each of the 4 surrounding vertices' R, G, and B channels independently
+  using the same fractional hit position (`wallX`/world hit coords) already
+  computed for texture sampling in `viewport_3d.lua`, then
+  `love.graphics.setColor(litR, litG, litB, 1)` before drawing that slice
+  (multiplied against the existing distance/side shading, same as the old
+  scalar brightness was). Floor/ceiling gradient color stops get the same
+  per-channel tinting, driven by the player-cell's interpolated color —
+  each gradient stop's own R/G/B is multiplied by the matching light
+  channel, so the base gradient's hue (e.g. the ceiling's purple-indigo)
+  is preserved and just modulated by the painted tint, not overwritten by
+  it. Sky is exempt (see above): daylight, not treated as a light source.
 - **Authoring — done**: a third editor layer ("Light", alongside Map and
   Event, `tools/editor/index.html`/`js/map-editor.js`) paints `map.light`
-  directly. A brightness slider (0-100%) sets the value a click/drag
-  applies; a brush-radius field applies it to a square block of vertices
-  around the cursor (uniform, no falloff); the canvas overlays one dot per
-  grid corner, grayscale = brightness, only while the Light layer is
-  active. "Reset Map to Full Brightness" deletes `map.light` entirely.
-  Free float brush, not snapped to discrete levels (the open question
-  below is resolved in favor of the simpler option; banding can still be
-  achieved by hand since nothing stops repeated same-value strokes).
-  Unavailable on procedural maps (no fixed layout to paint vertices onto).
+  directly. Controls: an `<input type=color>` picker sets the tint hue, an
+  Intensity slider (0–100%) scales it (white + 100% reproduces old pure-
+  brightness painting), and a Brush Radius slider (0–6, was a number input
+  originally — changed to a slider to match Intensity) applies the
+  composed color to a square block of vertices around the cursor (uniform,
+  no falloff). The canvas overlay renders an actual bilinearly-interpolated
+  gradient fill between corners (a 4×4 sub-cell supersample per grid cell,
+  the same math the engine does per-pixel, just at display resolution) —
+  not discrete dots — so the painted gradient reads directly against the
+  map, with small color-matched handle dots on top for precise click
+  targeting. "Reset Map to Full Brightness" deletes `map.light` entirely.
+  Free brush, not snapped to discrete levels. Unavailable on procedural
+  maps (no fixed layout to paint vertices onto).
 
 ## Verification
 

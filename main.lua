@@ -1471,6 +1471,19 @@ elseif paramDef.type == "script" then
                 check(#row == expectW,
                     "map '" .. tostring(map.name) .. "' light grid row " .. ri .. " has " .. #row
                     .. " values, expected " .. expectW .. " (layout width + 1)")
+                for ci, cell in ipairs(row) do
+                    local isTriple = type(cell) == "table" and #cell == 3
+                        and type(cell[1]) == "number" and type(cell[2]) == "number" and type(cell[3]) == "number"
+                    if check(isTriple,
+                        "map '" .. tostring(map.name) .. "' light grid [" .. ri .. "][" .. ci
+                        .. "] must be an {r,g,b} triple") then
+                        for ch = 1, 3 do
+                            check(cell[ch] >= 0 and cell[ch] <= 1,
+                                "map '" .. tostring(map.name) .. "' light grid [" .. ri .. "][" .. ci
+                                .. "] channel " .. ch .. " (" .. tostring(cell[ch]) .. ") is out of range 0..1")
+                        end
+                    end
+                end
             end
         end
 
