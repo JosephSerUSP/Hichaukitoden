@@ -264,10 +264,12 @@ renderer.getVictoryStage = function() return victoryAnim.stage end
 
 -- Dialogue text-reveal control for the input layer: a confirm press while
 -- text is still revealing completes it instead of advancing the node.
+-- Compares against the pre-wrapped form when one is cached so "done"
+-- means the same thing the draw path means by it.
 function renderer.isDialogueRevealing()
     local node = dialogueReveal.node
     if not node or node.type ~= "TEXT" then return false end
-    local content = node.content or ""
+    local content = dialogueReveal.wrapped or node.content or ""
     return revealedCount(content, dialogueReveal.elapsed) < #content
 end
 
@@ -457,13 +459,21 @@ end
 -- content, shared by the windows-drawn dialogue scene (main.lua's v-sync
 -- reads this every frame) and renderer.isDialogueRevealing/
 -- finishDialogueReveal, which all key off the same dialogueReveal tracker.
-function renderer.getRevealedDialogueText(node)
+-- wrapPx (optional): pre-wrap the FULL text to hard breaks at that pixel
+-- width ONCE per node, so the reveal can't shift wrap points mid-word --
+-- printf re-wrapping a growing string is what made long lines jumpy.
+function renderer.getRevealedDialogueText(node, wrapPx)
     if not node or node.type ~= "TEXT" then return "" end
     if dialogueReveal.node ~= node then
         dialogueReveal.node = node
         dialogueReveal.elapsed = 0
+        dialogueReveal.wrapped = nil
     end
-    local content = node.content or ""
+    if not dialogueReveal.wrapped then
+        local content = node.content or ""
+        dialogueReveal.wrapped = wrapPx and ui.wrapText(content, wrapPx) or content
+    end
+    local content = dialogueReveal.wrapped
     return utf8Prefix(content, revealedCount(content, dialogueReveal.elapsed))
 end
 

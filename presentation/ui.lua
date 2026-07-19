@@ -575,6 +575,16 @@ function ui.getPopupTextFont()
 end
 
 -- Measure rendered width of text in the active UI font (monospace).
+-- Pre-wraps text to hard line breaks at the given pixel limit using the
+-- active font's own wrap logic (Font:getWrap), so a typewriter reveal can
+-- expose it character by character without printf re-wrapping mid-word --
+-- wrap points are decided ONCE for the full text and never move.
+function ui.wrapText(text, limit)
+    if not mainFont or not text then return text or "" end
+    local _, lines = mainFont:getWrap(text, limit)
+    return table.concat(lines, "\n")
+end
+
 function ui.measureText(text)
     if mainFont then return mainFont:getWidth(text) end
     return #tostring(text) * (ui.fontSize or 8)

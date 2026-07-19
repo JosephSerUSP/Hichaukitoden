@@ -1402,6 +1402,13 @@ elseif paramDef.type == "script" then
             if ev.script then
                 validateCommands(ev.script, "map", false, true, desc)
             end
+            -- Event pages carry their own script overrides; each is a full
+            -- command tree and validates exactly like the base script.
+            for pi, page in ipairs(ev.pages or {}) do
+                if page.script then
+                    validateCommands(page.script, "map", false, true, desc .. " page " .. pi)
+                end
+            end
         end
     end
 
@@ -2114,7 +2121,21 @@ local function syncDialogueWindowState()
             speaker = string.gsub(speaker, "\\eventName", rName)
         end
         v.dialogueSpeaker = speaker or ""
-        v.dialogueText = renderer.getRevealedDialogueText(node)
+        -- Wrap width mirrors the message window's own draw call: text
+        -- starts at the padded content origin (~8px in) with printf limit
+        -- w - toPx(1); wrapping to the same width means the pre-broken
+        -- lines never re-wrap at draw time.
+        local uiMod = require("presentation.ui")
+        local wrapPx
+        do
+            local sceneDef = loader.getScene("dialogue")
+            for _, wd in ipairs((sceneDef and sceneDef.windows) or {}) do
+                if wd.id == "dialogue_message" and wd.rect and tonumber(wd.rect.w) then
+                    wrapPx = uiMod.toPx(wd.rect.w - 1) - 8
+                end
+            end
+        end
+        v.dialogueText = renderer.getRevealedDialogueText(node, wrapPx)
         -- Drives the animated waiting-for-input marker on the message
         -- window (waitInput formula), replacing the old "[Press SPACE]".
         v.dialogueWaiting = not renderer.isDialogueRevealing()
