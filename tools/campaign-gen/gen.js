@@ -183,10 +183,22 @@ async function validateRepairLoop() {
             console.log('VALIDATE OK');
             return true;
         }
-        const problems = res.output.split('\n')
-            .filter(l => !/^\[formula\] error in 'os\.time/.test(l)) // sandbox negative-test noise
-            .filter(l => /FAIL|error|missing|resolves to no|references/.test(l))
-            .join('\n');
+        // Everything after the VALIDATE FAIL banner IS the problem list --
+        // keyword-filtering risks dropping failure lines whose wording we
+        // didn't anticipate. Keyword fallback only when the banner is absent
+        // (validator crashed before its report).
+        let problems;
+        const failAt = res.output.indexOf('VALIDATE FAIL');
+        if (failAt !== -1) {
+            problems = res.output.slice(failAt).split('\n')
+                .filter(l => l.trim() !== '' && !/^\[validator\] warning/.test(l))
+                .join('\n');
+        } else {
+            problems = res.output.split('\n')
+                .filter(l => !/^\[formula\] error in 'os\.time/.test(l)) // sandbox negative-test noise
+                .filter(l => /FAIL|error|missing|resolves to no|references|attempt to/.test(l))
+                .join('\n');
+        }
         console.log(`validate round ${round} failed:\n${problems}\n-> asking repair model...`);
         const files = {};
         for (const f of ctxlib.CONTENT_FILES) {
