@@ -135,18 +135,23 @@ intensity.
   it. Sky is exempt (see above): daylight, not treated as a light source.
 - **Authoring — done**: a third editor layer ("Light", alongside Map and
   Event, `tools/editor/index.html`/`js/map-editor.js`) paints `map.light`
-  directly. Controls: an `<input type=color>` picker sets the tint hue, an
-  Intensity slider (0–100%) scales it (white + 100% reproduces old pure-
-  brightness painting), and a Brush Radius slider (0–6, was a number input
-  originally — changed to a slider to match Intensity) applies the
-  composed color to a square block of vertices around the cursor (uniform,
-  no falloff). The canvas overlay renders an actual bilinearly-interpolated
-  gradient fill between corners (a 4×4 sub-cell supersample per grid cell,
-  the same math the engine does per-pixel, just at display resolution) —
-  not discrete dots — so the painted gradient reads directly against the
-  map, with small color-matched handle dots on top for precise click
-  targeting. "Reset Map to Full Brightness" deletes `map.light` entirely.
-  Free brush, not snapped to discrete levels. Unavailable on procedural
+  directly. An `<input type=color>` picker IS the paint value directly —
+  no separate intensity scalar, since a dark/black pick already reaches
+  low brightness without one. A Paint/Blur tool-mode radio switches the
+  brush's effect: Paint stamps the picked color, Blur runs a single-pass
+  3×3 box blur (sampled from a pre-stroke snapshot, so repeated
+  clicks/drags progressively soften harder) over every vertex the brush
+  covers, for smoothing hard edges between painted regions without
+  hand-blending intermediate colors. The brush itself is round (Euclidean
+  distance test), not the square block the first version used, matching
+  how brushes read visually everywhere else. Brush Radius is a slider
+  (0–6, was a number input originally). The canvas overlay renders an
+  actual bilinearly-interpolated gradient fill between corners (a 4×4
+  sub-cell supersample per grid cell, the same math the engine does
+  per-pixel, just at display resolution) — not discrete dots — so the
+  painted gradient reads directly against the map, with small
+  color-matched handle dots on top for precise click targeting. "Reset
+  Map to Full Brightness" deletes `map.light` entirely. Unavailable on procedural
   maps (no fixed layout to paint vertices onto).
 
 ## Verification

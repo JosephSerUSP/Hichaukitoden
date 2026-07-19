@@ -507,29 +507,32 @@
         // sampled per-channel by the raycaster per wall-slice column. See
         // docs/design/raycaster-tileset-lighting.md and engine/main.lua's
         // validator (dimension + per-vertex shape checks against layout size).
-        let lightBrushColor = [1, 1, 1]; // set by the color picker, hex -> 0..1 via hexToRgb01 (events.js)
-        let lightBrushIntensity = 1.0;
+        // The color picker IS the paint value -- no separate intensity scalar,
+        // since a dark/black pick already achieves low brightness directly.
+        let lightBrushColor = [1, 1, 1]; // hex -> 0..1 via hexToRgb01 (events.js)
         let lightBrushRadius = 0;
-
-        // Composed paint value: picked color scaled by intensity, so white +
-        // 100% reproduces the old pure-brightness behavior, and a warm color
-        // at a lower intensity paints a dim torch-colored pool.
-        function currentLightPaintColor() {
-            return lightBrushColor.map(c => Math.max(0, Math.min(1, c * lightBrushIntensity)));
-        }
+        let lightToolMode = 'paint'; // 'paint' | 'blur'
 
         function setLightColor(hex) {
             lightBrushColor = hexToRgb01(hex);
         }
 
-        function setLightLevel(v) {
-            lightBrushIntensity = Math.max(0, Math.min(100, parseInt(v) || 0)) / 100;
-            document.getElementById('light-level-value').textContent = Math.round(lightBrushIntensity * 100) + '%';
+        function setLightTool(mode) {
+            lightToolMode = mode;
+            document.getElementById('light-color-row').style.display = mode === 'paint' ? 'flex' : 'none';
+            document.getElementById('light-blur-hint').style.display = mode === 'blur' ? 'block' : 'none';
         }
 
         function setLightRadius(v) {
             lightBrushRadius = Math.max(0, Math.min(6, parseInt(v) || 0));
             document.getElementById('light-radius-value').textContent = lightBrushRadius;
+        }
+
+        // Round brush membership: vertices within `radius` grid units of
+        // (cx, cy), Euclidean rather than the square block the brush used
+        // to paint.
+        function inBrush(dx, dy, radius) {
+            return dx * dx + dy * dy <= radius * radius + 0.001;
         }
 
         // Lazily creates map.light filled with full-white brightness ([1,1,1]),
@@ -552,6 +555,14 @@
             return Array.isArray(v) ? v : [1, 1, 1];
         }
 
+        // Clamped grid read for blur's neighbor sampling -- edges repeat their
+        // nearest in-bounds vertex rather than pulling in a phantom [1,1,1].
+        function clampedGridAt(grid, x, y, w, h) {
+            const cx = Math.max(0, Math.min(w, x)), cy = Math.max(0, Math.min(h, y));
+            const v = grid[cy] && grid[cy][cx];
+            return Array.isArray(v) ? v : [1, 1, 1];
+        }
+
         function paintLightAt(vx, vy) {
             const map = dbPayload.maps[currentMapIndex];
             if (!map || !map.layout || !map.layout.length) return;
@@ -559,12 +570,36 @@
             if (vx < 0 || vx > w || vy < 0 || vy > h) return;
 
             const light = ensureMapLight(map);
-            const color = currentLightPaintColor();
-            for (let dy = -lightBrushRadius; dy <= lightBrushRadius; dy++) {
-                for (let dx = -lightBrushRadius; dx <= lightBrushRadius; dx++) {
-                    const tx = vx + dx, ty = vy + dy;
-                    if (tx < 0 || tx > w || ty < 0 || ty > h) continue;
-                    light[ty][tx] = color.slice();
+
+            if (lightToolMode === 'blur') {
+                // Single-pass box blur (3x3) over every vertex the round brush
+                // covers, sampled from a snapshot so the pass doesn't feed
+                // its own already-blurred neighbors within one stroke.
+                const snapshot = light.map(row => row.map(c => c.slice()));
+                for (let dy = -lightBrushRadius; dy <= lightBrushRadius; dy++) {
+                    for (let dx = -lightBrushRadius; dx <= lightBrushRadius; dx++) {
+                        if (!inBrush(dx, dy, lightBrushRadius)) continue;
+                        const tx = vx + dx, ty = vy + dy;
+                        if (tx < 0 || tx > w || ty < 0 || ty > h) continue;
+                        const sum = [0, 0, 0];
+                        for (let ny = ty - 1; ny <= ty + 1; ny++) {
+                            for (let nx = tx - 1; nx <= tx + 1; nx++) {
+                                const c = clampedGridAt(snapshot, nx, ny, w, h);
+                                sum[0] += c[0]; sum[1] += c[1]; sum[2] += c[2];
+                            }
+                        }
+                        light[ty][tx] = sum.map(v => v / 9);
+                    }
+                }
+            } else {
+                const color = lightBrushColor.slice();
+                for (let dy = -lightBrushRadius; dy <= lightBrushRadius; dy++) {
+                    for (let dx = -lightBrushRadius; dx <= lightBrushRadius; dx++) {
+                        if (!inBrush(dx, dy, lightBrushRadius)) continue;
+                        const tx = vx + dx, ty = vy + dy;
+                        if (tx < 0 || tx > w || ty < 0 || ty > h) continue;
+                        light[ty][tx] = color.slice();
+                    }
                 }
             }
             setDirty(true);
