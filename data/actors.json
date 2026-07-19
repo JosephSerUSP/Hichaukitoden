@@ -789,7 +789,7 @@
     "role": "Caster",
     "maxHp": 12,
     "spriteKey": "wisp",
-    "smallBattler": "pixie",
+    "smallBattler": "wisp",
     "passives": [
       "etherealBody"
     ],
@@ -814,11 +814,11 @@
       }
     ],
     "evolutions": [],
-    "initialParty": false,
+    "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
     "traits": [],
-    "unlocked": false,
+    "unlocked": true,
     "tier": 1,
     "discipline": "alchemy",
     "sacrificeRewards": [
@@ -1045,7 +1045,7 @@
     "role": "Support",
     "maxHp": 7,
     "spriteKey": "candle",
-    "smallBattler": "pixie",
+    "smallBattler": "candle",
     "passives": [
       "nightVision"
     ],
