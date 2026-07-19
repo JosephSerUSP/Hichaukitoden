@@ -34,6 +34,10 @@ Rules:
   existing actors (asset generation is a separate step; placeholder reuse is
   correct here). Pick thematically closest.
 - skills/passives/elements: only ids from the ruleset.
+- CRITICAL: an actor's "role" field must be one of the ruleset's role ids
+  EXACTLY (see RULESET.roles). The outline cast's npc/creature/boss labels
+  are narrative categories, NOT role ids -- map each cast member to the
+  closest real ruleset role.
 - initialParty/isRecruitable/unlocked/tier/discipline follow the sample's
   conventions; give the player 2-3 unlocked starter creatures.
 - Bosses get higher level/tier and a `flavor` line each.

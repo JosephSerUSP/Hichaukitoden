@@ -26,6 +26,8 @@ Rules:
 - Item ids: sequential integers from 1, unique.
 - Every quest in the outline that needs a fetch-object gets a matching item
   here (mark it type "key" or similar per the sample's conventions).
-- shops.json: string-numeric keys ("1", "2", ...); each shop's items reference
-  item ids that exist; shop count and stock sized to the outline's town.
+- shops.json: string-numeric keys ("1", "2", ...). Each shop's "items" is an
+  array of OBJECTS -- `{"id": <itemId>}` optionally with a "condition" --
+  NEVER bare numbers. Ids must reference items that exist; shop count and
+  stock sized to the outline's town.
 - Meta keys (tier/density/potency/craftElement/craftKind) follow the sample.

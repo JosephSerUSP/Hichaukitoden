@@ -927,10 +927,18 @@ runValidation = function()
         check(opt.label and opt.action, "town option #" .. i .. " is missing label/action")
     end
 
-    -- Shop stock must reference existing items
+    -- Shop stock must reference existing items. Entries must be {id, ...}
+    -- objects -- generated data sometimes emits bare item-id numbers, which
+    -- must FAIL with a repairable message, never crash the validator (the
+    -- generator's repair loop feeds these lines back to the model).
     for shopId, shop in pairs(loader.shops or {}) do
-        for _, stock in ipairs(shop.items or {}) do
-            check(loader.getItem(stock.id), "shop " .. tostring(shopId) .. " stocks missing item '" .. tostring(stock.id) .. "'")
+        for si, stock in ipairs(shop.items or {}) do
+            if type(stock) ~= "table" then
+                check(false, "shop " .. tostring(shopId) .. " stock #" .. si ..
+                    " must be an object like {\"id\": N}, got bare value '" .. tostring(stock) .. "'")
+            else
+                check(loader.getItem(stock.id), "shop " .. tostring(shopId) .. " stocks missing item '" .. tostring(stock.id) .. "'")
+            end
         end
     end
 
@@ -2671,6 +2679,8 @@ local function handleKeyPressed(key)
                     scene_host.goto_scene("map")
                 elseif opt.action == "rest" then
                     recoverParty()
+                elseif opt.action == "open_shop" then
+                    openShop(opt.shopId or 1)
                 end
             end
         end
