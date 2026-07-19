@@ -6,7 +6,7 @@
     "role": "Healer",
     "maxHp": 9,
     "spriteKey": "pixie",
-    "smallBattler": "pixie",
+    "smallBattler": "pixie[fps=15]",
     "passives": [
       "postBattleHeal",
       "sense"
@@ -67,7 +67,7 @@
     "role": "Healer",
     "maxHp": 15,
     "spriteKey": "highPixie",
-    "smallBattler": "highPixie",
+    "smallBattler": "highPixie[fps=15]",
     "passives": [
       "postBattleHeal"
     ],
@@ -868,8 +868,7 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": [],
-    "names": []
+    "sacrificeRewards": []
   },
   {
     "id": 16,
@@ -990,8 +989,7 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": [],
-    "names": []
+    "sacrificeRewards": []
   },
   {
     "id": 19,
@@ -1038,8 +1036,7 @@
         "chance": 0.7,
         "count": 1
       }
-    ],
-    "names": []
+    ]
   },
   {
     "id": 20,
@@ -1089,8 +1086,7 @@
         "chance": 0.8,
         "count": 1
       }
-    ],
-    "names": []
+    ]
   },
   {
     "id": 21,
@@ -1125,8 +1121,7 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": [],
-    "names": []
+    "sacrificeRewards": []
   },
   {
     "id": 22,
@@ -1149,7 +1144,6 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": [],
-    "names": []
+    "sacrificeRewards": []
   }
 ]

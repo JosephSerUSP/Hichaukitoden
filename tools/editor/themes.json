@@ -109,7 +109,8 @@
       "bezel-shadow": "#202020",
       "bezel-dark": "#101010",
       "tooltip-bg": "#303020",
-      "tooltip-text": "#e0e0e0"
+      "tooltip-text": "#e0e0e0",
+      "gauge-hp": "#000000"
     }
   },
   {
