@@ -122,14 +122,17 @@ independently-drawn columns that can be tinted per-column.
   `viewport_3d.lua`, then `love.graphics.setColor(b, b, b, 1)` before
   drawing that slice. Floor/ceiling gradient color stops get the same
   per-column tinting, driven by the player-cell's interpolated brightness.
-- **Authoring**: a new brush tool in the map editor (`tools/editor/`) to
-  raise/lower brightness at grid vertices, visualized as an overlay on the
-  map grid. This is UI work over a grid of numbers, not real pixel
-  painting — small relative to the rest of this feature.
-- Open (not decided): free float brush vs. snapping to a small discrete set
-  of light levels for a more deliberately banded/retro look. Can be
-  decided during editor-tool implementation without blocking the renderer
-  work.
+- **Authoring — done**: a third editor layer ("Light", alongside Map and
+  Event, `tools/editor/index.html`/`js/map-editor.js`) paints `map.light`
+  directly. A brightness slider (0-100%) sets the value a click/drag
+  applies; a brush-radius field applies it to a square block of vertices
+  around the cursor (uniform, no falloff); the canvas overlays one dot per
+  grid corner, grayscale = brightness, only while the Light layer is
+  active. "Reset Map to Full Brightness" deletes `map.light` entirely.
+  Free float brush, not snapped to discrete levels (the open question
+  below is resolved in favor of the simpler option; banding can still be
+  achieved by hand since nothing stops repeated same-value strokes).
+  Unavailable on procedural maps (no fixed layout to paint vertices onto).
 
 ## Verification
 

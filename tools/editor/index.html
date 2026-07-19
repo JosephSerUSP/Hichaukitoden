@@ -819,6 +819,9 @@
             <button id="tool-event-btn" class="win98-btn active" onclick="switchMode('event')" title="Event Layer">
                 <span class="icon-sprite icon-event"></span>
             </button>
+            <button id="tool-light-btn" class="win98-btn" onclick="switchMode('light')" title="Light Layer (vertex lighting)">
+                💡
+            </button>
             <div class="toolbar-separator"></div>
             <button class="win98-btn" onclick="openDatabaseModal()" title="Database Manager">
                 <span class="icon-sprite icon-database"></span>
@@ -851,6 +854,29 @@
                     <p style="font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 0;">
                         In Event Layer, click or double-click any grid cell to create, edit, or delete events at coordinates (X, Y). Right-click for more options.
                     </p>
+                </div>
+
+                <!-- 2b. LIGHT PALETTE ("vertex colorer" -- paints session.currentMapData.light,
+                     see docs/design/raycaster-tileset-lighting.md. Only active in Light mode. -->
+                <div id="light-palette-section" style="display: none;">
+                    <div class="sidebar-title">Light Mode</div>
+                    <p style="font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 0 0 6px;">
+                        Paints brightness onto the map's grid corners (not cells) — walls and floors
+                        interpolate between the dots you place. Not available on procedural maps.
+                    </p>
+                    <div class="field-row-stacked">
+                        <label>Brightness: <span id="light-level-value">100%</span></label>
+                        <input type="range" id="light-level-slider" min="0" max="100" value="100"
+                               style="width: 100%;" oninput="setLightLevel(this.value)" />
+                    </div>
+                    <div class="field-row-stacked" style="margin-top: 6px;">
+                        <label>Brush Radius (vertices):</label>
+                        <input type="number" id="light-brush-radius" class="win98-input" min="0" max="6" value="0"
+                               oninput="setLightRadius(this.value)" />
+                    </div>
+                    <button class="win98-btn" style="width: 100%; margin-top: 8px;" onclick="clearMapLight()">
+                        Reset Map to Full Brightness
+                    </button>
                 </div>
 
                 <!-- 3. MAP HIERARCHY (Bottom aligned, stretching) -->

@@ -2,19 +2,15 @@
         // --- LAYER / EDITING MODE LOGIC ---
         function switchMode(mode) {
             editingMode = mode;
-            document.getElementById('tool-map-btn').classList.remove('active');
-            document.getElementById('tool-event-btn').classList.remove('active');
-
+            ['map', 'event', 'light'].forEach(m => document.getElementById(`tool-${m}-btn`).classList.remove('active'));
             document.getElementById(`tool-${mode}-btn`).classList.add('active');
-            document.getElementById('status-mode').textContent = `Layer: ${mode === 'map' ? 'Map Layer' : 'Event Layer'}`;
 
-            if (mode === 'map') {
-                document.getElementById('map-palette-section').style.display = 'block';
-                document.getElementById('event-palette-section').style.display = 'none';
-            } else {
-                document.getElementById('map-palette-section').style.display = 'none';
-                document.getElementById('event-palette-section').style.display = 'block';
-            }
+            const modeLabels = { map: 'Map Layer', event: 'Event Layer', light: 'Light Layer' };
+            document.getElementById('status-mode').textContent = `Layer: ${modeLabels[mode]}`;
+
+            document.getElementById('map-palette-section').style.display = mode === 'map' ? 'block' : 'none';
+            document.getElementById('event-palette-section').style.display = mode === 'event' ? 'block' : 'none';
+            document.getElementById('light-palette-section').style.display = mode === 'light' ? 'block' : 'none';
 
             // Re-render the map cells to update active visual style representation
             renderGridCells();
@@ -251,6 +247,27 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText('👤', sx * TILE_SIZE + TILE_SIZE / 2, sy * TILE_SIZE + TILE_SIZE / 2);
             }
+
+            // 4. Light layer overlay: one dot per grid CORNER (not cell),
+            // grayscale = brightness. Only drawn while actively editing light
+            // so it doesn't clutter the Map/Event layers.
+            if (editingMode === 'light' && map.layout && map.layout.length) {
+                const lh = map.layout.length, lw = map.layout[0].length;
+                for (let vy = 0; vy <= lh; vy++) {
+                    for (let vx = 0; vx <= lw; vx++) {
+                        const v = map.light && map.light[vy] && map.light[vy][vx] !== undefined
+                            ? map.light[vy][vx] : 1.0;
+                        const c = Math.round(Math.max(0, Math.min(1, v)) * 255);
+                        ctx.beginPath();
+                        ctx.arc(vx * TILE_SIZE, vy * TILE_SIZE, 5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${c},${c},${c},0.95)`;
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(255,140,0,0.9)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
         }
 
         function initCanvasEvents(canvas) {
@@ -281,6 +298,16 @@
                         isMouseDown = true;
                         paintCellAt(x, y);
                     }
+                } else if (editingMode === 'light') {
+                    if (e.button === 0) {
+                        // Light is painted onto grid CORNERS, not cells, so the
+                        // nearest vertex is a round() of the same pixel math the
+                        // cell coords above use a floor() of.
+                        const vx = Math.round((e.clientX - rect.left) / TILE_SIZE);
+                        const vy = Math.round((e.clientY - rect.top) / TILE_SIZE);
+                        isMouseDown = true;
+                        paintLightAt(vx, vy);
+                    }
                 } else {
                     if (e.button === 0) {
                         const clickedEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
@@ -303,6 +330,18 @@
 
                 const map = dbPayload.maps[currentMapIndex];
                 if (!map) return;
+
+                if (editingMode === 'light') {
+                    // Vertices range 0..width/height inclusive (one more than
+                    // cells), so this is bounds-checked separately below by
+                    // paintLightAt rather than reusing the cell bounds check.
+                    if (isMouseDown) {
+                        const vx = Math.round((e.clientX - rect.left) / TILE_SIZE);
+                        const vy = Math.round((e.clientY - rect.top) / TILE_SIZE);
+                        paintLightAt(vx, vy);
+                    }
+                    return;
+                }
 
                 const isProcedural = !map.layout || map.layout.length === 0;
                 const width = isProcedural ? 21 : map.layout[0].length;
@@ -434,6 +473,61 @@
             dbPayload.system.spawn.x = x;
             dbPayload.system.spawn.y = y;
 
+            setDirty(true);
+            renderGridCells();
+        }
+
+        // --- LIGHT LAYER ("vertex colorer") ---
+        // Paints map.light: a (layout height + 1) x (layout width + 1) grid of
+        // 0..1 floats over the map's grid *corners*, bilinearly sampled by the
+        // raycaster per wall-slice column. See docs/design/raycaster-tileset-lighting.md
+        // and engine/main.lua's validator (dimension check against layout size).
+        let lightBrushLevel = 1.0;
+        let lightBrushRadius = 0;
+
+        function setLightLevel(v) {
+            lightBrushLevel = Math.max(0, Math.min(100, parseInt(v) || 0)) / 100;
+            document.getElementById('light-level-value').textContent = Math.round(lightBrushLevel * 100) + '%';
+        }
+
+        function setLightRadius(v) {
+            lightBrushRadius = Math.max(0, Math.min(6, parseInt(v) || 0));
+        }
+
+        // Lazily creates map.light filled with full brightness (1.0), sized to
+        // match what the validator expects: layout height/width + 1 (vertices,
+        // not cells). Procedural maps have no fixed layout, so no light grid.
+        function ensureMapLight(map) {
+            if (!map.layout || !map.layout.length) return null;
+            if (map.light) return map.light;
+            const h = map.layout.length + 1;
+            const w = map.layout[0].length + 1;
+            map.light = Array.from({ length: h }, () => new Array(w).fill(1.0));
+            return map.light;
+        }
+
+        function paintLightAt(vx, vy) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !map.layout || !map.layout.length) return;
+            const h = map.layout.length, w = map.layout[0].length;
+            if (vx < 0 || vx > w || vy < 0 || vy > h) return;
+
+            const light = ensureMapLight(map);
+            for (let dy = -lightBrushRadius; dy <= lightBrushRadius; dy++) {
+                for (let dx = -lightBrushRadius; dx <= lightBrushRadius; dx++) {
+                    const tx = vx + dx, ty = vy + dy;
+                    if (tx < 0 || tx > w || ty < 0 || ty > h) continue;
+                    light[ty][tx] = lightBrushLevel;
+                }
+            }
+            setDirty(true);
+            renderGridCells();
+        }
+
+        function clearMapLight() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !map.light) return;
+            delete map.light;
             setDirty(true);
             renderGridCells();
         }
