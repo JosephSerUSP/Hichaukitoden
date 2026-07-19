@@ -1,0 +1,148 @@
+{
+  "1": {
+    "id": 1,
+    "name": "System Online Briefing",
+    "commands": [
+      {
+        "type": "TEXT",
+        "speaker": "Engineer Voss",
+        "text": "All gauges green. Water and power restored to Thestra."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mira",
+        "text": "The survivors are safe. The city will live because of you."
+      },
+      {
+        "type": "SET_FLAG",
+        "flag": "purifier_restored",
+        "value": true
+      }
+    ]
+  },
+  "4": {
+    "id": 4,
+    "name": "Quest Completion Reward",
+    "commands": [
+      {
+        "type": "GAIN_GOLD",
+        "amount": 50
+      },
+      {
+        "type": "GIVE_ITEM"
+      }
+    ]
+  },
+  "7": {
+    "id": 7,
+    "name": "Descent Transition",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The shaft narrows. Failing lamps flicker as you step into the dark."
+      },
+      {
+        "type": "TELEPORT"
+      }
+    ]
+  },
+  "12": {
+    "id": 12,
+    "name": "Boss Defeat Flow",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The Ash Sovereign dissolves into drifting cinders."
+      },
+      {
+        "type": "TEXT",
+        "text": "The Hydro Core awakens with a low, clean hum."
+      },
+      {
+        "type": "SET_FLAG",
+        "flag": "ash_sovereign_dead",
+        "value": true
+      }
+    ]
+  },
+  "13": {
+    "id": 13,
+    "name": "Party Recover at Hub",
+    "commands": [
+      {
+        "type": "RECOVER_PARTY"
+      }
+    ]
+  },
+  "14": {
+    "id": 14,
+    "name": "Corruption Cleared Notice",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The corruption here recedes. The air feels less thick."
+      }
+    ]
+  },
+  "15": {
+    "id": 15,
+    "name": "Survivor Rescue Ping",
+    "commands": [
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mira",
+        "text": "My medics sense the path is open. We're going down now."
+      },
+      {
+        "type": "SET_FLAG",
+        "flag": "survivors_reached",
+        "value": true
+      }
+    ]
+  },
+  "17": {
+    "id": 17,
+    "name": "Quest Log Reminder",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "Objective updated. Check your quest log for details."
+      }
+    ]
+  },
+  "30": {
+    "id": 30,
+    "name": "Vendor Greeting",
+    "commands": [
+      {
+        "type": "TEXT",
+        "speaker": "\\eventName",
+        "text": "Looking to trade? Step up to the counter."
+      }
+    ]
+  },
+  "31": {
+    "id": 31,
+    "name": "Shop Open Hub",
+    "commands": [
+      {
+        "type": "OPEN_SHOP",
+        "shopId": 1
+      }
+    ]
+  },
+  "33": {
+    "id": 33,
+    "name": "Return to Hub Loop",
+    "commands": [
+      {
+        "type": "TEXT",
+        "text": "The hub's lamps welcome you back from the dark."
+      },
+      {
+        "type": "CALL_COMMON_EVENT",
+        "commonEventId": 13
+      }
+    ]
+  }
+}

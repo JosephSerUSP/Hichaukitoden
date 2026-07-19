@@ -1,0 +1,92 @@
+{
+  "clear_lower_levels": {
+    "name": "Clear the Lower Levels",
+    "giver": "Engineer Voss",
+    "portrait": "NPC_Voss",
+    "summary": "Descend and eliminate corrupted entities blocking life support",
+    "description": "Engineer Voss dispatches you from Thestra Hub to investigate the lower levels. Corrupted entities have cut off the city's water, food, and power. Descend through the intake and clear the threats below.",
+    "objectives": [
+      "Speak with Engineer Voss in Thestra Hub.",
+      "Enter Thestra Intake and descend.",
+      "Eliminate Husk Brute in Corroded Conduit.",
+      "Defeat the Ash Sovereign in Hydro Core."
+    ],
+    "requirements": {
+      "items": []
+    },
+    "rewards": {
+      "gold": 60,
+      "items": [
+        {
+          "id": 5,
+          "qty": 1
+        }
+      ],
+      "flags": [
+        "lower_levels_cleared"
+      ]
+    }
+  },
+  "aid_survivors": {
+    "name": "Aid the Survivors",
+    "giver": "Healer Mira",
+    "portrait": "NPC_Mira",
+    "summary": "Clear a path so hub medics can reach trapped lower-level survivors",
+    "description": "Healer Mira asks for your help. Trapped survivors linger in the lower levels, but corrupted growths block the route. Clear the path so medics can reach them safely.",
+    "objectives": [
+      "Speak with Healer Mira in Thestra Hub.",
+      "Navigate Root Cavity and defeat Thorn Parasite.",
+      "Report the path is clear to Healer Mira."
+    ],
+    "requirements": {
+      "items": []
+    },
+    "rewards": {
+      "gold": 40,
+      "items": [
+        {
+          "id": 1,
+          "qty": 3
+        }
+      ],
+      "flags": [
+        "survivors_aided"
+      ]
+    }
+  },
+  "restore_purifier": {
+    "name": "Restore the Purifier",
+    "giver": "Engineer Voss",
+    "portrait": "NPC_Voss",
+    "summary": "Defeat the Ash Sovereign and bring the Hydro Core online",
+    "description": "With the depths partially cleared, Voss orders the final push. Restore power at Pulse Reactor, then descend to Hydro Core and defeat the Ash Sovereign to free the water purifier.",
+    "objectives": [
+      "Restore power in Pulse Reactor and defeat Static Wraith.",
+      "Descend to Hydro Core.",
+      "Confront and defeat Boss Ash Sovereign.",
+      "Return to Thestra Hub with systems online."
+    ],
+    "requirements": {
+      "items": [
+        {
+          "id": 24,
+          "qty": 1,
+          "consume": true
+        }
+      ]
+    },
+    "rewards": {
+      "gold": 80,
+      "items": [
+        {
+          "id": 18,
+          "qty": 1
+        }
+      ],
+      "flags": [
+        "purifier_restored",
+        "thestra_stabilized"
+      ]
+    }
+  }
+}

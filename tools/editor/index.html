@@ -666,6 +666,94 @@
         [data-block-selected="1"] {
             background: rgba(0, 0, 128, 0.15) !important;
         }
+
+        /* --- CAMPAIGN GENERATOR --- */
+        .cg-console {
+            flex: 1;
+            background: #0a0a0a;
+            color: #c8e6c8;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            line-height: 1.35;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-y: auto;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            border: 2px solid;
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+            box-shadow: inset 1px 1px 0px var(--win-black);
+        }
+        .cg-chip {
+            display: inline-block;
+            padding: 1px 10px;
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            border: 1px solid var(--win-shadow);
+            background: var(--win-gray);
+            color: var(--win-dark-shadow);
+        }
+        .cg-chip-running { background: #000080; color: #ffffff; border-color: #000080; }
+        .cg-chip-success { background: #005500; color: #ffffff; border-color: #005500; }
+        .cg-chip-failed { background: #aa0000; color: #ffffff; border-color: #aa0000; }
+        .cg-chip-cancelled { background: #806000; color: #ffffff; border-color: #806000; }
+        .cg-stage-strip {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-wrap: wrap;
+            font-size: 10px;
+        }
+        .cg-stage {
+            padding: 1px 7px;
+            border: 1px solid var(--win-shadow);
+            background: var(--win-gray);
+            color: var(--win-dark-shadow);
+        }
+        .cg-stage-done { background: #d8ecd8; color: #005500; border-color: #005500; }
+        .cg-stage-active {
+            background: var(--selection-bg);
+            color: var(--selection-text);
+            border-color: var(--selection-bg);
+            font-weight: bold;
+        }
+        .cg-stage-arrow { color: var(--win-shadow); }
+        .cg-input-error {
+            background: #ffe8e8 !important;
+            outline: 1px solid #aa0000;
+        }
+        .cg-field-error {
+            display: none;
+            font-size: 9px;
+            color: #aa0000;
+            margin-top: 1px;
+        }
+        .cg-model-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .cg-model-row label {
+            flex: 0 0 70px;
+            font-size: 10px;
+            text-transform: capitalize;
+        }
+        .cg-models-note {
+            font-size: 9px;
+            color: var(--win-dark-shadow);
+            margin: 0 0 4px;
+        }
+        .cg-cost-readout {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10px;
+            color: var(--win-dark-shadow);
+            min-height: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -705,6 +793,9 @@
                     </div>
                     <div class="dropdown-item" onclick="openStudioModal()">
                         🎨 Studio Preferences
+                    </div>
+                    <div class="dropdown-item" onclick="openCampaignGenModal()">
+                        🏭 Campaign Generator
                     </div>
                     <div class="dropdown-item" onclick="testPlay()">
                         <span class="icon-sprite icon-play"></span> Test Play
@@ -904,6 +995,108 @@
                 <button class="win98-btn win98-btn-success" onclick="saveData(); closeEngineModal(true)">OK</button>
                 <button class="win98-btn" onclick="saveData()">Apply</button>
                 <button class="win98-btn" onclick="closeEngineModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- CAMPAIGN GENERATOR MODAL --- -->
+    <div id="campaign-gen-modal" class="modal-overlay">
+        <div class="window outset-bevel" style="width: 90vw; height: 90vh; min-width: 1100px; min-height: 640px; display: flex; flex-direction: column;">
+            <div class="title-bar">
+                <div class="title-bar-text">🏭 Campaign Generator</div>
+                <div class="title-bar-controls">
+                    <button class="win-btn-small outset-bevel" onclick="closeCampaignGenModal()">×</button>
+                </div>
+            </div>
+
+            <div class="window-body" style="flex: 1; display: flex; gap: 8px; overflow: hidden;">
+                <!-- Left column: inputs -->
+                <div style="width: 400px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 2px;">
+                    <fieldset style="padding: 8px;">
+                        <legend>Campaign</legend>
+                        <div class="field-row-stacked">
+                            <label>Name (snake_case, becomes campaigns/&lt;name&gt;/):</label>
+                            <input type="text" id="cg-name" class="win98-input" style="font-family: monospace;"
+                                   placeholder="my_campaign" oninput="validateCgName()" />
+                            <span id="cg-name-error" class="cg-field-error">Lowercase letters, digits and underscores only (^[a-z0-9_]+$).</span>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 8px;">
+                            <label>Pitch:</label>
+                            <textarea id="cg-pitch" class="win98-input" rows="7"
+                                      style="resize: vertical; font-family: var(--font-family); font-size: 11px; box-sizing: border-box; width: 100%;"
+                                      oninput="cgInputsChanged()"
+                                      placeholder="e.g. A cozy mystery in a snowed-in mountain monastery: the abbot has vanished, the relics whisper at night, and the player's summoner must befriend or banish the six spirits haunting the cloister before the pass thaws."></textarea>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 8px;">
+                            <label>OpenRouter API Key:</label>
+                            <input type="password" id="cg-api-key" class="win98-input" autocomplete="off" />
+                            <span class="field-help">Leave blank to use the server's OPENROUTER_API_KEY env var. Never saved to disk.</span>
+                        </div>
+                    </fieldset>
+
+                    <fieldset style="padding: 8px;">
+                        <legend>Models</legend>
+                        <div id="cg-model-filter-row" style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                            <label style="font-size: 10px;">Filter:</label>
+                            <input type="text" id="cg-model-filter" class="win98-input" style="flex: 1;"
+                                   placeholder="type to filter hundreds of models..." oninput="cgRefilterModels()" />
+                        </div>
+                        <div id="cg-models-body">
+                            <!-- Rendered by campaign-gen.js -->
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 10px;">
+                            <input type="checkbox" id="cg-models-expand" onchange="cgToggleStageModels()" />
+                            <label for="cg-models-expand">Override per stage (outline, actors, items, quests, maps, events, repair)</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset style="padding: 8px;">
+                        <legend>Advanced</legend>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 10px; white-space: nowrap;">Run:</label>
+                            <select id="cg-stage-select" class="win98-select" style="flex: 1;">
+                                <option value="">Full run (all stages)</option>
+                                <option value="outline">outline only</option>
+                                <option value="actors">actors only</option>
+                                <option value="items">items only</option>
+                                <option value="quests">quests only</option>
+                                <option value="maps">maps only</option>
+                                <option value="events">events only</option>
+                                <option value="repair">repair only</option>
+                            </select>
+                            <input type="checkbox" id="cg-resume" />
+                            <label for="cg-resume" style="font-size: 10px;">Resume</label>
+                        </div>
+                        <span class="field-help">Single stage / resume re-uses what's already in campaigns/&lt;name&gt;/.</span>
+                    </fieldset>
+
+                    <div id="cg-success-hint" style="display: none; border: 1px solid #005500; background: #e8f4e8; padding: 6px 8px; font-size: 10px;">
+                        <b style="color: #005500;">Campaign ready.</b> Set it active, then Test Play.
+                        A spoiler guide was written to<br>
+                        <span id="cg-walkthrough-path" style="font-family: monospace;"></span>
+                    </div>
+                </div>
+
+                <!-- Right column: status + console -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="cg-status-chip" class="cg-chip">idle</span>
+                        <div id="cg-stage-strip" class="cg-stage-strip" style="flex: 1;"></div>
+                    </div>
+                    <div id="cg-console" class="cg-console"></div>
+                    <div id="cg-cost-readout" class="cg-cost-readout"></div>
+                </div>
+            </div>
+
+            <div class="dialog-footer">
+                <button id="cg-generate-btn" class="win98-btn win98-btn-success" style="color: #005500;" onclick="startCampaignGen()" disabled>Generate</button>
+                <button id="cg-cancel-btn" class="win98-btn" style="color: #aa0000; display: none;" onclick="cancelCampaignGen()">Cancel Run</button>
+                <span style="flex: 1;"></span>
+                <button id="cg-activate-btn" class="win98-btn" onclick="activateCampaign()" disabled>Set Active</button>
+                <button id="cg-testplay-btn" class="win98-btn" onclick="testPlay()" disabled>
+                    <span class="icon-sprite icon-play"></span> Test Play
+                </button>
+                <button class="win98-btn" onclick="closeCampaignGenModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1363,5 +1556,6 @@
     <script src="js/icon-picker.js"></script>
     <script src="js/icon-field.js"></script>
     <script src="js/studio.js"></script>
+    <script src="js/campaign-gen.js"></script>
 </body>
 </html>

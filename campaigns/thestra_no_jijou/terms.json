@@ -1,0 +1,144 @@
+{
+  "battle": {
+    "your_party_collapses": "Your party collapses in the dark.",
+    "enemies_emerge": "Enemies emerge from the dark!",
+    "victory": "Victory!",
+    "flee": "Flee",
+    "resolve_round": "Resolve Round",
+    "encounter": "A hostile group blocks your path!",
+    "victory_full": "Victory! All hostile forces vanquished.",
+    "defeat_full": "Defeat! The party has fallen in battle...",
+    "flee_success": "Escaped successfully!",
+    "flee_fail": "Failed to escape!",
+    "not_enough_mp": "Not enough MP!",
+    "no_item_left": "No {0}s left!",
+    "casts_spell": "{0} casts {1}!",
+    "uses_item": "{0} uses {1}!",
+    "uses_skill": "{0} uses {1} on {2}!",
+    "takes_damage": "- {0} takes {1} damage.",
+    "recovers_hp": "- {0} recovers {1} HP.",
+    "has_fallen": "! {0} has fallen!",
+    "got_status": "- {0} got {1} status.",
+    "status_wore_off": "- {0}'s {1} wore off.",
+    "consumes_mp": "- {0} consumes {1} MP.",
+    "mp_exhaustion": "{0} suffers from MP exhaustion!",
+    "gains_xp": "- {0} gains {1} XP.",
+    "recovers_mp": "- {0} MP restored.",
+    "resolving": "Resolving actions...",
+    "reaped": "{0} has passed away.",
+    "reserve_wave": "The party has fallen! The reserves rush in -- {0} will not act this round.",
+    "commands_monster": [
+      "Attack",
+      "Skill",
+      "Defend",
+      "Item",
+      "Flee"
+    ],
+    "help_summoner": [
+      "Strike with a basic attack.",
+      "Cast a spell from the grimoire.",
+      "Use an item from the inventory.",
+      "Attempt to escape the battle."
+    ],
+    "help_monster": [
+      "Strike with a basic attack.",
+      "Use one of this creature's skills.",
+      "Brace to reduce incoming damage.",
+      "Use an item from the inventory.",
+      "Attempt to escape the battle."
+    ]
+  },
+  "menu": {
+    "main_options": [
+      "ITEMS",
+      "STATUS",
+      "CRAFTING",
+      "EXIT"
+    ],
+    "equip_slots": [
+      "WPN",
+      "AMR",
+      "ACC"
+    ],
+    "exit_prompt": "Quit Hichaukitoden and exit to the desktop?",
+    "exit_options": [
+      "YES",
+      "NO"
+    ]
+  },
+  "events": {
+    "recover_party": "Your party has been fully recovered!",
+    "teleport": "You are whisked away...",
+    "found_item": "Found a {0}!"
+  },
+  "formation": {
+    "title": "Formation – Stillnight",
+    "label": "Drag and drop to rearrange. Active party is the first 4 members.",
+    "reserve_label": "Reserve",
+    "ok": "OK",
+    "cancel": "Cancel"
+  },
+  "inventory": {
+    "title": "Inventory – Stillnight",
+    "empty": "Your bag is empty.",
+    "use": "Use",
+    "discard": "Discard"
+  },
+  "log": {
+    "new_run": "[Run] New run started.",
+    "floor_intro": "[Floor] ",
+    "navigate_card": "[Navigate] You flip to card ",
+    "step_echo": "[Step] Your footsteps echo softly.",
+    "wall_blocks": "A wall blocks the way.",
+    "party_falls": "[Battle] Your party falls.",
+    "run_ended": "The run has ended. Start a new run.",
+    "no_deeper_floors": "No deeper floors. Run over (for now).",
+    "all_tiles_revealed": "All tiles revealed."
+  },
+  "status": {
+    "exploring_floor": "Exploring floor ",
+    "ready": "Ready.",
+    "log_cleared": "Log cleared.",
+    "only_adjacent_tiles": "You can only move to adjacent tiles.",
+    "enemy_encountered": "Enemy encountered!",
+    "descending": "Teleporting.",
+    "victory": "Victory."
+  },
+  "shop": {
+    "title": "Shop – Stillnight",
+    "vendor_message": "A crooked vendor raises one eyebrow.",
+    "not_enough_gold": "You don't have enough gold.",
+    "purchased": "Purchased "
+  },
+  "recruit": {
+    "title": "Recruit – Stillnight",
+    "no_one_here": "[Recruit] No one is here.",
+    "decline_offer": "[Recruit] You decline {0}'s offer.",
+    "recruited": "{0} recruited!",
+    "party_full": "Party is full. Select a member to replace:",
+    "decide_not_to_replace": "[Recruit] You decide not to replace anyone.",
+    "replace_member": "[Recruit] You replace {0} with {1}."
+  },
+  "title": {
+    "subtitle": "",
+    "options": [
+      "New Game",
+      "\\c[7]Continue",
+      "Exit"
+    ],
+    "no_save": "No save data.",
+    "copyright": "(C) 2026 SeraphCircle"
+  },
+  "game_over": {
+    "title": "GAME OVER",
+    "message": "The party has fallen...",
+    "return_to_title": "Return to Title"
+  },
+  "shrine": {
+    "silent": "[Shrine] This shrine is silent.",
+    "hp_change": "[Shrine] Your party's HP changes by {0}.",
+    "max_hp_change": "[Shrine] Your party's max HP changes by {0}.",
+    "xp_gain": "[Shrine] Your party gains {0} XP.",
+    "gold_gain": "[Shrine] You gain {0} gold."
+  }
+}

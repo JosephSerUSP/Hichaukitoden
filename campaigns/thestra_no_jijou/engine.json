@@ -1,0 +1,2001 @@
+{
+  "formulaHelp": [
+    {
+      "token": "a",
+      "description": "The acting battler (view: level, hp, maxHp, atk, def, mat, mdf)."
+    },
+    {
+      "token": "b",
+      "description": "The primary target battler (same fields as a)."
+    },
+    {
+      "token": "target",
+      "description": "Alias for the target battler (same fields as a)."
+    },
+    {
+      "token": "enemy",
+      "description": "Enemy battler in reward/encounter contexts (same fields as a)."
+    },
+    {
+      "token": "ally",
+      "description": "Ally battler in support contexts (same fields as a)."
+    },
+    {
+      "token": "a.level",
+      "description": "Battler level (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.hp",
+      "description": "Current HP (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.maxHp",
+      "description": "Max HP after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.atk",
+      "description": "Attack after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.def",
+      "description": "Defense after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.mat",
+      "description": "Magic attack after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.mdf",
+      "description": "Magic defense after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.mpd",
+      "description": "Per-round MP drain after traits (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.name",
+      "description": "Battler display name, for EMIT_TEXT args (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "a.row",
+      "description": "The battler's row: \"front\" or \"back\". Assigned by fielded slot at battle start (1-2 front, 3-4 back); no combat math consumes it yet."
+    },
+    {
+      "token": "session.mapSafe",
+      "description": "True when the current map is flagged safe (no MP drain)."
+    },
+    {
+      "token": "session.encounterRate",
+      "description": "The map's encounterRate override, falling back to combat.encounterChance."
+    },
+    {
+      "token": "party.size",
+      "description": "Number of party members (alias: party.count)."
+    },
+    {
+      "token": "party.count",
+      "description": "Number of party members."
+    },
+    {
+      "token": "party.aliveCount",
+      "description": "Living party members."
+    },
+    {
+      "token": "party.avgLevel",
+      "description": "Average party level."
+    },
+    {
+      "token": "party.totalLevel",
+      "description": "Sum of party levels."
+    },
+    {
+      "token": "party.totalMaxHp",
+      "description": "Sum of party max HP."
+    },
+    {
+      "token": "party.fleeBonus",
+      "description": "Sum of FLEE_CHANCE_BONUS trait rates over living members."
+    },
+    {
+      "token": "enemies.size",
+      "description": "Number of enemies (alias: enemies.count); enemies has the same aggregate fields as party."
+    },
+    {
+      "token": "session.gold",
+      "description": "Current gold."
+    },
+    {
+      "token": "session.mp",
+      "description": "Current shared MP pool."
+    },
+    {
+      "token": "session.maxMp",
+      "description": "Max shared MP pool."
+    },
+    {
+      "token": "session.floor",
+      "description": "Current dungeon floor."
+    },
+    {
+      "token": "battle.round",
+      "description": "Current battle round number."
+    },
+    {
+      "token": "combat",
+      "description": "The system.json combat table (e.g. combat.victoryExp)."
+    },
+    {
+      "token": "v",
+      "description": "Flow-local variables set via SET_VAR."
+    },
+    {
+      "token": "random(m, n)",
+      "description": "Random integer in [m, n]; random() gives a float in [0, 1)."
+    },
+    {
+      "token": "floor(x)",
+      "description": "Round down."
+    },
+    {
+      "token": "ceil(x)",
+      "description": "Round up."
+    },
+    {
+      "token": "round(x)",
+      "description": "Round to nearest integer."
+    },
+    {
+      "token": "abs(x)",
+      "description": "Absolute value."
+    },
+    {
+      "token": "min(a, b, ...)",
+      "description": "Smallest argument."
+    },
+    {
+      "token": "max(a, b, ...)",
+      "description": "Largest argument."
+    },
+    {
+      "token": "clamp(x, lo, hi)",
+      "description": "Constrain x to [lo, hi]."
+    },
+    {
+      "token": "a.meta.key",
+      "description": "Expose custom meta keys from the battler's database entry (also on b/target/enemy/ally)."
+    },
+    {
+      "token": "ingredient1.meta.key",
+      "description": "Reads meta key on ingredient 1 (item metadata, also on ingredient2)."
+    },
+    {
+      "token": "session.itemCount",
+      "description": "Distinct non-empty inventory stacks (bounds an inventory-list cursor)."
+    },
+    {
+      "token": "(list rows)",
+      "description": "SET_LIST sprite/gaugeValue/gaugeMax evaluate against each row's fields (e.g. hp, maxHp, spriteKey)."
+    }
+  ],
+  "metaKeys": [
+    {
+      "key": "tier",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "number",
+      "description": "Crafting tier/quality of the item"
+    },
+    {
+      "key": "density",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "number",
+      "description": "Material density"
+    },
+    {
+      "key": "potency",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "number",
+      "description": "Chemical/magical potency"
+    },
+    {
+      "key": "craftElement",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "string",
+      "description": "Elemental alignment of the ingredient"
+    },
+    {
+      "key": "craftKind",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "string",
+      "description": "Crafting pool category (blacksmith/tinker/alchemy/cooking)"
+    }
+  ],
+  "scripting": {
+    "allowRawAccess": false
+  },
+  "scriptingHelp": [
+    {
+      "token": "ctx.session",
+      "description": "Read-only session view: gold, mp, maxMp, floor."
+    },
+    {
+      "token": "ctx.battle",
+      "description": "Battle info when in a battle phase: { round }."
+    },
+    {
+      "token": "ctx.actor",
+      "description": "The acting battler handle, when one exists."
+    },
+    {
+      "token": "ctx.target",
+      "description": "The target battler handle, when one exists."
+    },
+    {
+      "token": "ctx.v",
+      "description": "Flow-local variables shared with SET_VAR / formulas."
+    },
+    {
+      "token": "ctx.rawSession",
+      "description": "Real session object — only present when scripting.allowRawAccess is true."
+    },
+    {
+      "token": "ctx.rawLoader",
+      "description": "Real data loader — only present when scripting.allowRawAccess is true."
+    },
+    {
+      "token": "api.damage(target, n)",
+      "description": "Deal n damage via effects.apply; death/log events emit normally."
+    },
+    {
+      "token": "api.heal(target, n)",
+      "description": "Heal n HP via effects.apply, capped at max HP."
+    },
+    {
+      "token": "api.giveItem(id, n)",
+      "description": "Add n of item id to the inventory."
+    },
+    {
+      "token": "api.takeItem(id, n)",
+      "description": "Remove n of item id (fails soft)."
+    },
+    {
+      "token": "api.gainGold(n)",
+      "description": "Add floor(n) gold, clamped at 0."
+    },
+    {
+      "token": "api.grantXp(target, n)",
+      "description": "Grant XP through the normal level-up pipeline."
+    },
+    {
+      "token": "api.addState(target, id, dur)",
+      "description": "Add a state via the status pipeline (emits state_add)."
+    },
+    {
+      "token": "api.removeState(target, id)",
+      "description": "Remove a state (emits state_remove)."
+    },
+    {
+      "token": "api.setFlag(flag, val)",
+      "description": "Set or clear a session flag."
+    },
+    {
+      "token": "api.emit(event)",
+      "description": "Append a raw event to the phase's event stream."
+    },
+    {
+      "token": "math / string / table",
+      "description": "Lua stdlib copies (mutations do not leak to the engine)."
+    },
+    {
+      "token": "random(m, n)",
+      "description": "The seeded math.random — deterministic under the golden harness."
+    }
+  ],
+  "commands": [
+    {
+      "id": "TEXT",
+      "category": "Message",
+      "label": "Show Text",
+      "params": [
+        {
+          "key": "text",
+          "type": "text"
+        },
+        {
+          "key": "speaker",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Shows a dialogue line and waits for input."
+    },
+    {
+      "id": "CHOICE",
+      "category": "Message",
+      "label": "Show Choice",
+      "params": [
+        {
+          "key": "options",
+          "type": "commands"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Presents options; each option carries its own command list."
+    },
+    {
+      "id": "CONDITIONAL_BRANCH",
+      "category": "Flow Control",
+      "label": "Conditional Branch",
+      "params": [
+        {
+          "key": "condition",
+          "type": "text"
+        },
+        {
+          "key": "commands",
+          "type": "commands"
+        },
+        {
+          "key": "elseCommands",
+          "type": "commands"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Branches on a flag:/hasItem: condition string."
+    },
+    {
+      "id": "RECOVER_PARTY",
+      "category": "Progression",
+      "label": "Recover Party",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Fully restores the party and shows the recovery line."
+    },
+    {
+      "id": "TELEPORT",
+      "category": "Progression",
+      "label": "Teleport",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Teleport the party to another location."
+    },
+    {
+      "id": "OPEN_SHOP",
+      "category": "Progression",
+      "label": "Open Shop",
+      "params": [
+        {
+          "key": "shopId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Opens the shop scene stocked from data/shops.json for the given shop id."
+    },
+    {
+      "id": "QUEST_OFFER",
+      "category": "Advanced",
+      "label": "Offer Quest",
+      "params": [
+        {
+          "key": "questId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Marks a quest active (quest:<id>:active flag) and runs the quest.offer flow (or the quest's acceptHook, if it has one)."
+    },
+    {
+      "id": "QUEST_COMPLETE",
+      "category": "Advanced",
+      "label": "Complete Quest",
+      "params": [
+        {
+          "key": "questId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Runs the quest.complete flow (or the quest's completeHook): takes item requirements and grants rewards, then marks the quest completed (quest:<id>:completed flag)."
+    },
+    {
+      "id": "BATTLE",
+      "category": "Progression",
+      "label": "Start Battle",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Triggers an encounter on the current map."
+    },
+    {
+      "id": "GIVE_ITEM",
+      "category": "Progression",
+      "label": "Give Random Treasure",
+      "deprecatedBy": "CHANGE_ITEM",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Grants a random item from the map's treasure list."
+    },
+    {
+      "id": "CALL_COMMON_EVENT",
+      "category": "Flow Control",
+      "label": "Call Common Event",
+      "params": [
+        {
+          "key": "commonEventId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Runs a common event's commands inline."
+    },
+    {
+      "id": "LABEL",
+      "category": "Flow Control",
+      "label": "Label",
+      "params": [
+        {
+          "key": "name",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Marks a jump target for JUMP_TO_LABEL elsewhere in this event/common event's command list. No effect on its own."
+    },
+    {
+      "id": "JUMP_TO_LABEL",
+      "category": "Flow Control",
+      "label": "Jump to Label",
+      "params": [
+        {
+          "key": "label",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": true,
+      "description": "Unconditionally jumps to the matching LABEL anywhere in this same event/common event (including inside other CHOICE options or branches). Does not cross CALL_COMMON_EVENT boundaries."
+    },
+    {
+      "id": "COMMENT",
+      "category": "Other",
+      "label": "Comment",
+      "params": [
+        {
+          "key": "text",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "any"
+      ],
+      "interactive": false,
+      "description": "Documentation only; the interpreter skips it entirely."
+    },
+    {
+      "id": "SET_VAR",
+      "category": "Variables",
+      "label": "Control Variables",
+      "params": [
+        {
+          "key": "name",
+          "type": "text"
+        },
+        {
+          "key": "value",
+          "type": "formula"
+        },
+        {
+          "key": "assignments",
+          "type": "assignments"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
+    },
+    {
+      "id": "SET_FLAG",
+      "category": "Variables",
+      "label": "Set Flag",
+      "params": [
+        {
+          "key": "flag",
+          "type": "text"
+        },
+        {
+          "key": "value",
+          "type": "flag"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets or clears a session flag (the same flags conditions read)."
+    },
+    {
+      "id": "IF",
+      "category": "Flow Control",
+      "label": "If",
+      "params": [
+        {
+          "key": "condition",
+          "type": "formula"
+        },
+        {
+          "key": "then",
+          "type": "commands"
+        },
+        {
+          "key": "else",
+          "type": "commands"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Runs then/else on a formula condition; flag:/hasItem: strings stay valid."
+    },
+    {
+      "id": "FOR_EACH",
+      "category": "Flow Control",
+      "label": "For Each",
+      "params": [
+        {
+          "key": "scope",
+          "type": "scope"
+        },
+        {
+          "key": "as",
+          "type": "text"
+        },
+        {
+          "key": "do",
+          "type": "commands"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Iterates enemies, living_enemies, allies, living_allies, party, or slot_allies (living battlers in battle slots 1-4, matching the legacy per-slot loops)."
+    },
+    {
+      "id": "GAIN_GOLD",
+      "category": "Progression",
+      "label": "Gain Gold",
+      "params": [
+        {
+          "key": "amount",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Adds floor(amount) gold to the party, clamped at 0."
+    },
+    {
+      "id": "GRANT_XP",
+      "category": "Progression",
+      "label": "Grant XP",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "amount",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Grants XP through the normal level-up pipeline."
+    },
+    {
+      "id": "DAMAGE",
+      "category": "Battler",
+      "label": "Damage",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "amount",
+          "type": "formula"
+        },
+        {
+          "key": "pierce",
+          "type": "flag"
+        },
+        {
+          "key": "minHp",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Deals damage via effects.apply so death/log events stay consistent. pierce skips DEF/element scaling and minHp floors HP without killing (legacy-exact raw damage)."
+    },
+    {
+      "id": "HEAL",
+      "category": "Battler",
+      "label": "Heal",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "amount",
+          "type": "formula"
+        },
+        {
+          "key": "trait",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Heals via effects.apply, capped at max HP. With a trait code, heals silently by the target's rate for that trait (absorbed TRAIT_HEAL)."
+    },
+    {
+      "id": "ADD_STATE",
+      "category": "Battler",
+      "label": "Add State",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "state",
+          "type": "state"
+        },
+        {
+          "key": "duration",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Adds a state through the status pipeline."
+    },
+    {
+      "id": "REMOVE_STATE",
+      "category": "Battler",
+      "label": "Remove State",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "state",
+          "type": "state"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Removes a state through the status pipeline."
+    },
+    {
+      "id": "CHANGE_MP",
+      "category": "Progression",
+      "label": "Change MP",
+      "params": [
+        {
+          "key": "amount",
+          "type": "formula"
+        },
+        {
+          "key": "actor",
+          "type": "battlerRef"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Changes the shared MP pool by a signed amount."
+    },
+    {
+      "id": "DRAIN_MP",
+      "category": "Party",
+      "label": "Drain MP",
+      "deprecatedBy": "CHANGE_MP",
+      "params": [
+        {
+          "key": "amount",
+          "type": "formula"
+        },
+        {
+          "key": "actor",
+          "type": "battlerRef"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Drains the shared MP pool, clamped at 0."
+    },
+    {
+      "id": "RESTORE_MP",
+      "category": "Party",
+      "label": "Restore MP",
+      "deprecatedBy": "CHANGE_MP",
+      "params": [
+        {
+          "key": "amount",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Restores the shared MP pool, capped at max MP."
+    },
+    {
+      "id": "STATE_TICKS",
+      "category": "Battler",
+      "label": "State Ticks",
+      "params": [],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Runs the regen/poison/duration-decay block for all battlers."
+    },
+    {
+      "id": "EMIT_TEXT",
+      "category": "Message",
+      "label": "Emit Text",
+      "params": [
+        {
+          "key": "term",
+          "type": "term"
+        },
+        {
+          "key": "fallback",
+          "type": "text"
+        },
+        {
+          "key": "args",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Emits a battle-log/text event via formatTerm."
+    },
+    {
+      "id": "CHANGE_ITEM",
+      "category": "Progression",
+      "label": "Change Item",
+      "params": [
+        {
+          "key": "item",
+          "type": "item"
+        },
+        {
+          "key": "count",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Gives or takes items by a signed count."
+    },
+    {
+      "id": "TAKE_ITEM",
+      "category": "Progression",
+      "label": "Take Item",
+      "deprecatedBy": "CHANGE_ITEM",
+      "params": [
+        {
+          "key": "item",
+          "type": "item"
+        },
+        {
+          "key": "count",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Removes items from the inventory (fails soft)."
+    },
+    {
+      "id": "USE_ITEM",
+      "category": "Progression",
+      "label": "Use Item",
+      "params": [
+        {
+          "key": "itemIndex",
+          "type": "formula"
+        },
+        {
+          "key": "target",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with target 'party' hit every member, otherwise target is a party index."
+    },
+    {
+      "id": "EQUIP_ITEM",
+      "category": "Progression",
+      "label": "Equip Item",
+      "params": [
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "target",
+          "type": "formula"
+        },
+        {
+          "key": "itemIndex",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Equips gear on a party member. slot: 1=Weapon 2=Armor 3=Accessory; target is a party index; itemIndex is 1-based into the window renderer's 'equipment' list order (1 = unequip, then matching inventory gear id-ascending). Previous gear returns to the inventory."
+    },
+    {
+      "id": "GIVE_ITEM_ID",
+      "category": "Progression",
+      "label": "Give Specific Item",
+      "deprecatedBy": "CHANGE_ITEM",
+      "params": [
+        {
+          "key": "item",
+          "type": "item"
+        },
+        {
+          "key": "count",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Adds a specific item (GIVE_ITEM stays the random-treasure command)."
+    },
+    {
+      "id": "REAP_FALLEN",
+      "category": "Advanced",
+      "label": "Reap Fallen Spirits",
+      "params": [],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Permadeath sweep: removes every party spirit still dead (plus emergency-wave casualties) and banks their EXP at the sacrifice rate. Meant for battle.victory / battle.escaped."
+    },
+    {
+      "id": "ROLL_ENCOUNTER",
+      "category": "Advanced",
+      "label": "Roll Encounter",
+      "params": [
+        {
+          "key": "chance",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Rolls math.random() < chance; on success emits an encounter event the map host consumes."
+    },
+    {
+      "id": "SPAWN_ENEMIES",
+      "category": "Advanced",
+      "label": "Spawn Enemies",
+      "params": [
+        {
+          "key": "count",
+          "type": "formula"
+        },
+        {
+          "key": "table",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Weighted enemy pick from the current map's encounter table; emits a spawn_enemies event with the built group."
+    },
+    {
+      "id": "EMIT_EVENT",
+      "category": "Advanced",
+      "label": "Emit Raw Event",
+      "params": [
+        {
+          "key": "event",
+          "type": "text"
+        },
+        {
+          "key": "value",
+          "type": "formula"
+        },
+        {
+          "key": "state",
+          "type": "state"
+        },
+        {
+          "key": "target",
+          "type": "battlerRef"
+        }
+      ],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Emits a raw event of the given type (e.g. flee_success) for the host loop to consume."
+    },
+    {
+      "id": "EMIT_TEXT",
+      "category": "UI",
+      "label": "Emit Text",
+      "params": [
+        {
+          "key": "term",
+          "type": "text"
+        },
+        {
+          "key": "args",
+          "type": "list"
+        }
+      ],
+      "contexts": [
+        "scene",
+        "common",
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Emits text event using terms."
+    },
+    {
+      "id": "SCENE_EVENT",
+      "category": "Advanced",
+      "label": "Scene Event",
+      "params": [
+        {
+          "key": "kind",
+          "type": "text"
+        },
+        {
+          "key": "scene",
+          "type": "text"
+        },
+        {
+          "key": "vars",
+          "type": "assignments"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Emits a scene_change event that scene_host consumes; the interpreter never switches scenes itself. Optional vars ({name, value} rows, evaluated against the pushing scene right now) are applied to the pushed scene's v right after its own on_enter runs, e.g. to hand it a chosen party member index."
+    },
+    {
+      "id": "FALLBACK",
+      "category": "Advanced",
+      "label": "Fall Through to Legacy Input",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Marks this hook invocation as unhandled so the legacy input underneath it runs instead (e.g. map movement on up/down/left/right when no menu overlay is open). Any hook key otherwise intercepts its key unconditionally."
+    },
+    {
+      "id": "LOAD_MAP",
+      "category": "Progression",
+      "label": "Load Map",
+      "params": [
+        {
+          "key": "mapId",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Loads the map with the given index into the session (title New Game, warps). If mapId is omitted, defaults to system.spawn.mapId."
+    },
+    {
+      "id": "QUIT_GAME",
+      "category": "Advanced",
+      "label": "Quit Game",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Quits the game (title Exit)."
+    },
+    {
+      "id": "RESET_SESSION",
+      "category": "Advanced",
+      "label": "Reset Session",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Discards the current session and starts a fresh one with the starting party (game over / new game)."
+    },
+    {
+      "id": "SCRIPT",
+      "category": "Advanced",
+      "label": "Script Call",
+      "params": [
+        {
+          "key": "code",
+          "type": "script"
+        },
+        {
+          "key": "ref",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sandboxed Lua escape hatch (see scriptingHelp). Forbidden in shipped default flows and built-in scenes; allowed in extra (user-authored) scenes."
+    },
+    {
+      "id": "OPEN_WINDOW",
+      "category": "UI",
+      "label": "Open Window",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Opens a UI window."
+    },
+    {
+      "id": "CLOSE_WINDOW",
+      "category": "UI",
+      "label": "Close Window",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Closes a UI window."
+    },
+    {
+      "id": "SET_LIST",
+      "category": "UI",
+      "label": "Set List",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        },
+        {
+          "key": "listId",
+          "type": "text"
+        },
+        {
+          "key": "format",
+          "type": "text"
+        },
+        {
+          "key": "priority",
+          "type": "text"
+        },
+        {
+          "key": "highlight",
+          "type": "text"
+        },
+        {
+          "key": "sprite",
+          "type": "text"
+        },
+        {
+          "key": "gaugeValue",
+          "type": "text"
+        },
+        {
+          "key": "gaugeMax",
+          "type": "text"
+        },
+        {
+          "key": "slot",
+          "type": "formula"
+        },
+        {
+          "key": "member",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row. slot/member are draw-time formulas for the 'equipSlots' and 'equipment' sources (slot: 1=Weapon 2=Armor 3=Accessory, member: party index)."
+    },
+    {
+      "id": "SET_TEXT",
+      "category": "UI",
+      "label": "Set Text",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        },
+        {
+          "key": "text",
+          "type": "text"
+        },
+        {
+          "key": "term",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets text in a window."
+    },
+    {
+      "id": "SET_CURSOR",
+      "category": "UI",
+      "label": "Set Cursor",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        },
+        {
+          "key": "index",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Sets cursor position (formula for dynamic index)."
+    },
+    {
+      "id": "FOCUS_WINDOW",
+      "category": "UI",
+      "label": "Focus Window",
+      "params": [
+        {
+          "key": "windowId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Focuses a UI window."
+    },
+    {
+      "id": "PLAY_ANIM",
+      "category": "UI",
+      "label": "Play Animation",
+      "params": [
+        {
+          "key": "animId",
+          "type": "text"
+        },
+        {
+          "key": "on",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "scene",
+        "action_sequence"
+      ],
+      "interactive": false,
+      "description": "Plays an animation."
+    },
+    {
+      "id": "WAIT",
+      "category": "UI",
+      "label": "Wait",
+      "params": [
+        {
+          "key": "duration",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "scene",
+        "action_sequence"
+      ],
+      "interactive": false,
+      "description": "Waits for a duration."
+    },
+    {
+      "id": "APPLY_EFFECT",
+      "category": "Advanced",
+      "label": "Apply Skill/Item Effects",
+      "params": [],
+      "contexts": [
+        "action_sequence"
+      ],
+      "interactive": false,
+      "description": "Applies the acting skill or item effects to the targets."
+    },
+    {
+      "id": "QUEST_TAKE_REQUIREMENTS",
+      "category": "Advanced",
+      "label": "Take Quest Requirements",
+      "params": [],
+      "contexts": [
+        "quest"
+      ],
+      "interactive": false,
+      "description": "Verifies and consumes the active quest's item requirements."
+    },
+    {
+      "id": "QUEST_GRANT_REWARDS",
+      "category": "Advanced",
+      "label": "Grant Quest Rewards",
+      "params": [],
+      "contexts": [
+        "quest"
+      ],
+      "interactive": false,
+      "description": "Grants the active quest's rewards (XP, Gold, Items, Flags)."
+    }
+  ],
+  "elementRules": {
+    "strongMultiplier": 1.5,
+    "weakMultiplier": 0.65
+  },
+  "battleLayout": {
+    "enemyRowWidth": 220,
+    "enemyStartX": 22,
+    "enemyPopupOffsetX": 28,
+    "enemyPopupY": 84,
+    "consoleTileY": 18,
+    "headerTileOffset": 1,
+    "slotPopupOffsetX": 8,
+    "slotPopupOffsetY": 10,
+    "fallbackX": 128,
+    "fallbackY": 70,
+    "enemyY": 44,
+    "enemyNameY": 101,
+    "enemyHpBarY": 113,
+    "enemyHpBarWidth": 64,
+    "enemyHpBarHeight": 4,
+    "enemySpriteSize": 64,
+    "enemyFallbackSize": 50,
+    "viewportOverlayW": 256,
+    "viewportOverlayH": 140,
+    "logPanelX": 10,
+    "logPanelY": 6,
+    "logPanelWidth": 236,
+    "logPanelHeight": 32,
+    "logTextX": 16,
+    "logTextY": 12,
+    "logTextLimit": 224,
+    "logSpaceX": 200,
+    "logSpaceY": 23,
+    "consoleTileX": 0,
+    "consoleTileW": 32,
+    "consoleTileH": 12,
+    "consoleTextTileX": 1,
+    "menuChoiceSpacing": 8,
+    "partyGridColWidth": 68,
+    "partyGridRowHeight": 40,
+    "partyGridNameXOffset": 1,
+    "partyGridHpXOffset": 8,
+    "partyGridHpYOffset": 11,
+    "partyGridHpBarXOffset": 8,
+    "partyGridHpBarYOffset": 22,
+    "partyGridHpBarWidth": 52,
+    "partyGridHpBarHeight": 3,
+    "partyGridEmptyYOffset": 8,
+    "logLineSpacing": 10,
+    "victoryPanelTileX": 6,
+    "victoryPanelTileY": 4,
+    "victoryPanelTileW": 20,
+    "victoryPanelTileH": 14,
+    "victoryLineSpacing": 12,
+    "commandBarTileH": 2.5,
+    "commandBarTextYOffset": 6,
+    "victoryRowHeight": 18,
+    "victoryGaugeWidth": 120,
+    "victoryGaugeHeight": 3
+  },
+  "effectTypes": [
+    {
+      "id": "hp_damage",
+      "label": "HP Damage",
+      "params": [
+        "formula"
+      ],
+      "description": "Deals formula damage, reduced by the target's DEF and scaled by elemental affinity."
+    },
+    {
+      "id": "hp_heal",
+      "label": "HP Heal",
+      "params": [
+        "formula"
+      ],
+      "description": "Restores formula HP, capped at max HP."
+    },
+    {
+      "id": "hp_drain",
+      "label": "HP Drain",
+      "params": [
+        "formula"
+      ],
+      "description": "Deals formula damage and heals the user for the same amount."
+    },
+    {
+      "id": "add_status",
+      "label": "Add Status",
+      "params": [
+        "status",
+        "chance",
+        "duration"
+      ],
+      "description": "Applies a state with the given chance and turn duration."
+    },
+    {
+      "id": "hp",
+      "label": "Flat HP Restore",
+      "params": [
+        "value"
+      ],
+      "description": "Item-style flat HP restore."
+    },
+    {
+      "id": "maxHp",
+      "label": "Max HP Up",
+      "params": [
+        "value"
+      ],
+      "description": "Permanently raises max HP and heals the difference."
+    },
+    {
+      "id": "xp",
+      "label": "Grant XP",
+      "params": [
+        "value"
+      ],
+      "description": "Grants experience points, possibly leveling up."
+    },
+    {
+      "id": "mp_heal",
+      "label": "MP Restore",
+      "params": [
+        "value"
+      ],
+      "description": "Restores the summoner's shared MP pool."
+    },
+    {
+      "id": "remove_status",
+      "label": "Remove Status",
+      "params": [
+        "value"
+      ],
+      "description": "Cures the state named in value."
+    },
+    {
+      "id": "recruit_egg",
+      "label": "Recruit Egg",
+      "params": [],
+      "description": "Reserved for the recruiting system (not yet implemented by the engine)."
+    }
+  ],
+  "traitCodes": [
+    {
+      "code": "PARAM_PLUS",
+      "label": "Parameter +",
+      "usesDataId": true,
+      "description": "Adds a flat amount to a parameter."
+    },
+    {
+      "code": "PARAM_RATE",
+      "label": "Parameter %",
+      "usesDataId": true,
+      "description": "Multiplies a parameter (1.2 = +20%)."
+    },
+    {
+      "code": "HIT",
+      "label": "Hit Rate",
+      "usesDataId": false,
+      "description": "Modifies hit chance (base 100%)."
+    },
+    {
+      "code": "EVA",
+      "label": "Evasion",
+      "usesDataId": false,
+      "description": "Modifies evade chance (base 0%)."
+    },
+    {
+      "code": "CRI",
+      "label": "Critical Rate",
+      "usesDataId": false,
+      "description": "Modifies crit chance (base 5%)."
+    },
+    {
+      "code": "HRG",
+      "label": "HP Regen",
+      "usesDataId": false,
+      "description": "Regenerates a fraction of max HP per turn."
+    },
+    {
+      "code": "POST_BATTLE_HEAL",
+      "label": "Post-Battle Heal",
+      "usesDataId": false,
+      "description": "Restores HP to the holder after victory."
+    },
+    {
+      "code": "GOLD_DIGGER",
+      "label": "Bonus Gold",
+      "usesDataId": false,
+      "description": "Increases gold found."
+    },
+    {
+      "code": "PARASITE",
+      "label": "Parasite",
+      "usesDataId": false,
+      "description": "Drains HP from a nearby ally each turn."
+    },
+    {
+      "code": "BATTLE_START_DAMAGE",
+      "label": "Ambush Damage",
+      "usesDataId": false,
+      "description": "Damages an enemy at battle start."
+    },
+    {
+      "code": "MOVE_HEAL",
+      "label": "Heal on Move",
+      "usesDataId": false,
+      "description": "Restores HP when moving on the map."
+    },
+    {
+      "code": "RECOVERY_XP_BONUS",
+      "label": "Recovery XP Bonus",
+      "usesDataId": false,
+      "description": "Bonus XP at recovery sites."
+    },
+    {
+      "code": "FLEE_CHANCE_BONUS",
+      "label": "Flee Chance +",
+      "usesDataId": false,
+      "description": "Increases the party's flee chance."
+    },
+    {
+      "code": "ON_PERMADEATH",
+      "label": "On Death Trigger",
+      "usesDataId": false,
+      "description": "Special behavior on death (e.g. Rebirth)."
+    },
+    {
+      "code": "SEE_TRAPS",
+      "label": "See Traps",
+      "usesDataId": false,
+      "description": "Detects hidden traps (value = level)."
+    },
+    {
+      "code": "SEE_WALLS",
+      "label": "See Secrets",
+      "usesDataId": false,
+      "description": "Reveals breakable walls."
+    },
+    {
+      "code": "SYMBIOSIS",
+      "label": "Symbiosis",
+      "usesDataId": false,
+      "description": "Heals a neighboring ally each turn."
+    },
+    {
+      "code": "INITIATIVE",
+      "label": "Initiative",
+      "usesDataId": false,
+      "description": "Chance to act first at battle start."
+    },
+    {
+      "code": "REAR_GUARD",
+      "label": "Rear Guard",
+      "usesDataId": false,
+      "description": "Negates enemy first strikes."
+    },
+    {
+      "code": "ELEMENT_CHANGE",
+      "label": "Element Change",
+      "usesDataId": true,
+      "description": "Overrides the holder's elements with dataId while active."
+    },
+    {
+      "code": "XP_RATE",
+      "label": "XP Rate +",
+      "usesDataId": false,
+      "description": "Multiplies experience gained (0.5 = +50%)."
+    }
+  ],
+  "windowLayout": {
+    "discipline_panel": {
+      "x": 0.5,
+      "y": 4,
+      "width": 11,
+      "height": 16.5,
+      "style": "list",
+      "title": "Select Discipline"
+    },
+    "crafter_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 12,
+      "height": 20.5,
+      "style": "list",
+      "title": "Select Crafter"
+    },
+    "ingredient_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 5,
+      "style": "panel",
+      "title": "Select Ingredients",
+      "lineSpacing": 0
+    },
+    "inventory_list": {
+      "x": 0,
+      "y": 8.5,
+      "width": 20,
+      "height": 15.5,
+      "style": "list",
+      "title": "Inventory"
+    },
+    "detail_panel": {
+      "x": 20,
+      "y": 8.5,
+      "width": 12,
+      "height": 15.5,
+      "style": "panel",
+      "title": "Item Info",
+      "lineSpacing": 2
+    },
+    "confirm_panel": {
+      "x": 0,
+      "y": 3.5,
+      "width": 32,
+      "height": 20.5,
+      "style": "confirm",
+      "title": "Confirm Crafting"
+    },
+    "roulette_panel": {
+      "x": 4,
+      "y": 7,
+      "width": 24,
+      "height": 10,
+      "style": "roulette",
+      "title": "Crafting..."
+    },
+    "title_footer": {
+      "x": 0,
+      "y": 26.5,
+      "width": 32,
+      "height": 3.5,
+      "style": "frame",
+      "contentY": 1,
+      "title": null
+    },
+    "game_over_message": {
+      "x": 0,
+      "y": 13,
+      "width": 32,
+      "height": 3,
+      "style": "frame",
+      "contentY": 1,
+      "title": null
+    },
+    "status_panel": {
+      "x": 0.5,
+      "y": 4.5,
+      "width": 20.5,
+      "height": 13,
+      "style": "panel",
+      "title": null,
+      "pageFormula": "v.page or 1",
+      "pages": [
+        {
+          "contentY": 6,
+          "lineSpacing": 1,
+          "gauges": [
+            {
+              "label": "HP  {sel('status_party').hp}/{sel('status_party').maxHp}",
+              "value": "sel('status_party').hp",
+              "max": "sel('status_party').maxHp",
+              "x": 1,
+              "y": 1,
+              "width": 18
+            },
+            {
+              "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
+              "value": "sel('status_party').exp",
+              "max": "sel('status_party').expNeeded",
+              "x": 1,
+              "y": 3,
+              "width": 18,
+              "color": [
+                0.1,
+                0.2,
+                0.5
+              ],
+              "fill": [
+                0.3,
+                0.6,
+                1
+              ]
+            }
+          ],
+          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}\nAMR {sel('status_party').armor}\nACC {sel('status_party').accessory}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.25,
+          "text": "{sel('status_party').name}   Skills & Passives\n\nSKILLS\n{sel('status_party').skillText}\n\nPASSIVES\n{sel('status_party').passiveText}"
+        },
+        {
+          "contentY": 1,
+          "lineSpacing": 1.5,
+          "text": "{sel('status_party').name}\n{sel('status_party').role}\n\n{sel('status_party').biography}"
+        }
+      ],
+      "gauges": []
+    },
+    "craft_header": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 3.5,
+      "style": "panel",
+      "title": "Item Creation"
+    },
+    "discipline_detail": {
+      "x": 12,
+      "y": 4,
+      "width": 19.5,
+      "height": 16.5,
+      "style": "panel",
+      "title": "Details"
+    },
+    "crafter_detail": {
+      "x": 12,
+      "y": 3.5,
+      "width": 20,
+      "height": 20.5,
+      "style": "panel",
+      "title": "Crafter Stats",
+      "portrait": "sel('crafter_panel').spriteKey",
+      "portraitX": 1,
+      "portraitY": 2,
+      "textX": 8
+    },
+    "result_panel": {
+      "x": 4,
+      "y": 6,
+      "width": 24,
+      "height": 12,
+      "style": "frame",
+      "title": "Crafting Success!",
+      "contentY": 5
+    },
+    "items_target": {
+      "x": 6,
+      "y": 8,
+      "width": 20,
+      "height": 12,
+      "style": "partyGrid",
+      "title": "Use on whom?"
+    },
+    "help": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 4,
+      "style": "frame",
+      "title": null
+    },
+    "party": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "partyGrid",
+      "title": null
+    },
+    "statusPortrait": {
+      "x": 21.5,
+      "y": 4.5,
+      "width": 10,
+      "height": 13,
+      "style": "panel",
+      "title": null,
+      "portrait": "sel('status_party').portraitKey"
+    },
+    "map_command": {
+      "x": 0,
+      "y": 16,
+      "width": 32,
+      "height": 2.5,
+      "style": "command",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.18
+        }
+      }
+    },
+    "map_member_popup": {
+      "x": 10,
+      "y": 9,
+      "width": 12,
+      "height": 7,
+      "style": "list",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.15,
+          "anchor": "cellOf:party"
+        }
+      }
+    },
+    "map_confirm": {
+      "x": 4,
+      "y": 6,
+      "width": 24,
+      "height": 8,
+      "style": "confirm",
+      "title": "CONFIRM",
+      "lineSpacing": 1,
+      "anim": {
+        "open": {
+          "duration": 0.18
+        }
+      }
+    },
+    "reserve_title": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 2
+    },
+    "reserve_help": {
+      "x": 0.5,
+      "y": 14,
+      "width": 31,
+      "height": 3.5
+    },
+    "reserve_party": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "partyGrid",
+      "gridColumns": 2
+    },
+    "reserve_roster": {
+      "x": 0,
+      "y": 2,
+      "width": 32,
+      "height": 11.5,
+      "style": "partyGrid",
+      "gridColumns": 4,
+      "hideMp": true
+    },
+    "reserve_popup": {
+      "x": 12,
+      "y": 12,
+      "width": 11,
+      "height": 9,
+      "style": "command",
+      "anim": {
+        "open": {
+          "duration": 0.2
+        }
+      },
+      "vertical": true
+    },
+    "battle_enemies": {
+      "x": 0,
+      "y": 0,
+      "width": 32,
+      "height": 17.5,
+      "style": "enemyRow",
+      "title": null
+    },
+    "battle_command": {
+      "x": 0,
+      "y": 15.5,
+      "width": 32,
+      "height": 2.5,
+      "style": "command",
+      "title": null
+    },
+    "battle_help": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "frame",
+      "title": null
+    },
+    "battle_log": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "battleLog",
+      "title": null
+    },
+    "battle_victory": {
+      "x": 6,
+      "y": 4,
+      "width": 20,
+      "height": 14,
+      "style": "victoryPanel",
+      "title": null
+    }
+  }
+}
