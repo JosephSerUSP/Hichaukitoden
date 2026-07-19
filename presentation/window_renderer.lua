@@ -954,7 +954,12 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     if layout.waitInput then
         local ok, wv = pcall(formula.eval, layout.waitInput, env)
         if ok and (wv == true or (type(wv) == "number" and wv ~= 0)) then
-            small_battlers.draw("UI_WaitingForInput[fps=30]", x + w - 16, y + h - 8, 12)
+            -- One tile in from the bottom-right corner, diagonally (owner
+            -- feedback 18.07.2026): the 12px marker's far corner sits
+            -- toPx(1) away from the window's far corner on both axes.
+            local size = 12
+            small_battlers.draw("UI_WaitingForInput[fps=30]",
+                x + w - ui.toPx(1) - size, y + h - ui.toPx(1) - size, size)
         end
     end
 end
