@@ -1,7 +1,23 @@
 {
-  "provider": {
-    "baseUrl": "https://openrouter.ai/api/v1",
-    "apiKeyEnv": "OPENROUTER_API_KEY"
+  "providers": {
+    "openrouter": {
+      "label": "OpenRouter",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "type": "openai-compatible",
+      "default": true
+    },
+    "deepseek": {
+      "label": "DeepSeek",
+      "baseUrl": "https://api.deepseek.com/v1",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "type": "openai-compatible"
+    },
+    "gemini": {
+      "label": "Gemini",
+      "apiKeyEnv": "GEMINI_API_KEY",
+      "type": "gemini"
+    }
   },
   "stages": {
     "outline": {

@@ -9,12 +9,15 @@
 // State persists in campaigns/<name>/gen-state.json; --resume continues a
 // partial run, --stage <s> re-runs one stage, --dry-run prints a stage's
 // assembled prompt without calling any API.
+//
+// Provider selection (OpenRouter / DeepSeek / Gemini):
+//   --provider <id>  |  env CAMPAIGN_GEN_PROVIDER  |  config.json defaultProvider / "default":true
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { chat, extractJson } = require('./lib/llm');
+const { chatForProvider, extractJson } = require('./lib/llm');
 const ctxlib = require('./lib/context');
 
 const HERE = __dirname;
@@ -22,16 +25,34 @@ const CONFIG = JSON.parse(fs.readFileSync(path.join(HERE, 'config.json'), 'utf8'
 const STAGE_ORDER = ['outline', 'actors', 'items', 'quests', 'maps', 'events'];
 
 // ---------------------------------------------------------------------------
+// Provider resolution
+// ---------------------------------------------------------------------------
+function resolveProvider() {
+    // Priority: --provider CLI > env CAMPAIGN_GEN_PROVIDER > config default
+    const id = opts.provider
+        || process.env.CAMPAIGN_GEN_PROVIDER
+        || Object.keys(CONFIG.providers).find(k => CONFIG.providers[k].default)
+        || 'openrouter';
+    const p = CONFIG.providers[id];
+    if (!p) {
+        console.error(`Unknown provider '${id}'. Available: ${Object.keys(CONFIG.providers).join(', ')}`);
+        process.exit(2);
+    }
+    return { id, ...p };
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 const args = process.argv.slice(2);
-const opts = { prompt: [], name: null, stage: null, resume: false, dryRun: false, model: null };
+const opts = { prompt: [], name: null, stage: null, resume: false, dryRun: false, model: null, provider: null };
 for (let i = 0; i < args.length; i++) {
     if (args[i] === '--name') opts.name = args[++i];
     else if (args[i] === '--stage') opts.stage = args[++i];
     else if (args[i] === '--resume') opts.resume = true;
     else if (args[i] === '--dry-run') opts.dryRun = true;
     else if (args[i] === '--model') opts.model = args[++i];
+    else if (args[i] === '--provider') opts.provider = args[++i];
     else opts.prompt.push(args[i]);
 }
 opts.prompt = opts.prompt.join(' ');
@@ -41,13 +62,36 @@ opts.prompt = opts.prompt.join(' ');
 // stages) > config.json per-stage default.
 let envModels = {};
 try { envModels = JSON.parse(process.env.CAMPAIGN_GEN_MODELS || '{}'); } catch { /* ignore */ }
-function modelFor(stage) {
+function rawModelFor(stage) {
     const sc = CONFIG.stages[stage] || CONFIG.stages.repair;
     return envModels[stage] || opts.model || sc.model;
 }
 
+// Model name normalization: when using a direct provider (not OpenRouter),
+// strip the OpenRouter-style prefix from model names so the provider's own
+// API accepts them. e.g. "deepseek/deepseek-chat" -> "deepseek-chat".
+function normalizeModel(model, provider) {
+    if (!provider) return model;
+    if (provider.type === 'gemini') {
+        // Strip common OpenRouter prefixes for Gemini models
+        return model.replace(/^(google\/|gemini\/)/, '');
+    }
+    if (provider.type === 'openai-compatible' && provider.id !== 'openrouter') {
+        // Direct (non-OpenRouter) OpenAI-compatible APIs don't use OpenRouter's
+        // "vendor/model" namespacing -- strip it. OpenRouter itself needs the
+        // prefix kept, since that's how it disambiguates vendors.
+        return model.replace(/^[a-zA-Z0-9_-]+\//, '');
+    }
+    return model;
+}
+
+function modelFor(stage) {
+    const provider = resolveProvider();
+    return normalizeModel(rawModelFor(stage), provider);
+}
+
 if (!opts.name || !/^[a-z0-9_]+$/.test(opts.name)) {
-    console.error('Usage: node gen.js --name <snake_case_name> [--stage s] [--resume] [--dry-run] "<pitch prompt>"');
+    console.error('Usage: node gen.js --name <snake_case_name> [--stage s] [--resume] [--dry-run] [--provider <id>] [--model <id>] "<pitch prompt>"');
     process.exit(2);
 }
 const DIR = path.join(ctxlib.REPO, 'campaigns', opts.name);
@@ -97,16 +141,18 @@ function assemblePrompt(stage, state) {
 const totals = { prompt: 0, completion: 0, cost: 0 };
 
 async function callStage(stage, userPrompt, extraMessages = []) {
+    const provider = resolveProvider();
     const sc = CONFIG.stages[stage] || CONFIG.stages.repair;
-    const apiKey = process.env[CONFIG.provider.apiKeyEnv];
+    const apiKey = process.env[provider.apiKeyEnv];
     if (!apiKey) {
-        console.error(`Missing API key: set ${CONFIG.provider.apiKeyEnv} in your environment.`);
+        console.error(`Missing API key for provider '${provider.id}': set ${provider.apiKeyEnv} in your environment.`);
         process.exit(2);
     }
     const started = Date.now();
     const model = modelFor(stage);
-    const { content, usage } = await chat({
-        baseUrl: CONFIG.provider.baseUrl,
+    const { content, usage } = await chatForProvider({
+        providerType: provider.type,
+        baseUrl: provider.baseUrl,
         apiKey,
         model: model,
         temperature: sc.temperature,
@@ -121,16 +167,17 @@ async function callStage(stage, userPrompt, extraMessages = []) {
     });
     process.stdout.write('\n');
     const secs = ((Date.now() - started) / 1000).toFixed(1);
+    const providerLabel = provider.label || provider.id;
     if (usage) {
         totals.prompt += usage.prompt_tokens || 0;
         totals.completion += usage.completion_tokens || 0;
         if (typeof usage.cost === 'number') totals.cost += usage.cost;
         const cost = typeof usage.cost === 'number' ? ` | $${usage.cost.toFixed(5)}` : '';
-        console.log(`  [${stage}] ${usage.prompt_tokens} in / ${usage.completion_tokens} out tokens${cost} | ${secs}s`
+        console.log(`  [${providerLabel} / ${stage}] ${usage.prompt_tokens} in / ${usage.completion_tokens} out tokens${cost} | ${secs}s`
             + ` || run total: ${totals.prompt} in / ${totals.completion} out`
             + (totals.cost ? ` | $${totals.cost.toFixed(5)}` : ''));
     } else {
-        console.log(`  [${stage}] done in ${secs}s (provider returned no usage data)`);
+        console.log(`  [${providerLabel} / ${stage}] done in ${secs}s (provider returned no usage data)`);
     }
     return content;
 }
@@ -230,6 +277,8 @@ async function validateRepairLoop() {
     if (!state.prompt && opts.prompt) state.prompt = opts.prompt;
 
     const stages = opts.stage ? [opts.stage] : STAGE_ORDER.filter(s => !opts.resume || !state.done.includes(s));
+    const provider = resolveProvider();
+    const providerLabel = provider.label || provider.id;
 
     for (const stage of stages) {
         const prompt = assemblePrompt(stage, state);
@@ -237,7 +286,7 @@ async function validateRepairLoop() {
             console.log(`===== DRY RUN: stage '${stage}' prompt =====\n${prompt}`);
             continue;
         }
-        console.log(`--- stage: ${stage} (${modelFor(stage)}) ---`);
+        console.log(`--- [${providerLabel}] stage: ${stage} (${modelFor(stage)}) ---`);
         const reply = await callStage(stage, prompt);
         const written = writeStageOutput(stage, reply);
         console.log(`  wrote: ${written.join(', ')}`);

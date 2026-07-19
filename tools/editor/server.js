@@ -3,11 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-// Campaign generator bridge state (one run at a time; key in memory only)
+// Campaign generator bridge state (one run at a time; keys in memory only)
 let genProc = null;
 let genLog = '';
 let genStatus = 'idle';
-let genApiKey = null;
+let genApiKeys = {};       // { providerId: apiKey } — session memory only
 let genModelCache = null;
 
 // PORT env override lets a second instance (e.g. preview/CI tooling) run
@@ -511,9 +511,10 @@ const server = http.createServer((req, res) => {
     // ------------------------------------------------------------------
     // Campaign generator bridge (tools/campaign-gen): the editor's
     // Generator window drives one gen.js child process at a time and
-    // polls its buffered log. The API key is held in server memory only
-    // (env var preferred; a key POSTed from the UI is never written to
-    // disk) and passed to the child via its environment.
+    // polls its buffered log. API keys are held in server memory only
+    // (env vars preferred; keys POSTed from the UI are never written to
+    // disk) and passed to the child via its environment. Supports
+    // multiple providers: OpenRouter, DeepSeek, and Gemini.
     // ------------------------------------------------------------------
     } else if (req.method === 'POST' && req.url === '/campaign-gen/start') {
         let body = '';
@@ -531,24 +532,46 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ success: false, message: 'Need a snake_case name and a pitch.' }));
                 return;
             }
-            const apiKey = p.apiKey || process.env.OPENROUTER_API_KEY || genApiKey;
-            if (!apiKey) {
+
+            // Provider selection: defaults to openrouter
+            const provider = p.provider || 'openrouter';
+
+            // Resolve API key for the selected provider.
+            // The frontend sends provider-specific keys (openrouterApiKey,
+            // deepseekApiKey, geminiApiKey) which we map to env var names.
+            const keyMap = {
+                openrouter: { field: 'openrouterApiKey', env: 'OPENROUTER_API_KEY' },
+                deepseek:  { field: 'deepseekApiKey',  env: 'DEEPSEEK_API_KEY' },
+                gemini:    { field: 'geminiApiKey',    env: 'GEMINI_API_KEY' },
+            };
+            const km = keyMap[provider];
+            if (!km) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, message: 'No API key: set OPENROUTER_API_KEY or supply one.' }));
+                res.end(JSON.stringify({ success: false, message: `Unknown provider '${provider}'.` }));
                 return;
             }
-            if (p.apiKey) genApiKey = p.apiKey; // session memory only
+            const apiKey = p[km.field] || process.env[km.env] || genApiKeys[provider];
+            if (!apiKey) {
+                const hint = provider === 'openrouter' ? 'OPENROUTER_API_KEY' : provider === 'deepseek' ? 'DEEPSEEK_API_KEY' : 'GEMINI_API_KEY';
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: `No API key for ${provider}: set ${hint} or supply one in the UI.` }));
+                return;
+            }
+            if (p[km.field]) genApiKeys[provider] = p[km.field]; // session memory only
+
             const { spawn } = require('child_process');
             const args = [path.join(PROJECT_DIR, 'tools', 'campaign-gen', 'gen.js'), '--name', p.name];
             if (p.stage) args.push('--stage', p.stage);
             if (p.resume) args.push('--resume');
+            if (provider !== 'openrouter') args.push('--provider', provider);
             args.push(p.pitch);
             genLog = '';
             genStatus = 'running';
             genProc = spawn(process.execPath, args, {
                 cwd: PROJECT_DIR,
                 env: Object.assign({}, process.env, {
-                    OPENROUTER_API_KEY: apiKey,
+                    [km.env]: apiKey,
+                    CAMPAIGN_GEN_PROVIDER: provider,
                     CAMPAIGN_GEN_MODELS: JSON.stringify(p.models || {}),
                 }),
             });

@@ -1028,10 +1028,29 @@
                                       placeholder="e.g. A cozy mystery in a snowed-in mountain monastery: the abbot has vanished, the relics whisper at night, and the player's summoner must befriend or banish the six spirits haunting the cloister before the pass thaws."></textarea>
                         </div>
                         <div class="field-row-stacked" style="margin-top: 8px;">
-                            <label>OpenRouter API Key:</label>
-                            <input type="password" id="cg-api-key" class="win98-input" autocomplete="off" />
-                            <span class="field-help">Leave blank to use the server's OPENROUTER_API_KEY env var. Never saved to disk.</span>
+                            <label style="margin-bottom: 4px;">Provider:</label>
+                            <div style="display: flex; gap: 10px; font-size: 10px;">
+                                <label><input type="radio" name="cg-provider" value="openrouter" checked onchange="cgProviderChanged()" /> OpenRouter</label>
+                                <label><input type="radio" name="cg-provider" value="deepseek" onchange="cgProviderChanged()" /> DeepSeek</label>
+                                <label><input type="radio" name="cg-provider" value="gemini" onchange="cgProviderChanged()" /> Gemini</label>
+                            </div>
                         </div>
+                        <div class="field-row-stacked" style="margin-top: 8px; display: flex;" id="cg-api-key-openrouter-row">
+                            <label>OpenRouter API Key:</label>
+                            <input type="password" id="cg-api-key-openrouter" class="win98-input" autocomplete="off" />
+                            <span class="field-help">Leave blank to use the server's OPENROUTER_API_KEY env var.</span>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 8px; display: none;" id="cg-api-key-deepseek-row">
+                            <label>DeepSeek API Key:</label>
+                            <input type="password" id="cg-api-key-deepseek" class="win98-input" autocomplete="off" />
+                            <span class="field-help">Leave blank to use the server's DEEPSEEK_API_KEY env var.</span>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 8px; display: none;" id="cg-api-key-gemini-row">
+                            <label>Gemini API Key:</label>
+                            <input type="password" id="cg-api-key-gemini" class="win98-input" autocomplete="off" />
+                            <span class="field-help">Leave blank to use the server's GEMINI_API_KEY env var.</span>
+                        </div>
+                        <span class="field-help" style="margin-top: 4px;">API keys are never saved to disk.</span>
                     </fieldset>
 
                     <fieldset style="padding: 8px;">

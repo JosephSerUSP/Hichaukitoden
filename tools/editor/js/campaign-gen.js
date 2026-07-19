@@ -99,6 +99,23 @@
         updateRunControls();
     };
 
+    function getSelectedProvider() {
+        const radios = document.getElementsByName('cg-provider');
+        for (const r of radios) {
+            if (r.checked) return r.value;
+        }
+        return 'openrouter';
+    }
+
+    window.cgProviderChanged = function() {
+        const provider = getSelectedProvider();
+        // Show only the API key field for the selected provider
+        ['openrouter', 'deepseek', 'gemini'].forEach(p => {
+            const row = $(`cg-api-key-${p}-row`);
+            if (row) row.style.display = p === provider ? 'flex' : 'none';
+        });
+    };
+
     function nameValid() { return /^[a-z0-9_]+$/.test($('cg-name').value); }
     function pitchFilled() { return $('cg-pitch').value.trim().length > 0; }
 
@@ -258,10 +275,20 @@
             name: $('cg-name').value,
             pitch: $('cg-pitch').value.trim(),
         };
+        // Provider selection
+        const provider = getSelectedProvider();
+        payload.provider = provider;
+
+        // Collect all API keys; the server picks the one matching the provider.
+        const openrouterKey = $('cg-api-key-openrouter').value.trim();
+        const deepseekKey = $('cg-api-key-deepseek').value.trim();
+        const geminiKey = $('cg-api-key-gemini').value.trim();
+        if (openrouterKey) payload.openrouterApiKey = openrouterKey;
+        if (deepseekKey) payload.deepseekApiKey = deepseekKey;
+        if (geminiKey) payload.geminiApiKey = geminiKey;
+
         const models = collectModelOverrides();
         if (Object.keys(models).length) payload.models = models;
-        const apiKey = $('cg-api-key').value.trim();
-        if (apiKey) payload.apiKey = apiKey;
         const stage = $('cg-stage-select').value;
         if (stage) payload.stage = stage;
         if ($('cg-resume').checked) payload.resume = true;
