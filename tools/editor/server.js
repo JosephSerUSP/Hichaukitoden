@@ -3,6 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
+// Campaign generator bridge state (one run at a time; key in memory only)
+let genProc = null;
+let genLog = '';
+let genStatus = 'idle';
+let genApiKey = null;
+let genModelCache = null;
+
 // PORT env override lets a second instance (e.g. preview/CI tooling) run
 // alongside a developer's own server on the default 8080.
 const PORT = parseInt(process.env.PORT, 10) || 8080;
@@ -501,6 +508,112 @@ const server = http.createServer((req, res) => {
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Game launched!' }));
+    // ------------------------------------------------------------------
+    // Campaign generator bridge (tools/campaign-gen): the editor's
+    // Generator window drives one gen.js child process at a time and
+    // polls its buffered log. The API key is held in server memory only
+    // (env var preferred; a key POSTed from the UI is never written to
+    // disk) and passed to the child via its environment.
+    // ------------------------------------------------------------------
+    } else if (req.method === 'POST' && req.url === '/campaign-gen/start') {
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => {
+            if (genProc) {
+                res.writeHead(409, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: 'A generation run is already in progress.' }));
+                return;
+            }
+            let p;
+            try { p = JSON.parse(body); } catch (e) { p = null; }
+            if (!p || !p.name || !/^[a-z0-9_]+$/.test(p.name) || !p.pitch) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: 'Need a snake_case name and a pitch.' }));
+                return;
+            }
+            const apiKey = p.apiKey || process.env.OPENROUTER_API_KEY || genApiKey;
+            if (!apiKey) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: 'No API key: set OPENROUTER_API_KEY or supply one.' }));
+                return;
+            }
+            if (p.apiKey) genApiKey = p.apiKey; // session memory only
+            const { spawn } = require('child_process');
+            const args = [path.join(PROJECT_DIR, 'tools', 'campaign-gen', 'gen.js'), '--name', p.name];
+            if (p.stage) args.push('--stage', p.stage);
+            if (p.resume) args.push('--resume');
+            args.push(p.pitch);
+            genLog = '';
+            genStatus = 'running';
+            genProc = spawn(process.execPath, args, {
+                cwd: PROJECT_DIR,
+                env: Object.assign({}, process.env, {
+                    OPENROUTER_API_KEY: apiKey,
+                    CAMPAIGN_GEN_MODELS: JSON.stringify(p.models || {}),
+                }),
+            });
+            genProc.stdout.on('data', d => { genLog += d.toString(); if (genLog.length > 2000000) genLog = genLog.slice(-1500000); });
+            genProc.stderr.on('data', d => { genLog += d.toString(); });
+            genProc.on('exit', code => {
+                genStatus = code === 0 ? 'success' : 'failed';
+                genProc = null;
+            });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+        });
+    } else if (req.method === 'GET' && req.url.startsWith('/campaign-gen/status')) {
+        const from = parseInt(new URL(req.url, 'http://x').searchParams.get('from') || '0', 10) || 0;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: genStatus, len: genLog.length, chunk: genLog.slice(from) }));
+    } else if (req.method === 'POST' && req.url === '/campaign-gen/cancel') {
+        if (genProc) { genProc.kill(); genStatus = 'cancelled'; }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+    } else if (req.method === 'GET' && req.url === '/campaign-gen/models') {
+        // Public OpenRouter catalogue, cached for the session; trimmed to
+        // what the picker needs (id, name, prompt/completion pricing).
+        if (genModelCache) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(genModelCache);
+        } else {
+            fetch('https://openrouter.ai/api/v1/models').then(r => r.json()).then(j => {
+                const trimmed = (j.data || []).map(m => ({
+                    id: m.id, name: m.name,
+                    promptPrice: m.pricing && m.pricing.prompt,
+                    completionPrice: m.pricing && m.pricing.completion,
+                }));
+                genModelCache = JSON.stringify(trimmed);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(genModelCache);
+            }).catch(e => {
+                res.writeHead(502, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: String(e) }));
+            });
+        }
+    } else if (req.method === 'GET' && req.url === '/campaign-gen/config') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(fs.readFileSync(path.join(PROJECT_DIR, 'tools', 'campaign-gen', 'config.json'), 'utf8'));
+    } else if (req.method === 'POST' && req.url === '/campaign-gen/activate') {
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => {
+            try {
+                const p = JSON.parse(body);
+                if (p.name && /^[a-z0-9_]+$/.test(p.name)) {
+                    fs.writeFileSync(path.join(PROJECT_DIR, 'campaign.json'),
+                        JSON.stringify({ active: p.name }, null, 2));
+                } else {
+                    // No name = revert to the default campaign (data/).
+                    const ptr = path.join(PROJECT_DIR, 'campaign.json');
+                    if (fs.existsSync(ptr)) fs.unlinkSync(ptr);
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: String(e) }));
+            }
+        });
     } else if (req.method === 'POST' && req.url === '/play-test-battle') {
         const loveCmd = `"${LOVE_EXE}" . test-battle`;
         exec(loveCmd, { cwd: PROJECT_DIR }, (err, stdout, stderr) => {

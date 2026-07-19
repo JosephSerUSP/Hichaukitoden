@@ -25,15 +25,26 @@ const STAGE_ORDER = ['outline', 'actors', 'items', 'quests', 'maps', 'events'];
 // CLI
 // ---------------------------------------------------------------------------
 const args = process.argv.slice(2);
-const opts = { prompt: [], name: null, stage: null, resume: false, dryRun: false };
+const opts = { prompt: [], name: null, stage: null, resume: false, dryRun: false, model: null };
 for (let i = 0; i < args.length; i++) {
     if (args[i] === '--name') opts.name = args[++i];
     else if (args[i] === '--stage') opts.stage = args[++i];
     else if (args[i] === '--resume') opts.resume = true;
     else if (args[i] === '--dry-run') opts.dryRun = true;
+    else if (args[i] === '--model') opts.model = args[++i];
     else opts.prompt.push(args[i]);
 }
 opts.prompt = opts.prompt.join(' ');
+
+// Model resolution, most specific wins: CAMPAIGN_GEN_MODELS env (JSON map of
+// stage -> model id, set by the editor's generator window) > --model (all
+// stages) > config.json per-stage default.
+let envModels = {};
+try { envModels = JSON.parse(process.env.CAMPAIGN_GEN_MODELS || '{}'); } catch { /* ignore */ }
+function modelFor(stage) {
+    const sc = CONFIG.stages[stage] || CONFIG.stages.repair;
+    return envModels[stage] || opts.model || sc.model;
+}
 
 if (!opts.name || !/^[a-z0-9_]+$/.test(opts.name)) {
     console.error('Usage: node gen.js --name <snake_case_name> [--stage s] [--resume] [--dry-run] "<pitch prompt>"');
@@ -93,10 +104,11 @@ async function callStage(stage, userPrompt, extraMessages = []) {
         process.exit(2);
     }
     const started = Date.now();
+    const model = modelFor(stage);
     const { content, usage } = await chat({
         baseUrl: CONFIG.provider.baseUrl,
         apiKey,
-        model: sc.model,
+        model: model,
         temperature: sc.temperature,
         // Live output: the model's reply streams to the console as it
         // generates, so long stages are visibly alive.
@@ -213,7 +225,7 @@ async function validateRepairLoop() {
             console.log(`===== DRY RUN: stage '${stage}' prompt =====\n${prompt}`);
             continue;
         }
-        console.log(`--- stage: ${stage} (${(CONFIG.stages[stage] || {}).model}) ---`);
+        console.log(`--- stage: ${stage} (${modelFor(stage)}) ---`);
         const reply = await callStage(stage, prompt);
         const written = writeStageOutput(stage, reply);
         console.log(`  wrote: ${written.join(', ')}`);
