@@ -43,28 +43,56 @@ local function lerpAngle(a, b, t)
 end
 
 -- Tileset atlas configuration. See docs/design/raycaster-tileset-lighting.md.
--- Grid cells are 64x64px; row 0 = wall variants, row 1 = floor variants
--- (reserved; the renderer does not floor-cast textures, only tints the
--- gradient), row 2 col 0 = the standard door, row 3 = a single wide sky
--- strip (4 cells, 256x64) sampled as one static stretch rather than tiled.
+-- Grid cells are 64x64px. Rows 0-1 (8 cells total) are wall variants --
+-- plain stone/brick in row 0, decorated building-front walls (windows,
+-- ivy, arches) in row 1, drawn from the same pool so alley walls and
+-- building fronts intermix. Row 2 (4 cells) is door variants. Row 3 is a
+-- single wide sky strip (4 cells, 256x64) sampled as one static stretch
+-- rather than tiled. Matches assets/tilesets/town_001.png.
 local ATLAS_TILE = 64
-local ATLAS_WALL_ROW, ATLAS_WALL_VARIANTS = 0, 4
-local ATLAS_DOOR_ROW, ATLAS_DOOR_COL = 2, 0
+local ATLAS_WALL_ROWS, ATLAS_WALL_COLS = 2, 4
+local ATLAS_WALL_VARIANTS = ATLAS_WALL_ROWS * ATLAS_WALL_COLS
+local ATLAS_DOOR_ROW, ATLAS_DOOR_VARIANTS = 2, 4
 local ATLAS_SKY_ROW, ATLAS_SKY_COLS = 3, 4
 
-local tileset = nil
-local sheetW, sheetH = 0, 0
+-- Per-map tileset selection (session.currentMapData.tileset, a name under
+-- assets/tilesets/<name>.png) lazily loaded and cached here. Maps without a
+-- tileset field fall back to the legacy single-texture behavior below,
+-- unchanged from before this atlas system existed.
+local atlasCache = {}
+local function getAtlas(name)
+    if atlasCache[name] ~= nil then
+        return atlasCache[name] or nil
+    end
+    local path = "assets/tilesets/" .. name .. ".png"
+    if love.filesystem.getInfo(path) then
+        local img = love.graphics.newImage(path)
+        img:setFilter("nearest", "nearest")
+        local entry = { img = img, w = img:getWidth(), h = img:getHeight() }
+        atlasCache[name] = entry
+        return entry
+    end
+    atlasCache[name] = false
+    return nil
+end
+
+local legacyTexture = nil    -- assets/textures/dungeon_tileset.jpg, if present
 local sliceQuad = nil        -- 1px-wide column slice, reused for walls and doors
-local skyQuad = nil          -- the full sky strip, drawn as one stretch
-local legacyTileset = false  -- true when falling back to the old single-image texture
+local skyQuad = nil          -- reused for the sky strip, viewport recomputed per atlas
 local spriteSliceQuad = nil
 
--- Deterministic per-cell wall variant so ambient wall texture varies without
--- being authored in map data (docs/design/raycaster-tileset-lighting.md).
-local function wallVariant(mapX, mapY)
-    local h = (mapX * 73856093 + mapY * 19349663) % 2147483647
+-- Deterministic per-cell variant picks so ambient wall/door texture varies
+-- without being authored in map data (docs/design/raycaster-tileset-lighting.md).
+local function cellHash(mapX, mapY, saltA, saltB)
+    local h = (mapX * saltA + mapY * saltB) % 2147483647
     if h < 0 then h = -h end
-    return h % ATLAS_WALL_VARIANTS
+    return h
+end
+local function wallVariant(mapX, mapY)
+    return cellHash(mapX, mapY, 73856093, 19349663) % ATLAS_WALL_VARIANTS
+end
+local function doorVariant(mapX, mapY)
+    return cellHash(mapX, mapY, 83492791, 39916801) % ATLAS_DOOR_VARIANTS
 end
 
 -- Bilinear-interpolated vertex brightness. session.currentMapData.light, if
@@ -111,26 +139,33 @@ end
 
 function viewport_3d.init()
     spriteSliceQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
+    -- Reused for both atlas walls/doors (64px tall) and the legacy single
+    -- texture (256px tall); viewport dims are set per-draw-call below.
+    sliceQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
+    skyQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
 
-    if love.filesystem.getInfo("assets/textures/tileset_atlas.png") then
-        -- New grid atlas: docs/design/raycaster-tileset-lighting.md.
-        tileset = love.graphics.newImage("assets/textures/tileset_atlas.png")
-        tileset:setFilter("nearest", "nearest")
-        sheetW, sheetH = tileset:getWidth(), tileset:getHeight()
-        legacyTileset = false
-        sliceQuad = love.graphics.newQuad(0, 0, 1, ATLAS_TILE, sheetW, sheetH)
-        skyQuad = love.graphics.newQuad(
-            0, ATLAS_SKY_ROW * ATLAS_TILE,
-            ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE,
-            sheetW, sheetH)
-    elseif love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
-        -- Legacy single-texture fallback: one wall look, no doors/sky/variants.
-        tileset = love.graphics.newImage("assets/textures/dungeon_tileset.jpg")
-        tileset:setFilter("nearest", "nearest")
-        sheetW, sheetH = 1024, 1024
-        legacyTileset = true
-        sliceQuad = love.graphics.newQuad(0, 0, 1, 256, sheetW, sheetH)
+    if love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
+        -- Legacy single-texture fallback, used whenever a map has no
+        -- `tileset` field. One wall look, no doors/sky/variants.
+        legacyTexture = love.graphics.newImage("assets/textures/dungeon_tileset.jpg")
+        legacyTexture:setFilter("nearest", "nearest")
     end
+end
+
+-- Resolves which texture/atlas to draw walls from this frame: a per-map
+-- named atlas (assets/tilesets/<name>.png) if the map declares `tileset`,
+-- else the legacy single image. Returns nil img if neither is available.
+local function resolveTileset(mapData)
+    if mapData and mapData.tileset then
+        local atlas = getAtlas(mapData.tileset)
+        if atlas then
+            return atlas.img, atlas.w, atlas.h, true
+        end
+    end
+    if legacyTexture then
+        return legacyTexture, 1024, 1024, false
+    end
+    return nil, 0, 0, false
 end
 
 -- Doors are ordinary map events (docs/design/raycaster-tileset-lighting.md)
@@ -218,9 +253,12 @@ function viewport_3d.draw(session)
     local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
     local ambient = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
 
-    if mapData and mapData.ceilingStyle == "sky" and tileset and not legacyTileset and skyQuad then
+    local tileImg, sheetW, sheetH, useAtlas = resolveTileset(mapData)
+
+    if mapData and mapData.ceilingStyle == "sky" and useAtlas then
+        skyQuad:setViewport(0, ATLAS_SKY_ROW * ATLAS_TILE, ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE, sheetW, sheetH)
         love.graphics.setColor(ambient, ambient, ambient, 1)
-        love.graphics.draw(tileset, skyQuad, 0, 0, 0,
+        love.graphics.draw(tileImg, skyQuad, 0, 0, 0,
             screenWpx / (ATLAS_SKY_COLS * ATLAS_TILE), halfH / ATLAS_TILE)
     else
         -- Ceiling gradient: Moody dark purple/indigo fade
@@ -339,7 +377,7 @@ function viewport_3d.draw(session)
 
         -- x coordinate on the texture (atlas tiles are 64px; the legacy
         -- single-image fallback keeps its original 256px sampling)
-        local wallTexSize = legacyTileset and 256 or ATLAS_TILE
+        local wallTexSize = useAtlas and ATLAS_TILE or 256
         local texX = math.floor(wallX * wallTexSize)
         if side == 0 and rx > 0 then texX = (wallTexSize - 1) - texX end
         if side == 1 and ry < 0 then texX = (wallTexSize - 1) - texX end
@@ -360,19 +398,21 @@ function viewport_3d.draw(session)
         brightness = brightness * sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
 
         -- Render textured slice or fallback color slice
-        if tileset and sliceQuad then
+        if tileImg then
             local originX, originY
-            if legacyTileset then
+            if not useAtlas then
                 originX, originY = 0, 0
             elseif doorLookup[mapX .. "," .. mapY] then
-                originX, originY = ATLAS_DOOR_COL * ATLAS_TILE, ATLAS_DOOR_ROW * ATLAS_TILE
+                originX = doorVariant(mapX, mapY) * ATLAS_TILE
+                originY = ATLAS_DOOR_ROW * ATLAS_TILE
             else
-                originX = wallVariant(mapX, mapY) * ATLAS_TILE
-                originY = ATLAS_WALL_ROW * ATLAS_TILE
+                local variant = wallVariant(mapX, mapY)
+                originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
+                originY = math.floor(variant / ATLAS_WALL_COLS) * ATLAS_TILE
             end
             sliceQuad:setViewport(originX + texX, originY, 1, wallTexSize, sheetW, sheetH)
             love.graphics.setColor(brightness, brightness, brightness, 1)
-            love.graphics.draw(tileset, sliceQuad, x, drawStart, 0, 1, lineHeight / wallTexSize)
+            love.graphics.draw(tileImg, sliceQuad, x, drawStart, 0, 1, lineHeight / wallTexSize)
         else
             -- Retro flat-shaded colors if tileset is missing
             local r = (side == 0) and 0.4 or 0.3

@@ -75,6 +75,11 @@ local previewWindowMockSpec = nil
 local isPreviewFontMode = false
 local previewFontName = nil
 local previewFontSize = nil
+local isPreviewMapMode = false
+local previewMapId = nil
+local previewMapX = nil
+local previewMapY = nil
+local previewMapDir = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -532,6 +537,54 @@ local function runPreviewFont(name, size)
         payload.height = ph
     end)
     if not ok then payload = { error = tostring(err) } end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- Headless raycaster preview (`lovec . preview-map <mapId> [x] [y] [dir]`):
+-- loads the given map by id, positions the camera, and dumps the actual
+-- viewport_3d render to a PNG -- for checking tileset/door/sky/lighting
+-- changes (docs/design/raycaster-tileset-lighting.md) without opening the
+-- interactive window.
+local function runPreviewMap(mapId, x, y, dir)
+    local json = require("data.json")
+    local payload = {}
+    local ok, err = pcall(function()
+        local exploration = require("engine.exploration")
+        local viewport_3d = require("presentation.viewport_3d")
+
+        local mapIdx
+        for idx, m in ipairs(loader.maps or {}) do
+            if tostring(m.id) == tostring(mapId) then mapIdx = idx break end
+        end
+        if not mapIdx then error("map not found: " .. tostring(mapId)) end
+
+        local vSession = makeHarnessSession()
+        exploration.loadMap(vSession, mapIdx)
+        if x then vSession.playerX = tonumber(x) + 1 end
+        if y then vSession.playerY = tonumber(y) + 1 end
+        if dir then vSession.playerDir = dir end
+
+        viewport_3d.init()
+
+        local pw, ph = 256, 144
+        local previewCanvas = love.graphics.newCanvas(pw, ph)
+        love.graphics.setCanvas(previewCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        viewport_3d.draw(vSession)
+        love.graphics.setCanvas()
+
+        local fileData = previewCanvas:newImageData():encode("png")
+        payload.image = love.data.encode("string", "base64", fileData)
+        payload.width = pw
+        payload.height = ph
+        payload.playerX, payload.playerY, payload.playerDir = vSession.playerX, vSession.playerY, vSession.playerDir
+    end)
+    if not ok then
+        payload = { error = tostring(err) }
+        love.graphics.setCanvas() -- draw() may have failed mid-canvas; always leave it unset
+    end
     print("PREVIEW BEGIN")
     print(json.encode(payload))
     print("PREVIEW END")
@@ -2029,6 +2082,13 @@ function love.load(arg)
                 previewFontName = arg[i + 1]
                 previewFontSize = arg[i + 2]
                 i = i + 2
+            elseif val == "preview-map" then
+                isPreviewMapMode = true
+                previewMapId = arg[i + 1]
+                previewMapX = arg[i + 2]
+                previewMapY = arg[i + 3]
+                previewMapDir = arg[i + 4]
+                i = i + 4
             elseif val:match("^campaign=") then
                 -- Overrides the campaign.json pointer for this run (used by
                 -- the generator's validate loops): campaign=<name> loads
@@ -2068,6 +2128,14 @@ function love.load(arg)
     if isPreviewAnimMode then
         loader.init(cliCampaignRoot)
         runPreviewAnim(previewAnimId, previewAnimJson, previewAnimSprite)
+        love.event.quit(0)
+        return
+    end
+
+    -- Headless raycaster preview, then quit.
+    if isPreviewMapMode then
+        loader.init(cliCampaignRoot)
+        runPreviewMap(previewMapId, previewMapX, previewMapY, previewMapDir)
         love.event.quit(0)
         return
     end

@@ -1,6 +1,7 @@
 # Raycaster Tileset, Doors, and Vertex Lighting — Design
 
-Status: decided direction (19.07.2026), not yet implemented. Extends the
+Status: implemented (19.07.2026), first atlas (`assets/tilesets/town_001.png`)
+landed and verified via the `preview-map` headless renderer. Extends the
 existing first-person raycaster (`presentation/viewport_3d.lua`) rather than
 replacing it. Directly supports [`commercial-identity.md`](commercial-identity.md)'s
 town-as-real-space goal and the "different types of walls/floors/doors" ask
@@ -39,24 +40,31 @@ everywhere). Grid cells are **64×64px** — painted at true low resolution so
 nearest-neighbor upscaling gives the intended blocky/period-correct look,
 rather than painting soft detail into an oversized cell.
 
+As delivered (`assets/tilesets/town_001.png`, 256×256 = 4×4 cells):
+
 | Row | Contents |
 |---|---|
-| 0 | Wall variants (3–4 cells) |
-| 1 | Floor variants (3–4 cells) |
-| 2 | Doors — 1 cell used (standard door), remaining cells reserved for future variants (locked, portcullis, etc.) |
-| 3 | Sky — a dedicated **256×64 region** (4 grid-cells wide), sampled as one continuous stretched image, not tiled per-column |
+| 0 | Plain wall variants (4 cells: cobblestone, dark stone, gray stone, sandstone) |
+| 1 | Decorated building-front wall variants (4 cells: plastered walls with windows/ivy/arches) — pooled with row 0 as one 8-variant wall set, not a separate "floor" row as originally sketched |
+| 2 | Door variants (4 cells — all four are real doors, not 1-used-plus-reserved as originally sketched) |
+| 3 | Sky — a **256×64 region** (all 4 cells), sampled as one continuous stretched image, not tiled per-column |
 
-Sky is wide because it must read as one continuous horizon/cloud image, not
-a repeating pattern — it does not share the 64px per-cell tiling rule.
+Multiple named atlases are expected over time (the `_001` suffix anticipates
+this), so atlases live under `assets/tilesets/<name>.png` and each map opts
+in via a `tileset` field naming one (e.g. `"tileset": "town_001"`). A map
+without a `tileset` field renders exactly as before this feature existed,
+via the legacy single-image `assets/textures/dungeon_tileset.jpg` path —
+this is how existing/generated dungeon maps stay untouched.
 
-## Wall/floor variant selection: engine-random, not authored
+## Wall/door variant selection: engine-random, not authored
 
-Wall and floor variants are **not** stored per-cell in map data. The
-renderer picks a variant deterministically from a hash of cell coordinates
-(`x, y`), giving free visual variety with zero editor authoring burden and
-no map-schema growth. Doors, by contrast, are explicitly authored — they're
-gameplay-relevant transitions and live alongside the existing map events
-system, not the ambient wall material.
+Wall variants (8, pooling rows 0–1) and door variants (4, row 2) are **not**
+stored per-cell in map data. The renderer picks a variant deterministically
+from a hash of cell coordinates (`x, y`) — a different hash salt for walls
+vs. doors so they don't correlate — giving free visual variety with zero
+editor authoring burden and no map-schema growth. *Which* cells are doors,
+however, is explicitly authored (gameplay-relevant transitions), living
+alongside the existing map events system, not the ambient wall material.
 
 ## Doors
 
@@ -123,19 +131,33 @@ independently-drawn columns that can be tinted per-column.
   decided during editor-tool implementation without blocking the renderer
   work.
 
-## Explicitly out of scope for this pass
+## Verification
 
-- Wraparound/panning sky (noted as future).
-- Door variants beyond the standard door.
-- Making town fully walkable end-to-end (this doc covers the rendering
-  substrate: atlas, doors-as-wall-texture, sky ceiling, lighting — wiring
-  an actual town map onto it, and converting `drawTown` off the menu-fake
-  path, is follow-on work once the substrate lands).
-- Generator/asset-manifest changes so LLM-generated campaigns can reference
-  real tileset variants — separate, already-identified gap (no asset
-  listing is fed into `tools/campaign-gen/lib/context.js` today).
+`lovec . preview-map <mapId> [x] [y] [dir]` (added in `main.lua`, alongside
+the existing `preview-scene`/`preview-window`/`preview-font` headless
+preview modes) loads a map by id, positions the camera, runs the real
+`viewport_3d.draw()` onto an offscreen canvas, and dumps a base64 PNG
+between `PREVIEW BEGIN`/`PREVIEW END` markers — no interactive window
+needed. Used to confirm the atlas, doors, sky, and lighting all render
+correctly against `town_001.png` before this landed; reusable going
+forward for any tileset/lighting iteration, and a natural fit for an
+editor-side map preview later.
 
-## Implementation order
+## Status of "explicitly out of scope" items
+
+- Wraparound/panning sky: still deferred, as planned.
+- Door variants beyond one standard door: **done differently than
+  planned** — the delivered atlas has 4 real door variants (row 2), not 1
+  used + 3 reserved, so door variant selection uses the same
+  hash-per-cell approach as walls rather than always sampling column 0.
+- Making town fully walkable end-to-end: still follow-on work. This pass
+  landed the rendering substrate (atlas, doors-as-wall-texture, sky
+  ceiling, lighting) and validated it against the existing town map's
+  layout with test data (a temporary door + light grid), but did not
+  redesign the town map itself or touch `drawTown`'s menu-fake path.
+- Generator/asset-manifest changes: still a separate, identified gap.
+
+## Implementation order (historical — see Status above for what shipped)
 
 1. Atlas loader: replace hardcoded single-texture load in
    `viewport_3d.init()` with a real grid atlas (configurable `tileW/tileH`,
