@@ -82,6 +82,9 @@ function assemblePrompt(stage, state) {
     return template.replace(/\{\{(\w+)\}\}/g, (_, k) => fills[k] !== undefined ? fills[k] : `{{${k}}}`);
 }
 
+// Running usage totals for the whole run, printed per call and at exit.
+const totals = { prompt: 0, completion: 0, cost: 0 };
+
 async function callStage(stage, userPrompt, extraMessages = []) {
     const sc = CONFIG.stages[stage] || CONFIG.stages.repair;
     const apiKey = process.env[CONFIG.provider.apiKeyEnv];
@@ -89,17 +92,35 @@ async function callStage(stage, userPrompt, extraMessages = []) {
         console.error(`Missing API key: set ${CONFIG.provider.apiKeyEnv} in your environment.`);
         process.exit(2);
     }
-    return chat({
+    const started = Date.now();
+    const { content, usage } = await chat({
         baseUrl: CONFIG.provider.baseUrl,
         apiKey,
         model: sc.model,
         temperature: sc.temperature,
+        // Live output: the model's reply streams to the console as it
+        // generates, so long stages are visibly alive.
+        onChunk: d => process.stdout.write(d),
         messages: [
             { role: 'system', content: 'You generate game data for a JSON-driven RPG engine. Reply with EXACTLY the artifact requested -- no commentary outside it.' },
             { role: 'user', content: userPrompt },
             ...extraMessages,
         ],
     });
+    process.stdout.write('\n');
+    const secs = ((Date.now() - started) / 1000).toFixed(1);
+    if (usage) {
+        totals.prompt += usage.prompt_tokens || 0;
+        totals.completion += usage.completion_tokens || 0;
+        if (typeof usage.cost === 'number') totals.cost += usage.cost;
+        const cost = typeof usage.cost === 'number' ? ` | $${usage.cost.toFixed(5)}` : '';
+        console.log(`  [${stage}] ${usage.prompt_tokens} in / ${usage.completion_tokens} out tokens${cost} | ${secs}s`
+            + ` || run total: ${totals.prompt} in / ${totals.completion} out`
+            + (totals.cost ? ` | $${totals.cost.toFixed(5)}` : ''));
+    } else {
+        console.log(`  [${stage}] done in ${secs}s (provider returned no usage data)`);
+    }
+    return content;
 }
 
 // ---------------------------------------------------------------------------
