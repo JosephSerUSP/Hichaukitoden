@@ -1,0 +1,27 @@
+{
+  "provider": {
+    "baseUrl": "https://openrouter.ai/api/v1",
+    "apiKeyEnv": "OPENROUTER_API_KEY"
+  },
+  "stages": {
+    "outline": {
+      "model": "deepseek/deepseek-chat",
+      "temperature": 0.9,
+      "note": "Creative stage - sets the quality ceiling. Point at the strongest model you can afford."
+    },
+    "actors": { "model": "deepseek/deepseek-chat", "temperature": 0.7 },
+    "items": { "model": "deepseek/deepseek-chat", "temperature": 0.7 },
+    "quests": { "model": "deepseek/deepseek-chat", "temperature": 0.7 },
+    "maps": { "model": "deepseek/deepseek-chat", "temperature": 0.7 },
+    "events": { "model": "deepseek/deepseek-chat", "temperature": 0.8 },
+    "repair": {
+      "model": "deepseek/deepseek-chat",
+      "temperature": 0.2,
+      "note": "Fed validator failures verbatim; low temperature, mechanical fixes only."
+    }
+  },
+  "validate": {
+    "lovecPath": "C:\\Program Files\\LOVE\\lovec.exe",
+    "maxRepairRounds": 4
+  }
+}
