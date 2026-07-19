@@ -6,6 +6,18 @@
         let eventModalSnapshot = null;
         let eventOriginalData = null;
 
+        // --- EVENT PAGES (engine/exploration.lua resolvePage) ---
+        // Working copy of the event's `pages` array while the modal is open;
+        // only written back to the event on Apply. -1 = the Base tab (the
+        // event's own fields — the fallback when no page matches).
+        let activeEventPages = [];
+        let activeEventPageIdx = -1;
+        // Base-tab field values stashed while a page tab borrows the shared
+        // inputs (name/trigger/sprite/logic). Base-only fields (priority,
+        // spawn, transparent, minimap color) are just disabled in page mode,
+        // so their DOM values survive untouched.
+        let eventBaseFieldStash = null;
+
         // rgb01 array <-> #rrggbb hex for <input type=color>
         function rgb01ToHex(c) {
             return '#' + (c || [0.4, 0.6, 1]).slice(0, 3)
@@ -92,9 +104,198 @@
                 document.getElementById('event-logic-common').checked = true;
             }
 
+            activeEventPages = (eventData && Array.isArray(eventData.pages))
+                ? JSON.parse(JSON.stringify(eventData.pages)) : [];
+            activeEventPageIdx = -1;
+            eventBaseFieldStash = null;
+            updateEventPageModeUI(false);
+            renderEventPageTabs();
+
             toggleEventLogicType();
             eventModalDirty = false;
             document.getElementById('event-modal').classList.add('active');
+        }
+
+        // --- Pages rail (left column of the event dialog) + field swapping ---
+        function renderEventPageTabs() {
+            const rail = document.getElementById('event-pages-tabs');
+            rail.innerHTML = '';
+            const mkItem = (label, idx, title) => {
+                const t = document.createElement('div');
+                const sel = idx === activeEventPageIdx;
+                t.style.cssText = 'font-size: 10px; padding: 2px 4px; cursor: pointer;'
+                    + 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;'
+                    + (sel ? 'background: #000080; color: white; font-weight: bold;' : '');
+                t.textContent = label;
+                if (title) t.title = title;
+                if (!sel) {
+                    t.onmouseover = () => { t.style.background = '#d0d0d0'; };
+                    t.onmouseout = () => { t.style.background = ''; };
+                }
+                t.onclick = () => selectEventPageTab(idx);
+                rail.appendChild(t);
+            };
+            mkItem('Base', -1, 'The event as authored — the fallback when no page condition matches.');
+            activeEventPages.forEach((p, i) => {
+                const cond = (p.condition || '').trim();
+                mkItem(`${i + 1}: ${cond || '(always)'}`, i,
+                    cond || 'No condition — always matches. Pages are checked in order; the LAST matching page wins.');
+            });
+
+            const btns = document.getElementById('event-pages-btns');
+            btns.innerHTML = '';
+            const mkBtn = (txt, title, fn, disabled) => {
+                const b = document.createElement('button');
+                b.className = 'win98-btn';
+                b.style.cssText = 'font-size: 10px; padding: 1px 6px; flex: 1;';
+                b.textContent = txt;
+                b.title = title;
+                b.disabled = !!disabled;
+                b.onclick = fn;
+                btns.appendChild(b);
+            };
+            const onPage = activeEventPageIdx !== -1;
+            mkBtn('+', 'Add a page (conditional overrides on top of Base)', addEventPage);
+            mkBtn('▲', 'Move this page earlier (checked sooner, loses ties)', () => moveEventPage(-1), !onPage || activeEventPageIdx === 0);
+            mkBtn('▼', 'Move this page later (later matching pages win)', () => moveEventPage(1), !onPage || activeEventPageIdx === activeEventPages.length - 1);
+            mkBtn('×', 'Delete this page', deleteEventPage, !onPage);
+        }
+
+        // Swap the shared inputs between Base and a page. Base-only controls
+        // are disabled+dimmed on pages; the trigger select temporarily gains
+        // an "(inherit)" option because an omitted field means "inherit".
+        function updateEventPageModeUI(pageMode) {
+            document.getElementById('event-page-cond-row').style.display = pageMode ? 'flex' : 'none';
+            document.getElementById('event-logic-inherit-row').style.display = pageMode ? 'flex' : 'none';
+
+            const trig = document.getElementById('event-prop-trigger');
+            let inh = trig.querySelector('option[value=""]');
+            if (pageMode && !inh) {
+                inh = document.createElement('option');
+                inh.value = '';
+                inh.textContent = '(inherit from base)';
+                trig.insertBefore(inh, trig.firstChild);
+            } else if (!pageMode && inh) {
+                const wasInherit = trig.value === '';
+                inh.remove();
+                if (wasInherit) trig.value = 'interact';
+            }
+
+            document.getElementById('event-prop-transparent').disabled = pageMode;
+            ['event-prop-priority', 'event-prop-spawn', 'event-prop-color-enabled'].forEach(id => {
+                const el = document.getElementById(id);
+                el.disabled = pageMode;
+                const fs = el.closest('fieldset');
+                if (fs) {
+                    fs.style.opacity = pageMode ? '0.55' : '';
+                    if (pageMode) fs.title = 'Base event only — pages cannot override this in the editor.';
+                    else fs.removeAttribute('title');
+                }
+            });
+            document.getElementById('event-prop-color').disabled =
+                pageMode || !document.getElementById('event-prop-color-enabled').checked;
+        }
+
+        // Write the currently displayed tab's inputs back into the working
+        // model. On a page, an EMPTY field is OMITTED from the page object
+        // (absent = inherit from base — resolvePage overlays any present key).
+        function commitEventPageFields() {
+            if (activeEventPageIdx === -1) {
+                eventBaseFieldStash = {
+                    name: document.getElementById('event-prop-name').value,
+                    trigger: document.getElementById('event-prop-trigger').value,
+                    sprite: window.activeEventSpritePath || '',
+                    logicCommon: document.getElementById('event-logic-common').checked,
+                    scriptId: document.getElementById('event-prop-script-id').value
+                };
+                return;
+            }
+            const page = activeEventPages[activeEventPageIdx];
+            if (!page) return;
+            const setOrOmit = (key, v) => { if (v) page[key] = v; else delete page[key]; };
+            setOrOmit('condition', document.getElementById('event-prop-page-condition').value.trim());
+            setOrOmit('name', document.getElementById('event-prop-name').value.trim());
+            setOrOmit('sprite', window.activeEventSpritePath || '');
+            setOrOmit('trigger', document.getElementById('event-prop-trigger').value);
+            if (document.getElementById('event-logic-inherit').checked) {
+                delete page.script;
+                delete page.scriptId;
+            } else if (document.getElementById('event-logic-common').checked) {
+                const sid = document.getElementById('event-prop-script-id').value;
+                if (sid !== '') page.scriptId = parseInt(sid); else delete page.scriptId;
+                delete page.script;
+            } else {
+                page.script = page.script || [];
+                delete page.scriptId;
+            }
+        }
+
+        function loadEventPageFields() {
+            const pageMode = activeEventPageIdx !== -1;
+            updateEventPageModeUI(pageMode);
+            if (!pageMode) {
+                const s = eventBaseFieldStash || {};
+                document.getElementById('event-prop-name').value = s.name || '';
+                document.getElementById('event-prop-trigger').value = s.trigger || 'interact';
+                updateEventGraphicPreview(s.sprite || '');
+                document.getElementById(s.logicCommon ? 'event-logic-common' : 'event-logic-custom').checked = true;
+                if (s.scriptId !== undefined && s.scriptId !== '') {
+                    document.getElementById('event-prop-script-id').value = s.scriptId;
+                }
+            } else {
+                const p = activeEventPages[activeEventPageIdx];
+                document.getElementById('event-prop-page-condition').value = p.condition || '';
+                document.getElementById('event-prop-name').value = p.name || '';
+                document.getElementById('event-prop-trigger').value = p.trigger !== undefined ? p.trigger : '';
+                updateEventGraphicPreview(p.sprite || '');
+                if (p.scriptId !== undefined) {
+                    document.getElementById('event-logic-common').checked = true;
+                    document.getElementById('event-prop-script-id').value = String(p.scriptId);
+                } else if (p.script) {
+                    document.getElementById('event-logic-custom').checked = true;
+                } else {
+                    document.getElementById('event-logic-inherit').checked = true;
+                }
+            }
+            toggleEventLogicType();
+        }
+
+        function selectEventPageTab(idx) {
+            if (idx === activeEventPageIdx) return;
+            commitEventPageFields();
+            activeEventPageIdx = idx;
+            loadEventPageFields();
+            renderEventPageTabs();
+        }
+
+        function addEventPage() {
+            commitEventPageFields();
+            activeEventPages.push({});
+            activeEventPageIdx = activeEventPages.length - 1;
+            eventModalDirty = true;
+            loadEventPageFields();
+            renderEventPageTabs();
+        }
+
+        function deleteEventPage() {
+            if (!confirm('Delete this page? The Base event is unaffected.')) return;
+            activeEventPages.splice(activeEventPageIdx, 1);
+            activeEventPageIdx = -1;
+            eventModalDirty = true;
+            loadEventPageFields();
+            renderEventPageTabs();
+        }
+
+        function moveEventPage(dir) {
+            const i = activeEventPageIdx, j = i + dir;
+            if (j < 0 || j >= activeEventPages.length) return;
+            commitEventPageFields();
+            const tmp = activeEventPages[i];
+            activeEventPages[i] = activeEventPages[j];
+            activeEventPages[j] = tmp;
+            activeEventPageIdx = j;
+            eventModalDirty = true;
+            renderEventPageTabs();
         }
 
         function updateEventGraphicPreview(spritePath) {
@@ -122,19 +323,38 @@
 
         function toggleEventLogicType() {
             const isCommon = document.getElementById('event-logic-common').checked;
+            const isInherit = activeEventPageIdx !== -1
+                && document.getElementById('event-logic-inherit').checked;
             const commonSelect = document.getElementById('event-prop-script-id');
 
-            commonSelect.disabled = !isCommon;
+            commonSelect.disabled = !isCommon || isInherit;
 
             const container = document.getElementById('event-contents-list');
-            if (isCommon) {
+            if (isInherit) {
+                // Page inherits the Base tab's logic — read-only preview of it.
+                const s = eventBaseFieldStash || {};
+                if (s.logicCommon) {
+                    const ce = dbPayload.commonEvents && dbPayload.commonEvents[s.scriptId];
+                    renderCommandList(container, ce ? ce.commands : [], null, true, 0, 'common');
+                } else {
+                    renderCommandList(container, activeEventLocalScript || [], null, true, 0, 'map');
+                }
+            } else if (isCommon) {
                 const ceId = commonSelect.value;
                 const ce = dbPayload.commonEvents && dbPayload.commonEvents[ceId];
                 // Read-only preview of the linked common event's own body, so
                 // its palette context is 'common' even though this event is 'map'.
                 renderCommandList(container, ce ? ce.commands : [], null, true, 0, 'common');
             } else {
-                renderCommandList(container, activeEventLocalScript, () => {
+                // Custom list: on a page tab this targets THE PAGE's own
+                // script array (same editor, different target).
+                let arr = activeEventLocalScript;
+                if (activeEventPageIdx !== -1) {
+                    const page = activeEventPages[activeEventPageIdx];
+                    page.script = page.script || [];
+                    arr = page.script;
+                }
+                renderCommandList(container, arr, () => {
                     eventModalDirty = true;
                     toggleEventLogicType();
                 }, false, 0, 'map');
@@ -161,6 +381,10 @@
         }
 
         function applyEventProperties() {
+            // If a page tab is showing, commit it and restore the Base tab's
+            // fields into the DOM so the reads below see base values.
+            if (activeEventPageIdx !== -1) selectEventPageTab(-1);
+
             const map = dbPayload.maps[currentMapIndex];
             if (!map.events) map.events = [];
 
@@ -190,6 +414,14 @@
             } else {
                 delete eventData.scriptId;
                 eventData.script = activeEventLocalScript;
+            }
+
+            // Pages: only written when non-empty; deleting the last page
+            // removes the key entirely (no `pages: []` churn in maps.json).
+            if (activeEventPages.length > 0) {
+                eventData.pages = JSON.parse(JSON.stringify(activeEventPages));
+            } else {
+                delete eventData.pages;
             }
 
             if (isNew) {

@@ -39,6 +39,11 @@
             if (Array.isArray(obj.names) && obj.names.length === 0) {
                 delete obj.names;
             }
+            // Event pages (engine resolvePage): an empty list means "no pages",
+            // so drop the key rather than churning maps.json with `pages: []`.
+            if (Array.isArray(obj.pages) && obj.pages.length === 0) {
+                delete obj.pages;
+            }
             for (const key in obj) {
                 if (Object.prototype.hasOwnProperty.call(obj, key) && typeof obj[key] === 'object' && obj[key] !== null) {
                     stripEmptyMeta(obj[key]);

@@ -910,7 +910,7 @@
 
     <!-- --- EVENT PROPERTIES DIALOG BOX MODAL --- -->
     <div id="event-modal" class="modal-overlay">
-        <div class="window outset-bevel" style="width: 760px; height: 500px; display: flex; flex-direction: column;">
+        <div class="window outset-bevel" style="width: 90vw; height: 90vh; min-width: 1280px; min-height: 720px; display: flex; flex-direction: column;">
             <div class="title-bar">
                 <div class="title-bar-text" id="event-modal-title">Event Editor - ID: 0001</div>
                 <div class="title-bar-controls">
@@ -927,13 +927,29 @@
                     </div>
                 </div>
 
-                <div class="db-tabs" style="margin-bottom: 0;">
-                    <div class="db-tab active" style="font-size: 10px; padding: 2px 8px; font-weight: bold;">Page 1</div>
+                <div id="event-page-cond-row" style="display: none; align-items: center; gap: 6px;">
+                    <label style="font-size: 10px; font-weight: bold; white-space: nowrap;">Page Condition:</label>
+                    <input type="text" id="event-prop-page-condition" class="win98-input" style="flex: 1;"
+                           placeholder="e.g. flag:metAlicia or hasItem:3 (blank = always)"
+                           title="flag:&lt;name&gt; checks a session flag; hasItem:&lt;itemId&gt; checks item presence; questStatus:&lt;questId&gt;:active|completed|inactive checks a quest. Comma-separate to AND them; anything else is evaluated as a formula. Blank always matches — the LAST page whose condition passes wins." />
                 </div>
 
                 <!-- Main Grid Split -->
                 <div style="flex: 1; display: flex; overflow: hidden; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: #dfdfdf; padding: 6px; gap: 6px; box-sizing: border-box;">
-                    
+
+                    <!-- Pages Rail: "Base" is the event as authored; entries below it
+                         are conditional override pages (engine/exploration.lua
+                         resolvePage — the LAST matching page wins). Rendered by
+                         renderEventPageTabs() in events.js. -->
+                    <div style="width: 180px; display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 10px; font-weight: bold;">Pages</div>
+                        <div id="event-pages-tabs" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; border: 2px solid; border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow); background: #ffffff; padding: 2px; box-shadow: inset 1px 1px 0px var(--win-black);"></div>
+                        <div id="event-pages-btns" style="display: flex; gap: 3px;"></div>
+                        <p style="font-size: 9px; color: var(--win-dark-shadow); margin: 0;">
+                            Pages are checked top to bottom; the last one whose condition passes wins. Empty page fields inherit from Base.
+                        </p>
+                    </div>
+
                     <!-- Left Sidebar Controls -->
                     <div style="width: 220px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 2px;">
                         
@@ -950,6 +966,7 @@
                                     <label for="event-prop-transparent">Transparent</label>
                                 </div>
                                 <button class="win98-btn" style="font-size: 10px; padding: 2px;" onclick="openAssetPickerForEventSprite()">Set...</button>
+                                <button class="win98-btn" style="font-size: 10px; padding: 2px;" title="No graphic (on a page: inherit the base event's graphic)" onclick="updateEventGraphicPreview(''); eventModalDirty = true;">Clear</button>
                             </div>
                         </fieldset>
 
@@ -997,6 +1014,10 @@
                         <!-- Logic Configuration -->
                         <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
                             <legend>Run Action Logic</legend>
+                            <div id="event-logic-inherit-row" style="display: none; align-items: center; gap: 4px;">
+                                <input type="radio" id="event-logic-inherit" name="event-logic-type" value="inherit" onchange="toggleEventLogicType()" />
+                                <label for="event-logic-inherit" style="font-size: 10px; font-weight: bold;">Inherit from Base</label>
+                            </div>
                             <div style="display: flex; align-items: center; gap: 4px;">
                                 <input type="radio" id="event-logic-common" name="event-logic-type" value="common" onchange="toggleEventLogicType()" checked />
                                 <label for="event-logic-common" style="font-size: 10px; font-weight: bold;">Link Common Event</label>

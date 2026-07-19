@@ -217,6 +217,19 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText('?', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
                 }
+
+                // Pages badge: navy corner tag with the page count so multi-page
+                // events are spottable on the grid (matches the navy accents used
+                // across the editor).
+                if (Array.isArray(ev.pages) && ev.pages.length > 0) {
+                    ctx.fillStyle = '#000080';
+                    ctx.fillRect(ex * TILE_SIZE + TILE_SIZE - 9, ey * TILE_SIZE + 1, 8, 8);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 7px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(String(ev.pages.length), ex * TILE_SIZE + TILE_SIZE - 5, ey * TILE_SIZE + 5.5);
+                }
             });
 
             // 3. Draw Player spawn indicator (only on the map spawn.mapId points at)
