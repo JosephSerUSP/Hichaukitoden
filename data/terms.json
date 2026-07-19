@@ -124,7 +124,8 @@
     "options": [
       "New Game",
       "\\c[7]Continue",
-      "Exit"
+      "Exit",
+      "Campaigns"
     ],
     "no_save": "No save data.",
     "copyright": "(C) 2026 SeraphCircle"

@@ -1178,6 +1178,25 @@
             "text": "No save data."
           }
         ]
+      },
+      {
+        "id": "campaign_picker",
+        "rect": {
+          "x": 7,
+          "y": 17,
+          "w": 18,
+          "h": 8
+        },
+        "style": "list",
+        "visibleRows": 5,
+        "visible": "v.pickerOpen",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:campaignRows",
+            "cursor": "v.campaignIdx"
+          }
+        ]
       }
     ],
     "goldenScript": [
@@ -1205,12 +1224,22 @@
           "cmd": "SET_VAR",
           "name": "showNotice",
           "value": "false"
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "pickerOpen",
+          "value": "false"
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "campaignIdx",
+          "value": 1
         }
       ],
       "on_up": [
         {
           "cmd": "IF",
-          "condition": "v.idx > 1",
+          "condition": "v.pickerOpen ~= true and v.idx > 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1218,12 +1247,23 @@
               "value": "v.idx - 1"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.pickerOpen == true and (v.campaignIdx or 1) > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "campaignIdx",
+              "value": "(v.campaignIdx or 1) - 1"
+            }
+          ]
         }
       ],
       "on_down": [
         {
           "cmd": "IF",
-          "condition": "v.idx < 3",
+          "condition": "v.pickerOpen ~= true and v.idx < 4",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1231,16 +1271,96 @@
               "value": "v.idx + 1"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.pickerOpen == true and (v.campaignIdx or 1) < (v.campaignCount or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "campaignIdx",
+              "value": "(v.campaignIdx or 1) + 1"
+            }
+          ]
         }
       ],
       "on_cancel": [
         {
-          "cmd": "SET_VAR",
-          "name": "idx",
-          "value": 3
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.pickerOpen == true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "pickerOpen",
+              "value": "false"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.pickerOpen ~= true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": 3
+            }
+          ]
         }
       ],
       "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.pickerOpen == true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SWITCH_CAMPAIGN",
+              "name": "(((v.campaignRows or {})[v.campaignIdx or 1]) or {}).campaign or ''"
+            },
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "title"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.pickerOpen ~= true and v.idx == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "campaignIdx",
+              "value": 1
+            },
+            {
+              "cmd": "LIST_CAMPAIGNS"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "pickerOpen",
+              "value": "true"
+            }
+          ]
+        },
         {
           "cmd": "IF",
           "condition": "v.idx == 1",

@@ -921,6 +921,62 @@ handlers.RESET_SESSION = function(cmd, ctx)
     if ok and renderer and renderer.init then renderer.init(fresh) end
 end
 
+-- Campaign selector (title-screen testing tool). Hot-switches the active
+-- campaign root: reloads the loader + config from the new root and persists
+-- the campaign.json pointer the same dual-write way the editor /save does
+-- (engine/server.lua saveFile) — the save-dir copy has read precedence in
+-- LOVE, so the source-dir file and the save-dir file must stay in sync.
+-- Shared by the SWITCH_CAMPAIGN command and script api.switchCampaign.
+local function switchCampaign(loader, name)
+    -- loader.resolveRoot passes explicit roots through unchecked, so
+    -- validate the campaign dir here before committing to it.
+    local root = "data"
+    if name ~= nil and name ~= "" then
+        root = "campaigns/" .. name
+        if not love.filesystem.getInfo(root .. "/system.json") then
+            return false
+        end
+    end
+    loader.init(root)
+    require("engine.config").load()
+    -- getSource(), not server.lua's getSourceDirectory(): the latter does
+    -- not exist in LOVE 11 (love.filesystem.getSourceBaseDirectory is the
+    -- parent dir); getSource() is the repo root when running from source.
+    local absPath = love.filesystem.getSource() .. "/campaign.json"
+    if root == "data" then
+        os.remove(absPath)
+        love.filesystem.remove("campaign.json")
+    else
+        local body = '{\n  "active": "' .. name .. '"\n}'
+        local file = io.open(absPath, "w")
+        if file then
+            file:write(body)
+            file:close()
+        end
+        love.filesystem.write("campaign.json", body)
+    end
+    return true
+end
+
+-- Materializes loader.listCampaigns() into scene vars for the title picker:
+-- rows carry `name` (display label, for the v: list renderer) and
+-- `campaign` (dir name, "" = default data/ root, for SWITCH_CAMPAIGN).
+handlers.LIST_CAMPAIGNS = function(cmd, ctx)
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local rows = {}
+    for _, c in ipairs(loader.listCampaigns()) do
+        table.insert(rows, { name = c.title, campaign = c.name })
+    end
+    ctx.v = ctx.v or {}
+    ctx.v.campaignRows = rows
+    ctx.v.campaignCount = #rows
+end
+
+handlers.SWITCH_CAMPAIGN = function(cmd, ctx)
+    local name = cmd.name ~= nil and evalFormula(cmd.name, ctx) or ""
+    switchCampaign(ctx.loader or (ctx.session and ctx.session.loader), tostring(name))
+end
+
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); scene_host consumes
     -- this event and performs the transition. Optional `vars` (same
@@ -1344,6 +1400,14 @@ local function buildScriptApi(ctx)
             return require("presentation.animation_player").isAnythingPlaying()
         end
     }
+    -- Campaign selector (title-screen testing tool): same operations the
+    -- LIST_CAMPAIGNS/SWITCH_CAMPAIGN commands run, exposed for extra scenes.
+    function api.listCampaigns()
+        return (ctx.loader or session.loader).listCampaigns()
+    end
+    function api.switchCampaign(name)
+        return switchCampaign(ctx.loader or session.loader, name)
+    end
     api.targeting = require("engine.targeting")
     return api
 end

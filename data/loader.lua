@@ -37,6 +37,25 @@ function loader.resolveRoot(explicit)
     return "data"
 end
 
+-- Campaign selector support (title-screen testing tool): default root first,
+-- then every campaigns/<x>/ dir that has a system.json. Title comes from a
+-- title-ish field in that system.json when present, else the dir name
+-- (system.json has no title field today, so the dir name is the usual case).
+function loader.listCampaigns()
+    local list = { { name = "", title = "(default)" } }
+    local dirs = love.filesystem.getDirectoryItems("campaigns")
+    table.sort(dirs)
+    for _, dir in ipairs(dirs) do
+        local sysPath = "campaigns/" .. dir .. "/system.json"
+        if love.filesystem.getInfo(sysPath) then
+            local ok, sys = pcall(load_json, sysPath)
+            local title = ok and type(sys) == "table" and (sys.title or sys.gameTitle) or nil
+            table.insert(list, { name = dir, title = type(title) == "string" and title or dir })
+        end
+    end
+    return list
+end
+
 function loader.init(root)
     loader.root = loader.resolveRoot(root)
     if loader.root ~= "data" then
