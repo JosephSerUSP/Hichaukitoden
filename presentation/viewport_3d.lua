@@ -42,13 +42,46 @@ local function lerpAngle(a, b, t)
     return a + diff * t
 end
 
--- Tileset configuration
+-- Tileset atlas configuration. See docs/design/raycaster-tileset-lighting.md.
+-- Grid cells are 64x64px; row 0 = wall variants, row 1 = floor variants
+-- (reserved; the renderer does not floor-cast textures, only tints the
+-- gradient), row 2 col 0 = the standard door, row 3 = a single wide sky
+-- strip (4 cells, 256x64) sampled as one static stretch rather than tiled.
+local ATLAS_TILE = 64
+local ATLAS_WALL_ROW, ATLAS_WALL_VARIANTS = 0, 4
+local ATLAS_DOOR_ROW, ATLAS_DOOR_COL = 2, 0
+local ATLAS_SKY_ROW, ATLAS_SKY_COLS = 3, 4
+
 local tileset = nil
-local tileW, tileH = 256, 256
-local sheetW, sheetH = 1024, 1024
-local sliceQuad = nil
+local sheetW, sheetH = 0, 0
+local sliceQuad = nil        -- 1px-wide column slice, reused for walls and doors
+local skyQuad = nil          -- the full sky strip, drawn as one stretch
+local legacyTileset = false  -- true when falling back to the old single-image texture
 local spriteSliceQuad = nil
-local wallQx, wallQy = 0, 0
+
+-- Deterministic per-cell wall variant so ambient wall texture varies without
+-- being authored in map data (docs/design/raycaster-tileset-lighting.md).
+local function wallVariant(mapX, mapY)
+    local h = (mapX * 73856093 + mapY * 19349663) % 2147483647
+    if h < 0 then h = -h end
+    return h % ATLAS_WALL_VARIANTS
+end
+
+-- Bilinear-interpolated vertex brightness. session.currentMapData.light, if
+-- present, is a (mapW+1) x (mapH+1) grid of 0..1 floats keyed [row][col]
+-- (1-indexed, row = y, col = x) covering the map's grid *corners*. Absent
+-- light data (older/generated maps) yields flat full brightness, i.e. no
+-- change from current behavior.
+local function sampleLight(light, x, y, fx, fy)
+    if not light then return 1.0 end
+    local r0, r1 = light[y], light[y + 1]
+    if not r0 or not r1 then return 1.0 end
+    local v00, v10 = r0[x] or 1.0, r0[x + 1] or 1.0
+    local v01, v11 = r1[x] or 1.0, r1[x + 1] or 1.0
+    local top = v00 + (v10 - v00) * fx
+    local bot = v01 + (v11 - v01) * fx
+    return top + (bot - top) * fy
+end
 
 local spriteImageCache = {}
 local function getEventSprite(ev, session)
@@ -79,12 +112,42 @@ end
 function viewport_3d.init()
     spriteSliceQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
 
-    if love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
+    if love.filesystem.getInfo("assets/textures/tileset_atlas.png") then
+        -- New grid atlas: docs/design/raycaster-tileset-lighting.md.
+        tileset = love.graphics.newImage("assets/textures/tileset_atlas.png")
+        tileset:setFilter("nearest", "nearest")
+        sheetW, sheetH = tileset:getWidth(), tileset:getHeight()
+        legacyTileset = false
+        sliceQuad = love.graphics.newQuad(0, 0, 1, ATLAS_TILE, sheetW, sheetH)
+        skyQuad = love.graphics.newQuad(
+            0, ATLAS_SKY_ROW * ATLAS_TILE,
+            ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE,
+            sheetW, sheetH)
+    elseif love.filesystem.getInfo("assets/textures/dungeon_tileset.jpg") then
+        -- Legacy single-texture fallback: one wall look, no doors/sky/variants.
         tileset = love.graphics.newImage("assets/textures/dungeon_tileset.jpg")
         tileset:setFilter("nearest", "nearest")
+        sheetW, sheetH = 1024, 1024
+        legacyTileset = true
         sliceQuad = love.graphics.newQuad(0, 0, 1, 256, sheetW, sheetH)
-        wallQx, wallQy = 0, 0
     end
+end
+
+-- Doors are ordinary map events (docs/design/raycaster-tileset-lighting.md)
+-- flagged door=true; they render into the wall slice instead of as a
+-- billboard, so they're normally left without a sprite. Built once per
+-- frame (not per raycast column) keyed by 1-indexed grid cell.
+local function buildDoorLookup(session)
+    local lookup = {}
+    local data = session.currentMapData
+    if data and data.events then
+        for _, ev in ipairs(data.events) do
+            if ev.door then
+                lookup[(ev.x + 1) .. "," .. (ev.y + 1)] = true
+            end
+        end
+    end
+    return lookup
 end
 
 -- Draw a vertical gradient block for ceiling/floor
@@ -143,12 +206,34 @@ function viewport_3d.draw(session)
         end
     end
 
-    -- ── 2. Draw Floor & Ceiling Gradients ────────────────────────────────────
+    -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
-    -- Ceiling gradient: Moody dark purple/indigo fade
-    drawVerticalGradient(0, 0, ui.toPx(ui.screenWidthTiles), halfH, {0.09, 0.06, 0.14}, {0.02, 0.01, 0.04})
+    local screenWpx = ui.toPx(ui.screenWidthTiles)
+    local mapData = session.currentMapData
+    local light = mapData and mapData.light
+
+    -- Player-cell vertex light, used to tint the ceiling/floor as a single
+    -- value (the gradients aren't raycast per-pixel, so they can't sample a
+    -- per-column light like walls do). See docs/design/raycaster-tileset-lighting.md.
+    local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
+    local ambient = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
+
+    if mapData and mapData.ceilingStyle == "sky" and tileset and not legacyTileset and skyQuad then
+        love.graphics.setColor(ambient, ambient, ambient, 1)
+        love.graphics.draw(tileset, skyQuad, 0, 0, 0,
+            screenWpx / (ATLAS_SKY_COLS * ATLAS_TILE), halfH / ATLAS_TILE)
+    else
+        -- Ceiling gradient: Moody dark purple/indigo fade
+        drawVerticalGradient(0, 0, screenWpx, halfH,
+            {0.09 * ambient, 0.06 * ambient, 0.14 * ambient},
+            {0.02 * ambient, 0.01 * ambient, 0.04 * ambient})
+    end
     -- Floor gradient: Cold dark stone grey fade
-    drawVerticalGradient(0, halfH, ui.toPx(ui.screenWidthTiles), halfH, {0.03, 0.03, 0.03}, {0.14, 0.12, 0.10})
+    drawVerticalGradient(0, halfH, screenWpx, halfH,
+        {0.03 * ambient, 0.03 * ambient, 0.03 * ambient},
+        {0.14 * ambient, 0.12 * ambient, 0.10 * ambient})
+
+    local doorLookup = buildDoorLookup(session)
 
     -- ── 3. Perspective Raycasting Loop with Fish-eye Correction ────────────────
     -- Camera direction vector
@@ -252,24 +337,42 @@ function viewport_3d.draw(session)
         end
         wallX = wallX - math.floor(wallX)
 
-        -- x coordinate on the texture
-        local texX = math.floor(wallX * 256)
-        if side == 0 and rx > 0 then texX = 255 - texX end
-        if side == 1 and ry < 0 then texX = 255 - texX end
+        -- x coordinate on the texture (atlas tiles are 64px; the legacy
+        -- single-image fallback keeps its original 256px sampling)
+        local wallTexSize = legacyTileset and 256 or ATLAS_TILE
+        local texX = math.floor(wallX * wallTexSize)
+        if side == 0 and rx > 0 then texX = (wallTexSize - 1) - texX end
+        if side == 1 and ry < 0 then texX = (wallTexSize - 1) - texX end
 
         -- Shading / Torchlight effect based on distance
         local brightness = math.max(0.12, 1.0 / (1.0 + perpWallDist * 0.35))
-        
+
         -- Darken Y-facing walls for dynamic corner shadows
         if side == 1 then
             brightness = brightness * 0.76
         end
 
+        -- Vertex lighting: bilinear-sample the light grid at the actual
+        -- continuous world hit position (same perpWallDist used for wallX).
+        local hitWX = cx + 1 + perpWallDist * rx
+        local hitWY = cy + 1 + perpWallDist * ry
+        local vx0, vy0 = math.floor(hitWX), math.floor(hitWY)
+        brightness = brightness * sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
+
         -- Render textured slice or fallback color slice
         if tileset and sliceQuad then
-            sliceQuad:setViewport(wallQx + texX, wallQy, 1, 256, sheetW, sheetH)
+            local originX, originY
+            if legacyTileset then
+                originX, originY = 0, 0
+            elseif doorLookup[mapX .. "," .. mapY] then
+                originX, originY = ATLAS_DOOR_COL * ATLAS_TILE, ATLAS_DOOR_ROW * ATLAS_TILE
+            else
+                originX = wallVariant(mapX, mapY) * ATLAS_TILE
+                originY = ATLAS_WALL_ROW * ATLAS_TILE
+            end
+            sliceQuad:setViewport(originX + texX, originY, 1, wallTexSize, sheetW, sheetH)
             love.graphics.setColor(brightness, brightness, brightness, 1)
-            love.graphics.draw(tileset, sliceQuad, x, drawStart, 0, 1, lineHeight / 256)
+            love.graphics.draw(tileset, sliceQuad, x, drawStart, 0, 1, lineHeight / wallTexSize)
         else
             -- Retro flat-shaded colors if tileset is missing
             local r = (side == 0) and 0.4 or 0.3

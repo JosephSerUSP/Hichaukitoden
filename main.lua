@@ -1402,8 +1402,36 @@ elseif paramDef.type == "script" then
 
     -- Run the tree walker over all data files
     for _, map in ipairs(loader.maps or {}) do
+        -- docs/design/raycaster-tileset-lighting.md: per-map ceiling flag and
+        -- optional vertex-light grid. Both are additive/optional so older
+        -- maps without them still validate cleanly.
+        check(map.ceilingStyle == nil or map.ceilingStyle == "sky" or map.ceilingStyle == "solid",
+            "map '" .. tostring(map.name) .. "' has invalid ceilingStyle '" .. tostring(map.ceilingStyle)
+            .. "' (expected 'sky' or 'solid')")
+        if map.light and map.layout then
+            local expectH = #map.layout + 1
+            local expectW = #map.layout[1] + 1
+            check(#map.light == expectH,
+                "map '" .. tostring(map.name) .. "' light grid has " .. #map.light
+                .. " rows, expected " .. expectH .. " (layout height + 1)")
+            for ri, row in ipairs(map.light) do
+                check(#row == expectW,
+                    "map '" .. tostring(map.name) .. "' light grid row " .. ri .. " has " .. #row
+                    .. " values, expected " .. expectW .. " (layout width + 1)")
+            end
+        end
+
         for i, ev in ipairs(map.events or {}) do
             local desc = "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")"
+            -- A door renders into the wall slice it occupies, so it only
+            -- makes sense sitting on a wall cell of a fixed (non-procedural)
+            -- layout; procedural dungeons regenerate their grid at runtime
+            -- so authored door positions can't be checked against it here.
+            if ev.door and map.layout then
+                local row = map.layout[ev.y + 1]
+                local cell = row and row:sub(ev.x + 1, ev.x + 1)
+                check(cell == "#", desc .. " is a door but its map cell is not a wall ('" .. tostring(cell) .. "')")
+            end
             if ev.commands then
                 validateCommands(ev.commands, "map", false, true, desc)
             end

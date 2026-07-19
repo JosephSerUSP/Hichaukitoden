@@ -468,6 +468,7 @@
             document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
             document.getElementById('prop-map-enc-rate').value = (map.encounterRate !== undefined) ? map.encounterRate : '';
             document.getElementById('prop-map-safe').checked = !!map.safe;
+            document.getElementById('prop-map-ceiling').value = map.ceilingStyle || 'solid';
 
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
             renderEncountersList(mapPropsEncounters);
@@ -626,6 +627,10 @@
             }
             map.safe = document.getElementById('prop-map-safe').checked;
             if (!map.safe) delete map.safe;
+
+            const ceilingStyle = document.getElementById('prop-map-ceiling').value;
+            if (ceilingStyle === 'sky') map.ceilingStyle = 'sky';
+            else delete map.ceilingStyle;
 
             if (map.layout) {
                 const currentH = map.layout.length;

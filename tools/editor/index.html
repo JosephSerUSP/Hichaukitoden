@@ -1177,6 +1177,10 @@
                                     <input type="checkbox" id="event-prop-transparent" />
                                     <label for="event-prop-transparent">Transparent</label>
                                 </div>
+                                <div style="display: flex; align-items: center; gap: 4px; font-size: 10px;" title="Renders into the wall slice this event sits on (the atlas's door tile) instead of as a billboard sprite. Must be placed on a wall ('#') cell. See docs/design/raycaster-tileset-lighting.md.">
+                                    <input type="checkbox" id="event-prop-door" />
+                                    <label for="event-prop-door">Door (wall-slot graphic)</label>
+                                </div>
                                 <button class="win98-btn" style="font-size: 10px; padding: 2px;" onclick="openAssetPickerForEventSprite()">Set...</button>
                                 <button class="win98-btn" style="font-size: 10px; padding: 2px;" title="No graphic (on a page: inherit the base event's graphic)" onclick="updateEventGraphicPreview(''); eventModalDirty = true;">Clear</button>
                             </div>
@@ -1329,6 +1333,13 @@
                         <div style="display: flex; align-items: center; gap: 4px; margin-top: 6px;">
                            <input type="checkbox" id="prop-map-safe" />
                            <label for="prop-map-safe" style="font-size: 10px;">Safe Map (no encounters, no MP drain)</label>
+                        </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;" title="Swaps the raycaster's upper-half draw between the atlas sky strip and the ordinary ceiling gradient. See docs/design/raycaster-tileset-lighting.md.">
+                           <label>Ceiling:</label>
+                           <select id="prop-map-ceiling" class="win98-select">
+                               <option value="solid">Solid (ceiling gradient)</option>
+                               <option value="sky">Sky (outdoor)</option>
+                           </select>
                         </div>
                     </fieldset>
                     

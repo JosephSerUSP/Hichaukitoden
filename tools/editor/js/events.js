@@ -71,6 +71,7 @@
                 document.getElementById('event-prop-name').value = eventData.name || `EV${String(eventData.id).padStart(3, '0')}`;
                 document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
                 document.getElementById('event-prop-transparent').checked = !!eventData.transparent;
+                document.getElementById('event-prop-door').checked = !!eventData.door;
                 document.getElementById('event-prop-priority').value = eventData.priority || 'same';
                 document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
 
@@ -95,6 +96,7 @@
                 document.getElementById('event-prop-name').value = `EV${String(nextId).padStart(3, '0')}`;
                 document.getElementById('event-prop-trigger').value = 'interact';
                 document.getElementById('event-prop-transparent').checked = false;
+                document.getElementById('event-prop-door').checked = false;
                 document.getElementById('event-prop-priority').value = 'same';
                 document.getElementById('event-prop-spawn').value = 'Fixed';
 
@@ -182,6 +184,7 @@
             }
 
             document.getElementById('event-prop-transparent').disabled = pageMode;
+            document.getElementById('event-prop-door').disabled = pageMode;
             ['event-prop-priority', 'event-prop-spawn', 'event-prop-color-enabled'].forEach(id => {
                 const el = document.getElementById(id);
                 el.disabled = pageMode;
@@ -399,6 +402,11 @@
             eventData.trigger = document.getElementById('event-prop-trigger').value;
             eventData.sprite = window.activeEventSpritePath || '';
             eventData.transparent = document.getElementById('event-prop-transparent').checked;
+            if (document.getElementById('event-prop-door').checked) {
+                eventData.door = true;
+            } else {
+                delete eventData.door;
+            }
             eventData.priority = document.getElementById('event-prop-priority').value;
             eventData.spawn = document.getElementById('event-prop-spawn').value;
             if (document.getElementById('event-prop-color-enabled').checked) {
