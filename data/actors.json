@@ -846,7 +846,7 @@
     "role": "None",
     "maxHp": 5,
     "spriteKey": "egg",
-    "smallBattler": "Ooze",
+    "smallBattler": "egg",
     "elements": [],
     "skills": [
       "attack",
