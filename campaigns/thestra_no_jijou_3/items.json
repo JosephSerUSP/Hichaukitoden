@@ -1,0 +1,800 @@
+[
+  {
+    "id": 1,
+    "name": "HP Tonic",
+    "type": "consumable",
+    "cost": 10,
+    "animation": "item.heal_tonic",
+    "description": "Heals one member to full HP.",
+    "icon": 52,
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 999
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Sigil Ink",
+    "type": "consumable",
+    "cost": 20,
+    "description": "+2 max HP to one member.",
+    "icon": 55,
+    "effects": [
+      {
+        "type": "maxHp",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Whispered Lessons",
+    "type": "consumable",
+    "cost": 64,
+    "description": "+6 XP to one member.",
+    "icon": 64,
+    "effects": [
+      {
+        "type": "xp",
+        "value": 6
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 18,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Elixir of Insight",
+    "type": "consumable",
+    "cost": 100,
+    "animation": "skill.divine_favor",
+    "description": "Grant a small amount of XP to the party.",
+    "icon": 65,
+    "effects": [
+      {
+        "type": "xp",
+        "value": 50
+      }
+    ],
+    "target": "party",
+    "meta": {
+      "tier": 2,
+      "potency": 25,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Silver Blade",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 25,
+    "icon": 180,
+    "description": "Sharpened steel blade.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 1
+      },
+      {
+        "code": "CRI",
+        "value": 0.1
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Bone Plate",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 25,
+    "icon": 172,
+    "description": "Sturdy bone harness.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 3
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Wind Charm",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 35,
+    "icon": 174,
+    "description": "A charm of rushing air.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 1
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 6,
+      "craftElement": "Green",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Light Amulet",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 30,
+    "icon": 174,
+    "description": "Glowing amulet.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "White",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Alert Charm",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 150,
+    "icon": 174,
+    "description": "Humming chime.",
+    "traits": [
+      {
+        "code": "INITIATIVE",
+        "value": 0.05
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 15,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Rear Mirror",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 200,
+    "icon": 6,
+    "description": "Reflective glass. Prevents sneak attacks if in back row.",
+    "traits": [
+      {
+        "code": "REAR_GUARD",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 12,
+      "craftElement": "Blue",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Mystic Egg",
+    "type": "consumable",
+    "cost": 500,
+    "icon": 184,
+    "description": "A mysterious egg that pulses with life. Use to hatch.",
+    "effects": [
+      {
+        "type": "recruit_egg",
+        "value": 15
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Golden Egg",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 9999,
+    "icon": 184,
+    "description": "Beautiful golden egg, sought after by many.",
+    "traits": [
+      {
+        "code": "XP_RATE",
+        "value": 1.5
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 50,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Vitality Seal 1",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 125,
+    "icon": 174,
+    "description": "+10% Max HP",
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "maxHp",
+        "value": 1.1
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Vitality Seal 2",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 400,
+    "icon": 174,
+    "description": "+20% Max HP",
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "maxHp",
+        "value": 1.2
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Vitality Seal 3",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 2800,
+    "icon": 174,
+    "description": "+30% Max HP",
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "maxHp",
+        "value": 1.3
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Radiant Blade Flavio",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1995,
+    "icon": 71,
+    "description": "Lucent blade carrying the blessings of the sun.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Red"
+      },
+      {
+        "code": "CRI",
+        "value": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Red",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 17,
+    "name": "Wind Dancer",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1520,
+    "icon": 72,
+    "description": "Leaf-shaped daggers that strike with the speed of wind.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Green"
+      },
+      {
+        "code": "CRI",
+        "value": 0.15
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Green",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 18,
+    "name": "Water Scepter",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1520,
+    "icon": 73,
+    "description": "Leaf-shaped daggers that strike with the speed of wind.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Blue"
+      },
+      {
+        "code": "CRI",
+        "value": 0.15
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Blue",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 19,
+    "name": "Holy Sword Gram",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1520,
+    "icon": 74,
+    "description": "Legendary sword wielded by angels of time immemorial.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "White"
+      },
+      {
+        "code": "CRI",
+        "value": 0.15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 35,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 20,
+    "name": "Dark Scepter Lucille",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1666,
+    "icon": 75,
+    "description": "Cursed sceptre. Once wielded by a fallen queen, or so they say.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Black"
+      },
+      {
+        "code": "CRI",
+        "value": 0.1
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 32,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 21,
+    "name": "Mars Emblem",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 400,
+    "icon": 81,
+    "description": "Its magicked properties imbue the wearer with elemental energy.",
+    "traits": [
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Red"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Mercury Crest",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 1260,
+    "icon": 83,
+    "description": "Ornate and delicate, its blue sheen is comforting.",
+    "traits": [
+      {
+        "code": "HRG",
+        "value": 0.05
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Blue"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Hermes' Boots",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 2100,
+    "icon": 82,
+    "description": "Wondrous boots that grant the wearer unimaginable swiftness.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "asp",
+        "value": 2
+      },
+      {
+        "code": "ELEMENT_CHANGE",
+        "dataId": "Green"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Glittering Teardrop",
+    "type": "quest",
+    "cost": 0,
+    "icon": 228,
+    "description": "A flawless crystal that catches the faintest light. Alicia believes Laura will love it."
+  },
+  {
+    "id": 25,
+    "name": "Untarnished Signet",
+    "type": "quest",
+    "cost": 0,
+    "icon": 218,
+    "description": "A heavy golden ring, unmarked and waiting for a new story. Laura can reshape it into something precious."
+  },
+  {
+    "id": 26,
+    "name": "Shattered Blade",
+    "type": "quest",
+    "cost": 0,
+    "icon": 180,
+    "description": "The rusted, broken remains of a blade that once held great power. The Weaponsmith might be interested."
+  },
+  {
+    "id": 27,
+    "name": "Shattered Edge",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 4000,
+    "icon": 180,
+    "description": "A masterwork blade reforged from ancient scraps. It hums with latent energy.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 5
+      },
+      {
+        "code": "CRI",
+        "value": 0.25
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 40,
+      "craftElement": "White",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 28,
+    "name": "Meteorite Plate",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 3500,
+    "icon": 172,
+    "description": "Heavy armor forged from star-metal. Incredibly dense.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 10
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 22,
+      "craftElement": "Black",
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 29,
+    "name": "Mug of Ale",
+    "type": "consumable",
+    "cost": 5,
+    "animation": "system.heal",
+    "description": "Cheap, frothy ale. Refreshes the spirit.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 10
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 30,
+    "name": "Pint of Stout",
+    "type": "consumable",
+    "cost": 12,
+    "animation": "system.heal",
+    "description": "Dark, heavy stout. A meal in a glass.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 25
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Black",
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 31,
+    "name": "Glass of Wine",
+    "type": "consumable",
+    "cost": 25,
+    "animation": "system.heal",
+    "description": "A surprisingly decent vintage.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 50
+      },
+      {
+        "type": "remove_status",
+        "value": "weakened"
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 16,
+      "craftElement": "Red",
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 32,
+    "name": "Scrap Metal",
+    "type": "junk",
+    "cost": 1,
+    "icon": 180,
+    "description": "A lump of useless metal.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "blacksmithing"
+    }
+  },
+  {
+    "id": 33,
+    "name": "Sludge",
+    "type": "junk",
+    "cost": 1,
+    "icon": 55,
+    "description": "A smelly, failed alchemical mixture.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 34,
+    "name": "Burnt Slop",
+    "type": "junk",
+    "cost": 1,
+    "icon": 220,
+    "description": "Completely charcoal. Inedible.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "cooking"
+    }
+  },
+  {
+    "id": 35,
+    "name": "Broken Spring",
+    "type": "junk",
+    "cost": 1,
+    "icon": 174,
+    "description": "A snapped spring and bent gear.",
+    "meta": {
+      "tier": 0,
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 36,
+    "name": "Ambrosia",
+    "type": "consumable",
+    "cost": 500,
+    "animation": "system.heal",
+    "icon": 222,
+    "description": "Food of the gods. Restores full HP and MP.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 999
+      },
+      {
+        "type": "mp_heal",
+        "value": 999
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "cooking",
+      "potency": 45,
+      "craftElement": "White"
+    }
+  },
+  {
+    "id": 37,
+    "name": "Philosopher's Stone",
+    "type": "consumable",
+    "cost": 1000,
+    "icon": 65,
+    "description": "A legendary alchemical catalyst.",
+    "effects": [
+      {
+        "type": "xp",
+        "value": 1000
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "craftKind": "alchemy",
+      "potency": 50,
+      "craftElement": "Red"
+    }
+  },
+  {
+    "id": 38,
+    "name": "Chrysalis Sigil",
+    "type": "quest",
+    "cost": 0,
+    "animation": "skill.divine_favor",
+    "icon": 65,
+    "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
+    "category": "promotion_key",
+    "meta": {
+      "tier": 3,
+      "craftKind": "alchemy",
+      "potency": 50,
+      "craftElement": "White"
+    }
+  },
+  {
+    "id": 39,
+    "name": "Obsidian Shard",
+    "type": "junk",
+    "cost": 15,
+    "icon": 180,
+    "description": "A sharp shard of dark volcanic glass.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "blacksmithing",
+      "craftElement": "Black"
+    }
+  },
+  {
+    "id": 40,
+    "name": "Melted Wax",
+    "type": "junk",
+    "cost": 5,
+    "icon": 220,
+    "description": "A glob of warm, pliable candle wax.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "alchemy",
+      "craftElement": "Red"
+    }
+  },
+  {
+    "id": 41,
+    "name": "Ectoplasm",
+    "type": "junk",
+    "cost": 12,
+    "icon": 55,
+    "description": "Shimmering residue left by spiritual entities.",
+    "meta": {
+      "tier": 1,
+      "craftKind": "alchemy",
+      "craftElement": "Blue"
+    }
+  }
+]

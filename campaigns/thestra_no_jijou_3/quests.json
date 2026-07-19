@@ -1,0 +1,104 @@
+{
+  "sparkling_gift": {
+    "name": "Sparkling Gesture",
+    "giver": "Alicia",
+    "portrait": "NPC_Alicia",
+    "summary": "Find a glittering keepsake that Alicia can gift to Laura.",
+    "description": "Alicia wants to surprise Laura with a shimmering token. She believes a rare teardrop crystal from the lower tunnels would be perfect.",
+    "objectives": [
+      "Locate a Glittering Teardrop in the dungeon.",
+      "Return it to Alicia so she can craft a gift for Laura."
+    ],
+    "requirements": {
+      "items": [
+        {
+          "id": 24,
+          "qty": 1,
+          "consume": true
+        }
+      ]
+    },
+    "rewards": {
+      "gold": 45,
+      "items": [
+        {
+          "id": 8,
+          "qty": 1
+        }
+      ],
+      "flags": [
+        "alicia_visits_pub",
+        "alicia_trust_earned"
+      ]
+    }
+  },
+  "golden_promise": {
+    "name": "Golden Promise",
+    "giver": "Laura",
+    "portrait": "NPC_Laura",
+    "summary": "Secure an ornate ring so Laura can work with new material.",
+    "description": "Laura needs an unmarked golden band taken from a rare undead. She is willing to pay well for anyone brave enough to retrieve it.",
+    "objectives": [
+      "Acquire an Untarnished Signet from the depths.",
+      "Deliver the ring to Laura at her forge."
+    ],
+    "requirements": {
+      "items": [
+        {
+          "id": 25,
+          "qty": 1,
+          "consume": true
+        }
+      ]
+    },
+    "rewards": {
+      "gold": 80,
+      "items": [
+        {
+          "id": 9,
+          "qty": 1
+        }
+      ]
+    }
+  },
+  "silent_shipment": {
+    "name": "The Silent Shipment",
+    "giver": "Gate Guard",
+    "portrait": "NPC_Geraldo",
+    "summary": "Investigate the missing supply shipment.",
+    "description": "The Gate Guard is worried about a shipment that never arrived. He suspects someone in town might know more.",
+    "objectives": [
+      "Ask around town about the shipment.",
+      "Speak to Alicia about any strange sightings.",
+      "Return to the Gate Guard with your findings."
+    ],
+    "rewards": {
+      "gold": 50,
+      "xp": 100
+    }
+  },
+  "shattered_blade_recovery": {
+    "name": "The Broken Legend",
+    "giver": "Weaponsmith",
+    "portrait": "NPC_Weapon_Shop",
+    "summary": "Retrieve the Shattered Blade for the Weaponsmith.",
+    "description": "The Weaponsmith has heard rumors of a 'Shattered Blade' in the Cryptic Vault (Floor 4/5). He believes he can reforge it into a masterpiece.",
+    "objectives": [
+      "Find the Shattered Blade in the Cryptic Vault.",
+      "Bring the blade to the Weaponsmith."
+    ],
+    "requirements": {
+      "items": [
+        {
+          "id": 26,
+          "qty": 1,
+          "consume": true
+        }
+      ]
+    },
+    "rewards": {
+      "gold": 250,
+      "xp": 500
+    }
+  }
+}

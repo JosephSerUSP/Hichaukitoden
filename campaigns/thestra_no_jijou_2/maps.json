@@ -1,0 +1,567 @@
+[
+  {
+    "id": 1,
+    "title": "Caer Vorn",
+    "category": "town",
+    "intro": "A quiet town built atop the collapsed shell of an ancient city. Below its streets, old magic stirs.",
+    "depth": 1,
+    "music": "town_caer",
+    "image": "CaerVorn.png",
+    "layout": [
+      "#############",
+      "#...........#",
+      "#.H.......W.#",
+      "#...........#",
+      "#.....P.....#",
+      "#...........#",
+      "#...........#",
+      "#####...#####",
+      "#...........#",
+      "#############"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 3,
+        "y": 2,
+        "sprite": "hella[fps=15]",
+        "trigger": "interact",
+        "name": "Warden Hella",
+        "script": [
+          {
+            "type": "LABEL",
+            "name": "hella_hub"
+          },
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:end_the_cultist:completed",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "The well runs clear. The decay is ended.",
+                "speaker": "Warden Hella"
+              },
+              {
+                "type": "TEXT",
+                "text": "Caer Vorn owes you its silence. Rest, summoner.",
+                "speaker": "Warden Hella"
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "questStatus:end_the_cultist:active",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "The Sanctum lies deep. End the cultist, or we all rot.",
+                    "speaker": "Warden Hella"
+                  },
+                  {
+                    "type": "JUMP_TO_LABEL",
+                    "label": "hella_hub"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "questStatus:recover_sealed_page:active",
+                    "commands": [
+                      {
+                        "type": "TEXT",
+                        "text": "The Sealed Page will tell us how to lock the ward.",
+                        "speaker": "Warden Hella"
+                      },
+                      {
+                        "type": "TEXT",
+                        "text": "Bring it back from the Sunken Library.",
+                        "speaker": "Warden Hella"
+                      },
+                      {
+                        "type": "JUMP_TO_LABEL",
+                        "label": "hella_hub"
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "CONDITIONAL_BRANCH",
+                        "condition": "questStatus:investigate_well:active",
+                        "commands": [
+                          {
+                            "type": "TEXT",
+                            "text": "The black well is no natural sickness.",
+                            "speaker": "Warden Hella"
+                          },
+                          {
+                            "type": "TEXT",
+                            "text": "Go to the Upper Catacombs. Find the broken ward.",
+                            "speaker": "Warden Hella"
+                          },
+                          {
+                            "type": "JUMP_TO_LABEL",
+                            "label": "hella_hub"
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "type": "TEXT",
+                            "text": "Traveler. The well runs black, and my people whisper of the dead below.",
+                            "speaker": "Warden Hella"
+                          },
+                          {
+                            "type": "TEXT",
+                            "text": "I need a summoner's eye in the catacombs.",
+                            "speaker": "Warden Hella"
+                          },
+                          {
+                            "type": "CHOICE",
+                            "options": [
+                              {
+                                "label": "What should I do?",
+                                "commands": [
+                                  {
+                                    "type": "TEXT",
+                                    "text": "Enter the Upper Catacombs. Learn why the ward failed.",
+                                    "speaker": "Warden Hella"
+                                  },
+                                  {
+                                    "type": "QUEST_OFFER",
+                                    "questId": "investigate_well"
+                                  },
+                                  {
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "hella_hub"
+                                  }
+                                ]
+                              },
+                              {
+                                "label": "Leave",
+                                "commands": []
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "x": 9,
+        "y": 2,
+        "sprite": "well[fps=15]",
+        "trigger": "interact",
+        "name": "The Well",
+        "script": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:end_the_cultist:completed",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "The water is clear. A faint warmth rises from the stone."
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "The well water is black and smells of old bone."
+              },
+              {
+                "type": "TEXT",
+                "text": "A faint hum leaks up from the dark below."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "x": 5,
+        "y": 4,
+        "sprite": "elder[fps=15]",
+        "trigger": "interact",
+        "name": "Town Elder",
+        "script": [
+          {
+            "type": "LABEL",
+            "name": "elder_hub"
+          },
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:investigate_well:completed",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "The wardstone broke. I felt it in my dreams.",
+                "speaker": "Town Elder"
+              },
+              {
+                "type": "TEXT",
+                "text": "The old city wants us gone.",
+                "speaker": "Town Elder"
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "Child, the ruins below were sealed for a reason.",
+                "speaker": "Town Elder"
+              },
+              {
+                "type": "TEXT",
+                "text": "Do not wake what sleeps in the hollow.",
+                "speaker": "Town Elder"
+              }
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "options": [
+              {
+                "label": "Any gossip?",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "They say a cultist feeds on our memories down there.",
+                    "speaker": "Town Elder"
+                  },
+                  {
+                    "type": "JUMP_TO_LABEL",
+                    "label": "elder_hub"
+                  }
+                ]
+              },
+              {
+                "label": "Leave",
+                "commands": []
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 0,
+    "safe": true
+  },
+  {
+    "id": 2,
+    "title": "Upper Catacombs",
+    "category": "dungeon",
+    "concept": "First ruin layer with broken wards and husks",
+    "depth": 2,
+    "layout": [
+      "#########",
+      "#.......#",
+      "#.#####.#",
+      "#.......#",
+      "#####.###",
+      "#.......#",
+      "#.#####.#",
+      "#.......#",
+      "#########"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 4,
+        "y": 8,
+        "trigger": "interact",
+        "name": "Broken Wardstone",
+        "script": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:investigate_well:active",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "The wardstone is shattered. Black fluid leaks from its core."
+              },
+              {
+                "type": "TEXT",
+                "text": "A carved line reads: 'The lower seal remembers.'"
+              },
+              {
+                "type": "SET_FLAG",
+                "flag": "wardstone_found",
+                "value": true
+              },
+              {
+                "type": "QUEST_COMPLETE",
+                "questId": "investigate_well"
+              },
+              {
+                "type": "TEXT",
+                "text": "You should report to Warden Hella. Then descend further.",
+                "speaker": "\\eventName"
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "A dead wardstone. The air here tastes of rot."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "treasures": [
+      {
+        "itemId": 1,
+        "x": 1,
+        "y": 1
+      }
+    ],
+    "encounters": [
+      {
+        "id": 3,
+        "weight": 10
+      }
+    ],
+    "recruits": [],
+    "generation": "Fixed",
+    "bgm": "dungeon1",
+    "encounterSteps": 4,
+    "safe": false
+  },
+  {
+    "id": 3,
+    "title": "Sunken Library",
+    "category": "dungeon",
+    "concept": "Flooded archive holding a sealed page",
+    "depth": 3,
+    "layout": [
+      "###########",
+      "#.........#",
+      "#.#######.#",
+      "#.........#",
+      "#.#######.#",
+      "#.........#",
+      "###########"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 5,
+        "y": 5,
+        "trigger": "interact",
+        "name": "Cursed Scholar",
+        "script": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:recover_sealed_page:active",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "You seek the Page? Then suffer my mind.",
+                "speaker": "Cursed Scholar"
+              },
+              {
+                "type": "BATTLE"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "flag:battle_won",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "The Sealed Page floats above the drowned desk."
+                  },
+                  {
+                    "type": "GIVE_ITEM_ID",
+                    "item": 38,
+                    "count": 1
+                  },
+                  {
+                    "type": "QUEST_COMPLETE",
+                    "questId": "recover_sealed_page"
+                  },
+                  {
+                    "type": "TEXT",
+                    "text": "Return it to Hella. The seal can be remade.",
+                    "speaker": "\\eventName"
+                  }
+                ],
+                "elseCommands": []
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "The scholar's ghost weeps into the flood."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "treasures": [
+      {
+        "itemId": 4,
+        "x": 1,
+        "y": 1
+      }
+    ],
+    "encounters": [
+      {
+        "id": 18,
+        "weight": 8
+      }
+    ],
+    "recruits": [],
+    "generation": "Fixed",
+    "bgm": "dungeon2",
+    "encounterSteps": 5,
+    "safe": false
+  },
+  {
+    "id": 4,
+    "title": "Bone Gallery",
+    "category": "dungeon",
+    "concept": "Collapsing hall of old bones and traps",
+    "depth": 4,
+    "layout": [
+      "###########",
+      "#.........#",
+      "#.#.#.#.#.#",
+      "#.........#",
+      "#.#.#.#.#.#",
+      "#.........#",
+      "###########"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 5,
+        "y": 5,
+        "trigger": "step",
+        "name": "Collapsing Floor",
+        "script": [
+          {
+            "type": "TEXT",
+            "text": "The bone floor cracks under your step!"
+          },
+          {
+            "type": "DAMAGE",
+            "target": "party",
+            "amount": 6,
+            "pierce": true,
+            "minHp": 1
+          }
+        ]
+      }
+    ],
+    "treasures": [
+      {
+        "itemId": 6,
+        "x": 9,
+        "y": 1
+      }
+    ],
+    "encounters": [
+      {
+        "id": 19,
+        "weight": 9
+      }
+    ],
+    "recruits": [],
+    "generation": "Fixed",
+    "bgm": "dungeon3",
+    "encounterSteps": 4,
+    "safe": false
+  },
+  {
+    "id": 5,
+    "title": "Hollow Sanctum",
+    "category": "dungeon",
+    "concept": "Cultist's ritual chamber beneath the city",
+    "depth": 5,
+    "layout": [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#....C....#",
+      "#.........#",
+      "#.........#",
+      "###########"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 5,
+        "y": 3,
+        "trigger": "interact",
+        "name": "Parasite Cultist",
+        "script": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:end_the_cultist:active",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "You bring the city's memory to me? No. I am its hunger.",
+                "speaker": "Parasite Cultist"
+              },
+              {
+                "type": "BATTLE"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "flag:battle_won",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "The cultist collapses into silt. The decay thins."
+                  },
+                  {
+                    "type": "SET_FLAG",
+                    "flag": "sanctum_sealed",
+                    "value": true
+                  },
+                  {
+                    "type": "QUEST_COMPLETE",
+                    "questId": "end_the_cultist"
+                  },
+                  {
+                    "type": "CALL_COMMON_EVENT",
+                    "commonEventId": 1
+                  }
+                ],
+                "elseCommands": []
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "The ritual chamber pulses with a sickly light."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "treasures": [],
+    "encounters": [
+      {
+        "id": 5,
+        "weight": 5
+      }
+    ],
+    "recruits": [],
+    "generation": "Fixed",
+    "bgm": "boss",
+    "encounterSteps": 6,
+    "safe": false
+  }
+]

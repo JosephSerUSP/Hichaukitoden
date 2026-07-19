@@ -1,0 +1,11 @@
+{
+  "prompt": "A lost-style dark dungeon RPG about summoning creatures, surviving attrition, and uncovering the circumstances beneath an ancient city.",
+  "done": [
+    "outline",
+    "actors",
+    "items",
+    "quests",
+    "maps",
+    "events"
+  ]
+}

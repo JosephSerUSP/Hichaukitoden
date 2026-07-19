@@ -1,0 +1,118 @@
+{
+  "title": "Whispers Beneath Caer Vorn",
+  "logline": "A Summoner delves into the buried ruins below a forgotten city to learn why its people vanished and end the decay leaking upward.",
+  "setting": "Caer Vorn is a quiet town built atop the collapsed shell of an ancient city. Below its streets, dungeon floors twist with old magic and restless dead. The Summoner arrives as the town's well begins to run black.",
+  "acts": [
+    {
+      "name": "Act I: The Descent Begins",
+      "beats": [
+        "Arrive in Caer Vorn and speak with Warden Hella",
+        "Accept the quest to investigate the well",
+        "Enter the Upper Catacombs and defeat roaming husks",
+        "Reach the flooded junction and learn of the lower seal"
+      ],
+      "mapsUsed": [
+        "Caer Vorn",
+        "Upper Catacombs"
+      ],
+      "climax": "Discover the broken wardstone in the Upper Catacombs"
+    },
+    {
+      "name": "Act II: Roots of the Rot",
+      "beats": [
+        "Descend to the Sunken Library",
+        "Recover the Sealed Page from a cursed scholar",
+        "Cross the Bone Gallery and avoid collapsing floors",
+        "Confront the parasite cultist feeding on the city's memory"
+      ],
+      "mapsUsed": [
+        "Sunken Library",
+        "Bone Gallery",
+        "Hollow Sanctum"
+      ],
+      "climax": "Defeat the Parasite Cultist in the Hollow Sanctum"
+    }
+  ],
+  "cast": [
+    {
+      "name": "Warden Hella",
+      "role": "npc",
+      "concept": "Town authority who gives the investigation quest",
+      "location": "Caer Vorn"
+    },
+    {
+      "name": "Husk Hound",
+      "role": "creature",
+      "concept": "Weak undead attacker encountered in Upper Catacombs",
+      "location": "Upper Catacombs"
+    },
+    {
+      "name": "Cursed Scholar",
+      "role": "creature",
+      "concept": "Debuffer spirit guarding the Sealed Page",
+      "location": "Sunken Library"
+    },
+    {
+      "name": "Parasite Cultist",
+      "role": "boss",
+      "concept": "Corrupted summoner spreading decay through the ruins",
+      "location": "Hollow Sanctum"
+    }
+  ],
+  "maps": [
+    {
+      "title": "Caer Vorn",
+      "category": "town",
+      "concept": "Hub town above the ruins with a poisoned well",
+      "depth": 1
+    },
+    {
+      "title": "Upper Catacombs",
+      "category": "dungeon",
+      "concept": "First ruin layer with broken wards and husks",
+      "depth": 2
+    },
+    {
+      "title": "Sunken Library",
+      "category": "dungeon",
+      "concept": "Flooded archive holding a sealed page",
+      "depth": 3
+    },
+    {
+      "title": "Bone Gallery",
+      "category": "dungeon",
+      "concept": "Collapsing hall of old bones and traps",
+      "depth": 4
+    },
+    {
+      "title": "Hollow Sanctum",
+      "category": "dungeon",
+      "concept": "Cultist's ritual chamber beneath the city",
+      "depth": 5
+    }
+  ],
+  "quests": [
+    {
+      "id": "investigate_well",
+      "name": "Investigate the Well",
+      "giver": "Warden Hella",
+      "summary": "Enter Upper Catacombs to find why the well runs black",
+      "act": 1
+    },
+    {
+      "id": "recover_sealed_page",
+      "name": "Recover the Sealed Page",
+      "giver": "Warden Hella",
+      "summary": "Retrieve the page from Sunken Library to learn the seal",
+      "act": 2
+    },
+    {
+      "id": "end_the_cultist",
+      "name": "End the Cultist",
+      "giver": "Warden Hella",
+      "summary": "Descend to Hollow Sanctum and stop the Parasite Cultist",
+      "act": 2
+    }
+  ],
+  "ending": "The Summoner banks the fallen creatures' EXP, seals the Hollow Sanctum, and Caer Vorn's well runs clear again as the decay ends."
+}

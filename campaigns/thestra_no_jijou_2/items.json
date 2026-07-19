@@ -1,0 +1,815 @@
+[
+  {
+    "id": 1,
+    "name": "HP Tonic",
+    "type": "consumable",
+    "cost": 10,
+    "animation": "item.heal_tonic",
+    "description": "Heals one member to full HP.",
+    "icon": 52,
+    "meta": {
+      "tier": 1,
+      "potency": 10,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 999
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Sigil Ink",
+    "type": "consumable",
+    "cost": 15,
+    "animation": "item.heal_tonic",
+    "description": "Restores a summon's skill uses by 2.",
+    "icon": 53,
+    "meta": {
+      "tier": 1,
+      "potency": 2,
+      "craftElement": "Blue",
+      "craftKind": "scribe"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Whispered Lessons",
+    "type": "consumable",
+    "cost": 20,
+    "animation": "item.heal_tonic",
+    "description": "Grants bonus EXP to one ally after battle.",
+    "icon": 54,
+    "meta": {
+      "tier": 1,
+      "potency": 5,
+      "craftElement": "Purple",
+      "craftKind": "arcane"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Elixir of Insight",
+    "type": "consumable",
+    "cost": 30,
+    "animation": "item.heal_tonic",
+    "description": "Cures silence and confusion on one member.",
+    "icon": 55,
+    "meta": {
+      "tier": 1,
+      "potency": 1,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Silver Blade",
+    "type": "equipment",
+    "cost": 60,
+    "animation": "item.equip_generic",
+    "description": "A town-forged blade faintly warded against husks.",
+    "icon": 30,
+    "slot": "weapon",
+    "meta": {
+      "tier": 1,
+      "attack": 6,
+      "element": "Silver"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Bone Plate",
+    "type": "equipment",
+    "cost": 70,
+    "animation": "item.equip_generic",
+    "description": "Rotted plates from catacomb dead; dulls bites.",
+    "icon": 31,
+    "slot": "armor",
+    "meta": {
+      "tier": 1,
+      "defense": 5,
+      "element": "Bone"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Wind Charm",
+    "type": "equipment",
+    "cost": 40,
+    "animation": "item.equip_generic",
+    "description": "A trinket that quickens step in flooded halls.",
+    "icon": 32,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "speed": 3,
+      "element": "Wind"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Light Amulet",
+    "type": "equipment",
+    "cost": 50,
+    "animation": "item.equip_generic",
+    "description": "Wards away the grasping dark of Caer Vorn.",
+    "icon": 33,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "resist": "dark",
+      "element": "Light"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Alert Charm",
+    "type": "equipment",
+    "cost": 35,
+    "animation": "item.equip_generic",
+    "description": "Warns of collapsing bone galleries ahead.",
+    "icon": 34,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "trapSense": 1,
+      "element": "Gold"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Rear Mirror",
+    "type": "equipment",
+    "cost": 45,
+    "animation": "item.equip_generic",
+    "description": "Shows stalkers behind; boosts evasion slightly.",
+    "icon": 35,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "evasion": 2,
+      "element": "Glass"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Mystic Egg",
+    "type": "consumable",
+    "cost": 25,
+    "animation": "item.equip_generic",
+    "description": "Hatches a temporary wisp ally in battle.",
+    "icon": 56,
+    "meta": {
+      "tier": 1,
+      "potency": 1,
+      "craftElement": "Purple",
+      "craftKind": "summon"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Golden Egg",
+    "type": "equipment",
+    "cost": 90,
+    "animation": "item.equip_generic",
+    "description": "A polished egg that empowers summoned gold allies.",
+    "icon": 36,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "summonBoost": 2,
+      "element": "Gold"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Vitality Seal 1",
+    "type": "equipment",
+    "cost": 30,
+    "animation": "item.equip_generic",
+    "description": "Minor wardstone shard; grants +4 max HP.",
+    "icon": 37,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "hp": 4,
+      "element": "Earth"
+    },
+    "effects": [
+      {
+        "type": "maxHp",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Vitality Seal 2",
+    "type": "equipment",
+    "cost": 55,
+    "animation": "item.equip_generic",
+    "description": "Wardstone shard; grants +8 max HP.",
+    "icon": 38,
+    "slot": "accessory",
+    "meta": {
+      "tier": 1,
+      "hp": 8,
+      "element": "Earth"
+    },
+    "effects": [
+      {
+        "type": "maxHp",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Vitality Seal 3",
+    "type": "equipment",
+    "cost": 80,
+    "animation": "item.equip_generic",
+    "description": "Pure wardstone; grants +14 max HP.",
+    "icon": 39,
+    "slot": "accessory",
+    "meta": {
+      "tier": 2,
+      "hp": 14,
+      "element": "Earth"
+    },
+    "effects": [
+      {
+        "type": "maxHp",
+        "value": 14
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Radiant Blade Flavio",
+    "type": "equipment",
+    "cost": 120,
+    "animation": "item.equip_generic",
+    "description": "Blessed blade that burns parasites and rot.",
+    "icon": 40,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "attack": 12,
+      "element": "Light"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 12
+      },
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Wind Dancer",
+    "type": "equipment",
+    "cost": 100,
+    "animation": "item.equip_generic",
+    "description": "Light sabre that rides the drafts of the deep.",
+    "icon": 41,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "attack": 9,
+      "speed": 2,
+      "element": "Wind"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 9
+      },
+      {
+        "type": "hp",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "name": "Water Scepter",
+    "type": "equipment",
+    "cost": 95,
+    "animation": "item.equip_generic",
+    "description": "Channel the Sunken Library's drowned currents.",
+    "icon": 42,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "magic": 10,
+      "element": "Water"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Holy Sword Gram",
+    "type": "equipment",
+    "cost": 150,
+    "animation": "item.equip_generic",
+    "description": "Ancient ward-blade that ends the restless dead.",
+    "icon": 43,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "attack": 14,
+      "element": "Light"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 14
+      },
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "Dark Scepter Lucille",
+    "type": "equipment",
+    "cost": 140,
+    "animation": "item.equip_generic",
+    "description": "Cultist-forged focus that feeds on decay.",
+    "icon": 44,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "magic": 13,
+      "element": "Dark"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 13
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Mars Emblem",
+    "type": "equipment",
+    "cost": 85,
+    "animation": "item.equip_generic",
+    "description": "War-emblem that raises attack of summoner.",
+    "icon": 45,
+    "slot": "accessory",
+    "meta": {
+      "tier": 2,
+      "attack": 4,
+      "element": "Red"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Mercury Crest",
+    "type": "equipment",
+    "cost": 85,
+    "animation": "item.equip_generic",
+    "description": "Crest of flux; raises speed and evasion.",
+    "icon": 46,
+    "slot": "accessory",
+    "meta": {
+      "tier": 2,
+      "speed": 3,
+      "evasion": 3,
+      "element": "Silver"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 3
+      },
+      {
+        "type": "hp",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Hermes' Boots",
+    "type": "equipment",
+    "cost": 110,
+    "animation": "item.equip_generic",
+    "description": "Swift boots for fleeing collapsing floors.",
+    "icon": 47,
+    "slot": "accessory",
+    "meta": {
+      "tier": 2,
+      "speed": 6,
+      "element": "Wind"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Glittering Teardrop",
+    "type": "quest",
+    "cost": 0,
+    "animation": "item.equip_generic",
+    "description": "A shimmering keepsake from the lower tunnels.",
+    "icon": 60,
+    "meta": {
+      "tier": 1,
+      "questId": "sparkling_gift"
+    },
+    "effects": []
+  },
+  {
+    "id": 25,
+    "name": "Untarnished Signet",
+    "type": "quest",
+    "cost": 0,
+    "animation": "item.equip_generic",
+    "description": "A signet of Caer Vorn's lost warden-line.",
+    "icon": 61,
+    "meta": {
+      "tier": 1,
+      "questId": "golden_promise"
+    },
+    "effects": []
+  },
+  {
+    "id": 26,
+    "name": "Shattered Blade",
+    "type": "quest",
+    "cost": 0,
+    "animation": "item.equip_generic",
+    "description": "Broken wardstone blade from Upper Catacombs.",
+    "icon": 62,
+    "meta": {
+      "tier": 1,
+      "questId": "shattered_blade_recovery"
+    },
+    "effects": []
+  },
+  {
+    "id": 27,
+    "name": "Shattered Edge",
+    "type": "equipment",
+    "cost": 0,
+    "animation": "item.equip_generic",
+    "description": "Reforged from the Shattered Blade; vs undead.",
+    "icon": 48,
+    "slot": "weapon",
+    "meta": {
+      "tier": 2,
+      "attack": 11,
+      "element": "Earth"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 11
+      },
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Meteorite Plate",
+    "type": "equipment",
+    "cost": 130,
+    "animation": "item.equip_generic",
+    "description": "Heavy plate fallen from the old city's sky.",
+    "icon": 49,
+    "slot": "armor",
+    "meta": {
+      "tier": 2,
+      "defense": 12,
+      "element": "Earth"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 12
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "name": "Mug of Ale",
+    "type": "consumable",
+    "cost": 5,
+    "animation": "item.equip_generic",
+    "description": "Caer Vorn tavern ale; restores a little HP.",
+    "icon": 57,
+    "meta": {
+      "tier": 1,
+      "potency": 8,
+      "craftElement": "Brown",
+      "craftKind": "brew"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": "Pint of Stout",
+    "type": "consumable",
+    "cost": 8,
+    "animation": "item.equip_generic",
+    "description": "Darker brew; restores more HP than ale.",
+    "icon": 58,
+    "meta": {
+      "tier": 1,
+      "potency": 15,
+      "craftElement": "Brown",
+      "craftKind": "brew"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 15
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Glass of Wine",
+    "type": "consumable",
+    "cost": 12,
+    "animation": "item.equip_generic",
+    "description": "Fancy import; cures fatigue and raises morale.",
+    "icon": 59,
+    "meta": {
+      "tier": 1,
+      "potency": 1,
+      "craftElement": "Red",
+      "craftKind": "brew"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Scrap Metal",
+    "type": "junk",
+    "cost": 1,
+    "animation": "item.equip_generic",
+    "description": "Rusted fragment of the collapsed city shell.",
+    "icon": 70,
+    "meta": {
+      "tier": 1,
+      "craftElement": "Iron",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 33,
+    "name": "Sludge",
+    "type": "junk",
+    "cost": 1,
+    "animation": "item.equip_generic",
+    "description": "Black ooze skimmed from the poisoned well.",
+    "icon": 71,
+    "meta": {
+      "tier": 1,
+      "craftElement": "Dark",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 34,
+    "name": "Burnt Slop",
+    "type": "junk",
+    "cost": 1,
+    "animation": "item.equip_generic",
+    "description": "Charred ration from a husk's old pack.",
+    "icon": 72,
+    "meta": {
+      "tier": 1,
+      "craftElement": "Ash",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 35,
+    "name": "Broken Spring",
+    "type": "junk",
+    "cost": 1,
+    "animation": "item.equip_generic",
+    "description": "Snapped mechanism from a Bone Gallery trap.",
+    "icon": 73,
+    "meta": {
+      "tier": 1,
+      "craftElement": "Steel",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 36,
+    "name": "Ambrosia",
+    "type": "consumable",
+    "cost": 40,
+    "animation": "item.equip_generic",
+    "description": "Revives a fallen ally with half HP.",
+    "icon": 64,
+    "meta": {
+      "tier": 2,
+      "potency": 50,
+      "craftElement": "Gold",
+      "craftKind": "alchemy"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 50
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Philosopher's Stone",
+    "type": "consumable",
+    "cost": 60,
+    "animation": "item.equip_generic",
+    "description": "Crafted catalyst that doubles next summon.",
+    "icon": 65,
+    "meta": {
+      "tier": 2,
+      "potency": 2,
+      "craftElement": "Purple",
+      "craftKind": "arcane"
+    },
+    "effects": [
+      {
+        "type": "hp",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "name": "Chrysalis Sigil",
+    "type": "quest",
+    "cost": 0,
+    "animation": "item.equip_generic",
+    "description": "Sealed Page sigil needed to mend the lower ward.",
+    "icon": 66,
+    "meta": {
+      "tier": 2,
+      "questId": "recover_sealed_page"
+    },
+    "effects": []
+  },
+  {
+    "id": 39,
+    "name": "Obsidian Shard",
+    "type": "junk",
+    "cost": 2,
+    "animation": "item.equip_generic",
+    "description": "Glassy shard from the Hollow Sanctum floor.",
+    "icon": 74,
+    "meta": {
+      "tier": 2,
+      "craftElement": "Dark",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 40,
+    "name": "Melted Wax",
+    "type": "junk",
+    "cost": 1,
+    "animation": "item.equip_generic",
+    "description": "Dripped seal-wax from the Sunken Library.",
+    "icon": 75,
+    "meta": {
+      "tier": 1,
+      "craftElement": "Wax",
+      "craftKind": "none"
+    },
+    "effects": []
+  },
+  {
+    "id": 41,
+    "name": "Ectoplasm",
+    "type": "junk",
+    "cost": 2,
+    "animation": "item.equip_generic",
+    "description": "Cold residue left by the Cursed Scholar.",
+    "icon": 76,
+    "meta": {
+      "tier": 2,
+      "craftElement": "Spirit",
+      "craftKind": "none"
+    },
+    "effects": []
+  }
+]

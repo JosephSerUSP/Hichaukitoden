@@ -1,0 +1,121 @@
+{
+  "1": {
+    "name": "Caer Vorn Provisioner",
+    "items": [
+      {
+        "id": 1
+      },
+      {
+        "id": 2
+      },
+      {
+        "id": 29
+      },
+      {
+        "id": 30
+      },
+      {
+        "id": 31
+      }
+    ]
+  },
+  "2": {
+    "name": "Warden's Arms",
+    "items": [
+      {
+        "id": 5
+      },
+      {
+        "id": 6
+      },
+      {
+        "id": 7
+      },
+      {
+        "id": 8
+      }
+    ]
+  },
+  "3": {
+    "name": "Catacomb Curios",
+    "items": [
+      {
+        "id": 9
+      },
+      {
+        "id": 10
+      },
+      {
+        "id": 13
+      },
+      {
+        "id": 14
+      }
+    ]
+  },
+  "4": {
+    "name": "Hella's Field Cache",
+    "items": [
+      {
+        "id": 3
+      },
+      {
+        "id": 4
+      },
+      {
+        "id": 11
+      },
+      {
+        "id": 36
+      }
+    ]
+  },
+  "5": {
+    "name": "Deep Delver Outfitters",
+    "items": [
+      {
+        "id": 17
+      },
+      {
+        "id": 18
+      },
+      {
+        "id": 21
+      },
+      {
+        "id": 22
+      },
+      {
+        "id": 23
+      },
+      {
+        "id": 28
+      }
+    ],
+    "condition": "questStatus:investigate_well:completed"
+  },
+  "6": {
+    "name": "Sanctum Salvage",
+    "items": [
+      {
+        "id": 16
+      },
+      {
+        "id": 19
+      },
+      {
+        "id": 20
+      },
+      {
+        "id": 15
+      },
+      {
+        "id": 12
+      },
+      {
+        "id": 37
+      }
+    ],
+    "condition": "questStatus:end_the_cultist:completed"
+  }
+}

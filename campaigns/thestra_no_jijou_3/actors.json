@@ -1,0 +1,1149 @@
+[
+  {
+    "id": 1,
+    "name": "Pixie",
+    "level": 1,
+    "role": "Healer",
+    "maxHp": 9,
+    "spriteKey": "pixie",
+    "smallBattler": "pixie[fps=15]",
+    "passives": [
+      "postBattleHeal",
+      "sense"
+    ],
+    "elements": [
+      "Green",
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "windBlade",
+      "soothingMote"
+    ],
+    "flavor": "A wandering mote-courier who got lost between shrines and never looked back.",
+    "expGrowth": 2,
+    "gold": 15,
+    "drops": [
+      {
+        "itemId": 1,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [
+      {
+        "level": 6,
+        "evolvesTo": 2
+      }
+    ],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 1,
+        "chance": 0.8,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Ariel",
+      "Puck",
+      "Sparky",
+      "Tinker",
+      "Faye",
+      "Mote",
+      "Clover",
+      "Twinkle"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "High Pixie",
+    "level": 6,
+    "role": "Healer",
+    "maxHp": 15,
+    "spriteKey": "highPixie",
+    "smallBattler": "highPixie[fps=15]",
+    "passives": [
+      "postBattleHeal"
+    ],
+    "elements": [
+      "Green",
+      "Green",
+      "White"
+    ],
+    "skills": [
+      "attack",
+      "windBlade",
+      "soothingMote",
+      "holySmite"
+    ],
+    "flavor": "A pixie that has attained a higher state of being.",
+    "expGrowth": 3,
+    "gold": 30,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 3,
+        "chance": 0.2
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 3,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Ariel",
+      "Puck",
+      "Sparky",
+      "Tinker",
+      "Faye",
+      "Mote",
+      "Clover",
+      "Twinkle"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Skeleton",
+    "level": 1,
+    "role": "Attacker",
+    "maxHp": 11,
+    "spriteKey": "skeleton",
+    "smallBattler": "Skeleton",
+    "passives": [
+      "undeadFortitude"
+    ],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "boneRush"
+    ],
+    "flavor": "A reanimated corpse that just wants to go back to sleep.",
+    "expGrowth": 4,
+    "gold": 18,
+    "drops": [
+      {
+        "itemId": 6,
+        "chance": 0.1
+      },
+      {
+        "itemId": 25,
+        "chance": 0.05
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 6,
+        "chance": 0.5,
+        "count": 1
+      },
+      {
+        "itemId": 25,
+        "chance": 0.25,
+        "count": 1,
+        "minLevel": 5
+      }
+    ],
+    "names": [
+      "Bones",
+      "Rattle",
+      "Calcium",
+      "Skelly",
+      "Grim",
+      "Marrow",
+      "Ribsy",
+      "Clack"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Angel",
+    "level": 1,
+    "role": "Support",
+    "maxHp": 12,
+    "spriteKey": "angel",
+    "smallBattler": "Angel",
+    "passives": [
+      "holyAura"
+    ],
+    "elements": [
+      "White",
+      "White",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "holySmite",
+      "divineFavor"
+    ],
+    "flavor": "A celestial being tasked with guiding the lost. Its patience is legendary.",
+    "expGrowth": 5,
+    "gold": 20,
+    "evolutions": [
+      {
+        "level": 6,
+        "evolvesTo": 5
+      }
+    ],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 8,
+        "chance": 0.15
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 8,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Gabriel",
+      "Michael",
+      "Uriel",
+      "Seraph",
+      "Halo",
+      "Mercy",
+      "Divine",
+      "Aura"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Archangel",
+    "level": 6,
+    "role": "Support",
+    "maxHp": 16,
+    "spriteKey": "archangel",
+    "smallBattler": "Angel",
+    "passives": [
+      "holyAura"
+    ],
+    "elements": [
+      "White",
+      "White",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "holySmite",
+      "divineFavor",
+      "soothingMote"
+    ],
+    "flavor": "A celestial being tasked with guiding the lost. Its patience is legendary.",
+    "expGrowth": 5,
+    "gold": 20,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 19,
+        "chance": 0.05
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 8,
+        "chance": 0.7,
+        "count": 1
+      },
+      {
+        "itemId": 19,
+        "chance": 0.2,
+        "count": 1,
+        "minLevel": 8
+      }
+    ],
+    "names": [
+      "Gabriel",
+      "Michael",
+      "Uriel",
+      "Seraph",
+      "Halo",
+      "Mercy",
+      "Divine",
+      "Aura"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Demon",
+    "level": 2,
+    "role": "Attacker",
+    "maxHp": 12,
+    "spriteKey": "demon",
+    "smallBattler": "Demon",
+    "passives": [
+      "chaosPact"
+    ],
+    "elements": [
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "infernalPact"
+    ],
+    "flavor": "A pact-bound fiend that revels in chaos and destruction.",
+    "expGrowth": 5,
+    "gold": 25,
+    "drops": [
+      {
+        "itemId": 5,
+        "chance": 0.1
+      }
+    ],
+    "evolutions": [
+      {
+        "level": 6,
+        "evolvesTo": 7
+      }
+    ],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 99
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 99
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 99
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "asp",
+        "value": 99
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 99
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 5,
+        "chance": 0.6,
+        "count": 1
+      },
+      {
+        "itemId": 5,
+        "chance": 0.4,
+        "count": 2,
+        "minLevel": 8
+      }
+    ],
+    "names": [
+      "Asmodeus",
+      "Malphas",
+      "Crowley",
+      "Fizz",
+      "Ash",
+      "Diablo",
+      "Brimstone",
+      "Cinder"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Incubus",
+    "level": 6,
+    "role": "Attacker",
+    "maxHp": 22,
+    "spriteKey": "incubus",
+    "smallBattler": "Demon",
+    "passives": [
+      "chaosPact",
+      "etherealBody"
+    ],
+    "elements": [
+      "Black",
+      "Black",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "infernalPact",
+      "drainKiss"
+    ],
+    "flavor": "A demon that invades dreams to steal vitality.",
+    "expGrowth": 6,
+    "gold": 60,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 20,
+        "chance": 0.05
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 20,
+        "chance": 0.3,
+        "count": 1,
+        "minLevel": 6
+      }
+    ],
+    "names": [
+      "Asmodeus",
+      "Malphas",
+      "Crowley",
+      "Fizz",
+      "Ash",
+      "Diablo",
+      "Brimstone",
+      "Cinder"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Nurse",
+    "level": 1,
+    "role": "Healer",
+    "maxHp": 14,
+    "spriteKey": "nurse",
+    "smallBattler": "Nurse",
+    "passives": [
+      "symbiosis"
+    ],
+    "elements": [
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "needleShot",
+      "fieldSurgery"
+    ],
+    "flavor": "She's here to help. Please don't resist.",
+    "expGrowth": 4,
+    "gold": 20,
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 2,
+        "chance": 0.2
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 2,
+        "chance": 0.7,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Florence",
+      "Clara",
+      "Joy",
+      "Stitch",
+      "Bandage",
+      "Suture",
+      "Val",
+      "Hygiene"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Imp",
+    "level": 1,
+    "role": "Attacker",
+    "maxHp": 8,
+    "spriteKey": "imp",
+    "smallBattler": "Imp",
+    "passives": [
+      "mischief"
+    ],
+    "elements": [
+      "Red",
+      "Red",
+      "Red"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw"
+    ],
+    "flavor": "A mischievous lesser demon that enjoys playing pranks.",
+    "expGrowth": 3,
+    "gold": 12,
+    "drops": [
+      {
+        "itemId": 3,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "names": [
+      "Pip",
+      "Grib",
+      "Scamp",
+      "Mischief",
+      "Pokey",
+      "Trick",
+      "Fidget",
+      "Impala"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Golem",
+    "level": 2,
+    "role": "Tank",
+    "maxHp": 15,
+    "spriteKey": "golem",
+    "smallBattler": "Golem",
+    "passives": [
+      "rearGuard",
+      "goldDigger"
+    ],
+    "elements": [],
+    "skills": [
+      "attack",
+      "boneRush"
+    ],
+    "flavor": "An animated statue, slow but incredibly durable.",
+    "expGrowth": 8,
+    "gold": 40,
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.4
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.8,
+        "count": 1
+      },
+      {
+        "itemId": 7,
+        "chance": 0.2,
+        "count": 1,
+        "minLevel": 5
+      }
+    ],
+    "names": [
+      "Rocky",
+      "Pebble",
+      "Titan",
+      "Granite",
+      "Block",
+      "Obsidian",
+      "Boulder",
+      "Clay"
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Ghoul",
+    "level": 2,
+    "role": "Tank",
+    "maxHp": 15,
+    "spriteKey": "ghoul",
+    "smallBattler": "Ghoul",
+    "passives": [
+      "goldDigger"
+    ],
+    "elements": [
+      "Black",
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "boneRush"
+    ],
+    "flavor": "An animated statue, slow but incredibly durable.",
+    "expGrowth": 8,
+    "gold": 40,
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 6,
+        "chance": 0.15
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 6,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Rot",
+      "Gnaw",
+      "Zombie",
+      "Corpse",
+      "Fester",
+      "Scavenger",
+      "Bonebiter",
+      "Decay"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Ooze",
+    "level": 1,
+    "role": "Debuffer",
+    "maxHp": 18,
+    "spriteKey": "ooze",
+    "smallBattler": "Ooze",
+    "passives": [
+      "rearGuard"
+    ],
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "windBlade"
+    ],
+    "expGrowth": 5,
+    "gold": 10,
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.5
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.8,
+        "count": 1
+      },
+      {
+        "itemId": 1,
+        "chance": 0.3,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Slime",
+      "Jelly",
+      "Gloop",
+      "Blob",
+      "Goo",
+      "Flubber",
+      "Puddle",
+      "Gunk"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Bat",
+    "level": 1,
+    "role": "Attacker",
+    "maxHp": 10,
+    "spriteKey": "bat",
+    "smallBattler": "Imp",
+    "passives": [
+      "nightVision",
+      "initiative"
+    ],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "boneRush"
+    ],
+    "expGrowth": 3,
+    "gold": 8,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.2
+      }
+    ],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Echo",
+      "Flap",
+      "Fang",
+      "Vlad",
+      "Sonic",
+      "Midnight",
+      "Belfry",
+      "Screech"
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Wisp",
+    "level": 1,
+    "role": "Caster",
+    "maxHp": 12,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp",
+    "passives": [
+      "etherealBody"
+    ],
+    "elements": [
+      "Blue",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "soothingMote"
+    ],
+    "expGrowth": 4,
+    "gold": 14,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.3
+      },
+      {
+        "itemId": 24,
+        "chance": 0.1
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.7,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Glow",
+      "Mote",
+      "Flicker",
+      "Ember",
+      "Shine",
+      "Beacon",
+      "Will-o",
+      "Lumen"
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Egg",
+    "level": 1,
+    "role": "None",
+    "maxHp": 5,
+    "spriteKey": "egg",
+    "smallBattler": "egg",
+    "elements": [],
+    "skills": [
+      "attack",
+      "wait"
+    ],
+    "expGrowth": 1,
+    "gold": 1,
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 16
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": []
+  },
+  {
+    "id": 16,
+    "name": "Phoenix",
+    "level": 10,
+    "role": "Reviver",
+    "spriteKey": "phoenix",
+    "smallBattler": "Angel",
+    "maxHp": 25,
+    "passives": [
+      "rebirth"
+    ],
+    "elements": [
+      "Red",
+      "White"
+    ],
+    "skills": [
+      "attack",
+      "flameRebirth",
+      "divineFavor"
+    ],
+    "expGrowth": 10,
+    "gold": 100,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "names": [
+      "Blaze",
+      "Ember",
+      "Spark",
+      "Pyro",
+      "Flare",
+      "Cinder",
+      "Ignis",
+      "Sol"
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Larva",
+    "level": 1,
+    "role": "Parasite",
+    "maxHp": 12,
+    "spriteKey": "larva",
+    "smallBattler": "Ooze",
+    "passives": [
+      "parasite"
+    ],
+    "elements": [
+      "Red"
+    ],
+    "skills": [
+      "attack"
+    ],
+    "flavor": "It's eating your rations. And your tank.",
+    "expGrowth": 2,
+    "gold": 5,
+    "evolutions": [
+      {
+        "level": 6,
+        "evolvesTo": 18
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "names": [
+      "Wiggly",
+      "Grub",
+      "Squirm",
+      "Munch",
+      "Silky",
+      "Chrysalis",
+      "Inchworm",
+      "Crawler"
+    ]
+  },
+  {
+    "id": 18,
+    "name": "Crimson Lord",
+    "level": 6,
+    "role": "Vampire",
+    "maxHp": 55,
+    "spriteKey": "vampire",
+    "smallBattler": "Demon",
+    "passives": [],
+    "elements": [
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "infernalPact"
+    ],
+    "flavor": "He has drunk his fill, and now commands the blood.",
+    "expGrowth": 6,
+    "gold": 80,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": []
+  },
+  {
+    "id": 19,
+    "name": "Flauros",
+    "level": 3,
+    "role": "Attacker",
+    "maxHp": 19,
+    "spriteKey": "flauros",
+    "smallBattler": "Demon",
+    "passives": [
+      "initiative",
+      "chaosPact"
+    ],
+    "elements": [
+      "Red",
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "infernalPact"
+    ],
+    "flavor": "A savage leopard demon. It smells of brimstone and burnt hair.",
+    "expGrowth": 6,
+    "gold": 35,
+    "drops": [
+      {
+        "itemId": 39,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.7,
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": "Candle",
+    "level": 1,
+    "role": "Support",
+    "maxHp": 7,
+    "spriteKey": "candle",
+    "smallBattler": "candle",
+    "passives": [
+      "nightVision"
+    ],
+    "elements": [
+      "Red",
+      "White"
+    ],
+    "skills": [
+      "attack",
+      "soothingMote",
+      "divineFavor"
+    ],
+    "flavor": "A simple wax candle given life. Ideally, keep it away from the library.",
+    "expGrowth": 2,
+    "gold": 8,
+    "drops": [
+      {
+        "itemId": 40,
+        "chance": 0.4
+      }
+    ],
+    "evolutions": [
+      {
+        "level": 8,
+        "evolvesTo": "lantern"
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [
+      {
+        "itemId": 40,
+        "chance": 0.8,
+        "count": 1
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Shadow Stalker",
+    "level": 12,
+    "maxHp": 40,
+    "role": "Assassin",
+    "elements": [
+      "Shadow"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "assassinate"
+    ],
+    "traits": [
+      {
+        "code": "EVA",
+        "value": 0.15
+      },
+      {
+        "code": "CRI",
+        "value": 0.1
+      }
+    ],
+    "spriteKey": "ShadowStalker",
+    "smallBattler": "Ghoul",
+    "gold": 14,
+    "expGrowth": 10,
+    "drops": [],
+    "evolutions": [],
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": []
+  },
+  {
+    "id": 22,
+    "name": "Alex",
+    "level": 1,
+    "maxHp": 18,
+    "maxMp": 820,
+    "role": "Summoner",
+    "elements": [],
+    "skills": [
+      "attack"
+    ],
+    "traits": [],
+    "spriteKey": "egg",
+    "gold": 0,
+    "expGrowth": 20,
+    "drops": [],
+    "evolutions": [],
+    "smallBattler": "Nurse",
+    "unlocked": false,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": []
+  }
+]
