@@ -521,7 +521,15 @@
             const styleRow = document.createElement('div');
             styleRow.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-top: 4px; font-size: 10px;';
             const styleLbl = document.createElement('span'); styleLbl.textContent = 'style'; styleLbl.style.width = '70px';
-            const styleSel = makeSelect(['list', 'panel', 'frame', 'confirm', 'roulette', 'partyGrid'], layout.style || 'panel', (v) => {
+            // Includes the 4 battle-internal singleton styles (command,
+            // enemyRow, battleLog, victoryPanel — presentation/window_renderer.lua
+            // ~L896-920) so their registry entries display their real style
+            // instead of makeSelect silently falling back to the first option
+            // when the current value isn't in the list. Deliberately NOT added
+            // to WINDOW_STYLE_PRESETS above: those 4 read bespoke env.v fields
+            // (battle/combatLog/victory) a freshly created window has no data
+            // for, so they stay view/edit-only here, not creatable.
+            const styleSel = makeSelect(['list', 'panel', 'frame', 'confirm', 'roulette', 'partyGrid', 'command', 'enemyRow', 'battleLog', 'victoryPanel'], layout.style || 'panel', (v) => {
                 layout.style = v; drawCanvas();
             }, null);
             markShadowed(styleLbl, styleSel, 'style');

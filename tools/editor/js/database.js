@@ -392,12 +392,67 @@
             buildStringListEditor(rewardsFs, 'Flags Set on Completion', q.rewards.flags, 'flag_name');
             formPanel.appendChild(rewardsFs);
 
+            // Per-quest hook overrides (main.lua:2677/2711 run these instead of
+            // the flows.json quest.offer/complete default when present). Until
+            // now these fields were only settable via the raw-JSON escape hatch
+            // even though the flow-level defaults have a full editor (Engine ->
+            // Flows -> Quests).
+            buildQuestHookEditor(formPanel, q, 'acceptHook', 'Accept Hook (overrides default quest.offer)');
+            buildQuestHookEditor(formPanel, q, 'completeHook', 'Complete Hook (overrides default quest.complete)');
+
             const delBtn = document.createElement('button');
             delBtn.className = 'win98-btn';
             delBtn.style.cssText = 'margin-top: 10px; color: #cc0000;';
             delBtn.textContent = 'Delete Quest';
             delBtn.onclick = () => deleteQuest(id);
             formPanel.appendChild(delBtn);
+        }
+
+        // Create/Remove-Override + renderCommandList (events.js), mirroring
+        // the flows.json phase-override pattern in engine-editor.js's
+        // renderFlowSceneEditor so quest-level hooks are edited the same way
+        // as the flow-level defaults they override.
+        function buildQuestHookEditor(formPanel, quest, field, label) {
+            const fs = document.createElement('fieldset');
+            fs.style.cssText = 'padding: 6px; margin-top: 6px;';
+            const leg = document.createElement('legend');
+            leg.textContent = label;
+            fs.appendChild(leg);
+            formPanel.appendChild(fs);
+
+            const body = document.createElement('div');
+            fs.appendChild(body);
+
+            const render = () => {
+                body.innerHTML = '';
+                if (!Array.isArray(quest[field])) {
+                    const info = document.createElement('div');
+                    info.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin-bottom: 4px;';
+                    info.textContent = 'No override — this quest uses the flow-level default.';
+                    body.appendChild(info);
+                    const createBtn = document.createElement('button');
+                    createBtn.className = 'win98-btn';
+                    createBtn.style.fontSize = '10px';
+                    createBtn.textContent = '+ Create Override';
+                    createBtn.onclick = () => { quest[field] = []; setDirty(true); render(); };
+                    body.appendChild(createBtn);
+                    return;
+                }
+
+                const listBox = document.createElement('div');
+                listBox.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; min-height: 80px; max-height: 200px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; font-family: monospace; font-size: 11px;';
+                const rerenderList = () => { setDirty(true); renderCommandList(listBox, quest[field], rerenderList, false, 0, 'quest'); };
+                renderCommandList(listBox, quest[field], rerenderList, false, 0, 'quest');
+                body.appendChild(listBox);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'win98-btn';
+                removeBtn.style.cssText = 'margin-top: 4px; font-size: 10px;';
+                removeBtn.textContent = 'Remove Override';
+                removeBtn.onclick = () => { delete quest[field]; setDirty(true); render(); };
+                body.appendChild(removeBtn);
+            };
+            render();
         }
 
         function buildActionSequenceForm(formPanel, id) {
