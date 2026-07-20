@@ -2073,7 +2073,7 @@
         {
           "image": "fog_001",
           "scrollX": 0.02,
-          "scrollY": 0.0,
+          "scrollY": 0,
           "blendMode": "alpha",
           "opacity": 0.6
         }

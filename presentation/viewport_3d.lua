@@ -113,12 +113,16 @@ end
 local BLEND_MODES = { alpha = true, add = true, multiply = true, screen = true }
 local panoramaQuad = nil -- reused; viewport recomputed per layer/frame
 
--- Draws the fog background ONCE per frame, before any walls/floor/ceiling:
--- a flat fill for plain color fog, or one or more scrolling panorama
--- layers. Everything drawn afterward uses alpha = fogAlpha and relies on
--- ordinary blending to reveal this layer where fog is thick -- see
--- docs/design/fog-presets-and-panorama.md for why this replaced the old
--- per-surface mix() approach.
+-- Draws the fog background ONCE per frame, before floor/ceiling: a flat
+-- fill for plain color fog, or one or more scrolling panorama layers.
+-- Floor/ceiling (drawn immediately after, covering the full screen) blend
+-- against this directly at alpha = fogAlpha. Walls and sprites do NOT --
+-- they draw on top of the now-opaque floor/ceiling, so alpha-blending them
+-- would reveal floor/ceiling pixels behind their own screen position, not
+-- fog. Each wall column / sprite stripe instead paints its own opaque
+-- flat-fog-colored rectangle immediately before its texture, giving it a
+-- correct (if panorama-blind) surface to fade toward. See
+-- docs/design/fog-presets-and-panorama.md.
 local function drawFogBackground(fog, screenWpx, screenHpx)
     love.graphics.push("all")
     love.graphics.setBlendMode("alpha")
@@ -680,11 +684,21 @@ function viewport_3d.draw(session)
             litR, litG, litB = litR * 0.76, litG * 0.76, litB * 0.76
         end
 
-        -- One shading model: alpha = fogAlpha, blended against whatever
-        -- drawFogBackground() already drew (flat fill or panorama). Black
-        -- flat fog (the no-fog default) makes this pixel-identical to the
-        -- old "brightness" multiply against a black backdrop.
         local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + perpWallDist * fog.density))
+
+        -- Walls draw ON TOP of the already-opaque floor/ceiling (which
+        -- cover the full screen). Alpha-blending the wall texture directly
+        -- would reveal the floor/ceiling behind it on screen -- wrong, a
+        -- wall should fade into FOG, not into whatever 2D pixel happens to
+        -- sit behind it in draw order. So each wall column gets its own
+        -- opaque fog-colored backing painted immediately before the
+        -- texture, giving it something correct to fade toward. (Flat color
+        -- only, not the panorama -- sampling the scrolling panorama
+        -- per-column from Lua isn't worth it for this; floor/ceiling still
+        -- show the full panorama via the shared background.)
+        local fc = fog.color
+        love.graphics.setColor(fc[1], fc[2], fc[3], 1)
+        love.graphics.rectangle("fill", x, drawStart, 1, drawEnd - drawStart)
 
         if atlas then
             local originX, originY
@@ -759,9 +773,12 @@ function viewport_3d.draw(session)
             local drawStartY = math.floor(70 - spriteHeight / 2)
             local drawStartX = math.floor(spriteScreenX - spriteWidth / 2)
 
-            -- Same single shading model as walls: alpha = fogAlpha against
-            -- the already-drawn fog background.
+            -- Same reasoning as walls: a sprite alpha-blended straight onto
+            -- the canvas would reveal the floor/ceiling/wall pixels already
+            -- behind it there, not fog. Give each visible stripe its own
+            -- opaque fog-colored backing first.
             local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
+            local fc = fog.color
 
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
                 if stripeX >= 0 and stripeX < 256 then
@@ -771,8 +788,10 @@ function viewport_3d.draw(session)
 
                         if clipH > 0 then
                             love.graphics.setScissor(stripeX, clipY, 1, clipH)
+                            love.graphics.setColor(fc[1], fc[2], fc[3], 1)
+                            love.graphics.rectangle("fill", stripeX, clipY, 1, clipH)
                             love.graphics.setColor(1, 1, 1, fogAlpha)
-                            
+
                             local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
                             spriteSliceQuad:setViewport(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())
                             love.graphics.draw(s.img, spriteSliceQuad, stripeX, drawStartY, 0, 1, spriteHeight / s.img:getHeight())
