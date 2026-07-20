@@ -784,11 +784,17 @@ function viewport_3d.draw(session)
             local drawStartY = math.floor(70 - spriteHeight / 2)
             local drawStartX = math.floor(spriteScreenX - spriteWidth / 2)
 
-            -- Same reasoning as walls: a sprite alpha-blended straight onto
-            -- the canvas would reveal the floor/ceiling/wall pixels already
-            -- behind it there, not fog. Give each visible stripe its own
-            -- fog layer (flat color + panorama, continuously sampled same
-            -- as the walls) first.
+            -- NOT the same fix as walls: sprites are billboards with a
+            -- transparent background (the source PNG's own alpha cuts out
+            -- the silhouette), so painting an opaque fog rectangle behind
+            -- the whole stripe -- like walls need -- would show a solid
+            -- fog-colored box around every sprite instead of true
+            -- transparency. What's already on the canvas behind a sprite's
+            -- transparent pixels is the correct thing to show: the zBuffer
+            -- test above already skips drawing this pixel at all when a
+            -- nearer wall occludes it, so whatever's underneath is exactly
+            -- the right background, not a draw-order artifact. Plain alpha
+            -- fade is correct here.
             local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
 
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
@@ -799,7 +805,6 @@ function viewport_3d.draw(session)
 
                         if clipH > 0 then
                             love.graphics.setScissor(stripeX, clipY, 1, clipH)
-                            drawFogLayers(fog, stripeX, clipY, 1, clipH)
                             love.graphics.setColor(1, 1, 1, fogAlpha)
 
                             local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
