@@ -2045,6 +2045,12 @@
     "title": "Sunken Temple Floor 1: Hall of Echoes",
     "intro": "Cracked stone corridors echo with whispers. The path to Mina is nearby.",
     "depth": 1,
+    "fog": {
+      "color": [0.4, 0.45, 0.5],
+      "density": 0.3,
+      "minFactor": 0.15,
+      "mode": "color"
+    },
     "music": "temple_ambient",
     "image": "SunkenTemple1.png",
     "layout": [

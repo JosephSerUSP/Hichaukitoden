@@ -1315,7 +1315,7 @@
 
     <!-- --- MAP PROPERTIES DIALOG MODAL --- -->
     <div id="map-properties-modal" class="modal-overlay" style="z-index: 1050;">
-        <div class="window outset-bevel" style="width: 550px;">
+        <div class="window outset-bevel" style="width: 720px;">
             <div class="title-bar">
                 <div class="title-bar-text">Map Properties</div>
                 <div class="title-bar-controls">
@@ -1386,6 +1386,60 @@
                                <option value="solid">Solid (ceiling gradient)</option>
                                <option value="sky">Sky (outdoor)</option>
                            </select>
+                        </div>
+                        <!-- --- FOG SETTINGS --- -->
+                        <div class="field-row-stacked" style="margin-top: 6px;">
+                           <div style="display: flex; align-items: center; gap: 4px;">
+                               <input type="checkbox" id="prop-map-fog-enabled" onchange="toggleFogFields()" />
+                               <label for="prop-map-fog-enabled" style="font-size: 10px;">Enable Fog (blend distant tiles toward color instead of darkening)</label>
+                           </div>
+                        </div>
+                        <div id="prop-fog-settings" style="display: none; margin-top: 4px; padding: 4px; border: 1px solid var(--win-shadow);">
+                           <div class="field-row-stacked" style="margin-top: 2px;">
+                               <label style="font-size: 10px;">Fog Color:</label>
+                               <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#fff;color:#000;border-color:#ccc #666 #666 #ccc;" onclick="setFogPreset('#ffffff','White Mist')">☁️</button>
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#a0c4e8;color:#000;" onclick="setFogPreset('#a0c4e8','Pale Blue')">🌊</button>
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#73808a;color:#fff;" onclick="setFogPreset('#73808a','Blue Haze')">🌫️</button>
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#333344;color:#ccc;" onclick="setFogPreset('#333344','Dark Fog')">🌑</button>
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#1a1a2e;color:#888;" onclick="setFogPreset('#1a1a2e','Underground')">🕳️</button>
+                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#4a3066;color:#ccc;" onclick="setFogPreset('#4a3066','Purple Dusk')">🌆</button>
+                               </div>
+                               <div style="display: flex; gap: 4px; margin-top: 3px;">
+                                   <input type="color" id="prop-map-fog-color" value="#73808a"
+                                          style="flex:1; height: 22px;" oninput="updateFogPreview()" />
+                                   <input type="text" id="prop-map-fog-label" class="win98-input" style="width:80px;font-size:9px;" placeholder="label" readonly />
+                               </div>
+                           </div>
+                           <!-- Fog Preview Canvas -->
+                           <div class="field-row-stacked" style="margin-top: 4px;">
+                               <label style="font-size: 10px;">Preview (near → far):</label>
+                               <canvas id="fog-preview-canvas" width="220" height="28"
+                                       style="width:100%;height:28px;border:1px solid var(--win-shadow);background:#fff;image-rendering:pixelated;"></canvas>
+                           </div>
+                           <div class="field-row-stacked" style="margin-top: 4px;">
+                               <label style="font-size: 10px;">Density (higher = faster fade):</label>
+                               <div style="display:flex;align-items:center;gap:4px;">
+                                   <input type="range" id="prop-map-fog-density" min="0.05" max="1.0" step="0.05" value="0.35"
+                                          style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-density-val').textContent=this.value" />
+                                   <span id="prop-map-fog-density-val" style="font-size:10px;min-width:28px;">0.35</span>
+                               </div>
+                           </div>
+                           <div class="field-row-stacked" style="margin-top: 4px;">
+                               <label style="font-size: 10px;">Min Visibility (0 = fully fog, 1 = never fades):</label>
+                               <div style="display:flex;align-items:center;gap:4px;">
+                                   <input type="range" id="prop-map-fog-minfactor" min="0.0" max="0.5" step="0.01" value="0.12"
+                                          style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-minfactor-val').textContent=this.value" />
+                                   <span id="prop-map-fog-minfactor-val" style="font-size:10px;min-width:28px;">0.12</span>
+                               </div>
+                           </div>
+                           <div class="field-row-stacked" style="margin-top: 4px;">
+                               <label style="font-size: 10px;">Mode:</label>
+                               <select id="prop-map-fog-mode" class="win98-select" style="width: 100%;" onchange="updateFogPreview()">
+                                   <option value="color">Flat Color</option>
+                                   <option value="gradient">Gradient (top/bottom in JSON)</option>
+                               </select>
+                           </div>
                         </div>
                     </fieldset>
                     

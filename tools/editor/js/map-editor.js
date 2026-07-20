@@ -628,6 +628,60 @@
         let mapPropsSnapshot = null;
         let mapPropsOriginal = null;
 
+        function toggleFogFields() {
+            const enabled = document.getElementById('prop-map-fog-enabled').checked;
+            document.getElementById('prop-fog-settings').style.display = enabled ? 'block' : 'none';
+            if (enabled) updateFogPreview();
+        }
+
+        // Fog presets: click a button to set color + label
+        function setFogPreset(hex, label) {
+            document.getElementById('prop-map-fog-color').value = hex;
+            document.getElementById('prop-map-fog-label').value = label;
+            updateFogPreview();
+        }
+
+        // Draw the fog preview canvas: a horizontal strip showing how tiles
+        // blend from their original color (left) into the fog color (right)
+        // at the configured density and minFactor values.
+        function updateFogPreview() {
+            const canvas = document.getElementById('fog-preview-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+
+            const hex = document.getElementById('prop-map-fog-color').value;
+            const fogRgb = hexToRgb01(hex);
+            const density = parseFloat(document.getElementById('prop-map-fog-density').value) || 0.35;
+            const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value) || 0.12;
+
+            // Simulate a stone wall tile (dark grey) and render fog mixing
+            // per pixel across the strip, left = near, right = far.
+            const wallColor = [0.45, 0.40, 0.35]; // a generic stone wall
+
+            for (let x = 0; x < w; x++) {
+                // Map x position to distance (0..12 grid units)
+                const dist = (x / w) * 12;
+                const fogAlpha = Math.max(minFactor, 1.0 / (1.0 + dist * density));
+
+                // Wall: fogColor * (1-fogAlpha) + wallColor * fogAlpha
+                const r = Math.round((fogRgb[0] * (1 - fogAlpha) + wallColor[0] * fogAlpha) * 255);
+                const g = Math.round((fogRgb[1] * (1 - fogAlpha) + wallColor[1] * fogAlpha) * 255);
+                const b = Math.round((fogRgb[2] * (1 - fogAlpha) + wallColor[2] * fogAlpha) * 255);
+
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
+                ctx.fillRect(x, 0, 1, h);
+            }
+
+            // Overlay distance markers
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = '7px sans-serif';
+            ctx.fillText('←near', 2, 8);
+            ctx.textAlign = 'right';
+            ctx.fillText('far→', w - 2, 8);
+            ctx.textAlign = 'left';
+        }
+
         function openMapProperties() {
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
@@ -646,6 +700,33 @@
             document.getElementById('prop-map-safe').checked = !!map.safe;
             document.getElementById('prop-map-tileset').value = map.tileset || '';
             document.getElementById('prop-map-ceiling').value = map.ceilingStyle || 'solid';
+
+            // Fog properties
+            const fog = map.fog;
+            if (fog) {
+                document.getElementById('prop-map-fog-enabled').checked = true;
+                document.getElementById('prop-map-fog-color').value = rgb01ToHex(fog.color || [0.5, 0.55, 0.6]);
+                document.getElementById('prop-map-fog-density').value = fog.density != null ? fog.density : 0.35;
+                document.getElementById('prop-map-fog-density-val').textContent = fog.density != null ? fog.density : '0.35';
+                document.getElementById('prop-map-fog-minfactor').value = fog.minFactor != null ? fog.minFactor : 0.12;
+                document.getElementById('prop-map-fog-minfactor-val').textContent = fog.minFactor != null ? fog.minFactor : '0.12';
+                document.getElementById('prop-map-fog-mode').value = fog.mode || 'color';
+            } else {
+                document.getElementById('prop-map-fog-enabled').checked = false;
+                document.getElementById('prop-map-fog-color').value = '#73808a';
+                document.getElementById('prop-map-fog-density').value = 0.35;
+                document.getElementById('prop-map-fog-density-val').textContent = '0.35';
+                document.getElementById('prop-map-fog-minfactor').value = 0.12;
+                document.getElementById('prop-map-fog-minfactor-val').textContent = '0.12';
+                document.getElementById('prop-map-fog-mode').value = 'color';
+            }
+            toggleFogFields();
+
+            // Label preset and draw preview
+            const fhex = document.getElementById('prop-map-fog-color').value.toUpperCase();
+            const pLabels = { '#FFFFFF': 'White Mist', '#A0C4E8': 'Pale Blue', '#73808A': 'Blue Haze', '#333344': 'Dark Fog', '#1A1A2E': 'Underground', '#4A3066': 'Purple Dusk' };
+            document.getElementById('prop-map-fog-label').value = pLabels[fhex] || 'Custom';
+            updateFogPreview();
 
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
             renderEncountersList(mapPropsEncounters);
@@ -812,6 +893,18 @@
             const ceilingStyle = document.getElementById('prop-map-ceiling').value;
             if (ceilingStyle === 'sky') map.ceilingStyle = 'sky';
             else delete map.ceilingStyle;
+
+            // Fog settings
+            if (document.getElementById('prop-map-fog-enabled').checked) {
+                map.fog = {
+                    color: hexToRgb01(document.getElementById('prop-map-fog-color').value),
+                    density: parseFloat(document.getElementById('prop-map-fog-density').value) || 0.35,
+                    minFactor: parseFloat(document.getElementById('prop-map-fog-minfactor').value) || 0.12,
+                    mode: document.getElementById('prop-map-fog-mode').value || 'color',
+                };
+            } else {
+                delete map.fog;
+            }
 
             if (map.layout) {
                 const currentH = map.layout.length;
