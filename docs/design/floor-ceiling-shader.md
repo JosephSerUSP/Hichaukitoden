@@ -1,6 +1,13 @@
 # Floor/Ceiling Texturing — Shader Plan
 
-Status: planning (19.07.2026), not yet implemented. Extends
+Status: implemented and verified (19.07.2026) for the ceiling half —
+`dungeon_001`'s `ceilingRow` now renders as a real perspective-correct
+textured cave ceiling via the shader described below, confirmed with
+`preview-map` screenshots including light-texture tinting. Floor casting
+uses the identical code path but has no floor art to prove yet (no atlas
+declares `floorRow`) — mechanically done, visually unconfirmed until floor
+art exists. The `map.heights` scaffold (see Scalability) was NOT added —
+still just planned. Originally written as a pure plan; extends
 [`raycaster-tileset-lighting.md`](raycaster-tileset-lighting.md), which
 explicitly deferred this: floors and ceilings are currently flat vertical
 gradients, tinted by vertex light but never textured. This doc plans the
@@ -130,27 +137,54 @@ letting "scalable" imply this grid raycaster will eventually grow into
 that — it won't, by construction. If that's ever wanted, it's a rewrite
 of the spatial representation, not an extension.
 
-## Implementation order (planned, not started)
+## Implementation order
 
-1. Manifest: add `floorRow`/`ceilingRow` reading to `getAtlas()` (pure
-   data plumbing, same shape as the existing `skyRow` read).
-2. Light-as-texture: build/cache an Image from `map.light` per map load,
-   linear-filtered.
-3. Floor-cast shader: fragment shader implementing the per-pixel world-pos
-   math above, sampling `floorRow`'s atlas region + the light texture,
-   applying the same distance-based shading walls already use so floors
-   don't look flatter/brighter than the walls around them.
-4. Ceiling-cast shader: same shader (or a mirrored second pass) for
-   `ceilingRow`, gated on `ceilingStyle ~= "sky"`.
-5. Fallback wiring: gradient stays the path when the relevant atlas row is
-   absent or shader compilation fails.
-6. Floor art for at least one atlas (cobblestone for `town_001`, a stone
-   floor for `dungeon_001`) so this is visually provable, not just
-   technically correct.
-7. `map.heights` scaffold (data only, default-flat, unconsumed) — reserved
-   per the scalability section, not wired to any rendering behavior yet.
+1. **Done.** Manifest: `floorRow`/`ceilingRow` reading in `getAtlas()`.
+2. **Done.** Light-as-texture: `getLightTexture(mapData)` in
+   `viewport_3d.lua` builds/caches a linear-filtered `Image` from
+   `map.light`, keyed on `(mapData, light-table-identity)` so it rebuilds
+   only when either changes; a 1×1 white fallback is bound when a map has
+   no light grid (LÖVE requires every declared `Image` uniform to be
+   `send()`-bound before a draw, so there's no "skip sampling" branch —
+   sampling a constant-white 1×1 texture is the cheap equivalent).
+3. **Done, shared for both planes.** One shader (`FLOOR_CEIL_SHADER_SRC`)
+   handles both floor and ceiling — same math, called twice with different
+   `targetRow`/screen-rect arguments (`drawShadedPlane`) rather than two
+   separate shader programs.
+4. **Done.** Ceiling gated on `ceilingStyle ~= "sky"` and `atlas.ceilingRow`
+   present; falls through to the sky-strip path or gradient otherwise, in
+   that priority order.
+5. **Done.** Fallback wiring: `ensureFloorCeilShader()` wraps compilation
+   in `pcall`, prints a warning and permanently falls back to gradients on
+   failure (checked once, not retried every frame) — same resilience
+   pattern as the atlas/legacy-texture loaders.
+6. **Not done.** Floor art. Both current atlases still lack a `floorRow` —
+   floor stays gradient everywhere until at least one exists.
+7. **Not done.** `map.heights` scaffold — still just planned (see
+   Scalability section above); nothing reads or writes it yet.
 
-Verification plan: extend the existing `preview-map` headless tool (no
-new tooling needed) to confirm floor/ceiling texture + lighting render
-correctly before/after, same as the wall atlas and vertex-lighting work
-was verified.
+**A bug fixed along the way, unrelated to the shader itself:** the
+`preview-map` CLI parser consumed 4 fixed argument slots
+(`mapId x y dir`) unconditionally, so calling it with fewer positional
+args before a trailing `campaign=<name>` flag (e.g.
+`preview-map 2 campaign=foo`, relying on default spawn) swallowed the
+flag as the x-coordinate and crashed on `tonumber(nil) + 1`. Fixed to
+only consume a slot as positional while the next token exists and isn't
+`campaign=...`; verified all three call shapes (all positionals + flag,
+some positionals + flag, no positionals + flag, no flag at all).
+
+**Verification performed:** `preview-map` screenshots of `dungeon_001`'s
+ceiling (id 2, both in the default `data/` campaign and a fixed-layout
+map in a test campaign) confirmed correct perspective convergence,
+correct occlusion behind walls (draw order: floor/ceiling shader → walls,
+unchanged from the gradient it replaced), and correct light-texture
+tinting — a map-half painted warm red/orange vs. cool blue rendered that
+split accurately on both the ceiling and the walls sharing the same light
+grid. One practical finding along the way: dungeon maps in this codebase
+always procedurally regenerate their grid at runtime regardless of an
+authored `layout`/`generation: "Fixed"` label — only `safe: true` (town)
+uses the authored layout directly (`engine/exploration.lua:loadMap`) — so
+hand-picked test coordinates against a dungeon's authored layout string
+don't correspond to the actual runtime grid; the loader's own computed
+spawn point (omit x/y in `preview-map`) is the reliable way to test
+dungeon maps headlessly.

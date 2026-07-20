@@ -2096,12 +2096,21 @@ function love.load(arg)
                 previewFontSize = arg[i + 2]
                 i = i + 2
             elseif val == "preview-map" then
+                -- x/y/dir are all optional (default spawn is used when
+                -- omitted), so only consume the next slots as positional
+                -- values while they exist and aren't another recognized
+                -- flag (e.g. a trailing campaign=<name>) -- a fixed
+                -- 4-slot consume here would swallow that flag as if it
+                -- were the x-coordinate and crash on tonumber(nil).
+                local function isPositional(v)
+                    return v ~= nil and not v:match("^campaign=")
+                end
                 isPreviewMapMode = true
                 previewMapId = arg[i + 1]
-                previewMapX = arg[i + 2]
-                previewMapY = arg[i + 3]
-                previewMapDir = arg[i + 4]
-                i = i + 4
+                if isPositional(arg[i + 2]) then previewMapX = arg[i + 2]; i = i + 1 end
+                if isPositional(arg[i + 2]) then previewMapY = arg[i + 2]; i = i + 1 end
+                if isPositional(arg[i + 2]) then previewMapDir = arg[i + 2]; i = i + 1 end
+                i = i + 1
             elseif val:match("^campaign=") then
                 -- Overrides the campaign.json pointer for this run (used by
                 -- the generator's validate loops): campaign=<name> loads

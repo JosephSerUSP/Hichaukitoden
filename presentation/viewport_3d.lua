@@ -86,7 +86,9 @@ local function getAtlas(name)
             wallRows = wallRows,
             wallVariants = #wallRows * ATLAS_WALL_COLS,
             doorRow = manifest.doorRow or 2,
-            skyRow = manifest.skyRow, -- nil = this atlas has no sky strip
+            skyRow = manifest.skyRow,         -- nil = this atlas has no sky strip
+            floorRow = manifest.floorRow,     -- nil = floor stays a flat gradient (no floor art yet)
+            ceilingRow = manifest.ceilingRow, -- nil = solid ceiling stays a flat gradient
         }
         atlasCache[name] = entry
         return entry
@@ -162,6 +164,151 @@ local function getEventSprite(ev, session)
     end
 
     return nil
+end
+
+-- ---------------------------------------------------------------------------
+-- Floor/ceiling shader. See docs/design/floor-ceiling-shader.md.
+--
+-- Walls are one draw call per screen column (a single distance, so a single
+-- texture slice). Floors/ceilings don't have that property -- every pixel
+-- within a row is a different world position -- so they're computed as a
+-- GPU fragment shader instead of a per-pixel Lua loop. The shader receives
+-- the SAME camera vectors (camPos/camDir/camPlane) the wall raycast loop
+-- already computes; the per-pixel world position formula below is the
+-- classic floor-casting algorithm, derived to match this renderer's own
+-- wall projection constants exactly (center row 70, scale 140 -- see
+-- `lineHeight = floor(140 / perpWallDist)` in the wall loop) so the floor
+-- meets the base of each wall with no seam.
+--
+-- Per-cell texture variant uses a GLSL-friendly float hash (the CPU wall
+-- hash's large integer multiplies aren't reliably precise in GLSL floats
+-- across GPUs) -- a different hash family from the wall/door CPU hashes,
+-- not the same formula ported; visually it serves the same "engine-random,
+-- not authored" purpose.
+local FLOOR_CEIL_SHADER_SRC = [[
+    uniform vec2 camPos;
+    uniform vec2 camDir;
+    uniform vec2 camPlane;
+    uniform float atlasW;
+    uniform float atlasH;
+    uniform float targetRow;
+    uniform vec2 mapSize;   // (mapW, mapH), light texture covers (mapW+1)x(mapH+1) vertices
+
+    vec2 cellVariantOrigin(vec2 cell) {
+        float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+        float col = floor(h * 4.0);
+        return vec2(col, targetRow);
+    }
+
+    vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
+        float dy = screen_coords.y - 70.0;
+        if (abs(dy) < 0.0001) dy = 0.0001;
+        float rowDist = 70.0 / abs(dy);
+
+        float cameraX = 2.0 * screen_coords.x / 256.0 - 1.0;
+        vec2 rayDir = camDir + camPlane * cameraX;
+        vec2 worldPos = camPos + rowDist * rayDir;
+
+        vec2 cell = floor(worldPos);
+        vec2 fracPos = fract(worldPos);
+        vec2 origin = cellVariantOrigin(cell);
+
+        vec2 uv = vec2((origin.x + fracPos.x) * 64.0 / atlasW, (origin.y + fracPos.y) * 64.0 / atlasH);
+        vec4 texColor = Texel(tex, uv);
+
+        float brightness = max(0.12, 1.0 / (1.0 + rowDist * 0.35));
+        vec2 lightUV = (worldPos - vec2(1.0)) / mapSize;
+        vec3 lightColor = Texel(lightTex, lightUV).rgb;
+
+        return vec4(texColor.rgb * brightness * lightColor, texColor.a) * color;
+    }
+]]
+
+local floorCeilShader = nil   -- false once a compile attempt has failed, so we don't retry every frame
+local whiteLightTex = nil     -- 1x1 white fallback bound when a map has no light grid
+local lightTexCache = { mapData = nil, lightRef = nil, tex = nil, w = 0, h = 0 }
+
+-- Rebuilding love.graphics.Shader source to inject the lightTex sampler
+-- (LÖVE requires every declared Image uniform to exist in the source, and
+-- there's exactly one caller here, so string-splicing it in once at compile
+-- time is simpler than threading a second shader variant through).
+local FLOOR_CEIL_SHADER_FULL = FLOOR_CEIL_SHADER_SRC:gsub(
+    "uniform vec2 mapSize;",
+    "uniform vec2 mapSize;\n    uniform Image lightTex;")
+
+local function ensureFloorCeilShader()
+    if floorCeilShader ~= nil then return floorCeilShader or nil end
+    local ok, shaderOrErr = pcall(love.graphics.newShader, FLOOR_CEIL_SHADER_FULL)
+    if ok then
+        floorCeilShader = shaderOrErr
+    else
+        print("[viewport_3d] floor/ceiling shader failed to compile, falling back to gradients: " .. tostring(shaderOrErr))
+        floorCeilShader = false
+    end
+    return floorCeilShader or nil
+end
+
+-- Bakes session.currentMapData.light into a small linear-filtered texture so
+-- the shader's bilinear light sampling comes from native GPU texture
+-- filtering rather than hand-written interpolation (docs/design/floor-ceiling-shader.md).
+-- Cached per map/light-table identity; rebuilt only when either changes
+-- (e.g. a fresh map load, or the editor writing new light data).
+local function getLightTexture(mapData)
+    local light = mapData and mapData.light
+    if not light or #light == 0 then return nil end
+    if lightTexCache.mapData == mapData and lightTexCache.lightRef == light then
+        return lightTexCache.tex, lightTexCache.w, lightTexCache.h
+    end
+    local h, w = #light, #light[1]
+    local imgData = love.image.newImageData(w, h)
+    for y = 0, h - 1 do
+        local row = light[y + 1]
+        for x = 0, w - 1 do
+            local c = row[x + 1] or DEFAULT_LIGHT
+            imgData:setPixel(x, y, c[1], c[2], c[3], 1)
+        end
+    end
+    local tex = love.graphics.newImage(imgData)
+    tex:setFilter("linear", "linear")
+    tex:setWrap("clamp", "clamp")
+    lightTexCache = { mapData = mapData, lightRef = light, tex = tex, w = w, h = h }
+    return tex, w, h
+end
+
+-- Draws one shaded floor/ceiling plane (the screen rows y0..y0+rectH) via
+-- the floor-casting shader, sampling atlasRow's variant-column texture and
+-- the given light texture (or full white if the map has none).
+local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH)
+    local shader = ensureFloorCeilShader()
+    if not shader then return false end
+
+    love.graphics.setShader(shader)
+    shader:send("camPos", { cx + 1, cy + 1 })
+    shader:send("camDir", { dirX, dirY })
+    shader:send("camPlane", { planeX, planeY })
+    shader:send("atlasW", atlas.w)
+    shader:send("atlasH", atlas.h)
+    shader:send("targetRow", atlasRow)
+    if lightTex then
+        shader:send("lightTex", lightTex)
+        shader:send("mapSize", { lightW - 1, lightH - 1 })
+    else
+        if not whiteLightTex then
+            local d = love.image.newImageData(1, 1)
+            d:setPixel(0, 0, 1, 1, 1, 1)
+            whiteLightTex = love.graphics.newImage(d)
+        end
+        shader:send("lightTex", whiteLightTex)
+        shader:send("mapSize", { 1, 1 })
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    -- The atlas image is only drawn here to bind it as the sampled texture;
+    -- its on-screen stretch is irrelevant since the shader computes its own
+    -- UVs from screen_coords, ignoring the default texture_coords entirely.
+    love.graphics.draw(atlas.img, 0, y0, 0, 256 / atlas.w, rectH / atlas.h)
+    love.graphics.setShader()
+    return true
 end
 
 function viewport_3d.init()
@@ -253,19 +400,30 @@ function viewport_3d.draw(session)
         end
     end
 
+    -- Camera direction vector + projection plane (orthogonal to camera
+    -- direction, 60-degree FOV) -- computed here (rather than just before
+    -- the wall loop, where this used to live) because the floor/ceiling
+    -- shader below needs it too.
+    local dirX = math.cos(cAngle)
+    local dirY = math.sin(cAngle)
+    local fovHalfTan = math.tan(math.pi / 6)
+    local planeX = -dirY * fovHalfTan
+    local planeY = dirX * fovHalfTan
+
     -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
     local screenWpx = ui.toPx(ui.screenWidthTiles)
     local mapData = session.currentMapData
     local light = mapData and mapData.light
 
-    -- Player-cell vertex light, used to tint the ceiling/floor as a single
-    -- color (the gradients aren't raycast per-pixel, so they can't sample a
-    -- per-column light like walls do). See docs/design/raycaster-tileset-lighting.md.
+    -- Player-cell vertex light, used to tint the gradient FALLBACK as a
+    -- single color (the shader path samples the light texture per-pixel
+    -- instead). See docs/design/raycaster-tileset-lighting.md.
     local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
     local ambR, ambG, ambB = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
 
     local atlas = resolveTileset(mapData)
+    local lightTex, lightW, lightH = getLightTexture(mapData)
 
     if mapData and mapData.ceilingStyle == "sky" and atlas and atlas.skyRow then
         skyQuad:setViewport(0, atlas.skyRow * ATLAS_TILE, ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
@@ -274,30 +432,27 @@ function viewport_3d.draw(session)
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(atlas.img, skyQuad, 0, 0, 0,
             screenWpx / (ATLAS_SKY_COLS * ATLAS_TILE), halfH / ATLAS_TILE)
+    elseif atlas and atlas.ceilingRow
+        and drawShadedPlane(atlas, atlas.ceilingRow, 0, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH) then
+        -- shaded plane drawn; nothing else to do
     else
         -- Ceiling gradient: Moody dark purple/indigo fade
         drawVerticalGradient(0, 0, screenWpx, halfH,
             {0.09 * ambR, 0.06 * ambG, 0.14 * ambB},
             {0.02 * ambR, 0.01 * ambG, 0.04 * ambB})
     end
-    -- Floor gradient: Cold dark stone grey fade
-    drawVerticalGradient(0, halfH, screenWpx, halfH,
-        {0.03 * ambR, 0.03 * ambG, 0.03 * ambB},
-        {0.14 * ambR, 0.12 * ambG, 0.10 * ambB})
+
+    if not (atlas and atlas.floorRow
+        and drawShadedPlane(atlas, atlas.floorRow, halfH, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH)) then
+        -- Floor gradient: Cold dark stone grey fade
+        drawVerticalGradient(0, halfH, screenWpx, halfH,
+            {0.03 * ambR, 0.03 * ambG, 0.03 * ambB},
+            {0.14 * ambR, 0.12 * ambG, 0.10 * ambB})
+    end
 
     local doorLookup = buildDoorLookup(session)
 
     -- ── 3. Perspective Raycasting Loop with Fish-eye Correction ────────────────
-    -- Camera direction vector
-    local dirX = math.cos(cAngle)
-    local dirY = math.sin(cAngle)
-    
-    -- Projection plane (orthogonal to camera direction)
-    -- Field of View is 60 degrees (tan(30) = 0.577)
-    local fovHalfTan = math.tan(math.pi / 6)
-    local planeX = -dirY * fovHalfTan
-    local planeY = dirX * fovHalfTan
-    
     local zBuffer = {}
 
     for x = 0, 255 do
