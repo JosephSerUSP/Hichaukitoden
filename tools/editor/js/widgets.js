@@ -243,6 +243,89 @@
             return makeSelect(mapOpts, current, onChange, flex);
         }
 
+        // Compact <fieldset class="groupbox"><legend>...</legend> wrapper for
+        // dense, RM2003-style form sections. Returns the fieldset so callers
+        // can keep appending rows into it.
+        function makeGroupbox(parent, title, extraStyle) {
+            const fs = document.createElement('fieldset');
+            fs.className = 'groupbox';
+            if (extraStyle) fs.style.cssText += extraStyle;
+            const legend = document.createElement('legend');
+            legend.textContent = title;
+            fs.appendChild(legend);
+            parent.appendChild(fs);
+            return fs;
+        }
+
+        // Small sparkline showing how a growth-scaled stat (maxHp, atk, def,
+        // mat, mdf, mpd) rises from level 1 to the actor's max level, using
+        // the same formula as engine/traits.lua traits.getBaseParam:
+        //   value(level) = base * (1 + rate * growthMultiplier * (level-1)^exponent)
+        function buildStatCurve(container, label, base, rate, growthMultiplier, exponent, maxLevel) {
+            const box = document.createElement('div');
+            box.className = 'stat-curve';
+
+            const head = document.createElement('div');
+            head.className = 'stat-curve-head';
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = label;
+            const valSpan = document.createElement('span');
+            valSpan.className = 'stat-curve-val';
+            head.appendChild(nameSpan);
+            head.appendChild(valSpan);
+            box.appendChild(head);
+
+            const lvls = Math.max(1, maxLevel || 99);
+            const points = [];
+            let maxVal = 0;
+            for (let lvl = 1; lvl <= lvls; lvl++) {
+                const factor = 1 + rate * growthMultiplier * Math.pow(Math.max(0, lvl - 1), exponent);
+                const val = base * factor;
+                points.push(val);
+                if (val > maxVal) maxVal = val;
+            }
+            valSpan.textContent = Math.round(points[points.length - 1]);
+            if (maxVal <= 0) maxVal = 1;
+
+            const w = 100, h = 30;
+            const toXY = (i, v) => [
+                (i / (lvls - 1 || 1)) * w,
+                h - (v / maxVal) * (h - 3) - 1
+            ];
+            let pathD = '';
+            points.forEach((v, i) => {
+                const [x, y] = toXY(i, v);
+                pathD += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+            });
+            const [lastX] = toXY(points.length - 1, points[points.length - 1]);
+            const fillD = pathD + `L${lastX.toFixed(1)},${h} L0,${h} Z`;
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svg.setAttribute('preserveAspectRatio', 'none');
+            const gridG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            gridG.setAttribute('class', 'curve-grid');
+            [0.25, 0.5, 0.75].forEach(frac => {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', '0'); line.setAttribute('x2', String(w));
+                line.setAttribute('y1', String(h * frac)); line.setAttribute('y2', String(h * frac));
+                gridG.appendChild(line);
+            });
+            svg.appendChild(gridG);
+            const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            fillPath.setAttribute('class', 'curve-fill');
+            fillPath.setAttribute('d', fillD);
+            svg.appendChild(fillPath);
+            const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            linePath.setAttribute('class', 'curve-path');
+            linePath.setAttribute('d', pathD.trim());
+            svg.appendChild(linePath);
+
+            box.appendChild(svg);
+            container.appendChild(box);
+            return box;
+        }
+
         function makeSelect(options, current, onChange, flex) {
             const sel = document.createElement('select');
             sel.className = 'win98-select';
@@ -1341,59 +1424,80 @@
             }
 
             if (activeDbTab === 'actors') {
-                // Name + Role side by side
-                const nameRoleRow = document.createElement('div');
-                nameRoleRow.className = 'form-row';
-                createFormField(nameRoleRow, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); });
-
-                const roleGroup = document.createElement('div');
-                roleGroup.className = 'form-group';
-                roleGroup.style.flex = '1';
-                const roleLbl = document.createElement('label');
-                roleLbl.textContent = 'Role';
-                roleGroup.appendChild(roleLbl);
-                roleGroup.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
-                nameRoleRow.appendChild(roleGroup);
-                formPanel.appendChild(nameRoleRow);
-
-                // Biography (renamed from Flavor Text) under Name/Role
-                createFormField(formPanel, 'Biography', item.flavor || '', val => { item.flavor = val; });
-
-                const statsRow = document.createElement('div');
-                statsRow.className = 'form-row';
                 item.baseParams = item.baseParams || {};
                 const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : (item[key] != null ? item[key] : fallback);
-                createFormField(statsRow, 'Base HP', base('maxHp', 10), val => { item.baseParams.maxHp = parseFloat(val) || 10; }, 'number');
-                createFormField(statsRow, 'Base MP Drain', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; }, 'number');
-                createFormField(statsRow, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; }, 'number');
-                formPanel.appendChild(statsRow);
 
-                const combatStatsRow = document.createElement('div');
-                combatStatsRow.className = 'form-row';
-                ['atk', 'def', 'mat', 'mdf'].forEach(key => {
-                    createFormField(combatStatsRow, 'Base ' + key.toUpperCase(), base(key, 10), val => {
-                        item.baseParams[key] = parseFloat(val) || 0;
-                    }, 'number');
-                });
-                formPanel.appendChild(combatStatsRow);
+                // Top row: Identity | Level & Rewards | Capacity, three tight groupboxes
+                const topRow = document.createElement('div');
+                topRow.className = 'groupbox-grid';
+                topRow.style.gridTemplateColumns = '1.3fr 1fr 1fr';
+                formPanel.appendChild(topRow);
 
-                const capacityRow = document.createElement('div');
-                capacityRow.className = 'form-row';
-                createFormField(capacityRow, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; }, 'number');
-                createFormField(capacityRow, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; }, 'number');
-                createFormField(capacityRow, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; }, 'number');
-                formPanel.appendChild(capacityRow);
+                const idBox = makeGroupbox(topRow, 'Identity');
+                createFormField(idBox, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); }, 'text', false, null, false);
+                const roleField = document.createElement('div');
+                roleField.className = 'form-group field-inline';
+                const roleLbl = document.createElement('label');
+                roleLbl.textContent = 'Role';
+                roleField.appendChild(roleLbl);
+                roleField.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
+                idBox.appendChild(roleField);
+                createFormField(idBox, 'Biography', item.flavor || '', val => { item.flavor = val; }, 'text', false, null, false);
 
-                const growthRow = document.createElement('div');
-                growthRow.className = 'form-row';
-                createFormField(growthRow, 'Exp Growth', item.expGrowth || 0, val => { item.expGrowth = parseInt(val) || 0; }, 'number');
-                createFormField(growthRow, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; }, 'number');
-                formPanel.appendChild(growthRow);
+                const lvlBox = makeGroupbox(topRow, 'Level & Rewards');
+                createFormField(lvlBox, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; renderActorStatCurves(); }, 'number', false, null, false);
+                createFormField(lvlBox, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; renderActorStatCurves(); }, 'number', false, null, false);
+                createFormField(lvlBox, 'Exp Growth', item.expGrowth || 0, val => { item.expGrowth = parseInt(val) || 0; }, 'number', false, null, false);
+                createFormField(lvlBox, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; }, 'number', false, null, false);
+
+                const capBox = makeGroupbox(topRow, 'Capacity');
+                createFormField(capBox, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; }, 'number', false, null, false);
+                createFormField(capBox, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; }, 'number', false, null, false);
+                createFormField(capBox, 'MP Drain', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; renderActorStatCurves(); }, 'number', false, null, false);
+
+                // Base Stats groupbox: editable base value + growth-curve sparkline per stat
+                const statsBox = makeGroupbox(formPanel, 'Base Stats & Growth Curves (Lv 1-' + (item.maxLevel || 99) + ')');
+                const statsGrid = document.createElement('div');
+                statsGrid.className = 'groupbox-grid';
+                statsGrid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+                statsBox.appendChild(statsGrid);
+
+                const growthCfg = (dbPayload.system && dbPayload.system.growth) || {};
+                const exponent = growthCfg.growthExponent != null ? growthCfg.growthExponent : 1.2;
+                const rates = growthCfg.growthRates || {};
+                const STAT_DEFS = [
+                    ['maxHp', 'Max HP'], ['atk', 'ATK'], ['def', 'DEF'],
+                    ['mat', 'MAT'], ['mdf', 'MDF'], ['mpd', 'MP Drain']
+                ];
+                function renderActorStatCurves() {
+                    statsGrid.innerHTML = '';
+                    STAT_DEFS.forEach(([key, label]) => {
+                        const cell = document.createElement('div');
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'form-control win98-input';
+                        input.style.cssText = 'width: 100%; margin-bottom: 3px;';
+                        input.value = base(key, 10);
+                        input.oninput = () => {
+                            item.baseParams[key] = parseFloat(input.value) || 0;
+                            setDirty(true);
+                            renderActorStatCurves();
+                        };
+                        cell.appendChild(input);
+                        statsGrid.appendChild(cell);
+                        const rate = rates[key] != null ? rates[key] : (key === 'maxHp' ? 0.15 : 0);
+                        buildStatCurve(cell, label, base(key, 10), rate,
+                            item.growthMultiplier == null ? 1 : item.growthMultiplier, exponent, item.maxLevel || 99);
+                    });
+                }
+                renderActorStatCurves();
 
                 ensurePortraitKeys();
                 // Sprite fields in a horizontal row
+                const spriteBox = makeGroupbox(formPanel, 'Sprites');
                 const spriteRow = document.createElement('div');
                 spriteRow.className = 'form-row';
+                spriteBox.appendChild(spriteRow);
                 window.createSpriteField(spriteRow, 'Sprite Key', item.spriteKey || '', (path) => {
                     item.spriteKey = path;
                     setDirty(true);
@@ -1402,13 +1506,16 @@
                     item.smallBattler = path;
                     setDirty(true);
                 }, false, 'smallBattlers', true);
-                formPanel.appendChild(spriteRow);
 
-                createCheckboxField(formPanel, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
-                createCheckboxField(formPanel, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; });
-                createFormField(formPanel, 'Tier', item.tier, v => { item.tier = parseFloat(v); }, 'number');
-                createFormField(formPanel, 'Discipline (Item Creation)', item.discipline, v => { item.discipline = v; }, 'text');
-                createCheckboxField(formPanel, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
+                const flagsBox = makeGroupbox(formPanel, 'Flags');
+                createCheckboxField(flagsBox, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
+                createCheckboxField(flagsBox, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; });
+                createCheckboxField(flagsBox, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
+                const flagsFieldsRow = document.createElement('div');
+                flagsFieldsRow.className = 'form-row';
+                flagsBox.appendChild(flagsFieldsRow);
+                createFormField(flagsFieldsRow, 'Tier', item.tier, v => { item.tier = parseFloat(v); }, 'number');
+                createFormField(flagsFieldsRow, 'Discipline (Item Creation)', item.discipline, v => { item.discipline = v; }, 'text');
 
                 // Three-column grid: Skills, Passives, Traits
                 const threeCol = document.createElement('div');

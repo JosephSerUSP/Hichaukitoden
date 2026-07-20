@@ -502,6 +502,93 @@
             margin-left: 4px;
         }
 
+        /* --- COMPACT GROUPBOX (RM2003-style dense sections) --- */
+        fieldset.groupbox {
+            margin: 0;
+            padding: 3px 6px 6px;
+            border: 1px solid;
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+        }
+
+        fieldset.groupbox legend {
+            font-size: 11px;
+            padding: 0 3px;
+        }
+
+        fieldset.groupbox .form-row,
+        fieldset.groupbox .form-group.field-inline {
+            margin-bottom: 4px;
+        }
+
+        /* Narrow groupbox columns: stack label above input instead of a
+           fixed-width label eating the whole column. */
+        fieldset.groupbox .form-group.field-inline {
+            flex-wrap: wrap;
+        }
+
+        fieldset.groupbox .form-group.field-inline label {
+            flex: 1 0 100%;
+        }
+
+        fieldset.groupbox .form-group.field-inline .form-control {
+            flex: 1 0 100%;
+        }
+
+        fieldset.groupbox .form-row:last-child,
+        fieldset.groupbox .form-group.field-inline:last-child,
+        fieldset.groupbox > *:last-child {
+            margin-bottom: 0;
+        }
+
+        .groupbox-grid {
+            display: grid;
+            gap: 6px;
+        }
+
+        /* --- STAT CURVE SPARKLINE --- */
+        .stat-curve {
+            border: 1px solid;
+            border-color: var(--win-shadow) var(--win-white) var(--win-white) var(--win-shadow);
+            background-color: var(--win-white, #fff);
+            padding: 3px 4px;
+        }
+
+        .stat-curve-head {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .stat-curve-head .stat-curve-val {
+            font-weight: normal;
+            color: var(--win-dark-shadow);
+        }
+
+        .stat-curve svg {
+            width: 100%;
+            height: 30px;
+            display: block;
+        }
+
+        .stat-curve .curve-grid {
+            stroke: var(--win-shadow);
+            stroke-width: 1;
+            opacity: 0.5;
+        }
+
+        .stat-curve .curve-fill {
+            fill: var(--win-navy, #000080);
+            opacity: 0.12;
+        }
+
+        .stat-curve .curve-path {
+            fill: none;
+            stroke: var(--win-navy, #000080);
+            stroke-width: 1.25;
+        }
+
         /* --- STATUS BAR --- */
         .status-bar {
             background-color: var(--win-gray);
