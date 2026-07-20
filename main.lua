@@ -1487,6 +1487,31 @@ elseif paramDef.type == "script" then
             end
         end
 
+        -- Optional per-map fog: { color = {r,g,b}, density > 0, minFactor 0..1 }.
+        -- The renderer treats absent fog as black fog (plain distance
+        -- darkening), so only the shape of a PRESENT fog table is checked.
+        if map.fog ~= nil then
+            local fogDesc = "map '" .. tostring(map.name) .. "' fog"
+            if check(type(map.fog) == "table", fogDesc .. " must be a table") then
+                local c = map.fog.color
+                if c ~= nil then
+                    local isTriple = type(c) == "table" and #c == 3
+                        and type(c[1]) == "number" and type(c[2]) == "number" and type(c[3]) == "number"
+                    if check(isTriple, fogDesc .. ".color must be an {r,g,b} triple") then
+                        for ch = 1, 3 do
+                            check(c[ch] >= 0 and c[ch] <= 1,
+                                fogDesc .. ".color channel " .. ch .. " (" .. tostring(c[ch]) .. ") is out of range 0..1")
+                        end
+                    end
+                end
+                check(map.fog.density == nil or (type(map.fog.density) == "number" and map.fog.density > 0),
+                    fogDesc .. ".density (" .. tostring(map.fog.density) .. ") must be a number > 0")
+                check(map.fog.minFactor == nil or (type(map.fog.minFactor) == "number"
+                        and map.fog.minFactor >= 0 and map.fog.minFactor <= 1),
+                    fogDesc .. ".minFactor (" .. tostring(map.fog.minFactor) .. ") must be a number in 0..1")
+            end
+        end
+
         for i, ev in ipairs(map.events or {}) do
             local desc = "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")"
             -- A door renders into the wall slice it occupies, so it only

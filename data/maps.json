@@ -3644,8 +3644,7 @@
         0.4
       ],
       "density": 0.3,
-      "minFactor": 0.03,
-      "mode": "color"
+      "minFactor": 0.03
     }
   },
   {

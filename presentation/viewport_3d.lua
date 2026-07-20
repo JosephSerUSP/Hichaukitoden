@@ -1,7 +1,6 @@
 local viewport_3d = {}
 local ui = require("presentation.ui")
 local exploration = require("engine.exploration")
-local config = require("engine.config")
 
 -- Direction vectors (matching exploration.lua)
 local DIRS = {
@@ -53,41 +52,23 @@ end
 --   { "wallRows": [0,1], "doorRow": 2, "skyRow": 3 }
 -- skyRow is omitted entirely when the atlas has no sky strip. Missing
 -- manifest = the town_001 shape (wallRows {0,1}, doorRow 2, skyRow 3).
--- Fog config: when present (per-map, in `mapData.fog`), distance-based
--- darkening is replaced with blending toward a fog color, revealing a
--- parallax-like mist/atmosphere behind distant tiles.  When absent/nil,
--- the old black-darkening behavior is preserved exactly (equivalent to
--- fogColor = {0,0,0} with default density/minFactor).
--- Supply an optional `fog` key in the map entry (maps.json):
+-- Fog config: an optional per-map `fog` key (maps.json):
 --   "fog": { "color": [0.5, 0.55, 0.6], "density": 0.35, "minFactor": 0.12 }
+-- Distance shading is a mix toward the fog color; the pre-fog "darken with
+-- distance" behavior is EXACTLY this formula with a black fog color, so
+-- there is only one shading model -- a map without fog just uses the
+-- defaults below. That identity is what keeps the wall loop, the sprite
+-- tint, and the floor/ceiling shader on a single code path each instead
+-- of branching per feature.
+local FOG_DEFAULTS = { color = { 0, 0, 0 }, density = 0.35, minFactor = 0.12 }
 local function getFogConfig(mapData)
-    if not mapData then return nil end
-    local fog = mapData.fog
-    if not fog then return nil end
+    local fog = mapData and mapData.fog
+    if not fog then return FOG_DEFAULTS, false end
     return {
-        color     = fog.color     or {0, 0, 0},
-        density   = fog.density   or 0.35,
-        minFactor = fog.minFactor or 0.12,
-        mode      = fog.mode      or "color",
-        gradient  = fog.gradient  or nil,
-    }
-end
-
--- Resolve the fog color (flat or gradient) at a given screen Y.
--- For gradient mode, interpolates between top and bottom colors based on
--- vertical position 0..1 within the viewport. For color mode, returns
--- the flat fog color.
-local function resolveFogColor(fog, screenY, viewportH)
-    if not fog then return 0, 0, 0 end
-    if fog.mode == "gradient" and fog.gradient then
-        local t = math.max(0, math.min(1, screenY / viewportH))
-        local top = fog.gradient.top   or fog.color
-        local bot = fog.gradient.bottom or fog.color
-        return top[1] + (bot[1] - top[1]) * t,
-               top[2] + (bot[2] - top[2]) * t,
-               top[3] + (bot[3] - top[3]) * t
-    end
-    return fog.color[1] or 0, fog.color[2] or 0, fog.color[3] or 0
+        color     = fog.color or FOG_DEFAULTS.color,
+        density   = fog.density or FOG_DEFAULTS.density,
+        minFactor = fog.minFactor or FOG_DEFAULTS.minFactor,
+    }, true
 end
 
 local ATLAS_TILE = 64
@@ -326,9 +307,8 @@ end
 
 -- Draws one shaded floor/ceiling plane (the screen rows y0..y0+rectH) via
 -- the floor-casting shader, sampling atlasRow's variant-column texture and
--- the given light texture (or full white if the map has none).
--- `fog` (optional): resolved fog config table from getFogConfig(); when nil
--- the shader receives fogColor=(0,0,0) preserving the old darkening behavior.
+-- the given light texture (or full white if the map has none). `fog` is the
+-- always-resolved config from getFogConfig() -- black fog = plain darkening.
 local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)
     local shader = ensureFloorCeilShader()
     if not shader then return false end
@@ -340,11 +320,9 @@ local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, p
     shader:send("atlasW", atlas.w)
     shader:send("atlasH", atlas.h)
     shader:send("targetRow", atlasRow)
-
-    -- Fog uniforms: fogColor defaults to black (old behavior) when fog is nil
-    shader:send("fogColor", fog and fog.color or { 0, 0, 0 })
-    shader:send("fogDensity", (fog and fog.density) or 0.35)
-    shader:send("fogMinFactor", (fog and fog.minFactor) or 0.12)
+    shader:send("fogColor", fog.color)
+    shader:send("fogDensity", fog.density)
+    shader:send("fogMinFactor", fog.minFactor)
 
     if lightTex then
         shader:send("lightTex", lightTex)
@@ -469,8 +447,10 @@ function viewport_3d.draw(session)
 
     local mapData = session.currentMapData
 
-    -- Resolve per-map fog config (nil = old behavior: darken to black)
-    local fog = getFogConfig(mapData)
+    -- Resolved fog config -- black fog (the default) IS the plain
+    -- darken-with-distance behavior; hasFog only gates the extra
+    -- background stripe walls need for non-black fog to blend against.
+    local fog, hasFog = getFogConfig(mapData)
 
     -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
@@ -617,76 +597,54 @@ function viewport_3d.draw(session)
         local vx0, vy0 = math.floor(hitWX), math.floor(hitWY)
         local litR, litG, litB = sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
 
-        -- Side darkening for corner shadows (applied before fog mixing)
+        -- Darken Y-facing walls for dynamic corner shadows (once -- this
+        -- feeds every branch below, so none of them reapply it)
         if side == 1 then
             litR, litG, litB = litR * 0.76, litG * 0.76, litB * 0.76
         end
 
-        -- Render textured slice or fallback color slice.
-        if fog then
-            local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + perpWallDist * fog.density))
-            local fc = fog.color
+        -- One shading model: mix toward the fog color by distance. Black
+        -- fog (the no-fog default) makes fogAlpha exactly the old
+        -- "brightness" multiplier, so there's no separate darkening path.
+        local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + perpWallDist * fog.density))
+        local fc = fog.color
 
-            if atlas then
-                local originX, originY
-                if doorLookup[mapX .. "," .. mapY] then
-                    originX = doorVariant(mapX, mapY) * ATLAS_TILE
-                    originY = atlas.doorRow * ATLAS_TILE
-                else
-                    local variant = wallVariant(mapX, mapY, atlas.wallVariants)
-                    originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
-                    originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
-                end
-                sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
+        if atlas then
+            local originX, originY
+            if doorLookup[mapX .. "," .. mapY] then
+                originX = doorVariant(mapX, mapY) * ATLAS_TILE
+                originY = atlas.doorRow * ATLAS_TILE
+            else
+                local variant = wallVariant(mapX, mapY, atlas.wallVariants)
+                originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
+                originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
+            end
+            sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
 
-                -- Two-layer approach matching the floor/ceiling shader:
-                -- 1) Draw fog background stripe (opaque)
-                -- 2) Draw wall texture on top with alpha = fogAlpha
-                -- Result: fogColor*(1-fogAlpha) + texel*vertexLight*fogAlpha
-                local wallH = drawEnd - drawStart
+            if hasFog then
+                -- Non-black fog needs a background to alpha-blend against
+                -- (matching the shader's mix()): an opaque fog stripe, then
+                -- the lit texture at alpha = fogAlpha on top. Result:
+                -- fogColor*(1-fogAlpha) + texel*vertexLight*fogAlpha.
                 love.graphics.setColor(fc[1], fc[2], fc[3], 1)
-                love.graphics.rectangle("fill", x, drawStart, 1, wallH)
+                love.graphics.rectangle("fill", x, drawStart, 1, drawEnd - drawStart)
                 love.graphics.setColor(litR, litG, litB, fogAlpha)
-                love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
             else
-                -- Retro flat-shaded colors if tileset is missing
-                local r = (side == 0) and 0.4 or 0.3
-                local g = (side == 0) and 0.45 or 0.35
-                local b = (side == 0) and 0.55 or 0.45
-                love.graphics.setColor(
-                    r * litR * fogAlpha + fc[1] * (1 - fogAlpha),
-                    g * litG * fogAlpha + fc[2] * (1 - fogAlpha),
-                    b * litB * fogAlpha + fc[3] * (1 - fogAlpha), 1)
-                love.graphics.line(x, drawStart, x, drawEnd)
+                -- Black fog: mix() collapses to a plain multiply, no
+                -- background stripe needed.
+                love.graphics.setColor(litR * fogAlpha, litG * fogAlpha, litB * fogAlpha, 1)
             end
+            love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
         else
-            -- No fog: old darkening behavior (brightness * vertexLight)
-            local brightness = math.max(0.12, 1.0 / (1.0 + perpWallDist * 0.35))
-            if side == 1 then brightness = brightness * 0.76 end
-            local wr = litR * brightness
-            local wg = litG * brightness
-            local wb = litB * brightness
-
-            if atlas then
-                local originX, originY
-                if doorLookup[mapX .. "," .. mapY] then
-                    originX = doorVariant(mapX, mapY) * ATLAS_TILE
-                    originY = atlas.doorRow * ATLAS_TILE
-                else
-                    local variant = wallVariant(mapX, mapY, atlas.wallVariants)
-                    originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
-                    originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
-                end
-                sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
-                love.graphics.setColor(wr, wg, wb, 1)
-                love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
-            else
-                local r = (side == 0) and 0.4 or 0.3
-                local g = (side == 0) and 0.45 or 0.35
-                local b = (side == 0) and 0.55 or 0.45
-                love.graphics.setColor(r * wr, g * wg, b * wb, 1)
-                love.graphics.line(x, drawStart, x, drawEnd)
-            end
+            -- Retro flat-shaded colors if tileset is missing
+            local r = (side == 0) and 0.4 or 0.3
+            local g = (side == 0) and 0.45 or 0.35
+            local b = (side == 0) and 0.55 or 0.45
+            love.graphics.setColor(
+                r * litR * fogAlpha + fc[1] * (1 - fogAlpha),
+                g * litG * fogAlpha + fc[2] * (1 - fogAlpha),
+                b * litB * fogAlpha + fc[3] * (1 - fogAlpha), 1)
+            love.graphics.line(x, drawStart, x, drawEnd)
         end
     end
 
@@ -740,21 +698,14 @@ function viewport_3d.draw(session)
             local drawStartY = math.floor(70 - spriteHeight / 2)
             local drawStartX = math.floor(spriteScreenX - spriteWidth / 2)
 
-            -- Render stripe by stripe
-            local spriteR, spriteG, spriteB
-            if fog then
-                local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
-                local fc = fog.color
-                -- Mix fog color into tint (multiplied by sprite texel, but
-                -- sprites are small billboards — the visual is close enough
-                -- to the shader's mix() for practical purposes).
-                spriteR = 1 * fogAlpha + fc[1] * (1 - fogAlpha)
-                spriteG = 1 * fogAlpha + fc[2] * (1 - fogAlpha)
-                spriteB = 1 * fogAlpha + fc[3] * (1 - fogAlpha)
-            else
-                local brightness = math.max(0.12, 1.0 / (1.0 + transformY * 0.35))
-                spriteR, spriteG, spriteB = brightness, brightness, brightness
-            end
+            -- Same single shading model as walls: tint = mix(fogColor,
+            -- white, fogAlpha), which with the black no-fog default is
+            -- exactly the old brightness grey.
+            local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
+            local fc = fog.color
+            local spriteR = fogAlpha + fc[1] * (1 - fogAlpha)
+            local spriteG = fogAlpha + fc[2] * (1 - fogAlpha)
+            local spriteB = fogAlpha + fc[3] * (1 - fogAlpha)
 
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
                 if stripeX >= 0 and stripeX < 256 then

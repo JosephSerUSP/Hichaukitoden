@@ -710,7 +710,6 @@
                 document.getElementById('prop-map-fog-density-val').textContent = fog.density != null ? fog.density : '0.35';
                 document.getElementById('prop-map-fog-minfactor').value = fog.minFactor != null ? fog.minFactor : 0.12;
                 document.getElementById('prop-map-fog-minfactor-val').textContent = fog.minFactor != null ? fog.minFactor : '0.12';
-                document.getElementById('prop-map-fog-mode').value = fog.mode || 'color';
             } else {
                 document.getElementById('prop-map-fog-enabled').checked = false;
                 document.getElementById('prop-map-fog-color').value = '#73808a';
@@ -718,7 +717,6 @@
                 document.getElementById('prop-map-fog-density-val').textContent = '0.35';
                 document.getElementById('prop-map-fog-minfactor').value = 0.12;
                 document.getElementById('prop-map-fog-minfactor-val').textContent = '0.12';
-                document.getElementById('prop-map-fog-mode').value = 'color';
             }
             toggleFogFields();
 
@@ -894,13 +892,16 @@
             if (ceilingStyle === 'sky') map.ceilingStyle = 'sky';
             else delete map.ceilingStyle;
 
-            // Fog settings
+            // Fog settings. NaN-checked rather than ||-defaulted: a
+            // minFactor of 0 (fully fogged at distance) is a legitimate
+            // slider value that || would silently replace with the default.
             if (document.getElementById('prop-map-fog-enabled').checked) {
+                const density = parseFloat(document.getElementById('prop-map-fog-density').value);
+                const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value);
                 map.fog = {
                     color: hexToRgb01(document.getElementById('prop-map-fog-color').value),
-                    density: parseFloat(document.getElementById('prop-map-fog-density').value) || 0.35,
-                    minFactor: parseFloat(document.getElementById('prop-map-fog-minfactor').value) || 0.12,
-                    mode: document.getElementById('prop-map-fog-mode').value || 'color',
+                    density: isNaN(density) ? 0.35 : density,
+                    minFactor: isNaN(minFactor) ? 0.12 : minFactor,
                 };
             } else {
                 delete map.fog;
