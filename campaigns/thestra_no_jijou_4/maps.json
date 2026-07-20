@@ -2,31 +2,31 @@
   {
     "id": 1,
     "title": "Thestra Village",
-    "intro": "A remote village locked under a perpetual storm. The blight is spreading from the Sunken Temple.",
+    "intro": "A remote village huddled beneath an endless storm. The blight seeps from the Sunken Temple, and hope wears thin.",
     "depth": 0,
     "music": "town_melancholy",
     "image": "ThestraVillage.png",
     "layout": [
-      "###################",
-      "#.........#........#",
-      "#.......###......#",
-      "#....#..........#.#",
-      "#....#..........#.#",
-      "#...#........#.....#",
-      "#......#........#..#",
-      "#.......#...#.....#",
-      "#....#.........#..#",
-      "#....#............#",
-      "#......#.......#..#",
-      "#........#.......#",
-      "###################"
+      "#####################",
+      "#...#.......#.......#",
+      "#...#...#...#.......#",
+      "#...###.###.........#",
+      "#.....#.......#.....#",
+      "#...#...#...#.......#",
+      "#.....#.......#.....#",
+      "#..####....####.....#",
+      "#.......#..........##",
+      "#.......#...........#",
+      "#.......#.......#...#",
+      "#.......#.....#.....#",
+      "#####################"
     ],
     "events": [
       {
         "id": 1,
         "x": 5,
         "y": 3,
-        "sprite": "",
+        "sprite": "assets/sprites/NPC01.png",
         "trigger": "interact",
         "pages": [
           {
@@ -72,11 +72,16 @@
                         ]
                       },
                       {
-                        "label": "Not now",
+                        "label": "I need to prepare first",
                         "commands": [
                           {
-                            "type": "JUMP_TO_LABEL",
-                            "label": "aris_menu"
+                            "type": "TEXT",
+                            "speaker": "Elder Aris",
+                            "text": "Take your time, but not too long. The village depends on you."
+                          },
+                          {
+                            "type": "CALL_COMMON_EVENT",
+                            "commonEventId": 33
                           }
                         ]
                       }
@@ -102,24 +107,34 @@
                         "type": "CHOICE",
                         "options": [
                           {
-                            "label": "I'll find her",
+                            "label": "I will find her",
                             "commands": [
                               {
                                 "type": "QUEST_OFFER",
                                 "questId": "missing_healer"
                               },
                               {
-                                "type": "JUMP_TO_LABEL",
-                                "label": "aris_menu"
+                                "type": "TEXT",
+                                "speaker": "Elder Aris",
+                                "text": "Thank you. She was last seen near the Hall of Echoes."
+                              },
+                              {
+                                "type": "CALL_COMMON_EVENT",
+                                "commonEventId": 33
                               }
                             ]
                           },
                           {
-                            "label": "Not now",
+                            "label": "I will search later",
                             "commands": [
                               {
-                                "type": "JUMP_TO_LABEL",
-                                "label": "aris_menu"
+                                "type": "TEXT",
+                                "speaker": "Elder Aris",
+                                "text": "Every hour counts, but I understand. The temple is treacherous."
+                              },
+                              {
+                                "type": "CALL_COMMON_EVENT",
+                                "commonEventId": 33
                               }
                             ]
                           }
@@ -206,14 +221,33 @@
                                         ],
                                         "elseCommands": [
                                           {
-                                            "type": "TEXT",
-                                            "speaker": "Elder Aris",
-                                            "text": "Your deeds are already legend. Rest and prepare for what lies ahead."
-                                          },
-                                          {
-                                            "type": "JUMP_TO_LABEL",
-                                            "label": "aris_menu"
-                                          }
+                                              "type": "TEXT",
+                                              "speaker": "Elder Aris",
+                                              "text": "Your deeds are already legend. Rest while you can."
+                                            },
+                                            {
+                                              "type": "CHOICE",
+                                              "options": [
+                                                {
+                                                  "label": "I will",
+                                                  "commands": [
+                                                    {
+                                                      "type": "CALL_COMMON_EVENT",
+                                                      "commonEventId": 33
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "label": "What should I do next?",
+                                                  "commands": [
+                                                    {
+                                                      "type": "JUMP_TO_LABEL",
+                                                      "label": "aris_menu"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
                                         ]
                                       }
                                     ]
@@ -227,7 +261,7 @@
                           {
                             "type": "TEXT",
                             "speaker": "Elder Aris",
-                            "text": "The blight grows. Enter the temple and find the source. Also, our healer is missing."
+                            "text": "The blight spreads while we wait. We need someone to enter the temple and find our healer."
                           },
                           {
                             "type": "JUMP_TO_LABEL",
@@ -251,7 +285,7 @@
         "id": 2,
         "x": 10,
         "y": 5,
-        "sprite": "",
+        "sprite": "assets/sprites/NPC03.png",
         "trigger": "interact",
         "pages": [
           {
@@ -278,18 +312,18 @@
                       {
                         "type": "TEXT",
                         "speaker": "Healer Mina",
-                        "text": "Thank you for rescuing me. Elder Aris told you about the tokens?"
+                        "text": "Elder Aris mentioned the tokens, yes? We need three of them."
                       },
                       {
                         "type": "TEXT",
                         "speaker": "Healer Mina",
-                        "text": "We need the Token of Earth, Token of Fire, and Token of Shadow to cleanse the blight."
+                        "text": "The Token of Earth, Token of Fire, and Token of Shadow. Together they can cleanse the blight."
                       },
                       {
                         "type": "CHOICE",
                         "options": [
                           {
-                            "label": "I'll find them",
+                            "label": "I will find them",
                             "commands": [
                               {
                                 "type": "QUEST_OFFER",
@@ -298,7 +332,7 @@
                               {
                                 "type": "TEXT",
                                 "speaker": "Healer Mina",
-                                "text": "Each lies deep in the temple. Be careful – powerful guardians protect them."
+                                "text": "Each lies in a different depth of the temple. Powerful guardians watch over them."
                               },
                               {
                                 "type": "JUMP_TO_LABEL",
@@ -307,11 +341,16 @@
                             ]
                           },
                           {
-                            "label": "Not yet",
+                            "label": "I am not ready yet",
                             "commands": [
                               {
-                                "type": "JUMP_TO_LABEL",
-                                "label": "mina_menu"
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "Come back when you are. I will be here preparing the ritual."
+                              },
+                              {
+                                "type": "CALL_COMMON_EVENT",
+                                "commonEventId": 33
                               }
                             ]
                           }
@@ -394,7 +433,7 @@
                               {
                                 "type": "TEXT",
                                 "speaker": "Healer Mina",
-                                "text": "Have you found the tokens? Earth, Fire, Shadow – they are in the lower levels."
+                                "text": "Any luck with the tokens? Earth, Fire, Shadow – they are on the lower floors."
                               },
                               {
                                 "type": "JUMP_TO_LABEL",
@@ -405,7 +444,7 @@
                               {
                                 "type": "TEXT",
                                 "speaker": "Healer Mina",
-                                "text": "I owe you my life. If you need healing, I can help."
+                                "text": "I owe you my life. If you need healing, I am happy to help."
                               },
                               {
                                 "type": "CHOICE",
@@ -419,7 +458,7 @@
                                       {
                                         "type": "TEXT",
                                         "speaker": "Healer Mina",
-                                        "text": "You're fully restored. Be safe on your journey."
+                                        "text": "All restored. Stay safe out there."
                                       },
                                       {
                                         "type": "JUMP_TO_LABEL",
@@ -428,11 +467,16 @@
                                     ]
                                   },
                                   {
-                                    "label": "Just talking",
+                                    "label": "Just catching up",
                                     "commands": [
                                       {
-                                        "type": "JUMP_TO_LABEL",
-                                        "label": "mina_menu"
+                                        "type": "TEXT",
+                                        "speaker": "Healer Mina",
+                                        "text": "The village is grateful for everything you have done."
+                                      },
+                                      {
+                                        "type": "CALL_COMMON_EVENT",
+                                        "commonEventId": 33
                                       }
                                     ]
                                   }
@@ -449,15 +493,38 @@
                   {
                     "type": "TEXT",
                     "speaker": "Healer Mina",
-                    "text": "I'm glad you're safe. The temple is dangerous."
+                    "text": "I am glad you are safe. The temple holds many dangers."
                   },
                   {
-                    "type": "CALL_COMMON_EVENT",
-                    "commonEventId": 33
-                  },
-                  {
-                    "type": "JUMP_TO_LABEL",
-                    "label": "mina_menu"
+                    "type": "CHOICE",
+                    "options": [
+                      {
+                        "label": "Heal me",
+                        "commands": [
+                          {
+                            "type": "RECOVER_PARTY"
+                          },
+                          {
+                            "type": "TEXT",
+                            "speaker": "Healer Mina",
+                            "text": "All restored. Stay safe out there."
+                          },
+                          {
+                            "type": "JUMP_TO_LABEL",
+                            "label": "mina_menu"
+                          }
+                        ]
+                      },
+                      {
+                        "label": "Goodbye for now",
+                        "commands": [
+                          {
+                            "type": "CALL_COMMON_EVENT",
+                            "commonEventId": 33
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -473,7 +540,7 @@
         "id": 3,
         "x": 15,
         "y": 7,
-        "sprite": "",
+        "sprite": "assets/sprites/NPC02.png",
         "trigger": "interact",
         "pages": [
           {
@@ -486,13 +553,13 @@
               {
                 "type": "TEXT",
                 "speaker": "Shopkeeper Garrick",
-                "text": "Supplies, equipment, and a bit of gossip. What'll it be?"
+                "text": "Welcome to Garrick's Goods! Need supplies, equipment, or a bit of news?"
               },
               {
                 "type": "CHOICE",
                 "options": [
                   {
-                    "label": "Buy",
+                    "label": "Browse wares",
                     "commands": [
                       {
                         "type": "OPEN_SHOP",
@@ -505,7 +572,7 @@
                     ]
                   },
                   {
-                    "label": "Gossip",
+                    "label": "Heard any news?",
                     "commands": [
                       {
                         "type": "CALL_COMMON_EVENT",
@@ -518,11 +585,12 @@
                     ]
                   },
                   {
-                    "label": "Leave",
+                    "label": "I am off",
                     "commands": [
                       {
-                        "type": "CALL_COMMON_EVENT",
-                        "commonEventId": 33
+                        "type": "TEXT",
+                        "speaker": "Shopkeeper Garrick",
+                        "text": "Come back anytime. Stay safe out there."
                       }
                     ]
                   }
@@ -540,7 +608,7 @@
         "id": 4,
         "x": 2,
         "y": 10,
-        "sprite": "",
+        "sprite": "assets/sprites/NPC04.png",
         "trigger": "interact",
         "pages": [
           {
@@ -548,18 +616,18 @@
             "script": [
               {
                 "type": "LABEL",
-                "name": "villager_menu"
+                "name": "elara_menu"
               },
               {
                 "type": "TEXT",
-                "speaker": "Villager",
-                "text": "The storm never used to be this fierce. It all started when the temple bled."
+                "speaker": "Townswoman Elara",
+                "text": "The storm never used to be this fierce. It all started when the temple began bleeding darkness."
               },
               {
                 "type": "CHOICE",
                 "options": [
                   {
-                    "label": "Tell me more",
+                    "label": "Tell me about the temple",
                     "commands": [
                       {
                         "type": "CALL_COMMON_EVENT",
@@ -567,7 +635,47 @@
                       },
                       {
                         "type": "JUMP_TO_LABEL",
-                        "label": "villager_menu"
+                        "label": "elara_menu"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Any advice?",
+                    "commands": [
+                      {
+                        "type": "CONDITIONAL_BRANCH",
+                        "condition": "questStatus:the_temple_blight:active",
+                        "commands": [
+                          {
+                            "type": "TEXT",
+                            "speaker": "Townswoman Elara",
+                            "text": "Old Man Harker by the gate says the temple's first floor is full of whispering echoes. Do not let them lead you astray."
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "type": "CONDITIONAL_BRANCH",
+                            "condition": "questStatus:missing_healer:active",
+                            "commands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Townswoman Elara",
+                                "text": "If you are looking for Mina, she was last seen near a side chamber on the first floor. Poor woman went in alone."
+                              }
+                            ],
+                            "elseCommands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Townswoman Elara",
+                                "text": "Stock up at Garrick's before heading into the temple. His prices are fair, and the depths are unforgiving."
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "JUMP_TO_LABEL",
+                        "label": "elara_menu"
                       }
                     ]
                   },
@@ -585,7 +693,7 @@
             ]
           }
         ],
-        "name": "Villager",
+        "name": "Townswoman Elara",
         "transparent": false,
         "priority": "same",
         "spawn": "Fixed"
@@ -595,8 +703,143 @@
         "x": 5,
         "y": 8,
         "door": true,
-        "name": "DoorTest",
-        "trigger": "interact"
+        "name": "Your Cottage",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "LABEL",
+                "name": "cottage_menu"
+              },
+              {
+                "type": "TEXT",
+                "text": "Your cottage stands quiet. The hearth is cold, but it is safe.",
+                "style": "terminal"
+              },
+              {
+                "type": "CHOICE",
+                "options": [
+                  {
+                    "label": "Rest by the fire",
+                    "commands": [
+                      {
+                        "type": "RECOVER_PARTY"
+                      },
+                      {
+                        "type": "TEXT",
+                        "text": "The warmth restores you. You feel ready to face the blight.",
+                        "style": "terminal"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Step back outside",
+                    "commands": [
+                      {
+                        "type": "LOG",
+                        "text": "There is work to be done."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "x": 8,
+        "y": 2,
+        "door": true,
+        "name": "Village Shrine",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "TEXT",
+                "text": "The weathered shrine stands unbowed. Faded offerings lie at the altar.",
+                "style": "terminal"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "flag:cursebeast_defeated",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "text": "A warm light radiates from the shrine. The spirits of Thestra honor your deeds.",
+                    "style": "terminal"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "text": "You offer a silent prayer. The shrine feels watchful, waiting.",
+                    "style": "terminal"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "x": 17,
+        "y": 10,
+        "sprite": "assets/sprites/NPC05.png",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "TEXT",
+                "speaker": "Young Darius",
+                "text": "Hey! You are the summoner everyone is talking about, right?"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "flag:cursebeast_defeated",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "speaker": "Young Darius",
+                    "text": "You are a legend! I want to be a summoner just like you!"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "questStatus:the_temple_blight:active || questStatus:missing_healer:active || questStatus:the_three_tokens:active",
+                    "commands": [
+                      {
+                        "type": "TEXT",
+                        "speaker": "Young Darius",
+                        "text": "The temple is scary, but I bet you can handle it! My dad says only brave folks go down there."
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "TEXT",
+                        "speaker": "Young Darius",
+                        "text": "If you are heading into the temple, be careful! The blight makes monsters go crazy."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "name": "Young Darius",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
       }
     ],
     "treasures": [],

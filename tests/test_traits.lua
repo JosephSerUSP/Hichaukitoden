@@ -9,6 +9,13 @@ _G.love = {
 }
 
 local traits = require("engine.traits")
+local config = require("engine.config")
+
+config.growth = {
+    growthExponent = 1.2,
+    baseParams = { maxHp = 10, atk = 10, def = 10, mat = 10, mdf = 10, mpd = 2, mxa = 4, mxp = 2 },
+    growthRates = { maxHp = 0.12, atk = 0.15, def = 0.13, mat = 0.15, mdf = 0.13, mpd = 0.05 }
+}
 
 -- Simple test framework
 local passed = 0
@@ -165,6 +172,39 @@ test("battler with all combinations returns correctly ordered objects", function
     assert(objs[2].traits[1].code == "PARAM_RATE", "Passive should be second")
     assert(objs[3].traits[1].code == "3", "Equipment should be third")
     assert(objs[4].traits[1].dataId == "def", "State should be fourth")
+end)
+
+print("=== Testing creature parameter growth ===")
+
+test("actor overrides base values and uses exponential-style growth", function()
+    local battler = {
+        actorData = { baseParams = { atk = 8 }, growthMultiplier = 1 },
+        level = 10,
+        passives = {}, equipment = {}, states = {}, paramPlus = {}
+    }
+    local atk = traits.getParam(battler, "atk", mockSession)
+    -- 8 * (1 + .15 * 9^1.2) = approximately 24.76
+    assert(atk == 24, "Expected level-10 ATK to resolve to 24, got " .. tostring(atk))
+end)
+
+test("mxa and mxp remain fixed while mpd grows", function()
+    local battler = {
+        actorData = { baseParams = { mpd = 2, mxa = 4, mxp = 2 } },
+        level = 20,
+        passives = {}, equipment = {}, states = {}, paramPlus = {}
+    }
+    assert(traits.getParam(battler, "mxa", mockSession) == 4, "mxa must not grow")
+    assert(traits.getParam(battler, "mxp", mockSession) == 2, "mxp must not grow")
+    assert(traits.getParam(battler, "mpd", mockSession) == 5, "mpd should grow to 5 at level 20")
+end)
+
+test("legacy actor fields remain valid", function()
+    local battler = {
+        actorData = { maxHp = 60, mpd = 3 }, level = 1,
+        passives = {}, equipment = {}, states = {}, paramPlus = {}
+    }
+    assert(traits.getParam(battler, "maxHp", mockSession) == 60, "legacy maxHp fallback failed")
+    assert(traits.getParam(battler, "mpd", mockSession) == 3, "legacy mpd fallback failed")
 end)
 
 print(string.format("=== Tests completed: %d passed, %d failed ===", passed, failed))

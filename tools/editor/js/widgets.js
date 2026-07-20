@@ -761,12 +761,22 @@
             'combat.battleItem':           { label: 'Battle "Item" Command Uses', widget: 'itemSelect' },
             'combat.defendSkillId':        { label: '"Defend" Command Skill', widget: 'skillSelect' },
             'combat.attackSkillId':        { label: '"Attack" Command Skill', widget: 'skillSelect' },
-            'growth.hpPerLevelRate':       { label: 'HP Gain per Level (% of base)', step: 0.01, min: 0,
-                                             help: 'Each level adds this fraction of the actor\'s base max HP (0.15 = +15%/level).' },
-            'growth.statBase':             { label: 'Stat Base Value', min: 0,
-                                             help: 'The level-1 value every growth curve starts from for atk/def/mat/mdf.' },
-            'growth.statPerLevel':         { label: 'Stat Gain per Level', step: 0.1, min: 0,
-                                             help: 'Flat amount added to each stat per level on top of the base value.' },
+            'growth.growthExponent':       { label: 'Growth Curve Exponent', step: 0.1, min: 1,
+                                             help: 'Superlinear growth curve. 1.2 is the default.' },
+            'growth.baseParams.maxHp':     { label: 'Default Base Max HP', min: 0 },
+            'growth.baseParams.atk':       { label: 'Default Base ATK', min: 0 },
+            'growth.baseParams.def':       { label: 'Default Base DEF', min: 0 },
+            'growth.baseParams.mat':       { label: 'Default Base MAT', min: 0 },
+            'growth.baseParams.mdf':       { label: 'Default Base MDF', min: 0 },
+            'growth.baseParams.mpd':       { label: 'Default Base MPD', min: 0 },
+            'growth.baseParams.mxa':       { label: 'Default Max Actions (mxa)', min: 0 },
+            'growth.baseParams.mxp':       { label: 'Default Max Passives (mxp)', min: 0 },
+            'growth.growthRates.maxHp':    { label: 'Max HP Growth Rate', step: 0.01, min: 0 },
+            'growth.growthRates.atk':      { label: 'ATK Growth Rate', step: 0.01, min: 0 },
+            'growth.growthRates.def':      { label: 'DEF Growth Rate', step: 0.01, min: 0 },
+            'growth.growthRates.mat':      { label: 'MAT Growth Rate', step: 0.01, min: 0 },
+            'growth.growthRates.mdf':      { label: 'MDF Growth Rate', step: 0.01, min: 0 },
+            'growth.growthRates.mpd':      { label: 'MPD Growth Rate', step: 0.01, min: 0 },
             'growth.expPerLevel':          { label: 'XP per Level (× current level)', min: 1,
                                              help: 'XP needed for the next level = this value × the current level.' },
             'dungeon.maxFloor':            { label: 'Deepest Floor', min: 1 },
@@ -1351,10 +1361,28 @@
 
                 const statsRow = document.createElement('div');
                 statsRow.className = 'form-row';
-                createFormField(statsRow, 'Base HP', item.maxHp || 10, val => { item.maxHp = parseInt(val) || 10; }, 'number');
-                createFormField(statsRow, 'Base MP Drain', item.mpd || 2, val => { item.mpd = parseInt(val) || 2; }, 'number');
+                item.baseParams = item.baseParams || {};
+                const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : (item[key] != null ? item[key] : fallback);
+                createFormField(statsRow, 'Base HP', base('maxHp', 10), val => { item.baseParams.maxHp = parseFloat(val) || 10; }, 'number');
+                createFormField(statsRow, 'Base MP Drain', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; }, 'number');
                 createFormField(statsRow, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; }, 'number');
                 formPanel.appendChild(statsRow);
+
+                const combatStatsRow = document.createElement('div');
+                combatStatsRow.className = 'form-row';
+                ['atk', 'def', 'mat', 'mdf'].forEach(key => {
+                    createFormField(combatStatsRow, 'Base ' + key.toUpperCase(), base(key, 10), val => {
+                        item.baseParams[key] = parseFloat(val) || 0;
+                    }, 'number');
+                });
+                formPanel.appendChild(combatStatsRow);
+
+                const capacityRow = document.createElement('div');
+                capacityRow.className = 'form-row';
+                createFormField(capacityRow, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; }, 'number');
+                createFormField(capacityRow, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; }, 'number');
+                createFormField(capacityRow, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; }, 'number');
+                formPanel.appendChild(capacityRow);
 
                 const growthRow = document.createElement('div');
                 growthRow.className = 'form-row';

@@ -5,8 +5,13 @@
     "script": [
       {
         "type": "TEXT",
-        "speaker": "_",
+        "speaker": "Townswoman Elara",
         "text": "Long ago, the Sunken Temple was built to seal a primordial evil. The blight is that seal weakening."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Townswoman Elara",
+        "text": "Some say the old gods themselves laid the first stones. If the seal breaks completely... I do not want to imagine."
       },
       {
         "type": "CALL_COMMON_EVENT",
@@ -20,8 +25,18 @@
     "script": [
       {
         "type": "TEXT",
-        "speaker": "_",
-        "text": "The storm hasn't let up since the blight started. Some say it's the temple weeping."
+        "speaker": "Shopkeeper Garrick",
+        "text": "The storm has not let up since the blight started. Some say it is the temple weeping."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Shopkeeper Garrick",
+        "text": "Trade has been slow. Adventurers are scarce, and the few who entered the temple never came back."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Shopkeeper Garrick",
+        "text": "Between you and me, I have seen strange lights flickering from the temple entrance at night."
       },
       {
         "type": "CALL_COMMON_EVENT",
@@ -214,7 +229,7 @@
       {
         "type": "TEXT",
         "speaker": "_",
-        "text": "Take care."
+        "text": "May the spirits watch over you."
       }
     ]
   }

@@ -10,6 +10,25 @@ local function growthConf(key, default)
     return default
 end
 
+-- Parameters that participate in the creature growth model.  mxa/mxp are
+-- intentionally included as fixed parameters: they describe capacity, not
+-- level growth, unless a future system explicitly adds that behavior.
+local GROWTH_PARAMS = {
+    maxHp = true, atk = true, def = true, mat = true, mdf = true, mpd = true
+}
+
+local function numberOr(value, fallback)
+    return type(value) == "number" and value or fallback
+end
+
+local function actorBaseParam(data, paramName)
+    local params = data.baseParams or {}
+    if params[paramName] ~= nil then return params[paramName] end
+    -- Legacy actor fields remain valid during the data migration.
+    if data[paramName] ~= nil then return data[paramName] end
+    return nil
+end
+
 -- Returns a list of all trait objects currently active on a battler
 function traits.getActiveObjects(battler, session)
     local objs = {}
@@ -76,23 +95,36 @@ end
 -- Get a base parameter from the actor's base design
 function traits.getBaseParam(battler, paramName)
     local data = battler.actorData
-    if paramName == "maxHp" then
-        -- Scale Max HP with level
-        local base = data.maxHp or 10
-        local rate = growthConf("hpPerLevelRate", 0.15)
-        return math.floor(base + (battler.level - 1) * (base * rate))
-    elseif paramName == "atk" or paramName == "def" or paramName == "mat" or paramName == "mdf" then
-        local statBase = growthConf("statBase", 10)
-        local perLevel = growthConf("statPerLevel", 0.5)
-        return statBase + (battler.level - 1) * perLevel
-    elseif paramName == "mpd" then
-        return data.mpd or 2
-    elseif paramName == "mxa" then
-        return data.mxa or 4
-    elseif paramName == "mxp" then
-        return data.mxp or 2
+    local defaults = config.growth and config.growth.baseParams or {}
+    local base = actorBaseParam(data, paramName)
+    if base == nil then
+        if paramName == "maxHp" then
+            base = numberOr(defaults.maxHp, growthConf("statBase", 10))
+        elseif paramName == "mpd" then
+            base = numberOr(defaults.mpd, 2)
+        elseif paramName == "mxa" then
+            base = numberOr(defaults.mxa, 4)
+        elseif paramName == "mxp" then
+            base = numberOr(defaults.mxp, 2)
+        else
+            base = numberOr(defaults[paramName], growthConf("statBase", 10))
+        end
     end
-    return growthConf("statBase", 10)
+
+    if not GROWTH_PARAMS[paramName] then return base end
+
+    local rates = config.growth and config.growth.growthRates or {}
+    local rate = rates[paramName]
+    if rate == nil then
+        if paramName == "maxHp" then rate = growthConf("hpPerLevelRate", 0.15)
+        elseif paramName == "mpd" then rate = 0
+        else rate = 0 end
+    end
+    local exponent = growthConf("growthExponent", 1.2)
+    local growthMultiplier = numberOr(data.growthMultiplier, 1.0)
+    local levelOffset = math.max(0, (battler.level or 1) - 1)
+    local growthFactor = 1 + rate * growthMultiplier * (levelOffset ^ exponent)
+    return base * growthFactor
 end
 
 -- Get a final parameter value after applying all traits
