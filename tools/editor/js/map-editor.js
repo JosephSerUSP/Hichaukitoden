@@ -631,7 +631,36 @@
         function toggleFogFields() {
             const enabled = document.getElementById('prop-map-fog-enabled').checked;
             document.getElementById('prop-fog-settings').style.display = enabled ? 'block' : 'none';
-            if (enabled) updateFogPreview();
+            if (enabled) { populateFogPresetDropdown(); onFogPresetChange(); }
+        }
+
+        // Fog presets (dbPayload.engine.fogPresets, docs/design/
+        // fog-presets-and-panorama.md): shared configs a map can reference
+        // instead of carrying its own color/density/panorama. "(custom)"
+        // keeps this map's own inline fields, which is what the dropdown
+        // defaults to for maps that don't reference a preset.
+        function populateFogPresetDropdown() {
+            const sel = document.getElementById('prop-map-fog-preset');
+            const map = dbPayload.maps[currentMapIndex];
+            const currentPresetId = (map && map.fog && map.fog.preset) || '';
+            sel.innerHTML = '';
+            const customOpt = document.createElement('option');
+            customOpt.value = '';
+            customOpt.textContent = '(custom -- this map\'s own values below)';
+            sel.appendChild(customOpt);
+            (dbPayload.engine.fogPresets || []).forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.label || p.id;
+                sel.appendChild(opt);
+            });
+            sel.value = currentPresetId;
+        }
+
+        function onFogPresetChange() {
+            const usingPreset = document.getElementById('prop-map-fog-preset').value !== '';
+            document.getElementById('prop-fog-custom-fields').style.display = usingPreset ? 'none' : 'block';
+            setDirty(true);
         }
 
         // Fog presets: click a button to set color + label
@@ -895,7 +924,13 @@
             // Fog settings. NaN-checked rather than ||-defaulted: a
             // minFactor of 0 (fully fogged at distance) is a legitimate
             // slider value that || would silently replace with the default.
-            if (document.getElementById('prop-map-fog-enabled').checked) {
+            const fogPresetId = document.getElementById('prop-map-fog-preset').value;
+            if (document.getElementById('prop-map-fog-enabled').checked && fogPresetId) {
+                // Shared preset reference (docs/design/fog-presets-and-panorama.md)
+                // -- no inline fields, so editing the preset in Engine Editor
+                // updates this map too.
+                map.fog = { preset: fogPresetId };
+            } else if (document.getElementById('prop-map-fog-enabled').checked) {
                 const density = parseFloat(document.getElementById('prop-map-fog-density').value);
                 const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value);
                 map.fog = {

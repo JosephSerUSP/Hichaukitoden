@@ -202,6 +202,268 @@
             panel.appendChild(box);
         }
 
+        // --- FOG PRESETS (docs/design/fog-presets-and-panorama.md) ---
+        // Shared registry: a map's fog can reference a preset by id instead
+        // of carrying its own color/density/minFactor/panorama inline, so
+        // editing a preset here updates every map using it. Each preset row
+        // is a two-line block (base fields + a nested panorama-layer list)
+        // rather than a single buildRegistryRows row, since panorama layers
+        // are themselves a variable-length list.
+        const FOG_BLEND_MODES = ['alpha', 'add', 'multiply', 'screen'];
+
+        function buildFogPanoramaLayers(container, preset, rerenderPreset) {
+            preset.panorama = preset.panorama || [];
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'margin-top: 4px; padding: 4px; border: 1px solid var(--win-shadow); background: #f4f4f4;';
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size: 9px; color: var(--win-dark-shadow); margin-bottom: 2px;';
+            label.textContent = 'Panorama layers (scrolling images, back to front):';
+            wrap.appendChild(label);
+
+            preset.panorama.forEach((layer, idx) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; gap: 3px; align-items: center; margin-top: 2px;';
+
+                const img = document.createElement('input');
+                img.className = 'win98-input';
+                img.style.cssText = 'width: 90px; font-size: 9px;';
+                img.placeholder = 'assets/panorama/<name>';
+                img.title = 'Image name under assets/panorama/ (no path, no extension)';
+                img.value = layer.image || '';
+                img.oninput = () => { layer.image = img.value; setDirty(true); };
+                row.appendChild(img);
+
+                const scrollX = document.createElement('input');
+                scrollX.type = 'number'; scrollX.step = '0.005';
+                scrollX.className = 'win98-input'; scrollX.style.cssText = 'width: 52px; font-size: 9px;';
+                scrollX.title = 'Horizontal scroll speed (image widths/sec)';
+                scrollX.value = layer.scrollX != null ? layer.scrollX : 0;
+                scrollX.oninput = () => { layer.scrollX = parseFloat(scrollX.value) || 0; setDirty(true); };
+                row.appendChild(scrollX);
+
+                const scrollY = document.createElement('input');
+                scrollY.type = 'number'; scrollY.step = '0.005';
+                scrollY.className = 'win98-input'; scrollY.style.cssText = 'width: 52px; font-size: 9px;';
+                scrollY.title = 'Vertical scroll speed (image heights/sec)';
+                scrollY.value = layer.scrollY != null ? layer.scrollY : 0;
+                scrollY.oninput = () => { layer.scrollY = parseFloat(scrollY.value) || 0; setDirty(true); };
+                row.appendChild(scrollY);
+
+                row.appendChild(makeSelect(FOG_BLEND_MODES, layer.blendMode || 'alpha', v => { layer.blendMode = v; }, '0'));
+
+                const opacity = document.createElement('input');
+                opacity.type = 'number'; opacity.step = '0.05'; opacity.min = '0'; opacity.max = '1';
+                opacity.className = 'win98-input'; opacity.style.cssText = 'width: 44px; font-size: 9px;';
+                opacity.title = 'Opacity (0-1)';
+                opacity.value = layer.opacity != null ? layer.opacity : 1;
+                opacity.oninput = () => { layer.opacity = parseFloat(opacity.value); if (isNaN(layer.opacity)) layer.opacity = 1; setDirty(true); };
+                row.appendChild(opacity);
+
+                row.appendChild(makeRowDeleteBtn(() => { preset.panorama.splice(idx, 1); rerenderPreset(); }));
+                wrap.appendChild(row);
+            });
+
+            wrap.appendChild(makeAddRowBtn('+ Add Layer', () => {
+                preset.panorama.push({ image: 'fog_001', scrollX: 0.02, scrollY: 0, blendMode: 'alpha', opacity: 1 });
+                rerenderPreset();
+            }));
+            container.appendChild(wrap);
+        }
+
+        function buildFogPresetsEditor(panel) {
+            dbPayload.engine.fogPresets = dbPayload.engine.fogPresets || [];
+            const list = dbPayload.engine.fogPresets;
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Named fog configs a map can reference (Map Properties → Fog → Preset) instead of carrying its own color/density/panorama — editing a preset here updates every map that references it.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+
+            const render = () => {
+                box.innerHTML = '';
+                list.forEach((preset, idx) => {
+                    const block = document.createElement('div');
+                    block.style.cssText = 'border: 1px solid var(--win-shadow); padding: 4px; margin-bottom: 4px; background: #fff;';
+
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+
+                    const id = document.createElement('input');
+                    id.className = 'win98-input';
+                    id.style.cssText = 'width: 90px; font-size: 10px;';
+                    id.placeholder = 'id';
+                    id.title = 'Referenced by maps as fog.preset -- must be unique';
+                    id.value = preset.id || '';
+                    id.oninput = () => { preset.id = id.value; setDirty(true); };
+                    row.appendChild(id);
+
+                    const labelInput = document.createElement('input');
+                    labelInput.className = 'win98-input';
+                    labelInput.style.cssText = 'width: 90px; font-size: 10px;';
+                    labelInput.placeholder = 'label';
+                    labelInput.value = preset.label || '';
+                    labelInput.oninput = () => { preset.label = labelInput.value; setDirty(true); };
+                    row.appendChild(labelInput);
+
+                    const color = document.createElement('input');
+                    color.type = 'color';
+                    color.style.cssText = 'width: 32px; height: 20px;';
+                    color.value = rgb01ToHex(preset.color || [0.3, 0.3, 0.35]);
+                    color.oninput = () => { preset.color = hexToRgb01(color.value); setDirty(true); };
+                    row.appendChild(color);
+
+                    const density = document.createElement('input');
+                    density.type = 'number'; density.step = '0.05'; density.min = '0.05';
+                    density.className = 'win98-input'; density.style.cssText = 'width: 48px; font-size: 10px;';
+                    density.title = 'Density (higher = fades faster)';
+                    density.value = preset.density != null ? preset.density : 0.35;
+                    density.oninput = () => { preset.density = parseFloat(density.value) || 0.35; setDirty(true); };
+                    row.appendChild(density);
+
+                    const minFactor = document.createElement('input');
+                    minFactor.type = 'number'; minFactor.step = '0.01'; minFactor.min = '0'; minFactor.max = '1';
+                    minFactor.className = 'win98-input'; minFactor.style.cssText = 'width: 48px; font-size: 10px;';
+                    minFactor.title = 'Min visibility (0 = fully fogged at distance)';
+                    minFactor.value = preset.minFactor != null ? preset.minFactor : 0.12;
+                    minFactor.oninput = () => {
+                        const v = parseFloat(minFactor.value);
+                        preset.minFactor = isNaN(v) ? 0.12 : v;
+                        setDirty(true);
+                    };
+                    row.appendChild(minFactor);
+
+                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
+                    block.appendChild(row);
+
+                    buildFogPanoramaLayers(block, preset, render);
+                    box.appendChild(block);
+                });
+                box.appendChild(makeAddRowBtn('+ Add Fog Preset', () => {
+                    list.push({ id: 'new_preset', label: 'New Preset', color: [0.3, 0.3, 0.35], density: 0.35, minFactor: 0.12 });
+                    render();
+                }));
+            };
+            render();
+            panel.appendChild(box);
+        }
+
+        // --- TILESET ATLAS REGISTRY ---
+        // assets/tilesets/*.png + sidecar .json manifests (docs/design/
+        // raycaster-tileset-lighting.md) live outside dbPayload entirely --
+        // they're static assets shared across every campaign. This editor
+        // fetches/saves them through their own endpoints, one atlas at a
+        // time, independent of the Database's batched Save Changes.
+        let tilesetRegistryCache = null;
+
+        async function fetchTilesetRegistry() {
+            const res = await fetch(`${API_URL}/api/tilesets`);
+            const result = await res.json();
+            tilesetRegistryCache = result.tilesets || [];
+            return tilesetRegistryCache;
+        }
+
+        async function saveTilesetManifest(t, statusEl) {
+            try {
+                const res = await fetch(`${API_URL}/api/tilesets/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(t)
+                });
+                const result = await res.json();
+                if (statusEl) statusEl.textContent = result.success ? 'Saved ✓' : ('Failed: ' + result.message);
+            } catch (err) {
+                if (statusEl) statusEl.textContent = 'Failed: ' + err.message;
+            }
+        }
+
+        function rowNumberOrNull(placeholder, value, onChange) {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'win98-input';
+            input.style.cssText = 'width: 44px; font-size: 10px;';
+            input.placeholder = placeholder;
+            input.title = placeholder + ' (blank = none)';
+            input.value = value != null ? value : '';
+            input.oninput = () => {
+                onChange(input.value === '' ? null : (parseInt(input.value) || 0));
+                setDirty(true);
+            };
+            return input;
+        }
+
+        async function buildTilesetRegistryEditor(panel) {
+            const note = document.createElement('p');
+            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+            note.textContent = 'Each atlas is a 64px-grid PNG under assets/tilesets/, 4 columns wide. wallRows is a comma-separated list of row indices (each contributes 4 wall variants); doorRow/skyRow/ceilingRow/floorRow are single row indices, blank = none. Saves independently of Save Changes — these files are shared across every campaign.';
+            panel.appendChild(note);
+
+            const box = makeListBox();
+            box.textContent = 'Loading...';
+            panel.appendChild(box);
+
+            const tilesets = await fetchTilesetRegistry();
+            box.innerHTML = '';
+
+            tilesets.forEach(t => {
+                const block = document.createElement('div');
+                block.style.cssText = 'border: 1px solid var(--win-shadow); padding: 4px; margin-bottom: 4px; background: #fff;';
+
+                const header = document.createElement('div');
+                header.style.cssText = 'font-size: 11px; font-weight: bold; margin-bottom: 2px;';
+                header.textContent = t.name + (t.width ? ` (${t.width}×${t.height}, ${t.height / 64} rows)` : '');
+                block.appendChild(header);
+
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; gap: 4px; align-items: center; flex-wrap: wrap;';
+
+                const wallRows = document.createElement('input');
+                wallRows.className = 'win98-input';
+                wallRows.style.cssText = 'width: 60px; font-size: 10px;';
+                wallRows.title = 'wallRows (csv of row indices)';
+                wallRows.value = (t.wallRows || []).join(',');
+                wallRows.oninput = () => {
+                    t.wallRows = wallRows.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                    setDirty(true);
+                };
+                row.appendChild(labeledField('wall', wallRows));
+
+                row.appendChild(labeledField('door', rowNumberOrNull('doorRow', t.doorRow, v => { t.doorRow = v == null ? 2 : v; })));
+                row.appendChild(labeledField('sky', rowNumberOrNull('skyRow', t.skyRow, v => { t.skyRow = v; })));
+                row.appendChild(labeledField('ceiling', rowNumberOrNull('ceilingRow', t.ceilingRow, v => { t.ceilingRow = v; })));
+                row.appendChild(labeledField('floor', rowNumberOrNull('floorRow', t.floorRow, v => { t.floorRow = v; })));
+
+                const status = document.createElement('span');
+                status.style.cssText = 'font-size: 9px; color: var(--win-dark-shadow); margin-left: 4px;';
+
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'win98-btn';
+                saveBtn.style.cssText = 'font-size: 10px;';
+                saveBtn.textContent = 'Save Manifest';
+                saveBtn.onclick = () => saveTilesetManifest(t, status);
+                row.appendChild(saveBtn);
+                row.appendChild(status);
+
+                block.appendChild(row);
+                box.appendChild(block);
+            });
+
+            if (!tilesets.length) {
+                box.textContent = 'No atlases found under assets/tilesets/.';
+            }
+        }
+
+        function labeledField(labelText, input) {
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; gap: 1px;';
+            const lbl = document.createElement('span');
+            lbl.style.cssText = 'font-size: 8px; color: var(--win-dark-shadow);';
+            lbl.textContent = labelText;
+            wrap.appendChild(lbl);
+            wrap.appendChild(input);
+            return wrap;
+        }
+
         function setEngineTab(tabName) {
             activeEngineTab = tabName;
             document.querySelectorAll('#engine-tabs .db-tab-btn').forEach(b => b.classList.remove('active'));
@@ -247,6 +509,19 @@
                 buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout, windowLayout: dbPayload.engine.windowLayout }, [], dbPayload.engine);
                 buildBattleScreenPreview(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
+            } else if (tabName === 'tileset') {
+                header.textContent = 'Tileset Atlases & Fog Presets';
+                dbPayload.engine.fogPresets = dbPayload.engine.fogPresets || [];
+                buildFogPresetsEditor(panel);
+                const sep = document.createElement('div');
+                sep.style.cssText = 'border-top: 1px solid var(--win-shadow); margin: 10px 0;';
+                panel.appendChild(sep);
+                const tilesetHeader = document.createElement('div');
+                tilesetHeader.style.cssText = 'font-weight: bold; font-size: 11px; margin-bottom: 6px;';
+                tilesetHeader.textContent = 'Tileset Atlases';
+                panel.appendChild(tilesetHeader);
+                buildTilesetRegistryEditor(panel);
+                attachJsonToggle(header, panel, dbPayload.engine.fogPresets, rerender);
             } else if (tabName === 'effectTypes') {
                 header.textContent = 'Effect Type Registry';
                 buildEffectTypeRegistryEditor(panel);

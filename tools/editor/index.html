@@ -1021,6 +1021,7 @@
                     <button id="engine-tab-progression" class="db-tab-btn" onclick="setEngineTab('progression')">Progression</button>
                     <button id="engine-tab-dungeon" class="db-tab-btn" onclick="setEngineTab('dungeon')">Map &amp; Dungeon</button>
                     <button id="engine-tab-rendering" class="db-tab-btn" onclick="setEngineTab('rendering')">Rendering</button>
+                    <button id="engine-tab-tileset" class="db-tab-btn" onclick="setEngineTab('tileset')">Tileset &amp; Fog</button>
                     <button id="engine-tab-effectTypes" class="db-tab-btn" onclick="setEngineTab('effectTypes')">Effect Types</button>
                     <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
                     <button id="engine-tab-metaKeys" class="db-tab-btn" onclick="setEngineTab('metaKeys')">Meta Keys</button>
@@ -1395,6 +1396,11 @@
                            </div>
                         </div>
                         <div id="prop-fog-settings" style="display: none; margin-top: 4px; padding: 4px; border: 1px solid var(--win-shadow);">
+                           <div class="field-row-stacked" style="margin-top: 2px;" title="Presets are shared: editing one in Engine Editor → Tileset &amp; Fog updates every map that references it. (custom) keeps this map's own inline values below.">
+                               <label style="font-size: 10px;">Preset:</label>
+                               <select id="prop-map-fog-preset" class="win98-select" onchange="onFogPresetChange()"></select>
+                           </div>
+                           <div id="prop-fog-custom-fields">
                            <div class="field-row-stacked" style="margin-top: 2px;">
                                <label style="font-size: 10px;">Fog Color:</label>
                                <div style="display: flex; gap: 3px; flex-wrap: wrap;">
@@ -1432,6 +1438,7 @@
                                           style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-minfactor-val').textContent=this.value" />
                                    <span id="prop-map-fog-minfactor-val" style="font-size:10px;min-width:28px;">0.12</span>
                                </div>
+                           </div>
                            </div>
                         </div>
                     </fieldset>

@@ -202,6 +202,67 @@ const server = http.createServer((req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
+    } else if (req.method === 'GET' && req.url === '/api/tilesets') {
+        // assets/tilesets/*.png atlases + their sidecar .json manifests
+        // (docs/design/raycaster-tileset-lighting.md) aren't part of any
+        // DATA_FILES payload -- they're static assets shared across every
+        // campaign, like the PNGs themselves -- so the Tileset tab reads/
+        // writes them through their own endpoints instead of dbPayload/save.
+        const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
+        let names = [];
+        try {
+            names = fs.readdirSync(tilesetsDir).filter(f => /\.png$/i.test(f)).map(f => f.replace(/\.png$/i, ''));
+        } catch (e) { /* no tilesets dir yet */ }
+        const tilesets = names.map(name => {
+            let manifest = {};
+            try {
+                manifest = JSON.parse(fs.readFileSync(path.join(tilesetsDir, `${name}.json`), 'utf8'));
+            } catch (e) { /* missing/unparseable manifest = defaults, same as the engine loader */ }
+            let w = null, h = null;
+            try {
+                const sizeOf = fs.readFileSync(path.join(tilesetsDir, `${name}.png`));
+                // Minimal PNG header read: width/height are big-endian
+                // uint32s at bytes 16 and 20 of the IHDR chunk.
+                w = sizeOf.readUInt32BE(16);
+                h = sizeOf.readUInt32BE(20);
+            } catch (e) { /* leave null if unreadable */ }
+            return {
+                name,
+                wallRows: manifest.wallRows || [0, 1],
+                doorRow: manifest.doorRow != null ? manifest.doorRow : 2,
+                skyRow: manifest.skyRow != null ? manifest.skyRow : null,
+                ceilingRow: manifest.ceilingRow != null ? manifest.ceilingRow : null,
+                floorRow: manifest.floorRow != null ? manifest.floorRow : null,
+                width: w,
+                height: h,
+            };
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ tilesets }));
+    } else if (req.method === 'POST' && req.url === '/api/tilesets/save') {
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => {
+            try {
+                const p = JSON.parse(body);
+                if (!p.name || !/^[a-zA-Z0-9_-]+$/.test(p.name)) {
+                    throw new Error('Invalid tileset name.');
+                }
+                const manifest = {};
+                if (Array.isArray(p.wallRows) && p.wallRows.length) manifest.wallRows = p.wallRows;
+                if (p.doorRow != null) manifest.doorRow = p.doorRow;
+                if (p.skyRow != null) manifest.skyRow = p.skyRow;
+                if (p.ceilingRow != null) manifest.ceilingRow = p.ceilingRow;
+                if (p.floorRow != null) manifest.floorRow = p.floorRow;
+                const manifestPath = path.join(PROJECT_DIR, 'assets', 'tilesets', `${p.name}.json`);
+                fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: e.message }));
+            }
+        });
     } else if (req.method === 'GET' && req.url === '/api/fonts') {
         // Font picker choices, read straight off disk so dropping a new
         // .ttf/.otf into assets/fonts/ is the only step needed — no editor
