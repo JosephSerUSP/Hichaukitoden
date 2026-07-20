@@ -64,14 +64,23 @@ end
 function formula.groupView(list, session)
     list = list or {}
     local count, alive, totalLevel, totalMaxHp, fleeBonus = 0, 0, 0, 0, 0
-    for _, b in ipairs(list) do
-        count = count + 1
-        totalLevel = totalLevel + (b.level or 1)
-        totalMaxHp = totalMaxHp + (traits.getParam(b, "maxHp", session) or 1)
-        if not (b.isDead and b:isDead()) and (b.hp or 0) > 0 then
-            alive = alive + 1
-            -- Living members only, matching the legacy flee roll in battle.lua
-            fleeBonus = fleeBonus + traits.getRate(b, "FLEE_CHANCE_BONUS", session)
+    -- Use numeric for loop (1 to 4 for party, #list for others) instead of
+    -- ipairs, so sparse arrays (e.g. party[1] removed, leaving a nil gap)
+    -- still count every non-nil member. ipairs stops at the first nil, which
+    -- would report party.count = 0 when only slot 2+ are occupied — breaking
+    -- any "party.count > 0" gate and the whole party-selection flow.
+    local limit = session and session.party == list and 4 or #list
+    for i = 1, limit do
+        local b = list[i]
+        if b then
+            count = count + 1
+            totalLevel = totalLevel + (b.level or 1)
+            totalMaxHp = totalMaxHp + (traits.getParam(b, "maxHp", session) or 1)
+            if not (b.isDead and b:isDead()) and (b.hp or 0) > 0 then
+                alive = alive + 1
+                -- Living members only, matching the legacy flee roll in battle.lua
+                fleeBonus = fleeBonus + traits.getRate(b, "FLEE_CHANCE_BONUS", session)
+            end
         end
     end
     return {

@@ -2161,6 +2161,10 @@
               "value": 4
             },
             {
+              "cmd": "SCRIPT",
+              "ref": "snapPartyIdx"
+            },
+            {
               "cmd": "SET_CURSOR",
               "windowId": "party",
               "index": "v.partyIdx"
@@ -2290,15 +2294,8 @@
               "windowId": "map_member_popup"
             },
             {
-              "cmd": "SCENE_EVENT",
-              "kind": "push",
-              "scene": "status",
-              "vars": [
-                {
-                  "name": "idx",
-                  "value": "v.memberIdx"
-                }
-              ]
+              "cmd": "SCRIPT",
+              "ref": "pushStatus"
             }
           ]
         },
@@ -2321,19 +2318,8 @@
               "windowId": "map_member_popup"
             },
             {
-              "cmd": "SCENE_EVENT",
-              "kind": "push",
-              "scene": "status",
-              "vars": [
-                {
-                  "name": "idx",
-                  "value": "v.memberIdx"
-                },
-                {
-                  "name": "entry",
-                  "value": "'equip'"
-                }
-              ]
+              "cmd": "SCRIPT",
+              "ref": "pushStatusEquip"
             }
           ]
         },
@@ -2660,7 +2646,10 @@
       ]
     },
     "scripts": {
-      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n"
+      "snapPartyIdx": "\nlocal v = ctx.v\nfor i = 1, 4 do\n    local m = api.party(i)\n    if m then\n        v.partyIdx = i\n        break\n    end\nend\n",
+      "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n",
+      "pushStatus": "\nlocal v = ctx.v\nif v.memberIdx then\n    api.emit({ type = \"scene_change\", kind = \"push\", scene = \"status\", vars = { idx = v.memberIdx } })\nend\n",
+      "pushStatusEquip": "\nlocal v = ctx.v\nif v.memberIdx then\n    api.emit({ type = \"scene_change\", kind = \"push\", scene = \"status\", vars = { idx = v.memberIdx, entry = \"equip\" } })\nend\n"
     },
     "goldenScript": [
       {
@@ -3050,55 +3039,55 @@
     "kind": "menu",
     "hooks": {
       "on_enter": [
-      {
-        "cmd": "SET_VAR",
-        "name": "page",
-        "value": 1
-      },
-      {
-        "cmd": "IF",
-        "condition": "v.idx == nil or v.idx == 0",
-        "then": [
-          {
-            "cmd": "SET_VAR",
-            "name": "idx",
-            "value": 1
-          }
-        ]
-      },
-      {
-        "cmd": "SET_VAR",
-        "name": "state",
-        "value": 1
-      },
-      {
-        "cmd": "SET_VAR",
-        "name": "slot",
-        "value": 1
-      },
-      {
-        "cmd": "SET_VAR",
-        "name": "eqIdx",
-        "value": 1
-      },
-      {
-        "cmd": "IF",
-        "condition": "v.entry == 'equip'",
-        "then": [
-          {
-            "cmd": "SET_VAR",
-            "name": "state",
-            "value": 2
-          },
-          {
-            "cmd": "SET_VAR",
-            "name": "slot",
-            "value": 1
-          }
-        ],
-        "else": []
-      }
-    ],
+        {
+          "cmd": "SET_VAR",
+          "name": "page",
+          "value": 1
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.idx == nil or v.idx == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "state",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "slot",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "eqIdx",
+          "value": 1
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.entry == 'equip'",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "state",
+              "value": 2
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "slot",
+              "value": 1
+            }
+          ],
+          "else": []
+        }
+      ],
       "on_up": [
         {
           "cmd": "IF",

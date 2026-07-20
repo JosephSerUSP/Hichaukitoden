@@ -58,7 +58,8 @@
       "Mote",
       "Clover",
       "Twinkle"
-    ]
+    ],
+    "baseParams": {}
   },
   {
     "id": 2,
