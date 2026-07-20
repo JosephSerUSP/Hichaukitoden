@@ -1,5 +1,6 @@
 {
     "wallRows": [0, 1],
     "doorRow": 2,
-    "ceilingRow": 3
+    "ceilingRow": 3,
+    "floorRow": 4
 }
