@@ -59,7 +59,17 @@
       "Clover",
       "Twinkle"
     ],
-    "baseParams": {}
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 6,
+      "def": 10,
+      "mat": 15,
+      "mdf": 14,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 2,
@@ -116,7 +126,18 @@
       "Mote",
       "Clover",
       "Twinkle"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 9,
+      "def": 15,
+      "mat": 23,
+      "mdf": 21,
+      "mpd": 5,
+      "mxa": 6,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 3,
@@ -179,7 +200,18 @@
       "Marrow",
       "Ribsy",
       "Clack"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 16,
+      "def": 11,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 4,
@@ -240,7 +272,18 @@
       "Mercy",
       "Divine",
       "Aura"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 7,
+      "def": 11,
+      "mat": 13,
+      "mdf": 15,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 5,
@@ -303,7 +346,18 @@
       "Mercy",
       "Divine",
       "Aura"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 17,
+      "atk": 11,
+      "def": 17,
+      "mat": 20,
+      "mdf": 23,
+      "mpd": 3,
+      "mxa": 8,
+      "mxp": 5
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 6,
@@ -343,33 +397,7 @@
     "initialParty": true,
     "isRecruitable": true,
     "isEvolved": false,
-    "traits": [
-      {
-        "code": "PARAM_PLUS",
-        "dataId": "atk",
-        "value": 99
-      },
-      {
-        "code": "PARAM_PLUS",
-        "dataId": "def",
-        "value": 99
-      },
-      {
-        "code": "PARAM_PLUS",
-        "dataId": "maxHp",
-        "value": 99
-      },
-      {
-        "code": "PARAM_PLUS",
-        "dataId": "asp",
-        "value": 99
-      },
-      {
-        "code": "PARAM_PLUS",
-        "dataId": "mat",
-        "value": 99
-      }
-    ],
+    "traits": [],
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
@@ -395,7 +423,18 @@
       "Diablo",
       "Brimstone",
       "Cinder"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 18,
+      "def": 12,
+      "mat": 8,
+      "mdf": 9,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 7,
@@ -454,7 +493,18 @@
       "Diablo",
       "Brimstone",
       "Cinder"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 22,
+      "atk": 24,
+      "def": 17,
+      "mat": 11,
+      "mdf": 12,
+      "mpd": 2,
+      "mxa": 6,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 8,
@@ -509,7 +559,18 @@
       "Suture",
       "Val",
       "Hygiene"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 6,
+      "def": 10,
+      "mat": 15,
+      "mdf": 14,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 9,
@@ -558,7 +619,18 @@
       "Trick",
       "Fidget",
       "Impala"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 16,
+      "def": 11,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 10,
@@ -616,7 +688,18 @@
       "Obsidian",
       "Boulder",
       "Clay"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 15,
+      "atk": 9,
+      "def": 20,
+      "mat": 6,
+      "mdf": 17,
+      "mpd": 1,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 11,
@@ -671,7 +754,18 @@
       "Scavenger",
       "Bonebiter",
       "Decay"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 15,
+      "atk": 9,
+      "def": 20,
+      "mat": 6,
+      "mdf": 17,
+      "mpd": 1,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 12,
@@ -728,7 +822,18 @@
       "Flubber",
       "Puddle",
       "Gunk"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 7,
+      "def": 11,
+      "mat": 14,
+      "mdf": 12,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 13,
@@ -781,7 +886,18 @@
       "Midnight",
       "Belfry",
       "Screech"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 16,
+      "def": 11,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 14,
@@ -838,7 +954,18 @@
       "Beacon",
       "Will-o",
       "Lumen"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 5,
+      "def": 7,
+      "mat": 17,
+      "mdf": 15,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 15,
@@ -869,7 +996,18 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 5,
+      "atk": 3,
+      "def": 3,
+      "mat": 3,
+      "mdf": 3,
+      "mpd": 0,
+      "mxa": 2,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 16,
@@ -912,7 +1050,18 @@
       "Cinder",
       "Ignis",
       "Sol"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 29,
+      "atk": 19,
+      "def": 27,
+      "mat": 34,
+      "mdf": 32,
+      "mpd": 8,
+      "mxa": 10,
+      "mxp": 6
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 17,
@@ -958,7 +1107,18 @@
       "Chrysalis",
       "Inchworm",
       "Crawler"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 11,
+      "def": 7,
+      "mat": 7,
+      "mdf": 6,
+      "mpd": 3,
+      "mxa": 3,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 18,
@@ -990,7 +1150,18 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 55,
+      "atk": 27,
+      "def": 21,
+      "mat": 18,
+      "mdf": 18,
+      "mpd": 5,
+      "mxa": 6,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 19,
@@ -1037,7 +1208,18 @@
         "chance": 0.7,
         "count": 1
       }
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 19,
+      "atk": 19,
+      "def": 13,
+      "mat": 8,
+      "mdf": 10,
+      "mpd": 1,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 20,
@@ -1087,7 +1269,18 @@
         "chance": 0.8,
         "count": 1
       }
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 7,
+      "def": 11,
+      "mat": 13,
+      "mdf": 15,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 21,
@@ -1122,7 +1315,18 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 40,
+      "atk": 38,
+      "def": 13,
+      "mat": 11,
+      "mdf": 13,
+      "mpd": 2,
+      "mxa": 6,
+      "mxp": 4
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 22,
@@ -1145,6 +1349,17 @@
     "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 5,
+      "def": 9,
+      "mat": 16,
+      "mdf": 14,
+      "mpd": 6,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   }
 ]

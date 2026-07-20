@@ -48,7 +48,18 @@
       "Golem",
       "Stone Sentinel",
       "Guardian"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 60,
+      "atk": 14,
+      "def": 31,
+      "mat": 9,
+      "mdf": 26,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1.15
   },
   {
     "id": 2,
@@ -99,7 +110,18 @@
       "Cursebeast",
       "Blight Tyrant",
       "Nameless Horror"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 120,
+      "atk": 15,
+      "def": 23,
+      "mat": 29,
+      "mdf": 25,
+      "mpd": 6,
+      "mxa": 8,
+      "mxp": 4
+    },
+    "growthMultiplier": 1.35
   },
   {
     "id": 3,
@@ -149,7 +171,18 @@
       "Decayed Golem",
       "Rust Guardian",
       "Sludge Lord"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 50,
+      "atk": 12,
+      "def": 27,
+      "mat": 8,
+      "mdf": 23,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1.15
   },
   {
     "id": 4,
@@ -200,7 +233,18 @@
       "Wraith",
       "Shadow Soul",
       "Cursed Echo"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 45,
+      "atk": 10,
+      "def": 11,
+      "mat": 29,
+      "mdf": 32,
+      "mpd": 6,
+      "mxa": 6,
+      "mxp": 4
+    },
+    "growthMultiplier": 1.15
   },
   {
     "id": 5,
@@ -243,7 +287,18 @@
       "Ghost",
       "Wisp",
       "Soul"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 6,
+      "def": 7,
+      "mat": 17,
+      "mdf": 19,
+      "mpd": 3,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 6,
@@ -289,7 +344,18 @@
       "Skitterer",
       "Centipede",
       "Crawler"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 15,
+      "atk": 18,
+      "def": 12,
+      "mat": 8,
+      "mdf": 9,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 7,
@@ -335,7 +401,18 @@
       "Slime",
       "Gunk",
       "Muck"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 20,
+      "atk": 8,
+      "def": 13,
+      "mat": 17,
+      "mdf": 14,
+      "mpd": 4,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 8,
@@ -381,7 +458,18 @@
       "Spore",
       "Puffball",
       "Fungus"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 8,
+      "def": 13,
+      "mat": 17,
+      "mdf": 14,
+      "mpd": 4,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 9,
@@ -429,7 +517,18 @@
       "Bat",
       "Night Flier",
       "Blightwing"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 18,
+      "def": 12,
+      "mat": 8,
+      "mdf": 9,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 10,
@@ -477,7 +576,18 @@
       "Hound",
       "Blight Beast",
       "Corrupted Wolf"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 22,
+      "atk": 21,
+      "def": 14,
+      "mat": 9,
+      "mdf": 10,
+      "mpd": 1,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 11,
@@ -525,7 +635,18 @@
       "Shade",
       "Dark Wisp",
       "Shadow"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 16,
+      "atk": 6,
+      "def": 7,
+      "mat": 18,
+      "mdf": 20,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 12,
@@ -573,7 +694,18 @@
       "Golem",
       "Statue",
       "Rock Guardian"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 30,
+      "atk": 10,
+      "def": 23,
+      "mat": 7,
+      "mdf": 20,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 13,
@@ -621,7 +753,18 @@
       "Zombie",
       "Shambler",
       "Rotter"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 25,
+      "atk": 10,
+      "def": 22,
+      "mat": 6,
+      "mdf": 18,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 14,
@@ -671,7 +814,18 @@
       "Phantom",
       "Apparition",
       "Tormented Soul"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 7,
+      "def": 8,
+      "mat": 20,
+      "mdf": 22,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 15,
@@ -719,7 +873,18 @@
       "Rat",
       "Vermin",
       "Carrier"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 10,
+      "atk": 11,
+      "def": 7,
+      "mat": 7,
+      "mdf": 6,
+      "mpd": 3,
+      "mxa": 3,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 16,
@@ -767,7 +932,18 @@
       "Treant",
       "Blightwood",
       "Root Walker"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 35,
+      "atk": 11,
+      "def": 25,
+      "mat": 7,
+      "mdf": 21,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 17,
@@ -815,7 +991,18 @@
       "Shade",
       "Mimic",
       "Echo"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 6,
+      "def": 7,
+      "mat": 17,
+      "mdf": 19,
+      "mpd": 3,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 18,
@@ -861,7 +1048,18 @@
       "Slime",
       "Vile Ooze",
       "Blight Mucus"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 15,
+      "atk": 8,
+      "def": 12,
+      "mat": 15,
+      "mdf": 13,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 19,
@@ -910,7 +1108,18 @@
       "Guardian",
       "Statue",
       "Sentinel"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 40,
+      "atk": 11,
+      "def": 25,
+      "mat": 7,
+      "mdf": 21,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 20,
@@ -958,7 +1167,18 @@
       "Worm",
       "Leech",
       "Bloodsucker"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 12,
+      "def": 8,
+      "mat": 8,
+      "mdf": 7,
+      "mpd": 3,
+      "mxa": 3,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 21,
@@ -1007,12 +1227,34 @@
       "Sprite",
       "Pixie",
       "Cure Wisp"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 13,
+      "atk": 7,
+      "def": 11,
+      "mat": 17,
+      "mdf": 15,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 22,
     "name": "Alex",
     "role": "Summoner",
-    "tier": 1
+    "tier": 1,
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 5,
+      "def": 9,
+      "mat": 16,
+      "mdf": 14,
+      "mpd": 6,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   }
 ]

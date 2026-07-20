@@ -32,7 +32,18 @@
     "sacrificeRewards": [],
     "names": [
       "Alex"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 20,
+      "atk": 5,
+      "def": 9,
+      "mat": 16,
+      "mdf": 14,
+      "mpd": 6,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 2,
@@ -67,7 +78,18 @@
     "sacrificeRewards": [],
     "names": [
       "Hella"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 30,
+      "atk": 3,
+      "def": 3,
+      "mat": 3,
+      "mdf": 3,
+      "mpd": 0,
+      "mxa": 2,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 3,
@@ -116,7 +138,18 @@
       "Maw",
       "Gnaw",
       "Pale"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 18,
+      "def": 12,
+      "mat": 8,
+      "mdf": 9,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 4,
@@ -166,7 +199,18 @@
       "Ink",
       "Rote",
       "Vell"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 22,
+      "atk": 10,
+      "def": 15,
+      "mat": 20,
+      "mdf": 17,
+      "mpd": 4,
+      "mxa": 6,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 5,
@@ -218,7 +262,18 @@
       "Vorn",
       "Mawr",
       "Cyl"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 60,
+      "atk": 20,
+      "def": 13,
+      "mat": 13,
+      "mdf": 11,
+      "mpd": 5,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1.15
   },
   {
     "id": 6,
@@ -279,7 +334,18 @@
       "Mote",
       "Clover",
       "Twinkle"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 6,
+      "def": 10,
+      "mat": 15,
+      "mdf": 14,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 7,
@@ -336,7 +402,18 @@
       "Mote",
       "Clover",
       "Twinkle"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 9,
+      "def": 15,
+      "mat": 23,
+      "mdf": 21,
+      "mpd": 5,
+      "mxa": 6,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 8,
@@ -385,7 +462,18 @@
       "Rattle",
       "Clipper",
       "Bonez"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 16,
+      "def": 11,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 9,
@@ -434,7 +522,18 @@
       "Snip",
       "Ember",
       "Grik"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 16,
+      "def": 11,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 10,
@@ -483,7 +582,18 @@
       "Screech",
       "Wing",
       "Ulu"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 12,
+      "atk": 18,
+      "def": 12,
+      "mat": 8,
+      "mdf": 9,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 11,
@@ -533,7 +643,18 @@
       "Lurch",
       "Rot",
       "Grim"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 26,
+      "atk": 10,
+      "def": 22,
+      "mat": 6,
+      "mdf": 18,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 12,
@@ -582,7 +703,18 @@
       "Drip",
       "Slip",
       "Goo"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 18,
+      "atk": 8,
+      "def": 13,
+      "mat": 17,
+      "mdf": 14,
+      "mpd": 4,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 13,
@@ -632,7 +764,18 @@
       "Flick",
       "Glow",
       "Pale"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 16,
+      "atk": 7,
+      "def": 9,
+      "mat": 22,
+      "mdf": 20,
+      "mpd": 5,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 14,
@@ -682,7 +825,18 @@
       "Veil",
       "Cut",
       "Null"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 15,
+      "atk": 23,
+      "def": 8,
+      "mat": 7,
+      "mdf": 8,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 15,
@@ -731,7 +885,18 @@
       "Squirm",
       "Bite",
       "Hatch"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 20,
+      "atk": 15,
+      "def": 10,
+      "mat": 10,
+      "mdf": 8,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 1
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 16,
@@ -781,7 +946,18 @@
       "Wax",
       "Flame",
       "Lume"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 11,
+      "atk": 7,
+      "def": 11,
+      "mat": 13,
+      "mdf": 15,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 17,
@@ -830,7 +1006,18 @@
       "Aim",
       "Notch",
       "Dry"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 14,
+      "atk": 19,
+      "def": 13,
+      "mat": 8,
+      "mdf": 10,
+      "mpd": 1,
+      "mxa": 5,
+      "mxp": 2
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 18,
@@ -879,7 +1066,18 @@
       "Quill",
       "Ink",
       "Fade"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 19,
+      "atk": 7,
+      "def": 8,
+      "mat": 21,
+      "mdf": 24,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 19,
@@ -928,7 +1126,18 @@
       "Crack",
       "Dust",
       "Skitter"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 17,
+      "atk": 21,
+      "def": 14,
+      "mat": 9,
+      "mdf": 10,
+      "mpd": 1,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1
   },
   {
     "id": 20,
@@ -979,6 +1188,17 @@
       "Bulwark",
       "Mold",
       "Sentinel"
-    ]
+    ],
+    "baseParams": {
+      "maxHp": 40,
+      "atk": 13,
+      "def": 29,
+      "mat": 8,
+      "mdf": 24,
+      "mpd": 2,
+      "mxa": 5,
+      "mxp": 3
+    },
+    "growthMultiplier": 1.15
   }
 ]
