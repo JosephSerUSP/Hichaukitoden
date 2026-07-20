@@ -857,7 +857,7 @@ end
 -- it never reflows, it's simply revealed as the box grows.
 local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     local contentX, contentY = contentOrigin(layout, title, x, y)
-    local lineSpacing = ui.toPx(layout.lineSpacing or 2)
+    local lineSpacing = ui.toPx(layout.lineSpacing or 1)
 
     drawPortrait(layout, env, x, y, title)
     drawLayoutGauges(layout.gauges, env, x, y)

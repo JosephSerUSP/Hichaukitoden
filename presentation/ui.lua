@@ -162,6 +162,13 @@ function ui.init()
 
     ui.setFont(fontName, fontSize)
 
+    -- Font normalization toggle: when true (default), Unicode characters not
+    -- covered by pixel fonts (curly quotes, dashes, ellipsis, etc.) are
+    -- mapped to ASCII equivalents so they render instead of showing [] boxes.
+    -- Set "fontNormalize": false in system.json for fonts with full Unicode
+    -- coverage (e.g. IBMPlexMono).
+    fontNormalizeEnabled = (config.ui and config.ui.fontNormalize) ~= false
+
     -- Load active popup font from system config
     local popConf = config.battle_screen and config.battle_screen.popup or {}
     local popupFontName = popConf.font
@@ -329,6 +336,45 @@ function ui.drawTargetReticle(x, y, w, h)
     love.graphics.pop()
 end
 
+-- Normalize Unicode characters that the active pixel font may not cover
+-- down to their closest ASCII equivalents so they render instead of showing
+-- the missing-glyph box ([]). Only active when ui.fontNormalize is true
+-- (config.ui.fontNormalize, defaults to on for pixel fonts like 04B_03__).
+-- When loading a font that has full Unicode support (e.g. IBMPlexMono),
+-- set "fontNormalize": false in system.json to skip this pass.
+local fontNormalizeEnabled = true
+local function normalizeText(text)
+    if not fontNormalizeEnabled or not text then return text or "" end
+    -- Replace Unicode characters not covered by pixel fonts with ASCII
+    -- equivalents. Uses raw UTF-8 byte sequences (LuaJIT does not support
+    -- the \u{NNNN} escape syntax).
+    local normalized = text
+        -- Curly single quotes: U+2018 (0xE2 0x80 0x98), U+2019 (0xE2 0x80 0x99)
+        :gsub("\xE2\x80\x98", "'")
+        :gsub("\xE2\x80\x99", "'")
+        -- Curly double quotes: U+201C (0xE2 0x80 0x9C), U+201D (0xE2 0x80 0x9D)
+        :gsub("\xE2\x80\x9C", '"')
+        :gsub("\xE2\x80\x9D", '"')
+        -- En dash U+2013, Em dash U+2014 (0xE2 0x80 0x93/0x94)
+        :gsub("\xE2\x80\x93", "-")
+        :gsub("\xE2\x80\x94", "-")
+        -- Horizontal ellipsis U+2026 (0xE2 0x80 0xA6)
+        :gsub("\xE2\x80\xA6", "...")
+        -- Left/right double angle U+00AB/U+00BB (0xC2 0xAB/0xBB)
+        :gsub("\xC2\xAB", "<<")
+        :gsub("\xC2\xBB", ">>")
+        -- No-break space U+00A0 (0xC2 0xA0)
+        :gsub("\xC2\xA0", " ")
+        -- Bullet U+2022 (0xE2 0x80 0xA2)
+        :gsub("\xE2\x80\xA2", "*")
+        -- Trade mark sign U+2122 (0xE2 0x84 0xA2)
+        :gsub("\xE2\x84\xA2", "(TM)")
+        -- Copyright U+00A9 (0xC2 0xA9), Registered U+00AE (0xC2 0xAE)
+        :gsub("\xC2\xA9", "(C)")
+        :gsub("\xC2\xAE", "(R)")
+    return normalized
+end
+
 -- Draw text with drop shadow (crisp monochrome)
 function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
     local r, g, b, a = love.graphics.getColor()
@@ -342,7 +388,8 @@ function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
     local drawFont = font or mainFont
     if drawFont then love.graphics.setFont(drawFont) end
     
-    local parsedText = text or ""
+    -- Normalize text to replace Unicode characters not covered by pixel fonts
+    local parsedText = normalizeText(text or "")
     if eventName and eventName ~= "" then
         parsedText = string.gsub(parsedText, "\\eventName", string.gsub(eventName, "%%", "%%%%"))
     else
