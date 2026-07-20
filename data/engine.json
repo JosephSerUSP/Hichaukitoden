@@ -173,6 +173,14 @@
       "description": "Distinct non-empty inventory stacks (bounds an inventory-list cursor)."
     },
     {
+      "token": "session.skillCount",
+      "description": "Per-party-slot skill counts, e.g. session.skillCount[v.idx] (bounds the status scene's skill-inspector cursor)."
+    },
+    {
+      "token": "session.passiveCount",
+      "description": "Per-party-slot passive counts, e.g. session.passiveCount[v.idx] (bounds the status scene's passive-inspector cursor)."
+    },
+    {
       "token": "(list rows)",
       "description": "SET_LIST sprite/gaugeValue/gaugeMax evaluate against each row's fields (e.g. hp, maxHp, spriteKey)."
     }
@@ -1835,60 +1843,109 @@
       "contentY": 1,
       "title": null
     },
-    "status_panel": {
+    "dialogue_name": {
+      "x": 0,
+      "y": 16,
+      "width": 9.5,
+      "height": 2,
+      "style": "panel",
+      "title": null,
+      "contentY": 0.5
+    },
+    "status_name_header": {
       "x": 0.5,
       "y": 4.5,
       "width": 20.5,
-      "height": 13,
+      "height": 2,
       "style": "panel",
       "title": null,
-      "pageFormula": "v.page or 1",
-      "pages": [
+      "contentY": 0.5,
+      "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}"
+    },
+    "status_skills": {
+      "x": 0.5,
+      "y": 6.5,
+      "width": 20.5,
+      "height": 11,
+      "style": "list",
+      "title": "SKILLS",
+      "emptyText": "No skills."
+    },
+    "status_passives": {
+      "x": 0.5,
+      "y": 6.5,
+      "width": 20.5,
+      "height": 11,
+      "style": "list",
+      "title": "PASSIVES",
+      "emptyText": "No passives."
+    },
+    "status_bio": {
+      "x": 0.5,
+      "y": 6.5,
+      "width": 20.5,
+      "height": 11,
+      "style": "panel",
+      "title": "BIOGRAPHY",
+      "contentY": 2,
+      "lineSpacing": 1.5,
+      "text": "{sel('status_party').biography}"
+    },
+    "status_dock": {
+      "x": 0,
+      "y": 18,
+      "width": 9.5,
+      "height": 12,
+      "style": "panel",
+      "title": null,
+      "actorStatus": "status_party",
+      "contentY": 8.5,
+      "lineSpacing": 1,
+      "gauges": [
         {
-          "contentY": 6,
-          "lineSpacing": 1,
-          "gauges": [
-            {
-              "label": "HP  {sel('status_party').hp}/{sel('status_party').maxHp}",
-              "value": "sel('status_party').hp",
-              "max": "sel('status_party').maxHp",
-              "x": 1,
-              "y": 1,
-              "width": 18
-            },
-            {
-              "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
-              "value": "sel('status_party').exp",
-              "max": "sel('status_party').expNeeded",
-              "x": 1,
-              "y": 3,
-              "width": 18,
-              "color": [
-                0.1,
-                0.2,
-                0.5
-              ],
-              "fill": [
-                0.3,
-                0.6,
-                1
-              ]
-            }
+          "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
+          "value": "sel('status_party').exp",
+          "max": "sel('status_party').expNeeded",
+          "x": 0.5,
+          "y": 6.5,
+          "width": 8.5,
+          "color": [
+            0.1,
+            0.2,
+            0.5
           ],
-          "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}\nATK {sel('status_party').atk}  DEF {sel('status_party').def}  MAT {sel('status_party').mat}\nMDF {sel('status_party').mdf}  ASP {sel('status_party').asp}  MPD {sel('status_party').mpd}\nWPN {sel('status_party').weapon}\nAMR {sel('status_party').armor}\nACC {sel('status_party').accessory}"
-        },
-        {
-          "contentY": 1,
-          "lineSpacing": 1.25,
-          "text": "{sel('status_party').name}   Skills & Passives\n\nSKILLS\n{sel('status_party').skillText}\n\nPASSIVES\n{sel('status_party').passiveText}"
-        },
-        {
-          "contentY": 1,
-          "lineSpacing": 1.5,
-          "text": "{sel('status_party').name}\n{sel('status_party').role}\n\n{sel('status_party').biography}"
+          "fill": [
+            0.3,
+            0.6,
+            1
+          ]
         }
       ],
-      "gauges": []
+      "text": "ATK {sel('status_party').atk}  DEF {sel('status_party').def}\nMAT {sel('status_party').mat}  MDF {sel('status_party').mdf}\nASP {sel('status_party').asp}  MPD {sel('status_party').mpd}"
+    },
+    "equip_slots": {
+      "x": 0.5,
+      "y": 6.5,
+      "width": 20.5,
+      "height": 11,
+      "style": "list",
+      "title": "EQUIP"
+    },
+    "equip_list_frame": {
+      "x": 9.5,
+      "y": 18,
+      "width": 22.5,
+      "height": 12,
+      "style": "frame",
+      "title": null
+    },
+    "equip_list": {
+      "x": 9.5,
+      "y": 18,
+      "width": 22.5,
+      "height": 12,
+      "style": "list",
+      "title": "SELECT"
     },
     "craft_header": {
       "x": 0,
@@ -1961,7 +2018,7 @@
       "portrait": "sel('status_party').portraitKey",
       "portraitX": 1.3,
       "portraitW": 7.33,
-      "portraitH": 11
+      "portraitH": 9
     },
     "map_command": {
       "x": 0,

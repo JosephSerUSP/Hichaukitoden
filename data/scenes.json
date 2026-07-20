@@ -2318,30 +2318,6 @@
               "windowId": "map_member_popup"
             },
             {
-              "cmd": "SCRIPT",
-              "ref": "pushStatusEquip"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 3",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "mode",
-              "value": 4
-            },
-            {
-              "cmd": "CLOSE_WINDOW",
-              "windowId": "map_member_popup"
-            },
-            {
               "cmd": "SCENE_EVENT",
               "kind": "push",
               "scene": "1",
@@ -2356,7 +2332,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 4",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 3",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -2395,7 +2371,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 5",
+          "condition": "v._guard == 0 and v.mode == 2 and v.popupIdx == 4",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -2625,11 +2601,7 @@
       "unitCommands": [
         {
           "name": "STATUS",
-          "help": "View this creature's stats, skills and biography."
-        },
-        {
-          "name": "EQUIP",
-          "help": "Change this creature's weapon, armor or accessory."
+          "help": "View this creature's stats, skills, biography and equipment."
         },
         {
           "name": "ITEM CREATION",
@@ -2648,8 +2620,7 @@
     "scripts": {
       "snapPartyIdx": "\nlocal v = ctx.v\nfor i = 1, 4 do\n    local m = api.party(i)\n    if m then\n        v.partyIdx = i\n        break\n    end\nend\n",
       "selectPartyMember": "\nlocal v = ctx.v\nlocal member = api.party(v.partyIdx)\nif member then\n    v._guard = 1\n    v.mode = 2\n    v.memberIdx = v.partyIdx\n    v.popupIdx = 1\n    api.emit({ type = \"open_window\", windowId = \"map_member_popup\" })\n    api.emit({ type = \"set_list\", windowId = \"map_member_popup\", listId = \"config:unitCommands\" })\n    api.emit({ type = \"set_cursor\", windowId = \"map_member_popup\", index = v.popupIdx })\nend\n",
-      "pushStatus": "\nlocal v = ctx.v\nif v.memberIdx then\n    api.emit({ type = \"scene_change\", kind = \"push\", scene = \"status\", vars = { idx = v.memberIdx } })\nend\n",
-      "pushStatusEquip": "\nlocal v = ctx.v\nif v.memberIdx then\n    api.emit({ type = \"scene_change\", kind = \"push\", scene = \"status\", vars = { idx = v.memberIdx, entry = \"equip\" } })\nend\n"
+      "pushStatus": "\nlocal v = ctx.v\nif v.memberIdx then\n    api.emit({ type = \"scene_change\", kind = \"push\", scene = \"status\", vars = { idx = v.memberIdx } })\nend\n"
     },
     "goldenScript": [
       {
@@ -2715,15 +2686,6 @@
         },
         {
           "cmd": "OPEN_WINDOW",
-          "windowId": "items_info_panel"
-        },
-        {
-          "cmd": "SET_TEXT",
-          "windowId": "items_info_panel",
-          "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}"
-        },
-        {
-          "cmd": "OPEN_WINDOW",
           "windowId": "help"
         },
         {
@@ -2739,11 +2701,6 @@
           "cmd": "SET_CURSOR",
           "windowId": "party",
           "index": 0
-        },
-        {
-          "cmd": "SET_TEXT",
-          "windowId": "help",
-          "text": "UP/DOWN: select    ENTER: use    ESC: back"
         }
       ],
       "on_up": [
@@ -2910,9 +2867,9 @@
         "id": "items_left_panel",
         "rect": {
           "x": 0.5,
-          "y": 4.5,
-          "w": 19,
-          "h": 13
+          "y": 6.5,
+          "w": 31,
+          "h": 11
         },
         "visible": "v.state == 1",
         "style": "list",
@@ -2928,39 +2885,21 @@
         ]
       },
       {
-        "id": "items_info_panel",
-        "rect": {
-          "x": 20,
-          "y": 4.5,
-          "w": 11.5,
-          "h": 13
-        },
-        "visible": "v.state == 1",
-        "style": "panel",
-        "title": null,
-        "lineSpacing": 1,
-        "content": [
-          {
-            "type": "text",
-            "text": "{sel('items_left_panel').name}\nOwned: x{sel('items_left_panel').qty}\n\n{sel('items_left_panel').description}"
-          }
-        ]
-      },
-      {
         "id": "help",
         "rect": {
           "x": 0,
           "y": 0,
           "w": 32,
-          "h": 4
+          "h": 6
         },
         "visible": "v.state == 1",
         "style": "frame",
         "title": null,
+        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
-            "text": "UP/DOWN: select    ENTER: use    ESC: back"
+            "text": "{sel('items_left_panel').description}"
           }
         ]
       },
@@ -3053,7 +2992,8 @@
               "name": "idx",
               "value": 1
             }
-          ]
+          ],
+          "else": []
         },
         {
           "cmd": "SET_VAR",
@@ -3071,32 +3011,57 @@
           "value": 1
         },
         {
-          "cmd": "IF",
-          "condition": "v.entry == 'equip'",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "slot",
-              "value": 1
-            }
-          ],
-          "else": []
+          "cmd": "SET_VAR",
+          "name": "skillIdx",
+          "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "passiveIdx",
+          "value": 1
         }
       ],
       "on_up": [
         {
           "cmd": "IF",
-          "condition": "v.state == 1 and v.idx > 1",
+          "condition": "v.state == 1 and (v.page or 1) == 2 and v.skillIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "skillIdx",
+              "value": "v.skillIdx - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and (v.page or 1) == 3 and v.passiveIdx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "passiveIdx",
+              "value": "v.passiveIdx - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and ((v.page or 1) == 1 or (v.page or 1) == 4) and v.idx > 1",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "idx",
               "value": "v.idx - 1"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "skillIdx",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "passiveIdx",
+              "value": 1
             }
           ]
         },
@@ -3126,12 +3091,44 @@
       "on_down": [
         {
           "cmd": "IF",
-          "condition": "v.state == 1 and v.idx < party.count",
+          "condition": "v.state == 1 and (v.page or 1) == 2 and v.skillIdx < (session.skillCount[v.idx] or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "skillIdx",
+              "value": "v.skillIdx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and (v.page or 1) == 3 and v.passiveIdx < (session.passiveCount[v.idx] or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "passiveIdx",
+              "value": "v.passiveIdx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1 and ((v.page or 1) == 1 or (v.page or 1) == 4) and v.idx < party.count",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "idx",
               "value": "v.idx + 1"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "skillIdx",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "passiveIdx",
+              "value": 1
             }
           ]
         },
@@ -3177,7 +3174,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "page",
-                  "value": 3
+                  "value": 4
                 }
               ]
             }
@@ -3191,7 +3188,7 @@
           "then": [
             {
               "cmd": "IF",
-              "condition": "(v.page or 1) < 3",
+              "condition": "(v.page or 1) < 4",
               "then": [
                 {
                   "cmd": "SET_VAR",
@@ -3213,7 +3210,7 @@
       "on_select": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and party.count > 0",
+          "condition": "v._guard == 0 and v.state == 1 and (v.page or 1) == 1 and party.count > 0",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -3365,8 +3362,8 @@
           "h": 12
         },
         "style": "partyGrid",
-        "visible": "v.state == 1",
-        "cursor": "v.state == 1 and v.idx or 0",
+        "visible": "false",
+        "cursor": "v.idx",
         "content": [
           {
             "type": "list",
@@ -3376,15 +3373,8 @@
         ]
       },
       {
-        "id": "status_panel",
-        "rect": {
-          "x": 0.5,
-          "y": 4.5,
-          "w": 20.5,
-          "h": 13
-        },
+        "id": "status_name_header",
         "style": "panel",
-        "visible": "v.state == 1",
         "content": []
       },
       {
@@ -3396,58 +3386,82 @@
           "h": 4
         },
         "style": "frame",
-        "visible": "v.state == 1",
+        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
-            "text": "UP/DOWN: select member    LEFT/RIGHT: page    ENTER: equip    ESC: back"
+            "text": "{v.state == 2 and 'UP/DOWN: choose slot    ENTER: change equipment    ESC: back' or (v.state == 3 and (sel('equip_list').description .. (sel('equip_list').preview ~= '' and ('\\n' .. sel('equip_list').preview) or '')) or ((v.page or 1) == 2 and sel('status_skills').description or ((v.page or 1) == 3 and sel('status_passives').description or 'UP/DOWN: select member    LEFT/RIGHT: page    ENTER: equip    ESC: back')))}"
           }
         ]
       },
       {
         "id": "statusPortrait",
-        "rect": {
-          "x": 21.5,
-          "y": 4.5,
-          "w": 10,
-          "h": 13
-        },
         "style": "panel",
-        "visible": "v.state == 1",
         "content": []
       },
       {
         "id": "equip_slots",
-        "rect": {
-          "x": 4,
-          "y": 5,
-          "w": 14,
-          "h": 8
-        },
         "style": "list",
-        "visible": "v.state == 2",
-        "title": "EQUIP",
+        "visible": "(v.page or 1) == 1",
         "content": [
           {
             "type": "list",
             "listId": "equipSlots",
-            "format": "{name}: {item}",
-            "cursor": "v.slot",
+            "format": "{item}",
+            "labelField": "name",
+            "cursor": "v.state == 1 and 0 or v.slot",
             "member": "v.idx"
           }
         ]
       },
       {
+        "id": "status_dock",
+        "style": "panel",
+        "content": []
+      },
+      {
+        "id": "status_skills",
+        "style": "list",
+        "visible": "(v.page or 1) == 2",
+        "content": [
+          {
+            "type": "list",
+            "listId": "memberSkills",
+            "format": "{name}",
+            "cursor": "v.skillIdx",
+            "member": "v.idx"
+          }
+        ]
+      },
+      {
+        "id": "status_passives",
+        "style": "list",
+        "visible": "(v.page or 1) == 3",
+        "content": [
+          {
+            "type": "list",
+            "listId": "memberPassives",
+            "format": "{name}",
+            "cursor": "v.passiveIdx",
+            "member": "v.idx"
+          }
+        ]
+      },
+      {
+        "id": "status_bio",
+        "style": "panel",
+        "visible": "(v.page or 1) == 4",
+        "content": []
+      },
+      {
+        "id": "equip_list_frame",
+        "style": "frame",
+        "content": []
+      },
+      {
         "id": "equip_list",
-        "rect": {
-          "x": 10,
-          "y": 4,
-          "w": 18,
-          "h": 12
-        },
         "style": "list",
         "visible": "v.state == 3",
-        "title": "SELECT",
         "content": [
           {
             "type": "list",
@@ -3456,25 +3470,6 @@
             "cursor": "v.eqIdx",
             "slot": "v.slot",
             "member": "v.idx"
-          }
-        ]
-      },
-      {
-        "id": "equip_info",
-        "rect": {
-          "x": 0,
-          "y": 16,
-          "w": 32,
-          "h": 8
-        },
-        "style": "panel",
-        "visible": "v.state == 3",
-        "title": "INFO",
-        "lineSpacing": 1,
-        "content": [
-          {
-            "type": "text",
-            "text": "{sel('equip_list').name}\n{sel('equip_list').description}\n\nPREVIEW: {sel('equip_list').preview}"
           }
         ]
       }
@@ -3727,12 +3722,12 @@
           "w": 29.5,
           "h": 4
         },
-        "visible": "v.combatState == 'input' and v.currentHelpText ~= ''",
+        "visible": "(v.combatState == 'input' and v.currentHelpText ~= '') or v.combatState == 'victory'",
         "style": "frame",
         "content": [
           {
             "type": "text",
-            "text": "{v.currentHelpText}"
+            "text": "{v.combatState == 'victory' and v.victorySpoilsText or v.currentHelpText}"
           }
         ]
       },
@@ -4730,12 +4725,6 @@
     "windows": [
       {
         "id": "dialogue_name",
-        "rect": {
-          "x": 0,
-          "y": 16,
-          "w": 8,
-          "h": 2
-        },
         "style": "panel",
         "visible": "v.dialogueSpeaker ~= nil and v.dialogueSpeaker ~= ''",
         "content": [
@@ -4750,7 +4739,7 @@
         "rect": {
           "x": 0,
           "y": 18,
-          "w": 8,
+          "w": 9.5,
           "h": 12
         },
         "style": "frame",
@@ -4761,7 +4750,7 @@
             "portraitField": "v.dialoguePortrait",
             "portraitX": 1,
             "portraitY": 1,
-            "portraitW": 6,
+            "portraitW": 7.5,
             "portraitH": 10
           }
         ]
@@ -4769,9 +4758,9 @@
       {
         "id": "dialogue_message",
         "rect": {
-          "x": 8,
+          "x": 9.5,
           "y": 18,
-          "w": 24,
+          "w": 22.5,
           "h": 12
         },
         "style": "frame",
@@ -4787,9 +4776,9 @@
       {
         "id": "dialogue_choices",
         "rect": {
-          "x": 8,
+          "x": 9.5,
           "y": 18,
-          "w": 24,
+          "w": 22.5,
           "h": 12
         },
         "style": "list",

@@ -1356,7 +1356,7 @@ runValidation = function()
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {}, ritualMode = "summon", targetIsReserve = true, targetIndex = 1, pool = {}, poolIdx = 1, level = 1, baseLevel = 1, _stepDir = 1, mpCost = 0, expCost = 0, done = 0, titleText = "", previewText = "", costText = "", helpText = "", resultText = "", memberName = "", confirmOptions = {}, ritualPush = "", popupTargetIsReserve = true, popupTargetIndex = 1, page = 1, evoIdx = 1, evoPaths = {} },
+                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, skillIdx = 1, passiveIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {}, ritualMode = "summon", targetIsReserve = true, targetIndex = 1, pool = {}, poolIdx = 1, level = 1, baseLevel = 1, _stepDir = 1, mpCost = 0, expCost = 0, done = 0, titleText = "", previewText = "", costText = "", helpText = "", resultText = "", memberName = "", confirmOptions = {}, ritualPush = "", popupTargetIsReserve = true, popupTargetIndex = 1, page = 1, evoIdx = 1, evoPaths = {} },
                         party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
@@ -1940,13 +1940,27 @@ elseif paramDef.type == "script" then
                         sceneDesc .. " windows[" .. wi .. "]: duplicate window id '" .. tostring(winDef.id) .. "'")
                     seenIds[winDef.id] = true
 
-                    -- rect must be present with x,y,w,h (values may be exprs).
-                    check(type(winDef.rect) == "table",
-                        sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'rect'")
-                    if type(winDef.rect) == "table" then
-                        for _, dim in ipairs({ "x", "y", "w", "h" }) do
-                            check(winDef.rect[dim] ~= nil,
-                                sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': rect missing '" .. dim .. "'")
+                    -- rect must be present with x,y,w,h (values may be exprs) —
+                    -- UNLESS this window id has an engine.json windowLayout
+                    -- entry to fall back on. A scene omitting rect entirely
+                    -- means "use windowLayout's geometry as-is", which keeps
+                    -- that geometry editable via the Windows-tab drag-resize
+                    -- tool (it only ever writes to windowLayout — an inline
+                    -- scene rect would otherwise always shadow it at render
+                    -- time, silently making the tool's edits inert).
+                    local hasLayoutFallback = (loader.engine and loader.engine.windowLayout
+                        and loader.engine.windowLayout[winDef.id]) ~= nil
+                    if winDef.rect == nil then
+                        check(hasLayoutFallback,
+                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': missing 'rect' (and no engine.json windowLayout entry to fall back on)")
+                    else
+                        check(type(winDef.rect) == "table",
+                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': 'rect' must be a table")
+                        if type(winDef.rect) == "table" then
+                            for _, dim in ipairs({ "x", "y", "w", "h" }) do
+                                check(winDef.rect[dim] ~= nil,
+                                    sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "': rect missing '" .. dim .. "'")
+                            end
                         end
                     end
 
@@ -1987,7 +2001,7 @@ elseif paramDef.type == "script" then
                                 -- Verify known list sources resolve syntactically.
                                 local src = block.listId or ""
                                 local knownSources = { inventory = true, party = true, reserve = true,
-                                    equipSlots = true, equipment = true }
+                                    equipSlots = true, equipment = true, memberSkills = true, memberPassives = true }
                                 if not knownSources[src] and not src:find("^config:") and not src:find("^v:")
                                     and not src:find("^static:") and not src:find("^term:") then
                                     print("[validator] warning: " .. sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] unknown list source '" .. src .. "'")

@@ -3,7 +3,7 @@ local config = require("engine.config")
 local ui = {}
 
 local iconset
-local iconSize = 12
+local iconSize = 8
 local iconQuads = {}
 local windowskin
 local windowskinHighlight
@@ -541,6 +541,24 @@ function ui.drawIcon(iconId, x, y)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(iconset, quad, x, y)
     love.graphics.pop()
+end
+
+-- Draws "[icon] text" as one unit — the icon immediately in front of the
+-- name it belongs to, with the gap sized off the REAL icon footprint
+-- (iconSize) rather than a constant some caller has to keep in sync by
+-- hand. This is the one place that convention lives; anywhere rows pair
+-- an icon with a name (inventory, equipment, equip slots, ...) should
+-- call this instead of re-deriving the icon/gap math per caller.
+-- Returns the x position immediately after the drawn text (for callers
+-- that need to continue laying content out on the same line).
+function ui.drawIconText(iconId, text, x, y, color)
+    local textX = x
+    if iconId and iconId > 0 then
+        ui.drawIcon(iconId, textX + ui.toPx(0.25), y - 2)
+        textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
+    end
+    ui.drawString(text, textX, y, color)
+    return textX + ui.measureText(text)
 end
 
 -- Draw icons from system/iconset.png with uniform scale factor

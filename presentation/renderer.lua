@@ -803,7 +803,7 @@ end
 
 -- Victory window: gold/EXP drain animation with per-member gauges. Visible
 -- only while v.combatState == "victory" (window `visible` formula).
-function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage)
+function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
     if not victoryInfo then return end
     if victoryAnim.source ~= victoryInfo then
         victoryAnim.source = victoryInfo
@@ -829,11 +829,15 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage)
     local gaugeEndX = contentX + layoutVal("victoryGaugeWidth")
     local ty = vy + 22
 
-    -- Gold grant drains from X→0 while EXP value is static.
-    -- Party total gold (at bottom of window) rises from pre→post.
+    -- Gold grant drains from X→0 while EXP value is static. The spoils
+    -- text itself is no longer drawn on the victory panel (owner request:
+    -- the battle_help window shows it instead) — published onto the scene
+    -- var table each frame so battle_help's data-driven text can read it.
     local drainGold = math.floor((victoryAnim.displayedGoldDrain or victoryInfo.gold or 0) + 0.5)
-    local drainStr = "+" .. drainGold .. "G"
-    ui.drawString(drainStr .. "  EXP +" .. (victoryInfo.exp or 0), contentX, ty, {1, 0.9, 0.4, 1})
+    local partyGoldPreview = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
+    if v then
+        v.victorySpoilsText = "+" .. drainGold .. "G  EXP +" .. (victoryInfo.exp or 0) .. "\nGold: " .. partyGoldPreview .. " G"
+    end
 
     -- Always draw member rows with gauges (pre-drain values in stage 0,
     -- then animate during stage 1+).
@@ -855,11 +859,6 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage)
         -- Gauge at full width below the name line
         ui.drawBar(contentX, rowY + 10, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
     end
-
-    -- Party total gold at the bottom of the window
-    local partyGold = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
-    local totalGoldY = vy + vh - 16
-    ui.drawString("Gold: " .. partyGold .. " G", contentX, totalGoldY, {1, 0.85, 0.5, 1})
 
     -- Bottom prompt: ENTER to start drain, SPACE to dismiss when done
     local prompt = (victoryAnim.stage == 0) and "[ENTER]" or (victoryAnim.stage == 2 and "[SPACE]" or "")

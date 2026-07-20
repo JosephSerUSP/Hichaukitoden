@@ -3626,13 +3626,13 @@
         ]
       ]
     ],
-    "tileset": "town_002",
+    "tileset": "town_003",
     "ceilingStyle": "sky",
     "fog": {
       "color": [
-        0.63,
-        0.77,
-        0.91
+        0.1,
+        0.22,
+        0.34
       ],
       "density": 0.1,
       "minFactor": 0

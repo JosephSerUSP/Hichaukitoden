@@ -16,7 +16,6 @@
       "Green"
     ],
     "skills": [
-      "attack",
       "windBlade",
       "soothingMote"
     ],
@@ -88,7 +87,6 @@
       "White"
     ],
     "skills": [
-      "attack",
       "windBlade",
       "soothingMote",
       "holySmite"
@@ -154,7 +152,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "boneRush"
     ],
     "flavor": "A reanimated corpse that just wants to go back to sleep.",
@@ -230,7 +227,6 @@
       "Blue"
     ],
     "skills": [
-      "attack",
       "holySmite",
       "divineFavor"
     ],
@@ -302,7 +298,6 @@
       "Blue"
     ],
     "skills": [
-      "attack",
       "holySmite",
       "divineFavor",
       "soothingMote"
@@ -375,7 +370,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "shadowClaw",
       "infernalPact"
     ],
@@ -454,7 +448,6 @@
       "Blue"
     ],
     "skills": [
-      "attack",
       "shadowClaw",
       "infernalPact",
       "drainKiss"
@@ -522,7 +515,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "needleShot",
       "fieldSurgery"
     ],
@@ -589,7 +581,6 @@
       "Red"
     ],
     "skills": [
-      "attack",
       "shadowClaw"
     ],
     "flavor": "A mischievous lesser demon that enjoys playing pranks.",
@@ -646,7 +637,6 @@
     ],
     "elements": [],
     "skills": [
-      "attack",
       "boneRush"
     ],
     "flavor": "An animated statue, slow but incredibly durable.",
@@ -718,7 +708,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "boneRush"
     ],
     "flavor": "An animated statue, slow but incredibly durable.",
@@ -782,7 +771,6 @@
       "Green"
     ],
     "skills": [
-      "attack",
       "windBlade"
     ],
     "expGrowth": 5,
@@ -851,7 +839,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "boneRush"
     ],
     "expGrowth": 3,
@@ -915,7 +902,6 @@
       "Blue"
     ],
     "skills": [
-      "attack",
       "soothingMote"
     ],
     "expGrowth": 4,
@@ -977,7 +963,6 @@
     "smallBattler": "egg",
     "elements": [],
     "skills": [
-      "attack",
       "wait"
     ],
     "expGrowth": 1,
@@ -1026,7 +1011,6 @@
       "White"
     ],
     "skills": [
-      "attack",
       "flameRebirth",
       "divineFavor"
     ],
@@ -1078,9 +1062,7 @@
     "elements": [
       "Red"
     ],
-    "skills": [
-      "attack"
-    ],
+    "skills": [],
     "flavor": "It's eating your rations. And your tank.",
     "expGrowth": 2,
     "gold": 5,
@@ -1135,7 +1117,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "shadowClaw",
       "infernalPact"
     ],
@@ -1182,7 +1163,6 @@
       "Black"
     ],
     "skills": [
-      "attack",
       "shadowClaw",
       "infernalPact"
     ],
@@ -1238,7 +1218,6 @@
       "White"
     ],
     "skills": [
-      "attack",
       "soothingMote",
       "divineFavor"
     ],
@@ -1293,7 +1272,6 @@
       "Shadow"
     ],
     "skills": [
-      "attack",
       "shadowClaw",
       "assassinate"
     ],
@@ -1338,9 +1316,7 @@
     "maxMp": 820,
     "role": "Summoner",
     "elements": [],
-    "skills": [
-      "attack"
-    ],
+    "skills": [],
     "traits": [],
     "spriteKey": "egg",
     "gold": 0,

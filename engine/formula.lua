@@ -135,6 +135,24 @@ function formula.sessionView(session)
             end
             return counts
         end)(),
+        -- Per-member skill/passive counts (1-indexed by party slot) — lets
+        -- the status scene bound its skill/passive inspector cursors
+        -- (skillIdx/passiveIdx) the same way itemCount/equipCount bound
+        -- theirs, instead of a SCRIPT walking session.party by hand.
+        skillCount = (function()
+            local counts = {}
+            for i, m in ipairs(session.party or {}) do
+                counts[i] = (m.actorData and m.actorData.skills and #m.actorData.skills) or 0
+            end
+            return counts
+        end)(),
+        passiveCount = (function()
+            local counts = {}
+            for i, m in ipairs(session.party or {}) do
+                counts[i] = (m.actorData and m.actorData.passives and #m.actorData.passives) or 0
+            end
+            return counts
+        end)(),
     }
 end
 

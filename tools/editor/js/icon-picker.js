@@ -6,8 +6,8 @@ function openIconPicker(currentId, cb) {
     grid.innerHTML = '';
 
     // Iconset has 10 columns
-    const iconSize = 12; // 12x12
-    const displaySize = 24; // Scaled 2x
+    const iconSize = 8; // 8x8
+    const displaySize = 24; // Scaled 3x
 
     // Assuming max icons is large, say 200, could determine from image dimensions but this is simpler
     const maxIcons = 300;

@@ -67,14 +67,14 @@ end
 --   * If the actor has only one unique element → full-size icon.
 --   * If the actor has 2+ unique elements → each icon is scaled down to
 --     X = max(0.4, 1 - 0.2 * max(1, n - 3)) and arranged equidistantly
---     within the 12×12 px tile (diagonal for 2, triangle for 3, polygon
+--     within the 8×8 px tile (diagonal for 2, triangle for 3, polygon
 --     for n).
 --   * If one element type appears more often than the others (dominant),
 --     that element is drawn 0.2 larger and the rest 0.2 smaller.
 --
 -- @param  elems  array of element name strings (may contain duplicates)
 -- @param  x, y   top-left corner of the tile area
--- @return        width consumed (always iconSize = 12)
+-- @return        width consumed (always iconSize = 8)
 local function drawElementIcons(elems, x, y, session)
     if not elems or #elems == 0 then return 0 end
 

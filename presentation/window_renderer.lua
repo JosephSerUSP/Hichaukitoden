@@ -19,8 +19,11 @@
 --   "equipSlots"       a member's 3 gear slots (fields: index, name, item, icon)
 --   "equipment"        inventory gear matching a slot's type, [ UNEQUIP ] first
 --                      (fields: id, name, icon, qty, description, preview)
+--   "memberSkills"     a member's skills (fields: id, name, description)
+--   "memberPassives"   a member's passives (fields: id, name, description)
 -- The equip sources read the window's SET_LIST slot/member formulas at draw
--- time (slot: 1=Weapon 2=Armor 3=Accessory, member: party index).
+-- time (slot: 1=Weapon 2=Armor 3=Accessory, member: party index). The
+-- skill/passive sources read only the member formula.
 --
 -- Row templates/formulas (SET_LIST format/highlight/priority) are evaluated
 -- with the row's fields merged over the scene env, so "{name} (x{qty})" and
@@ -127,9 +130,9 @@ local function battlerListRows(session, sourceArray, maxSlots)
             view.role = (m.actorData and m.actorData.role) or "CREATURE"
             view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
             local eq = m.equipment or {}
-            view.weapon = eq[1] and eq[1].name or "[ EMPTY ]"
-            view.armor = eq[2] and eq[2].name or "[ EMPTY ]"
-            view.accessory = eq[3] and eq[3].name or "[ EMPTY ]"
+            view.weapon = eq[1] and eq[1].name or "-"
+            view.armor = eq[2] and eq[2].name or "-"
+            view.accessory = eq[3] and eq[3].name or "-"
             local function joinNames(ids, getter)
                 local names = {}
                 for _, id in ipairs(ids or {}) do
@@ -261,10 +264,49 @@ local function equipSlotRows(session, win, env)
         table.insert(rows, {
             index = i,
             name = labels[i] or SLOT_TYPES[i],
-            item = eq and eq.name or "[ EMPTY ]",
+            item = eq and eq.name or "-",
             icon = eq and eq.icon or 0,
             description = eq and eq.description or "",
         })
+    end
+    return rows
+end
+
+-- Inspectable skill/passive rows for the status scene's Skills/Passives
+-- pages (owner request: they should be their own pages, individually
+-- selectable, with the description shown in the context-help bar — same
+-- convention as the equip item picker). win.member is the SAME formula
+-- convention equipSlots/equipment use (usually "v.idx").
+local function memberSkillRows(session, win, env)
+    local memberIdx = tonumber((formula.eval(win.member, env))) or 1
+    local member = session and session.party and session.party[memberIdx]
+    local loader = session and session.loader
+    local rows = {}
+    for _, id in ipairs((member and member.actorData and member.actorData.skills) or {}) do
+        local skill = loader and loader.getSkill and loader.getSkill(id)
+        if skill then
+            table.insert(rows, { id = id, name = skill.name or id, description = skill.description or "" })
+        end
+    end
+    if #rows == 0 then
+        table.insert(rows, { id = "none", name = "None", description = "" })
+    end
+    return rows
+end
+
+local function memberPassiveRows(session, win, env)
+    local memberIdx = tonumber((formula.eval(win.member, env))) or 1
+    local member = session and session.party and session.party[memberIdx]
+    local loader = session and session.loader
+    local rows = {}
+    for _, id in ipairs((member and member.actorData and member.actorData.passives) or {}) do
+        local passive = loader and loader.getPassive and loader.getPassive(id)
+        if passive then
+            table.insert(rows, { id = id, name = passive.name or id, description = passive.description or "" })
+        end
+    end
+    if #rows == 0 then
+        table.insert(rows, { id = "none", name = "None", description = "" })
     end
     return rows
 end
@@ -320,6 +362,10 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = equipSlotRows(ctx.session, win, env)
     elseif src == "equipment" then
         rows = equipmentRows(ctx.session, win, env)
+    elseif src == "memberSkills" then
+        rows = memberSkillRows(ctx.session, win, env)
+    elseif src == "memberPassives" then
+        rows = memberPassiveRows(ctx.session, win, env)
     elseif src:sub(1, 7) == "config:" then
         rows = configRows(sceneData, src:sub(8))
     elseif src:sub(1, 2) == "v:" then
@@ -480,6 +526,35 @@ local function drawPortrait(layout, env, x, y, title)
     end
 end
 
+-- Draws the SAME actor-status cell used everywhere else party status is
+-- shown (partyGrid style, battle/map HUD) inside an ordinary "panel"
+-- window. layout.actorStatus names the OTHER window whose selected row
+-- carries the real battler object (row.battlerRef) — a battler is a Lua
+-- object (methods, not just fields), so it can't round-trip through
+-- formula.eval, which only returns number/boolean/string by design.
+-- env.sel is the same lookup {expr} templates use via sel('id'), just
+-- called directly here instead of through the sandboxed formula string.
+--
+-- Positioned via the window's plain natural content origin (1 tile inset,
+-- untitled; 2 if titled) — the SAME thing gridSlot's index-1 cell reduces
+-- to (col/row both 0 there). Deliberately NOT contentOrigin()/layout's own
+-- contentX/contentY: those belong to this window's separate text/gauge
+-- block (drawn further down, below the cell), and reusing them here would
+-- drag the cell down to wherever the text starts instead of pinning it to
+-- the window's top-left — exactly the "drawing way lower than it should"
+-- bug this comment is here to stop from recurring.
+local function drawActorStatusCell(layout, env, x, y, title, ctx)
+    if not layout.actorStatus then return 0 end
+    local row = env.sel and env.sel(layout.actorStatus)
+    local battler = row and row.battlerRef
+    if not battler then return 0 end
+    local session = ctx and ctx.session
+    local colW, rowH = actor_status.cellSize(session)
+    local cellX, cellY = ui.panelContentOrigin(x, y, title, nil, nil)
+    actor_status.draw(battler, cellX, cellY, false, session)
+    return rowH
+end
+
 local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
     local contentX, contentY = contentOrigin(layout, title, x, y)
 
@@ -534,11 +609,17 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             textX = contentX + ui.toPx(0.5) + spriteSize + 3
             end
         end
-        if row.icon and row.icon > 0 then
-            ui.drawIcon(row.icon, textX + ui.toPx(0.5), rowY - 2)
-            textX = textX + ui.toPx(2.5)
+        -- win.labelField (e.g. equip_slots' slot name "WPN"/"AMR"/"ACC")
+        -- draws as plain text BEFORE the icon, so the icon sits immediately
+        -- in front of the item name it belongs to instead of in front of
+        -- the whole "label: item" line (owner feedback: icon must precede
+        -- the name it's for, not the slot label).
+        if win.labelField then
+            local label = tostring(row[win.labelField] or "") .. ":  "
+            ui.drawString(label, textX, rowY, color)
+            textX = textX + ui.measureText(label)
         end
-        ui.drawString(interpolate(format, rEnv), textX, rowY, color)
+        ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
         if hasGauge then
             -- (extra parens: see drawLayoutGauges — truncates eval's
             -- (value, err) pair so a failed formula degrades to 0/1
@@ -873,6 +954,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     local lineSpacing = ui.toPx(layout.lineSpacing or 1)
 
     drawPortrait(layout, env, x, y, title)
+    drawActorStatusCell(layout, env, x, y, title, ctx)
     drawLayoutGauges(layout.gauges, env, x, y)
 
     local text = layout.text ~= nil and layout.text or win.text
@@ -917,57 +999,25 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     elseif style == "battleLog" then
         renderer.drawBattleLogWindow(env.v and env.v.combatLog)
     elseif style == "victoryPanel" then
-        renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory, env.v and env.v.victoryStage or 0)
+        renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory, env.v and env.v.victoryStage or 0, env.v)
     else -- "panel", "frame" and any unknown style: text content
         if text then
-            -- Explicit layout.align wins; otherwise frame keeps its historic
-            -- centered default (battle_help etc.). Centered text anchors at
-            -- the raw window x; anything else uses the padded content origin.
-            local align = layout.align or ((style == "frame") and "center" or "left")
-            local tx = (align == "center") and x or contentX
+            -- Left-justified by default everywhere (owner feedback: too much
+            -- of the UI was center-justified when it shouldn't be) — an
+            -- explicit layout.align still overrides per window.
+            local align = layout.align or "left"
 
-            -- Small-window centering rule (owner feedback 18.07.2026):
-            -- padding applies on ALL sides, and when the content can't fit
-            -- with symmetric padding on an axis, it centers on that axis
-            -- instead of hugging top/left and crowding the far edge. Counts
-            -- explicit lines only -- printf-wrapped long text (message box)
-            -- keeps its top anchor.
-            --
-            -- Only applies when contentY is the DEFAULT (untitled=1/titled=2
-            -- tile) padding -- that's the only case where "contentY - y" is
-            -- actually symmetric decorative padding the rule can safely
-            -- mirror onto the bottom edge. A layout author who set an
-            -- explicit contentY did so for a reason (status_panel pushes it
-            -- to y=6 tiles to clear two gauges drawn above the text); this
-            -- rule used to treat that large one-sided offset as if it were
-            -- padding to mirror, "discovered" almost no room was left, and
-            -- yanked the text back up on top of the gauges it was placed
-            -- below to avoid.
-            local rendered = interpolate(text, env)
-            local lineCount = 0
-            local maxLineW = 0
-            for chunk in (rendered .. "\n"):gmatch("(.-)\n") do
-                lineCount = lineCount + 1
-                local lw = ui.measureText(chunk)
-                if lw > maxLineW then maxLineW = lw end
-            end
-            -- Trailing blank lines from template padding don't push layout.
-            while lineCount > 1 and rendered:sub(-1) == "\n" do
-                lineCount = lineCount - 1
-                rendered = rendered:sub(1, -2)
-            end
-            local padY = contentY - y
-            local ty = contentY
-            local textH = (lineCount - 1) * lineSpacing + ui.lineHeight
-            if layout.contentY == nil and textH > h - 2 * padY then
-                ty = y + math.max(2, math.floor((h - textH) / 2))
-            end
+            -- Padding is symmetric on all 4 sides: contentX/contentY (the
+            -- top-left inset, default or author-set) mirrored onto the
+            -- right/bottom edges. No dynamic "shrink text to fit, recenter
+            -- if it doesn't" behavior here anymore — that rule used to
+            -- misfire on ordinary windows (wrapped dialogue text, etc.),
+            -- spilling text past the padding instead of respecting it. A
+            -- window that's too small for its text should get a smaller
+            -- explicit contentX/contentY (e.g. the name-box style small
+            -- panels), not a runtime workaround.
             local padX = contentX - x
-            if align ~= "center" and maxLineW > w - 2 * padX then
-                align = "center"
-                tx = x
-            end
-            drawTextLines(text, env, tx, ty, lineSpacing, w - ui.toPx(1), align)
+            drawTextLines(text, env, contentX, contentY, lineSpacing, w - 2 * padX, align)
         end
     end
 
@@ -1123,7 +1173,23 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             goto continue
         end
 
-        -- Resolve rect (expressions allowed per-value).
+        -- Build a synthetic window layout: start from engine.json windowLayout
+        -- (for shared windows like help/party that have existing style defs),
+        -- then overlay the windows array's own properties.
+        local layout = {}
+        local baseLayout = layouts[winDef.id]
+        if baseLayout then
+            for k, v in pairs(baseLayout) do layout[k] = v end
+        end
+
+        -- Resolve rect (expressions allowed per-value). A scene's rect is
+        -- only an OVERRIDE per-dimension — any dimension it doesn't specify
+        -- falls back to engine.json's windowLayout entry for this window id
+        -- (baseLayout, already merged above), not a hardcoded literal. Get
+        -- this wrong and every window with a scene-level rect (i.e. nearly
+        -- all of them) silently ignores its engine.json x/y/w/h entirely,
+        -- which is also what makes the Windows-tab editor's drag-resize (it
+        -- only writes to windowLayout) a no-op for those windows.
         local function resolveDim(dim, default)
             if dim == nil then return default end
             local ok, val = pcall(formula.eval, dim, env)
@@ -1133,19 +1199,10 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             end
             return default
         end
-        local x = resolveDim(winDef.rect and winDef.rect.x, 0)
-        local y = resolveDim(winDef.rect and winDef.rect.y, 0)
-        local w = resolveDim(winDef.rect and winDef.rect.w, 8)
-        local h = resolveDim(winDef.rect and winDef.rect.h, 4)
-
-        -- Build a synthetic window layout: start from engine.json windowLayout
-        -- (for shared windows like help/party that have existing style defs),
-        -- then overlay the windows array's own properties.
-        local layout = {}
-        local baseLayout = layouts[winDef.id]
-        if baseLayout then
-            for k, v in pairs(baseLayout) do layout[k] = v end
-        end
+        local x = resolveDim(winDef.rect and winDef.rect.x, layout.x or 0)
+        local y = resolveDim(winDef.rect and winDef.rect.y, layout.y or 0)
+        local w = resolveDim(winDef.rect and winDef.rect.w, layout.width or 8)
+        local h = resolveDim(winDef.rect and winDef.rect.h, layout.height or 4)
         layout.x = x
         layout.y = y
         layout.width = w
@@ -1172,7 +1229,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         win.cursorFormula, win.sprite = nil, nil
         win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
         win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel = nil, nil, nil
-        win.slot, win.member = nil, nil
+        win.slot, win.member, win.labelField = nil, nil, nil
         win._resolvedRows, win._resolvedCursor = nil, nil
         local gauges = {}
 
@@ -1191,6 +1248,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 win.priority = block.priority
                 win.slot = block.slot
                 win.member = block.member
+                win.labelField = block.labelField
                 -- pull rows from pre-resolved cache
                 local cached = listCache[winDef.id]
                 if cached then

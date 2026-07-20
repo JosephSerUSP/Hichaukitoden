@@ -72,7 +72,45 @@ Last consolidated: 2026-07-17 (post overhaul-7 merge to main).
 - G1 validates whatever root is active. Golden logs (G2/G3) are recorded
   against the default campaign only — run gates with `data/` active.
 
-### 1.4 Extensibility (round-wide rule since o7, keep it)
+### 1.4 Scene layout convention: context-help bar + bottom dock
+
+Every `"draw": "windows"` menu scene shares one skeleton instead of each
+scene inventing its own chrome:
+
+- **Top: a "CONTEXT HELP" bar** (style `frame`, full width, docked at
+  `y=0`). It never holds a fixed hint string — its `content` text is a
+  formula keyed on scene state (`v.state`, `v.combatState`, …) so the same
+  window reads as nav hints in one state and as contextual explanation
+  (an item/equip description, victory spoils, …) in another. This replaces
+  the old pattern of a separate description/info panel next to a static
+  "UP/DOWN: select ENTER: use" bar — one window, state-dependent text, no
+  redundant real estate. (Applied to the `items` scene's `help` window and
+  `battle`'s `battle_help` window during `victory`.)
+- **Bottom: a persistent dock**, one of two things depending on scene:
+  1. **Persistent party status** — the current/selected member's compact
+     status, always visible regardless of what's happening above it.
+  2. **Context-aware content laid out like the dialogue box** — left pane
+     is an info panel (portrait/name/stat summary), right pane is the
+     larger, interactive pane (lists, explanations, previews — anything
+     the player can act on lives here, not in the narrow left pane).
+  Both variants share the dialogue scene's exact footprint and column
+  split: left column width starts from `battle_layout.partyGridColWidth`
+  (68px = 8.5 tiles — the same fixed cell width `actor_status.draw` uses
+  everywhere else) but widens as needed (currently 9.5 tiles, to fit the
+  status dock's stats), right column takes the remaining width. **The
+  left column's width is the authority**: if a scene's info panel needs
+  more room to read cleanly, widen the shared dialogue footprint to match
+  rather than shrinking the info panel's content — don't let two scenes
+  drift to two different "narrow left column" widths, and don't let the
+  same width live in two places either (`data/engine.json`'s windowLayout
+  entry AND a scene's own `rect` both set x/y/w/h — the scene's `rect`
+  always wins, so when the shared width changes, both need editing or the
+  engine.json one silently does nothing).
+- A scene can layer scene-specific chrome above this dock (e.g. status's
+  equipment-slot header + portrait), but the dock itself — and the
+  context-help bar — should look and behave the same everywhere it's used.
+
+### 1.5 Extensibility (round-wide rule since o7, keep it)
 
 Every schema tolerates unknown future fields: readers ignore keys they
 don't understand, validators warn rather than reject on unrecognized
