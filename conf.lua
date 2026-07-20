@@ -7,6 +7,8 @@ function love.conf(t)
     t.window.minwidth = 256
     t.window.minheight = 240
     t.window.vsync = 1
+    t.window.fullscreen = false
+    t.window.fullscreentype = "desktop"
     t.modules.joystick = true
     t.modules.keyboard = true
     t.modules.mouse = true

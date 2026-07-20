@@ -3086,6 +3086,17 @@ function love.keypressed(key, scancode, isrepeat)
     end
     
     if inputCooldown > 0 then return end
+    if key == "f11" then
+        local full = not love.window.getFullscreen()
+        love.window.setFullscreen(full, "desktop")
+        if full then
+            print("Fullscreen ON")
+        else
+            print("Fullscreen OFF")
+        end
+        return
+    end
+
     if key == "f9" then
         if server.isActive() then
             server.stop()
