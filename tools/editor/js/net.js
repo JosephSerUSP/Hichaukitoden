@@ -8,6 +8,7 @@
                 initMapEditor();
                 initDatabaseEditor();
                 initSystemTab();
+                await populateCampaignPicker();
 
                 document.getElementById('status-db').textContent = 'Database: Connected';
                 setDirty(false);
@@ -15,6 +16,54 @@
                 console.error(err);
                 document.getElementById('status-db').textContent = 'Database: Offline';
                 showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the game is running.');
+            }
+        }
+
+        // Campaign picker: which root the Database Manager/Map/Event editors
+        // read and write, and what Test Play boots (server.js's activeCampaign,
+        // kept in sync with campaign.json). Repopulated on every fetchDatabase()
+        // so the dropdown always reflects what's actually loaded.
+        async function populateCampaignPicker() {
+            const select = document.getElementById('campaign-picker');
+            if (!select) return;
+            try {
+                const res = await fetch(`${API_URL}/campaigns/list`);
+                const result = await res.json();
+                select.innerHTML = '<option value="">Default (data/)</option>';
+                (result.campaigns || []).forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+                select.value = dbPayload._activeCampaign || '';
+            } catch (err) {
+                // Non-fatal: the picker just stays at its last known state.
+            }
+        }
+
+        async function switchCampaign(name) {
+            if (isDirty && !confirmDiscard('Switch campaigns and discard unsaved changes?')) {
+                // Revert the dropdown to the still-active campaign rather than
+                // leaving it showing a selection that was never applied.
+                document.getElementById('campaign-picker').value = dbPayload._activeCampaign || '';
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/campaigns/switch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name || undefined })
+                });
+                const result = await res.json();
+                if (!result.success) {
+                    showToast('Failed to switch campaign: ' + result.message);
+                    return;
+                }
+                await fetchDatabase();
+                showToast('Now editing: ' + (name || 'Default (data/)'));
+            } catch (err) {
+                showToast('Failed to switch campaign: ' + err.message);
             }
         }
 

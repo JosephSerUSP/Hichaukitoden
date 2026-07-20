@@ -25,13 +25,51 @@ const DATA_FILES = [
 // Override with the LOVE_PATH environment variable if LÖVE lives elsewhere
 const LOVE_EXE = process.env.LOVE_PATH || 'C:\\Program Files\\LOVE\\love.exe';
 
+// ---------------------------------------------------------------------------
+// Campaign picker: which root the editor reads/writes DATA_FILES from.
+// null = the default data/ campaign; a name = campaigns/<name>/. This used
+// to be permanently data/ -- campaign.json (below) could redirect what the
+// GAME loads via Test Play, but the editor's own Database Manager/Map
+// Editor had no way to point at a generated campaign's own files at all.
+// Seeded from campaign.json at boot so the editor agrees with whatever the
+// game would already resolve on a fresh launch.
+const CAMPAIGN_JSON_PATH = path.join(PROJECT_DIR, 'campaign.json');
+function readCampaignPointer() {
+    try {
+        const p = JSON.parse(fs.readFileSync(CAMPAIGN_JSON_PATH, 'utf8'));
+        return (p && typeof p.active === 'string') ? p.active : null;
+    } catch (e) {
+        return null;
+    }
+}
+let activeCampaign = readCampaignPointer();
+
+function dataDir() {
+    return activeCampaign
+        ? path.join(PROJECT_DIR, 'campaigns', activeCampaign)
+        : path.join(PROJECT_DIR, 'data');
+}
+
+// Shared by /campaigns/switch and the older /campaign-gen/activate (which
+// only ever wrote campaign.json for Test Play) so both agree on the same
+// in-memory activeCampaign the editor's own reads/writes now depend on.
+function setActiveCampaign(name) {
+    if (name && /^[a-z0-9_]+$/.test(name)) {
+        activeCampaign = name;
+        fs.writeFileSync(CAMPAIGN_JSON_PATH, JSON.stringify({ active: name }, null, 2));
+    } else {
+        activeCampaign = null;
+        if (fs.existsSync(CAMPAIGN_JSON_PATH)) fs.unlinkSync(CAMPAIGN_JSON_PATH);
+    }
+}
+
 // Stale-save guard: a per-file version token (mtime + size). /data hands the
 // tokens to the editor inside the payload; /save rejects with 409 when a file
 // changed on disk after the editor loaded, instead of silently overwriting
 // commits made while the editor was open.
 const fileVersion = (filename) => {
     try {
-        const st = fs.statSync(path.join(PROJECT_DIR, 'data', filename));
+        const st = fs.statSync(path.join(dataDir(), filename));
         return `${Math.floor(st.mtimeMs)}:${st.size}`;
     } catch (e) {
         return null;
@@ -105,13 +143,13 @@ const server = http.createServer((req, res) => {
     if (req.method === 'GET' && req.url === '/data') {
         const getFileContents = (filename) => {
             try {
-                const filePath = path.join(PROJECT_DIR, 'data', filename);
+                const filePath = path.join(dataDir(), filename);
                 return JSON.parse(fs.readFileSync(filePath, 'utf8'));
             } catch (e) {
                 return null;
             }
         };
- 
+
         const data = {};
         DATA_FILES.forEach(name => {
             data[name] = getFileContents(`${name}.json`);
@@ -119,6 +157,7 @@ const server = http.createServer((req, res) => {
         // The editor posts the whole payload back on /save, so the tokens
         // round-trip without any bookkeeping on the client.
         data._fileVersions = allFileVersions();
+        data._activeCampaign = activeCampaign; // null = default data/ campaign
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
@@ -424,7 +463,7 @@ const server = http.createServer((req, res) => {
                 DATA_FILES.forEach(name => {
                     const content = payload[name];
                     if (content === undefined || content === null) return;
-                    const filePath = path.join(PROJECT_DIR, 'data', `${name}.json`);
+                    const filePath = path.join(dataDir(), `${name}.json`);
                     let existing;
                     try {
                         existing = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -441,7 +480,7 @@ const server = http.createServer((req, res) => {
 
                 const saveFile = (filename, content) => {
                     if (content) {
-                        const filePath = path.join(PROJECT_DIR, 'data', filename);
+                        const filePath = path.join(dataDir(), filename);
                         fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
                     }
                 };
@@ -617,21 +656,48 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(fs.readFileSync(path.join(PROJECT_DIR, 'tools', 'campaign-gen', 'config.json'), 'utf8'));
     } else if (req.method === 'POST' && req.url === '/campaign-gen/activate') {
+        // Kept for the Campaign Generator modal's own "Set Active" button;
+        // now just a thin wrapper around setActiveCampaign so it stays in
+        // sync with the campaign picker instead of only writing campaign.json
+        // (the editor's own reads/writes used to never know it changed).
         let body = '';
         req.on('data', c => { body += c; });
         req.on('end', () => {
             try {
                 const p = JSON.parse(body);
-                if (p.name && /^[a-z0-9_]+$/.test(p.name)) {
-                    fs.writeFileSync(path.join(PROJECT_DIR, 'campaign.json'),
-                        JSON.stringify({ active: p.name }, null, 2));
-                } else {
-                    // No name = revert to the default campaign (data/).
-                    const ptr = path.join(PROJECT_DIR, 'campaign.json');
-                    if (fs.existsSync(ptr)) fs.unlinkSync(ptr);
-                }
+                setActiveCampaign(p.name);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: String(e) }));
+            }
+        });
+    } else if (req.method === 'GET' && req.url === '/campaigns/list') {
+        // Lists every campaigns/<name>/ folder alongside the default data/
+        // campaign, for the toolbar campaign picker.
+        let names = [];
+        try {
+            const campaignsDir = path.join(PROJECT_DIR, 'campaigns');
+            names = fs.readdirSync(campaignsDir)
+                .filter(f => fs.statSync(path.join(campaignsDir, f)).isDirectory())
+                .sort();
+        } catch (e) { /* no campaigns/ dir yet */ }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ active: activeCampaign, campaigns: names }));
+    } else if (req.method === 'POST' && req.url === '/campaigns/switch') {
+        // Switches which root the editor's Database Manager/Map Editor
+        // reads and writes -- and keeps campaign.json (what Test Play
+        // boots) pointed at the same place, so what you're editing and
+        // what F5 launches never disagree.
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => {
+            try {
+                const p = JSON.parse(body);
+                setActiveCampaign(p.name);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, active: activeCampaign }));
             } catch (e) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, message: String(e) }));

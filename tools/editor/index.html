@@ -830,6 +830,12 @@
             <button class="win98-btn" style="color: #005500;" onclick="testPlay()" title="Test Play (F5)">
                 <span class="icon-sprite icon-play"></span>
             </button>
+            <div class="toolbar-separator"></div>
+            <label for="campaign-picker" style="font-size: 10px; margin-right: 4px;">Campaign:</label>
+            <select id="campaign-picker" class="win98-select" style="width: 160px;"
+                    onchange="switchCampaign(this.value)" title="Which campaign the Database/Map/Event editors read and write, and what Test Play boots">
+                <option value="">Default (data/)</option>
+            </select>
         </div>
 
         <!-- Workspace Layout -->
