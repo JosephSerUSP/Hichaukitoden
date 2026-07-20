@@ -6,39 +6,37 @@
         // engine/maps/flows are owned by their own editors (Engine window,
         // map editor, Flows tab), so the Database modal snapshots everything
         // else and restores it in place on discard (references stay valid).
-        function dbConfigSnapshot() {
-            const snap = {};
-            Object.keys(dbPayload).forEach(k => {
-                if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
-                    snap[k] = JSON.parse(JSON.stringify(dbPayload[k]));
-                }
-            });
-            return JSON.stringify(snap);
-        }
-
-        let dbModalSnapshot = null;
-
-        function openDatabaseModal() {
-            dbModalSnapshot = dbConfigSnapshot();
-            document.getElementById('db-modal').classList.add('active');
-            setDbTab(activeDbTab);
-        }
-
-        function closeDatabaseModal(force) {
-            if (!force && dbModalSnapshot !== null && dbConfigSnapshot() !== dbModalSnapshot) {
-                if (!confirmDiscard('You have unsaved database changes. Discard them and close?')) return;
-                const snap = JSON.parse(dbModalSnapshot);
+        const dbModalSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => {
+                const snap = {};
+                Object.keys(dbPayload).forEach(k => {
+                    if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
+                        snap[k] = dbPayload[k];
+                    }
+                });
+                return snap;
+            },
+            onRestore: (snap) => {
                 Object.keys(dbPayload).forEach(k => {
                     if (k !== 'engine' && k !== 'maps' && k !== 'flows') {
                         delete dbPayload[k];
                     }
                 });
                 Object.assign(dbPayload, snap);
-
                 initMapEditor();
                 initDatabaseEditor();
-            }
-            dbModalSnapshot = null;
+            },
+            confirmMessage: 'You have unsaved database changes. Discard them and close?'
+        });
+
+        function openDatabaseModal() {
+            dbModalSnapshotHelper.capture();
+            document.getElementById('db-modal').classList.add('active');
+            setDbTab(activeDbTab);
+        }
+
+        function closeDatabaseModal(force) {
+            if (!dbModalSnapshotHelper.close(force)) return;
             document.getElementById('db-modal').classList.remove('active');
         }
 

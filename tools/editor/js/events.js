@@ -3,8 +3,19 @@
         let activeEventLocalScript = null;
 
         let eventModalDirty = false;
-        let eventModalSnapshot = null;
         let eventOriginalData = null;
+
+        const eventModalSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => eventOriginalData,
+            getIsDirty: () => eventModalDirty,
+            onRestore: (snap, originalData) => {
+                if (originalData && snap) {
+                    Object.keys(originalData).forEach(k => delete originalData[k]);
+                    Object.assign(originalData, snap);
+                }
+            },
+            confirmMessage: 'Discard changes to this event?'
+        });
 
         // --- EVENT PAGES (engine/exploration.lua resolvePage) ---
         // Working copy of the event's `pages` array while the modal is open;
@@ -64,7 +75,6 @@
             const eventData = (map.events || []).find(e => e.x === x && e.y === y);
 
             if (eventData) {
-                eventModalSnapshot = JSON.stringify(eventData);
                 eventOriginalData = eventData;
 
                 document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(eventData.id).padStart(4, '0')}`;
@@ -86,7 +96,6 @@
                     document.getElementById('event-logic-custom').checked = true;
                 }
             } else {
-                eventModalSnapshot = null;
                 eventOriginalData = null;
                 let maxId = 0;
                 (map.events || []).forEach(e => { maxId = Math.max(maxId, e.id || 0); });
@@ -115,6 +124,7 @@
 
             toggleEventLogicType();
             eventModalDirty = false;
+            eventModalSnapshotHelper.capture();
             document.getElementById('event-modal').classList.add('active');
         }
 
@@ -365,19 +375,8 @@
         }
 
         function closeEventModal(force) {
-            if (!force && eventModalDirty && !confirmDiscard('Discard changes to this event?')) return;
+            if (!eventModalSnapshotHelper.close(force)) return;
 
-            // Only revert on an actual discard: applyEventProperties() mutates
-            // eventData (== eventOriginalData) and then calls close(true) while
-            // still dirty, so restoring on the force path would undo the Apply.
-            if (!force && eventModalDirty && eventOriginalData && eventModalSnapshot) {
-                // Restore in place
-                const snap = JSON.parse(eventModalSnapshot);
-                Object.keys(eventOriginalData).forEach(k => delete eventOriginalData[k]);
-                Object.assign(eventOriginalData, snap);
-            }
-
-            eventModalSnapshot = null;
             eventOriginalData = null;
             eventModalDirty = false;
             document.getElementById('event-modal').classList.remove('active');
@@ -1382,7 +1381,18 @@
         let activeCmdOriginal = null;
         let activeCmdHostCtx = 'map';
         let cmdDialogDirty = false;
-        let cmdModalSnapshot = null;
+
+        const cmdModalSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => activeCmdOriginal,
+            getIsDirty: () => cmdDialogDirty,
+            onRestore: (snap, originalData) => {
+                if (originalData && snap) {
+                    Object.keys(originalData).forEach(k => delete originalData[k]);
+                    Object.assign(originalData, snap);
+                }
+            },
+            confirmMessage: 'Discard this command?'
+        });
 
         function populateCmdCommonEventsDropdown() {
             const select = document.getElementById('cmd-select-common-event');
@@ -1425,7 +1435,7 @@
         function openAddCommandDialog(callback, hostCtx, ensureId) {
             activeCmdCallback = callback;
             activeCmdOriginal = null;
-            cmdModalSnapshot = null;
+            cmdModalSnapshotHelper.capture();
             activeCmdHostCtx = hostCtx || 'map';
             populateCmdTypeSelect(activeCmdHostCtx, ensureId);
             const select = document.getElementById('cmd-select-type');
@@ -1448,7 +1458,7 @@
         function openEditCommandDialog(cmd, callback, hostCtx) {
             activeCmdCallback = callback;
             activeCmdOriginal = cmd;
-            cmdModalSnapshot = JSON.stringify(cmd);
+            cmdModalSnapshotHelper.capture();
             activeCmdHostCtx = hostCtx || 'map';
             const id = cmdId(cmd);
             populateCmdTypeSelect(activeCmdHostCtx, id);
@@ -1680,16 +1690,8 @@
         }
 
         function closeCmdDialog(force) {
-            if (!force && cmdDialogDirty && !confirmDiscard('Discard this command?')) return;
+            if (!cmdModalSnapshotHelper.close(force)) return;
 
-            // Revert only on discard, never on the force path applyCmdDialog uses.
-            if (!force && cmdDialogDirty && activeCmdOriginal && cmdModalSnapshot) {
-                const snap = JSON.parse(cmdModalSnapshot);
-                Object.keys(activeCmdOriginal).forEach(k => delete activeCmdOriginal[k]);
-                Object.assign(activeCmdOriginal, snap);
-            }
-
-            cmdModalSnapshot = null;
             cmdDialogDirty = false;
             document.getElementById('cmd-modal').classList.remove('active');
         }
