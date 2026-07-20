@@ -383,6 +383,19 @@ end
 -- Widget drawing
 -- ---------------------------------------------------------------------------
 
+-- Advances `line` by however many VISUAL rows a chunk actually occupies once
+-- word-wrapped at `limit` (ui.wrapText uses the same font/wrap algorithm
+-- ui.drawString's printf call will), not by 1 per logical (\n-separated)
+-- chunk. A chunk that word-wraps to 2 lines used to make the NEXT chunk draw
+-- on top of its second line — e.g. a long quest summary followed by a hard
+-- "\n\nObjectives:" header would overlap the summary's wrapped second line.
+local function wrappedLineCount(chunk, limit)
+    if chunk == "" then return 1 end
+    local wrapped = ui.wrapText(chunk, limit)
+    local _, count = wrapped:gsub("\n", "\n")
+    return count + 1
+end
+
 local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
     local rendered = interpolate(text, env)
     local line = 0
@@ -390,7 +403,7 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
         if chunk ~= "" then
             ui.drawString(chunk, x, y + line * lineSpacing, COLOR_NORMAL, align or "left", limit)
         end
-        line = line + 1
+        line = line + wrappedLineCount(chunk, limit)
     end
 end
 
@@ -919,6 +932,17 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             -- instead of hugging top/left and crowding the far edge. Counts
             -- explicit lines only -- printf-wrapped long text (message box)
             -- keeps its top anchor.
+            --
+            -- Only applies when contentY is the DEFAULT (untitled=1/titled=2
+            -- tile) padding -- that's the only case where "contentY - y" is
+            -- actually symmetric decorative padding the rule can safely
+            -- mirror onto the bottom edge. A layout author who set an
+            -- explicit contentY did so for a reason (status_panel pushes it
+            -- to y=6 tiles to clear two gauges drawn above the text); this
+            -- rule used to treat that large one-sided offset as if it were
+            -- padding to mirror, "discovered" almost no room was left, and
+            -- yanked the text back up on top of the gauges it was placed
+            -- below to avoid.
             local rendered = interpolate(text, env)
             local lineCount = 0
             local maxLineW = 0
@@ -935,7 +959,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             local padY = contentY - y
             local ty = contentY
             local textH = (lineCount - 1) * lineSpacing + ui.lineHeight
-            if textH > h - 2 * padY then
+            if layout.contentY == nil and textH > h - 2 * padY then
                 ty = y + math.max(2, math.floor((h - textH) / 2))
             end
             local padX = contentX - x
@@ -1038,13 +1062,33 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             local syntheticWin = {
                 listId = listBlock.listId,
                 format = listBlock.format,
-                cursorFormula = listBlock.cursor,
+                -- Same precedence the real per-window loop uses below
+                -- (winDef.cursor is a fallback for when the content block
+                -- itself doesn't declare one, e.g. status_party's cursor
+                -- lives on the window def, not its list content block).
+                -- Missing this fallback here meant the PRE-resolved cursor
+                -- (the one sel('status_party') and this window's own
+                -- highlight actually use, via the listCache built in this
+                -- pass) stayed nil -> defaulted to row 1 regardless of
+                -- v.idx, so the status page always showed party member 1's
+                -- stats no matter which member was actually selected.
+                cursorFormula = listBlock.cursor ~= nil and listBlock.cursor or winDef.cursor,
                 cursor = 1,
                 sprite = listBlock.sprite,
                 gaugeValue = listBlock.gaugeValue,
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
                 priority = listBlock.priority,
+                -- "equipSlots"/"equipment" list sources need these to know
+                -- which member/slot to read (equipContext). Missing them
+                -- made formula.eval(nil, env) resolve slot to 0 instead of
+                -- v.slot, so SLOT_TYPES[0] was nil and equipmentRows bailed
+                -- out with zero rows — not even "[ UNEQUIP ]" — before this
+                -- pre-resolution pass's cache was even consulted by the real
+                -- per-window draw loop below, making the equip item list
+                -- permanently empty and nothing selectable.
+                slot = listBlock.slot,
+                member = listBlock.member,
             }
             local rows = resolveRows(syntheticWin, state, sceneData, ctx, env)
             local cur = liveCursor(syntheticWin, env)
@@ -1420,7 +1464,7 @@ function wr.resolveDataState(sceneData, ctx, state)
             local syntheticWin = {
                 listId = listBlock.listId,
                 format = listBlock.format,
-                cursorFormula = listBlock.cursor,
+                cursorFormula = listBlock.cursor ~= nil and listBlock.cursor or winDef.cursor,
                 cursor = 1,
                 sprite = listBlock.sprite,
                 gaugeValue = listBlock.gaugeValue,

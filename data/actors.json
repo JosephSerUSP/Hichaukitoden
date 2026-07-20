@@ -1007,7 +1007,8 @@
       "mxa": 2,
       "mxp": 1
     },
-    "growthMultiplier": 1
+    "growthMultiplier": 1,
+    "passives": []
   },
   {
     "id": 16,
@@ -1326,7 +1327,8 @@
       "mxa": 6,
       "mxp": 4
     },
-    "growthMultiplier": 1
+    "growthMultiplier": 1,
+    "passives": []
   },
   {
     "id": 22,

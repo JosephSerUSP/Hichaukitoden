@@ -1958,7 +1958,10 @@
       "height": 13,
       "style": "panel",
       "title": null,
-      "portrait": "sel('status_party').portraitKey"
+      "portrait": "sel('status_party').portraitKey",
+      "portraitX": 1.3,
+      "portraitW": 7.33,
+      "portraitH": 11
     },
     "map_command": {
       "x": 0,
