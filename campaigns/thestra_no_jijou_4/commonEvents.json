@@ -1,0 +1,221 @@
+{
+  "1": {
+    "id": 1,
+    "name": "Temple History",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "Long ago, the Sunken Temple was built to seal a primordial evil. The blight is that seal weakening."
+      },
+      {
+        "type": "CALL_COMMON_EVENT",
+        "commonEventId": 33
+      }
+    ]
+  },
+  "4": {
+    "id": 4,
+    "name": "Storm Gossip",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "The storm hasn't let up since the blight started. Some say it's the temple weeping."
+      },
+      {
+        "type": "CALL_COMMON_EVENT",
+        "commonEventId": 33
+      }
+    ]
+  },
+  "7": {
+    "id": 7,
+    "name": "Quest Reminder",
+    "script": [
+      {
+        "type": "CONDITIONAL_BRANCH",
+        "condition": "questStatus:the_temple_blight:active",
+        "commands": [
+          {
+            "type": "TEXT",
+            "speaker": "_",
+            "text": "Have you investigated the temple? The blight worsens."
+          }
+        ],
+        "elseCommands": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "questStatus:missing_healer:active",
+            "commands": [
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "Mina is still missing. She may be in the temple."
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "questStatus:the_three_tokens:active",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "speaker": "_",
+                    "text": "The tokens are in the depths. Earth, Fire, Shadow."
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "speaker": "_",
+                    "text": "The village needs you. The blight is spreading."
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "12": {
+    "id": 12,
+    "name": "Token Reward",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "The three tokens glow with ancient power. You feel the temple's energy shift."
+      }
+    ]
+  },
+  "13": {
+    "id": 13,
+    "name": "Ritual Scene",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mina",
+        "text": "I shall combine the tokens into a Purification Stone."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mina",
+        "text": "Focus their energy... Now! The stone is formed."
+      },
+      {
+        "type": "TAKE_ITEM",
+        "item": 23,
+        "count": 1
+      },
+      {
+        "type": "TAKE_ITEM",
+        "item": 24,
+        "count": 1
+      },
+      {
+        "type": "TAKE_ITEM",
+        "item": 25,
+        "count": 1
+      }
+    ]
+  },
+  "14": {
+    "id": 14,
+    "name": "Final Celebration",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "The storm breaks! Sunlight touches Thestra for the first time in years."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Elder Aris",
+        "text": "You have done what no one could. The temple is sealed. The blight is gone."
+      },
+      {
+        "type": "GRANT_XP",
+        "target": "1",
+        "amount": 5000
+      },
+      {
+        "type": "GAIN_GOLD",
+        "amount": 1000
+      },
+      {
+        "type": "GIVE_ITEM_ID",
+        "item": 21,
+        "count": 1
+      },
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "Your summoned creatures are honored in a village festival."
+      }
+    ]
+  },
+  "15": {
+    "id": 15,
+    "name": "Rescue Mina",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mina",
+        "text": "Oh, thank the spirits! I was trapped here for days. The blight nearly took me."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mina",
+        "text": "I found a clue – a note about three tokens needed to cleanse the temple."
+      },
+      {
+        "type": "TEXT",
+        "speaker": "Healer Mina",
+        "text": "Take me back to the village. I can help you with the ritual."
+      }
+    ]
+  },
+  "17": {
+    "id": 17,
+    "name": "Boss Defeated Greeting",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "The curse is broken! You are a hero!"
+      }
+    ]
+  },
+  "30": {
+    "id": 30,
+    "name": "Healing Service",
+    "script": [
+      {
+        "type": "RECOVER_PARTY"
+      },
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "You are fully healed."
+      }
+    ]
+  },
+  "31": {
+    "id": 31,
+    "name": "Empty",
+    "script": []
+  },
+  "33": {
+    "id": 33,
+    "name": "Goodbye",
+    "script": [
+      {
+        "type": "TEXT",
+        "speaker": "_",
+        "text": "Take care."
+      }
+    ]
+  }
+}

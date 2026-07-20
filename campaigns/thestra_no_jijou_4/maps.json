@@ -1,0 +1,2322 @@
+[
+  {
+    "id": 1,
+    "title": "Thestra Village",
+    "intro": "A remote village locked under a perpetual storm. The blight is spreading from the Sunken Temple.",
+    "depth": 0,
+    "music": "town_melancholy",
+    "image": "ThestraVillage.png",
+    "layout": [
+      "###################",
+      "#.........#........#",
+      "#.......###......#",
+      "#....#..........#.#",
+      "#....#..........#.#",
+      "#...#........#.....#",
+      "#......#........#..#",
+      "#.......#...#.....#",
+      "#....#.........#..#",
+      "#....#............#",
+      "#......#.......#..#",
+      "#........#.......#",
+      "###################"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 5,
+        "y": 3,
+        "sprite": "",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "LABEL",
+                "name": "aris_menu"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "questStatus:the_temple_blight:inactive",
+                "commands": [
+                  {
+                    "type": "TEXT",
+                    "speaker": "Elder Aris",
+                    "text": "The blight grows stronger each day. The Temple below is the source."
+                  },
+                  {
+                    "type": "TEXT",
+                    "speaker": "Elder Aris",
+                    "text": "I need a brave soul to investigate. Will you help us?"
+                  },
+                  {
+                    "type": "CHOICE",
+                    "options": [
+                      {
+                        "label": "Accept the quest",
+                        "commands": [
+                          {
+                            "type": "QUEST_OFFER",
+                            "questId": "the_temple_blight"
+                          },
+                          {
+                            "type": "TEXT",
+                            "speaker": "Elder Aris",
+                            "text": "Enter the temple and find the source. Be swift, the blight spares none."
+                          },
+                          {
+                            "type": "JUMP_TO_LABEL",
+                            "label": "aris_menu"
+                          }
+                        ]
+                      },
+                      {
+                        "label": "Not now",
+                        "commands": [
+                          {
+                            "type": "JUMP_TO_LABEL",
+                            "label": "aris_menu"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "questStatus:missing_healer:inactive",
+                    "commands": [
+                      {
+                        "type": "TEXT",
+                        "speaker": "Elder Aris",
+                        "text": "Our healer Mina went into the temple days ago. No one has seen her."
+                      },
+                      {
+                        "type": "TEXT",
+                        "speaker": "Elder Aris",
+                        "text": "She may still be alive. Please look for her."
+                      },
+                      {
+                        "type": "CHOICE",
+                        "options": [
+                          {
+                            "label": "I'll find her",
+                            "commands": [
+                              {
+                                "type": "QUEST_OFFER",
+                                "questId": "missing_healer"
+                              },
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "aris_menu"
+                              }
+                            ]
+                          },
+                          {
+                            "label": "Not now",
+                            "commands": [
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "aris_menu"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "CONDITIONAL_BRANCH",
+                        "condition": "questStatus:missing_healer:completed",
+                        "commands": [
+                          {
+                            "type": "CONDITIONAL_BRANCH",
+                            "condition": "questStatus:the_three_tokens:inactive",
+                            "commands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Elder Aris",
+                                "text": "Mina is safe, but the blight remains. Ancient texts mention three tokens."
+                              },
+                              {
+                                "type": "TEXT",
+                                "speaker": "Elder Aris",
+                                "text": "Speak with Mina – she knows the ritual. Retrieve the tokens from the temple depths."
+                              },
+                              {
+                                "type": "SET_FLAG",
+                                "flag": "aris_suggested_tokens",
+                                "value": true
+                              },
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "aris_menu"
+                              }
+                            ],
+                            "elseCommands": [
+                              {
+                                "type": "CONDITIONAL_BRANCH",
+                                "condition": "questStatus:the_three_tokens:active",
+                                "commands": [
+                                  {
+                                    "type": "TEXT",
+                                    "speaker": "Elder Aris",
+                                    "text": "The tokens are spread across the lower floors. Hurry, the blight spreads."
+                                  },
+                                  {
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "aris_menu"
+                                  }
+                                ],
+                                "elseCommands": [
+                                  {
+                                    "type": "CONDITIONAL_BRANCH",
+                                    "condition": "flag:purification_stone_given",
+                                    "commands": [
+                                      {
+                                        "type": "TEXT",
+                                        "speaker": "Elder Aris",
+                                        "text": "The purification stone is in your hands. Descend to the sanctum and end this curse."
+                                      },
+                                      {
+                                        "type": "JUMP_TO_LABEL",
+                                        "label": "aris_menu"
+                                      }
+                                    ],
+                                    "elseCommands": [
+                                      {
+                                        "type": "CONDITIONAL_BRANCH",
+                                        "condition": "flag:cursebeast_defeated",
+                                        "commands": [
+                                          {
+                                            "type": "TEXT",
+                                            "speaker": "Elder Aris",
+                                            "text": "The storm is lifting! You have saved Thestra. The temple is sealed forever."
+                                          },
+                                          {
+                                            "type": "CALL_COMMON_EVENT",
+                                            "commonEventId": 14
+                                          },
+                                          {
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "aris_menu"
+                                          }
+                                        ],
+                                        "elseCommands": [
+                                          {
+                                            "type": "TEXT",
+                                            "speaker": "Elder Aris",
+                                            "text": "Your deeds are already legend. Rest and prepare for what lies ahead."
+                                          },
+                                          {
+                                            "type": "JUMP_TO_LABEL",
+                                            "label": "aris_menu"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "type": "TEXT",
+                            "speaker": "Elder Aris",
+                            "text": "The blight grows. Enter the temple and find the source. Also, our healer is missing."
+                          },
+                          {
+                            "type": "JUMP_TO_LABEL",
+                            "label": "aris_menu"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "name": "Elder Aris",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      },
+      {
+        "id": 2,
+        "x": 10,
+        "y": 5,
+        "sprite": "",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "!flag:mina_rescued",
+            "script": [],
+            "transparent": true,
+            "priority": "normal"
+          },
+          {
+            "condition": "flag:mina_rescued",
+            "script": [
+              {
+                "type": "LABEL",
+                "name": "mina_menu"
+              },
+              {
+                "type": "CONDITIONAL_BRANCH",
+                "condition": "flag:aris_suggested_tokens",
+                "commands": [
+                  {
+                    "type": "CONDITIONAL_BRANCH",
+                    "condition": "questStatus:the_three_tokens:inactive",
+                    "commands": [
+                      {
+                        "type": "TEXT",
+                        "speaker": "Healer Mina",
+                        "text": "Thank you for rescuing me. Elder Aris told you about the tokens?"
+                      },
+                      {
+                        "type": "TEXT",
+                        "speaker": "Healer Mina",
+                        "text": "We need the Token of Earth, Token of Fire, and Token of Shadow to cleanse the blight."
+                      },
+                      {
+                        "type": "CHOICE",
+                        "options": [
+                          {
+                            "label": "I'll find them",
+                            "commands": [
+                              {
+                                "type": "QUEST_OFFER",
+                                "questId": "the_three_tokens"
+                              },
+                              {
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "Each lies deep in the temple. Be careful – powerful guardians protect them."
+                              },
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "mina_menu"
+                              }
+                            ]
+                          },
+                          {
+                            "label": "Not yet",
+                            "commands": [
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "mina_menu"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "type": "CONDITIONAL_BRANCH",
+                        "condition": "hasItem:23, hasItem:24, hasItem:25",
+                        "commands": [
+                          {
+                            "type": "CONDITIONAL_BRANCH",
+                            "condition": "flag:purification_stone_given",
+                            "commands": [
+                              {
+                                "type": "CONDITIONAL_BRANCH",
+                                "condition": "flag:cursebeast_defeated",
+                                "commands": [
+                                  {
+                                    "type": "TEXT",
+                                    "speaker": "Healer Mina",
+                                    "text": "The curse is broken! The village is saved. I am forever grateful."
+                                  },
+                                  {
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "mina_menu"
+                                  }
+                                ],
+                                "elseCommands": [
+                                  {
+                                    "type": "TEXT",
+                                    "speaker": "Healer Mina",
+                                    "text": "Use the purification stone in the sanctum. Destroy the Cursebeast!"
+                                  },
+                                  {
+                                    "type": "JUMP_TO_LABEL",
+                                    "label": "mina_menu"
+                                  }
+                                ]
+                              }
+                            ],
+                            "elseCommands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "You have all three tokens! I can now perform the ritual to create the Purification Stone."
+                              },
+                              {
+                                "type": "CALL_COMMON_EVENT",
+                                "commonEventId": 13
+                              },
+                              {
+                                "type": "GIVE_ITEM_ID",
+                                "item": 26,
+                                "count": 1
+                              },
+                              {
+                                "type": "SET_FLAG",
+                                "flag": "purification_stone_given",
+                                "value": true
+                              },
+                              {
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "The stone is ready. Take it to the deepest sanctum and shatter the source."
+                              },
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "mina_menu"
+                              }
+                            ]
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "type": "CONDITIONAL_BRANCH",
+                            "condition": "questStatus:the_three_tokens:active",
+                            "commands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "Have you found the tokens? Earth, Fire, Shadow – they are in the lower levels."
+                              },
+                              {
+                                "type": "JUMP_TO_LABEL",
+                                "label": "mina_menu"
+                              }
+                            ],
+                            "elseCommands": [
+                              {
+                                "type": "TEXT",
+                                "speaker": "Healer Mina",
+                                "text": "I owe you my life. If you need healing, I can help."
+                              },
+                              {
+                                "type": "CHOICE",
+                                "options": [
+                                  {
+                                    "label": "Heal me",
+                                    "commands": [
+                                      {
+                                        "type": "RECOVER_PARTY"
+                                      },
+                                      {
+                                        "type": "TEXT",
+                                        "speaker": "Healer Mina",
+                                        "text": "You're fully restored. Be safe on your journey."
+                                      },
+                                      {
+                                        "type": "JUMP_TO_LABEL",
+                                        "label": "mina_menu"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "label": "Just talking",
+                                    "commands": [
+                                      {
+                                        "type": "JUMP_TO_LABEL",
+                                        "label": "mina_menu"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "type": "TEXT",
+                    "speaker": "Healer Mina",
+                    "text": "I'm glad you're safe. The temple is dangerous."
+                  },
+                  {
+                    "type": "CALL_COMMON_EVENT",
+                    "commonEventId": 33
+                  },
+                  {
+                    "type": "JUMP_TO_LABEL",
+                    "label": "mina_menu"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "name": "Healer Mina",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      },
+      {
+        "id": 3,
+        "x": 15,
+        "y": 7,
+        "sprite": "",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "LABEL",
+                "name": "garrick_menu"
+              },
+              {
+                "type": "TEXT",
+                "speaker": "Shopkeeper Garrick",
+                "text": "Supplies, equipment, and a bit of gossip. What'll it be?"
+              },
+              {
+                "type": "CHOICE",
+                "options": [
+                  {
+                    "label": "Buy",
+                    "commands": [
+                      {
+                        "type": "OPEN_SHOP",
+                        "shopId": 1
+                      },
+                      {
+                        "type": "JUMP_TO_LABEL",
+                        "label": "garrick_menu"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Gossip",
+                    "commands": [
+                      {
+                        "type": "CALL_COMMON_EVENT",
+                        "commonEventId": 4
+                      },
+                      {
+                        "type": "JUMP_TO_LABEL",
+                        "label": "garrick_menu"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave",
+                    "commands": [
+                      {
+                        "type": "CALL_COMMON_EVENT",
+                        "commonEventId": 33
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "name": "Shopkeeper Garrick",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      },
+      {
+        "id": 4,
+        "x": 2,
+        "y": 10,
+        "sprite": "",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "",
+            "script": [
+              {
+                "type": "LABEL",
+                "name": "villager_menu"
+              },
+              {
+                "type": "TEXT",
+                "speaker": "Villager",
+                "text": "The storm never used to be this fierce. It all started when the temple bled."
+              },
+              {
+                "type": "CHOICE",
+                "options": [
+                  {
+                    "label": "Tell me more",
+                    "commands": [
+                      {
+                        "type": "CALL_COMMON_EVENT",
+                        "commonEventId": 1
+                      },
+                      {
+                        "type": "JUMP_TO_LABEL",
+                        "label": "villager_menu"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Goodbye",
+                    "commands": [
+                      {
+                        "type": "CALL_COMMON_EVENT",
+                        "commonEventId": 33
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "name": "Villager",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      },
+      {
+        "id": 5,
+        "x": 5,
+        "y": 8,
+        "door": true,
+        "name": "DoorTest",
+        "trigger": "interact"
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "category": "town",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 0,
+    "safe": true,
+    "ceilingStyle": "sky",
+    "tileset": "town_001",
+    "light": [
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          0.7,
+          0.35
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      [
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ]
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Sunken Temple Floor 1: Hall of Echoes",
+    "intro": "Cracked stone corridors echo with whispers. The path to Mina is nearby.",
+    "depth": 1,
+    "music": "temple_ambient",
+    "image": "SunkenTemple1.png",
+    "layout": [
+      "###################",
+      "#......#........#",
+      "#...###..#..#..#",
+      "#..##...........#",
+      "#.......##..##..",
+      "#...........#..#",
+      "#...###...#..#.#",
+      "#..##.......#..#",
+      "#........##....#",
+      "#.......#..#...#",
+      "#...###.......#",
+      "###################"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 8,
+        "y": 6,
+        "sprite": "",
+        "trigger": "interact",
+        "pages": [
+          {
+            "condition": "questStatus:missing_healer:active && !flag:mina_rescued",
+            "script": [
+              {
+                "type": "CALL_COMMON_EVENT",
+                "commonEventId": 15
+              },
+              {
+                "type": "SET_FLAG",
+                "flag": "mina_rescued",
+                "value": true
+              },
+              {
+                "type": "QUEST_COMPLETE",
+                "questId": "missing_healer"
+              },
+              {
+                "type": "GIVE_ITEM_ID",
+                "item": 27,
+                "count": 1
+              },
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "Mina gives you a herbal note hinting at the tokens."
+              }
+            ]
+          },
+          {
+            "condition": "flag:mina_rescued",
+            "script": [],
+            "transparent": true
+          }
+        ],
+        "name": "Wounded Healer",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      }
+    ],
+    "treasures": [
+      {
+        "itemId": 4,
+        "chance": 0.5
+      }
+    ],
+    "encounters": [
+      {
+        "id": 5,
+        "weight": 8
+      },
+      {
+        "id": 6,
+        "weight": 10
+      }
+    ],
+    "recruits": [],
+    "category": "dungeon",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 10,
+    "safe": false
+  },
+  {
+    "id": 4,
+    "title": "Sunken Temple Floor 3: Chamber of Sacrifice",
+    "intro": "A vast chamber lit by braziers. The Guardian Golem stands before the Token of Fire.",
+    "depth": 3,
+    "music": "temple_fire",
+    "image": "SunkenTemple3.png",
+    "layout": [
+      "#############",
+      "#...........#",
+      "##..#####.##",
+      "#..........#",
+      "#..########",
+      "#..........#",
+      "###########"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 5,
+        "y": 3,
+        "sprite": "",
+        "trigger": "automatic",
+        "pages": [
+          {
+            "condition": "!hasItem:24",
+            "script": [
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "The Guardian Golem awakens!"
+              },
+              {
+                "type": "BATTLE"
+              },
+              {
+                "type": "GIVE_ITEM_ID",
+                "item": 24,
+                "count": 1
+              },
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "You claim the Token of Fire from the defeated golem."
+              }
+            ]
+          },
+          {
+            "condition": "hasItem:24",
+            "script": [],
+            "transparent": true
+          }
+        ],
+        "name": "Guardian Golem",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      }
+    ],
+    "treasures": [],
+    "encounters": [
+      {
+        "id": 12,
+        "weight": 10
+      }
+    ],
+    "recruits": [],
+    "category": "dungeon",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 15,
+    "safe": false
+  },
+  {
+    "id": 5,
+    "title": "Sunken Temple Floor 4: Sanctum of the Fallen",
+    "intro": "The deepest level. Black crystal veins pulse with dark energy. The Cursebeast lurks.",
+    "depth": 4,
+    "music": "temple_dark",
+    "image": "SunkenTemple4.png",
+    "layout": [
+      "###############",
+      "#......#......#",
+      "#.##......##..#",
+      "#..........#..#",
+      "#....##......#",
+      "#..........#..#",
+      "##...........#",
+      "#.......#....#",
+      "#.....##....##",
+      "#...#........#",
+      "#######.####"
+    ],
+    "events": [
+      {
+        "id": 1,
+        "x": 6,
+        "y": 5,
+        "sprite": "",
+        "trigger": "automatic",
+        "pages": [
+          {
+            "condition": "!hasItem:25",
+            "script": [
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "The altar glows with shadow. You take the Token of Shadow."
+              },
+              {
+                "type": "GIVE_ITEM_ID",
+                "item": 25,
+                "count": 1
+              }
+            ]
+          },
+          {
+            "condition": "hasItem:25",
+            "script": [],
+            "transparent": true
+          }
+        ],
+        "name": "Token Altar",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      },
+      {
+        "id": 2,
+        "x": 8,
+        "y": 8,
+        "sprite": "",
+        "trigger": "automatic",
+        "pages": [
+          {
+            "condition": "flag:purification_stone_given && !flag:cursebeast_defeated",
+            "script": [
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "The Cursebeast rises from the shadows!"
+              },
+              {
+                "type": "BATTLE"
+              },
+              {
+                "type": "SET_FLAG",
+                "flag": "cursebeast_defeated",
+                "value": true
+              },
+              {
+                "type": "TEXT",
+                "speaker": "_",
+                "text": "You shatter the source with the Purification Stone. The blight recedes."
+              },
+              {
+                "type": "CALL_COMMON_EVENT",
+                "commonEventId": 14
+              }
+            ]
+          },
+          {
+            "condition": "flag:cursebeast_defeated",
+            "script": [],
+            "transparent": true
+          }
+        ],
+        "name": "Cursebeast",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed"
+      }
+    ],
+    "treasures": [],
+    "encounters": [
+      {
+        "id": 11,
+        "weight": 12
+      }
+    ],
+    "recruits": [],
+    "category": "dungeon",
+    "generation": "Fixed",
+    "bgm": "",
+    "encounterSteps": 10,
+    "safe": false
+  }
+]

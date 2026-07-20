@@ -1,0 +1,101 @@
+{
+  "the_temple_blight": {
+    "name": "The Temple Blight",
+    "giver": "Elder Aris",
+    "portrait": "NPC_ElderAris",
+    "summary": "Investigate the source of the withering blight in the Sunken Temple and find a way to stop it.",
+    "description": "Elder Aris explains that the blight has been spreading from the Sunken Temple beneath the village. He asks you to enter the temple, learn what you can about the curse, and hopefully find a way to break it before the village is consumed.",
+    "objectives": [
+      "Enter the Sunken Temple through the Hall of Echoes.",
+      "Find any clues about the blight's source.",
+      "Return to Elder Aris in Thestra Village with your findings."
+    ],
+    "requirements": {
+      "items": []
+    },
+    "rewards": {
+      "gold": 30,
+      "items": [
+        {
+          "id": 1,
+          "qty": 2
+        }
+      ],
+      "flags": [
+        "reported_to_aris_act1"
+      ]
+    }
+  },
+  "missing_healer": {
+    "name": "Missing Healer",
+    "giver": "Elder Aris",
+    "portrait": "NPC_ElderAris",
+    "summary": "Find Healer Mina who disappeared into the Sunken Temple while trying to help the sick.",
+    "description": "Healer Mina ventured into the temple days ago and hasn't returned. Elder Aris fears she may be injured or lost. Search the Hall of Echoes and bring her back safely.",
+    "objectives": [
+      "Explore the Hall of Echoes on Floor 1 of the Sunken Temple.",
+      "Locate Healer Mina in a hidden side room.",
+      "Speak with Mina and ensure she is safe.",
+      "Return to Elder Aris to report Mina's rescue."
+    ],
+    "requirements": {
+      "items": []
+    },
+    "rewards": {
+      "gold": 20,
+      "items": [
+        {
+          "id": 1,
+          "qty": 1
+        }
+      ],
+      "flags": [
+        "mina_rescued"
+      ]
+    }
+  },
+  "the_three_tokens": {
+    "name": "The Three Tokens",
+    "giver": "Healer Mina",
+    "portrait": "NPC_HealerMina",
+    "summary": "Collect three ancient tokens (Earth, Fire, Shadow) from the Sunken Temple floors to perform a cleansing ritual.",
+    "description": "After being rescued, Healer Mina reveals that the blight can only be stopped by collecting three ancient tokens hidden deep within the temple. Each token corresponds to a different elemental force: Earth, Fire, and Shadow. Bring them to her so she can forge a Purification Stone.",
+    "objectives": [
+      "Retrieve the Token of Earth from the Vault of Decay on Floor 2.",
+      "Retrieve the Token of Fire from the Chamber of Sacrifice on Floor 3.",
+      "Retrieve the Token of Shadow from the Sanctum of the Fallen on Floor 4.",
+      "Return all three tokens to Healer Mina in Thestra Village."
+    ],
+    "requirements": {
+      "items": [
+        {
+          "id": 23,
+          "qty": 1,
+          "consume": true
+        },
+        {
+          "id": 24,
+          "qty": 1,
+          "consume": true
+        },
+        {
+          "id": 25,
+          "qty": 1,
+          "consume": true
+        }
+      ]
+    },
+    "rewards": {
+      "gold": 100,
+      "items": [
+        {
+          "id": 26,
+          "qty": 1
+        }
+      ],
+      "flags": [
+        "purification_stone_obtained"
+      ]
+    }
+  }
+}

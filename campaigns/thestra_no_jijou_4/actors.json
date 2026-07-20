@@ -1,0 +1,1018 @@
+[
+  {
+    "id": 1,
+    "name": "Guardian Golem",
+    "level": 8,
+    "role": "Tank",
+    "maxHp": 60,
+    "spriteKey": "golem",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "dealDamageMod",
+      "initiative"
+    ],
+    "elements": [
+      "Red",
+      "Yellow"
+    ],
+    "skills": [
+      "attack",
+      "defend",
+      "boneRush"
+    ],
+    "flavor": "An ancient stone construct animated to guard the Token of Fire. Immune to physical damage until its elemental core is exposed.",
+    "expGrowth": 5,
+    "gold": 50,
+    "drops": [
+      {
+        "itemId": 39,
+        "chance": 0.4
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Golem",
+      "Stone Sentinel",
+      "Guardian"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Cursebeast",
+    "level": 12,
+    "role": "Debuffer",
+    "maxHp": 120,
+    "spriteKey": "shadowStalker",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "chaosPact",
+      "dealDamageMod"
+    ],
+    "elements": [
+      "Shadow",
+      "Black"
+    ],
+    "skills": [
+      "shadowClaw",
+      "boneRush",
+      "wait"
+    ],
+    "flavor": "The physical manifestation of the blight—a twisted mass of corrupted life and shadow. Uses poison, weaken, and berserk states.",
+    "expGrowth": 8,
+    "gold": 100,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.5
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 1,
+        "count": 2
+      }
+    ],
+    "names": [
+      "Cursebeast",
+      "Blight Tyrant",
+      "Nameless Horror"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Decayed Golem",
+    "level": 6,
+    "role": "Tank",
+    "maxHp": 50,
+    "spriteKey": "golem",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "undeadFortitude"
+    ],
+    "elements": [
+      "Black",
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "defend",
+      "needleShot"
+    ],
+    "flavor": "A golem corrupted by the blight, now a vessel of decay. Guards the Token of Earth on Floor 2.",
+    "expGrowth": 4,
+    "gold": 40,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.7,
+        "count": 2
+      }
+    ],
+    "names": [
+      "Decayed Golem",
+      "Rust Guardian",
+      "Sludge Lord"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Curse-touched Spirit",
+    "level": 10,
+    "role": "Spirit",
+    "maxHp": 45,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp[fps=15]",
+    "passives": [
+      "etherealBody",
+      "nightVision"
+    ],
+    "elements": [
+      "Shadow",
+      "Black"
+    ],
+    "skills": [
+      "shadowClaw",
+      "drainKiss",
+      "wait"
+    ],
+    "flavor": "A vengeful spirit empowered by the curse, guarding the Token of Shadow in the Sanctum of the Fallen.",
+    "expGrowth": 6,
+    "gold": 60,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.4
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Wraith",
+      "Shadow Soul",
+      "Cursed Echo"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Weak Spirit",
+    "level": 2,
+    "role": "Spirit",
+    "maxHp": 12,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp[fps=15]",
+    "passives": [
+      "sense"
+    ],
+    "elements": [
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "windBlade"
+    ],
+    "flavor": "A fragmented soul from the Hall of Echoes, whispering warnings of the temple's dangers.",
+    "expGrowth": 1,
+    "gold": 5,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.2,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Ghost",
+      "Wisp",
+      "Soul"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Crawler",
+    "level": 2,
+    "role": "Attacker",
+    "maxHp": 15,
+    "spriteKey": "larva",
+    "smallBattler": "golem[fps=15]",
+    "passives": [],
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "needleShot"
+    ],
+    "flavor": "A multi-legged insectoid that skitters along the temple walls, its bite carries a mild toxin.",
+    "expGrowth": 1,
+    "gold": 4,
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Skitterer",
+      "Centipede",
+      "Crawler"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Sludge",
+    "level": 3,
+    "role": "Debuffer",
+    "maxHp": 20,
+    "spriteKey": "ooze",
+    "smallBattler": "ooze[fps=15]",
+    "passives": [],
+    "elements": [
+      "Green",
+      "Black"
+    ],
+    "skills": [
+      "attack"
+    ],
+    "flavor": "A puddle of corrosive filth, animated by the blight. Weakens anything it touches.",
+    "expGrowth": 1,
+    "gold": 3,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.4
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Slime",
+      "Gunk",
+      "Muck"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Poison Spore",
+    "level": 3,
+    "role": "Debuffer",
+    "maxHp": 18,
+    "spriteKey": "ooze",
+    "smallBattler": "ooze[fps=15]",
+    "passives": [],
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "needleShot"
+    ],
+    "flavor": "A floating cluster of toxic spores that release a choking cloud when disturbed.",
+    "expGrowth": 1,
+    "gold": 3,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.3,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Spore",
+      "Puffball",
+      "Fungus"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Blighted Bat",
+    "level": 2,
+    "role": "Attacker",
+    "maxHp": 14,
+    "spriteKey": "bat",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "nightVision"
+    ],
+    "elements": [
+      "Shadow"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw"
+    ],
+    "flavor": "A bat twisted by the curse, now aggressive and phosphorescent. Often found in groups.",
+    "expGrowth": 1,
+    "gold": 4,
+    "drops": [
+      {
+        "itemId": 39,
+        "chance": 0.1
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.2,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Bat",
+      "Night Flier",
+      "Blightwing"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Corrupted Hound",
+    "level": 4,
+    "role": "Attacker",
+    "maxHp": 22,
+    "spriteKey": "ghoul",
+    "smallBattler": "ghoul[fps=15]",
+    "passives": [
+      "undeadFortitude"
+    ],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "boneRush"
+    ],
+    "flavor": "A wild dog warped by the blight, its fur matted with dark energy. Hunts in packs.",
+    "expGrowth": 1,
+    "gold": 6,
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Hound",
+      "Blight Beast",
+      "Corrupted Wolf"
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Shadow Wisp",
+    "level": 3,
+    "role": "Spirit",
+    "maxHp": 16,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp[fps=15]",
+    "passives": [
+      "etherealBody"
+    ],
+    "elements": [
+      "Shadow"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw"
+    ],
+    "flavor": "A wisp consumed by shadow, drawn to living souls. Extinguishes light as it passes.",
+    "expGrowth": 1,
+    "gold": 5,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.3,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Shade",
+      "Dark Wisp",
+      "Shadow"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Stone Golem",
+    "level": 4,
+    "role": "Tank",
+    "maxHp": 30,
+    "spriteKey": "golem",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "initiative"
+    ],
+    "elements": [
+      "Yellow"
+    ],
+    "skills": [
+      "attack",
+      "defend"
+    ],
+    "flavor": "A lesser construct left to patrol the temple corridors. Sturdy but predictable.",
+    "expGrowth": 1,
+    "gold": 8,
+    "drops": [
+      {
+        "itemId": 39,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.4,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Golem",
+      "Statue",
+      "Rock Guardian"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Rotting Zombie",
+    "level": 3,
+    "role": "Tank",
+    "maxHp": 25,
+    "spriteKey": "ghoul",
+    "smallBattler": "ghoul[fps=15]",
+    "passives": [
+      "undeadFortitude"
+    ],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "wait"
+    ],
+    "flavor": "A reanimated corpse, shambling and relentless. It spreads decay with every touch.",
+    "expGrowth": 1,
+    "gold": 4,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Zombie",
+      "Shambler",
+      "Rotter"
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Phantom",
+    "level": 4,
+    "role": "Spirit",
+    "maxHp": 18,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp[fps=15]",
+    "passives": [
+      "etherealBody",
+      "nightVision"
+    ],
+    "elements": [
+      "Shadow"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw",
+      "drainKiss"
+    ],
+    "flavor": "The lingering echo of a worshipper who refused to leave, now bound to the temple in anguish.",
+    "expGrowth": 1,
+    "gold": 7,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.4,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Phantom",
+      "Apparition",
+      "Tormented Soul"
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Cursed Rat",
+    "level": 1,
+    "role": "Parasite",
+    "maxHp": 8,
+    "spriteKey": "larva",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "parasite"
+    ],
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "needleShot"
+    ],
+    "flavor": "A common rat, now host to a parasitic blight entity. Its bite can pass on the curse.",
+    "expGrowth": 1,
+    "gold": 2,
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.3,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Rat",
+      "Vermin",
+      "Carrier"
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Blighted Treant",
+    "level": 5,
+    "role": "Tank",
+    "maxHp": 35,
+    "spriteKey": "golem",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "moveHeal"
+    ],
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "attack",
+      "defend"
+    ],
+    "flavor": "A tree-like creature corrupted by the blight, its roots seeking living prey and draining life.",
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.4
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.6,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Treant",
+      "Blightwood",
+      "Root Walker"
+    ]
+  },
+  {
+    "id": 17,
+    "name": "Echoing Shade",
+    "level": 2,
+    "role": "Spirit",
+    "maxHp": 14,
+    "spriteKey": "wisp",
+    "smallBattler": "wisp[fps=15]",
+    "passives": [
+      "sense"
+    ],
+    "elements": [
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "shadowClaw"
+    ],
+    "flavor": "A shade that mimics the voice of lost adventurers to lure the unwary deeper into the temple.",
+    "expGrowth": 1,
+    "gold": 5,
+    "drops": [
+      {
+        "itemId": 41,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 41,
+        "chance": 0.3,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Shade",
+      "Mimic",
+      "Echo"
+    ]
+  },
+  {
+    "id": 18,
+    "name": "Vile Slime",
+    "level": 2,
+    "role": "Debuffer",
+    "maxHp": 15,
+    "spriteKey": "ooze",
+    "smallBattler": "ooze[fps=15]",
+    "passives": [],
+    "elements": [
+      "Black",
+      "Green"
+    ],
+    "skills": [
+      "attack"
+    ],
+    "flavor": "Formed from congealed blight residue, this slime leaves a trail of sickening corruption.",
+    "expGrowth": 1,
+    "gold": 4,
+    "drops": [
+      {
+        "itemId": 33,
+        "chance": 0.5
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 33,
+        "chance": 0.7,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Slime",
+      "Vile Ooze",
+      "Blight Mucus"
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Temple Guardian",
+    "level": 5,
+    "role": "Tank",
+    "maxHp": 40,
+    "spriteKey": "golem",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "dealDamageMod"
+    ],
+    "elements": [
+      "Yellow"
+    ],
+    "skills": [
+      "attack",
+      "boneRush",
+      "defend"
+    ],
+    "flavor": "An animated statue of an ancient warrior, still following its last orders to protect the temple.",
+    "expGrowth": 1,
+    "gold": 12,
+    "drops": [
+      {
+        "itemId": 39,
+        "chance": 0.3
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 39,
+        "chance": 0.5,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Guardian",
+      "Statue",
+      "Sentinel"
+    ]
+  },
+  {
+    "id": 20,
+    "name": "Blood Worm",
+    "level": 2,
+    "role": "Parasite",
+    "maxHp": 10,
+    "spriteKey": "larva",
+    "smallBattler": "golem[fps=15]",
+    "passives": [
+      "parasite"
+    ],
+    "elements": [
+      "Red"
+    ],
+    "skills": [
+      "attack",
+      "drainKiss"
+    ],
+    "flavor": "A leech-like worm that burrows into flesh, draining life to sustain itself.",
+    "expGrowth": 1,
+    "gold": 3,
+    "drops": [
+      {
+        "itemId": 32,
+        "chance": 0.2
+      }
+    ],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 32,
+        "chance": 0.4,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Worm",
+      "Leech",
+      "Bloodsucker"
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Healing Sprite",
+    "level": 2,
+    "role": "Healer",
+    "maxHp": 12,
+    "spriteKey": "pixie",
+    "smallBattler": "pixie[fps=15]",
+    "passives": [
+      "postBattleHeal",
+      "sense"
+    ],
+    "elements": [
+      "White"
+    ],
+    "skills": [
+      "attack",
+      "soothingMote"
+    ],
+    "flavor": "A benign spirit drawn to the temple's lingering magic, able to mend wounds with a soft glow.",
+    "expGrowth": 1,
+    "gold": 5,
+    "drops": [
+      {
+        "itemId": 1,
+        "chance": 0.1
+      }
+    ],
+    "evolutions": [],
+    "initialParty": true,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "",
+    "sacrificeRewards": [
+      {
+        "itemId": 1,
+        "chance": 0.2,
+        "count": 1
+      }
+    ],
+    "names": [
+      "Sprite",
+      "Pixie",
+      "Cure Wisp"
+    ]
+  },
+  {
+    "id": 22,
+    "name": "Alex",
+    "role": "Summoner",
+    "tier": 1
+  }
+]
