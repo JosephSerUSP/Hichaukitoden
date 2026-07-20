@@ -1373,6 +1373,13 @@
                            <input type="checkbox" id="prop-map-safe" />
                            <label for="prop-map-safe" style="font-size: 10px;">Safe Map (no encounters, no MP drain)</label>
                         </div>
+                        <div class="field-row-stacked" style="margin-top: 6px;" title="Which assets/tilesets/<name>.png atlas this map's walls/doors/floor/ceiling render from. Blank = the engine default (dungeon_001). See docs/design/raycaster-tileset-lighting.md.">
+                           <label>Tileset:</label>
+                           <div style="display: flex; gap: 4px;">
+                               <input type="text" id="prop-map-tileset" class="win98-input" style="flex: 1;" placeholder="(default: dungeon_001)" />
+                               <button class="win98-btn" onclick="openAssetPickerForTileset()">...</button>
+                           </div>
+                        </div>
                         <div class="field-row-stacked" style="margin-top: 6px;" title="Swaps the raycaster's upper-half draw between the atlas sky strip and the ordinary ceiling gradient. See docs/design/raycaster-tileset-lighting.md.">
                            <label>Ceiling:</label>
                            <select id="prop-map-ceiling" class="win98-select">

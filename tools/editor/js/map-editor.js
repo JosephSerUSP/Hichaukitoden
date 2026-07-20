@@ -644,6 +644,7 @@
             document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
             document.getElementById('prop-map-enc-rate').value = (map.encounterRate !== undefined) ? map.encounterRate : '';
             document.getElementById('prop-map-safe').checked = !!map.safe;
+            document.getElementById('prop-map-tileset').value = map.tileset || '';
             document.getElementById('prop-map-ceiling').value = map.ceilingStyle || 'solid';
 
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
@@ -804,6 +805,10 @@
             map.safe = document.getElementById('prop-map-safe').checked;
             if (!map.safe) delete map.safe;
 
+            const tileset = document.getElementById('prop-map-tileset').value.trim();
+            if (tileset) map.tileset = tileset;
+            else delete map.tileset;
+
             const ceilingStyle = document.getElementById('prop-map-ceiling').value;
             if (ceilingStyle === 'sky') map.ceilingStyle = 'sky';
             else delete map.ceilingStyle;
@@ -894,5 +899,16 @@
         function openAssetPickerForBgm() {
             openAssetPicker('midi', (path) => {
                 document.getElementById('prop-map-bgm').value = path;
+            });
+        }
+
+        // map.tileset is a bare atlas name (e.g. "dungeon_001"), not a path --
+        // the engine resolves it to assets/tilesets/<name>.png itself
+        // (viewport_3d.lua resolveTileset/getAtlas). Strip the picked file
+        // down to that name.
+        function openAssetPickerForTileset() {
+            openAssetPicker('tilesets', (path) => {
+                const filename = path.split('/').pop();
+                document.getElementById('prop-map-tileset').value = filename.replace(/\.[^/.]+$/, '');
             });
         }
