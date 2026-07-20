@@ -977,6 +977,119 @@ handlers.SWITCH_CAMPAIGN = function(cmd, ctx)
     switchCampaign(ctx.loader or (ctx.session and ctx.session.loader), tostring(name))
 end
 
+-- ---------------------------------------------------------------------
+-- Save/Load menu + quest log commands
+-- ---------------------------------------------------------------------
+
+-- Materializes a fixed set of save slots into v.saveRows (rows: name =
+-- display label, slot = slot id "slot1".."slotN", empty = true when no save
+-- exists there yet), the same v:-list-source pattern LIST_CAMPAIGNS uses for
+-- the title campaign picker. Slot count defaults to 3 (cmd.count overrides).
+handlers.LIST_SAVES = function(cmd, ctx)
+    local savegame = require("engine.savegame")
+    local count = cmd.count ~= nil and tonumber(evalFormula(cmd.count, ctx)) or 3
+    local existing = {}
+    for _, s in ipairs(savegame.list()) do existing[s.slot] = s end
+    local rows = {}
+    for i = 1, count do
+        local slotId = "slot" .. i
+        local s = existing[slotId]
+        local label
+        if s then
+            local when = s.savedAt and os.date("%Y-%m-%d %H:%M", s.savedAt) or "?"
+            label = string.format("Slot %d - %s - %sG", i, when, tostring(s.gold or 0))
+        else
+            label = string.format("Slot %d - (empty)", i)
+        end
+        table.insert(rows, {
+            name = label, slot = slotId, empty = (s == nil),
+            gold = s and s.gold, dungeonFloor = s and s.dungeonFloor, savedAt = s and s.savedAt,
+        })
+    end
+    ctx.v = ctx.v or {}
+    ctx.v.saveRows = rows
+    ctx.v.saveCount = #rows
+end
+
+-- Saves the current session into the given slot. The scene name recorded is
+-- whatever scene is BELOW this one on the stack (save_menu is reached by
+-- pushing on top of town/map, never by goto), matching how F5/quicksave in
+-- main.lua records the scene it was invoked from. savegame.serialize only
+-- captures town/map state as safe to resume into (engine/savegame.lua:77-80)
+-- — saving from anything else silently produces an unloadable save, so scene
+-- authors should only expose Save from town/map, same restriction F5 already
+-- has.
+handlers.SAVE_GAME = function(cmd, ctx)
+    local savegame = require("engine.savegame")
+    local scene_host = require("engine.scene_host") -- lazy: breaks the scene_host<->interpreter require cycle
+    local slot = cmd.slot ~= nil and tostring(evalFormula(cmd.slot, ctx)) or "slot1"
+    local sceneName = scene_host.getPrevious() or "town"
+    savegame.save(ctx.session, ctx.loader or (ctx.session and ctx.session.loader), sceneName, slot)
+end
+
+-- Loads a slot, rebuilds the GameSession, re-points the renderer/global
+-- session (same three steps as RESET_SESSION above and main.lua's
+-- quickLoad/F6), and transitions straight to the scene the save was made
+-- from. That target scene is only known once the save file is read, so this
+-- command emits its own scene_change event instead of requiring a follow-up
+-- SCENE_EVENT (whose `scene` field is a literal, not a formula — it can't
+-- reference the just-loaded v.loadedScene).
+handlers.LOAD_GAME = function(cmd, ctx)
+    local savegame = require("engine.savegame")
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local slot = cmd.slot ~= nil and tostring(evalFormula(cmd.slot, ctx)) or "slot1"
+    local data, err = savegame.load(slot, loader)
+    if not data then
+        ctx.v = ctx.v or {}
+        ctx.v.loadError = tostring(err)
+        return
+    end
+    if data.campaignRoot and data.campaignRoot ~= loader.root then
+        loader.init(data.campaignRoot)
+        require("engine.config").load()
+    end
+    local sess, sceneName = savegame.deserialize(data, loader)
+    _G.activeSession = sess
+    ctx.session = sess
+    ctx.party = sess.party
+    local ok, renderer = pcall(require, "presentation.renderer")
+    if ok and renderer and renderer.init then renderer.init(sess) end
+    table.insert(ctx.events, { type = "scene_change", kind = "goto", scene = sceneName or "town" })
+end
+
+-- Materializes the player's active/completed quests into v.questRows for the
+-- quest log. Quest-level only (owner scope decision): objectives are shown
+-- as static text, matching quests.json's schema — there is no per-objective
+-- completion tracking (session.flags only carries "quest:<id>:active" /
+-- "quest:<id>:completed" per quest, see engine/conditions.lua questStatus).
+handlers.LIST_ACTIVE_QUESTS = function(cmd, ctx)
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local flags = ctx.session and ctx.session.flags or {}
+    local rows = {}
+    for id, q in pairs(loader.quests or {}) do
+        local active = flags["quest:" .. id .. ":active"]
+        local completed = flags["quest:" .. id .. ":completed"]
+        if active or completed then
+            local objectives = table.concat(q.objectives or {}, "\n- ")
+            if objectives ~= "" then objectives = "- " .. objectives end
+            table.insert(rows, {
+                name = (completed and "[Done] " or "") .. (q.name or id),
+                id = id,
+                summary = q.summary or "",
+                objectives = objectives,
+                completed = completed and true or false,
+            })
+        end
+    end
+    table.sort(rows, function(a, b)
+        if a.completed ~= b.completed then return not a.completed end
+        return (a.name or "") < (b.name or "")
+    end)
+    ctx.v = ctx.v or {}
+    ctx.v.questRows = rows
+    ctx.v.questCount = #rows
+end
+
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); scene_host consumes
     -- this event and performs the transition. Optional `vars` (same

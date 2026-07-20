@@ -589,6 +589,115 @@
             stroke-width: 1.25;
         }
 
+        /* --- FIXED-HEIGHT SCROLLING LISTS (RPG Maker MZ-style) --- */
+        .win98-listbox {
+            height: 132px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .listbox-add-btn {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            align-self: stretch !important;
+        }
+
+        .list-row,
+        .list-row-edit {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 18px;
+            min-height: 18px;
+            max-height: 18px;
+            padding: 0 3px;
+            font-size: 11px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .list-row {
+            cursor: default;
+        }
+
+        .list-row.stripe-alt {
+            background: #dde4f5;
+        }
+
+        .list-row.selected {
+            background: var(--title-blue, #000080) !important;
+            color: #fff;
+        }
+
+        /* Edit-mode controls must fit the same 18px row the summary text
+           uses, or switching a row into/out of edit mode reflows every row
+           below it. */
+        .list-row-edit select,
+        .list-row-edit input {
+            height: 16px;
+            font-size: 10px;
+            padding: 0 2px;
+            box-sizing: border-box;
+        }
+
+        .list-row-edit .win98-btn {
+            height: 16px;
+            min-width: 16px;
+            padding: 0 4px;
+            font-size: 9px;
+        }
+
+        .win98-listbox::-webkit-scrollbar {
+            width: 16px;
+        }
+
+        .win98-listbox::-webkit-scrollbar-track {
+            background: var(--win-gray);
+        }
+
+        .win98-listbox::-webkit-scrollbar-thumb {
+            background-color: var(--win-gray);
+            border: 1px solid;
+            border-color: var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);
+            box-shadow: inset 1px 1px 0px var(--win-white), inset -1px -1px 0px var(--win-black);
+        }
+
+        .listbox-header {
+            display: flex;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--win-dark-shadow);
+            border-bottom: 1px solid var(--win-shadow);
+            padding: 0 0 2px;
+            margin-bottom: 2px;
+            position: sticky;
+            top: 0;
+            background: #fff;
+        }
+
+        /* --- ANIMATED SPRITE-SHEET PREVIEW ---
+           steps(N) with jump-end (the default) samples N points across the
+           0->end range at fractions 0, 1/N, ..., (N-1)/N. For those samples to
+           land exactly on frame boundaries (0, -cellPx, -2*cellPx, ...) the end
+           value must be -(N * cellPx), NOT -((N-1) * cellPx) — using frames-1
+           here was the earlier bug: steps stopped 1 cell short of a full cycle,
+           so every frame after the first sampled a fraction of a pixel into the
+           next cell instead of sitting on it. */
+        @keyframes spriteSheetPlay {
+            from { background-position-x: 0px; }
+            to   { background-position-x: calc(-1 * var(--sprite-frames, 1) * var(--sprite-cell-px, 48px)); }
+        }
+
+        .sprite-sheet-anim {
+            image-rendering: pixelated;
+            animation-name: spriteSheetPlay;
+            animation-timing-function: steps(var(--sprite-frames, 1));
+            animation-iteration-count: infinite;
+            animation-duration: var(--sprite-dur, 1s);
+        }
+
         /* --- STATUS BAR --- */
         .status-bar {
             background-color: var(--win-gray);

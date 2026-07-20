@@ -136,8 +136,24 @@
     "statBase": 10,
     "statPerLevel": 0.5,
     "growthExponent": 1.2,
-    "baseParams": { "maxHp": 10, "atk": 10, "def": 10, "mat": 10, "mdf": 10, "mpd": 2, "mxa": 4, "mxp": 2 },
-    "growthRates": { "maxHp": 0.12, "atk": 0.15, "def": 0.13, "mat": 0.15, "mdf": 0.13, "mpd": 0.05 },
+    "baseParams": {
+      "maxHp": 10,
+      "atk": 10,
+      "def": 10,
+      "mat": 10,
+      "mdf": 10,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthRates": {
+      "maxHp": 0.12,
+      "atk": 0.15,
+      "def": 0.13,
+      "mat": 0.15,
+      "mdf": 0.13,
+      "mpd": 0.05
+    },
     "expPerLevel": 15
   },
   "newGame": {

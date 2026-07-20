@@ -43,15 +43,15 @@ local function lerpAngle(a, b, t)
 end
 
 -- Tileset atlas configuration. See docs/design/raycaster-tileset-lighting.md.
--- Grid cells are 64x64px, 4 columns wide. Which rows hold wall variants vs.
--- the door row vs. an optional sky strip is NOT fixed across atlases --
--- assets/tilesets/town_001.png uses rows 0-1 for walls and row 3 as a sky
--- strip, while assets/tilesets/dungeon_001.png (no sky needed underground)
--- repurposes row 3 as a third wall-variant row instead. Each atlas therefore
--- carries an optional sidecar assets/tilesets/<name>.json manifest:
---   { "wallRows": [0,1], "doorRow": 2, "skyRow": 3 }
--- skyRow is omitted entirely when the atlas has no sky strip. Missing
--- manifest = the town_001 shape (wallRows {0,1}, doorRow 2, skyRow 3).
+-- Grid cells are 64x64px, 4 columns wide. Default row layout (no sidecar
+-- needed): row 0 = sky/ceiling, row 1 = wall, row 2 = door, row 3 = floor.
+-- More wall/door/floor variety comes from a WIDER atlas (more columns),
+-- not more rows. Atlases that deviate from this (e.g. no sky strip, extra
+-- wall-variant rows) carry a sidecar assets/tilesets/<name>.json manifest
+-- overriding whichever fields differ:
+--   { "wallRows": [0,1], "doorRow": 2, "skyRow": 3, "floorRow": 4 }
+-- skyRow/ceilingRow/floorRow are omitted entirely when the atlas has no
+-- such strip (e.g. dungeon_001's ceilingRow instead of skyRow).
 -- Fog config: an optional per-map `fog` key (maps.json), either a shared
 -- preset reference or inline fields. See docs/design/fog-presets-and-panorama.md.
 --   "fog": { "preset": "misty_dusk" }
@@ -189,15 +189,19 @@ local function getAtlas(name)
     if love.filesystem.getInfo(path) then
         local img = love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
-        local manifest = loadAtlasManifest(name) or {}
-        local wallRows = manifest.wallRows or { 0, 1 }
+        local loadedManifest = loadAtlasManifest(name)
+        local manifest = loadedManifest or {}
+        -- No sidecar at all = the built-in sky/wall/door/floor default. A
+        -- present-but-partial manifest (e.g. dungeon_001's no-skyRow) is
+        -- taken at face value instead -- its omissions are intentional.
+        local wallRows = manifest.wallRows or (not loadedManifest and { 1 }) or nil
         local entry = {
             img = img, w = img:getWidth(), h = img:getHeight(),
             wallRows = wallRows,
-            wallVariants = #wallRows * ATLAS_WALL_COLS,
-            doorRow = manifest.doorRow or 2,
-            skyRow = manifest.skyRow,         -- nil = this atlas has no sky strip
-            floorRow = manifest.floorRow,     -- nil = floor stays a flat gradient (no floor art yet)
+            wallVariants = wallRows and (#wallRows * ATLAS_WALL_COLS) or 0,
+            doorRow = manifest.doorRow or (not loadedManifest and 2) or nil,
+            skyRow = manifest.skyRow or (not loadedManifest and 0) or nil,
+            floorRow = manifest.floorRow or (not loadedManifest and 3) or nil,
             ceilingRow = manifest.ceilingRow, -- nil = solid ceiling stays a flat gradient
         }
         atlasCache[name] = entry

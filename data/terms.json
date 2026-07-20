@@ -123,7 +123,7 @@
     "subtitle": "",
     "options": [
       "New Game",
-      "\\c[7]Continue",
+      "Continue",
       "Exit",
       "Campaigns"
     ],

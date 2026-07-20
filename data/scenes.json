@@ -1165,17 +1165,36 @@
       {
         "id": "title_notice",
         "rect": {
-          "x": 8,
+          "x": 6,
           "y": 22,
-          "w": 16,
+          "w": 20,
           "h": 3
         },
         "style": "frame",
-        "visible": "v.showNotice",
+        "visible": "v.loadError ~= nil and v.loadError ~= ''",
         "content": [
           {
             "type": "text",
-            "text": "No save data."
+            "text": "{v.loadError}"
+          }
+        ]
+      },
+      {
+        "id": "load_picker",
+        "rect": {
+          "x": 7,
+          "y": 17,
+          "w": 18,
+          "h": 8
+        },
+        "style": "list",
+        "visibleRows": 3,
+        "visible": "v.loadPickerOpen",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:saveRows",
+            "cursor": "v.loadIdx"
           }
         ]
       },
@@ -1204,6 +1223,15 @@
         "key": "down"
       },
       {
+        "key": "return"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      },
+      {
         "key": "down"
       },
       {
@@ -1222,11 +1250,6 @@
         },
         {
           "cmd": "SET_VAR",
-          "name": "showNotice",
-          "value": "false"
-        },
-        {
-          "cmd": "SET_VAR",
           "name": "pickerOpen",
           "value": "false"
         },
@@ -1234,12 +1257,22 @@
           "cmd": "SET_VAR",
           "name": "campaignIdx",
           "value": 1
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "loadPickerOpen",
+          "value": "false"
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "loadIdx",
+          "value": 1
         }
       ],
       "on_up": [
         {
           "cmd": "IF",
-          "condition": "v.pickerOpen ~= true and v.idx > 1",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx > 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1258,17 +1291,39 @@
               "value": "(v.campaignIdx or 1) - 1"
             }
           ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.loadPickerOpen == true and (v.loadIdx or 1) > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "loadIdx",
+              "value": "(v.loadIdx or 1) - 1"
+            }
+          ]
         }
       ],
       "on_down": [
         {
           "cmd": "IF",
-          "condition": "v.pickerOpen ~= true and v.idx < 4",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx < 4",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "idx",
               "value": "v.idx + 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.loadPickerOpen == true and (v.loadIdx or 1) < (v.saveCount or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "loadIdx",
+              "value": "(v.loadIdx or 1) + 1"
             }
           ]
         },
@@ -1303,7 +1358,31 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.pickerOpen ~= true",
+          "condition": "v._guard == 0 and v.loadPickerOpen == true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "loadPickerOpen",
+                  "value": "false"
+                },
+                {
+                  "name": "loadError",
+                  "value": "''"
+                }
+              ]
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.pickerOpen ~= true and v.loadPickerOpen ~= true",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1363,7 +1442,35 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.idx == 1",
+          "condition": "v._guard == 0 and v.loadPickerOpen == true",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "IF",
+              "condition": "(((v.saveRows or {})[v.loadIdx or 1]) or {}).empty ~= true",
+              "then": [
+                {
+                  "cmd": "LOAD_GAME",
+                  "slot": "(((v.saveRows or {})[v.loadIdx or 1]) or {}).slot or 'slot1'"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "loadError",
+                  "value": "'Empty slot.'"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx == 1",
           "then": [
             {
               "cmd": "RESET_SESSION"
@@ -1380,23 +1487,390 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.idx == 2",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx == 2",
           "then": [
             {
+              "cmd": "LIST_SAVES"
+            },
+            {
               "cmd": "SET_VAR",
-              "name": "showNotice",
-              "value": "true"
+              "assignments": [
+                {
+                  "name": "loadIdx",
+                  "value": 1
+                },
+                {
+                  "name": "loadPickerOpen",
+                  "value": "true"
+                },
+                {
+                  "name": "loadError",
+                  "value": "''"
+                }
+              ]
             }
           ]
         },
         {
           "cmd": "IF",
-          "condition": "v.idx == 3",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx == 3",
           "then": [
             {
               "cmd": "QUIT_GAME"
             }
           ]
+        }
+      ]
+    },
+    "config": {}
+  },
+  {
+    "id": "save_menu",
+    "name": "Save Game",
+    "kind": "menu",
+    "draw": "windows",
+    "backdrop": "map",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      }
+    ],
+    "windows": [
+      {
+        "id": "save_help",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "w": 32,
+          "h": 4
+        },
+        "style": "frame",
+        "title": null,
+        "content": [
+          {
+            "type": "text",
+            "text": "UP/DOWN: select slot   ENTER: save   ESC: back"
+          }
+        ]
+      },
+      {
+        "id": "save_list",
+        "rect": {
+          "x": 4,
+          "y": 5,
+          "w": 24,
+          "h": 8
+        },
+        "style": "list",
+        "visibleRows": 3,
+        "title": "Save Game",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:saveRows",
+            "cursor": "v.idx"
+          }
+        ]
+      },
+      {
+        "id": "save_confirm",
+        "rect": {
+          "x": 4,
+          "y": 14,
+          "w": 24,
+          "h": 3
+        },
+        "style": "frame",
+        "title": null,
+        "visible": "v.confirmed == true",
+        "content": [
+          {
+            "type": "text",
+            "text": "Saved!"
+          }
+        ]
+      },
+      {
+        "id": "party",
+        "rect": {
+          "x": 0,
+          "y": 18,
+          "w": 32,
+          "h": 12
+        },
+        "style": "partyGrid",
+        "title": null,
+        "cursor": 0,
+        "content": [
+          {
+            "type": "list",
+            "listId": "party",
+            "format": "{name}",
+            "cursor": "0"
+          }
+        ]
+      }
+    ],
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "assignments": [
+            {
+              "name": "idx",
+              "value": 1
+            },
+            {
+              "name": "confirmed",
+              "value": "false"
+            }
+          ]
+        },
+        {
+          "cmd": "LIST_SAVES"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "party",
+          "index": 0
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "idx",
+                  "value": "v.idx - 1"
+                },
+                {
+                  "name": "confirmed",
+                  "value": "false"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx < (v.saveCount or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "idx",
+                  "value": "v.idx + 1"
+                },
+                {
+                  "name": "confirmed",
+                  "value": "false"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SAVE_GAME",
+              "slot": "(((v.saveRows or {})[v.idx or 1]) or {}).slot or 'slot1'"
+            },
+            {
+              "cmd": "LIST_SAVES"
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmed",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "SCENE_EVENT",
+          "kind": "pop"
+        }
+      ]
+    },
+    "config": {}
+  },
+  {
+    "id": "quest_log",
+    "name": "Quest Log",
+    "kind": "menu",
+    "draw": "windows",
+    "backdrop": "map",
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "escape"
+      }
+    ],
+    "windows": [
+      {
+        "id": "quest_help",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "w": 32,
+          "h": 4
+        },
+        "style": "frame",
+        "title": null,
+        "content": [
+          {
+            "type": "text",
+            "text": "UP/DOWN: select quest   ESC: back"
+          }
+        ]
+      },
+      {
+        "id": "quest_list",
+        "rect": {
+          "x": 0.5,
+          "y": 4.5,
+          "w": 14,
+          "h": 13
+        },
+        "style": "list",
+        "title": null,
+        "emptyText": "No quests yet.",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:questRows",
+            "cursor": "v.idx"
+          }
+        ]
+      },
+      {
+        "id": "quest_detail",
+        "rect": {
+          "x": 15,
+          "y": 4.5,
+          "w": 16.5,
+          "h": 13
+        },
+        "style": "panel",
+        "title": null,
+        "lineSpacing": 1,
+        "content": [
+          {
+            "type": "text",
+            "text": "{sel('quest_list').summary}\n\nObjectives:\n{sel('quest_list').objectives}"
+          }
+        ]
+      },
+      {
+        "id": "party",
+        "rect": {
+          "x": 0,
+          "y": 18,
+          "w": 32,
+          "h": 12
+        },
+        "style": "partyGrid",
+        "title": null,
+        "cursor": 0,
+        "content": [
+          {
+            "type": "list",
+            "listId": "party",
+            "format": "{name}",
+            "cursor": "0"
+          }
+        ]
+      }
+    ],
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "name": "idx",
+          "value": 1
+        },
+        {
+          "cmd": "LIST_ACTIVE_QUESTS"
+        },
+        {
+          "cmd": "OPEN_WINDOW",
+          "windowId": "party"
+        },
+        {
+          "cmd": "SET_LIST",
+          "windowId": "party",
+          "listId": "party"
+        },
+        {
+          "cmd": "SET_CURSOR",
+          "windowId": "party",
+          "index": 0
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx < (v.questCount or 1)",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "SCENE_EVENT",
+          "kind": "pop"
         }
       ]
     },
@@ -1565,7 +2039,7 @@
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 4"
+              "value": "v.cmdIdx > 1 and v.cmdIdx - 1 or 6"
             }
           ]
         },
@@ -1614,7 +2088,7 @@
             {
               "cmd": "SET_VAR",
               "name": "cmdIdx",
-              "value": "v.cmdIdx < 4 and v.cmdIdx + 1 or 1"
+              "value": "v.cmdIdx < 6 and v.cmdIdx + 1 or 1"
             }
           ]
         },
@@ -1717,6 +2191,38 @@
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 4",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "save_menu"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 5",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "push",
+              "scene": "quest_log"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 1 and v.cmdIdx == 6",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -2116,6 +2622,14 @@
         {
           "name": "RESERVE",
           "help": "Manage your reserve roster, summon, or sacrifice creatures."
+        },
+        {
+          "name": "SAVE",
+          "help": "Save your progress to a slot."
+        },
+        {
+          "name": "QUESTS",
+          "help": "View your active and completed quests."
         },
         {
           "name": "EXIT",
@@ -2536,49 +3050,55 @@
     "kind": "menu",
     "hooks": {
       "on_enter": [
-        {
-          "cmd": "SET_VAR",
-          "name": "page",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "idx",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "state",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "slot",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "eqIdx",
-          "value": 1
-        },
-        {
-          "cmd": "IF",
-          "condition": "v.entry == 'equip'",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "slot",
-              "value": 1
-            }
-          ],
-          "else": []
-        }
-      ],
+      {
+        "cmd": "SET_VAR",
+        "name": "page",
+        "value": 1
+      },
+      {
+        "cmd": "IF",
+        "condition": "v.idx == nil or v.idx == 0",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "idx",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "state",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "slot",
+        "value": 1
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "eqIdx",
+        "value": 1
+      },
+      {
+        "cmd": "IF",
+        "condition": "v.entry == 'equip'",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "state",
+            "value": 2
+          },
+          {
+            "cmd": "SET_VAR",
+            "name": "slot",
+            "value": 1
+          }
+        ],
+        "else": []
+      }
+    ],
       "on_up": [
         {
           "cmd": "IF",

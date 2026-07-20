@@ -256,36 +256,33 @@
             initDatabaseEditor();
         }
 
-        // Editable list of plain strings (quest objectives, reward flags).
-        // onChange receives the mutated array; caller owns the backing array.
+        // Editable list of plain strings (actor custom names, quest
+        // objectives, reward flags), built on the shared buildRowListEditor
+        // engine (same click/shift-click/Delete/Ctrl+C/X/V model as every
+        // other list in the database editor).
         function buildStringListEditor(container, labelText, arr, placeholder) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = labelText;
-            group.appendChild(lbl);
-
-            const list = document.createElement('div');
-            const render = () => {
-                list.innerHTML = '';
-                arr.forEach((val, i) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-bottom: 2px;';
+            buildRowListEditor(container, arr, {
+                label: labelText,
+                summary: (val) => [val || '(empty)'],
+                editor: (row, val, idx, commit) => {
                     const inp = document.createElement('input');
                     inp.className = 'win98-input';
                     inp.style.flex = '1';
                     inp.placeholder = placeholder || '';
                     inp.value = val;
-                    inp.oninput = () => { arr[i] = inp.value; setDirty(true); };
+                    inp.oninput = () => { arr[idx] = inp.value; setDirty(true); };
+                    inp.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(inp);
-                    row.appendChild(makeRowDeleteBtn(() => { arr.splice(i, 1); render(); }));
-                    list.appendChild(row);
-                });
-                list.appendChild(makeAddRowBtn('+ Add', () => { arr.push(''); render(); }));
-            };
-            render();
-            group.appendChild(list);
-            container.appendChild(group);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn'; doneBtn.textContent = '✓'; doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); commit(); }));
+                    inp.focus({ preventScroll: true });
+                },
+                newItem: () => '',
+                addLabel: '+ Add'
+            });
         }
 
         // Editable list of { id, qty, [consume] } item references (quest

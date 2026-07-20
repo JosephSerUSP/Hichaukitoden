@@ -2,7 +2,7 @@
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
 
-        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false) {
+        window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false, animate = false) {
             const group = document.createElement('div');
             group.className = 'form-group';
 
@@ -31,15 +31,55 @@
             img.onerror = () => { img.style.display = 'none'; noneTxt.style.display = 'block'; };
 
             function updateThumb(path) {
+                thumbWrap.classList.remove('sprite-sheet-anim');
+                thumbWrap.style.backgroundImage = '';
+                // The base thumbWrap style sets "background: #000" as a shorthand,
+                // which (being inline) always outranks the .sprite-sheet-anim
+                // class's background-size/repeat — so those must be set inline too.
+                thumbWrap.style.backgroundRepeat = '';
+                thumbWrap.style.backgroundSize = '';
                 if (path) {
                     path = path.replace(/\\/g, '/');
-                    if (isBareKey && !path.includes('/')) {
-                        img.src = '/assets/' + defaultDir + '/' + path + '.png';
+                    const resolved = (isBareKey && !path.includes('/'))
+                        ? '/assets/' + defaultDir + '/' + path + '.png'
+                        : '/' + path;
+
+                    if (animate) {
+                        // Sprite sheets follow the engine convention (see
+                        // presentation/small_battlers.lua): a horizontal strip of
+                        // square cells, cell size = image height, frame count =
+                        // width / height. [speed=N]/[fps=N] tokens embedded in the
+                        // key (e.g. "pixie[fps=15]") override the default 4fps,
+                        // same as small_battlers.frame()'s `ss.fps or (ss.speed and
+                        // 4*ss.speed or 4)`.
+                        img.style.display = 'none';
+                        noneTxt.style.display = 'none';
+                        const tokens = {};
+                        path.replace(/\[([^=\]]+)=([^\]]+)\]/g, (m, k, v) => { tokens[k] = parseFloat(v); return ''; });
+                        const fps = tokens.fps || (tokens.speed ? 4 * tokens.speed : 4);
+                        const probe = new Image();
+                        probe.onload = () => {
+                            const boxPx = thumbWrap.clientWidth || 48;
+                            const cell = Math.min(probe.naturalWidth, probe.naturalHeight);
+                            const frames = Math.max(1, Math.floor(probe.naturalWidth / cell));
+                            thumbWrap.style.backgroundImage = `url('${resolved}')`;
+                            thumbWrap.style.backgroundRepeat = 'no-repeat';
+                            // Explicit px sizing (rather than "auto 100%") keeps each
+                            // frame exactly boxPx wide, so the steps() animation below
+                            // lands precisely on cell boundaries instead of drifting.
+                            thumbWrap.style.backgroundSize = `${frames * boxPx}px ${boxPx}px`;
+                            thumbWrap.style.setProperty('--sprite-frames', frames);
+                            thumbWrap.style.setProperty('--sprite-cell-px', boxPx + 'px');
+                            thumbWrap.style.setProperty('--sprite-dur', (frames / fps) + 's');
+                            thumbWrap.classList.add('sprite-sheet-anim');
+                        };
+                        probe.onerror = () => { noneTxt.style.display = 'block'; };
+                        probe.src = resolved;
                     } else {
-                        img.src = '/' + path;
+                        img.src = resolved;
+                        img.style.display = 'block';
+                        noneTxt.style.display = 'none';
                     }
-                    img.style.display = 'block';
-                    noneTxt.style.display = 'none';
                 } else {
                     img.style.display = 'none';
                     noneTxt.style.display = 'block';
@@ -351,8 +391,175 @@
 
         function makeListBox() {
             const box = document.createElement('div');
+            box.className = 'win98-listbox';
             box.style.cssText = 'border: 1px solid var(--win-shadow); background: #fff; padding: 4px; display: flex; flex-direction: column; gap: 2px;';
             return box;
+        }
+
+        // Optional sticky column-header row for a list box (e.g. "Type | Content"),
+        // matching how RPG Maker MZ labels its trait/effect list columns.
+        function makeListHeader(box, columns) {
+            const header = document.createElement('div');
+            header.className = 'listbox-header';
+            columns.forEach(col => {
+                const span = document.createElement('span');
+                span.textContent = col.label;
+                span.style.flex = col.flex || '1';
+                if (col.width) { span.style.flex = '0 0 ' + col.width; }
+                header.appendChild(span);
+            });
+            box.appendChild(header);
+        }
+
+        // Generic MZ-style row-list editor: fixed-height scrollable box,
+        // compact single-line summary rows, click/shift-click range select,
+        // Delete/Ctrl+C/X/V act on the whole selection, double-click or
+        // Enter/Space edits a row in place. Every list in the Actors form
+        // (and elsewhere) is built from this one engine so the interaction
+        // model — and the "only one row edits at a time" guarantee — is
+        // shared rather than reimplemented per list.
+        //
+        // The "only one edit at a time" and "edit rows match summary-row
+        // height" bugs from the first Traits-only version both came from
+        // editing being done as an ad-hoc in-place DOM mutation with no
+        // shared state. Here editingIdx lives in the closure and render()
+        // is the ONLY thing that ever produces a row: at most one row can
+        // ever be in edit mode because render() only builds edit UI for
+        // `idx === editingIdx`, and both row kinds share the same CSS class
+        // sizing (.list-row / .list-row-edit, both fixed-height).
+        //
+        // opts:
+        //   label       - form-group label above the box (optional)
+        //   columns     - [{label, flex?}] sticky header (optional)
+        //   summary(item, idx)     -> [text, text, ...] matching columns
+        //   editor(row, item, idx, commit) -> populate row with edit
+        //                             controls; call commit() to exit edit
+        //                             mode (structural changes and Done/
+        //                             Enter should commit; free-typing in a
+        //                             text/number field should not, so the
+        //                             row doesn't collapse mid-keystroke)
+        //   newItem()   -> object pushed by "+ Add"; omit to hide Add
+        //   addLabel
+        function buildRowListEditor(container, array, opts) {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            if (opts.label) {
+                const lbl = document.createElement('label');
+                lbl.textContent = opts.label;
+                group.appendChild(lbl);
+            }
+            const box = makeListBox();
+
+            let sel = null; // { anchor, focus }
+            let clipboard = null;
+            let editingIdx = null;
+
+            const selRange = () => sel ? { lo: Math.min(sel.anchor, sel.focus), hi: Math.max(sel.anchor, sel.focus) } : null;
+            const selectedIndices = () => {
+                const r = selRange();
+                if (!r) return [];
+                const out = [];
+                for (let i = r.lo; i <= r.hi; i++) out.push(i);
+                return out;
+            };
+            const applySelectionStyle = () => {
+                (box._rows || []).forEach((row, i) => {
+                    const r = selRange();
+                    row.classList.toggle('selected', !!r && i >= r.lo && i <= r.hi && editingIdx === null);
+                });
+            };
+            const doDeleteSelected = () => {
+                const idxs = selectedIndices();
+                if (!idxs.length) return;
+                idxs.sort((a, b) => b - a).forEach(i => array.splice(i, 1));
+                sel = null; editingIdx = null; setDirty(true); render();
+            };
+            const doCopy = () => {
+                const idxs = selectedIndices();
+                if (!idxs.length) return;
+                clipboard = idxs.map(i => JSON.parse(JSON.stringify(array[i])));
+            };
+            const doCut = () => { doCopy(); doDeleteSelected(); };
+            const doPaste = () => {
+                if (!clipboard || !clipboard.length) return;
+                const at = sel ? selRange().hi + 1 : array.length;
+                array.splice(at, 0, ...JSON.parse(JSON.stringify(clipboard)));
+                setDirty(true); render();
+            };
+            const commit = () => { editingIdx = null; render(); };
+            const enterEditMode = (idx) => { editingIdx = idx; render(); };
+
+            const render = () => {
+                box.innerHTML = '';
+                if (opts.columns) makeListHeader(box, opts.columns);
+                box._rows = array.map((item, idx) => {
+                    const row = document.createElement('div');
+                    row.tabIndex = -1;
+
+                    if (idx === editingIdx) {
+                        row.className = 'list-row-edit';
+                        const reopen = () => { row.innerHTML = ''; opts.editor(row, item, idx, commit, reopen); };
+                        opts.editor(row, item, idx, commit, reopen);
+                    } else {
+                        row.className = 'list-row' + (idx % 2 === 1 ? ' stripe-alt' : '');
+                        opts.summary(item, idx).forEach(text => {
+                            const span = document.createElement('span');
+                            span.textContent = text;
+                            span.style.flex = '1';
+                            row.appendChild(span);
+                        });
+                        row.addEventListener('mousedown', (e) => {
+                            // .focus() without preventScroll can scrollIntoView the
+                            // row — on a tall form that shifts everything under the
+                            // cursor, so a real double-click's second half can land
+                            // on a DIFFERENT row that just scrolled into place. That
+                            // was the actual cause of "multiple rows editing at
+                            // once": not missing single-edit enforcement (each list
+                            // only ever has one editingIdx), but clicks silently
+                            // hitting the wrong list entirely.
+                            const wasEditing = editingIdx !== null;
+                            editingIdx = null;
+                            if (e.shiftKey) { e.preventDefault(); sel = { anchor: sel ? sel.anchor : idx, focus: idx }; }
+                            else { sel = { anchor: idx, focus: idx }; }
+                            if (wasEditing) render(); else applySelectionStyle();
+                            const target = box._rows[idx];
+                            if (target) target.focus({ preventScroll: true });
+                        });
+                        row.addEventListener('dblclick', () => enterEditMode(idx));
+                        row.addEventListener('keydown', (e) => {
+                            const rows = box._rows;
+                            if (e.key === 'Delete') { e.preventDefault(); doDeleteSelected(); }
+                            else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enterEditMode(idx); }
+                            else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                const dir = e.key === 'ArrowUp' ? -1 : 1;
+                                const anchor = e.shiftKey ? (sel ? sel.anchor : idx) : null;
+                                const from = sel ? sel.focus : idx;
+                                const nf = Math.max(0, Math.min(rows.length - 1, from + dir));
+                                sel = e.shiftKey ? { anchor, focus: nf } : { anchor: nf, focus: nf };
+                                applySelectionStyle();
+                                if (rows[nf]) rows[nf].focus({ preventScroll: true });
+                            } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') { e.preventDefault(); doCopy(); }
+                            else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') { e.preventDefault(); doCut(); }
+                            else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') { e.preventDefault(); doPaste(); }
+                        });
+                    }
+                    box.appendChild(row);
+                    return row;
+                });
+                applySelectionStyle();
+                if (opts.newItem) {
+                    box.appendChild(makeAddRowBtn(opts.addLabel || '+ Add', () => {
+                        array.push(opts.newItem());
+                        editingIdx = array.length - 1;
+                        render();
+                    }));
+                }
+            };
+            render();
+            group.appendChild(box);
+            container.appendChild(group);
+            return { render, box };
         }
 
         function makeRowDeleteBtn(onDelete) {
@@ -366,7 +573,7 @@
 
         function makeAddRowBtn(label, onAdd) {
             const btn = document.createElement('button');
-            btn.className = 'win98-btn';
+            btn.className = 'win98-btn listbox-add-btn';
             btn.style.cssText = 'font-size: 10px; align-self: flex-start; margin-top: 2px;';
             btn.textContent = label;
             btn.onclick = () => { onAdd(); setDirty(true); };
@@ -374,23 +581,32 @@
         }
 
         // Editable list of skill/item effect rows ({type, formula|value|status...})
+        function effectTypeLabel(type) {
+            const opt = effectTypeOptions().find(o => (o.value !== undefined ? o.value : o) === type);
+            return (opt && opt.label) || type;
+        }
+        function effectContentText(eff) {
+            if (eff.type === 'hp_damage' || eff.type === 'hp_heal' || eff.type === 'hp_drain') {
+                return eff.formula || '(no formula)';
+            }
+            if (eff.type === 'add_status') {
+                const pct = Math.round((eff.chance !== undefined ? eff.chance : 1) * 100);
+                return `${eff.status || '?'} @ ${pct}% for ${eff.duration !== undefined ? eff.duration : 3}t`;
+            }
+            return String(eff.value !== undefined ? eff.value : 0);
+        }
+
         function buildEffectsEditor(container, owner) {
             owner.effects = owner.effects || [];
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Effects';
-            group.appendChild(lbl);
-            const box = makeListBox();
-
-            const render = () => {
-                box.innerHTML = '';
-                owner.effects.forEach((eff, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+            buildRowListEditor(container, owner.effects, {
+                label: 'Effects',
+                columns: [{ label: 'Type', flex: '1' }, { label: 'Content', flex: '1' }],
+                summary: (eff) => [effectTypeLabel(eff.type), effectContentText(eff)],
+                editor: (row, eff, idx, commit, reopen) => {
                     row.appendChild(makeSelect(effectTypeOptions(), eff.type, v => {
                         eff.type = v;
-                        render();
+                        setDirty(true);
+                        reopen(); // rebuild this row's fields (formula vs status vs plain value) without collapsing to summary
                     }));
 
                     if (eff.type === 'hp_damage' || eff.type === 'hp_heal' || eff.type === 'hp_drain') {
@@ -400,19 +616,20 @@
                         f.placeholder = 'formula, e.g. 6 + 1.2 * a.level';
                         f.value = eff.formula || '';
                         f.oninput = () => { eff.formula = f.value; setDirty(true); };
+                        f.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                         row.appendChild(f);
                     } else if (eff.type === 'add_status') {
                         const stateIds = Object.keys(dbPayload.states || {});
-                        row.appendChild(makeSelect(stateIds, eff.status, v => { eff.status = v; }, '1'));
+                        row.appendChild(makeSelect(stateIds, eff.status, v => { eff.status = v; setDirty(true); }, '1'));
                         const chance = document.createElement('input');
                         chance.type = 'number'; chance.step = '0.05'; chance.min = '0'; chance.max = '1';
-                        chance.className = 'win98-input'; chance.style.width = '52px';
+                        chance.className = 'win98-input'; chance.style.width = '48px';
                         chance.title = 'Chance (0-1)';
                         chance.value = eff.chance !== undefined ? eff.chance : 1;
                         chance.oninput = () => { eff.chance = parseFloat(chance.value) || 0; setDirty(true); };
                         row.appendChild(chance);
                         const dur = document.createElement('input');
-                        dur.type = 'number'; dur.className = 'win98-input'; dur.style.width = '44px';
+                        dur.type = 'number'; dur.className = 'win98-input'; dur.style.width = '40px';
                         dur.title = 'Duration (turns)';
                         dur.value = eff.duration !== undefined ? eff.duration : 3;
                         dur.oninput = () => { eff.duration = parseInt(dur.value) || 0; setDirty(true); };
@@ -425,46 +642,56 @@
                         v.title = 'Effect value';
                         v.value = eff.value !== undefined ? eff.value : 0;
                         v.oninput = () => { eff.value = parseInt(v.value) || 0; setDirty(true); };
+                        v.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                         row.appendChild(v);
                     }
 
-                    row.appendChild(makeRowDeleteBtn(() => { owner.effects.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Effect', () => {
-                    owner.effects.push({ type: 'hp_damage', formula: '' });
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn';
+                    doneBtn.textContent = '✓';
+                    doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { owner.effects.splice(idx, 1); commit(); }));
+                },
+                newItem: () => ({ type: 'hp_damage', formula: '' }),
+                addLabel: '+ Add Effect'
+            });
         }
 
-        // Editable list of trait rows ({code, dataId?, value})
+        function traitTypeLabel(code) {
+            const opt = traitCodeOptions().find(o => (o.value !== undefined ? o.value : o) === code);
+            return (opt && opt.label) || code;
+        }
+
+        // RPG Maker MZ shows traits as one summary line per row ("Max HP * 150%")
+        // rather than a row of dropdowns — far denser, and it reads at a glance.
+        function traitContentText(tr) {
+            const dataLabel = tr.dataId || '';
+            if (/RATE/.test(tr.code)) return `${dataLabel} × ${Math.round((tr.value || 0) * 100)}%`;
+            if (/PLUS/.test(tr.code)) return `${dataLabel}${dataLabel ? ' ' : ''}+ ${tr.value}`;
+            return dataLabel ? `${dataLabel}: ${tr.value}` : String(tr.value != null ? tr.value : '');
+        }
+
+        // Editable list of trait rows ({code, dataId?, value}), MZ-style,
+        // built on the shared buildRowListEditor engine.
         function buildTraitsEditor(container, owner, label) {
             owner.traits = owner.traits || [];
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = label || 'Traits';
-            group.appendChild(lbl);
-            const box = makeListBox();
-
-            const render = () => {
-                box.innerHTML = '';
-                owner.traits.forEach((tr, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+            buildRowListEditor(container, owner.traits, {
+                label: label || 'Traits',
+                columns: [{ label: 'Type', flex: '1' }, { label: 'Data / Value', flex: '1' }],
+                summary: (tr) => [traitTypeLabel(tr.code), traitContentText(tr)],
+                editor: (row, tr, idx, commit) => {
                     row.appendChild(makeSelect(traitCodeOptions(), tr.code, v => {
                         tr.code = v;
                         if (!traitUsesDataId(v)) delete tr.dataId;
-                        render();
+                        setDirty(true);
+                        commit();
                     }, '1'));
                     if (traitUsesDataId(tr.code)) {
                         // ELEMENT_CHANGE's dataId is an element; param traits use stat ids
                         const dataIdOpts = tr.code === 'ELEMENT_CHANGE' ? elementOptions(false) : PARAM_IDS;
-                        row.appendChild(makeSelect(dataIdOpts, tr.dataId || dataIdOpts[0], v => { tr.dataId = v; }));
+                        row.appendChild(makeSelect(dataIdOpts, tr.dataId || dataIdOpts[0], v => { tr.dataId = v; setDirty(true); }));
                     }
                     const v = document.createElement('input');
                     v.type = 'number'; v.step = 'any';
@@ -473,18 +700,20 @@
                     v.title = 'Trait value';
                     v.value = tr.value !== undefined ? tr.value : 0;
                     v.oninput = () => { tr.value = parseFloat(v.value) || 0; setDirty(true); };
+                    v.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(v);
-                    row.appendChild(makeRowDeleteBtn(() => { owner.traits.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Trait', () => {
-                    owner.traits.push({ code: 'PARAM_PLUS', dataId: 'atk', value: 1 });
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn';
+                    doneBtn.textContent = '✓';
+                    doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { owner.traits.splice(idx, 1); commit(); }));
+                    v.focus({ preventScroll: true });
+                },
+                newItem: () => ({ code: 'PARAM_PLUS', dataId: 'atk', value: 1 }),
+                addLabel: '+ Add Trait'
+            });
         }
 
         // Checkbox list bound to an array of ids (actor skills/passives)
@@ -527,126 +756,92 @@
 
         // List field bound to an array of ids (actor skills/passives)
         function buildIdListEditor(container, label, allIds, nameOf, ownerArrGetter, ownerArrSetter, addLabel) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = label;
-            group.appendChild(lbl);
-            const box = makeListBox();
-            box.style.maxHeight = '120px';
-            box.style.overflowY = 'auto';
-
+            // buildRowListEditor mutates its array in place (push/splice), so
+            // it needs one stable array reference for the lifetime of this
+            // widget — grab-or-create it once and attach it back immediately.
+            const arr = ownerArrGetter() || [];
+            ownerArrSetter(arr);
             const options = allIds.map(id => ({ value: id, label: nameOf(id) }));
 
-            const render = () => {
-                box.innerHTML = '';
-                const arr = ownerArrGetter() || [];
-                arr.forEach((id, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-
+            buildRowListEditor(container, arr, {
+                label,
+                summary: (id) => [nameOf(id)],
+                editor: (row, id, idx, commit) => {
                     row.appendChild(makeSelect(options, id, v => {
                         arr[idx] = v;
-                        ownerArrSetter(arr);
-                        render();
+                        setDirty(true);
+                        commit();
                     }, '1'));
-
-                    row.appendChild(makeRowDeleteBtn(() => {
-                        arr.splice(idx, 1);
-                        ownerArrSetter(arr);
-                        render();
-                    }));
-
-                    box.appendChild(row);
-                });
-
-                box.appendChild(makeAddRowBtn(addLabel, () => {
-                    const newArr = ownerArrGetter() || [];
-                    newArr.push(allIds.length > 0 ? allIds[0] : '');
-                    ownerArrSetter(newArr);
-                    render();
-                }));
-            };
-
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); commit(); }));
+                },
+                newItem: () => (allIds.length > 0 ? allIds[0] : ''),
+                addLabel
+            });
         }
 
         // Editable list of drop rows ({itemId, chance}) for actors
         function buildDropsEditor(container, actor) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Item Drops (item + chance 0-1)';
-            group.appendChild(lbl);
-            const box = makeListBox();
+            actor.drops = actor.drops || [];
             const itemOptions = dbPayload.items.map(it => ({ value: String(it.id), label: it.name }));
+            const itemName = (id) => (itemOptions.find(o => o.value === String(id)) || {}).label || String(id);
 
-            const render = () => {
-                actor.drops = actor.drops || [];
-                box.innerHTML = '';
-                actor.drops.forEach((drop, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    row.appendChild(makeSelect(itemOptions, drop.itemId, v => { drop.itemId = parseInt(v); }, '1'));
+            buildRowListEditor(container, actor.drops, {
+                label: 'Item Drops (item + chance 0-1)',
+                columns: [{ label: 'Item', flex: '1' }, { label: 'Chance', flex: '1' }],
+                summary: (drop) => [itemName(drop.itemId), String(drop.chance !== undefined ? drop.chance : 0.1)],
+                editor: (row, drop, idx, commit) => {
+                    row.appendChild(makeSelect(itemOptions, drop.itemId, v => { drop.itemId = parseInt(v); setDirty(true); }, '1'));
                     const chance = document.createElement('input');
                     chance.type = 'number'; chance.step = '0.05'; chance.min = '0'; chance.max = '1';
                     chance.className = 'win98-input'; chance.style.width = '56px';
                     chance.title = 'Drop chance (0-1)';
                     chance.value = drop.chance !== undefined ? drop.chance : 0.1;
                     chance.oninput = () => { drop.chance = parseFloat(chance.value) || 0; setDirty(true); };
+                    chance.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(chance);
-                    row.appendChild(makeRowDeleteBtn(() => { actor.drops.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Drop', () => {
-                    actor.drops.push({ itemId: dbPayload.items[0] ? dbPayload.items[0].id : 1, chance: 0.1 });
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn'; doneBtn.textContent = '✓'; doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { actor.drops.splice(idx, 1); commit(); }));
+                },
+                newItem: () => ({ itemId: dbPayload.items[0] ? dbPayload.items[0].id : 1, chance: 0.1 }),
+                addLabel: '+ Add Drop'
+            });
         }
 
         // Editable list of sacrifice reward rows ({itemId, chance, count, minLevel})
         // for actors. Empty list = the actor falls back to
         // system.summoner.defaultSacrificeRewards.
         function buildSacrificeRewardsEditor(container, actor) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Sacrifice Rewards (item, chance 0-1, count, min level)';
-            lbl.title = 'Rolled when this creature is sacrificed. Empty = system default table.';
-            group.appendChild(lbl);
-            const box = makeListBox();
+            actor.sacrificeRewards = actor.sacrificeRewards || [];
             const itemOptions = dbPayload.items.map(it => ({ value: String(it.id), label: it.name }));
+            const itemName = (id) => (itemOptions.find(o => o.value === String(id)) || {}).label || String(id);
 
-            const render = () => {
-                actor.sacrificeRewards = actor.sacrificeRewards || [];
-                box.innerHTML = '';
-                actor.sacrificeRewards.forEach((reward, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    row.appendChild(makeSelect(itemOptions, reward.itemId, v => { reward.itemId = parseInt(v); }, '1'));
+            buildRowListEditor(container, actor.sacrificeRewards, {
+                label: 'Sacrifice Rewards (item, chance 0-1, count, min level)',
+                columns: [{ label: 'Item', flex: '2' }, { label: 'Chance / Count / MinLv', flex: '2' }],
+                summary: (r) => [itemName(r.itemId),
+                    `${r.chance !== undefined ? r.chance : 1} × ${r.count !== undefined ? r.count : 1}` + (r.minLevel ? ` (Lv${r.minLevel}+)` : '')],
+                editor: (row, reward, idx, commit) => {
+                    row.appendChild(makeSelect(itemOptions, reward.itemId, v => { reward.itemId = parseInt(v); setDirty(true); }, '1'));
                     const chance = document.createElement('input');
                     chance.type = 'number'; chance.step = '0.05'; chance.min = '0'; chance.max = '1';
-                    chance.className = 'win98-input'; chance.style.width = '52px';
+                    chance.className = 'win98-input'; chance.style.width = '48px';
                     chance.title = 'Reward chance (0-1)';
                     chance.value = reward.chance !== undefined ? reward.chance : 1;
                     chance.oninput = () => { reward.chance = parseFloat(chance.value) || 0; setDirty(true); };
                     row.appendChild(chance);
                     const count = document.createElement('input');
                     count.type = 'number'; count.min = '1';
-                    count.className = 'win98-input'; count.style.width = '44px';
+                    count.className = 'win98-input'; count.style.width = '38px';
                     count.title = 'Item count';
                     count.value = reward.count !== undefined ? reward.count : 1;
                     count.oninput = () => { reward.count = parseInt(count.value) || 1; setDirty(true); };
                     row.appendChild(count);
                     const minLevel = document.createElement('input');
                     minLevel.type = 'number'; minLevel.min = '0';
-                    minLevel.className = 'win98-input'; minLevel.style.width = '44px';
+                    minLevel.className = 'win98-input'; minLevel.style.width = '38px';
                     minLevel.title = 'Minimum creature level for this reward (0 = always)';
                     minLevel.value = reward.minLevel !== undefined ? reward.minLevel : 0;
                     minLevel.oninput = () => {
@@ -654,55 +849,48 @@
                         if (v > 0) { reward.minLevel = v; } else { delete reward.minLevel; }
                         setDirty(true);
                     };
+                    minLevel.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(minLevel);
-                    row.appendChild(makeRowDeleteBtn(() => { actor.sacrificeRewards.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Reward', () => {
-                    actor.sacrificeRewards.push({ itemId: dbPayload.items[0] ? dbPayload.items[0].id : 1, chance: 1, count: 1 });
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn'; doneBtn.textContent = '✓'; doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { actor.sacrificeRewards.splice(idx, 1); commit(); }));
+                },
+                newItem: () => ({ itemId: dbPayload.items[0] ? dbPayload.items[0].id : 1, chance: 1, count: 1 }),
+                addLabel: '+ Add Reward'
+            });
         }
 
         // Editable list of evolution rows ({level, evolvesTo}) for actors
         function buildEvolutionsEditor(container, actor) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Evolutions (at level → becomes)';
-            group.appendChild(lbl);
-            const box = makeListBox();
+            actor.evolutions = actor.evolutions || [];
             const actorOptions = dbPayload.actors.map(a => ({ value: String(a.id), label: a.name }));
+            const actorName = (id) => (actorOptions.find(o => o.value === String(id)) || {}).label || String(id);
 
-            const render = () => {
-                actor.evolutions = actor.evolutions || [];
-                box.innerHTML = '';
-                actor.evolutions.forEach((evo, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
+            buildRowListEditor(container, actor.evolutions, {
+                label: 'Evolutions (at level → becomes)',
+                columns: [{ label: 'Level', flex: '1' }, { label: 'Becomes', flex: '1' }],
+                summary: (evo) => [String(evo.level !== undefined ? evo.level : 5), actorName(evo.evolvesTo)],
+                editor: (row, evo, idx, commit) => {
                     const level = document.createElement('input');
                     level.type = 'number'; level.min = '1';
                     level.className = 'win98-input'; level.style.width = '56px';
                     level.title = 'Evolution level';
                     level.value = evo.level !== undefined ? evo.level : 5;
                     level.oninput = () => { evo.level = parseInt(level.value) || 1; setDirty(true); };
+                    level.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                     row.appendChild(level);
-                    row.appendChild(makeSelect(actorOptions, evo.evolvesTo, v => { evo.evolvesTo = parseInt(v); }, '1'));
-                    row.appendChild(makeRowDeleteBtn(() => { actor.evolutions.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Evolution', () => {
-                    actor.evolutions.push({ level: 5, evolvesTo: dbPayload.actors[0] ? dbPayload.actors[0].id : 1 });
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+                    row.appendChild(makeSelect(actorOptions, evo.evolvesTo, v => { evo.evolvesTo = parseInt(v); setDirty(true); }, '1'));
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn'; doneBtn.textContent = '✓'; doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { actor.evolutions.splice(idx, 1); commit(); }));
+                },
+                newItem: () => ({ level: 5, evolvesTo: dbPayload.actors[0] ? dbPayload.actors[0].id : 1 }),
+                addLabel: '+ Add Evolution'
+            });
         }
 
         function createCheckboxField(container, labelText, checked, onChange) {
@@ -1297,30 +1485,17 @@
 
         // Editable list of element slots (duplicates allowed, e.g. Green ×2)
         function buildElementSlotsEditor(container, owner) {
-            const group = document.createElement('div');
-            group.className = 'form-group';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Elements (slots; duplicates stack)';
-            group.appendChild(lbl);
-            const box = makeListBox();
-            const render = () => {
-                owner.elements = owner.elements || [];
-                box.innerHTML = '';
-                owner.elements.forEach((el, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                    row.appendChild(makeSelect(elementOptions(false), el, v => { owner.elements[idx] = v; }, '1'));
-                    row.appendChild(makeRowDeleteBtn(() => { owner.elements.splice(idx, 1); render(); }));
-                    box.appendChild(row);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Element', () => {
-                    owner.elements.push(elementOptions(false)[0]);
-                    render();
-                }));
-            };
-            render();
-            group.appendChild(box);
-            container.appendChild(group);
+            owner.elements = owner.elements || [];
+            buildRowListEditor(container, owner.elements, {
+                label: 'Elements (slots; duplicates stack)',
+                summary: (el) => [el],
+                editor: (row, el, idx, commit) => {
+                    row.appendChild(makeSelect(elementOptions(false), el, v => { owner.elements[idx] = v; setDirty(true); commit(); }, '1'));
+                    row.appendChild(makeRowDeleteBtn(() => { owner.elements.splice(idx, 1); commit(); }));
+                },
+                newItem: () => elementOptions(false)[0],
+                addLabel: '+ Add Element'
+            });
         }
 
         function loadFormForItem(item) {
@@ -1505,7 +1680,7 @@
                 window.createSpriteField(spriteRow, 'Small Battler', item.smallBattler || '', (path) => {
                     item.smallBattler = path;
                     setDirty(true);
-                }, false, 'smallBattlers', true);
+                }, false, 'smallBattlers', true, true);
 
                 const flagsBox = makeGroupbox(formPanel, 'Flags');
                 createCheckboxField(flagsBox, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
