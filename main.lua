@@ -827,6 +827,56 @@ runValidation = function()
     for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
         validTraitCodes[tc.code] = true
     end
+    local validFogPresets = {}
+    for _, fp in ipairs((loader.engine and loader.engine.fogPresets) or {}) do
+        validFogPresets[fp.id] = true
+    end
+
+    local validBlendModes = { alpha = true, add = true, multiply = true, screen = true }
+
+    -- Shared shape check for a fog config table -- used both for a map's
+    -- own `fog` (docs/design/fog-presets-and-panorama.md) and for each
+    -- entry in engine.fogPresets, since a preset IS a fog config (plus id/
+    -- label). `desc` is a human-readable prefix, e.g. "map 'x' fog" or
+    -- "fog preset 'y'".
+    local function checkFogShape(desc, fog)
+        local c = fog.color
+        if c ~= nil then
+            local isTriple = type(c) == "table" and #c == 3
+                and type(c[1]) == "number" and type(c[2]) == "number" and type(c[3]) == "number"
+            if check(isTriple, desc .. ".color must be an {r,g,b} triple") then
+                for ch = 1, 3 do
+                    check(c[ch] >= 0 and c[ch] <= 1,
+                        desc .. ".color channel " .. ch .. " (" .. tostring(c[ch]) .. ") is out of range 0..1")
+                end
+            end
+        end
+        check(fog.density == nil or (type(fog.density) == "number" and fog.density > 0),
+            desc .. ".density (" .. tostring(fog.density) .. ") must be a number > 0")
+        check(fog.minFactor == nil or (type(fog.minFactor) == "number"
+                and fog.minFactor >= 0 and fog.minFactor <= 1),
+            desc .. ".minFactor (" .. tostring(fog.minFactor) .. ") must be a number in 0..1")
+        if fog.panorama ~= nil then
+            if check(type(fog.panorama) == "table", desc .. ".panorama must be a list") then
+                for pi, layer in ipairs(fog.panorama) do
+                    local pdesc = desc .. ".panorama[" .. pi .. "]"
+                    check(type(layer.image) == "string" and layer.image ~= "",
+                        pdesc .. ".image must be a non-empty string (assets/panorama/<image>.png)")
+                    check(layer.blendMode == nil or validBlendModes[layer.blendMode],
+                        pdesc .. ".blendMode '" .. tostring(layer.blendMode) .. "' is not a recognized blend mode")
+                    check(layer.opacity == nil or (type(layer.opacity) == "number"
+                            and layer.opacity >= 0 and layer.opacity <= 1),
+                        pdesc .. ".opacity (" .. tostring(layer.opacity) .. ") must be a number in 0..1")
+                end
+            end
+        end
+    end
+
+    for _, fp in ipairs((loader.engine and loader.engine.fogPresets) or {}) do
+        if check(type(fp.id) == "string" and fp.id ~= "", "a fog preset is missing its id") then
+            checkFogShape("fog preset '" .. fp.id .. "'", fp)
+        end
+    end
 
     -- Meta system validation (C10)
     local registeredMeta = {}
@@ -1487,28 +1537,20 @@ elseif paramDef.type == "script" then
             end
         end
 
-        -- Optional per-map fog: { color = {r,g,b}, density > 0, minFactor 0..1 }.
-        -- The renderer treats absent fog as black fog (plain distance
-        -- darkening), so only the shape of a PRESENT fog table is checked.
+        -- Optional per-map fog: either { preset = "id" } referencing
+        -- engine.fogPresets, or an inline config (docs/design/
+        -- fog-presets-and-panorama.md). The renderer treats absent fog as
+        -- black fog (plain distance darkening), so only a PRESENT fog
+        -- table is checked.
         if map.fog ~= nil then
             local fogDesc = "map '" .. tostring(map.name) .. "' fog"
             if check(type(map.fog) == "table", fogDesc .. " must be a table") then
-                local c = map.fog.color
-                if c ~= nil then
-                    local isTriple = type(c) == "table" and #c == 3
-                        and type(c[1]) == "number" and type(c[2]) == "number" and type(c[3]) == "number"
-                    if check(isTriple, fogDesc .. ".color must be an {r,g,b} triple") then
-                        for ch = 1, 3 do
-                            check(c[ch] >= 0 and c[ch] <= 1,
-                                fogDesc .. ".color channel " .. ch .. " (" .. tostring(c[ch]) .. ") is out of range 0..1")
-                        end
-                    end
+                if map.fog.preset ~= nil then
+                    check(validFogPresets[map.fog.preset],
+                        fogDesc .. " references unknown preset '" .. tostring(map.fog.preset) .. "'")
+                else
+                    checkFogShape(fogDesc, map.fog)
                 end
-                check(map.fog.density == nil or (type(map.fog.density) == "number" and map.fog.density > 0),
-                    fogDesc .. ".density (" .. tostring(map.fog.density) .. ") must be a number > 0")
-                check(map.fog.minFactor == nil or (type(map.fog.minFactor) == "number"
-                        and map.fog.minFactor >= 0 and map.fog.minFactor <= 1),
-                    fogDesc .. ".minFactor (" .. tostring(map.fog.minFactor) .. ") must be a number in 0..1")
             end
         end
 

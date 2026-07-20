@@ -52,23 +52,96 @@ end
 --   { "wallRows": [0,1], "doorRow": 2, "skyRow": 3 }
 -- skyRow is omitted entirely when the atlas has no sky strip. Missing
 -- manifest = the town_001 shape (wallRows {0,1}, doorRow 2, skyRow 3).
--- Fog config: an optional per-map `fog` key (maps.json):
---   "fog": { "color": [0.5, 0.55, 0.6], "density": 0.35, "minFactor": 0.12 }
--- Distance shading is a mix toward the fog color; the pre-fog "darken with
--- distance" behavior is EXACTLY this formula with a black fog color, so
--- there is only one shading model -- a map without fog just uses the
--- defaults below. That identity is what keeps the wall loop, the sprite
--- tint, and the floor/ceiling shader on a single code path each instead
--- of branching per feature.
-local FOG_DEFAULTS = { color = { 0, 0, 0 }, density = 0.35, minFactor = 0.12 }
-local function getFogConfig(mapData)
+-- Fog config: an optional per-map `fog` key (maps.json), either a shared
+-- preset reference or inline fields. See docs/design/fog-presets-and-panorama.md.
+--   "fog": { "preset": "misty_dusk" }
+--   "fog": { "color": [0.5,0.55,0.6], "density": 0.35, "minFactor": 0.12,
+--            "panorama": [{ "image": "fog_001", "scrollX": 0.01, "scrollY": 0,
+--                            "blendMode": "alpha", "opacity": 1.0 }] }
+-- Distance shading is a mix toward the fog color/background; the pre-fog
+-- "darken with distance" behavior is EXACTLY this with a black flat-color
+-- fog and no panorama, so there is only one shading model -- a map without
+-- fog just uses the defaults below. That identity is what keeps the wall
+-- loop, the sprite tint, and the floor/ceiling shader on a single code
+-- path each instead of branching per feature.
+local FOG_DEFAULTS = { color = { 0, 0, 0 }, density = 0.35, minFactor = 0.12, panorama = nil }
+local function getFogConfig(session, mapData)
     local fog = mapData and mapData.fog
     if not fog then return FOG_DEFAULTS, false end
+
+    if fog.preset then
+        local presets = session and session.loader and session.loader.engine and session.loader.engine.fogPresets
+        local resolved = nil
+        if presets then
+            for _, p in ipairs(presets) do
+                if p.id == fog.preset then resolved = p break end
+            end
+        end
+        -- An unresolvable preset id falls back to no-fog rather than
+        -- erroring, matching how missing atlases/light grids degrade
+        -- elsewhere in this renderer; the validator catches the typo.
+        if not resolved then return FOG_DEFAULTS, false end
+        fog = resolved
+    end
+
     return {
         color     = fog.color or FOG_DEFAULTS.color,
         density   = fog.density or FOG_DEFAULTS.density,
         minFactor = fog.minFactor or FOG_DEFAULTS.minFactor,
+        panorama  = (fog.panorama and #fog.panorama > 0) and fog.panorama or nil,
     }, true
+end
+
+-- Panorama images (assets/panorama/<name>.png), lazily loaded/cached like
+-- tileset atlases. Repeat-wrapped so a screen-sized viewport quad can be
+-- offset over time for a scrolling-mist effect without a shader.
+local panoramaCache = {}
+local function getPanoramaImage(name)
+    if panoramaCache[name] ~= nil then return panoramaCache[name] or nil end
+    local path = "assets/panorama/" .. name .. ".png"
+    if love.filesystem.getInfo(path) then
+        local img = love.graphics.newImage(path)
+        img:setFilter("nearest", "nearest")
+        img:setWrap("repeat", "repeat")
+        panoramaCache[name] = img
+        return img
+    end
+    panoramaCache[name] = false
+    return nil
+end
+
+local BLEND_MODES = { alpha = true, add = true, multiply = true, screen = true }
+local panoramaQuad = nil -- reused; viewport recomputed per layer/frame
+
+-- Draws the fog background ONCE per frame, before any walls/floor/ceiling:
+-- a flat fill for plain color fog, or one or more scrolling panorama
+-- layers. Everything drawn afterward uses alpha = fogAlpha and relies on
+-- ordinary blending to reveal this layer where fog is thick -- see
+-- docs/design/fog-presets-and-panorama.md for why this replaced the old
+-- per-surface mix() approach.
+local function drawFogBackground(fog, screenWpx, screenHpx)
+    love.graphics.push("all")
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setColor(fog.color[1], fog.color[2], fog.color[3], 1)
+    love.graphics.rectangle("fill", 0, 0, screenWpx, screenHpx)
+
+    if fog.panorama then
+        local t = love.timer.getTime()
+        for _, layer in ipairs(fog.panorama) do
+            local img = getPanoramaImage(layer.image)
+            if img then
+                local iw, ih = img:getWidth(), img:getHeight()
+                local ox = (t * (layer.scrollX or 0) * iw) % iw
+                local oy = (t * (layer.scrollY or 0) * ih) % ih
+                if not panoramaQuad then panoramaQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1) end
+                panoramaQuad:setViewport(ox, oy, screenWpx, screenHpx, iw, ih)
+                love.graphics.setBlendMode(BLEND_MODES[layer.blendMode] and layer.blendMode or "alpha")
+                love.graphics.setColor(1, 1, 1, layer.opacity or 1.0)
+                love.graphics.draw(img, panoramaQuad, 0, 0)
+            end
+        end
+    end
+    love.graphics.pop()
 end
 
 local ATLAS_TILE = 64
@@ -212,10 +285,10 @@ local FLOOR_CEIL_SHADER_SRC = [[
     uniform float atlasH;
     uniform float targetRow;
     uniform vec2 mapSize;   // (mapW, mapH), light texture covers (mapW+1)x(mapH+1) vertices
-    // Fog uniforms: blend toward fogColor instead of darkening.
-    // When fog is disabled (config nil), fogColor = (0,0,0) reproduces
-    // the original brightness*darkening behavior exactly.
-    uniform vec3 fogColor;
+    // Fog: rather than mixing toward a fog color in-shader, output alpha =
+    // fogAlpha and let ordinary blending reveal whatever drawFogBackground()
+    // already drew behind this (flat fill or scrolling panorama) -- see
+    // docs/design/fog-presets-and-panorama.md.
     uniform float fogDensity;
     uniform float fogMinFactor;
 
@@ -246,10 +319,8 @@ local FLOOR_CEIL_SHADER_SRC = [[
         vec2 lightUV = (worldPos - vec2(1.0)) / mapSize;
         vec3 lightColor = Texel(lightTex, lightUV).rgb;
         vec3 shaded = texColor.rgb * lightColor;
-        // Mix between fog color and shaded texture (fogColor=black -> old behavior)
-        vec3 finalColor = mix(fogColor, shaded, fogAlpha);
 
-        return vec4(finalColor, texColor.a) * color;
+        return vec4(shaded, texColor.a * fogAlpha) * color;
     }
 ]]
 
@@ -261,7 +332,6 @@ local lightTexCache = { mapData = nil, lightRef = nil, tex = nil, w = 0, h = 0 }
 -- (LÖVE requires every declared Image uniform to exist in the source, and
 -- there's exactly one caller here, so string-splicing it in once at compile
 -- time is simpler than threading a second shader variant through).
--- Also inject fogColor, fogDensity, fogMinFactor after mapSize.
 local FLOOR_CEIL_SHADER_FULL = FLOOR_CEIL_SHADER_SRC:gsub(
     "uniform vec2 mapSize;",
     "uniform vec2 mapSize;\n    uniform Image lightTex;")
@@ -307,8 +377,10 @@ end
 
 -- Draws one shaded floor/ceiling plane (the screen rows y0..y0+rectH) via
 -- the floor-casting shader, sampling atlasRow's variant-column texture and
--- the given light texture (or full white if the map has none). `fog` is the
--- always-resolved config from getFogConfig() -- black fog = plain darkening.
+-- the given light texture (or full white if the map has none). `fog` only
+-- supplies density/minFactor here -- the shader outputs alpha, not a mixed
+-- color; drawFogBackground() already drew what fog.color/panorama reveals
+-- underneath (docs/design/fog-presets-and-panorama.md).
 local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)
     local shader = ensureFloorCeilShader()
     if not shader then return false end
@@ -320,7 +392,6 @@ local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, p
     shader:send("atlasW", atlas.w)
     shader:send("atlasH", atlas.h)
     shader:send("targetRow", atlasRow)
-    shader:send("fogColor", fog.color)
     shader:send("fogDensity", fog.density)
     shader:send("fogMinFactor", fog.minFactor)
 
@@ -447,10 +518,11 @@ function viewport_3d.draw(session)
 
     local mapData = session.currentMapData
 
-    -- Resolved fog config -- black fog (the default) IS the plain
-    -- darken-with-distance behavior; hasFog only gates the extra
-    -- background stripe walls need for non-black fog to blend against.
-    local fog, hasFog = getFogConfig(mapData)
+    -- Resolved fog config (preset-aware) -- black fog with no panorama IS
+    -- the plain darken-with-distance behavior, so there's exactly one
+    -- shading model: draw the fog background, then everything else at
+    -- alpha = fogAlpha. See docs/design/fog-presets-and-panorama.md.
+    local fog = getFogConfig(session, mapData)
 
     -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
@@ -465,6 +537,11 @@ function viewport_3d.draw(session)
 
     local atlas = resolveTileset(mapData)
     local lightTex, lightW, lightH = getLightTexture(mapData)
+
+    -- Fog background FIRST: everything drawn after this (shaded floor/
+    -- ceiling, walls, sprites) uses alpha = fogAlpha and blends against it.
+    -- See docs/design/fog-presets-and-panorama.md.
+    drawFogBackground(fog, screenWpx, halfH * 2)
 
     if mapData and mapData.ceilingStyle == "sky" and atlas and atlas.skyRow then
         skyQuad:setViewport(0, atlas.skyRow * ATLAS_TILE, ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
@@ -603,11 +680,11 @@ function viewport_3d.draw(session)
             litR, litG, litB = litR * 0.76, litG * 0.76, litB * 0.76
         end
 
-        -- One shading model: mix toward the fog color by distance. Black
-        -- fog (the no-fog default) makes fogAlpha exactly the old
-        -- "brightness" multiplier, so there's no separate darkening path.
+        -- One shading model: alpha = fogAlpha, blended against whatever
+        -- drawFogBackground() already drew (flat fill or panorama). Black
+        -- flat fog (the no-fog default) makes this pixel-identical to the
+        -- old "brightness" multiply against a black backdrop.
         local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + perpWallDist * fog.density))
-        local fc = fog.color
 
         if atlas then
             local originX, originY
@@ -620,30 +697,14 @@ function viewport_3d.draw(session)
                 originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
             end
             sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
-
-            if hasFog then
-                -- Non-black fog needs a background to alpha-blend against
-                -- (matching the shader's mix()): an opaque fog stripe, then
-                -- the lit texture at alpha = fogAlpha on top. Result:
-                -- fogColor*(1-fogAlpha) + texel*vertexLight*fogAlpha.
-                love.graphics.setColor(fc[1], fc[2], fc[3], 1)
-                love.graphics.rectangle("fill", x, drawStart, 1, drawEnd - drawStart)
-                love.graphics.setColor(litR, litG, litB, fogAlpha)
-            else
-                -- Black fog: mix() collapses to a plain multiply, no
-                -- background stripe needed.
-                love.graphics.setColor(litR * fogAlpha, litG * fogAlpha, litB * fogAlpha, 1)
-            end
+            love.graphics.setColor(litR, litG, litB, fogAlpha)
             love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
         else
             -- Retro flat-shaded colors if tileset is missing
             local r = (side == 0) and 0.4 or 0.3
             local g = (side == 0) and 0.45 or 0.35
             local b = (side == 0) and 0.55 or 0.45
-            love.graphics.setColor(
-                r * litR * fogAlpha + fc[1] * (1 - fogAlpha),
-                g * litG * fogAlpha + fc[2] * (1 - fogAlpha),
-                b * litB * fogAlpha + fc[3] * (1 - fogAlpha), 1)
+            love.graphics.setColor(r * litR, g * litG, b * litB, fogAlpha)
             love.graphics.line(x, drawStart, x, drawEnd)
         end
     end
@@ -698,24 +759,19 @@ function viewport_3d.draw(session)
             local drawStartY = math.floor(70 - spriteHeight / 2)
             local drawStartX = math.floor(spriteScreenX - spriteWidth / 2)
 
-            -- Same single shading model as walls: tint = mix(fogColor,
-            -- white, fogAlpha), which with the black no-fog default is
-            -- exactly the old brightness grey.
+            -- Same single shading model as walls: alpha = fogAlpha against
+            -- the already-drawn fog background.
             local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
-            local fc = fog.color
-            local spriteR = fogAlpha + fc[1] * (1 - fogAlpha)
-            local spriteG = fogAlpha + fc[2] * (1 - fogAlpha)
-            local spriteB = fogAlpha + fc[3] * (1 - fogAlpha)
 
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
                 if stripeX >= 0 and stripeX < 256 then
                     if transformY < (zBuffer[stripeX + 1] or 0) then
                         local clipY = math.max(0, drawStartY)
                         local clipH = math.min(144, drawStartY + spriteHeight) - clipY
-                        
+
                         if clipH > 0 then
                             love.graphics.setScissor(stripeX, clipY, 1, clipH)
-                            love.graphics.setColor(spriteR, spriteG, spriteB, 1)
+                            love.graphics.setColor(1, 1, 1, fogAlpha)
                             
                             local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
                             spriteSliceQuad:setViewport(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())

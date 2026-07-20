@@ -2024,5 +2024,60 @@
       "style": "victoryPanel",
       "title": null
     }
-  }
+  },
+  "fogPresets": [
+    {
+      "id": "blue_haze",
+      "label": "Blue Haze",
+      "color": [
+        0.45,
+        0.5,
+        0.54
+      ],
+      "density": 0.35,
+      "minFactor": 0.12
+    },
+    {
+      "id": "underground",
+      "label": "Underground",
+      "color": [
+        0.1,
+        0.1,
+        0.18
+      ],
+      "density": 0.35,
+      "minFactor": 0.05
+    },
+    {
+      "id": "purple_dusk",
+      "label": "Purple Dusk",
+      "color": [
+        0.29,
+        0.19,
+        0.4
+      ],
+      "density": 0.3,
+      "minFactor": 0.03
+    },
+    {
+      "id": "rolling_mist",
+      "label": "Rolling Mist",
+      "color": [
+        0.35,
+        0.32,
+        0.45
+      ],
+      "density": 0.3,
+      "minFactor": 0.1,
+      "panorama": [
+        {
+          "image": "fog_001",
+          "scrollX": 0.02,
+          "scrollY": 0.0,
+          "blendMode": "alpha",
+          "opacity": 0.6
+        }
+      ]
+    }
+  ]
 }
