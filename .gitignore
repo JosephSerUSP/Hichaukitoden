@@ -1,3 +1,6 @@
 
 # Local campaign selection pointer (per-machine; written by the title selector / editor)
 campaign.json
+
+# Player save files (per-machine; written by engine/savegame.lua)
+saves/

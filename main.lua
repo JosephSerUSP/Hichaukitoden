@@ -9,6 +9,7 @@ local traits = require("engine.traits")
 local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
+local savegame = require("engine.savegame")
 require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
 
@@ -66,6 +67,7 @@ activeSession = nil
 
 local isTestBattle = false
 local isValidateMode = false
+local isSaveTestMode = false
 local cliCampaignRoot = nil
 local isPreviewSceneMode = false
 local previewSceneId = nil
@@ -2178,6 +2180,8 @@ function love.load(arg)
                 if isPositional(arg[i + 2]) then previewMapY = arg[i + 2]; i = i + 1 end
                 if isPositional(arg[i + 2]) then previewMapDir = arg[i + 2]; i = i + 1 end
                 i = i + 1
+            elseif val == "savetest" then
+                isSaveTestMode = true
             elseif val:match("^campaign=") then
                 -- Overrides the campaign.json pointer for this run (used by
                 -- the generator's validate loops): campaign=<name> loads
@@ -2186,6 +2190,28 @@ function love.load(arg)
             end
             i = i + 1
         end
+    end
+
+    if isSaveTestMode then
+        loader.init(cliCampaignRoot)
+        local s = session.GameSession.new(loader)
+        s:initializeStartingParty()
+        exploration.loadMap(s, 1)
+        local origGold, origPartyName, origPX, origPY = s.gold, s.party[1] and s.party[1].name, s.playerX, s.playerY
+        s.expBank = 42
+        savegame.save(s, loader, "town", "savetest")
+        local data = savegame.load("savetest", loader)
+        assert(data, "load returned nil")
+        local loaded, scene = savegame.deserialize(data, loader)
+        assert(loaded.gold == origGold, "gold mismatch")
+        assert(loaded.expBank == 42, "expBank mismatch")
+        assert(loaded.party[1] and loaded.party[1].name == origPartyName, "party[1] name mismatch")
+        assert(loaded.playerX == origPX and loaded.playerY == origPY, "player pos mismatch")
+        assert(scene == "town", "scene mismatch: " .. tostring(scene))
+        savegame.delete("savetest")
+        print("SAVETEST OK")
+        love.event.quit(0)
+        return
     end
 
     -- E5: headless scene preview for the editor canvas, then quit.
@@ -2827,6 +2853,28 @@ local function getTargetCoords(target)
 end
 
 -- Action handling for key presses
+-- Loads the "quicksave" slot: rebuilds activeSession from the save data,
+-- switches campaign root if the save was made against a different one, and
+-- resets the scene stack to the scene it was saved from (mirrors the
+-- title/RESET_SESSION boot sequence in love.load / interpreter.lua).
+function quickLoad()
+    local data, err = savegame.load("quicksave", loader)
+    if not data then
+        print("[savegame] load failed: " .. tostring(err))
+        return
+    end
+    if data.campaignRoot and data.campaignRoot ~= loader.root then
+        loader.init(data.campaignRoot)
+        require("engine.config").load()
+    end
+    local sess, sceneName = savegame.deserialize(data, loader)
+    activeSession = sess
+    renderer.init(activeSession)
+    scene_host.init(nil)
+    scene_host.push(sceneName or "town", { session = activeSession, loader = loader, party = activeSession.party })
+    print("Game loaded.")
+end
+
 local function handleKeyPressed(key)
     if inputCooldown > 0 then return end
     if not activeSession then return end
@@ -3047,7 +3095,23 @@ function love.keypressed(key, scancode, isrepeat)
         end
         return
     end
-    
+
+    -- Quicksave/quickload: only meaningful while actually playing (the
+    -- "map"/"town" scenes are the only ones with a resumable position --
+    -- see engine/savegame.lua's serializeMap comment), never during the
+    -- isTestBattle dev harness (blocked by the early return above).
+    if key == "f5" then
+        local scene = scene_host.getCurrent()
+        if activeSession and (scene == "map" or scene == "town") then
+            savegame.save(activeSession, loader, scene, "quicksave")
+            print("Game saved.")
+        end
+        return
+    elseif key == "f6" then
+        quickLoad()
+        return
+    end
+
     handleKeyPressed(key)
 end
 
