@@ -563,11 +563,6 @@
         // Hook names expected on custom scenes (from engine/scene_host.lua).
         const SCENE_HOOK_NAMES = ['on_enter', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right', 'on_page', 'on_frame'];
 
-        function flowScenes() {
-            const scenes = Object.keys(dbPayload.flows || {}).filter(k => k !== '_test' && k !== 'quest');
-            return scenes.length ? scenes : ['battle'];
-        }
-
         function flowPhasesForScene(scene) {
             const known = KNOWN_PHASES_BY_SCENE[scene] || [];
             const existing = Object.keys((dbPayload.flows || {})[scene] || {});

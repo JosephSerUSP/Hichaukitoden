@@ -2101,27 +2101,14 @@
                         lbl.textContent = 'Spawn Facing Direction';
                         group.appendChild(lbl);
 
-                        const select = document.createElement('select');
-                        select.className = 'form-control inset-bevel';
-                        select.id = 'field-dir';
-                        const directions = ['N', 'E', 'S', 'W'];
-                        directions.forEach(d => {
-                            const opt = document.createElement('option');
-                            opt.value = d;
-                            opt.textContent = d;
-                            if (value === d) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = () => {
-                            setDirty(true);
+                        const select = makeSelect(['N', 'E', 'S', 'W'], value, (v) => {
                             let target = targetRoot;
                             for (let i = 0; i < currentPath.length - 1; i++) {
                                 if (!target[currentPath[i]]) target[currentPath[i]] = {};
                                 target = target[currentPath[i]];
                             }
-                            target[key] = select.value;
-                        };
+                            target[key] = v;
+                        });
 
                         group.appendChild(select);
                         container.appendChild(group);

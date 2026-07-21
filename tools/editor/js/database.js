@@ -529,11 +529,29 @@
             document.getElementById('max-modal').classList.remove('active');
         }
 
+        function currentCollectionLength(tab) {
+            if (tab === 'actors') return dbPayload.actors.length;
+            if (tab === 'items') return dbPayload.items.length;
+            if (tab === 'shops') return Object.keys(dbPayload.shops || {}).length;
+            if (tab === 'commonEvents') return Object.keys(dbPayload.commonEvents || {}).length;
+            if (['skills', 'passives', 'states', 'elements', 'roles', 'animations'].includes(tab)) {
+                return Object.keys(dbPayload[tab] || {}).length;
+            }
+            return 0;
+        }
+
         function applyChangeMax() {
             const newMax = parseInt(document.getElementById('max-input-val').value);
             if (isNaN(newMax) || newMax < 1 || newMax > 99) {
                 alert('Invalid max size (Enter 1 - 99).');
                 return;
+            }
+
+            const currentLenBefore = currentCollectionLength(activeDbTab);
+            if (newMax < currentLenBefore) {
+                const removed = currentLenBefore - newMax;
+                const ok = confirm(`Shrinking to ${newMax} will permanently delete the trailing ${removed} ${activeDbTab} entr${removed === 1 ? 'y' : 'ies'}. Continue?`);
+                if (!ok) return;
             }
 
             if (activeDbTab === 'actors') {
