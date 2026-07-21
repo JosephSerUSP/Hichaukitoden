@@ -6,9 +6,12 @@
 --   session (required), loader, battle, party, enemies,
 --   a/b/target/enemy/ally battler refs, v (flow-locals).
 --
--- Fallback rule: a phase absent from flows.json runs the legacy Lua block —
--- hosts guard conversions with `if flow.has(phase)` so every conversion is
--- independently shippable and revertable.
+-- Fallback rule (battle-only, frozen legacy holdout per docs/SPEC.md §1.2):
+-- engine/battle.lua and engine/scenes/battle.lua still guard phase-by-phase
+-- conversions with `if flow.has(phase)`, running a legacy Lua block when a
+-- phase is absent from flows.json. Every other host calls flow.run(phase,
+-- ctx) unconditionally — flows.json is the only source of phase logic there,
+-- and the validator requires the phases they depend on to exist.
 --
 -- A future host (e.g. a menu scene) declares phases by simply adding a new
 -- top-level object to flows.json ("menu": { "open": [...] }) and calling

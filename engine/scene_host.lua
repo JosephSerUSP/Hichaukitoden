@@ -47,11 +47,6 @@ local function getSceneData(ctx, id)
     return nil
 end
 
--- Fallback mapping for legacy string IDs to scene objects where possible
-local function resolveSceneId(id)
-    return id
-end
-
 -- Initialize the host with an active session and loader
 function scene_host.init(startScene)
     sceneStack = {}
@@ -221,7 +216,7 @@ end
 function scene_host.push(id, ctx, vars)
     ctx = ctx or lastCtx
     table.insert(sceneStack, {
-        id = resolveSceneId(id),
+        id = id,
         v = {},
         waitTimer = 0,
         windows = {},
