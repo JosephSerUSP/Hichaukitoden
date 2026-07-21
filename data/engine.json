@@ -1798,64 +1798,6 @@
     }
   ],
   "windowLayout": {
-    "discipline_panel": {
-      "x": 0.5,
-      "y": 4,
-      "width": 11,
-      "height": 16.5,
-      "style": "list",
-      "title": "Select Discipline"
-    },
-    "crafter_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
-      "style": "list",
-      "title": "Select Crafter"
-    },
-    "ingredient_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 32,
-      "height": 5,
-      "style": "panel",
-      "title": "Select Ingredients",
-      "lineSpacing": 0
-    },
-    "inventory_list": {
-      "x": 0,
-      "y": 8.5,
-      "width": 20,
-      "height": 15.5,
-      "style": "list",
-      "title": "Inventory"
-    },
-    "detail_panel": {
-      "x": 20,
-      "y": 8.5,
-      "width": 12,
-      "height": 15.5,
-      "style": "panel",
-      "title": "Item Info",
-      "lineSpacing": 2
-    },
-    "confirm_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 32,
-      "height": 20.5,
-      "style": "confirm",
-      "title": "Confirm Crafting"
-    },
-    "roulette_panel": {
-      "x": 4,
-      "y": 7,
-      "width": 24,
-      "height": 10,
-      "style": "roulette",
-      "title": "Crafting..."
-    },
     "title_footer": {
       "x": 0,
       "y": 26.5,
@@ -1978,43 +1920,6 @@
       "style": "list",
       "title": "SELECT"
     },
-    "craft_header": {
-      "x": 0,
-      "y": 0,
-      "width": 32,
-      "height": 3.5,
-      "style": "panel",
-      "title": "Item Creation"
-    },
-    "discipline_detail": {
-      "x": 12,
-      "y": 4,
-      "width": 19.5,
-      "height": 16.5,
-      "style": "panel",
-      "title": "Details"
-    },
-    "crafter_detail": {
-      "x": 12,
-      "y": 3.5,
-      "width": 20,
-      "height": 20.5,
-      "style": "panel",
-      "title": "Crafter Stats",
-      "portrait": "sel('crafter_panel').spriteKey",
-      "portraitX": 1,
-      "portraitY": 2,
-      "textX": 8
-    },
-    "result_panel": {
-      "x": 4,
-      "y": 6,
-      "width": 24,
-      "height": 12,
-      "style": "frame",
-      "title": "Crafting Success!",
-      "contentY": 5
-    },
     "items_target": {
       "x": 6,
       "y": 8,
@@ -2066,60 +1971,6 @@
       "portraitX": 1.3,
       "portraitW": 7.33,
       "portraitH": 9
-    },
-    "map_command": {
-      "x": 0,
-      "y": 16,
-      "width": 32,
-      "height": 2.5,
-      "style": "command",
-      "title": null,
-      "anim": {
-        "open": {
-          "duration": 0.18
-        }
-      }
-    },
-    "map_member_popup": {
-      "x": 10,
-      "y": 9,
-      "width": 12,
-      "height": 7,
-      "style": "list",
-      "title": null,
-      "anim": {
-        "open": {
-          "duration": 0.15,
-          "anchor": "cellOf:party"
-        }
-      }
-    },
-    "map_data_popup": {
-      "x": 10,
-      "y": 9,
-      "width": 12,
-      "height": 5,
-      "style": "list",
-      "title": null,
-      "anim": {
-        "open": {
-          "duration": 0.15
-        }
-      }
-    },
-    "map_confirm": {
-      "x": 4,
-      "y": 6,
-      "width": 24,
-      "height": 8,
-      "style": "confirm",
-      "title": "CONFIRM",
-      "lineSpacing": 1,
-      "anim": {
-        "open": {
-          "duration": 0.18
-        }
-      }
     },
     "reserve_title": {
       "x": 0,
