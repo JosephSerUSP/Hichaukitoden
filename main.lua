@@ -12,6 +12,7 @@ local flow = require("engine.flow")
 local savegame = require("engine.savegame")
 require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
+local small_battlers = require("presentation.small_battlers")
 
 -- Setup currentScene interceptor on _G
 setmetatable(_G, {
@@ -2533,10 +2534,14 @@ function love.draw()
     renderer.drawDamagePopups()
     
     if server.isActive() then
-        love.graphics.setColor(0.1, 0.4, 0.8, 0.8)
-        love.graphics.rectangle("fill", 216, 2, 38, 9)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("DEV ON", 219, 3)
+        local blueDotKey = "UI_BlueDot"
+        local blueDot = small_battlers.get(blueDotKey)
+        if blueDot then
+            love.graphics.setBlendMode("add")
+            local dotX = 32 * 8 - blueDot.cellW - 2   -- right edge of 256px virtual screen
+            small_battlers.draw(blueDotKey, dotX, 2, blueDot.cellW)
+            love.graphics.setBlendMode("alpha")
+        end
     end
     
     love.graphics.setCanvas()

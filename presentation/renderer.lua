@@ -13,6 +13,38 @@ local gradient_shader  = require("presentation.gradient_shader")
 
 local renderer = {}
 
+-- Direction constants matching viewport_3d.lua, used by the rotating minimap
+local MINIMAP_DIR_ORDER = { "N", "E", "S", "W" }
+local MINIMAP_DIR_ANGLES = {
+    N = -math.pi / 2,
+    E = 0,
+    S = math.pi / 2,
+    W = math.pi,
+}
+
+local function minimapTurnRightDir(dir)
+    local idx = 1
+    for i, d in ipairs(MINIMAP_DIR_ORDER) do
+        if d == dir then idx = i; break end
+    end
+    return MINIMAP_DIR_ORDER[idx % 4 + 1]
+end
+
+local function minimapTurnLeftDir(dir)
+    local idx = 1
+    for i, d in ipairs(MINIMAP_DIR_ORDER) do
+        if d == dir then idx = i; break end
+    end
+    return MINIMAP_DIR_ORDER[(idx - 2) % 4 + 1]
+end
+
+local function lerpAngle(a, b, t)
+    local diff = b - a
+    while diff < -math.pi do diff = diff + math.pi * 2 end
+    while diff > math.pi do diff = diff - math.pi * 2 end
+    return a + diff * t
+end
+
 -- Battle layout accessor: engine.json override -> built-in default.
 -- Defaults + override lookup live in presentation/battle_layout.lua,
 -- shared with actor_status.lua (breaks the require cycle that would
@@ -331,42 +363,143 @@ function renderer.addDamagePopup(text, x, y, color, isText)
     })
 end
 
--- Renders the mini-map in a small panel
-local function drawMinimap(x, y, size)
-    local grid = renderer.session.mapGrid
+-- Renders the mini-map in a small panel, rotated so the player's facing
+-- direction always points upward. Supports mid-animation turn interpolation.
+--
+-- Camera follows the player (RPG Maker style): the viewport is always centred
+-- on the player unless doing so would expose void beyond the map edges, in
+-- which case the viewport shifts to stay clamped (no void shown).  If the map
+-- is smaller than the viewport, the entire map is centred.
+--
+-- A tile includes its black gap pixel (tileSize px per tile), so the panel is
+-- sized as n * tileSize + 2 — exactly 1 px of background on each side.
+local function drawMinimap(x, y, radius)
+    local session = renderer.session
+    local grid = session.mapGrid
     if not grid then return end
-    
-    local px, py = renderer.session.playerX, renderer.session.playerY
-    local tileSize = 4
-    
+
+    local px, py = session.playerX, session.playerY
+    local tileSize = 2       -- each tile = 1 coloured + 1 black gap
+    radius = radius or 6     -- tiles visible in each direction from the player
+
+    local gridW, gridH = #grid[1], #grid
+    local visW = radius * 2 + 1
+    local visH = radius * 2 + 1
+
+    -- ── 1. Viewport bounds (RPG Maker camera) ─────────────────────────────
+    -- Start player-centred, then shift when clamped to map edges.  For maps
+    -- smaller than the viewport, centre the entire map.
+    local startGx = px - radius
+    local endGx   = px + radius
+    local startGy = py - radius
+    local endGy   = py + radius
+
+    if gridW <= visW then
+        startGx, endGx = 1, gridW
+    elseif startGx < 1 then
+        endGx = endGx + (1 - startGx)
+        startGx = 1
+    elseif endGx > gridW then
+        startGx = startGx - (endGx - gridW)
+        endGx = gridW
+    end
+
+    if gridH <= visH then
+        startGy, endGy = 1, gridH
+    elseif startGy < 1 then
+        endGy = endGy + (1 - startGy)
+        startGy = 1
+    elseif endGy > gridH then
+        startGy = startGy - (endGy - gridH)
+        endGy = gridH
+    end
+
+    -- Visual centre (rotation pivot) — midpoint of the visible tile range
+    local centreTileX = (startGx + endGx) / 2
+    local centreTileY = (startGy + endGy) / 2
+
+    -- ── 2. Panel sizing ───────────────────────────────────────────────────
+    -- A tile occupies tileSize px (coloured + black gap).  Panel adds 1 px
+    -- of true black on each side.
+    local numTilesX = endGx - startGx + 1
+    local numTilesY = endGy - startGy + 1
+    local panelW = numTilesX * tileSize + 2
+    local panelH = numTilesY * tileSize + 2
+
+    -- Render overflow tiles outside the panel (and beyond the map) so
+    -- rotation doesn't abruptly clip at the edges.  Tiles beyond the map
+    -- limits are drawn as walls.  The scissor rect hides the excess.
+    local overflow     = 2
+    local renderStartGx = startGx - overflow
+    local renderEndGx   = endGx   + overflow
+    local renderStartGy = startGy - overflow
+    local renderEndGy   = endGy   + overflow
+
+    -- ── 3. Camera angle (turn interpolation) ──────────────────────────────
+    local cAngle = MINIMAP_DIR_ANGLES[session.playerDir]
+    if session.transitionTimer and session.transitionTimer > 0 then
+        local frac = session.transitionTimer / 0.15
+        if session.transitionDir == "turn_left" then
+            local prevDir = minimapTurnRightDir(session.playerDir)
+            local prevAngle = MINIMAP_DIR_ANGLES[prevDir]
+            cAngle = lerpAngle(prevAngle, cAngle, 1.0 - frac)
+        elseif session.transitionDir == "turn_right" then
+            local prevDir = minimapTurnLeftDir(session.playerDir)
+            local prevAngle = MINIMAP_DIR_ANGLES[prevDir]
+            cAngle = lerpAngle(prevAngle, cAngle, 1.0 - frac)
+        end
+    end
+
+    local rot = -(cAngle + math.pi / 2)   -- forward → screen-up
+
+    -- ── 4. Background panel (no border) ───────────────────────────────────
     love.graphics.setColor(0, 0, 0, 0.6)
-    love.graphics.rectangle("fill", x, y, #grid[1] * tileSize + 4, #grid * tileSize + 4)
-    love.graphics.setColor(0.3, 0.3, 0.4, 0.8)
-    love.graphics.rectangle("line", x, y, #grid[1] * tileSize + 4, #grid * tileSize + 4)
-    
-    for gy = 1, #grid do
-        for gx = 1, #grid[gy] do
-            if renderer.session.visitedGrid[gy][gx] then
+    love.graphics.rectangle("fill", x, y, panelW, panelH)
+
+    -- ── 5. Rotation pivot in screen pixels ────────────────────────────────
+    -- centreTile maps to the midpoint of a tile (coloured part).  With
+    -- tileSize=2 each tile sits at positions: coloured (1 px), gap (1 px),
+    -- so the tile centre = pos + 0.5.
+    local rotCx = x + 1 + (centreTileX - startGx) * tileSize + (tileSize - 1) / 2
+    local rotCy = y + 1 + (centreTileY - startGy) * tileSize + (tileSize - 1) / 2
+
+    -- ── 6. Map tiles (rotated, clipped to panel) ─────────────────────────
+    -- Overflow tiles render outside the panel but the scissor hides them,
+    -- giving a smooth appearance during rotation.
+    local prevSx, prevSy, prevSw, prevSh = love.graphics.getScissor()
+    love.graphics.setScissor(x, y, panelW, panelH)
+
+    love.graphics.push()
+    love.graphics.translate(rotCx, rotCy)
+    love.graphics.rotate(rot)
+
+    for gy = renderStartGy, renderEndGy do
+        for gx = renderStartGx, renderEndGx do
+            local dx = gx - centreTileX
+            local dy = gy - centreTileY
+
+            if gx < 1 or gx > gridW or gy < 1 or gy > gridH then
+                -- Beyond map limits: draw as wall
+                love.graphics.setColor(0.2, 0.2, 0.2, 1)
+                love.graphics.rectangle("fill", dx * tileSize, dy * tileSize, tileSize - 1, tileSize - 1)
+            elseif session.visitedGrid[gy][gx] then
                 local cell = grid[gy][gx]
-                
-                -- Check for coordinate-based event at this tile (0-indexed coordinates)
+
+                -- Event marker at this tile
                 local mapEvent = nil
-                if renderer.session.currentMapData and renderer.session.currentMapData.events then
-                    for _, ev in ipairs(renderer.session.currentMapData.events) do
+                if session.currentMapData and session.currentMapData.events then
+                    for _, ev in ipairs(session.currentMapData.events) do
                         if ev.x == gx - 1 and ev.y == gy - 1 then
                             mapEvent = ev
                             break
                         end
                     end
                 end
-                
+
                 if mapEvent then
-                    -- Marker color precedence: the map event's own
-                    -- minimapColor, else the linked common event's default,
-                    -- else light blue for generic NPCs / shops.
                     local evColor = mapEvent.minimapColor
-                    if not evColor and mapEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
-                        local ce = renderer.session.loader.commonEvents[tostring(mapEvent.scriptId)]
+                    if not evColor and mapEvent.scriptId and session.loader and session.loader.commonEvents then
+                        local ce = session.loader.commonEvents[tostring(mapEvent.scriptId)]
                         evColor = ce and ce.minimapColor or nil
                     end
                     if evColor then
@@ -379,19 +512,28 @@ local function drawMinimap(x, y, size)
                 else
                     love.graphics.setColor(0.4, 0.4, 0.4, 1)
                 end
-                love.graphics.rectangle("fill", x + 2 + (gx - 1) * tileSize, y + 2 + (gy - 1) * tileSize, tileSize - 1, tileSize - 1)
+                love.graphics.rectangle("fill", dx * tileSize, dy * tileSize, tileSize - 1, tileSize - 1)
             end
         end
     end
-    
-    -- Draw player position as blinking red pixel
+
+    -- ── 7. Player marker (inside rotation, at player's tile offset) ───────
     local blink = math.floor(love.timer.getTime() * 4) % 2 == 0
-    if blink then
-        love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.setColor(blink and 1 or 1, blink and 0 or 1, blink and 0 or 1, 1)
+    local ms = tileSize - 1
+    love.graphics.rectangle("fill",
+        (px - centreTileX) * tileSize,
+        (py - centreTileY) * tileSize,
+        ms, ms)
+
+    love.graphics.pop()  -- transform (push/translate/rotate)
+
+    -- Restore previous scissor (if any)
+    if prevSx then
+        love.graphics.setScissor(prevSx, prevSy, prevSw, prevSh)
     else
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setScissor()
     end
-    love.graphics.rectangle("fill", x + 2 + (px - 1) * tileSize, y + 2 + (py - 1) * tileSize, tileSize - 1, tileSize - 1)
 end
 
 
@@ -425,8 +567,9 @@ end
 function renderer.drawMap()
     viewport_3d.draw(renderer.session)
     
-    -- Mini-map overlay
-    drawMinimap(170, 6, 6)
+    -- Mini-map overlay, half a tile from top-right corner
+    local mmPanelW = (6 * 2 + 1) * 2 + 2  -- 13 tiles * 2 + 2 = 28
+    drawMinimap(ui.toPx(ui.screenWidthTiles) - mmPanelW - math.floor(ui.tileSize / 2), math.floor(ui.tileSize / 2), 6)
     
     -- Coordinates & Facing Overlay
     ui.drawString("X:" .. renderer.session.playerX .. " Y:" .. renderer.session.playerY .. " [" .. renderer.session.playerDir .. "]", 6, 6, {1, 1, 0.7, 0.8})
