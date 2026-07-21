@@ -245,11 +245,11 @@
     },
     {
       "token": "ctx.rawSession",
-      "description": "Real session object — only present when scripting.allowRawAccess is true."
+      "description": "Real session object \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "ctx.rawLoader",
-      "description": "Real data loader — only present when scripting.allowRawAccess is true."
+      "description": "Real data loader \u2014 only present when scripting.allowRawAccess is true."
     },
     {
       "token": "api.damage(target, n)",
@@ -297,7 +297,7 @@
     },
     {
       "token": "random(m, n)",
-      "description": "The seeded math.random — deterministic under the golden harness."
+      "description": "The seeded math.random \u2014 deterministic under the golden harness."
     }
   ],
   "commands": [
@@ -556,7 +556,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
+      "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. \u2014 when assignments is present, name/value are ignored."
     },
     {
       "id": "SET_FLAG",
@@ -1189,6 +1189,65 @@
       ],
       "interactive": false,
       "description": "Switches the active campaign root to campaigns/<name> (empty name = default data/), reloads loader/config, and persists the campaign.json pointer. Follow with RESET_SESSION + re-enter the scene."
+    },
+    {
+      "id": "LIST_SAVES",
+      "category": "Advanced",
+      "label": "List Save Slots",
+      "params": [
+        {
+          "key": "count",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Fills v.saveRows (rows: name = display label, slot = slot id, empty = true if unused) and v.saveCount from a fixed set of save slots (default 3, override with count). Used by the Save/Load menus."
+    },
+    {
+      "id": "SAVE_GAME",
+      "category": "Advanced",
+      "label": "Save Game",
+      "params": [
+        {
+          "key": "slot",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Saves the current session into the given slot (default 'slot1'). Records the scene BELOW this one on the stack, so Save must be reached by pushing on top of town/map (same restriction as F5 quicksave)."
+    },
+    {
+      "id": "LOAD_GAME",
+      "category": "Advanced",
+      "label": "Load Game",
+      "params": [
+        {
+          "key": "slot",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Loads the given slot, rebuilds the session, and transitions to the scene it was saved from. Sets v.loadError if the slot can't be read."
+    },
+    {
+      "id": "LIST_ACTIVE_QUESTS",
+      "category": "Advanced",
+      "label": "List Active Quests",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Fills v.questRows (rows: name, id, summary, objectives, completed) and v.questCount from quests the session has active or completed (session.flags quest:<id>:active/:completed). Quest-level only, no per-objective tracking."
     },
     {
       "id": "SCRIPT",
