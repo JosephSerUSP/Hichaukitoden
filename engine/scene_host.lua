@@ -1,5 +1,6 @@
 local interpreter = require("engine.interpreter")
 local input_map = require("engine.input_map")
+local scene_transition = require("presentation.scene_transition")
 
 local scene_host = {}
 
@@ -248,6 +249,11 @@ function scene_host.push(id, ctx, vars)
         end
     end
 
+    if sceneData and sceneData.anim and sceneData.anim.enter then
+        local enterAnim = sceneData.anim.enter
+        scene_transition.start("enter", enterAnim.effect or "fade", enterAnim.duration or 0.2, enterAnim.color)
+    end
+
     if ctx then
         scene_host.runHook("on_enter", ctx)
     end
@@ -256,6 +262,12 @@ end
 function scene_host.pop(ctx)
     ctx = ctx or lastCtx
     if #sceneStack > 0 then
+        local state = sceneStack[#sceneStack]
+        local sceneData = getSceneData(ctx, state.id)
+        if sceneData and sceneData.anim and sceneData.anim.exit then
+            local exitAnim = sceneData.anim.exit
+            scene_transition.start("exit", exitAnim.effect or "fade", exitAnim.duration or 0.15, exitAnim.color)
+        end
         if ctx then
             scene_host.runHook("on_exit", ctx)
         end
@@ -270,6 +282,8 @@ end
 
 function scene_host.update(dt, ctx)
     scene_host.rememberCtx(ctx)
+    scene_transition.update(dt)
+
     if #sceneStack > 0 then
         local state = sceneStack[#sceneStack]
         if state.waitTimer and state.waitTimer > 0 then
@@ -301,10 +315,14 @@ function scene_host.draw(ctx)
     if #sceneStack == 0 then return false end
     local state = sceneStack[#sceneStack]
     local sceneData = getSceneData(ctx, state.id)
-    if not sceneData or sceneData.draw ~= "windows" then return false end
+    if not sceneData or sceneData.draw ~= "windows" then
+        scene_transition.draw()
+        return false
+    end
     drawBackdrop(sceneData, ctx)
     local window_renderer = require("presentation.window_renderer")
     window_renderer.draw(state, sceneData, ctx)
+    scene_transition.draw()
     return true
 end
 

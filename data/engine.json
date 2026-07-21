@@ -1881,7 +1881,11 @@
       "height": 2,
       "style": "panel",
       "title": null,
-      "contentY": 0.5
+      "contentY": 0.5,
+      "anim": {
+        "open": { "duration": 0.18, "effect": "slideUp", "fromOffset": 16 },
+        "close": { "duration": 0.12, "effect": "slideDown", "toOffset": 16 }
+      }
     },
     "status_name_header": {
       "x": 0.5,

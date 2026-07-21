@@ -511,18 +511,34 @@ end
 local function drawPortrait(layout, env, x, y, title)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
-    if type(key) ~= "string" or key == "" then return end
-    local img = ui.resolvePortraitImage(key)
+    local img = (type(key) == "string" and key ~= "") and ui.resolvePortraitImage(key) or nil
+    local contentX, contentY = contentOrigin(layout, title, x, y)
+    local drawX = x + ui.toPx(layout.portraitX or 1)
+    local drawY = layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY
+
     if img then
         love.graphics.setColor(1, 1, 1, 1)
-        local contentX, contentY = contentOrigin(layout, title, x, y)
-        local drawX = x + ui.toPx(layout.portraitX or 1)
-        local drawY = layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY
         if layout.portraitW and layout.portraitH then
             ui.drawSlicedPortrait(img, drawX, drawY, ui.toPx(layout.portraitW), ui.toPx(layout.portraitH))
         else
             love.graphics.draw(img, drawX, drawY, 0, 1, 1)
         end
+    elseif layout.portraitPlaceholder then
+        local ph = layout.portraitPlaceholder
+        local pw = ui.toPx(layout.portraitW or 7.5)
+        local phH = ui.toPx(layout.portraitH or 10)
+        love.graphics.push("all")
+        if ph == "vignette" or ph == "frame" then
+            love.graphics.setColor(unpack(layout.placeholderTint or {0.15, 0.15, 0.22, 0.6}))
+            love.graphics.rectangle("fill", drawX, drawY, pw, phH, 4, 4)
+            love.graphics.setColor(0.3, 0.3, 0.4, 0.8)
+            love.graphics.rectangle("line", drawX, drawY, pw, phH, 4, 4)
+        elseif ph == "silhouette" then
+            love.graphics.setColor(0.1, 0.1, 0.15, 0.7)
+            love.graphics.rectangle("fill", drawX, drawY, pw, phH)
+            ui.drawString("?", drawX + pw/2 - 3, drawY + phH/2 - 4, {0.4, 0.4, 0.5, 1})
+        end
+        love.graphics.pop()
     end
 end
 
@@ -580,6 +596,18 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
     local startOffset = math.max(1, math.min(cursor - 3, #rows - visible + 1))
     local endOffset = math.min(#rows, startOffset + visible - 1)
     local format = win.format or "{name}"
+    -- Smooth cursor interpolation
+    local targetCursorY = contentY + (cursor - startOffset) * rowPitch
+    if type(win) == "table" then
+        if not win._cursorY then
+            win._cursorY = targetCursorY
+        else
+            local dt = love.timer and love.timer.getDelta() or 0.016
+            win._cursorY = win._cursorY + (targetCursorY - win._cursorY) * math.min(1, dt * 25)
+        end
+    end
+    local drawCursorY = (type(win) == "table" and win._cursorY) or targetCursorY
+
     for i = startOffset, endOffset do
         local row = rows[i]
         local rEnv = rowEnv(env, row)
@@ -600,9 +628,6 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         end
 
         local textX = contentX + ui.toPx(0.5)
-        if isSel then
-            small_battlers.draw("Cursor", contentX - 6, rowY, 8)
-        end
         if spriteField then
             local key = row[spriteField]
             if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
@@ -639,6 +664,9 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
                 win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 }, preview)
         end
     end
+
+    -- Single smooth-moving cursor drawn at interpolated position
+    small_battlers.draw("Cursor", contentX - 6, drawCursorY, 8)
 end
 
 -- "partyGrid" style (owner direction 11.07.2026): arranges one
@@ -873,13 +901,19 @@ local function drawRoulette(win, layout, rows, cursor, env, x, y, w, h, title)
     ui.drawString(row.name or "", x, contentY + ui.toPx(4.5), COLOR_SELECTED, "center", w)
 end
 
+-- Animation clock tables (weak-keyed by win table so destroyed windows
+-- release their entries automatically).
+--
 -- Open animation: layout.anim.open = { duration = seconds, anchor =
--- "cellOf:<windowId>" (optional) } grows the window from a point to its
--- full size when it opens. Purely presentational — window state, hooks and
--- golden logs are unaffected. The clock is keyed by the runtime win table,
--- so re-opening a closed window replays the animation. There is no close
--- animation: a scene that wants one can stage it with hooks (CLOSE_WINDOW +
--- WAIT before the pop), like the game_over intro does in reverse.
+-- "cellOf:<windowId>" (optional), effect = "grow"|"slideUp"|"slideDown"|
+-- "slideLeft"|"slideRight"|"fade", fromOffset = pixels (slide effects) }
+-- animates the window entering. The "grow" effect (default) scales the
+-- rect from an anchor point; slide effects translate the rect from an
+-- offset; "fade" animates the panel alpha.
+--
+-- Close animation: anim.close = { duration, effect, toOffset } plays in
+-- reverse when the window hides. The renderer detects visibility
+-- transitions and keeps a hidden window alive through its close anim.
 --
 -- Owner direction 13.07.2026: the windowskin frame/tiles must never be
 -- graphically scaled (love.graphics.scale on a 9-sliced texture stretches
@@ -888,7 +922,28 @@ end
 -- size, so growing the REAL rect fed into it keeps every frame crisp.
 -- Content (text/lists) stays laid out at the window's resting size and is
 -- simply revealed via scissor as the box grows, rather than reflowing.
-local openClocks = setmetatable({}, { __mode = "k" })
+local openClocks  = setmetatable({}, { __mode = "k" })
+local closeClocks = setmetatable({}, { __mode = "k" })
+
+-- Returns the progress (0..1) and whether the animation is still running.
+local function animProgress(clockTable, win, durDefault)
+    local now = love.timer.getTime()
+    local t0 = clockTable[win]
+    if not t0 then
+        t0 = now
+        clockTable[win] = t0
+    end
+    local dur = tonumber(durDefault) or 0.22
+    local p = dur <= 0 and 1 or math.min(1, (now - t0) / dur)
+    return p, p < 1
+end
+
+-- Evaluate the eased progress value using the layout's easing field (or
+-- quadratic ease-out by default, matching the existing grow animation).
+local function animEase(p, easing)
+    if easing == "linear" then return p end
+    return 1 - (1 - p) * (1 - p) -- quadratic ease-out
+end
 
 -- Resolves an anchor spec to a pixel point the window grows FROM. Currently
 -- supports "cellOf:<windowId>": the center of that window's currently
@@ -926,37 +981,113 @@ local function anchoredRestPosition(ax, ay, x, y, w, h)
 end
 
 -- Returns the animated (px, py, pw, ph) rect to actually draw the panel
--- border at, and whether animation is still in progress (caller scissors
--- content to this rect while true).
-local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
-    local anim = layout.anim and layout.anim.open
+-- border at, plus an optional alpha (1 = opaque, < 1 = fading), and
+-- whether animation is still in progress (caller scissors content to
+-- this rect while true, or applies alpha).
+-- `closing` (boolean): when true, plays the close animation in reverse.
+-- `clockOverride` (number|nil): when set, uses this absolute time as
+-- the animation start (used by drawWindowFromData to keep close
+-- animation timing across visibility transitions).
+local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, closing, clockOverride)
+    local phase = closing and "close" or "open"
+    local anim = layout.anim and layout.anim[phase]
     if not anim then
         openClocks[win] = nil
-        return x, y, w, h, false
+        closeClocks[win] = nil
+        return x, y, w, h, 1, false
     end
+
+    local clockTable = closing and closeClocks or openClocks
+    -- Clear the opposite clock so a rapid open→close→open restarts cleanly.
+    if closing then openClocks[win] = nil else closeClocks[win] = nil end
+
     local now = love.timer.getTime()
-    local t0 = openClocks[win]
-    if not t0 then
-        t0 = now
-        openClocks[win] = t0
+    if clockOverride then
+        -- Use caller-supplied start time (persisted across frames for
+        -- close animations triggered by visibility transitions).
+        if not clockTable[win] then clockTable[win] = clockOverride end
     end
-    local dur = tonumber(anim.duration) or 0.22
-    local p = dur <= 0 and 1 or math.min(1, (now - t0) / dur)
-    if p >= 1 then return x, y, w, h, false end
-    local ease = 1 - (1 - p) * (1 - p)
-    local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
-    local growFromX, growFromY = ax or (x + w / 2), ay or (y + h / 2)
-    local realCx, realCy = x + w / 2, y + h / 2
-    local cx = growFromX + (realCx - growFromX) * ease
-    local cy = growFromY + (realCy - growFromY) * ease
-    -- ui.drawPanel assumes at least ~16px to fit its 4px-inset tiled
-    -- background and 8px corner quads; below that its own internal
-    -- scissor math goes negative and crashes. Floor both dimensions so
-    -- the panel is never asked to draw smaller than it can handle — the
-    -- box "pops in" at that floor size on the very first frame or two,
-    -- then continues growing, which reads as fine at these durations.
-    local pw, ph = math.max(16, w * ease), math.max(16, h * ease)
-    return cx - pw / 2, cy - ph / 2, pw, ph, true
+    local p, running = animProgress(clockTable, win, anim.duration)
+    if not running then
+        -- If closing animation finished, signal caller via animating=false
+        -- but still return the "fully closed" position (slid out).
+        if closing then
+            closeClocks[win] = nil
+        end
+        return x, y, w, h, 1, false
+    end
+
+    local easing = anim.easing
+    local ease = animEase(closing and (1 - p) or p, easing)
+    local effect = anim.effect or "grow"
+    local offset = closing and (anim.toOffset or 0) or (anim.fromOffset or 0)
+
+    if effect == "grow" or effect == "scale" then
+        local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+        local growFromX, growFromY = ax or (x + w / 2), ay or (y + h / 2)
+        local realCx, realCy = x + w / 2, y + h / 2
+        local cx = growFromX + (realCx - growFromX) * ease
+        local cy = growFromY + (realCy - growFromY) * ease
+        local pw = math.max(16, w * ease)
+        local ph = math.max(16, h * ease)
+        return cx - pw / 2, cy - ph / 2, pw, ph, 1, true
+
+    elseif effect == "fade" then
+        -- Rect stays fixed, alpha animates.
+        local alpha = ease
+        return x, y, w, h, alpha, true
+
+    elseif effect == "slideUp" then
+        local offPx = offset or h
+        local slideY = y + offPx * (1 - ease)
+        return x, slideY, w, h, 1, true
+
+    elseif effect == "slideDown" then
+        local offPx = offset or h
+        local slideY = y - offPx * (1 - ease)
+        return x, slideY, w, h, 1, true
+
+    elseif effect == "slideLeft" then
+        local offPx = offset or w
+        local slideX = x + offPx * (1 - ease)
+        return slideX, y, w, h, 1, true
+
+    elseif effect == "slideRight" then
+        local offPx = offset or w
+        local slideX = x - offPx * (1 - ease)
+        return slideX, y, w, h, 1, true
+
+    else
+        -- Unknown effect: fall back to instant.
+        return x, y, w, h, 1, false
+    end
+end
+
+-- Thin wrapper for backward compatibility: open-only, returns old signature.
+local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
+    local px, py, pw, ph, _, animating = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, false)
+    return px, py, pw, ph, animating
+end
+
+-- Applies content alpha for fade animations (called in drawWindow).
+-- When the fade alpha is < 1, applies a global alpha push so content
+-- fades along with the panel, preventing a jarring "panel is transparent
+-- but text is opaque" mismatch.
+local function applyContentAlpha(win, layout, ctx, listCache, layouts, closing)
+    local phase = closing and "close" or "open"
+    local anim = layout.anim and layout.anim[phase]
+    if not anim or anim.effect ~= "fade" then return end
+    local _, _, _, _, alpha, animating = windowAnimRect(win, layout, 0, 0, 0, 0, ctx, listCache, layouts, closing)
+    if animating and alpha < 1 then
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, alpha)
+    end
+end
+
+-- Reverses the alpha push if one was applied.
+local function revertContentAlpha()
+    -- Only pop if there's a push (checked at call site via a flag).
+    love.graphics.pop()
 end
 
 -- Style-specific content: called once per window per frame, either directly
@@ -1060,6 +1191,25 @@ end
 -- generic outer panel too would double up or mismatch.
 local NO_OUTER_PANEL_STYLES = { command = true, enemyRow = true, battleLog = true, victoryPanel = true }
 
+-- Applies a layout's shiftWith override after visibility is resolved.
+-- When layout.shiftWith names another window id that is currently hidden,
+-- the shiftWhenHidden rect (table with x/y/w/h overrides) is merged in.
+-- This lets a dependent window fill the space of a hidden sibling
+-- (e.g. dialogue_message fills the portrait slot when no portrait is set).
+-- shiftResolved is a lookup table: winId -> { visible = bool, layout = tbl }
+local function applyShiftWith(layout, shiftResolved)
+    local targetId = layout.shiftWith
+    if not targetId then return end
+    local target = shiftResolved[targetId]
+    if target and not target.visible and layout.shiftWhenHidden then
+        local shift = layout.shiftWhenHidden
+        if shift.x ~= nil then layout.x = shift.x end
+        if shift.y ~= nil then layout.y = shift.y end
+        if shift.w ~= nil then layout.width = shift.w end
+        if shift.h ~= nil then layout.height = shift.h end
+    end
+end
+
 local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache, layouts)
     layout = resolvePageLayout(layout, env)
     local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
@@ -1068,13 +1218,27 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     local title = layout.title
     if title then title = interpolate(title, env) end
 
-    local anim = layout.anim and layout.anim.open
-    if anim and anim.anchor then
-        local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
+    local animOpen = layout.anim and layout.anim.open
+    if animOpen and animOpen.anchor then
+        local ax, ay = resolveAnchor(animOpen.anchor, ctx, listCache, layouts)
         x, y = anchoredRestPosition(ax, ay, x, y, w, h)
     end
 
-    local px, py, pw, ph, animating = openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
+    -- Support alpha fade: if the open animation has effect="fade", push
+    -- a global alpha so panel AND content fade in together.
+    local alphaPushed = false
+    local phase = (win._closing) and "close" or "open"
+    local anim = layout.anim and layout.anim[phase]
+    if anim and anim.effect == "fade" then
+        local _, _, _, _, alpha, animating = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, win._closing)
+        if animating and alpha < 1 then
+            love.graphics.push("all")
+            love.graphics.setColor(1, 1, 1, alpha)
+            alphaPushed = true
+        end
+    end
+
+    local px, py, pw, ph, _, animating = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, win._closing)
     if animating then
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(px, py, pw, ph)
@@ -1084,6 +1248,38 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     else
         if not NO_OUTER_PANEL_STYLES[style] then ui.drawPanel(x, y, w, h, title) end
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
+    end
+
+    -- Idle ambient animation (e.g. border pulse)
+    if layout.anim and layout.anim.idle and not animating then
+        local idle = layout.anim.idle
+        if idle.effect == "pulseBorder" then
+            local t = love.timer.getTime()
+            local period = idle.period or 2.0
+            local pulse = 0.5 + 0.5 * math.sin(t * (2 * math.pi / period))
+            love.graphics.push("all")
+            local col = idle.color or {1, 0.85, 0.5}
+            love.graphics.setColor(col[1], col[2], col[3], 0.25 * pulse)
+            love.graphics.rectangle("line", x - 1, y - 1, w + 2, h + 2)
+            love.graphics.pop()
+        end
+    end
+
+    -- Focus visual indicator
+    if state and state.focusedWindow == id and layout.anim and layout.anim.focus then
+        local focusAnim = layout.anim.focus
+        if focusAnim.effect == "pulseBorder" or focusAnim.effect == "highlight" then
+            local t = love.timer.getTime()
+            local pulse = 0.5 + 0.5 * math.sin(t * 8)
+            love.graphics.push("all")
+            love.graphics.setColor(1, 1, 0.7, 0.3 * pulse)
+            love.graphics.rectangle("line", x, y, w, h)
+            love.graphics.pop()
+        end
+    end
+
+    if alphaPushed then
+        love.graphics.pop()
     end
 end
 
@@ -1102,6 +1298,12 @@ end
 
 -- Per-type warning-once guard so unknown content block types don't spam.
 local warnedBlockTypes = {}
+
+-- Data-authored window visibility tracking for close-animation and
+-- shiftWith support. Persisted on state so transitions survive frames.
+local function initVisibilityState(state)
+    state._visTrack = state._visTrack or {}
+end
 
 function wr.drawWindowFromData(sceneData, state, ctx)
     if not sceneData or not sceneData.windows then return end
@@ -1126,16 +1328,6 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             local syntheticWin = {
                 listId = listBlock.listId,
                 format = listBlock.format,
-                -- Same precedence the real per-window loop uses below
-                -- (winDef.cursor is a fallback for when the content block
-                -- itself doesn't declare one, e.g. status_party's cursor
-                -- lives on the window def, not its list content block).
-                -- Missing this fallback here meant the PRE-resolved cursor
-                -- (the one sel('status_party') and this window's own
-                -- highlight actually use, via the listCache built in this
-                -- pass) stayed nil -> defaulted to row 1 regardless of
-                -- v.idx, so the status page always showed party member 1's
-                -- stats no matter which member was actually selected.
                 cursorFormula = listBlock.cursor ~= nil and listBlock.cursor or winDef.cursor,
                 cursor = 1,
                 sprite = listBlock.sprite,
@@ -1143,14 +1335,6 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
                 priority = listBlock.priority,
-                -- "equipSlots"/"equipment" list sources need these to know
-                -- which member/slot to read (equipContext). Missing them
-                -- made formula.eval(nil, env) resolve slot to 0 instead of
-                -- v.slot, so SLOT_TYPES[0] was nil and equipmentRows bailed
-                -- out with zero rows — not even "[ UNEQUIP ]" — before this
-                -- pre-resolution pass's cache was even consulted by the real
-                -- per-window draw loop below, making the equip item list
-                -- permanently empty and nothing selectable.
                 slot = listBlock.slot,
                 member = listBlock.member,
             }
@@ -1166,44 +1350,79 @@ function wr.drawWindowFromData(sceneData, state, ctx)
     local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
 
     -- Persistent synthetic win tables, one per window id. openClocks (the
-    -- open-animation timer) is keyed by the win TABLE, so rebuilding it every
-    -- frame reset the animation each frame and any anim.open window stayed
-    -- frozen at its 16px pop-in floor (the reserve popup "sliver" bug).
+    -- open-animation timer) is keyed by the win TABLE, so rebuilding it
+    -- every frame reset the animation each frame and any anim.open window
+    -- stayed frozen at its 16px pop-in floor (the reserve popup "sliver"
+    -- bug).
     state._dataWins = state._dataWins or {}
+    initVisibilityState(state)
 
+    -- ── Pass 1: resolve visibility for all windows into shiftResolved. ──
+    -- We need every window's visibility known before any window draws so
+    -- shiftWith (which reads another window's visibility) works reliably.
+    local shiftResolved = {}
     for _, winDef in ipairs(sceneData.windows) do
-        -- Evaluate visibility expression.  Absent = visible (true).
         local visible = true
         if winDef.visible then
             local ok, vv = pcall(formula.eval, winDef.visible, env)
             if not ok then visible = false
             else visible = vv == true or (type(vv) == "number" and vv ~= 0) end
         end
+        shiftResolved[winDef.id] = { visible = visible }
+    end
+
+    -- ── Pass 2: draw windows, applying shiftWith and close/open anims. ──
+    for _, winDef in ipairs(sceneData.windows) do
+        local visible = shiftResolved[winDef.id].visible
+
+        -- Close-animation detection: if this window was visible last frame
+        -- and is now hidden, and has anim.close, keep it "alive" through
+        -- the close animation before truly hiding it.
+        local prevVis = state._visTrack[winDef.id]
+        state._visTrack[winDef.id] = visible
+        local closeAnimStart = nil
+        local wasVisible = prevVis ~= false -- default true for first frame
+        if not visible and wasVisible then
+            local winTable = state._dataWins[winDef.id]
+            if winTable then
+                local baseLayout = layouts[winDef.id]
+                local hasClose = false
+                if baseLayout and baseLayout.anim and baseLayout.anim.close then
+                    hasClose = true
+                elseif winDef.anim and winDef.anim.close then
+                    hasClose = true
+                end
+                if hasClose then
+                    -- Keep drawing this window for the close animation duration.
+                    -- Signal to drawWindow that it's closing by setting _closing.
+                    winTable._closing = true
+                    closeAnimStart = love.timer.getTime()
+                    visible = true -- override: keep drawing
+                end
+            end
+        end
+
         if not visible then
-            -- Drop the hidden window's anim clock so re-showing it replays
-            -- the open animation (same rule as the winState path).
+            -- Drop the hidden window's anim clocks so re-showing replays
+            -- the animation.
             local prev = state._dataWins[winDef.id]
-            if prev then openClocks[prev] = nil end
+            if prev then
+                openClocks[prev] = nil
+                closeClocks[prev] = nil
+                prev._closing = nil
+            end
             goto continue
         end
 
-        -- Build a synthetic window layout: start from engine.json windowLayout
-        -- (for shared windows like help/party that have existing style defs),
-        -- then overlay the windows array's own properties.
+        -- Build a synthetic window layout: start from engine.json
+        -- windowLayout, then overlay the windows array's own properties.
         local layout = {}
         local baseLayout = layouts[winDef.id]
         if baseLayout then
             for k, v in pairs(baseLayout) do layout[k] = v end
         end
 
-        -- Resolve rect (expressions allowed per-value). A scene's rect is
-        -- only an OVERRIDE per-dimension — any dimension it doesn't specify
-        -- falls back to engine.json's windowLayout entry for this window id
-        -- (baseLayout, already merged above), not a hardcoded literal. Get
-        -- this wrong and every window with a scene-level rect (i.e. nearly
-        -- all of them) silently ignores its engine.json x/y/w/h entirely,
-        -- which is also what makes the Windows-tab editor's drag-resize (it
-        -- only writes to windowLayout) a no-op for those windows.
+        -- Resolve rect (expressions allowed per-value).
         local function resolveDim(dim, default)
             if dim == nil then return default end
             local ok, val = pcall(formula.eval, dim, env)
@@ -1228,16 +1447,55 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
         if winDef.align ~= nil then layout.align = winDef.align end
         if winDef.waitInput ~= nil then layout.waitInput = winDef.waitInput end
+        -- Propagate shiftWith from winDef to layout (scenes.json overrides
+        -- engine.json, so this must happen AFTER baseLayout merge).
+        if winDef.shiftWith ~= nil then layout.shiftWith = winDef.shiftWith end
+        if winDef.shiftWhenHidden ~= nil then layout.shiftWhenHidden = winDef.shiftWhenHidden end
+        -- Propagate anim blocks from winDef, merged over baseLayout's.
+        if winDef.anim then
+            layout.anim = layout.anim or {}
+            for k, v in pairs(winDef.anim) do layout.anim[k] = v end
+        end
 
-        -- Build the synthetic win entry from content blocks, reusing the
-        -- persistent table so per-win state keyed on it (openClocks) survives
-        -- across frames. All fields are re-derived below, so stale values
-        -- from the previous frame are explicitly cleared first.
+        -- Apply shiftWith: if the referenced window is hidden, override
+        -- this window's rect to fill the void.
+        applyShiftWith(layout, shiftResolved)
+
+        -- Grab or create the persistent win entry. If this window is
+        -- closing from a prior frame, the existing table is reused so
+        -- the close clock (keyed by the win TABLE) survives.
         local win = state._dataWins[winDef.id]
         if not win then
             win = {}
             state._dataWins[winDef.id] = win
+        elseif win._closing then
+            -- Close animation continued from a prior frame: check if done.
+            -- Compute progress; if finished, truly hide and skip drawing.
+            local closeAnim = layout.anim and layout.anim.close
+            if closeAnim then
+                local p, running = animProgress(closeClocks, win, closeAnim.duration)
+                if not running then
+                    -- Close animation complete: truly hide.
+                    win._closing = nil
+                    openClocks[win] = nil
+                    closeClocks[win] = nil
+                    goto continue
+                end
+            else
+                -- No close anim after all (layout changed between frames?)
+                win._closing = nil
+            end
         end
+
+        -- If we started a close animation this frame, inject the clock start.
+        if closeAnimStart and win._closing then
+            if not closeClocks[win] then
+                closeClocks[win] = closeAnimStart
+            end
+        end
+
+        -- Clear fields from the previous frame's draw cycle; they're
+        -- re-derived from the current content blocks below.
         win.open = true
         win.listId, win.format, win.text, win.cursor = nil, nil, nil, 1
         win.cursorFormula, win.sprite = nil, nil
