@@ -2,6 +2,34 @@
         // --- ASSET PICKER IMPLEMENTATION ---
         let activeAssetCallback = null;
 
+        window.createSnapshotModal = function({ getSnapshotSource, onRestore, confirmMessage, getIsDirty }) {
+            let snapshot = null;
+            let originalData = null;
+
+            function capture() {
+                originalData = getSnapshotSource();
+                snapshot = JSON.stringify(originalData);
+            }
+
+            function close(force) {
+                if (!force && snapshot !== null) {
+                    const dirty = getIsDirty ? getIsDirty() : JSON.stringify(getSnapshotSource()) !== snapshot;
+                    if (dirty) {
+                        if (!window.confirmDiscard(confirmMessage)) return false;
+
+                        const snap = JSON.parse(snapshot);
+                        onRestore(snap, originalData);
+                    }
+                }
+
+                snapshot = null;
+                originalData = null;
+                return true;
+            }
+
+            return { capture, close };
+        };
+
         window.createSpriteField = function(container, labelText, value, onChange, useBlockLayout = false, defaultDir = 'sprites', isBareKey = false, animate = false) {
             const group = document.createElement('div');
             group.className = 'form-group';

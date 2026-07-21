@@ -4,3 +4,4 @@ campaign.json
 
 # Player save files (per-machine; written by engine/savegame.lua)
 saves/
+node_modules/

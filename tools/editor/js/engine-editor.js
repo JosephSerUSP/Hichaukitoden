@@ -47,29 +47,26 @@
         // the effect-type / trait-code registries that drive editor dropdowns
         // and validation.
         let activeEngineTab = 'battleflow';
-        let engineModalSnapshot = null;
-
-        function engineSnapshotStr() {
-            return JSON.stringify({ system: dbPayload.system, engine: dbPayload.engine });
-        }
+        const engineModalSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => ({ system: dbPayload.system, engine: dbPayload.engine }),
+            onRestore: (snap) => {
+                dbPayload.system = snap.system;
+                dbPayload.engine = snap.engine;
+                setDirty(false);
+            },
+            confirmMessage: 'You have unsaved engine changes. Discard them and close?'
+        });
 
         function openEngineModal() {
             if (!dbPayload.system) dbPayload.system = {};
             if (!dbPayload.engine) dbPayload.engine = {};
-            engineModalSnapshot = engineSnapshotStr();
+            engineModalSnapshotHelper.capture();
             document.getElementById('engine-modal').classList.add('active');
             setEngineTab(activeEngineTab);
         }
 
         function closeEngineModal(force) {
-            if (!force && engineModalSnapshot !== null && engineSnapshotStr() !== engineModalSnapshot) {
-                if (!confirmDiscard('You have unsaved engine changes. Discard them and close?')) return;
-                const snap = JSON.parse(engineModalSnapshot);
-                dbPayload.system = snap.system;
-                dbPayload.engine = snap.engine;
-                setDirty(false);
-            }
-            engineModalSnapshot = null;
+            if (!engineModalSnapshotHelper.close(force)) return;
             document.getElementById('engine-modal').classList.remove('active');
         }
 
@@ -1267,18 +1264,21 @@
         }
 
         // --- DAMAGE POPUP SETTINGS MODAL (physics + battle_screen config) ---
-        let damagePopupSnapshot = null;
-
-        function damagePopupConfigSnapshot() {
-            return JSON.stringify({
+        const damagePopupSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => ({
                 physics: dbPayload.system.physics || {},
                 battle_screen: dbPayload.system.battle_screen || {}
-            });
-        }
+            }),
+            onRestore: (snap) => {
+                dbPayload.system.physics = snap.physics;
+                dbPayload.system.battle_screen = snap.battle_screen;
+            },
+            confirmMessage: 'Discard changes to Damage Popup settings?'
+        });
 
         function openDamagePopupModal() {
             if (!dbPayload.system) dbPayload.system = {};
-            damagePopupSnapshot = damagePopupConfigSnapshot();
+            damagePopupSnapshotHelper.capture();
 
             const container = document.getElementById('damage-popup-form');
             container.innerHTML = '';
@@ -1291,13 +1291,7 @@
         }
 
         function closeDamagePopupModal(force) {
-            if (!force && damagePopupSnapshot !== null && damagePopupConfigSnapshot() !== damagePopupSnapshot) {
-                if (!confirmDiscard('Discard changes to Damage Popup settings?')) return;
-                const snap = JSON.parse(damagePopupSnapshot);
-                dbPayload.system.physics = snap.physics;
-                dbPayload.system.battle_screen = snap.battle_screen;
-            }
-            damagePopupSnapshot = null;
+            if (!damagePopupSnapshotHelper.close(force)) return;
             document.getElementById('damage-popup-modal').classList.remove('active');
         }
 

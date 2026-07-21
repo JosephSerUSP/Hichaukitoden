@@ -625,8 +625,19 @@
         // discard them cleanly, matching the rest of this dialog's OK/Cancel semantics.
         let mapPropsEncounters = [];
         let mapPropsDirty = false;
-        let mapPropsSnapshot = null;
         let mapPropsOriginal = null;
+
+        const mapPropsSnapshotHelper = window.createSnapshotModal({
+            getSnapshotSource: () => mapPropsOriginal,
+            getIsDirty: () => mapPropsDirty,
+            onRestore: (snap, originalData) => {
+                if (originalData && snap) {
+                    Object.keys(originalData).forEach(k => delete originalData[k]);
+                    Object.assign(originalData, snap);
+                }
+            },
+            confirmMessage: 'Discard changes to this map\'s properties?'
+        });
 
         function toggleFogFields() {
             const enabled = document.getElementById('prop-map-fog-enabled').checked;
@@ -715,8 +726,8 @@
             const map = dbPayload.maps[currentMapIndex];
             if (!map) return;
 
-            mapPropsSnapshot = JSON.stringify(map);
             mapPropsOriginal = map;
+            mapPropsSnapshotHelper.capture();
 
             document.getElementById('prop-map-title').value = map.title || map.name || '';
             document.getElementById('prop-map-category').value = getMapCategory(map, currentMapIndex);
@@ -762,18 +773,8 @@
         }
 
         function closeMapPropertiesModal(force) {
-            if (!force && mapPropsDirty && !confirmDiscard('Discard changes to this map\'s properties?')) return;
+            if (!mapPropsSnapshotHelper.close(force)) return;
 
-            // Revert only on discard: saveMapProperties() mutates the map then
-            // calls close(true) while still dirty, so a force-path restore would
-            // undo the save.
-            if (!force && mapPropsDirty && mapPropsOriginal && mapPropsSnapshot) {
-                const snap = JSON.parse(mapPropsSnapshot);
-                Object.keys(mapPropsOriginal).forEach(k => delete mapPropsOriginal[k]);
-                Object.assign(mapPropsOriginal, snap);
-            }
-
-            mapPropsSnapshot = null;
             mapPropsOriginal = null;
             mapPropsDirty = false;
             document.getElementById('map-properties-modal').classList.remove('active');
