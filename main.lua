@@ -2674,7 +2674,12 @@ local function openShop(shopId)
     local shopData = loader.shops[tostring(shopId)]
     local shopName = (shopData and shopData.name) or tostring(shopId)
 
+    -- Read max stock from system settings (default 20).
+    local sys = loader and loader.system
+    local defaultStock = (sys and sys.shopMaxStock) or 20
+
     local items = {}
+    local maxCost = 0
     if shopData and shopData.items then
         for _, shopItem in ipairs(shopData.items) do
             local allowed = true
@@ -2695,6 +2700,8 @@ local function openShop(shopId)
             if allowed then
                 local itemData = loader.getItem(shopItem.id)
                 if itemData then
+                    local cost = shopItem.price or itemData.cost or 0
+                    maxCost = math.max(maxCost, cost)
                     -- Plain table (not an __index proxy): the shop scene's
                     -- v:items list source copies row fields with pairs(),
                     -- which cannot see metatable fields. Price honors the
@@ -2704,12 +2711,16 @@ local function openShop(shopId)
                         name = itemData.name or "",
                         icon = itemData.icon or 0,
                         description = itemData.description or "",
-                        cost = shopItem.price or itemData.cost or 0,
+                        cost = cost,
+                        stock = shopItem.stock or defaultStock,
                     })
                 end
             end
         end
     end
+
+    -- maxPrice = 20 * most expensive item for leading-zero padding.
+    local maxPrice = maxCost * 20
 
     -- Push the shop scene and seed its v-state with shop data
     scene_host.push("shop", { session = activeSession, loader = loader, party = activeSession.party })
@@ -2719,6 +2730,7 @@ local function openShop(shopId)
         state.v.items = items
         state.v.count = #items
         state.v.idx = 1
+        state.v.maxPrice = maxPrice
     end
 end
 

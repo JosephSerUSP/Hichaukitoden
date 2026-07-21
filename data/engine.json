@@ -2019,14 +2019,6 @@
       "title": "Crafting Success!",
       "contentY": 5
     },
-    "items_target": {
-      "x": 6,
-      "y": 8,
-      "width": 20,
-      "height": 12,
-      "style": "partyGrid",
-      "title": "Use on whom?"
-    },
     "help": {
       "x": 0,
       "y": 0,

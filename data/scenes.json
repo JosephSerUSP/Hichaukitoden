@@ -2869,6 +2869,14 @@
             {
               "name": "state",
               "value": 1
+            },
+            {
+              "name": "popupText",
+              "value": "''"
+            },
+            {
+              "name": "popupTimer",
+              "value": 0
             }
           ]
         },
@@ -2880,7 +2888,8 @@
           "cmd": "SET_LIST",
           "windowId": "items_left_panel",
           "listId": "inventory",
-          "format": "{name} (x{qty})"
+          "format": "{name}",
+          "formatRight": "{formatQty(qty)}"
         },
         {
           "cmd": "SET_CURSOR",
@@ -2975,17 +2984,8 @@
               "value": 1
             },
             {
-              "cmd": "OPEN_WINDOW",
-              "windowId": "items_target"
-            },
-            {
-              "cmd": "SET_LIST",
-              "windowId": "items_target",
-              "listId": "party"
-            },
-            {
               "cmd": "SET_CURSOR",
-              "windowId": "items_target",
+              "windowId": "party",
               "index": "v.targetIdx"
             }
           ]
@@ -2998,6 +2998,10 @@
               "cmd": "SET_VAR",
               "name": "_guard",
               "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "useItemAndPop"
             },
             {
               "cmd": "USE_ITEM",
@@ -3014,12 +3018,25 @@
                 {
                   "name": "idx",
                   "value": "max(1, min(v.idx, session.itemCount))"
+                },
+                {
+                  "name": "targetIdx",
+                  "value": 1
+                },
+                {
+                  "name": "popupText",
+                  "value": "'Used ' .. v._popupItemName .. '!'"
+                },
+                {
+                  "name": "popupTimer",
+                  "value": 1.5
                 }
               ]
             },
             {
-              "cmd": "CLOSE_WINDOW",
-              "windowId": "items_target"
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": 0
             }
           ]
         }
@@ -3040,8 +3057,14 @@
               "value": 1
             },
             {
-              "cmd": "CLOSE_WINDOW",
-              "windowId": "items_target"
+              "cmd": "SET_VAR",
+              "name": "targetIdx",
+              "value": 1
+            },
+            {
+              "cmd": "SET_CURSOR",
+              "windowId": "party",
+              "index": 0
             }
           ]
         },
@@ -3060,9 +3083,36 @@
             }
           ]
         }
+      ],
+      "on_frame": [
+        {
+          "cmd": "IF",
+          "condition": "v.popupTimer > 0",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "popupTimer",
+              "value": "max(0, v.popupTimer - 0.016)"
+            },
+            {
+              "cmd": "IF",
+              "condition": "v.popupTimer <= 0",
+              "then": [
+                {
+                  "cmd": "SET_VAR",
+                  "name": "popupText",
+                  "value": "''"
+                }
+              ]
+            }
+          ]
+        }
       ]
     },
     "config": {},
+    "scripts": {
+      "useItemAndPop": "local inv = api.items()\nlocal item = inv[ctx.v.idx]\nctx.v._popupItemName = item and item.name or 'item'"
+    },
     "draw": "windows",
     "backdrop": "map",
     "windows": [
@@ -3082,7 +3132,8 @@
           {
             "type": "list",
             "listId": "inventory",
-            "format": "{name} (x{qty})",
+            "format": "{name}",
+            "formatRight": "{formatQty(qty)}",
             "cursor": "v.idx"
           }
         ]
@@ -3094,7 +3145,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{sel('items_left_panel').description}"
+            "text": "{v.popupText and v.popupText ~= '' and v.popupText or sel('items_left_panel').description}"
           }
         ]
       },
@@ -3106,36 +3157,16 @@
           "w": 32,
           "h": 12
         },
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2",
         "style": "partyGrid",
-        "title": null,
-        "cursor": 0,
+        "title": "v.state == 2 and 'Use on whom?' or null",
+        "cursor": "v.state == 2 and v.targetIdx or 0",
         "content": [
           {
             "type": "list",
             "listId": "party",
             "format": "{name}",
-            "cursor": "0"
-          }
-        ]
-      },
-      {
-        "id": "items_target",
-        "rect": {
-          "x": 6,
-          "y": 8,
-          "w": 20,
-          "h": 12
-        },
-        "visible": "v.state == 2",
-        "style": "partyGrid",
-        "title": "Use on whom?",
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "v.targetIdx"
+            "cursor": "v.state == 2 and v.targetIdx or 0"
           }
         ]
       }
@@ -3950,24 +3981,43 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
-          "name": "idx",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "count",
-          "value": 0
+          "assignments": [
+            {
+              "name": "idx",
+              "value": 1
+            },
+            {
+              "name": "qty",
+              "value": 1
+            },
+            {
+              "name": "state",
+              "value": 1
+            },
+            {
+              "name": "confirmIdx",
+              "value": 1
+            }
+          ]
         }
       ],
       "on_up": [
         {
           "cmd": "IF",
-          "condition": "v.idx > 1",
+          "condition": "v.state == 1 and v.idx > 1",
           "then": [
             {
               "cmd": "SET_VAR",
-              "name": "idx",
-              "value": "v.idx - 1"
+              "assignments": [
+                {
+                  "name": "idx",
+                  "value": "v.idx - 1"
+                },
+                {
+                  "name": "qty",
+                  "value": 1
+                }
+              ]
             }
           ]
         }
@@ -3975,39 +4025,198 @@
       "on_down": [
         {
           "cmd": "IF",
-          "condition": "v.count and v.idx < v.count",
+          "condition": "v.state == 1 and v.count and v.idx < v.count",
           "then": [
             {
               "cmd": "SET_VAR",
-              "name": "idx",
-              "value": "v.idx + 1"
+              "assignments": [
+                {
+                  "name": "idx",
+                  "value": "v.idx + 1"
+                },
+                {
+                  "name": "qty",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.count > 0 and v.items[v.idx]",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "shopIncreaseQty"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1 and v.qty > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "qty",
+              "value": "v.qty - 1"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "confirmIdx",
+              "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
         }
       ],
       "on_cancel": [
         {
-          "cmd": "SCENE_EVENT",
-          "kind": "pop"
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "state",
+                  "value": 1
+                },
+                {
+                  "name": "qty",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            }
+          ]
         }
       ],
       "on_select": [
         {
           "cmd": "IF",
-          "condition": "v.count > 0 and v.items[v.idx] and session.gold >= v.items[v.idx].cost",
+          "condition": "v._guard == 0 and v.state == 1 and v.count > 0 and v.items[v.idx] and session.gold >= v.items[v.idx].cost",
           "then": [
             {
-              "cmd": "GAIN_GOLD",
-              "amount": "-v.items[v.idx].cost"
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
             },
             {
               "cmd": "SET_VAR",
-              "name": "pendingItem",
-              "value": "v.items[v.idx].id"
+              "assignments": [
+                {
+                  "name": "state",
+                  "value": 2
+                },
+                {
+                  "name": "confirmIdx",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "IF",
+              "condition": "v.confirmIdx == 1",
+              "then": [
+                {
+                  "cmd": "SCRIPT",
+                  "ref": "buyItem"
+                }
+              ],
+              "else": [
+                {
+                  "cmd": "SET_VAR",
+                  "assignments": [
+                    {
+                      "name": "state",
+                      "value": 1
+                    },
+                    {
+                      "name": "qty",
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
       ]
+    },
+    "scripts": {
+      "shopIncreaseQty": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal maxAfford = item.cost > 0 and math.floor(ctx.session.gold / item.cost) or 1\nlocal maxStock = item.stock or 99\nlocal cap = math.min(maxAfford, maxStock)\nif ctx.v.qty < cap then\n  ctx.v.qty = ctx.v.qty + 1\nend",
+      "buyItem": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal total = item.cost * ctx.v.qty\nif ctx.session.gold < total then ctx.v.state = 1; ctx.v.qty = 1; return end\napi.gainGold(-total)\napi.giveItem(item.id, ctx.v.qty)\nctx.v.state = 1\nctx.v.qty = 1"
     },
     "config": {},
     "draw": "windows",
@@ -4021,11 +4230,12 @@
           "w": 32,
           "h": 4
         },
+        "visible": "v.state == 1",
         "style": "frame",
         "content": [
           {
             "type": "text",
-            "text": "{v.shopName}   Gold: {session.gold} G   [ESC: leave]"
+            "text": "{v.shopName}   Gold: {session.gold} G\n{sel('shop_list').description}"
           }
         ]
       },
@@ -4034,33 +4244,43 @@
         "rect": {
           "x": 0.5,
           "y": 4.5,
-          "w": 19,
+          "w": 31,
           "h": 13
         },
         "style": "list",
         "emptyText": "No items available.",
+        "visible": "v.state == 1",
         "content": [
           {
             "type": "list",
             "listId": "v:items",
-            "format": "{name}   {cost} G",
+            "format": "{name}",
+            "formatRight": "{v.qty and v.qty > 1 and formatPrice(cost * v.qty, v.maxPrice) or formatPrice(cost, v.maxPrice)}",
             "cursor": "v.idx"
           }
         ]
       },
       {
-        "id": "shop_info",
+        "id": "shop_confirm",
         "rect": {
-          "x": 20,
-          "y": 4.5,
-          "w": 11.5,
-          "h": 13
+          "x": 4,
+          "y": 7,
+          "w": 24,
+          "h": 7
         },
-        "style": "panel",
+        "visible": "v.state == 2",
+        "style": "confirm",
+        "title": "Confirm Purchase",
+        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
-            "text": "{sel('shop_list').description}\n\nPrice: {sel('shop_list').cost} G"
+            "text": "{sel('shop_list').name} x{v.qty} = {v.items[v.idx].cost * v.qty} G"
+          },
+          {
+            "type": "list",
+            "listId": "static:Buy,Cancel",
+            "cursor": "v.confirmIdx"
           }
         ]
       },
@@ -4072,6 +4292,7 @@
           "w": 32,
           "h": 12
         },
+        "visible": "v.state == 1",
         "style": "partyGrid",
         "cursor": 0,
         "content": [

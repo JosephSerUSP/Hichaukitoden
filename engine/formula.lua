@@ -17,6 +17,29 @@ local HELPERS = {
     max = math.max,
     round = function(x) return math.floor(x + 0.5) end,
     clamp = function(x, lo, hi) return math.max(lo, math.min(hi, x)) end,
+    -- Formats quantity for display: "x04" with leading zero; dark gray (palette index 7) when <10.
+    formatQty = function(qty)
+        qty = math.floor(tonumber(qty) or 0)
+        if qty <= 0 then return "x00" end
+        local numStr = qty < 10 and ("0" .. tostring(qty)) or tostring(qty)
+        if qty < 10 then
+            return "\\c[7]x" .. numStr .. "\\c[0]"
+        else
+            return "x" .. numStr
+        end
+    end,
+    -- Formats price with leading zeros padded to the width of the shop's
+    -- maxPrice (20 × most expensive item cost, set as v.maxPrice by openShop).
+    formatPrice = function(cost, maxPrice)
+        cost = math.floor(tonumber(cost) or 0)
+        maxPrice = math.floor(tonumber(maxPrice) or cost or 0)
+        local maxDigits = #tostring(maxPrice)
+        local priceStr = tostring(cost)
+        while #priceStr < maxDigits do
+            priceStr = "0" .. priceStr
+        end
+        return priceStr .. "G"
+    end,
 }
 
 -- One warning per distinct expression, so a bad formula in a data file

@@ -644,7 +644,14 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             ui.drawString(label, textX, rowY, color)
             textX = textX + ui.measureText(label)
         end
-        ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
+        local afterTextX = ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
+        if win.formatRight and win.formatRight ~= "" then
+            local rightText = interpolate(win.formatRight, rEnv)
+            local rightW = ui.measureText(rightText)
+            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
+            local rightX = rightEdge - rightW
+            ui.drawString(rightText, rightX, rowY, color)
+        end
         if hasGauge then
             -- (extra parens: see drawLayoutGauges — truncates eval's
             -- (value, err) pair so a failed formula degrades to 0/1
@@ -1352,6 +1359,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             local syntheticWin = {
                 listId = listBlock.listId,
                 format = listBlock.format,
+                formatRight = listBlock.formatRight,
                 cursorFormula = listBlock.cursor ~= nil and listBlock.cursor or winDef.cursor,
                 cursor = 1,
                 sprite = listBlock.sprite,
@@ -1521,7 +1529,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         -- Clear fields from the previous frame's draw cycle; they're
         -- re-derived from the current content blocks below.
         win.open = true
-        win.listId, win.format, win.text, win.cursor = nil, nil, nil, 1
+        win.listId, win.format, win.formatRight, win.text, win.cursor = nil, nil, nil, nil, 1
         win.cursorFormula, win.sprite = nil, nil
         win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
         win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel = nil, nil, nil
@@ -1533,6 +1541,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             if block.type == "list" then
                 win.listId = block.listId
                 win.format = block.format
+                win.formatRight = block.formatRight
                 win.cursorFormula = block.cursor
                 win.sprite = block.sprite
                 win.gaugeValue = block.gaugeValue
@@ -1818,6 +1827,7 @@ function wr.resolveDataState(sceneData, ctx, state)
             local syntheticWin = {
                 listId = listBlock.listId,
                 format = listBlock.format,
+                formatRight = listBlock.formatRight,
                 cursorFormula = listBlock.cursor ~= nil and listBlock.cursor or winDef.cursor,
                 cursor = 1,
                 sprite = listBlock.sprite,

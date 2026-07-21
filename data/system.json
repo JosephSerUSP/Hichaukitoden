@@ -137,6 +137,7 @@
     "defendSkillId": "defend",
     "attackSkillId": "attack"
   },
+  "shopMaxStock": 20,
   "growth": {
     "hpPerLevelRate": 0.15,
     "statBase": 10,
