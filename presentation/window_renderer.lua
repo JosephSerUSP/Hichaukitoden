@@ -692,6 +692,17 @@ end
 local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
+    local scale = 1
+    local scene_host = require("engine.scene_host")
+    if scene_host.getCurrent() == "dialogue" then
+        local enterTime = _G.dialogueEnterTime or 0
+        local now = love.timer.getTime()
+        local dur = 0.15
+        local p = math.min(1, dur <= 0 and 1 or (now - enterTime) / dur)
+        scale = 1 - p
+    end
+    if scale <= 0 then return end
+
     -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
     -- (contentX) so the map party popup — anchored to the grid cells via
     -- cellOf:party — lines up with the sprites. The shared MP gauge is drawn on
@@ -716,15 +727,27 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local gaugeW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
     local numberX = gaugeX + gaugeW + gap
     if not layout.hideMp then
-        ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, 1})
+        love.graphics.push()
+        local mpCenterX = contentX + gridW / 2
+        local mpCenterY = numberY + ui.fontSize / 2
+        love.graphics.translate(mpCenterX, mpCenterY)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-mpCenterX, -mpCenterY)
+        ui.drawString(label, contentX, numberY, {0.80, 0.90, 1.0, scale})
         drawMpReadout(session, gaugeX, gaugeY, gaugeW, numberX, numberY, mpBarH)
+        love.graphics.pop()
     end
     for i, row in ipairs(rows) do
         local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
+        local colW, rowH = actor_status.cellSize(session)
+        local scx, scy = cx + colW / 2, cy + rowH / 2
+        love.graphics.push()
+        love.graphics.translate(scx, scy)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-scx, -scy)
         if row.battlerRef then
             actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
         else
-            local colW, rowH = actor_status.cellSize(session)
             ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, i == cursor)
             if i == cursor then
                 small_battlers.draw("Cursor", cx - 6, cy, 8)
@@ -733,6 +756,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
             local textW = ui.measureText(text)
             ui.drawString(text, cx + (colW - textW) / 2, cy + (rowH - ui.lineHeight) / 2, { 0.4, 0.4, 0.4, 1 })
         end
+        love.graphics.pop()
     end
 end
 

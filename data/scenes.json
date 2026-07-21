@@ -4890,10 +4890,6 @@
     "kind": "menu",
     "draw": "windows",
     "backdrop": "map",
-    "anim": {
-      "enter": { "effect": "fadeIn", "duration": 0.2 },
-      "exit": { "effect": "fadeOut", "duration": 0.15 }
-    },
     "config": {
       "note": "Windows-drawn. Reached via scene_host.goto_scene(\"dialogue\") from map step/interact events and CALL_COMMON_EVENT chains. main.lua's handleKeyPressed dialogue branch drives GraphWalker advance/selectChoice directly (unchanged); a per-frame sync in love.update mirrors the active node into v.dialogue* fields these windows bind to, docked over the same footprint the party HUD uses elsewhere so dialogue doesn't take over the whole screen."
     },
@@ -4920,10 +4916,6 @@
           "w": 9.5,
           "h": 12
         },
-        "anim": {
-          "open": { "duration": 0.25, "effect": "fade" },
-          "close": { "duration": 0.15, "effect": "fade" }
-        },
         "style": "frame",
         "visible": "v.dialoguePortrait ~= nil and v.dialoguePortrait ~= ''",
         "content": [
@@ -4947,10 +4939,6 @@
         },
         "shiftWith": "dialogue_portrait",
         "shiftWhenHidden": { "x": 0, "w": 32 },
-        "anim": {
-          "open": { "duration": 0.22, "effect": "slideUp", "fromOffset": 24 },
-          "close": { "duration": 0.15, "effect": "slideDown", "toOffset": 24 }
-        },
         "style": "frame",
         "align": "left",
         "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
@@ -4971,9 +4959,6 @@
         },
         "shiftWith": "dialogue_portrait",
         "shiftWhenHidden": { "x": 0, "w": 32 },
-        "anim": {
-          "open": { "duration": 0.15, "effect": "slideUp", "fromOffset": 12 }
-        },
         "style": "list",
         "fitRows": "bottom",
         "visible": "v.dialogueMode == 'choice'",

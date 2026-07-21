@@ -216,6 +216,9 @@ end
 -- (e.g. the ritual scene's ritualMode/targetIndex).
 function scene_host.push(id, ctx, vars)
     ctx = ctx or lastCtx
+    if id == "dialogue" then
+        _G.dialogueEnterTime = love.timer.getTime()
+    end
     table.insert(sceneStack, {
         id = id,
         v = {},

@@ -2488,6 +2488,12 @@ function love.draw()
     local ctx = { session = activeSession, loader = loader }
     if scene_host.draw(ctx) then
         -- scene host handles drawing (currently does nothing for D1, but returns true if it has hooks)
+        if scene_host.getCurrent() == "dialogue" then
+            local enterTime = _G.dialogueEnterTime or 0
+            if love.timer.getTime() - enterTime < 0.15 then
+                drawSharedPartyHud()
+            end
+        end
     else
         if scene_host.getCurrent() == "town" then
         renderer.drawTown(townSelectedIdx)
