@@ -1090,6 +1090,36 @@ handlers.LIST_ACTIVE_QUESTS = function(cmd, ctx)
     ctx.v.questCount = #rows
 end
 
+-- Fixed display order for the Controls scene's binding list.
+local INPUT_BUTTON_ORDER = {
+    "A", "B", "X", "Y", "L", "R", "START", "SELECT", "UP", "DOWN", "LEFT", "RIGHT",
+}
+
+-- Materializes engine.input_map's current SNES-button->key bindings into
+-- v.bindingRows for the Controls scene, in a fixed button order.
+handlers.LIST_INPUT_BINDINGS = function(cmd, ctx)
+    local input_map = require("engine.input_map")
+    local bindings = input_map.getBindings()
+    local rows = {}
+    for _, button in ipairs(INPUT_BUTTON_ORDER) do
+        local key = bindings[button]
+        table.insert(rows, { name = button .. " - " .. tostring(key), button = button, key = key })
+    end
+    ctx.v = ctx.v or {}
+    ctx.v.bindingRows = rows
+    ctx.v.bindingCount = #rows
+end
+
+-- Rebinds a SNES button to a raw key via engine.input_map and persists it.
+handlers.SET_INPUT_BINDING = function(cmd, ctx)
+    local input_map = require("engine.input_map")
+    local button = cmd.button ~= nil and tostring(evalFormula(cmd.button, ctx)) or nil
+    local key = cmd.key ~= nil and tostring(evalFormula(cmd.key, ctx)) or nil
+    if button and key then
+        input_map.setBinding(button, key)
+    end
+end
+
 handlers.SCENE_EVENT = function(cmd, ctx)
     -- The interpreter never switches scenes itself (S2); scene_host consumes
     -- this event and performs the transition. Optional `vars` (same

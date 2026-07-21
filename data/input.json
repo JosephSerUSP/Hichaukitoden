@@ -1,0 +1,16 @@
+{
+  "bindings": {
+    "A": "return",
+    "B": "escape",
+    "X": "x",
+    "Y": "z",
+    "L": "q",
+    "R": "e",
+    "START": "space",
+    "SELECT": "tab",
+    "UP": "up",
+    "DOWN": "down",
+    "LEFT": "left",
+    "RIGHT": "right"
+  }
+}

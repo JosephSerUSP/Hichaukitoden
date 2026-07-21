@@ -1,4 +1,5 @@
 local interpreter = require("engine.interpreter")
+local input_map = require("engine.input_map")
 
 local scene_host = {}
 
@@ -313,6 +314,23 @@ function scene_host.draw(ctx)
 end
 
 function scene_host.keypressed(key, ctx)
+    -- Raw key capture (e.g. the `controls` scene rebinding a button):
+    -- while the current scene's v._capturingKey is set, the very next
+    -- physical key -- WASD/arrows/escape included -- is routed to a
+    -- scene-local on_raw_key hook instead of normal WASD-normalize +
+    -- hook dispatch below. Scoped to this one need; not a generic hook.
+    if #sceneStack > 0 then
+        local state = sceneStack[#sceneStack]
+        if state.v and state.v._capturingKey then
+            local sceneData = getSceneData(ctx, state.id)
+            if sceneData and sceneData.hooks and sceneData.hooks.on_raw_key then
+                ctx.v = state.v
+                ctx.v.rawKey = key
+                return scene_host.runHook("on_raw_key", ctx)
+            end
+        end
+    end
+
     -- Normalize WASD to arrow key names
     if key == "w" then key = "up"
     elseif key == "s" then key = "down"
@@ -320,26 +338,22 @@ function scene_host.keypressed(key, ctx)
     elseif key == "d" then key = "right"
     end
 
-    if key == "escape" then
-        return scene_host.runHook("on_cancel", ctx)
-    elseif key == "return" or key == "space" then
-        return scene_host.runHook("on_select", ctx)
-    elseif key == "up" then
-        return scene_host.runHook("on_up", ctx)
-    elseif key == "down" then
-        return scene_host.runHook("on_down", ctx)
-    elseif key == "left" then
-        return scene_host.runHook("on_left", ctx)
-    elseif key == "right" then
-        return scene_host.runHook("on_right", ctx)
-    elseif key == "q" or key == "e" or key == "tab" then
-        -- Page-flip hook for scenes with multiple info pages (e.g. the
-        -- ritual scene's stats/art pages). Scenes that don't define it
-        -- fall through unhandled, as with any absent hook.
-        return scene_host.runHook("on_page", ctx)
+    -- Resolve the physical key to a logical SNES button via the rebindable
+    -- input map, then to the existing hook that button drives. Defaults
+    -- (data/input.json) reproduce the previous hardcoded mapping exactly.
+    local button = input_map.resolveHook(key)
+    if not button then
+        return false
     end
-    -- Fallback not handled
-    return false
+    local hookName = input_map.BUTTON_TO_HOOK[button]
+    if not hookName then
+        -- X, Y, SELECT: bound but no game hook consumes them yet.
+        return false
+    end
+    -- Page-flip hook for scenes with multiple info pages (e.g. the
+    -- ritual scene's stats/art pages). Scenes that don't define it
+    -- fall through unhandled, as with any absent hook.
+    return scene_host.runHook(hookName, ctx)
 end
 
 return scene_host

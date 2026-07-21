@@ -1258,6 +1258,37 @@
       "description": "Fills v.questRows (rows: name, id, summary, objectives, completed) and v.questCount from quests the session has active or completed (session.flags quest:<id>:active/:completed). Quest-level only, no per-objective tracking."
     },
     {
+      "id": "LIST_INPUT_BINDINGS",
+      "category": "Advanced",
+      "label": "List Input Bindings",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Fills v.bindingRows (rows: name = 'BUTTON - key', button, key) and v.bindingCount from engine.input_map's current SNES-button->key bindings, in a fixed button order. Used by the Controls scene."
+    },
+    {
+      "id": "SET_INPUT_BINDING",
+      "category": "Advanced",
+      "label": "Set Input Binding",
+      "params": [
+        {
+          "key": "button",
+          "type": "formula"
+        },
+        {
+          "key": "key",
+          "type": "formula"
+        }
+      ],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Rebinds the given SNES button (A/B/X/Y/L/R/START/SELECT/UP/DOWN/LEFT/RIGHT) to the given LOVE key name via engine.input_map, persisting to data/input.json. No-op if the button name is unknown."
+    },
+    {
       "id": "SCRIPT",
       "category": "Advanced",
       "label": "Script Call",
@@ -2060,6 +2091,19 @@
         "open": {
           "duration": 0.15,
           "anchor": "cellOf:party"
+        }
+      }
+    },
+    "map_data_popup": {
+      "x": 10,
+      "y": 9,
+      "width": 12,
+      "height": 5,
+      "style": "list",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.15
         }
       }
     },
