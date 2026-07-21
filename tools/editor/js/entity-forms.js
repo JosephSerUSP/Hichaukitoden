@@ -193,8 +193,10 @@
             },
             skills: {
                 resolve: item => dbPayload.skills[item.id],
+                rows: { top: { gap: '0' } },
                 fields: [
-                    { kind: 'text', key: 'name', label: 'Name', refreshList: true },
+                    { row: 'top', kind: 'icon', key: 'icon', label: 'Icon' },
+                    { row: 'top', kind: 'text', key: 'name', label: 'Name', refreshList: true },
                     { kind: 'text', key: 'description', label: 'Description' },
                     { kind: 'select', key: 'target', label: 'Target',
                       options: () => SKILL_TARGETS, fallback: 'enemy-any' },

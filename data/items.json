@@ -695,7 +695,8 @@
     "meta": {
       "tier": 0,
       "craftKind": "tinkering"
-    }
+    },
+    "effects": []
   },
   {
     "id": 36,

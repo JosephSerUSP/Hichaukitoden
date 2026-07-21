@@ -285,7 +285,7 @@ local function memberSkillRows(session, win, env)
     for _, id in ipairs((member and member.actorData and member.actorData.skills) or {}) do
         local skill = loader and loader.getSkill and loader.getSkill(id)
         if skill then
-            table.insert(rows, { id = id, name = skill.name or id, description = skill.description or "" })
+            table.insert(rows, { id = id, name = skill.name or id, description = skill.description or "", icon = skill.icon or 0 })
         end
     end
     if #rows == 0 then
@@ -302,7 +302,7 @@ local function memberPassiveRows(session, win, env)
     for _, id in ipairs((member and member.actorData and member.actorData.passives) or {}) do
         local passive = loader and loader.getPassive and loader.getPassive(id)
         if passive then
-            table.insert(rows, { id = id, name = passive.name or id, description = passive.description or "" })
+            table.insert(rows, { id = id, name = passive.name or id, description = passive.description or "", icon = passive.icon or 0 })
         end
     end
     if #rows == 0 then
@@ -809,6 +809,32 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     if n == 0 then return end
     local gap = ui.toPx(0.5)
     local isVertical = layout and (layout.vertical or layout.direction == "vertical")
+    -- A row with an icon (skill/passive-style rows) draws as one centered
+    -- "[icon] name" unit via ui.drawIconText, instead of printf's own
+    -- "center" alignment (which only knows about the text) — icon-less
+    -- rows (Attack/Skill/Defend/Item/Flee) are unaffected.
+    local function drawSlotLabel(row, color, slotX, slotW, textY, cursorY)
+        local label = row.name or ""
+        local hasIcon = row.icon and row.icon > 0
+        if hasIcon then
+            local textW = ui.measureText(label)
+            local iconBlockW = ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)
+            local totalW = iconBlockW + textW
+            local startX = slotX + (slotW - totalW) / 2
+            if cursorY then
+                small_battlers.draw("Cursor", startX - 10, cursorY, 8)
+            end
+            ui.drawIconText(row.icon, label, startX, textY, color)
+        else
+            if cursorY then
+                local textW = love.graphics.getFont():getWidth(label)
+                local textX = slotX + (slotW - textW) / 2
+                small_battlers.draw("Cursor", textX - 10, cursorY, 8)
+            end
+            ui.drawString(label, slotX, textY, color, "center", slotW)
+        end
+    end
+
     if isVertical then
         local slotH = (h - gap * (n + 1)) / n
         for i, row in ipairs(rows) do
@@ -816,14 +842,8 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
             local sy = y + gap + (i - 1) * (slotH + gap)
             ui.drawPanel(x, sy, w, slotH, nil, isSel)
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-            local label = row.name or ""
             local textY = sy + slotH / 2 - ui.lineHeight / 2
-            if isSel then
-                local textW = love.graphics.getFont():getWidth(label)
-                local textX = x + (w - textW) / 2
-                small_battlers.draw("Cursor", textX - 10, sy + slotH / 2 - 4, 8)
-            end
-            ui.drawString(label, x, textY, color, "center", w)
+            drawSlotLabel(row, color, x, w, textY, isSel and (sy + slotH / 2 - 4) or nil)
         end
     else
         local slotW = (w - gap * (n + 1)) / n
@@ -832,14 +852,8 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
             local sx = x + gap + (i - 1) * (slotW + gap)
             ui.drawPanel(sx, y, slotW, h, nil, isSel)
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
-            local label = row.name or ""
             local textY = y + h / 2 - ui.lineHeight / 2
-            if isSel then
-                local textW = love.graphics.getFont():getWidth(label)
-                local textX = sx + (slotW - textW) / 2
-                small_battlers.draw("Cursor", textX - 10, y + h / 2 - 4, 8)
-            end
-            ui.drawString(label, sx, textY, color, "center", slotW)
+            drawSlotLabel(row, color, sx, slotW, textY, isSel and (y + h / 2 - 4) or nil)
         end
     end
 end

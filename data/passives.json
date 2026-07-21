@@ -4,7 +4,7 @@
     "name": "Trick Heal",
     "description": "A playful mending art.",
     "effect": "Restores 1 HP to party on victory.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "POST_BATTLE_HEAL",
@@ -17,7 +17,7 @@
     "name": "Gold Digger",
     "description": "Greed is good.",
     "effect": "Increases gold found by 5.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "GOLD_DIGGER",
@@ -30,7 +30,7 @@
     "name": "Hunger",
     "description": "An insatiable void.",
     "effect": "Drains 2 HP from a nearby ally every turn.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "PARASITE",
@@ -43,7 +43,7 @@
     "name": "Ambush",
     "description": "Strike from the shadows.",
     "effect": "Deals damage to an enemy at start of battle.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "BATTLE_START_DAMAGE",
@@ -56,7 +56,7 @@
     "name": "Regeneration",
     "description": "Life finds a way.",
     "effect": "Restores HP when moving.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "MOVE_HEAL",
@@ -69,7 +69,7 @@
     "name": "Scholar",
     "description": "Knowledge is power.",
     "effect": "Gains bonus XP at recovery sites.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "RECOVERY_XP_BONUS",
@@ -82,7 +82,7 @@
     "name": "Coward",
     "description": "He who fights and runs away...",
     "effect": "Increases chance to flee.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "FLEE_CHANCE_BONUS",
@@ -95,7 +95,7 @@
     "name": "Strength",
     "description": "Raw power.",
     "effect": "Increases damage dealt.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "PARAM_PLUS",
@@ -109,7 +109,7 @@
     "name": "Rebirth",
     "description": "Rising from the ashes.",
     "effect": "On death: Restore 20% HP, lose 2 levels.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "ON_PERMADEATH",
@@ -122,7 +122,7 @@
     "name": "Trap Sense",
     "description": "Eyes that see what others miss.",
     "effect": "Detects hidden traps.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "SEE_TRAPS",
@@ -135,7 +135,7 @@
     "name": "Sense",
     "description": "Heightened awareness.",
     "effect": "Reveals breakable walls.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "SEE_WALLS",
@@ -148,7 +148,7 @@
     "name": "Undead Fortitude",
     "description": "Bones harder than steel.",
     "effect": "Max HP +20%.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "PARAM_RATE",
@@ -162,7 +162,7 @@
     "name": "Holy Aura",
     "description": "Bathed in divine light.",
     "effect": "Regenerates 5% HP each turn.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "HRG",
@@ -175,7 +175,7 @@
     "name": "Night Vision",
     "description": "Pierces the dark.",
     "effect": "Detects traps and secrets (Level 2).",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "SEE_TRAPS",
@@ -188,7 +188,7 @@
     "name": "Ethereal",
     "description": "Hard to touch.",
     "effect": "Chance to avoid physical damage (Not Implemented Yet, using HP buff).",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "PARAM_RATE",
@@ -202,7 +202,7 @@
     "name": "Chaos Pact",
     "description": "Power at a price.",
     "effect": "Atk +15%.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "PARAM_RATE",
@@ -216,7 +216,7 @@
     "name": "Mischief",
     "description": "Always up to no good.",
     "effect": "Gold found +2.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "GOLD_DIGGER",
@@ -229,7 +229,7 @@
     "name": "Symbiosis",
     "description": "A life-giving bond.",
     "effect": "Heals neighbor 2 HP/turn.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "SYMBIOSIS",
@@ -242,7 +242,7 @@
     "name": "Initiative",
     "description": "A chance to act before the enemy.",
     "effect": "25% chance of a first strike.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "INITIATIVE",
@@ -255,7 +255,7 @@
     "name": "Rear Guard",
     "description": "Protects against ambushes.",
     "effect": "Negates enemy first strikes.",
-    "icon": 1,
+    "icon": 103,
     "traits": [
       {
         "code": "REAR_GUARD",

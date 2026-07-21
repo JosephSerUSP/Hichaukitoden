@@ -2000,6 +2000,22 @@
       "style": "frame",
       "title": null
     },
+    "battle_help": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "frame",
+      "title": null
+    },
+    "battle_log": {
+      "x": 1.25,
+      "y": 0.75,
+      "width": 29.5,
+      "height": 4,
+      "style": "battleLog",
+      "title": null
+    },
     "party": {
       "x": 0,
       "y": 18,
@@ -2117,22 +2133,6 @@
       "width": 32,
       "height": 2.5,
       "style": "command",
-      "title": null
-    },
-    "battle_help": {
-      "x": 1.25,
-      "y": 0.75,
-      "width": 29.5,
-      "height": 4,
-      "style": "frame",
-      "title": null
-    },
-    "battle_log": {
-      "x": 1.25,
-      "y": 0.75,
-      "width": 29.5,
-      "height": 4,
-      "style": "battleLog",
       "title": null
     },
     "battle_victory": {

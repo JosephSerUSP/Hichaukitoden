@@ -4,6 +4,7 @@
     "name": "Wind Blade",
     "target": "enemy-any",
     "element": "Green",
+    "icon": 2,
     "animation": "skill.wind_blade",
     "description": "[Enemy] Strikes a foe with a blade of wind.",
     "effects": [
@@ -18,6 +19,7 @@
     "name": "Soothing Mote",
     "target": "ally-any",
     "element": "White",
+    "icon": 4,
     "animation": "skill.soothing_mote",
     "description": "[Ally] Heals a small amount of HP for an ally.",
     "mpCost": 5,
@@ -33,6 +35,7 @@
     "name": "Bone Rush",
     "target": "enemy-any",
     "element": "Black",
+    "icon": 5,
     "animation": "skill.bone_rush",
     "description": "[Enemy] A reckless charge.",
     "effects": [
@@ -47,6 +50,7 @@
     "name": "Holy Smite",
     "target": "enemy-any",
     "element": "White",
+    "icon": 4,
     "animation": "skill.holy_smite",
     "description": "[Enemy] Smite evil with holy light.",
     "mpCost": 15,
@@ -62,6 +66,7 @@
     "name": "Divine Favor",
     "target": "ally-any",
     "element": "White",
+    "icon": 4,
     "animation": "skill.divine_favor",
     "description": "[Ally] Grants regeneration to an ally.",
     "mpCost": 8,
@@ -79,6 +84,7 @@
     "name": "Shadow Claw",
     "target": "enemy-any",
     "element": "Black",
+    "icon": 5,
     "animation": "skill.shadow_claw",
     "description": "[Enemy] Tears at the enemy from the shadows.",
     "effects": [
@@ -93,6 +99,7 @@
     "name": "Infernal Pact",
     "target": "self",
     "element": "Red",
+    "icon": 1,
     "description": "[Self] Sacrifice safety for power. (Grants Berserk)",
     "effects": [
       {
@@ -108,6 +115,7 @@
     "name": "Wait",
     "target": "self",
     "element": "White",
+    "icon": 4,
     "description": "[Self] Do nothing.",
     "effects": []
   },
@@ -116,6 +124,7 @@
     "name": "Flame Rebirth",
     "target": "self",
     "element": "Red",
+    "icon": 1,
     "animation": "skill.flame_rebirth",
     "description": "[Self] Rise from the ashes.",
     "effects": []
@@ -125,6 +134,7 @@
     "name": "Needle Shot",
     "target": "enemy-any",
     "element": "Black",
+    "icon": 5,
     "animation": "skill.needle_shot",
     "description": "[Enemy] A precise strike that injects toxins.",
     "effects": [
@@ -145,6 +155,7 @@
     "name": "Field Surgery",
     "target": "ally-any",
     "element": "Black",
+    "icon": 5,
     "description": "[Ally] Emergency medical attention. It might hurt.",
     "effects": [
       {
@@ -158,6 +169,7 @@
     "name": "Drain Kiss",
     "target": "enemy-any",
     "element": "Black",
+    "icon": 5,
     "animation": "skill.drain_kiss",
     "description": "[Enemy] Steals vitality and puts the target to sleep.",
     "effects": [
@@ -178,6 +190,7 @@
     "name": "Assassinate",
     "target": "enemy-any",
     "element": "Black",
+    "icon": 5,
     "description": "[Enemy] A lethal strike aimed at a vital point.",
     "effects": [
       {
@@ -191,6 +204,7 @@
     "name": "Attack",
     "target": "enemy",
     "element": null,
+    "icon": 0,
     "animation": "skill.attack",
     "description": "[Enemy] A basic physical attack.",
     "spCost": 0,
@@ -208,6 +222,7 @@
     "name": "Defend",
     "target": "self",
     "element": null,
+    "icon": 0,
     "description": "[Self] Brace for impact, reducing incoming damage this round.",
     "speed": 50,
     "effects": [
