@@ -104,6 +104,12 @@ local dialogueSelectIdx = 1
 
 local inputCooldown = 0
 
+-- Auto-repeat state (update-driven, not OS key repeat)
+local heldKeys = {}  -- key → { holdTime = seconds, lastFire = count }
+
+-- Forward declarations (defined later in the file, called by update loop)
+local handleKeyPressed
+
 local server = require("engine.server")
 config = require("engine.config")
 
@@ -2426,8 +2432,44 @@ end
 function love.update(dt)
     renderer.update(dt)
     server.update(dt)
-    if activeSession and activeSession.transitionTimer and activeSession.transitionTimer > 0 then
-        activeSession.transitionTimer = activeSession.transitionTimer - dt
+    if activeSession then
+        local prevTransition = activeSession.transitionTimer
+        if activeSession.transitionTimer and activeSession.transitionTimer > 0 then
+            activeSession.transitionTimer = activeSession.transitionTimer - dt
+        end
+        if activeSession.bumpTimer and activeSession.bumpTimer > 0 then
+            activeSession.bumpTimer = activeSession.bumpTimer - dt
+        end
+        -- Decay per-key bump cooldowns (only blocks the same key that bumped)
+        if activeSession.bumpCooldowns then
+            for k, t in pairs(activeSession.bumpCooldowns) do
+                local remaining = t - dt
+                if remaining <= 0 then
+                    activeSession.bumpCooldowns[k] = nil
+                else
+                    activeSession.bumpCooldowns[k] = remaining
+                end
+            end
+        end
+
+        -- When the transition animation finishes, immediately re-fire the held
+        -- directional key so movement continues without waiting for the next
+        -- auto-repeat tick (closing the gap between timer expiry and repeat).
+        if prevTransition and prevTransition > 0
+            and (not activeSession.transitionTimer or activeSession.transitionTimer <= 0)
+            and scene_host.getCurrent() == "map" then
+            local REPEAT_DIR_KEYS = { "up", "down", "left", "right",
+                                      "w", "a", "s", "d", "q", "e" }
+            for _, key in ipairs(REPEAT_DIR_KEYS) do
+                if love.keyboard.isDown(key) then
+                    local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
+                    if not scene_host.keypressed(key, ctx) then
+                        handleKeyPressed(key)
+                    end
+                    break
+                end
+            end
+        end
     end
     
     if inputCooldown > 0 then
@@ -2453,6 +2495,40 @@ function love.update(dt)
         if shopState and shopState.v.pendingItem then
             activeSession:addItem(shopState.v.pendingItem, 1)
             shopState.v.pendingItem = nil
+        end
+    end
+
+    -- ── Auto-repeat for held directional keys ────────────────────────────
+    -- Driven by love.keyboard.isDown() + timers instead of OS key repeat,
+    -- giving controlled initial delay and interval for menu scrolling and
+    -- map movement. Routes through the input mapper (scene_host.keypressed)
+    -- so rebindable controls work automatically.
+    local REPEAT_DIR_KEYS = { "up", "down", "left", "right",
+                              "w", "a", "s", "d", "q", "e" }
+    local REPEAT_INITIAL  = 0.3   -- seconds before repeat starts
+    local REPEAT_INTERVAL = 0.06  -- seconds between repeat fires (~16/sec)
+
+    for _, key in ipairs(REPEAT_DIR_KEYS) do
+        if love.keyboard.isDown(key) then
+            local state = heldKeys[key]
+            if not state then
+                heldKeys[key] = { holdTime = 0, lastFire = 0 }
+                state = heldKeys[key]
+            end
+            state.holdTime = state.holdTime + dt
+            if state.holdTime >= REPEAT_INITIAL then
+                local elapsed = state.holdTime - REPEAT_INITIAL
+                local fireCount = math.floor(elapsed / REPEAT_INTERVAL)
+                if fireCount > state.lastFire then
+                    state.lastFire = fireCount
+                    local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
+                    if not scene_host.keypressed(key, ctx) then
+                        handleKeyPressed(key)
+                    end
+                end
+            end
+        else
+            heldKeys[key] = nil
         end
     end
 end
@@ -2900,7 +2976,7 @@ function quickLoad()
     print("Game loaded.")
 end
 
-local function handleKeyPressed(key)
+handleKeyPressed = function(key)
     if inputCooldown > 0 then return end
     if not activeSession then return end
 
@@ -2944,6 +3020,14 @@ local function handleKeyPressed(key)
         end
         
     elseif scene_host.getCurrent() == "map" then
+        -- MOVEMENT (forward/backward/strafe) is blocked while any transition
+        -- animation is playing, preventing a disorienting mismatch between
+        -- the grid state and the mid-animation camera.  TURNS are exempt so
+        -- the player can rotate freely while stepping.
+        --
+        -- Turns ARE blocked during another turn (no queued turns), but
+        -- allowed during steps for responsive cornering.
+
         -- Strafe (q/e) has no scene_host hook mapping, so it isn't caught
         -- by the map scene's FALLBACK dance above; guard it here directly
         -- so it can't move the party while the cursor/command overlay
@@ -2954,36 +3038,94 @@ local function handleKeyPressed(key)
         end
         local moved = false
         if key == "up" or key == "w" then
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0 then return end
+            if activeSession.bumpCooldowns and activeSession.bumpCooldowns[key] then return end
             moved = exploration.moveForward(activeSession)
             if moved then
-                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.bumpCooldowns = {}  -- any success clears all cooldowns
+                local d = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.transitionTimer = d
+                activeSession.transitionDuration = d
                 activeSession.transitionDir = "forward"
+            elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
+                activeSession.bumpTimer = 0.12
+                activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
+                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpNudgeKey = key
             end
         elseif key == "down" or key == "s" then
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0 then return end
+            if activeSession.bumpCooldowns and activeSession.bumpCooldowns[key] then return end
             moved = exploration.moveBackward(activeSession)
             if moved then
-                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.bumpCooldowns = {}
+                local d = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.transitionTimer = d
+                activeSession.transitionDuration = d
                 activeSession.transitionDir = "backward"
+            elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
+                activeSession.bumpTimer = 0.12
+                activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
+                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpNudgeKey = key
             end
         elseif key == "left" or key == "a" then
+            -- Block turn-while-turning so the animation can complete, but
+            -- allow turns during a step animation (responsive cornering).
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0
+                and activeSession.transitionDir
+                and (activeSession.transitionDir == "turn_left" or activeSession.transitionDir == "turn_right") then
+                return
+            end
             exploration.turnLeft(activeSession)
-            activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+            activeSession.bumpCooldowns = {}  -- turning resets all cooldowns
+            local d = 0.225
+            activeSession.transitionTimer = d
+            activeSession.transitionDuration = d
             activeSession.transitionDir = "turn_left"
         elseif key == "right" or key == "d" then
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0
+                and activeSession.transitionDir
+                and (activeSession.transitionDir == "turn_left" or activeSession.transitionDir == "turn_right") then
+                return
+            end
             exploration.turnRight(activeSession)
-            activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+            activeSession.bumpCooldowns = {}
+            local d = 0.225
+            activeSession.transitionTimer = d
+            activeSession.transitionDuration = d
             activeSession.transitionDir = "turn_right"
         elseif key == "q" then
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0 then return end
+            if activeSession.bumpCooldowns and activeSession.bumpCooldowns[key] then return end
             moved = exploration.strafeLeft(activeSession)
             if moved then
-                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.bumpCooldowns = {}
+                local d = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.transitionTimer = d
+                activeSession.transitionDuration = d
                 activeSession.transitionDir = "strafe_left"
+            elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
+                activeSession.bumpTimer = 0.12
+                activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
+                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpNudgeKey = key
             end
         elseif key == "e" then
+            if activeSession.transitionTimer and activeSession.transitionTimer > 0 then return end
+            if activeSession.bumpCooldowns and activeSession.bumpCooldowns[key] then return end
             moved = exploration.strafeRight(activeSession)
             if moved then
-                activeSession.transitionTimer = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.bumpCooldowns = {}
+                local d = conf("ui", "moveTransitionDuration", 0.15)
+                activeSession.transitionTimer = d
+                activeSession.transitionDuration = d
                 activeSession.transitionDir = "strafe_right"
+            elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
+                activeSession.bumpTimer = 0.12
+                activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
+                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpNudgeKey = key
             end
         elseif key == "space" or key == "return" then
             local frontTile, tx, ty = exploration.getFrontTile(activeSession)
@@ -3149,6 +3291,12 @@ function love.keypressed(key, scancode, isrepeat)
     end
 
     handleKeyPressed(key)
+end
+
+-- heldKeys is declared at module level (near inputCooldown); this handler
+-- clears the tracked state so the update loop stops repeating on release.
+function love.keyreleased(key)
+    heldKeys[key] = nil
 end
 
 function love.resize(w, h)

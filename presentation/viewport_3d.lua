@@ -501,7 +501,8 @@ function viewport_3d.draw(session)
     local cAngle = DIR_ANGLES[pdir]
 
     if session.transitionTimer and session.transitionTimer > 0 then
-        local frac = session.transitionTimer / 0.15
+        local duration = session.transitionDuration or 0.15
+        local frac = duration > 0 and (session.transitionTimer / duration) or 1
         local df = DIRS[pdir]
         local dr = DIRS[turnRightDir(pdir)]
 
@@ -526,6 +527,35 @@ function viewport_3d.draw(session)
             local prevAngle = DIR_ANGLES[prevDir]
             cAngle = lerpAngle(prevAngle, cAngle, 1.0 - frac)
         end
+    end
+
+    -- ── 2. Bump nudge (wall collision feedback) ────────────────────────────
+    -- When bumpTimer > 0, push the camera into the wall for a brief moment
+    -- and then ease back, simulating a half-step into the obstacle.
+    -- The nudge direction matches the ATTEMPTED movement direction so
+    -- forward/backward bumps nudge forward/backward, and strafe bumps nudge
+    -- left/right respectively.  Decays from 0.12 tiles → 0 over 120ms.
+    if session.bumpTimer and session.bumpTimer > 0 then
+        local frac = session.bumpTimer / 0.12  -- 1.0 → 0.0
+        local nudge = frac * 0.12
+        local dx, dy = 0, 0
+        local key = session.bumpNudgeKey
+        local fwd = DIRS[pdir]
+        if key == "up" or key == "w" then
+            dx, dy = fwd.dx, fwd.dy                      -- forward
+        elseif key == "down" or key == "s" then
+            dx, dy = -fwd.dx, -fwd.dy                    -- backward
+        elseif key == "q" then
+            local ld = DIRS[turnLeftDir(pdir)]
+            dx, dy = ld.dx, ld.dy                         -- strafe left
+        elseif key == "e" then
+            local rd = DIRS[turnRightDir(pdir)]
+            dx, dy = rd.dx, rd.dy                         -- strafe right
+        else
+            dx, dy = fwd.dx, fwd.dy                       -- fallback: forward
+        end
+        cx = cx + dx * nudge
+        cy = cy + dy * nudge
     end
 
     -- Camera direction vector + projection plane (orthogonal to camera
