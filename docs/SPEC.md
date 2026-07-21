@@ -71,6 +71,11 @@ Last consolidated: 2026-07-17 (post overhaul-7 merge to main).
   endpoints and `engine/config.lua` follow the same root.
 - G1 validates whatever root is active. Golden logs (G2/G3) are recorded
   against the default campaign only — run gates with `data/` active.
+- **Non-default `campaigns/<name>/` roots are disposable test artifacts**
+  of the generation pipeline (21.07.2026 decision). They are not held to
+  sync parity with `data/` — a scene/menu feature landing in the default
+  campaign does not obligate porting it to `thestra_no_jijou_2/3/4` etc.
+  Regenerate them from the pipeline when needed instead of hand-syncing.
 
 ### 1.4 Scene layout convention: context-help bar + bottom dock
 
