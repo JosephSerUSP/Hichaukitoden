@@ -1025,6 +1025,12 @@
             'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05, min: 0 },
             'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05, min: 0 },
             'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05, min: 0 },
+            'ui.turnTransitionDuration':   { label: 'Turn Transition (s)', step: 0.025, min: 0 },
+            'ui.autoRepeatInitial':        { label: 'Auto-Repeat Initial Delay (s)', step: 0.05, min: 0 },
+            'ui.autoRepeatInterval':       { label: 'Auto-Repeat Interval (s)', step: 0.01, min: 0 },
+            'ui.bumpDuration':             { label: 'Bump Animation Duration (s)', step: 0.01, min: 0 },
+            'ui.bumpCooldown':             { label: 'Bump Per-Key Cooldown (s)', step: 0.05, min: 0 },
+            'ui.bumpNudge':                { label: 'Bump Nudge (tiles)', step: 0.01, min: 0 },
             'ui.textPalette':              { label: 'Text Palette \\c[n] Colors', widget: 'colorList' },
             'physics.gravity':             { label: 'Popup Gravity (px/s²)', min: 0 },
             'physics.bounceVelocityRetain':{ label: 'Popup Bounce Retention (0-1)', step: 0.05, min: 0, max: 1 },
@@ -1863,7 +1869,8 @@
                     summoner: dbPayload.system.summoner || {},
                     spawn: dbPayload.system.spawn || {},
                     newGame: dbPayload.system.newGame || {},
-                    town: dbPayload.system.town || {}
+                    town: dbPayload.system.town || {},
+                    ui: dbPayload.system.ui || {}
                 };
                 buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);
             }

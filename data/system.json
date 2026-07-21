@@ -5,7 +5,13 @@
     "fontNormalize": true,
     "menuSlideDuration": 0.15,
     "moveTransitionDuration": 0.15,
+    "turnTransitionDuration": 0.225,
     "inputCooldown": 0.3,
+    "autoRepeatInitial": 0.3,
+    "autoRepeatInterval": 0.06,
+    "bumpDuration": 0.12,
+    "bumpCooldown": 0.5,
+    "bumpNudge": 0.12,
     "textPalette": [
       [
         1,

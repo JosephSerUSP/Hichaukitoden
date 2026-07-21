@@ -2505,8 +2505,8 @@ function love.update(dt)
     -- so rebindable controls work automatically.
     local REPEAT_DIR_KEYS = { "up", "down", "left", "right",
                               "w", "a", "s", "d", "q", "e" }
-    local REPEAT_INITIAL  = 0.3   -- seconds before repeat starts
-    local REPEAT_INTERVAL = 0.06  -- seconds between repeat fires (~16/sec)
+    local REPEAT_INITIAL  = conf("ui", "autoRepeatInitial", 0.3)
+    local REPEAT_INTERVAL = conf("ui", "autoRepeatInterval", 0.06)
 
     for _, key in ipairs(REPEAT_DIR_KEYS) do
         if love.keyboard.isDown(key) then
@@ -3048,9 +3048,9 @@ handleKeyPressed = function(key)
                 activeSession.transitionDuration = d
                 activeSession.transitionDir = "forward"
             elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
-                activeSession.bumpTimer = 0.12
+                activeSession.bumpTimer = conf("ui", "bumpDuration", 0.12)
                 activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
-                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpCooldowns[key] = conf("ui", "bumpCooldown", 0.5)
                 activeSession.bumpNudgeKey = key
             end
         elseif key == "down" or key == "s" then
@@ -3064,9 +3064,9 @@ handleKeyPressed = function(key)
                 activeSession.transitionDuration = d
                 activeSession.transitionDir = "backward"
             elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
-                activeSession.bumpTimer = 0.12
+                activeSession.bumpTimer = conf("ui", "bumpDuration", 0.12)
                 activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
-                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpCooldowns[key] = conf("ui", "bumpCooldown", 0.5)
                 activeSession.bumpNudgeKey = key
             end
         elseif key == "left" or key == "a" then
@@ -3079,7 +3079,7 @@ handleKeyPressed = function(key)
             end
             exploration.turnLeft(activeSession)
             activeSession.bumpCooldowns = {}  -- turning resets all cooldowns
-            local d = 0.225
+            local d = conf("ui", "turnTransitionDuration", 0.225)
             activeSession.transitionTimer = d
             activeSession.transitionDuration = d
             activeSession.transitionDir = "turn_left"
@@ -3091,7 +3091,7 @@ handleKeyPressed = function(key)
             end
             exploration.turnRight(activeSession)
             activeSession.bumpCooldowns = {}
-            local d = 0.225
+            local d = conf("ui", "turnTransitionDuration", 0.225)
             activeSession.transitionTimer = d
             activeSession.transitionDuration = d
             activeSession.transitionDir = "turn_right"
@@ -3106,9 +3106,9 @@ handleKeyPressed = function(key)
                 activeSession.transitionDuration = d
                 activeSession.transitionDir = "strafe_left"
             elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
-                activeSession.bumpTimer = 0.12
+                activeSession.bumpTimer = conf("ui", "bumpDuration", 0.12)
                 activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
-                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpCooldowns[key] = conf("ui", "bumpCooldown", 0.5)
                 activeSession.bumpNudgeKey = key
             end
         elseif key == "e" then
@@ -3122,9 +3122,9 @@ handleKeyPressed = function(key)
                 activeSession.transitionDuration = d
                 activeSession.transitionDir = "strafe_right"
             elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
-                activeSession.bumpTimer = 0.12
+                activeSession.bumpTimer = conf("ui", "bumpDuration", 0.12)
                 activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
-                activeSession.bumpCooldowns[key] = 0.5
+                activeSession.bumpCooldowns[key] = conf("ui", "bumpCooldown", 0.5)
                 activeSession.bumpNudgeKey = key
             end
         elseif key == "space" or key == "return" then

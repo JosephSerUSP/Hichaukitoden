@@ -1,6 +1,7 @@
 local viewport_3d = {}
 local ui = require("presentation.ui")
 local exploration = require("engine.exploration")
+local config = require("engine.config")
 
 -- Direction vectors (matching exploration.lua)
 local DIRS = {
@@ -536,8 +537,10 @@ function viewport_3d.draw(session)
     -- forward/backward bumps nudge forward/backward, and strafe bumps nudge
     -- left/right respectively.  Decays from 0.12 tiles → 0 over 120ms.
     if session.bumpTimer and session.bumpTimer > 0 then
-        local frac = session.bumpTimer / 0.12  -- 1.0 → 0.0
-        local nudge = frac * 0.12
+        local bumpDur = (config.ui and config.ui.bumpDuration) or 0.12
+        local frac = bumpDur > 0 and (session.bumpTimer / bumpDur) or 1
+        local maxNudge = (config.ui and config.ui.bumpNudge) or 0.12
+        local nudge = frac * maxNudge
         local dx, dy = 0, 0
         local key = session.bumpNudgeKey
         local fwd = DIRS[pdir]
