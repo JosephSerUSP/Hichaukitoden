@@ -227,7 +227,7 @@
         function applyAssetSelection() {
             const path = document.getElementById('asset-picker-selected').value;
             if (!path) {
-                alert('Please select an asset file.');
+                showToast('Please select an asset file.');
                 return;
             }
             closeAssetPicker();

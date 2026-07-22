@@ -1052,7 +1052,7 @@
         function deleteMap() {
             const map = dbPayload.maps[currentMapIndex];
             if (getMapCategory(map, currentMapIndex) === 'town') {
-                alert("Cannot delete a Town category map.");
+                showToast("Cannot delete a Town category map.");
                 return;
             }
             if (confirm(`Are you sure you want to delete "${map.title}"?`)) {
