@@ -1883,8 +1883,16 @@
       "title": null,
       "contentY": 0.5,
       "anim": {
-        "open": { "duration": 0.18, "effect": "slideUp", "fromOffset": 16 },
-        "close": { "duration": 0.12, "effect": "slideDown", "toOffset": 16 }
+        "open": {
+          "duration": 0.18,
+          "effect": "slideUp",
+          "fromOffset": 16
+        },
+        "close": {
+          "duration": 0.12,
+          "effect": "slideDown",
+          "toOffset": 16
+        }
       }
     },
     "status_name_header": {

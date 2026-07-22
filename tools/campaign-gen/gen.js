@@ -215,7 +215,8 @@ function writeStageOutput(stage, reply) {
 // ---------------------------------------------------------------------------
 function runValidator() {
     try {
-        const out = execFileSync(CONFIG.validate.lovecPath, ['.', 'validate', `campaign=${opts.name}`],
+        const lovecBin = ctxlib.resolveLovecPath(CONFIG.validate && CONFIG.validate.lovecPath);
+        const out = execFileSync(lovecBin, ['.', 'validate', `campaign=${opts.name}`],
             { cwd: ctxlib.REPO, encoding: 'utf8', timeout: 120000 });
         return { ok: true, output: out };
     } catch (err) {

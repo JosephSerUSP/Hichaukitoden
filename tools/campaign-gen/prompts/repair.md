@@ -20,3 +20,9 @@ content, keep all dialogue text and structure intact.
 
 ONE JSON object containing ONLY the files you changed, complete:
 `{ "<filename>": <complete corrected content>, ... }`
+
+Rules for repair:
+- Make ONLY targeted edits that fix the specific reported errors.
+- Do NOT rewrite or re-generate unaffected events, maps, or items.
+- Fix broken ID references by replacing them with valid IDs from the manifest.
+- Do NOT introduce SCRIPT commands or custom code logic during repair.

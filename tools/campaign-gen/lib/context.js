@@ -75,6 +75,16 @@ function manifest(campaignDir) {
     const quests = j('quests.json');
     const shops = j('shops.json');
     const commonEvents = j('commonEvents.json');
+
+    // List available NPC sprite paths from assets/sprites
+    let sprites = [];
+    const spritesDir = path.join(REPO, 'assets', 'sprites');
+    if (fs.existsSync(spritesDir)) {
+        sprites = fs.readdirSync(spritesDir)
+            .filter(f => f.endsWith('.png'))
+            .map(f => `assets/sprites/${f}`);
+    }
+
     return {
         actors: actors.map(a => ({ id: a.id, name: a.name, role: a.role, tier: a.tier })),
         items: items.map(i => ({ id: i.id, name: i.name, type: i.type })),
@@ -82,7 +92,20 @@ function manifest(campaignDir) {
         quests: Object.keys(quests),
         shops: Object.keys(shops),
         commonEvents: Object.keys(commonEvents),
+        availableSprites: sprites,
     };
 }
 
-module.exports = { REPO, CONTENT_FILES, readJson, commandRegistry, ruleset, samples, manifest };
+function resolveLovecPath(configuredPath) {
+    if (configuredPath && fs.existsSync(configuredPath)) return configuredPath;
+    if (process.env.LOVE_EXE) {
+        const lovec = process.env.LOVE_EXE.replace(/love\.exe$/i, 'lovec.exe');
+        if (fs.existsSync(lovec)) return lovec;
+    }
+    const stdPath = 'C:\\Program Files\\LOVE\\lovec.exe';
+    if (fs.existsSync(stdPath)) return stdPath;
+    return 'lovec';
+}
+
+module.exports = { REPO, CONTENT_FILES, readJson, commandRegistry, ruleset, samples, manifest, resolveLovecPath };
+

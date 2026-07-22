@@ -3626,13 +3626,13 @@
         ]
       ]
     ],
-    "tileset": "town_003",
+    "tileset": "town_balamb",
     "ceilingStyle": "sky",
     "fog": {
       "color": [
-        0.1,
-        0.22,
-        0.34
+        0.24,
+        0.62,
+        1
       ],
       "density": 0.1,
       "minFactor": 0

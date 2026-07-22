@@ -29,8 +29,8 @@ Rules:
 - Town layout: 19-24 columns wide, 18-22 rows, outer walls, walkable plaza,
   building-ish wall clusters. Place one interact event per outline cast NPC
   at a sensible floor tile (0-indexed x/y on a FLOOR '.' tile adjacent to
-  walkable space), sprite reused from existing `assets/sprites/NPC*.png`
-  paths seen in the sample.
+  walkable space). Use sprite paths strictly from `MANIFEST.availableSprites`
+  (e.g., `assets/sprites/NPC00.png` through `assets/sprites/NPC16.png`).
 - Dungeon floors: follow the sample's procedural fields (generation, depth,
   encounters, treasures, recruits, encounterSteps); encounters/recruits use
   manifest actor ids, treasures use manifest item ids; difficulty scales
