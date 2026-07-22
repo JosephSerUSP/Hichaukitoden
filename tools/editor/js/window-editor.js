@@ -591,27 +591,25 @@
         // Dedicated widget: layout.gauges (declarative label+bar rows)
         // ---------------------------------------------------------------
         function buildGaugeListEditor(layoutObj, onChange) {
+            layoutObj.gauges = layoutObj.gauges || [];
             const box = document.createElement('fieldset');
             box.style.cssText = 'padding: 6px;';
             const legend = document.createElement('legend');
             legend.textContent = 'Gauges (layout.gauges)';
             box.appendChild(legend);
 
-            const rowsBox = document.createElement('div');
-            rowsBox.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
-            box.appendChild(rowsBox);
-
-            const render = () => {
-                rowsBox.innerHTML = '';
-                (layoutObj.gauges || []).forEach((g, idx) => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr 40px 40px 40px 24px; gap: 3px; align-items: center; font-size: 10px;';
+            buildRowListEditor(box, layoutObj.gauges, {
+                columns: [{ label: 'Label', flex: '1' }, { label: 'Value', flex: '1' }, { label: 'Max', flex: '1' }, { label: 'X/Y/W', flex: '1' }],
+                summary: (g) => [g.label || '(no label)', g.value != null ? String(g.value) : '0', g.max != null ? String(g.max) : '1', `${g.x != null ? g.x : 1}, ${g.y != null ? g.y : 1}, ${g.width != null ? g.width : 18}`],
+                editor: (row, g, idx, commit) => {
+                    row.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr 40px 40px 40px auto auto; gap: 3px; align-items: center; font-size: 10px;';
                     const mk = (val, ph, onInput) => {
                         const inp = document.createElement('input');
                         inp.className = 'win98-input';
                         inp.placeholder = ph;
                         inp.value = val != null ? val : '';
                         inp.oninput = () => { onInput(inp.value); setDirty(true); onChange(); };
+                        inp.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                         return inp;
                     };
                     const mkNum = (val, ph, onInput) => {
@@ -619,6 +617,7 @@
                         inp.type = 'number'; inp.className = 'win98-input'; inp.placeholder = ph;
                         inp.value = val != null ? val : '';
                         inp.oninput = () => { const n = parseFloat(inp.value); onInput(isNaN(n) ? undefined : n); setDirty(true); onChange(); };
+                        inp.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
                         return inp;
                     };
                     row.appendChild(mk(g.label, 'label', v => g.label = v));
@@ -627,29 +626,17 @@
                     row.appendChild(mkNum(g.x, 'x', v => g.x = v));
                     row.appendChild(mkNum(g.y, 'y', v => g.y = v));
                     row.appendChild(mkNum(g.width, 'w', v => g.width = v));
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'win-btn-small outset-bevel';
-                    delBtn.style.cssText = 'font-size: 8px; color: red;';
-                    delBtn.textContent = '×';
-                    delBtn.onclick = () => { layoutObj.gauges.splice(idx, 1); setDirty(true); onChange(); render(); };
-                    row.appendChild(delBtn);
-                    rowsBox.appendChild(row);
-                });
-            };
-            render();
-
-            const addBtn = document.createElement('button');
-            addBtn.className = 'win98-btn';
-            addBtn.style.cssText = 'font-size: 10px; margin-top: 4px;';
-            addBtn.textContent = '+ Gauge';
-            addBtn.onclick = () => {
-                layoutObj.gauges = layoutObj.gauges || [];
-                layoutObj.gauges.push({ label: '', value: '0', max: '1', x: 1, y: 1, width: 18 });
-                setDirty(true);
-                onChange();
-                render();
-            };
-            box.appendChild(addBtn);
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn';
+                    doneBtn.textContent = '✓';
+                    doneBtn.title = 'Done editing';
+                    doneBtn.onclick = () => commit();
+                    row.appendChild(doneBtn);
+                    row.appendChild(makeRowDeleteBtn(() => { layoutObj.gauges.splice(idx, 1); onChange(); commit(); }));
+                },
+                newItem: () => ({ label: '', value: '0', max: '1', x: 1, y: 1, width: 18 }),
+                addLabel: '+ Gauge'
+            });
             return box;
         }
 
@@ -679,86 +666,53 @@
             formulaRow.appendChild(formulaLbl); formulaRow.appendChild(formulaInp);
             box.appendChild(formulaRow);
 
-            let activePage = 0;
-            const tabsRow = document.createElement('div');
-            tabsRow.style.cssText = 'display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 6px;';
-            const pageBody = document.createElement('div');
+            layoutObj.pages = layoutObj.pages || [];
+            buildRowListEditor(box, layoutObj.pages, {
+                columns: [{ label: 'Page', flex: '1' }, { label: 'Text', flex: '2' }],
+                summary: (page, idx) => ['Page ' + (idx + 1), (page.text || '(no text)').replace(/\s+/g, ' ').slice(0, 40)],
+                editor: (row, page, idx, commit) => {
+                    row.style.cssText = 'display: flex; flex-direction: column; gap: 4px; font-size: 10px;';
 
-            const renderPageBody = () => {
-                pageBody.innerHTML = '';
-                const pages = layoutObj.pages || [];
-                const page = pages[activePage];
-                if (!page) return;
-                const textLbl = document.createElement('div');
-                textLbl.style.cssText = 'font-size: 10px; margin-bottom: 2px;';
-                textLbl.textContent = 'text:';
-                pageBody.appendChild(textLbl);
-                const textArea = document.createElement('textarea');
-                textArea.className = 'win98-input';
-                textArea.style.cssText = 'width: 100%; height: 60px; font-family: monospace; font-size: 10px; box-sizing: border-box; resize: vertical;';
-                textArea.value = page.text || '';
-                textArea.oninput = () => { page.text = textArea.value; setDirty(true); };
-                pageBody.appendChild(textArea);
+                    const textLbl = document.createElement('div');
+                    textLbl.textContent = 'text:';
+                    row.appendChild(textLbl);
+                    const textArea = document.createElement('textarea');
+                    textArea.className = 'win98-input';
+                    textArea.style.cssText = 'width: 100%; height: 60px; font-family: monospace; font-size: 10px; box-sizing: border-box; resize: vertical;';
+                    textArea.value = page.text || '';
+                    textArea.oninput = () => { page.text = textArea.value; setDirty(true); };
+                    row.appendChild(textArea);
 
-                const grid = document.createElement('div');
-                grid.style.cssText = 'display: grid; grid-template-columns: 70px 70px 70px 70px; gap: 4px; align-items: center; font-size: 10px; margin-top: 4px;';
-                ['contentX', 'contentY', 'lineSpacing'].forEach(key => {
-                    const lbl = document.createElement('span'); lbl.textContent = key;
-                    const inp = document.createElement('input');
-                    inp.type = 'number'; inp.step = '0.5'; inp.className = 'win98-input';
-                    inp.value = page[key] != null ? page[key] : '';
-                    inp.oninput = () => { const n = parseFloat(inp.value); if (!isNaN(n)) { page[key] = n; setDirty(true); } };
-                    grid.appendChild(lbl); grid.appendChild(inp);
-                });
-                pageBody.appendChild(grid);
+                    const grid = document.createElement('div');
+                    grid.style.cssText = 'display: grid; grid-template-columns: 70px 70px 70px 70px; gap: 4px; align-items: center; margin-top: 4px;';
+                    ['contentX', 'contentY', 'lineSpacing'].forEach(key => {
+                        const lbl = document.createElement('span'); lbl.textContent = key;
+                        const inp = document.createElement('input');
+                        inp.type = 'number'; inp.step = '0.5'; inp.className = 'win98-input';
+                        inp.value = page[key] != null ? page[key] : '';
+                        inp.oninput = () => { const n = parseFloat(inp.value); if (!isNaN(n)) { page[key] = n; setDirty(true); onChange(); } };
+                        grid.appendChild(lbl); grid.appendChild(inp);
+                    });
+                    row.appendChild(grid);
 
-                pageBody.appendChild(buildGaugeListEditor(page, onChange));
-            };
+                    row.appendChild(buildGaugeListEditor(page, onChange));
 
-            const renderTabs = () => {
-                tabsRow.innerHTML = '';
-                const pages = layoutObj.pages || [];
-                pages.forEach((p, i) => {
-                    const tab = document.createElement('button');
-                    tab.className = 'win98-btn' + (i === activePage ? ' active' : '');
-                    tab.style.fontSize = '10px';
-                    tab.textContent = 'Page ' + (i + 1);
-                    tab.onclick = () => { activePage = i; renderTabs(); renderPageBody(); };
-                    tabsRow.appendChild(tab);
-                });
-                const addBtn = document.createElement('button');
-                addBtn.className = 'win98-btn';
-                addBtn.style.fontSize = '10px';
-                addBtn.textContent = '+ Page';
-                addBtn.onclick = () => {
-                    layoutObj.pages = layoutObj.pages || [];
-                    layoutObj.pages.push({ text: '' });
+                    const btnRow = document.createElement('div');
+                    btnRow.style.cssText = 'display: flex; gap: 4px; justify-content: flex-end;';
+                    const doneBtn = document.createElement('button');
+                    doneBtn.className = 'win98-btn';
+                    doneBtn.textContent = '✓ Done';
+                    doneBtn.onclick = () => commit();
+                    btnRow.appendChild(doneBtn);
+                    btnRow.appendChild(makeRowDeleteBtn(() => { layoutObj.pages.splice(idx, 1); onChange(); commit(); }));
+                    row.appendChild(btnRow);
+                },
+                newItem: () => {
                     layoutObj.pageFormula = layoutObj.pageFormula || 'v.page or 1';
-                    activePage = layoutObj.pages.length - 1;
-                    setDirty(true);
-                    renderTabs();
-                    renderPageBody();
-                };
-                tabsRow.appendChild(addBtn);
-                if ((layoutObj.pages || []).length > 0) {
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'win98-btn';
-                    delBtn.style.cssText = 'font-size: 10px; color: red;';
-                    delBtn.textContent = '− Remove Page';
-                    delBtn.onclick = () => {
-                        layoutObj.pages.splice(activePage, 1);
-                        activePage = Math.max(0, activePage - 1);
-                        setDirty(true);
-                        renderTabs();
-                        renderPageBody();
-                    };
-                    tabsRow.appendChild(delBtn);
-                }
-            };
-
-            renderTabs();
-            renderPageBody();
-            box.appendChild(tabsRow);
-            box.appendChild(pageBody);
+                    formulaInp.value = layoutObj.pageFormula;
+                    return { text: '' };
+                },
+                addLabel: '+ Page'
+            });
             return box;
         }
