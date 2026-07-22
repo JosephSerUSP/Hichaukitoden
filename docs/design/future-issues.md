@@ -36,19 +36,11 @@ the shared image loading, frame slicing, and idle animation clock.
 
 ---
 
-## 3. `partyGridOrigin` in renderer.lua duplicates `ui.panelContentOrigin`
+## 3. ~~`partyGridOrigin` in renderer.lua duplicates `ui.panelContentOrigin`~~ FIXED (22.07.2026)
 
-[`presentation/renderer.lua`](../presentation/renderer.lua)'s `partyGridOrigin(session)`
-re-derives a panel's content origin (`contentX`/`contentY` with the title-inset
-fallback, converted via `ui.toPx`) by hand, duplicating what
-[`ui.panelContentOrigin`](../presentation/ui.lua:209) already does and what
-`window_renderer.lua`'s `contentOrigin` already wraps. This is the one origin
-calculation that drifted from the shared helper — everything else (grid cell
-math in `actor_status.gridSlot`/`cellSize`) is properly centralized. Violates
-`docs/SPEC.md` §2.1 (no copy-pasted coordinate mappings).
-
-**Fix idea:** Replace the hand-rolled logic in `partyGridOrigin` with a call to
-`ui.panelContentOrigin`.
+`partyGridOrigin` now calls `ui.panelContentOrigin` directly instead of
+re-deriving the same title-inset math by hand. No behavior change (same
+defaults, same output).
 
 ---
 
@@ -98,31 +90,82 @@ field kind, matching the elements-tab pattern.
 
 ---
 
-## 6. Editor: gauge/page list editors don't use the shared row-list widget
+## 6. ~~Editor: gauge/page list editors don't use the shared row-list widget~~ FIXED (22.07.2026)
 
-`tools/editor/js/window-editor.js`'s `buildGaugeListEditor` (~line 593) and
-`buildPageListEditor` (~line 659) both hand-roll their own add/delete-only
-row UI instead of `buildRowListEditor` (`widgets.js:471`), which every other
-list in the editor (effects, traits, quest objectives/rewards, item refs)
-uses. Beyond the code duplication, this is a real UX inconsistency: gauge/page
-rows silently lack the multi-select, arrow-key nav, and Ctrl+C/X/V that users
-get everywhere else in the same modal.
-
-**Fix idea:** Rebuild both on top of `buildRowListEditor`, matching the
-row-editor pattern used for effects/traits.
+Both rebuilt on `buildRowListEditor`. Pages now render as list rows
+(double-click to edit) instead of a tab strip, gaining multi-select/arrow-nav/
+Ctrl+C/X/V for free; gauges keep the same inline field layout with
+Enter-to-commit added. No data shape changes.
 
 ---
 
-## 7. Editor: `alert()` vs the app's own `showToast()`
+## 7. ~~Editor: `alert()` vs the app's own `showToast()`~~ FIXED (22.07.2026)
 
-Eight call sites (`database.js`, `map-editor.js`, `widgets.js`, `studio.js`
-×5) still use the blocking, unstyled native `alert()` for messages that have
-equivalent non-blocking `showToast()` (`net.js:70`) calls elsewhere in the
-same app (e.g. quest/sequence rename errors). `alert()` breaks the Win98
-chrome and blocks the whole page; likely legacy code predating the toast
-helper.
+All 8 call sites swapped to `showToast()`; each was a pure informational
+message followed immediately by `return`, so no blocking-confirmation
+behavior was lost.
 
-**Fix idea:** Sweep the 8 call sites to `showToast()`, checking each one
-individually for whether it's a blocking-confirmation use (should stay
-`confirm()`/stay blocking) vs. an informational message (should become a
-toast).
+---
+
+## 8. Two remaining SCRIPT usages violate items/shop's S6 zero-SCRIPT rule
+
+`items` and `shop` are on the validator's `builtinSceneIds` allowlist (S6:
+zero SCRIPT commands) in `main.lua`'s `validateCommands` — but two usages
+still exist:
+
+- `shop`'s `buyItem` script (`data/scenes.json` scene `shop` → `scripts.buyItem`)
+  performs real side effects (`api.gainGold`, `api.giveItem`) gated by an
+  affordability check. Converting it needs either a new native command
+  combining conditional gold/item mutation, or extending `GIVE_ITEM_ID`'s
+  allowed `contexts` (currently `battle_phase`/`map`/`common`, missing
+  `scene`) to match `GAIN_GOLD`'s (which already includes `scene`) plus
+  verifying `scene_host.lua` actually executes that command in scene-hook
+  context. Not attempted this session — untested engine-vocabulary
+  extension, no live playtest coverage for shop purchases.
+- `items`'s `useItemAndPop` script (`data/scenes.json` scene `items` →
+  `scripts.useItemAndPop`) reads `api.items()[ctx.v.idx].name` to remember
+  the just-used item's display name for the "Used X!" popup. Unlike shop's
+  `v.items` (an explicit scene var with `.name`/`.cost`/`.stock` fields,
+  already formula-accessible — see item 8's sibling fix below), items'
+  inventory list is rendered via `SET_LIST windowId=items_left_panel
+  listId=inventory` and never materialized into a `v.*` array, so there's no
+  formula-accessible equivalent today. Fix idea: add an ordered
+  `session.inventoryNames` (or similar) to `formula.sessionView`
+  (`engine/formula.lua:133`) built with the *same* sort order the
+  `inventory` list source uses, mirroring the precedent already set by
+  `session.itemCount`/`equipCount`/`skillCount` ("lets scene hooks bound X
+  without SCRIPT" — see the comments at `formula.lua:148-191`). Getting the
+  ordering wrong would silently mislabel the popup, so this needs the
+  ordering verified against the real list-source code, not just eyeballed.
+
+(Fixed this session: `shopIncreaseQty`, the third SCRIPT usage in `shop`,
+converted to a pure `min()`/`floor()` formula — see the
+`scheduled-review-2026-07-22` branch.)
+
+---
+
+## 9. G2 golden battle log has been silently broken since commit `962194d` (~10 commits, unnoticed)
+
+`lovec . validate golden` / `tools/golden/check.ps1` currently **fail on
+`main`** — bisected precisely to `962194d` ("feat: add baseParams and
+growthMultiplier to actors in campaigns and data"): its parent `5869f0a`
+matches `tools/golden/battle.log` byte-for-byte, `962194d` itself diverges
+from the very first damage roll (`Pixie` takes 10 in the reference log, 9 in
+a fresh run) and the battle runs 3 events longer (33 vs 30 lines). The actor
+stat rebalancing in that commit shifted a threshold (crit/hit/flee — not yet
+pinned down further) enough to change the RNG-consumption pattern of the
+fixed `runGolden()` action script, even though `math.randomseed(12345)` is
+reseeded identically at the top of every run. Every commit since (10+,
+through current HEAD `866c244`) inherited the broken gate without anyone
+noticing or investigating — `git log --oneline -- tools/golden/battle.log`
+shows the log was last deliberately regenerated at `9edbd38`, before
+`962194d`.
+
+**Not fixed this session** — per `docs/SPEC.md`'s golden-log discipline
+("never regenerate a golden log to green a diff") this needs an owner
+decision (was the `962194d` stat rebalance intentional? if so, a deliberate,
+reviewed regeneration is the fix; if not, the actual bug is in whatever
+stat/threshold shifted) rather than an autonomous regeneration. Reproduce
+with: `git checkout 962194d -- .` (or any commit since) then
+`tools/golden/check.ps1` — mismatch; `git checkout 5869f0a -- .` then same
+script — match.
