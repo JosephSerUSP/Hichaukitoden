@@ -169,3 +169,12 @@ stat/threshold shifted) rather than an autonomous regeneration. Reproduce
 with: `git checkout 962194d -- .` (or any commit since) then
 `tools/golden/check.ps1` — mismatch; `git checkout 5869f0a -- .` then same
 script — match.
+
+Same-family gap in G3: `tools/golden/check-ui.ps1` also mismatches on `main`
+today for scenes `title` (pre-existing, already flagged in the
+`scheduled-review-2026-07-21` review as caused by `e9e5995`'s mini-map work)
+and `items` (not previously flagged — plausibly the same `962194d` stat
+rebalance, or the popupTimer/dynamic-stock-formatting commits, changed
+observable on-screen content without a log regen). Confirmed pre-existing on
+clean `main`, unrelated to this session's diff — this branch's own G3 run
+shows the identical two mismatches and nothing new.
