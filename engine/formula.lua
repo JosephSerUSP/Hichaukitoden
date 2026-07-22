@@ -17,28 +17,41 @@ local HELPERS = {
     max = math.max,
     round = function(x) return math.floor(x + 0.5) end,
     clamp = function(x, lo, hi) return math.max(lo, math.min(hi, x)) end,
-    -- Formats quantity for display: "x04" with leading zero; dark gray (palette index 7) when <10.
+    -- Formats quantity for display: "x04" with leading zero dark gray (palette
+    -- index 7) only on the leading zero; the x and actual digit stay normal.
     formatQty = function(qty)
         qty = math.floor(tonumber(qty) or 0)
-        if qty <= 0 then return "x00" end
-        local numStr = qty < 10 and ("0" .. tostring(qty)) or tostring(qty)
+        if qty <= 0 then return "x\\c[7]00\\c[0]" end
         if qty < 10 then
-            return "\\c[7]x" .. numStr .. "\\c[0]"
+            return "x\\c[7]0\\c[0]" .. tostring(qty)
         else
-            return "x" .. numStr
+            return "x" .. tostring(qty)
+        end
+    end,
+    -- Formats a quantity NUMBER (no "x" prefix) with a dark-gray leading zero
+    -- when <10, e.g. "01", "15". Used for the "qty×price" shop format.
+    formatQtyNum = function(qty)
+        qty = math.floor(tonumber(qty) or 0)
+        if qty < 10 then
+            return "\\c[7]0\\c[0]" .. tostring(qty)
+        else
+            return tostring(qty)
         end
     end,
     -- Formats price with leading zeros padded to the width of the shop's
     -- maxPrice (20 × most expensive item cost, set as v.maxPrice by openShop).
+    -- Leading zeros are dark gray (palette index 7); the G is yellow (palette 6).
     formatPrice = function(cost, maxPrice)
         cost = math.floor(tonumber(cost) or 0)
         maxPrice = math.floor(tonumber(maxPrice) or cost or 0)
         local maxDigits = #tostring(maxPrice)
         local priceStr = tostring(cost)
-        while #priceStr < maxDigits do
-            priceStr = "0" .. priceStr
+        local zeros = maxDigits - #priceStr
+        if zeros > 0 then
+            return "\\c[7]" .. string.rep("0", zeros) .. "\\c[0]" .. priceStr .. " \\c[6]G\\c[0]"
+        else
+            return priceStr .. " \\c[6]G\\c[0]"
         end
-        return priceStr .. "G"
     end,
 }
 

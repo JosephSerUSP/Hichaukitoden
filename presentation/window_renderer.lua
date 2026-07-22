@@ -647,8 +647,11 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         local afterTextX = ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
         if win.formatRight and win.formatRight ~= "" then
             local rightText = interpolate(win.formatRight, rEnv)
-            local rightW = ui.measureText(rightText)
-            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
+            -- Strip \c[N] color codes before measuring, since drawString
+            -- removes them during rendering but measureText counts them.
+            local measureText = rightText:gsub("\\c%[%d+%]", "")
+            local rightW = ui.measureText(measureText)
+            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(0.5))
             local rightX = rightEdge - rightW
             ui.drawString(rightText, rightX, rowY, color)
         end

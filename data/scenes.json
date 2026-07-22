@@ -2929,12 +2929,12 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.state == 2 and v.targetIdx > 1",
+          "condition": "v.state == 2",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "targetIdx",
-              "value": "v.targetIdx - 1"
+              "value": "(v.targetIdx + 1) % 4 + 1"
             }
           ]
         }
@@ -2953,12 +2953,12 @@
         },
         {
           "cmd": "IF",
-          "condition": "v.state == 2 and v.targetIdx < party.count",
+          "condition": "v.state == 2",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "targetIdx",
-              "value": "v.targetIdx + 1"
+              "value": "(v.targetIdx + 1) % 4 + 1"
             }
           ]
         }
@@ -3013,7 +3013,7 @@
               "assignments": [
                 {
                   "name": "state",
-                  "value": 1
+                  "value": 3
                 },
                 {
                   "name": "idx",
@@ -3037,6 +3037,30 @@
               "cmd": "SET_CURSOR",
               "windowId": "party",
               "index": 0
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "state",
+                  "value": 1
+                },
+                {
+                  "name": "popupTimer",
+                  "value": 0
+                }
+              ]
             }
           ]
         }
@@ -3065,6 +3089,30 @@
               "cmd": "SET_CURSOR",
               "windowId": "party",
               "index": 0
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.state == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "state",
+                  "value": 1
+                },
+                {
+                  "name": "popupTimer",
+                  "value": 0
+                }
+              ]
             }
           ]
         },
@@ -3121,10 +3169,10 @@
         "rect": {
           "x": 0.5,
           "y": 4.5,
-          "w": 31,
+          "w": 20,
           "h": 13
         },
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2 or v.state == 3",
         "style": "list",
         "title": null,
         "emptyText": "No items.",
@@ -3140,12 +3188,31 @@
       },
       {
         "id": "help",
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2 or v.state == 3",
         "lineSpacing": 1,
         "content": [
           {
             "type": "text",
             "text": "{v.popupText and v.popupText ~= '' and v.popupText or sel('items_left_panel').description}"
+          }
+        ]
+      },
+      {
+        "id": "items_popup",
+        "rect": {
+          "x": 8,
+          "y": 10,
+          "w": 16,
+          "h": 3
+        },
+        "visible": "v.popupTimer > 0",
+        "style": "frame",
+        "title": null,
+        "align": "center",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.popupText}"
           }
         ]
       },
@@ -3157,9 +3224,9 @@
           "w": 32,
           "h": 12
         },
-        "visible": "v.state == 1 or v.state == 2",
+        "visible": "v.state == 1 or v.state == 2 or v.state == 3",
         "style": "partyGrid",
-        "title": "v.state == 2 and 'Use on whom?' or null",
+        "title": null,
         "cursor": "v.state == 2 and v.targetIdx or 0",
         "content": [
           {
@@ -4046,7 +4113,7 @@
       "on_right": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and v.count > 0 and v.items[v.idx]",
+          "condition": "v._guard == 0 and v.state == 1 and v.count > 0 and v.items[v.idx] ~= nil",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -4230,7 +4297,7 @@
           "w": 32,
           "h": 4
         },
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2",
         "style": "frame",
         "content": [
           {
@@ -4244,18 +4311,18 @@
         "rect": {
           "x": 0.5,
           "y": 4.5,
-          "w": 31,
+          "w": 24,
           "h": 13
         },
         "style": "list",
         "emptyText": "No items available.",
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2",
         "content": [
           {
             "type": "list",
             "listId": "v:items",
             "format": "{name}",
-            "formatRight": "{v.qty and v.qty > 1 and formatPrice(cost * v.qty, v.maxPrice) or formatPrice(cost, v.maxPrice)}",
+            "formatRight": "{formatQtyNum(v.qty)} x  {formatPrice(cost, v.maxPrice)}",
             "cursor": "v.idx"
           }
         ]
@@ -4275,7 +4342,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{sel('shop_list').name} x{v.qty} = {v.items[v.idx].cost * v.qty} G"
+            "text": "{v.qty}x {sel('shop_list').name}\nTotal: {formatPrice(v.items[v.idx].cost * v.qty, v.maxPrice)}"
           },
           {
             "type": "list",
@@ -4292,7 +4359,7 @@
           "w": 32,
           "h": 12
         },
-        "visible": "v.state == 1",
+        "visible": "v.state == 1 or v.state == 2",
         "style": "partyGrid",
         "cursor": 0,
         "content": [
