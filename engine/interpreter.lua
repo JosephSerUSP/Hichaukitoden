@@ -511,8 +511,9 @@ handlers.EMIT_TEXT = function(cmd, ctx)
 end
 
 handlers.CHANGE_ITEM = function(cmd, ctx)
-    local count = cmd.count or 1
-    if cmd.item == "random" then
+    local count = math.floor(evalFormula(cmd.count or 1, ctx))
+    local itemId = cmd.item
+    if itemId == "random" then
         local loot = "1"
         local mapData = ctx.session.currentMapData
         if mapData and mapData.treasures and #mapData.treasures > 0 then
@@ -524,10 +525,15 @@ handlers.CHANGE_ITEM = function(cmd, ctx)
             ctx.session:addItem(loot, count)
         end
     else
+        local loader = ctx.loader or (ctx.session and ctx.session.loader)
+        if type(itemId) == "string" and loader and not loader.getItem(itemId) then
+            local evalId = evalFormula(itemId, ctx)
+            if evalId and evalId ~= 0 then itemId = tostring(evalId) end
+        end
         if count < 0 then
-            if ctx.session:hasItem(cmd.item, 1) then ctx.session:addItem(cmd.item, count) end
+            if ctx.session:hasItem(itemId, 1) then ctx.session:addItem(itemId, count) end
         else
-            ctx.session:addItem(cmd.item, count)
+            ctx.session:addItem(itemId, count)
         end
     end
 end

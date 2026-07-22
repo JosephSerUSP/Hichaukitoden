@@ -905,7 +905,8 @@
       "contexts": [
         "battle_phase",
         "map",
-        "common"
+        "common",
+        "scene"
       ],
       "interactive": false,
       "description": "Gives or takes items by a signed count."

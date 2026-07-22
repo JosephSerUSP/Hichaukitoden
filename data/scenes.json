@@ -3000,10 +3000,6 @@
               "value": 1
             },
             {
-              "cmd": "SCRIPT",
-              "ref": "useItemAndPop"
-            },
-            {
               "cmd": "USE_ITEM",
               "itemIndex": "v.idx",
               "target": "v.targetIdx"
@@ -3022,10 +3018,6 @@
                 {
                   "name": "targetIdx",
                   "value": 1
-                },
-                {
-                  "name": "popupText",
-                  "value": "'Used ' .. v._popupItemName .. '!'"
                 },
                 {
                   "name": "popupTimer",
@@ -3135,32 +3127,19 @@
       "on_frame": [
         {
           "cmd": "IF",
-          "condition": "v.popupTimer > 0",
+          "condition": "(v.popupTimer or 0) > 0",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "popupTimer",
-              "value": "max(0, v.popupTimer - 0.016)"
-            },
-            {
-              "cmd": "IF",
-              "condition": "v.popupTimer <= 0",
-              "then": [
-                {
-                  "cmd": "SET_VAR",
-                  "name": "popupText",
-                  "value": "''"
-                }
-              ]
+              "value": "max(0, (v.popupTimer or 0) - 0.016)"
             }
           ]
         }
       ]
     },
     "config": {},
-    "scripts": {
-      "useItemAndPop": "local inv = api.items()\nlocal item = inv[ctx.v.idx]\nctx.v._popupItemName = item and item.name or 'item'"
-    },
+    "scripts": {},
     "draw": "windows",
     "backdrop": "map",
     "windows": [
@@ -3193,7 +3172,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{v.popupText and v.popupText ~= '' and v.popupText or sel('items_left_panel').description}"
+            "text": "{((v.popupTimer or 0) > 0 and ('Used ' .. (sel('items_left_panel').name or 'item') .. '!')) or sel('items_left_panel').description}"
           }
         ]
       },
@@ -4121,8 +4100,9 @@
               "value": 1
             },
             {
-              "cmd": "SCRIPT",
-              "ref": "shopIncreaseQty"
+              "cmd": "SET_VAR",
+              "name": "qty",
+              "value": "min((v.qty or 1) + 1, min(v.items[v.idx].cost > 0 and floor(session.gold / v.items[v.idx].cost) or (v.items[v.idx].stock or 99), v.items[v.idx].stock or 99))"
             }
           ]
         },
@@ -4146,7 +4126,7 @@
       "on_left": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and v.qty > 1",
+          "condition": "v._guard == 0 and v.state == 1 and (v.qty or 1) > 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -4156,7 +4136,7 @@
             {
               "cmd": "SET_VAR",
               "name": "qty",
-              "value": "v.qty - 1"
+              "value": "(v.qty or 1) - 1"
             }
           ]
         },
@@ -4257,8 +4237,26 @@
               "condition": "v.confirmIdx == 1",
               "then": [
                 {
-                  "cmd": "SCRIPT",
-                  "ref": "buyItem"
+                  "cmd": "GAIN_GOLD",
+                  "amount": "-(v.items[v.idx].cost * (v.qty or 1))"
+                },
+                {
+                  "cmd": "CHANGE_ITEM",
+                  "item": "v.items[v.idx].id",
+                  "count": "(v.qty or 1)"
+                },
+                {
+                  "cmd": "SET_VAR",
+                  "assignments": [
+                    {
+                      "name": "state",
+                      "value": 1
+                    },
+                    {
+                      "name": "qty",
+                      "value": 1
+                    }
+                  ]
                 }
               ],
               "else": [
@@ -4281,10 +4279,7 @@
         }
       ]
     },
-    "scripts": {
-      "shopIncreaseQty": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal maxAfford = item.cost > 0 and math.floor(ctx.session.gold / item.cost) or 1\nlocal maxStock = item.stock or 99\nlocal cap = math.min(maxAfford, maxStock)\nif ctx.v.qty < cap then\n  ctx.v.qty = ctx.v.qty + 1\nend",
-      "buyItem": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal total = item.cost * ctx.v.qty\nif ctx.session.gold < total then ctx.v.state = 1; ctx.v.qty = 1; return end\napi.gainGold(-total)\napi.giveItem(item.id, ctx.v.qty)\nctx.v.state = 1\nctx.v.qty = 1"
-    },
+    "scripts": {},
     "config": {},
     "draw": "windows",
     "backdrop": "map",
