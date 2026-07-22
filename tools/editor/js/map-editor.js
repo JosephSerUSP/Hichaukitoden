@@ -426,6 +426,11 @@
                     openEventModal(x, y);
                 }
             });
+
+            window.addEventListener('mouseup', () => {
+                isMouseDown = false;
+                lightObjectDragging = false;
+            });
         }
 
         // Pastes eventCopyBuffer at (x, y) on the current map, if the tile is free.
@@ -1171,7 +1176,6 @@
                     }
                 }
             });
-            canvas.addEventListener('mouseup', () => { lightObjectDragging = false; });
             map.light = out;
             setDirty(true);
             renderGridCells();
