@@ -233,6 +233,7 @@ const server = http.createServer((req, res) => {
                 skyRow: manifest.skyRow != null ? manifest.skyRow : null,
                 ceilingRow: manifest.ceilingRow != null ? manifest.ceilingRow : null,
                 floorRow: manifest.floorRow != null ? manifest.floorRow : null,
+                tiles: manifest.tiles || {},
                 width: w,
                 height: h,
             };
@@ -254,6 +255,7 @@ const server = http.createServer((req, res) => {
                 if (p.skyRow != null) manifest.skyRow = p.skyRow;
                 if (p.ceilingRow != null) manifest.ceilingRow = p.ceilingRow;
                 if (p.floorRow != null) manifest.floorRow = p.floorRow;
+                if (p.tiles && typeof p.tiles === 'object' && !Array.isArray(p.tiles)) manifest.tiles = p.tiles;
                 const manifestPath = path.join(PROJECT_DIR, 'assets', 'tilesets', `${p.name}.json`);
                 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
                 res.writeHead(200, { 'Content-Type': 'application/json' });

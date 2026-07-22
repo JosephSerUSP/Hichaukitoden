@@ -411,6 +411,13 @@
                 header.textContent = t.name + (t.width ? ` (${t.width}×${t.height}, ${t.height / 64} rows)` : '');
                 block.appendChild(header);
 
+                const preview = document.createElement('img');
+                preview.src = `/assets/tilesets/${encodeURIComponent(t.name)}.png`;
+                preview.alt = `${t.name} atlas`;
+                preview.style.cssText = 'display:block; width:128px; max-height:96px; object-fit:contain; object-position:left top; image-rendering:pixelated; border:1px solid var(--win-shadow); margin:3px 0; background:#000;';
+                preview.title = 'Atlas preview. Semantic tile atlas coordinates use [row, column], zero-based.';
+                block.appendChild(preview);
+
                 const row = document.createElement('div');
                 row.style.cssText = 'display: flex; gap: 4px; align-items: center; flex-wrap: wrap;';
 
@@ -442,6 +449,43 @@
                 row.appendChild(status);
 
                 block.appendChild(row);
+
+                // Semantic tiles are intentionally data-first for this first
+                // pass: their atlas cell, collision, and emitter properties
+                // travel together in one manifest and can be pasted from an
+                // art pipeline without touching map geometry.
+                const semantic = document.createElement('textarea');
+                semantic.className = 'win98-input';
+                semantic.style.cssText = 'display:block; width:100%; height:72px; box-sizing:border-box; margin-top:4px; font:9px monospace;';
+                semantic.title = 'Named tile properties JSON. atlas is [row,column]; emitsLight has color/radius/falloff.';
+                semantic.value = JSON.stringify(t.tiles || {}, null, 2);
+                semantic.onchange = () => {
+                    try {
+                        const value = JSON.parse(semantic.value || '{}');
+                        if (!value || Array.isArray(value)) throw new Error('Expected an object');
+                        t.tiles = value;
+                        semantic.style.borderColor = '';
+                        setDirty(true);
+                    } catch (err) { semantic.style.borderColor = '#cc0000'; }
+                };
+                const semanticLabel = document.createElement('div');
+                semanticLabel.style.cssText = 'font-size:9px; margin-top:4px;';
+                semanticLabel.textContent = 'Semantic tiles (e.g. wall_torch: atlas, solid, emitsLight)';
+                block.appendChild(semanticLabel);
+                block.appendChild(semantic);
+                const addSemantic = document.createElement('button');
+                addSemantic.className = 'win98-btn';
+                addSemantic.style.cssText = 'font-size:9px; margin-top:3px;';
+                addSemantic.textContent = 'Add Semantic Tile';
+                addSemantic.onclick = () => {
+                    const id = window.prompt('Tile id (letters, digits, underscore):', 'wall_torch');
+                    if (!id || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(id)) return;
+                    t.tiles = t.tiles || {};
+                    if (!t.tiles[id]) t.tiles[id] = { atlas: [0, 0], solid: true };
+                    semantic.value = JSON.stringify(t.tiles, null, 2);
+                    setDirty(true);
+                };
+                block.appendChild(addSemantic);
                 box.appendChild(block);
             });
 
@@ -507,17 +551,12 @@
                 buildBattleScreenPreview(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
             } else if (tabName === 'tileset') {
-                header.textContent = 'Tileset Atlases & Fog Presets';
+                header.textContent = 'Tileset Atlases';
+                buildTilesetRegistryEditor(panel);
+            } else if (tabName === 'fog') {
+                header.textContent = 'Fog Presets';
                 dbPayload.engine.fogPresets = dbPayload.engine.fogPresets || [];
                 buildFogPresetsEditor(panel);
-                const sep = document.createElement('div');
-                sep.style.cssText = 'border-top: 1px solid var(--win-shadow); margin: 10px 0;';
-                panel.appendChild(sep);
-                const tilesetHeader = document.createElement('div');
-                tilesetHeader.style.cssText = 'font-weight: bold; font-size: 11px; margin-bottom: 6px;';
-                tilesetHeader.textContent = 'Tileset Atlases';
-                panel.appendChild(tilesetHeader);
-                buildTilesetRegistryEditor(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.fogPresets, rerender);
             } else if (tabName === 'effectTypes') {
                 header.textContent = 'Effect Type Registry';

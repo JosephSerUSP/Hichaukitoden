@@ -204,6 +204,7 @@ local function getAtlas(name)
             skyRow = manifest.skyRow or (not loadedManifest and 0) or nil,
             floorRow = manifest.floorRow or (not loadedManifest and 3) or nil,
             ceilingRow = manifest.ceilingRow, -- nil = solid ceiling stays a flat gradient
+            tiles = manifest.tiles or {}, -- named semantic tile definitions
         }
         atlasCache[name] = entry
         return entry
@@ -377,7 +378,7 @@ end
 -- Cached per map/light-table identity; rebuilt only when either changes
 -- (e.g. a fresh map load, or the editor writing new light data).
 local function getLightTexture(mapData)
-    local light = mapData and mapData.light
+    local light = mapData and (mapData.runtimeLight or mapData.light)
     if not light or #light == 0 then return nil end
     if lightTexCache.mapData == mapData and lightTexCache.lightRef == light then
         return lightTexCache.tex, lightTexCache.w, lightTexCache.h
@@ -469,6 +470,28 @@ local function buildDoorLookup(session)
                 lookup[(ev.x + 1) .. "," .. (ev.y + 1)] = true
             end
         end
+    end
+    return lookup
+end
+
+-- Named materials are sparse map overrides: normal geometry remains in the
+-- compact #/. layout, while a material selects a specific atlas cell and its
+-- properties.  Runtime procedural light fixtures share this lookup.
+local function buildMaterialLookup(session)
+    local lookup = {}
+    local data = session.currentMapData or {}
+    for y, row in ipairs(data.materials or {}) do
+        for x, id in ipairs(row) do
+            if id and id ~= "" then lookup[x .. "," .. y] = id end
+        end
+    end
+    for _, source in ipairs(data.lightObjects or {}) do
+        if source.material then
+            lookup[(source.x + 1) .. "," .. (source.y + 1)] = source.material
+        end
+    end
+    for _, source in ipairs(session.generatedLightObjects or {}) do
+        lookup[(source.x + 1) .. "," .. (source.y + 1)] = source.material
     end
     return lookup
 end
@@ -582,7 +605,7 @@ function viewport_3d.draw(session)
     -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
     local screenWpx = ui.toPx(ui.screenWidthTiles)
-    local light = mapData and mapData.light
+    local light = (mapData and mapData.runtimeLight) or (mapData and mapData.light)
 
     -- Player-cell vertex light, used to tint the gradient FALLBACK as a
     -- single color (the shader path samples the light texture per-pixel
@@ -624,6 +647,7 @@ function viewport_3d.draw(session)
     end
 
     local doorLookup = buildDoorLookup(session)
+    local materialLookup = buildMaterialLookup(session)
 
     -- ── 3. Perspective Raycasting Loop with Fish-eye Correction ────────────────
     local zBuffer = {}
@@ -750,7 +774,11 @@ function viewport_3d.draw(session)
 
         if atlas then
             local originX, originY
-            if doorLookup[mapX .. "," .. mapY] then
+            local material = atlas.tiles[materialLookup[mapX .. "," .. mapY] or ""]
+            if material and material.atlas then
+                originY = material.atlas[1] * ATLAS_TILE
+                originX = material.atlas[2] * ATLAS_TILE
+            elseif doorLookup[mapX .. "," .. mapY] then
                 originX = doorVariant(mapX, mapY) * ATLAS_TILE
                 originY = atlas.doorRow * ATLAS_TILE
             else

@@ -1069,6 +1069,7 @@
                     <div class="field-row-stacked" style="display: flex; gap: 10px; font-size: 10px;">
                         <label><input type="radio" name="light-tool" value="paint" checked onchange="setLightTool(this.value)" /> Paint</label>
                         <label><input type="radio" name="light-tool" value="blur" onchange="setLightTool(this.value)" /> Blur</label>
+                        <label><input type="radio" name="light-tool" value="object" onchange="setLightTool(this.value)" /> Lamp</label>
                     </div>
                     <div class="field-row-stacked" style="display: flex; align-items: center; gap: 6px; margin-top: 6px;" id="light-color-row">
                         <label style="white-space: nowrap;">Tint Color:</label>
@@ -1078,6 +1079,9 @@
                     <p id="light-blur-hint" style="display: none; font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 6px 0 0;">
                         Softens harsh edges by averaging each vertex with its neighbors — click or drag repeatedly to smooth further.
                     </p>
+                    <p id="light-object-hint" style="display: none; font-size: 10px; color: var(--win-dark-shadow); line-height: 1.3; margin: 6px 0 0;">
+                        Click a cell to add/remove a lighting-only lamp. Lamps do not create events or alter collision.
+                    </p>
                     <div class="field-row-stacked" style="margin-top: 6px;">
                         <label>Brush Radius: <span id="light-radius-value">0</span> vertices (round)</label>
                         <input type="range" id="light-brush-radius" min="0" max="6" value="0"
@@ -1086,6 +1090,16 @@
                     <button class="win98-btn" style="width: 100%; margin-top: 8px;" onclick="clearMapLight()">
                         Reset Map to Full Brightness
                     </button>
+                    <button class="win98-btn" style="width: 100%; margin-top: 4px;" onclick="bakeMapLighting()">Bake Lighting from Lamps</button>
+                    <div id="light-object-settings" style="display:none; margin-top:8px; border-top:1px solid var(--win-shadow); padding-top:6px;">
+                        <div class="sidebar-title">Selected Lamp</div>
+                        <div class="field-row-stacked"><label>Color</label><input id="lamp-color" type="color" value="#ff9438" oninput="updateSelectedLamp('color', this.value)" /></div>
+                        <div class="field-row-stacked"><label>Radius</label><input id="lamp-radius" type="number" min="0.1" step="0.1" value="4" oninput="updateSelectedLamp('radius', this.value)" /></div>
+                        <div class="field-row-stacked"><label>Falloff</label><input id="lamp-falloff" type="number" min="0.1" step="0.1" value="2" oninput="updateSelectedLamp('falloff', this.value)" /></div>
+                        <div class="field-row-stacked"><label>Material</label><input id="lamp-material" class="win98-input" value="wall_torch" oninput="updateSelectedLamp('material', this.value)" /></div>
+                        <button class="win98-btn" onclick="copySelectedLamp()">Copy Lamp</button>
+                        <button class="win98-btn" onclick="deleteSelectedLamp()">Delete Lamp</button>
+                    </div>
                 </div>
 
                 <!-- 3. MAP HIERARCHY (Bottom aligned, stretching) -->
@@ -1217,7 +1231,8 @@
                     <button id="engine-tab-progression" class="db-tab-btn" onclick="setEngineTab('progression')">Progression</button>
                     <button id="engine-tab-dungeon" class="db-tab-btn" onclick="setEngineTab('dungeon')">Map &amp; Dungeon</button>
                     <button id="engine-tab-rendering" class="db-tab-btn" onclick="setEngineTab('rendering')">Rendering</button>
-                    <button id="engine-tab-tileset" class="db-tab-btn" onclick="setEngineTab('tileset')">Tileset &amp; Fog</button>
+                    <button id="engine-tab-tileset" class="db-tab-btn" onclick="setEngineTab('tileset')">Tilesets</button>
+                    <button id="engine-tab-fog" class="db-tab-btn" onclick="setEngineTab('fog')">Fog Presets</button>
                     <button id="engine-tab-effectTypes" class="db-tab-btn" onclick="setEngineTab('effectTypes')">Effect Types</button>
                     <button id="engine-tab-traitCodes" class="db-tab-btn" onclick="setEngineTab('traitCodes')">Trait Codes</button>
                     <button id="engine-tab-metaKeys" class="db-tab-btn" onclick="setEngineTab('metaKeys')">Meta Keys</button>

@@ -95,6 +95,9 @@
         let mapCanvas = null;
         let ctx = null;
         let selectedEvent = null;
+        let selectedLightObject = null;
+        let lightObjectCopyBuffer = null;
+        let lightObjectDragging = false;
         let dragOffset = { x: 0, y: 0 };
         let mouseX = 0, mouseY = 0;
         let eventCopyBuffer = null;
@@ -114,6 +117,10 @@
         }
 
         function loadActiveMap() {
+            selectedLightObject = null;
+            lightObjectDragging = false;
+            const lampSettings = document.getElementById('light-object-settings');
+            if (lampSettings) lampSettings.style.display = 'none';
             // Initialize canvas event listeners once canvas is loaded
             const canvas = document.getElementById('map-canvas');
             if (canvas && !mapCanvas) {
@@ -292,6 +299,21 @@
                     }
                 }
             }
+
+            if (editingMode === 'light') {
+                const alpha = lightToolMode === 'object' ? 1 : 0.42;
+                (map.lightObjects || []).forEach(light => {
+                    ctx.save();
+                    ctx.globalAlpha = alpha;
+                    ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('💡', (light.x + 0.5) * TILE_SIZE, (light.y + 0.5) * TILE_SIZE + 1);
+                    if (light === selectedLightObject) {
+                        ctx.strokeStyle = '#00a000'; ctx.lineWidth = 2;
+                        ctx.strokeRect(light.x * TILE_SIZE + 1, light.y * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                    }
+                    ctx.restore();
+                });
+            }
         }
 
         function initCanvasEvents(canvas) {
@@ -324,6 +346,11 @@
                     }
                 } else if (editingMode === 'light') {
                     if (e.button === 0) {
+                        if (lightToolMode === 'object') {
+                            selectOrCreateLightObjectAt(x, y);
+                            lightObjectDragging = !!selectedLightObject;
+                            return;
+                        }
                         // Light is painted onto grid CORNERS, not cells, so the
                         // nearest vertex is a round() of the same pixel math the
                         // cell coords above use a floor() of.
@@ -359,7 +386,9 @@
                     // Vertices range 0..width/height inclusive (one more than
                     // cells), so this is bounds-checked separately below by
                     // paintLightAt rather than reusing the cell bounds check.
-                    if (isMouseDown) {
+                    if (lightObjectDragging && lightToolMode === 'object' && selectedLightObject) {
+                        moveSelectedLamp(x, y);
+                    } else if (isMouseDown && lightToolMode !== 'object') {
                         const vx = Math.round((e.clientX - rect.left) / TILE_SIZE);
                         const vy = Math.round((e.clientY - rect.top) / TILE_SIZE);
                         paintLightAt(vx, vy);
@@ -438,6 +467,12 @@
                 const x = Math.floor((mouseX - rect.left) / TILE_SIZE);
                 const y = Math.floor((mouseY - rect.top) / TILE_SIZE);
                 pasteEventAt(x, y);
+            }
+            if (editingMode === 'light' && lightToolMode === 'object' && lightObjectCopyBuffer && e.ctrlKey && e.key === 'v') {
+                const canvas = document.getElementById('map-canvas');
+                if (!canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                pasteLampAt(Math.floor((mouseX - rect.left) / TILE_SIZE), Math.floor((mouseY - rect.top) / TILE_SIZE));
             }
         });
 
@@ -521,6 +556,9 @@
             lightToolMode = mode;
             document.getElementById('light-color-row').style.display = mode === 'paint' ? 'flex' : 'none';
             document.getElementById('light-blur-hint').style.display = mode === 'blur' ? 'block' : 'none';
+            document.getElementById('light-object-hint').style.display = mode === 'object' ? 'block' : 'none';
+            document.getElementById('light-object-settings').style.display = mode === 'object' && selectedLightObject ? 'block' : 'none';
+            renderGridCells();
         }
 
         function setLightRadius(v) {
@@ -1041,4 +1079,100 @@
                 const filename = path.split('/').pop();
                 document.getElementById('prop-map-tileset').value = filename.replace(/\.[^/.]+$/, '');
             });
+        }
+
+        function refreshSelectedLampSettings() {
+            const panel = document.getElementById('light-object-settings');
+            panel.style.display = selectedLightObject ? 'block' : 'none';
+            if (!selectedLightObject) return;
+            document.getElementById('lamp-color').value = rgb01ToHex(selectedLightObject.color || [1, 0.58, 0.22]);
+            document.getElementById('lamp-radius').value = selectedLightObject.radius || 4;
+            document.getElementById('lamp-falloff').value = selectedLightObject.falloff || 2;
+            document.getElementById('lamp-material').value = selectedLightObject.material || '';
+        }
+
+        function selectOrCreateLightObjectAt(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || x < 0 || y < 0) return;
+            map.lightObjects = map.lightObjects || [];
+            selectedLightObject = map.lightObjects.find(l => l.x === x && l.y === y);
+            if (!selectedLightObject) {
+                selectedLightObject = { x, y, color: [1, 0.58, 0.22], radius: 4, falloff: 2, material: 'wall_torch' };
+                map.lightObjects.push(selectedLightObject);
+            }
+            refreshSelectedLampSettings();
+            setDirty(true);
+            renderGridCells();
+        }
+
+        function moveSelectedLamp(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !selectedLightObject || x < 0 || y < 0) return;
+            const occupied = (map.lightObjects || []).find(l => l !== selectedLightObject && l.x === x && l.y === y);
+            if (occupied || (selectedLightObject.x === x && selectedLightObject.y === y)) return;
+            selectedLightObject.x = x; selectedLightObject.y = y;
+            setDirty(true); renderGridCells();
+        }
+
+        function updateSelectedLamp(key, value) {
+            if (!selectedLightObject) return;
+            selectedLightObject[key] = key === 'color' ? hexToRgb01(value) : (key === 'material' ? value.trim() : Math.max(0.1, parseFloat(value) || 0.1));
+            setDirty(true); renderGridCells();
+        }
+
+        function copySelectedLamp() {
+            if (selectedLightObject) lightObjectCopyBuffer = JSON.stringify(selectedLightObject);
+        }
+
+        function pasteLampAt(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !lightObjectCopyBuffer || x < 0 || y < 0 || (map.lightObjects || []).some(l => l.x === x && l.y === y)) return;
+            selectedLightObject = JSON.parse(lightObjectCopyBuffer);
+            selectedLightObject.x = x; selectedLightObject.y = y;
+            map.lightObjects = map.lightObjects || []; map.lightObjects.push(selectedLightObject);
+            refreshSelectedLampSettings(); setDirty(true); renderGridCells();
+        }
+
+        function deleteSelectedLamp() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !selectedLightObject) return;
+            map.lightObjects = (map.lightObjects || []).filter(l => l !== selectedLightObject);
+            selectedLightObject = null; refreshSelectedLampSettings(); setDirty(true); renderGridCells();
+        }
+
+        function bakeVisible(grid, x0, y0, x1, y1) {
+            let dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+            let sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx - dy;
+            let x = x0, y = y0;
+            while (x !== x1 || y !== y1) {
+                if ((x !== x0 || y !== y0) && (!grid[y] || grid[y][x] === '#')) return false;
+                const e2 = err * 2;
+                if (e2 > -dy) { err -= dy; x += sx; }
+                if (e2 < dx) { err += dx; y += sy; }
+            }
+            return true;
+        }
+
+        // Bake is intentionally explicit: it replaces the baseline grid; any
+        // subsequent Paint stroke becomes the artist's direct override.
+        function bakeMapLighting() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !map.layout || !map.layout.length) return;
+            const h = map.layout.length, w = map.layout[0].length, ambient = [0.12, 0.12, 0.12];
+            const out = Array.from({ length: h + 1 }, () => Array.from({ length: w + 1 }, () => ambient.slice()));
+            (map.lightObjects || []).forEach(source => {
+                const radius = Math.max(0.1, source.radius || 4), color = source.color || [1, 0.58, 0.22];
+                for (let vy = Math.max(0, Math.floor(source.y - radius)); vy <= Math.min(h, Math.ceil(source.y + radius)); vy++) {
+                    for (let vx = Math.max(0, Math.floor(source.x - radius)); vx <= Math.min(w, Math.ceil(source.x + radius)); vx++) {
+                        const dx = vx - (source.x + 0.5), dy = vy - (source.y + 0.5), d = Math.hypot(dx, dy);
+                        if (d > radius || !bakeVisible(map.layout, source.x, source.y, Math.max(0, Math.min(w - 1, vx)), Math.max(0, Math.min(h - 1, vy)))) continue;
+                        const s = Math.pow(1 - d / radius, source.falloff || 2);
+                        for (let c = 0; c < 3; c++) out[vy][vx][c] = Math.min(1, out[vy][vx][c] + color[c] * s);
+                    }
+                }
+            });
+            canvas.addEventListener('mouseup', () => { lightObjectDragging = false; });
+            map.light = out;
+            setDirty(true);
+            renderGridCells();
         }

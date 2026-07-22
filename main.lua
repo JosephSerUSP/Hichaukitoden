@@ -1546,6 +1546,27 @@ elseif paramDef.type == "script" then
             end
         end
 
+        -- Lighting-only objects are authored independently of gameplay
+        -- events.  Fixed maps may bake them into `light`; procedural maps
+        -- use the same schema at generation/load time.
+        for li, source in ipairs(map.lightObjects or {}) do
+            local desc = "map '" .. tostring(map.name) .. "' light object " .. li
+            check(type(source.x) == "number" and type(source.y) == "number", desc .. " needs numeric x/y")
+            check(type(source.radius) == "number" and source.radius > 0, desc .. " needs radius > 0")
+            check(type(source.color) == "table" and #source.color == 3, desc .. " needs an RGB color")
+            if source.color then
+                for ci, ch in ipairs(source.color) do
+                    check(type(ch) == "number" and ch >= 0 and ch <= 1, desc .. " color channel " .. ci .. " is out of range")
+                end
+            end
+        end
+        if map.materials and map.layout then
+            check(#map.materials == #map.layout, "map '" .. tostring(map.name) .. "' materials height must match layout")
+            for ri, row in ipairs(map.materials) do
+                check(type(row) == "table" and #row == #map.layout[1], "map '" .. tostring(map.name) .. "' materials row " .. ri .. " must match layout width")
+            end
+        end
+
         -- Optional per-map fog: either { preset = "id" } referencing
         -- engine.fogPresets, or an inline config (docs/design/
         -- fog-presets-and-panorama.md). The renderer treats absent fog as

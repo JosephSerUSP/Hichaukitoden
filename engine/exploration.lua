@@ -1,6 +1,7 @@
 local config = require("engine.config")
 local conditions = require("engine.conditions")
 local formulaEngine = require("engine.formula")
+local lighting = require("engine.lighting")
 
 local exploration = {}
 
@@ -111,6 +112,7 @@ function exploration.generateDungeon(mapData, seed)
     local exitX, exitY = rooms[#rooms].cx, rooms[#rooms].cy
     
     local generatedEvents = {}
+    local generatedLights = {}
     
     local openTiles = {}
     for y = 2, height - 1 do
@@ -125,6 +127,23 @@ function exploration.generateDungeon(mapData, seed)
     for i = #openTiles, 2, -1 do
         local j = math.random(i)
         openTiles[i], openTiles[j] = openTiles[j], openTiles[i]
+    end
+
+    -- Procedural maps get a deterministic baseline of wall torches.  These
+    -- are lighting-only objects (not events), so they cannot accidentally
+    -- trigger scripts or consume an event slot.  A tileset may later render
+    -- the matching material differently without changing this placement rule.
+    for y = 2, height - 1 do
+        for x = 2, width - 1 do
+            if grid[y][x] == "#" and math.random(9) == 1 then
+                local adjacentFloor = (grid[y - 1] and grid[y - 1][x] == ".")
+                    or (grid[y + 1] and grid[y + 1][x] == ".")
+                    or grid[y][x - 1] == "." or grid[y][x + 1] == "."
+                if adjacentFloor then
+                    table.insert(generatedLights, { x = x - 1, y = y - 1, material = "wall_torch", color = { 1, 0.58, 0.22 }, radius = 4 })
+                end
+            end
+        end
     end
     
     local placedCount = 1
@@ -169,7 +188,7 @@ function exploration.generateDungeon(mapData, seed)
         end
     end
     
-    return grid, startX, startY, generatedEvents
+    return grid, startX, startY, generatedEvents, generatedLights
 end
 
 -- Initialize map state in GameSession
@@ -194,9 +213,11 @@ function exploration.loadMap(session, mapIdx)
         startX, startY = startXDef + 1, startYDef + 1 -- Lua is 1-indexed, systems spawn is 0-indexed
     else
         -- Procedurally generate floor layout and inject events
-        local generatedEvents
-        grid, startX, startY, generatedEvents = exploration.generateDungeon(mapData, os.time() + mapIdx)
+        local generatedEvents, generatedLights
+        grid, startX, startY, generatedEvents, generatedLights = exploration.generateDungeon(mapData, os.time() + mapIdx)
         session.currentMapData.events = generatedEvents
+        session.generatedLightObjects = generatedLights
+        session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
     end
     
     session.mapGrid = grid
