@@ -4121,8 +4121,9 @@
               "value": 1
             },
             {
-              "cmd": "SCRIPT",
-              "ref": "shopIncreaseQty"
+              "cmd": "SET_VAR",
+              "name": "qty",
+              "value": "min(v.qty + 1, min(v.items[v.idx].cost > 0 and floor(session.gold / v.items[v.idx].cost) or 1, v.items[v.idx].stock or 99))"
             }
           ]
         },
@@ -4282,7 +4283,6 @@
       ]
     },
     "scripts": {
-      "shopIncreaseQty": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal maxAfford = item.cost > 0 and math.floor(ctx.session.gold / item.cost) or 1\nlocal maxStock = item.stock or 99\nlocal cap = math.min(maxAfford, maxStock)\nif ctx.v.qty < cap then\n  ctx.v.qty = ctx.v.qty + 1\nend",
       "buyItem": "local item = ctx.v.items[ctx.v.idx]\nif not item then return end\nlocal total = item.cost * ctx.v.qty\nif ctx.session.gold < total then ctx.v.state = 1; ctx.v.qty = 1; return end\napi.gainGold(-total)\napi.giveItem(item.id, ctx.v.qty)\nctx.v.state = 1\nctx.v.qty = 1"
     },
     "config": {},
