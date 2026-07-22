@@ -647,14 +647,12 @@ local function partyGridOrigin(session)
     local loaderRef = session and session.loader
     local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
     local partyLayout = layouts and layouts.party or {}
-    local px = partyLayout.x or 0
-    local py = partyLayout.y or 18
-    local title = partyLayout.title
-    local contentX = partyLayout.contentX or partyLayout.textX or 1
-    local contentY = partyLayout.contentY or (title and title ~= "" and 2 or 1)
+    local px = ui.toPx(partyLayout.x or 0)
+    local py = ui.toPx(partyLayout.y or 18)
+    local contentX = partyLayout.contentX or partyLayout.textX
+    local contentY = partyLayout.contentY
 
-    local gridX = ui.toPx(px + contentX)
-    local gridY = ui.toPx(py + contentY)
+    local gridX, gridY = ui.panelContentOrigin(px, py, partyLayout.title, contentX, contentY)
     local cols = partyLayout.gridColumns or 2
     return gridX, gridY, cols
 end

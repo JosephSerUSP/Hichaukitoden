@@ -543,7 +543,7 @@
         function applyChangeMax() {
             const newMax = parseInt(document.getElementById('max-input-val').value);
             if (isNaN(newMax) || newMax < 1 || newMax > 99) {
-                alert('Invalid max size (Enter 1 - 99).');
+                showToast('Invalid max size (Enter 1 - 99).');
                 return;
             }
 

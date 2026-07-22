@@ -184,11 +184,11 @@
         if (!id) return;
         const cleanId = id.trim().toLowerCase();
         if (!/^\w+$/.test(cleanId)) {
-            alert('Invalid ID format.');
+            showToast('Invalid ID format.');
             return;
         }
         if (editorThemes.some(t => t.id === cleanId)) {
-            alert('Theme ID already exists.');
+            showToast('Theme ID already exists.');
             return;
         }
         const name = prompt('Enter Name for new theme:', id);
@@ -222,7 +222,7 @@
 
     window.deleteStudioTheme = function() {
         if (editorThemes.length <= 1) {
-            alert('Cannot delete the last remaining theme.');
+            showToast('Cannot delete the last remaining theme.');
             return;
         }
         const theme = editorThemes.find(t => t.id === activeThemeId);
@@ -254,11 +254,11 @@
                 studioModalDirty = false;
                 studioModalSnapshot = JSON.stringify({ themes: editorThemes, activeId: activeThemeId });
             } else {
-                alert('Failed to save themes to server.');
+                showToast('Failed to save themes to server.');
             }
         } catch (e) {
             console.error('Failed to save themes:', e);
-            alert('Error saving themes.');
+            showToast('Error saving themes.');
         }
     };
 
