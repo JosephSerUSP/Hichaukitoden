@@ -215,7 +215,18 @@
     "genMinRoomSize": 3,
     "genMaxRoomSize": 5,
     "exitSprite": "assets/sprites/NPC00.png",
-    "exitScriptId": 1
+    "exitScriptId": 1,
+    "playerLight": {
+      "enabled": true,
+      "radius": 3.5,
+      "color": [
+        0.35,
+        0.3,
+        0.22
+      ],
+      "falloff": 1.5,
+      "onlyInDungeons": true
+    }
   },
   "summoner": {
     "startMp": 820,

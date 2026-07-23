@@ -65,7 +65,22 @@ end
 -- fog just uses the defaults below. That identity is what keeps the wall
 -- loop, the sprite tint, and the floor/ceiling shader on a single code
 -- path each instead of branching per feature.
-local FOG_DEFAULTS = { color = { 0, 0, 0 }, density = 0.35, minFactor = 0.12, panorama = nil }
+local FOG_DEFAULTS = { color = { 0, 0, 0 }, startDist = 0.0, distance = 8.0, sharpness = 1.0, minFactor = 0.12, panorama = nil }
+
+local function calcFogAlpha(dist, fog)
+    local dStart = fog.startDist or FOG_DEFAULTS.startDist
+    local dRange = fog.distance or FOG_DEFAULTS.distance
+    if dRange <= 0 then dRange = 0.001 end
+    local norm = (dist - dStart) / dRange
+    if norm < 0 then norm = 0 elseif norm > 1 then norm = 1 end
+    local sharpness = fog.sharpness or FOG_DEFAULTS.sharpness
+    if sharpness ~= 1.0 then
+        norm = norm ^ sharpness
+    end
+    local minFactor = fog.minFactor or FOG_DEFAULTS.minFactor
+    return 1.0 - norm * (1.0 - minFactor)
+end
+
 local function getFogConfig(session, mapData)
     local fog = mapData and mapData.fog
     if not fog then return FOG_DEFAULTS, false end
@@ -85,10 +100,15 @@ local function getFogConfig(session, mapData)
         fog = resolved
     end
 
+    local dStart = (fog.startDist ~= nil) and fog.startDist or FOG_DEFAULTS.startDist
+    local dDist = fog.distance or (fog.endDist and math.max(0.1, fog.endDist - dStart)) or FOG_DEFAULTS.distance
+
     return {
         color     = fog.color or FOG_DEFAULTS.color,
-        density   = fog.density or FOG_DEFAULTS.density,
-        minFactor = fog.minFactor or FOG_DEFAULTS.minFactor,
+        startDist = dStart,
+        distance  = dDist,
+        sharpness = (fog.sharpness ~= nil) and fog.sharpness or FOG_DEFAULTS.sharpness,
+        minFactor = (fog.minFactor ~= nil) and fog.minFactor or FOG_DEFAULTS.minFactor,
         panorama  = (fog.panorama and #fog.panorama > 0) and fog.panorama or nil,
     }, true
 end
@@ -98,16 +118,18 @@ end
 -- offset over time for a scrolling-mist effect without a shader.
 local panoramaCache = {}
 local function getPanoramaImage(name)
-    if panoramaCache[name] ~= nil then return panoramaCache[name] or nil end
-    local path = "assets/panorama/" .. name .. ".png"
+    if not name or name == "" then return nil end
+    local cleanName = tostring(name):gsub("^assets/panorama/", ""):gsub("%.png$", "")
+    if panoramaCache[cleanName] ~= nil then return panoramaCache[cleanName] or nil end
+    local path = "assets/panorama/" .. cleanName .. ".png"
     if love.filesystem.getInfo(path) then
         local img = love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
         img:setWrap("repeat", "repeat")
-        panoramaCache[name] = img
+        panoramaCache[cleanName] = img
         return img
     end
-    panoramaCache[name] = false
+    panoramaCache[cleanName] = false
     return nil
 end
 
@@ -128,7 +150,7 @@ local function drawFogLayers(fog, x, y, w, h)
     love.graphics.rectangle("fill", x, y, w, h)
 
     if fog.panorama then
-        local t = love.timer.getTime()
+        local t = (fog.time ~= nil) and fog.time or love.timer.getTime()
         for _, layer in ipairs(fog.panorama) do
             local img = getPanoramaImage(layer.image)
             if img then
@@ -203,10 +225,62 @@ local function getAtlasByDef(id, tilesetDef)
             ceilingCol = tilesetDef.base.ceilings[1].atlas[2]
         end
 
+        local skyTiles = {}
+        if tilesetDef.skyTiles and #tilesetDef.skyTiles > 0 then
+            for _, st in ipairs(tilesetDef.skyTiles) do
+                if type(st) == "table" then
+                    if st.atlas then
+                        table.insert(skyTiles, { st.atlas[1], st.atlas[2] })
+                    elseif st[1] ~= nil and st[2] ~= nil then
+                        table.insert(skyTiles, { st[1], st[2] })
+                    end
+                end
+            end
+        elseif tilesetDef.base and tilesetDef.base.skies and #tilesetDef.base.skies > 0 then
+            for _, st in ipairs(tilesetDef.base.skies) do
+                if type(st) == "table" then
+                    if st.atlas then
+                        table.insert(skyTiles, { st.atlas[1], st.atlas[2] })
+                    elseif st[1] ~= nil and st[2] ~= nil then
+                        table.insert(skyTiles, { st[1], st[2] })
+                    end
+                end
+            end
+        elseif tilesetDef.base and tilesetDef.base.ceilings and #tilesetDef.base.ceilings > 0 then
+            for _, c in ipairs(tilesetDef.base.ceilings) do
+                if type(c) == "table" then
+                    if c.atlas then
+                        table.insert(skyTiles, { c.atlas[1], c.atlas[2] })
+                    elseif c[1] ~= nil and c[2] ~= nil then
+                        table.insert(skyTiles, { c[1], c[2] })
+                    end
+                end
+            end
+        end
+
         local skyRow = tilesetDef.skyRow
         local skyCol = tilesetDef.skyCol
         if skyRow == nil then
             skyRow, skyCol = ceilingRow, ceilingCol
+        end
+
+        if #skyTiles == 0 then
+            if skyRow ~= nil then
+                if skyCol ~= nil then
+                    table.insert(skyTiles, { skyRow, skyCol })
+                else
+                    for col = 0, ATLAS_SKY_COLS - 1 do
+                        table.insert(skyTiles, { skyRow, col })
+                    end
+                end
+            else
+                table.insert(skyTiles, { 0, 0 })
+            end
+        end
+
+        if skyRow == nil then
+            skyRow = skyTiles[1][1]
+            skyCol = skyTiles[1][2]
         end
 
         local doorRow = tilesetDef.doorRow
@@ -232,6 +306,7 @@ local function getAtlasByDef(id, tilesetDef)
             doorRow = doorRow,
             skyRow = skyRow,
             skyCol = skyCol,
+            skyTiles = skyTiles,
             floorRow = floorRow,
             floorCol = floorCol,
             ceilingRow = ceilingRow,
@@ -387,8 +462,8 @@ end
 -- the SAME camera vectors (camPos/camDir/camPlane) the wall raycast loop
 -- already computes; the per-pixel world position formula below is the
 -- classic floor-casting algorithm, derived to match this renderer's own
--- wall projection constants exactly (center row 70, scale 140 -- see
--- `lineHeight = floor(140 / perpWallDist)` in the wall loop) so the floor
+-- wall projection constants exactly (center row 70, scale 170.6667 -- see
+-- `lineHeight = floor(170.6667 / perpWallDist)` in the wall loop) so the floor
 -- meets the base of each wall with no seam.
 --
 -- Per-cell texture variant uses a GLSL-friendly float hash (the CPU wall
@@ -408,9 +483,13 @@ local FLOOR_CEIL_SHADER_SRC = [[
     // Fog: rather than mixing toward a fog color in-shader, output alpha =
     // fogAlpha and let ordinary blending reveal whatever drawFogBackground()
     // already drew behind this (flat fill or scrolling panorama) -- see
-    // docs/design/fog-presets-and-panorama.md.
-    uniform float fogDensity;
+    // docs/design/fog-presets-and-panorama.md.    uniform float fogStart;
+    uniform float fogDistance;
+    uniform float fogSharpness;
     uniform float fogMinFactor;
+    uniform vec3 playerLightColor;
+    uniform float playerLightRadius;
+    uniform float playerLightFalloff;
 
     vec2 cellVariantOrigin(vec2 cell) {
         if (targetCol >= 0.0) return vec2(targetCol, targetRow);
@@ -422,7 +501,7 @@ local FLOOR_CEIL_SHADER_SRC = [[
     vec4 effect(vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords) {
         float dy = screen_coords.y - 70.0;
         if (abs(dy) < 0.0001) dy = 0.0001;
-        float rowDist = 70.0 / abs(dy);
+        float rowDist = 85.3333 / abs(dy);
 
         float cameraX = 2.0 * screen_coords.x / 256.0 - 1.0;
         vec2 rayDir = camDir + camPlane * cameraX;
@@ -435,10 +514,24 @@ local FLOOR_CEIL_SHADER_SRC = [[
         vec2 uv = vec2((origin.x + fracPos.x) * 64.0 / atlasW, (origin.y + fracPos.y) * 64.0 / atlasH);
         vec4 texColor = Texel(tex, uv);
 
-        // Fog alpha: 1.0 at camera, ramps toward fogMinFactor at distance
-        float fogAlpha = max(fogMinFactor, 1.0 / (1.0 + rowDist * fogDensity));
+        // Fog alpha: 1.0 within fogStart, ramps toward fogMinFactor over fogDistance with sharpness curve
+        float span = max(0.001, fogDistance);
+        float normDist = clamp((rowDist - fogStart) / span, 0.0, 1.0);
+        if (fogSharpness != 1.0) {
+            normDist = pow(normDist, fogSharpness);
+        }
+        float fogAlpha = 1.0 - normDist * (1.0 - fogMinFactor);
         vec2 lightUV = (worldPos - vec2(0.5)) / (mapSize + vec2(1.0));
         vec3 lightColor = Texel(lightTex, lightUV).rgb;
+
+        if (playerLightRadius > 0.0) {
+            float playerDist = length(worldPos - camPos);
+            if (playerDist < playerLightRadius) {
+                float strength = pow(1.0 - playerDist / playerLightRadius, playerLightFalloff);
+                lightColor = min(vec3(1.0), lightColor + playerLightColor * strength);
+            }
+        }
+
         vec3 shaded = texColor.rgb * lightColor;
 
         return vec4(shaded, texColor.a * fogAlpha) * color;
@@ -502,7 +595,7 @@ end
 -- supplies density/minFactor here -- the shader outputs alpha, not a mixed
 -- color; drawFogBackground() already drew what fog.color/panorama reveals
 -- underneath (docs/design/fog-presets-and-panorama.md).
-local function drawShadedPlane(atlas, atlasRow, atlasCol, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)
+local function drawShadedPlane(atlas, atlasRow, atlasCol, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog, playerLight)
     local shader = ensureFloorCeilShader()
     if not shader then return false end
 
@@ -514,8 +607,20 @@ local function drawShadedPlane(atlas, atlasRow, atlasCol, y0, rectH, cx, cy, dir
     shader:send("atlasH", atlas.h)
     shader:send("targetRow", atlasRow)
     shader:send("targetCol", atlasCol or -1)
-    shader:send("fogDensity", fog.density)
+    shader:send("fogStart", fog.startDist)
+    shader:send("fogDistance", fog.distance)
+    shader:send("fogSharpness", fog.sharpness)
     shader:send("fogMinFactor", fog.minFactor)
+
+    if playerLight and playerLight.active and playerLight.radius > 0 then
+        shader:send("playerLightColor", playerLight.color)
+        shader:send("playerLightRadius", playerLight.radius)
+        shader:send("playerLightFalloff", playerLight.falloff)
+    else
+        shader:send("playerLightColor", { 0, 0, 0 })
+        shader:send("playerLightRadius", 0.0)
+        shader:send("playerLightFalloff", 1.0)
+    end
 
     if lightTex then
         shader:send("lightTex", lightTex)
@@ -690,12 +795,12 @@ function viewport_3d.draw(session)
     end
 
     -- Camera direction vector + projection plane (orthogonal to camera
-    -- direction, 60-degree FOV) -- computed here (rather than just before
-    -- the wall loop, where this used to live) because the floor/ceiling
-    -- shader below needs it too.
+    -- direction, 73.74-degree FOV for 1:1 square tile ratio) -- computed
+    -- here (rather than just before the wall loop, where this used to live)
+    -- because the floor/ceiling shader below needs it too.
     local dirX = math.cos(cAngle)
     local dirY = math.sin(cAngle)
-    local fovHalfTan = math.tan(math.pi / 6)
+    local fovHalfTan = 0.75
     local planeX = -dirY * fovHalfTan
     local planeY = dirX * fovHalfTan
 
@@ -707,6 +812,20 @@ function viewport_3d.draw(session)
     -- alpha = fogAlpha. See docs/design/fog-presets-and-panorama.md.
     local fog = getFogConfig(session, mapData)
 
+    -- Resolved player light config from system settings
+    local sysCfg = session and session.loader and session.loader.system
+    local dungeonCfg = sysCfg and sysCfg.dungeon
+    local pLightCfg = dungeonCfg and dungeonCfg.playerLight
+    local playerLight = {
+        enabled = (pLightCfg == nil or pLightCfg.enabled == nil) and true or pLightCfg.enabled,
+        radius = (pLightCfg and pLightCfg.radius) or 3.5,
+        color = (pLightCfg and pLightCfg.color) or { 0.35, 0.3, 0.22 },
+        falloff = (pLightCfg and pLightCfg.falloff) or 1.5,
+        onlyInDungeons = (pLightCfg == nil or pLightCfg.onlyInDungeons == nil) and true or pLightCfg.onlyInDungeons,
+    }
+    local isDungeon = not (mapData and mapData.safe)
+    playerLight.active = playerLight.enabled and (not playerLight.onlyInDungeons or isDungeon) and playerLight.radius > 0
+
     -- ── 2. Draw Floor & Ceiling ───────────────────────────────────────────────
     local halfH = ui.toPx(9) -- exactly 9 tiles (72px)
     local screenWpx = ui.toPx(ui.screenWidthTiles)
@@ -717,6 +836,11 @@ function viewport_3d.draw(session)
     -- instead). See docs/design/raycaster-tileset-lighting.md.
     local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
     local ambR, ambG, ambB = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
+    if playerLight.active then
+        ambR = math.min(1.0, ambR + playerLight.color[1])
+        ambG = math.min(1.0, ambG + playerLight.color[2])
+        ambB = math.min(1.0, ambB + playerLight.color[3])
+    end
 
     -- The active session owns the loaded tileset registry. Omitting it here
     -- makes resolveTileset fall back to a nonexistent module-global loader,
@@ -729,20 +853,31 @@ function viewport_3d.draw(session)
     -- See docs/design/fog-presets-and-panorama.md.
     drawFogBackground(fog, screenWpx, halfH * 2)
 
-    if mapData and mapData.ceilingStyle == "sky" and atlas and atlas.skyRow then
-        -- A selected sky is one atlas cell. Legacy row-only manifests retain
-        -- their full-width sky strip; authored base ceilings/skies use their
-        -- designated atlas cell.
-        local skyX = (atlas.skyCol or 0) * ATLAS_TILE
-        local skyW = atlas.skyCol ~= nil and ATLAS_TILE or ATLAS_SKY_COLS * ATLAS_TILE
-        skyQuad:setViewport(skyX, atlas.skyRow * ATLAS_TILE, skyW, ATLAS_TILE, atlas.w, atlas.h)
+    if mapData and mapData.ceilingStyle == "sky" and atlas and (atlas.skyTiles or atlas.skyRow) then
+        local skyTiles = atlas.skyTiles
+        if not skyTiles or #skyTiles == 0 then
+            skyTiles = { { atlas.skyRow or 0, atlas.skyCol or 0 } }
+        end
+        local numSkyTiles = #skyTiles
+        local scaleY = halfH / ATLAS_TILE
+        local scaleX = scaleY
+        local tileWpx = ATLAS_TILE * scaleX
+        local tileIdx = 1
+        local x = 0
+
         -- Sky is daylight, not torchlight -- deliberately NOT tinted by the
         -- vertex light grid (that models local/indoor light sources).
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(atlas.img, skyQuad, 0, 0, 0,
-            screenWpx / skyW, halfH / ATLAS_TILE)
+        while x < screenWpx do
+            local tile = skyTiles[tileIdx]
+            local r, c = tile[1], tile[2]
+            skyQuad:setViewport(c * ATLAS_TILE, r * ATLAS_TILE, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+            love.graphics.draw(atlas.img, skyQuad, x, 0, 0, scaleX, scaleY)
+            x = x + tileWpx
+            tileIdx = (tileIdx % numSkyTiles) + 1
+        end
     elseif atlas and atlas.ceilingRow
-        and drawShadedPlane(atlas, atlas.ceilingRow, atlas.ceilingCol, 0, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog) then
+        and drawShadedPlane(atlas, atlas.ceilingRow, atlas.ceilingCol, 0, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog, playerLight) then
         -- shaded plane drawn; nothing else to do
     else
         -- Ceiling gradient: Moody dark purple/indigo fade
@@ -752,7 +887,7 @@ function viewport_3d.draw(session)
     end
 
     if not (atlas and atlas.floorRow
-        and drawShadedPlane(atlas, atlas.floorRow, atlas.floorCol, halfH, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)) then
+        and drawShadedPlane(atlas, atlas.floorRow, atlas.floorCol, halfH, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog, playerLight)) then
         -- Floor gradient: Cold dark stone grey fade
         drawVerticalGradient(0, halfH, screenWpx, halfH,
             {0.03 * ambR, 0.03 * ambG, 0.03 * ambB},
@@ -839,7 +974,7 @@ function viewport_3d.draw(session)
         zBuffer[x + 1] = perpWallDist
 
         -- Calculate height of line to draw on screen
-        local lineHeight = math.floor(140 / perpWallDist)
+        local lineHeight = math.floor(170.6667 / perpWallDist)
 
         -- Calculate lowest and highest pixel to fill in current stripe
         local drawStart = 70 - lineHeight / 2
@@ -866,13 +1001,25 @@ function viewport_3d.draw(session)
         local vx0, vy0 = math.floor(hitWX), math.floor(hitWY)
         local litR, litG, litB = sampleLight(light, vx0, vy0, hitWX - vx0, hitWY - vy0)
 
+        if playerLight.active then
+            local dx = hitWX - (cx + 1)
+            local dy = hitWY - (cy + 1)
+            local dist = math.sqrt(dx * dx + dy * dy)
+            if dist < playerLight.radius then
+                local strength = (1 - dist / playerLight.radius) ^ playerLight.falloff
+                litR = math.min(1.0, litR + playerLight.color[1] * strength)
+                litG = math.min(1.0, litG + playerLight.color[2] * strength)
+                litB = math.min(1.0, litB + playerLight.color[3] * strength)
+            end
+        end
+
         -- Darken Y-facing walls for dynamic corner shadows (once -- this
         -- feeds every branch below, so none of them reapply it)
         if side == 1 then
             litR, litG, litB = litR * 0.76, litG * 0.76, litB * 0.76
         end
 
-        local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + perpWallDist * fog.density))
+        local fogAlpha = calcFogAlpha(perpWallDist, fog)
 
         -- Walls draw ON TOP of the already-opaque floor/ceiling (which
         -- cover the full screen). Alpha-blending the wall texture directly
@@ -993,7 +1140,7 @@ function viewport_3d.draw(session)
             local spriteScreenX = math.floor((256 / 2) * (1 + transformX / transformY))
             
             -- Calculate billboard height and width
-            local spriteHeight = math.abs(math.floor(140 / transformY))
+            local spriteHeight = math.abs(math.floor(170.6667 / transformY))
             local spriteWidth = spriteHeight
             
             local drawStartY = math.floor(70 - spriteHeight / 2)
@@ -1010,7 +1157,7 @@ function viewport_3d.draw(session)
             -- nearer wall occludes it, so whatever's underneath is exactly
             -- the right background, not a draw-order artifact. Plain alpha
             -- fade is correct here.
-            local fogAlpha = math.max(fog.minFactor, 1.0 / (1.0 + transformY * fog.density))
+            local fogAlpha = calcFogAlpha(transformY, fog)
 
             for stripeX = drawStartX, drawStartX + spriteWidth - 1 do
                 if stripeX >= 0 and stripeX < 256 then
@@ -1020,7 +1167,23 @@ function viewport_3d.draw(session)
 
                         if clipH > 0 then
                             love.graphics.setScissor(stripeX, clipY, 1, clipH)
-                            love.graphics.setColor(1, 1, 1, fogAlpha)
+
+                            local sx, sy = s.x + 0.5, s.y + 0.5
+                            local svx0, svy0 = math.floor(sx), math.floor(sy)
+                            local sLitR, sLitG, sLitB = sampleLight(light, svx0, svy0, sx - svx0, sy - svy0)
+                            if playerLight.active then
+                                local dx = sx - (cx + 1)
+                                local dy = sy - (cy + 1)
+                                local dist = math.sqrt(dx * dx + dy * dy)
+                                if dist < playerLight.radius then
+                                    local strength = (1 - dist / playerLight.radius) ^ playerLight.falloff
+                                    sLitR = math.min(1.0, sLitR + playerLight.color[1] * strength)
+                                    sLitG = math.min(1.0, sLitG + playerLight.color[2] * strength)
+                                    sLitB = math.min(1.0, sLitB + playerLight.color[3] * strength)
+                                end
+                            end
+
+                            love.graphics.setColor(sLitR, sLitG, sLitB, fogAlpha)
 
                             local texCol = math.floor((stripeX - drawStartX) / spriteWidth * s.img:getWidth())
                             spriteSliceQuad:setViewport(texCol, 0, 1, s.img:getHeight(), s.img:getWidth(), s.img:getHeight())

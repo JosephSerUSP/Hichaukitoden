@@ -1095,6 +1095,11 @@
             'dungeon.genMaxRoomSize':      { label: 'Room Size (max)' },
             'dungeon.exitSprite':          { label: 'Exit Stairs Sprite', widget: 'assetPath', dir: 'sprites' },
             'dungeon.exitScriptId':        { label: 'Exit Stairs Common Event', widget: 'commonEventSelect' },
+            'dungeon.playerLight.enabled': { label: 'Player Emits Light', widget: 'checkbox', help: 'Whether the player emits light while in dungeons.' },
+            'dungeon.playerLight.radius':  { label: 'Player Light Radius (tiles)', step: 0.5, min: 0.1, help: 'Radius of light emitted by the player.' },
+            'dungeon.playerLight.color':   { label: 'Player Light Color', widget: 'color', help: 'RGB color of the player light emission.' },
+            'dungeon.playerLight.falloff': { label: 'Player Light Falloff', step: 0.1, min: 0.1, help: 'Falloff curve exponent for player light emission.' },
+            'dungeon.playerLight.onlyInDungeons': { label: 'Light Only in Dungeons', widget: 'checkbox', help: 'Restricts player light to non-safe (dungeon) maps.' },
             'summoner.startMp':            { label: 'Starting MP' },
             'summoner.summonCostBase':     { label: 'Summon Base Cost (MP)' },
             'summoner.summonCostPerLevel': { label: 'Summon Cost / Level (MP)' },
@@ -1361,6 +1366,25 @@
                 input.oninput = () => {
                     const parsed = parseFloat(input.value);
                     setNestedValue(targetRoot, currentPath, key, isNaN(parsed) ? 0 : parsed);
+                    setDirty(true);
+                };
+                group.appendChild(input);
+                appendFieldHelp(group, schema);
+                container.appendChild(group);
+                return true;
+            }
+
+            if (widget === 'checkbox' || typeof value === 'boolean') {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = !!value;
+                input.onchange = () => {
+                    setNestedValue(targetRoot, currentPath, key, input.checked);
                     setDirty(true);
                 };
                 group.appendChild(input);

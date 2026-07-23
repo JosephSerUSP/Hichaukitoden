@@ -83,6 +83,9 @@ local previewMapId = nil
 local previewMapX = nil
 local previewMapY = nil
 local previewMapDir = nil
+local isPreviewFogMode = false
+local previewFogSpec = nil
+local previewFogMapId = nil
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -593,6 +596,61 @@ local function runPreviewMap(mapId, x, y, dir)
     if not ok then
         payload = { error = tostring(err) }
         love.graphics.setCanvas() -- draw() may have failed mid-canvas; always leave it unset
+    end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
+-- Headless fog preview (`lovec . preview-fog <fogSpecJson> [mapId]`):
+-- loads a map (or the first map), overrides its fog settings with fogSpecJson,
+-- and renders a 3D viewport frame to PNG base64 for the editor preview pane.
+local function runPreviewFog(fogSpecJson, mapId)
+    local json = require("data.json")
+    local payload = {}
+    local ok, err = pcall(function()
+        local exploration = require("engine.exploration")
+        local viewport_3d = require("presentation.viewport_3d")
+
+        local fogSpec = json.decode(fogSpecJson or "{}") or {}
+        local mapIdx = 1
+        if mapId and mapId ~= "" then
+            for idx, m in ipairs(loader.maps or {}) do
+                if tostring(m.id) == tostring(mapId) then mapIdx = idx break end
+            end
+        end
+
+        local vSession = makeHarnessSession()
+        exploration.loadMap(vSession, mapIdx)
+        if vSession.currentMapData then
+            vSession.currentMapData.fog = fogSpec
+        end
+
+        viewport_3d.init()
+
+        local pw, ph = 512, 288
+        local baseCanvas = love.graphics.newCanvas(256, 144)
+        local previewCanvas = love.graphics.newCanvas(pw, ph)
+        previewCanvas:setFilter("nearest", "nearest")
+
+        love.graphics.setCanvas(baseCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        viewport_3d.draw(vSession)
+
+        love.graphics.setCanvas(previewCanvas)
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(baseCanvas, 0, 0, 0, 2, 2)
+        love.graphics.setCanvas()
+
+        local fileData = previewCanvas:newImageData():encode("png")
+        payload.image = love.data.encode("string", "base64", fileData)
+        payload.width = pw
+        payload.height = ph
+    end)
+    if not ok then
+        payload = { error = tostring(err) }
+        love.graphics.setCanvas()
     end
     print("PREVIEW BEGIN")
     print(json.encode(payload))
@@ -2235,6 +2293,14 @@ function love.load(arg)
                 if isPositional(arg[i + 2]) then previewMapY = arg[i + 2]; i = i + 1 end
                 if isPositional(arg[i + 2]) then previewMapDir = arg[i + 2]; i = i + 1 end
                 i = i + 1
+            elseif val == "preview-fog" then
+                isPreviewFogMode = true
+                previewFogSpec = arg[i + 1]
+                if arg[i + 2] and not arg[i + 2]:match("^campaign=") then
+                    previewFogMapId = arg[i + 2]
+                    i = i + 1
+                end
+                i = i + 1
             elseif val == "savetest" then
                 isSaveTestMode = true
             elseif val:match("^campaign=") then
@@ -2306,6 +2372,13 @@ function love.load(arg)
     if isPreviewMapMode then
         loader.init(cliCampaignRoot)
         runPreviewMap(previewMapId, previewMapX, previewMapY, previewMapDir)
+        love.event.quit(0)
+        return
+    end
+
+    if isPreviewFogMode then
+        loader.init(cliCampaignRoot)
+        runPreviewFog(previewFogSpec, previewFogMapId)
         love.event.quit(0)
         return
     end
@@ -2949,8 +3022,18 @@ handleDialogueAction = function()
 end
 
 -- Translates JSON command lists to dynamic conversation graphs
-local function runEventCommands(eventTitle, commands)
-    local graph = interpreter.runInteractive(commands, interpreterCtx())
+local function runEventCommands(eventTarget, commands)
+    local eventTitle = (type(eventTarget) == "table" and (eventTarget.name or "Event")) or tostring(eventTarget or "Event")
+    local activeEv = (type(eventTarget) == "table") and eventTarget or nil
+    if activeSession then
+        activeSession.activeEvent = activeEv
+    end
+    local ictx = interpreterCtx()
+    if activeEv then
+        ictx.event = activeEv
+        ictx.eventId = activeEv.id
+    end
+    local graph = interpreter.runInteractive(commands, ictx)
     if not graph then return end
     graph.name = eventTitle
 
@@ -2977,7 +3060,7 @@ local function checkStepEvents()
                 end
                 
                 if commands then
-                    runEventCommands(ev.name or "Event", commands)
+                    runEventCommands(ev, commands)
                     return true
                 end
             end
@@ -3199,7 +3282,7 @@ handleKeyPressed = function(key)
                 end
                 
                 if commands then
-                    runEventCommands(eventObj.name or "Event", commands)
+                    runEventCommands(eventObj, commands)
                 end
             end
         end

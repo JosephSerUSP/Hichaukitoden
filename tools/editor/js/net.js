@@ -143,14 +143,15 @@
                     // Fields inside the Database modal are live-bound, so a
                     // successful save means there's nothing left to "discard" if
                     // the modal is closed afterwards — refresh its snapshot.
-                    if (dbModalSnapshot !== null) {
-                        dbModalSnapshot = JSON.stringify(dbPayload);
+                    if (window.dbModalSnapshotHelper && typeof window.dbModalSnapshotHelper.capture === 'function') {
+                        window.dbModalSnapshotHelper.capture();
                     }
                 } else {
                     showToast('Failed to save data: ' + result.message);
                 }
             } catch (err) {
-                showToast('Connection failed: server offline');
+                console.error('saveData error:', err);
+                showToast('Save failed: ' + (err.message || 'server offline'));
             }
         }
 

@@ -79,6 +79,7 @@
 
                 document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(eventData.id).padStart(4, '0')}`;
                 document.getElementById('event-prop-name').value = eventData.name || `EV${String(eventData.id).padStart(3, '0')}`;
+                document.getElementById('event-prop-label').value = eventData.label || '';
                 document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
                 document.getElementById('event-prop-transparent').checked = !!eventData.transparent;
                 document.getElementById('event-prop-door').checked = !!eventData.door;
@@ -103,6 +104,7 @@
 
                 document.getElementById('event-modal-title').textContent = `Event Editor - ID: ${String(nextId).padStart(4, '0')}`;
                 document.getElementById('event-prop-name').value = `EV${String(nextId).padStart(3, '0')}`;
+                document.getElementById('event-prop-label').value = '';
                 document.getElementById('event-prop-trigger').value = 'interact';
                 document.getElementById('event-prop-transparent').checked = false;
                 document.getElementById('event-prop-door').checked = false;
@@ -216,6 +218,7 @@
             if (activeEventPageIdx === -1) {
                 eventBaseFieldStash = {
                     name: document.getElementById('event-prop-name').value,
+                    label: document.getElementById('event-prop-label').value,
                     trigger: document.getElementById('event-prop-trigger').value,
                     sprite: window.activeEventSpritePath || '',
                     logicCommon: document.getElementById('event-logic-common').checked,
@@ -225,9 +228,10 @@
             }
             const page = activeEventPages[activeEventPageIdx];
             if (!page) return;
+            delete page.name;
+            delete page.label;
             const setOrOmit = (key, v) => { if (v) page[key] = v; else delete page[key]; };
             setOrOmit('condition', document.getElementById('event-prop-page-condition').value.trim());
-            setOrOmit('name', document.getElementById('event-prop-name').value.trim());
             setOrOmit('sprite', window.activeEventSpritePath || '');
             setOrOmit('trigger', document.getElementById('event-prop-trigger').value);
             if (document.getElementById('event-logic-inherit').checked) {
@@ -249,6 +253,7 @@
             if (!pageMode) {
                 const s = eventBaseFieldStash || {};
                 document.getElementById('event-prop-name').value = s.name || '';
+                document.getElementById('event-prop-label').value = s.label || '';
                 document.getElementById('event-prop-trigger').value = s.trigger || 'interact';
                 updateEventGraphicPreview(s.sprite || '');
                 document.getElementById(s.logicCommon ? 'event-logic-common' : 'event-logic-custom').checked = true;
@@ -258,7 +263,10 @@
             } else {
                 const p = activeEventPages[activeEventPageIdx];
                 document.getElementById('event-prop-page-condition').value = p.condition || '';
-                document.getElementById('event-prop-name').value = p.name || '';
+                if (eventBaseFieldStash) {
+                    document.getElementById('event-prop-name').value = eventBaseFieldStash.name || '';
+                    document.getElementById('event-prop-label').value = eventBaseFieldStash.label || '';
+                }
                 document.getElementById('event-prop-trigger').value = p.trigger !== undefined ? p.trigger : '';
                 updateEventGraphicPreview(p.sprite || '');
                 if (p.scriptId !== undefined) {
@@ -398,6 +406,8 @@
             }
 
             eventData.name = document.getElementById('event-prop-name').value;
+            const lblVal = document.getElementById('event-prop-label').value.trim();
+            if (lblVal) eventData.label = lblVal; else delete eventData.label;
             eventData.trigger = document.getElementById('event-prop-trigger').value;
             eventData.sprite = window.activeEventSpritePath || '';
             eventData.transparent = document.getElementById('event-prop-transparent').checked;

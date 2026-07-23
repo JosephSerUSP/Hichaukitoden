@@ -309,6 +309,47 @@ handlers.SET_FLAG = function(cmd, ctx)
     ctx.session.flags[cmd.flag] = cmd.value and true or nil
 end
 
+handlers.CHANGE_EVENT_PROPERTIES = function(cmd, ctx)
+    local session = ctx.session
+    if not session then return end
+    
+    local targetEventId = cmd.eventId or cmd.id or (ctx and ctx.eventId) or (ctx and ctx.event and ctx.event.id) or (session.activeEvent and session.activeEvent.id)
+    if not targetEventId then return end
+
+    local persistent = cmd.persistent
+    if persistent == nil then persistent = true end
+
+    local mapIdx = session.currentMapIndex or 1
+
+    if persistent then
+        session.eventOverrides = session.eventOverrides or {}
+        session.eventOverrides[mapIdx] = session.eventOverrides[mapIdx] or {}
+        session.eventOverrides[mapIdx][targetEventId] = session.eventOverrides[mapIdx][targetEventId] or {}
+        if cmd.label ~= nil then session.eventOverrides[mapIdx][targetEventId].label = cmd.label end
+        if cmd.name ~= nil then session.eventOverrides[mapIdx][targetEventId].name = cmd.name end
+    else
+        session.tempEventOverrides = session.tempEventOverrides or {}
+        session.tempEventOverrides[targetEventId] = session.tempEventOverrides[targetEventId] or {}
+        if cmd.label ~= nil then session.tempEventOverrides[targetEventId].label = cmd.label end
+        if cmd.name ~= nil then session.tempEventOverrides[targetEventId].name = cmd.name end
+    end
+
+    -- Mutate active in-memory target event on session.currentMapData.events
+    if session.currentMapData and session.currentMapData.events then
+        for _, ev in ipairs(session.currentMapData.events) do
+            if ev.id == targetEventId then
+                if cmd.label ~= nil then ev.label = cmd.label end
+                if cmd.name ~= nil then ev.name = cmd.name end
+                break
+            end
+        end
+    end
+end
+handlers.SET_EVENT_PROPERTIES = handlers.CHANGE_EVENT_PROPERTIES
+handlers.SET_EVENT_LABEL = handlers.CHANGE_EVENT_PROPERTIES
+handlers.CHANGE_EVENT_LABEL = handlers.CHANGE_EVENT_PROPERTIES
+handlers.SET_EVENT_NAME = handlers.CHANGE_EVENT_PROPERTIES
+
 handlers.IF = function(cmd, ctx)
     local branch
     -- CONDITIONAL_BRANCH's "flag:"/"hasItem:" string conditions stay valid

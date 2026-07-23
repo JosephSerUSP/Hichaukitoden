@@ -574,27 +574,48 @@ function renderer.drawMap()
     -- Coordinates & Facing Overlay
     ui.drawString("X:" .. renderer.session.playerX .. " Y:" .. renderer.session.playerY .. " [" .. renderer.session.playerDir .. "]", 6, 6, {1, 1, 0.7, 0.8})
     
-    -- Front action prompt if any
+    -- Front action prompt / event label box if any
     local frontTile, tx, ty = exploration.getFrontTile(renderer.session)
-    local hasEvent = false
+    local targetEvent = nil
     if tx and ty and renderer.session.currentMapData and renderer.session.currentMapData.events then
-        for _, ev in ipairs(renderer.session.currentMapData.events) do
-            if ev.x == tx - 1 and ev.y == ty - 1 then
-                hasEvent = true
+        for _, rawEv in ipairs(renderer.session.currentMapData.events) do
+            if rawEv.x == tx - 1 and rawEv.y == ty - 1 then
+                targetEvent = exploration.resolvePage(rawEv, renderer.session)
                 break
             end
         end
     end
 
-    if (frontTile and frontTile ~= "#" and frontTile ~= ".") or hasEvent then
-        local label = "INTERACT [SPACE]"
-        if frontTile == "E" then label = "STAIRS DOWN [SPACE]"
-        elseif frontTile == "S" then label = "STAIRS UP [SPACE]"
-        elseif frontTile == "R" then label = "RECOVERY [SPACE]"
-        elseif frontTile == "T" then label = "TREASURE [SPACE]"
+    if (frontTile and frontTile ~= "#" and frontTile ~= ".") or targetEvent then
+        local displayLabel = nil
+        if targetEvent then
+            if targetEvent.label and targetEvent.label ~= "" then
+                displayLabel = targetEvent.label
+            elseif targetEvent.scriptId and renderer.session.loader and renderer.session.loader.commonEvents then
+                local ce = renderer.session.loader.commonEvents[tostring(targetEvent.scriptId)]
+                if ce and ce.label and ce.label ~= "" then
+                    displayLabel = ce.label
+                end
+            end
+            if not displayLabel and targetEvent.name and targetEvent.name ~= "" and targetEvent.name ~= "Trigger" and targetEvent.name ~= "Event" then
+                displayLabel = targetEvent.name
+            end
         end
-        ui.drawPanel(60, 105, 136, 26)
-        ui.drawString(label, 64, 112, {1, 1, 0.5, 1}, "center", 128)
+
+        if not displayLabel then
+            if frontTile == "E" then displayLabel = "Stairs Down"
+            elseif frontTile == "S" then displayLabel = "Stairs Up"
+            elseif frontTile == "R" then displayLabel = "Recovery"
+            elseif frontTile == "T" then displayLabel = "Treasure"
+            else displayLabel = "Interact"
+            end
+        end
+
+        local screenW = ui.toPx(ui.screenWidthTiles)
+        local pWidth = math.max(120, ui.measureText(displayLabel) + 16)
+        local pX = math.floor((screenW - pWidth) / 2)
+        ui.drawPanel(pX, 105, pWidth, 26)
+        ui.drawString(displayLabel, pX + 4, 112, {1, 1, 0.5, 1}, "center", pWidth - 8)
     end
 end
 

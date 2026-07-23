@@ -780,30 +780,31 @@
             updateFogPreview();
         }
 
-        // Draw the fog preview canvas: a horizontal strip showing how tiles
-        // blend from their original color (left) into the fog color (right)
-        // at the configured density and minFactor values.
-        function updateFogPreview() {
-            const canvas = document.getElementById('fog-preview-canvas');
+        // Helper to draw a fog preview canvas showing a wall gradient from
+        // 0 to 12 tiles out, grid distance ticks, and a 50% visibility indicator.
+        function renderFogPreviewCanvas(canvas, color, density, minFactor) {
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const w = canvas.width, h = canvas.height;
 
-            const hex = document.getElementById('prop-map-fog-color').value;
-            const fogRgb = hexToRgb01(hex);
-            const density = parseFloat(document.getElementById('prop-map-fog-density').value) || 0.35;
-            const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value) || 0.12;
+            let fogRgb;
+            if (typeof color === 'string') {
+                fogRgb = hexToRgb01(color);
+            } else if (Array.isArray(color)) {
+                fogRgb = color;
+            } else {
+                fogRgb = [0.5, 0.55, 0.6];
+            }
+            density = parseFloat(density) || 0.35;
+            minFactor = (minFactor !== undefined && minFactor !== null) ? parseFloat(minFactor) : 0.12;
 
-            // Simulate a stone wall tile (dark grey) and render fog mixing
-            // per pixel across the strip, left = near, right = far.
-            const wallColor = [0.45, 0.40, 0.35]; // a generic stone wall
+            const maxDist = 12; // 12 grid units (cells/tiles)
+            const wallColor = [0.45, 0.40, 0.35]; // generic stone wall base color
 
             for (let x = 0; x < w; x++) {
-                // Map x position to distance (0..12 grid units)
-                const dist = (x / w) * 12;
+                const dist = (x / w) * maxDist;
                 const fogAlpha = Math.max(minFactor, 1.0 / (1.0 + dist * density));
 
-                // Wall: fogColor * (1-fogAlpha) + wallColor * fogAlpha
                 const r = Math.round((fogRgb[0] * (1 - fogAlpha) + wallColor[0] * fogAlpha) * 255);
                 const g = Math.round((fogRgb[1] * (1 - fogAlpha) + wallColor[1] * fogAlpha) * 255);
                 const b = Math.round((fogRgb[2] * (1 - fogAlpha) + wallColor[2] * fogAlpha) * 255);
@@ -812,13 +813,111 @@
                 ctx.fillRect(x, 0, 1, h);
             }
 
-            // Overlay distance markers
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.font = '7px sans-serif';
-            ctx.fillText('←near', 2, 8);
-            ctx.textAlign = 'right';
-            ctx.fillText('far→', w - 2, 8);
-            ctx.textAlign = 'left';
+            // Overlay distance markers (ticks every 2 cells)
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '8px monospace';
+
+            for (let tile = 0; tile <= maxDist; tile += 2) {
+                const x = Math.round((tile / maxDist) * w);
+                ctx.beginPath();
+                ctx.moveTo(x, h - 8);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+
+                let label = tile + 't';
+                if (tile === 0) {
+                    ctx.textAlign = 'left';
+                    ctx.fillText(label, 2, h - 2);
+                } else if (tile === maxDist) {
+                    ctx.textAlign = 'right';
+                    ctx.fillText(label, w - 2, h - 2);
+                } else {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, x, h - 2);
+                }
+            }
+
+            // 50% Fog Distance indicator mark
+            const dist50 = 1.0 / density;
+            if (dist50 > 0 && dist50 <= maxDist) {
+                const x50 = Math.round((dist50 / maxDist) * w);
+                ctx.strokeStyle = 'rgba(255,230,100,0.8)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.moveTo(x50, 0);
+                ctx.lineTo(x50, h);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#ffe664';
+                ctx.textAlign = 'center';
+                ctx.font = '7px sans-serif';
+                ctx.fillText('50%', Math.min(w - 12, Math.max(12, x50)), 8);
+            }
+        }
+
+        // Fetch 3D engine fog preview in Map Properties
+        let mapFogBaking = false;
+        let mapFogBakeQueued = false;
+        let mapFogBakeTimer = null;
+
+        function updateFogPreview() {
+            clearTimeout(mapFogBakeTimer);
+            mapFogBakeTimer = setTimeout(doMapFogPreviewBake, 100);
+        }
+
+        async function doMapFogPreviewBake() {
+            if (mapFogBaking) { mapFogBakeQueued = true; return; }
+            mapFogBaking = true;
+
+            const hex = document.getElementById('prop-map-fog-color').value;
+            const startDist = parseFloat(document.getElementById('prop-map-fog-startdist').value) || 0.0;
+            const distance = parseFloat(document.getElementById('prop-map-fog-distance').value) || 8.0;
+            const sharpness = parseFloat(document.getElementById('prop-map-fog-sharpness').value) || 1.0;
+            const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value) || 0.12;
+
+            const imgEl = document.getElementById('fog-preview-img');
+            const currentMap = dbPayload.maps && dbPayload.maps[currentMapIndex];
+            const mapId = currentMap ? currentMap.id : '';
+            const fogPresetId = document.getElementById('prop-map-fog-preset') ? document.getElementById('prop-map-fog-preset').value : '';
+
+            let fogSpec;
+            if (fogPresetId) {
+                fogSpec = { preset: fogPresetId };
+            } else {
+                fogSpec = {
+                    color: hexToRgb01(hex),
+                    startDist: startDist,
+                    distance: distance,
+                    sharpness: sharpness,
+                    minFactor: minFactor
+                };
+            }
+
+            try {
+                const resp = await fetch('/preview-fog', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fog: fogSpec, mapId: mapId })
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.image && imgEl) {
+                        imgEl.src = 'data:image/png;base64,' + data.image;
+                        imgEl.style.display = 'block';
+                    }
+                }
+            } catch (e) {
+                console.warn('Fog 3D preview error:', e);
+            } finally {
+                mapFogBaking = false;
+                if (mapFogBakeQueued) {
+                    mapFogBakeQueued = false;
+                    doMapFogPreviewBake();
+                }
+            }
         }
 
         function openMapProperties() {
@@ -865,17 +964,26 @@
             // Fog properties
             const fog = map.fog;
             if (fog) {
+                const fDist = fog.distance != null ? fog.distance : (fog.endDist != null ? Math.max(0.1, fog.endDist - (fog.startDist || 0)) : 8.0);
                 document.getElementById('prop-map-fog-enabled').checked = true;
                 document.getElementById('prop-map-fog-color').value = rgb01ToHex(fog.color || [0.5, 0.55, 0.6]);
-                document.getElementById('prop-map-fog-density').value = fog.density != null ? fog.density : 0.35;
-                document.getElementById('prop-map-fog-density-val').textContent = fog.density != null ? fog.density : '0.35';
+                document.getElementById('prop-map-fog-startdist').value = fog.startDist != null ? fog.startDist : 0.0;
+                document.getElementById('prop-map-fog-startdist-val').textContent = fog.startDist != null ? fog.startDist : '0.0';
+                document.getElementById('prop-map-fog-distance').value = fDist;
+                document.getElementById('prop-map-fog-distance-val').textContent = fDist;
+                document.getElementById('prop-map-fog-sharpness').value = fog.sharpness != null ? fog.sharpness : 1.0;
+                document.getElementById('prop-map-fog-sharpness-val').textContent = fog.sharpness != null ? fog.sharpness : '1.0';
                 document.getElementById('prop-map-fog-minfactor').value = fog.minFactor != null ? fog.minFactor : 0.12;
                 document.getElementById('prop-map-fog-minfactor-val').textContent = fog.minFactor != null ? fog.minFactor : '0.12';
             } else {
                 document.getElementById('prop-map-fog-enabled').checked = false;
                 document.getElementById('prop-map-fog-color').value = '#73808a';
-                document.getElementById('prop-map-fog-density').value = 0.35;
-                document.getElementById('prop-map-fog-density-val').textContent = '0.35';
+                document.getElementById('prop-map-fog-startdist').value = 0.0;
+                document.getElementById('prop-map-fog-startdist-val').textContent = '0.0';
+                document.getElementById('prop-map-fog-distance').value = 8.0;
+                document.getElementById('prop-map-fog-distance-val').textContent = '8.0';
+                document.getElementById('prop-map-fog-sharpness').value = 1.0;
+                document.getElementById('prop-map-fog-sharpness-val').textContent = '1.0';
                 document.getElementById('prop-map-fog-minfactor').value = 0.12;
                 document.getElementById('prop-map-fog-minfactor-val').textContent = '0.12';
             }
@@ -1053,11 +1161,15 @@
                 // updates this map too.
                 map.fog = { preset: fogPresetId };
             } else if (document.getElementById('prop-map-fog-enabled').checked) {
-                const density = parseFloat(document.getElementById('prop-map-fog-density').value);
+                const startDist = parseFloat(document.getElementById('prop-map-fog-startdist').value);
+                const distance = parseFloat(document.getElementById('prop-map-fog-distance').value);
+                const sharpness = parseFloat(document.getElementById('prop-map-fog-sharpness').value);
                 const minFactor = parseFloat(document.getElementById('prop-map-fog-minfactor').value);
                 map.fog = {
                     color: hexToRgb01(document.getElementById('prop-map-fog-color').value),
-                    density: isNaN(density) ? 0.35 : density,
+                    startDist: isNaN(startDist) ? 0.0 : startDist,
+                    distance: isNaN(distance) ? 8.0 : distance,
+                    sharpness: isNaN(sharpness) ? 1.0 : sharpness,
                     minFactor: isNaN(minFactor) ? 0.12 : minFactor,
                 };
             } else {

@@ -1,0 +1,15 @@
+{
+  "name": "hichaukitoden-editor",
+  "version": "1.0.0",
+  "description": "Hichaukitoden Developer Studio",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^43.2.0"
+  }
+}

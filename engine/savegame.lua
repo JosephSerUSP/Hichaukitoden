@@ -127,6 +127,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         gold = sessionObj.gold,
         inventory = sessionObj.inventory,
         flags = sessionObj.flags,
+        eventOverrides = sessionObj.eventOverrides,
         dungeonFloor = sessionObj.dungeonFloor,
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
@@ -148,6 +149,7 @@ function savegame.deserialize(data, loader)
     sess.gold = data.gold or 0
     sess.inventory = data.inventory or {}
     sess.flags = data.flags or {}
+    sess.eventOverrides = data.eventOverrides or {}
     sess.dungeonFloor = data.dungeonFloor or 1
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp

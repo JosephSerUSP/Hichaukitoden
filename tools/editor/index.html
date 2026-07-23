@@ -26,13 +26,13 @@
         }
 
         body {
-            background-color: var(--desktop-teal);
+            background-color: var(--win-gray);
             color: var(--text-color);
             font-family: var(--font-family);
             font-size: 11px;
             margin: 0;
-            padding: 8px;
-            height: calc(100vh - 16px);
+            padding: 0;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -953,18 +953,7 @@
     </style>
 </head>
 <body>
-    <div class="window outset-bevel main-app-window">
-        <!-- Title Bar -->
-        <div class="title-bar">
-            <div class="title-bar-text">
-                <span>📁</span>
-                Hichaukitoden developer Studio
-            </div>
-            <div class="title-bar-controls">
-                <button class="win-btn-small outset-bevel" onclick="window.close()">×</button>
-            </div>
-        </div>
-
+    <div class="window main-app-window">
         <!-- Menu Bar -->
         <div class="menu-bar">
             <div class="menu-item">
@@ -1432,7 +1421,11 @@
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2px;">
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <label style="font-size: 10px; font-weight: bold;">Name:</label>
-                        <input type="text" id="event-prop-name" class="win98-input" style="width: 180px;" placeholder="EV001" />
+                        <input type="text" id="event-prop-name" class="win98-input" style="width: 140px;" placeholder="EV001" />
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+                        <label style="font-size: 10px; font-weight: bold;">Display Label:</label>
+                        <input type="text" id="event-prop-label" class="win98-input" style="width: 100%;" placeholder="e.g. Pink-haired girl" title="Text shown when approaching the event in the dungeon/map view." />
                     </div>
                 </div>
 
@@ -1666,7 +1659,7 @@
                                    <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#73808a;color:#fff;" onclick="setFogPreset('#73808a','Blue Haze')">🌫️</button>
                                    <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#333344;color:#ccc;" onclick="setFogPreset('#333344','Dark Fog')">🌑</button>
                                    <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#1a1a2e;color:#888;" onclick="setFogPreset('#1a1a2e','Underground')">🕳️</button>
-                                   <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#4a3066;color:#ccc;" onclick="setFogPreset('#4a3066','Purple Dusk')">🌆</button>
+                                    <button class="win98-btn" style="min-width:0;font-size:9px;padding:1px 4px;background:#4a3066;color:#ccc;" onclick="setFogPreset('#4a3066','Purple Dusk')">🌆</button>
                                </div>
                                <div style="display: flex; gap: 4px; margin-top: 3px;">
                                    <input type="color" id="prop-map-fog-color" value="#73808a"
@@ -1674,29 +1667,51 @@
                                    <input type="text" id="prop-map-fog-label" class="win98-input" style="width:80px;font-size:9px;" placeholder="label" readonly />
                                </div>
                            </div>
-                           <!-- Fog Preview Canvas -->
-                           <div class="field-row-stacked" style="margin-top: 4px;">
-                               <label style="font-size: 10px;">Preview (near → far):</label>
-                               <canvas id="fog-preview-canvas" width="220" height="28"
-                                       style="width:100%;height:28px;border:1px solid var(--win-shadow);background:#fff;image-rendering:pixelated;"></canvas>
-                           </div>
-                           <div class="field-row-stacked" style="margin-top: 4px;">
-                               <label style="font-size: 10px;">Density (higher = faster fade):</label>
-                               <div style="display:flex;align-items:center;gap:4px;">
-                                   <input type="range" id="prop-map-fog-density" min="0.05" max="1.0" step="0.05" value="0.35"
-                                          style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-density-val').textContent=this.value" />
-                                   <span id="prop-map-fog-density-val" style="font-size:10px;min-width:28px;">0.35</span>
-                               </div>
-                           </div>
-                           <div class="field-row-stacked" style="margin-top: 4px;">
-                               <label style="font-size: 10px;">Min Visibility (0 = fully fog, 1 = never fades):</label>
-                               <div style="display:flex;align-items:center;gap:4px;">
-                                   <input type="range" id="prop-map-fog-minfactor" min="0.0" max="0.5" step="0.01" value="0.12"
-                                          style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-minfactor-val').textContent=this.value" />
-                                   <span id="prop-map-fog-minfactor-val" style="font-size:10px;min-width:28px;">0.12</span>
-                               </div>
-                           </div>
-                           </div>
+                            <!-- 2X 3D Preview Box + Side Sliders Layout -->
+                            <div style="display: flex; gap: 8px; margin-top: 6px; align-items: flex-start;">
+                                <!-- Left Column: 2X Preview Image Box -->
+                                <div style="flex: 0 0 512px; display: flex; flex-direction: column;">
+                                    <label style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">3D Viewport Preview (512x288 2X):</label>
+                                    <div style="width: 512px; height: 288px; border: 1px solid var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0;">
+                                        <img id="fog-preview-img" style="width: 512px; height: 288px; image-rendering: pixelated; object-fit: contain; display: block;" />
+                                    </div>
+                                </div>
+                                <!-- Right Column: Sliders -->
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                    <div class="field-row-stacked">
+                                        <label style="font-size: 10px;">Start Distance (clear tiles from camera):</label>
+                                        <div style="display:flex;align-items:center;gap:4px;">
+                                            <input type="range" id="prop-map-fog-startdist" min="0.0" max="16.0" step="0.25" value="0.0"
+                                                   style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-startdist-val').textContent=this.value" />
+                                            <span id="prop-map-fog-startdist-val" style="font-size:10px;min-width:28px;">0.0</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-row-stacked">
+                                        <label style="font-size: 10px;">Fog Distance (how far fog extends past start):</label>
+                                        <div style="display:flex;align-items:center;gap:4px;">
+                                            <input type="range" id="prop-map-fog-distance" min="0.5" max="32.0" step="0.5" value="8.0"
+                                                   style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-distance-val').textContent=this.value" />
+                                            <span id="prop-map-fog-distance-val" style="font-size:10px;min-width:28px;">8.0</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-row-stacked">
+                                        <label style="font-size: 10px;">Sharpness (1.0 = smooth, &gt;1.0 = sharp threshold):</label>
+                                        <div style="display:flex;align-items:center;gap:4px;">
+                                            <input type="range" id="prop-map-fog-sharpness" min="0.1" max="10.0" step="0.1" value="1.0"
+                                                   style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-sharpness-val').textContent=this.value" />
+                                            <span id="prop-map-fog-sharpness-val" style="font-size:10px;min-width:28px;">1.0</span>
+                                        </div>
+                                    </div>
+                                    <div class="field-row-stacked">
+                                        <label style="font-size: 10px;">Min Visibility Floor (0 = fully fogged, 0.5 = 50% max fog):</label>
+                                        <div style="display:flex;align-items:center;gap:4px;">
+                                            <input type="range" id="prop-map-fog-minfactor" min="0.0" max="0.5" step="0.01" value="0.12"
+                                                   style="flex:1;" oninput="updateFogPreview();document.getElementById('prop-map-fog-minfactor-val').textContent=this.value" />
+                                            <span id="prop-map-fog-minfactor-val" style="font-size:10px;min-width:28px;">0.12</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </fieldset>
                     

@@ -211,57 +211,181 @@
         function buildFogPanoramaLayers(container, preset, rerenderPreset) {
             preset.panorama = preset.panorama || [];
             const wrap = document.createElement('div');
-            wrap.style.cssText = 'margin-top: 4px; padding: 4px; border: 1px solid var(--win-shadow); background: #f4f4f4;';
+            wrap.style.cssText = 'margin-top: 2px; padding: 4px; border: 1px solid var(--win-shadow); background: #f4f4f4;';
             const label = document.createElement('div');
-            label.style.cssText = 'font-size: 9px; color: var(--win-dark-shadow); margin-bottom: 2px;';
-            label.textContent = 'Panorama layers (scrolling images, back to front):';
+            label.style.cssText = 'font-size: 9.5px; color: var(--win-dark-shadow); margin-bottom: 4px; font-weight: bold;';
+            label.textContent = 'Parallax / Panorama Layers (scrolling mist images, back to front):';
             wrap.appendChild(label);
+
+            if (preset.panorama.length === 0) {
+                const emptyNote = document.createElement('div');
+                emptyNote.style.cssText = 'font-size: 9px; color: #888; margin: 4px 0; font-style: italic;';
+                emptyNote.textContent = 'No panorama layers (flat fog color mode). Click "+ Add Layer" below to add scrolling mist.';
+                wrap.appendChild(emptyNote);
+            }
 
             preset.panorama.forEach((layer, idx) => {
                 const row = document.createElement('div');
-                row.style.cssText = 'display: flex; gap: 3px; align-items: center; margin-top: 2px;';
+                row.style.cssText = 'display: flex; gap: 4px; align-items: center; margin-top: 4px; padding: 4px; border: 1px solid #ccc; background: #fff; flex-wrap: wrap;';
 
-                const img = document.createElement('input');
-                img.className = 'win98-input';
-                img.style.cssText = 'width: 90px; font-size: 9px;';
-                img.placeholder = 'assets/panorama/<name>';
-                img.title = 'Image name under assets/panorama/ (no path, no extension)';
-                img.value = layer.image || '';
-                img.oninput = () => { layer.image = img.value; setDirty(true); };
-                row.appendChild(img);
+                // Thumbnail
+                const thumb = document.createElement('img');
+                thumb.style.cssText = 'width: 28px; height: 28px; object-fit: cover; border: 1px solid #999; background: #000; cursor: pointer; flex-shrink: 0;';
+                const cleanImgName = (layer.image || '').replace(/^assets\/panorama\//, '').replace(/\.png$/i, '');
+                thumb.src = cleanImgName ? `assets/panorama/${cleanImgName}.png` : '';
+                thumb.title = 'Click to choose image with Asset Picker';
+                row.appendChild(thumb);
+
+                // Image name field + Asset Picker button
+                const imgWrap = document.createElement('div');
+                imgWrap.style.cssText = 'display: flex; align-items: center; gap: 2px; flex: 1 1 130px;';
+                
+                const imgInput = document.createElement('input');
+                imgInput.className = 'win98-input';
+                imgInput.style.cssText = 'flex: 1; font-size: 9px; font-family: monospace;';
+                imgInput.placeholder = 'fog_001';
+                imgInput.value = cleanImgName;
+                imgInput.onchange = () => {
+                    const val = imgInput.value.trim().replace(/^assets\/panorama\//, '').replace(/\.png$/i, '');
+                    layer.image = val;
+                    thumb.src = val ? `assets/panorama/${val}.png` : '';
+                    setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                imgWrap.appendChild(imgInput);
+
+                const pickBtn = document.createElement('button');
+                pickBtn.className = 'win98-btn';
+                pickBtn.style.cssText = 'font-size: 9px; padding: 1px 4px; min-width: 0;';
+                pickBtn.textContent = '...';
+                pickBtn.title = 'Browse assets/panorama/';
+                const triggerPicker = () => {
+                    if (typeof openAssetPicker === 'function') {
+                        openAssetPicker('panorama', (filepath) => {
+                            const pickedName = filepath.replace(/\\/g, '/').split('/').pop().replace(/\.png$/i, '');
+                            layer.image = pickedName;
+                            imgInput.value = pickedName;
+                            thumb.src = pickedName ? `assets/panorama/${pickedName}.png` : '';
+                            setDirty(true);
+                            if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                        });
+                    }
+                };
+                pickBtn.onclick = triggerPicker;
+                thumb.onclick = triggerPicker;
+                imgWrap.appendChild(pickBtn);
+                row.appendChild(imgWrap);
+
+                // Scroll X
+                const sxWrap = document.createElement('div');
+                sxWrap.style.cssText = 'display: flex; align-items: center; gap: 2px; font-size: 9px;';
+                sxWrap.innerHTML = '<span style="color:#555;">SX:</span>';
+                const scrollXSlider = document.createElement('input');
+                scrollXSlider.type = 'range'; scrollXSlider.min = '-0.1'; scrollXSlider.max = '0.1'; scrollXSlider.step = '0.001';
+                scrollXSlider.style.cssText = 'width: 50px;';
+                scrollXSlider.value = layer.scrollX != null ? layer.scrollX : 0;
 
                 const scrollX = document.createElement('input');
-                scrollX.type = 'number'; scrollX.step = '0.005';
-                scrollX.className = 'win98-input'; scrollX.style.cssText = 'width: 52px; font-size: 9px;';
-                scrollX.title = 'Horizontal scroll speed (image widths/sec)';
+                scrollX.type = 'number'; scrollX.step = '0.001';
+                scrollX.className = 'win98-input'; scrollX.style.cssText = 'width: 44px; font-size: 9px;';
+                scrollX.title = 'Horizontal scroll speed (% width per sec)';
                 scrollX.value = layer.scrollX != null ? layer.scrollX : 0;
-                scrollX.oninput = () => { layer.scrollX = parseFloat(scrollX.value) || 0; setDirty(true); };
-                row.appendChild(scrollX);
+
+                scrollXSlider.oninput = () => {
+                    const v = parseFloat(scrollXSlider.value) || 0;
+                    layer.scrollX = v; scrollX.value = v; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                scrollX.oninput = () => {
+                    const v = parseFloat(scrollX.value) || 0;
+                    layer.scrollX = v; scrollXSlider.value = v; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                sxWrap.appendChild(scrollXSlider);
+                sxWrap.appendChild(scrollX);
+                row.appendChild(sxWrap);
+
+                // Scroll Y
+                const syWrap = document.createElement('div');
+                syWrap.style.cssText = 'display: flex; align-items: center; gap: 2px; font-size: 9px;';
+                syWrap.innerHTML = '<span style="color:#555;">SY:</span>';
+                const scrollYSlider = document.createElement('input');
+                scrollYSlider.type = 'range'; scrollYSlider.min = '-0.1'; scrollYSlider.max = '0.1'; scrollYSlider.step = '0.001';
+                scrollYSlider.style.cssText = 'width: 50px;';
+                scrollYSlider.value = layer.scrollY != null ? layer.scrollY : 0;
 
                 const scrollY = document.createElement('input');
-                scrollY.type = 'number'; scrollY.step = '0.005';
-                scrollY.className = 'win98-input'; scrollY.style.cssText = 'width: 52px; font-size: 9px;';
-                scrollY.title = 'Vertical scroll speed (image heights/sec)';
+                scrollY.type = 'number'; scrollY.step = '0.001';
+                scrollY.className = 'win98-input'; scrollY.style.cssText = 'width: 44px; font-size: 9px;';
+                scrollY.title = 'Vertical scroll speed (% height per sec)';
                 scrollY.value = layer.scrollY != null ? layer.scrollY : 0;
-                scrollY.oninput = () => { layer.scrollY = parseFloat(scrollY.value) || 0; setDirty(true); };
-                row.appendChild(scrollY);
 
-                row.appendChild(makeSelect(FOG_BLEND_MODES, layer.blendMode || 'alpha', v => { layer.blendMode = v; }, '0'));
+                scrollYSlider.oninput = () => {
+                    const v = parseFloat(scrollYSlider.value) || 0;
+                    layer.scrollY = v; scrollY.value = v; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                scrollY.oninput = () => {
+                    const v = parseFloat(scrollY.value) || 0;
+                    layer.scrollY = v; scrollYSlider.value = v; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                syWrap.appendChild(scrollYSlider);
+                syWrap.appendChild(scrollY);
+                row.appendChild(syWrap);
+
+                // Blend Mode
+                const blendSelect = makeSelect(FOG_BLEND_MODES, layer.blendMode || 'alpha', v => {
+                    layer.blendMode = v;
+                    setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                }, '0');
+                blendSelect.style.fontSize = '9px';
+                row.appendChild(blendSelect);
+
+                // Opacity
+                const opWrap = document.createElement('div');
+                opWrap.style.cssText = 'display: flex; align-items: center; gap: 2px; font-size: 9px;';
+                opWrap.innerHTML = '<span style="color:#555;">Op:</span>';
+                const opSlider = document.createElement('input');
+                opSlider.type = 'range'; opSlider.min = '0'; opSlider.max = '1'; opSlider.step = '0.05';
+                opSlider.style.cssText = 'width: 45px;';
+                opSlider.value = layer.opacity != null ? layer.opacity : 1;
 
                 const opacity = document.createElement('input');
                 opacity.type = 'number'; opacity.step = '0.05'; opacity.min = '0'; opacity.max = '1';
-                opacity.className = 'win98-input'; opacity.style.cssText = 'width: 44px; font-size: 9px;';
-                opacity.title = 'Opacity (0-1)';
+                opacity.className = 'win98-input'; opacity.style.cssText = 'width: 36px; font-size: 9px;';
+                opacity.title = 'Layer opacity (0.0 to 1.0)';
                 opacity.value = layer.opacity != null ? layer.opacity : 1;
-                opacity.oninput = () => { layer.opacity = parseFloat(opacity.value); if (isNaN(layer.opacity)) layer.opacity = 1; setDirty(true); };
-                row.appendChild(opacity);
 
-                row.appendChild(makeRowDeleteBtn(() => { preset.panorama.splice(idx, 1); rerenderPreset(); }));
+                opSlider.oninput = () => {
+                    const v = parseFloat(opSlider.value);
+                    layer.opacity = isNaN(v) ? 1 : v; opacity.value = layer.opacity; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                opacity.oninput = () => {
+                    let v = parseFloat(opacity.value);
+                    if (isNaN(v)) v = 1;
+                    layer.opacity = v; opSlider.value = v; setDirty(true);
+                    if (typeof updateLocalPreview === 'function') updateLocalPreview();
+                };
+                opWrap.appendChild(opSlider);
+                opWrap.appendChild(opacity);
+                row.appendChild(opWrap);
+
+                // Delete button
+                row.appendChild(makeRowDeleteBtn(() => {
+                    preset.panorama.splice(idx, 1);
+                    setDirty(true);
+                    rerenderPreset();
+                }));
+
                 wrap.appendChild(row);
             });
 
             wrap.appendChild(makeAddRowBtn('+ Add Layer', () => {
-                preset.panorama.push({ image: 'fog_001', scrollX: 0.02, scrollY: 0, blendMode: 'alpha', opacity: 1 });
+                preset.panorama.push({ image: 'fog_001', scrollX: 0.02, scrollY: 0, blendMode: 'alpha', opacity: 0.6 });
+                setDirty(true);
                 rerenderPreset();
             }));
             container.appendChild(wrap);
@@ -270,79 +394,350 @@
         function buildFogPresetsEditor(panel) {
             dbPayload.engine.fogPresets = dbPayload.engine.fogPresets || [];
             const list = dbPayload.engine.fogPresets;
-            const note = document.createElement('p');
-            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
-            note.textContent = 'Named fog configs a map can reference (Map Properties → Fog → Preset) instead of carrying its own color/density/panorama — editing a preset here updates every map that references it.';
-            panel.appendChild(note);
 
-            const box = makeListBox();
+            // Clear tab container and format as a full-height 2-column flex layout
+            panel.innerHTML = '';
+            panel.style.display = 'flex';
+            panel.style.gap = '6px';
+            panel.style.padding = '0';
+            panel.style.overflow = 'hidden';
+            panel.style.height = '100%';
+            panel.style.boxSizing = 'border-box';
+
+            let selectedIndex = 0;
+
+            // --- LEFT COLUMN (db-items-column inset-panel) ---
+            const itemsCol = document.createElement('div');
+            itemsCol.className = 'db-items-column inset-panel';
+            itemsCol.style.cssText = 'width: 200px; flex-shrink: 0; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;';
+
+            const headerBar = document.createElement('div');
+            headerBar.style.cssText = 'padding: 4px 6px; font-size: 10px; font-weight: bold; border-bottom: 1px solid var(--win-shadow); background: var(--win-bg); display: flex; justify-content: space-between; align-items: center;';
+            headerBar.innerHTML = '<span>Fog Presets</span><span id="fog-presets-count" style="font-weight: normal; color: #666;"></span>';
+            itemsCol.appendChild(headerBar);
+
+            const listBox = document.createElement('div');
+            listBox.className = 'db-list-box';
+            listBox.style.cssText = 'flex: 1; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 1px;';
+            itemsCol.appendChild(listBox);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display: flex; gap: 4px; padding: 4px; border-top: 1px solid var(--win-shadow); background: var(--win-bg);';
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'win98-btn';
+            addBtn.style.cssText = 'flex: 1; font-size: 10px; font-weight: bold; color: #005500;';
+            addBtn.textContent = '+ Add';
+            addBtn.onclick = () => {
+                const newId = 'fog_' + (list.length + 1);
+                list.push({ id: newId, label: 'New Fog Preset', color: [0.5, 0.55, 0.6], density: 0.35, minFactor: 0.12, panorama: [] });
+                selectedIndex = list.length - 1;
+                setDirty(true);
+                render();
+            };
+            btnRow.appendChild(addBtn);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'win98-btn';
+            delBtn.style.cssText = 'flex: 1; font-size: 10px; color: #880000;';
+            delBtn.textContent = 'Delete';
+            delBtn.onclick = () => {
+                if (selectedIndex >= 0 && selectedIndex < list.length) {
+                    list.splice(selectedIndex, 1);
+                    selectedIndex = Math.max(0, Math.min(selectedIndex, list.length - 1));
+                    setDirty(true);
+                    render();
+                }
+            };
+            btnRow.appendChild(delBtn);
+            itemsCol.appendChild(btnRow);
+
+            panel.appendChild(itemsCol);
+
+            // --- RIGHT COLUMN (db-form-panel inset-panel) ---
+            const detailPanel = document.createElement('div');
+            detailPanel.className = 'db-form-panel inset-panel';
+            detailPanel.style.cssText = 'flex: 1; overflow-y: auto; padding: 8px; background: var(--cool-bg); height: 100%; box-sizing: border-box;';
+            panel.appendChild(detailPanel);
+
+            const renderList = () => {
+                listBox.innerHTML = '';
+                const countEl = headerBar.querySelector('#fog-presets-count');
+                if (countEl) countEl.textContent = `(${list.length})`;
+
+                list.forEach((preset, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'db-list-item';
+                    if (idx === selectedIndex) btn.classList.add('active');
+
+                    const hexColor = rgb01ToHex(preset.color || [0.5, 0.55, 0.6]);
+                    const idxStr = String(idx + 1).padStart(4, '0');
+
+                    btn.style.cssText = 'display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;';
+
+                    const swatch = document.createElement('span');
+                    swatch.style.cssText = `width: 10px; height: 10px; background-color: ${hexColor}; border: 1px solid #000; flex-shrink: 0; display: inline-block;`;
+                    btn.appendChild(swatch);
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;';
+                    labelSpan.textContent = `${idxStr}: ${preset.label || preset.id}`;
+                    btn.appendChild(labelSpan);
+
+                    btn.onclick = () => {
+                        selectedIndex = idx;
+                        render();
+                    };
+                    listBox.appendChild(btn);
+                });
+            };
+
+            const renderDetail = () => {
+                detailPanel.innerHTML = '';
+
+                if (list.length === 0 || selectedIndex < 0 || selectedIndex >= list.length) {
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.style.cssText = 'font-size: 11px; color: #666; font-style: italic; padding: 12px;';
+                    emptyMsg.textContent = 'No fog preset selected. Click "+ Add" on the left panel to create one.';
+                    detailPanel.appendChild(emptyMsg);
+                    return;
+                }
+
+                const preset = list[selectedIndex];
+
+                // Tip note
+                const note = document.createElement('p');
+                note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
+                note.textContent = 'Editing a preset updates every map referencing it (Map Properties → Fog → Preset).';
+                detailPanel.appendChild(note);
+
+                // --- IDENTIFICATION FIELDSET ---
+                const idFs = document.createElement('fieldset');
+                idFs.style.cssText = 'margin-bottom: 8px; padding: 6px; border: 1px solid var(--win-shadow);';
+                idFs.innerHTML = '<legend style="font-size: 10px; font-weight: bold;">Identification</legend>';
+
+                const idRow = document.createElement('div');
+                idRow.style.cssText = 'display: flex; gap: 8px; align-items: center; flex-wrap: wrap;';
+
+                const idWrap = document.createElement('div');
+                idWrap.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+                idWrap.innerHTML = '<label style="font-size: 10px; min-width: 30px;">ID:</label>';
+                const idInput = document.createElement('input');
+                idInput.className = 'win98-input';
+                idInput.style.cssText = 'width: 110px; font-size: 10px;';
+                idInput.title = 'Referenced by maps as fog.preset -- must be unique';
+                idInput.value = preset.id || '';
+                idInput.oninput = () => {
+                    preset.id = idInput.value;
+                    setDirty(true);
+                    renderList();
+                };
+                idWrap.appendChild(idInput);
+                idRow.appendChild(idWrap);
+
+                const labelWrap = document.createElement('div');
+                labelWrap.style.cssText = 'display: flex; align-items: center; gap: 4px; flex: 1;';
+                labelWrap.innerHTML = '<label style="font-size: 10px; min-width: 40px;">Label:</label>';
+                const labelInput = document.createElement('input');
+                labelInput.className = 'win98-input';
+                labelInput.style.cssText = 'flex: 1; font-size: 10px;';
+                labelInput.placeholder = 'Preset Name';
+                labelInput.value = preset.label || '';
+                labelInput.oninput = () => {
+                    preset.label = labelInput.value;
+                    setDirty(true);
+                    renderList();
+                };
+                labelWrap.appendChild(labelInput);
+                idRow.appendChild(labelWrap);
+
+                idFs.appendChild(idRow);
+                detailPanel.appendChild(idFs);
+
+                // --- FOG PARAMETERS FIELDSET (Measured in Cells / Tiles) ---
+                const paramFs = document.createElement('fieldset');
+                paramFs.style.cssText = 'margin-bottom: 8px; padding: 6px; border: 1px solid var(--win-shadow);';
+                paramFs.innerHTML = '<legend style="font-size: 10px; font-weight: bold;">Fog Parameters (Measured in Cells / Tiles)</legend>';
+
+                // Side-by-Side Layout Wrapper
+                const layoutWrap = document.createElement('div');
+                layoutWrap.style.cssText = 'display: flex; gap: 10px; margin-top: 4px; align-items: flex-start;';
+
+                // Left Column: 2X Preview Box
+                const previewWrap = document.createElement('div');
+                previewWrap.style.cssText = 'flex: 0 0 512px; display: flex; flex-direction: column;';
+                previewWrap.innerHTML = '<label style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">3D Viewport Preview (512x288 2X):</label>' +
+                    '<div style="width: 512px; height: 288px; border: 1px solid var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0;">' +
+                    '<img id="preset-fog-preview-img" style="width: 512px; height: 288px; image-rendering: pixelated; object-fit: contain; display: block;" />' +
+                    '<span id="preset-fog-preview-loading" style="position: absolute; top: 4px; right: 4px; font-size: 9px; color: #fff; background: rgba(0,0,0,0.7); padding: 1px 5px; border-radius: 2px; border: 1px solid #666; pointer-events: none; display: none;">Rendering...</span>' +
+                    '</div>';
+                layoutWrap.appendChild(previewWrap);
+
+                // Right Column: Color + Sliders
+                const slidersCol = document.createElement('div');
+                slidersCol.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 4px;';
+
+                // Color row
+                const colorRow = document.createElement('div');
+                colorRow.style.cssText = 'margin-bottom: 4px;';
+                colorRow.innerHTML = '<label style="font-size: 10px; font-weight: bold; display: block; margin-bottom: 2px;">Fog Color:</label>';
+
+                const paletteWrap = document.createElement('div');
+                paletteWrap.style.cssText = 'display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 4px;';
+                const presetsColors = [
+                    { hex: '#ffffff', label: '☁️ White Mist' },
+                    { hex: '#a0c4e8', label: '🌊 Pale Blue' },
+                    { hex: '#73808a', label: '🌫️ Blue Haze' },
+                    { hex: '#333344', label: '🌑 Dark Fog' },
+                    { hex: '#1a1a2e', label: '🕳️ Underground' },
+                    { hex: '#4a3066', label: '🌆 Purple Dusk' }
+                ];
+                presetsColors.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.className = 'win98-btn';
+                    btn.style.cssText = `min-width:0; font-size:9px; padding:1px 5px; background:${p.hex}; color:${parseInt(p.hex.replace('#',''),16)>0x888888?'#000':'#fff'};`;
+                    btn.textContent = p.label;
+                    btn.onclick = () => {
+                        preset.color = hexToRgb01(p.hex);
+                        colorPicker.value = p.hex;
+                        setDirty(true);
+                        renderList();
+                        updateLocalPreview();
+                    };
+                    paletteWrap.appendChild(btn);
+                });
+                colorRow.appendChild(paletteWrap);
+
+                const colorPickerRow = document.createElement('div');
+                colorPickerRow.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+                const colorPicker = document.createElement('input');
+                colorPicker.type = 'color';
+                colorPicker.style.cssText = 'width: 40px; height: 22px; cursor: pointer;';
+                colorPicker.value = rgb01ToHex(preset.color || [0.5, 0.55, 0.6]);
+                colorPicker.oninput = () => {
+                    preset.color = hexToRgb01(colorPicker.value);
+                    setDirty(true);
+                    renderList();
+                    updateLocalPreview();
+                };
+                colorPickerRow.appendChild(colorPicker);
+
+                const colorHexLabel = document.createElement('span');
+                colorHexLabel.style.cssText = 'font-size: 10px; font-family: monospace; color: #333;';
+                colorHexLabel.textContent = colorPicker.value.toUpperCase();
+                colorPicker.addEventListener('input', () => { colorHexLabel.textContent = colorPicker.value.toUpperCase(); });
+                colorPickerRow.appendChild(colorHexLabel);
+                colorRow.appendChild(colorPickerRow);
+                slidersCol.appendChild(colorRow);
+
+                // Sliders
+                const createParamRow = (labelText, key, minVal, maxVal, stepVal, defaultVal) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'margin-bottom: 4px;';
+                    row.innerHTML = `<label style="font-size: 10px; font-weight: bold;">${labelText}</label>`;
+
+                    const sRow = document.createElement('div');
+                    sRow.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-top: 1px;';
+
+                    const slider = document.createElement('input');
+                    slider.type = 'range'; slider.min = String(minVal); slider.max = String(maxVal); slider.step = String(stepVal);
+                    slider.style.cssText = 'flex: 1;';
+                    slider.value = preset[key] != null ? preset[key] : defaultVal;
+
+                    const numInput = document.createElement('input');
+                    numInput.type = 'number'; numInput.step = String(stepVal); numInput.min = String(minVal); numInput.max = String(maxVal);
+                    numInput.className = 'win98-input'; numInput.style.cssText = 'width: 48px; font-size: 10px;';
+                    numInput.value = preset[key] != null ? preset[key] : defaultVal;
+
+                    slider.oninput = () => {
+                        const v = parseFloat(slider.value);
+                        preset[key] = isNaN(v) ? defaultVal : v;
+                        numInput.value = preset[key];
+                        setDirty(true);
+                        renderList();
+                        updateLocalPreview();
+                    };
+
+                    numInput.oninput = () => {
+                        const v = parseFloat(numInput.value);
+                        preset[key] = isNaN(v) ? defaultVal : v;
+                        slider.value = preset[key];
+                        setDirty(true);
+                        renderList();
+                        updateLocalPreview();
+                    };
+
+                    sRow.appendChild(slider);
+                    sRow.appendChild(numInput);
+                    row.appendChild(sRow);
+                    return row;
+                };
+
+                slidersCol.appendChild(createParamRow('Start Distance (Clear zone in tiles):', 'startDist', 0.0, 16.0, 0.25, 0.0));
+                slidersCol.appendChild(createParamRow('Fog Distance (How far fog extends past start):', 'distance', 0.5, 32.0, 0.5, 8.0));
+                slidersCol.appendChild(createParamRow('Sharpness (1.0 = linear, >1.0 = sharp threshold):', 'sharpness', 0.1, 10.0, 0.1, 1.0));
+                slidersCol.appendChild(createParamRow('Min Visibility Floor (0.0 to 0.5):', 'minFactor', 0.0, 0.5, 0.01, 0.12));
+
+                layoutWrap.appendChild(slidersCol);
+                paramFs.appendChild(layoutWrap);
+
+                let presetBaking = false;
+                let presetBakeQueued = false;
+                let presetBakeTimer = null;
+
+                const updateLocalPreview = () => {
+                    clearTimeout(presetBakeTimer);
+                    presetBakeTimer = setTimeout(doLocalPreviewBake, 100);
+                };
+
+                const doLocalPreviewBake = async () => {
+                    if (presetBaking) { presetBakeQueued = true; return; }
+                    presetBaking = true;
+
+                    const imgEl = previewWrap.querySelector('#preset-fog-preview-img');
+                    try {
+                        const resp = await fetch('/preview-fog', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ fog: preset })
+                        });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data.image && imgEl) {
+                                imgEl.src = 'data:image/png;base64,' + data.image;
+                                imgEl.style.display = 'block';
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Preset 3D fog preview error:', e);
+                    } finally {
+                        presetBaking = false;
+                        if (presetBakeQueued) {
+                            presetBakeQueued = false;
+                            doLocalPreviewBake();
+                        }
+                    }
+                };
+
+                updateLocalPreview();
+
+                detailPanel.appendChild(paramFs);
+
+                // --- PANORAMA LAYERS FIELDSET ---
+                const panoFs = document.createElement('fieldset');
+                panoFs.style.cssText = 'margin-bottom: 8px; padding: 6px; border: 1px solid var(--win-shadow);';
+                panoFs.innerHTML = '<legend style="font-size: 10px; font-weight: bold;">Panorama Background Layers</legend>';
+
+                buildFogPanoramaLayers(panoFs, preset, renderDetail);
+                detailPanel.appendChild(panoFs);
+            };
 
             const render = () => {
-                box.innerHTML = '';
-                list.forEach((preset, idx) => {
-                    const block = document.createElement('div');
-                    block.style.cssText = 'border: 1px solid var(--win-shadow); padding: 4px; margin-bottom: 4px; background: #fff;';
-
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-
-                    const id = document.createElement('input');
-                    id.className = 'win98-input';
-                    id.style.cssText = 'width: 90px; font-size: 10px;';
-                    id.placeholder = 'id';
-                    id.title = 'Referenced by maps as fog.preset -- must be unique';
-                    id.value = preset.id || '';
-                    id.oninput = () => { preset.id = id.value; setDirty(true); };
-                    row.appendChild(id);
-
-                    const labelInput = document.createElement('input');
-                    labelInput.className = 'win98-input';
-                    labelInput.style.cssText = 'width: 90px; font-size: 10px;';
-                    labelInput.placeholder = 'label';
-                    labelInput.value = preset.label || '';
-                    labelInput.oninput = () => { preset.label = labelInput.value; setDirty(true); };
-                    row.appendChild(labelInput);
-
-                    const color = document.createElement('input');
-                    color.type = 'color';
-                    color.style.cssText = 'width: 32px; height: 20px;';
-                    color.value = rgb01ToHex(preset.color || [0.3, 0.3, 0.35]);
-                    color.oninput = () => { preset.color = hexToRgb01(color.value); setDirty(true); };
-                    row.appendChild(color);
-
-                    const density = document.createElement('input');
-                    density.type = 'number'; density.step = '0.05'; density.min = '0.05';
-                    density.className = 'win98-input'; density.style.cssText = 'width: 48px; font-size: 10px;';
-                    density.title = 'Density (higher = fades faster)';
-                    density.value = preset.density != null ? preset.density : 0.35;
-                    density.oninput = () => { preset.density = parseFloat(density.value) || 0.35; setDirty(true); };
-                    row.appendChild(density);
-
-                    const minFactor = document.createElement('input');
-                    minFactor.type = 'number'; minFactor.step = '0.01'; minFactor.min = '0'; minFactor.max = '1';
-                    minFactor.className = 'win98-input'; minFactor.style.cssText = 'width: 48px; font-size: 10px;';
-                    minFactor.title = 'Min visibility (0 = fully fogged at distance)';
-                    minFactor.value = preset.minFactor != null ? preset.minFactor : 0.12;
-                    minFactor.oninput = () => {
-                        const v = parseFloat(minFactor.value);
-                        preset.minFactor = isNaN(v) ? 0.12 : v;
-                        setDirty(true);
-                    };
-                    row.appendChild(minFactor);
-
-                    row.appendChild(makeRowDeleteBtn(() => { list.splice(idx, 1); render(); }));
-                    block.appendChild(row);
-
-                    buildFogPanoramaLayers(block, preset, render);
-                    box.appendChild(block);
-                });
-                box.appendChild(makeAddRowBtn('+ Add Fog Preset', () => {
-                    list.push({ id: 'new_preset', label: 'New Preset', color: [0.3, 0.3, 0.35], density: 0.35, minFactor: 0.12 });
-                    render();
-                }));
+                renderList();
+                renderDetail();
             };
+
             render();
-            panel.appendChild(box);
         }
 
         // --- TILESET ATLAS REGISTRY ---

@@ -9,6 +9,12 @@ local exploration = {}
 -- RPG Maker-style event pages: `ev.pages` is an ordered list of
 -- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
 -- LAST page whose condition passes wins (so authors order pages
+
+local exploration = {}
+
+-- RPG Maker-style event pages: `ev.pages` is an ordered list of
+-- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
+-- LAST page whose condition passes wins (so authors order pages
 -- least-to-most specific, same convention as RPG Maker), overriding
 -- whichever fields it defines onto a copy of the base event; an
 -- unconditioned page always matches, so it's the natural final fallback.
@@ -16,28 +22,52 @@ local exploration = {}
 -- the same flag:/hasItem:/questStatus: grammar as CONDITIONAL_BRANCH,
 -- falling back to a formula (mirrors engine/director.lua's ROUTER).
 function exploration.resolvePage(ev, session)
-    if not ev or not ev.pages or #ev.pages == 0 then return ev end
+    if not ev then return nil end
     local effective = ev
-    for _, page in ipairs(ev.pages) do
-        local result = true
-        if page.condition and page.condition ~= "" then
-            local matched
-            matched, result = conditions.evalPrefixed(page.condition, session)
-            if not matched then
-                local fctx = formulaEngine.makeContext({}, session)
-                local val, err = formulaEngine.eval(page.condition, fctx)
-                result = (not err) and val ~= false and val ~= 0 and val ~= nil
+    if ev.pages and #ev.pages > 0 then
+        for _, page in ipairs(ev.pages) do
+            local result = true
+            if page.condition and page.condition ~= "" then
+                local matched
+                matched, result = conditions.evalPrefixed(page.condition, session)
+                if not matched then
+                    local fctx = formulaEngine.makeContext({}, session)
+                    local val, err = formulaEngine.eval(page.condition, fctx)
+                    result = (not err) and val ~= false and val ~= 0 and val ~= nil
+                end
+            end
+            if result then
+                local merged = {}
+                for k, v in pairs(effective) do merged[k] = v end
+                for k, v in pairs(page) do
+                    if k ~= "condition" and k ~= "name" and k ~= "label" then
+                        merged[k] = v
+                    end
+                end
+                merged.name = ev.name
+                merged.label = ev.label
+                effective = merged
             end
         end
-        if result then
+    end
+
+    if session and ev.id then
+        local mapIdx = session.currentMapIndex or 1
+        local pOverride = session.eventOverrides and session.eventOverrides[mapIdx] and session.eventOverrides[mapIdx][ev.id]
+        local tOverride = session.tempEventOverrides and session.tempEventOverrides[ev.id]
+        if pOverride or tOverride then
             local merged = {}
-            for k, v in pairs(ev) do merged[k] = v end
-            for k, v in pairs(page) do
-                if k ~= "condition" then merged[k] = v end
+            for k, v in pairs(effective) do merged[k] = v end
+            if pOverride then
+                for k, v in pairs(pOverride) do merged[k] = v end
+            end
+            if tOverride then
+                for k, v in pairs(tOverride) do merged[k] = v end
             end
             effective = merged
         end
     end
+
     return effective
 end
 
@@ -241,6 +271,7 @@ function exploration.loadMap(session, mapIdx)
     local mapData = session.loader.maps[mapIdx]
     session.currentMapIndex = mapIdx
     session.currentMapData = mapData
+    session.tempEventOverrides = {}
     
     local grid, startX, startY
     if mapData.safe then

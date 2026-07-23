@@ -107,7 +107,12 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    let requestPath = req.url === '/' ? '/index.html' : req.url;
+    req.on('error', (err) => {
+        console.error('Request stream error:', err);
+    });
+
+    try {
+        let requestPath = req.url === '/' ? '/index.html' : req.url;
     requestPath = requestPath.split('?')[0];
     const decodedUrl = decodeURIComponent(requestPath);
     const relativePath = decodedUrl.replace(/^[\/\\]/, '');
@@ -516,6 +521,48 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(jsonText);
         });
+    } else if (req.method === 'POST' && req.url === '/preview-fog') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', () => {
+            const fail = (msg) => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: msg }));
+            };
+            let parsed;
+            try {
+                parsed = JSON.parse(body || '{}');
+            } catch (e) {
+                return fail('request body was not valid JSON: ' + e.message);
+            }
+            if (!fs.existsSync(previewExe)) return fail('preview unavailable — LOVE not found at ' + previewExe + ' (set LOVE_PATH)');
+
+            const fogSpecJson = JSON.stringify(parsed.fog || {});
+            const mapId = String(parsed.mapId || '');
+
+            const { execFile } = require('child_process');
+            execFile(previewExe, ['.', 'preview-fog', fogSpecJson, mapId], {
+                cwd: PROJECT_DIR,
+                timeout: 15000,
+                windowsHide: true,
+                maxBuffer: 4 * 1024 * 1024
+            }, (err, stdout) => {
+                const text = String(stdout || '');
+                const begin = text.indexOf('PREVIEW BEGIN');
+                const end = text.indexOf('PREVIEW END');
+                if (begin === -1 || end === -1 || end < begin) {
+                    return fail('preview produced no output' + (err ? ' (' + err.message + ')' : ''));
+                }
+                const jsonText = text.slice(begin + 'PREVIEW BEGIN'.length, end).trim();
+                try {
+                    JSON.parse(jsonText);
+                } catch (e) {
+                    return fail('preview output was not valid JSON: ' + e.message);
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(jsonText);
+            });
+        });
     } else if (req.method === 'POST' && req.url === '/save') {
         let body = '';
         req.on('data', chunk => { body += chunk; });
@@ -595,6 +642,9 @@ const server = http.createServer((req, res) => {
                 }, (notifyRes) => {});
                 notifyReq.on('error', (err) => {
                     // Ignore errors if game is not running
+                });
+                notifyReq.on('timeout', () => {
+                    notifyReq.destroy();
                 });
                 notifyReq.end();
 
@@ -848,8 +898,25 @@ const server = http.createServer((req, res) => {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');
     }
+    } catch (serverErr) {
+        console.error('Unhandled server request error:', serverErr);
+        if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Internal server error', message: serverErr.message }));
+        }
+    }
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[CRITICAL] Uncaught Exception in editor server:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[CRITICAL] Unhandled Rejection in editor server at:', promise, 'reason:', reason);
 });
 
 server.listen(PORT, '127.0.0.1', () => {
     console.log(`Editor server running at http://127.0.0.1:${PORT}`);
 });
+
+module.exports = server;

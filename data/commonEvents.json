@@ -1,6 +1,7 @@
 {
   "1": {
     "name": "Teleport",
+    "label": "Stairs Down",
     "minimapColor": [
       0,
       0.8,
@@ -41,6 +42,7 @@
   },
   "7": {
     "name": "Recovery Light",
+    "label": "Recovery Light",
     "minimapColor": [
       0,
       0.8,
@@ -58,6 +60,7 @@
   },
   "12": {
     "name": "Treasure Chest Loot",
+    "label": "Treasure Chest",
     "minimapColor": [
       0.8,
       0.8,
@@ -73,6 +76,7 @@
   },
   "13": {
     "name": "Dungeon Monster Battle",
+    "label": "Monster",
     "minimapColor": [
       0.8,
       0,
@@ -86,6 +90,7 @@
   },
   "14": {
     "name": "Workbench",
+    "label": "Workbench",
     "minimapColor": [
       0.8,
       0.5,

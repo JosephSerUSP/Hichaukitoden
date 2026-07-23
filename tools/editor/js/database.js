@@ -28,6 +28,7 @@
             },
             confirmMessage: 'You have unsaved database changes. Discard them and close?'
         });
+        window.dbModalSnapshotHelper = dbModalSnapshotHelper;
 
         function openDatabaseModal() {
             dbModalSnapshotHelper.capture();
