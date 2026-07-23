@@ -74,7 +74,12 @@
     ],
     "rewards": {
       "gold": 50,
-      "xp": 100
+      "xp": 100,
+      "items": [],
+      "flags": []
+    },
+    "requirements": {
+      "items": []
     }
   },
   "shattered_blade_recovery": {

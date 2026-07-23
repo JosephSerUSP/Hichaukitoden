@@ -178,8 +178,8 @@
       6
     ],
     "party": {
-      "twoMemberChance": 0.25,
-      "twoMemberBonusLevels": 3,
+      "twoMemberChance": 1,
+      "twoMemberBonusLevels": 28,
       "defaultSize": 3
     }
   },

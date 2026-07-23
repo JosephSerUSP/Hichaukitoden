@@ -1743,7 +1743,16 @@
         "x": 15,
         "y": 15,
         "spawn": "Random",
-        "sprite": "assets/sprites/NPC14.png"
+        "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
+        "name": "EV005",
+        "trigger": "interact",
+        "transparent": false,
+        "priority": "same",
+        "minimapColor": [
+          0.41,
+          1,
+          0.4
+        ]
       }
     ],
     "treasures": [
