@@ -1,0 +1,433 @@
+{
+    "dungeon_default": {
+        "id": "dungeon_default",
+        "name": "Standard Dungeon",
+        "texture": "assets/tilesets/dungeon_001.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "dungeon_wall_1",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 70
+                },
+                {
+                    "id": "dungeon_wall_2",
+                    "role": "base_wall",
+                    "middle": [1, 2],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 30
+                }
+            ],
+            "floors": [
+                {
+                    "id": "dungeon_floor_1",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 70,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "dungeon_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [0, 0],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [
+            {
+                "id": "dungeon_door",
+                "role": "door",
+                "atlas": [2, 0]
+            }
+        ],
+        "features": [
+            {
+                "id": "wall_torch",
+                "role": "wall_feature",
+                "atlas": [1, 2],
+                "injectProbability": 0.12,
+                "requiresAdjacentFloor": true,
+                "emitsLight": {
+                    "color": [1, 0.58, 0.22],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        ],
+        "tiles": {
+            "wall_torch": {
+                "atlas": [1, 0],
+                "solid": true,
+                "role": "wall_feature",
+                "emitsLight": {
+                    "color": [1, 0.58, 0.22],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        }
+    },
+    "town_default": {
+        "id": "town_default",
+        "name": "Town Exterior",
+        "texture": "assets/tilesets/town_001.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "town_wall_base",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "tile_3_0",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [
+            {
+                "id": "tile_2_0",
+                "role": "door",
+                "atlas": [2, 0]
+            }
+        ],
+        "features": [],
+        "tiles": {}
+    },
+    "town_001": {
+        "id": "town_001",
+        "name": "Town 001",
+        "texture": "assets/tilesets/town_001.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "town_wall_base",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "tile_3_0",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [
+            {
+                "id": "tile_2_0",
+                "role": "door",
+                "atlas": [2, 0]
+            }
+        ],
+        "features": [],
+        "tiles": {}
+    },
+    "town_002": {
+        "id": "town_002",
+        "name": "Town 002",
+        "texture": "assets/tilesets/town_002.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "town_002_wall",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "town_002_floor",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [],
+        "features": [],
+        "tiles": {}
+    },
+    "town_003": {
+        "id": "town_003",
+        "name": "Town 003",
+        "texture": "assets/tilesets/town_003.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "town_003_wall",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "town_003_floor",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [],
+        "features": [],
+        "tiles": {}
+    },
+    "town_balamb": {
+        "id": "town_balamb",
+        "name": "Balamb Town",
+        "texture": "assets/tilesets/town_balamb.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "balamb_wall_base",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "tile_3_0",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [],
+        "features": [],
+        "tiles": {}
+    },
+    "template_tileset": {
+        "id": "template_tileset",
+        "name": "Template Tileset",
+        "texture": "assets/tilesets/template_tileset.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "wall_base_1",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 70
+                }
+            ],
+            "floors": [
+                {
+                    "id": "floor_stone",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 80,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "ceiling_stone",
+                    "role": "base_ceiling",
+                    "atlas": [0, 0],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [
+            {
+                "id": "door_standard",
+                "role": "door",
+                "atlas": [2, 0]
+            }
+        ],
+        "features": [
+            {
+                "id": "wall_torch",
+                "role": "wall_feature",
+                "atlas": [1, 3],
+                "injectProbability": 0.12,
+                "requiresAdjacentFloor": true,
+                "emitsLight": {
+                    "color": [1, 0.58, 0.22],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        ],
+        "tiles": {
+            "wall_torch": {
+                "atlas": [1, 3],
+                "solid": true,
+                "role": "wall_feature",
+                "emitsLight": {
+                    "color": [1, 0.58, 0.22],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        }
+    },
+    "autotile_guide": {
+        "id": "autotile_guide",
+        "name": "Autotile Visual Guide",
+        "texture": "assets/tilesets/autotile_guide.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "guide_wall_base",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "guide_floor",
+                    "role": "base_floor",
+                    "atlas": [3, 0],
+                    "weight": 100
+                }
+            ],
+            "ceilings": []
+        },
+        "doors": [
+            {
+                "id": "guide_door",
+                "role": "door",
+                "atlas": [2, 0]
+            }
+        ],
+        "features": [
+            {
+                "id": "guide_torch",
+                "role": "wall_feature",
+                "atlas": [1, 3],
+                "injectProbability": 0.15,
+                "emitsLight": {
+                    "color": [1, 0.6, 0.2],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        ],
+        "tiles": {
+            "guide_torch": {
+                "atlas": [1, 3],
+                "solid": true,
+                "role": "wall_feature",
+                "emitsLight": {
+                    "color": [1, 0.6, 0.2],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            }
+        }
+    },
+    "town_test": {
+        "id": "town_test",
+        "name": "town test",
+        "texture": "assets/tilesets/town_test.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "town_test_wall",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "town_test_floor",
+                    "role": "base_floor",
+                    "atlas": [0, 1],
+                    "weight": 100
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "town_test_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [0, 0],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [],
+        "features": [
+            {
+                "id": "town_test_wall_fixture_1",
+                "role": "wall_feature",
+                "atlas": [1, 2],
+                "injectProbability": 0.12,
+                "emitsLight": {
+                    "color": [1, 0.58, 0.22],
+                    "radius": 4,
+                    "falloff": 2
+                }
+            },
+            {
+                "id": "town_test_wall_fixture_2",
+                "role": "wall_feature",
+                "atlas": [1, 3],
+                "injectProbability": 0.12
+            }
+        ]
+    }
+}

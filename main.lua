@@ -1521,6 +1521,16 @@ elseif paramDef.type == "script" then
         check(map.ceilingStyle == nil or map.ceilingStyle == "sky" or map.ceilingStyle == "solid",
             "map '" .. tostring(map.name) .. "' has invalid ceilingStyle '" .. tostring(map.ceilingStyle)
             .. "' (expected 'sky' or 'solid')")
+        if map.tileset then
+            local tsDef = loader.getTileset(map.tileset)
+            check(tsDef ~= nil,
+                "map '" .. tostring(map.name) .. "' references unknown tileset '" .. tostring(map.tileset) .. "'")
+            if tsDef then
+                local tsPath = tsDef.texture or ("assets/tilesets/" .. tostring(map.tileset) .. ".png")
+                check(love.filesystem.getInfo(tsPath) ~= nil,
+                    "map '" .. tostring(map.name) .. "' tileset '" .. tostring(map.tileset) .. "' texture missing (" .. tsPath .. ")")
+            end
+        end
         if map.light and map.layout then
             local expectH = #map.layout + 1
             local expectW = #map.layout[1] + 1

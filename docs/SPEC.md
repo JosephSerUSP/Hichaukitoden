@@ -122,6 +122,86 @@ don't understand, validators warn rather than reject on unrecognized
 *optional* fields, and new entry types arrive behind `kind`/version
 discriminators — old data never needs migrating.
 
+### 1.6 Map cell overrides (unified, 23.07.2026)
+
+`mapData.overrides` is a flat array of `{x, y, visual, passable, mutateTo,
+hidden}` entries (0-indexed, author-facing) — the single per-cell escape
+hatch, replacing the old dead `tiles{}` grid and the lamp's free-text
+`material` field (see `docs/design/tileset-and-events-redesign.md` §8.1):
+
+- `visual` — a feature/material id resolved against the tileset's merged
+  `tiles` table (same id space as `data/tilesets.json`'s `features[].id`);
+  wins over generated light-object materials.
+- `passable` — overrides the layout char's solidity (illusory wall = `true`
+  despite `#`; one-way/blocked floor = `false` despite `.`).
+- `mutateTo` — a pending structural-mutation target (`"#"`/`"."`/`"o"`),
+  applied by the `MUTATE_TILE` command (`engine/exploration.lua: mutateTile`)
+  and cleared once consumed.
+- `hidden` (on the *event*, not the override) — an event at an overridden
+  cell renders nothing until that cell's `mutateTo` has been consumed.
+
+`engine/exploration.lua: buildOverrideIndex` indexes this once per map load
+(`session.overrideIndex`, keyed 1-indexed `"x,y"` to match `session.mapGrid`).
+
+### 1.7 Structural `opening` cell (23.07.2026)
+
+`"o"` is a third layout char alongside `"#"`/`"."` — a doorway/gate/arch the
+player walks through (design doc §2/§6), distinct from a decorative
+`wall_event` door which sits on an actual `"#"` and is never passable. `"o"`
+is passable by the existing `~= "#"` movement check (no change needed there)
+but, unlike `"."`, still stops the raycaster's DDA loop and renders a frame
+— `presentation/viewport_3d.lua`'s wall column loop treats `"o"` as a hit
+alongside `"#"`, currently borrowing the door atlas row as a stand-in visual
+(no dedicated weighted/adjacency-resolved opening variant yet — that's §3).
+Authored via the map editor's Layout brush (`tools/editor/js/map-editor.js:
+setPaintTool('opening', ...)`) or as a `MUTATE_TILE ... to="o"` runtime
+mutation (hidden-passage reveal, per the override's `mutateTo`).
+
+Still open design work: decoration-layer weighted variants, adjacency
+predicates, prefabs (§3 of the redesign doc), and dungeon-generation
+authorship of `opening` cells (currently hand-authored only).
+
+### 1.8 Tileset Studio: variant pools, not cell painting (23.07.2026)
+
+`tools/editor/js/tileset-editor.js` (design doc §7) now treats the atlas
+canvas as a **coordinate picker**, not the authoring surface — a "Wall"
+click used to always overwrite `base.walls[0]`, which is why `weight` fields
+existed with nothing to weigh against (§0). The primary surface is now a
+**Variant Pools** list per structural role (Walls/Floors/Ceilings/Wall
+Fixtures/Floor Fixtures/Doors): select a pool entry (or add a new one),
+*then* click the atlas to assign that entry's coordinates. Deleting/adding
+goes through the real backing array (`tilesetData.base.walls`, `.floors`,
+`.ceilings`, `.features` filtered by role, `.doors`), so pools can actually
+hold N weighted variants now.
+
+The redundant `tiles{}` mirror the old editor dual-wrote alongside
+`features[]` (dead per §0 — nothing ever read it by map cell) is dropped on
+save; `features[]` is the single source of truth. `presentation/
+viewport_3d.lua`'s atlas loader still merges a legacy `tiles{}` if present,
+so hand-authored `tilesets.json` entries from before this change keep
+working unchanged.
+
+**Base walls are a fixed 128×64 block, authored with one click.** The old
+per-slot model (three independently-clickable targets — middle/leftEdge/
+rightEdge — chosen via a slot radio) let an author scatter them anywhere in
+the atlas, including on top of unrelated fixture cells; the engine only ever
+renders leftEdge/rightEdge as 32px-wide *halves of a single cell* anyway
+(`viewport_3d.lua:838-851`, offX 0 vs 32). The editor now matches that: click
+a wall variant's **middle** cell in the atlas and the cell immediately to
+its right is auto-assigned as both edges (offX 0/32), matching a spritesheet
+laid out as `[wall middle][wall edges]` side by side — e.g. `town_test.png`
+(256×128, 4×2 cells): row 0 = `[ceiling, floor, -, -]`, row 1 = `[wall
+middle, wall edges, fixture 1, fixture 2]`, authored by clicking (1,0) for
+the wall, then (1,2)/(1,3) for the two wall fixtures. The underlying schema
+(`middle`/`leftEdge`/`rightEdge` triples) is unchanged, so existing data with
+edges elsewhere in the atlas still renders — only new authoring assumes the
+fixed layout.
+
+Not in scope for this pass (§3, still open): actual weighted-random
+*resolution* at render/generation time (the pools are real now, but nothing
+picks between variants by weight yet), adjacency/context predicates,
+prefabs, and zone/region tagging.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

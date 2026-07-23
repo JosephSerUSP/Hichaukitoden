@@ -90,6 +90,9 @@ function loader.init(root)
     local animation_player = require("presentation.animation_player")
     animation_player.load(loader.animations)
 
+    -- Decoupled tilesets data registry
+    loader.tilesets = J("tilesets.json")
+
     -- Create lookup indices for scalability
     loader.actorsById = {}
     for _, actor in ipairs(loader.actors) do
@@ -105,6 +108,12 @@ function loader.init(root)
     for _, scene in ipairs(loader.scenes or {}) do
         loader.scenesById[scene.id] = scene
     end
+end
+
+function loader.getTileset(id)
+    if not loader.tilesets then return nil end
+    local key = (id and tostring(id) ~= "") and tostring(id) or "dungeon_default"
+    return loader.tilesets[key] or loader.tilesets["dungeon_default"]
 end
 
 -- Helpers to find items/skills by ID (O(1) lookups)

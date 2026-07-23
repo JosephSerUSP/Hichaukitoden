@@ -567,6 +567,31 @@
       "description": "Sets one or several flow-local variables, readable as v.name in formulas. Single form: name + value. Multi form: assignments rows, evaluated in order so later values can read earlier ones via v. — when assignments is present, name/value are ignored."
     },
     {
+      "id": "MUTATE_TILE",
+      "category": "Progression",
+      "label": "Mutate Tile",
+      "params": [
+        {
+          "key": "x",
+          "type": "number"
+        },
+        {
+          "key": "y",
+          "type": "number"
+        },
+        {
+          "key": "to",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Change a map cell's structure at runtime (e.g. reveal a hidden passage: wall -> floor)."
+    },
+    {
       "id": "SET_FLAG",
       "category": "Variables",
       "label": "Set Flag",
@@ -2198,12 +2223,13 @@
       "id": "blue_haze",
       "label": "Blue Haze",
       "color": [
-        0.45,
-        0.5,
-        0.54
+        0.53,
+        0.79,
+        1
       ],
       "density": 0.35,
-      "minFactor": 0.12
+      "minFactor": 0.12,
+      "panorama": []
     },
     {
       "id": "underground",
@@ -2214,7 +2240,8 @@
         0.18
       ],
       "density": 0.35,
-      "minFactor": 0.05
+      "minFactor": 0.05,
+      "panorama": []
     },
     {
       "id": "purple_dusk",
@@ -2225,7 +2252,8 @@
         0.4
       ],
       "density": 0.3,
-      "minFactor": 0.03
+      "minFactor": 0.03,
+      "panorama": []
     },
     {
       "id": "rolling_mist",

@@ -38,26 +38,39 @@
         // Registered once; each entry's close function already knows how to
         // prompt-and-discard if that modal has unsaved staged changes.
         const ESCAPE_MODAL_CLOSERS = [
-            ['asset-picker-modal', () => closeAssetPicker()],
-            ['cmd-modal', () => closeCmdDialog()],
-            ['cmd-selector-modal', () => closeCmdSelectorModal()],
-            ['icon-picker-modal', () => closeIconPicker()],
-            ['damage-popup-modal', () => closeDamagePopupModal()],
-            ['max-modal', () => closeChangeMaxDialog()],
-            ['map-properties-modal', () => closeMapPropertiesModal()],
-            ['event-modal', () => closeEventModal()],
-            ['db-modal', () => closeDatabaseModal()],
-            ['engine-modal', () => closeEngineModal()],
-            ['toast-modal', () => closeToast()]
+            ['icon-picker-modal', () => typeof closeIconPicker === 'function' && closeIconPicker()],
+            ['asset-picker-modal', () => typeof closeAssetPicker === 'function' && closeAssetPicker()],
+            ['cmd-modal', () => typeof closeCmdDialog === 'function' && closeCmdDialog()],
+            ['cmd-selector-modal', () => typeof closeCmdSelectorModal === 'function' && closeCmdSelectorModal()],
+            ['damage-popup-modal', () => typeof closeDamagePopupModal === 'function' && closeDamagePopupModal()],
+            ['max-modal', () => typeof closeChangeMaxDialog === 'function' && closeChangeMaxDialog()],
+            ['map-properties-modal', () => typeof closeMapPropertiesModal === 'function' && closeMapPropertiesModal()],
+            ['event-modal', () => typeof closeEventModal === 'function' && closeEventModal()],
+            ['tileset-studio-modal', () => typeof closeTilesetStudioModal === 'function' && closeTilesetStudioModal()],
+            ['campaign-gen-modal', () => typeof closeCampaignGenModal === 'function' && closeCampaignGenModal()],
+            ['studio-modal', () => typeof closeStudioModal === 'function' && closeStudioModal()],
+            ['db-modal', () => typeof closeDatabaseModal === 'function' && closeDatabaseModal()],
+            ['engine-modal', () => typeof closeEngineModal === 'function' && closeEngineModal()],
+            ['toast-modal', () => typeof closeToast === 'function' && closeToast()]
         ];
 
         window.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
+            // Also close active context menus if open
+            const contextMenu = document.getElementById('map-context-menu');
+            if (contextMenu && contextMenu.style.display !== 'none') {
+                contextMenu.style.display = 'none';
+                return;
+            }
             for (const [id, closeFn] of ESCAPE_MODAL_CLOSERS) {
                 const el = document.getElementById(id);
-                if (el && el.classList.contains('active')) {
-                    closeFn();
-                    return;
+                if (el) {
+                    const style = window.getComputedStyle(el);
+                    const isVisible = el.classList.contains('active') || (style.display !== 'none' && style.visibility !== 'hidden');
+                    if (isVisible) {
+                        closeFn();
+                        return;
+                    }
                 }
             }
         });

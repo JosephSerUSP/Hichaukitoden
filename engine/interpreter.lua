@@ -298,6 +298,11 @@ handlers.SET_VAR = function(cmd, ctx)
     ctx.v[cmd.name] = evalFormula(cmd.value, ctx)
 end
 
+handlers.MUTATE_TILE = function(cmd, ctx)
+    local exploration = require("engine.exploration")
+    exploration.mutateTile(ctx.session, evalFormula(cmd.x, ctx), evalFormula(cmd.y, ctx), cmd.to)
+end
+
 handlers.SET_FLAG = function(cmd, ctx)
     -- Same flag table conditions read (flag:<name>); false clears the flag
     -- so "flag not set" and "flag == false" stay indistinguishable.

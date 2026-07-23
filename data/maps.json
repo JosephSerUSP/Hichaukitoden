@@ -4,6 +4,8 @@
     "title": "Town of Stillnight",
     "intro": "A quiet settlement on the edge of the void.",
     "depth": 0,
+    "tileset": "town_test",
+    "ceilingStyle": "sky",
     "music": "town1",
     "image": "TownAlencar.png",
     "layout": [
@@ -3626,16 +3628,8 @@
         ]
       ]
     ],
-    "tileset": "town_balamb",
-    "ceilingStyle": "sky",
     "fog": {
-      "color": [
-        0.24,
-        0.62,
-        1
-      ],
-      "density": 0.1,
-      "minFactor": 0
+      "preset": "blue_haze"
     },
     "lightObjects": [
       {

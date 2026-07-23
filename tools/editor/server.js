@@ -203,63 +203,96 @@ const server = http.createServer((req, res) => {
             res.end(JSON.stringify({ error: 'Invalid directory' }));
         }
     } else if (req.method === 'GET' && req.url === '/api/tilesets') {
-        // assets/tilesets/*.png atlases + their sidecar .json manifests
-        // (docs/design/raycaster-tileset-lighting.md) aren't part of any
-        // DATA_FILES payload -- they're static assets shared across every
-        // campaign, like the PNGs themselves -- so the Tileset tab reads/
-        // writes them through their own endpoints instead of dbPayload/save.
-        const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
-        let names = [];
+        const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
+        let tilesetsMap = {};
         try {
-            names = fs.readdirSync(tilesetsDir).filter(f => /\.png$/i.test(f)).map(f => f.replace(/\.png$/i, ''));
-        } catch (e) { /* no tilesets dir yet */ }
-        const tilesets = names.map(name => {
-            let manifest = {};
-            try {
-                manifest = JSON.parse(fs.readFileSync(path.join(tilesetsDir, `${name}.json`), 'utf8'));
-            } catch (e) { /* missing/unparseable manifest = defaults, same as the engine loader */ }
-            let w = null, h = null;
-            try {
-                const sizeOf = fs.readFileSync(path.join(tilesetsDir, `${name}.png`));
-                // Minimal PNG header read: width/height are big-endian
-                // uint32s at bytes 16 and 20 of the IHDR chunk.
-                w = sizeOf.readUInt32BE(16);
-                h = sizeOf.readUInt32BE(20);
-            } catch (e) { /* leave null if unreadable */ }
-            return {
-                name,
-                wallRows: manifest.wallRows || [0, 1],
-                doorRow: manifest.doorRow != null ? manifest.doorRow : 2,
-                skyRow: manifest.skyRow != null ? manifest.skyRow : null,
-                ceilingRow: manifest.ceilingRow != null ? manifest.ceilingRow : null,
-                floorRow: manifest.floorRow != null ? manifest.floorRow : null,
-                tiles: manifest.tiles || {},
-                width: w,
-                height: h,
-            };
+            tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
+        } catch (e) {}
+
+        const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
+        let pngFiles = [];
+        try {
+            pngFiles = fs.readdirSync(tilesetsDir).filter(f => /\.png$/i.test(f));
+        } catch (e) {}
+
+        const tilesets = Object.keys(tilesetsMap).map(id => {
+            const def = tilesetsMap[id];
+            return Object.assign({ id, name: def.name || id }, def);
         });
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ tilesets }));
+        res.end(JSON.stringify({ tilesets, textures: pngFiles }));
     } else if (req.method === 'POST' && req.url === '/api/tilesets/save') {
         let body = '';
         req.on('data', c => { body += c; });
         req.on('end', () => {
             try {
                 const p = JSON.parse(body);
-                if (!p.name || !/^[a-zA-Z0-9_-]+$/.test(p.name)) {
+                const id = p.id || p.name;
+                if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) {
+                    throw new Error('Invalid tileset ID.');
+                }
+                const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
+                let tilesetsMap = {};
+                try {
+                    tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
+                } catch (e) {}
+
+                tilesetsMap[id] = p;
+                fs.writeFileSync(tilesetsJsonPath, JSON.stringify(tilesetsMap, null, 4) + '\n', 'utf8');
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, id }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, message: e.message }));
+            }
+        });
+    } else if (req.method === 'POST' && req.url === '/api/tilesets/create') {
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => {
+            try {
+                const p = JSON.parse(body);
+                const name = p.name ? p.name.trim() : '';
+                if (!name || !/^[a-zA-Z0-9_-]+$/.test(name)) {
                     throw new Error('Invalid tileset name.');
                 }
-                const manifest = {};
-                if (Array.isArray(p.wallRows) && p.wallRows.length) manifest.wallRows = p.wallRows;
-                if (p.doorRow != null) manifest.doorRow = p.doorRow;
-                if (p.skyRow != null) manifest.skyRow = p.skyRow;
-                if (p.ceilingRow != null) manifest.ceilingRow = p.ceilingRow;
-                if (p.floorRow != null) manifest.floorRow = p.floorRow;
-                if (p.tiles && typeof p.tiles === 'object' && !Array.isArray(p.tiles)) manifest.tiles = p.tiles;
-                const manifestPath = path.join(PROJECT_DIR, 'assets', 'tilesets', `${p.name}.json`);
-                fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 4) + '\n', 'utf8');
+                const tilesetsJsonPath = path.join(PROJECT_DIR, 'data', 'tilesets.json');
+                let tilesetsMap = {};
+                try {
+                    tilesetsMap = JSON.parse(fs.readFileSync(tilesetsJsonPath, 'utf8'));
+                } catch (e) {}
+
+                if (tilesetsMap[name]) {
+                    throw new Error(`Tileset '${name}' already exists.`);
+                }
+
+                const tilesetsDir = path.join(PROJECT_DIR, 'assets', 'tilesets');
+                const targetPng = path.join(tilesetsDir, `${name}.png`);
+                let tmplPng = path.join(tilesetsDir, 'template_tileset.png');
+                if (!fs.existsSync(tmplPng)) tmplPng = path.join(tilesetsDir, 'dungeon_001.png');
+
+                if (!fs.existsSync(targetPng) && fs.existsSync(tmplPng)) {
+                    fs.copyFileSync(tmplPng, targetPng);
+                }
+
+                tilesetsMap[name] = {
+                    id: name,
+                    name: p.displayName || name,
+                    texture: `assets/tilesets/${name}.png`,
+                    tileWidth: 64,
+                    tileHeight: 64,
+                    base: { walls: [], floors: [], ceilings: [] },
+                    doors: [],
+                    features: [],
+                    tiles: {}
+                };
+
+                fs.writeFileSync(tilesetsJsonPath, JSON.stringify(tilesetsMap, null, 4) + '\n', 'utf8');
+
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: true }));
+                res.end(JSON.stringify({ success: true, name, id: name }));
             } catch (e) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, message: e.message }));

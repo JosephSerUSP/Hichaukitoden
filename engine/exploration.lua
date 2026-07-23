@@ -2,6 +2,7 @@ local config = require("engine.config")
 local conditions = require("engine.conditions")
 local formulaEngine = require("engine.formula")
 local lighting = require("engine.lighting")
+local loader = require("data.loader")
 
 local exploration = {}
 
@@ -57,6 +58,38 @@ local DIRS = {
 local DIR_ORDER = { "N", "E", "S", "W" }
 
 -- Generate random room-based dungeon map
+-- Resolve the visual fixtures defined by a tileset into per-map material
+-- placements. This applies to authored safe maps as well as generated
+-- dungeons, so a fixture configured in Tileset Studio is actually visible
+-- when testing a town map.
+function exploration.injectTilesetFeatures(grid, mapData)
+    local tilesetDef = loader.getTileset(mapData and mapData.tileset)
+    local featureList = (tilesetDef and tilesetDef.features) or {
+        { id = "wall_torch", role = "wall_feature", injectProbability = 0.11, requiresAdjacentFloor = true, emitsLight = { color = { 1, 0.58, 0.22 }, radius = 4 } }
+    }
+    local generated = {}
+    local height = #grid
+    for _, feat in ipairs(featureList) do
+        local prob = feat.injectProbability or 0.1
+        for y = 2, height - 1 do
+            local width = #grid[y]
+            for x = 2, width - 1 do
+                if feat.role == "wall_feature" and grid[y][x] == "#" then
+                    local adjFloor = (grid[y - 1] and grid[y - 1][x] == ".")
+                        or (grid[y + 1] and grid[y + 1][x] == ".")
+                        or grid[y][x - 1] == "." or grid[y][x + 1] == "."
+                    if (not feat.requiresAdjacentFloor or adjFloor) and math.random() < prob then
+                        local lColor = feat.emitsLight and feat.emitsLight.color or { 1, 0.58, 0.22 }
+                        local lRadius = feat.emitsLight and feat.emitsLight.radius or 4
+                        table.insert(generated, { x = x - 1, y = y - 1, material = feat.id, color = lColor, radius = lRadius })
+                    end
+                end
+            end
+        end
+    end
+    return generated
+end
+
 function exploration.generateDungeon(mapData, seed)
     if seed then math.randomseed(seed) end
     
@@ -112,7 +145,6 @@ function exploration.generateDungeon(mapData, seed)
     local exitX, exitY = rooms[#rooms].cx, rooms[#rooms].cy
     
     local generatedEvents = {}
-    local generatedLights = {}
     
     local openTiles = {}
     for y = 2, height - 1 do
@@ -129,22 +161,7 @@ function exploration.generateDungeon(mapData, seed)
         openTiles[i], openTiles[j] = openTiles[j], openTiles[i]
     end
 
-    -- Procedural maps get a deterministic baseline of wall torches.  These
-    -- are lighting-only objects (not events), so they cannot accidentally
-    -- trigger scripts or consume an event slot.  A tileset may later render
-    -- the matching material differently without changing this placement rule.
-    for y = 2, height - 1 do
-        for x = 2, width - 1 do
-            if grid[y][x] == "#" and math.random(9) == 1 then
-                local adjacentFloor = (grid[y - 1] and grid[y - 1][x] == ".")
-                    or (grid[y + 1] and grid[y + 1][x] == ".")
-                    or grid[y][x - 1] == "." or grid[y][x + 1] == "."
-                if adjacentFloor then
-                    table.insert(generatedLights, { x = x - 1, y = y - 1, material = "wall_torch", color = { 1, 0.58, 0.22 }, radius = 4 })
-                end
-            end
-        end
-    end
+    local generatedLights = exploration.injectTilesetFeatures(grid, mapData)
     
     local placedCount = 1
     
@@ -191,6 +208,34 @@ function exploration.generateDungeon(mapData, seed)
     return grid, startX, startY, generatedEvents, generatedLights
 end
 
+-- Unified per-cell override table (docs/design/tileset-and-events-redesign.md
+-- §8.1): `mapData.overrides` is a flat array of
+-- {x, y (0-indexed, author-facing), visual, passable, mutateTo, hidden}
+-- entries, replacing the dead `tiles{}`/free-text-`material` split. Indexed
+-- once per map load, keyed 1-indexed ("x,y") to match session.mapGrid.
+function exploration.buildOverrideIndex(session)
+    local index = {}
+    local data = session.currentMapData or {}
+    for _, ov in ipairs(data.overrides or {}) do
+        index[(ov.x + 1) .. "," .. (ov.y + 1)] = ov
+    end
+    session.overrideIndex = index
+    return index
+end
+
+-- Mutates the structure layer at runtime (e.g. a hidden-passage-reveal
+-- event turning a wall into floor). `to` is a raw layout char ("#"/"."),
+-- matching session.mapGrid's existing 1-indexed char-grid representation.
+function exploration.mutateTile(session, x, y, to)
+    local gx, gy = x + 1, y + 1
+    local row = session.mapGrid[gy]
+    if not row then return false end
+    row[gx] = to
+    local ov = session.overrideIndex and session.overrideIndex[gx .. "," .. gy]
+    if ov then ov.mutateTo = nil end -- consumed: already applied to the grid
+    return true
+end
+
 -- Initialize map state in GameSession
 function exploration.loadMap(session, mapIdx)
     local mapData = session.loader.maps[mapIdx]
@@ -211,6 +256,19 @@ function exploration.loadMap(session, mapIdx)
         local startXDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.x or 10
         local startYDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.y or 17
         startX, startY = startXDef + 1, startYDef + 1 -- Lua is 1-indexed, systems spawn is 0-indexed
+
+        -- Safe/authored maps use the same tileset fixture rules as generated
+        -- maps. Without this, wall fixtures configured in a tileset never
+        -- appeared while testing a town.
+        session.generatedLightObjects = exploration.injectTilesetFeatures(grid, mapData)
+        if not mapData.light then
+            local lightSources = {}
+            for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
+            for _, source in ipairs(session.generatedLightObjects) do table.insert(lightSources, source) end
+            if #lightSources > 0 then
+                session.currentMapData.runtimeLight = lighting.bake(grid, lightSources)
+            end
+        end
     else
         -- Procedurally generate floor layout and inject events
         local generatedEvents, generatedLights
@@ -221,6 +279,7 @@ function exploration.loadMap(session, mapIdx)
     end
     
     session.mapGrid = grid
+    exploration.buildOverrideIndex(session)
     session.playerX = startX
     session.playerY = startY
     session.playerDir = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.dir or "N"
@@ -277,7 +336,14 @@ local function tryMove(session, dx, dy)
     local targetY = session.playerY + dy
 
     local row = session.mapGrid[targetY]
-    if row and row[targetX] and row[targetX] ~= "#" then
+    local ov = session.overrideIndex and session.overrideIndex[targetX .. "," .. targetY]
+    local passable
+    if ov and ov.passable ~= nil then
+        passable = ov.passable -- illusory wall (true) / one-way wall (false) override the char
+    else
+        passable = row and row[targetX] and row[targetX] ~= "#"
+    end
+    if passable then
         session.playerX = targetX
         session.playerY = targetY
         exploration.revealFog(session)

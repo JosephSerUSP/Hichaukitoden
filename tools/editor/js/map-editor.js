@@ -2,15 +2,16 @@
         // --- LAYER / EDITING MODE LOGIC ---
         function switchMode(mode) {
             editingMode = mode;
-            ['map', 'event', 'light'].forEach(m => document.getElementById(`tool-${m}-btn`).classList.remove('active'));
+            ['map', 'event', 'light', 'override'].forEach(m => document.getElementById(`tool-${m}-btn`).classList.remove('active'));
             document.getElementById(`tool-${mode}-btn`).classList.add('active');
 
-            const modeLabels = { map: 'Map Layer', event: 'Event Layer', light: 'Light Layer' };
+            const modeLabels = { map: 'Map Layer', event: 'Event Layer', light: 'Light Layer', override: 'Override Layer' };
             document.getElementById('status-mode').textContent = `Layer: ${modeLabels[mode]}`;
 
             document.getElementById('map-palette-section').style.display = mode === 'map' ? 'block' : 'none';
             document.getElementById('event-palette-section').style.display = mode === 'event' ? 'block' : 'none';
             document.getElementById('light-palette-section').style.display = mode === 'light' ? 'block' : 'none';
+            document.getElementById('override-palette-section').style.display = mode === 'override' ? 'block' : 'none';
 
             // Re-render the map cells to update active visual style representation
             renderGridCells();
@@ -98,6 +99,9 @@
         let selectedLightObject = null;
         let lightObjectCopyBuffer = null;
         let lightObjectDragging = false;
+        let selectedOverride = null;
+        let selectedOverrideIsPending = false; // true if selectedOverride hasn't been committed to map.overrides yet
+        let overrideDragging = false;
         let dragOffset = { x: 0, y: 0 };
         let mouseX = 0, mouseY = 0;
         let eventCopyBuffer = null;
@@ -121,6 +125,11 @@
             lightObjectDragging = false;
             const lampSettings = document.getElementById('light-object-settings');
             if (lampSettings) lampSettings.style.display = 'none';
+            selectedOverride = null;
+            selectedOverrideIsPending = false;
+            overrideDragging = false;
+            const overrideSettings = document.getElementById('override-settings');
+            if (overrideSettings) overrideSettings.style.display = 'none';
             // Initialize canvas event listeners once canvas is loaded
             const canvas = document.getElementById('map-canvas');
             if (canvas && !mapCanvas) {
@@ -171,6 +180,8 @@
 
                     if (tile === '#') {
                         ctx.fillStyle = '#808080'; // Wall
+                    } else if (tile === 'o') {
+                        ctx.fillStyle = '#c8a878'; // Opening (doorway/gate/arch, still passable)
                     } else {
                         ctx.fillStyle = '#ffffff'; // Floor
                     }
@@ -314,6 +325,40 @@
                     ctx.restore();
                 });
             }
+
+            // Unified per-cell overrides (docs/SPEC.md §1.6): a solid dark
+            // chip behind the glyph so it reads against wall/floor/opening
+            // tiles alike, rendered in every mode (full opacity) so an
+            // override's effect on the map stays visible while painting
+            // other layers, not just while in Override mode.
+            (map.overrides || []).forEach(ov => {
+                ctx.save();
+                const cx = (ov.x + 0.5) * TILE_SIZE, cy = (ov.y + 0.5) * TILE_SIZE;
+                ctx.beginPath();
+                ctx.arc(cx, cy, TILE_SIZE * 0.38, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(20,20,20,0.75)';
+                ctx.fill();
+                ctx.font = '14px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('🧩', cx, cy + 1);
+                if (editingMode === 'override' && ov === selectedOverride) {
+                    ctx.strokeStyle = '#0000a0'; ctx.lineWidth = 2;
+                    ctx.strokeRect(ov.x * TILE_SIZE + 1, ov.y * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                }
+                ctx.restore();
+            });
+
+            // A freshly-clicked cell in Override mode gets a dashed selection
+            // box but no committed chip -- it isn't written to map.overrides
+            // until the author actually sets a field (see
+            // selectOrCreateOverrideAt/updateSelectedOverride), so an empty
+            // click-and-look-away leaves no clutter behind.
+            if (editingMode === 'override' && selectedOverride && selectedOverrideIsPending) {
+                ctx.save();
+                ctx.strokeStyle = '#0000a0'; ctx.lineWidth = 2;
+                ctx.setLineDash([4, 3]);
+                ctx.strokeRect(selectedOverride.x * TILE_SIZE + 1, selectedOverride.y * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                ctx.restore();
+            }
         }
 
         function initCanvasEvents(canvas) {
@@ -359,6 +404,11 @@
                         isMouseDown = true;
                         paintLightAt(vx, vy);
                     }
+                } else if (editingMode === 'override') {
+                    if (e.button === 0) {
+                        selectOrCreateOverrideAt(x, y);
+                        overrideDragging = !!selectedOverride;
+                    }
                 } else {
                     if (e.button === 0) {
                         const clickedEvent = (map.events || []).find(ev => ev.x === x && ev.y === y);
@@ -396,6 +446,11 @@
                     return;
                 }
 
+                if (editingMode === 'override' && overrideDragging && selectedOverride) {
+                    moveSelectedOverride(x, y);
+                    return;
+                }
+
                 const isProcedural = !map.layout || map.layout.length === 0;
                 const width = isProcedural ? 21 : map.layout[0].length;
                 const height = isProcedural ? 21 : map.layout.length;
@@ -430,6 +485,7 @@
             window.addEventListener('mouseup', () => {
                 isMouseDown = false;
                 lightObjectDragging = false;
+                overrideDragging = false;
             });
         }
 
@@ -520,7 +576,7 @@
             const map = dbPayload.maps[currentMapIndex];
             if (!map || !map.layout[y]) return;
 
-            let tileChar = activePaintTool === 'floor' ? '.' : '#';
+            let tileChar = activePaintTool === 'floor' ? '.' : (activePaintTool === 'opening' ? 'o' : '#');
             const line = map.layout[y];
             const updatedLine = line.substring(0, x) + tileChar + line.substring(x + 1);
             map.layout[y] = updatedLine;
@@ -781,8 +837,30 @@
             document.getElementById('prop-map-enc-steps').value = map.encounterSteps || 0;
             document.getElementById('prop-map-enc-rate').value = (map.encounterRate !== undefined) ? map.encounterRate : '';
             document.getElementById('prop-map-safe').checked = !!map.safe;
-            document.getElementById('prop-map-tileset').value = map.tileset || '';
             document.getElementById('prop-map-ceiling').value = map.ceilingStyle || 'solid';
+
+            // Populate tileset select with registered tilesets from data/tilesets.json
+            (async () => {
+                try {
+                    const resp = await fetch('/api/tilesets');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        const select = document.getElementById('prop-map-tileset');
+                        if (select) {
+                            select.innerHTML = '';
+                            (data.tilesets || []).forEach(ts => {
+                                const opt = document.createElement('option');
+                                opt.value = ts.id;
+                                opt.textContent = `${ts.name || ts.id} (${ts.id})`;
+                                select.appendChild(opt);
+                            });
+                            select.value = map.tileset || 'dungeon_default';
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load tilesets for map properties:', e);
+                }
+            })();
 
             // Fog properties
             const fog = map.fog;
@@ -1143,6 +1221,80 @@
             if (!map || !selectedLightObject) return;
             map.lightObjects = (map.lightObjects || []).filter(l => l !== selectedLightObject);
             selectedLightObject = null; refreshSelectedLampSettings(); setDirty(true); renderGridCells();
+        }
+
+        // Unified per-cell overrides (docs/SPEC.md §1.6): {x, y, visual,
+        // passable, mutateTo}. `passable`/`mutateTo` are tri-state (unset,
+        // true/false, "#"/"."/"o") stored only when non-empty. Clicking an
+        // empty cell selects a *pending* override that is NOT written to
+        // map.overrides until the author actually sets a field -- otherwise
+        // every stray click litters the map with inert entries.
+        function refreshSelectedOverrideSettings() {
+            const panel = document.getElementById('override-settings');
+            panel.style.display = selectedOverride ? 'block' : 'none';
+            if (!selectedOverride) return;
+            document.getElementById('override-visual').value = selectedOverride.visual || '';
+            document.getElementById('override-passable').value = selectedOverride.passable === true ? 'true' : (selectedOverride.passable === false ? 'false' : '');
+            document.getElementById('override-mutateTo').value = selectedOverride.mutateTo || '';
+        }
+
+        function selectOrCreateOverrideAt(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || x < 0 || y < 0) return;
+            map.overrides = map.overrides || [];
+            const existing = map.overrides.find(o => o.x === x && o.y === y);
+            if (existing) {
+                selectedOverride = existing;
+                selectedOverrideIsPending = false;
+            } else {
+                selectedOverride = { x, y };
+                selectedOverrideIsPending = true; // not pushed to map.overrides until a field is set
+            }
+            refreshSelectedOverrideSettings();
+            renderGridCells();
+        }
+
+        function moveSelectedOverride(x, y) {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !selectedOverride || x < 0 || y < 0) return;
+            const occupied = (map.overrides || []).find(o => o !== selectedOverride && o.x === x && o.y === y);
+            if (occupied || (selectedOverride.x === x && selectedOverride.y === y)) return;
+            selectedOverride.x = x; selectedOverride.y = y;
+            if (!selectedOverrideIsPending) setDirty(true);
+            renderGridCells();
+        }
+
+        function updateSelectedOverride(key, value) {
+            if (!selectedOverride) return;
+            if (key === 'visual') {
+                const v = value.trim();
+                if (v) selectedOverride.visual = v; else delete selectedOverride.visual;
+            } else if (key === 'passable') {
+                if (value === 'true') selectedOverride.passable = true;
+                else if (value === 'false') selectedOverride.passable = false;
+                else delete selectedOverride.passable;
+            } else if (key === 'mutateTo') {
+                if (value === '#' || value === '.' || value === 'o') selectedOverride.mutateTo = value;
+                else delete selectedOverride.mutateTo;
+            }
+            if (selectedOverrideIsPending) {
+                const map = dbPayload.maps[currentMapIndex];
+                map.overrides = map.overrides || [];
+                map.overrides.push(selectedOverride);
+                selectedOverrideIsPending = false;
+            }
+            setDirty(true); renderGridCells();
+        }
+
+        function deleteSelectedOverride() {
+            const map = dbPayload.maps[currentMapIndex];
+            if (!map || !selectedOverride) return;
+            if (!selectedOverrideIsPending) {
+                map.overrides = (map.overrides || []).filter(o => o !== selectedOverride);
+                setDirty(true);
+            }
+            selectedOverride = null; selectedOverrideIsPending = false;
+            refreshSelectedOverrideSettings(); renderGridCells();
         }
 
         function bakeVisible(grid, x0, y0, x1, y1) {

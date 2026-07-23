@@ -173,49 +173,144 @@ local DEFAULT_TILESET = "dungeon_001"
 -- assets/tilesets/<name>.png) lazily loaded and cached here. A map without a
 -- `tileset` field uses DEFAULT_TILESET.
 local atlasCache = {}
-local function loadAtlasManifest(name)
-    local path = "assets/tilesets/" .. name .. ".json"
-    if not love.filesystem.getInfo(path) then return nil end
-    local ok, decoded = pcall(function()
-        return require("data.json").decode(love.filesystem.read(path))
-    end)
-    if ok and type(decoded) == "table" then return decoded end
-    return nil
-end
-local function getAtlas(name)
-    if atlasCache[name] ~= nil then
-        return atlasCache[name] or nil
-    end
-    local path = "assets/tilesets/" .. name .. ".png"
+local function getAtlasByDef(id, tilesetDef)
+    if not tilesetDef then return nil end
+    if atlasCache[id] ~= nil then return atlasCache[id] or nil end
+    local path = tilesetDef.texture or ("assets/tilesets/" .. id .. ".png")
     if love.filesystem.getInfo(path) then
         local img = love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
-        local loadedManifest = loadAtlasManifest(name)
-        local manifest = loadedManifest or {}
-        -- No sidecar at all = the built-in sky/wall/door/floor default. A
-        -- present-but-partial manifest (e.g. dungeon_001's no-skyRow) is
-        -- taken at face value instead -- its omissions are intentional.
-        local wallRows = manifest.wallRows or (not loadedManifest and { 1 }) or nil
+        local tiles = {}
+        if tilesetDef.tiles then
+            for k, v in pairs(tilesetDef.tiles) do tiles[k] = v end
+        end
+        if tilesetDef.features then
+            for _, f in ipairs(tilesetDef.features) do
+                if f.id then tiles[f.id] = f end
+            end
+        end
+        local floorRow = tilesetDef.floorRow
+        local floorCol = tilesetDef.floorCol
+        if floorRow == nil and tilesetDef.base and tilesetDef.base.floors and tilesetDef.base.floors[1] and tilesetDef.base.floors[1].atlas then
+            floorRow = tilesetDef.base.floors[1].atlas[1]
+            floorCol = tilesetDef.base.floors[1].atlas[2]
+        end
+
+        local ceilingRow = tilesetDef.ceilingRow
+        local ceilingCol = tilesetDef.ceilingCol
+        if ceilingRow == nil and tilesetDef.base and tilesetDef.base.ceilings and tilesetDef.base.ceilings[1] and tilesetDef.base.ceilings[1].atlas then
+            ceilingRow = tilesetDef.base.ceilings[1].atlas[1]
+            ceilingCol = tilesetDef.base.ceilings[1].atlas[2]
+        end
+
+        local skyRow = tilesetDef.skyRow
+        local skyCol = tilesetDef.skyCol
+        if skyRow == nil then
+            skyRow, skyCol = ceilingRow, ceilingCol
+        end
+
+        local doorRow = tilesetDef.doorRow
+        if doorRow == nil and tilesetDef.doors and tilesetDef.doors[1] and tilesetDef.doors[1].atlas then
+            doorRow = tilesetDef.doors[1].atlas[1]
+        end
+
+        local wallRows = tilesetDef.wallRows
+        if not wallRows and tilesetDef.base and tilesetDef.base.walls and #tilesetDef.base.walls > 0 then
+            wallRows = {}
+            for _, w in ipairs(tilesetDef.base.walls) do
+                if w.middle and w.middle[1] then
+                    table.insert(wallRows, w.middle[1])
+                end
+            end
+        end
+        if not wallRows or #wallRows == 0 then wallRows = { 1 } end
+
         local entry = {
             img = img, w = img:getWidth(), h = img:getHeight(),
             wallRows = wallRows,
-            wallVariants = wallRows and (#wallRows * ATLAS_WALL_COLS) or 0,
-            doorRow = manifest.doorRow or (not loadedManifest and 2) or nil,
-            skyRow = manifest.skyRow or (not loadedManifest and 0) or nil,
-            floorRow = manifest.floorRow or (not loadedManifest and 3) or nil,
-            ceilingRow = manifest.ceilingRow, -- nil = solid ceiling stays a flat gradient
-            tiles = manifest.tiles or {}, -- named semantic tile definitions
+            wallVariants = #wallRows * ATLAS_WALL_COLS,
+            doorRow = doorRow,
+            skyRow = skyRow,
+            skyCol = skyCol,
+            floorRow = floorRow,
+            floorCol = floorCol,
+            ceilingRow = ceilingRow,
+            ceilingCol = ceilingCol,
+            tiles = tiles,
+            manifest = tilesetDef,
         }
-        atlasCache[name] = entry
+        atlasCache[id] = entry
         return entry
     end
-    atlasCache[name] = false
+    atlasCache[id] = false
     return nil
 end
 
 local sliceQuad = nil        -- 1px-wide column slice, reused for walls and doors
 local skyQuad = nil          -- reused for the sky strip, viewport recomputed per atlas
 local spriteSliceQuad = nil
+local compositeQuad = nil    -- Quad for baking tile layer composites into a 64x64 canvas
+local compositeCache = {}    -- Cached 64x64 composite tile canvases keyed by tile specs
+
+local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay)
+    local key = (atlas.manifest and atlas.manifest.id or "default")
+        .. ":" .. originX .. "," .. originY
+        .. "|" .. (leftEdgeSpec and (leftEdgeSpec[1] .. "," .. leftEdgeSpec[2] .. "," .. (leftEdgeSpec[3] or 0)) or "")
+        .. "|" .. (rightEdgeSpec and (rightEdgeSpec[1] .. "," .. rightEdgeSpec[2] .. "," .. (rightEdgeSpec[3] or 32)) or "")
+        .. "|" .. (featureOverlay and featureOverlay.atlas and (featureOverlay.atlas[1] .. "," .. featureOverlay.atlas[2]) or "")
+
+    if compositeCache[key] then
+        return compositeCache[key]
+    end
+
+    local canvas = love.graphics.newCanvas(ATLAS_TILE, ATLAS_TILE)
+    canvas:setFilter("nearest", "nearest")
+    -- Bake in ordinary 2D space. The finished canvas is an opaque wall tile
+    -- (the base wall is drawn first), so the raycaster can light and fog it
+    -- exactly once like any other wall texture.
+    local previousCanvas = love.graphics.getCanvas()
+    love.graphics.push("all")
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 0)
+
+    -- 1. Base Wall
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setColor(1, 1, 1, 1)
+    compositeQuad:setViewport(originX, originY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+    love.graphics.draw(atlas.img, compositeQuad, 0, 0)
+
+    -- 2. Left Edge Overlay (32x64)
+    love.graphics.setBlendMode("alpha")
+    if leftEdgeSpec then
+        local eRow, eCol, eOffX = leftEdgeSpec[1], leftEdgeSpec[2], leftEdgeSpec[3] or 0
+        compositeQuad:setViewport(eCol * ATLAS_TILE + eOffX, eRow * ATLAS_TILE, 32, ATLAS_TILE, atlas.w, atlas.h)
+        love.graphics.draw(atlas.img, compositeQuad, 0, 0)
+    end
+
+    -- 3. Right Edge Overlay (32x64)
+    if rightEdgeSpec then
+        local eRow, eCol, eOffX = rightEdgeSpec[1], rightEdgeSpec[2], rightEdgeSpec[3] or 32
+        compositeQuad:setViewport(eCol * ATLAS_TILE + eOffX, eRow * ATLAS_TILE, 32, ATLAS_TILE, atlas.w, atlas.h)
+        love.graphics.draw(atlas.img, compositeQuad, 32, 0)
+    end
+
+    -- 4. Feature Overlay / Fixture (64x64)
+    if featureOverlay and featureOverlay.atlas then
+        local fOriginY = featureOverlay.atlas[1] * ATLAS_TILE
+        local fOriginX = featureOverlay.atlas[2] * ATLAS_TILE
+        compositeQuad:setViewport(fOriginX, fOriginY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+        love.graphics.draw(atlas.img, compositeQuad, 0, 0)
+    end
+
+    -- Canvas targets are not part of LÖVE's push/pop graphics state. Failing
+    -- to restore this explicitly sends the rest of the frame into the 64px
+    -- bake canvas, leaving the on-screen world black/untextured.
+    love.graphics.setCanvas(previousCanvas)
+    love.graphics.pop()
+
+    compositeCache[key] = canvas
+    return canvas
+end
 
 -- Deterministic per-cell variant picks so ambient wall/door texture varies
 -- without being authored in map data (docs/design/raycaster-tileset-lighting.md).
@@ -308,6 +403,7 @@ local FLOOR_CEIL_SHADER_SRC = [[
     uniform float atlasW;
     uniform float atlasH;
     uniform float targetRow;
+    uniform float targetCol; // >= 0 selects one authored cell; -1 keeps legacy row variants
     uniform vec2 mapSize;   // (mapW, mapH), light texture covers (mapW+1)x(mapH+1) vertices
     // Fog: rather than mixing toward a fog color in-shader, output alpha =
     // fogAlpha and let ordinary blending reveal whatever drawFogBackground()
@@ -317,6 +413,7 @@ local FLOOR_CEIL_SHADER_SRC = [[
     uniform float fogMinFactor;
 
     vec2 cellVariantOrigin(vec2 cell) {
+        if (targetCol >= 0.0) return vec2(targetCol, targetRow);
         float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
         float col = floor(h * 4.0);
         return vec2(col, targetRow);
@@ -340,7 +437,7 @@ local FLOOR_CEIL_SHADER_SRC = [[
 
         // Fog alpha: 1.0 at camera, ramps toward fogMinFactor at distance
         float fogAlpha = max(fogMinFactor, 1.0 / (1.0 + rowDist * fogDensity));
-        vec2 lightUV = (worldPos - vec2(1.0)) / mapSize;
+        vec2 lightUV = (worldPos - vec2(0.5)) / (mapSize + vec2(1.0));
         vec3 lightColor = Texel(lightTex, lightUV).rgb;
         vec3 shaded = texColor.rgb * lightColor;
 
@@ -405,7 +502,7 @@ end
 -- supplies density/minFactor here -- the shader outputs alpha, not a mixed
 -- color; drawFogBackground() already drew what fog.color/panorama reveals
 -- underneath (docs/design/fog-presets-and-panorama.md).
-local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)
+local function drawShadedPlane(atlas, atlasRow, atlasCol, y0, rectH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)
     local shader = ensureFloorCeilShader()
     if not shader then return false end
 
@@ -416,6 +513,7 @@ local function drawShadedPlane(atlas, atlasRow, y0, rectH, cx, cy, dirX, dirY, p
     shader:send("atlasW", atlas.w)
     shader:send("atlasH", atlas.h)
     shader:send("targetRow", atlasRow)
+    shader:send("targetCol", atlasCol or -1)
     shader:send("fogDensity", fog.density)
     shader:send("fogMinFactor", fog.minFactor)
 
@@ -447,14 +545,21 @@ function viewport_3d.init()
     -- atlas is active for the current map).
     sliceQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     skyQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
+    compositeQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
+    compositeCache = {}
 end
 
 -- Resolves which atlas to draw walls/doors/sky from this frame: the map's
 -- own `tileset` if it names one, else DEFAULT_TILESET. Returns nil if that
 -- atlas file doesn't exist (draw() falls back to flat-shaded lines).
-local function resolveTileset(mapData)
-    local name = (mapData and mapData.tileset) or DEFAULT_TILESET
-    return getAtlas(name)
+local function resolveTileset(mapData, session)
+    local tilesetId = (mapData and mapData.tileset) or "dungeon_default"
+    local tilesetDef = (session and session.loader and session.loader.getTileset(tilesetId))
+        or (loader and loader.getTileset and loader.getTileset(tilesetId))
+    if tilesetDef then
+        return getAtlasByDef(tilesetDef.id or tilesetId, tilesetDef)
+    end
+    return nil
 end
 
 -- Doors are ordinary map events (docs/design/raycaster-tileset-lighting.md)
@@ -613,7 +718,10 @@ function viewport_3d.draw(session)
     local px0, py0 = math.floor(cx + 1), math.floor(cy + 1)
     local ambR, ambG, ambB = sampleLight(light, px0, py0, (cx + 1) - px0, (cy + 1) - py0)
 
-    local atlas = resolveTileset(mapData)
+    -- The active session owns the loaded tileset registry. Omitting it here
+    -- makes resolveTileset fall back to a nonexistent module-global loader,
+    -- returning nil and rendering the flat black/blue fallback instead.
+    local atlas = resolveTileset(mapData, session)
     local lightTex, lightW, lightH = getLightTexture(mapData)
 
     -- Fog background FIRST: everything drawn after this (shaded floor/
@@ -622,14 +730,19 @@ function viewport_3d.draw(session)
     drawFogBackground(fog, screenWpx, halfH * 2)
 
     if mapData and mapData.ceilingStyle == "sky" and atlas and atlas.skyRow then
-        skyQuad:setViewport(0, atlas.skyRow * ATLAS_TILE, ATLAS_SKY_COLS * ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+        -- A selected sky is one atlas cell. Legacy row-only manifests retain
+        -- their full-width sky strip; authored base ceilings/skies use their
+        -- designated atlas cell.
+        local skyX = (atlas.skyCol or 0) * ATLAS_TILE
+        local skyW = atlas.skyCol ~= nil and ATLAS_TILE or ATLAS_SKY_COLS * ATLAS_TILE
+        skyQuad:setViewport(skyX, atlas.skyRow * ATLAS_TILE, skyW, ATLAS_TILE, atlas.w, atlas.h)
         -- Sky is daylight, not torchlight -- deliberately NOT tinted by the
         -- vertex light grid (that models local/indoor light sources).
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(atlas.img, skyQuad, 0, 0, 0,
-            screenWpx / (ATLAS_SKY_COLS * ATLAS_TILE), halfH / ATLAS_TILE)
+            screenWpx / skyW, halfH / ATLAS_TILE)
     elseif atlas and atlas.ceilingRow
-        and drawShadedPlane(atlas, atlas.ceilingRow, 0, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog) then
+        and drawShadedPlane(atlas, atlas.ceilingRow, atlas.ceilingCol, 0, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog) then
         -- shaded plane drawn; nothing else to do
     else
         -- Ceiling gradient: Moody dark purple/indigo fade
@@ -639,7 +752,7 @@ function viewport_3d.draw(session)
     end
 
     if not (atlas and atlas.floorRow
-        and drawShadedPlane(atlas, atlas.floorRow, halfH, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)) then
+        and drawShadedPlane(atlas, atlas.floorRow, atlas.floorCol, halfH, halfH, cx, cy, dirX, dirY, planeX, planeY, lightTex, lightW, lightH, fog)) then
         -- Floor gradient: Cold dark stone grey fade
         drawVerticalGradient(0, halfH, screenWpx, halfH,
             {0.03 * ambR, 0.03 * ambG, 0.03 * ambB},
@@ -775,20 +888,57 @@ function viewport_3d.draw(session)
         if atlas then
             local originX, originY
             local material = atlas.tiles[materialLookup[mapX .. "," .. mapY] or ""]
+            local featureOverlay = nil
+
+            if material and material.role == "wall_feature" then
+                featureOverlay = material
+                material = nil -- fall through to draw base wall underneath feature
+            end
+
             if material and material.atlas then
                 originY = material.atlas[1] * ATLAS_TILE
                 originX = material.atlas[2] * ATLAS_TILE
             elseif doorLookup[mapX .. "," .. mapY] then
                 originX = doorVariant(mapX, mapY) * ATLAS_TILE
-                originY = atlas.doorRow * ATLAS_TILE
+                originY = (atlas.doorRow or 2) * ATLAS_TILE
+            elseif grid[mapY] and grid[mapY][mapX] == "o" then
+                -- Structural opening: no dedicated atlas row yet (§3's
+                -- weighted/adjacency variant resolution is deferred), so it
+                -- borrows the door row as a stand-in arch/gate frame.
+                originX = doorVariant(mapX, mapY) * ATLAS_TILE
+                originY = (atlas.doorRow or 2) * ATLAS_TILE
             else
-                local variant = wallVariant(mapX, mapY, atlas.wallVariants)
-                originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
-                originY = atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] * ATLAS_TILE
+                local baseWall = (atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1])
+                if baseWall and baseWall.middle then
+                    originX = baseWall.middle[2] * ATLAS_TILE
+                    originY = baseWall.middle[1] * ATLAS_TILE
+                else
+                    local variant = wallVariant(mapX, mapY, math.max(1, atlas.wallVariants))
+                    originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
+                    originY = (atlas.wallRows and atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] or 1) * ATLAS_TILE
+                end
             end
-            sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
-            love.graphics.setColor(litR, litG, litB, fogAlpha)
-            love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
+
+            -- Composite tile layers (base wall + edge autotiling + wall fixture overlay)
+            -- into a unified 64x64 canvas texture before applying lighting & fog.
+            local hasLeftEdge = (side == 0 and grid[mapY - 1] and grid[mapY - 1][mapX] == ".") or (side == 1 and grid[mapY] and grid[mapY][mapX - 1] == ".")
+            local hasRightEdge = (side == 0 and grid[mapY + 1] and grid[mapY + 1][mapX] == ".") or (side == 1 and grid[mapY] and grid[mapY][mapX + 1] == ".")
+
+            local leftEdgeSpec = hasLeftEdge and (atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1] and atlas.manifest.base.walls[1].leftEdge) or nil
+            local rightEdgeSpec = hasRightEdge and (atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1] and atlas.manifest.base.walls[1].rightEdge) or nil
+
+            if not leftEdgeSpec and not rightEdgeSpec and not featureOverlay then
+                sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
+                love.graphics.setBlendMode("alpha")
+                love.graphics.setColor(litR, litG, litB, fogAlpha)
+                love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
+            else
+                local compositeCanvas = getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay)
+                sliceQuad:setViewport(texX, 0, 1, ATLAS_TILE, ATLAS_TILE, ATLAS_TILE)
+                love.graphics.setBlendMode("alpha")
+                love.graphics.setColor(litR, litG, litB, fogAlpha)
+                love.graphics.draw(compositeCanvas, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
+            end
         else
             -- Retro flat-shaded colors if tileset is missing
             local r = (side == 0) and 0.4 or 0.3

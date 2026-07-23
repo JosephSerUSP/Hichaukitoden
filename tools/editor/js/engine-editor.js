@@ -391,107 +391,20 @@
 
         async function buildTilesetRegistryEditor(panel) {
             const note = document.createElement('p');
-            note.style.cssText = 'font-size: 10px; color: var(--win-dark-shadow); margin: 0 0 8px;';
-            note.textContent = 'Each atlas is a 64px-grid PNG under assets/tilesets/, 4 columns wide. wallRows is a comma-separated list of row indices (each contributes 4 wall variants); doorRow/skyRow/ceilingRow/floorRow are single row indices, blank = none. Saves independently of Save Changes — these files are shared across every campaign.';
+            note.style.cssText = 'font-size: 11px; color: var(--win-dark-shadow); margin: 0 0 12px;';
+            note.textContent = 'All tilesets are managed through the Tileset Studio. Configure 64px grid textures, assign row roles (Wall, Door, Sky, Floor, Ceiling), define autotiling edges, and set up semantic tiles with light emitters.';
             panel.appendChild(note);
 
-            const box = makeListBox();
-            box.textContent = 'Loading...';
-            panel.appendChild(box);
-
-            const tilesets = await fetchTilesetRegistry();
-            box.innerHTML = '';
-
-            tilesets.forEach(t => {
-                const block = document.createElement('div');
-                block.style.cssText = 'border: 1px solid var(--win-shadow); padding: 4px; margin-bottom: 4px; background: #fff;';
-
-                const header = document.createElement('div');
-                header.style.cssText = 'font-size: 11px; font-weight: bold; margin-bottom: 2px;';
-                header.textContent = t.name + (t.width ? ` (${t.width}×${t.height}, ${t.height / 64} rows)` : '');
-                block.appendChild(header);
-
-                const preview = document.createElement('img');
-                preview.src = `/assets/tilesets/${encodeURIComponent(t.name)}.png`;
-                preview.alt = `${t.name} atlas`;
-                preview.style.cssText = 'display:block; width:128px; max-height:96px; object-fit:contain; object-position:left top; image-rendering:pixelated; border:1px solid var(--win-shadow); margin:3px 0; background:#000;';
-                preview.title = 'Atlas preview. Semantic tile atlas coordinates use [row, column], zero-based.';
-                block.appendChild(preview);
-
-                const row = document.createElement('div');
-                row.style.cssText = 'display: flex; gap: 4px; align-items: center; flex-wrap: wrap;';
-
-                const wallRows = document.createElement('input');
-                wallRows.className = 'win98-input';
-                wallRows.style.cssText = 'width: 60px; font-size: 10px;';
-                wallRows.title = 'wallRows (csv of row indices)';
-                wallRows.value = (t.wallRows || []).join(',');
-                wallRows.oninput = () => {
-                    t.wallRows = wallRows.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-                    setDirty(true);
-                };
-                row.appendChild(labeledField('wall', wallRows));
-
-                row.appendChild(labeledField('door', rowNumberOrNull('doorRow', t.doorRow, v => { t.doorRow = v == null ? 2 : v; })));
-                row.appendChild(labeledField('sky', rowNumberOrNull('skyRow', t.skyRow, v => { t.skyRow = v; })));
-                row.appendChild(labeledField('ceiling', rowNumberOrNull('ceilingRow', t.ceilingRow, v => { t.ceilingRow = v; })));
-                row.appendChild(labeledField('floor', rowNumberOrNull('floorRow', t.floorRow, v => { t.floorRow = v; })));
-
-                const status = document.createElement('span');
-                status.style.cssText = 'font-size: 9px; color: var(--win-dark-shadow); margin-left: 4px;';
-
-                const saveBtn = document.createElement('button');
-                saveBtn.className = 'win98-btn';
-                saveBtn.style.cssText = 'font-size: 10px;';
-                saveBtn.textContent = 'Save Manifest';
-                saveBtn.onclick = () => saveTilesetManifest(t, status);
-                row.appendChild(saveBtn);
-                row.appendChild(status);
-
-                block.appendChild(row);
-
-                // Semantic tiles are intentionally data-first for this first
-                // pass: their atlas cell, collision, and emitter properties
-                // travel together in one manifest and can be pasted from an
-                // art pipeline without touching map geometry.
-                const semantic = document.createElement('textarea');
-                semantic.className = 'win98-input';
-                semantic.style.cssText = 'display:block; width:100%; height:72px; box-sizing:border-box; margin-top:4px; font:9px monospace;';
-                semantic.title = 'Named tile properties JSON. atlas is [row,column]; emitsLight has color/radius/falloff.';
-                semantic.value = JSON.stringify(t.tiles || {}, null, 2);
-                semantic.onchange = () => {
-                    try {
-                        const value = JSON.parse(semantic.value || '{}');
-                        if (!value || Array.isArray(value)) throw new Error('Expected an object');
-                        t.tiles = value;
-                        semantic.style.borderColor = '';
-                        setDirty(true);
-                    } catch (err) { semantic.style.borderColor = '#cc0000'; }
-                };
-                const semanticLabel = document.createElement('div');
-                semanticLabel.style.cssText = 'font-size:9px; margin-top:4px;';
-                semanticLabel.textContent = 'Semantic tiles (e.g. wall_torch: atlas, solid, emitsLight)';
-                block.appendChild(semanticLabel);
-                block.appendChild(semantic);
-                const addSemantic = document.createElement('button');
-                addSemantic.className = 'win98-btn';
-                addSemantic.style.cssText = 'font-size:9px; margin-top:3px;';
-                addSemantic.textContent = 'Add Semantic Tile';
-                addSemantic.onclick = () => {
-                    const id = window.prompt('Tile id (letters, digits, underscore):', 'wall_torch');
-                    if (!id || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(id)) return;
-                    t.tiles = t.tiles || {};
-                    if (!t.tiles[id]) t.tiles[id] = { atlas: [0, 0], solid: true };
-                    semantic.value = JSON.stringify(t.tiles, null, 2);
-                    setDirty(true);
-                };
-                block.appendChild(addSemantic);
-                box.appendChild(block);
-            });
-
-            if (!tilesets.length) {
-                box.textContent = 'No atlases found under assets/tilesets/.';
-            }
+            const launchBtn = document.createElement('button');
+            launchBtn.className = 'win98-btn win98-btn-success';
+            launchBtn.style.cssText = 'padding: 6px 16px; font-weight: bold; cursor: pointer;';
+            launchBtn.textContent = '🏰 Open Tileset Studio';
+            launchBtn.onclick = () => {
+                if (typeof window.openTilesetStudioModal === 'function') {
+                    window.openTilesetStudioModal();
+                }
+            };
+            panel.appendChild(launchBtn);
         }
 
         function labeledField(labelText, input) {
