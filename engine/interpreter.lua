@@ -632,12 +632,28 @@ end
 -- target 'party' hit every member; otherwise target is a party index.
 handlers.USE_ITEM = function(cmd, ctx)
     local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
+    local tab = (ctx.v and tonumber(ctx.v.tab)) or 1
+    local loader = ctx.loader or ctx.session.loader
     local stacks = {}
     for itemId, qty in pairs(ctx.session.inventory or {}) do
-        if qty > 0 then table.insert(stacks, itemId) end
+        if qty > 0 then
+            if tab == 1 or not loader then
+                table.insert(stacks, itemId)
+            else
+                local item = loader.getItem(itemId)
+                if item then
+                    local matches = false
+                    if tab == 1 then matches = true
+                    elseif tab == 2 then matches = (item.type == "consumable")
+                    elseif tab == 3 then matches = (item.type == "equipment")
+                    elseif tab == 4 then matches = (item.type == "quest" or item.type == "junk")
+                    else matches = true end
+                    if matches then table.insert(stacks, itemId) end
+                end
+            end
+        end
     end
     table.sort(stacks, compareIds)
-    local loader = ctx.loader or ctx.session.loader
     local item = stacks[idx] and loader.getItem(stacks[idx])
     if not item then
         if ctx.v then ctx.v.lastItemResult = { success = false, reason = "No item found" } end

@@ -87,21 +87,38 @@ local function compareIds(a, b)
     return tostring(a) < tostring(b)
 end
 
-local function inventoryRows(session)
+local function inventoryRows(session, env, win)
     local rows = {}
     if not session or not session.inventory then return rows end
+    local tab = 1
+    if win and win.tabVar then
+        tab = math.floor(tonumber((formula.eval(win.tabVar, env))) or 1)
+    elseif env and env.v and env.v.tab then
+        tab = math.floor(tonumber(env.v.tab) or 1)
+    end
+
     for itemId, qty in pairs(session.inventory) do
         if qty > 0 then
             local item = session.loader.getItem(itemId)
             if item then
-                table.insert(rows, {
-                    id = item.id,
-                    name = item.name or "",
-                    icon = item.icon or 0,
-                    qty = qty,
-                    description = item.description or "",
-                    meta = item.meta or {},
-                })
+                local matches = false
+                if tab == 1 then matches = true
+                elseif tab == 2 then matches = (item.type == "consumable")
+                elseif tab == 3 then matches = (item.type == "equipment")
+                elseif tab == 4 then matches = (item.type == "quest" or item.type == "junk")
+                else matches = true end
+
+                if matches then
+                    table.insert(rows, {
+                        id = item.id,
+                        name = item.name or "",
+                        icon = item.icon or 0,
+                        qty = qty,
+                        description = item.description or "",
+                        meta = item.meta or {},
+                        type = item.type,
+                    })
+                end
             end
         end
     end
@@ -361,7 +378,7 @@ local function resolveRows(win, state, sceneData, ctx, env)
     local src = win.listId or ""
     local rows
     if src == "inventory" then
-        rows = inventoryRows(ctx.session)
+        rows = inventoryRows(ctx.session, env, win)
     elseif src == "party" then
         rows = partyRows(ctx.session)
     elseif src == "reserve" then
@@ -582,6 +599,39 @@ end
 local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
     local contentX, contentY = contentOrigin(layout, title, x, y)
 
+    -- Integrated Tab Header Strip (Option 1 / Approach A):
+    local tabs = win.tabs or layout.tabs
+    if tabs and #tabs > 0 then
+        local tabVar = win.tabVar or layout.tabVar or "v.tab"
+        local activeTab = math.floor(tonumber((formula.eval(tabVar, env))) or 1)
+        local tabAreaW = w - ui.toPx(2)
+        local totalTabs = #tabs
+        local tabW = tabAreaW / totalTabs
+        for tIdx, tabItem in ipairs(tabs) do
+            local tabName = type(tabItem) == "table" and tabItem.name or tostring(tabItem)
+            local isTabSel = (tIdx == activeTab)
+            local tabX = contentX + (tIdx - 1) * tabW
+            if isTabSel then
+                ui.drawPanel(tabX + 1, contentY - 2, tabW - 2, ui.lineHeight + 3, nil, true)
+            end
+            local label = tabName
+            local color = isTabSel and COLOR_SELECTED or COLOR_DIM
+            local textW = ui.measureText(label)
+            local textX = tabX + math.max(0, (tabW - textW) / 2)
+            ui.drawString(label, textX, contentY, color)
+        end
+        -- Separator line under tab bar
+        local sepY = contentY + ui.lineHeight + 2
+        love.graphics.push("all")
+        love.graphics.setColor(0.3, 0.35, 0.45, 0.6)
+        love.graphics.line(contentX, sepY, contentX + tabAreaW, sepY)
+        love.graphics.pop()
+
+        -- Shift contentY down for rows and adjust available height
+        contentY = contentY + ui.lineHeight + 4
+        h = h - (ui.lineHeight + 4)
+    end
+
     -- Row widgets (vocabulary extension 11.07.2026): win.sprite names a row
     -- field carrying a small-battler sheet key drawn at the row's left;
     -- win.gaugeValue/gaugeMax are row-scoped formulas drawn as a bar under
@@ -595,7 +645,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
     if spriteField then rowPitch = math.max(rowPitch, spriteSize + 2) end
     if layout.rowPitch then rowPitch = ui.toPx(layout.rowPitch) end
 
-    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(3)) / rowPitch))
+    local visible = layout.visibleRows or math.max(1, math.floor((h - ui.toPx(2)) / rowPitch))
     if #rows == 0 then
         local emptyText = layout.emptyText or "No entries."
         ui.drawString(emptyText, contentX, contentY, COLOR_DIM)
@@ -653,13 +703,14 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             textX = textX + ui.measureText(label)
         end
         local afterTextX = ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
+        local scrollPad = 6
         if win.formatRight and win.formatRight ~= "" then
             local rightText = interpolate(win.formatRight, rEnv)
             -- Strip \c[N] color codes before measuring, since drawString
             -- removes them during rendering but measureText counts them.
             local measureText = rightText:gsub("\\c%[%d+%]", "")
             local rightW = ui.measureText(measureText)
-            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(0.5))
+            local rightEdge = spriteField and (x + w - cardPad * 2 - scrollPad) or (x + w - ui.toPx(0.5) - scrollPad)
             local rightX = rightEdge - rightW
             ui.drawString(rightText, rightX, rowY, color)
         end
@@ -669,10 +720,10 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
             -- instead of crashing tonumber's base argument)
             local val = tonumber((formula.eval(win.gaugeValue, rEnv))) or 0
             local max = tonumber((formula.eval(win.gaugeMax, rEnv))) or 1
-            local barX = textX
+            local barX = textX - 2
             -- Stay inside the row's own card (not the whole window) when
             -- one is drawn, so the bar never bleeds past its border.
-            local rightEdge = spriteField and (x + w - cardPad * 2) or (x + w - ui.toPx(1))
+            local rightEdge = spriteField and (x + w - cardPad * 2 - scrollPad) or (x + w - ui.toPx(1) - scrollPad)
             local barW = math.max(8, rightEdge - barX)
             local preview = isSel
                 and buildGaugePreview(win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel, rEnv)
@@ -685,6 +736,12 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
 
     -- Single smooth-moving cursor drawn at interpolated position
     small_battlers.draw("Cursor", contentX - 6, drawCursorY, 8)
+
+    -- Render lean windowskin scrollbar if total rows exceed visible capacity
+    if #rows > visible then
+        local listH = visible * rowPitch
+        ui.drawScrollbar(x, contentY, w, listH, #rows, visible, startOffset)
+    end
 end
 
 -- "partyGrid" style (owner direction 11.07.2026): arranges one
@@ -1378,6 +1435,8 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
                 priority = listBlock.priority,
+                tabs = listBlock.tabs or winDef.tabs,
+                tabVar = listBlock.tabVar or winDef.tabVar,
                 slot = listBlock.slot,
                 member = listBlock.member,
             }
@@ -1543,6 +1602,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         win.listId, win.format, win.formatRight, win.text, win.cursor = nil, nil, nil, nil, 1
         win.cursorFormula, win.sprite = nil, nil
         win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
+        win.tabs, win.tabVar = nil, nil
         win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel = nil, nil, nil
         win.slot, win.member, win.labelField = nil, nil, nil
         win._resolvedRows, win._resolvedCursor = nil, nil
@@ -1562,6 +1622,8 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 win.gaugePreviewLabel = block.gaugePreviewLabel
                 win.highlight = block.highlight
                 win.priority = block.priority
+                win.tabs = block.tabs or winDef.tabs
+                win.tabVar = block.tabVar or winDef.tabVar
                 win.slot = block.slot
                 win.member = block.member
                 win.labelField = block.labelField

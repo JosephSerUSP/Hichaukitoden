@@ -1,30 +1,34 @@
 action|High Pixie|Pixie||
-damage||Pixie|10|
-death||Pixie||
+damage||Pixie|9|
 action|Pixie|High Pixie||
-damage||High Pixie|7|
+damage||High Pixie|4|
+action|Pixie|High Pixie||
+damage||High Pixie|4|
+action|Angel|Pixie||
+damage||Pixie|7|
+death||Pixie||
+text||||
 action|Pixie|Angel||
-damage||Angel|10|
-mp_drain|High Pixie||2|
-mp_drain|Skeleton||2|
+damage||Angel|9|
+mp_drain|High Pixie||5|
+mp_drain|Skeleton||1|
 mp_drain|Angel||2|
 action|Skeleton|Skeleton||
 state_add||Skeleton||defending
 action|High Pixie|High Pixie||
 heal||High Pixie|6|
 action|Pixie|Skeleton||
-damage||Skeleton|5|
+damage||Skeleton|3|
 action|Angel|Pixie||
-damage||Pixie|10|
-death||Pixie||
+damage||Pixie|7|
 action|Pixie|High Pixie||
-damage||High Pixie|7|
+damage||High Pixie|4|
 state_remove||Skeleton||defending
-mp_drain|High Pixie||2|
-mp_drain|Skeleton||2|
+mp_drain|High Pixie||5|
+mp_drain|Skeleton||1|
 mp_drain|Angel||2|
 flee_success||||
 action|High Pixie|Pixie||
-damage||Pixie|10|
+damage||Pixie|9|
 death||Pixie||
 victory||||

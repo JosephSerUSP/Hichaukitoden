@@ -270,6 +270,42 @@
                 }
             });
 
+            // 2.1 Draw Anchors (Hybrid Pre-authored Rooms)
+            (map.anchors || []).forEach(anc => {
+                const ax = anc.x || 0;
+                const ay = anc.y || 0;
+                const ah = (anc.layout || []).length;
+                const aw = ah > 0 ? anc.layout[0].length : 0;
+                ctx.strokeStyle = '#a855f7'; // Purple dashed border
+                ctx.setLineDash([4, 2]);
+                ctx.lineWidth = 2;
+                ctx.strokeRect(ax * TILE_SIZE + 1, ay * TILE_SIZE + 1, aw * TILE_SIZE - 2, ah * TILE_SIZE - 2);
+                ctx.setLineDash([]);
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.1)';
+                ctx.fillRect(ax * TILE_SIZE, ay * TILE_SIZE, aw * TILE_SIZE, ah * TILE_SIZE);
+                ctx.fillStyle = '#a855f7';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText('ANCHOR', ax * TILE_SIZE + 4, ay * TILE_SIZE + 10);
+            });
+
+            // 2.2 Draw Per-Cell Overrides (Illusory walls, tile mutations)
+            (map.overrides || []).forEach(ov => {
+                const ox = ov.x;
+                const oy = ov.y;
+                if (ox !== undefined && oy !== undefined) {
+                    ctx.fillStyle = 'rgba(234, 179, 8, 0.25)';
+                    ctx.fillRect(ox * TILE_SIZE, oy * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = '#eab308';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(ox * TILE_SIZE + 1, oy * TILE_SIZE + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+                    ctx.fillStyle = '#854d0e';
+                    ctx.font = 'bold 8px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('OVR', ox * TILE_SIZE + TILE_SIZE / 2, oy * TILE_SIZE + TILE_SIZE / 2);
+                }
+            });
+
             // 3. Draw Player spawn indicator (only on the map spawn.mapId points at)
             const currentMap = dbPayload.maps[currentMapIndex];
             const isSpawn = dbPayload.system && dbPayload.system.spawn && currentMap &&

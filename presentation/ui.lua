@@ -134,6 +134,11 @@ function ui.init()
         panelQuads.tr = love.graphics.newQuad(56, 0, 8, 8, wsW, wsH)
         panelQuads.bl = love.graphics.newQuad(32, 24, 8, 8, wsW, wsH)
         panelQuads.br = love.graphics.newQuad(56, 24, 8, 8, wsW, wsH)
+
+        panelQuads.scrollTrack = love.graphics.newQuad(32, 32, 16, 16, wsW, wsH)
+        panelQuads.scrollThumb = love.graphics.newQuad(48, 32, 16, 16, wsW, wsH)
+        panelQuads.arrowUp = love.graphics.newQuad(40, 8, 16, 8, wsW, wsH)
+        panelQuads.arrowDown = love.graphics.newQuad(40, 16, 16, 8, wsW, wsH)
     end
 
     if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
@@ -336,6 +341,82 @@ function ui.drawTargetReticle(x, y, w, h)
     love.graphics.pop()
 end
 
+-- Draw lean RPG Maker 2003 styled windowskin scrollbar with overflow arrows
+-- Fits in a ultra-lean 2px width footprint along the right inner border of a list.
+function ui.drawScrollbar(x, y, w, h, totalRows, visibleRows, startOffset)
+    if totalRows <= visibleRows or totalRows <= 0 then return end
+
+    love.graphics.push("all")
+
+    local skin = windowskin
+    local maxScroll = totalRows - visibleRows
+    local scrollPos = math.max(0, math.min(maxScroll, (startOffset or 1) - 1))
+
+    -- 1. Lean 2px Rail / Track along right margin edge (x + w - 8)
+    local railX = x + w - 8
+    local railY = y + 8
+    local railH = math.max(8, h - 16)
+
+    if skin then
+        local wsW, wsH = skin:getDimensions()
+        -- Sample 2px vertical track slice from windowskin at (34, 33, 2, 14)
+        local trackQuad = love.graphics.newQuad(34, 33, 2, 14, wsW, wsH)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(skin, trackQuad, railX, railY, 0, 1, railH / 14)
+    else
+        love.graphics.setColor(0.2, 0.25, 0.35, 0.6)
+        love.graphics.rectangle("fill", railX, railY, 2, railH)
+    end
+
+    -- 2. Lean 2px Thumb Handle sampled directly from windowskin at (55, 33, 2, 14)
+    local thumbH = math.max(6, math.floor(railH * (visibleRows / totalRows)))
+    local thumbY = railY + math.floor((railH - thumbH) * (maxScroll > 0 and (scrollPos / maxScroll) or 0))
+
+    if skin then
+        local wsW, wsH = skin:getDimensions()
+        -- Sample 2px vertical thumb slice from windowskin at (55, 33, 2, 14)
+        local thumbQuad = love.graphics.newQuad(55, 33, 2, 14, wsW, wsH)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(skin, thumbQuad, railX, thumbY, 0, 1, thumbH / 14)
+    else
+        love.graphics.setColor(0.9, 0.95, 1.0, 1)
+        love.graphics.rectangle("fill", railX, thumbY, 2, thumbH)
+    end
+
+    -- 3. Static 16x8 Up / Down Arrow Indicators (40,8 and 40,16) sampled from windowskin
+    local arrowX = railX - 7
+    local canScrollUp = (startOffset > 1)
+    local canScrollDown = ((startOffset + visibleRows - 1) < totalRows)
+
+    -- Up Arrow indicator (16x8) at top of rail (railY - 8)
+    if skin and panelQuads.arrowUp then
+        if canScrollUp then
+            love.graphics.setColor(1, 1, 1, 1.0)
+        else
+            love.graphics.setColor(1, 1, 1, 0.25) -- Dim when inactive
+        end
+        love.graphics.draw(skin, panelQuads.arrowUp, arrowX, railY - 8)
+    else
+        local color = canScrollUp and COLOR_SELECTED or COLOR_DIM
+        ui.drawString("^", railX - 2, railY - 6, color)
+    end
+
+    -- Down Arrow indicator (16x8) at bottom of rail (railY + railH)
+    if skin and panelQuads.arrowDown then
+        if canScrollDown then
+            love.graphics.setColor(1, 1, 1, 1.0)
+        else
+            love.graphics.setColor(1, 1, 1, 0.25) -- Dim when inactive
+        end
+        love.graphics.draw(skin, panelQuads.arrowDown, arrowX, railY + railH)
+    else
+        local color = canScrollDown and COLOR_SELECTED or COLOR_DIM
+        ui.drawString("v", railX - 2, railY + railH, color)
+    end
+
+    love.graphics.pop()
+end
+
 -- Normalize Unicode characters that the active pixel font may not cover
 -- down to their closest ASCII equivalents so they render instead of showing
 -- the missing-glyph box ([]). Only active when ui.fontNormalize is true
@@ -487,15 +568,18 @@ end
 function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
     local r_old, g_old, b_old, a_old = love.graphics.getColor()
 
-    love.graphics.setColor(0.1, 0.1, 0.1, 1)
+    -- Sunken dark navy channel background (matches windowskin frame tone)
+    love.graphics.setColor(0.06, 0.08, 0.14, 0.95)
     love.graphics.rectangle("fill", x, y, w, h)
 
     local pct = math.max(0, math.min(1, current / maxVal))
     local fillW = math.floor((w - 2) * pct)
 
     if fillW > 0 then
+        color1 = color1 or { 0.2, 0.45, 0.85 }
+        color2 = color2 or { 0.4, 0.7, 1.0 }
         for i = 0, h - 3 do
-            local factor = i / (h - 2)
+            local factor = (h > 2) and (i / (h - 2)) or 0
             local r = color1[1] * (1 - factor) + color2[1] * factor
             local g = color1[2] * (1 - factor) + color2[2] * factor
             local b = color1[3] * (1 - factor) + color2[3] * factor
@@ -506,9 +590,8 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
 
     drawBarPreview(x, y, w, h, current, maxVal, preview)
 
-    -- Pixel-perfect 1px outline: offset by 0.5 to align with pixel grid,
-    -- preventing the Love2D "smooth" line-style spread across 2 pixels.
-    love.graphics.setColor(0.4, 0.4, 0.4, 1)
+    -- Metallic slate outline
+    love.graphics.setColor(0.32, 0.38, 0.52, 0.95)
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
 
@@ -555,8 +638,8 @@ function ui.drawIconText(iconId, text, x, y, color)
     local textX = x
     if iconId and iconId > 0 then
         ui.drawIcon(iconId, textX + ui.toPx(0.25), y - 2)
-        textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
     end
+    textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
     ui.drawString(text, textX, y, color)
     return textX + ui.measureText(text)
 end

@@ -2863,6 +2863,10 @@
               "value": 1
             },
             {
+              "name": "tab",
+              "value": 1
+            },
+            {
               "name": "targetIdx",
               "value": 1
             },
@@ -2959,6 +2963,48 @@
               "cmd": "SET_VAR",
               "name": "targetIdx",
               "value": "(v.targetIdx + 1) % 4 + 1"
+            }
+          ]
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "tab",
+                  "value": "(v.tab or 1) > 1 and ((v.tab or 1) - 1) or 4"
+                },
+                {
+                  "name": "idx",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "IF",
+          "condition": "v.state == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "assignments": [
+                {
+                  "name": "tab",
+                  "value": "(v.tab or 1) < 4 and ((v.tab or 1) + 1) or 1"
+                },
+                {
+                  "name": "idx",
+                  "value": 1
+                }
+              ]
             }
           ]
         }
@@ -3159,6 +3205,13 @@
         "style": "list",
         "title": null,
         "emptyText": "No items.",
+        "tabs": [
+          "All",
+          "Usable",
+          "Equip",
+          "Key"
+        ],
+        "tabVar": "v.tab",
         "content": [
           {
             "type": "list",
@@ -3176,7 +3229,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{((v.popupTimer or 0) > 0 and ('Used ' .. (sel('items_left_panel').name or 'item') .. '!')) or sel('items_left_panel').description}"
+            "text": "{((v.popupTimer or 0) > 0 and ('Used ' .. (sel('items_left_panel') and sel('items_left_panel').name or 'item') .. '!')) or (sel('items_left_panel') and sel('items_left_panel').description or '')}"
           }
         ]
       },
@@ -4096,7 +4149,7 @@
       "on_right": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and v.count > 0 and v.items[v.idx] ~= nil",
+          "condition": "v._guard == 0 and v.state == 2 and v.items[v.idx] ~= nil",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -4109,28 +4162,12 @@
               "value": "min((v.qty or 1) + 1, min(v.items[v.idx].cost > 0 and floor(session.gold / v.items[v.idx].cost) or (v.items[v.idx].stock or 99), v.items[v.idx].stock or 99))"
             }
           ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
-            }
-          ]
         }
       ],
       "on_left": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and (v.qty or 1) > 1",
+          "condition": "v._guard == 0 and v.state == 2 and (v.qty or 1) > 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -4141,22 +4178,6 @@
               "cmd": "SET_VAR",
               "name": "qty",
               "value": "(v.qty or 1) - 1"
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "confirmIdx",
-              "value": "v.confirmIdx == 1 and 2 or 1"
             }
           ]
         }

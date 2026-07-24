@@ -264,6 +264,80 @@
                         c.appendChild(note);
                     } }
                 ]
+            },
+            shops: {
+                resolve: item => dbPayload.shops[item.id],
+                fields: [
+                    { kind: 'text', key: 'name', label: 'Shop Name', refreshList: true,
+                      get: (s, item) => s.name || `Shop ${item.id}` },
+                    { kind: 'custom', build: (container, shopData) => {
+                        const listWrapper = document.createElement('div');
+                        listWrapper.className = 'form-group';
+                        const lbl = document.createElement('label');
+                        lbl.textContent = 'Stock Selection (price override + unlock condition)';
+                        listWrapper.appendChild(lbl);
+
+                        const renderStock = () => {
+                            listWrapper.querySelectorAll('.shop-stock-row').forEach(el => el.remove());
+                            dbPayload.items.forEach(availItem => {
+                                const stockEntry = shopData.items.find(shIt => shIt.id === availItem.id);
+                                const div = document.createElement('div');
+                                div.className = 'shop-stock-row';
+                                div.style.cssText = 'margin: 4px 0; display: flex; align-items: center; gap: 6px;';
+
+                                const chk = document.createElement('input');
+                                chk.type = 'checkbox';
+                                chk.checked = !!stockEntry;
+                                chk.onchange = () => {
+                                    setDirty(true);
+                                    if (chk.checked) {
+                                        if (!shopData.items.some(i => i.id === availItem.id)) {
+                                            shopData.items.push({ id: availItem.id, price: availItem.cost });
+                                        }
+                                    } else {
+                                        shopData.items = shopData.items.filter(i => i.id !== availItem.id);
+                                    }
+                                    renderStock();
+                                };
+
+                                const nameSpan = document.createElement('span');
+                                nameSpan.style.flex = '1';
+                                nameSpan.textContent = `${availItem.name} (base ${availItem.cost} G)`;
+
+                                div.appendChild(chk);
+                                div.appendChild(nameSpan);
+
+                                if (stockEntry) {
+                                    const price = document.createElement('input');
+                                    price.type = 'number';
+                                    price.className = 'win98-input';
+                                    price.style.width = '64px';
+                                    price.title = 'Shop price (G)';
+                                    price.value = stockEntry.price !== undefined ? stockEntry.price : availItem.cost;
+                                    price.oninput = () => { stockEntry.price = parseInt(price.value) || 0; setDirty(true); };
+                                    div.appendChild(price);
+
+                                    const cond = document.createElement('input');
+                                    cond.type = 'text';
+                                    cond.className = 'win98-input';
+                                    cond.style.width = '130px';
+                                    cond.placeholder = 'level:3 / flag:x / gold:50';
+                                    cond.title = 'Unlock condition (blank = always available)';
+                                    cond.value = stockEntry.condition || '';
+                                    cond.oninput = () => {
+                                        if (cond.value === '') { delete stockEntry.condition; } else { stockEntry.condition = cond.value; }
+                                        setDirty(true);
+                                    };
+                                    div.appendChild(cond);
+                                }
+
+                                listWrapper.appendChild(div);
+                            });
+                        };
+                        renderStock();
+                        container.appendChild(listWrapper);
+                    } }
+                ]
             }
         };
 

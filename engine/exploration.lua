@@ -120,6 +120,40 @@ function exploration.injectTilesetFeatures(grid, mapData)
     return generated
 end
 
+-- Selects a weighted variant from a variant pool (walls/floors/ceilings)
+-- deterministically based on seed key (e.g. "x,y") or randomly.
+function exploration.resolveTilesetVariant(pool, seedKey)
+    if not pool or #pool == 0 then return nil end
+    if #pool == 1 then return pool[1] end
+
+    local totalWeight = 0
+    for _, item in ipairs(pool) do
+        totalWeight = totalWeight + (item.weight or 1)
+    end
+    if totalWeight <= 0 then return pool[1] end
+
+    local r
+    if seedKey then
+        local hash = 0
+        local str = tostring(seedKey)
+        for i = 1, #str do
+            hash = (hash * 31 + str:byte(i)) % 100000
+        end
+        r = (hash / 100000) * totalWeight
+    else
+        r = math.random() * totalWeight
+    end
+
+    local accumulated = 0
+    for _, item in ipairs(pool) do
+        accumulated = accumulated + (item.weight or 1)
+        if r <= accumulated then
+            return item
+        end
+    end
+    return pool[#pool]
+end
+
 function exploration.generateDungeon(mapData, seed, session)
     if seed then math.randomseed(seed) end
     
@@ -134,40 +168,104 @@ function exploration.generateDungeon(mapData, seed, session)
     end
     
     local rooms = {}
-    local numRooms = math.random(dungeonConf("genMinRooms", 4), dungeonConf("genMaxRooms", 6))
+    local occupiedGrid = {}
+    for y = 1, height do occupiedGrid[y] = {} end
+
+    -- 1. Apply Fixed/Authored Anchors (Diablo 1 style pre-authored quest/special rooms)
+    if mapData.anchors and #mapData.anchors > 0 then
+        for _, anchor in ipairs(mapData.anchors) do
+            local ax = (anchor.x or 0) + 1
+            local ay = (anchor.y or 0) + 1
+            local layout = anchor.layout or {}
+            local ah = #layout
+            local aw = ah > 0 and #layout[1] or 0
+            
+            for ry = 1, ah do
+                local line = layout[ry]
+                local gy = ay + ry - 1
+                if gy >= 1 and gy <= height then
+                    for rx = 1, #line do
+                        local char = line:sub(rx, rx)
+                        local gx = ax + rx - 1
+                        if gx >= 1 and gx <= width then
+                            grid[gy][gx] = char
+                            occupiedGrid[gy][gx] = true
+                        end
+                    end
+                end
+            end
+            
+            local cx = math.floor(ax + aw / 2)
+            local cy = math.floor(ay + ah / 2)
+            table.insert(rooms, { x = ax, y = ay, w = aw, h = ah, cx = cx, cy = cy, isAnchor = true, allowRandomEvents = (anchor.allowRandomEvents ~= false) })
+        end
+    end
+
+    -- 2. Carve Procedural Interstitial Rooms around anchors
+    local numProcedural = math.random(dungeonConf("genMinRooms", 4), dungeonConf("genMaxRooms", 6))
     local minRoom = dungeonConf("genMinRoomSize", 3)
     local maxRoom = dungeonConf("genMaxRoomSize", 5)
 
-    for r = 1, numRooms do
+    local attempts = 0
+    local createdProcedural = 0
+    while createdProcedural < numProcedural and attempts < 100 do
+        attempts = attempts + 1
         local rw = math.random(minRoom, maxRoom)
         local rh = math.random(minRoom, maxRoom)
         local rx = math.random(2, width - rw - 1)
         local ry = math.random(2, height - rh - 1)
         
-        -- Carve room
-        for y = ry, ry + rh - 1 do
-            for x = rx, rx + rw - 1 do
-                grid[y][x] = "."
+        -- Check collision with existing anchors/rooms
+        local overlaps = false
+        for y = ry - 1, ry + rh do
+            for x = rx - 1, rx + rw do
+                if y >= 1 and y <= height and x >= 1 and x <= width then
+                    if occupiedGrid[y][x] then
+                        overlaps = true
+                        break
+                    end
+                end
             end
+            if overlaps then break end
         end
-        table.insert(rooms, { x = rx, y = ry, w = rw, h = rh, cx = math.floor(rx + rw/2), cy = math.floor(ry + rh/2) })
+
+        if not overlaps then
+            for y = ry, ry + rh - 1 do
+                for x = rx, rx + rw - 1 do
+                    grid[y][x] = "."
+                    occupiedGrid[y][x] = true
+                end
+            end
+            local cx = math.floor(rx + rw / 2)
+            local cy = math.floor(ry + rh / 2)
+            table.insert(rooms, { x = rx, y = ry, w = rw, h = rh, cx = cx, cy = cy, isAnchor = false, allowRandomEvents = true })
+            createdProcedural = createdProcedural + 1
+        end
+    end
+
+    -- If no rooms exist at all, make a fallback center room
+    if #rooms == 0 then
+        local rw, rh = 5, 5
+        local rx, ry = math.floor((width - rw) / 2), math.floor((height - rh) / 2)
+        for y = ry, ry + rh - 1 do
+            for x = rx, rx + rw - 1 do grid[y][x] = "." end
+        end
+        table.insert(rooms, { x = rx, y = ry, w = rw, h = rh, cx = math.floor(rx + rw/2), cy = math.floor(ry + rh/2), isAnchor = false, allowRandomEvents = true })
     end
     
-    -- Connect rooms with hallways
+    -- 3. Connect rooms (Anchors + Procedural) with Hallways
     for i = 1, #rooms - 1 do
         local r1 = rooms[i]
         local r2 = rooms[i+1]
         
-        -- Horizontal tunnel
         local x1, x2 = math.min(r1.cx, r2.cx), math.max(r1.cx, r2.cx)
         for x = x1, x2 do
-            grid[r1.cy][x] = "."
+            if grid[r1.cy][x] == "#" then grid[r1.cy][x] = "." end
         end
         
-        -- Vertical tunnel
         local y1, y2 = math.min(r1.cy, r2.cy), math.max(r1.cy, r2.cy)
         for y = y1, y2 do
-            grid[y][r2.cx] = "."
+            if grid[y][r2.cx] == "#" then grid[y][r2.cx] = "." end
         end
     end
     
@@ -176,20 +274,43 @@ function exploration.generateDungeon(mapData, seed, session)
     
     local generatedEvents = {}
     
-    local openTiles = {}
+    -- Gather candidate open tiles, prioritizing ROOM tiles over corridor tiles
+    local roomOpenTiles = {}
+    local corridorOpenTiles = {}
+    
     for y = 2, height - 1 do
         for x = 2, width - 1 do
             if grid[y][x] == "." and not (x == startX and y == startY) and not (x == exitX and y == exitY) then
-                table.insert(openTiles, { x = x, y = y })
+                local inRoom = false
+                for _, rm in ipairs(rooms) do
+                    if rm.allowRandomEvents and x >= rm.x and x < rm.x + rm.w and y >= rm.y and y < rm.y + rm.h then
+                        inRoom = true
+                        break
+                    end
+                end
+                if inRoom then
+                    table.insert(roomOpenTiles, { x = x, y = y })
+                else
+                    table.insert(corridorOpenTiles, { x = x, y = y })
+                end
             end
         end
     end
     
-    -- Shuffle open tiles
-    for i = #openTiles, 2, -1 do
+    -- Shuffle both pools
+    for i = #roomOpenTiles, 2, -1 do
         local j = math.random(i)
-        openTiles[i], openTiles[j] = openTiles[j], openTiles[i]
+        roomOpenTiles[i], roomOpenTiles[j] = roomOpenTiles[j], roomOpenTiles[i]
     end
+    for i = #corridorOpenTiles, 2, -1 do
+        local j = math.random(i)
+        corridorOpenTiles[i], corridorOpenTiles[j] = corridorOpenTiles[j], corridorOpenTiles[i]
+    end
+
+    -- Combined pool: room tiles first, fallback to corridors if rooms run out
+    local openTiles = {}
+    for _, t in ipairs(roomOpenTiles) do table.insert(openTiles, t) end
+    for _, t in ipairs(corridorOpenTiles) do table.insert(openTiles, t) end
 
     local generatedLights = exploration.injectTilesetFeatures(grid, mapData)
     

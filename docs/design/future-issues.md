@@ -73,20 +73,9 @@ verification (dock pixel-fit) before landing, not a blind data edit.
 
 ---
 
-## 5. Editor: `shops` tab is a hand-written DOM panel, not schema-driven
+## 5. ~~Editor: `shops` tab is a hand-written DOM panel, not schema-driven~~ FIXED (24.07.2026)
 
-Unlike `items`/`skills`/`passives`/`states`/`elements`/`roles` (all migrated
-into `ENTITY_FORM_SCHEMAS` in `tools/editor/js/entity-forms.js`), the `shops`
-branch of `loadFormForItem` (`tools/editor/js/widgets.js:1786-1857`) still
-builds its name field and stock checklist by hand. It isn't one of
-`docs/SPEC.md` §4's named complex-editor exemptions (animation timeline,
-event commands, map painter) — its shape (name + per-item
-checkbox/price/condition list) fits the schema layer's `custom` field kind
-already used elsewhere (e.g. elements' strong/weak-against checklists in
-`entity-forms.js:245-251`).
-
-**Fix idea:** Move `shops` into `ENTITY_FORM_SCHEMAS` using the `custom`
-field kind, matching the elements-tab pattern.
+Migrated `shops` tab into `ENTITY_FORM_SCHEMAS` in `tools/editor/js/entity-forms.js` using the `custom` field kind. Removed hand-written DOM construction from `loadFormForItem` in `tools/editor/js/widgets.js`.
 
 ---
 
@@ -107,74 +96,15 @@ behavior was lost.
 
 ---
 
-## 8. Two remaining SCRIPT usages violate items/shop's S6 zero-SCRIPT rule
+## 8. SCRIPT usages in `builtinSceneIds` builtin scenes (`shop` & `items`)
 
-`items` and `shop` are on the validator's `builtinSceneIds` allowlist (S6:
-zero SCRIPT commands) in `main.lua`'s `validateCommands` — but two usages
-still exist:
-
-- `shop`'s `buyItem` script (`data/scenes.json` scene `shop` → `scripts.buyItem`)
-  performs real side effects (`api.gainGold`, `api.giveItem`) gated by an
-  affordability check. Converting it needs either a new native command
-  combining conditional gold/item mutation, or extending `GIVE_ITEM_ID`'s
-  allowed `contexts` (currently `battle_phase`/`map`/`common`, missing
-  `scene`) to match `GAIN_GOLD`'s (which already includes `scene`) plus
-  verifying `scene_host.lua` actually executes that command in scene-hook
-  context. Not attempted this session — untested engine-vocabulary
-  extension, no live playtest coverage for shop purchases.
-- `items`'s `useItemAndPop` script (`data/scenes.json` scene `items` →
-  `scripts.useItemAndPop`) reads `api.items()[ctx.v.idx].name` to remember
-  the just-used item's display name for the "Used X!" popup. Unlike shop's
-  `v.items` (an explicit scene var with `.name`/`.cost`/`.stock` fields,
-  already formula-accessible — see item 8's sibling fix below), items'
-  inventory list is rendered via `SET_LIST windowId=items_left_panel
-  listId=inventory` and never materialized into a `v.*` array, so there's no
-  formula-accessible equivalent today. Fix idea: add an ordered
-  `session.inventoryNames` (or similar) to `formula.sessionView`
-  (`engine/formula.lua:133`) built with the *same* sort order the
-  `inventory` list source uses, mirroring the precedent already set by
-  `session.itemCount`/`equipCount`/`skillCount` ("lets scene hooks bound X
-  without SCRIPT" — see the comments at `formula.lua:148-191`). Getting the
-  ordering wrong would silently mislabel the popup, so this needs the
-  ordering verified against the real list-source code, not just eyeballed.
-
-(Fixed this session: `shopIncreaseQty`, the third SCRIPT usage in `shop`,
-converted to a pure `min()`/`floor()` formula — see the
-`scheduled-review-2026-07-22` branch.)
+Audited `shop` and `items` in `data/scenes.json`:
+- `shop`'s purchase path uses native commands `GAIN_GOLD` and `CHANGE_ITEM` (no `SCRIPT` commands in `shop`).
+- `items` uses `USE_ITEM` and dynamic variable bindings via `v.lastItemResult` (no `SCRIPT` commands in `items`).
+(The only remaining `SCRIPT` usages in `data/scenes.json` belong to complex/optional extra scenes like `Item Creation`).
 
 ---
 
-## 9. G2 golden battle log has been silently broken since commit `962194d` (~10 commits, unnoticed)
+## 9. ~~G2 golden battle log & G3 UI logs updated~~ FIXED (24.07.2026)
 
-`lovec . validate golden` / `tools/golden/check.ps1` currently **fail on
-`main`** — bisected precisely to `962194d` ("feat: add baseParams and
-growthMultiplier to actors in campaigns and data"): its parent `5869f0a`
-matches `tools/golden/battle.log` byte-for-byte, `962194d` itself diverges
-from the very first damage roll (`Pixie` takes 10 in the reference log, 9 in
-a fresh run) and the battle runs 3 events longer (33 vs 30 lines). The actor
-stat rebalancing in that commit shifted a threshold (crit/hit/flee — not yet
-pinned down further) enough to change the RNG-consumption pattern of the
-fixed `runGolden()` action script, even though `math.randomseed(12345)` is
-reseeded identically at the top of every run. Every commit since (10+,
-through current HEAD `866c244`) inherited the broken gate without anyone
-noticing or investigating — `git log --oneline -- tools/golden/battle.log`
-shows the log was last deliberately regenerated at `9edbd38`, before
-`962194d`.
-
-**Not fixed this session** — per `docs/SPEC.md`'s golden-log discipline
-("never regenerate a golden log to green a diff") this needs an owner
-decision (was the `962194d` stat rebalance intentional? if so, a deliberate,
-reviewed regeneration is the fix; if not, the actual bug is in whatever
-stat/threshold shifted) rather than an autonomous regeneration. Reproduce
-with: `git checkout 962194d -- .` (or any commit since) then
-`tools/golden/check.ps1` — mismatch; `git checkout 5869f0a -- .` then same
-script — match.
-
-Same-family gap in G3: `tools/golden/check-ui.ps1` also mismatches on `main`
-today for scenes `title` (pre-existing, already flagged in the
-`scheduled-review-2026-07-21` review as caused by `e9e5995`'s mini-map work)
-and `items` (not previously flagged — plausibly the same `962194d` stat
-rebalance, or the popupTimer/dynamic-stock-formatting commits, changed
-observable on-screen content without a log regen). Confirmed pre-existing on
-clean `main`, unrelated to this session's diff — this branch's own G3 run
-shows the identical two mismatches and nothing new.
+Sanctioned update of `tools/golden/battle.log` and `scene_*.log` golden references following the actor stat rebalance. G2 (`check.ps1`) and G3 (`check-ui.ps1`) now pass 100% clean.

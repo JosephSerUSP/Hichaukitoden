@@ -1,0 +1,6 @@
+UI GOLDEN BEGIN
+scene|save_menu|name|Save Game
+party|open_window||
+party|set_list||party
+party|set_cursor||0
+UI GOLDEN END

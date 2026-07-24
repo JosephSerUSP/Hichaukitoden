@@ -148,9 +148,26 @@ function formula.sessionView(session)
         -- Distinct non-empty inventory stacks — lets scene hooks bound an
         -- inventory-list cursor (session.itemCount) without SCRIPT.
         itemCount = (function()
+            local tab = (env and env.v and tonumber(env.v.tab)) or 1
+            local loader = session.loader
             local n = 0
-            for _, qty in pairs(session.inventory or {}) do
-                if qty > 0 then n = n + 1 end
+            for itemId, qty in pairs(session.inventory or {}) do
+                if qty > 0 then
+                    if tab == 1 or not loader then
+                        n = n + 1
+                    else
+                        local item = loader.getItem(itemId)
+                        if item then
+                            local matches = false
+                            if tab == 1 then matches = true
+                            elseif tab == 2 then matches = (item.type == "consumable")
+                            elseif tab == 3 then matches = (item.type == "equipment")
+                            elseif tab == 4 then matches = (item.type == "quest" or item.type == "junk")
+                            else matches = true end
+                            if matches then n = n + 1 end
+                        end
+                    end
+                end
             end
             return n
         end)(),

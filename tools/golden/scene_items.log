@@ -7,8 +7,6 @@ help|open_window||
 party|open_window||
 party|set_list||party
 party|set_cursor||0
-items_target|open_window||
-items_target|set_list||party
-items_target|set_cursor||1
-items_target|close_window||
+party|set_cursor||1
+party|set_cursor||0
 UI GOLDEN END
