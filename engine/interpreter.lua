@@ -25,6 +25,7 @@ local formulaEngine = require("engine.formula")
 local config = require("engine.config")
 local conditions = require("engine.conditions")
 local recruitment = require("engine.recruitment")
+local usability = require("engine.usability")
 
 local interpreter = {}
 
@@ -593,6 +594,14 @@ handlers.TAKE_ITEM = function(cmd, ctx)
     end
 end
 
+local function compareIds(a, b)
+    local na, nb = tonumber(a), tonumber(b)
+    if na and nb then return na < nb end
+    if na then return true end
+    if nb then return false end
+    return tostring(a) < tostring(b)
+end
+
 -- Field item use as data (items-scene promotion): applies an item's
 -- data-defined effects through the same effects pipeline field and battle
 -- use share, then consumes one. itemIndex is 1-based into the id-sorted
@@ -605,27 +614,54 @@ handlers.USE_ITEM = function(cmd, ctx)
     for itemId, qty in pairs(ctx.session.inventory or {}) do
         if qty > 0 then table.insert(stacks, itemId) end
     end
-    table.sort(stacks)
+    table.sort(stacks, compareIds)
     local loader = ctx.loader or ctx.session.loader
     local item = stacks[idx] and loader.getItem(stacks[idx])
-    if not item then return end
-    -- targetScope is the old field name (see engine/battle.lua's same
-    -- fallback); no item in data/items.json still uses it, kept only so a
-    -- hand-authored item using the old name doesn't silently misbehave.
-    if (item.target or item.targetScope) == "party" then
+    if not item then
+        if ctx.v then ctx.v.lastItemResult = { success = false, reason = "No item found" } end
+        return
+    end
+
+    local isPartyTarget = (item.target or item.targetScope) == "party"
+    local target = nil
+    if not isPartyTarget then
+        target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]
+    end
+
+    local ok, reason = usability.canUseItem(item, target or ctx.session.party[1], { session = ctx.session, isField = (ctx.battle == nil) })
+    if not ok then
+        if ctx.v then ctx.v.lastItemResult = { success = false, reason = reason, itemName = item.name } end
+        return
+    end
+
+    local hpRestored = 0
+    if isPartyTarget then
         for _, member in ipairs(ctx.session.party) do
+            local prevHp = member.hp or 0
             for _, eff in ipairs(item.effects or {}) do
                 emitAll(ctx, effects.apply(eff, member, member, ctx.session))
             end
+            hpRestored = hpRestored + ((member.hp or 0) - prevHp)
         end
     else
-        local target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]
         if not target then return end
+        local prevHp = target.hp or 0
         for _, eff in ipairs(item.effects or {}) do
             emitAll(ctx, effects.apply(eff, target, target, ctx.session))
         end
+        hpRestored = (target.hp or 0) - prevHp
     end
+
     ctx.session:addItem(item.id, -1)
+    if ctx.v then
+        ctx.v.lastItemResult = {
+            success = true,
+            itemName = item.name,
+            targetName = target and target.name or "Party",
+            hpRestored = hpRestored,
+            reason = "OK"
+        }
+    end
 end
 
 -- Equip flow as data (status-scene equip): slot is 1=Weapon, 2=Armor,
@@ -656,7 +692,7 @@ handlers.EQUIP_ITEM = function(cmd, ctx)
             end
         end
     end
-    table.sort(matching, function(a, b) return a.id < b.id end)
+    table.sort(matching, function(a, b) return compareIds(a.id, b.id) end)
     local item = matching[idx - 1]
     if not item then return end
     if prev then ctx.session:addItem(prev.id, 1) end
@@ -1293,7 +1329,7 @@ local function buildScriptApi(ctx)
                 end
             end
         end
-        table.sort(list, function(a, b) return a.id < b.id end)
+        table.sort(list, function(a, b) return compareIds(a.id, b.id) end)
         return list
     end
     function api.allItems()

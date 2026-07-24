@@ -222,17 +222,27 @@ function GameSession:recruitActor(actorId, level)
     return nil, "Full"
 end
 
+local function compareIds(a, b)
+    local na, nb = tonumber(a), tonumber(b)
+    if na and nb then return na < nb end
+    if na then return true end
+    if nb then return false end
+    return tostring(a) < tostring(b)
+end
+
 function GameSession:addItem(itemId, amount)
     amount = amount or 1
-    self.inventory[itemId] = (self.inventory[itemId] or 0) + amount
-    if self.inventory[itemId] <= 0 then
-        self.inventory[itemId] = nil
+    local id = tonumber(itemId) or itemId
+    self.inventory[id] = (self.inventory[id] or 0) + amount
+    if self.inventory[id] <= 0 then
+        self.inventory[id] = nil
     end
 end
 
 function GameSession:hasItem(itemId, amount)
     amount = amount or 1
-    return (self.inventory[itemId] or 0) >= amount
+    local id = tonumber(itemId) or itemId
+    return (self.inventory[id] or 0) >= amount
 end
 
 function GameSession:isPartyEmpty()
@@ -257,7 +267,7 @@ function GameSession:fillEmptySlotsFromReserve()
     for k, b in pairs(self.reserve or {}) do
         if b then table.insert(keys, k) end
     end
-    table.sort(keys)
+    table.sort(keys, compareIds)
 
     local deployed = {}
     local ki = 1

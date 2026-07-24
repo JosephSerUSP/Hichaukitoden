@@ -79,6 +79,14 @@ end
 -- List sources
 -- ---------------------------------------------------------------------------
 
+local function compareIds(a, b)
+    local na, nb = tonumber(a), tonumber(b)
+    if na and nb then return na < nb end
+    if na then return true end
+    if nb then return false end
+    return tostring(a) < tostring(b)
+end
+
 local function inventoryRows(session)
     local rows = {}
     if not session or not session.inventory then return rows end
@@ -97,7 +105,7 @@ local function inventoryRows(session)
             end
         end
     end
-    table.sort(rows, function(a, b) return a.id < b.id end)
+    table.sort(rows, function(a, b) return compareIds(a.id, b.id) end)
     return rows
 end
 
@@ -334,7 +342,7 @@ local function equipmentRows(session, win, env)
             end
         end
     end
-    table.sort(matching, function(a, b) return a.item.id < b.item.id end)
+    table.sort(matching, function(a, b) return compareIds(a.item.id, b.item.id) end)
     for _, m in ipairs(matching) do
         table.insert(rows, {
             id = m.item.id,

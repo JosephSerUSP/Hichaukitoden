@@ -425,12 +425,22 @@ function battle.startTargetSelection(pendingAction)
         local sk = ldr().getSkill(pendingAction.id)
         spec = sk and sk.target or "enemy"
     elseif pendingAction.type == "item" then
-        local items = {}
-        for itemId, qty in pairs(sess().inventory or {}) do
-            if qty > 0 then table.insert(items, itemId) end
+        local itemId = pendingAction.id
+        if not itemId then
+            local items = {}
+            for id, qty in pairs(sess().inventory or {}) do
+                if qty > 0 then table.insert(items, id) end
+            end
+            local function compareIds(a, b)
+                local na, nb = tonumber(a), tonumber(b)
+                if na and nb then return na < nb end
+                if na then return true end
+                if nb then return false end
+                return tostring(a) < tostring(b)
+            end
+            table.sort(items, compareIds)
+            itemId = items[pendingAction.itemIndex]
         end
-        table.sort(items)
-        local itemId = items[pendingAction.itemIndex]
         local item = itemId and ldr().getItem(itemId)
         spec = item and (item.target or item.targetScope) or "ally"
     end

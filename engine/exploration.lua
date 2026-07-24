@@ -301,8 +301,10 @@ end
 
 -- Initialize map state in GameSession
 function exploration.loadMap(session, mapIdx)
-    local mapData = session.loader.maps[mapIdx]
+    local rawMapData = session.loader.maps[mapIdx] or {}
     session.currentMapIndex = mapIdx
+    local mapData = {}
+    for k, v in pairs(rawMapData) do mapData[k] = v end
     session.currentMapData = mapData
     session.tempEventOverrides = {}
     

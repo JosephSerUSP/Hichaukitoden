@@ -1828,7 +1828,7 @@
         "x": 16,
         "y": 5,
         "spawn": "Random",
-        "sprite": "assets/sprites/NPC14.png"
+        "sprite": "assets/sprites/OBJ_TreasureChest_001.png"
       },
       {
         "id": 6,

@@ -479,16 +479,36 @@ function Battle:applyItem(action, actor, target)
     local session = self.session
     local loader = session.loader
 
-    -- Resolve the item by its 1-based index into the id-sorted non-empty
-    -- inventory — the SAME ordering api.items()/USE_ITEM use, so the index
-    -- committed from the battle command menu maps here correctly.
-    local stacks = {}
-    for itemId, qty in pairs(session.inventory or {}) do
-        if qty > 0 then table.insert(stacks, itemId) end
+    local item = nil
+    if action.id then
+        item = loader.getItem(action.id)
+    elseif action.itemIndex then
+        local stacks = {}
+        for itemId, qty in pairs(session.inventory or {}) do
+            if qty > 0 then table.insert(stacks, itemId) end
+        end
+        local function compareIds(a, b)
+            local na, nb = tonumber(a), tonumber(b)
+            if na and nb then return na < nb end
+            if na then return true end
+            if nb then return false end
+            return tostring(a) < tostring(b)
+        end
+        table.sort(stacks, compareIds)
+        item = stacks[action.itemIndex] and loader.getItem(stacks[action.itemIndex])
     end
-    table.sort(stacks)
-    local item = stacks[action.itemIndex] and loader.getItem(stacks[action.itemIndex])
+
     if not item then return events end
+
+    -- Verify item is still in stock
+    local curQty = (session.inventory and session.inventory[item.id]) or 0
+    if curQty <= 0 then
+        table.insert(events, {
+            type = "text",
+            text = loader.formatTerm("battle.no_items_left", "No {0} remaining!", item.name or "?"),
+        })
+        return events
+    end
 
     table.insert(events, {
         type = "text",

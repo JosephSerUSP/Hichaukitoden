@@ -213,8 +213,21 @@
                 ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
                 ctx.fillRect(ex * TILE_SIZE + 1.5, ey * TILE_SIZE + 1.5, TILE_SIZE - 3, TILE_SIZE - 3);
 
-                if (ev.sprite) {
-                    const img = getCachedImage(ev.sprite);
+                // Resolve sprite: explicit event sprite or fallback to linked Common Event's sprite
+                let spriteToDraw = ev.sprite;
+                let isCommonEventLink = false;
+                if (!spriteToDraw && ev.scriptId != null && dbPayload.commonEvents) {
+                    const ce = dbPayload.commonEvents[String(ev.scriptId)];
+                    if (ce) {
+                        isCommonEventLink = true;
+                        if (ce.sprite) spriteToDraw = ce.sprite;
+                    }
+                } else if (ev.scriptId != null) {
+                    isCommonEventLink = true;
+                }
+
+                if (spriteToDraw) {
+                    const img = getCachedImage(spriteToDraw);
                     if (img && img.complete) {
                         ctx.drawImage(img, ex * TILE_SIZE + 2, ey * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
                     } else {
@@ -230,6 +243,17 @@
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText('?', ex * TILE_SIZE + TILE_SIZE / 2, ey * TILE_SIZE + TILE_SIZE / 2);
+                }
+
+                // Common Event badge: cyan top-left tag with "CE" to indicate link
+                if (isCommonEventLink) {
+                    ctx.fillStyle = '#06b6d4';
+                    ctx.fillRect(ex * TILE_SIZE + 1, ey * TILE_SIZE + 1, 13, 8);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 7px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('CE', ex * TILE_SIZE + 7.5, ey * TILE_SIZE + 5);
                 }
 
                 // Pages badge: navy corner tag with the page count so multi-page

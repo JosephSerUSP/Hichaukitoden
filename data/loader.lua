@@ -132,7 +132,12 @@ function loader.getActorByRole(role)
 end
 
 function loader.getItem(id)
-    return loader.itemsById[id]
+    if not id then return nil end
+    local item = loader.itemsById[id]
+    if not item and tonumber(id) then
+        item = loader.itemsById[tonumber(id)]
+    end
+    return item
 end
 
 function loader.getSkill(id)

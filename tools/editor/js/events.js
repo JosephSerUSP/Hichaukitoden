@@ -86,7 +86,7 @@
                 document.getElementById('event-prop-priority').value = eventData.priority || 'same';
                 document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
 
-                updateEventGraphicPreview(eventData.sprite);
+                updateEventGraphicPreview(eventData.sprite, eventData.scriptId);
                 setEventColorFields(eventData.minimapColor);
                 activeEventLocalScript = eventData.script ? JSON.parse(JSON.stringify(eventData.script)) : [];
 
@@ -319,14 +319,26 @@
             renderEventPageTabs();
         }
 
-        function updateEventGraphicPreview(spritePath) {
+        function updateEventGraphicPreview(spritePath, scriptId) {
             const img = document.getElementById('event-graphic-img');
             const none = document.getElementById('event-graphic-none');
             window.activeEventSpritePath = spritePath || '';
 
-            if (spritePath) {
-                img.src = '/' + spritePath;
+            let effectivePath = spritePath;
+            let isInherited = false;
+
+            if (!effectivePath && scriptId != null && dbPayload.commonEvents) {
+                const ce = dbPayload.commonEvents[String(scriptId)];
+                if (ce && ce.sprite) {
+                    effectivePath = ce.sprite;
+                    isInherited = true;
+                }
+            }
+
+            if (effectivePath) {
+                img.src = '/' + effectivePath;
                 img.style.display = 'block';
+                img.style.opacity = isInherited ? '0.75' : '1.0';
                 none.style.display = 'none';
             } else {
                 img.style.display = 'none';

@@ -310,6 +310,17 @@
   ],
   "commands": [
     {
+      "id": "RECRUIT",
+      "category": "Map Events",
+      "label": "Recruit Monster",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "description": "Triggers dynamic creature recruitment for the floor or specified actor."
+    },
+    {
       "id": "TEXT",
       "category": "Message",
       "label": "Show Text",
@@ -1786,6 +1797,12 @@
       "label": "Recruit Egg",
       "params": [],
       "description": "Reserved for the recruiting system."
+    },
+    {
+      "id": "RECRUIT",
+      "label": "Recruit Monster",
+      "params": [],
+      "description": "Triggers dynamic creature recruitment for the floor or specified actor."
     },
     {
       "id": "RECRUIT_ACTOR",

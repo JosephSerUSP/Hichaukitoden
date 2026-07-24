@@ -32,11 +32,17 @@
     ]
   },
   "4": {
-    "name": "Recruit Pixie",
+    "name": "Recruit Creature",
+    "label": "Recruit",
+    "sprite": "assets/sprites/OBJ_Statue_001.png",
+    "minimapColor": [
+      0.2,
+      0.8,
+      0.4
+    ],
     "commands": [
       {
-        "type": "TEXT",
-        "text": "A friendly Pixie wants to join your party!"
+        "type": "RECRUIT"
       }
     ]
   },
@@ -61,6 +67,7 @@
   "12": {
     "name": "Treasure Chest Loot",
     "label": "Treasure Chest",
+    "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
     "minimapColor": [
       0.8,
       0.8,
