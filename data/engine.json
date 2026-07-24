@@ -471,19 +471,6 @@
       "description": "Triggers an encounter on the current map."
     },
     {
-      "id": "GIVE_ITEM",
-      "category": "Progression",
-      "label": "Give Random Treasure",
-      "deprecatedBy": "CHANGE_ITEM",
-      "params": [],
-      "contexts": [
-        "map",
-        "common"
-      ],
-      "interactive": true,
-      "description": "Grants a random item from the map's treasure list."
-    },
-    {
       "id": "CALL_COMMON_EVENT",
       "category": "Flow Control",
       "label": "Call Common Event",
@@ -933,48 +920,6 @@
       "description": "Changes the shared MP pool by a signed amount."
     },
     {
-      "id": "DRAIN_MP",
-      "category": "Party",
-      "label": "Drain MP",
-      "deprecatedBy": "CHANGE_MP",
-      "params": [
-        {
-          "key": "amount",
-          "type": "formula"
-        },
-        {
-          "key": "actor",
-          "type": "battlerRef"
-        }
-      ],
-      "contexts": [
-        "battle_phase",
-        "map",
-        "common"
-      ],
-      "interactive": false,
-      "description": "Drains the shared MP pool, clamped at 0."
-    },
-    {
-      "id": "RESTORE_MP",
-      "category": "Party",
-      "label": "Restore MP",
-      "deprecatedBy": "CHANGE_MP",
-      "params": [
-        {
-          "key": "amount",
-          "type": "formula"
-        }
-      ],
-      "contexts": [
-        "battle_phase",
-        "map",
-        "common"
-      ],
-      "interactive": false,
-      "description": "Restores the shared MP pool, capped at max MP."
-    },
-    {
       "id": "STATE_TICKS",
       "category": "Battler",
       "label": "State Ticks",
@@ -1035,29 +980,6 @@
       "description": "Gives or takes items by a signed count."
     },
     {
-      "id": "TAKE_ITEM",
-      "category": "Progression",
-      "label": "Take Item",
-      "deprecatedBy": "CHANGE_ITEM",
-      "params": [
-        {
-          "key": "item",
-          "type": "item"
-        },
-        {
-          "key": "count",
-          "type": "number"
-        }
-      ],
-      "contexts": [
-        "battle_phase",
-        "map",
-        "common"
-      ],
-      "interactive": false,
-      "description": "Removes items from the inventory (fails soft)."
-    },
-    {
       "id": "USE_ITEM",
       "category": "Progression",
       "label": "Use Item",
@@ -1100,29 +1022,6 @@
       ],
       "interactive": false,
       "description": "Equips gear on a party member. slot: 1=Weapon 2=Armor 3=Accessory; target is a party index; itemIndex is 1-based into the window renderer's 'equipment' list order (1 = unequip, then matching inventory gear id-ascending). Previous gear returns to the inventory."
-    },
-    {
-      "id": "GIVE_ITEM_ID",
-      "category": "Progression",
-      "label": "Give Specific Item",
-      "deprecatedBy": "CHANGE_ITEM",
-      "params": [
-        {
-          "key": "item",
-          "type": "item"
-        },
-        {
-          "key": "count",
-          "type": "number"
-        }
-      ],
-      "contexts": [
-        "battle_phase",
-        "map",
-        "common"
-      ],
-      "interactive": false,
-      "description": "Adds a specific item (GIVE_ITEM stays the random-treasure command)."
     },
     {
       "id": "REAP_FALLEN",
@@ -1818,15 +1717,6 @@
       "label": "Erase Event",
       "params": [],
       "description": "Removes the active map event from the current floor."
-    },
-    {
-      "id": "TAKE_ITEM",
-      "label": "Take Item",
-      "params": [
-        "item",
-        "count"
-      ],
-      "description": "Deducts specified item count from player inventory."
     }
   ],
   "traitCodes": [

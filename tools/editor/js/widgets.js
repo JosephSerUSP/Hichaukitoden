@@ -1734,7 +1734,7 @@
                         select.onchange = (e) => {
                             const newMode = e.target.value;
                             if (newMode === 'script') {
-                                item.recruitEvent = { commands: rec.commands || [{ type: 'TEXT', text: 'A wild ' + (item.name || 'creature') + ' appears!' }, { type: 'RECRUIT_ACTOR', actorId: item.id }, { type: 'ERASE_EVENT' }] };
+                                item.recruitEvent = { commands: rec.commands || [{ cmd: 'TEXT', text: 'A wild ' + (item.name || 'creature') + ' appears!' }, { cmd: 'RECRUIT_ACTOR', actorId: item.id }, { cmd: 'ERASE_EVENT' }] };
                             } else if (newMode === 'common') {
                                 item.recruitEvent = { scriptId: rec.scriptId || 1 };
                             } else {

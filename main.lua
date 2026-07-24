@@ -693,7 +693,7 @@ runValidation = function()
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
-            local id = cmd.cmd or cmd.type
+            local id = cmd.cmd
             if id == nil then
                 check(false, ownerDesc .. " uses unknown command 'nil' (missing cmd or type field)")
                 goto continue
@@ -1072,14 +1072,14 @@ elseif paramDef.type == "script" then
         do
             local nodes = {}
             local mixed = {
-                { type = "TEXT", text = "before" },
+                { cmd = "TEXT", text = "before" },
                 { cmd = "SET_VAR", name = "n", value = "2 + 3" },
                 { cmd = "COMMENT", text = "swallowed into the run" },
                 { cmd = "IF", condition = "v.n == 5", ["then"] = {
                     { cmd = "GAIN_GOLD", amount = "v.n" },
                     { cmd = "EMIT_TEXT", fallback = "bridge ran" },
                 } },
-                { type = "TEXT", text = "after" },
+                { cmd = "TEXT", text = "after" },
             }
             local firstId = interpreter.compile(nodes, mixed, "a4b", nil,
                 { loader = loader, recoverParty = function() end, session = tSession })
@@ -1267,7 +1267,7 @@ elseif paramDef.type == "script" then
             local function checkScriptRefs(cmds, where)
                 for _, cmd in ipairs(cmds or {}) do
                     if type(cmd) == "table" then
-                        local id = cmd.cmd or cmd.type
+                        local id = cmd.cmd
                         if id == "SCRIPT" then
                             check(cmd.code ~= nil or cmd.ref ~= nil, where .. " SCRIPT has neither code nor ref")
                             if cmd.ref ~= nil then
@@ -2131,8 +2131,7 @@ handleDialogueAction = function()
             -- Task A4b: a compiled run of non-interactive registry commands.
             -- Mutations (gold, items, states, flags) apply through the same
             -- handlers battle phases use; emitted text events render as
-            -- dialogue lines by converting this node into a TEXT chain, the
-            -- same trick GIVE_ITEM_ACTION uses.
+            -- dialogue lines by converting this node into a TEXT chain.
             local events = interpreter.runImmediate(node.commands, {
                 session = activeSession,
                 loader = loader,
@@ -2266,17 +2265,6 @@ handleDialogueAction = function()
             scene_host.goto_scene("map")
         elseif node.action == "START_BATTLE" then
             triggerBattle()
-        elseif node.action == "GIVE_ITEM_ACTION" then
-            local loot = conf("dungeon", "defaultLoot", 1) -- 1 = HP Tonic
-            if activeSession.currentMapData.treasures and #activeSession.currentMapData.treasures > 0 then
-                loot = activeSession.currentMapData.treasures[math.random(#activeSession.currentMapData.treasures)]
-            end
-            local item = loader.getItem(loot)
-            activeSession:addItem(loot, 1)
-
-            node.type = "TEXT"
-            node.content = loader.formatTerm("events.found_item", "Found a {0}!", (item and item.name or loot))
-            node.action = nil
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then
             local ce = loader.commonEvents and loader.commonEvents[tostring(node.commonEventId)]
             if ce and ce.commands then

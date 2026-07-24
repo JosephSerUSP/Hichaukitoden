@@ -564,7 +564,7 @@ validator.run = function(loader)
     local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
         for _, cmd in ipairs(cmds or {}) do
 
-            local id = cmd.cmd or cmd.type
+            local id = cmd.cmd
             if id == nil then
                 check(false, ownerDesc .. " uses unknown command 'nil' (missing cmd or type field)")
                 goto continue
@@ -943,14 +943,14 @@ elseif paramDef.type == "script" then
         do
             local nodes = {}
             local mixed = {
-                { type = "TEXT", text = "before" },
+                { cmd = "TEXT", text = "before" },
                 { cmd = "SET_VAR", name = "n", value = "2 + 3" },
                 { cmd = "COMMENT", text = "swallowed into the run" },
                 { cmd = "IF", condition = "v.n == 5", ["then"] = {
                     { cmd = "GAIN_GOLD", amount = "v.n" },
                     { cmd = "EMIT_TEXT", fallback = "bridge ran" },
                 } },
-                { type = "TEXT", text = "after" },
+                { cmd = "TEXT", text = "after" },
             }
             local firstId = interpreter.compile(nodes, mixed, "a4b", nil,
                 { loader = loader, recoverParty = function() end, session = tSession })
@@ -1138,7 +1138,7 @@ elseif paramDef.type == "script" then
             local function checkScriptRefs(cmds, where)
                 for _, cmd in ipairs(cmds or {}) do
                     if type(cmd) == "table" then
-                        local id = cmd.cmd or cmd.type
+                        local id = cmd.cmd
                         if id == "SCRIPT" then
                             check(cmd.code ~= nil or cmd.ref ~= nil, where .. " SCRIPT has neither code nor ref")
                             if cmd.ref ~= nil then

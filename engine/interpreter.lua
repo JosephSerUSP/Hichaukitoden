@@ -29,20 +29,20 @@ local usability = require("engine.usability")
 
 local interpreter = {}
 
--- The nine ids interpreter.compile knows how to turn into dialogue nodes.
--- Anything else is a registry command executed via runImmediate (task A4b);
--- in map/common data the legacy nine are stored under `type`, newer commands
--- under `cmd` (the editor's cmdFieldName rule mirrors this table).
+-- The ids interpreter.compile knows how to turn into dialogue nodes.
+-- Anything else is a registry command executed via runImmediate (task A4b).
+-- All commands store their id under `cmd` (the `type` key was retired in the
+-- 24.07.2026 legacy purge; a one-time data migration renamed it everywhere).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
-    TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    TELEPORT = true, BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
     LABEL = true, JUMP_TO_LABEL = true, RECRUIT_ACTOR = true, ERASE_EVENT = true,
-    TAKE_ITEM = true, RECRUIT = true,
+    RECRUIT = true,
 }
 
 local function cmdId(cmd)
-    return cmd.cmd or cmd.type
+    return cmd.cmd
 end
 
 ------------------------------------------------------------------
@@ -74,8 +74,9 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         local nodeId = prefix .. "_" .. i
         firstId = firstId or nodeId
         local nextId = (i < #commands) and (prefix .. "_" .. (i + 1)) or tailNodeId
+        local id = cmdId(cmd)
 
-        if not INTERACTIVE_COMPILE_IDS[cmdId(cmd)] then
+        if not INTERACTIVE_COMPILE_IDS[id] then
             -- Task A4b: collect the contiguous run of non-interactive
             -- commands into ONE node so ctx.v flow-locals survive across the
             -- run (SET_VAR -> IF chains). COMMENTs inside the run are
@@ -95,9 +96,9 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             skipUntil = j
             local runNext = (j < #commands) and (prefix .. "_" .. (j + 1)) or tailNodeId
             nodes[nodeId] = { type = "ACTION", action = "RUN_IMMEDIATE", commands = run, next = runNext }
-        elseif cmd.type == "TEXT" then
+        elseif id == "TEXT" then
             nodes[nodeId] = { type = "TEXT", content = cmd.text, speaker = cmd.speaker, next = nextId }
-        elseif cmd.type == "CHOICE" then
+        elseif id == "CHOICE" then
             local options = {}
             for oi, opt in ipairs(cmd.options or {}) do
                 -- Optional per-option visibility gate (flag:/hasItem:/
@@ -120,13 +121,13 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                 end
             end
             nodes[nodeId] = { type = "CHOICE", options = options }
-        elseif cmd.type == "OPEN_SHOP" then
+        elseif id == "OPEN_SHOP" then
             nodes[nodeId] = { type = "ACTION", action = "OPEN_SHOP", shopId = cmd.shopId, next = nextId }
-        elseif cmd.type == "QUEST_OFFER" then
+        elseif id == "QUEST_OFFER" then
             nodes[nodeId] = { type = "ACTION", action = "OFFER_QUEST", questId = cmd.questId, next = nextId }
-        elseif cmd.type == "QUEST_COMPLETE" then
+        elseif id == "QUEST_COMPLETE" then
             nodes[nodeId] = { type = "ACTION", action = "COMPLETE_QUEST", questId = cmd.questId, next = nextId }
-        elseif cmd.type == "CONDITIONAL_BRANCH" then
+        elseif id == "CONDITIONAL_BRANCH" then
             local trueFirst = interpreter.compile(nodes, cmd.commands, nodeId .. "_then", nextId, ctx)
             local falseFirst = interpreter.compile(nodes, cmd.elseCommands, nodeId .. "_else", nextId, ctx)
             nodes[nodeId] = {
@@ -135,20 +136,18 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                 trueNode = trueFirst or nextId,
                 falseNode = falseFirst or nextId
             }
-        elseif cmd.type == "RECOVER_PARTY" then
+        elseif id == "RECOVER_PARTY" then
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif cmd.type == "TELEPORT" then
+        elseif id == "TELEPORT" then
             local teleportId = nodeId .. "_teleport"
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.teleport", "You are whisked away..."), next = teleportId }
             nodes[teleportId] = { type = "ACTION", action = "TELEPORT" }
-        elseif cmd.type == "BATTLE" then
+        elseif id == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
-        elseif cmd.type == "GIVE_ITEM" then
-            nodes[nodeId] = { type = "ACTION", action = "GIVE_ITEM_ACTION", next = nextId }
-        elseif cmd.type == "CALL_COMMON_EVENT" then
+        elseif id == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
-        elseif cmd.type == "LABEL" then
+        elseif id == "LABEL" then
             -- Marks a jump target (RPG Maker-style). A no-op passthrough,
             -- like COMMENT, but records its node id under cmd.name so any
             -- JUMP_TO_LABEL anywhere in this same compile tree can target it
@@ -158,18 +157,16 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             ctx.labels = ctx.labels or {}
             ctx.labels[cmd.name] = nodeId
             nodes[nodeId] = { type = "ROUTER", condition = "", trueNode = nextId, falseNode = nextId }
-        elseif cmd.type == "JUMP_TO_LABEL" then
+        elseif id == "JUMP_TO_LABEL" then
             -- Unconditional jump to a LABEL node anywhere in this compile
             -- tree (including across CHOICE options/branches). Target is
             -- unresolved until interpreter.compileTop's post-pass fills in
             -- trueNode/falseNode -- _pendingLabel must not survive past that.
             nodes[nodeId] = { type = "ROUTER", condition = "", _pendingLabel = cmd.label }
-        elseif cmdId(cmd) == "COMMENT" then
+        elseif id == "COMMENT" then
             -- Documentation only (SPEC S3): compiles to nothing. Keep the
             -- chain intact by letting the previous node's nextId point past
             -- it — easiest is an empty ROUTER-less passthrough node.
-            -- (cmdId: flows-style data stores COMMENT under `cmd`, editor
-            -- map/common data under `type`; both must stay inert here.)
             nodes[nodeId] = { type = "ROUTER", condition = "", trueNode = nextId, falseNode = nextId }
         end
         end
@@ -226,9 +223,12 @@ end
 -- Immediate mode: synchronous execution for engine phases
 ------------------------------------------------------------------
 
+-- RECOVER_PARTY is deliberately absent: its mutation (HP/MP/state reset) is
+-- immediate-safe via handlers.RECOVER_PARTY; only the confirmation text is
+-- interactive, and that lives in interpreter.compile's node path.
 local INTERACTIVE_IDS = {
-    TEXT = true, CHOICE = true, RECOVER_PARTY = true, TELEPORT = true,
-    BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
+    TEXT = true, CHOICE = true, TELEPORT = true,
+    BATTLE = true, CALL_COMMON_EVENT = true,
 }
 
 local handlers = {}
@@ -427,10 +427,17 @@ handlers.RECOVER_PARTY = function(cmd, ctx)
     if ctx.recoverParty then
         ctx.recoverParty()
     elseif ctx.session and ctx.session.party then
-        for _, actor in ipairs(ctx.session.party) do
-            actor.hp = actor:getMaxHp(ctx.session)
-            actor.mp = actor:getMaxMp(ctx.session)
-            actor.states = {}
+        -- Mirrors main.lua's recoverParty: MP is session-level (summoner
+        -- economy), and recovery clears only the "dead" state.
+        local sess = ctx.session
+        sess.mp = sess.maxMp or sess.mp
+        for _, actor in ipairs(sess.party) do
+            actor.hp = actor:getMaxHp(sess)
+            actor:removeState("dead")
+        end
+        if sess.summoner then
+            sess.summoner.hp = sess.summoner:getMaxHp(sess)
+            sess.summoner:removeState("dead")
         end
     end
 end
@@ -508,17 +515,6 @@ handlers.CHANGE_MP = function(cmd, ctx)
     else
         ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
     end
-end
-
-handlers.DRAIN_MP = function(cmd, ctx)
-    local amount = math.floor(evalFormula(cmd.amount, ctx))
-    ctx.session.mp = math.max(0, ctx.session.mp - amount)
-    table.insert(ctx.events, { type = "mp_drain", value = amount, actor = (cmd.actor and resolveRef(cmd.actor, ctx)) or ctx.a })
-end
-
-handlers.RESTORE_MP = function(cmd, ctx)
-    local amount = math.floor(evalFormula(cmd.amount, ctx))
-    ctx.session.mp = math.min(ctx.session.maxMp or (ctx.session.mp + amount), ctx.session.mp + amount)
 end
 
 -- The regen/poison/duration-decay block as one command (S2). This is the
@@ -602,17 +598,6 @@ handlers.CHANGE_ITEM = function(cmd, ctx)
         else
             ctx.session:addItem(itemId, count)
         end
-    end
-end
-
-handlers.TAKE_ITEM = function(cmd, ctx)
-    local session = ctx.session
-    if not session then return end
-    local itemId = cmd.item or cmd.itemId or cmd.id
-    local count = cmd.count or 1
-    -- Fails soft (S2): removing more than owned just clears the stack.
-    if itemId and session:hasItem(itemId, 1) then
-        session:addItem(itemId, -count)
     end
 end
 
@@ -736,10 +721,6 @@ handlers.EQUIP_ITEM = function(cmd, ctx)
     if prev then ctx.session:addItem(prev.id, 1) end
     member.equipment[slot] = item
     ctx.session:addItem(item.id, -1)
-end
-
-handlers.GIVE_ITEM_ID = function(cmd, ctx)
-    ctx.session:addItem(cmd.item, cmd.count or 1)
 end
 
 handlers.RECRUIT_ACTOR = function(cmd, ctx)

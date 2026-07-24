@@ -1,12 +1,16 @@
 package.path = package.path .. ";../?.lua;?.lua"
 
--- Mock love for config
-_G.love = {
-    filesystem = {
-        getInfo = function() return false end,
-        read = function() return "{}" end
+-- Mock love for config when running under a plain Lua runner. Under LÖVE
+-- the real table must survive — replacing it kills love.event and crashes
+-- the boot loop after the tests finish.
+if not _G.love then
+    _G.love = {
+        filesystem = {
+            getInfo = function() return false end,
+            read = function() return "{}" end
+        }
     }
-}
+end
 
 local battle = require("engine.battle")
 local session = require("engine.session")

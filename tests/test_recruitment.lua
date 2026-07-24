@@ -19,12 +19,12 @@ mockLoader = {
         [4] = { id = 4, name = "Angel", level = 2, role = "Support", recruitEvent = { type = "gold", goldCost = 30 } },
         [12] = { id = 12, name = "Ooze", level = 1, role = "Debuffer", recruitEvent = { type = "aid", itemRequired = 1 } },
         [13] = { id = 13, name = "Bat", level = 1, role = "Attacker", recruitEvent = { type = "free" } },
-        [15] = { id = 15, name = "CustomCreature", level = 1, recruitEvent = { commands = { { type = "TEXT", text = "Custom event!" } } } },
-        [16] = { id = 16, name = "ArrayCreature", level = 1, recruitEvent = { { type = "TEXT", text = "Direct array event!" } } },
+        [15] = { id = 15, name = "CustomCreature", level = 1, recruitEvent = { commands = { { cmd = "TEXT", text = "Custom event!" } } } },
+        [16] = { id = 16, name = "ArrayCreature", level = 1, recruitEvent = { { cmd = "TEXT", text = "Direct array event!" } } },
         [17] = { id = 17, name = "ScriptIdCreature", level = 1, recruitEvent = 4 },
     },
     commonEvents = {
-        ["4"] = { id = "4", name = "Recruit Pixie", commands = { { type = "TEXT", text = "Common event recruit!" } } }
+        ["4"] = { id = "4", name = "Recruit Pixie", commands = { { cmd = "TEXT", text = "Common event recruit!" } } }
     },
     items = {
         [1] = { id = 1, name = "Potion", type = "item" }
@@ -43,11 +43,11 @@ mockLoader = {
 -- Test 1: recruitment.compile outputs expected script commands for each type and format
 local pixieScript = recruitment.compile(mockLoader.actors[1], 1, { loader = mockLoader })
 assert(#pixieScript > 0, "Pixie heal script failed to compile")
-assert(pixieScript[2].type == "RECOVER_PARTY", "Pixie script missing RECOVER_PARTY")
+assert(pixieScript[2].cmd == "RECOVER_PARTY", "Pixie script missing RECOVER_PARTY")
 
 local angelScript = recruitment.compile(mockLoader.actors[4], 1, { loader = mockLoader })
 assert(#angelScript > 0, "Angel gold script failed to compile")
-assert(angelScript[2].type == "CHOICE", "Angel script missing CHOICE")
+assert(angelScript[2].cmd == "CHOICE", "Angel script missing CHOICE")
 assert(angelScript[2].options[1].condition == "gold:30", "Angel script missing gold condition")
 
 local customScript = recruitment.compile(mockLoader.actors[15], 1, { loader = mockLoader })
@@ -80,18 +80,18 @@ assert(slotType5 == "reserve", "5th Bat should be placed in reserve")
 assert(sess.reserve[1] ~= nil, "Reserve slot 1 should hold 5th Bat")
 print("  [PASS] GameSession:recruitActor places members correctly in party and reserve")
 
--- Test 3: Interpreter command handlers (RECRUIT_ACTOR, ERASE_EVENT, TAKE_ITEM)
+-- Test 3: Interpreter command handlers (RECRUIT_ACTOR, ERASE_EVENT, CHANGE_ITEM)
 sess.inventory[1] = 5
 local ctx = { session = sess, events = {} }
 
 interpreter.runImmediate({
-    { type = "TAKE_ITEM", item = 1, count = 2 },
-    { type = "RECRUIT_ACTOR", actorId = 4, level = 2 }
+    { cmd = "CHANGE_ITEM", item = 1, count = -2 },
+    { cmd = "RECRUIT_ACTOR", actorId = 4, level = 2 }
 }, ctx)
 
-assert(sess.inventory[1] == 3, "TAKE_ITEM did not deduct items correctly")
+assert(sess.inventory[1] == 3, "CHANGE_ITEM did not deduct items correctly")
 assert(sess.reserve[2] ~= nil and sess.reserve[2].id == 4, "RECRUIT_ACTOR did not add Angel to reserve")
-print("  [PASS] Interpreter commands TAKE_ITEM and RECRUIT_ACTOR executed cleanly")
+print("  [PASS] Interpreter commands CHANGE_ITEM and RECRUIT_ACTOR executed cleanly")
 
 -- Test 4: ERASE_EVENT removes map event
 sess.currentMapData = {
@@ -102,7 +102,7 @@ sess.currentMapData = {
 }
 ctx.eventId = "recruit_1"
 interpreter.runImmediate({
-    { type = "ERASE_EVENT" }
+    { cmd = "ERASE_EVENT" }
 }, ctx)
 
 assert(#sess.currentMapData.events == 1, "ERASE_EVENT did not remove target event")
@@ -112,17 +112,17 @@ print("  [PASS] Interpreter command ERASE_EVENT erased target map event")
 -- Test 5: Interpreter command handlers (GAIN_GOLD with amount, RECOVER_PARTY)
 sess.gold = 50
 interpreter.runImmediate({
-    { type = "GAIN_GOLD", amount = -30 }
+    { cmd = "GAIN_GOLD", amount = -30 }
 }, ctx)
 assert(sess.gold == 20, "GAIN_GOLD (negative) failed to deduct gold correctly. Got: " .. tostring(sess.gold))
 
 interpreter.runImmediate({
-    { type = "GAIN_GOLD", amount = 15 }
+    { cmd = "GAIN_GOLD", amount = 15 }
 }, ctx)
 assert(sess.gold == 35, "GAIN_GOLD (positive) failed to add gold correctly. Got: " .. tostring(sess.gold))
 
 interpreter.runImmediate({
-    { type = "RECOVER_PARTY" }
+    { cmd = "RECOVER_PARTY" }
 }, ctx)
 for _, member in ipairs(sess.party) do
     assert(member.hp == member:getMaxHp(sess), "RECOVER_PARTY failed to restore hp for party member")
@@ -146,7 +146,15 @@ sess.currentMapData = {
         { id = "recruit_4", type = "recruit" }
     }
 }
-local angelOptScript = angelScript[2].options[1].script
+-- The compiled option script mixes interactive commands (TEXT) with
+-- side-effect commands; at runtime the dialogue host renders the former and
+-- runs the latter through runImmediate. Mirror that split here.
+local angelOptScript = {}
+for _, c in ipairs(angelScript[2].options[1].script) do
+    if not interpreter.INTERACTIVE_IDS[c.cmd or c.type] then
+        table.insert(angelOptScript, c)
+    end
+end
 interpreter.runImmediate(angelOptScript, { session = sess, events = {} })
 assert(sess.gold == 0, "Recruiting Angel did not deduct 30 gold")
 assert(#sess.currentMapData.events == 0, "Recruiting Angel did not erase the map event")

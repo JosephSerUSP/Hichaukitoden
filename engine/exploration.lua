@@ -382,7 +382,7 @@ function exploration.generateDungeon(mapData, seed, session)
                     sprite = spritePath,
                     trigger = "touch",
                     script = {
-                        { type = "RECRUIT" }
+                        { cmd = "RECRUIT" }
                     }
                 })
             end

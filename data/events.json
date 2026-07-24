@@ -8,18 +8,17 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "TEXT",
           "text": "Go down the stairs?",
-          "style": "terminal"
+          "style": "terminal",
+          "cmd": "TEXT"
         },
         {
-          "type": "CHOICE",
           "options": [
             {
               "label": "Yes",
               "script": [
                 {
-                  "type": "TELEPORT"
+                  "cmd": "TELEPORT"
                 }
               ]
             },
@@ -32,7 +31,8 @@
                 }
               ]
             }
-          ]
+          ],
+          "cmd": "CHOICE"
         }
       ]
     }
@@ -46,12 +46,11 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "TEXT",
           "text": "Go back up?",
-          "style": "terminal"
+          "style": "terminal",
+          "cmd": "TEXT"
         },
         {
-          "type": "CHOICE",
           "options": [
             {
               "label": "Yes",
@@ -70,7 +69,8 @@
                 }
               ]
             }
-          ]
+          ],
+          "cmd": "CHOICE"
         }
       ]
     }
@@ -103,7 +103,7 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "BATTLE"
+          "cmd": "BATTLE"
         }
       ]
     }
@@ -146,7 +146,7 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "RECRUIT"
+          "cmd": "RECRUIT"
         }
       ]
     }
@@ -309,13 +309,12 @@
     "type": "shrine_scenario",
     "script": [
       {
-        "type": "TEXT",
         "title": "Whispering Shade",
         "text": "A whisper from beyond promises knowledge... at a price.",
-        "style": "terminal"
+        "style": "terminal",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Offer HP (lose 3 HP each, gain XP)",
@@ -339,7 +338,8 @@
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -348,13 +348,12 @@
     "type": "shrine_scenario",
     "script": [
       {
-        "type": "TEXT",
         "title": "Gleaming Idol",
         "text": "A gleaming idol stands before you, radiating warmth. Touching it could imbue power or curse you.",
-        "style": "terminal"
+        "style": "terminal",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Touch the idol",
@@ -393,7 +392,8 @@
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -402,20 +402,19 @@
     "type": "shrine_scenario",
     "script": [
       {
-        "type": "TEXT",
         "title": "Bargaining Spirit",
         "text": "A translucent merchant appears, offering to trade gold for knowledge.",
-        "style": "terminal"
+        "style": "terminal",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Pay 5G for knowledge",
             "script": [
               {
-                "type": "GAIN_GOLD",
-                "amount": -5
+                "amount": -5,
+                "cmd": "GAIN_GOLD"
               },
               {
                 "type": "GIVE_XP",
@@ -442,8 +441,8 @@
                     "chance": 0.5,
                     "script": [
                       {
-                        "type": "GAIN_GOLD",
-                        "amount": -2
+                        "amount": -2,
+                        "cmd": "GAIN_GOLD"
                       }
                     ]
                   }
@@ -460,7 +459,8 @@
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -469,13 +469,12 @@
     "type": "shrine_scenario",
     "script": [
       {
-        "type": "TEXT",
         "title": "Trial of Haste",
         "text": "A spectral stopwatch hovers in the air, its ticking echoing in your mind. It offers a challenge: a trial of speed for a reward.",
-        "style": "terminal"
+        "style": "terminal",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Accept the trial (high risk, high reward)",
@@ -509,12 +508,13 @@
             "label": "Take a small reward instead",
             "script": [
               {
-                "type": "GAIN_GOLD",
-                "amount": 10
+                "amount": 10,
+                "cmd": "GAIN_GOLD"
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -523,13 +523,12 @@
     "type": "shrine_scenario",
     "script": [
       {
-        "type": "TEXT",
         "title": "Forgotten Music Box",
         "text": "A dusty, ornate music box sits on a pedestal. It seems functional.",
-        "style": "terminal"
+        "style": "terminal",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Turn the crank",
@@ -561,7 +560,8 @@
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -574,9 +574,9 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "TEXT",
           "text": "This abandoned house is now your home. It's safe here.",
-          "style": "terminal"
+          "style": "terminal",
+          "cmd": "TEXT"
         }
       ]
     }
@@ -605,9 +605,9 @@
     "scripts": {
       "onEnter": [
         {
-          "type": "TEXT",
           "text": "The temple is quiet. You feel a sense of peace.",
-          "style": "terminal"
+          "style": "terminal",
+          "cmd": "TEXT"
         }
       ]
     }

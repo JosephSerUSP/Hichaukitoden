@@ -1,6 +1,6 @@
 -- Creature Recruitment Event Builder / Compiler
 -- Translates an actor's `recruitEvent` JSON specification into standard
--- interpreter commands (TEXT, CHOICE, GAIN_GOLD, TAKE_ITEM, RECOVER_PARTY,
+-- interpreter commands (TEXT, CHOICE, GAIN_GOLD, CHANGE_ITEM, RECOVER_PARTY,
 -- BATTLE, RECRUIT_ACTOR, ERASE_EVENT).
 -- Supports raw command arrays, scriptId references, event pages, or preset event types.
 
@@ -21,7 +21,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
     local session = ctx and ctx.session
     local loader = (ctx and ctx.loader) or (session and session.loader)
 
-    -- Case 1: Direct command array [ { type = "TEXT", ... }, ... ]
+    -- Case 1: Direct command array [ { cmd = "TEXT", ... }, ... ]
     if type(rec) == "table" and rec[1] ~= nil then
         return rec
     end
@@ -74,26 +74,26 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
         local declineText = (type(rec) == "table" and rec.declineText) or (actorName .. " scoffs. 'No coin, no deal!'")
 
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = greeting
         })
         table.insert(commands, {
-            type = "CHOICE",
+            cmd = "CHOICE",
             options = {
                 {
                     label = "Pay " .. cost .. " Gold",
                     condition = "gold:" .. cost,
                     script = {
-                        { type = "GAIN_GOLD", amount = -cost },
-                        { type = "TEXT", text = acceptText },
-                        { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
-                        { type = "ERASE_EVENT" }
+                        { cmd = "GAIN_GOLD", amount = -cost },
+                        { cmd = "TEXT", text = acceptText },
+                        { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
+                        { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Decline",
                     script = {
-                        { type = "TEXT", text = declineText }
+                        { cmd = "TEXT", text = declineText }
                     }
                 }
             }
@@ -104,30 +104,30 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
         local acceptText = (type(rec) == "table" and rec.acceptText) or (actorName .. " smiles brightly. 'Shall I travel with you?'")
 
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = greeting
         })
         table.insert(commands, {
-            type = "RECOVER_PARTY"
+            cmd = "RECOVER_PARTY"
         })
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = acceptText
         })
         table.insert(commands, {
-            type = "CHOICE",
+            cmd = "CHOICE",
             options = {
                 {
                     label = "Recruit " .. actorName,
                     script = {
-                        { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
-                        { type = "ERASE_EVENT" }
+                        { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
+                        { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Leave",
                     script = {
-                        { type = "TEXT", text = "You part ways peacefully." }
+                        { cmd = "TEXT", text = "You part ways peacefully." }
                     }
                 }
             }
@@ -143,26 +143,26 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
         local declineText = (type(rec) == "table" and rec.declineText) or (actorName .. " groans softly as you step back.")
 
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = greeting
         })
         table.insert(commands, {
-            type = "CHOICE",
+            cmd = "CHOICE",
             options = {
                 {
                     label = "Give " .. itemName,
                     condition = "hasItem:" .. itemId,
                     script = {
-                        { type = "TAKE_ITEM", item = itemId, count = 1 },
-                        { type = "TEXT", text = acceptText },
-                        { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
-                        { type = "ERASE_EVENT" }
+                        { cmd = "CHANGE_ITEM", item = itemId, count = -1 },
+                        { cmd = "TEXT", text = acceptText },
+                        { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
+                        { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Leave",
                     script = {
-                        { type = "TEXT", text = declineText }
+                        { cmd = "TEXT", text = declineText }
                     }
                 }
             }
@@ -175,31 +175,31 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
         local troopId = (type(rec) == "table" and rec.troopId) or actorId
 
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = greeting
         })
         table.insert(commands, {
-            type = "CHOICE",
+            cmd = "CHOICE",
             options = {
                 {
                     label = "Battle " .. actorName,
                     script = {
-                        { type = "BATTLE", troopId = troopId },
-                        { type = "TEXT", text = acceptText },
+                        { cmd = "BATTLE", troopId = troopId },
+                        { cmd = "TEXT", text = acceptText },
                         {
-                            type = "CHOICE",
+                            cmd = "CHOICE",
                             options = {
                                 {
                                     label = "Recruit " .. actorName,
                                     script = {
-                                        { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
-                                        { type = "ERASE_EVENT" }
+                                        { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
+                                        { cmd = "ERASE_EVENT" }
                                     }
                                 },
                                 {
                                     label = "Leave",
                                     script = {
-                                        { type = "TEXT", text = "You leave the defeated creature behind." }
+                                        { cmd = "TEXT", text = "You leave the defeated creature behind." }
                                     }
                                 }
                             }
@@ -209,7 +209,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 {
                     label = "Step Back",
                     script = {
-                        { type = "TEXT", text = declineText }
+                        { cmd = "TEXT", text = declineText }
                     }
                 }
             }
@@ -219,23 +219,23 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
         local greeting = (type(rec) == "table" and rec.greeting) or ("A wandering " .. actorName .. " gazes at you with curiosity and offers to join!")
 
         table.insert(commands, {
-            type = "TEXT",
+            cmd = "TEXT",
             text = greeting
         })
         table.insert(commands, {
-            type = "CHOICE",
+            cmd = "CHOICE",
             options = {
                 {
                     label = "Recruit " .. actorName,
                     script = {
-                        { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
-                        { type = "ERASE_EVENT" }
+                        { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
+                        { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Decline",
                     script = {
-                        { type = "TEXT", text = "You decide not to recruit " .. actorName .. "." }
+                        { cmd = "TEXT", text = "You decide not to recruit " .. actorName .. "." }
                     }
                 }
             }

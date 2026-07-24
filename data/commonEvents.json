@@ -9,17 +9,16 @@
     ],
     "commands": [
       {
-        "type": "TEXT",
-        "text": "Go down the stairs?"
+        "text": "Go down the stairs?",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Yes",
             "commands": [
               {
-                "type": "TELEPORT"
+                "cmd": "TELEPORT"
               }
             ]
           },
@@ -27,7 +26,8 @@
             "label": "No",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -42,7 +42,7 @@
     ],
     "commands": [
       {
-        "type": "RECRUIT"
+        "cmd": "RECRUIT"
       }
     ]
   },
@@ -56,11 +56,11 @@
     ],
     "commands": [
       {
-        "type": "RECOVER_PARTY"
+        "cmd": "RECOVER_PARTY"
       },
       {
-        "type": "TEXT",
-        "text": "The soothing light restores your party's HP and MP!"
+        "text": "The soothing light restores your party's HP and MP!",
+        "cmd": "TEXT"
       }
     ]
   },
@@ -91,7 +91,7 @@
     ],
     "commands": [
       {
-        "type": "BATTLE"
+        "cmd": "BATTLE"
       }
     ]
   },
@@ -105,29 +105,26 @@
     ],
     "commands": [
       {
-        "type": "COMMENT",
-        "text": "SPEC S8 composability proof: crafting authored as pure data. CHOICE -> hasItem checks -> TAKE_ITEM -> formula success roll -> GIVE_ITEM_ID / consolation text. Zero SCRIPT, zero engine Lua."
+        "text": "SPEC S8 composability proof: crafting authored as pure data. CHOICE -> hasItem checks -> TAKE_ITEM -> formula success roll -> GIVE_ITEM_ID / consolation text. Zero SCRIPT, zero engine Lua.",
+        "cmd": "COMMENT"
       },
       {
-        "type": "TEXT",
-        "text": "A sturdy workbench, cluttered with alembics and etching tools."
+        "text": "A sturdy workbench, cluttered with alembics and etching tools.",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Brew: Whispered Lessons (Tonic + Ink)",
             "commands": [
               {
-                "type": "COMMENT",
-                "text": "Recipe: 1x HP Tonic + 1x Sigil Ink -> Whispered Lessons. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+                "text": "Recipe: 1x HP Tonic + 1x Sigil Ink -> Whispered Lessons. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items.",
+                "cmd": "COMMENT"
               },
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "hasItem:1",
                 "commands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "hasItem:2",
                     "commands": [
                       {
@@ -168,18 +165,20 @@
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
-                        "text": "You are missing: Sigil Ink."
+                        "text": "You are missing: Sigil Ink.",
+                        "cmd": "TEXT"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "TEXT",
-                    "text": "You are missing: HP Tonic."
+                    "text": "You are missing: HP Tonic.",
+                    "cmd": "TEXT"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -187,15 +186,13 @@
             "label": "Etch: Golden Egg (Mystic Egg + Ink)",
             "commands": [
               {
-                "type": "COMMENT",
-                "text": "Recipe: 1x Mystic Egg + 1x Sigil Ink -> Golden Egg. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+                "text": "Recipe: 1x Mystic Egg + 1x Sigil Ink -> Golden Egg. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items.",
+                "cmd": "COMMENT"
               },
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "hasItem:11",
                 "commands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "hasItem:2",
                     "commands": [
                       {
@@ -236,18 +233,20 @@
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
-                        "text": "You are missing: Sigil Ink."
+                        "text": "You are missing: Sigil Ink.",
+                        "cmd": "TEXT"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "TEXT",
-                    "text": "You are missing: Mystic Egg."
+                    "text": "You are missing: Mystic Egg.",
+                    "cmd": "TEXT"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -255,15 +254,13 @@
             "label": "Mix: Glass of Wine (Ale + Stout)",
             "commands": [
               {
-                "type": "COMMENT",
-                "text": "Recipe: 1x Mug of Ale + 1x Pint of Stout -> Glass of Wine. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items."
+                "text": "Recipe: 1x Mug of Ale + 1x Pint of Stout -> Glass of Wine. Ingredient checks are presence-only (hasItem has no count param), so recipes use two distinct items.",
+                "cmd": "COMMENT"
               },
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "hasItem:29",
                 "commands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "hasItem:30",
                     "commands": [
                       {
@@ -304,18 +301,20 @@
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
-                        "text": "You are missing: Pint of Stout."
+                        "text": "You are missing: Pint of Stout.",
+                        "cmd": "TEXT"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "TEXT",
-                    "text": "You are missing: Mug of Ale."
+                    "text": "You are missing: Mug of Ale.",
+                    "cmd": "TEXT"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -323,12 +322,13 @@
             "label": "Leave",
             "commands": [
               {
-                "type": "TEXT",
-                "text": "You step away from the workbench."
+                "text": "You step away from the workbench.",
+                "cmd": "TEXT"
               }
             ]
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -336,34 +336,32 @@
     "name": "Alicia Talk Hub",
     "commands": [
       {
-        "type": "LABEL",
-        "name": "alicia_talk_hub"
+        "name": "alicia_talk_hub",
+        "cmd": "LABEL"
       },
       {
-        "type": "TEXT",
         "text": "(She fiddles with a loose thread on her apron, waiting for you to speak.)",
-        "speaker": "Alicia"
+        "speaker": "Alicia",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "About Laura",
             "commands": [
               {
-                "type": "TEXT",
                 "text": "Laura? She’s… she’s amazing. She’s strong, and beautiful, and… and she smells like vanilla and iron. Is that weird? That’s weird. Forget I said that.",
-                "speaker": "Alicia"
+                "speaker": "Alicia",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "alicia_talk_hub"
+                        "label": "alicia_talk_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ]
                   },
@@ -371,7 +369,8 @@
                     "label": "I should get going.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ]
           },
@@ -379,19 +378,18 @@
             "label": "About Shop",
             "commands": [
               {
-                "type": "TEXT",
                 "text": "I sell things that keep you alive! It makes me happy. Watching people leave with full bags… it means they might come back. That’s nice.",
-                "speaker": "Alicia"
+                "speaker": "Alicia",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "alicia_talk_hub"
+                        "label": "alicia_talk_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ]
                   },
@@ -399,7 +397,8 @@
                     "label": "I should get going.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ]
           },
@@ -407,19 +406,18 @@
             "label": "About You",
             "commands": [
               {
-                "type": "TEXT",
                 "text": "Me? I’m just Alicia. I like baking. And… I like listening to the rain. The dungeon is scary, but the rain makes it sound like it’s sleeping.",
-                "speaker": "Alicia"
+                "speaker": "Alicia",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "alicia_talk_hub"
+                        "label": "alicia_talk_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ]
                   },
@@ -427,7 +425,8 @@
                     "label": "I should get going.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ]
           },
@@ -435,150 +434,147 @@
             "label": "Ask about Quest",
             "commands": [
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "questStatus:sparkling_gift:completed",
                 "commands": [
                   {
-                    "type": "TEXT",
                     "text": "I’m going to make this into a necklace. Or maybe a ring? No, a necklace. She doesn’t like rings when she works. Thank you again!",
-                    "speaker": "Alicia"
+                    "speaker": "Alicia",
+                    "cmd": "TEXT"
                   },
                   {
-                    "type": "JUMP_TO_LABEL",
-                    "label": "alicia_talk_hub"
+                    "label": "alicia_talk_hub",
+                    "cmd": "JUMP_TO_LABEL"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "questStatus:sparkling_gift:active",
                     "commands": [
                       {
-                        "type": "TEXT",
                         "text": "The Glittering Teardrop… please be careful. It’s pretty, but the dungeon is mean. Don’t get hurt for a rock, okay?",
-                        "speaker": "Alicia"
+                        "speaker": "Alicia",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "CONDITIONAL_BRANCH",
                         "condition": "hasItem:24",
                         "commands": [
                           {
-                            "type": "TEXT",
                             "text": "You… you found it! Oh, look at it! It’s perfect. It catches the light just like her eyes when she’s happy. Thank you! Thank you so much!",
-                            "speaker": "Alicia"
+                            "speaker": "Alicia",
+                            "cmd": "TEXT"
                           },
                           {
-                            "type": "CHOICE",
                             "options": [
                               {
                                 "label": "Here you go.",
                                 "commands": [
                                   {
-                                    "type": "QUEST_COMPLETE",
-                                    "questId": "sparkling_gift"
+                                    "questId": "sparkling_gift",
+                                    "cmd": "QUEST_COMPLETE"
                                   },
                                   {
-                                    "type": "TEXT",
                                     "text": "I’m going to make this into a necklace. Or maybe a ring? No, a necklace. She doesn’t like rings when she works. Thank you again!",
-                                    "speaker": "Alicia"
+                                    "speaker": "Alicia",
+                                    "cmd": "TEXT"
                                   },
                                   {
-                                    "type": "JUMP_TO_LABEL",
-                                    "label": "alicia_talk_hub"
+                                    "label": "alicia_talk_hub",
+                                    "cmd": "JUMP_TO_LABEL"
                                   }
                                 ]
                               }
-                            ]
+                            ],
+                            "cmd": "CHOICE"
                           }
                         ],
                         "elseCommands": [
                           {
-                            "type": "CHOICE",
                             "options": [
                               {
                                 "label": "I'm still looking.",
                                 "commands": [
                                   {
-                                    "type": "JUMP_TO_LABEL",
-                                    "label": "alicia_talk_hub"
+                                    "label": "alicia_talk_hub",
+                                    "cmd": "JUMP_TO_LABEL"
                                   }
                                 ]
                               }
-                            ]
+                            ],
+                            "cmd": "CHOICE"
                           }
-                        ]
+                        ],
+                        "cmd": "CONDITIONAL_BRANCH"
                       }
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
                         "text": "Actually… can I ask a favor? It’s about Laura. I want to give her something special. Something that… shines like she does. There’s a crystal, a ‘Glittering Teardrop’, deep in the dungeon. Would you…?",
-                        "speaker": "Alicia"
+                        "speaker": "Alicia",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "CHOICE",
                         "options": [
                           {
                             "label": "I'll find it.",
                             "commands": [
                               {
-                                "type": "QUEST_OFFER",
-                                "questId": "sparkling_gift"
+                                "questId": "sparkling_gift",
+                                "cmd": "QUEST_OFFER"
                               },
                               {
-                                "type": "TEXT",
                                 "text": "The Glittering Teardrop… please be careful. It’s pretty, but the dungeon is mean. Don’t get hurt for a rock, okay?",
-                                "speaker": "Alicia"
+                                "speaker": "Alicia",
+                                "cmd": "TEXT"
                               },
                               {
-                                "type": "CONDITIONAL_BRANCH",
                                 "condition": "hasItem:24",
                                 "commands": [
                                   {
-                                    "type": "TEXT",
                                     "text": "You… you found it! Oh, look at it! It’s perfect. It catches the light just like her eyes when she’s happy. Thank you! Thank you so much!",
-                                    "speaker": "Alicia"
+                                    "speaker": "Alicia",
+                                    "cmd": "TEXT"
                                   },
                                   {
-                                    "type": "CHOICE",
                                     "options": [
                                       {
                                         "label": "Here you go.",
                                         "commands": [
                                           {
-                                            "type": "QUEST_COMPLETE",
-                                            "questId": "sparkling_gift"
+                                            "questId": "sparkling_gift",
+                                            "cmd": "QUEST_COMPLETE"
                                           },
                                           {
-                                            "type": "TEXT",
                                             "text": "I’m going to make this into a necklace. Or maybe a ring? No, a necklace. She doesn’t like rings when she works. Thank you again!",
-                                            "speaker": "Alicia"
+                                            "speaker": "Alicia",
+                                            "cmd": "TEXT"
                                           },
                                           {
-                                            "type": "JUMP_TO_LABEL",
-                                            "label": "alicia_talk_hub"
+                                            "label": "alicia_talk_hub",
+                                            "cmd": "JUMP_TO_LABEL"
                                           }
                                         ]
                                       }
-                                    ]
+                                    ],
+                                    "cmd": "CHOICE"
                                   }
                                 ],
                                 "elseCommands": [
                                   {
-                                    "type": "CHOICE",
                                     "options": [
                                       {
                                         "label": "I'm still looking.",
                                         "commands": [
                                           {
-                                            "type": "JUMP_TO_LABEL",
-                                            "label": "alicia_talk_hub"
+                                            "label": "alicia_talk_hub",
+                                            "cmd": "JUMP_TO_LABEL"
                                           }
                                         ]
                                       }
-                                    ]
+                                    ],
+                                    "cmd": "CHOICE"
                                   }
-                                ]
+                                ],
+                                "cmd": "CONDITIONAL_BRANCH"
                               }
                             ]
                           },
@@ -586,16 +582,19 @@
                             "label": "Maybe later.",
                             "commands": [
                               {
-                                "type": "JUMP_TO_LABEL",
-                                "label": "alicia_talk_hub"
+                                "label": "alicia_talk_hub",
+                                "cmd": "JUMP_TO_LABEL"
                               }
                             ]
                           }
-                        ]
+                        ],
+                        "cmd": "CHOICE"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -603,7 +602,8 @@
             "label": "That's enough talk for now.",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -611,34 +611,32 @@
     "name": "Laura Talk Hub",
     "commands": [
       {
-        "type": "LABEL",
-        "name": "laura_talk_hub"
+        "name": "laura_talk_hub",
+        "cmd": "LABEL"
       },
       {
-        "type": "TEXT",
         "text": "(She wipes soot from her forehead, giving you a brief moment of attention.)",
-        "speaker": "Laura"
+        "speaker": "Laura",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "About Alicia",
             "commands": [
               {
-                "type": "TEXT",
                 "text": "Alicia? She's... soft. Too soft for this place. But she makes good bread. And she doesn't ask stupid questions. I tolerate her.",
-                "speaker": "Laura"
+                "speaker": "Laura",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "laura_talk_hub"
+                        "label": "laura_talk_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ]
                   },
@@ -646,7 +644,8 @@
                     "label": "I'm going.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ]
           },
@@ -654,19 +653,18 @@
             "label": "About Smithing",
             "commands": [
               {
-                "type": "TEXT",
                 "text": "Fire purifies. Metal obeys. People... people lie. Steel never lies to you. It just is. That's why I like it.",
-                "speaker": "Laura"
+                "speaker": "Laura",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "Ask about something else.",
                     "commands": [
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "laura_talk_hub"
+                        "label": "laura_talk_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ]
                   },
@@ -674,7 +672,8 @@
                     "label": "I'm going.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ]
           },
@@ -682,150 +681,147 @@
             "label": "Ask about Quest",
             "commands": [
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "questStatus:golden_promise:completed",
                 "commands": [
                   {
-                    "type": "TEXT",
                     "text": "I'll need time to work on this. Check back later. And... thanks.",
-                    "speaker": "Laura"
+                    "speaker": "Laura",
+                    "cmd": "TEXT"
                   },
                   {
-                    "type": "JUMP_TO_LABEL",
-                    "label": "laura_talk_hub"
+                    "label": "laura_talk_hub",
+                    "cmd": "JUMP_TO_LABEL"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "questStatus:golden_promise:active",
                     "commands": [
                       {
-                        "type": "TEXT",
                         "text": "Find that signet. Don't come back empty-handed.",
-                        "speaker": "Laura"
+                        "speaker": "Laura",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "CONDITIONAL_BRANCH",
                         "condition": "hasItem:25",
                         "commands": [
                           {
-                            "type": "TEXT",
                             "text": "You found it. Hmph. Not bad. The gold is pure... untouched. Give it here.",
-                            "speaker": "Laura"
+                            "speaker": "Laura",
+                            "cmd": "TEXT"
                           },
                           {
-                            "type": "CHOICE",
                             "options": [
                               {
                                 "label": "Hand it over.",
                                 "commands": [
                                   {
-                                    "type": "QUEST_COMPLETE",
-                                    "questId": "golden_promise"
+                                    "questId": "golden_promise",
+                                    "cmd": "QUEST_COMPLETE"
                                   },
                                   {
-                                    "type": "TEXT",
                                     "text": "I'll need time to work on this. Check back later. And... thanks.",
-                                    "speaker": "Laura"
+                                    "speaker": "Laura",
+                                    "cmd": "TEXT"
                                   },
                                   {
-                                    "type": "JUMP_TO_LABEL",
-                                    "label": "laura_talk_hub"
+                                    "label": "laura_talk_hub",
+                                    "cmd": "JUMP_TO_LABEL"
                                   }
                                 ]
                               }
-                            ]
+                            ],
+                            "cmd": "CHOICE"
                           }
                         ],
                         "elseCommands": [
                           {
-                            "type": "CHOICE",
                             "options": [
                               {
                                 "label": "Still looking.",
                                 "commands": [
                                   {
-                                    "type": "JUMP_TO_LABEL",
-                                    "label": "laura_talk_hub"
+                                    "label": "laura_talk_hub",
+                                    "cmd": "JUMP_TO_LABEL"
                                   }
                                 ]
                               }
-                            ]
+                            ],
+                            "cmd": "CHOICE"
                           }
-                        ]
+                        ],
+                        "cmd": "CONDITIONAL_BRANCH"
                       }
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
                         "text": "You're going deep? Listen. Rumor says a rare undead down there wears a golden band. Unmarked, untarnished. I want that signet — new material for my forge, good pay for you. Interested?",
-                        "speaker": "Laura"
+                        "speaker": "Laura",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "CHOICE",
                         "options": [
                           {
                             "label": "I'll look for it.",
                             "commands": [
                               {
-                                "type": "QUEST_OFFER",
-                                "questId": "golden_promise"
+                                "questId": "golden_promise",
+                                "cmd": "QUEST_OFFER"
                               },
                               {
-                                "type": "TEXT",
                                 "text": "Find that signet. Don't come back empty-handed.",
-                                "speaker": "Laura"
+                                "speaker": "Laura",
+                                "cmd": "TEXT"
                               },
                               {
-                                "type": "CONDITIONAL_BRANCH",
                                 "condition": "hasItem:25",
                                 "commands": [
                                   {
-                                    "type": "TEXT",
                                     "text": "You found it. Hmph. Not bad. The gold is pure... untouched. Give it here.",
-                                    "speaker": "Laura"
+                                    "speaker": "Laura",
+                                    "cmd": "TEXT"
                                   },
                                   {
-                                    "type": "CHOICE",
                                     "options": [
                                       {
                                         "label": "Hand it over.",
                                         "commands": [
                                           {
-                                            "type": "QUEST_COMPLETE",
-                                            "questId": "golden_promise"
+                                            "questId": "golden_promise",
+                                            "cmd": "QUEST_COMPLETE"
                                           },
                                           {
-                                            "type": "TEXT",
                                             "text": "I'll need time to work on this. Check back later. And... thanks.",
-                                            "speaker": "Laura"
+                                            "speaker": "Laura",
+                                            "cmd": "TEXT"
                                           },
                                           {
-                                            "type": "JUMP_TO_LABEL",
-                                            "label": "laura_talk_hub"
+                                            "label": "laura_talk_hub",
+                                            "cmd": "JUMP_TO_LABEL"
                                           }
                                         ]
                                       }
-                                    ]
+                                    ],
+                                    "cmd": "CHOICE"
                                   }
                                 ],
                                 "elseCommands": [
                                   {
-                                    "type": "CHOICE",
                                     "options": [
                                       {
                                         "label": "Still looking.",
                                         "commands": [
                                           {
-                                            "type": "JUMP_TO_LABEL",
-                                            "label": "laura_talk_hub"
+                                            "label": "laura_talk_hub",
+                                            "cmd": "JUMP_TO_LABEL"
                                           }
                                         ]
                                       }
-                                    ]
+                                    ],
+                                    "cmd": "CHOICE"
                                   }
-                                ]
+                                ],
+                                "cmd": "CONDITIONAL_BRANCH"
                               }
                             ]
                           },
@@ -833,16 +829,19 @@
                             "label": "Not my job.",
                             "commands": [
                               {
-                                "type": "JUMP_TO_LABEL",
-                                "label": "laura_talk_hub"
+                                "label": "laura_talk_hub",
+                                "cmd": "JUMP_TO_LABEL"
                               }
                             ]
                           }
-                        ]
+                        ],
+                        "cmd": "CHOICE"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -850,7 +849,8 @@
             "label": "That's all.",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -858,27 +858,26 @@
     "name": "Alicia Default Hub",
     "commands": [
       {
-        "type": "LABEL",
-        "name": "alicia_default_hub"
+        "name": "alicia_default_hub",
+        "cmd": "LABEL"
       },
       {
-        "type": "TEXT",
         "text": "Oh! H-hello there! It's good to see you again. Please, look around. And— uh— drink water. People forget.",
-        "speaker": "Alicia"
+        "speaker": "Alicia",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Buy Consumables",
             "commands": [
               {
-                "type": "OPEN_SHOP",
-                "shopId": 1
+                "shopId": 1,
+                "cmd": "OPEN_SHOP"
               },
               {
-                "type": "JUMP_TO_LABEL",
-                "label": "alicia_default_hub"
+                "label": "alicia_default_hub",
+                "cmd": "JUMP_TO_LABEL"
               }
             ]
           },
@@ -886,8 +885,8 @@
             "label": "Talk",
             "commands": [
               {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 15
+                "commonEventId": 15,
+                "cmd": "CALL_COMMON_EVENT"
               }
             ]
           },
@@ -895,7 +894,8 @@
             "label": "Leave",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -903,27 +903,26 @@
     "name": "Laura Default Hub",
     "commands": [
       {
-        "type": "LABEL",
-        "name": "laura_default_hub"
+        "name": "laura_default_hub",
+        "cmd": "LABEL"
       },
       {
-        "type": "TEXT",
         "text": "Back again? Blade dull already? Or are you just looking for warmth?",
-        "speaker": "Laura"
+        "speaker": "Laura",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Shop Weapons",
             "commands": [
               {
-                "type": "OPEN_SHOP",
-                "shopId": 2
+                "shopId": 2,
+                "cmd": "OPEN_SHOP"
               },
               {
-                "type": "JUMP_TO_LABEL",
-                "label": "laura_default_hub"
+                "label": "laura_default_hub",
+                "cmd": "JUMP_TO_LABEL"
               }
             ]
           },
@@ -931,8 +930,8 @@
             "label": "Talk",
             "commands": [
               {
-                "type": "CALL_COMMON_EVENT",
-                "commonEventId": 17
+                "commonEventId": 17,
+                "cmd": "CALL_COMMON_EVENT"
               }
             ]
           },
@@ -940,7 +939,8 @@
             "label": "Leave",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   },
@@ -948,26 +948,25 @@
     "name": "Gate Guard Allow Pass Hub",
     "commands": [
       {
-        "type": "LABEL",
-        "name": "gate_guard_pass_hub"
+        "name": "gate_guard_pass_hub",
+        "cmd": "LABEL"
       },
       {
-        "type": "TEXT",
-        "text": "Guild Pass verified. Keep your MP above the red line. Don’t be a hero in there— heroes become stains."
+        "text": "Guild Pass verified. Keep your MP above the red line. Don’t be a hero in there— heroes become stains.",
+        "cmd": "TEXT"
       },
       {
-        "type": "CHOICE",
         "options": [
           {
             "label": "Enter Dungeon",
             "commands": [
               {
-                "type": "SET_FLAG",
                 "flag": "dungeon_entered",
-                "value": true
+                "value": true,
+                "cmd": "SET_FLAG"
               },
               {
-                "type": "TELEPORT"
+                "cmd": "TELEPORT"
               }
             ]
           },
@@ -975,12 +974,12 @@
             "label": "Ask about stains.",
             "commands": [
               {
-                "type": "TEXT",
-                "text": "People come back talking about ‘treasure’. Then they stop sleeping. Then they stop talking. Then we stop calling them by name. Go."
+                "text": "People come back talking about ‘treasure’. Then they stop sleeping. Then they stop talking. Then we stop calling them by name. Go.",
+                "cmd": "TEXT"
               },
               {
-                "type": "JUMP_TO_LABEL",
-                "label": "gate_guard_pass_hub"
+                "label": "gate_guard_pass_hub",
+                "cmd": "JUMP_TO_LABEL"
               }
             ]
           },
@@ -988,44 +987,44 @@
             "label": "Report Progress",
             "commands": [
               {
-                "type": "CONDITIONAL_BRANCH",
                 "condition": "flag:boss_killed_floor_6",
                 "commands": [
                   {
-                    "type": "TEXT",
-                    "text": "You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner."
+                    "text": "You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner.",
+                    "cmd": "TEXT"
                   },
                   {
-                    "type": "JUMP_TO_LABEL",
-                    "label": "gate_guard_pass_hub"
+                    "label": "gate_guard_pass_hub",
+                    "cmd": "JUMP_TO_LABEL"
                   }
                 ],
                 "elseCommands": [
                   {
-                    "type": "CONDITIONAL_BRANCH",
                     "condition": "flag:boss_killed_floor_3",
                     "commands": [
                       {
-                        "type": "TEXT",
-                        "text": "The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper."
+                        "text": "The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper.",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "gate_guard_pass_hub"
+                        "label": "gate_guard_pass_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
                     ],
                     "elseCommands": [
                       {
-                        "type": "TEXT",
-                        "text": "Still alive. That's progress enough for today."
+                        "text": "Still alive. That's progress enough for today.",
+                        "cmd": "TEXT"
                       },
                       {
-                        "type": "JUMP_TO_LABEL",
-                        "label": "gate_guard_pass_hub"
+                        "label": "gate_guard_pass_hub",
+                        "cmd": "JUMP_TO_LABEL"
                       }
-                    ]
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
-                ]
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ]
           },
@@ -1033,18 +1032,17 @@
             "label": "Anything strange?",
             "commands": [
               {
-                "type": "TEXT",
-                "text": "Strange? Always. But the supply shipment is late. Very late. It usually comes through the old tunnel, but it's silent."
+                "text": "Strange? Always. But the supply shipment is late. Very late. It usually comes through the old tunnel, but it's silent.",
+                "cmd": "TEXT"
               },
               {
-                "type": "CHOICE",
                 "options": [
                   {
                     "label": "I'll investigate.",
                     "commands": [
                       {
-                        "type": "QUEST_OFFER",
-                        "questId": "silent_shipment"
+                        "questId": "silent_shipment",
+                        "cmd": "QUEST_OFFER"
                       }
                     ]
                   },
@@ -1052,7 +1050,8 @@
                     "label": "Not my problem.",
                     "commands": []
                   }
-                ]
+                ],
+                "cmd": "CHOICE"
               }
             ],
             "condition": "questStatus:silent_shipment:inactive"
@@ -1061,7 +1060,8 @@
             "label": "Leave",
             "commands": []
           }
-        ]
+        ],
+        "cmd": "CHOICE"
       }
     ]
   }

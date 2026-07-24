@@ -6,7 +6,8 @@ The single current-state authority for architecture and design rules.
 for context, never as instructions. If code and this document disagree,
 that is a bug in one of them: fix it or flag it, don't silently pick one.
 
-Last consolidated: 2026-07-17 (post overhaul-7 merge to main).
+Last consolidated: 2026-07-24 (legacy-purge round; battle/ritual/reserve
+scenes now windows-drawn, Summoner economy live).
 
 ---
 
@@ -48,9 +49,17 @@ Last consolidated: 2026-07-17 (post overhaul-7 merge to main).
 - **Scenes are data** (`data/scenes.json`): `{id, name, kind, hooks,
   scripts, windows}`. Scenes with `"draw": "windows"` are rendered
   entirely from their `windows` array by `presentation/window_renderer.lua`.
-- **Battle is the one legacy-drawn holdout**, frozen pending the Summoner
-  rework (see `docs/design/summoner-rework.md`). Do not extend the legacy
-  renderer; new UI work happens in the windows system.
+- **Battle is windows-drawn too** (as of 07.2026): the old "legacy-drawn
+  holdout, frozen pending Summoner rework" state is over. 14 of 16 scenes
+  render via the windows system; the two exceptions (`map`, `town`) are
+  world-rendered through the raycaster by design, not conversion debt.
+  The Summoner rework itself is live: per-round MP drain in battle
+  (`engine/battle.lua`), per-step field drain (`engine/exploration.lua`),
+  sacrifice with level-scaled EXP/rewards (`SACRIFICE_EXP_RATE` trait),
+  species unlock flags, and the shared `ritual` scene
+  (summon/promote/sacrifice) plus `reserve` scene. Shared presentation
+  services (damage popups, text reveal, battle anims) still live in
+  `presentation/renderer.lua`, which serves both paths.
 - **Animations are data** (`data/animations.json`): typed track lists
   (tint, blend, transform, shake, particles, force_field, gradient_map,
   screen_flash). `system.*` reserved entries (damage_flash, shake, death,
@@ -120,7 +129,19 @@ scene inventing its own chrome:
 Every schema tolerates unknown future fields: readers ignore keys they
 don't understand, validators warn rather than reject on unrecognized
 *optional* fields, and new entry types arrive behind `kind`/version
-discriminators — old data never needs migrating.
+discriminators.
+
+**Scope narrowed (24.07.2026, owner decision):** this rule protects
+*future* fields and shipped-player data only. Repo-owned content
+(`data/*.json`, campaign roots, save files — saves are test artifacts for
+now and may break freely) gets migrated in place when a schema changes;
+dual-read shims for old shapes of our own data are carrying cost, not
+compatibility, and should be deleted after a one-time migration. Removed
+under this rule so far: the deprecated command aliases
+(GIVE_ITEM/TAKE_ITEM/GIVE_ITEM_ID/DRAIN_MP/RESTORE_MP → CHANGE_ITEM/
+CHANGE_MP, 24.07). Still queued: the dual `type`/`cmd` command-key format,
+the `tiles{}` tileset merge in `viewport_3d.lua`, scene_host's
+legacy-Lua-draw fallback branches, and the elementIcons fallback chain.
 
 ### 1.6 Map cell overrides (unified, 23.07.2026)
 

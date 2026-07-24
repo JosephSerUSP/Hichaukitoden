@@ -480,24 +480,10 @@
         // both generated from data/engine.json -> commands, so any command
         // registered there (with a matching Lua handler) is automatically
         // addable/editable/nestable in every host that lists it in `contexts`.
-        // The nine commands the interactive interpreter (engine/interpreter.lua
-        // compile()) actually knows how to run — TEXT, CHOICE,
-        // CONDITIONAL_BRANCH, RECOVER_PARTY, TELEPORT, BATTLE, GIVE_ITEM,
-        // CALL_COMMON_EVENT, COMMENT — are stored under the legacy `type` field
-        // when added to a map/common host, matching what that interpreter path
-        // reads; everything else (and COMMENT in battle_phase flows, matching
-        // existing data/flows.json) is stored under `cmd`, which both
-        // interpreter.runImmediate and the A7 validator resolve via
-        // `cmd.cmd or cmd.type`.
-        const INTERACTIVE_COMPILE_IDS = {
-            TEXT: 1, CHOICE: 1, CONDITIONAL_BRANCH: 1, RECOVER_PARTY: 1,
-            TELEPORT: 1, BATTLE: 1, GIVE_ITEM: 1, CALL_COMMON_EVENT: 1, COMMENT: 1
-        };
-        function cmdFieldName(id, hostCtx) {
-            return (hostCtx !== 'battle_phase' && INTERACTIVE_COMPILE_IDS[id]) ? 'type' : 'cmd';
-        }
+        // Every command stores its id under `cmd` (the legacy `type` field
+        // was retired in the 24.07.2026 purge; data was migrated in place).
         function cmdId(cmd) {
-            return cmd.cmd || cmd.type;
+            return cmd.cmd;
         }
         function cmdRegistry() {
             return (dbPayload.engine && dbPayload.engine.commands) || [];
@@ -601,8 +587,6 @@
                 return 'Teleport';
             } else if (id === 'BATTLE') {
                 return 'Start Battle';
-            } else if (id === 'GIVE_ITEM') {
-                return 'Give Random Item';
             } else if (id === 'CALL_COMMON_EVENT') {
                 const ce = dbPayload.commonEvents && dbPayload.commonEvents[cmd.commonEventId];
                 return `Call Common Event: ${ce ? ce.name : 'ID ' + cmd.commonEventId}`;
@@ -650,8 +634,7 @@
         // list. `onChange()` is called after any add/edit/delete so the caller can
         // re-render and mark itself dirty; pass null/readOnly=true for a static preview.
         // `hostCtx` ('map'/'common'/'battle_phase') filters which registry
-        // commands the add/edit dialog offers (SPEC S1 contexts) and picks the
-        // storage field (SPEC A6 note above cmdFieldName). CHOICE and
+        // commands the add/edit dialog offers (SPEC S1 contexts). CHOICE and
         // CONDITIONAL_BRANCH render as nested branches with their own
         // sub-command-lists rendered inline (via recursion); any other
         // registered command with a `commands`-type param (IF, FOR_EACH, ...)
@@ -1724,7 +1707,7 @@
             const wasSameType = activeCmdOriginal && cmdId(activeCmdOriginal) === type;
 
             let cmd = {};
-            cmd[cmdFieldName(type, activeCmdHostCtx)] = type;
+            cmd.cmd = type;
 
             (def && def.params || []).forEach(p => {
                 if (p.type === 'commands') {
