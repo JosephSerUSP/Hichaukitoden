@@ -52,7 +52,7 @@ function Battle:tryDeployWave(roundEvents)
     if not hasReserve then return false end
 
     local outgoingBySlot = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if session.party[i] then
             outgoingBySlot[i] = session.party[i]
             table.insert(self.fallen, session.party[i])
@@ -150,13 +150,12 @@ end
 -- (overhaul-6 F1: the summoner no longer has an instant "acts first" slot;
 -- Flee is now any active creature's action -- the first one committed for
 -- the round triggers the party's flee attempt, same odds/penalty as before.)
-function Battle:resolveRound(collectedActions)
-    local roundEvents = {}
 
+function Battle:checkFlee(collectedActions, roundEvents)
     -- 1. Flee: if any creature chose it this round, resolve immediately
     -- (before the speed-ordered queue runs) and skip the rest of the round.
     local fleeing = false
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         local act = collectedActions and collectedActions[i]
         if act and act.type == "flee" then fleeing = true break end
     end
@@ -171,7 +170,7 @@ function Battle:resolveRound(collectedActions)
                 table.insert(roundEvents, ev)
                 if ev.type == "flee_success" then escaped = true end
             end
-            if escaped then return roundEvents end
+            if escaped then return true end
         else
             -- Legacy block: runs only when the phase is removed from
             -- flows.json (SPEC S4 fallback rule)
@@ -186,7 +185,7 @@ function Battle:resolveRound(collectedActions)
 
             if roll < baseFlee then
                 table.insert(roundEvents, { type = "flee_success" })
-                return roundEvents
+                return true
             else
                 table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
                 -- Lose some gold as penalty
@@ -201,14 +200,18 @@ function Battle:resolveRound(collectedActions)
     -- Check if combat ends immediately
     if self:isVictory() then
         table.insert(roundEvents, { type = "victory" })
-        return roundEvents
+        return true
     end
 
+    return false
+end
+
+function Battle:buildTurnQueue(collectedActions)
     -- 2. Build the turn queue for all creatures
     local queue = {}
 
     -- Ally creatures
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         local ally = self.allies[i]
         if ally and not ally:isDead() then
             local chosenAct = collectedActions and collectedActions[i]
@@ -278,117 +281,123 @@ function Battle:resolveRound(collectedActions)
         return a.speed > b.speed
     end)
     
-    -- 3. Execute actions in speed order
+    return queue
+end
+
+function Battle:executeTurn(turn, roundEvents)
+    if self:isVictory() or self:isDefeat() then
+        return
+    end
+
     local targeting = require("engine.targeting")
     local config = require("engine.config")
-    for _, turn in ipairs(queue) do
-        local targetDead = false
-        if turn.target and turn.target.isDead and turn.target:isDead() then
-            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
-            if spec then
-                local expanded = targeting.expand(spec)
-                if expanded.state ~= "dead" and expanded.state ~= "any" then
-                    targetDead = true
-                end
-            end
-        end
-
-        if targetDead then
-            local autoRedirect = false
-            if self.session and self.session.autoRedirect ~= nil then
-                autoRedirect = self.session.autoRedirect
-            elseif config.combat and config.combat.autoRedirect ~= nil then
-                autoRedirect = config.combat.autoRedirect
-            end
-
-            if autoRedirect then
-                local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
-                if spec then
-                    local newTargets = targeting.resolve(turn.actor, spec, self, nil, turn.item or turn.skill)
-                    if newTargets and #newTargets > 0 and not newTargets[1]:isDead() then
-                        turn.target = newTargets[1]
-                        targetDead = false
-                    end
-                end
-            end
-        end
-
-        if not turn.actor:isDead() then
-            if targetDead then
-                local loader = self.session and self.session.loader
-                local msg = (loader and loader.formatTerm) and loader.formatTerm("battle.target_dead", "{0}'s target is already dead!", turn.actor.name) or (turn.actor.name .. "'s target is already dead!")
-                table.insert(roundEvents, {
-                    type = "text",
-                    text = msg
-                })
-            elseif turn.item then
-                -- F7: apply the used item's effects and consume it. This
-                -- spends the creature's turn exactly like a skill would.
-                local evs = self:applyItem(turn.item, turn.actor, turn.target)
-                for _, ev in ipairs(evs) do
-                    table.insert(roundEvents, ev)
-                end
-            else
-                local loader = self.session.loader
-                local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
-                
-                table.insert(roundEvents, {
-                    type = "action",
-                    actor = turn.actor,
-                    skill = turn.skill,
-                    target = turn.target or (targets[1] or turn.actor),
-                    animation = turn.skill and turn.skill.animation or nil,
-                })
-                
-                local seq = nil
-                if turn.skill.actionSequence then
-                    seq = loader.actionSequences[turn.skill.actionSequence]
-                end
-                local commands = (seq and seq.commands) or turn.skill.actionSequenceCommands
-                if not commands then
-                    local defaultSeq = loader.actionSequences and loader.actionSequences["default"]
-                    commands = defaultSeq and defaultSeq.commands
-                end
-                if not commands then
-                    commands = { { cmd = "APPLY_EFFECT" } }
-                end
-                
-                local seqCtx = {
-                    a = turn.actor,
-                    target = turn.target or (targets[1] or turn.actor),
-                    targets = targets,
-                    skill = turn.skill,
-                    battle = self,
-                    session = self.session,
-                    loader = loader,
-                    events = {},
-                    refs = {}
-                }
-                
-                interpreter.runImmediate(commands, seqCtx)
-                
-                for _, ev in ipairs(seqCtx.events) do
-                    table.insert(roundEvents, ev)
-                end
-            end
-            
-            -- Check for victory/defeat mid-turn. A wipe with reserves left
-            -- deploys the emergency wave instead of ending the battle; the
-            -- round continues (remaining enemy turns whose targets fell are
-            -- skipped by the target-dead check above).
-            if self:isVictory() then
-                table.insert(roundEvents, { type = "victory" })
-                break
-            elseif self:isDefeat() and not self:tryDeployWave(roundEvents) then
-                table.insert(roundEvents, { type = "defeat" })
-                break
+    
+    local targetDead = false
+    if turn.target and turn.target.isDead and turn.target:isDead() then
+        local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+        if spec then
+            local expanded = targeting.expand(spec)
+            if expanded.state ~= "dead" and expanded.state ~= "any" then
+                targetDead = true
             end
         end
     end
-    
+
+    if targetDead then
+        local autoRedirect = false
+        if self.session and self.session.autoRedirect ~= nil then
+            autoRedirect = self.session.autoRedirect
+        elseif config.combat and config.combat.autoRedirect ~= nil then
+            autoRedirect = config.combat.autoRedirect
+        end
+
+        if autoRedirect then
+            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+            if spec then
+                local newTargets = targeting.resolve(turn.actor, spec, self, nil, turn.item or turn.skill)
+                if newTargets and #newTargets > 0 and not newTargets[1]:isDead() then
+                    turn.target = newTargets[1]
+                    targetDead = false
+                end
+            end
+        end
+    end
+
+    if not turn.actor:isDead() then
+        if targetDead then
+            local loader = self.session and self.session.loader
+            local msg = (loader and loader.formatTerm) and loader.formatTerm("battle.target_dead", "{0}'s target is already dead!", turn.actor.name) or (turn.actor.name .. "'s target is already dead!")
+            table.insert(roundEvents, {
+                type = "text",
+                text = msg
+            })
+        elseif turn.item then
+            -- F7: apply the used item's effects and consume it. This
+            -- spends the creature's turn exactly like a skill would.
+            local evs = self:applyItem(turn.item, turn.actor, turn.target)
+            for _, ev in ipairs(evs) do
+                table.insert(roundEvents, ev)
+            end
+        else
+            local loader = self.session.loader
+            local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
+            
+            table.insert(roundEvents, {
+                type = "action",
+                actor = turn.actor,
+                skill = turn.skill,
+                target = turn.target or (targets[1] or turn.actor),
+                animation = turn.skill and turn.skill.animation or nil,
+            })
+            
+            local seq = nil
+            if turn.skill.actionSequence then
+                seq = loader.actionSequences[turn.skill.actionSequence]
+            end
+            local commands = (seq and seq.commands) or turn.skill.actionSequenceCommands
+            if not commands then
+                local defaultSeq = loader.actionSequences and loader.actionSequences["default"]
+                commands = defaultSeq and defaultSeq.commands
+            end
+            if not commands then
+                commands = { { cmd = "APPLY_EFFECT" } }
+            end
+            
+            local seqCtx = {
+                a = turn.actor,
+                target = turn.target or (targets[1] or turn.actor),
+                targets = targets,
+                skill = turn.skill,
+                battle = self,
+                session = self.session,
+                loader = loader,
+                events = {},
+                refs = {}
+            }
+            
+            interpreter.runImmediate(commands, seqCtx)
+            
+            for _, ev in ipairs(seqCtx.events) do
+                table.insert(roundEvents, ev)
+            end
+        end
+        
+        -- Check for victory/defeat mid-turn. A wipe with reserves left
+        -- deploys the emergency wave instead of ending the battle; the
+        -- round continues (remaining enemy turns whose targets fell are
+        -- skipped by the target-dead check above).
+        if self:isVictory() then
+            table.insert(roundEvents, { type = "victory" })
+        elseif self:isDefeat() and not self:tryDeployWave(roundEvents) then
+            table.insert(roundEvents, { type = "defeat" })
+        end
+    end
+end
+
+function Battle:processRoundEnd(roundEvents)
     -- Skip round-end ticks if the battle outcome is already decided
     if self:isVictory() or self:isDefeat() then
-        return roundEvents
+        return
     end
     
     if flow.has("battle.round_end") then
@@ -404,7 +413,7 @@ function Battle:resolveRound(collectedActions)
             table.insert(roundEvents, { type = "defeat" })
         end
         self.round = self.round + 1
-        return roundEvents
+        return
     end
 
     -- Legacy block: runs only when the phase is removed from flows.json
@@ -463,7 +472,7 @@ function Battle:resolveRound(collectedActions)
     -- or when no map is loaded, e.g. test battles)
     local mapData = self.session.currentMapData
     if not (mapData and mapData.safe) then
-        for i = 1, 4 do
+        for i = 1, config.MAX_PARTY_SIZE do
             local ally = self.allies[i]
             if ally and not ally:isDead() then
                 local drain = traits.getParam(ally, "mpd", self.session)
@@ -477,7 +486,7 @@ function Battle:resolveRound(collectedActions)
         end
         if self.session.mp <= 0 then
             -- Party takes progressive damage at 0 MP
-            for i = 1, 4 do
+            for i = 1, config.MAX_PARTY_SIZE do
                 local ally = self.allies[i]
                 if ally and not ally:isDead() then
                     local exhaustDmg = config.combat and config.combat.mpExhaustionDamage or 1
@@ -501,8 +510,30 @@ function Battle:resolveRound(collectedActions)
         table.insert(roundEvents, { type = "defeat" })
     end
     self.round = self.round + 1
+end
+
+function Battle:resolveRound(collectedActions)
+    local roundEvents = {}
+    
+    -- 1. Flee
+    if self:checkFlee(collectedActions, roundEvents) then
+        return roundEvents
+    end
+    
+    -- 2. Build queue
+    local queue = self:buildTurnQueue(collectedActions)
+    
+    -- 3. Execute turns
+    for _, turn in ipairs(queue) do
+        self:executeTurn(turn, roundEvents)
+    end
+    
+    -- 4. End of round
+    self:processRoundEnd(roundEvents)
+    
     return roundEvents
 end
+
 
 function Battle:applyItem(action, actor, target)
     local events = {}
@@ -598,7 +629,7 @@ function Battle:isDefeat()
     -- Defeat when all 4 active creatures are dead (the summoner is not a
     -- battle participant -- overhaul-6 F1).
     local monstersAlive = false
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if self.allies[i] and not self.allies[i]:isDead() then
             monstersAlive = true
             break
@@ -609,7 +640,7 @@ end
 
 function Battle:getAllActiveBattlers()
     local list = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if self.allies[i] then table.insert(list, self.allies[i]) end
     end
     for _, enemy in ipairs(self.enemies) do

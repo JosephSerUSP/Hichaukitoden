@@ -379,7 +379,7 @@ local function scopeList(scope, ctx)
         -- (index 5 of battle.allies); with fewer creatures it includes them.
         local allies = ctx.party or (ctx.battle and ctx.battle.allies) or ctx.session.party or {}
         local slots = {}
-        for i = 1, 4 do
+        for i = 1, config.MAX_PARTY_SIZE do
             if allies[i] and not allies[i]:isDead() then table.insert(slots, allies[i]) end
         end
         return slots
@@ -606,9 +606,13 @@ handlers.CHANGE_ITEM = function(cmd, ctx)
 end
 
 handlers.TAKE_ITEM = function(cmd, ctx)
+    local session = ctx.session
+    if not session then return end
+    local itemId = cmd.item or cmd.itemId or cmd.id
+    local count = cmd.count or 1
     -- Fails soft (S2): removing more than owned just clears the stack.
-    if ctx.session:hasItem(cmd.item, 1) then
-        ctx.session:addItem(cmd.item, -(cmd.count or 1))
+    if itemId and session:hasItem(itemId, 1) then
+        session:addItem(itemId, -count)
     end
 end
 
@@ -758,15 +762,6 @@ handlers.ERASE_EVENT = function(cmd, ctx)
 end
 handlers.REMOVE_EVENT = handlers.ERASE_EVENT
 
-handlers.TAKE_ITEM = function(cmd, ctx)
-    local session = ctx.session
-    if not session then return end
-    local itemId = cmd.item or cmd.itemId or cmd.id
-    local count = cmd.count or 1
-    if itemId then
-        session:addItem(itemId, -count)
-    end
-end
 
 -- Permadeath sweep (Summoner rework §3): every party spirit still dead at
 -- battle end — plus emergency-wave casualties parked on battle.fallen — is
@@ -784,7 +779,7 @@ end
 handlers.REAP_FALLEN = function(cmd, ctx)
     local session = ctx.session
     local fallen = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         local b = session.party[i]
         if b and b:isDead() then
             table.insert(fallen, { battler = b, slot = i })
@@ -1175,9 +1170,8 @@ end
 -- has.
 handlers.SAVE_GAME = function(cmd, ctx)
     local savegame = require("engine.savegame")
-    local scene_host = require("engine.scene_host") -- lazy: breaks the scene_host<->interpreter require cycle
     local slot = cmd.slot ~= nil and tostring(evalFormula(cmd.slot, ctx)) or "slot1"
-    local sceneName = scene_host.getPrevious() or "town"
+    local sceneName = ctx.sceneName or "town"
     savegame.save(ctx.session, ctx.loader or (ctx.session and ctx.session.loader), sceneName, slot)
 end
 
@@ -1305,9 +1299,69 @@ local function copyTable(src)
     return t
 end
 
+local SCRIPT_API_PROTOTYPE = {
+    eval = function(expr, env)
+        local ok, val = pcall(formulaEngine.eval, tostring(expr or ""), env or {})
+        if ok then return val end
+        return nil
+    end,
+    systemConfig = require("engine.config"),
+    targeting = require("engine.targeting"),
+    battle = {
+        commitAction = function(index, action)
+            require("engine.scenes.battle").commitAction(index, action)
+        end,
+        submitRound = function()
+            require("engine.scenes.battle").submitRound()
+        end,
+        startTargetSelection = function(pendingAction)
+            require("engine.scenes.battle").startTargetSelection(pendingAction)
+        end,
+        undoAction = function()
+            return require("engine.scenes.battle").undoAction()
+        end,
+        showMessage = function(msg)
+            require("engine.scenes.battle").showMessage(msg)
+        end,
+        advanceLog = function()
+            require("engine.scenes.battle").advanceLog()
+        end,
+        handleTransition = function(action)
+            return require("engine.scenes.battle").handleTransition(action)
+        end,
+        isLogRevealing = function()
+            local battle = require("engine.scenes.battle")
+            return require("presentation.renderer").isBattleLogRevealing(battle.getState().combatLog)
+        end,
+        finishLogReveal = function()
+            require("presentation.renderer").finishBattleLogReveal()
+        end,
+        isAnimationPlaying = function()
+            return require("presentation.animation_player").isAnythingPlaying()
+        end
+    }
+}
+SCRIPT_API_PROTOTYPE.__index = SCRIPT_API_PROTOTYPE
+
+local SCRIPT_ENV_PROTOTYPE = {
+    math = copyTable(math),
+    string = copyTable(string),
+    table = copyTable(table),
+    random = math.random,
+    pairs = pairs,
+    ipairs = ipairs,
+    tostring = tostring,
+    tonumber = tonumber,
+    type = type,
+    select = select,
+    unpack = unpack,
+    print = print,
+}
+SCRIPT_ENV_PROTOTYPE.__index = SCRIPT_ENV_PROTOTYPE
+
 local function buildScriptApi(ctx)
     local session = ctx.session
-    local api = {}
+    local api = setmetatable({}, SCRIPT_API_PROTOTYPE)
     function api.damage(target, n)
         emitAll(ctx, effects.apply({ type = "hp_damage", formula = tostring(n) }, ctx.a or target, target, session))
     end
@@ -1331,11 +1385,6 @@ local function buildScriptApi(ctx)
     function api.emit(event) table.insert(ctx.events, event) end
     -- Generic read helpers (D13): formula evaluation and data queries, so
     -- extra scenes can compute in SCRIPT without bespoke engine commands.
-    function api.eval(expr, env)
-        local ok, val = pcall(formulaEngine.eval, tostring(expr or ""), env or {})
-        if ok then return val end
-        return nil
-    end
     function api.items()
         local loader = ctx.loader or session.loader
         local list = {}
@@ -1412,7 +1461,7 @@ local function buildScriptApi(ctx)
         local l = ctx.loader or session.loader
         return l and l.formatTerm(key, fallback, ...) or fallback
     end
-    api.systemConfig = require("engine.config")
+    -- systemConfig moved to prototype
     function api.allActors()
         local l = ctx.loader or session.loader
         local list = {}
@@ -1652,7 +1701,7 @@ local function buildScriptApi(ctx)
     end
     function api.reserve(i)
         local out = {}
-        for idx = 1, 8 do
+        for idx = 1, (config and config.MAX_RESERVE_SIZE or 8) do
             local m = session.reserve and session.reserve[idx]
             if m then
                 local view = formulaEngine.battlerView(m, session) or {}
@@ -1667,39 +1716,7 @@ local function buildScriptApi(ctx)
         if i ~= nil then return out[i] end
         return out
     end
-    api.battle = {
-        commitAction = function(index, action)
-            require("engine.scenes.battle").commitAction(index, action)
-        end,
-        submitRound = function()
-            require("engine.scenes.battle").submitRound()
-        end,
-        startTargetSelection = function(pendingAction)
-            require("engine.scenes.battle").startTargetSelection(pendingAction)
-        end,
-        undoAction = function()
-            return require("engine.scenes.battle").undoAction()
-        end,
-        showMessage = function(msg)
-            require("engine.scenes.battle").showMessage(msg)
-        end,
-        advanceLog = function()
-            require("engine.scenes.battle").advanceLog()
-        end,
-        handleTransition = function(action)
-            return require("engine.scenes.battle").handleTransition(action)
-        end,
-        isLogRevealing = function()
-            local battle = require("engine.scenes.battle")
-            return require("presentation.renderer").isBattleLogRevealing(battle.getState().combatLog)
-        end,
-        finishLogReveal = function()
-            require("presentation.renderer").finishBattleLogReveal()
-        end,
-        isAnimationPlaying = function()
-            return require("presentation.animation_player").isAnythingPlaying()
-        end
-    }
+    -- battle API moved to prototype
     -- Campaign selector (title-screen testing tool): same operations the
     -- LIST_CAMPAIGNS/SWITCH_CAMPAIGN commands run, exposed for extra scenes.
     function api.listCampaigns()
@@ -1720,7 +1737,7 @@ local function buildScriptApi(ctx)
         if cfg.combat and cfg.combat.autoRedirect ~= nil then return cfg.combat.autoRedirect end
         return false
     end
-    api.targeting = require("engine.targeting")
+    -- targeting moved to prototype
     return api
 end
 
@@ -1746,19 +1763,8 @@ handlers.SCRIPT = function(cmd, ctx)
     local env = {
         ctx = scriptCtx,
         api = buildScriptApi(ctx),
-        math = copyTable(math),
-        string = copyTable(string),
-        table = copyTable(table),
-        random = math.random,
-        pairs = pairs,
-        ipairs = ipairs,
-        tostring = tostring,
-        tonumber = tonumber,
-        type = type,
-        select = select,
-        unpack = unpack,
-        print = print,
     }
+    setmetatable(env, SCRIPT_ENV_PROTOTYPE)
     -- Explicitly absent: io, os, love, require, raw loader/session (S6).
     if scripting.allowRawAccess == true then
         scriptCtx.rawSession = session

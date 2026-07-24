@@ -2,6 +2,10 @@ local json = require("data.json")
 
 local config = {}
 
+-- Party/reserve size bounds (used engine-wide instead of magic numbers)
+config.MAX_PARTY_SIZE = 4
+config.MAX_RESERVE_SIZE = 8
+
 function config.load()
     -- Follows the active campaign root (see data/loader.lua resolveRoot):
     -- reads loader.root when the loader module is already loaded, else
@@ -35,5 +39,10 @@ function config.load()
 end
 
 config.load()
+
+-- Party/reserve size bounds — engine-wide constants replacing magic numbers.
+-- system.json may override these; these are fallback defaults.
+if not config.MAX_PARTY_SIZE then config.MAX_PARTY_SIZE = 4 end
+if not config.MAX_RESERVE_SIZE then config.MAX_RESERVE_SIZE = 8 end
 
 return config

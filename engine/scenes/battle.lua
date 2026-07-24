@@ -76,7 +76,7 @@ function battle.rebuildLivingMembers()
     -- Battle:resolveRound's collectedActions slots directly (no +1 offset).
     local v = battle.getState()
     local living = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         local c = sess().party[i]
         if c and not c:isDead() then
             table.insert(living, { type = "monster", actor = c, index = i })
@@ -207,7 +207,7 @@ function battle.resolveRound()
     -- event is actually revealed in the log. The real writes are replayed
     -- by processEvent's "wave" handler, timed to the swap animation.
     local partyBackup = {}
-    for i = 1, 4 do partyBackup[i] = sess().party[i] end
+    for i = 1, config.MAX_PARTY_SIZE do partyBackup[i] = sess().party[i] end
     local reserveBackup = {}
     for k, b in pairs(sess().reserve or {}) do reserveBackup[k] = b end
 
@@ -219,7 +219,7 @@ function battle.resolveRound()
         b.states = bk.states
     end
     sess().mp = mpBackup
-    for i = 1, 4 do sess().party[i] = partyBackup[i] end
+    for i = 1, config.MAX_PARTY_SIZE do sess().party[i] = partyBackup[i] end
     sess().reserve = reserveBackup
 
     return events

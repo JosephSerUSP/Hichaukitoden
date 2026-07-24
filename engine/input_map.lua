@@ -16,6 +16,10 @@ local DEFAULTS = {
     UP = "up", DOWN = "down", LEFT = "left", RIGHT = "right",
 }
 
+local SECONDARY_DEFAULTS = {
+    UP = "w", DOWN = "s", LEFT = "a", RIGHT = "d",
+}
+
 -- SNES button -> existing scene hook name. X, Y, SELECT have no game hook
 -- to dispatch to yet (S.C. 21.07.2026) -- deliberately absent here rather
 -- than pointing at an invented placeholder; resolveHook/keypressed callers
@@ -51,6 +55,13 @@ local function rebuildReverse()
     keyToButton = {}
     for button, key in pairs(bindings) do
         keyToButton[key] = button
+    end
+    -- Add secondary bindings (WASD) unless their target button
+    -- has been rebound away from the default arrow key.
+    for button, key in pairs(SECONDARY_DEFAULTS) do
+        if not keyToButton[key] then
+            keyToButton[key] = button
+        end
     end
 end
 
@@ -108,7 +119,7 @@ function input_map.setBinding(button, key)
     return true
 end
 
--- Given a raw LOVE key name (after WASD normalization), returns the SNES
+-- Given a raw LOVE key name, returns the SNES
 -- button name it's currently bound to, or nil if nothing is bound to it.
 function input_map.resolveHook(key)
     if not bindings then input_map.load() end

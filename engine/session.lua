@@ -204,7 +204,7 @@ function GameSession:recruitActor(actorId, level)
     battler.hp = battler:getMaxHp(self)
 
     -- Check active party slots (1-4)
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if not self.party[i] then
             battler.row = (i <= 2) and "front" or "back"
             self.party[i] = battler
@@ -213,7 +213,7 @@ function GameSession:recruitActor(actorId, level)
     end
 
     -- Check reserve roster (slots 1-8)
-    for i = 1, 8 do
+    for i = 1, config.MAX_RESERVE_SIZE do
         if not self.reserve[i] then
             self.reserve[i] = battler
             return battler, "reserve"
@@ -247,7 +247,7 @@ function GameSession:hasItem(itemId, amount)
 end
 
 function GameSession:isPartyEmpty()
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if self.party[i] then return false end
     end
     return true
@@ -272,7 +272,7 @@ function GameSession:fillEmptySlotsFromReserve()
 
     local deployed = {}
     local ki = 1
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if not self.party[i] and keys[ki] then
             local key = keys[ki]
             local b = self.reserve[key]
@@ -301,7 +301,7 @@ function GameSession:getActiveParty()
     -- object for their name/level/equipment/MP-adjacent data, used outside
     -- battle (shop level-gates, RECOVER_PARTY, etc.), but never fights.
     local active = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         if self.party[i] then
             table.insert(active, self.party[i])
         end

@@ -347,12 +347,7 @@ function scene_host.keypressed(key, ctx)
         end
     end
 
-    -- Normalize WASD to arrow key names
-    if key == "w" then key = "up"
-    elseif key == "s" then key = "down"
-    elseif key == "a" then key = "left"
-    elseif key == "d" then key = "right"
-    end
+
 
     -- Resolve the physical key to a logical SNES button via the rebindable
     -- input map, then to the existing hook that button drives. Defaults

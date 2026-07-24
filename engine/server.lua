@@ -4,6 +4,7 @@ local json = require("data.json")
 local server = {}
 local tcpListener = nil
 local active = false
+server.configReloaded = false
 
 -- Single manifest of database files exposed to the editor. Keep in sync with
 -- DATA_FILES in tools/editor/server.js.
@@ -80,14 +81,7 @@ function server.update(dt)
                     local config = require("engine.config")
                     config.load()
 
-                    -- Hot-reload active UI font
-                    local ui = require("presentation.ui")
-                    if config.ui and config.ui.activeFont then
-                        ui.setFont(config.ui.activeFont, config.ui.fontSize)
-                    end
-                    if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font then
-                        ui.loadPopupFont(config.battle_screen.popup.font, config.battle_screen.popup.fontSize)
-                    end
+                    server.configReloaded = true
                     
                     sendResponse(client, "200 OK", "application/json", json.encode({ success = true, message = "Reloaded config and database" }))
                 elseif method == "GET" and path == "/data" then
@@ -155,14 +149,7 @@ function server.update(dt)
                             local config = require("engine.config")
                             config.load()
 
-                            -- Hot-reload active UI font
-                            local ui = require("presentation.ui")
-                            if config.ui and config.ui.activeFont then
-                                ui.setFont(config.ui.activeFont, config.ui.fontSize)
-                            end
-                            if config.battle_screen and config.battle_screen.popup and config.battle_screen.popup.font then
-                                ui.loadPopupFont(config.battle_screen.popup.font, config.battle_screen.popup.fontSize)
-                            end
+                            server.configReloaded = true
                             
                             success = true
                             statusMsg = "Saved and hot-reloaded successfully!"

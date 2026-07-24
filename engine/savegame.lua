@@ -7,6 +7,7 @@
 -- can see save files on disk). love.filesystem reads already prefer the
 -- save-dir copy, so the two stay in sync.
 local json = require("data.json")
+local config = require("engine.config")
 
 local savegame = {}
 
@@ -116,7 +117,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         reserve[tostring(k)] = serializeBattler(b)
     end
     local party = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         party[i] = serializeBattler(sessionObj.party[i])
     end
     return {
@@ -161,7 +162,7 @@ function savegame.deserialize(data, loader)
     if summoner then sess.summoner = summoner end
 
     sess.party = {}
-    for i = 1, 4 do
+    for i = 1, config.MAX_PARTY_SIZE do
         sess.party[i] = deserializeBattler(data.party and data.party[i], loader)
     end
 
