@@ -70,7 +70,13 @@ local BATTLE_LAYOUT = {
     partyGridHpBarYOffset = 22,
     partyGridHpBarWidth = 52,
     partyGridHpBarHeight = 3,
-    partyGridEmptyYOffset = 8
+    partyGridEmptyYOffset = 8,
+    targetIndicatorDistance = 8,
+    targetIndicatorBlinkSpeed = 0.25,
+    targetIndicatorEnemyOffsetX = 0,
+    targetIndicatorEnemyOffsetY = 0,
+    targetIndicatorAllyOffsetX = 0,
+    targetIndicatorAllyOffsetY = 0
 }
 
 -- Battle layout accessor: engine.json override -> built-in default.

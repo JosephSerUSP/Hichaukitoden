@@ -36,6 +36,11 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "heal",
+      "greeting": "A glowing Pixie flutters near you! 'You look exhausted! Let me soothe your wounds.'",
+      "acceptText": "Pixie smiles warmly. 'May I travel with you?'"
+    },
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -170,6 +175,11 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "hostile",
+      "greeting": "A Skeleton rattles its blade and tests your fighting spirit!",
+      "acceptText": "The Skeleton lowers its sword in respect. 'Your combat skill is worthy of my blade.'"
+    },
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -241,6 +251,12 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "gold",
+      "goldCost": 30,
+      "greeting": "A radiant Angel hovers gracefully. 'A modest offering of 30 Gold shall fund my holy crusade.'",
+      "acceptText": "Angel accepts the offering. 'May divine light guide our path.'"
+    },
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -524,6 +540,11 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "heal",
+      "greeting": "Nurse approaches softly. 'Hold still, let me mend your injuries.'",
+      "acceptText": "Nurse smiles gently. 'I shall watch over your health.'"
+    },
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -595,6 +616,12 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "gold",
+      "goldCost": 15,
+      "greeting": "A mischievous Imp rattles a pouch of coins. 'Hand over 15 Gold and I'll fight for you!'",
+      "acceptText": "Imp snatches the coins greedily. 'Keke! Deal!'"
+    },
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -645,6 +672,11 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "hostile",
+      "greeting": "A massive Golem looms over you, raising its heavy stone fists!",
+      "acceptText": "The Golem kneels in respect. 'I yield to your power. I shall be your shield.'"
+    },
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -778,6 +810,12 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "aid",
+      "itemRequired": 1,
+      "greeting": "A sickly Ooze quivers helplessly, needing a Potion to stabilize...",
+      "acceptText": "The Ooze absorbs the potion and bubbles with delight!"
+    },
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -846,6 +884,10 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "free",
+      "greeting": "A friendly Bat flaps softly around your head and offers to join!"
+    },
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -919,6 +961,12 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "aid",
+      "itemRequired": 1,
+      "greeting": "A weak Wisp flickers faintly on the dungeon floor, needing a Potion...",
+      "acceptText": "The Wisp absorbs the potion and glows brightly with gratitude!"
+    },
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -1238,6 +1286,10 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
+    "recruitEvent": {
+      "type": "free",
+      "greeting": "A tiny animated Candle flickers cheerfully and wants to accompany you!"
+    },
     "isEvolved": false,
     "traits": [],
     "unlocked": false,

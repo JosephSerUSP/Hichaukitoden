@@ -24,6 +24,7 @@ local effects = require("engine.effects")
 local formulaEngine = require("engine.formula")
 local config = require("engine.config")
 local conditions = require("engine.conditions")
+local recruitment = require("engine.recruitment")
 
 local interpreter = {}
 
@@ -35,7 +36,8 @@ local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     TELEPORT = true, BATTLE = true, GIVE_ITEM = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
-    LABEL = true, JUMP_TO_LABEL = true,
+    LABEL = true, JUMP_TO_LABEL = true, RECRUIT_ACTOR = true, ERASE_EVENT = true,
+    TAKE_ITEM = true, RECRUIT = true,
 }
 
 local function cmdId(cmd)
@@ -664,6 +666,52 @@ end
 
 handlers.GIVE_ITEM_ID = function(cmd, ctx)
     ctx.session:addItem(cmd.item, cmd.count or 1)
+end
+
+handlers.RECRUIT_ACTOR = function(cmd, ctx)
+    local session = ctx.session
+    if not session then return end
+    local actorId = cmd.actorId or cmd.id
+    local level = cmd.level
+    if not actorId then return end
+
+    local battler, slotType = session:recruitActor(actorId, level)
+    if battler then
+        local msg
+        if slotType == "party" then
+            msg = session.loader.formatTerm("recruit.recruited", "{0} recruited to party!", battler.name)
+        else
+            msg = session.loader.formatTerm("recruit.reserve", "{0} sent to reserve roster!", battler.name)
+        end
+        table.insert(ctx.events, { type = "text", text = msg })
+    else
+        table.insert(ctx.events, { type = "text", text = "Your party and reserve are full!" })
+    end
+end
+handlers.RECRUIT = handlers.RECRUIT_ACTOR
+
+handlers.ERASE_EVENT = function(cmd, ctx)
+    local session = ctx.session
+    if not session or not session.currentMapData or not session.currentMapData.events then return end
+    local targetId = cmd.eventId or (ctx and ctx.eventId) or (ctx and ctx.event and ctx.event.id) or (session.activeEvent and session.activeEvent.id)
+    if not targetId then return end
+    for i = #session.currentMapData.events, 1, -1 do
+        if session.currentMapData.events[i].id == targetId then
+            table.remove(session.currentMapData.events, i)
+            break
+        end
+    end
+end
+handlers.REMOVE_EVENT = handlers.ERASE_EVENT
+
+handlers.TAKE_ITEM = function(cmd, ctx)
+    local session = ctx.session
+    if not session then return end
+    local itemId = cmd.item or cmd.itemId or cmd.id
+    local count = cmd.count or 1
+    if itemId then
+        session:addItem(itemId, -count)
+    end
 end
 
 -- Permadeath sweep (Summoner rework §3): every party spirit still dead at
@@ -1568,6 +1616,9 @@ local function buildScriptApi(ctx)
     api.battle = {
         commitAction = function(index, action)
             require("engine.scenes.battle").commitAction(index, action)
+        end,
+        submitRound = function()
+            require("engine.scenes.battle").submitRound()
         end,
         startTargetSelection = function(pendingAction)
             require("engine.scenes.battle").startTargetSelection(pendingAction)

@@ -996,9 +996,105 @@
             updateFogPreview();
 
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
+            mapPropsRecruits = JSON.parse(JSON.stringify(map.recruits || []));
             renderEncountersList(mapPropsEncounters);
+            renderRecruitsList(mapPropsRecruits);
             mapPropsDirty = false;
             document.getElementById('map-properties-modal').classList.add('active');
+        }
+
+        let mapPropsRecruits = [];
+
+        function renderRecruitsList(recruits) {
+            const list = document.getElementById('prop-recruits-list');
+            if (!list) return;
+            list.innerHTML = '';
+            (recruits || []).forEach((actorId, idx) => {
+                const actor = (dbPayload.actors || []).find(a => a.id === actorId);
+                const item = document.createElement('div');
+                item.style.fontSize = '10px';
+                item.style.padding = '2px 4px';
+                item.style.cursor = 'pointer';
+                item.textContent = `${actor ? actor.name : 'Unknown'} (ID ${actorId})`;
+                item.onclick = () => {
+                    document.querySelectorAll('#prop-recruits-list > div').forEach(d => d.style.background = '');
+                    item.style.background = 'var(--win-blue)';
+                    item.style.color = '#fff';
+                    list.dataset.selectedIdx = idx;
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function addRecruitToMap() {
+            const actors = (dbPayload.actors || []).filter(a => a.isRecruitable);
+            if (!actors.length) { showToast('No recruitable actors defined — check "Recruitable in dungeons" on an Actor first.'); return; }
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+            const box = document.createElement('div');
+            box.style.cssText = 'min-width:280px;padding:10px;'
+                + 'background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);'
+                + 'display:flex;flex-direction:column;gap:8px;';
+
+            const title = document.createElement('div');
+            title.textContent = 'Add Recruitable Creature to Pool';
+            title.style.cssText = 'font-weight:bold;';
+            box.appendChild(title);
+
+            const actorRow = document.createElement('div');
+            actorRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            const actorLabel = document.createElement('label');
+            actorLabel.textContent = 'Creature:';
+            actorLabel.style.cssText = 'font-size:10px;min-width:60px;';
+            const actorSelect = document.createElement('select');
+            actorSelect.className = 'win98-select';
+            actorSelect.style.flex = '1';
+            actors.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.id;
+                opt.textContent = `${a.name} (ID ${a.id})`;
+                actorSelect.appendChild(opt);
+            });
+            actorRow.appendChild(actorLabel);
+            actorRow.appendChild(actorSelect);
+            box.appendChild(actorRow);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:4px;';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'win98-btn';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = () => overlay.remove();
+            const okBtn = document.createElement('button');
+            okBtn.className = 'win98-btn';
+            okBtn.textContent = 'Add';
+            okBtn.onclick = () => {
+                mapPropsRecruits.push(parseInt(actorSelect.value));
+                mapPropsDirty = true;
+                renderRecruitsList(mapPropsRecruits);
+                overlay.remove();
+            };
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(okBtn);
+            box.appendChild(btnRow);
+
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        }
+
+        function removeRecruitFromMap() {
+            const list = document.getElementById('prop-recruits-list');
+            if (!list) return;
+            const idx = parseInt(list.dataset.selectedIdx);
+            if (!isNaN(idx) && mapPropsRecruits[idx] !== undefined) {
+                mapPropsRecruits.splice(idx, 1);
+                delete list.dataset.selectedIdx;
+                mapPropsDirty = true;
+                renderRecruitsList(mapPropsRecruits);
+            }
         }
 
         function closeMapPropertiesModal(force) {
@@ -1133,6 +1229,7 @@
             map.bgm = newBgm;
             map.encounterSteps = newSteps;
             map.encounters = mapPropsEncounters;
+            map.recruits = mapPropsRecruits;
 
             const rateRaw = document.getElementById('prop-map-enc-rate').value;
             if (rateRaw === '') {

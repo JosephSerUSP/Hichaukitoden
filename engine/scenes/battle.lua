@@ -480,13 +480,23 @@ function battle.commitAction(memberIndex, action)
     v.itemSelect = false
 
     if v.activeMemberIdx > #(v.livingMembers or {}) then
-        v.escaped = false
-        v.eventsQueue = battle.resolveRound()
-        v.eventQueueIndex = 1
-        v.combatLog = {}
-        battle.advanceLog()
-        v.combatState = "log"
+        v.confirmPhase = true
+        v.selectedIndex = 1
     end
+end
+
+-------------------------------------------------------------------------------
+-- Submits the queued round after final confirmation
+-------------------------------------------------------------------------------
+function battle.submitRound()
+    local v = battle.getState()
+    v.confirmPhase = false
+    v.escaped = false
+    v.eventsQueue = battle.resolveRound()
+    v.eventQueueIndex = 1
+    v.combatLog = {}
+    battle.advanceLog()
+    v.combatState = "log"
 end
 
 -------------------------------------------------------------------------------
@@ -494,6 +504,13 @@ end
 -------------------------------------------------------------------------------
 function battle.undoAction()
     local v = battle.getState()
+    if v.confirmPhase then
+        v.confirmPhase = false
+        v.activeMemberIdx = #(v.livingMembers or {})
+        v.selectedIndex = 1
+        return true
+    end
+
     if not v.activeMemberIdx or v.activeMemberIdx <= 1 then return false end
 
     v.activeMemberIdx = v.activeMemberIdx - 1

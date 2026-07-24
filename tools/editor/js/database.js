@@ -66,70 +66,92 @@
             listContainer.innerHTML = '';
 
             let items = [];
-            if (activeDbTab === 'actors') items = dbPayload.actors;
-            else if (activeDbTab === 'items') items = dbPayload.items;
+            if (activeDbTab === 'actors') items = dbPayload.actors || [];
+            else if (activeDbTab === 'items') items = dbPayload.items || [];
             else if (activeDbTab === 'shops') {
-                items = Object.keys(dbPayload.shops)
-                    .map(k => ({ id: k, name: dbPayload.shops[k].name || `Shop ${k}` }))
+                const shops = dbPayload.shops || {};
+                items = Object.keys(shops)
+                    .map(k => ({ id: k, name: (shops[k] && shops[k].name) || `Shop ${k}` }))
                     .sort((a, b) => parseInt(a.id) - parseInt(b.id));
             }
             else if (activeDbTab === 'commonEvents') {
                 if (!dbPayload.commonEvents) dbPayload.commonEvents = {};
                 items = Object.keys(dbPayload.commonEvents)
-                    .map(k => ({ id: k, name: dbPayload.commonEvents[k].name || `Event ${k}` }))
+                    .map(k => ({ id: k, name: (dbPayload.commonEvents[k] && dbPayload.commonEvents[k].name) || `Event ${k}` }))
                     .sort((a, b) => parseInt(a.id) - parseInt(b.id));
             }
             else if (activeDbTab === 'skills' || activeDbTab === 'passives' || activeDbTab === 'states'
                   || activeDbTab === 'elements' || activeDbTab === 'roles' || activeDbTab === 'animations') {
-                // String-keyed collections (skills/passives/states/elements/roles/animations)
                 if (!dbPayload[activeDbTab]) dbPayload[activeDbTab] = {};
-                items = Object.keys(dbPayload[activeDbTab])
-                    .map(k => ({ id: k, name: dbPayload[activeDbTab][k].name || k }));
-                // Animations keep insertion order (new entries append to the
-                // bottom); the engine keys by id so JSON order is cosmetic.
-                if (activeDbTab !== 'animations') {
-                    items.sort((a, b) => a.name.localeCompare(b.name));
+                const coll = dbPayload[activeDbTab];
+                if (Array.isArray(coll)) {
+                    items = coll.map((entry, i) => typeof entry === 'object' && entry ? entry : { id: String(i), name: String(entry) });
+                } else {
+                    items = Object.keys(coll)
+                        .map(k => ({ id: k, name: (coll[k] && coll[k].name) || k }));
+                    if (activeDbTab !== 'animations') {
+                        items.sort((a, b) => a.name.localeCompare(b.name));
+                    }
                 }
             }
             else if (activeDbTab === 'quests') {
-                // Object keyed by quest id (like commonEvents), but the keys are
-                // string slugs rather than numeric.
                 if (!dbPayload.quests) dbPayload.quests = {};
                 items = Object.keys(dbPayload.quests)
-                    .map(k => ({ id: k, name: dbPayload.quests[k].name || k }));
+                    .map(k => ({ id: k, name: (dbPayload.quests[k] && dbPayload.quests[k].name) || k }));
             }
             else if (activeDbTab === 'actionSequences') {
                 if (!dbPayload.actionSequences) dbPayload.actionSequences = {};
                 items = Object.keys(dbPayload.actionSequences)
-                    .map(k => ({ id: k, name: dbPayload.actionSequences[k].name || k }))
+                    .map(k => ({ id: k, name: (dbPayload.actionSequences[k] && dbPayload.actionSequences[k].name) || k }))
                     .sort((a, b) => a.id.localeCompare(b.id));
             }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
 
-            items.forEach((item, idx) => {
+            let selectedItem = null;
+            (items || []).forEach((item, idx) => {
+                if (!item) return;
                 const btn = document.createElement('button');
                 btn.className = 'db-list-item';
 
-                // Format prefix like RPG Maker "0001: summoner"
                 const idxStr = String(idx + 1).padStart(4, '0');
                 btn.textContent = activeDbTab === 'system' ? item.name : `${idxStr}: ${item.name || item.id}`;
 
                 if (activeDbItemId === item.id || (activeDbItemId === '' && idx === 0)) {
                     btn.classList.add('active');
                     activeDbItemId = item.id;
-                    if (!listOnly) loadFormForItem(item);
+                    selectedItem = item;
                 }
 
                 btn.onclick = () => {
                     document.querySelectorAll('.db-list-item').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     activeDbItemId = item.id;
-                    loadFormForItem(item);
+                    try {
+                        loadFormForItem(item);
+                    } catch (e) {
+                        console.error('Error loading form for item:', item, e);
+                    }
                 };
 
                 listContainer.appendChild(btn);
             });
+
+            // Fallback selection if activeDbItemId didn't match any item in current tab
+            if (!selectedItem && items.length > 0) {
+                selectedItem = items[0];
+                activeDbItemId = selectedItem.id;
+                const firstBtn = listContainer.querySelector('.db-list-item');
+                if (firstBtn) firstBtn.classList.add('active');
+            }
+
+            if (!listOnly && selectedItem) {
+                try {
+                    loadFormForItem(selectedItem);
+                } catch (e) {
+                    console.error('Error loading form for selected item:', selectedItem, e);
+                }
+            }
 
             // Quests and Themes create entries via their own "+ New" button
             // (string-keyed / self-contained array entries), not the numeric

@@ -1068,6 +1068,163 @@ function renderer.drawScreenFlashOverlay(battleState)
     end
 end
 
+local function getActionTargetCandidates(act, slotActor, battleState, session)
+    if not act or not act.type then return {}, false end
+    local loader = require("data.loader")
+    local targeting = require("engine.targeting")
+    
+    if act.type == "attack" then
+        if act.target then
+            return { act.target }, false
+        end
+        return {}, false
+    elseif act.type == "skill" then
+        local sk = act.id and loader.getSkill(act.id)
+        local spec = sk and sk.target or "enemy"
+        local exp = targeting.expand(spec)
+        local isRandom = (exp.mode == "random")
+        if isRandom or exp.count == "all" then
+            local candidates = targeting.getCandidates(slotActor, spec, battleState, sk)
+            return candidates, isRandom
+        else
+            if act.target then
+                return { act.target }, false
+            else
+                local candidates = targeting.getCandidates(slotActor, spec, battleState, sk)
+                return candidates, false
+            end
+        end
+    elseif act.type == "item" then
+        local items = {}
+        if session and session.inventory then
+            for itemId, qty in pairs(session.inventory) do
+                if qty > 0 then table.insert(items, itemId) end
+            end
+            table.sort(items)
+        end
+        local itemId = act.itemIndex and items[act.itemIndex]
+        local item = itemId and loader.getItem(itemId)
+        local spec = item and (item.target or item.targetScope) or "ally"
+        local exp = targeting.expand(spec)
+        local isRandom = (exp.mode == "random")
+        if isRandom or exp.count == "all" then
+            local candidates = targeting.getCandidates(slotActor, spec, battleState, item)
+            return candidates, isRandom
+        else
+            if act.target then
+                return { act.target }, false
+            else
+                local candidates = targeting.getCandidates(slotActor, spec, battleState, item)
+                return candidates, false
+            end
+        end
+    end
+    return {}, false
+end
+
+function renderer.drawTargetIndicators(bv, combatState)
+    if combatState ~= "input" or not bv then return end
+    local session = renderer.session
+    if not session or not bv.battle then return end
+
+    local battleState = bv.battle
+    local collected = bv.collectedActions or {}
+    local targetsMap = {}
+
+    for slotIdx = 1, 4 do
+        local c = session.party and session.party[slotIdx]
+        if c and not c:isDead() then
+            local act = collected[slotIdx]
+            if act then
+                local candidates, isRandom = getActionTargetCandidates(act, c, battleState, session)
+                for _, trg in ipairs(candidates) do
+                    if trg then
+                        if not targetsMap[trg] then targetsMap[trg] = {} end
+                        local exists = false
+                        for _, existing in ipairs(targetsMap[trg]) do
+                            if existing.slot == slotIdx then
+                                exists = true
+                                break
+                            end
+                        end
+                        if not exists then
+                            table.insert(targetsMap[trg], { slot = slotIdx, isRandom = isRandom })
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local dist = layoutVal("targetIndicatorDistance") or 8
+    local blinkSpeed = layoutVal("targetIndicatorBlinkSpeed") or 0.25
+    local tick = math.floor(love.timer.getTime() / blinkSpeed)
+
+    for targetBattler, slotList in pairs(targetsMap) do
+        if #slotList > 0 then
+            table.sort(slotList, function(a, b) return a.slot < b.slot end)
+            
+            local targetX, targetY = nil, nil
+            local isEnemy = false
+            local enemyIdx = nil
+            for idx, enemy in ipairs(battleState.enemies or {}) do
+                if enemy == targetBattler then
+                    isEnemy = true
+                    enemyIdx = idx
+                    break
+                end
+            end
+
+            if isEnemy then
+                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
+                local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+                local nameY = layoutVal("enemyNameY")
+                local rightEdge = ex + spacing - 4
+                local totalW = (#slotList - 1) * dist + 7
+                targetX = rightEdge - totalW + (layoutVal("targetIndicatorEnemyOffsetX") or 0)
+                targetY = nameY + (layoutVal("targetIndicatorEnemyOffsetY") or 0)
+            else
+                local allyIdx = nil
+                for idx, c in ipairs(session.party or {}) do
+                    if c == targetBattler then
+                        allyIdx = idx
+                        break
+                    end
+                end
+                if allyIdx then
+                    local gridX, gridY, cols = partyGridOrigin(session)
+                    local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
+                    local colW, _ = actor_status.cellSize(session)
+                    local totalW = (#slotList - 1) * dist + 7
+                    targetX = slotX + colW - totalW - 4 + (layoutVal("targetIndicatorAllyOffsetX") or 0)
+                    targetY = slotY + 2 + (layoutVal("targetIndicatorAllyOffsetY") or 0)
+                end
+            end
+
+            if targetX and targetY then
+                if #slotList == 1 then
+                    local phase = tick % 2
+                    if phase == 0 then
+                        local info = slotList[1]
+                        local color = info.isRandom and {1, 0.3, 0.3, 1} or {1, 1, 1, 1}
+                        ui.drawString(tostring(info.slot), targetX, targetY, color)
+                    end
+                else
+                    local phase = tick % #slotList
+                    for i = 1, #slotList do
+                        if (i - 1) == phase then
+                            local info = slotList[i]
+                            local color = info.isRandom and {1, 0.3, 0.3, 1} or {1, 1, 1, 1}
+                            local offsetX = (i - 1) * dist
+                            ui.drawString(tostring(info.slot), targetX + offsetX, targetY, color)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 function renderer.drawTargetReticles(bv, combatState, selectedIndex, skillSelect, itemSelect, livingMembers, activeMemberIdx)
     if combatState ~= "input" or not bv then return end
     
@@ -1083,6 +1240,8 @@ function renderer.drawTargetReticles(bv, combatState, selectedIndex, skillSelect
             ui.drawTargetReticle(tx, ty, tw, th)
         end
     end
+
+    renderer.drawTargetIndicators(bv, combatState)
 end
 
 function renderer.drawDamagePopups()

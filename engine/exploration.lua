@@ -120,7 +120,7 @@ function exploration.injectTilesetFeatures(grid, mapData)
     return generated
 end
 
-function exploration.generateDungeon(mapData, seed)
+function exploration.generateDungeon(mapData, seed, session)
     if seed then math.randomseed(seed) end
     
     local width = mapData.width or dungeonConf("genWidth", 21)
@@ -234,6 +234,39 @@ function exploration.generateDungeon(mapData, seed)
             end
         end
     end
+
+    -- Process mapData.recruits pool to spawn a recruit event if none exists
+    if mapData.recruits and #mapData.recruits > 0 then
+        local hasRecruitEvent = false
+        for _, ev in ipairs(generatedEvents) do
+            if ev.id == "recruit" or ev.type == "recruit" then
+                hasRecruitEvent = true
+                break
+            end
+        end
+        if not hasRecruitEvent then
+            local tile = openTiles[placedCount]
+            if tile then
+                placedCount = placedCount + 1
+                local candidateActorId = mapData.recruits[math.random(#mapData.recruits)]
+                local loader = session and session.loader
+                local actorData = loader and loader.getActor(candidateActorId)
+                local spritePath = (actorData and actorData.spriteKey and ("assets/sprites/" .. actorData.spriteKey .. ".png")) or "assets/sprites/OBJ_Statue_001.png"
+                table.insert(generatedEvents, {
+                    id = "recruit_" .. candidateActorId,
+                    type = "recruit",
+                    actorId = candidateActorId,
+                    x = tile.x - 1,
+                    y = tile.y - 1,
+                    sprite = spritePath,
+                    trigger = "touch",
+                    script = {
+                        { type = "RECRUIT" }
+                    }
+                })
+            end
+        end
+    end
     
     return grid, startX, startY, generatedEvents, generatedLights
 end
@@ -303,7 +336,7 @@ function exploration.loadMap(session, mapIdx)
     else
         -- Procedurally generate floor layout and inject events
         local generatedEvents, generatedLights
-        grid, startX, startY, generatedEvents, generatedLights = exploration.generateDungeon(mapData, os.time() + mapIdx)
+        grid, startX, startY, generatedEvents, generatedLights = exploration.generateDungeon(mapData, os.time() + mapIdx, session)
         session.currentMapData.events = generatedEvents
         session.generatedLightObjects = generatedLights
         session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)

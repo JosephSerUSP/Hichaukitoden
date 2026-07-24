@@ -4,26 +4,72 @@
     let studioModalSnapshot = null;
     let studioModalDirty = false;
 
+    const THEME_CATEGORIES = [
+        {
+            title: "🖥️ Desktop & Window Frame",
+            keys: [
+                { id: "desktop-bg", label: "Desktop Workspace", desc: "Background color behind windows", default: "#008080" },
+                { id: "window-bg", label: "Window Frame / Toolbar", desc: "Main window background and dialog fill", default: "#c0c0c0" },
+                { id: "window-text", label: "Window Text Color", desc: "Standard text color across the editor", default: "#000000" },
+                { id: "window-border", label: "Window Outer Border", desc: "Outer border color for popups and windows", default: "#000000" }
+            ]
+        },
+        {
+            title: "🏷️ Title Bars & Header",
+            keys: [
+                { id: "window-header-bg-start", label: "Header Gradient (Start)", desc: "Left side of window title bar gradient", default: "#000080" },
+                { id: "window-header-bg-end", label: "Header Gradient (End)", desc: "Right side of window title bar gradient", default: "#0000a8" },
+                { id: "window-header-text", label: "Header Title Text", desc: "Text color inside window title bars", default: "#ffffff" }
+            ]
+        },
+        {
+            title: "📄 Panels, Buttons & Selection",
+            keys: [
+                { id: "content-bg", label: "Container Panel Fill", desc: "Background fill for nested panels and forms", default: "#ffffff" },
+                { id: "button-bg", label: "Button Fill", desc: "Background color of standard buttons", default: "#c0c0c0" },
+                { id: "selection-bg", label: "Selection Highlight", desc: "Background highlight for selected rows/tabs", default: "#000080" },
+                { id: "selection-text", label: "Selection Text", desc: "Text color for selected rows/tabs", default: "#ffffff" }
+            ]
+        },
+        {
+            title: "🔳 3D Bevel Highlights",
+            keys: [
+                { id: "bezel-light", label: "Bevel Light Highlight", desc: "Top/left raised edge color", default: "#ffffff" },
+                { id: "bezel-shadow", label: "Bevel Medium Shadow", desc: "Bottom/right inner shadow color", default: "#808080" },
+                { id: "bezel-dark", label: "Bevel Dark Shadow", desc: "Deep inset border shadow color", default: "#404040" }
+            ]
+        },
+        {
+            title: "💬 Tooltips & Popovers",
+            keys: [
+                { id: "tooltip-bg", label: "Tooltip Background", desc: "Background fill for info tooltips", default: "#ffffe1" },
+                { id: "tooltip-text", label: "Tooltip Text", desc: "Text color inside tooltips", default: "#000000" }
+            ]
+        }
+    ];
+
     // Apply theme to document documentElement (:root)
     function applyTheme(theme) {
         if (!theme || !theme.colors) return;
         const root = document.documentElement;
         const colors = theme.colors;
         const mappings = {
-            'window-bg': '--win-gray',
             'desktop-bg': '--desktop-teal',
+            'window-bg': '--win-gray',
+            'window-text': '--text-color',
+            'window-border': '--win-border',
             'window-header-bg-start': '--title-blue',
             'window-header-bg-end': '--title-blue-light',
-            'window-text': '--text-color',
+            'window-header-text': '--title-text',
+            'content-bg': '--cool-bg',
+            'button-bg': '--button-bg',
+            'selection-bg': '--selection-bg',
+            'selection-text': '--selection-text',
             'bezel-light': '--win-white',
             'bezel-shadow': '--win-shadow',
             'bezel-dark': '--win-dark-shadow',
-            'content-bg': '--cool-bg',
-            'selection-bg': '--selection-bg',
-            'selection-text': '--selection-text',
             'tooltip-bg': '--tooltip-bg',
-            'tooltip-text': '--tooltip-text',
-            'text-highlight': '--win-blue'
+            'tooltip-text': '--tooltip-text'
         };
         for (const [token, cssVar] of Object.entries(mappings)) {
             if (colors[token]) {
@@ -102,9 +148,10 @@
         
         const nameGroup = document.createElement('div');
         nameGroup.className = 'field-row-stacked';
-        nameGroup.style.marginBottom = '8px';
+        nameGroup.style.marginBottom = '12px';
         const nameLabel = document.createElement('label');
-        nameLabel.textContent = 'Name:';
+        nameLabel.style.fontWeight = 'bold';
+        nameLabel.textContent = 'Theme Name:';
         const nameInput = document.createElement('input');
         nameInput.className = 'win98-input';
         nameInput.value = theme.name || '';
@@ -119,64 +166,63 @@
         nameGroup.appendChild(nameInput);
         panel.appendChild(nameGroup);
 
-        const grid = document.createElement('div');
-        grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px;';
-        
         theme.colors = theme.colors || {};
-        const colorKeys = [
-            "desktop-bg", "window-bg", "window-text", "window-border",
-            "window-header-bg-start", "window-header-bg-end", "window-header-text",
-            "button-bg", "terminal-bg", "terminal-text", "tile-bg", "tile-fog-bg",
-            "tile-fog-text", "tile-player-bg", "text-danger", "text-highlight",
-            "text-success", "text-mystic", "text-warning", "text-special",
-            "text-info", "selection-bg", "selection-text", "content-bg",
-            "gauge-hp", "gauge-bg", "text-functional", "bezel-light",
-            "bezel-shadow", "bezel-dark", "tooltip-bg", "tooltip-text"
-        ];
         
-        colorKeys.forEach(key => {
-            if (theme.colors[key] === undefined) {
-                theme.colors[key] = '#000000';
-            }
-            const row = document.createElement('div');
-            row.style.cssText = 'display: flex; align-items: center; gap: 4px;';
-            const lbl = document.createElement('span');
-            lbl.style.cssText = 'flex: 1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-            lbl.textContent = key;
-            lbl.title = key;
+        THEME_CATEGORIES.forEach(cat => {
+            const catHeader = document.createElement('div');
+            catHeader.style.cssText = 'font-weight: bold; font-size: 11px; margin-top: 10px; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid var(--win-shadow); color: var(--text-color);';
+            catHeader.textContent = cat.title;
+            panel.appendChild(catHeader);
             
-            const isHex = /^#[0-9a-fA-F]{6}$/.test(theme.colors[key] || '');
-            const pick = document.createElement('input');
-            pick.type = 'color';
-            pick.style.cssText = 'width: 28px; height: 20px; padding: 0; border: 1px solid var(--win-shadow);';
-            pick.value = isHex ? theme.colors[key] : '#000000';
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-bottom: 8px;';
             
-            const hex = document.createElement('input');
-            hex.className = 'win98-input';
-            hex.style.width = '72px';
-            hex.value = theme.colors[key] || '';
-            
-            pick.oninput = () => {
-                theme.colors[key] = pick.value;
-                hex.value = pick.value;
-                applyTheme(theme);
-                studioModalDirty = true;
-            };
-            hex.oninput = () => {
-                theme.colors[key] = hex.value;
-                if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) {
-                    pick.value = hex.value;
-                    applyTheme(theme);
+            cat.keys.forEach(field => {
+                const key = field.id;
+                if (theme.colors[key] === undefined) {
+                    theme.colors[key] = field.default || '#000000';
                 }
-                studioModalDirty = true;
-            };
-            
-            row.appendChild(lbl);
-            row.appendChild(pick);
-            row.appendChild(hex);
-            grid.appendChild(row);
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+                
+                const lbl = document.createElement('span');
+                lbl.style.cssText = 'flex: 1; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help;';
+                lbl.textContent = field.label;
+                lbl.title = `${field.label} (${key}): ${field.desc}`;
+                
+                const isHex = /^#[0-9a-fA-F]{6}$/.test(theme.colors[key] || '');
+                const pick = document.createElement('input');
+                pick.type = 'color';
+                pick.style.cssText = 'width: 28px; height: 20px; padding: 0; border: 1px solid var(--win-shadow); cursor: pointer;';
+                pick.value = isHex ? theme.colors[key] : '#000000';
+                
+                const hex = document.createElement('input');
+                hex.className = 'win98-input';
+                hex.style.width = '72px';
+                hex.value = theme.colors[key] || '';
+                
+                pick.oninput = () => {
+                    theme.colors[key] = pick.value;
+                    hex.value = pick.value;
+                    applyTheme(theme);
+                    studioModalDirty = true;
+                };
+                hex.oninput = () => {
+                    theme.colors[key] = hex.value;
+                    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) {
+                        pick.value = hex.value;
+                        applyTheme(theme);
+                    }
+                    studioModalDirty = true;
+                };
+                
+                row.appendChild(lbl);
+                row.appendChild(pick);
+                row.appendChild(hex);
+                grid.appendChild(row);
+            });
+            panel.appendChild(grid);
         });
-        panel.appendChild(grid);
     }
 
     window.createStudioTheme = function() {

@@ -1556,7 +1556,10 @@
             });
         }
 
+        let activeActorSubTab = 'stats';
+
         function loadFormForItem(item) {
+            if (!item) return;
             const formPanel = document.getElementById('db-form-panel');
             // The animation editor owns timers/listeners; tear them down
             // whenever the form is rebuilt (including leaving the tab).
@@ -1567,14 +1570,16 @@
             formPanel.innerHTML = '';
             formPanel.style.display = 'block'; // Reset layout
 
-            const header = document.createElement('div');
-            header.style.fontWeight = 'bold';
-            header.style.fontSize = '12px';
-            header.style.marginBottom = '12px';
-            header.style.borderBottom = '1px solid var(--win-shadow)';
-            header.style.paddingBottom = '4px';
-            header.textContent = `General Settings - ${item.name || item.id}`;
-            formPanel.appendChild(header);
+            if (activeDbTab !== 'actors') {
+                const header = document.createElement('div');
+                header.style.fontWeight = 'bold';
+                header.style.fontSize = '12px';
+                header.style.marginBottom = '12px';
+                header.style.borderBottom = '1px solid var(--win-shadow)';
+                header.style.paddingBottom = '4px';
+                header.textContent = `General Settings - ${item.name || item.id}`;
+                formPanel.appendChild(header);
+            }
 
             if (activeDbTab === 'commonEvents') {
                 const eventData = dbPayload.commonEvents[item.id];
@@ -1660,142 +1665,483 @@
                 item.baseParams = item.baseParams || {};
                 const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : (item[key] != null ? item[key] : fallback);
 
-                // Top row: Identity | Level & Rewards | Capacity, three tight groupboxes
-                const topRow = document.createElement('div');
-                topRow.className = 'groupbox-grid';
-                topRow.style.gridTemplateColumns = '1.3fr 1fr 1fr';
-                formPanel.appendChild(topRow);
-
-                const idBox = makeGroupbox(topRow, 'Identity');
-                createFormField(idBox, 'Name', item.name, val => { item.name = val; initDatabaseEditor(true); }, 'text', false, null, false);
-                const roleField = document.createElement('div');
-                roleField.className = 'form-group field-inline';
-                const roleLbl = document.createElement('label');
-                roleLbl.textContent = 'Role';
-                roleField.appendChild(roleLbl);
-                roleField.appendChild(makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => { item.role = v; }, '1'));
-                idBox.appendChild(roleField);
-                createFormField(idBox, 'Biography', item.flavor || '', val => { item.flavor = val; }, 'text', false, null, false);
-
-                const lvlBox = makeGroupbox(topRow, 'Level & Rewards');
-                createFormField(lvlBox, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; renderActorStatCurves(); }, 'number', false, null, false);
-                createFormField(lvlBox, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; renderActorStatCurves(); }, 'number', false, null, false);
-                createFormField(lvlBox, 'Exp Growth', item.expGrowth || 0, val => { item.expGrowth = parseInt(val) || 0; }, 'number', false, null, false);
-                createFormField(lvlBox, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; }, 'number', false, null, false);
-
-                const capBox = makeGroupbox(topRow, 'Capacity');
-                createFormField(capBox, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; }, 'number', false, null, false);
-                createFormField(capBox, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; }, 'number', false, null, false);
-                createFormField(capBox, 'MP Drain', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; renderActorStatCurves(); }, 'number', false, null, false);
-
-                // Base Stats groupbox: editable base value + growth-curve sparkline per stat
-                const statsBox = makeGroupbox(formPanel, 'Base Stats & Growth Curves (Lv 1-' + (item.maxLevel || 99) + ')');
-                const statsGrid = document.createElement('div');
-                statsGrid.className = 'groupbox-grid';
-                statsGrid.style.gridTemplateColumns = 'repeat(6, 1fr)';
-                statsBox.appendChild(statsGrid);
-
-                const growthCfg = (dbPayload.system && dbPayload.system.growth) || {};
-                const exponent = growthCfg.growthExponent != null ? growthCfg.growthExponent : 1.2;
-                const rates = growthCfg.growthRates || {};
-                const STAT_DEFS = [
-                    ['maxHp', 'Max HP'], ['atk', 'ATK'], ['def', 'DEF'],
-                    ['mat', 'MAT'], ['mdf', 'MDF'], ['mpd', 'MP Drain']
-                ];
-                function renderActorStatCurves() {
-                    statsGrid.innerHTML = '';
-                    STAT_DEFS.forEach(([key, label]) => {
-                        const cell = document.createElement('div');
-                        const input = document.createElement('input');
-                        input.type = 'number';
-                        input.className = 'form-control win98-input';
-                        input.style.cssText = 'width: 100%; margin-bottom: 3px;';
-                        input.value = base(key, 10);
-                        input.oninput = () => {
-                            item.baseParams[key] = parseFloat(input.value) || 0;
-                            setDirty(true);
-                            renderActorStatCurves();
-                        };
-                        cell.appendChild(input);
-                        statsGrid.appendChild(cell);
-                        const rate = rates[key] != null ? rates[key] : (key === 'maxHp' ? 0.15 : 0);
-                        buildStatCurve(cell, label, base(key, 10), rate,
-                            item.growthMultiplier == null ? 1 : item.growthMultiplier, exponent, item.maxLevel || 99);
-                    });
-                }
-                renderActorStatCurves();
-
                 ensurePortraitKeys();
-                // Sprite fields in a horizontal row
-                const spriteBox = makeGroupbox(formPanel, 'Sprites');
-                const spriteRow = document.createElement('div');
-                spriteRow.className = 'form-row';
-                spriteBox.appendChild(spriteRow);
-                window.createSpriteField(spriteRow, 'Sprite Key', item.spriteKey || '', (path) => {
+
+                // Helper for recruitment editor
+                function buildRecruitmentEditor(parentBox, item) {
+                    const group = makeGroupbox(parentBox, 'Dungeon Recruitment Event Config');
+
+                    const bodyContainer = document.createElement('div');
+                    bodyContainer.style.cssText = 'margin-top: 4px; display: flex; flex-direction: column; gap: 6px;';
+                    group.appendChild(bodyContainer);
+
+                    function renderRecruitmentBody() {
+                        bodyContainer.innerHTML = '';
+                        if (!item.isRecruitable) {
+                            const note = document.createElement('div');
+                            note.style.cssText = 'font-size: 11px; color: var(--win-shadow); font-style: italic; padding: 4px 0;';
+                            note.textContent = 'Creature is not recruitable. Enable "Recruitable" in the top header bar above to configure dungeon recruitment events.';
+                            bodyContainer.appendChild(note);
+                            return;
+                        }
+
+                        item.recruitEvent = item.recruitEvent || { type: 'free' };
+                        let rec = item.recruitEvent;
+                        if (Array.isArray(rec)) {
+                            item.recruitEvent = { commands: rec };
+                            rec = item.recruitEvent;
+                        } else if (typeof rec === 'number' || (typeof rec === 'string' && !isNaN(rec) && rec !== '')) {
+                            item.recruitEvent = { scriptId: parseInt(rec) };
+                            rec = item.recruitEvent;
+                        }
+
+                        let currentMode = 'free';
+                        if (rec.commands || rec.script) currentMode = 'script';
+                        else if (rec.scriptId !== undefined) currentMode = 'common';
+                        else if (rec.type) currentMode = rec.type;
+
+                        const typeRow = document.createElement('div');
+                        typeRow.className = 'form-row';
+                        typeRow.style.cssText = 'display:flex; align-items:center; gap:8px;';
+                        
+                        const label = document.createElement('label');
+                        label.textContent = 'Recruitment Event Type:';
+                        label.style.cssText = 'font-size: 10px; font-weight: bold; min-width: 140px;';
+                        typeRow.appendChild(label);
+
+                        const select = document.createElement('select');
+                        select.className = 'win98-select';
+                        select.style.flex = '1';
+
+                        const modes = [
+                            { id: 'heal', label: 'Healing Offer (Restores HP/MP before joining)' },
+                            { id: 'gold', label: 'Gold Demand (Requires Gold payment)' },
+                            { id: 'aid', label: 'Item Aid Required (Requires Potion/Item)' },
+                            { id: 'hostile', label: 'Battle Challenge (Battles first, surrenders on victory)' },
+                            { id: 'free', label: 'Free Join (Joins unconditionally)' },
+                            { id: 'common', label: 'Common Event Reference (Uses scriptId)' },
+                            { id: 'script', label: 'Custom Command Script (Custom sequence)' }
+                        ];
+
+                        modes.forEach(m => {
+                            const opt = document.createElement('option');
+                            opt.value = m.id;
+                            opt.textContent = m.label;
+                            if (m.id === currentMode) opt.selected = true;
+                            select.appendChild(opt);
+                        });
+
+                        select.onchange = (e) => {
+                            const newMode = e.target.value;
+                            if (newMode === 'script') {
+                                item.recruitEvent = { commands: rec.commands || [{ type: 'TEXT', text: 'A wild ' + (item.name || 'creature') + ' appears!' }, { type: 'RECRUIT_ACTOR', actorId: item.id }, { type: 'ERASE_EVENT' }] };
+                            } else if (newMode === 'common') {
+                                item.recruitEvent = { scriptId: rec.scriptId || 1 };
+                            } else {
+                                item.recruitEvent = { type: newMode, greeting: rec.greeting, acceptText: rec.acceptText, declineText: rec.declineText };
+                                if (newMode === 'gold') item.recruitEvent.goldCost = rec.goldCost || (item.gold || 20);
+                                if (newMode === 'aid') item.recruitEvent.itemRequired = rec.itemRequired || 1;
+                            }
+                            setDirty(true);
+                            renderRecruitmentBody();
+                        };
+                        typeRow.appendChild(select);
+                        bodyContainer.appendChild(typeRow);
+
+                        rec = item.recruitEvent;
+
+                        if (currentMode === 'gold') {
+                            const row = document.createElement('div');
+                            row.className = 'form-row';
+                            createFormField(row, 'Gold Cost Demanded', rec.goldCost || 20, v => {
+                                rec.goldCost = parseInt(v) || 0;
+                                setDirty(true);
+                            }, 'number');
+                            bodyContainer.appendChild(row);
+                        } else if (currentMode === 'aid') {
+                            const row = document.createElement('div');
+                            row.className = 'form-row';
+                            const itemsList = dbPayload.items || [];
+                            const itemSelectRow = document.createElement('div');
+                            itemSelectRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;';
+                            const lbl = document.createElement('label');
+                            lbl.textContent = 'Required Item:';
+                            lbl.style.cssText = 'font-size:10px;min-width:90px;';
+                            const itemSel = document.createElement('select');
+                            itemSel.className = 'win98-select';
+                            itemSel.style.flex = '1';
+                            itemsList.forEach(it => {
+                                const opt = document.createElement('option');
+                                opt.value = it.id;
+                                opt.textContent = `${it.name || 'Item'} (ID ${it.id})`;
+                                if (it.id === (rec.itemRequired || 1)) opt.selected = true;
+                                itemSel.appendChild(opt);
+                            });
+                            itemSel.onchange = (e) => {
+                                rec.itemRequired = parseInt(e.target.value);
+                                setDirty(true);
+                            };
+                            itemSelectRow.appendChild(lbl);
+                            itemSelectRow.appendChild(itemSel);
+                            row.appendChild(itemSelectRow);
+                            bodyContainer.appendChild(row);
+                        } else if (currentMode === 'common') {
+                            const row = document.createElement('div');
+                            row.className = 'form-row';
+                            const commonEvents = dbPayload.commonEvents || {};
+                            const ceRow = document.createElement('div');
+                            ceRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;';
+                            const lbl = document.createElement('label');
+                            lbl.textContent = 'Common Event:';
+                            lbl.style.cssText = 'font-size:10px;min-width:90px;';
+                            const ceSel = document.createElement('select');
+                            ceSel.className = 'win98-select';
+                            ceSel.style.flex = '1';
+                            Object.keys(commonEvents).forEach(cid => {
+                                const ce = commonEvents[cid];
+                                const opt = document.createElement('option');
+                                opt.value = cid;
+                                opt.textContent = `${ce.name || 'Common Event'} (ID ${cid})`;
+                                if (parseInt(cid) === (rec.scriptId || 1)) opt.selected = true;
+                                ceSel.appendChild(opt);
+                            });
+                            ceSel.onchange = (e) => {
+                                rec.scriptId = parseInt(e.target.value);
+                                setDirty(true);
+                            };
+                            ceRow.appendChild(lbl);
+                            ceRow.appendChild(ceSel);
+                            row.appendChild(ceRow);
+                            bodyContainer.appendChild(row);
+                        }
+
+                        if (currentMode !== 'script' && currentMode !== 'common') {
+                            const textRow = document.createElement('div');
+                            textRow.style.cssText = 'display:flex; flex-direction:column; gap:4px; margin-top:4px;';
+                            
+                            createFormField(textRow, 'Greeting Text Override (optional)', rec.greeting || '', v => {
+                                rec.greeting = v;
+                                setDirty(true);
+                            }, 'text');
+                            createFormField(textRow, 'Accept Text Override (optional)', rec.acceptText || '', v => {
+                                rec.acceptText = v;
+                                setDirty(true);
+                            }, 'text');
+                            createFormField(textRow, 'Decline Text Override (optional)', rec.declineText || '', v => {
+                                rec.declineText = v;
+                                setDirty(true);
+                            }, 'text');
+
+                            bodyContainer.appendChild(textRow);
+                        } else if (currentMode === 'script') {
+                            const scriptBox = document.createElement('div');
+                            scriptBox.style.cssText = 'margin-top:6px; border:1px solid var(--win-shadow); padding:4px; background:#fff;';
+                            bodyContainer.appendChild(scriptBox);
+                            rec.commands = rec.commands || rec.script || [];
+
+                            const rerenderScript = () => {
+                                setDirty(true);
+                                renderCommandList(scriptBox, rec.commands, rerenderScript, false, 0, 'map');
+                            };
+                            renderCommandList(scriptBox, rec.commands, rerenderScript, false, 0, 'map');
+                        }
+                    }
+
+                    renderRecruitmentBody();
+                }
+
+                // --- PERSISTENT ULTRA-COMPACT HERO HEADER ---
+                const heroHeader = document.createElement('div');
+                heroHeader.style.cssText = `
+                    background: var(--win-gray, #c0c0c0);
+                    border: 1px solid var(--win-shadow, #808080);
+                    padding: 4px 8px;
+                    margin-bottom: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    font-size: 11px;
+                `;
+
+                // ID Badge
+                const idBadge = document.createElement('div');
+                idBadge.style.cssText = 'font-weight: bold; font-family: monospace; font-size: 11px; color: var(--win-highlight, #000080); background: #ffffff; padding: 2px 5px; border: 1px solid var(--win-shadow, #808080); min-width: 50px; text-align: center;';
+                idBadge.textContent = `#${String(item.id != null ? item.id : '').padStart(4, '0')}`;
+                heroHeader.appendChild(idBadge);
+
+                // Name Field (inline compact)
+                const nameWrap = document.createElement('div');
+                nameWrap.style.cssText = 'display: flex; align-items: center; gap: 4px; flex: 1.2; min-width: 130px;';
+                const nameLbl = document.createElement('label');
+                nameLbl.textContent = 'Name:';
+                nameLbl.style.fontWeight = 'bold';
+                nameLbl.style.fontSize = '11px';
+                const nameInp = document.createElement('input');
+                nameInp.type = 'text';
+                nameInp.className = 'win98-input';
+                nameInp.style.cssText = 'flex: 1; height: 20px; font-size: 11px; padding: 1px 4px;';
+                nameInp.value = item.name || '';
+                nameInp.oninput = () => {
+                    item.name = nameInp.value;
+                    setDirty(true);
+                    initDatabaseEditor(true);
+                };
+                nameWrap.appendChild(nameLbl);
+                nameWrap.appendChild(nameInp);
+                heroHeader.appendChild(nameWrap);
+
+                // Role Dropdown (inline compact)
+                const roleWrap = document.createElement('div');
+                roleWrap.style.cssText = 'display: flex; align-items: center; gap: 4px; flex: 1; min-width: 110px;';
+                const roleLbl = document.createElement('label');
+                roleLbl.textContent = 'Role:';
+                roleLbl.style.fontWeight = 'bold';
+                roleLbl.style.fontSize = '11px';
+                const roleSel = makeSelect(Object.keys(dbPayload.roles || { Spirit: 1 }), item.role || 'Spirit', v => {
+                    item.role = v;
+                    setDirty(true);
+                }, '1');
+                roleSel.style.cssText = 'flex: 1; height: 20px; font-size: 11px;';
+                roleWrap.appendChild(roleLbl);
+                roleWrap.appendChild(roleSel);
+                heroHeader.appendChild(roleWrap);
+
+                // Tier Input (inline compact)
+                const tierWrap = document.createElement('div');
+                tierWrap.style.cssText = 'display: flex; align-items: center; gap: 4px; width: 75px;';
+                const tierLbl = document.createElement('label');
+                tierLbl.textContent = 'Tier:';
+                tierLbl.style.fontWeight = 'bold';
+                tierLbl.style.fontSize = '11px';
+                const tierInp = document.createElement('input');
+                tierInp.type = 'number';
+                tierInp.className = 'win98-input';
+                tierInp.style.cssText = 'width: 35px; height: 20px; font-size: 11px; padding: 1px 2px;';
+                tierInp.value = item.tier != null ? item.tier : 1;
+                tierInp.oninput = () => {
+                    item.tier = parseFloat(tierInp.value) || 1;
+                    setDirty(true);
+                };
+                tierWrap.appendChild(tierLbl);
+                tierWrap.appendChild(tierInp);
+                heroHeader.appendChild(tierWrap);
+
+                // Compact Sprite Pickers (Inline)
+                const spritesWrap = document.createElement('div');
+                spritesWrap.style.cssText = 'display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--win-shadow); padding-left: 6px;';
+                window.createSpriteField(spritesWrap, 'Sprite', item.spriteKey || '', (path) => {
                     item.spriteKey = path;
                     setDirty(true);
                 }, false, 'portraits', true);
-                window.createSpriteField(spriteRow, 'Small Battler', item.smallBattler || '', (path) => {
+                window.createSpriteField(spritesWrap, 'Battler', item.smallBattler || '', (path) => {
                     item.smallBattler = path;
                     setDirty(true);
                 }, false, 'smallBattlers', true, true);
+                heroHeader.appendChild(spritesWrap);
 
-                const flagsBox = makeGroupbox(formPanel, 'Flags');
-                createCheckboxField(flagsBox, 'In starting-party pool (initialParty)', item.initialParty, v => { item.initialParty = v; });
-                createCheckboxField(flagsBox, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; });
-                createCheckboxField(flagsBox, 'Recruitable in dungeons (isRecruitable)', item.isRecruitable, v => { item.isRecruitable = v; });
-                const flagsFieldsRow = document.createElement('div');
-                flagsFieldsRow.className = 'form-row';
-                flagsBox.appendChild(flagsFieldsRow);
-                createFormField(flagsFieldsRow, 'Tier', item.tier, v => { item.tier = parseFloat(v); }, 'number');
-                createFormField(flagsFieldsRow, 'Discipline (Item Creation)', item.discipline, v => { item.discipline = v; }, 'text');
+                // Primary Quick Flags (Recruitable & Initial Party) - Vertical Stack
+                const flagsWrap = document.createElement('div');
+                flagsWrap.style.cssText = 'display: flex; flex-direction: column; justify-content: center; gap: 0px; border-left: 1px solid var(--win-shadow); padding-left: 6px;';
+                
+                const recRow = document.createElement('div');
+                recRow.style.cssText = 'display: flex; align-items: center; gap: 4px; line-height: 1; margin: 1px 0;';
+                const recChk = document.createElement('input');
+                recChk.type = 'checkbox';
+                recChk.checked = !!item.isRecruitable;
+                recChk.onchange = () => {
+                    item.isRecruitable = recChk.checked;
+                    if (recChk.checked && !item.recruitEvent) item.recruitEvent = { type: 'free' };
+                    setDirty(true);
+                    if (activeActorSubTab === 'recruitment') renderSubPageContent();
+                };
+                const recLbl = document.createElement('label');
+                recLbl.style.cssText = 'font-size: 10px; cursor: pointer; user-select: none;';
+                recLbl.textContent = 'Recruitable';
+                recLbl.onclick = () => { recChk.click(); };
+                recRow.appendChild(recChk);
+                recRow.appendChild(recLbl);
+                flagsWrap.appendChild(recRow);
 
-                // Three-column grid: Skills, Passives, Traits
-                const threeCol = document.createElement('div');
-                threeCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
-                const skillsCol = document.createElement('div');
-                const passivesCol = document.createElement('div');
-                const traitsCol = document.createElement('div');
-                threeCol.appendChild(skillsCol);
-                threeCol.appendChild(passivesCol);
-                threeCol.appendChild(traitsCol);
-                formPanel.appendChild(threeCol);
+                const initRow = document.createElement('div');
+                initRow.style.cssText = 'display: flex; align-items: center; gap: 4px; line-height: 1; margin: 1px 0;';
+                const initChk = document.createElement('input');
+                initChk.type = 'checkbox';
+                initChk.checked = !!item.initialParty;
+                initChk.onchange = () => {
+                    item.initialParty = initChk.checked;
+                    setDirty(true);
+                };
+                const initLbl = document.createElement('label');
+                initLbl.style.cssText = 'font-size: 10px; cursor: pointer; user-select: none;';
+                initLbl.textContent = 'Initial Party';
+                initLbl.onclick = () => { initChk.click(); };
+                initRow.appendChild(initChk);
+                initRow.appendChild(initLbl);
+                flagsWrap.appendChild(initRow);
 
-                buildIdListEditor(skillsCol, 'Skills',
-                    Object.keys(dbPayload.skills || {}),
-                    id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id,
-                    () => item.skills, arr => { item.skills = arr; }, '+ Add Skill');
-                buildIdListEditor(passivesCol, 'Passives',
-                    Object.keys(dbPayload.passives || {}),
-                    id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
-                    () => item.passives, arr => { item.passives = arr; }, '+ Add Passive');
-                buildTraitsEditor(traitsCol, item, 'Innate Traits');
+                heroHeader.appendChild(flagsWrap);
 
-                // Three-column grid: Elements, Item Drops, Evolutions
-                const threeColBottom = document.createElement('div');
-                threeColBottom.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
-                const elementsCol = document.createElement('div');
-                const dropsCol = document.createElement('div');
-                const evolutionsCol = document.createElement('div');
-                threeColBottom.appendChild(elementsCol);
-                threeColBottom.appendChild(dropsCol);
-                threeColBottom.appendChild(evolutionsCol);
-                formPanel.appendChild(threeColBottom);
+                formPanel.appendChild(heroHeader);
 
-                buildElementSlotsEditor(elementsCol, item);
-                buildDropsEditor(dropsCol, item);
-                buildEvolutionsEditor(evolutionsCol, item);
+                // --- TOP SUB-PAGE TAB STRIP ---
+                const subTabStrip = document.createElement('div');
+                subTabStrip.style.cssText = 'display: flex; gap: 2px; border-bottom: 2px solid var(--win-shadow); margin-bottom: 8px; background: rgba(0,0,0,0.04); padding: 2px 2px 0 2px;';
 
-                // Sacrifice rewards row (full width below the three columns)
-                const sacrificeRow = document.createElement('div');
-                formPanel.appendChild(sacrificeRow);
-                buildSacrificeRewardsEditor(sacrificeRow, item);
+                const subTabs = [
+                    { id: 'stats', label: '📊 General & Stats' },
+                    { id: 'combat', label: '⚔️ Combat & Abilities' },
+                    { id: 'recruitment', label: '📜 Dungeon & Recruitment' },
+                    { id: 'ecosystem', label: '🌀 Fusion & Ecosystem' }
+                ];
 
-                // Custom names row
-                const namesRow = document.createElement('div');
-                formPanel.appendChild(namesRow);
-                item.names = item.names || [];
-                buildStringListEditor(namesRow, 'Possible Custom Names (Allies)', item.names, 'e.g. Sparky');
+                const tabButtons = {};
+                subTabs.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.className = 'db-tab-btn' + (activeActorSubTab === t.id ? ' active' : '');
+                    btn.textContent = t.label;
+                    btn.style.cssText = 'padding: 4px 10px; font-size: 11px; cursor: pointer;';
+                    btn.onclick = () => {
+                        activeActorSubTab = t.id;
+                        Object.keys(tabButtons).forEach(k => tabButtons[k].classList.remove('active'));
+                        btn.classList.add('active');
+                        renderSubPageContent();
+                    };
+                    tabButtons[t.id] = btn;
+                    subTabStrip.appendChild(btn);
+                });
+                formPanel.appendChild(subTabStrip);
+
+                // Container for active sub-page content
+                const subPageContainer = document.createElement('div');
+                subPageContainer.className = 'actor-subpage-container';
+                subPageContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+                formPanel.appendChild(subPageContainer);
+
+                function renderSubPageContent() {
+                    subPageContainer.innerHTML = '';
+
+                    if (activeActorSubTab === 'stats') {
+                        // General info + Progression + Stats
+                        const topRow = document.createElement('div');
+                        topRow.className = 'groupbox-grid';
+                        topRow.style.gridTemplateColumns = '1.3fr 1fr 1fr';
+                        subPageContainer.appendChild(topRow);
+
+                        const bioBox = makeGroupbox(topRow, 'Identity & Lore');
+                        createFormField(bioBox, 'Biography / Flavor Text', item.flavor || '', val => { item.flavor = val; setDirty(true); }, 'text', false, null, false);
+                        createCheckboxField(bioBox, 'Unlocked by Default', item.unlocked, v => { item.unlocked = v; setDirty(true); });
+
+                        const lvlBox = makeGroupbox(topRow, 'Level & Rewards');
+                        createFormField(lvlBox, 'Base Level', item.level || 1, val => { item.level = parseInt(val) || 1; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
+                        createFormField(lvlBox, 'Growth Multiplier', item.growthMultiplier == null ? 1 : item.growthMultiplier, val => { item.growthMultiplier = parseFloat(val) || 1; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
+                        createFormField(lvlBox, 'Exp Growth', item.expGrowth || 0, val => { item.expGrowth = parseInt(val) || 0; setDirty(true); }, 'number', false, null, false);
+                        createFormField(lvlBox, 'Gold Reward', item.gold || 0, val => { item.gold = parseInt(val) || 0; setDirty(true); }, 'number', false, null, false);
+
+                        const capBox = makeGroupbox(topRow, 'Capacity Limits');
+                        createFormField(capBox, 'Max Actions (mxa)', base('mxa', 4), val => { item.baseParams.mxa = parseFloat(val) || 0; setDirty(true); }, 'number', false, null, false);
+                        createFormField(capBox, 'Max Passives (mxp)', base('mxp', 2), val => { item.baseParams.mxp = parseFloat(val) || 0; setDirty(true); }, 'number', false, null, false);
+                        createFormField(capBox, 'MP Drain (mpd)', base('mpd', 2), val => { item.baseParams.mpd = parseFloat(val) || 2; renderActorStatCurves(); setDirty(true); }, 'number', false, null, false);
+
+                        // Base Stats groupbox: editable base value + growth-curve sparkline per stat
+                        const statsBox = makeGroupbox(subPageContainer, 'Base Stats & Growth Curves (Lv 1-' + (item.maxLevel || 99) + ')');
+                        const statsGrid = document.createElement('div');
+                        statsGrid.className = 'groupbox-grid';
+                        statsGrid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+                        statsBox.appendChild(statsGrid);
+
+                        const growthCfg = (dbPayload.system && dbPayload.system.growth) || {};
+                        const exponent = growthCfg.growthExponent != null ? growthCfg.growthExponent : 1.2;
+                        const rates = growthCfg.growthRates || {};
+                        const STAT_DEFS = [
+                            ['maxHp', 'Max HP'], ['atk', 'ATK'], ['def', 'DEF'],
+                            ['mat', 'MAT'], ['mdf', 'MDF'], ['mpd', 'MP Drain']
+                        ];
+                        function renderActorStatCurves() {
+                            statsGrid.innerHTML = '';
+                            STAT_DEFS.forEach(([key, label]) => {
+                                const cell = document.createElement('div');
+                                const input = document.createElement('input');
+                                input.type = 'number';
+                                input.className = 'form-control win98-input';
+                                input.style.cssText = 'width: 100%; margin-bottom: 3px;';
+                                input.value = base(key, 10);
+                                input.oninput = () => {
+                                    item.baseParams[key] = parseFloat(input.value) || 0;
+                                    setDirty(true);
+                                    renderActorStatCurves();
+                                };
+                                cell.appendChild(input);
+                                statsGrid.appendChild(cell);
+                                const rate = rates[key] != null ? rates[key] : (key === 'maxHp' ? 0.15 : 0);
+                                buildStatCurve(cell, label, base(key, 10), rate,
+                                    item.growthMultiplier == null ? 1 : item.growthMultiplier, exponent, item.maxLevel || 99);
+                            });
+                        }
+                        renderActorStatCurves();
+
+                    } else if (activeActorSubTab === 'combat') {
+                        // Three-column grid: Skills, Passives, Traits
+                        const threeCol = document.createElement('div');
+                        threeCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';
+                        const skillsCol = document.createElement('div');
+                        const passivesCol = document.createElement('div');
+                        const traitsCol = document.createElement('div');
+                        threeCol.appendChild(skillsCol);
+                        threeCol.appendChild(passivesCol);
+                        threeCol.appendChild(traitsCol);
+                        subPageContainer.appendChild(threeCol);
+
+                        buildIdListEditor(skillsCol, 'Skills',
+                            Object.keys(dbPayload.skills || {}),
+                            id => (dbPayload.skills[id] && dbPayload.skills[id].name) || id,
+                            () => item.skills, arr => { item.skills = arr; setDirty(true); }, '+ Add Skill');
+                        buildIdListEditor(passivesCol, 'Passives',
+                            Object.keys(dbPayload.passives || {}),
+                            id => (dbPayload.passives[id] && dbPayload.passives[id].name) || id,
+                            () => item.passives, arr => { item.passives = arr; setDirty(true); }, '+ Add Passive');
+                        buildTraitsEditor(traitsCol, item, 'Innate Traits');
+
+                        // Elements section
+                        const elemBox = document.createElement('div');
+                        subPageContainer.appendChild(elemBox);
+                        buildElementSlotsEditor(elemBox, item);
+
+                    } else if (activeActorSubTab === 'recruitment') {
+                        // Dungeon Recruitment Event Config
+                        buildRecruitmentEditor(subPageContainer, item);
+
+                    } else if (activeActorSubTab === 'ecosystem') {
+                        // Discipline row
+                        const discBox = makeGroupbox(subPageContainer, 'Crafting & Discipline');
+                        createFormField(discBox, 'Discipline (Item Creation)', item.discipline || '', v => { item.discipline = v; setDirty(true); }, 'text');
+
+                        // Two-column grid: Item Drops & Evolutions
+                        const gridTwo = document.createElement('div');
+                        gridTwo.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px;';
+                        const dropsCol = document.createElement('div');
+                        const evolutionsCol = document.createElement('div');
+                        gridTwo.appendChild(dropsCol);
+                        gridTwo.appendChild(evolutionsCol);
+                        subPageContainer.appendChild(gridTwo);
+
+                        buildDropsEditor(dropsCol, item);
+                        buildEvolutionsEditor(evolutionsCol, item);
+
+                        // Sacrifice rewards row
+                        const sacrificeRow = document.createElement('div');
+                        subPageContainer.appendChild(sacrificeRow);
+                        buildSacrificeRewardsEditor(sacrificeRow, item);
+
+                        // Custom names row
+                        const namesRow = document.createElement('div');
+                        subPageContainer.appendChild(namesRow);
+                        item.names = item.names || [];
+                        buildStringListEditor(namesRow, 'Possible Custom Names (Allies)', item.names, 'e.g. Sparky');
+                    }
+                }
+
+                renderSubPageContent();
 
             } else if (ENTITY_FORM_SCHEMAS[activeDbTab]) {
                 if (!buildEntityForm(formPanel, item, ENTITY_FORM_SCHEMAS[activeDbTab])) return;

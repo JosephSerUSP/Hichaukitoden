@@ -192,6 +192,36 @@ function GameSession:initializeStartingParty()
     end
 end
 
+function GameSession:recruitActor(actorId, level)
+    local actorData = self.loader.getActor(actorId)
+    if not actorData then
+        return nil, "Actor not found"
+    end
+    level = level or actorData.level or 1
+    local battler = Battler.new(actorData, level)
+    battler.name = randomAllyName(actorData)
+    battler.hp = battler:getMaxHp(self)
+
+    -- Check active party slots (1-4)
+    for i = 1, 4 do
+        if not self.party[i] then
+            battler.row = (i <= 2) and "front" or "back"
+            self.party[i] = battler
+            return battler, "party"
+        end
+    end
+
+    -- Check reserve roster (slots 1-8)
+    for i = 1, 8 do
+        if not self.reserve[i] then
+            self.reserve[i] = battler
+            return battler, "reserve"
+        end
+    end
+
+    return nil, "Full"
+end
+
 function GameSession:addItem(itemId, amount)
     amount = amount or 1
     self.inventory[itemId] = (self.inventory[itemId] or 0) + amount

@@ -1688,6 +1688,12 @@
     "partyGridHpBarWidth": 52,
     "partyGridHpBarHeight": 3,
     "partyGridEmptyYOffset": 8,
+    "targetIndicatorDistance": 8,
+    "targetIndicatorBlinkSpeed": 0.25,
+    "targetIndicatorEnemyOffsetX": 0,
+    "targetIndicatorEnemyOffsetY": 0,
+    "targetIndicatorAllyOffsetX": 0,
+    "targetIndicatorAllyOffsetY": 0,
     "logLineSpacing": 10,
     "victoryPanelTileX": 6,
     "victoryPanelTileY": 4,
@@ -1779,7 +1785,31 @@
       "id": "recruit_egg",
       "label": "Recruit Egg",
       "params": [],
-      "description": "Reserved for the recruiting system (not yet implemented by the engine)."
+      "description": "Reserved for the recruiting system."
+    },
+    {
+      "id": "RECRUIT_ACTOR",
+      "label": "Recruit Actor",
+      "params": [
+        "actorId",
+        "level"
+      ],
+      "description": "Adds specified actor to the party or reserve."
+    },
+    {
+      "id": "ERASE_EVENT",
+      "label": "Erase Event",
+      "params": [],
+      "description": "Removes the active map event from the current floor."
+    },
+    {
+      "id": "TAKE_ITEM",
+      "label": "Take Item",
+      "params": [
+        "item",
+        "count"
+      ],
+      "description": "Deducts specified item count from player inventory."
     }
   ],
   "traitCodes": [

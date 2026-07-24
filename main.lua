@@ -3021,9 +3021,10 @@ handleDialogueAction = function()
     end
 end
 
+local recruitment = require("engine.recruitment")
+
 -- Translates JSON command lists to dynamic conversation graphs
 local function runEventCommands(eventTarget, commands)
-    local eventTitle = (type(eventTarget) == "table" and (eventTarget.name or "Event")) or tostring(eventTarget or "Event")
     local activeEv = (type(eventTarget) == "table") and eventTarget or nil
     if activeSession then
         activeSession.activeEvent = activeEv
@@ -3033,6 +3034,24 @@ local function runEventCommands(eventTarget, commands)
         ictx.event = activeEv
         ictx.eventId = activeEv.id
     end
+
+    -- If this is a RECRUIT event, compile the actor's recruitment script
+    if commands and #commands == 1 and (commands[1].type == "RECRUIT" or commands[1].cmd == "RECRUIT") then
+        local actorId = activeEv and activeEv.actorId
+        if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
+            local recruits = activeSession.currentMapData.recruits
+            if #recruits > 0 then
+                actorId = recruits[math.random(#recruits)]
+            end
+        end
+        actorId = actorId or 1
+        local actorData = loader.getActor(actorId)
+        if actorData then
+            commands = recruitment.compile(actorData, activeSession and activeSession.dungeonFloor, ictx)
+        end
+    end
+
+    local eventTitle = (type(eventTarget) == "table" and (eventTarget.name or "Event")) or tostring(eventTarget or "Event")
     local graph = interpreter.runInteractive(commands, ictx)
     if not graph then return end
     graph.name = eventTitle
@@ -3270,7 +3289,7 @@ handleKeyPressed = function(key)
                 end
             end
             
-            if eventObj and (eventObj.trigger == nil or eventObj.trigger == "interact") then
+            if eventObj and (eventObj.trigger == nil or eventObj.trigger == "interact" or eventObj.trigger == "touch") then
                 local commands = nil
                 if eventObj.scriptId then
                     local commonEvent = loader.commonEvents and loader.commonEvents[tostring(eventObj.scriptId)]

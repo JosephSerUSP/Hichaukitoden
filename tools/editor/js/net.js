@@ -1,21 +1,34 @@
 
-        async function fetchDatabase() {
+        async function fetchDatabase(retries = 3) {
+            let dataLoaded = false;
             try {
                 const res = await fetch(`${API_URL}/data`);
                 if (!res.ok) throw new Error('Database server offline');
                 dbPayload = await res.json();
-
-                initMapEditor();
-                initDatabaseEditor();
-                initSystemTab();
-                await populateCampaignPicker();
-
-                document.getElementById('status-db').textContent = 'Database: Connected';
-                setDirty(false);
+                dataLoaded = true;
             } catch (err) {
-                console.error(err);
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, 600));
+                    return fetchDatabase(retries - 1);
+                }
+                console.error('Database fetch error:', err);
                 document.getElementById('status-db').textContent = 'Database: Offline';
-                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the game is running.');
+                showToast('Failed to connect to Hichaukitoden dev server!\n\nVerify that the editor server is running.');
+                return;
+            }
+
+            if (dataLoaded) {
+                try {
+                    initMapEditor();
+                    initDatabaseEditor();
+                    initSystemTab();
+                    await populateCampaignPicker();
+                    document.getElementById('status-db').textContent = 'Database: Connected';
+                    setDirty(false);
+                } catch (guiErr) {
+                    console.error('Error initializing editor UI after fetch:', guiErr);
+                    document.getElementById('status-db').textContent = 'Database: Connected (UI Warning)';
+                }
             }
         }
 

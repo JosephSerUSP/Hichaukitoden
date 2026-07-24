@@ -14,19 +14,24 @@
             --desktop-teal: #008080;
             --title-blue: #000080;
             --title-blue-light: #1084d0;
+            --title-text: #ffffff;
             --text-color: #000000;
             --text-muted: #808080;
             --text-empty: #b0b0b0;
             --cool-bg: #e6e6ec;
+            --button-bg: #d4d0c8;
+            --win-border: #808080;
             --selection-bg: #000080;
             --selection-text: #ffffff;
+            --tooltip-bg: #ffffe1;
+            --tooltip-text: #000000;
             --win-blue: #000080;
             --font-family: 'Tahoma', 'Arial', sans-serif;
             --spritesheet-url: url('Assets/Icons.png');
         }
 
         body {
-            background-color: var(--win-gray);
+            background-color: var(--desktop-teal);
             color: var(--text-color);
             font-family: var(--font-family);
             font-size: 11px;
@@ -73,7 +78,7 @@
         /* --- WINDOW ELEMENTS --- */
         .title-bar {
             background: linear-gradient(90deg, var(--title-blue), var(--title-blue-light));
-            color: #fff;
+            color: var(--title-text, #ffffff);
             padding: 3px 4px;
             display: flex;
             justify-content: space-between;
@@ -403,7 +408,8 @@
         .win98-btn {
             font-family: var(--font-family);
             font-size: 11px;
-            background-color: var(--win-gray);
+            background-color: var(--button-bg, var(--win-gray));
+            color: var(--text-color);
             border: 2px solid;
             border-color: var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);
             box-shadow: inset 1px 1px 0px var(--win-white), inset -1px -1px 0px var(--win-black);
@@ -1721,6 +1727,15 @@
                        <div style="display: flex; gap: 4px; margin-top: 6px;">
                            <button class="win98-btn" onclick="addEncounterToMap()" style="flex: 1; font-size: 10px;">Add</button>
                            <button class="win98-btn" onclick="removeEncounterFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
+                       </div>
+                    </fieldset>
+
+                    <fieldset style="flex: 1; display: flex; flex-direction: column;">
+                       <legend>Recruits Pool</legend>
+                       <div style="flex: 1; border: 1px solid var(--win-shadow); background: #fff; overflow-y: auto; height: 120px; padding: 4px;" id="prop-recruits-list"></div>
+                       <div style="display: flex; gap: 4px; margin-top: 6px;">
+                           <button class="win98-btn" onclick="addRecruitToMap()" style="flex: 1; font-size: 10px;">Add</button>
+                           <button class="win98-btn" onclick="removeRecruitFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
                        </div>
                     </fieldset>
                 </div>
