@@ -24,6 +24,7 @@
     "mp_exhaustion": "{0} suffers from MP exhaustion!",
     "gains_xp": "- {0} gains {1} XP.",
     "recovers_mp": "- {0} MP restored.",
+    "target_dead": "{0}'s target is already dead!",
     "resolving": "Resolving actions...",
     "reaped": "{0} has passed away.",
     "reserve_wave": "The party has fallen! The reserves rush in -- {0} will not act this round.",

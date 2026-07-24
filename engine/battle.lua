@@ -280,18 +280,48 @@ function Battle:resolveRound(collectedActions)
     
     -- 3. Execute actions in speed order
     local targeting = require("engine.targeting")
+    local config = require("engine.config")
     for _, turn in ipairs(queue) do
         local targetDead = false
         if turn.target and turn.target.isDead and turn.target:isDead() then
-            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or turn.skill.target
-            local expanded = targeting.expand(spec)
-            if expanded.state ~= "dead" and expanded.state ~= "any" then
-                targetDead = true
+            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+            if spec then
+                local expanded = targeting.expand(spec)
+                if expanded.state ~= "dead" and expanded.state ~= "any" then
+                    targetDead = true
+                end
             end
         end
 
-        if not turn.actor:isDead() and not targetDead then
-            if turn.item then
+        if targetDead then
+            local autoRedirect = false
+            if self.session and self.session.autoRedirect ~= nil then
+                autoRedirect = self.session.autoRedirect
+            elseif config.combat and config.combat.autoRedirect ~= nil then
+                autoRedirect = config.combat.autoRedirect
+            end
+
+            if autoRedirect then
+                local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+                if spec then
+                    local newTargets = targeting.resolve(turn.actor, spec, self, nil, turn.item or turn.skill)
+                    if newTargets and #newTargets > 0 and not newTargets[1]:isDead() then
+                        turn.target = newTargets[1]
+                        targetDead = false
+                    end
+                end
+            end
+        end
+
+        if not turn.actor:isDead() then
+            if targetDead then
+                local loader = self.session and self.session.loader
+                local msg = (loader and loader.formatTerm) and loader.formatTerm("battle.target_dead", "{0}'s target is already dead!", turn.actor.name) or (turn.actor.name .. "'s target is already dead!")
+                table.insert(roundEvents, {
+                    type = "text",
+                    text = msg
+                })
+            elseif turn.item then
                 -- F7: apply the used item's effects and consume it. This
                 -- spends the creature's turn exactly like a skill would.
                 local evs = self:applyItem(turn.item, turn.actor, turn.target)

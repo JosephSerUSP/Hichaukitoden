@@ -1,6 +1,6 @@
 -- Creature Recruitment Event Builder / Compiler
 -- Translates an actor's `recruitEvent` JSON specification into standard
--- interpreter commands (TEXT, CHOICE, TAKE_GOLD, TAKE_ITEM, RECOVER_PARTY,
+-- interpreter commands (TEXT, CHOICE, GAIN_GOLD, TAKE_ITEM, RECOVER_PARTY,
 -- BATTLE, RECRUIT_ACTOR, ERASE_EVENT).
 -- Supports raw command arrays, scriptId references, event pages, or preset event types.
 
@@ -84,7 +84,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                     label = "Pay " .. cost .. " Gold",
                     condition = "gold:" .. cost,
                     script = {
-                        { type = "TAKE_GOLD", value = cost },
+                        { type = "GAIN_GOLD", amount = -cost },
                         { type = "TEXT", text = acceptText },
                         { type = "RECRUIT_ACTOR", actorId = actorId, level = level },
                         { type = "ERASE_EVENT" }

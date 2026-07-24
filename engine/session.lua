@@ -140,6 +140,7 @@ function GameSession.new(loader)
     self.dungeonFloor = 1
     self.transitionTimer = 0
     self.transitionDir = "forward"
+    self.autoRedirect = (loader and loader.system and loader.system.combat and loader.system.combat.autoRedirect) or false
     
     -- Summoner details
     local startMp = loader.system and loader.system.summoner and loader.system.summoner.startMp or 820

@@ -19,6 +19,12 @@ function conditions.evalPrefixed(condStr, session)
         return true, session.flags[flag] == true
     end
 
+    local goldStr = condStr:match("^gold:(.+)")
+    if goldStr then
+        local amt = tonumber(goldStr) or 0
+        return true, (session and (session.gold or 0) >= amt)
+    end
+
     local itemStr = condStr:match("^hasItem:(.+)")
     if itemStr then
         -- Item ids are numeric; the pattern always yields a string, so convert

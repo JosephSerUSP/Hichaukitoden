@@ -11,7 +11,8 @@ local GameSession = sessionModule.GameSession
 print("[TEST] Starting creature recruitment system tests...")
 
 -- Mock loader for testing
-local mockLoader = {
+local mockLoader
+mockLoader = {
     actors = {
         [1] = { id = 1, name = "Pixie", level = 1, role = "Healer", recruitEvent = { type = "heal" } },
         [3] = { id = 3, name = "Skeleton", level = 1, role = "Attacker", recruitEvent = { type = "hostile" } },
@@ -28,7 +29,11 @@ local mockLoader = {
     items = {
         [1] = { id = 1, name = "Potion", type = "item" }
     },
-    getActor = function(self, id) return self.actors[id] end,
+    getActor = function(a, b)
+        local id = (type(a) == "number" or type(a) == "string") and a or b
+        return mockLoader.actors[id]
+    end,
+    getActorByRole = function(role) return { id = 99, name = "Summoner", role = role } end,
     getItem = function(self, id) return self.items[id] end,
     getTerm = function(self, key, default) return default end,
     formatTerm = function(self, key, default, p1) return (default:gsub("{0}", tostring(p1))) end,
@@ -104,4 +109,48 @@ assert(#sess.currentMapData.events == 1, "ERASE_EVENT did not remove target even
 assert(sess.currentMapData.events[1].id == "stairs_1", "Wrong event was erased")
 print("  [PASS] Interpreter command ERASE_EVENT erased target map event")
 
+-- Test 5: Interpreter command handlers (GAIN_GOLD with amount, RECOVER_PARTY)
+sess.gold = 50
+interpreter.runImmediate({
+    { type = "GAIN_GOLD", amount = -30 }
+}, ctx)
+assert(sess.gold == 20, "GAIN_GOLD (negative) failed to deduct gold correctly. Got: " .. tostring(sess.gold))
+
+interpreter.runImmediate({
+    { type = "GAIN_GOLD", amount = 15 }
+}, ctx)
+assert(sess.gold == 35, "GAIN_GOLD (positive) failed to add gold correctly. Got: " .. tostring(sess.gold))
+
+interpreter.runImmediate({
+    { type = "RECOVER_PARTY" }
+}, ctx)
+for _, member in ipairs(sess.party) do
+    assert(member.hp == member:getMaxHp(sess), "RECOVER_PARTY failed to restore hp for party member")
+end
+print("  [PASS] Interpreter commands GAIN_GOLD and RECOVER_PARTY executed cleanly")
+
+-- Test 6: conditions.evalPrefixed handles gold prefix
+local conditions = require("engine.conditions")
+local matched, result = conditions.evalPrefixed("gold:30", sess)
+assert(matched == true and result == true, "gold:30 condition evaluation failed when gold is 35")
+
+local matched2, result2 = conditions.evalPrefixed("gold:100", sess)
+assert(matched2 == true and result2 == false, "gold:100 condition evaluation failed when gold is 35")
+print("  [PASS] Condition evaluator correctly handles gold: prefix")
+
+-- Test 7: End-to-end recruitment execution of compiled gold recruit option script
+sess.gold = 30
+sess.activeEvent = { id = "recruit_4", actorId = 4 }
+sess.currentMapData = {
+    events = {
+        { id = "recruit_4", type = "recruit" }
+    }
+}
+local angelOptScript = angelScript[2].options[1].script
+interpreter.runImmediate(angelOptScript, { session = sess, events = {} })
+assert(sess.gold == 0, "Recruiting Angel did not deduct 30 gold")
+assert(#sess.currentMapData.events == 0, "Recruiting Angel did not erase the map event")
+print("  [PASS] End-to-end gold recruitment script executed successfully")
+
 print("[TEST] All Creature Recruitment tests passed successfully!")
+

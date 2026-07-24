@@ -2303,6 +2303,8 @@ function love.load(arg)
                 i = i + 1
             elseif val == "savetest" then
                 isSaveTestMode = true
+            elseif val == "unittest" then
+                isUnitTestMode = true
             elseif val:match("^campaign=") then
                 -- Overrides the campaign.json pointer for this run (used by
                 -- the generator's validate loops): campaign=<name> loads
@@ -2332,6 +2334,16 @@ function love.load(arg)
         savegame.delete("savetest")
         print("SAVETEST OK")
         love.event.quit(0)
+        return
+    end
+
+    if isUnitTestMode then
+        loader.init(cliCampaignRoot)
+        dofile("tests/test_traits.lua")
+        dofile("tests/test_recruitment.lua")
+        dofile("tests/test_target_redirection.lua")
+        print("ALL UNIT TESTS OK")
+        if love.event and love.event.quit then love.event.quit(0) end
         return
     end
 
@@ -3036,8 +3048,9 @@ local function runEventCommands(eventTarget, commands)
     end
 
     -- If this is a RECRUIT event, compile the actor's recruitment script
-    if commands and #commands == 1 and (commands[1].type == "RECRUIT" or commands[1].cmd == "RECRUIT") then
-        local actorId = activeEv and activeEv.actorId
+    local cType = commands and #commands == 1 and (commands[1].type or commands[1].cmd)
+    if cType and (cType == "RECRUIT" or cType == "recruit" or cType == "RECRUIT_ACTOR") then
+        local actorId = (activeEv and activeEv.actorId) or (commands[1] and (commands[1].actorId or commands[1].id))
         if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
             local recruits = activeSession.currentMapData.recruits
             if #recruits > 0 then
@@ -3067,7 +3080,7 @@ local function checkStepEvents()
     if activeSession.currentMapData.events then
         for _, rawEv in ipairs(activeSession.currentMapData.events) do
             local ev = exploration.resolvePage(rawEv, activeSession)
-            if ev.x == px and ev.y == py and ev.trigger == "step" then
+            if ev.x == px and ev.y == py and (ev.trigger == "step" or ev.trigger == "touch") then
                 local commands = nil
                 if ev.scriptId then
                     local commonEvent = loader.commonEvents and loader.commonEvents[tostring(ev.scriptId)]

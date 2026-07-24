@@ -5966,15 +5966,16 @@
           "x": 4,
           "y": 5,
           "w": 24,
-          "h": 6
+          "h": 7
         },
         "style": "list",
-        "visibleRows": 2,
+        "visibleRows": 3,
         "title": "Options",
         "content": [
           {
             "type": "list",
             "listId": "config:optionsCommands",
+            "formatRight": "{id == 'autoredirect' and (v.autoRedirect and 'ON' or 'OFF') or ''}",
             "cursor": "v.idx"
           }
         ]
@@ -6052,6 +6053,10 @@
             {
               "name": "confirmIdx",
               "value": 2
+            },
+            {
+              "name": "autoRedirect",
+              "value": "(session and session.autoRedirect ~= nil) and session.autoRedirect or false"
             }
           ]
         },
@@ -6097,7 +6102,7 @@
       "on_down": [
         {
           "cmd": "IF",
-          "condition": "v.mode == 'nav' and v.idx < 2",
+          "condition": "v.mode == 'nav' and v.idx < 3",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -6138,6 +6143,26 @@
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.mode == 'nav' and v.idx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "autoRedirect",
+              "value": "not (v.autoRedirect or false)"
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.setAutoRedirect(ctx.v.autoRedirect)"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.mode == 'nav' and v.idx == 3",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -6227,10 +6252,17 @@
     "config": {
       "optionsCommands": [
         {
+          "id": "controls",
           "name": "CONTROLS",
           "help": "View and rebind the SNES-style button layout."
         },
         {
+          "id": "autoredirect",
+          "name": "AUTO REDIRECT",
+          "help": "Toggle auto redirection when a target dies before skill execution."
+        },
+        {
+          "id": "exit",
           "name": "EXIT",
           "help": "Quit Hichaukitoden and return to the desktop."
         }

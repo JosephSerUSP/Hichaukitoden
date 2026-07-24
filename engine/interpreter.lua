@@ -413,8 +413,26 @@ handlers.FOR_EACH = function(cmd, ctx)
 end
 
 handlers.GAIN_GOLD = function(cmd, ctx)
-    local amount = math.floor(evalFormula(cmd.amount, ctx))
+    local amount = math.floor(evalFormula(cmd.amount or cmd.value or 0, ctx))
     ctx.session.gold = math.max(0, (ctx.session.gold or 0) + amount)
+end
+handlers.GIVE_GOLD = handlers.GAIN_GOLD
+handlers.CHANGE_GOLD = handlers.GAIN_GOLD
+handlers.TAKE_GOLD = function(cmd, ctx)
+    local amount = math.floor(evalFormula(cmd.amount or cmd.value or 0, ctx))
+    ctx.session.gold = math.max(0, (ctx.session.gold or 0) - amount)
+end
+
+handlers.RECOVER_PARTY = function(cmd, ctx)
+    if ctx.recoverParty then
+        ctx.recoverParty()
+    elseif ctx.session and ctx.session.party then
+        for _, actor in ipairs(ctx.session.party) do
+            actor.hp = actor:getMaxHp(ctx.session)
+            actor.mp = actor:getMaxMp(ctx.session)
+            actor.states = {}
+        end
+    end
 end
 
 handlers.GRANT_XP = function(cmd, ctx)
@@ -1689,6 +1707,18 @@ local function buildScriptApi(ctx)
     end
     function api.switchCampaign(name)
         return switchCampaign(ctx.loader or session.loader, name)
+    end
+    function api.setAutoRedirect(val)
+        if session then session.autoRedirect = val and true or false end
+        local cfg = require("engine.config")
+        cfg.combat = cfg.combat or {}
+        cfg.combat.autoRedirect = val and true or false
+    end
+    function api.getAutoRedirect()
+        if session and session.autoRedirect ~= nil then return session.autoRedirect end
+        local cfg = require("engine.config")
+        if cfg.combat and cfg.combat.autoRedirect ~= nil then return cfg.combat.autoRedirect end
+        return false
     end
     api.targeting = require("engine.targeting")
     return api

@@ -135,7 +135,8 @@
     "mpExhaustionDamage": 1,
     "battleItem": 1,
     "defendSkillId": "defend",
-    "attackSkillId": "attack"
+    "attackSkillId": "attack",
+    "autoRedirect": false
   },
   "shopMaxStock": 20,
   "growth": {

@@ -132,6 +132,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
         expBank = sessionObj.expBank,
+        autoRedirect = sessionObj.autoRedirect,
         summoner = serializeBattler(sessionObj.summoner),
         party = party,
         reserve = reserve,
@@ -154,6 +155,7 @@ function savegame.deserialize(data, loader)
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp
     sess.expBank = data.expBank or 0
+    if data.autoRedirect ~= nil then sess.autoRedirect = data.autoRedirect end
 
     local summoner = deserializeBattler(data.summoner, loader)
     if summoner then sess.summoner = summoner end

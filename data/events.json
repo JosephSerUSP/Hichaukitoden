@@ -414,8 +414,8 @@
             "label": "Pay 5G for knowledge",
             "script": [
               {
-                "type": "TAKE_GOLD",
-                "value": 5
+                "type": "GAIN_GOLD",
+                "amount": -5
               },
               {
                 "type": "GIVE_XP",
@@ -442,8 +442,8 @@
                     "chance": 0.5,
                     "script": [
                       {
-                        "type": "TAKE_GOLD",
-                        "value": 2
+                        "type": "GAIN_GOLD",
+                        "amount": -2
                       }
                     ]
                   }
@@ -509,8 +509,8 @@
             "label": "Take a small reward instead",
             "script": [
               {
-                "type": "GIVE_GOLD",
-                "value": 10
+                "type": "GAIN_GOLD",
+                "amount": 10
               }
             ]
           }

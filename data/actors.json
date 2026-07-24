@@ -453,7 +453,7 @@
     "role": "Attacker",
     "maxHp": 22,
     "spriteKey": "incubus",
-    "smallBattler": "Demon",
+    "smallBattler": "vampireLord[fps=10]",
     "passives": [
       "chaosPact",
       "etherealBody"
