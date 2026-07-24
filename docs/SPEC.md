@@ -46,20 +46,35 @@ scenes now windows-drawn, Summoner economy live).
 
 ### 1.2 Presentation
 
-- **Scenes are data** (`data/scenes.json`): `{id, name, kind, hooks,
-  scripts, windows}`. Scenes with `"draw": "windows"` are rendered
-  entirely from their `windows` array by `presentation/window_renderer.lua`.
-- **Battle is windows-drawn too** (as of 07.2026): the old "legacy-drawn
-  holdout, frozen pending Summoner rework" state is over. 14 of 16 scenes
-  render via the windows system; the two exceptions (`map`, `town`) are
-  world-rendered through the raycaster by design, not conversion debt.
-  The Summoner rework itself is live: per-round MP drain in battle
+- **Scenes are data** (`data/scenes.json`): `{id, name, kind, draw, hooks,
+  scripts, windows}`. **Every scene declares how it draws** — there is no
+  host-side fallback (24.07.2026); an unrecognized `draw` is a hard error in
+  `scene_host.draw` and a G1 failure:
+  - `"draw": "windows"` — rendered entirely from the `windows` array by
+    `presentation/window_renderer.lua`. 14 of 15 scenes, battle included
+    (the old "legacy-drawn holdout frozen pending Summoner rework" state is
+    over). Such a scene may also set `"backdrop": "map"` to show the world
+    behind its windows, VN-style.
+  - `"draw": "world"` — a world view named by `world` (registry:
+    `presentation/world_renderer.lua`), with the scene's windows layered on
+    top by the same window renderer. Only `map` (`world: "map"`, the
+    raycaster) uses this. The old `town` scene — legacy-drawn, unreachable,
+    superseded by the town *map* — was deleted in the purge.
+- **The Summoner rework is live**: per-round MP drain in battle
   (`engine/battle.lua`), per-step field drain (`engine/exploration.lua`),
   sacrifice with level-scaled EXP/rewards (`SACRIFICE_EXP_RATE` trait),
   species unlock flags, and the shared `ritual` scene
-  (summon/promote/sacrifice) plus `reserve` scene. Shared presentation
-  services (damage popups, text reveal, battle anims) still live in
-  `presentation/renderer.lua`, which serves both paths.
+  (summon/promote/sacrifice) plus `reserve` scene.
+- **`presentation/renderer.lua` is live shared presentation, not a legacy
+  renderer** — despite the name it holds window-content drawers that
+  `window_renderer` dispatches to (enemy row, battle log, victory panel),
+  cross-cutting FX services (damage popups, text reveal, battle anims), and
+  coordinate helpers. Treat it as a shared library; do not "migrate off" it.
+- **The engine never requires presentation.** Where a command or SCRIPT api
+  call needs presentation (is the battle log still revealing? re-point at a
+  swapped session?), the host injects hooks via
+  `interpreter.bindPresentation` (bound in `main.lua`); unbound, every hook
+  degrades to a no-op/false so headless runs work.
 - **Animations are data** (`data/animations.json`): typed track lists
   (tint, blend, transform, shake, particles, force_field, gradient_map,
   screen_flash). `system.*` reserved entries (damage_flash, shake, death,
@@ -136,12 +151,43 @@ discriminators.
 (`data/*.json`, campaign roots, save files — saves are test artifacts for
 now and may break freely) gets migrated in place when a schema changes;
 dual-read shims for old shapes of our own data are carrying cost, not
-compatibility, and should be deleted after a one-time migration. Removed
-under this rule so far: the deprecated command aliases
-(GIVE_ITEM/TAKE_ITEM/GIVE_ITEM_ID/DRAIN_MP/RESTORE_MP → CHANGE_ITEM/
-CHANGE_MP, 24.07). Still queued: the dual `type`/`cmd` command-key format,
-the `tiles{}` tileset merge in `viewport_3d.lua`, scene_host's
-legacy-Lua-draw fallback branches, and the elementIcons fallback chain.
+compatibility, and should be deleted after a one-time migration.
+
+Removed under this rule (24.07.2026):
+
+- the deprecated command aliases (GIVE_ITEM/TAKE_ITEM/GIVE_ITEM_ID/DRAIN_MP/
+  RESTORE_MP → CHANGE_ITEM/CHANGE_MP);
+- the dual `type`/`cmd` command-key format — **every command stores its id
+  under `cmd`**, and the editor no longer mirrors an interactive-id table to
+  decide which key to write;
+- the dual `script`/`commands` name for sub-command lists — **`commands` is
+  the only name**, on events, event pages, CHOICE options and recruitEvents;
+- the redundant `tiles{}` tileset mirror (`features[]` is the sole source of
+  feature ids, per §1.8) and its merge in `viewport_3d.lua`;
+- the `ui.elementIcons` config + hardcoded icon table in `actor_status.lua`
+  (nothing set the config and the table had drifted out of sync with
+  `elements.json`; one `UNKNOWN_ELEMENT_ICON` constant remains);
+- main.lua's 1,351-line inline copy of the validator — `engine/validator.lua`
+  was a near-identical extraction that **nothing ever required**, so the CLI
+  branch now calls `validator.run(loader)` and main.lua shrank 2,737 → 1,375
+  lines;
+- scene_host's legacy-Lua-draw fallback, together with the `town` scene that
+  was its last user: every scene now names its draw mode (§1.2), main.lua's
+  `love.draw` fallback branch is gone, and G1 gates the contract. Also gone
+  with town: `renderer.drawTown`, its background image load,
+  `townSelectedIdx`, ~40 lines of main.lua keypress handling,
+  `system.json`'s `town.options`, the editor's `townOptions` widget, and
+  `tools/golden/scene_town.log`. Save/load defaults moved `"town"` → `"map"`;
+- `interpreter.lua`'s `pcall(require, "presentation.renderer")`
+  engine→presentation layering violation, replaced by the injected
+  `interpreter.bindPresentation` seam (§1.2). `viewport_3d.draw` also
+  self-initializes now instead of trapping callers who never ran the boot
+  sequence.
+
+**The purge is complete** — no known dual-read paths, compat shims, or
+legacy fallbacks remain. `presentation/renderer.lua` was investigated and
+deliberately NOT split: it is live shared presentation (§1.2), so a file
+split would be churn with regression risk and no functional gain.
 
 ### 1.6 Map cell overrides (unified, 23.07.2026)
 
@@ -198,9 +244,9 @@ hold N weighted variants now.
 The redundant `tiles{}` mirror the old editor dual-wrote alongside
 `features[]` (dead per §0 — nothing ever read it by map cell) is dropped on
 save; `features[]` is the single source of truth. `presentation/
-viewport_3d.lua`'s atlas loader still merges a legacy `tiles{}` if present,
-so hand-authored `tilesets.json` entries from before this change keep
-working unchanged.
+viewport_3d.lua`'s atlas loader no longer merges a legacy `tiles{}` at all —
+the mirror was purged from both the loader and `tilesets.json` on 24.07.2026
+(see §1.5).
 
 **Base walls are a fixed 128×64 block, authored with one click.** The old
 per-slot model (three independently-clickable targets — middle/leftEdge/

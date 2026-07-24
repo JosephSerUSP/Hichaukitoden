@@ -184,27 +184,6 @@
       "defaultSize": 3
     }
   },
-  "town": {
-    "options": [
-      {
-        "label": "Dungeon",
-        "action": "enter_dungeon",
-        "mapId": 2
-      },
-      {
-        "label": "Weapon Shop",
-        "action": "dialogue"
-      },
-      {
-        "label": "Alicia Shop",
-        "action": "dialogue"
-      },
-      {
-        "label": "Rest (House)",
-        "action": "rest"
-      }
-    ]
-  },
   "dungeon": {
     "maxFloor": 5,
     "moveMpDrain": 1,

@@ -29,6 +29,27 @@ local usability = require("engine.usability")
 
 local interpreter = {}
 
+-- Presentation seam (24.07.2026). A few commands and SCRIPT api calls need to
+-- ask presentation a question ("is the battle log still revealing?") or tell it
+-- the session object was swapped underneath it. The interpreter used to
+-- `pcall(require, "presentation.renderer")` inline for that — engine reaching
+-- into presentation, the wrong direction. The host binds these once at boot
+-- (main.lua) and the engine only ever calls through this table; unbound (pure
+-- headless use) every entry degrades to a safe no-op/false.
+local presentation = {}
+
+-- Expected keys: rebindSession(session), isBattleLogRevealing(),
+-- finishBattleLogReveal(), isAnimationPlaying().
+function interpreter.bindPresentation(hooks)
+    presentation = hooks or {}
+end
+
+local function present(name, ...)
+    local fn = presentation[name]
+    if not fn then return nil end
+    return fn(...)
+end
+
 -- The ids interpreter.compile knows how to turn into dialogue nodes.
 -- Anything else is a registry command executed via runImmediate (task A4b).
 -- All commands store their id under `cmd` (the `type` key was retired in the
@@ -111,8 +132,7 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                     show = (not matched) or result
                 end
                 if show then
-                    -- Older data files used "script" for option sub-commands
-                    local optFirst = interpreter.compile(nodes, opt.commands or opt.script, nodeId .. "_opt" .. oi, nextId, ctx)
+                    local optFirst = interpreter.compile(nodes, opt.commands, nodeId .. "_opt" .. oi, nextId, ctx)
                     table.insert(options, {
                         label = opt.label,
                         setFlag = opt.setFlag,
@@ -1063,8 +1083,7 @@ handlers.RESET_SESSION = function(cmd, ctx)
     fresh:initializeStartingParty()
     _G.activeSession = fresh
     ctx.session = fresh
-    local ok, renderer = pcall(require, "presentation.renderer")
-    if ok and renderer and renderer.init then renderer.init(fresh) end
+    present("rebindSession", fresh)
 end
 
 -- Campaign selector (title-screen testing tool). Hot-switches the active
@@ -1168,7 +1187,7 @@ end
 handlers.SAVE_GAME = function(cmd, ctx)
     local savegame = require("engine.savegame")
     local slot = cmd.slot ~= nil and tostring(evalFormula(cmd.slot, ctx)) or "slot1"
-    local sceneName = ctx.sceneName or "town"
+    local sceneName = ctx.sceneName or "map"
     savegame.save(ctx.session, ctx.loader or (ctx.session and ctx.session.loader), sceneName, slot)
 end
 
@@ -1197,9 +1216,8 @@ handlers.LOAD_GAME = function(cmd, ctx)
     _G.activeSession = sess
     ctx.session = sess
     ctx.party = sess.party
-    local ok, renderer = pcall(require, "presentation.renderer")
-    if ok and renderer and renderer.init then renderer.init(sess) end
-    table.insert(ctx.events, { type = "scene_change", kind = "goto", scene = sceneName or "town" })
+    present("rebindSession", sess)
+    table.insert(ctx.events, { type = "scene_change", kind = "goto", scene = sceneName or "map" })
 end
 
 -- Materializes the player's active/completed quests into v.questRows for the
@@ -1328,13 +1346,13 @@ local SCRIPT_API_PROTOTYPE = {
         end,
         isLogRevealing = function()
             local battle = require("engine.scenes.battle")
-            return require("presentation.renderer").isBattleLogRevealing(battle.getState().combatLog)
+            return present("isBattleLogRevealing", battle.getState().combatLog) or false
         end,
         finishLogReveal = function()
-            require("presentation.renderer").finishBattleLogReveal()
+            present("finishBattleLogReveal")
         end,
         isAnimationPlaying = function()
-            return require("presentation.animation_player").isAnythingPlaying()
+            return present("isAnimationPlaying") or false
         end
     }
 }

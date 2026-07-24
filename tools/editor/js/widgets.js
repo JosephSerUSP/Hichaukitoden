@@ -1121,7 +1121,6 @@
             'newGame.party.twoMemberChance': { label: 'Duo Start Chance (0-1)', step: 0.05 },
             'newGame.party.twoMemberBonusLevels': { label: 'Duo Start Bonus Levels' },
             'newGame.party.defaultSize':   { label: 'Trio Start Party Size' },
-            'town.options':                { label: 'Town Menu Options', widget: 'townOptions' },
             'elementRules.strongMultiplier': { label: 'Strong-Element Damage ×', step: 0.05, min: 0,
                                                help: 'Damage multiplier when the attack element is strong against the target (1.5 = +50%).' },
             'elementRules.weakMultiplier': { label: 'Weak-Element Damage ×', step: 0.05, min: 0,
@@ -1308,47 +1307,6 @@
                 return true;
             }
 
-            if (widget === 'townOptions' && Array.isArray(value)) {
-                const group = document.createElement('div');
-                group.className = 'form-group';
-                const lbl = document.createElement('label');
-                lbl.textContent = schema.label || key;
-                group.appendChild(lbl);
-                const box = makeListBox();
-                const arr = value;
-                const render = () => {
-                    box.innerHTML = '';
-                    arr.forEach((opt, idx) => {
-                        const row = document.createElement('div');
-                        row.style.cssText = 'display: flex; gap: 4px; align-items: center;';
-                        const label = document.createElement('input');
-                        label.className = 'win98-input';
-                        label.style.width = '90px';
-                        label.title = 'Menu label';
-                        label.value = opt.label || '';
-                        label.oninput = () => { opt.label = label.value; setDirty(true); };
-                        row.appendChild(label);
-                        row.appendChild(makeSelect(['enter_dungeon', 'dialogue', 'rest'], opt.action, v => {
-                            opt.action = v;
-                            setDirty(true);
-                            render();
-                        }));
-                        if (opt.action === 'enter_dungeon') {
-                            row.appendChild(createMapPicker(opt.mapId, v => { opt.mapId = parseInt(v); }, '1'));
-                        }
-                        row.appendChild(makeRowDeleteBtn(() => { arr.splice(idx, 1); render(); }));
-                        box.appendChild(row);
-                    });
-                    box.appendChild(makeAddRowBtn('+ Add Option', () => {
-                        arr.push({ label: 'New Option', action: 'dialogue' });
-                        render();
-                    }));
-                };
-                render();
-                group.appendChild(box);
-                container.appendChild(group);
-                return true;
-            }
 
             if (widget === 'number' || typeof value === 'number') {
                 const group = document.createElement('div');
@@ -1701,7 +1659,7 @@
                         }
 
                         let currentMode = 'free';
-                        if (rec.commands || rec.script) currentMode = 'script';
+                        if (rec.commands) currentMode = 'script';
                         else if (rec.scriptId !== undefined) currentMode = 'common';
                         else if (rec.type) currentMode = rec.type;
 
@@ -1842,7 +1800,7 @@
                             const scriptBox = document.createElement('div');
                             scriptBox.style.cssText = 'margin-top:6px; border:1px solid var(--win-shadow); padding:4px; background:#fff;';
                             bodyContainer.appendChild(scriptBox);
-                            rec.commands = rec.commands || rec.script || [];
+                            rec.commands = rec.commands || [];
 
                             const rerenderScript = () => {
                                 setDirty(true);
@@ -2173,7 +2131,6 @@
                     summoner: dbPayload.system.summoner || {},
                     spawn: dbPayload.system.spawn || {},
                     newGame: dbPayload.system.newGame || {},
-                    town: dbPayload.system.town || {},
                     ui: dbPayload.system.ui || {}
                 };
                 buildRecursiveForm(formPanel, systemConfig, [], dbPayload.system);

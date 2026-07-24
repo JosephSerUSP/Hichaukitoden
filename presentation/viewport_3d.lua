@@ -202,10 +202,9 @@ local function getAtlasByDef(id, tilesetDef)
     if love.filesystem.getInfo(path) then
         local img = love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
+        -- `features[]` is the single source of truth for feature/material ids
+        -- (SPEC 1.8); the redundant `tiles{}` mirror was purged 24.07.2026.
         local tiles = {}
-        if tilesetDef.tiles then
-            for k, v in pairs(tilesetDef.tiles) do tiles[k] = v end
-        end
         if tilesetDef.features then
             for _, f in ipairs(tilesetDef.features) do
                 if f.id then tiles[f.id] = f end
@@ -720,6 +719,11 @@ local function drawVerticalGradient(x, y, w, h, colTop, colBottom)
 end
 
 function viewport_3d.draw(session)
+    -- Self-initialize rather than requiring every caller to have called init()
+    -- first: the map scene draws through scene_host now (24.07.2026), so the
+    -- world view is reachable from hosts that never ran the boot sequence
+    -- (the golden-ui harness), and a missing init used to crash on a nil quad.
+    if not skyQuad then viewport_3d.init() end
     local grid  = session.mapGrid
     local px    = session.playerX
     local py    = session.playerY

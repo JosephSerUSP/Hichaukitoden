@@ -40,18 +40,16 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
             end
         end
 
-        -- Case 4: Explicit commands array or script array on event object
+        -- Case 4: Explicit commands array on event object
         if rec.commands and type(rec.commands) == "table" and #rec.commands > 0 then
             return rec.commands
-        elseif rec.script and type(rec.script) == "table" and #rec.script > 0 then
-            return rec.script
         end
 
         -- Case 5: scriptId referencing a common event
         if rec.scriptId and loader and loader.commonEvents then
             local ce = loader.commonEvents[tostring(rec.scriptId)]
             if ce then
-                local ceCmds = ce.commands or ce.script
+                local ceCmds = ce.commands
                 if ceCmds and #ceCmds > 0 then
                     return ceCmds
                 end
@@ -83,7 +81,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 {
                     label = "Pay " .. cost .. " Gold",
                     condition = "gold:" .. cost,
-                    script = {
+                    commands = {
                         { cmd = "GAIN_GOLD", amount = -cost },
                         { cmd = "TEXT", text = acceptText },
                         { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
@@ -92,7 +90,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 },
                 {
                     label = "Decline",
-                    script = {
+                    commands = {
                         { cmd = "TEXT", text = declineText }
                     }
                 }
@@ -119,14 +117,14 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
             options = {
                 {
                     label = "Recruit " .. actorName,
-                    script = {
+                    commands = {
                         { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
                         { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Leave",
-                    script = {
+                    commands = {
                         { cmd = "TEXT", text = "You part ways peacefully." }
                     }
                 }
@@ -152,7 +150,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 {
                     label = "Give " .. itemName,
                     condition = "hasItem:" .. itemId,
-                    script = {
+                    commands = {
                         { cmd = "CHANGE_ITEM", item = itemId, count = -1 },
                         { cmd = "TEXT", text = acceptText },
                         { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
@@ -161,7 +159,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 },
                 {
                     label = "Leave",
-                    script = {
+                    commands = {
                         { cmd = "TEXT", text = declineText }
                     }
                 }
@@ -183,7 +181,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
             options = {
                 {
                     label = "Battle " .. actorName,
-                    script = {
+                    commands = {
                         { cmd = "BATTLE", troopId = troopId },
                         { cmd = "TEXT", text = acceptText },
                         {
@@ -191,14 +189,14 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                             options = {
                                 {
                                     label = "Recruit " .. actorName,
-                                    script = {
+                                    commands = {
                                         { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
                                         { cmd = "ERASE_EVENT" }
                                     }
                                 },
                                 {
                                     label = "Leave",
-                                    script = {
+                                    commands = {
                                         { cmd = "TEXT", text = "You leave the defeated creature behind." }
                                     }
                                 }
@@ -208,7 +206,7 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
                 },
                 {
                     label = "Step Back",
-                    script = {
+                    commands = {
                         { cmd = "TEXT", text = declineText }
                     }
                 }
@@ -227,14 +225,14 @@ function recruitment.compile(actorData, dungeonFloor, ctx)
             options = {
                 {
                     label = "Recruit " .. actorName,
-                    script = {
+                    commands = {
                         { cmd = "RECRUIT_ACTOR", actorId = actorId, level = level },
                         { cmd = "ERASE_EVENT" }
                     }
                 },
                 {
                     label = "Decline",
-                    script = {
+                    commands = {
                         { cmd = "TEXT", text = "You decide not to recruit " .. actorName .. "." }
                     }
                 }

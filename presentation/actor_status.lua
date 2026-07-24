@@ -27,23 +27,18 @@ local function layoutVal(session, key)
     return battle_layout.get(session, key)
 end
 
--- Element orb icon ids come from system.json (ui.elementIcons); the table
--- below is only the fallback for older data files.
-local DEFAULT_ELEMENT_ICONS = {
-    Black = 15, White = 14, Green = 12, Red = 11, Blue = 13, Yellow = 17,
-    default = 16
-}
+-- Element orb icon ids come from the element registry (data/elements.json).
+-- The old system.json `ui.elementIcons` config and its hardcoded mirror table
+-- were purged 24.07.2026 — nothing ever set the config, and the table's ids had
+-- drifted out of sync with the registry. This is the only fallback left: the
+-- iconset slot used for an element with no registry entry.
+local UNKNOWN_ELEMENT_ICON = 16
 
 local function drawElementIcon(element, x, y, session)
-    -- Icon comes from the element registry (data/elements.json); legacy
-    -- ui.elementIcons config and the built-in table remain as fallbacks.
+    -- Icon comes from the element registry (data/elements.json).
     local loaderRef = session and session.loader
     local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
-    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
-    local id = (registryEntry and registryEntry.icon)
-        or legacyIcons[element]
-        or legacyIcons.default
-        or DEFAULT_ELEMENT_ICONS.default
+    local id = (registryEntry and registryEntry.icon) or UNKNOWN_ELEMENT_ICON
     -- B.4: Displaced by 3px in x, 6px in y to align with name text
     ui.drawIcon(id, x + 3, y + 5)
 end
@@ -53,11 +48,7 @@ end
 local function drawElementIconScaled(element, x, y, scale, session)
     local loaderRef = session and session.loader
     local registryEntry = loaderRef and loaderRef.elements and loaderRef.elements[element]
-    local legacyIcons = (config.ui and config.ui.elementIcons) or DEFAULT_ELEMENT_ICONS
-    local id = (registryEntry and registryEntry.icon)
-        or legacyIcons[element]
-        or legacyIcons.default
-        or DEFAULT_ELEMENT_ICONS.default
+    local id = (registryEntry and registryEntry.icon) or UNKNOWN_ELEMENT_ICON
     ui.drawIconScaled(id, x, y, scale)
 end
 

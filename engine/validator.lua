@@ -652,7 +652,6 @@ validator.run = function(loader)
                     if id == "CHOICE" and type(val) == "table" then
                         for oi, opt in ipairs(val) do
                             if opt.commands then validateCommands(opt.commands, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
-                            if opt.script then validateCommands(opt.script, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
                         end
                     else
                         validateCommands(val, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> nested")
@@ -797,14 +796,11 @@ elseif paramDef.type == "script" then
             if ev.commands then
                 validateCommands(ev.commands, "map", false, true, desc)
             end
-            if ev.script then
-                validateCommands(ev.script, "map", false, true, desc)
-            end
-            -- Event pages carry their own script overrides; each is a full
-            -- command tree and validates exactly like the base script.
+            -- Event pages carry their own command overrides; each is a full
+            -- command tree and validates exactly like the base list.
             for pi, page in ipairs(ev.pages or {}) do
-                if page.script then
-                    validateCommands(page.script, "map", false, true, desc .. " page " .. pi)
+                if page.commands then
+                    validateCommands(page.commands, "map", false, true, desc .. " page " .. pi)
                 end
             end
         end
@@ -813,9 +809,6 @@ elseif paramDef.type == "script" then
     for ceId, ce in pairs(loader.commonEvents or {}) do
         if ce.commands then
             validateCommands(ce.commands, "common", false, true, "common event '" .. tostring(ceId) .. "'")
-        end
-        if ce.script then
-            validateCommands(ce.script, "common", false, true, "common event '" .. tostring(ceId) .. "'")
         end
     end
 
@@ -1103,7 +1096,22 @@ elseif paramDef.type == "script" then
         
         for _, scene in ipairs(loader.scenes or {}) do
             local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
-            
+
+            -- Every scene must declare how it draws (the legacy "no flag =
+            -- fall back to Lua drawing" rule was purged 24.07.2026), and a
+            -- world scene's `world` id must be one the world renderer knows.
+            check(scene.draw == "windows" or scene.draw == "world",
+                sceneDesc .. " must declare draw = \"windows\" or \"world\" (got '"
+                .. tostring(scene.draw) .. "')")
+            if scene.draw == "world" then
+                local worldIds = {}
+                for _, id in ipairs(require("presentation.world_renderer").ids()) do
+                    worldIds[id] = true
+                end
+                check(worldIds[scene.world],
+                    sceneDesc .. " declares unknown world '" .. tostring(scene.world) .. "'")
+            end
+
             -- Generic config validation (D13): no scene-kind-specific checks.
             -- Any config key ending in "Formula" whose value is a string must
             -- compile against the mock scene context.

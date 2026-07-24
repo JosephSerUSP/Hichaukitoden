@@ -16,7 +16,7 @@
           "options": [
             {
               "label": "Yes",
-              "script": [
+              "commands": [
                 {
                   "cmd": "TELEPORT"
                 }
@@ -24,7 +24,7 @@
             },
             {
               "label": "No",
-              "script": [
+              "commands": [
                 {
                   "type": "LOG",
                   "text": "You decide to stay."
@@ -54,7 +54,7 @@
           "options": [
             {
               "label": "Yes",
-              "script": [
+              "commands": [
                 {
                   "type": "ASCEND"
                 }
@@ -62,7 +62,7 @@
             },
             {
               "label": "No",
-              "script": [
+              "commands": [
                 {
                   "type": "LOG",
                   "text": "You decide to stay."
@@ -307,7 +307,7 @@
   {
     "id": "shrine_shade",
     "type": "shrine_scenario",
-    "script": [
+    "commands": [
       {
         "title": "Whispering Shade",
         "text": "A whisper from beyond promises knowledge... at a price.",
@@ -318,7 +318,7 @@
         "options": [
           {
             "label": "Offer HP (lose 3 HP each, gain XP)",
-            "script": [
+            "commands": [
               {
                 "type": "DAMAGE_PARTY",
                 "amount": 3
@@ -331,7 +331,7 @@
           },
           {
             "label": "Decline",
-            "script": [
+            "commands": [
               {
                 "type": "LOG",
                 "text": "[Shrine] You ignore the whispers."
@@ -346,7 +346,7 @@
   {
     "id": "shrine_idol",
     "type": "shrine_scenario",
-    "script": [
+    "commands": [
       {
         "title": "Gleaming Idol",
         "text": "A gleaming idol stands before you, radiating warmth. Touching it could imbue power or curse you.",
@@ -357,13 +357,13 @@
         "options": [
           {
             "label": "Touch the idol",
-            "script": [
+            "commands": [
               {
                 "type": "WEIGHTED_BRANCH",
                 "outcomes": [
                   {
                     "chance": 0.5,
-                    "script": [
+                    "commands": [
                       {
                         "type": "LOG",
                         "text": "MaxHP +2 (Simulated)"
@@ -372,7 +372,7 @@
                   },
                   {
                     "chance": 0.5,
-                    "script": [
+                    "commands": [
                       {
                         "type": "DAMAGE_PARTY",
                         "amount": 2
@@ -385,7 +385,7 @@
           },
           {
             "label": "Walk away",
-            "script": [
+            "commands": [
               {
                 "type": "LOG",
                 "text": "[Shrine] You leave the idol untouched."
@@ -400,7 +400,7 @@
   {
     "id": "shrine_spirit",
     "type": "shrine_scenario",
-    "script": [
+    "commands": [
       {
         "title": "Bargaining Spirit",
         "text": "A translucent merchant appears, offering to trade gold for knowledge.",
@@ -411,7 +411,7 @@
         "options": [
           {
             "label": "Pay 5G for knowledge",
-            "script": [
+            "commands": [
               {
                 "amount": -5,
                 "cmd": "GAIN_GOLD"
@@ -424,13 +424,13 @@
           },
           {
             "label": "Attempt to bargain",
-            "script": [
+            "commands": [
               {
                 "type": "WEIGHTED_BRANCH",
                 "outcomes": [
                   {
                     "chance": 0.5,
-                    "script": [
+                    "commands": [
                       {
                         "type": "GIVE_XP",
                         "amount": 4
@@ -439,7 +439,7 @@
                   },
                   {
                     "chance": 0.5,
-                    "script": [
+                    "commands": [
                       {
                         "amount": -2,
                         "cmd": "GAIN_GOLD"
@@ -452,7 +452,7 @@
           },
           {
             "label": "Leave",
-            "script": [
+            "commands": [
               {
                 "type": "LOG",
                 "text": "[Shrine] You refuse the deal."
@@ -467,7 +467,7 @@
   {
     "id": "shrine_haste",
     "type": "shrine_scenario",
-    "script": [
+    "commands": [
       {
         "title": "Trial of Haste",
         "text": "A spectral stopwatch hovers in the air, its ticking echoing in your mind. It offers a challenge: a trial of speed for a reward.",
@@ -478,13 +478,13 @@
         "options": [
           {
             "label": "Accept the trial (high risk, high reward)",
-            "script": [
+            "commands": [
               {
                 "type": "WEIGHTED_BRANCH",
                 "outcomes": [
                   {
                     "chance": 0.4,
-                    "script": [
+                    "commands": [
                       {
                         "type": "GIVE_XP",
                         "amount": 15
@@ -493,7 +493,7 @@
                   },
                   {
                     "chance": 0.6,
-                    "script": [
+                    "commands": [
                       {
                         "type": "DAMAGE_PARTY",
                         "amount": 5
@@ -506,7 +506,7 @@
           },
           {
             "label": "Take a small reward instead",
-            "script": [
+            "commands": [
               {
                 "amount": 10,
                 "cmd": "GAIN_GOLD"
@@ -521,7 +521,7 @@
   {
     "id": "shrine_music_box",
     "type": "shrine_scenario",
-    "script": [
+    "commands": [
       {
         "title": "Forgotten Music Box",
         "text": "A dusty, ornate music box sits on a pedestal. It seems functional.",
@@ -532,7 +532,7 @@
         "options": [
           {
             "label": "Turn the crank",
-            "script": [
+            "commands": [
               {
                 "type": "LOG",
                 "text": "[Shrine] A melancholic melody fills the air."
@@ -553,7 +553,7 @@
           },
           {
             "label": "Leave it alone",
-            "script": [
+            "commands": [
               {
                 "type": "LOG",
                 "text": "[Shrine] You leave the music box silent."

@@ -311,18 +311,30 @@ local function drawBackdrop(sceneData, ctx)
     require("presentation.viewport_3d").draw(session)
 end
 
+-- Every scene declares how it draws (scenes.json `draw`):
+--   "windows" -- rendered entirely from its windows array
+--   "world"   -- a world view (named by `world`) with windows layered on top
+-- The old "no flag = fall back to legacy Lua drawing" rule was purged
+-- 24.07.2026 once the last legacy-drawn scene (town) was deleted and map
+-- became an explicit world scene, so there is no host-side fallback left:
+-- a scene with an unrecognized draw mode is a data bug and says so.
 function scene_host.draw(ctx)
-    -- Declarative drawing is opt-in per scene ("draw": "windows" in
-    -- scenes.json). Scenes without the flag fall back to legacy Lua drawing
-    -- (SPEC S2 fallback rule), so conversions stay independently shippable.
     if #sceneStack == 0 then return false end
     local state = sceneStack[#sceneStack]
     local sceneData = getSceneData(ctx, state.id)
-    if not sceneData or sceneData.draw ~= "windows" then
+    if not sceneData then
         scene_transition.draw()
         return false
     end
-    drawBackdrop(sceneData, ctx)
+    if sceneData.draw == "world" then
+        require("presentation.world_renderer").draw(sceneData.world, ctx)
+    elseif sceneData.draw ~= "windows" then
+        error("scene '" .. tostring(state.id) .. "' has no draw mode "
+            .. "(expected \"windows\" or \"world\", got '"
+            .. tostring(sceneData.draw) .. "')", 0)
+    else
+        drawBackdrop(sceneData, ctx)
+    end
     local window_renderer = require("presentation.window_renderer")
     window_renderer.draw(state, sceneData, ctx)
     scene_transition.draw()

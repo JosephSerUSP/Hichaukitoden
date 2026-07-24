@@ -106,14 +106,9 @@ local function getPortrait(id)
     return ui.resolvePortraitImage(id)
 end
 
-local townBg
 function renderer.init(session)
     renderer.session = session
     ui.init()
-    if love.filesystem.getInfo("assets/locationArt/TownAlencar.png") then
-        townBg = love.graphics.newImage("assets/locationArt/TownAlencar.png")
-        townBg:setFilter("nearest", "nearest")
-    end
     damagePopups = {}
 end
 
@@ -538,31 +533,6 @@ end
 
 
 -- Renders the Town Scene
-function renderer.drawTown(selectedIdx)
-    -- Draw Town Background
-    if townBg then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(townBg, 0, 0, 0, 256/townBg:getWidth(), ui.toPx(18)/townBg:getHeight())
-    else
-        love.graphics.clear(0.1, 0.1, 0.15, 1)
-    end
-    
-    -- Town Options
-    ui.drawPanel(ui.toPx(1), ui.toPx(1), ui.toPx(13), ui.toPx(15))
-    ui.drawString("TOWN SQUARE", ui.toPx(2), ui.toPx(2), {1, 0.85, 0.5, 1})
-    
-    -- Town options are data-driven (system.town.options)
-    local townOptions = (config.town and config.town.options) or {}
-    for i, opt in ipairs(townOptions) do
-        local color = (i == selectedIdx) and {1, 1, 0.5, 1} or {1, 1, 1, 1}
-        local optY = ui.toPx(2) + i * ui.lineHeight
-        if i == selectedIdx then
-            small_battlers.draw("Cursor", ui.toPx(2) + 2, optY, 8)
-        end
-        ui.drawString(opt.label or "???", ui.toPx(2) + 12, optY, color)
-    end
-end
-
 -- Renders the Map Scene
 function renderer.drawMap()
     viewport_3d.draw(renderer.session)

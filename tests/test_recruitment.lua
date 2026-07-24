@@ -150,8 +150,8 @@ sess.currentMapData = {
 -- side-effect commands; at runtime the dialogue host renders the former and
 -- runs the latter through runImmediate. Mirror that split here.
 local angelOptScript = {}
-for _, c in ipairs(angelScript[2].options[1].script) do
-    if not interpreter.INTERACTIVE_IDS[c.cmd or c.type] then
+for _, c in ipairs(angelScript[2].options[1].commands) do
+    if not interpreter.INTERACTIVE_IDS[c.cmd] then
         table.insert(angelOptScript, c)
     end
 end

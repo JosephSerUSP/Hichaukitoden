@@ -36,7 +36,23 @@
         "y": 0,
         "sprite": "assets/sprites/NPC00.png",
         "trigger": "step",
-        "script": [
+        "name": "Gate Guard",
+        "label": "Gate Guard",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed",
+        "pages": [
+          {
+            "sprite": "assets/sprites/NPC10.png",
+            "commands": [
+              {
+                "commonEventId": 33,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ]
+          }
+        ],
+        "commands": [
           {
             "condition": "questStatus:silent_shipment:active",
             "commands": [
@@ -158,22 +174,6 @@
             ],
             "cmd": "CONDITIONAL_BRANCH"
           }
-        ],
-        "name": "Gate Guard",
-        "label": "Gate Guard",
-        "transparent": false,
-        "priority": "same",
-        "spawn": "Fixed",
-        "pages": [
-          {
-            "script": [
-              {
-                "commonEventId": 33,
-                "cmd": "CALL_COMMON_EVENT"
-              }
-            ],
-            "sprite": "assets/sprites/NPC10.png"
-          }
         ]
       },
       {
@@ -182,7 +182,9 @@
         "y": 5,
         "sprite": "assets/sprites/NPC01.png",
         "trigger": "interact",
-        "script": [
+        "name": "Weapon Shop",
+        "label": "Weaponsmith",
+        "commands": [
           {
             "name": "weaponsmith_hub",
             "cmd": "LABEL"
@@ -444,9 +446,7 @@
             ],
             "cmd": "CHOICE"
           }
-        ],
-        "name": "Weapon Shop",
-        "label": "Weaponsmith"
+        ]
       },
       {
         "id": 3,
@@ -456,7 +456,7 @@
         "trigger": "interact",
         "name": "Yukio",
         "label": "Yukio",
-        "script": [
+        "commands": [
           {
             "name": "yukio_hub",
             "cmd": "LABEL"
@@ -528,7 +528,9 @@
         "y": 7,
         "sprite": "assets/sprites/NPC03.png",
         "trigger": "interact",
-        "script": [
+        "name": "Laura",
+        "label": "Laura",
+        "commands": [
           {
             "condition": "questStatus:golden_promise:active",
             "commands": [
@@ -699,9 +701,7 @@
             ],
             "cmd": "CONDITIONAL_BRANCH"
           }
-        ],
-        "name": "Laura",
-        "label": "Laura"
+        ]
       },
       {
         "id": 5,
@@ -709,17 +709,17 @@
         "y": 8,
         "sprite": "assets/sprites/NPC08.png",
         "trigger": "interact",
-        "script": [
-          {
-            "text": "This abandoned house is now your home. It feels safe here.",
-            "cmd": "TEXT"
-          }
-        ],
         "name": "Sign",
         "label": "Town Sign",
         "transparent": true,
         "priority": "same",
-        "spawn": "Fixed"
+        "spawn": "Fixed",
+        "commands": [
+          {
+            "text": "This abandoned house is now your home. It feels safe here.",
+            "cmd": "TEXT"
+          }
+        ]
       },
       {
         "id": 6,
@@ -736,7 +736,9 @@
         "y": 9,
         "sprite": "assets/sprites/NPC02.png",
         "trigger": "interact",
-        "script": [
+        "name": "Alicia",
+        "label": "Pink-haired girl",
+        "commands": [
           {
             "condition": "questStatus:silent_shipment:active",
             "commands": [
@@ -949,9 +951,7 @@
             ],
             "cmd": "CONDITIONAL_BRANCH"
           }
-        ],
-        "name": "Alicia",
-        "label": "Pink-haired girl"
+        ]
       },
       {
         "id": 8,
@@ -959,7 +959,8 @@
         "y": 12,
         "sprite": "assets/sprites/NPC04.png",
         "trigger": "interact",
-        "script": [
+        "name": "Pub Owner",
+        "commands": [
           {
             "name": "pub_main",
             "cmd": "LABEL"
@@ -1461,8 +1462,7 @@
             ],
             "cmd": "CHOICE"
           }
-        ],
-        "name": "Pub Owner"
+        ]
       },
       {
         "id": 9,
@@ -1470,7 +1470,9 @@
         "y": 13,
         "sprite": "assets/sprites/NPC06.png",
         "trigger": "interact",
-        "script": [
+        "name": "Auctioneer",
+        "label": "Auctioneer",
+        "commands": [
           {
             "name": "auctioneer_hub",
             "cmd": "LABEL"
@@ -1537,9 +1539,7 @@
             ],
             "cmd": "CHOICE"
           }
-        ],
-        "name": "Auctioneer",
-        "label": "Auctioneer"
+        ]
       },
       {
         "id": 10,
@@ -1547,14 +1547,14 @@
         "y": 14,
         "sprite": "assets/sprites/NPC05.png",
         "trigger": "interact",
-        "script": [
+        "name": "Temple",
+        "label": "Temple",
+        "commands": [
           {
             "text": "The temple is quiet. You feel a sense of peace.",
             "cmd": "TEXT"
           }
-        ],
-        "name": "Temple",
-        "label": "Temple"
+        ]
       },
       {
         "x": 9,
@@ -1566,7 +1566,8 @@
         "transparent": false,
         "priority": "same",
         "spawn": "Fixed",
-        "script": [
+        "id": 12,
+        "commands": [
           {
             "cmd": "GRANT_XP",
             "target": "summoner",
@@ -1602,8 +1603,7 @@
             ],
             "cmd": "CHOICE"
           }
-        ],
-        "id": 12
+        ]
       }
     ],
     "treasures": [],
@@ -1799,7 +1799,7 @@
         "spawn": "Fixed",
         "sprite": "assets/sprites/NPC11.png",
         "trigger": "interact",
-        "script": [
+        "commands": [
           {
             "text": "You pull the ancient iron lever hidden behind the stone slab...",
             "cmd": "TEXT"
@@ -1824,7 +1824,7 @@
         "spawn": "Fixed",
         "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
         "trigger": "interact",
-        "script": [
+        "commands": [
           {
             "condition": "hasItem:24",
             "commands": [
@@ -1937,7 +1937,7 @@
         "trigger": "interact",
         "name": "Wandering Merchant",
         "label": "Wandering Merchant",
-        "script": [
+        "commands": [
           {
             "name": "wandering_merchant_hub",
             "cmd": "LABEL"
@@ -2083,7 +2083,7 @@
         "trigger": "interact",
         "name": "Daphne",
         "label": "Daphne",
-        "script": [
+        "commands": [
           {
             "name": "daphne_hub",
             "cmd": "LABEL"

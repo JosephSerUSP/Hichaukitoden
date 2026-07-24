@@ -350,7 +350,7 @@ function exploration.generateDungeon(mapData, seed, session)
                     scriptId = ev.scriptId,
                     sprite = ev.sprite,
                     trigger = ev.trigger or "interact",
-                    script = ev.script
+                    commands = ev.commands
                 })
             end
         end
@@ -381,7 +381,7 @@ function exploration.generateDungeon(mapData, seed, session)
                     y = tile.y - 1,
                     sprite = spritePath,
                     trigger = "touch",
-                    script = {
+                    commands = {
                         { cmd = "RECRUIT" }
                     }
                 })
