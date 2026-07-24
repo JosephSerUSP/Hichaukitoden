@@ -1738,6 +1738,16 @@
                            <button class="win98-btn" onclick="removeRecruitFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
                        </div>
                     </fieldset>
+
+                    <fieldset style="flex: 1; display: flex; flex-direction: column;">
+                       <legend>Anchors (Pre-authored Rooms)</legend>
+                       <div style="flex: 1; border: 1px solid var(--win-shadow); background: #fff; overflow-y: auto; height: 120px; padding: 4px;" id="prop-anchors-list"></div>
+                       <div style="display: flex; gap: 4px; margin-top: 6px;">
+                           <button class="win98-btn" onclick="addAnchorToMap()" style="flex: 1; font-size: 10px;">Add Anchor</button>
+                           <button class="win98-btn" onclick="editSelectedAnchor()" style="flex: 1; font-size: 10px;">Edit</button>
+                           <button class="win98-btn" onclick="removeAnchorFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
+                       </div>
+                    </fieldset>
                 </div>
                 
                 <div class="dialog-footer">

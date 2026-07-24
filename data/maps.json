@@ -1704,6 +1704,43 @@
     "depth": 1,
     "music": "dungeon1",
     "image": "DungeonFloors1.png",
+    "anchors": [
+      {
+        "name": "Vault Entry Archway",
+        "x": 1,
+        "y": 1,
+        "allowRandomEvents": true,
+        "layout": [
+          "#####",
+          "#...#",
+          "#...#",
+          "#...#",
+          "##o##"
+        ]
+      },
+      {
+        "name": "Alchemist's Hidden Workshop",
+        "x": 12,
+        "y": 10,
+        "allowRandomEvents": true,
+        "layout": [
+          "######",
+          "#....#",
+          "#....#",
+          "#....#",
+          "#....#",
+          "######"
+        ]
+      }
+    ],
+    "overrides": [
+      {
+        "x": 12,
+        "y": 12,
+        "passable": false,
+        "mutateTo": "o"
+      }
+    ],
     "events": [
       {
         "id": 1,
@@ -1752,6 +1789,67 @@
           0.41,
           1,
           0.4
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Secret Lever",
+        "x": 13,
+        "y": 10,
+        "spawn": "Fixed",
+        "sprite": "assets/sprites/NPC11.png",
+        "trigger": "interact",
+        "script": [
+          {
+            "type": "TEXT",
+            "text": "You pull the ancient iron lever hidden behind the stone slab..."
+          },
+          {
+            "type": "MUTATE_TILE",
+            "x": 12,
+            "y": 12,
+            "to": "o"
+          },
+          {
+            "type": "TEXT",
+            "text": "A heavy stone wall grindingly recedes, revealing a passage into the Alchemist Workshop!"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "name": "Teardrop Crystal Pedestal",
+        "x": 14,
+        "y": 11,
+        "spawn": "Fixed",
+        "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
+        "trigger": "interact",
+        "script": [
+          {
+            "type": "CONDITIONAL_BRANCH",
+            "condition": "hasItem:24",
+            "commands": [
+              {
+                "type": "TEXT",
+                "text": "The stone pedestal is empty now."
+              }
+            ],
+            "elseCommands": [
+              {
+                "type": "TEXT",
+                "text": "Resting on a velvet cushion is a shimmering Teardrop Crystal!"
+              },
+              {
+                "type": "CHANGE_ITEM",
+                "item": "24",
+                "count": 1
+              },
+              {
+                "type": "TEXT",
+                "text": "Acquired Glittering Teardrop! Alicia will be delighted."
+              }
+            ]
+          }
         ]
       }
     ],

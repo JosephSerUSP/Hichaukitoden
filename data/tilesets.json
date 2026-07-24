@@ -25,6 +25,25 @@
                         32
                     ],
                     "weight": 70
+                },
+                {
+                    "id": "dungeon_wall_2",
+                    "role": "base_wall",
+                    "middle": [
+                        1,
+                        0
+                    ],
+                    "leftEdge": [
+                        1,
+                        2,
+                        0
+                    ],
+                    "rightEdge": [
+                        1,
+                        2,
+                        32
+                    ],
+                    "weight": 30
                 }
             ],
             "floors": [
@@ -36,6 +55,16 @@
                         0
                     ],
                     "weight": 70,
+                    "heightOffset": 0
+                },
+                {
+                    "id": "dungeon_floor_2",
+                    "role": "base_floor",
+                    "atlas": [
+                        0,
+                        1
+                    ],
+                    "weight": 30,
                     "heightOffset": 0
                 }
             ],

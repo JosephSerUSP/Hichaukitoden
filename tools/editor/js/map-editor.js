@@ -1057,13 +1057,146 @@
 
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
             mapPropsRecruits = JSON.parse(JSON.stringify(map.recruits || []));
+            mapPropsAnchors = JSON.parse(JSON.stringify(map.anchors || []));
             renderEncountersList(mapPropsEncounters);
             renderRecruitsList(mapPropsRecruits);
+            renderAnchorsList(mapPropsAnchors);
             mapPropsDirty = false;
             document.getElementById('map-properties-modal').classList.add('active');
         }
 
         let mapPropsRecruits = [];
+        let mapPropsAnchors = [];
+
+        function renderAnchorsList(anchors) {
+            const list = document.getElementById('prop-anchors-list');
+            if (!list) return;
+            list.innerHTML = '';
+            (anchors || []).forEach((anc, idx) => {
+                const item = document.createElement('div');
+                item.style.fontSize = '10px';
+                item.style.padding = '2px 4px';
+                item.style.cursor = 'pointer';
+                const ah = (anc.layout || []).length;
+                const aw = ah > 0 ? anc.layout[0].length : 0;
+                item.textContent = `${anc.name || 'Anchor'} (${aw}x${ah} at ${anc.x},${anc.y})`;
+                item.onclick = () => {
+                    document.querySelectorAll('#prop-anchors-list > div').forEach(d => d.style.background = '');
+                    item.style.background = 'var(--win-blue)';
+                    item.style.color = '#fff';
+                    list.dataset.selectedIdx = idx;
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function openAnchorDialog(anchorToEdit, onSave) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;';
+            const box = document.createElement('div');
+            box.style.cssText = 'min-width:320px;padding:10px;background:var(--win-gray);border:2px solid;'
+                + 'border-color:var(--win-white) var(--win-shadow) var(--win-shadow) var(--win-white);'
+                + 'display:flex;flex-direction:column;gap:8px;';
+
+            const title = document.createElement('div');
+            title.textContent = anchorToEdit ? 'Edit Pre-authored Anchor' : 'Add Pre-authored Anchor Room';
+            title.style.cssText = 'font-weight:bold;';
+            box.appendChild(title);
+
+            const nameRow = document.createElement('div');
+            nameRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            nameRow.appendChild(Object.assign(document.createElement('label'), { textContent: 'Name:', style: 'font-size:10px;min-width:60px;' }));
+            const nameInput = Object.assign(document.createElement('input'), { className: 'win98-input', value: anchorToEdit ? (anchorToEdit.name || '') : 'Quest Room', style: 'flex:1;' });
+            nameRow.appendChild(nameInput);
+            box.appendChild(nameRow);
+
+            const posRow = document.createElement('div');
+            posRow.style.cssText = 'display:flex;gap:10px;';
+            const xDiv = document.createElement('div'); xDiv.style.cssText = 'display:flex;align-items:center;gap:4px;flex:1;';
+            xDiv.appendChild(Object.assign(document.createElement('label'), { textContent: 'X:', style: 'font-size:10px;' }));
+            const xInput = Object.assign(document.createElement('input'), { type: 'number', className: 'win98-input', value: anchorToEdit ? anchorToEdit.x : 2, style: 'flex:1;' });
+            xDiv.appendChild(xInput);
+            const yDiv = document.createElement('div'); yDiv.style.cssText = 'display:flex;align-items:center;gap:4px;flex:1;';
+            yDiv.appendChild(Object.assign(document.createElement('label'), { textContent: 'Y:', style: 'font-size:10px;' }));
+            const yInput = Object.assign(document.createElement('input'), { type: 'number', className: 'win98-input', value: anchorToEdit ? anchorToEdit.y : 2, style: 'flex:1;' });
+            yDiv.appendChild(yInput);
+            posRow.appendChild(xDiv); posRow.appendChild(yDiv);
+            box.appendChild(posRow);
+
+            const allowEvRow = document.createElement('div');
+            allowEvRow.style.cssText = 'display:flex;align-items:center;gap:4px;';
+            const allowChk = Object.assign(document.createElement('input'), { type: 'checkbox', checked: anchorToEdit ? (anchorToEdit.allowRandomEvents !== false) : true });
+            allowEvRow.appendChild(allowChk);
+            allowEvRow.appendChild(Object.assign(document.createElement('label'), { textContent: 'Allow Random Spawns inside anchor', style: 'font-size:10px;' }));
+            box.appendChild(allowEvRow);
+
+            const layoutLabel = Object.assign(document.createElement('label'), { textContent: 'Layout Grid (#=wall, .=floor, o=opening):', style: 'font-size:10px;' });
+            box.appendChild(layoutLabel);
+            const layoutTextarea = Object.assign(document.createElement('textarea'), { className: 'win98-input', rows: 6, style: 'font-family:monospace;font-size:11px;width:100%;' });
+            layoutTextarea.value = anchorToEdit ? (anchorToEdit.layout || []).join('\n') : "#####\n#...#\n#...#\n#...#\n##o##";
+            box.appendChild(layoutTextarea);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:4px;';
+            const cancelBtn = Object.assign(document.createElement('button'), { className: 'win98-btn', textContent: 'Cancel', onclick: () => overlay.remove() });
+            const okBtn = Object.assign(document.createElement('button'), {
+                className: 'win98-btn win98-btn-success', textContent: 'Save Anchor',
+                onclick: () => {
+                    const lines = layoutTextarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    if (!lines.length) { showToast('Anchor layout cannot be empty.'); return; }
+                    const anc = {
+                        name: nameInput.value.trim() || 'Anchor',
+                        x: parseInt(xInput.value) || 0,
+                        y: parseInt(yInput.value) || 0,
+                        allowRandomEvents: allowChk.checked,
+                        layout: lines
+                    };
+                    onSave(anc);
+                    overlay.remove();
+                }
+            });
+            btnRow.appendChild(cancelBtn); btnRow.appendChild(okBtn);
+            box.appendChild(btnRow);
+
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+        }
+
+        function addAnchorToMap() {
+            openAnchorDialog(null, (anc) => {
+                mapPropsAnchors.push(anc);
+                mapPropsDirty = true;
+                renderAnchorsList(mapPropsAnchors);
+            });
+        }
+
+        function editSelectedAnchor() {
+            const list = document.getElementById('prop-anchors-list');
+            if (!list) return;
+            const idx = parseInt(list.dataset.selectedIdx);
+            if (!isNaN(idx) && mapPropsAnchors[idx]) {
+                openAnchorDialog(mapPropsAnchors[idx], (anc) => {
+                    mapPropsAnchors[idx] = anc;
+                    mapPropsDirty = true;
+                    renderAnchorsList(mapPropsAnchors);
+                });
+            } else {
+                showToast('Select an anchor from the list to edit.');
+            }
+        }
+
+        function removeAnchorFromMap() {
+            const list = document.getElementById('prop-anchors-list');
+            if (!list) return;
+            const idx = parseInt(list.dataset.selectedIdx);
+            if (!isNaN(idx) && mapPropsAnchors[idx] !== undefined) {
+                mapPropsAnchors.splice(idx, 1);
+                delete list.dataset.selectedIdx;
+                mapPropsDirty = true;
+                renderAnchorsList(mapPropsAnchors);
+            }
+        }
 
         function renderRecruitsList(recruits) {
             const list = document.getElementById('prop-recruits-list');
@@ -1290,6 +1423,7 @@
             map.encounterSteps = newSteps;
             map.encounters = mapPropsEncounters;
             map.recruits = mapPropsRecruits;
+            map.anchors = mapPropsAnchors;
 
             const rateRaw = document.getElementById('prop-map-enc-rate').value;
             if (rateRaw === '') {
