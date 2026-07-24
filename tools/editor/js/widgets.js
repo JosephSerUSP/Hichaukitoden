@@ -1570,6 +1570,10 @@
             formPanel.innerHTML = '';
             formPanel.style.display = 'block'; // Reset layout
 
+            // Host for the "{ } JSON" toggle button; set by whichever branch
+            // builds this tab's header bar (actors uses its own hero header).
+            let headerHost = null;
+
             if (activeDbTab !== 'actors') {
                 const header = document.createElement('div');
                 header.style.fontWeight = 'bold';
@@ -1579,6 +1583,7 @@
                 header.style.paddingBottom = '4px';
                 header.textContent = `General Settings - ${item.name || item.id}`;
                 formPanel.appendChild(header);
+                headerHost = header;
             }
 
             if (activeDbTab === 'commonEvents') {
@@ -1983,6 +1988,7 @@
                 heroHeader.appendChild(flagsWrap);
 
                 formPanel.appendChild(heroHeader);
+                headerHost = heroHeader;
 
                 // --- TOP SUB-PAGE TAB STRIP ---
                 const subTabStrip = document.createElement('div');
@@ -2188,7 +2194,7 @@
                 }
             })();
             if (jsonTarget) {
-                attachJsonToggle(header, formPanel, jsonTarget, () => {
+                attachJsonToggle(headerHost || formPanel, formPanel, jsonTarget, () => {
                     initDatabaseEditor();
                 });
                 if (activeDbTab !== 'terms' && activeDbTab !== 'system') {
