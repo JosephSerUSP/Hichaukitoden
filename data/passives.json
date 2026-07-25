@@ -265,5 +265,18 @@
         "value": 1
       }
     ]
+  },
+  "artisan": {
+    "id": "artisan",
+    "name": "Artisan",
+    "description": "Hands that know the work.",
+    "effect": "Increases Item Creation yield by 25%.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "CRAFT_YIELD_RATE",
+        "value": 0.25
+      }
+    ]
   }
 }

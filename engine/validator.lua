@@ -694,7 +694,15 @@ validator.run = function(loader)
                         -- Scene-side aliases (crafting scenes read i1/i2/crafter).
                         i1 = mockItemView1,
                         i2 = mockItemView2,
-                        crafter = mockCrafter,
+                        -- At runtime `crafter` is a formula.battlerView, which
+                        -- carries generic `.trait` access; the raw Battler used
+                        -- here does not, so a yield formula reading
+                        -- crafter.trait.<CODE> failed to compile against a mock
+                        -- that was simply the wrong shape. Layer trait over the
+                        -- Battler rather than replacing it, so every real field
+                        -- stays reachable.
+                        crafter = setmetatable({ trait = mockTraits() },
+                            { __index = mockCrafter or {} }),
                         alpha = 0.5,
                         S = 10
         }

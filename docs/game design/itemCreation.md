@@ -31,6 +31,13 @@ it has no evolution to grow into, and MDF 22 makes it the best tinker on the
 roster — ahead of Crimson Lord, a creature with more than twice its battle
 total. Recruiting it is a crafting decision, not a combat one.
 
+Aptitude can also come from what a creature *is* rather than its stat line:
+the **`CRAFT_YIELD_RATE`** trait scales the yield score, so a passive can make a
+creature a better crafter without touching a single battle stat. Candle carries
+`artisan` (+25%). The yield formula reads it off the crafter as
+`crafter.trait.CRAFT_YIELD_RATE`, which works for any registered code through
+`formula.battlerView`'s generic trait access — no per-trait engine plumbing.
+
 Menu flow: a creature's context menu on the map → Item Creation. The creature is
 already chosen by the time the scene opens, and its single discipline follows
 from it, so the scene opens directly on ingredient selection — there is no
@@ -100,12 +107,10 @@ the difficulty dial for the whole progression curve.
 
 ## Open work
 
-- **Crafting-related traits/passives** are the intended way to give a creature
-  crafting aptitude independent of its battle stats — the trait machinery
-  already does this shape for `SACRIFICE_EXP_RATE`, so a craft-yield trait code
-  summed into the yield formula would follow the same pattern. Deliberately
-  *not* solved with a new per-actor "aptitude" number: the existing levers
-  (stat shape, evolution dead-ends, negative traits) already carry that weight.
+- More crafting passives. `CRAFT_YIELD_RATE` exists and `artisan` (+25%, on
+  Candle) is the only holder; the obvious companions are a *negative* rate for
+  creatures that are all thumbs, and discipline-conditional variants once
+  trait conditions can test a discipline.
 - Only one promotion key exists for ~5 promotion lines.
 - `evolutions` entries require a `level` threshold, so a purely item-gated
   promotion path needs a dummy `level: 1`; and cost is the only gate (no

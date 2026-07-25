@@ -34,7 +34,7 @@
     ],
     "config": {
       "alpha": 0.5,
-      "yieldFormula": "floor((ingredient1.meta.potency + ingredient2.meta.potency) / 2) + floor(alpha * S)",
+      "yieldFormula": "(floor((ingredient1.meta.potency + ingredient2.meta.potency) / 2) + floor(alpha * S)) * (1 + crafter.trait.CRAFT_YIELD_RATE)",
       "penaltyFormula": "((ingredient1.meta.craftElement ~= ingredient2.meta.craftElement and ingredient1.meta.craftElement ~= '' and ingredient2.meta.craftElement ~= '') and 15 or 0) + (S < (ingredient1.meta.tier + ingredient2.meta.tier) * 6 and 20 or 0)",
       "anomalyFormula": "random() < 0.05 and 1.5 or 1.0",
       "brackets": [

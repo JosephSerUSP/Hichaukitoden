@@ -1994,6 +1994,12 @@
       "label": "XP Rate +",
       "usesDataId": false,
       "description": "Multiplies experience gained (0.5 = +50%)."
+    },
+    {
+      "code": "CRAFT_YIELD_RATE",
+      "label": "Craft Yield +",
+      "usesDataId": false,
+      "description": "Multiplies Item Creation yield score (0.25 = +25%)."
     }
   ],
   "windowLayout": {

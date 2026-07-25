@@ -1277,7 +1277,8 @@
     "smallBattler": "candle",
     "passives": [
       "nightVision",
-      "recoveryXpBonus"
+      "recoveryXpBonus",
+      "artisan"
     ],
     "elements": [
       "Red",
