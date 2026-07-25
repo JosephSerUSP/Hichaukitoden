@@ -878,7 +878,7 @@ end
 handlers.RECRUIT_ACTOR = function(cmd, ctx)
     local session = ctx.session
     if not session then return end
-    local actorId = cmd.actorId or cmd.id
+    local actorId = cmd.actorId
     local level = cmd.level
     if not actorId then return end
 

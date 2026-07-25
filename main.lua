@@ -978,7 +978,7 @@ local function runEventCommands(eventTarget, commands)
     -- If this is a RECRUIT event, compile the actor's recruitment script
     local cType = commands and #commands == 1 and (commands[1].type or commands[1].cmd)
     if cType and (cType == "RECRUIT" or cType == "recruit" or cType == "RECRUIT_ACTOR") then
-        local actorId = (activeEv and activeEv.actorId) or (commands[1] and (commands[1].actorId or commands[1].id))
+        local actorId = (activeEv and activeEv.actorId) or (commands[1] and commands[1].actorId)
         if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
             local recruits = activeSession.currentMapData.recruits
             if #recruits > 0 then
