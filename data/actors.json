@@ -937,7 +937,8 @@
     "spriteKey": "wisp",
     "smallBattler": "wisp",
     "passives": [
-      "etherealBody"
+      "etherealBody",
+      "moveHeal"
     ],
     "elements": [
       "Blue",
@@ -1259,7 +1260,8 @@
     "spriteKey": "candle",
     "smallBattler": "candle",
     "passives": [
-      "nightVision"
+      "nightVision",
+      "recoveryXpBonus"
     ],
     "elements": [
       "Red",
@@ -1358,7 +1360,9 @@
       "mxp": 4
     },
     "growthMultiplier": 1,
-    "passives": []
+    "passives": [
+      "battleStartDamage"
+    ]
   },
   {
     "id": 22,

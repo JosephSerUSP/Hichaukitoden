@@ -17,7 +17,7 @@ function readJson(rel) {
 // generated). The generator copies ALL of data/ into the campaign dir first,
 // then overwrites only the content-layer files stage by stage.
 const CONTENT_FILES = ['actors.json', 'items.json', 'quests.json', 'maps.json',
-    'shops.json', 'events.json', 'commonEvents.json'];
+    'shops.json', 'commonEvents.json'];
 
 function commandRegistry() {
     const eng = readJson('data/engine.json');

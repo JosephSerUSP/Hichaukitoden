@@ -280,8 +280,72 @@ function Battle:buildTurnQueue(collectedActions)
     table.sort(queue, function(a, b)
         return a.speed > b.speed
     end)
-    
+
+    self:applyFirstStrikes(queue)
+
     return queue
+end
+
+-- First strike (INITIATIVE) and its counter (REAR_GUARD), 24.07.2026.
+-- A battler carrying INITIATIVE rolls its rate (0.25 = 25% for the `initiative`
+-- passive) for the right to act before the whole speed order this round.
+-- REAR_GUARD negates it: a side holding any REAR_GUARD stops the OPPOSING side
+-- from first-striking at all. Symmetric by design -- the `rearGuard` passive is
+-- described party-side ("negates enemy first strikes"), but creatures appear on
+-- both sides of a battle, so the rule reads off traits rather than allegiance.
+--
+-- RNG discipline: the roll happens ONLY when an eligible carrier exists, so a
+-- battle with no INITIATIVE in it consumes no randomness and the golden battle
+-- log (G2) stays byte-identical.
+function Battle:applyFirstStrikes(queue)
+    local traits = require("engine.traits")
+    local session = self.session
+
+    local function guardOf(list)
+        local sum = 0
+        for _, b in ipairs(list or {}) do
+            if b and not b:isDead() then
+                sum = sum + traits.getRate(b, "REAR_GUARD", session)
+            end
+        end
+        return sum
+    end
+
+    local allyIndex = {}
+    for _, a in ipairs(self.allies or {}) do allyIndex[a] = true end
+    local allyGuard, enemyGuard = guardOf(self.allies), guardOf(self.enemies)
+
+    -- Collect eligible carriers first: no carrier means no roll at all.
+    local eligible = {}
+    for _, turn in ipairs(queue) do
+        local rate = traits.getRate(turn.actor, "INITIATIVE", session)
+        if rate > 0 then
+            local blockedBy = allyIndex[turn.actor] and enemyGuard or allyGuard
+            if blockedBy <= 0 then
+                table.insert(eligible, { turn = turn, rate = rate })
+            end
+        end
+    end
+    if #eligible == 0 then return end
+
+    local anyWon = false
+    for _, cand in ipairs(eligible) do
+        if math.random() < cand.rate then
+            cand.turn.firstStrike = true
+            anyWon = true
+        end
+    end
+    if not anyWon then return end
+
+    -- Stable partition: winners move ahead of everyone, each group keeping the
+    -- speed order already established above.
+    local front, back = {}, {}
+    for _, turn in ipairs(queue) do
+        table.insert(turn.firstStrike and front or back, turn)
+    end
+    for i = #queue, 1, -1 do queue[i] = nil end
+    for _, turn in ipairs(front) do table.insert(queue, turn) end
+    for _, turn in ipairs(back) do table.insert(queue, turn) end
 end
 
 function Battle:executeTurn(turn, roundEvents)

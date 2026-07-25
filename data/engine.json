@@ -93,8 +93,12 @@
       "description": "Sum of party max HP."
     },
     {
-      "token": "party.fleeBonus",
-      "description": "Sum of FLEE_CHANCE_BONUS trait rates over living members."
+      "token": "party.trait.<CODE>",
+      "description": "Sum of any registered trait code's rate over living party members (e.g. party.trait.FLEE_CHANCE_BONUS, party.trait.GOLD_DIGGER)."
+    },
+    {
+      "token": "a.trait.<CODE>",
+      "description": "A battler's rate for any registered trait code (works on a/b/target/ally/enemy, e.g. ally.trait.MOVE_HEAL)."
     },
     {
       "token": "enemies.size",
@@ -225,6 +229,26 @@
       ],
       "type": "string",
       "description": "Crafting pool category (blacksmith/tinker/alchemy/cooking)"
+    },
+    {
+      "key": "detect",
+      "appliesTo": [
+        "mapEvents",
+        "commonEvents",
+        "overrides"
+      ],
+      "type": "string",
+      "description": "Marks this event/cell as detectable: \"trap\" (checked against SEE_TRAPS) or \"secret\" (SEE_WALLS). Affects perception only -- a trap is still an ordinary event."
+    },
+    {
+      "key": "detectLevel",
+      "appliesTo": [
+        "mapEvents",
+        "commonEvents",
+        "overrides"
+      ],
+      "type": "number",
+      "description": "Difficulty of noticing this (default 1). The party's best sense rate must be >= this value."
     }
   ],
   "scripting": {
@@ -1548,6 +1572,39 @@
       ],
       "interactive": false,
       "description": "Grants the active quest's rewards (XP, Gold, Items, Flags)."
+    },
+    {
+      "id": "ERASE_EVENT",
+      "category": "Map",
+      "label": "Erase Event",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Removes the active map event from the current floor (a looted chest, a recruited creature)."
+    },
+    {
+      "id": "RECRUIT_ACTOR",
+      "category": "Progression",
+      "label": "Recruit Creature",
+      "params": [
+        {
+          "key": "actorId",
+          "type": "actor"
+        },
+        {
+          "key": "level",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Adds the actor to the party, or the reserve when the active slots are full."
     }
   ],
   "elementRules": {
@@ -1711,29 +1768,11 @@
     {
       "id": "recruit_egg",
       "label": "Recruit Egg",
-      "params": [],
-      "description": "Reserved for the recruiting system."
-    },
-    {
-      "id": "RECRUIT",
-      "label": "Recruit Monster",
-      "params": [],
-      "description": "Triggers dynamic creature recruitment for the floor or specified actor."
-    },
-    {
-      "id": "RECRUIT_ACTOR",
-      "label": "Recruit Actor",
       "params": [
-        "actorId",
+        "value",
         "level"
       ],
-      "description": "Adds specified actor to the party or reserve."
-    },
-    {
-      "id": "ERASE_EVENT",
-      "label": "Erase Event",
-      "params": [],
-      "description": "Removes the active map event from the current floor."
+      "description": "Recruits actor `value` into the party (reserve when the active slots are full); `level` optional. Used by hatching items like the Mystic Egg."
     }
   ],
   "traitCodes": [

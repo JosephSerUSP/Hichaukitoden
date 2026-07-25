@@ -11,6 +11,31 @@ scenes now windows-drawn, Summoner economy live).
 
 ---
 
+## 0. Why this engine is shaped this way
+
+**Eventing is the backbone.** This engine is a deliberate recreation of building
+whole systems out of RPG Maker 2003-style event blocks -- by an author with 20+
+years in that engine -- except the blocks are far more powerful and **the engine
+itself is made of them**. Battle phases (`data/flows.json`), scene logic
+(`data/scenes.json` hooks), recovery sites and quest handling
+(`data/commonEvents.json`), map events and traps are all command lists an author
+can open and change without touching Lua.
+
+Everything in Sec.1 follows from that goal rather than the reverse:
+
+- A feature belongs in the command language first. If it can be a command list,
+  that IS the implementation -- not a prototype of one.
+- When Lua is unavoidable, add a **reusable primitive** data can compose (a
+  registry command, a ref/scope, a formula token), never a one-off special case.
+  `FOR_EACH`'s `neighbor` ref serves any adjacency trait; `x.trait.<CODE>` made
+  every trait readable from data at once.
+- Don't build a bespoke mechanism where an event already suffices: traps are
+  plain events with a step trigger, so there is no "trap system" to maintain.
+- Widening the command language lifts every author at once -- including the
+  campaign generator, which emits the same commands.
+
+---
+
 ## 1. Architecture
 
 ### 1.1 Data drives the engine

@@ -32,10 +32,10 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 ## Registry (data/engine.json)
 
-- commands: **64**
-- effect types: **15**
+- commands: **66**
+- effect types: **12**
 - trait codes: **21**
-- meta keys: **5** (tier, density, potency, craftElement, craftKind)
+- meta keys: **7** (tier, density, potency, craftElement, craftKind, detect, detectLevel)
 
 ### Registry entries with no implementation
 
@@ -49,9 +49,9 @@ are what's left:
 - **unused** -- declared in the registry and never referenced anywhere.
   Harmless, but dead weight the editor still offers as a choice.
 
-- trait codes (assigned): `BATTLE_START_DAMAGE`, `GOLD_DIGGER`, `INITIATIVE`, `MOVE_HEAL`, `PARASITE`, `REAR_GUARD`, `RECOVERY_XP_BONUS`, `SEE_TRAPS`, `SEE_WALLS`, `SYMBIOSIS`
+- trait codes (assigned): none
 - trait codes (unused): none
-- effect types (assigned): `recruit_egg`
+- effect types (assigned): none
 - effect types (unused): none
 - commands (assigned): none
 - commands (unused): none
@@ -60,6 +60,7 @@ are what's left:
 
 - `_test`: `scene`, `script_escape`
 - `battle`: `battle_start`, `defeat`, `encounter_check`, `escaped`, `flee_attempt`, `round_end`, `victory`
+- `exploration`: `step`
 - `quest`: `complete`, `offer`
 
 ## Content inventory
@@ -68,7 +69,7 @@ are what's left:
 - item-creation disciplines across the roster: alchemyx22
 - items: **46** (consumablex12, equipmentx23, junkx7, questx4)
 - skills: **15**, passives: **20**, states: **7**, roles: **13**, elements: **7**
-- maps: **7**, events: **25**, common events: **11**, shops: **6**, quests: **4**
+- maps: **7**, common events: **11**, shops: **6**, quests: **4**
 - animations: **27**, tilesets: **9**
 
 ## Notes for agents

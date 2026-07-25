@@ -83,7 +83,20 @@ function formula.battlerView(battler, session)
         -- exposed so formulas/conditions can read it ("front" until a
         -- battle assigns rows by slot).
         row = battler.row or "front",
-        meta = battler.meta or {}
+        meta = battler.meta or {},
+        -- Generic trait access: `a.trait.GOLD_DIGGER`, `ally.trait.MOVE_HEAL`,
+        -- ... resolves to traits.getRate for ANY registered code, so a new
+        -- trait becomes usable from data (flows, scene hooks, item/skill
+        -- formulas) with no new Lua. Replaces the pattern of hand-adding one
+        -- field per trait (which is how FLEE_CHANCE_BONUS ended up hardcoded
+        -- in groupView while ten other codes stayed unreachable and dead).
+        -- Lazy via __index: computing all ~21 codes per view build would run
+        -- getActiveObjects once per code on every formula evaluation.
+        trait = setmetatable({}, {
+            __index = function(_, code)
+                return traits.getRate(battler, code, session)
+            end
+        })
     }
 end
 
@@ -99,7 +112,8 @@ end
 -- Aggregate view over a list of battlers (party or enemies).
 function formula.groupView(list, session)
     list = list or {}
-    local count, alive, totalLevel, totalMaxHp, fleeBonus = 0, 0, 0, 0, 0
+    local count, alive, totalLevel, totalMaxHp = 0, 0, 0, 0
+    local living = {}
     -- Use numeric for loop (1 to 4 for party, #list for others) instead of
     -- ipairs, so sparse arrays (e.g. party[1] removed, leaving a nil gap)
     -- still count every non-nil member. ipairs stops at the first nil, which
@@ -114,8 +128,7 @@ function formula.groupView(list, session)
             totalMaxHp = totalMaxHp + (traits.getParam(b, "maxHp", session) or 1)
             if not (b.isDead and b:isDead()) and (b.hp or 0) > 0 then
                 alive = alive + 1
-                -- Living members only, matching the legacy flee roll in battle.lua
-                fleeBonus = fleeBonus + traits.getRate(b, "FLEE_CHANCE_BONUS", session)
+                table.insert(living, b)
             end
         end
     end
@@ -126,7 +139,20 @@ function formula.groupView(list, session)
         avgLevel = count > 0 and totalLevel / count or 0,
         totalLevel = totalLevel,
         totalMaxHp = totalMaxHp,
-        fleeBonus = fleeBonus,
+        -- Group trait access: `party.trait.FLEE_CHANCE_BONUS` sums a code across
+        -- LIVING members (the flee roll's long-standing rule). Generic for the
+        -- same reason as battlerView.trait: the old hand-rolled `fleeBonus`
+        -- field was the ONLY trait a formula could reach, so the other codes
+        -- stayed unreachable from data -- and several of them stayed dead.
+        trait = setmetatable({}, {
+            __index = function(_, code)
+                local sum = 0
+                for _, b in ipairs(living) do
+                    sum = sum + traits.getRate(b, code, session)
+                end
+                return sum
+            end
+        }),
     }
 end
 

@@ -45,6 +45,32 @@ full wasted planning pass.
 - `[formula] error in 'os.time()'` during G1 is the sandbox negative test, not a
   failure.
 
+## The core philosophy: eventing is the backbone
+
+This project is built by an RPG Maker 2003 developer of 20+ years, and it is a
+deliberate recreation of that way of working: **entire systems assembled out of
+event blocks.** The difference is that here the event blocks are far more
+powerful, and **the engine itself is made of them** — battle phases, scene
+logic, recovery sites, quest handling and trap behavior are all command lists in
+`data/*.json` that an author can open and modify without touching Lua.
+
+That is the *reason* for the data-driven architecture below, not a side effect of
+it. Practical consequences an agent must internalize:
+
+- **Prefer expressing a feature as event commands over writing Lua.** If a
+  mechanic can be a command list in a flow, scene hook, or common event, that is
+  the correct implementation — not a shortcut. Several traits are implemented
+  entirely in data (see `data/flows.json`).
+- **When Lua is needed, add a reusable primitive, not a special case.** The right
+  move is a new registry command / a new ref or scope / a new formula token that
+  data can then compose — e.g. `FOR_EACH`'s `neighbor` ref serves any adjacency
+  trait, and `x.trait.<CODE>` made every trait readable from data at once.
+- **Don't build a bespoke mechanism where an event can already do the job.**
+  Traps are ordinary events with a step trigger — anything an event can do, a
+  trap can do — so there is no separate "trap system" to maintain.
+- Power belongs in the command language. Widening it lifts every author,
+  including the campaign generator, which emits the same commands.
+
 ## Non-negotiables
 
 - **Data drives the engine.** Content lives in `data/*.json`; Lua never

@@ -10,6 +10,7 @@ local battle_layout = require("presentation.battle_layout")
 local actor_status = require("presentation.actor_status")
 local animation_player = require("presentation.animation_player")
 local gradient_shader  = require("presentation.gradient_shader")
+local detection = require("engine.detection")
 
 local renderer = {}
 
@@ -368,6 +369,14 @@ end
 --
 -- A tile includes its black gap pixel (tileSize px per tile), so the panel is
 -- sized as n * tileSize + 2 — exactly 1 px of background on each side.
+-- Minimap colours for detected traps/secrets. Distinct from event colours so a
+-- sensed danger never reads as an ordinary interactable.
+local DETECT_COLORS = {
+    trap    = { 1, 0.35, 0.1, 1 },   -- warning orange
+    secret  = { 0.5, 0.9, 1, 1 },    -- pale cyan
+    default = { 1, 1, 0.4, 1 },
+}
+
 local function drawMinimap(x, y, radius)
     local session = renderer.session
     local grid = session.mapGrid
@@ -473,9 +482,37 @@ local function drawMinimap(x, y, radius)
             local dx = gx - centreTileX
             local dy = gy - centreTileY
 
+            -- Detected traps/secrets (SEE_TRAPS / SEE_WALLS) show up even on
+            -- tiles the party has never walked, which is the whole point of a
+            -- creature's senses: they mark danger AHEAD. Resolution lives in
+            -- engine/detection.lua; this only picks the colour.
+            local detected = nil
+            if gx >= 1 and gx <= gridW and gy >= 1 and gy <= gridH
+                and session.currentMapData then
+                for _, ev in ipairs(session.currentMapData.events or {}) do
+                    if ev.x == gx - 1 and ev.y == gy - 1 and detection.isRevealed(session, ev) then
+                        detected = ev.meta.detect
+                        break
+                    end
+                end
+                if not detected then
+                    for _, ov in ipairs(session.currentMapData.overrides or {}) do
+                        if ov.x == gx - 1 and ov.y == gy - 1 and detection.isRevealed(session, ov) then
+                            detected = ov.meta.detect
+                            break
+                        end
+                    end
+                end
+            end
+
             if gx < 1 or gx > gridW or gy < 1 or gy > gridH then
                 -- Beyond map limits: draw as wall
                 love.graphics.setColor(0.2, 0.2, 0.2, 1)
+                love.graphics.rectangle("fill", dx * tileSize, dy * tileSize, tileSize - 1, tileSize - 1)
+            elseif detected and not session.visitedGrid[gy][gx] then
+                -- Sensed but unvisited: draw the marker on otherwise-unknown map.
+                local c = DETECT_COLORS[detected] or DETECT_COLORS.default
+                love.graphics.setColor(c[1], c[2], c[3], c[4] or 1)
                 love.graphics.rectangle("fill", dx * tileSize, dy * tileSize, tileSize - 1, tileSize - 1)
             elseif session.visitedGrid[gy][gx] then
                 local cell = grid[gy][gx]
@@ -491,7 +528,12 @@ local function drawMinimap(x, y, radius)
                     end
                 end
 
-                if mapEvent then
+                if detected then
+                    -- A sensed trap/secret keeps its detection colour on
+                    -- visited tiles too, so it stays legible after you pass it.
+                    local c = DETECT_COLORS[detected] or DETECT_COLORS.default
+                    love.graphics.setColor(c[1], c[2], c[3], c[4] or 1)
+                elseif mapEvent then
                     local evColor = mapEvent.minimapColor
                     if not evColor and mapEvent.scriptId and session.loader and session.loader.commonEvents then
                         local ce = session.loader.commonEvents[tostring(mapEvent.scriptId)]

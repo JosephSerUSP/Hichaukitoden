@@ -218,6 +218,31 @@ function effects.apply(effectData, a, b, session, context)
             })
         end
 
+    -- Hatching item (the Mystic Egg): recruits `value` as a new creature into
+    -- the party, or the reserve when the four active slots are full. The name
+    -- is historical -- it is a plain "recruit this actor" effect, `level`
+    -- optional (defaults to the actor's own).
+    elseif effectData.type == "recruit_egg" then
+        local actorId = effectData.value or effectData.actorId
+        local battler, slotType = session:recruitActor(actorId, effectData.level)
+        if not battler then
+            table.insert(events, {
+                type = "text",
+                text = "[effect] recruit_egg: cannot recruit '" .. tostring(actorId)
+                    .. "' (" .. tostring(slotType) .. ")"
+            })
+        else
+            table.insert(events, {
+                type = "recruit",
+                target = battler,
+                slot = slotType
+            })
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.hatched", "- {0} joins you!", battler.name)
+            })
+        end
+
     -- Restores the summoner's shared MP pool (e.g. pub drinks)
     elseif effectData.type == "mp_heal" then
         local healVal = math.max(0, math.min(session.maxMp - session.mp, effectData.value or 0))

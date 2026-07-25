@@ -56,7 +56,29 @@
     ],
     "commands": [
       {
+        "cmd": "COMMENT",
+        "text": "Recovery site. RECOVERY_XP_BONUS grants its carriers bonus XP for resting here (Scholar-type passives); creatures without the trait get 0 and no message."
+      },
+      {
         "cmd": "RECOVER_PARTY"
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "IF",
+            "condition": "ally.trait.RECOVERY_XP_BONUS > 0",
+            "then": [
+              {
+                "cmd": "GRANT_XP",
+                "target": "ally",
+                "amount": "ally.trait.RECOVERY_XP_BONUS"
+              }
+            ]
+          }
+        ]
       },
       {
         "text": "The soothing light restores your party's HP and MP!",

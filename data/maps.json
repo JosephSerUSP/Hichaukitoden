@@ -1738,7 +1738,11 @@
         "x": 12,
         "y": 12,
         "passable": false,
-        "mutateTo": "o"
+        "mutateTo": "o",
+        "meta": {
+          "detect": "secret",
+          "detectLevel": 1
+        }
       }
     ],
     "events": [
@@ -1849,6 +1853,164 @@
               }
             ],
             "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "x": 11,
+        "y": 10,
+        "trigger": "step",
+        "label": "Spike Pit",
+        "minimapColor": [
+          1,
+          0.35,
+          0.1
+        ],
+        "meta": {
+          "detect": "trap",
+          "detectLevel": 1
+        },
+        "commands": [
+          {
+            "cmd": "TEXT",
+            "text": "Rusted spikes snap up from the floor!"
+          },
+          {
+            "cmd": "FOR_EACH",
+            "scope": "living_allies",
+            "as": "ally",
+            "do": [
+              {
+                "cmd": "DAMAGE",
+                "target": "ally",
+                "amount": "4 + session.floor",
+                "pierce": true,
+                "minHp": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "x": 5,
+        "y": 6,
+        "trigger": "step",
+        "label": "Seeping Gas",
+        "minimapColor": [
+          1,
+          0.35,
+          0.1
+        ],
+        "meta": {
+          "detect": "trap",
+          "detectLevel": 2
+        },
+        "commands": [
+          {
+            "cmd": "TEXT",
+            "text": "A sweet, rotten smell rises from the flagstones..."
+          },
+          {
+            "cmd": "FOR_EACH",
+            "scope": "living_allies",
+            "as": "ally",
+            "do": [
+              {
+                "cmd": "ADD_STATE",
+                "target": "ally",
+                "state": "poison",
+                "duration": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "x": 9,
+        "y": 10,
+        "trigger": "interact",
+        "label": "Bound Chest",
+        "minimapColor": [
+          1,
+          0.8,
+          0.2
+        ],
+        "meta": {
+          "detect": "trap",
+          "detectLevel": 1
+        },
+        "commands": [
+          {
+            "cmd": "CONDITIONAL_BRANCH",
+            "condition": "party.trait.SEE_TRAPS >= 1",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Your companion hisses a warning: the lid is wired to something underneath."
+              },
+              {
+                "cmd": "CHOICE",
+                "options": [
+                  {
+                    "label": "Open it carefully",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "You lift the lid slowly. The wire goes slack, harmlessly."
+                      },
+                      {
+                        "cmd": "CHANGE_ITEM",
+                        "item": "4",
+                        "count": 1
+                      },
+                      {
+                        "cmd": "ERASE_EVENT"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave it alone",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "You back away from the chest."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "elseCommands": [
+              {
+                "cmd": "TEXT",
+                "text": "You throw the lid open -- and something bites."
+              },
+              {
+                "cmd": "FOR_EACH",
+                "scope": "living_allies",
+                "as": "ally",
+                "do": [
+                  {
+                    "cmd": "DAMAGE",
+                    "target": "ally",
+                    "amount": "6",
+                    "pierce": true,
+                    "minHp": 1
+                  }
+                ]
+              },
+              {
+                "cmd": "CHANGE_ITEM",
+                "item": "4",
+                "count": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
           }
         ]
       }

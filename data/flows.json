@@ -8,6 +8,59 @@
       {
         "cmd": "SPAWN_ENEMIES",
         "count": "random(combat.minEnemies, combat.maxEnemies)"
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Ambush (BATTLE_START_DAMAGE): the party's summed trait rate hits ONE enemy as the battle opens. v.hit guards the FOR_EACH so only the first living enemy is struck -- no engine-side 'first enemy' ref needed."
+      },
+      {
+        "cmd": "SET_VAR",
+        "name": "ambush",
+        "value": "party.trait.BATTLE_START_DAMAGE"
+      },
+      {
+        "cmd": "IF",
+        "condition": "v.ambush > 0",
+        "then": [
+          {
+            "cmd": "SET_VAR",
+            "name": "hit",
+            "value": "0"
+          },
+          {
+            "cmd": "FOR_EACH",
+            "scope": "living_enemies",
+            "as": "enemy",
+            "do": [
+              {
+                "cmd": "IF",
+                "condition": "v.hit == 0",
+                "then": [
+                  {
+                    "cmd": "DAMAGE",
+                    "target": "enemy",
+                    "amount": "v.ambush",
+                    "pierce": true,
+                    "minHp": 1
+                  },
+                  {
+                    "cmd": "EMIT_TEXT",
+                    "term": "battle.ambush",
+                    "fallback": "{0} is caught off guard!",
+                    "args": [
+                      "enemy.name"
+                    ]
+                  },
+                  {
+                    "cmd": "SET_VAR",
+                    "name": "hit",
+                    "value": "1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ],
     "round_end": [
@@ -63,6 +116,50 @@
             ]
           }
         ]
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Adjacency traits: SYMBIOSIS heals the creature beside it, PARASITE feeds on it. `neighbor` is the nearest living creature in an adjacent party slot, published per-iteration by FOR_EACH; with no living neighbour the commands no-op."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "slot_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "IF",
+            "condition": "ally.trait.SYMBIOSIS > 0",
+            "then": [
+              {
+                "cmd": "HEAL",
+                "target": "neighbor",
+                "amount": "ally.trait.SYMBIOSIS"
+              }
+            ]
+          },
+          {
+            "cmd": "IF",
+            "condition": "ally.trait.PARASITE > 0",
+            "then": [
+              {
+                "cmd": "DAMAGE",
+                "target": "neighbor",
+                "amount": "ally.trait.PARASITE",
+                "pierce": true,
+                "minHp": 1
+              },
+              {
+                "cmd": "EMIT_TEXT",
+                "term": "battle.parasite",
+                "fallback": "{0} feeds on {1}!",
+                "args": [
+                  "ally.name",
+                  "neighbor.name"
+                ]
+              }
+            ]
+          }
+        ]
       }
     ],
     "defeat": [
@@ -101,7 +198,7 @@
       },
       {
         "cmd": "IF",
-        "condition": "v.roll < combat.baseFleeChance + party.fleeBonus",
+        "condition": "v.roll < combat.baseFleeChance + party.trait.FLEE_CHANCE_BONUS",
         "then": [
           {
             "cmd": "EMIT_EVENT",
@@ -124,11 +221,11 @@
     "victory": [
       {
         "cmd": "COMMENT",
-        "text": "Victory rewards: gold roll, XP per survivor, POST_BATTLE_HEAL trait. Mirrors the legacy main.lua block (task A5a)."
+        "text": "Victory rewards: gold roll (plus the party's GOLD_DIGGER trait sum), XP per survivor, POST_BATTLE_HEAL trait."
       },
       {
         "cmd": "GAIN_GOLD",
-        "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax)"
+        "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax) + party.trait.GOLD_DIGGER"
       },
       {
         "cmd": "FOR_EACH",
@@ -316,6 +413,26 @@
       },
       {
         "cmd": "QUEST_GRANT_REWARDS"
+      }
+    ]
+  },
+  "exploration": {
+    "step": [
+      {
+        "cmd": "COMMENT",
+        "text": "Runs once per successful player step (main.lua, before the encounter roll). Per-step trait effects live here so they stay data-authored: MOVE_HEAL regenerates while walking, reusing HEAL's trait form exactly like POST_BATTLE_HEAL does on victory."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "HEAL",
+            "target": "ally",
+            "trait": "MOVE_HEAL"
+          }
+        ]
       }
     ]
   }

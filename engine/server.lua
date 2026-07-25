@@ -9,7 +9,7 @@ server.configReloaded = false
 -- Single manifest of database files exposed to the editor. Keep in sync with
 -- DATA_FILES in tools/editor/server.js.
 local DATA_FILES = {
-    "actors", "elements", "events", "items", "maps", "quests", "shops",
+    "actors", "elements", "items", "maps", "quests", "shops",
     "sounds", "terms", "actionSequences", "system", "commonEvents",
     "skills", "passives", "states", "roles", "engine", "flows", "scenes"
 }

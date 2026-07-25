@@ -53,7 +53,12 @@ end
 -- data rather than Lua (POST_BATTLE_HEAL is read by a battle flow, for
 -- instance). Everything else under data/ (passives, items, actors, states) only
 -- ASSIGNS a code to content, which is not an implementation.
-local IMPL_DATA_FILES = { "data/flows.json", "data/scenes.json", "data/engine.json" }
+-- Anything holding command lists counts: flows (phase logic), scenes (hooks and
+-- SCRIPT bodies), common events, and maps (their events carry command trees).
+-- Missing commonEvents.json here once made RECOVERY_XP_BONUS report as dead
+-- immediately after it was implemented in the shared recovery event.
+local IMPL_DATA_FILES = { "data/flows.json", "data/scenes.json", "data/engine.json",
+    "data/commonEvents.json", "data/maps.json" }
 local ASSIGN_DATA_FILES = {
     "data/passives.json", "data/items.json", "data/actors.json",
     "data/states.json", "data/skills.json",
@@ -253,8 +258,8 @@ function engine_state.build(loader)
     line(("- skills: **%d**, passives: **%d**, states: **%d**, roles: **%d**, elements: **%d**"):format(
         countKeys(loader.skills), countKeys(loader.passives), countKeys(loader.states),
         countKeys(loader.roles), countKeys(loader.elements)))
-    line(("- maps: **%d**, events: **%d**, common events: **%d**, shops: **%d**, quests: **%d**"):format(
-        #(loader.maps or {}), #(loader.events or {}), countKeys(loader.commonEvents),
+    line(("- maps: **%d**, common events: **%d**, shops: **%d**, quests: **%d**"):format(
+        #(loader.maps or {}), countKeys(loader.commonEvents),
         countKeys(loader.shops), countKeys(loader.quests)))
     line(("- animations: **%d**, tilesets: **%d**"):format(
         countKeys(loader.animations), countKeys(loader.tilesets)))

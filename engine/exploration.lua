@@ -343,15 +343,19 @@ function exploration.generateDungeon(mapData, seed, session)
             end
             
             if tx and ty then
-                table.insert(generatedEvents, {
-                    id = ev.id,
-                    x = tx - 1,
-                    y = ty - 1,
-                    scriptId = ev.scriptId,
-                    sprite = ev.sprite,
-                    trigger = ev.trigger or "interact",
-                    commands = ev.commands
-                })
+                -- Carry the WHOLE authored event through, overriding only the
+                -- resolved position. This used to copy a whitelist of six
+                -- fields, which silently dropped everything else an author had
+                -- written on the event -- `meta` (so trap/secret detection saw
+                -- nothing), `label`, `minimapColor`, `pages`, and any field a
+                -- future feature adds. Placement is the only thing generation
+                -- owns; the rest of the event is the author's.
+                local placed = {}
+                for k, v in pairs(ev) do placed[k] = v end
+                placed.x = tx - 1
+                placed.y = ty - 1
+                placed.trigger = ev.trigger or "interact"
+                table.insert(generatedEvents, placed)
             end
         end
     end

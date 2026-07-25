@@ -569,28 +569,251 @@ validator.run = function(loader)
             "' with no handler in engine/interpreter.lua (stub commands are not allowed)")
     end
 
+    -- Flow-locals (`v.*`) are DATA, not engine surface: a formula reads a
+    -- local because some SET_VAR in the same tree (or a SCENE_EVENT pushing
+    -- into the scene) assigns it. So the mock `v` is not hand-maintained
+    -- here -- every formula check seeds it by PRE-SCANNING the tree it is
+    -- about to validate (collectAssignedVars/resolveSeedVars below), which
+    -- means adding a new local is pure data work, no engine edit. Seeding
+    -- stays strictly limited to names something actually assigns, so a
+    -- formula reading a name NOTHING assigns still evaluates against nil
+    -- and fails G1 -- that is what catches typo'd locals.
+    --
+    -- Only the entries below survive as hardcoded: the ENGINE puts them in
+    -- `v` as a side effect, no SET_VAR ever names them, so no pre-scan of
+    -- data could find them.
+    local HOST_SEEDED_VARS = {
+        -- engine/scene_host.lua: raw key of the press being captured, set
+        -- while v._capturingKey is on (controls scene rebinding).
+        rawKey = "escape",
+        -- engine/interpreter.lua list-builder commands, each of which fills
+        -- a rows list plus its count as a side effect. Row shapes mirror the
+        -- handlers so `v.xRows[i].field` formulas see the real fields.
+        campaignRows = { { name = "Mock Campaign", campaign = "" } },
+        campaignCount = 1,
+        saveRows = { { name = "Slot 1 - (empty)", slot = "slot1", empty = true,
+            gold = 0, dungeonFloor = 1, savedAt = 0 } },
+        saveCount = 1,
+        questRows = { { name = "Mock Quest", id = "mock", summary = "",
+            objectives = "", completed = false } },
+        questCount = 1,
+        bindingRows = { { name = "A - z", button = "A", key = "z" } },
+        bindingCount = 1,
+        -- USE_ITEM's result record (engine/interpreter.lua).
+        lastItemResult = { success = true, reason = "", itemName = "Mock Item" },
+        -- Shop stock the Lua host materializes before pushing the shop scene
+        -- (main.lua openShop / engine/cli_tools.lua), not any SET_VAR.
+        shopName = "Mock Shop",
+        items = { { id = 1, cost = 50, name = "Item 1", stock = 9 },
+                  { id = 2, cost = 100, name = "Item 2", stock = 9 },
+                  { id = 3, cost = 200, name = "Item 3", stock = 9 } },
+        count = 3,
+    }
+
+    -- Mock scene actors, built once: a Battler and item views are expensive
+    -- enough that rebuilding them per formula check is wasteful.
+    local mockItemView1 = require("engine.formula").itemView(loader.getItem(1))
+    local mockItemView2 = require("engine.formula").itemView(loader.getItem(2))
+    -- Guarded: a campaign missing actor 1 fails its own check above; the
+    -- mock must not crash the run before that message is collected.
+    local mockCrafter = loader.getActor(1) and session.Battler.new(loader.getActor(1), 1) or nil
+
     -- Mock context shared by every formula-compiling param check (the
-    -- 'formula' type and E7's 'assignments' list-of-pairs type).
-    local function buildFormulaMockCtx()
+    -- 'formula' type and E7's 'assignments' list-of-pairs type) and by the
+    -- scene checks. `seedVars` is the pre-scanned flow-local seed for the
+    -- tree being validated (see resolveSeedVars).
+    local function buildFormulaMockCtx(seedVars)
+        -- Any registered trait code must resolve for `x.trait.<CODE>` formulas
+        -- (engine/formula.lua battlerView/groupView). A permissive stub: the
+        -- validator checks that a formula COMPILES and evaluates, not what a
+        -- particular trait's live rate is.
+        local function mockTraits()
+            return setmetatable({}, { __index = function() return 0.1 end })
+        end
+        local v = {}
+        for k, val in pairs(HOST_SEEDED_VARS) do v[k] = val end
+        for k, val in pairs(seedVars or {}) do v[k] = val end
         return {
-                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
-                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1 },
+                        enemy = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
+                        ally = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
+                        target = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
+                        a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
+                        b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
-                        v = { roll = 0.5, bonus = 10, state = 1, disciplineIdx = 2, crafterIdx = 1, slot = 1, i1Idx = 3, i2Idx = 1, confirmIdx = 1, i1Id = 1, i2Id = 2, rouletteStep = 0, S = 10, idx = 1, count = 3, items = { { id = 1, cost = 50, name = "Item 1" }, { id = 2, cost = 100, name = "Item 2" }, { id = 3, cost = 200, name = "Item 3" } }, selectedDisciplineIdx = 2, selectedCrafterIdx = 1, selectedIngredient1Idx = 3, selectedIngredient2Idx = 1, cursorSlot = 1, confirmOptionIdx = 1, i1_item_id = 1, i2_item_id = 2, invCount = 3, rouletteDelay = 0.05, isAnomaly = false, yieldScore = 10, yieldAnomalyScore = 15, poolSize = 3, poolTargetIdx = 1, poolCurrentIdx = 1, resultItemId = 1, resultItemName = "Mock Item", opt = 1, subIdx = 1, selectedIdx = 1, targetIdx = 1, _guard = 0, eqIdx = 1, skillIdx = 1, passiveIdx = 1, mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1, memberIdx = 1, popupIdx = 1, seededCrafterIdx = 1, focusArea = "party", cursorIdx = 1, summonIdx = 1, summonPool = {}, popupCount = 1, popupOptions = {}, ritualMode = "summon", targetIsReserve = true, targetIndex = 1, pool = {}, poolIdx = 1, level = 1, baseLevel = 1, _stepDir = 1, mpCost = 0, expCost = 0, done = 0, titleText = "", previewText = "", costText = "", helpText = "", resultText = "", memberName = "", confirmOptions = {}, ritualPush = "", popupTargetIsReserve = true, popupTargetIndex = 1, page = 1, evoIdx = 1, evoPaths = {}, popupTimer = 0, popupText = "", _popupItemName = "", qty = 1, shopName = "" },
-                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
-                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, fleeBonus = 0.1 },
+                        v = v,
+                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, trait = mockTraits() },
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, trait = mockTraits() },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
                         ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
+                        -- Scene-side aliases (crafting scenes read i1/i2/crafter).
+                        i1 = mockItemView1,
+                        i2 = mockItemView2,
+                        crafter = mockCrafter,
                         alpha = 0.5,
                         S = 10
         }
     end
 
-    local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc)
+    -- A sandboxed SCRIPT body is data too (it lives in scenes.json), and
+    -- `v.invCount = #inv` in one is as much an authored local as a SET_VAR
+    -- row -- so its assignments are pre-scanned out of the source text.
+    -- `==`/`~=`/`<=`/`>=` can't match: only a bare `=` not followed by
+    -- another `=` counts. No value comes back, so these seed neutrally.
+    local function collectScriptAssignedVars(text, out)
+        if type(text) ~= "string" then return out end
+        for name in text:gmatch("v%.([%a_][%w_]*)%s*=[^=]") do
+            table.insert(out, { name = name })
+        end
+        return out
+    end
+
+    -- Pre-scan: every flow-local a command tree assigns, in author order,
+    -- as { name, value } rows. Nested command lists (IF then/else, FOR_EACH
+    -- commands, CHOICE options, ...) are walked generically rather than by
+    -- key name, so a new block command needs no change here. A SCENE_EVENT's
+    -- `vars` rows are skipped: they land in the PUSHED scene's v, not this
+    -- tree's (collected per target scene by collectScenePushedVars).
+    local function collectAssignedVars(cmds, out)
+        out = out or {}
+        for _, cmd in ipairs(cmds or {}) do
+            if type(cmd) == "table" then
+                if cmd.cmd == "SET_VAR" then
+                    if type(cmd.name) == "string" and cmd.name ~= "" then
+                        table.insert(out, { name = cmd.name, value = cmd.value })
+                    end
+                    for _, a in ipairs(cmd.assignments or {}) do
+                        if type(a) == "table" and type(a.name) == "string" and a.name ~= "" then
+                            table.insert(out, { name = a.name, value = a.value })
+                        end
+                    end
+                elseif cmd.cmd == "SCRIPT" then
+                    collectScriptAssignedVars(cmd.code, out)
+                end
+                for key, val in pairs(cmd) do
+                    if type(val) == "table" and key ~= "assignments" and key ~= "vars" then
+                        collectAssignedVars(val, out)
+                    end
+                end
+            end
+        end
+        return out
+    end
+
+    -- Shape hint for locals a pre-scan found but could not evaluate (SCRIPT
+    -- assignments, mostly): if the data itself indexes one, takes its length
+    -- or reads a field off it, a scalar seed would blow up where a plain
+    -- number can't be indexed. Collected from how the tree USES the name, so
+    -- it stays data-driven like the rest of the seeding.
+    local function collectTableShapedVars(node, out, seen)
+        out = out or {}
+        if type(node) == "string" then
+            for name in node:gmatch("#%s*v%.([%a_][%w_]*)") do out[name] = true end
+            for name in node:gmatch("v%.([%a_][%w_]*)%s*%[") do out[name] = true end
+            for name in node:gmatch("v%.([%a_][%w_]*)%.") do out[name] = true end
+            return out
+        end
+        if type(node) ~= "table" then return out end
+        seen = seen or {}
+        if seen[node] then return out end
+        seen[node] = true
+        for _, val in pairs(node) do collectTableShapedVars(val, out, seen) end
+        return out
+    end
+
+    -- Stand-in for a table-shaped local: three rows long, and every field
+    -- read off it (or off a row) answers 1, so `#v.pool`, `v.items[v.idx]`
+    -- and `v.items[v.idx].cost` all evaluate without pretending to know the
+    -- real row shape.
+    local function mockTableValue()
+        local anyField = { __index = function() return 1 end }
+        local row = function() return setmetatable({}, anyField) end
+        return setmetatable({ row(), row(), row() }, anyField)
+    end
+
+    -- Turn pre-scanned assignments into concrete mock values by evaluating
+    -- each assigned expression -- the same thing the SET_VAR handler does at
+    -- runtime, so a seed carries the real TYPE (index numbers stay numbers,
+    -- `'summon'`-style mode strings stay strings). FIRST successful
+    -- assignment per name wins: that is the author's initializer (on_enter's
+    -- `idx = 1`), where a later `idx = v.idx - 1` would leave the seed
+    -- drifted out of range. Two passes, so an initializer that reads a local
+    -- assigned further down the tree still lands on a real value. Whatever
+    -- is left -- SCRIPT-assigned names, self-referential expressions --
+    -- takes a neutral seed: a table stand-in if the data uses the name
+    -- table-like, otherwise 1. A seed only has to be type-plausible.
+    -- formula.eval never raises (it returns 0, err); the pcall is belt and
+    -- braces.
+    local function resolveSeedVars(assigned, tableShaped)
+        local formulaEngine = require("engine.formula")
+        local ctx = buildFormulaMockCtx(nil)
+        -- Seeding evaluates speculatively (a pass-1 row may read a local
+        -- pass 2 fills in), so formula.lua's per-expression console warning
+        -- is muted here: those misses are not problems, and printing them
+        -- would bury the real check output. An expression that still fails
+        -- its own check reports through check() with the same error text.
+        local realPrint = print
+        print = function() end
+        for _ = 1, 2 do
+            for _, a in ipairs(assigned) do
+                if ctx.v[a.name] == nil then
+                    if type(a.value) == "string" then
+                        local ok, result, ferr = pcall(formulaEngine.eval, a.value, ctx)
+                        if ok and ferr == nil then ctx.v[a.name] = result end
+                    elseif a.value ~= nil then
+                        ctx.v[a.name] = a.value
+                    end
+                end
+            end
+        end
+        print = realPrint
+        for _, a in ipairs(assigned) do
+            if ctx.v[a.name] == nil then
+                ctx.v[a.name] = (tableShaped or {})[a.name] and mockTableValue() or 1
+            end
+        end
+        return ctx.v
+    end
+
+    local function seedVarsFor(cmds, pushedVars)
+        local assigned = {}
+        -- Pushed vars are seeded before the scene's own assignments: they
+        -- exist in v before on_enter runs (engine/scene_host.lua push).
+        for _, a in ipairs(pushedVars or {}) do table.insert(assigned, a) end
+        collectAssignedVars(cmds, assigned)
+        return resolveSeedVars(assigned, collectTableShapedVars(cmds))
+    end
+
+    -- SCENE_EVENT hands `vars` to the scene it pushes, so for the RECEIVING
+    -- scene those names count as assigned even though nothing inside it
+    -- SET_VARs them. Collected once across every host that can push a scene.
+    local scenePushedVars = {}
+    local function collectScenePushedVars(node, seen)
+        if type(node) ~= "table" then return end
+        seen = seen or {}
+        if seen[node] then return end
+        seen[node] = true
+        if node.cmd == "SCENE_EVENT" and node.scene ~= nil and type(node.vars) == "table" then
+            local key = tostring(node.scene)
+            scenePushedVars[key] = scenePushedVars[key] or {}
+            for _, a in ipairs(node.vars) do
+                if type(a) == "table" and type(a.name) == "string" and a.name ~= "" then
+                    table.insert(scenePushedVars[key], { name = a.name, value = a.value })
+                end
+            end
+        end
+        for _, val in pairs(node) do collectScenePushedVars(val, seen) end
+    end
+    for _, root in ipairs({ loader.scenes, loader.flows, loader.commonEvents,
+        loader.maps, loader.quests, loader.actionSequences }) do
+        collectScenePushedVars(root)
+    end
+
+    -- `seedVars` is the pre-scanned flow-local seed for the whole tree; it is
+    -- computed once at the top-level call and handed to nested lists, since
+    -- a nested IF branch reads locals its enclosing tree assigned.
+    local function validateCommands(cmds, hostCtx, isImmediate, allowScript, ownerDesc, seedVars)
+        seedVars = seedVars or seedVarsFor(cmds)
         for _, cmd in ipairs(cmds or {}) do
 
             local id = cmd.cmd
@@ -635,7 +858,7 @@ validator.run = function(loader)
                     if val ~= nil then
 
                 if paramDef.type == "formula" then
-                    local mockCtx = buildFormulaMockCtx()
+                    local mockCtx = buildFormulaMockCtx(seedVars)
                     local formulaEngine = require("engine.formula")
                     if type(val) == "string" and (val:match("^flag:") or val:match("^hasItem:")) then
                         -- Allow legacy condition strings
@@ -654,7 +877,7 @@ validator.run = function(loader)
                     check(type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a list of {name, value} rows")
                     if type(val) == "table" then
                         local formulaEngine = require("engine.formula")
-                        local mockCtx = buildFormulaMockCtx()
+                        local mockCtx = buildFormulaMockCtx(seedVars)
                         for ai, a in ipairs(val) do
                             check(type(a) == "table" and type(a.name) == "string" and a.name ~= "",
                                 ownerDesc .. " command '" .. id .. "' " .. paramDef.key .. "[" .. ai .. "] needs a non-empty string name")
@@ -680,10 +903,10 @@ validator.run = function(loader)
                     local nestedImmediate = isImmediate or (cmdDef.interactive ~= true)
                     if id == "CHOICE" and type(val) == "table" then
                         for oi, opt in ipairs(val) do
-                            if opt.commands then validateCommands(opt.commands, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt") end
+                            if opt.commands then validateCommands(opt.commands, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> CHOICE opt", seedVars) end
                         end
                     else
-                        validateCommands(val, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> nested")
+                        validateCommands(val, hostCtx, nestedImmediate, allowScript, ownerDesc .. " -> nested", seedVars)
                     end
 elseif paramDef.type == "script" then
                             local chunk, err = load(val, "validator", "t", {})
@@ -719,7 +942,7 @@ elseif paramDef.type == "script" then
                             -- Usually just a string like "target", "a", "b", "summoner", etc.
                             check(type(val) == "string" or type(val) == "table", ownerDesc .. " command '" .. id .. "' param '" .. paramDef.key .. "' expects a valid battlerRef")
                         elseif paramDef.type == "commands" then
-                            validateCommands(val, hostCtx, isImmediate or (cmdDef.interactive ~= true), allowScript, ownerDesc .. " -> nested")
+                            validateCommands(val, hostCtx, isImmediate or (cmdDef.interactive ~= true), allowScript, ownerDesc .. " -> nested", seedVars)
                         end
                     end
                 end
@@ -1038,7 +1261,8 @@ elseif paramDef.type == "script" then
     -- the hosts call unconditionally must exist and execute cleanly against
     -- a fresh session (behavioral regressions are covered by the golden
     -- battle log, tools/golden/check).
-    for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.escaped", "battle.encounter_check" }) do
+    for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.escaped", "battle.encounter_check",
+        "exploration.step" }) do
         check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
         if flow.has(phase) then
             local s = session.GameSession.new(loader)
@@ -1084,47 +1308,40 @@ elseif paramDef.type == "script" then
     -- Scenes validation (C9)
     local function validateScenes()
         local formulaEngine = require("engine.formula")
-        local mockItem1 = loader.getItem(1)
-        local mockItem2 = loader.getItem(2)
-        local mockCrafter = session.Battler.new(loader.getActor(1), 1)
-        
-        local mockCtx = {
-            i1 = formulaEngine.itemView(mockItem1),
-            i2 = formulaEngine.itemView(mockItem2),
-            ingredient1 = formulaEngine.itemView(mockItem1),
-            ingredient2 = formulaEngine.itemView(mockItem2),
-            crafter = mockCrafter,
-            alpha = 0.5,
-            S = 10,
-            v = {
-                -- Crafting variables
-                state = 1, disciplineIdx = 1, crafterIdx = 1, slot = 1,
-                i1Idx = 1, i2Idx = 1, confirmIdx = 1, i1Id = 0, i2Id = 0,
-                rouletteStep = 0, selectedDisciplineIdx = 1,
-                selectedCrafterIdx = 1, selectedIngredient1Idx = 1,
-                selectedIngredient2Idx = 1, cursorSlot = 1,
-                confirmOptionIdx = 1, i1_item_id = 0, i2_item_id = 0,
-                invCount = 0, rouletteDelay = 0, isAnomaly = false,
-                yieldScore = 0, yieldAnomalyScore = 0, poolSize = 0,
-                poolTargetIdx = 0, poolCurrentIdx = 0, resultItemId = 0,
-                resultItemName = "",
-                -- Common menu variables (D6 scenes)
-                opt = 1, subIdx = 1, idx = 1, count = 1,
-                selectedIdx = 1, _guard = 0, eqIdx = 1,
-                -- Map scene's cursor/overlay state
-                mode = 1, focus = "cmd", cmdIdx = 1, partyIdx = 1,
-                memberIdx = 1, popupIdx = 1, confirmIdx = 1,
-                seededCrafterIdx = 1,
-                -- Reserve scene variables
-                focusArea = "party", cursorIdx = 1, summonIdx = 1,
-                summonPool = {}, popupTimer = 0, popupText = "",
-                _popupItemName = "", qty = 1, shopName = "",
-                items = { { id = 1, cost = 50, name = "Item 1" } }
-            }
-        }
-        
+
         for _, scene in ipairs(loader.scenes or {}) do
             local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
+
+            -- One mock context per scene, its `v` seeded from what THIS
+            -- scene assigns. Hooks share a single v for the scene's whole
+            -- lifetime (engine/scene_host.lua), so the seed is the union
+            -- over every hook -- on_input formulas legitimately read what
+            -- on_enter set -- plus the scene's named SCRIPT bodies and
+            -- whatever a SCENE_EVENT pushes in. on_enter comes first (it is
+            -- the initializer scene_host runs before any input hook) and the
+            -- rest in sorted order, so the seed never depends on pairs()
+            -- iteration order.
+            local sceneAssigned = {}
+            for _, a in ipairs(scenePushedVars[tostring(scene.id)] or {}) do
+                table.insert(sceneAssigned, a)
+            end
+            local hookNames = {}
+            for hookName in pairs(scene.hooks or {}) do
+                if hookName ~= "on_enter" then table.insert(hookNames, hookName) end
+            end
+            table.sort(hookNames)
+            if (scene.hooks or {}).on_enter then table.insert(hookNames, 1, "on_enter") end
+            for _, hookName in ipairs(hookNames) do
+                collectAssignedVars(scene.hooks[hookName], sceneAssigned)
+            end
+            local scriptNames = {}
+            for name in pairs(scene.scripts or {}) do table.insert(scriptNames, name) end
+            table.sort(scriptNames)
+            for _, name in ipairs(scriptNames) do
+                collectScriptAssignedVars(scene.scripts[name], sceneAssigned)
+            end
+            local sceneSeeds = resolveSeedVars(sceneAssigned, collectTableShapedVars(scene))
+            local mockCtx = buildFormulaMockCtx(sceneSeeds)
 
             -- Every scene must declare how it draws (the legacy "no flag =
             -- fall back to Lua drawing" rule was purged 24.07.2026), and a
@@ -1190,7 +1407,7 @@ elseif paramDef.type == "script" then
             end
             if scene.hooks then
                 for hookName, cmds in pairs(scene.hooks) do
-                    validateCommands(cmds, "scene", true, allowSceneScript, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
+                    validateCommands(cmds, "scene", true, allowSceneScript, sceneDesc .. " hook '" .. tostring(hookName) .. "'", sceneSeeds)
                     checkScriptRefs(cmds, sceneDesc .. " hook '" .. tostring(hookName) .. "'")
                 end
             end

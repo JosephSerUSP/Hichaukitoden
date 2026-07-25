@@ -64,7 +64,6 @@ function loader.init(root)
     local function J(name) return load_json(loader.root .. "/" .. name) end
     loader.actors = J("actors.json")
     loader.elements = J("elements.json")
-    loader.events = J("events.json")
     loader.items = J("items.json")
     loader.maps = J("maps.json")
     loader.quests = J("quests.json")

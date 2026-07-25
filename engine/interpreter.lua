@@ -52,14 +52,20 @@ end
 
 -- The ids interpreter.compile knows how to turn into dialogue nodes.
 -- Anything else is a registry command executed via runImmediate (task A4b).
+-- ERASE_EVENT / RECRUIT_ACTOR / RECRUIT were listed here until 24.07.2026
+-- despite compile() having no branch that builds a node for them: they produced
+-- NO node, so the surrounding chain linked to a node id that never existed and
+-- the graph dangled (G1 "links to missing node"). They are ordinary
+-- side-effect commands with handlers, so they belong in the RUN_IMMEDIATE runs
+-- like every other non-interactive command. Anything added to this set MUST get
+-- a matching branch in compile() below.
 -- All commands store their id under `cmd` (the `type` key was retired in the
 -- 24.07.2026 legacy purge; a one-time data migration renamed it everywhere).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     TELEPORT = true, BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
-    LABEL = true, JUMP_TO_LABEL = true, RECRUIT_ACTOR = true, ERASE_EVENT = true,
-    RECRUIT = true,
+    LABEL = true, JUMP_TO_LABEL = true,
 }
 
 local function cmdId(cmd)
@@ -418,18 +424,40 @@ local function scopeList(scope, ctx)
     return base
 end
 
+-- Party slots are a 4-wide line, so "the creature beside me" is the nearest
+-- occupied slot on either side: the next slot first, else the previous. Used by
+-- the `neighbor` ref FOR_EACH publishes below, which is what adjacency-based
+-- traits (SYMBIOSIS heals a neighbour, PARASITE feeds on one) are expressed
+-- with. Dead creatures are skipped: they are neither helped nor drained.
+local function slotNeighbor(list, index)
+    for _, step in ipairs({ 1, -1 }) do
+        local j = index + step
+        while j >= 1 and j <= #list do
+            local other = list[j]
+            if other and not (other.isDead and other:isDead()) then return other end
+            j = j + step
+        end
+    end
+    return nil
+end
+
 handlers.FOR_EACH = function(cmd, ctx)
     local list = scopeList(cmd.scope, ctx)
     local varName = cmd.as or "it"
     ctx.refs = ctx.refs or {}
     local prev = ctx.refs[varName]
-    for _, battler in ipairs(list) do
+    -- `neighbor` is scoped to this loop and restored afterwards, exactly like
+    -- the iteration variable, so nested FOR_EACHes can't leak it.
+    local prevNeighbor = ctx.refs.neighbor
+    for i, battler in ipairs(list) do
         if battler then
             ctx.refs[varName] = battler
+            ctx.refs.neighbor = slotNeighbor(list, i)
             interpreter.execList(cmd["do"], ctx)
         end
     end
     ctx.refs[varName] = prev
+    ctx.refs.neighbor = prevNeighbor
 end
 
 handlers.GAIN_GOLD = function(cmd, ctx)
