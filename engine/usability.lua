@@ -32,7 +32,7 @@ function usability.canUseItem(item, target, context)
 
     -- Target state validation if target provided
     if target then
-        local spec = item.target or item.targetScope or "ally"
+        local spec = item.target or "ally"
         local exp = targeting.expand(spec)
 
         local isDead = target.isDead and target:isDead()

@@ -442,7 +442,7 @@ function battle.startTargetSelection(pendingAction)
             itemId = items[pendingAction.itemIndex]
         end
         local item = itemId and ldr().getItem(itemId)
-        spec = item and (item.target or item.targetScope) or "ally"
+        spec = item and item.target or "ally"
     end
 
     local targeting = require("engine.targeting")

@@ -665,7 +665,7 @@ handlers.USE_ITEM = function(cmd, ctx)
         return
     end
 
-    local isPartyTarget = (item.target or item.targetScope) == "party"
+    local isPartyTarget = item.target == "party"
     local target = nil
     if not isPartyTarget then
         target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]

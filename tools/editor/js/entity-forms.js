@@ -174,9 +174,8 @@
                     { row: 'main', kind: 'select', key: 'target', label: 'Target Scope',
                       options: [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
                       when: it => it.type !== 'equipment',
-                      get: it => it.target || it.targetScope || '',
+                      get: it => it.target || '',
                       set: (it, v) => {
-                          delete it.targetScope; // old field name, migrate off it on save
                           if (v === '') { delete it.target; } else { it.target = v; }
                       } },
                     { row: 'main', kind: 'number', key: 'cost', label: 'Buy Cost (G)', fallback: 0 },

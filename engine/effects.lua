@@ -156,7 +156,7 @@ function effects.apply(effectData, a, b, session, context)
     -- that already knows the skill is a no-op that says so, so the item isn't
     -- silently consumed for nothing (the caller checks usability first).
     elseif effectData.type == "learn_skill" then
-        local skillId = effectData.skill or effectData.value
+        local skillId = effectData.skill
         local known = false
         for _, s in ipairs(b.skills or {}) do
             if s == skillId then known = true break end
@@ -192,7 +192,7 @@ function effects.apply(effectData, a, b, session, context)
     -- traits.getParam folds into every stat read. maxHp also heals by the
     -- gain so the boost is immediately usable, matching the `maxHp` effect.
     elseif effectData.type == "param_plus" then
-        local param = effectData.param or effectData.dataId
+        local param = effectData.param
         local gain = math.floor(effectData.value or 0)
         b.paramPlus = b.paramPlus or {}
         if param == nil or b.paramPlus[param] == nil then
@@ -229,7 +229,7 @@ function effects.apply(effectData, a, b, session, context)
 
     -- Cures the state named in value (e.g. wine curing "weakened")
     elseif effectData.type == "remove_status" then
-        local stateId = effectData.value or effectData.status
+        local stateId = effectData.value
         if stateId then
             b:removeState(stateId)
             table.insert(events, {

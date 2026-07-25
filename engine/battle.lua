@@ -294,7 +294,7 @@ function Battle:executeTurn(turn, roundEvents)
     
     local targetDead = false
     if turn.target and turn.target.isDead and turn.target:isDead() then
-        local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+        local spec = turn.item and (turn.item.target or "ally") or (turn.skill and turn.skill.target)
         if spec then
             local expanded = targeting.expand(spec)
             if expanded.state ~= "dead" and expanded.state ~= "any" then
@@ -312,7 +312,7 @@ function Battle:executeTurn(turn, roundEvents)
         end
 
         if autoRedirect then
-            local spec = turn.item and (turn.item.target or turn.item.targetScope or "ally") or (turn.skill and turn.skill.target)
+            local spec = turn.item and (turn.item.target or "ally") or (turn.skill and turn.skill.target)
             if spec then
                 local newTargets = targeting.resolve(turn.actor, spec, self, nil, turn.item or turn.skill)
                 if newTargets and #newTargets > 0 and not newTargets[1]:isDead() then
@@ -579,7 +579,7 @@ function Battle:applyItem(action, actor, target)
     })
 
     local targeting = require("engine.targeting")
-    local targets = targeting.resolve(actor, item.target or item.targetScope or "ally", self, target, item)
+    local targets = targeting.resolve(actor, item.target or "ally", self, target, item)
     
     local seq = nil
     if item.actionSequence then

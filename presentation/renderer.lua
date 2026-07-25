@@ -1081,7 +1081,7 @@ local function getActionTargetCandidates(act, slotActor, battleState, session)
         end
         local itemId = act.itemIndex and items[act.itemIndex]
         local item = itemId and loader.getItem(itemId)
-        local spec = item and (item.target or item.targetScope) or "ally"
+        local spec = item and item.target or "ally"
         local exp = targeting.expand(spec)
         local isRandom = (exp.mode == "random")
         if isRandom or exp.count == "all" then

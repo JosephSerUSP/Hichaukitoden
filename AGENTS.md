@@ -49,41 +49,80 @@ full wasted planning pass.
 
 - **Data drives the engine.** Content lives in `data/*.json`; Lua never
   hardcodes content. Adding a command/effect/trait = a `data/engine.json`
-  registry entry **plus** a handler. The validator and editor read the registry.
+  registry entry **plus** a handler. The validator and editor read the registry,
+  so the registry — not a hand-written list — is the extension point.
+- **Behavior in data is real implementation.** Phase logic lives in
+  `data/flows.json`, scene logic in `data/scenes.json` hooks, both run by one
+  interpreter. Do not add a Lua fallback "in case the data is missing" — hosts
+  call `flow.run(phase, ctx)` unconditionally and the validator requires the
+  phase to exist. Two paths for one behavior is the bug.
+- **Formulas over scripts.** Numeric/boolean params take sandboxed formulas over
+  registry-declared tokens. `SCRIPT` is a rationed escape hatch: battle phases
+  are zero-SCRIPT (G1 enforces), and every validate run prints the total SCRIPT
+  count so growth stays visible.
+- **One implementation, never an approximation.** The editor previews through the
+  real engine (`lovec . preview-*`) and validates through the real validator
+  (`GET /validate`) — it never re-implements rendering or schema in JS. If you
+  find yourself writing a second version of something the engine already does,
+  stop.
 - **No compatibility shims.** There is no shipped player base and saves are test
   artifacts that may break freely. When a schema changes, migrate the repo's own
-  data in place and delete the old read path (SPEC §1.5). Dual-read paths are
-  carrying cost, not compatibility.
+  data in place and delete the old read path (SPEC §1.5). A `foo.a or foo.b`
+  dual-read of our own data is carrying cost, not compatibility.
+- **Fail loud, never silently.** Unknown targeting specs, draw modes, label
+  jumps and registry ids raise errors rather than defaulting; the validator
+  turns invisible authoring mistakes into build failures. A feature that
+  silently does nothing is the worst outcome — prefer a crash or a G1 failure.
+- **Enforce with gates, not vigilance.** When a rule can be checked
+  mechanically, add the check (G1 for data/registry rules, unit tests for
+  behavior, G4 for doc currency) instead of writing it down and hoping. Rules
+  that live only in prose have already failed here once.
+- **Loader data is shared and immutable.** `loader.getItem(id)` /
+  `getActor(id)` hand back the one table every holder sees — `battler.equipment[slot]`
+  is a *reference*, not a copy. Per-instance state belongs on the instance
+  (e.g. ward charges on `battler.wardCharges`, keyed by slot), and anything
+  stored there must round-trip through `engine/savegame.lua`.
 - **Owner-supervised:** changes to `engine/battle.lua` and
   `engine/scenes/battle.lua` are never made autonomously.
 - **No copy-pasted logic or coordinate math.** Layout/geometry lives in shared
   helpers; editor form fields come from the schema layer
   (`tools/editor/js/entity-forms.js`), not hand-written DOM.
 - **The engine never requires presentation.** Use the
-  `interpreter.bindPresentation` seam.
+  `interpreter.bindPresentation` seam. (`engine/validator.lua` and
+  `engine/cli_tools.lua` are the deliberate exceptions: they are build tools
+  that validate presentation data, not runtime engine code.)
+- **Presentation feel is a rule, not a preference** — rich vertical gradients for
+  major menus (never flat dark overlays), panels that slide via timer states,
+  gauges that interpolate instead of jumping, damage numbers with velocity and
+  gravity. Review-enforced; see SPEC §2.2–2.3 before touching UI.
 
 ## Gotchas that cost real time
 
+Kept short on purpose: an entry earns its place only if it caused a real bug and
+no gate can catch it. **If you hit a trap that a gate could have caught, add the
+gate instead of adding a line here** (that is how the item-type trap below became
+a G1 check).
+
 - **The editor dev server writes straight to `data/*.json`.** After browser
   testing, always `git diff data/` — it is not sandboxed.
-- **`battler.equipment[slot]` is a shared reference to the loader's item
-  table.** Never store per-instance state there (ward charges live on
-  `battler.wardCharges`).
-- **`usability.canUseItem` requires `type == "consumable"`.** An item with
-  `type: "item"` is silently unusable and invisible in the menu.
 - **Commands store their id under `cmd`**, always (the legacy `type` key was
   purged). Sub-command lists are always `commands`, never `script`.
 - **After rewriting a JSON file programmatically, re-dump with its original
   indent** (`data/tilesets.json` is 4-space; most others are 2-space) or the
-  diff becomes unreadable.
+  diff becomes unreadable noise.
 - **`docs/ENGINE-STATE.md` is ASCII-only on purpose** — it is byte-compared by
-  both a PowerShell and a bash gate.
+  both a PowerShell and a bash gate, and PowerShell 5.1 reads files as ANSI.
 - Terminal-dialog slash commands and interactive git flags are unavailable here.
+
+Traps that are now **gated** rather than remembered: an item carrying `effects`
+with a non-`consumable` `type` is silently unusable (G1 fails it); a scene with
+no draw mode (G1); a registry entry nothing implements (G4 reports it).
 
 ## Where things live
 
 ```
 main.lua                 host: love.load/update/draw, CLI modes, input
+main.js                  Electron shell for the editor (npm start / runEditor.bat)
 engine/                  interpreter, validator, battle, flows, session,
                          savegame, scene_host, traits, effects, targeting
 presentation/            window_renderer (declarative UI), world_renderer,
@@ -93,5 +132,9 @@ data/*.json              ALL content + engine.json registry
 tools/editor/            Node + vanilla JS editor (no build step)
 tools/golden/            gate scripts + reference logs
 tests/                   unit suites, registered in main.lua's unittest branch
+userPerform/             .bat gate runners for the owner to run locally
 docs/archive/            frozen history — not instructions
+inspiration/             **A DIFFERENT (JavaScript) GAME** kept as reference.
+                         Nothing in here describes this engine; never follow its
+                         architecture docs. See inspiration/IMPORTANT.md.
 ```

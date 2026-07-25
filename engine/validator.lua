@@ -216,6 +216,18 @@ validator.run = function(loader)
     for _, item in ipairs(loader.items) do
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))
+        -- An item with effects but a non-consumable `type` is silently
+        -- unusable: usability.canUseItem refuses anything that isn't
+        -- "consumable", so it never appears as usable in the items menu and its
+        -- effects can never fire. Caught here because the failure is invisible
+        -- in-game -- nothing errors, the item just does nothing forever.
+        if item.effects and #item.effects > 0 then
+            check((item.type or "consumable") == "consumable",
+                "item " .. tostring(item.id) .. " ('" .. tostring(item.name)
+                .. "') has effects but type '" .. tostring(item.type)
+                .. "' -- usability.canUseItem only accepts \"consumable\", so it "
+                .. "would be silently unusable")
+        end
         if item.actionSequence then
             check(loader.actionSequences[item.actionSequence] ~= nil, "item '" .. tostring(item.id) .. "' actionSequence references missing sequence '" .. tostring(item.actionSequence) .. "'")
         end
