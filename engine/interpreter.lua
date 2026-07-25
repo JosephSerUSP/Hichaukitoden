@@ -342,7 +342,7 @@ handlers.CHANGE_EVENT_PROPERTIES = function(cmd, ctx)
     local session = ctx.session
     if not session then return end
     
-    local targetEventId = cmd.eventId or cmd.id or (ctx and ctx.eventId) or (ctx and ctx.event and ctx.event.id) or (session.activeEvent and session.activeEvent.id)
+    local targetEventId = cmd.eventId or (ctx and ctx.eventId) or (ctx and ctx.event and ctx.event.id) or (session.activeEvent and session.activeEvent.id)
     if not targetEventId then return end
 
     local persistent = cmd.persistent
@@ -374,9 +374,7 @@ handlers.CHANGE_EVENT_PROPERTIES = function(cmd, ctx)
         end
     end
 end
-handlers.SET_EVENT_PROPERTIES = handlers.CHANGE_EVENT_PROPERTIES
 handlers.SET_EVENT_LABEL = handlers.CHANGE_EVENT_PROPERTIES
-handlers.CHANGE_EVENT_LABEL = handlers.CHANGE_EVENT_PROPERTIES
 handlers.SET_EVENT_NAME = handlers.CHANGE_EVENT_PROPERTIES
 
 handlers.IF = function(cmd, ctx)
@@ -461,14 +459,8 @@ handlers.FOR_EACH = function(cmd, ctx)
 end
 
 handlers.GAIN_GOLD = function(cmd, ctx)
-    local amount = math.floor(evalFormula(cmd.amount or cmd.value or 0, ctx))
+    local amount = math.floor(evalFormula(cmd.amount or 0, ctx))
     ctx.session.gold = math.max(0, (ctx.session.gold or 0) + amount)
-end
-handlers.GIVE_GOLD = handlers.GAIN_GOLD
-handlers.CHANGE_GOLD = handlers.GAIN_GOLD
-handlers.TAKE_GOLD = function(cmd, ctx)
-    local amount = math.floor(evalFormula(cmd.amount or cmd.value or 0, ctx))
-    ctx.session.gold = math.max(0, (ctx.session.gold or 0) - amount)
 end
 
 handlers.RECOVER_PARTY = function(cmd, ctx)
