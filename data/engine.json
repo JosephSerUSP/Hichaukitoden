@@ -2008,9 +2008,8 @@
       "y": 3.5,
       "width": 32,
       "height": 5,
-      "style": "panel",
-      "title": "Select Ingredients",
-      "lineSpacing": 0
+      "style": "list",
+      "title": "Select Ingredients"
     },
     "inventory_list": {
       "x": 0,
