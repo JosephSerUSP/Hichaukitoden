@@ -18,17 +18,31 @@ Item Creation access, and a creature that excels at crafting may be poor in
 battle, or vice versa. Battle performance, Item Creation aptitude, and sacrifice
 value are meant to pull in different directions per species.
 
-Menu flow: Item Creation → Select Creature → Item Creation menu.
+Menu flow: a creature's context menu on the map → Item Creation. The creature is
+already chosen by the time the scene opens, and its single discipline follows
+from it, so the scene opens directly on ingredient selection — there is no
+"pick a discipline" and no "pick a creature" step.
 
 ## Implementation (live)
 
 The whole system is the data-authored scene `1` in `data/scenes.json` — hooks,
-windows, and a `calcYield` SCRIPT — with no bespoke engine Lua. Everything below
-is a tunable field of that scene's `config`:
+windows, and a `calcYield` SCRIPT — with no bespoke engine Lua. The scene is
+pushed with `seededCrafterIdx` (the party slot picked in the context menu);
+`calcYield` reads that creature's `discipline`, looks it up in the engine
+registry, and drives the pool filter, the ingredient highlight and the governing
+stat from it. Its four states are ingredients → confirm → roulette → result.
+
+**Disciplines live in `data/engine.json` → `disciplines[]`** —
+`{kind, label, stat, description}`: blacksmithing/ATK, tinkering/ASP,
+alchemy/MAT, cooking/MaxHP. That is the single source of truth naming
+an item's `meta.craftKind` and a creature's `discipline`; G1 rejects either
+naming a kind that is not registered, and the editor offers it as a dropdown
+rather than a free string. `api.disciplines()` exposes it to SCRIPT.
+
+Everything below is a tunable field of the scene's `config`:
 
 | Field | Role |
 |---|---|
-| `disciplines[]` | `{kind, label, stat, description}` — blacksmithing/ATK, tinkering/ASP, alchemy/MAT, cooking/MaxHP |
 | `yieldFormula` | mean ingredient `potency` + `alpha × crafterStat` |
 | `penaltyFormula` | 15 for element mismatch, 20 if the crafter is under-tier |
 | `anomalyFormula` | 5% chance of a 1.5× score multiplier ("CRITICAL ANOMALY") |

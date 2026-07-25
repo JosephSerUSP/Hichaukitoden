@@ -2073,7 +2073,9 @@
                     } else if (activeActorSubTab === 'ecosystem') {
                         // Discipline row
                         const discBox = makeGroupbox(subPageContainer, 'Crafting & Discipline');
-                        createFormField(discBox, 'Discipline (Item Creation)', item.discipline || '', v => { item.discipline = v; setDirty(true); }, 'text');
+                        createSelectField(discBox, 'Discipline (Item Creation)', item.discipline || '',
+                            engineEnumOptions('disciplines', item.discipline),
+                            v => { if (v) { item.discipline = v; } else { delete item.discipline; } setDirty(true); });
 
                         // Two-column grid: Item Drops & Evolutions
                         const gridTwo = document.createElement('div');
@@ -2496,6 +2498,55 @@
             container.appendChild(group);
         }
 
+        // Options for a field whose value must name an entry in an engine.json
+        // registry (today: `disciplines`, named by item meta.craftKind and by
+        // actor.discipline). G1 rejects a value that is not in the registry, so
+        // the editor offers the registry instead of a free string -- but a
+        // drifted existing value is kept as an extra option rather than
+        // silently rewritten to something valid on open.
+        function engineEnumOptions(registryName, current) {
+            const reg = (dbPayload.engine && dbPayload.engine[registryName]) || [];
+            const opts = [{ value: '', label: '(none)' }];
+            reg.forEach(entry => {
+                const value = entry.kind || entry.id || '';
+                if (!value) return;
+                opts.push({ value: value, label: entry.label || value });
+            });
+            if (current && !opts.some(o => o.value === current)) {
+                opts.push({ value: current, label: current + ' (unregistered)' });
+            }
+            return opts;
+        }
+
+        function createSelectField(container, labelText, value, options, onChange, useBlockLayout = true) {
+            const group = document.createElement('div');
+            group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+
+            const label = document.createElement('label');
+            label.textContent = labelText;
+            if (useBlockLayout) {
+                label.style.marginBottom = '2px';
+            }
+            group.appendChild(label);
+
+            const select = document.createElement('select');
+            select.className = 'form-control inset-bevel';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.value;
+                o.textContent = opt.label;
+                if (opt.value === (value || '')) o.selected = true;
+                select.appendChild(o);
+            });
+            select.addEventListener('change', () => {
+                onChange(select.value);
+                setDirty(true);
+            });
+
+            group.appendChild(select);
+            container.appendChild(group);
+        }
+
         function buildMetaEditor(container, owner, appliesToName) {
             if (!owner) return;
             
@@ -2564,6 +2615,27 @@
                             input.value = meta[k];
                             input.oninput = () => {
                                 owner.meta[k] = parseFloat(input.value) || 0;
+                                setDirty(true);
+                            };
+                        } else if (reg && reg.enumFrom) {
+                            // Value must name an engine.json registry entry
+                            // (G1-checked), so offer the registry rather than a
+                            // free string -- this is where craftKind typos used
+                            // to come from.
+                            input = document.createElement('select');
+                            input.className = 'win98-input';
+                            input.style.flex = '1';
+                            input.style.boxSizing = 'border-box';
+                            input.style.height = '19px';
+                            engineEnumOptions(reg.enumFrom, meta[k]).forEach(opt => {
+                                const o = document.createElement('option');
+                                o.value = opt.value;
+                                o.textContent = opt.label;
+                                if (opt.value === (meta[k] || '')) o.selected = true;
+                                input.appendChild(o);
+                            });
+                            input.onchange = () => {
+                                owner.meta[k] = input.value;
                                 setDirty(true);
                             };
                         } else {

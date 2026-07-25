@@ -1733,6 +1733,23 @@ local function buildScriptApi(ctx)
         return l and l.formatTerm(key, fallback, ...) or fallback
     end
     -- systemConfig moved to prototype
+    -- Item Creation disciplines (engine.json `disciplines`): the shared
+    -- taxonomy that item `meta.craftKind` and actor `discipline` both name.
+    -- Registry-backed rather than scene-local, so a second crafting surface
+    -- reads the same list instead of re-declaring it.
+    function api.disciplines()
+        local l = ctx.loader or session.loader
+        local list = {}
+        for _, d in ipairs((l and l.engine and l.engine.disciplines) or {}) do
+            table.insert(list, {
+                kind = d.kind or "",
+                label = d.label or d.kind or "",
+                stat = d.stat or "atk",
+                description = d.description or "",
+            })
+        end
+        return list
+    end
     function api.allActors()
         local l = ctx.loader or session.loader
         local list = {}

@@ -228,7 +228,8 @@
         "items"
       ],
       "type": "string",
-      "description": "Crafting pool category (blacksmith/tinker/alchemy/cooking)"
+      "description": "Crafting pool category. Must name a kind registered in engine.json disciplines (G1-checked).",
+      "enumFrom": "disciplines"
     },
     {
       "key": "detect",
@@ -249,6 +250,32 @@
       ],
       "type": "number",
       "description": "Difficulty of noticing this (default 1). The party's best sense rate must be >= this value."
+    }
+  ],
+  "disciplines": [
+    {
+      "kind": "blacksmithing",
+      "label": "Blacksmithing",
+      "stat": "atk",
+      "description": "Forge weapons and armor using ATK."
+    },
+    {
+      "kind": "tinkering",
+      "label": "Tinkering",
+      "stat": "asp",
+      "description": "Assemble accessories using ASP."
+    },
+    {
+      "kind": "alchemy",
+      "label": "Alchemy",
+      "stat": "mat",
+      "description": "Brew potions and ink using MAT."
+    },
+    {
+      "kind": "cooking",
+      "label": "Cooking",
+      "stat": "maxHp",
+      "description": "Cook foods using Max HP."
     }
   ],
   "scripting": {
@@ -1970,22 +1997,6 @@
     }
   ],
   "windowLayout": {
-    "discipline_panel": {
-      "x": 0.5,
-      "y": 4,
-      "width": 11,
-      "height": 16.5,
-      "style": "list",
-      "title": "Select Discipline"
-    },
-    "crafter_panel": {
-      "x": 0,
-      "y": 3.5,
-      "width": 12,
-      "height": 20.5,
-      "style": "list",
-      "title": "Select Crafter"
-    },
     "ingredient_panel": {
       "x": 0,
       "y": 3.5,
@@ -2169,26 +2180,6 @@
       "height": 3.5,
       "style": "panel",
       "title": "Item Creation"
-    },
-    "discipline_detail": {
-      "x": 12,
-      "y": 4,
-      "width": 19.5,
-      "height": 16.5,
-      "style": "panel",
-      "title": "Details"
-    },
-    "crafter_detail": {
-      "x": 12,
-      "y": 3.5,
-      "width": 20,
-      "height": 20.5,
-      "style": "panel",
-      "title": "Crafter Stats",
-      "portrait": "sel('crafter_panel').spriteKey",
-      "portraitX": 1,
-      "portraitY": 2,
-      "textX": 8
     },
     "result_panel": {
       "x": 4,

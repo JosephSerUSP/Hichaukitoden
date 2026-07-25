@@ -5,25 +5,19 @@
     "kind": "menu",
     "goldenScript": [
       {
-        "key": "return"
-      },
-      {
         "key": "down"
-      },
-      {
-        "key": "return"
-      },
-      {
-        "key": "down"
-      },
-      {
-        "key": "return"
       },
       {
         "key": "right"
       },
       {
         "key": "down"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
       },
       {
         "key": "return"
@@ -39,32 +33,6 @@
       }
     ],
     "config": {
-      "disciplines": [
-        {
-          "kind": "blacksmithing",
-          "label": "Blacksmithing",
-          "stat": "atk",
-          "description": "Forge weapons and armor using ATK."
-        },
-        {
-          "kind": "tinkering",
-          "label": "Tinkering",
-          "stat": "asp",
-          "description": "Assemble accessories using ASP."
-        },
-        {
-          "kind": "alchemy",
-          "label": "Alchemy",
-          "stat": "mat",
-          "description": "Brew potions and ink using MAT."
-        },
-        {
-          "kind": "cooking",
-          "label": "Cooking",
-          "stat": "maxHp",
-          "description": "Cook foods using Max HP."
-        }
-      ],
       "alpha": 0.5,
       "yieldFormula": "floor((ingredient1.meta.potency + ingredient2.meta.potency) / 2) + floor(alpha * S)",
       "penaltyFormula": "((ingredient1.meta.craftElement ~= ingredient2.meta.craftElement and ingredient1.meta.craftElement ~= '' and ingredient2.meta.craftElement ~= '') and 15 or 0) + (S < (ingredient1.meta.tier + ingredient2.meta.tier) * 6 and 20 or 0)",
@@ -99,8 +67,6 @@
       },
       "terms": {
         "title": "Item Creation",
-        "selectDiscipline": "Select Discipline:",
-        "selectCrafter": "Select Crafter:",
         "selectIngredients": "Select Ingredients:",
         "yieldText": "Expected Yield: {0}",
         "anomalyText": "CRITICAL ANOMALY DETECTED!",
@@ -112,55 +78,16 @@
     "windows": [
       {
         "id": "craft_header",
-        "content": []
-      },
-      {
-        "id": "discipline_panel",
-        "visible": "v.state == 1",
-        "content": [
-          {
-            "type": "list",
-            "listId": "config:disciplines",
-            "format": "{label}",
-            "cursor": "v.selectedDisciplineIdx"
-          }
-        ]
-      },
-      {
-        "id": "discipline_detail",
-        "visible": "v.state == 1",
         "content": [
           {
             "type": "text",
-            "text": "Governing Stat: {config.disciplines[v.selectedDisciplineIdx].stat}\n{sel('discipline_panel').description}"
-          }
-        ]
-      },
-      {
-        "id": "crafter_panel",
-        "visible": "v.state == 2",
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "v.selectedCrafterIdx"
-          }
-        ]
-      },
-      {
-        "id": "crafter_detail",
-        "visible": "v.state == 2",
-        "content": [
-          {
-            "type": "text",
-            "text": "{sel('crafter_panel').name}\nLevel: {sel('crafter_panel').level}\n{config.disciplines[v.selectedDisciplineIdx].stat}: {sel('crafter_panel')[config.disciplines[v.selectedDisciplineIdx].stat]}"
+            "text": "{v.crafterName} -- {v.discLabel}"
           }
         ]
       },
       {
         "id": "ingredient_panel",
-        "visible": "v.state == 3",
+        "visible": "v.state == 1",
         "content": [
           {
             "type": "text",
@@ -170,21 +97,21 @@
       },
       {
         "id": "inventory_list",
-        "visible": "v.state == 3",
+        "visible": "v.state == 1",
         "content": [
           {
             "type": "list",
             "listId": "inventory",
             "format": "{name} (x{qty})",
-            "priority": "meta.craftKind == config.disciplines[v.selectedDisciplineIdx].kind",
-            "highlight": "meta.craftKind == config.disciplines[v.selectedDisciplineIdx].kind",
+            "priority": "meta.craftKind == v.discKind",
+            "highlight": "meta.craftKind == v.discKind",
             "cursor": "v.cursorSlot == 1 and v.selectedIngredient1Idx or v.selectedIngredient2Idx"
           }
         ]
       },
       {
         "id": "detail_panel",
-        "visible": "v.state == 3",
+        "visible": "v.state == 1",
         "content": [
           {
             "type": "text",
@@ -194,7 +121,7 @@
       },
       {
         "id": "confirm_panel",
-        "visible": "v.state == 4",
+        "visible": "v.state == 2",
         "content": [
           {
             "type": "text",
@@ -209,7 +136,7 @@
       },
       {
         "id": "roulette_panel",
-        "visible": "v.state == 5",
+        "visible": "v.state == 3",
         "content": [
           {
             "type": "list",
@@ -220,7 +147,7 @@
       },
       {
         "id": "result_panel",
-        "visible": "v.state == 6",
+        "visible": "v.state == 4",
         "content": [
           {
             "type": "text",
@@ -233,23 +160,13 @@
       "on_enter": [
         {
           "cmd": "SET_VAR",
-          "name": "page",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
           "name": "state",
           "value": 1
         },
         {
           "cmd": "SET_VAR",
-          "name": "selectedDisciplineIdx",
-          "value": 1
-        },
-        {
-          "cmd": "SET_VAR",
-          "name": "selectedCrafterIdx",
-          "value": 1
+          "name": "crafterIdx",
+          "value": "v.seededCrafterIdx or 1"
         },
         {
           "cmd": "SET_VAR",
@@ -283,11 +200,6 @@
         },
         {
           "cmd": "SET_VAR",
-          "name": "crafterIdx",
-          "value": 0
-        },
-        {
-          "cmd": "SET_VAR",
           "name": "rouletteStep",
           "value": 0
         },
@@ -317,128 +229,14 @@
           "value": 0
         },
         {
-          "cmd": "SET_VAR",
-          "name": "seededCrafterIdx",
-          "value": "v.seededCrafterIdx or 0"
+          "cmd": "SCRIPT",
+          "ref": "calcYield"
         }
       ],
       "on_select": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and (v.seededCrafterIdx or 0) > 0",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "crafterIdx",
-              "value": "v.seededCrafterIdx"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 3
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedIngredient1Idx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedIngredient2Idx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "cursorSlot",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "i1_item_id",
-              "value": 0
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "i2_item_id",
-              "value": 0
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 1 and (v.seededCrafterIdx or 0) == 0",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedCrafterIdx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "crafterIdx",
-              "value": "v.selectedCrafterIdx"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 3
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedIngredient1Idx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedIngredient2Idx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "cursorSlot",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "i1_item_id",
-              "value": 0
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "i2_item_id",
-              "value": 0
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
+          "condition": "v._guard == 0 and v.state == 1",
           "then": [
             {
               "cmd": "SCRIPT",
@@ -456,7 +254,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "state",
-                  "value": 4
+                  "value": 2
                 },
                 {
                   "cmd": "SET_VAR",
@@ -469,7 +267,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 4",
+          "condition": "v._guard == 0 and v.state == 2",
           "then": [
             {
               "cmd": "IF",
@@ -482,7 +280,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "state",
-                  "value": 5
+                  "value": 3
                 },
                 {
                   "cmd": "SET_VAR",
@@ -504,7 +302,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "state",
-                  "value": 3
+                  "value": 1
                 },
                 {
                   "cmd": "SET_VAR",
@@ -522,21 +320,11 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 6",
+          "condition": "v._guard == 0 and v.state == 4",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "state",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedDisciplineIdx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedCrafterIdx",
               "value": 1
             },
             {
@@ -567,6 +355,11 @@
             {
               "cmd": "SET_VAR",
               "name": "i2_item_id",
+              "value": 0
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "poolTargetIdx",
               "value": 0
             },
             {
@@ -604,54 +397,6 @@
             },
             {
               "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3 and (v.seededCrafterIdx or 0) > 0",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 1
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3 and (v.seededCrafterIdx or 0) == 0",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 4",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 3
-            },
-            {
-              "cmd": "SET_VAR",
               "name": "cursorSlot",
               "value": 2
             },
@@ -664,12 +409,12 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 5",
+          "condition": "v._guard == 0 and v.state == 3",
           "then": [
             {
               "cmd": "SET_VAR",
               "name": "state",
-              "value": 4
+              "value": 2
             },
             {
               "cmd": "SET_VAR",
@@ -683,38 +428,6 @@
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.state == 1",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedDisciplineIdx",
-              "value": "(v.selectedDisciplineIdx - 2) % 4 + 1"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedCrafterIdx",
-              "value": "(v.selectedCrafterIdx - 2) % (v.partyCount or 4) + 1"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
           "then": [
             {
               "cmd": "SCRIPT",
@@ -758,38 +471,6 @@
           "condition": "v._guard == 0 and v.state == 1",
           "then": [
             {
-              "cmd": "SET_VAR",
-              "name": "selectedDisciplineIdx",
-              "value": "v.selectedDisciplineIdx % 4 + 1"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 2",
-          "then": [
-            {
-              "cmd": "SET_VAR",
-              "name": "selectedCrafterIdx",
-              "value": "v.selectedCrafterIdx % (v.partyCount or 4) + 1"
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "_guard",
-              "value": 1
-            }
-          ]
-        },
-        {
-          "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
-          "then": [
-            {
               "cmd": "SCRIPT",
               "ref": "calcYield"
             },
@@ -828,7 +509,7 @@
       "on_left": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
+          "condition": "v._guard == 0 and v.state == 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -844,7 +525,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 4",
+          "condition": "v._guard == 0 and v.state == 2",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -862,7 +543,7 @@
       "on_right": [
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 3",
+          "condition": "v._guard == 0 and v.state == 1",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -878,7 +559,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "v._guard == 0 and v.state == 4",
+          "condition": "v._guard == 0 and v.state == 2",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -896,7 +577,7 @@
       "on_frame": [
         {
           "cmd": "IF",
-          "condition": "v.state == 5",
+          "condition": "v.state == 3",
           "then": [
             {
               "cmd": "SCRIPT",
@@ -908,7 +589,7 @@
     },
     "draw": "windows",
     "scripts": {
-      "calcYield": "-- Yield / pool / roulette computation for the Item Creation extra scene.\n-- Faithful port of the former engine handler; runs in the SCRIPT sandbox.\nlocal v = ctx.v\nlocal config = ctx.config or {}\nlocal disc = (config.disciplines or {})[v.selectedDisciplineIdx or 1]\nif not disc then return end\nlocal discKind = disc.kind or \"\"\n\n-- Inventory, ordered exactly as the window renderer's priority sort:\n-- discipline-matching items first, id ascending within each group.\nlocal inv = api.items()\ntable.sort(inv, function(a, b)\n    local aKind = a.meta and a.meta.craftKind or \"\"\n    local bKind = b.meta and b.meta.craftKind or \"\"\n    if aKind == discKind and bKind ~= discKind then return true\n    elseif aKind ~= discKind and bKind == discKind then return false\n    else return a.id < b.id end\nend)\nv.invCount = #inv\nlocal party = api.party()\nv.partyCount = #party\n\nlocal i1 = inv[v.selectedIngredient1Idx]\nlocal i2 = inv[v.selectedIngredient2Idx]\nv.i1_item_id = i1 and i1.id or 0\nv.i2_item_id = i2 and i2.id or 0\nif v.i1_item_id == 0 or v.i2_item_id == 0 then\n    v.yieldScore = 0\n    v.yieldAnomalyScore = 0\n    v.isAnomaly = false\n    return\nend\n\nlocal crafter = party[v.crafterIdx or 1]\nif not crafter then return end\nlocal statName = disc.stat or \"atk\"\nlocal S = (statName == \"level\") and crafter.level or crafter[statName]\n\nlocal env = { i1 = i1, i2 = i2, ingredient1 = i1, ingredient2 = i2,\n    crafter = crafter, alpha = config.alpha or 0.5, S = S }\nlocal Y = math.floor(tonumber(api.eval(config.yieldFormula or \"0\", env)) or 0)\nlocal penalty = math.floor(tonumber(api.eval(config.penaltyFormula or \"0\", env)) or 0)\nlocal Y_final = math.max(0, Y - penalty)\nlocal anomalyMult = tonumber(api.eval(config.anomalyFormula or \"1.0\", env)) or 1.0\nlocal isCrit = (anomalyMult > 1.0)\nlocal Y_anomaly = math.floor(Y_final * anomalyMult)\n\n-- Outcome tier: name from the pre-anomaly bracket, pool tier from the final score\nlocal brackets = config.brackets or {}\nlocal tier, tierName = 0, \"Junk\"\nfor _, br in ipairs(brackets) do\n    if Y_final <= br.max then tier = br.tier; tierName = br.name; break end\nend\nif tier == 0 and Y_final > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr and Y_final > lastBr.max then tier = lastBr.tier; tierName = lastBr.name end\nend\nlocal finalScore = isCrit and Y_anomaly or Y_final\nlocal outcomeTier = 0\nfor _, br in ipairs(brackets) do\n    if finalScore <= br.max then outcomeTier = br.tier; break end\nend\nif outcomeTier == 0 and finalScore > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr then outcomeTier = lastBr.tier end\nend\n\n-- Roulette pool from the full item database; fall back to tier-0 items\nlocal pool = {}\nfor _, item in ipairs(api.allItems()) do\n    if item.meta and item.meta.craftKind == discKind and item.meta.tier == outcomeTier then\n        table.insert(pool, item)\n    end\nend\nif #pool == 0 then\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == discKind and item.meta.tier == 0 then\n            table.insert(pool, item)\n        end\n    end\nend\n\nv.yieldScore = Y_final\nv.yieldAnomalyScore = Y_anomaly\nv.penaltyValue = penalty\nv.isAnomaly = isCrit\nv.outcomeTier = outcomeTier\nv.outcomeTierName = tierName\nv.i1Name = i1.name or \"\"\nv.i2Name = i2.name or \"\"\nv.crafterName = crafter.name or \"\"\nv.elementConflict = (i1.meta and i2.meta\n    and i1.meta.craftElement and i2.meta.craftElement\n    and i1.meta.craftElement ~= \"\" and i2.meta.craftElement ~= \"\"\n    and i1.meta.craftElement ~= i2.meta.craftElement) and true or false\n\nv.poolTargetIdx = v.poolTargetIdx or 0\nif #pool > 0 then\n    v.poolSize = #pool\n    if v.poolTargetIdx == 0 then v.poolTargetIdx = random(#pool) end\n    v.poolCurrentIdx = random(#pool)\n    local targetItem = pool[v.poolTargetIdx]\n    v.resultItemId = targetItem and targetItem.id or 0\n    v.resultItemName = targetItem and targetItem.name or \"\"\n    v.pool = {}\n    for _, pitem in ipairs(pool) do\n        table.insert(v.pool, { name = pitem.name or \"\", icon = pitem.icon or 0 })\n    end\nelse\n    v.poolSize = 0\n    v.poolCurrentIdx = 0\n    v.resultItemId = 0\n    v.resultItemName = \"\"\n    v.pool = {}\nend\n\n-- Roulette completion (state 5): consume ingredients, grant the result\nif v.state == 5 then\n    local timing = config.timing or {}\n    local steps = timing.steps or 200\n    v.rouletteStep = (v.rouletteStep or 0) + 1\n    if v.rouletteStep >= steps then\n        if v.i1_item_id ~= 0 then api.takeItem(v.i1_item_id, 1) end\n        if v.i2_item_id ~= 0 then api.takeItem(v.i2_item_id, 1) end\n        local resultItem = pool[v.poolTargetIdx or 1]\n        if resultItem then api.giveItem(resultItem.id, 1) end\n        api.emit({ type = \"text\", text = \"Crafted \" .. (v.resultItemName or \"\") .. \"!\" })\n        v.state = 6\n        v.rouletteStep = 0\n    else\n        local delay = v.rouletteDelay or timing.initialDelay or 0.05\n        v.rouletteDelay = math.min(delay * (timing.delayMult or 1.25), timing.maxDelay or 10)\n    end\nend\n"
+      "calcYield": "-- Yield / pool / roulette computation for the Item Creation extra scene.\n-- Runs in the SCRIPT sandbox.\n--\n-- The crafter is fixed on entry (the scene is opened from a creature's context\n-- menu), and each creature has exactly one discipline, so the discipline is\n-- looked up from the crafter rather than chosen -- see\n-- docs/game design/itemCreation.md.\nlocal v = ctx.v\nlocal config = ctx.config or {}\n\nlocal party = api.party()\nlocal crafter = party[v.crafterIdx or 1]\nif not crafter then return end\n\nlocal discKind = (crafter.actorData and crafter.actorData.discipline) or \"\"\nlocal disc\nfor _, d in ipairs(api.disciplines()) do\n    if d.kind == discKind then disc = d break end\nend\nif not disc then return end\nv.discKind = discKind\nv.discLabel = disc.label or discKind\nv.discStat = disc.stat or \"atk\"\nv.crafterName = crafter.name or \"\"\n\n-- Inventory, ordered exactly as the window renderer's priority sort:\n-- discipline-matching items first, id ascending within each group.\nlocal inv = api.items()\ntable.sort(inv, function(a, b)\n    local aKind = a.meta and a.meta.craftKind or \"\"\n    local bKind = b.meta and b.meta.craftKind or \"\"\n    if aKind == discKind and bKind ~= discKind then return true\n    elseif aKind ~= discKind and bKind == discKind then return false\n    else return a.id < b.id end\nend)\nv.invCount = #inv\n\nlocal i1 = inv[v.selectedIngredient1Idx]\nlocal i2 = inv[v.selectedIngredient2Idx]\nv.i1_item_id = i1 and i1.id or 0\nv.i2_item_id = i2 and i2.id or 0\nif v.i1_item_id == 0 or v.i2_item_id == 0 then\n    v.yieldScore = 0\n    v.yieldAnomalyScore = 0\n    v.isAnomaly = false\n    return\nend\n\nlocal statName = disc.stat or \"atk\"\nlocal S = (statName == \"level\") and crafter.level or crafter[statName]\n\nlocal env = { i1 = i1, i2 = i2, ingredient1 = i1, ingredient2 = i2,\n    crafter = crafter, alpha = config.alpha or 0.5, S = S }\nlocal Y = math.floor(tonumber(api.eval(config.yieldFormula or \"0\", env)) or 0)\nlocal penalty = math.floor(tonumber(api.eval(config.penaltyFormula or \"0\", env)) or 0)\nlocal Y_final = math.max(0, Y - penalty)\nlocal anomalyMult = tonumber(api.eval(config.anomalyFormula or \"1.0\", env)) or 1.0\nlocal isCrit = (anomalyMult > 1.0)\nlocal Y_anomaly = math.floor(Y_final * anomalyMult)\n\n-- Outcome tier: name from the pre-anomaly bracket, pool tier from the final score\nlocal brackets = config.brackets or {}\nlocal tier, tierName = 0, \"Junk\"\nfor _, br in ipairs(brackets) do\n    if Y_final <= br.max then tier = br.tier; tierName = br.name; break end\nend\nif tier == 0 and Y_final > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr and Y_final > lastBr.max then tier = lastBr.tier; tierName = lastBr.name end\nend\nlocal finalScore = isCrit and Y_anomaly or Y_final\nlocal outcomeTier = 0\nfor _, br in ipairs(brackets) do\n    if finalScore <= br.max then outcomeTier = br.tier; break end\nend\nif outcomeTier == 0 and finalScore > 0 then\n    local lastBr = brackets[#brackets]\n    if lastBr then outcomeTier = lastBr.tier end\nend\n\n-- Roulette pool from the full item database; fall back to tier-0 items\nlocal pool = {}\nfor _, item in ipairs(api.allItems()) do\n    if item.meta and item.meta.craftKind == discKind and item.meta.tier == outcomeTier then\n        table.insert(pool, item)\n    end\nend\nif #pool == 0 then\n    for _, item in ipairs(api.allItems()) do\n        if item.meta and item.meta.craftKind == discKind and item.meta.tier == 0 then\n            table.insert(pool, item)\n        end\n    end\nend\n\nv.yieldScore = Y_final\nv.yieldAnomalyScore = Y_anomaly\nv.penaltyValue = penalty\nv.isAnomaly = isCrit\nv.outcomeTier = outcomeTier\nv.outcomeTierName = tierName\nv.i1Name = i1.name or \"\"\nv.i2Name = i2.name or \"\"\nv.elementConflict = (i1.meta and i2.meta\n    and i1.meta.craftElement and i2.meta.craftElement\n    and i1.meta.craftElement ~= \"\" and i2.meta.craftElement ~= \"\"\n    and i1.meta.craftElement ~= i2.meta.craftElement) and true or false\n\nv.poolTargetIdx = v.poolTargetIdx or 0\nif #pool > 0 then\n    v.poolSize = #pool\n    if v.poolTargetIdx == 0 then v.poolTargetIdx = random(#pool) end\n    v.poolCurrentIdx = random(#pool)\n    local targetItem = pool[v.poolTargetIdx]\n    v.resultItemId = targetItem and targetItem.id or 0\n    v.resultItemName = targetItem and targetItem.name or \"\"\n    v.pool = {}\n    for _, pitem in ipairs(pool) do\n        table.insert(v.pool, { name = pitem.name or \"\", icon = pitem.icon or 0 })\n    end\nelse\n    v.poolSize = 0\n    v.poolCurrentIdx = 0\n    v.resultItemId = 0\n    v.resultItemName = \"\"\n    v.pool = {}\nend\n\n-- Roulette completion (state 3): consume ingredients, grant the result\nif v.state == 3 then\n    local timing = config.timing or {}\n    local steps = timing.steps or 200\n    v.rouletteStep = (v.rouletteStep or 0) + 1\n    if v.rouletteStep >= steps then\n        if v.i1_item_id ~= 0 then api.takeItem(v.i1_item_id, 1) end\n        if v.i2_item_id ~= 0 then api.takeItem(v.i2_item_id, 1) end\n        local resultItem = pool[v.poolTargetIdx or 1]\n        if resultItem then api.giveItem(resultItem.id, 1) end\n        api.emit({ type = \"text\", text = \"Crafted \" .. (v.resultItemName or \"\") .. \"!\" })\n        v.state = 4\n        v.rouletteStep = 0\n    else\n        local delay = v.rouletteDelay or timing.initialDelay or 0.05\n        v.rouletteDelay = math.min(delay * (timing.delayMult or 1.25), timing.maxDelay or 10)\n    end\nend\n"
     }
   },
   {

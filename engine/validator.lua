@@ -92,6 +92,43 @@ validator.run = function(loader)
         }
     end
 
+    -- Item Creation disciplines (engine.json `disciplines`) are named from three
+    -- places that used to have nothing tying them together: an item's
+    -- `meta.craftKind`, an actor's `discipline`, and the crafting scene. A typo
+    -- in any of them fails silently -- the item simply never appears in a pool,
+    -- or the creature can craft nothing -- so it is gated here rather than left
+    -- to be noticed in play.
+    local knownDisciplines = {}
+    local disciplineNames = {}
+    for _, d in ipairs((loader.engine and loader.engine.disciplines) or {}) do
+        if d.kind then
+            knownDisciplines[d.kind] = true
+            table.insert(disciplineNames, d.kind)
+        end
+    end
+    table.sort(disciplineNames)
+    local disciplineList = table.concat(disciplineNames, ", ")
+    if #disciplineNames > 0 then
+        for _, item in ipairs(loader.items or {}) do
+            local kind = item.meta and item.meta.craftKind
+            if kind ~= nil and kind ~= "" then
+                check(knownDisciplines[kind] == true,
+                    "item '" .. tostring(item.id) .. "' ('" .. tostring(item.name)
+                    .. "') meta.craftKind '" .. tostring(kind)
+                    .. "' is not a registered discipline (" .. disciplineList .. ")")
+            end
+        end
+        for _, actor in ipairs(loader.actors or {}) do
+            local disc = actor.discipline
+            if disc ~= nil and disc ~= "" then
+                check(knownDisciplines[disc] == true,
+                    "actor '" .. tostring(actor.id) .. "' ('" .. tostring(actor.name)
+                    .. "') discipline '" .. tostring(disc)
+                    .. "' is not a registered discipline (" .. disciplineList .. ")")
+            end
+        end
+    end
+
     local undeclaredWarnings = 0
     local function validateMeta(metaObj, collName, entryId)
         if not metaObj then return end
