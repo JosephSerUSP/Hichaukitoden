@@ -7,7 +7,7 @@ local targeting = {}
 -- (T1 acceptance criterion: the old string-ladder's silent fallthrough to
 -- "enemy" must be impossible). The G1 validator pcall-wraps expand over
 -- every skill/item spec, so bad data fails validate, not gameplay.
-local VALID_SIDES  = { enemy = true, ally = true, self = true, any = true }
+local VALID_SIDES  = { enemy = true, ally = true, self = true, any = true, none = true }
 local VALID_MODES  = { choose = true, random = true }
 local VALID_STATES = { alive = true, dead = true, any = true }
 
@@ -35,6 +35,8 @@ function targeting.expand(spec)
             return { side = "ally", count = "all", mode = "choose", state = "alive" }
         elseif spec == "enemy-all" then
             return { side = "enemy", count = "all", mode = "choose", state = "alive" }
+        elseif spec == "none" then
+            return { side = "none", count = 0, mode = "choose", state = "any" }
         else
             error("targeting: unknown target spec '" .. spec .. "'", 2)
         end

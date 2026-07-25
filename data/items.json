@@ -233,7 +233,8 @@
         "type": "recruit_egg",
         "value": 15
       }
-    ]
+    ],
+    "target": "none"
   },
   {
     "id": 12,
@@ -603,7 +604,8 @@
       "potency": 5,
       "craftElement": "Red",
       "craftKind": "cooking"
-    }
+    },
+    "target": "none"
   },
   {
     "id": 30,
@@ -623,7 +625,8 @@
       "potency": 8,
       "craftElement": "Black",
       "craftKind": "cooking"
-    }
+    },
+    "target": "none"
   },
   {
     "id": 31,

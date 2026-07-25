@@ -4,6 +4,21 @@ local newgame = require("engine.newgame")
 
 local session = {}
 
+-- Recruited allies (never the Summoner) draw a random name from
+-- actorData.names when one is defined, so starting parties don't all use
+-- the same handful of default names.
+local function randomAllyName(actorData)
+    if not actorData then return "Unknown" end
+    if actorData.role == "Summoner" then return actorData.name end
+    local list = actorData.names
+    if list and #list > 0 then
+        return list[math.random(#list)]
+    end
+    return actorData.name
+end
+
+session.randomAllyName = randomAllyName
+
 -- Game_Battler definition
 local Battler = {}
 Battler.__index = Battler

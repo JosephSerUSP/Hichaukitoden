@@ -2940,7 +2940,7 @@
             {
               "cmd": "SET_VAR",
               "name": "targetIdx",
-              "value": "(v.targetIdx + 1) % 4 + 1"
+              "value": "((v.targetIdx or 1) > 1 and ((v.targetIdx or 1) - 1) or max(1, party.count))"
             }
           ]
         }
@@ -2964,7 +2964,7 @@
             {
               "cmd": "SET_VAR",
               "name": "targetIdx",
-              "value": "(v.targetIdx + 1) % 4 + 1"
+              "value": "((v.targetIdx or 1) < party.count and ((v.targetIdx or 1) + 1) or 1)"
             }
           ]
         }
@@ -3022,19 +3022,9 @@
               "value": 1
             },
             {
-              "cmd": "SET_VAR",
-              "name": "state",
-              "value": 2
-            },
-            {
-              "cmd": "SET_VAR",
-              "name": "targetIdx",
-              "value": 1
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.targetIdx"
+              "cmd": "USE_ITEM",
+              "itemIndex": "v.idx",
+              "target": 0
             }
           ]
         },
@@ -3051,31 +3041,6 @@
               "cmd": "USE_ITEM",
               "itemIndex": "v.idx",
               "target": "v.targetIdx"
-            },
-            {
-              "cmd": "SET_VAR",
-              "assignments": [
-                {
-                  "name": "popupText",
-                  "value": "v.lastItemResult and (v.lastItemResult.success and ('Used ' .. (v.lastItemResult.itemName or 'item') .. '!') or ('Cannot use: ' .. (v.lastItemResult.reason or ''))) or ''"
-                },
-                {
-                  "name": "state",
-                  "value": 3
-                },
-                {
-                  "name": "idx",
-                  "value": "max(1, min(v.idx, session.itemCount))"
-                },
-                {
-                  "name": "targetIdx",
-                  "value": 1
-                },
-                {
-                  "name": "popupTimer",
-                  "value": 1.5
-                }
-              ]
             },
             {
               "cmd": "SET_CURSOR",

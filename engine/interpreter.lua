@@ -706,6 +706,7 @@ end
 -- target 'party' hit every member; otherwise target is a party index.
 handlers.USE_ITEM = function(cmd, ctx)
     local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
+    local targetVal = tonumber(evalFormula(cmd.target, ctx)) or 0
     local tab = (ctx.v and tonumber(ctx.v.tab)) or 1
     local loader = ctx.loader or ctx.session.loader
     local stacks = {}
@@ -730,49 +731,119 @@ handlers.USE_ITEM = function(cmd, ctx)
     table.sort(stacks, compareIds)
     local item = stacks[idx] and loader.getItem(stacks[idx])
     if not item then
-        if ctx.v then ctx.v.lastItemResult = { success = false, reason = "No item found" } end
+        if ctx.v then
+            ctx.v.lastItemResult = { success = false, reason = "No item found" }
+            ctx.v.state = 3
+            ctx.v.popupTimer = 1.5
+            ctx.v.popupText = "Cannot use: No item found"
+        end
         return
     end
 
-    local isPartyTarget = item.target == "party"
+    if item.type ~= "consumable" then
+        if ctx.v then
+            ctx.v.lastItemResult = { success = false, reason = "Not consumable", itemName = item.name }
+            ctx.v.state = 3
+            ctx.v.popupTimer = 1.5
+            ctx.v.popupText = "Cannot use: Not consumable"
+        end
+        return
+    end
+
+    local isPartyTarget = (item.target == "party") or (item.target == "none")
+
+    -- Called from state 1 (targetVal == 0): single target items enter target selection (state 2)
+    if targetVal == 0 and not isPartyTarget then
+        if ctx.v then
+            ctx.v.state = 2
+            ctx.v.targetIdx = 1
+            handlers.SET_CURSOR({ windowId = "party", index = 1 }, ctx)
+        end
+        return
+    end
+
     local target = nil
     if not isPartyTarget then
-        target = ctx.session.party[tonumber(evalFormula(cmd.target, ctx)) or 1]
+        target = ctx.session.party[targetVal > 0 and targetVal or 1]
     end
 
-    local ok, reason = usability.canUseItem(item, target or ctx.session.party[1], { session = ctx.session, isField = (ctx.battle == nil) })
+    local ok, reason = usability.canUseItem(item, target or (isPartyTarget and nil or ctx.session.party[1]), { session = ctx.session, isField = (ctx.battle == nil) })
     if not ok then
-        if ctx.v then ctx.v.lastItemResult = { success = false, reason = reason, itemName = item.name } end
+        if ctx.v then
+            ctx.v.lastItemResult = { success = false, reason = reason, itemName = item.name }
+            ctx.v.state = 3
+            ctx.v.popupTimer = 1.5
+            ctx.v.popupText = "Cannot use: " .. reason
+        end
         return
     end
 
+    local effectLogs = {}
     local hpRestored = 0
-    if isPartyTarget then
+    if item.target == "party" then
         for _, member in ipairs(ctx.session.party) do
             local prevHp = member.hp or 0
             for _, eff in ipairs(item.effects or {}) do
-                emitAll(ctx, effects.apply(eff, member, member, ctx.session))
+                local evs = effects.apply(eff, member, member, ctx.session)
+                for _, ev in ipairs(evs) do
+                    if ev.type == "text" then table.insert(effectLogs, ev.text) end
+                end
+                emitAll(ctx, evs)
             end
             hpRestored = hpRestored + ((member.hp or 0) - prevHp)
         end
-    else
-        if not target then return end
-        local prevHp = target.hp or 0
+    elseif item.target == "none" then
         for _, eff in ipairs(item.effects or {}) do
-            emitAll(ctx, effects.apply(eff, target, target, ctx.session))
+            local evs = effects.apply(eff, nil, nil, ctx.session)
+            for _, ev in ipairs(evs) do
+                if ev.type == "text" then table.insert(effectLogs, ev.text) end
+            end
+            emitAll(ctx, evs)
         end
-        hpRestored = (target.hp or 0) - prevHp
+    else
+        target = target or ctx.session.party[1]
+        if target then
+            local prevHp = target.hp or 0
+            for _, eff in ipairs(item.effects or {}) do
+                local evs = effects.apply(eff, target, target, ctx.session)
+                for _, ev in ipairs(evs) do
+                    if ev.type == "text" then table.insert(effectLogs, ev.text) end
+                end
+                emitAll(ctx, evs)
+            end
+            hpRestored = (target.hp or 0) - prevHp
+        end
     end
 
     ctx.session:addItem(item.id, -1)
+
+    local detailsParts = {}
+    if hpRestored > 0 then
+        table.insert(detailsParts, "+" .. tostring(hpRestored) .. " HP")
+    end
+    for _, textMsg in ipairs(effectLogs) do
+        local clean = textMsg:gsub("^%-%s*", "")
+        table.insert(detailsParts, clean)
+    end
+    local detailsStr = #detailsParts > 0 and table.concat(detailsParts, ", ") or nil
+    local tName = (not isPartyTarget and target) and target.name or nil
+
     if ctx.v then
         ctx.v.lastItemResult = {
             success = true,
             itemName = item.name,
-            targetName = target and target.name or "Party",
+            targetName = tName,
             hpRestored = hpRestored,
+            details = detailsStr,
             reason = "OK"
         }
+        ctx.v.state = 3
+        ctx.v.popupTimer = 1.5
+        local mainText = "Used " .. item.name .. (tName and (" on " .. tName) or "") .. "!"
+        if detailsStr then
+            mainText = mainText .. "\n" .. detailsStr
+        end
+        ctx.v.popupText = mainText
     end
 end
 
@@ -1695,7 +1766,11 @@ local function buildScriptApi(ctx)
         -- target slot can never be silently destroyed by a Summon.
         local arr = isReserve and session.reserve or session.party
         if arr[index] then return false end
-        local battler = require("engine.session").Battler.new(actorData, level or actorData.level or 1)
+        local sessMod = require("engine.session")
+        local battler = sessMod.Battler.new(actorData, level or actorData.level or 1)
+        if sessMod.randomAllyName then
+            battler.name = sessMod.randomAllyName(actorData)
+        end
         battler.hp = battler:getMaxHp(session)
         arr[index] = battler
         return true

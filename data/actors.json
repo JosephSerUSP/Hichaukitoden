@@ -1005,6 +1005,22 @@
   {
     "id": 15,
     "name": "Egg",
+    "names": [
+      "Yolko",
+      "Eggbert",
+      "Benedict",
+      "Omelet",
+      "Sunny",
+      "Shelly",
+      "Scramble",
+      "Hardboiled",
+      "Crackers",
+      "Humpty",
+      "Albumen",
+      "Poached",
+      "Quiche",
+      "Coddle"
+    ],
     "level": 1,
     "role": "None",
     "maxHp": 5,

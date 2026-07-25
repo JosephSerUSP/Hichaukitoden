@@ -30,43 +30,65 @@ function usability.canUseItem(item, target, context)
         return false, "Cannot be used in field"
     end
 
+    local session = context.session
+
+    -- Global / No-target checks
+    if item.target == "none" or (item.effects and #item.effects > 0 and not target) then
+        for _, eff in ipairs(item.effects or {}) do
+            if eff.type == "mp_heal" and session then
+                local maxMp = session.maxMp or 999
+                if (session.mp or 0) >= maxMp then
+                    return false, "MP is already full"
+                end
+            elseif eff.type == "recruit_egg" and session then
+                local partyFull = (#(session.party or {}) >= 4)
+                local reserveFull = (#(session.reserve or {}) >= 16)
+                if partyFull and reserveFull then
+                    return false, "Party and reserve are full"
+                end
+            end
+        end
+    end
+
     -- Target state validation if target provided
     if target then
         local spec = item.target or "ally"
-        local exp = targeting.expand(spec)
+        if spec ~= "none" then
+            local exp = targeting.expand(spec)
 
-        local isDead = target.isDead and target:isDead()
-        if exp.state == "alive" and isDead then
-            return false, "Target is dead"
-        elseif exp.state == "dead" and not isDead then
-            return false, "Target is not dead"
-        end
-
-        -- Check if healing HP on target that already has full HP
-        if exp.state ~= "dead" and item.effects then
-            local hasHpHeal = false
-            for _, eff in ipairs(item.effects) do
-                if eff.type == "hp" or eff.type == "hp_heal" then
-                    hasHpHeal = true
-                    break
-                end
-            end
-            if hasHpHeal then
-                local maxHp = target.getMaxHp and target:getMaxHp(context.session) or target.maxHp or 999
-                if (target.hp or 0) >= maxHp then
-                    return false, "HP is already full"
-                end
+            local isDead = target.isDead and target:isDead()
+            if exp.state == "alive" and isDead then
+                return false, "Target is dead"
+            elseif exp.state == "dead" and not isDead then
+                return false, "Target is not dead"
             end
 
-            -- Skillbooks: refuse a creature that already knows the skill, so
-            -- the item can't be consumed for nothing (same guard shape as the
-            -- full-HP check above; effects.lua also fails soft if it slips by).
-            for _, eff in ipairs(item.effects) do
-                if eff.type == "learn_skill" then
-                    local skillId = eff.skill or eff.value
-                    for _, known in ipairs(target.skills or {}) do
-                        if known == skillId then
-                            return false, "Already knows that skill"
+            -- Check if healing HP on target that already has full HP
+            if exp.state ~= "dead" and item.effects then
+                local hasHpHeal = false
+                for _, eff in ipairs(item.effects) do
+                    if eff.type == "hp" or eff.type == "hp_heal" then
+                        hasHpHeal = true
+                        break
+                    end
+                end
+                if hasHpHeal then
+                    local maxHp = target.getMaxHp and target:getMaxHp(context.session) or target.maxHp or 999
+                    if (target.hp or 0) >= maxHp then
+                        return false, "HP is already full"
+                    end
+                end
+
+                -- Skillbooks: refuse a creature that already knows the skill, so
+                -- the item can't be consumed for nothing (same guard shape as the
+                -- full-HP check above; effects.lua also fails soft if it slips by).
+                for _, eff in ipairs(item.effects) do
+                    if eff.type == "learn_skill" then
+                        local skillId = eff.skill or eff.value
+                        for _, known in ipairs(target.skills or {}) do
+                            if known == skillId then
+                                return false, "Already knows that skill"
+                            end
                         end
                     end
                 end

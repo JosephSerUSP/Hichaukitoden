@@ -135,6 +135,7 @@ function effects.apply(effectData, a, b, session, context)
 
     elseif effectData.type == "maxHp" then
         local gain = effectData.value or 0
+        b.paramPlus = b.paramPlus or {}
         b.paramPlus.maxHp = (b.paramPlus.maxHp or 0) + gain
         local maxHp = traits.getParam(b, "maxHp", session)
         b.hp = math.min(maxHp, b.hp + gain)
@@ -142,6 +143,11 @@ function effects.apply(effectData, a, b, session, context)
             type = "heal",
             target = b,
             value = gain
+        })
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.param_up", "- {0}'s {1} rises by {2}!",
+                b.name, "Max HP", gain)
         })
 
     elseif effectData.type == "xp" then
@@ -211,10 +217,17 @@ function effects.apply(effectData, a, b, session, context)
                 param = param,
                 value = gain
             })
+            local statLabel = param
+            if param == "atk" then statLabel = "ATK"
+            elseif param == "def" then statLabel = "DEF"
+            elseif param == "mat" then statLabel = "MAT"
+            elseif param == "mdf" then statLabel = "MDF"
+            elseif param == "maxHp" then statLabel = "Max HP"
+            end
             table.insert(events, {
                 type = "text",
                 text = session.loader.formatTerm("battle.param_up", "- {0}'s {1} rises by {2}!",
-                    b.name, param, gain)
+                    b.name, statLabel, gain)
             })
         end
 
