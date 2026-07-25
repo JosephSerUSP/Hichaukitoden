@@ -49,8 +49,8 @@ Rules (structure conventions this engine expects):
 - Do NOT touch dungeon-floor placeholder events beyond what the walkthrough
   demands; the outline's story beats live in the town cast and quest hooks.
 - CRITICAL / HARD RULES:
-  - Use ONLY high-level engine commands (`TEXT`, `CHOICE`, `QUEST_OFFER`, `QUEST_COMPLETE`, `OPEN_SHOP`, `SET_FLAG`, `CONDITIONAL_BRANCH`, `HEAL_PARTY`, `CHANGE_GOLD`, `GIVE_ITEM`, `CALL_COMMON_EVENT`, `WARP`, `LABEL`, `JUMP_TO_LABEL`).
+  - Use ONLY high-level engine commands (`TEXT`, `CHOICE`, `QUEST_OFFER`, `QUEST_COMPLETE`, `OPEN_SHOP`, `SET_FLAG`, `CONDITIONAL_BRANCH`, `RECOVER_PARTY`, `GAIN_GOLD`, `CHANGE_ITEM`, `CALL_COMMON_EVENT`, `TELEPORT`, `LABEL`, `JUMP_TO_LABEL`).
   - NEVER emit `SCRIPT` commands or raw Lua code strings in event scripts.
   - Every `questId` in `QUEST_OFFER` or `QUEST_COMPLETE` MUST exist in `MANIFEST.quests`.
   - Every `shopId` in `OPEN_SHOP` MUST exist in `MANIFEST.shops`.
-  - Every `itemId` in `GIVE_ITEM` or `hasItem:<id>` MUST exist in `MANIFEST.items`.
+  - Every `itemId` in `CHANGE_ITEM` or `hasItem:<id>` MUST exist in `MANIFEST.items`.

@@ -306,11 +306,6 @@
             return sel;
         };
 
-        function createMapPicker(current, onChange, flex) {
-            const mapOpts = dbPayload.maps ? dbPayload.maps.map((m, i) => ({ value: String(i + 1), label: m.title || ('Map ' + (i + 1)) })) : [];
-            return makeSelect(mapOpts, current, onChange, flex);
-        }
-
         // Compact <fieldset class="groupbox"><legend>...</legend> wrapper for
         // dense, RM2003-style form sections. Returns the fieldset so callers
         // can keep appending rows into it.

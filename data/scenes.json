@@ -1147,14 +1147,6 @@
       },
       {
         "id": "title_footer",
-        "rect": {
-          "x": 0,
-          "y": 26.5,
-          "w": 32,
-          "h": 3.5
-        },
-        "style": "frame",
-        "contentY": 1,
         "content": [
           {
             "type": "text",
@@ -1614,14 +1606,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -1832,14 +1816,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -3221,15 +3197,7 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
         "visible": "v.state == 1 or v.state == 2 or v.state == 3",
-        "style": "partyGrid",
-        "title": null,
         "cursor": "v.state == 2 and v.targetIdx or 0",
         "content": [
           {
@@ -3670,7 +3638,6 @@
       },
       {
         "id": "status_name_header",
-        "style": "panel",
         "content": []
       },
       {
@@ -3685,12 +3652,10 @@
       },
       {
         "id": "statusPortrait",
-        "style": "panel",
         "content": []
       },
       {
         "id": "equip_slots",
-        "style": "list",
         "visible": "(v.page or 1) == 1",
         "content": [
           {
@@ -3705,12 +3670,10 @@
       },
       {
         "id": "status_dock",
-        "style": "panel",
         "content": []
       },
       {
         "id": "status_skills",
-        "style": "list",
         "visible": "(v.page or 1) == 2",
         "content": [
           {
@@ -3724,7 +3687,6 @@
       },
       {
         "id": "status_passives",
-        "style": "list",
         "visible": "(v.page or 1) == 3",
         "content": [
           {
@@ -3738,18 +3700,15 @@
       },
       {
         "id": "status_bio",
-        "style": "panel",
         "visible": "(v.page or 1) == 4",
         "content": []
       },
       {
         "id": "equip_list_frame",
-        "style": "frame",
         "content": []
       },
       {
         "id": "equip_list",
-        "style": "list",
         "visible": "v.state == 3",
         "content": [
           {
@@ -3975,25 +3934,11 @@
     "windows": [
       {
         "id": "battle_enemies",
-        "rect": {
-          "x": 0,
-          "y": 0,
-          "w": 32,
-          "h": 17.5
-        },
-        "style": "enemyRow",
         "content": []
       },
       {
         "id": "battle_command",
-        "rect": {
-          "x": 0,
-          "y": 15.5,
-          "w": 32,
-          "h": 2.5
-        },
         "visible": "v.combatState == 'input'",
-        "style": "command",
         "content": [
           {
             "type": "list",
@@ -4540,14 +4485,6 @@
       },
       {
         "id": "game_over_message",
-        "rect": {
-          "x": 0,
-          "y": 13,
-          "w": 32,
-          "h": 3
-        },
-        "style": "frame",
-        "contentY": 1,
         "visible": "v.step >= 1",
         "content": [
           {
@@ -5030,12 +4967,6 @@
     "windows": [
       {
         "id": "reserve_title",
-        "rect": {
-          "x": 0,
-          "y": 0,
-          "w": 32,
-          "h": 2
-        },
         "content": [
           {
             "type": "text",
@@ -5060,14 +4991,6 @@
       },
       {
         "id": "reserve_party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "gridColumns": 2,
         "content": [
           {
             "type": "list",
@@ -5079,15 +5002,6 @@
       },
       {
         "id": "reserve_roster",
-        "rect": {
-          "x": 0,
-          "y": 2,
-          "w": 32,
-          "h": 11.5
-        },
-        "style": "partyGrid",
-        "gridColumns": 4,
-        "hideMp": true,
         "content": [
           {
             "type": "list",
@@ -5099,14 +5013,6 @@
       },
       {
         "id": "reserve_popup",
-        "rect": {
-          "x": 12,
-          "y": 12,
-          "w": 11,
-          "h": 9
-        },
-        "style": "command",
-        "vertical": true,
         "visible": "v.mode == 2",
         "content": [
           {
@@ -5163,7 +5069,6 @@
     "windows": [
       {
         "id": "dialogue_name",
-        "style": "panel",
         "visible": "v.dialogueSpeaker ~= nil and v.dialogueSpeaker ~= ''",
         "content": [
           {
@@ -5984,14 +5889,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -6299,14 +6196,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {

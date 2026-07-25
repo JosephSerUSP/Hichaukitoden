@@ -840,84 +840,6 @@
             updateFogPreview();
         }
 
-        // Helper to draw a fog preview canvas showing a wall gradient from
-        // 0 to 12 tiles out, grid distance ticks, and a 50% visibility indicator.
-        function renderFogPreviewCanvas(canvas, color, density, minFactor) {
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width, h = canvas.height;
-
-            let fogRgb;
-            if (typeof color === 'string') {
-                fogRgb = hexToRgb01(color);
-            } else if (Array.isArray(color)) {
-                fogRgb = color;
-            } else {
-                fogRgb = [0.5, 0.55, 0.6];
-            }
-            density = parseFloat(density) || 0.35;
-            minFactor = (minFactor !== undefined && minFactor !== null) ? parseFloat(minFactor) : 0.12;
-
-            const maxDist = 12; // 12 grid units (cells/tiles)
-            const wallColor = [0.45, 0.40, 0.35]; // generic stone wall base color
-
-            for (let x = 0; x < w; x++) {
-                const dist = (x / w) * maxDist;
-                const fogAlpha = Math.max(minFactor, 1.0 / (1.0 + dist * density));
-
-                const r = Math.round((fogRgb[0] * (1 - fogAlpha) + wallColor[0] * fogAlpha) * 255);
-                const g = Math.round((fogRgb[1] * (1 - fogAlpha) + wallColor[1] * fogAlpha) * 255);
-                const b = Math.round((fogRgb[2] * (1 - fogAlpha) + wallColor[2] * fogAlpha) * 255);
-
-                ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(x, 0, 1, h);
-            }
-
-            // Overlay distance markers (ticks every 2 cells)
-            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = '8px monospace';
-
-            for (let tile = 0; tile <= maxDist; tile += 2) {
-                const x = Math.round((tile / maxDist) * w);
-                ctx.beginPath();
-                ctx.moveTo(x, h - 8);
-                ctx.lineTo(x, h);
-                ctx.stroke();
-
-                let label = tile + 't';
-                if (tile === 0) {
-                    ctx.textAlign = 'left';
-                    ctx.fillText(label, 2, h - 2);
-                } else if (tile === maxDist) {
-                    ctx.textAlign = 'right';
-                    ctx.fillText(label, w - 2, h - 2);
-                } else {
-                    ctx.textAlign = 'center';
-                    ctx.fillText(label, x, h - 2);
-                }
-            }
-
-            // 50% Fog Distance indicator mark
-            const dist50 = 1.0 / density;
-            if (dist50 > 0 && dist50 <= maxDist) {
-                const x50 = Math.round((dist50 / maxDist) * w);
-                ctx.strokeStyle = 'rgba(255,230,100,0.8)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([2, 2]);
-                ctx.beginPath();
-                ctx.moveTo(x50, 0);
-                ctx.lineTo(x50, h);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = '#ffe664';
-                ctx.textAlign = 'center';
-                ctx.font = '7px sans-serif';
-                ctx.fillText('50%', Math.min(w - 12, Math.max(12, x50)), 8);
-            }
-        }
-
         // Fetch 3D engine fog preview in Map Properties
         let mapFogBaking = false;
         let mapFogBakeQueued = false;
@@ -1553,17 +1475,6 @@
         function openAssetPickerForBgm() {
             openAssetPicker('midi', (path) => {
                 document.getElementById('prop-map-bgm').value = path;
-            });
-        }
-
-        // map.tileset is a bare atlas name (e.g. "dungeon_001"), not a path --
-        // the engine resolves it to assets/tilesets/<name>.png itself
-        // (viewport_3d.lua resolveTileset/getAtlas). Strip the picked file
-        // down to that name.
-        function openAssetPickerForTileset() {
-            openAssetPicker('tilesets', (path) => {
-                const filename = path.split('/').pop();
-                document.getElementById('prop-map-tileset').value = filename.replace(/\.[^/.]+$/, '');
             });
         }
 

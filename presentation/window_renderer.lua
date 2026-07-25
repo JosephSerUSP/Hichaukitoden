@@ -54,6 +54,19 @@ local COLOR_DIM = { 0.6, 0.6, 0.6, 1 }
 -- Expression helpers
 -- ---------------------------------------------------------------------------
 
+-- Resolve a rect dimension (winDef.rect.x/y/w/h) as a formula against env,
+-- falling back to default on nil or eval failure. Shared by the real draw
+-- path (drawWindowFromData) and the headless preview path (resolveDataState).
+local function resolveDim(dim, default, env)
+    if dim == nil then return default end
+    local ok, val = pcall(formula.eval, dim, env)
+    if ok then
+        local n = tonumber(val)
+        if n then return n end
+    end
+    return default
+end
+
 -- Replace every {expr} in template with formula.eval(expr, env).
 local function interpolate(template, env)
     if template == nil then return "" end
@@ -1533,19 +1546,10 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         end
 
         -- Resolve rect (expressions allowed per-value).
-        local function resolveDim(dim, default)
-            if dim == nil then return default end
-            local ok, val = pcall(formula.eval, dim, env)
-            if ok then
-                local n = tonumber(val)
-                if n then return n end
-            end
-            return default
-        end
-        local x = resolveDim(winDef.rect and winDef.rect.x, layout.x or 0)
-        local y = resolveDim(winDef.rect and winDef.rect.y, layout.y or 0)
-        local w = resolveDim(winDef.rect and winDef.rect.w, layout.width or 8)
-        local h = resolveDim(winDef.rect and winDef.rect.h, layout.height or 4)
+        local x = resolveDim(winDef.rect and winDef.rect.x, layout.x or 0, env)
+        local y = resolveDim(winDef.rect and winDef.rect.y, layout.y or 0, env)
+        local w = resolveDim(winDef.rect and winDef.rect.w, layout.width or 8, env)
+        local h = resolveDim(winDef.rect and winDef.rect.h, layout.height or 4, env)
         layout.x = x
         layout.y = y
         layout.width = w
@@ -1943,20 +1947,10 @@ function wr.resolveDataState(sceneData, ctx, state)
             end
         end
 
-        local function resolveDim(dim, default)
-            if dim == nil then return default end
-            local ok, val = pcall(formula.eval, dim, env)
-            if ok then
-                local n = tonumber(val)
-                if n then return n end
-            end
-            return default
-        end
-
-        local x = resolveDim(winDef.rect and winDef.rect.x, 0)
-        local y = resolveDim(winDef.rect and winDef.rect.y, 0)
-        local w = resolveDim(winDef.rect and winDef.rect.w, 8)
-        local h = resolveDim(winDef.rect and winDef.rect.h, 4)
+        local x = resolveDim(winDef.rect and winDef.rect.x, 0, env)
+        local y = resolveDim(winDef.rect and winDef.rect.y, 0, env)
+        local w = resolveDim(winDef.rect and winDef.rect.w, 8, env)
+        local h = resolveDim(winDef.rect and winDef.rect.h, 4, env)
 
         local entry = {
             id = winDef.id,

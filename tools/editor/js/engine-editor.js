@@ -740,50 +740,6 @@
             render();
         }
 
-        // --- TILESET ATLAS REGISTRY ---
-        // assets/tilesets/*.png + sidecar .json manifests (docs/design/
-        // raycaster-tileset-lighting.md) live outside dbPayload entirely --
-        // they're static assets shared across every campaign. This editor
-        // fetches/saves them through their own endpoints, one atlas at a
-        // time, independent of the Database's batched Save Changes.
-        let tilesetRegistryCache = null;
-
-        async function fetchTilesetRegistry() {
-            const res = await fetch(`${API_URL}/api/tilesets`);
-            const result = await res.json();
-            tilesetRegistryCache = result.tilesets || [];
-            return tilesetRegistryCache;
-        }
-
-        async function saveTilesetManifest(t, statusEl) {
-            try {
-                const res = await fetch(`${API_URL}/api/tilesets/save`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(t)
-                });
-                const result = await res.json();
-                if (statusEl) statusEl.textContent = result.success ? 'Saved ✓' : ('Failed: ' + result.message);
-            } catch (err) {
-                if (statusEl) statusEl.textContent = 'Failed: ' + err.message;
-            }
-        }
-
-        function rowNumberOrNull(placeholder, value, onChange) {
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.className = 'win98-input';
-            input.style.cssText = 'width: 44px; font-size: 10px;';
-            input.placeholder = placeholder;
-            input.title = placeholder + ' (blank = none)';
-            input.value = value != null ? value : '';
-            input.oninput = () => {
-                onChange(input.value === '' ? null : (parseInt(input.value) || 0));
-                setDirty(true);
-            };
-            return input;
-        }
-
         async function buildTilesetRegistryEditor(panel) {
             const note = document.createElement('p');
             note.style.cssText = 'font-size: 11px; color: var(--win-dark-shadow); margin: 0 0 12px;';
@@ -800,17 +756,6 @@
                 }
             };
             panel.appendChild(launchBtn);
-        }
-
-        function labeledField(labelText, input) {
-            const wrap = document.createElement('div');
-            wrap.style.cssText = 'display: flex; flex-direction: column; align-items: flex-start; gap: 1px;';
-            const lbl = document.createElement('span');
-            lbl.style.cssText = 'font-size: 8px; color: var(--win-dark-shadow);';
-            lbl.textContent = labelText;
-            wrap.appendChild(lbl);
-            wrap.appendChild(input);
-            return wrap;
         }
 
         function setEngineTab(tabName) {
