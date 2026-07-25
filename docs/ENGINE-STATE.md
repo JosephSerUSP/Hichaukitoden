@@ -66,7 +66,7 @@ are what's left:
 ## Content inventory
 
 - actors: **22** (4 summonable-from-start, 6 with promotion paths)
-- item-creation disciplines across the roster: alchemyx22
+- item-creation disciplines across the roster: alchemyx5, blacksmithingx5, cookingx6, tinkeringx6
 - items: **46** (consumablex12, equipmentx23, junkx7, questx4)
 - skills: **15**, passives: **20**, states: **8**, roles: **13**, elements: **7**
 - maps: **7**, common events: **11**, shops: **6**, quests: **4**

@@ -262,8 +262,8 @@
     {
       "kind": "tinkering",
       "label": "Tinkering",
-      "stat": "asp",
-      "description": "Assemble accessories using ASP."
+      "stat": "mdf",
+      "description": "Assemble accessories using MDF."
     },
     {
       "kind": "alchemy",

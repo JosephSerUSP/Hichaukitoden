@@ -18,6 +18,14 @@ Item Creation access, and a creature that excels at crafting may be poor in
 battle, or vice versa. Battle performance, Item Creation aptitude, and sacrifice
 value are meant to pull in different directions per species.
 
+That pull comes from the levers the roster already has, not from a separate
+"crafting aptitude" number: a creature whose *only* good stat is its discipline's
+stat is a specialist (Wisp — MAT 17 and little else), and so is one that is
+broadly decent but cannot evolve (Golem, Flauros). The counterweights are the
+powerhouses whose discipline points at their weak side — Shadow Stalker crafts
+on MDF 13 despite 38 ATK. Discipline persists across an evolution, so investing
+in a crafter is not lost when it evolves.
+
 Menu flow: a creature's context menu on the map → Item Creation. The creature is
 already chosen by the time the scene opens, and its single discipline follows
 from it, so the scene opens directly on ingredient selection — there is no
@@ -87,10 +95,16 @@ the difficulty dial for the whole progression curve.
 
 ## Open work
 
-- **All 22 creatures currently have `discipline: "alchemy"`**, so the
-  "diverse party for crafting access" pillar is inert. Spreading disciplines
-  across the roster — deliberately *against* each creature's combat strength —
-  is a content pass, not an engine change.
+- **Crafting-related traits/passives** are the intended way to give a creature
+  crafting aptitude independent of its battle stats — the trait machinery
+  already does this shape for `SACRIFICE_EXP_RATE`, so a craft-yield trait code
+  summed into the yield formula would follow the same pattern. Deliberately
+  *not* solved with a new per-actor "aptitude" number: the existing levers
+  (stat shape, evolution dead-ends, negative traits) already carry that weight.
+- **Candle's `evolvesTo: "lantern"` names no actor.** Nothing validates
+  `evolvesTo`, so it fails silently. Either Lantern should exist or the
+  evolution should go; a G1 check for evolution targets is worth adding once
+  the data is settled.
 - Only one promotion key exists for ~5 promotion lines.
 - `evolutions` entries require a `level` threshold, so a purely item-gated
   promotion path needs a dummy `level: 1`; and cost is the only gate (no

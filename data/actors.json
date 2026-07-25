@@ -45,7 +45,7 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 1,
@@ -112,7 +112,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 3,
@@ -184,7 +184,7 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "blacksmithing",
     "sacrificeRewards": [
       {
         "itemId": 6,
@@ -267,7 +267,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 8,
@@ -334,7 +334,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 8,
@@ -626,7 +626,7 @@
     "traits": [],
     "unlocked": true,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "blacksmithing",
     "sacrificeRewards": [],
     "names": [
       "Pip",
@@ -687,7 +687,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [
       {
         "itemId": 32,
@@ -758,7 +758,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [
       {
         "itemId": 6,
@@ -826,7 +826,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 33,
@@ -898,7 +898,7 @@
     ],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "blacksmithing",
     "sacrificeRewards": [
       {
         "itemId": 32,
@@ -1045,7 +1045,7 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "blacksmithing",
     "sacrificeRewards": [],
     "baseParams": {
       "maxHp": 5,
@@ -1089,7 +1089,7 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "blacksmithing",
     "sacrificeRewards": [],
     "names": [
       "Blaze",
@@ -1144,7 +1144,7 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [],
     "names": [
       "Wiggly",
@@ -1196,7 +1196,7 @@
     "drops": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [],
     "baseParams": {
       "maxHp": 55,
@@ -1247,7 +1247,7 @@
     "traits": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "cooking",
     "sacrificeRewards": [
       {
         "itemId": 39,
@@ -1312,7 +1312,7 @@
     "traits": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [
       {
         "itemId": 40,
@@ -1363,7 +1363,7 @@
     "evolutions": [],
     "unlocked": false,
     "tier": 1,
-    "discipline": "alchemy",
+    "discipline": "tinkering",
     "sacrificeRewards": [],
     "baseParams": {
       "maxHp": 40,
