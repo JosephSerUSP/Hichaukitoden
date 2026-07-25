@@ -1732,6 +1732,14 @@ end
 -- Entry point: draw all open windows of the scene state, in open order.
 -- If the scene has a data-authored `windows` array, uses drawWindowFromData
 -- instead of the runtime winState path.
+--
+-- Who still needs the runtime winState path (25.07.2026): every `"draw":
+-- "windows"` scene is now declarative -- Item Creation was the last holdout --
+-- but the path is NOT dead. It still serves the `map` world scene (no windows
+-- array; its hooks drive the exploration HUD through window commands) and
+-- main.lua's drawSharedPartyHud, which hands us a synthetic winState with no
+-- sceneData at all. Note the early return below: for a scene WITH a windows
+-- array, any OPEN_WINDOW/SET_TEXT its hooks still emit is inert.
 -- ---------------------------------------------------------------------------
 function wr.draw(state, sceneData, ctx)
     -- S1w: scenes with a data-authored windows array draw entirely through
@@ -1936,6 +1944,13 @@ function wr.resolveDataState(sceneData, ctx, state)
     -- Rebuild env with populated listCache.
     env = buildEnv(state, sceneData, ctx, listCache)
 
+    -- Same engine.json windowLayout base the real draw path merges
+    -- (drawWindowFromData): a window that omits rect/style/title inherits them
+    -- from its layout entry rather than from invented defaults. Without this the
+    -- preview reported every such window at 0,0 8x4 with no title -- an
+    -- approximation of the renderer instead of the renderer's own geometry.
+    local layouts = (ctx.loader and ctx.loader.engine and ctx.loader.engine.windowLayout) or {}
+
     for _, winDef in ipairs(sceneData.windows) do
         local visible = true
         if winDef.visible then
@@ -1947,22 +1962,35 @@ function wr.resolveDataState(sceneData, ctx, state)
             end
         end
 
-        local x = resolveDim(winDef.rect and winDef.rect.x, 0, env)
-        local y = resolveDim(winDef.rect and winDef.rect.y, 0, env)
-        local w = resolveDim(winDef.rect and winDef.rect.w, 8, env)
-        local h = resolveDim(winDef.rect and winDef.rect.h, 4, env)
+        local baseLayout = resolvePageLayout(layouts[winDef.id] or {}, env)
+        local x = resolveDim(winDef.rect and winDef.rect.x, baseLayout.x or 0, env)
+        local y = resolveDim(winDef.rect and winDef.rect.y, baseLayout.y or 0, env)
+        local w = resolveDim(winDef.rect and winDef.rect.w, baseLayout.width or 8, env)
+        local h = resolveDim(winDef.rect and winDef.rect.h, baseLayout.height or 4, env)
 
         local entry = {
             id = winDef.id,
             open = visible,
-            style = winDef.style or "panel",
+            hasLayout = layouts[winDef.id] ~= nil,
+            style = winDef.style or baseLayout.style or "panel",
             x = x,
             y = y,
             width = w,
             height = h,
         }
 
-        -- Collect text content from text blocks.
+        local titleSrc = winDef.title ~= nil and winDef.title or baseLayout.title
+        if titleSrc ~= nil then
+            local okT, title = pcall(interpolate, titleSrc, env)
+            entry.title = okT and title or ("<error: " .. tostring(title) .. ">")
+        end
+
+        -- Collect text content from text blocks. A layout-level `text` wins, as
+        -- it does in drawWindow.
+        if baseLayout.text ~= nil then
+            local okT, text = pcall(interpolate, baseLayout.text, env)
+            entry.text = okT and text or ("<error: " .. tostring(text) .. ">")
+        end
         for _, block in ipairs(winDef.content or {}) do
             if block.type == "text" and entry.text == nil then
                 local okT, text = pcall(interpolate, block.text or "", env)
@@ -1976,18 +2004,26 @@ function wr.resolveDataState(sceneData, ctx, state)
             entry.rows = {}
             -- Find the list block's format for row rendering.
             local format = "{name}"
+            local highlight = nil
             for _, block in ipairs(winDef.content or {}) do
                 if block.type == "list" then
                     entry.listId = block.listId
                     if block.format then format = block.format end
+                    highlight = block.highlight
                     break
                 end
             end
             for _, row in ipairs(cached.rows) do
                 local rEnv = rowEnv(env, row)
                 local okR, textR = pcall(interpolate, format, rEnv)
+                local highlighted = false
+                if highlight and highlight ~= "" then
+                    local okH, hv = pcall(formula.eval, highlight, rEnv)
+                    highlighted = okH and hv == true
+                end
                 table.insert(entry.rows, {
                     text = okR and textR or ("<error: " .. tostring(textR) .. ">"),
+                    highlighted = highlighted,
                     icon = row.icon or 0,
                 })
             end

@@ -14,7 +14,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 | id | kind | draw | world | windows | hooks |
 |---|---|---|---|---|---|
-| `1` | menu | windows | - | 0 | 8 |
+| `1` | menu | windows | - | 11 | 8 |
 | `battle` | battle | windows | - | 5 | 7 |
 | `controls` | menu | windows | - | 3 | 6 |
 | `dialogue` | menu | windows | - | 4 | 1 |
