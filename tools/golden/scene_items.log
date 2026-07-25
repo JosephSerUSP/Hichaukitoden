@@ -1,12 +1,4 @@
 UI GOLDEN BEGIN
 scene|items|name|Items
-items_left_panel|open_window||
-items_left_panel|set_list||inventory
-items_left_panel|set_cursor||1
-help|open_window||
-party|open_window||
-party|set_list||party
-party|set_cursor||0
 party|set_cursor||1
-party|set_cursor||0
 UI GOLDEN END
