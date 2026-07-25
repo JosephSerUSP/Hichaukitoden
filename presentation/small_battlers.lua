@@ -184,7 +184,11 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
     local isFadingOut = dead and battlerRef and
         (animation_player.isPlaying(battlerRef, "system.reap")
             or animation_player.isPlaying(battlerRef, "system.swap_out"))
-    local animated = (not dead) or isFadingOut
+    -- A state can pin the sprite still (data/states.json display.sprite.static)
+    -- -- a sleeping or petrified creature stops bobbing. Frame 0 only; any
+    -- colour change comes from that state's looped animation instead.
+    local frozen = battlerRef and battlerRef.spriteStatic
+    local animated = ((not dead) or isFadingOut) and not frozen
     local frame = animated and small_battlers.frame(ss) or 0
 
     -- Damage-feedback shake and transform from animation player

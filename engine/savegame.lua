@@ -46,6 +46,7 @@ local function serializeBattler(b)
         -- Death-ward charges live on the battler (never on the shared loader
         -- item table), so they must round-trip with it.
         wardCharges = b.wardCharges,
+        history = b.history,
     }
 end
 
@@ -76,6 +77,7 @@ local function deserializeBattler(data, loader)
     end
     if data.paramPlus then b.paramPlus = data.paramPlus end
     if data.wardCharges then b.wardCharges = data.wardCharges end
+    if data.history then b.history = data.history end
     return b
 end
 
@@ -137,6 +139,8 @@ function savegame.serialize(sessionObj, loader, sceneName)
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
         expBank = sessionObj.expBank,
+        -- The graveyard outlives every creature in it, so it must persist.
+        memorial = sessionObj.memorial,
         autoRedirect = sessionObj.autoRedirect,
         summoner = serializeBattler(sessionObj.summoner),
         party = party,
@@ -160,6 +164,7 @@ function savegame.deserialize(data, loader)
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp
     sess.expBank = data.expBank or 0
+    sess.memorial = data.memorial or {}
     if data.autoRedirect ~= nil then sess.autoRedirect = data.autoRedirect end
 
     local summoner = deserializeBattler(data.summoner, loader)

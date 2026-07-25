@@ -1605,6 +1605,66 @@
       ],
       "interactive": false,
       "description": "Adds the actor to the party, or the reserve when the active slots are full."
+    },
+    {
+      "id": "SYNC_TRAIT_STATE",
+      "category": "State",
+      "label": "Sync Trait -> State",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "trait",
+          "type": "trait"
+        },
+        {
+          "key": "state",
+          "type": "state"
+        },
+        {
+          "key": "duration",
+          "type": "number"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Adds `state` while the target has any `trait` rate, removes it otherwise. Idempotent -- makes an equipment/passive-granted trait visible through the normal state display."
+    },
+    {
+      "id": "RECORD_HISTORY",
+      "category": "Progression",
+      "label": "Record History",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "field",
+          "type": "text"
+        },
+        {
+          "key": "amount",
+          "type": "formula"
+        },
+        {
+          "key": "value",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Increments a creature's history counter (`field` by `amount`), or sets it to `value`. Which events count is decided by the flow that calls this."
     }
   ],
   "elementRules": {
@@ -2044,7 +2104,7 @@
       "title": "BIOGRAPHY",
       "contentY": 2,
       "lineSpacing": 1.5,
-      "text": "{sel('status_party').biography}"
+      "text": "{sel('status_party').biography}\n\n{sel('status_party').historyText}"
     },
     "status_dock": {
       "x": 0,

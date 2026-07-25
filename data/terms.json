@@ -112,7 +112,8 @@
     "only_adjacent_tiles": "You can only move to adjacent tiles.",
     "enemy_encountered": "Enemy encountered!",
     "descending": "Teleporting.",
-    "victory": "Victory."
+    "victory": "Victory.",
+    "history": "Born a {0} - {1} expedition(s), {2} battle(s), {3} promotion(s)"
   },
   "shop": {
     "title": "Shop – Stillnight",

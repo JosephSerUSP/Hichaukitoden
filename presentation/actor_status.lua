@@ -20,6 +20,7 @@ local config = require("engine.config")
 local traits = require("engine.traits")
 local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
+local animation_player = require("presentation.animation_player")
 
 local actor_status = {}
 
@@ -180,6 +181,88 @@ end
 -- party-grid slot rendering: windowskin panel, animated sprite (dead tint
 -- via small_battlers), element icons + name on one line, HP text, HP bar —
 -- so it looks and behaves identically wherever it's called.
+-- Active-state display (24.07.2026). Three optional channels, all authored in
+-- data/states.json, so a new state needs no presentation code:
+--   icon              cycled in the party cell (below)
+--   display.animation a looped data/animations.json entry applied while active
+--                     (poison pulses green through a gradient_map track)
+--   display.sprite    sprite behaviour flags, e.g. { static = true } for a
+--                     sleeping/petrified creature that stops bobbing
+--   display.hideIcon  suppress the icon (death already reads as tint + popup)
+--
+-- One icon slot cycling by priority, RPG Maker 2003 style (owner decision): a
+-- party cell is ~68px wide, so several icons side by side would crowd out the
+-- name and gauge.
+local STATE_ICON_CYCLE_SECONDS = 0.9
+
+local function stateDisplayList(battler, session)
+    local list = {}
+    for _, stateInfo in ipairs(battler.states or {}) do
+        local def = session and session.loader and session.loader.getState(stateInfo.id)
+        if def and def.icon and def.icon > 0 and not (def.display and def.display.hideIcon) then
+            table.insert(list, def)
+        end
+    end
+    -- Highest priority first, then by id so the cycle order is stable frame to
+    -- frame (pairs order over states must never leak into what the player sees).
+    table.sort(list, function(a, b)
+        local pa, pb = a.priority or 0, b.priority or 0
+        if pa ~= pb then return pa > pb end
+        return tostring(a.id) < tostring(b.id)
+    end)
+    return list
+end
+
+-- Keeps each active state's looped animation running and drops the ones whose
+-- state has expired. Polled from draw rather than hooked into addState/
+-- removeState so it self-corrects after a load, a swap, or an equipment change.
+function actor_status.syncStateAnimations(battler, session)
+    if not battler then return end
+    local wanted = {}
+    for _, stateInfo in ipairs(battler.states or {}) do
+        local def = session and session.loader and session.loader.getState(stateInfo.id)
+        local entryId = def and def.display and def.display.animation
+        if entryId then
+            wanted[entryId] = true
+            if not animation_player.isPlaying(battler, entryId) then
+                animation_player.play(entryId, battler)
+            end
+        end
+    end
+    for _, stateInfo in ipairs(battler.stateAnimsPlaying or {}) do
+        if not wanted[stateInfo] then
+            animation_player.stopAnimation(battler, stateInfo)
+        end
+    end
+    local playing = {}
+    for entryId in pairs(wanted) do table.insert(playing, entryId) end
+    battler.stateAnimsPlaying = playing
+end
+
+-- True when an active state pins the sprite still (petrification, sleep).
+function actor_status.spriteIsStatic(battler, session)
+    for _, stateInfo in ipairs(battler and battler.states or {}) do
+        local def = session and session.loader and session.loader.getState(stateInfo.id)
+        if def and def.display and def.display.sprite and def.display.sprite.static then
+            return true
+        end
+    end
+    return false
+end
+
+-- Draws the cycling state icon for a battler at (x, y). Returns the width used
+-- (0 when the creature carries no displayable state).
+function actor_status.drawStateIcon(battler, x, y, session)
+    local list = stateDisplayList(battler, session)
+    if #list == 0 then return 0 end
+    local idx = 1
+    if #list > 1 then
+        idx = (math.floor(love.timer.getTime() / STATE_ICON_CYCLE_SECONDS) % #list) + 1
+    end
+    ui.drawIcon(list[idx].icon, x, y)
+    return 10
+end
+
 function actor_status.draw(battler, x, y, isSelected, session)
     if not battler then return end
     local colW, rowH = actor_status.cellSize(session)
@@ -196,6 +279,7 @@ function actor_status.draw(battler, x, y, isSelected, session)
     -- Windowskin panel behind the whole cell, then the animated sprite
     -- (dead tint / flash / shake handled by small_battlers.draw).
     ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2, nil, isSelected)
+    battler.spriteStatic = actor_status.spriteIsStatic(battler, session)
     local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
     local spriteOffsetX = 0
     if spriteKey and small_battlers.draw(spriteKey, x, y + ui.lineHeight, spriteSize, dead, battler) then
@@ -217,6 +301,16 @@ function actor_status.draw(battler, x, y, isSelected, session)
     local maxNameChars = math.floor(nameClipW / 6)
     local displayName = (battler.name):sub(1, maxNameChars)
     ui.drawString(displayName, nameX, lineY, color, "left", 256)
+
+    -- Cycling state icon, right-aligned on the name line so it never pushes
+    -- the name around as states come and go.
+    actor_status.syncStateAnimations(battler, session)
+    actor_status.drawStateIcon(battler, slotContentEndX - 8, lineY - 4, session)
+
+    -- Cycling state icon, right-aligned on the name line so it never pushes
+    -- the name around as states come and go.
+    actor_status.syncStateAnimations(battler, session)
+    actor_status.drawStateIcon(battler, slotContentEndX - 8, lineY - 4, session)
 
     -- LINE 2 (mid): HP fraction text "current/max"
     local dispHp = battler.displayedHp or battler.hp

@@ -531,5 +531,199 @@ do
     check(orange > 0, "detected traps render as markers on the minimap")
 end
 
+
+-- 20. State display: cycling icon, looped state animation, static-sprite flag,
+-- and wards mirrored into a real `warded` state.
+do
+    local actor_status = require("presentation.actor_status")
+    local animation_player = require("presentation.animation_player")
+    local flow = require("engine.flow")
+    local sess = sessionModule.GameSession.new(loader)
+    local b = sess:recruitActor(3, 3)
+
+    -- No states: nothing drawn, nothing playing.
+    check(actor_status.drawStateIcon(b, 0, 0, sess) == 0,
+        "a creature with no states draws no state icon")
+    check(not actor_status.spriteIsStatic(b, sess),
+        "sprite is not static without a static-flagged state")
+
+    -- Poison carries a looped animation entry; syncing must start it.
+    b:addState("poison", 3)
+    actor_status.syncStateAnimations(b, sess)
+    check(animation_player.isPlaying(b, "state.poison"),
+        "poison starts its looped state animation")
+    check(actor_status.drawStateIcon(b, 0, 0, sess) > 0,
+        "an active state draws its icon")
+
+    -- Removing the state stops the animation on the next sync (self-healing:
+    -- nothing hooks removeState, the draw path converges).
+    b:removeState("poison")
+    actor_status.syncStateAnimations(b, sess)
+    check(not animation_player.isPlaying(b, "state.poison"),
+        "clearing the state stops its looped animation")
+
+    -- Sleep pins the sprite still.
+    b:addState("sleep", 3)
+    check(actor_status.spriteIsStatic(b, sess),
+        "a static-flagged state (sleep) freezes the sprite")
+    b:removeState("sleep")
+
+    -- Dead is display.hideIcon: death reads through tint/popup, not the row.
+    b:addState("dead")
+    check(actor_status.drawStateIcon(b, 0, 0, sess) == 0,
+        "dead is hidden from the state icon row")
+    b:removeState("dead")
+
+    -- Wards become a real state, mirrored from the trait by SYNC_TRAIT_STATE.
+    local warded = sess:recruitActor(3, 3)
+    warded.equipment[3] = loader.getItem(42) -- Warding Charm (ON_PERMADEATH)
+    flow.run("exploration.step", { session = sess, party = sess.party })
+    local hasWarded = false
+    for _, st in ipairs(warded.states) do if st.id == "warded" then hasWarded = true end end
+    check(hasWarded, "equipping a ward shows the `warded` state")
+
+    -- Unequipping clears it on the next sweep -- no equip hook required.
+    warded.equipment[3] = nil
+    flow.run("exploration.step", { session = sess, party = sess.party })
+    local stillWarded = false
+    for _, st in ipairs(warded.states) do if st.id == "warded" then stillWarded = true end end
+    check(not stillWarded, "removing the ward clears the `warded` state")
+end
+
+-- 21. The poison tint actually reaches the screen. The gradient_map channel
+-- runs through a shader, so a logic-only assertion would not catch it silently
+-- no-opping -- sample the drawn cell instead.
+do
+    local actor_status = require("presentation.actor_status")
+    local animation_player = require("presentation.animation_player")
+    local renderer = require("presentation.renderer")
+    local sess = sessionModule.GameSession.new(loader)
+    local b = sess:recruitActor(3, 3)
+    renderer.init(sess)
+
+    local function greenPixels()
+        local canvas = love.graphics.newCanvas(80, 48)
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 1)
+        actor_status.draw(b, 6, 6, false, sess)
+        love.graphics.setCanvas()
+        local d = canvas:newImageData()
+        local n = 0
+        for y = 0, 47 do
+            for x = 0, 79 do
+                local r, g, bb = d:getPixel(x, y)
+                if g > 0.30 and g > r * 1.35 and g > bb * 1.35 then n = n + 1 end
+            end
+        end
+        return n
+    end
+
+    local clean = greenPixels()
+    b:addState("poison", 3)
+    actor_status.syncStateAnimations(b, sess)
+    for _ = 1, 40 do animation_player.update(0.016) end -- to the tint peak
+    check(greenPixels() > clean, "poison visibly tints the creature green on screen")
+end
+
+
+-- 22. Creature history + the memorial (proof-build brief): the numbers that
+-- turn a generated creature into "my Pixie", and the record that outlives it.
+do
+    local flow = require("engine.flow")
+    local exploration = require("engine.exploration")
+    local formula = require("engine.formula")
+    local sess = sessionModule.GameSession.new(loader)
+    local b = sess:recruitActor(3, 4) -- Skeleton
+
+    check(b.history and b.history.species == "Skeleton" and b.history.expeditions == 0,
+        "a new creature starts with an empty history and its origin species")
+
+    -- Battles are counted by the victory/escaped flows.
+    sess.mapSafe = true
+    flow.run("battle.victory", { session = sess, party = sess.party })
+    check(b.history.battles == 1, "surviving a battle counts toward the creature's record")
+
+    -- Expeditions count on leaving safety, not per floor.
+    sess.currentMapData = { safe = true }
+    exploration.loadMap(sess, 2) -- a dungeon floor
+    check(b.history.expeditions == 1, "leaving a safe map counts one expedition")
+    exploration.loadMap(sess, 3) -- deeper: same expedition
+    check(b.history.expeditions == 1, "descending another floor is still one expedition")
+
+    -- History is readable from data (scene text/formulas).
+    local view = formula.battlerView(b, sess)
+    check(view.history and view.history.battles == 1,
+        "history is exposed to formulas for display")
+
+    -- Dying files a memorial record that survives the battler.
+    b.hp = 0
+    b:addState("dead")
+    local ctx = { session = sess, events = {} }
+    interpreter.runImmediate({ { cmd = "REAP_FALLEN" } }, ctx)
+    check(#sess.memorial == 1, "a reaped creature is filed in the memorial")
+    local rec = sess.memorial[1]
+    check(rec.cause == "battle" and rec.sacrificed == false and rec.battles == 1
+        and rec.species == "Skeleton" and rec.level == 4,
+        "the memorial record keeps species, level, battles and cause of death")
+
+    -- Promotion carries history, stat-ups and learned skills across forms.
+    local sess2 = sessionModule.GameSession.new(loader)
+    local pixie = sess2:recruitActor(1, 6) -- Pixie, at its evolution threshold
+    pixie.history.battles = 7
+    effects.apply({ type = "param_plus", param = "atk", value = 3 }, pixie, pixie, sess2)
+    effects.apply({ type = "learn_skill", skill = "windBlade" }, pixie, pixie, sess2)
+    local api = interpreter.buildScriptApiForTest and interpreter.buildScriptApiForTest(sess2)
+    if not api then
+        -- promote lives on the SCRIPT api; drive it the way the ritual scene does
+        local ok = interpreter.runImmediate({ { cmd = "SCRIPT", code = "api.promote(false, 1)" } },
+            { session = sess2, loader = loader, party = sess2.party, events = {} })
+    end
+    local promoted = sess2.party[1]
+    check(promoted.history.battles == 7 and promoted.history.promotions >= 1,
+        "promotion carries the creature's history and counts the promotion")
+    check(promoted.history.species == "Pixie",
+        "a promoted creature still remembers the species it started as")
+    check((promoted.paramPlus.atk or 0) >= 3,
+        "promotion preserves permanent stat-ups")
+    local keptSkill = false
+    for _, sk in ipairs(promoted.skills or {}) do if sk == "windBlade" then keptSkill = true end end
+    check(keptSkill, "promotion preserves skills taught by skillbooks")
+
+    -- The memorial round-trips through a save.
+    local blob = savegame.serialize(sess, loader, "map")
+    local restored = savegame.deserialize(blob, loader)
+    check(restored.memorial and #restored.memorial == 1
+        and restored.memorial[1].species == "Skeleton",
+        "the memorial survives save/load")
+end
+
+-- 23. Sacrifice files its own memorial record, flagged as a sacrifice rather
+-- than a death. "Sacrifice status" is one of the history fields the proof-build
+-- brief asks for -- the difference between a creature you lost and one you spent.
+do
+    local sess = sessionModule.GameSession.new(loader)
+    local b = sess:recruitActor(1, 5) -- Pixie
+    b.history.expeditions = 2
+    interpreter.runImmediate({ { cmd = "SCRIPT", code = "api.sacrifice(false, 1)" } },
+        { session = sess, loader = loader, party = sess.party, events = {} })
+    check(sess.party[1] == nil, "sacrifice removes the creature from its slot")
+    check(#sess.memorial == 1, "sacrifice files a memorial record")
+    local rec = sess.memorial[1]
+    check(rec.sacrificed == true and rec.cause == "sacrifice",
+        "the record distinguishes a sacrifice from a death in battle")
+    check(rec.expeditions == 2 and rec.species == "Pixie" and rec.level == 5,
+        "a sacrificed creature keeps the history it earned")
+end
+
+-- 24. The history line is authorable (a term, not a hardcoded string) and
+-- formats with the creature's real numbers.
+do
+    local line = loader.formatTerm("status.history", "MISSING", "Pixie", 3, 11, 1)
+    check(line ~= "MISSING" and line:find("Pixie", 1, true) ~= nil,
+        "status.history term exists and substitutes the species")
+    check(line:find("3", 1, true) and line:find("11", 1, true),
+        "the history line carries expedition and battle counts")
+end
+
 print(string.format("=== Ward/effect/trait tests: %d passed, %d failed ===", passed, failed))
 assert(failed == 0, "permadeath ward / effect tests failed")

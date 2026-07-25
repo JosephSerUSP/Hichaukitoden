@@ -61,6 +61,24 @@
             ]
           }
         ]
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Keep the `warded` state in step with whatever death ward the creature is currently carrying, so the player can SEE it before deciding to descend further."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "slot_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "SYNC_TRAIT_STATE",
+            "target": "ally",
+            "trait": "ON_PERMADEATH",
+            "state": "warded",
+            "duration": 9999
+          }
+        ]
       }
     ],
     "round_end": [
@@ -184,6 +202,23 @@
       {
         "cmd": "SCENE_EVENT",
         "kind": "map"
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Creature history: every creature still standing at the end of a fight has one more battle behind it. Reaped creatures are excluded -- their record is closed by REAP_FALLEN."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "RECORD_HISTORY",
+            "target": "ally",
+            "field": "battles",
+            "amount": "1"
+          }
+        ]
       }
     ],
     "flee_attempt": [
@@ -250,6 +285,23 @@
       },
       {
         "cmd": "REAP_FALLEN"
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Creature history: every creature still standing at the end of a fight has one more battle behind it. Reaped creatures are excluded -- their record is closed by REAP_FALLEN."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "living_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "RECORD_HISTORY",
+            "target": "ally",
+            "field": "battles",
+            "amount": "1"
+          }
+        ]
       }
     ],
     "encounter_check": [
@@ -431,6 +483,43 @@
             "cmd": "HEAL",
             "target": "ally",
             "trait": "MOVE_HEAL"
+          }
+        ]
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Keep the `warded` state in step with whatever death ward the creature is currently carrying, so the player can SEE it before deciding to descend further."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "slot_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "SYNC_TRAIT_STATE",
+            "target": "ally",
+            "trait": "ON_PERMADEATH",
+            "state": "warded",
+            "duration": 9999
+          }
+        ]
+      }
+    ],
+    "expedition_start": [
+      {
+        "cmd": "COMMENT",
+        "text": "Runs when the party leaves a safe map for a dangerous one (engine/exploration.lua loadMap). One expedition = one trip out of town, not one floor."
+      },
+      {
+        "cmd": "FOR_EACH",
+        "scope": "slot_allies",
+        "as": "ally",
+        "do": [
+          {
+            "cmd": "RECORD_HISTORY",
+            "target": "ally",
+            "field": "expeditions",
+            "amount": "1"
           }
         ]
       }

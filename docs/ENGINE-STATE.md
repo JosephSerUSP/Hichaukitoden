@@ -32,7 +32,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 ## Registry (data/engine.json)
 
-- commands: **66**
+- commands: **68**
 - effect types: **12**
 - trait codes: **21**
 - meta keys: **7** (tier, density, potency, craftElement, craftKind, detect, detectLevel)
@@ -60,7 +60,7 @@ are what's left:
 
 - `_test`: `scene`, `script_escape`
 - `battle`: `battle_start`, `defeat`, `encounter_check`, `escaped`, `flee_attempt`, `round_end`, `victory`
-- `exploration`: `step`
+- `exploration`: `expedition_start`, `step`
 - `quest`: `complete`, `offer`
 
 ## Content inventory
@@ -68,9 +68,9 @@ are what's left:
 - actors: **22** (4 summonable-from-start, 6 with promotion paths)
 - item-creation disciplines across the roster: alchemyx22
 - items: **46** (consumablex12, equipmentx23, junkx7, questx4)
-- skills: **15**, passives: **20**, states: **7**, roles: **13**, elements: **7**
+- skills: **15**, passives: **20**, states: **8**, roles: **13**, elements: **7**
 - maps: **7**, common events: **11**, shops: **6**, quests: **4**
-- animations: **27**, tilesets: **9**
+- animations: **28**, tilesets: **9**
 
 ## Notes for agents
 

@@ -154,6 +154,14 @@ local function battlerListRows(session, sourceArray, maxSlots)
             view.expNeeded = (m.level or 1) * expPerLevel
             view.role = (m.actorData and m.actorData.role) or "CREATURE"
             view.biography = (m.actorData and m.actorData.flavor) or "No biography available."
+            -- Creature history as one authorable line (term, not a hardcoded
+            -- string) so a scene can show what this creature has lived through.
+            local h = m.history or {}
+            view.historyText = (loader and loader.formatTerm)
+                and loader.formatTerm("status.history",
+                    "Born a {0} - {1} expedition(s), {2} battle(s), {3} promotion(s)",
+                    h.species or view.name, h.expeditions or 0, h.battles or 0, h.promotions or 0)
+                or ""
             local eq = m.equipment or {}
             view.weapon = eq[1] and eq[1].name or "-"
             view.armor = eq[2] and eq[2].name or "-"

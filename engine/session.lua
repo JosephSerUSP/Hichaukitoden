@@ -33,6 +33,17 @@ function Battler.new(actorData, level)
     self.states = {}
     self.hp = 10 -- placeholder, will update to maxHp
     self.paramPlus = { maxHp = 0, atk = 0, def = 0, mat = 0, mdf = 0 }
+    -- Creature history (proof-build brief): the numbers that turn a generated
+    -- creature into "my Pixie". Counted by the RECORD_HISTORY command from
+    -- flow phases, so what gets counted is data, not code. `species` keeps the
+    -- creature's ORIGIN name so a promoted Titania still remembers it hatched
+    -- as a Pixie.
+    self.history = {
+        species = actorData.name,
+        expeditions = 0,
+        battles = 0,
+        promotions = 0,
+    }
     
     return self
 end
@@ -138,6 +149,11 @@ function GameSession.new(loader)
     self.inventory = {}
     self.flags = {}
     self.dungeonFloor = 1
+    -- The graveyard: one record per creature that left the party permanently
+    -- (reaped or sacrificed), keeping its history after the battler object is
+    -- gone. This is what makes a loss legible days later instead of a silently
+    -- emptied slot.
+    self.memorial = {}
     self.transitionTimer = 0
     self.transitionDir = "forward"
     self.autoRedirect = (loader and loader.system and loader.system.combat and loader.system.combat.autoRedirect) or false
@@ -191,6 +207,28 @@ function GameSession:initializeStartingParty()
             table.insert(self.party, battler)
         end
     end
+end
+
+-- Files a creature into the memorial and returns the record. `cause` is a term
+-- key ("battle", "sacrifice"), resolved to text at display time so the record
+-- stays language-neutral.
+function GameSession:remember(battler, cause)
+    if not battler then return nil end
+    local h = battler.history or {}
+    local record = {
+        name = battler.name,
+        species = h.species or (battler.actorData and battler.actorData.name),
+        finalForm = battler.actorData and battler.actorData.name,
+        level = battler.level,
+        expeditions = h.expeditions or 0,
+        battles = h.battles or 0,
+        promotions = h.promotions or 0,
+        cause = cause,
+        sacrificed = (cause == "sacrifice"),
+    }
+    self.memorial = self.memorial or {}
+    table.insert(self.memorial, record)
+    return record
 end
 
 function GameSession:recruitActor(actorId, level)

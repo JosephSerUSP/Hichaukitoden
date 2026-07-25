@@ -9,12 +9,6 @@ local exploration = {}
 -- RPG Maker-style event pages: `ev.pages` is an ordered list of
 -- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
 -- LAST page whose condition passes wins (so authors order pages
-
-local exploration = {}
-
--- RPG Maker-style event pages: `ev.pages` is an ordered list of
--- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
--- LAST page whose condition passes wins (so authors order pages
 -- least-to-most specific, same convention as RPG Maker), overriding
 -- whichever fields it defines onto a copy of the base event; an
 -- unconditioned page always matches, so it's the natural final fallback.
@@ -427,6 +421,15 @@ end
 -- Initialize map state in GameSession
 function exploration.loadMap(session, mapIdx)
     local rawMapData = session.loader.maps[mapIdx] or {}
+    -- An "expedition" is one trip out of safety, not one floor: fire the phase
+    -- only on the safe -> dangerous transition. What that phase counts is data
+    -- (data/flows.json exploration.expedition_start).
+    local wasSafe = not (session.currentMapData and session.currentMapData.safe == false)
+        and (session.currentMapData == nil or session.currentMapData.safe == true)
+    local goingDangerous = not (rawMapData.safe == true)
+    if wasSafe and goingDangerous and session.party then
+        require("engine.flow").run("exploration.expedition_start", { session = session, party = session.party })
+    end
     session.currentMapIndex = mapIdx
     local mapData = {}
     for k, v in pairs(rawMapData) do mapData[k] = v end

@@ -84,6 +84,10 @@ function formula.battlerView(battler, session)
         -- battle assigns rows by slot).
         row = battler.row or "front",
         meta = battler.meta or {},
+        -- Creature history, readable from data so a scene can show "3rd
+        -- expedition, 11 battles" without engine changes (engine/session.lua
+        -- Battler.new; counted by the RECORD_HISTORY command).
+        history = battler.history or {},
         -- Generic trait access: `a.trait.GOLD_DIGGER`, `ally.trait.MOVE_HEAL`,
         -- ... resolves to traits.getRate for ANY registered code, so a new
         -- trait becomes usable from data (flows, scene hooks, item/skill

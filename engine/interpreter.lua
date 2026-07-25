@@ -554,6 +554,47 @@ handlers.REMOVE_STATE = function(cmd, ctx)
     emitAll(ctx, effects.apply({ type = "remove_status", status = cmd.state }, target, target, ctx.session))
 end
 
+-- Mirrors "does this battler have trait X?" into "does it show state Y?", so a
+-- trait granted by equipment/passives can be *seen* through the normal state
+-- display instead of needing a bespoke indicator (owner decision 24.07.2026:
+-- wards apply a real state). Idempotent and self-healing: re-running it after an
+-- equipment change, a swap, or a load converges on the right answer, which is
+-- why it is called from flow phases rather than hooked into equip/unequip.
+--
+-- Deliberately generic -- any future trait that should be legible to the player
+-- can be mirrored the same way, no new Lua (SPEC Sec.0).
+-- Creature history counters (proof-build brief). Increments a numeric field by
+-- `amount`, or sets it to `value` for text fields, on the target's history
+-- table. Generic on purpose: WHICH events count as an expedition or a battle is
+-- decided by the flow phases that call this, not by engine code, so the
+-- bookkeeping can be re-tuned in data (SPEC Sec.0).
+handlers.RECORD_HISTORY = function(cmd, ctx)
+    local target = resolveRef(cmd.target, ctx)
+    if not target or not cmd.field then return end
+    target.history = target.history or {}
+    if cmd.value ~= nil then
+        target.history[cmd.field] = cmd.value
+    else
+        local amount = math.floor(evalFormula(cmd.amount or 1, ctx))
+        target.history[cmd.field] = (target.history[cmd.field] or 0) + amount
+    end
+end
+
+handlers.SYNC_TRAIT_STATE = function(cmd, ctx)
+    local target = resolveRef(cmd.target, ctx)
+    if not target or not cmd.trait or not cmd.state then return end
+    local has = traits.getRate(target, cmd.trait, ctx.session) > 0
+    local shown = false
+    for _, s in ipairs(target.states or {}) do
+        if s.id == cmd.state then shown = true break end
+    end
+    if has and not shown then
+        target:addState(cmd.state, cmd.duration)
+    elseif shown and not has then
+        target:removeState(cmd.state)
+    end
+end
+
 handlers.CHANGE_MP = function(cmd, ctx)
     local amount = math.floor(evalFormula(cmd.amount, ctx))
     if amount < 0 then
@@ -962,7 +1003,10 @@ handlers.REAP_FALLEN = function(cmd, ctx)
             local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
             local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
             session.expBank = math.max(0, (session.expBank or 0) + exp)
-            table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot })
+            -- File it in the memorial BEFORE the slot is cleared: once the
+            -- battler object is gone its history would be unrecoverable.
+            local record = session.remember and session:remember(b, "battle") or nil
+            table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot, record = record })
         end
     end
 end
@@ -1658,6 +1702,7 @@ local function buildScriptApi(ctx)
     end
     function api.sacrifice(isReserve, index)
         local arr = isReserve and session.reserve or session.party
+        if session.remember then session:remember(arr[index], "sacrifice") end
         arr[index] = nil
         if not isReserve then session:autoFieldIfEmpty() end
     end
@@ -1850,6 +1895,28 @@ local function buildScriptApi(ctx)
         newB.states = states or {}
         newB.equipment = equip or { nil, nil, nil }
         newB.hp = b.hp > 0 and math.min(newB:getMaxHp(session), b.hp) or newB:getMaxHp(session)
+        -- Promotion mints a new battler for the evolved species, so carry the
+        -- creature's history across: it is the SAME creature, one form later.
+        -- `species` deliberately keeps the original (a Titania remembers the
+        -- Pixie it hatched as); `paramPlus` carries too, or a promotion would
+        -- silently wipe every stat-up item ever fed to it.
+        newB.history = b.history or newB.history
+        newB.history.promotions = (newB.history.promotions or 0) + 1
+        newB.paramPlus = b.paramPlus or newB.paramPlus
+        newB.wardCharges = b.wardCharges
+        -- Skills the creature LEARNED (skillbooks) are not in either species'
+        -- innate list, so they would vanish with the old battler. Carry over
+        -- anything the previous form knew that the new form doesn't.
+        local innate = {}
+        for _, sk in ipairs((b.actorData and b.actorData.skills) or {}) do innate[sk] = true end
+        local known = {}
+        for _, sk in ipairs(newB.skills or {}) do known[sk] = true end
+        for _, sk in ipairs(b.skills or {}) do
+            if not innate[sk] and not known[sk] then
+                table.insert(newB.skills, sk)
+                known[sk] = true
+            end
+        end
         arr[index] = newB
         return true
     end
