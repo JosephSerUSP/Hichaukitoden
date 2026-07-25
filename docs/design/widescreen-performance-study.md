@@ -1,5 +1,10 @@
 # Widescreen Performance Study: 480×270 Map Renderer
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 > **Question:** How much more performance expensive would it be to expand the renderer to render a full 480×270 map (vs the current 256×240)?
 
 ---

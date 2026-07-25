@@ -1,5 +1,10 @@
 # Creature Parameters and Growth
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Creature parameters are resolved from global system defaults, actor overrides,
 level growth, and active traits.
 

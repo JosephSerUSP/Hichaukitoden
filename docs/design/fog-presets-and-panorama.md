@@ -1,5 +1,10 @@
 # Fog Presets, Panorama Layers, and the Tileset Tab — Design
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: implemented (20.07.2026). Extends
 [`raycaster-tileset-lighting.md`](raycaster-tileset-lighting.md) and the fog
 work reviewed/cleaned up the same day. Three asks bundled because the third

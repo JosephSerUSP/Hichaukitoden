@@ -1,5 +1,10 @@
 # Event-Driven Content — Action Sequences, Quest Hooks, Editor Themes
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: **planned** (owner decisions taken 17.07.2026). Three
 independently-shippable workstreams sharing one unifying pattern. No
 implementation has started; this is the execution plan.

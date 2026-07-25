@@ -1,5 +1,10 @@
 # Tileset System & Map-Event Fixtures — Redesign Proposal
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: **proposal, for design board** (drafted 23.07.2026). No implementation
 has started. This document captures a converged conversation; several items
 are explicitly flagged as open decisions rather than settled design.

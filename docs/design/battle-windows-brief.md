@@ -1,5 +1,10 @@
 # Battle Windows Conversion — Brief (rev. 2, matches design rev. 2)
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 **Context:** `docs/design/summoner-rework.md` (decided 17.07.2026,
 rev. 2) and `docs/SPEC.md` §1.2. Converts the last legacy-drawn scene —
 battle — to `"draw": "windows"`, then deletes the legacy renderer path.

@@ -151,6 +151,73 @@ function effects.apply(effectData, a, b, session, context)
             text = session.loader.formatTerm("battle.gains_xp", "- {0} gains {1} XP.", b.name, effectData.value or 0)
         })
 
+    -- Skillbook: permanently teaches `skill` to the target (creature
+    -- customization — Item Creation's tier pools can yield these). A creature
+    -- that already knows the skill is a no-op that says so, so the item isn't
+    -- silently consumed for nothing (the caller checks usability first).
+    elseif effectData.type == "learn_skill" then
+        local skillId = effectData.skill or effectData.value
+        local known = false
+        for _, s in ipairs(b.skills or {}) do
+            if s == skillId then known = true break end
+        end
+        if not skillId or not (session.loader.skills and session.loader.skills[skillId]) then
+            table.insert(events, {
+                type = "text",
+                text = "[effect] learn_skill: unknown skill '" .. tostring(skillId) .. "'"
+            })
+        elseif known then
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.already_knows", "- {0} already knows that skill.", b.name)
+            })
+        else
+            b.skills = b.skills or {}
+            table.insert(b.skills, skillId)
+            local skillData = session.loader.skills[skillId]
+            table.insert(events, {
+                type = "learn_skill",
+                target = b,
+                skill = skillId
+            })
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.learns_skill", "- {0} learns {1}!",
+                    b.name, (skillData and skillData.name) or skillId)
+            })
+        end
+
+    -- Permanent stat-up (the general form of `maxHp` above): adds `value` to
+    -- the target's paramPlus for `param`, which savegame persists and
+    -- traits.getParam folds into every stat read. maxHp also heals by the
+    -- gain so the boost is immediately usable, matching the `maxHp` effect.
+    elseif effectData.type == "param_plus" then
+        local param = effectData.param or effectData.dataId
+        local gain = math.floor(effectData.value or 0)
+        b.paramPlus = b.paramPlus or {}
+        if param == nil or b.paramPlus[param] == nil then
+            table.insert(events, {
+                type = "text",
+                text = "[effect] param_plus: unknown param '" .. tostring(param) .. "'"
+            })
+        else
+            b.paramPlus[param] = b.paramPlus[param] + gain
+            if param == "maxHp" and gain > 0 then
+                b.hp = math.min(traits.getParam(b, "maxHp", session), b.hp + gain)
+            end
+            table.insert(events, {
+                type = "param_plus",
+                target = b,
+                param = param,
+                value = gain
+            })
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.param_up", "- {0}'s {1} rises by {2}!",
+                    b.name, param, gain)
+            })
+        end
+
     -- Restores the summoner's shared MP pool (e.g. pub drinks)
     elseif effectData.type == "mp_heal" then
         local healVal = math.max(0, math.min(session.maxMp - session.mp, effectData.value or 0))

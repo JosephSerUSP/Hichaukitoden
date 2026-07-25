@@ -1668,6 +1668,23 @@
       "description": "Permanently raises max HP and heals the difference."
     },
     {
+      "id": "learn_skill",
+      "label": "Teach Skill",
+      "params": [
+        "skill"
+      ],
+      "description": "Permanently teaches the target a skill (skillbook items). No-op with a message if already known."
+    },
+    {
+      "id": "param_plus",
+      "label": "Permanent Stat Up",
+      "params": [
+        "param",
+        "value"
+      ],
+      "description": "Permanently raises the target's param (maxHp/atk/def/mat/mdf) by value. maxHp also heals by the gain."
+    },
+    {
       "id": "xp",
       "label": "Grant XP",
       "params": [
@@ -1800,9 +1817,15 @@
     },
     {
       "code": "ON_PERMADEATH",
-      "label": "On Death Trigger",
+      "label": "Death Ward / On-Death Trigger",
       "usesDataId": false,
-      "description": "Special behavior on death (e.g. Rebirth)."
+      "description": "Saves the creature from the end-of-battle permadeath sweep (REAP_FALLEN). mode: relic (never consumed) | charges (spends one per save, breaks at zero) | ward (consumed, creature survives) | revive (consumed, reaped then restored). Optional params: hpFraction, charges, levelCost. Defaults come from system.json permadeath.",
+      "params": [
+        "mode",
+        "hpFraction",
+        "charges",
+        "levelCost"
+      ]
     },
     {
       "code": "SEE_TRAPS",

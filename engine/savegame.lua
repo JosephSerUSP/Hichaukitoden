@@ -43,6 +43,9 @@ local function serializeBattler(b)
         passives = passives,
         skills = skills,
         paramPlus = b.paramPlus,
+        -- Death-ward charges live on the battler (never on the shared loader
+        -- item table), so they must round-trip with it.
+        wardCharges = b.wardCharges,
     }
 end
 
@@ -72,6 +75,7 @@ local function deserializeBattler(data, loader)
         for _, s in ipairs(data.skills) do table.insert(b.skills, s) end
     end
     if data.paramPlus then b.paramPlus = data.paramPlus end
+    if data.wardCharges then b.wardCharges = data.wardCharges end
     return b
 end
 

@@ -1,4 +1,4 @@
--- Phase flows per SPEC S4 (docs/plans/overhaul-3): data/flows.json maps
+-- Phase flows per SPEC S4 (docs/archive/plans/overhaul-3): data/flows.json maps
 -- scene phases ("battle.victory", "exploration.step", ...) to command lists
 -- executed in immediate mode by engine/interpreter.lua.
 --

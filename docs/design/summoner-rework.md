@@ -1,5 +1,10 @@
 # Summoner Rework — Design Doc (DECIDED 17.07.2026, rev. 2)
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: **decided**. This document gates the battle-presentation
 conversion to the windows system (`docs/SPEC.md` §1.2). Owner decisions
 are recorded inline; §1 records what is already true in the engine and

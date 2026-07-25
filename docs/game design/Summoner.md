@@ -1,3 +1,8 @@
+
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
 The Summoner is no longer a battle participant. They have no HP, no command phase, and no turn — they don't fight. What remains is their name, their MP pool, and their equipment. Equipment no longer buffs personal combat stats (there's no combat to buff); instead it shapes the MP economy itself — max MP, summon cost discounts, drain reduction, MP regen.
 
 MP is now the central resource of the whole game, not just a spell-cost meter. Active creatures continuously drain it just by being on the field. Creature spells cost it. Summoning a creature spends it. Sacrificing a creature refunds some of it back, scaled by the sacrificed creature's level. If MP hits zero mid-battle, the bond between summoner and creatures frays — active creatures start suffering per-round damage or penalties (the old MP-exhaustion-damage concept, redirected from the summoner onto the party). A battle is lost only when every active creature is dead; MP running dry is dangerous pressure, not an instant loss.

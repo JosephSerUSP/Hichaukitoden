@@ -113,7 +113,10 @@
     "traits": [
       {
         "code": "ON_PERMADEATH",
-        "value": 1
+        "value": 1,
+        "mode": "relic",
+        "hpFraction": 0.2,
+        "levelCost": 2
       }
     ]
   },

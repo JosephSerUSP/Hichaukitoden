@@ -1,5 +1,10 @@
 # Raycaster Tileset, Doors, and Vertex Lighting — Design
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: implemented (19.07.2026), first atlas (`assets/tilesets/town_001.png`)
 landed and verified via the `preview-map` headless renderer. Extends the
 existing first-person raycaster (`presentation/viewport_3d.lua`) rather than
@@ -15,7 +20,7 @@ no floor/ceiling texturing (flat gradients only), and has no door concept —
 map-to-map transitions are entirely scripted map events, not a renderable
 tile type. Town is currently faked as a static-image-plus-menu scene
 (`presentation/renderer.lua:drawTown`) rather than a walkable space, which
-`docs/plans/overhaul-4/future-map-kind.md` already flags as a known
+`docs/archive/plans/overhaul-4/future-map-kind.md` already flags as a known
 compromise.
 
 Reference points considered: Wizardry (static image per location — the

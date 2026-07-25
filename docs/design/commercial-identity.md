@@ -1,5 +1,10 @@
 # Commercial Identity — Working Direction
 
+> **Intent, not status.** This document describes what we mean to build and why.
+> For what is actually implemented right now, read the generated
+> [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
+> works, `docs/SPEC.md`. Where this document and those disagree, they win.
+
 Status: working product and narrative direction. This document records decisions
 made in the commercial-positioning discussion; it does not replace the technical
 specification or the authored campaign design.

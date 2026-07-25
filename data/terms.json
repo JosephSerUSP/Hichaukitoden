@@ -47,7 +47,13 @@
       "Brace to reduce incoming damage.",
       "Use an item from the inventory.",
       "Attempt to escape the battle."
-    ]
+    ],
+    "learns_skill": "- {0} learns {1}!",
+    "already_knows": "- {0} already knows that skill.",
+    "param_up": "- {0}'s {1} rises by {2}!",
+    "ward_save": "{0} is pulled back from the brink!",
+    "ward_broke": "The {0} shatters.",
+    "ward_charges": "{0} charges remain."
   },
   "menu": {
     "main_options": [

@@ -1,7 +1,7 @@
 # Hichaukitoden — Living Spec
 
 The single current-state authority for architecture and design rules.
-`BIBLE.md` (root) points here; everything under `docs/plans/` is a
+`BIBLE.md` (root) points here; everything under `docs/archive/` is a
 **historical** record of how each overhaul round got us here — read those
 for context, never as instructions. If code and this document disagree,
 that is a bug in one of them: fix it or flag it, don't silently pick one.
@@ -304,10 +304,29 @@ This applies to the editor too: form fields come from the schema layer
 | G1 validate | `lovec . validate` → `VALIDATE OK` | Cross-references (every id link in data, incl. graphs/quests/scriptIds), command trees vs registry, formula compilation, targeting specs, scene windows, animation tracks, meta keys, zero-SCRIPT battle phases, required flow phases. |
 | G2 golden battle | `tools/golden/check.ps1` | Battle simulation event log byte-identity (`tools/golden/battle.log`). Never regenerate to silence a red diff — regeneration is a reviewed, owner-signed action. |
 | G3 golden UI | `tools/golden/check-ui.ps1` | Per-scene UI trace identity for every scene. |
+| G4 engine state | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches what the engine actually reports (scene inventory + draw modes, registry counts, **registry entries with no implementation**, flow phases, content inventory). |
 
 The `[formula] error in 'os.time()'` line during G1 is the sandbox
 negative-test, not a failure. The editor runs G1 automatically after every
 save (`/validate` endpoint) and surfaces problems in the UI.
+
+**G4 is a documentation gate, and its failure mode differs from G2/G3.** A red
+G2/G3 means a behavioral regression to investigate; a red G4 means the generated
+doc is stale — run `tools/golden/capture-state.ps1` and commit the result. It
+exists because documentation drift is a real, measured cost here: on 24.07.2026
+four separate documents asserted implementation facts that had become false
+(battle "frozen" on the legacy renderer, permadeath "not implemented", Item
+Creation "quite early", the validator's location), which produced a wrong plan
+that had to be walked back. Stale docs are worse than absent ones — they cost
+rediscovery *plus* an incorrect conclusion. Hence: **prose states intent;
+generated output states status.** `docs/ENGINE-STATE.md` is never hand-edited.
+
+Its "registry entries with no implementation" section is the drift detector that
+matters most: it distinguishes entries implemented in Lua, entries implemented in
+data (a flow/scene consuming them), entries merely *assigned* to content with
+nothing consuming them — these lie to the player, which is what `ON_PERMADEATH`
+did for months while the `rebirth` passive advertised it — and entries declared
+and never referenced at all.
 
 Mechanical-rule enforcement map: registry/context/zero-SCRIPT/dangling-id
 rules → G1; behavioral regressions → G2; scene rendering → G3; the
@@ -333,10 +352,16 @@ in PR review when violated.
 
 ## 5. Process
 
+- **`AGENTS.md` (repo root) is the agent entry point** — document authority,
+  gate commands, non-negotiables, and the gotchas that cost real time. `CLAUDE.md`
+  just points at it. Keep it short; architecture rules belong in THIS file.
+- **Document authority order**: `docs/ENGINE-STATE.md` (generated, what exists) >
+  this file (how and why) > `docs/design/` + `docs/game design/` (intent only,
+  never status) > `docs/archive/**` (frozen, never authoritative).
 - `docs/ORCHESTRATION.md` is the integrator runbook (branches, briefs,
-  candidate evaluation). Gates above are its G1–G3.
+  candidate evaluation). Gates above are its G1–G4.
 - Owner-supervision rule: work touching `engine/battle.lua` /
   `engine/scenes/battle.lua` is owner-supervised, never autonomous.
-- `docs/plans/<round>/` directories are frozen history. New rounds add a
+- `docs/archive/plans/<round>/` directories are frozen history. New rounds add a
   directory; they do not edit old ones. When a round's rule survives, it
   gets merged into THIS file and cited from here.

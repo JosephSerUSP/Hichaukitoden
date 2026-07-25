@@ -86,6 +86,7 @@ local previewMapDir = nil
 local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
+local isEngineStateMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -175,6 +176,8 @@ function love.load(arg)
                 isTestBattle = true
             elseif val == "validate" then
                 isValidateMode = true
+            elseif val == "engine-state" then
+                isEngineStateMode = true
             elseif val == "golden" then
                 isGoldenMode = true
             elseif val == "golden-ui" then
@@ -267,6 +270,7 @@ function love.load(arg)
         dofile("tests/test_traits.lua")
         dofile("tests/test_recruitment.lua")
         dofile("tests/test_target_redirection.lua")
+        dofile("tests/test_permadeath_wards.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return
@@ -317,6 +321,22 @@ function love.load(arg)
         loader.init(cliCampaignRoot)
         cli_tools.runPreviewFog(previewFogSpec, previewFogMapId, loader)
         love.event.quit(0)
+        return
+    end
+
+    -- Generated ground truth for docs/ENGINE-STATE.md (G4). Prints the report
+    -- between markers; tools/golden/check-state.* captures and diffs it.
+    if isEngineStateMode then
+        loader.init(cliCampaignRoot)
+        local ok, report = pcall(require("engine.engine_state").build, loader)
+        if ok then
+            print("ENGINE STATE BEGIN")
+            print(report)
+            print("ENGINE STATE END")
+        else
+            print("ENGINE STATE FAIL: " .. tostring(report))
+        end
+        love.event.quit(ok and 0 or 1)
         return
     end
 

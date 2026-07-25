@@ -29,34 +29,44 @@ local function actorBaseParam(data, paramName)
     return nil
 end
 
--- Returns a list of all trait objects currently active on a battler
+-- Returns a list of all trait objects currently active on a battler.
+-- Each entry also carries provenance (`source`, plus `slot`/`item`/`id` where
+-- applicable) so callers that must act on the SOURCE rather than just sum a
+-- value can find it -- e.g. a death ward that destroys the equipment which
+-- saved the creature (see traits.findSource).
 function traits.getActiveObjects(battler, session)
     local objs = {}
-    
+
     -- 1. Innate actor data
     table.insert(objs, {
         traits = battler.actorData.traits or {},
-        condition = nil
+        condition = nil,
+        source = "actor"
     })
-    
+
     -- 2. Passives
     for _, passiveId in ipairs(battler.passives) do
         local passive = session.loader.getPassive(passiveId)
         if passive then
             table.insert(objs, {
                 traits = passive.traits or {},
-                condition = passive.condition
+                condition = passive.condition,
+                source = "passive",
+                id = passiveId
             })
         end
     end
-    
+
     -- 3. Equipment
     for i = 1, 3 do
         local eq = battler.equipment[i]
         if eq then
             table.insert(objs, {
                 traits = eq.traits or {},
-                condition = eq.condition
+                condition = eq.condition,
+                source = "equipment",
+                slot = i,
+                item = eq
             })
         end
     end
@@ -67,12 +77,38 @@ function traits.getActiveObjects(battler, session)
         if state then
             table.insert(objs, {
                 traits = state.traits or {},
-                condition = state.condition
+                condition = state.condition,
+                source = "state",
+                id = stateInfo.id
             })
         end
     end
-    
+
     return objs
+end
+
+-- Every ACTIVE trait with `traitCode`, as a list of { trait = <trait>,
+-- source = <getActiveObjects entry> } in getActiveObjects order (actor,
+-- passives, equipment, states).
+--
+-- Unlike getRate (which sums values across every source), this exists for
+-- one-shot triggers whose SOURCE matters -- notably ON_PERMADEATH death wards,
+-- where the engine must know which equipment slot to break, and must choose
+-- BETWEEN candidates rather than take the first one found (see
+-- interpreter.lua's resolveWard: a free innate relic should save the creature
+-- before a consumable amulet is destroyed).
+function traits.findAllSources(battler, traitCode, session)
+    local found = {}
+    for _, obj in ipairs(traits.getActiveObjects(battler, session)) do
+        if traits.evaluateCondition(obj.condition, battler, session) then
+            for _, t in ipairs(obj.traits) do
+                if t.code == traitCode then
+                    table.insert(found, { trait = t, source = obj })
+                end
+            end
+        end
+    end
+    return found
 end
 
 -- Evaluates if a condition is met

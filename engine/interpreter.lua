@@ -1,4 +1,4 @@
--- Unified command interpreter per SPEC S1/S2/S3/S6 (docs/plans/overhaul-3).
+-- Unified command interpreter per SPEC S1/S2/S3/S6 (docs/archive/plans/overhaul-3).
 -- One command language for map/common events (interactive mode) and engine
 -- phases (immediate mode). Command semantics live here; the registry that
 -- drives the editor and validator lives in data/engine.json -> commands.
@@ -793,6 +793,119 @@ handlers.REMOVE_EVENT = handlers.ERASE_EVENT
 -- event per fallen spirit, carrying `slot` for battlers still fielded
 -- (nil for wave casualties, already off-field) so the deferred removal
 -- knows which party index to clear.
+-- Death wards (ON_PERMADEATH). A creature about to be reaped may be saved by
+-- a trait carried on equipment, a passive, or its actor data. The trait's
+-- `mode` picks the behavior, all four parametric:
+--
+--   relic    never consumed (an innate rebirth like the Phoenix's)
+--   charges  spends one charge per save; breaks at zero
+--   ward     consumed on use; the creature simply never dies
+--   revive   consumed on use; reaped visually, then restored
+--
+-- Optional per-trait params, each falling back to system.json `permadeath`:
+--   hpFraction  fraction of maxHp the survivor is restored to
+--   charges     starting charge count (charges mode)
+--   levelCost   levels lost as the price of surviving (the `rebirth` passive's
+--               "restore 20% HP, lose 2 levels" is exactly relic + levelCost)
+--
+-- Candidates are ranked so the CHEAPEST save wins: a free relic before a
+-- charge before something that gets destroyed. Charges live on the battler
+-- (`wardCharges`, keyed by equipment slot / "passive:<id>" / "actor"), never on
+-- the item table -- battler.equipment[slot] is a shared reference to the
+-- loader's item, so decrementing there would drain every copy in the game.
+local WARD_MODE_RANK = { relic = 1, charges = 2, ward = 3, revive = 4 }
+
+local function wardConf(session, key, default)
+    local sys = session.loader and session.loader.system
+    local pd = sys and sys.permadeath
+    if pd and pd[key] ~= nil then return pd[key] end
+    return default
+end
+
+local function wardChargeKey(source)
+    if source.source == "equipment" then return "slot:" .. tostring(source.slot) end
+    if source.source == "passive" then return "passive:" .. tostring(source.id) end
+    if source.source == "state" then return "state:" .. tostring(source.id) end
+    return "actor"
+end
+
+-- Picks the ward that should fire for this battler, or nil. Skips charge-based
+-- wards whose charges are spent so a depleted amulet doesn't block a working
+-- relic from saving the creature.
+local function resolveWard(b, session)
+    local best, bestRank
+    for _, cand in ipairs(traits.findAllSources(b, "ON_PERMADEATH", session)) do
+        local mode = cand.trait.mode or "ward"
+        if mode == "charges" then
+            local key = wardChargeKey(cand.source)
+            local left = (b.wardCharges and b.wardCharges[key])
+                or cand.trait.charges or wardConf(session, "defaultCharges", 1)
+            if left <= 0 then goto continue end
+        end
+        local rank = WARD_MODE_RANK[mode] or 99
+        if not bestRank or rank < bestRank then
+            best, bestRank = cand, rank
+        end
+        ::continue::
+    end
+    return best
+end
+
+-- Applies a ward: revives the battler and consumes the source as its mode
+-- dictates. Returns the event describing what happened, which the battle
+-- presentation can render (and, once displayed states exist, drive an icon
+-- from -- the ward's remaining charges are reported here).
+local function applyWard(b, cand, session, ctx)
+    local t = cand.trait
+    local mode = t.mode or "ward"
+    local frac = t.hpFraction or wardConf(session, "reviveHpFraction", 0.25)
+    local levelCost = t.levelCost or 0
+
+    b:removeState("dead")
+    local maxHp = traits.getParam(b, "maxHp", session)
+    b.hp = math.max(1, math.floor(maxHp * frac))
+
+    if levelCost > 0 and b.level > 1 then
+        b.level = math.max(1, b.level - levelCost)
+        b.exp = 0
+        b.hp = math.min(b.hp, traits.getParam(b, "maxHp", session))
+    end
+
+    local broke, remaining = false, nil
+    if mode == "charges" then
+        local key = wardChargeKey(cand.source)
+        b.wardCharges = b.wardCharges or {}
+        local left = b.wardCharges[key] or t.charges or wardConf(session, "defaultCharges", 1)
+        remaining = math.max(0, left - 1)
+        b.wardCharges[key] = remaining
+        broke = (remaining <= 0) and wardConf(session, "breakOnLastCharge", true)
+    elseif mode == "ward" or mode == "revive" then
+        broke = true
+    end
+
+    -- Only equipment can actually be destroyed; a passive/innate ward that
+    -- "breaks" simply stops applying, which needs no bookkeeping here.
+    local itemName = nil
+    if broke and cand.source.source == "equipment" then
+        local eq = cand.source.item
+        itemName = eq and eq.name or nil
+        b.equipment[cand.source.slot] = nil
+        if b.wardCharges then b.wardCharges[wardChargeKey(cand.source)] = nil end
+    end
+
+    return {
+        type = "ward_save",
+        target = b,
+        mode = mode,
+        sourceKind = cand.source.source,
+        item = itemName,
+        broke = broke,
+        charges = remaining,
+        hp = b.hp,
+        levelCost = (levelCost > 0) and levelCost or nil,
+    }
+end
+
 handlers.REAP_FALLEN = function(cmd, ctx)
     local session = ctx.session
     local fallen = {}
@@ -811,10 +924,18 @@ handlers.REAP_FALLEN = function(cmd, ctx)
     local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
     for _, f in ipairs(fallen) do
         local b = f.battler
-        local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
-        local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
-        session.expBank = math.max(0, (session.expBank or 0) + exp)
-        table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot })
+        -- Death ward first: a saved creature is not reaped at all, banks no
+        -- EXP, and keeps its slot. Resolved here so the sweep stays the single
+        -- authority on who actually dies.
+        local ward = resolveWard(b, session)
+        if ward then
+            table.insert(ctx.events, applyWard(b, ward, session, ctx))
+        else
+            local traitBonus = traits.getRate(b, "SACRIFICE_EXP_RATE", session)
+            local exp = math.floor(b:totalExp() * rate * (1 + traitBonus))
+            session.expBank = math.max(0, (session.expBank or 0) + exp)
+            table.insert(ctx.events, { type = "reap", target = b, exp = exp, slot = f.slot })
+        end
     end
 end
 

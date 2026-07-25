@@ -227,5 +227,10 @@
     "x": 11,
     "y": 9,
     "dir": "N"
+  },
+  "permadeath": {
+    "reviveHpFraction": 0.25,
+    "defaultCharges": 1,
+    "breakOnLastCharge": true
   }
 }

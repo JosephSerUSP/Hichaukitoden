@@ -15,6 +15,10 @@ validator.run = function(loader)
         return cond
     end
 
+    -- The params a battler's paramPlus table carries (engine/session.lua
+    -- Battler.new) — the set `param_plus` effects may target.
+    local VALID_PARAM_PLUS = { maxHp = true, atk = true, def = true, mat = true, mdf = true }
+
     -- Registry lookup sets from data/engine.json
     local validEffectTypes = {}
     for _, et in ipairs((loader.engine and loader.engine.effectTypes) or {}) do
@@ -154,6 +158,19 @@ validator.run = function(loader)
             check(validEffectTypes[eff.type], ownerDesc .. " uses unregistered effect type '" .. tostring(eff.type) .. "'")
             if eff.type == "add_status" then
                 check(loader.getState(eff.status), ownerDesc .. " references missing state '" .. tostring(eff.status) .. "'")
+            elseif eff.type == "learn_skill" then
+                -- Skillbooks name a real skill, or they'd be dud items.
+                local skillId = eff.skill or eff.value
+                check(loader.getSkill(skillId),
+                    ownerDesc .. " (learn_skill) references missing skill '" .. tostring(skillId) .. "'")
+            elseif eff.type == "param_plus" then
+                -- Only the params a battler's paramPlus table actually carries
+                -- (engine/session.lua Battler.new) can be raised.
+                local param = eff.param or eff.dataId
+                check(VALID_PARAM_PLUS[param],
+                    ownerDesc .. " (param_plus) targets unknown param '" .. tostring(param) .. "'")
+                check(type(eff.value) == "number",
+                    ownerDesc .. " (param_plus) needs a numeric value")
             end
         end
     end

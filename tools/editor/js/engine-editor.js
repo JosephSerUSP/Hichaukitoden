@@ -1004,7 +1004,7 @@
                 // in maps.json are CONTENT edited in the map workspace.
                 // A "Map" scene entry belongs in this list only once the
                 // engine map scene-kind exists as data
-                // (docs/plans/overhaul-4/future-map-kind.md).
+                // (docs/archive/plans/overhaul-4/future-map-kind.md).
             };
             renderSceneList();
             listCol.appendChild(listBox);

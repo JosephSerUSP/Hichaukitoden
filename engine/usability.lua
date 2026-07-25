@@ -57,6 +57,20 @@ function usability.canUseItem(item, target, context)
                     return false, "HP is already full"
                 end
             end
+
+            -- Skillbooks: refuse a creature that already knows the skill, so
+            -- the item can't be consumed for nothing (same guard shape as the
+            -- full-HP check above; effects.lua also fails soft if it slips by).
+            for _, eff in ipairs(item.effects) do
+                if eff.type == "learn_skill" then
+                    local skillId = eff.skill or eff.value
+                    for _, known in ipairs(target.skills or {}) do
+                        if known == skillId then
+                            return false, "Already knows that skill"
+                        end
+                    end
+                end
+            end
         end
     end
 

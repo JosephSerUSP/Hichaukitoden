@@ -7,7 +7,7 @@ deliberately model/tool-agnostic: it needs a shell, git, the game runtime,
 and (for editor work) a browser. Any capable agent can run it from this
 doc — that portability is the point.
 
-Read alongside `docs/plans/<round>/SPEC.md` (architecture + Ground rules),
+Read alongside `docs/archive/plans/<round>/SPEC.md` (architecture + Ground rules),
 `PLAYBOOK.md` (human-facing plan), and `FEEDBACK.md` (owner feedback trail).
 
 ---
@@ -16,7 +16,7 @@ Read alongside `docs/plans/<round>/SPEC.md` (architecture + Ground rules),
 
 - One **integration branch** per round (e.g. `fable-5-overhaul-3`). It must
   stay green on every gate at every commit.
-- Each task has a **brief** in `docs/plans/<round>/briefs/<ID>.md` with an
+- Each task has a **brief** in `docs/archive/plans/<round>/briefs/<ID>.md` with an
   acceptance checklist. Briefs are self-contained and tool-agnostic.
 - Executors work on **candidate branches** `o3/<id>-<short-name>[-<suffix>]`
   cut from the integration branch. Cloud executors (Jules) may push several
@@ -38,11 +38,23 @@ Read alongside `docs/plans/<round>/SPEC.md` (architecture + Ground rules),
   **NEVER regenerate `battle.log` to make a red diff green.** Regenerating it
   is a deliberate, reviewed, local-only action (see §5). `tools/golden/check.*`
   do this comparison for you.
-- **G3 — editor:** `node tools/editor/server.js` (port 8080), open the
-  editor, exercise the changed UI, confirm **zero console errors** and that a
-  save round-trips. Requires a browser tool; if the executor's environment
-  can't run it, that is declared verification debt (see §6) and the
-  orchestrator clears it.
+- **G3 — golden UI:** `tools/golden/check-ui.ps1`. Per-scene UI trace
+  identity for every scene; same never-regenerate-to-go-green rule as G2.
+- **G4 — engine state:** `tools/golden/check-state.ps1`. Confirms
+  `docs/ENGINE-STATE.md` still matches the live engine. **Unlike G2/G3, a red
+  G4 is a stale doc, not a regression** — run `tools/golden/capture-state.ps1`
+  and commit the result.
+- **Editor check (not numbered):** `node tools/editor/server.js` (port 8080),
+  open the editor, exercise the changed UI, confirm **zero console errors** and
+  that a save round-trips. Requires a browser tool; if the executor's
+  environment can't run it, that is declared verification debt (see §6) and the
+  orchestrator clears it. Remember the editor writes straight to `data/*.json`
+  — `git diff data/` afterwards.
+
+Gate numbering follows `docs/SPEC.md` §3, which is the authority. (Before
+24.07.2026 this file numbered the editor check "G3" while SPEC.md used G3 for
+golden UI — if you see "G3" meaning the editor in any older document or script,
+it predates this fix.)
 
 Re-run the relevant gates **after each merge**, not just per candidate — a
 candidate green in isolation can break once combined.
@@ -72,7 +84,7 @@ honestly in the merge message.
 git fetch --prune
 git checkout -b _t_<id> origin/o3/<candidate>
 git merge <integration-branch> --no-edit      # pull latest integration IN
-# run gates: G1, G2 (if engine/data touched), G3 (if editor touched)
+# run gates: G1, G2/G3 (if engine/data touched), G4 (always), editor check (if editor touched)
 ```
 If good, merge into the integration branch with `--no-ff` and a full commit
 message (§7), then `git branch -D _t_<id>`. Verifying on `_t_<id>` (candidate
@@ -111,12 +123,12 @@ refactors. Rules:
 
 ## 6. Verification-debt protocol
 
-An executor that cannot run a gate (e.g. Jules has no browser for G3)
+An executor that cannot run a gate (e.g. no browser for the editor check)
 declares it unchecked in the PR checklist with the reason. The orchestrator
 then **runs that gate during evaluation** before merging — debt is cleared
 at integration, never merged as-is. A local executor (Zoo Code) that *can*
-run all three should run and report them; if it doesn't, treat its G3 as
-debt and check it yourself.
+run them all should run and report them; if it doesn't, treat the missing
+ones as debt and check them yourself.
 
 ## 7. Merge commit / PR checklist
 
@@ -124,7 +136,8 @@ End every integration merge message with the SPEC Ground-rules checklist,
 filled honestly, plus attribution:
 
 ```
-Gates: [x] G1 validate [x] G2 golden [x] G3 editor-console.
+Gates: [x] G1 validate [x] G2 golden [x] G3 golden-UI [x] G4 engine-state
+[x] editor-console (if editor touched).
 Unchecked = verification debt; reason: <…, or "none">.
 Spec deviations: none / <list>.
 Files touched outside the brief's list: none / <list>.
@@ -163,4 +176,4 @@ Fable 5 for the mechanical passes (diff triage, running gates, cleanup);
 Opus 4.8 (or equivalent frontier model) for the judgment calls —
 architecture, anything touching the golden log, ambiguous merges, and the
 subtle bug classes in §4. The gates are what make a cheaper model safe here:
-a wrong call fails G1/G2/G3 loudly rather than sneaking in.
+a wrong call fails G1-G4 loudly rather than sneaking in.

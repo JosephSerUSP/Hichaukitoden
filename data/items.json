@@ -797,5 +797,120 @@
       "craftKind": "alchemy",
       "craftElement": "Blue"
     }
+  },
+  {
+    "id": 42,
+    "name": "Warding Charm",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 400,
+    "icon": 150,
+    "description": "Shatters to keep its bearer from passing away. Once.",
+    "traits": [
+      {
+        "code": "ON_PERMADEATH",
+        "value": 1,
+        "mode": "ward",
+        "hpFraction": 0.1
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "White",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 43,
+    "name": "Vial of Second Breath",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 650,
+    "icon": 151,
+    "description": "Draws the fallen back once the dust settles, then runs dry.",
+    "traits": [
+      {
+        "code": "ON_PERMADEATH",
+        "value": 1,
+        "mode": "revive",
+        "hpFraction": 0.35
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 30,
+      "craftElement": "White",
+      "craftKind": "alchemy"
+    }
+  },
+  {
+    "id": 44,
+    "name": "Thrice-Blessed Bead",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 1200,
+    "icon": 152,
+    "description": "Three prayers answered, then only glass.",
+    "traits": [
+      {
+        "code": "ON_PERMADEATH",
+        "value": 1,
+        "mode": "charges",
+        "charges": 3,
+        "hpFraction": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "potency": 40,
+      "craftElement": "Yellow",
+      "craftKind": "tinkering"
+    }
+  },
+  {
+    "id": 45,
+    "name": "Tome: Wind Blade",
+    "type": "consumable",
+    "cost": 300,
+    "icon": 103,
+    "description": "Teaches Wind Blade to one creature.",
+    "effects": [
+      {
+        "type": "learn_skill",
+        "skill": "windBlade"
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 20,
+      "craftElement": "Green",
+      "craftKind": "alchemy"
+    },
+    "scope": "field",
+    "target": "ally"
+  },
+  {
+    "id": 46,
+    "name": "Whetstone Draught",
+    "type": "consumable",
+    "cost": 250,
+    "icon": 104,
+    "description": "Permanently sharpens a creature's attack.",
+    "effects": [
+      {
+        "type": "param_plus",
+        "param": "atk",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "potency": 18,
+      "craftElement": "Red",
+      "craftKind": "alchemy"
+    },
+    "scope": "field",
+    "target": "ally"
   }
 ]

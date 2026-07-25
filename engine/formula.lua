@@ -1,4 +1,4 @@
--- Sandboxed formula evaluation per SPEC S5 (docs/plans/overhaul-3).
+-- Sandboxed formula evaluation per SPEC S5 (docs/archive/plans/overhaul-3).
 -- Formulas are Lua expressions over a documented, read-only context plus a
 -- small whitelist of math helpers. Every exposed token is documented in
 -- data/engine.json -> formulaHelp; keep the two in sync.

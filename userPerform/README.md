@@ -9,7 +9,7 @@ Double-click a `.bat`, or run it from a terminal in this folder.
 
 ---
 
-## The three gates (from `docs/ORCHESTRATION.md`)
+## The gates (numbering per `docs/SPEC.md` Sec.3)
 
 Run whichever gates a change could affect. Re-run after each merge.
 
@@ -17,15 +17,23 @@ Run whichever gates a change could affect. Re-run after each merge.
 |---|---|---|
 | `G1-validate.bat` | Data/formula validator | Output ends with `VALIDATE OK` |
 | `G2-golden.bat` | Battle golden-master | Prints `Golden log matches.` |
-| `G3-editor.bat` | Editor console | Editor loads, **zero** console errors, Save round-trips |
+| `G3-golden-ui.bat` | Per-scene UI traces | Every scene prints `Golden UI log matches` |
+| `G4-engine-state.bat` | Docs match the engine | Prints `Engine state doc matches.` |
+| `editor-check.bat` | Editor console (not numbered) | Editor loads, **zero** console errors, Save round-trips |
 
 Notes:
 - **G1:** the line `[formula] error in 'os.time()'` is an expected sandbox
   negative-test, not a failure.
-- **G2:** never regenerate `tools/golden/battle.log` just to clear a red
-  diff. Regenerating is a deliberate, reviewed action for intentional battle
-  changes only.
-- **G3:** needs Node installed; close the window (Ctrl+C) to stop the server.
+- **G2/G3:** never regenerate a golden log just to clear a red diff. A red
+  golden gate is a behavioral regression. Regenerating is a deliberate,
+  reviewed action for intentional changes only.
+- **G4 is different:** a red G4 means `docs/ENGINE-STATE.md` is *stale*, not
+  that the engine is wrong. Fix it by regenerating:
+  `powershell -File tools\golden\capture-state.ps1`, then commit the file.
+- **editor-check:** needs Node; close the window (Ctrl+C) to stop the server.
+  The editor writes straight to `data/*.json` — run `git diff data/` after.
+  (This script used to be called `G3-editor.bat`, which collided with SPEC's
+  G3 = golden UI; renamed 24.07.2026.)
 
 Assumes LÖVE is installed at `C:\Program Files\LOVE\` (with `lovec.exe` for
 the console output G1/G2 need). If your path differs, edit the `.bat`s.
@@ -46,7 +54,7 @@ Unified command-list hover into one shared CSS rule
 per-row inline `onmouseover/onmouseout` from the plain-line path in
 `tools/editor/js/events.js`. Effect: block headers (CHOICE / IF / generic)
 now highlight on hover exactly like plain rows; read-only rows stay inert.
-**Run:** `G3-editor.bat` — open a flow/scene with plain commands AND
+**Run:** `editor-check.bat` — open a flow/scene with plain commands AND
 CHOICE/IF blocks, hover each, confirm identical navy+white highlight, that
 selection (navy) and striping still read correctly, and zero console errors.
 
@@ -65,5 +73,5 @@ coords), and both `window_renderer` sites (`drawPartyGridStyle` and the
 resolved to `actor_status.cellSize()` (= partyGridColWidth/RowHeight), so the
 numbers are unchanged.
 **Run:** `G2-golden.bat` — must still print `Golden log matches.` (byte-
-identical; do NOT regenerate the log). Then `G3-editor.bat` for a visual
+identical; do NOT regenerate the log). Then `editor-check.bat` for a visual
 sanity check of the party HUD / battle console / target grid.
