@@ -1614,14 +1614,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -1832,14 +1824,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -3221,15 +3205,7 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
         "visible": "v.state == 1 or v.state == 2 or v.state == 3",
-        "style": "partyGrid",
-        "title": null,
         "cursor": "v.state == 2 and v.targetIdx or 0",
         "content": [
           {
@@ -5984,14 +5960,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
@@ -6299,14 +6267,6 @@
       },
       {
         "id": "party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "title": null,
         "cursor": 0,
         "content": [
           {
