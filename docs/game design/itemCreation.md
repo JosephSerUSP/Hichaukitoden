@@ -26,6 +26,11 @@ powerhouses whose discipline points at their weak side — Shadow Stalker crafts
 on MDF 13 despite 38 ATK. Discipline persists across an evolution, so investing
 in a crafter is not lost when it evolves.
 
+**Candle is the archetype**: 7 HP and 7 ATK make it nearly useless in a fight,
+it has no evolution to grow into, and MDF 22 makes it the best tinker on the
+roster — ahead of Crimson Lord, a creature with more than twice its battle
+total. Recruiting it is a crafting decision, not a combat one.
+
 Menu flow: a creature's context menu on the map → Item Creation. The creature is
 already chosen by the time the scene opens, and its single discipline follows
 from it, so the scene opens directly on ingredient selection — there is no
@@ -101,10 +106,6 @@ the difficulty dial for the whole progression curve.
   summed into the yield formula would follow the same pattern. Deliberately
   *not* solved with a new per-actor "aptitude" number: the existing levers
   (stat shape, evolution dead-ends, negative traits) already carry that weight.
-- **Candle's `evolvesTo: "lantern"` names no actor.** Nothing validates
-  `evolvesTo`, so it fails silently. Either Lantern should exist or the
-  evolution should go; a G1 check for evolution targets is worth adding once
-  the data is settled.
 - Only one promotion key exists for ~5 promotion lines.
 - `evolutions` entries require a `level` threshold, so a purely item-gated
   promotion path needs a dummy `level: 1`; and cost is the only gate (no

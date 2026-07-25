@@ -223,6 +223,14 @@ validator.run = function(loader)
         for _, el in ipairs(actor.elements or {}) do
             check(loader.getElement(el), "actor " .. tostring(actor.id) .. " references missing element '" .. tostring(el) .. "'")
         end
+        -- Evolution targets. Candle pointed at a "lantern" that never existed
+        -- (dropped 25.07.2026): the creature simply never evolved, with nothing
+        -- reporting why -- exactly the silent failure this gate exists for.
+        for _, evo in ipairs(actor.evolutions or {}) do
+            check(evo.evolvesTo ~= nil and loader.getActor(evo.evolvesTo) ~= nil,
+                "actor " .. tostring(actor.id) .. " ('" .. tostring(actor.name)
+                .. "') evolves into missing actor '" .. tostring(evo.evolvesTo) .. "'")
+        end
         if actor.role then
             check(loader.getRole(actor.role), "actor " .. tostring(actor.id) .. " references missing role '" .. tostring(actor.role) .. "'")
         end

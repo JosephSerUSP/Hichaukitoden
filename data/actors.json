@@ -1296,12 +1296,6 @@
         "chance": 0.4
       }
     ],
-    "evolutions": [
-      {
-        "level": 8,
-        "evolvesTo": "lantern"
-      }
-    ],
     "initialParty": false,
     "isRecruitable": true,
     "recruitEvent": {
@@ -1325,7 +1319,7 @@
       "atk": 7,
       "def": 11,
       "mat": 13,
-      "mdf": 15,
+      "mdf": 22,
       "mpd": 2,
       "mxa": 5,
       "mxp": 3
