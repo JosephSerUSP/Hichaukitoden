@@ -430,10 +430,6 @@
           "condition": "v._guard == 0 and v.state == 1",
           "then": [
             {
-              "cmd": "SCRIPT",
-              "ref": "calcYield"
-            },
-            {
               "cmd": "SET_VAR",
               "name": "_guard",
               "value": 1
@@ -461,6 +457,10 @@
                   ]
                 }
               ]
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             }
           ]
         }
@@ -470,10 +470,6 @@
           "cmd": "IF",
           "condition": "v._guard == 0 and v.state == 1",
           "then": [
-            {
-              "cmd": "SCRIPT",
-              "ref": "calcYield"
-            },
             {
               "cmd": "SET_VAR",
               "name": "_guard",
@@ -502,6 +498,10 @@
                   ]
                 }
               ]
+            },
+            {
+              "cmd": "SCRIPT",
+              "ref": "calcYield"
             }
           ]
         }
