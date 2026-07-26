@@ -6,12 +6,18 @@
 --   session (required), loader, battle, party, enemies,
 --   a/b/target/enemy/ally battler refs, v (flow-locals).
 --
--- Fallback rule (battle-only, frozen legacy holdout per docs/SPEC.md §1.2):
--- engine/battle.lua and engine/scenes/battle.lua still guard phase-by-phase
--- conversions with `if flow.has(phase)`, running a legacy Lua block when a
--- phase is absent from flows.json. Every other host calls flow.run(phase,
--- ctx) unconditionally — flows.json is the only source of phase logic there,
--- and the validator requires the phases they depend on to exist.
+-- EVERY host calls flow.run(phase, ctx) unconditionally. flows.json is the
+-- only source of phase logic, and the validator requires each phase a host
+-- depends on to exist, so there is nothing to fall back to and no reason to
+-- ask first.
+--
+-- The battle hosts used to guard their calls with `if flow.has(phase) then ...
+-- else <legacy Lua> end`, keeping a second implementation alive behind each
+-- one. All three were deleted on 26.07.2026 (round_end, flee_attempt,
+-- battle_start); the round-end pair had already drifted apart. `flow.has` now
+-- has exactly one caller, the validator's required-phase check, which is the
+-- job it should have had all along: proving a phase exists, not choosing
+-- whether to use it.
 --
 -- A future host (e.g. a menu scene) declares phases by simply adding a new
 -- top-level object to flows.json ("menu": { "open": [...] }) and calling
@@ -39,8 +45,10 @@ function flow.has(phase, loader)
     return lookup(l, phase) ~= nil
 end
 
--- Runs the phase's command list in immediate mode; returns events[] (empty
--- when the phase is not defined — callers pair this with flow.has).
+-- Runs the phase's command list in immediate mode; returns events[]. An
+-- undefined phase yields no events rather than raising, which is why the
+-- validator gates the required ones: a host whose phase went missing would
+-- otherwise do nothing, quietly.
 function flow.run(phase, ctx)
     local loader = ctx.loader or (ctx.session and ctx.session.loader)
     local commands = lookup(loader, phase)

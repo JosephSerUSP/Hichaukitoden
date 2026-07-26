@@ -161,41 +161,20 @@ function Battle:checkFlee(collectedActions, roundEvents)
         if act and act.type == "flee" then fleeing = true break end
     end
     if fleeing then
-        if flow.has("battle.flee_attempt") then
-            local flowEvents = flow.run("battle.flee_attempt", {
-                session = self.session,
-                battle = self,
-            })
-            local escaped = false
-            for _, ev in ipairs(flowEvents) do
-                table.insert(roundEvents, ev)
-                if ev.type == "flee_success" then escaped = true end
-            end
-            if escaped then return true end
-        else
-            -- Legacy block: runs only when the phase is removed from
-            -- flows.json (SPEC S4 fallback rule)
-            local roll = math.random()
-            local baseFlee = config.combat and config.combat.baseFleeChance or 0.4
-            -- Add flee bonus from coward/fleeChanceBonus passive
-            for _, ally in ipairs(self.allies) do
-                if not ally:isDead() then
-                    baseFlee = baseFlee + traits.getRate(ally, "FLEE_CHANCE_BONUS", self.session)
-                end
-            end
-
-            if roll < baseFlee then
-                table.insert(roundEvents, { type = "flee_success" })
-                return true
-            else
-                table.insert(roundEvents, { type = "text", text = self.session.loader.getTerm("battle.flee_fail", "Failed to escape!") })
-                -- Lose some gold as penalty
-                local goldLossMin = config.combat and config.combat.goldLossOnFleeMin or 5
-                local goldLossMax = config.combat and config.combat.goldLossOnFleeMax or 15
-                local goldLoss = math.random(goldLossMin, goldLossMax)
-                self.session.gold = math.max(0, self.session.gold - goldLoss)
-            end
+        -- Called unconditionally: battle.flee_attempt is a required phase (G1
+        -- fails without it). The Lua duplicate that used to sit behind a
+        -- flow.has check -- its own roll, its own flee bonus, its own gold
+        -- penalty -- was removed on 26.07.2026 with the other S4 fallbacks.
+        local flowEvents = flow.run("battle.flee_attempt", {
+            session = self.session,
+            battle = self,
+        })
+        local escaped = false
+        for _, ev in ipairs(flowEvents) do
+            table.insert(roundEvents, ev)
+            if ev.type == "flee_success" then escaped = true end
         end
+        if escaped then return true end
     end
 
     -- Check if combat ends immediately

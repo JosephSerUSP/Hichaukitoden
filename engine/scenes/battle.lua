@@ -96,34 +96,15 @@ function battle.triggerBattle()
     local possibleEnemies = mapData and mapData.encounters
     if not possibleEnemies or #possibleEnemies == 0 then return end
 
+    -- Called unconditionally: battle.battle_start is a required phase (G1 fails
+    -- without it). The Lua duplicate that used to sit behind a flow.has check
+    -- -- its own weighted roll over the map's encounter table, its own battler
+    -- construction -- was removed on 26.07.2026 with the other S4 fallbacks.
     local enemyList = {}
-    if flow.has("battle.battle_start") then
-        for _, ev in ipairs(flow.run("battle.battle_start", { session = sess() })) do
-            if ev.type == "spawn_enemies" then enemyList = ev.enemies end
-        end
-        if #enemyList == 0 then return end
-    else
-        local numEnemies = math.random(conf("combat", "minEnemies", 1), conf("combat", "maxEnemies", 3))
-        for i = 1, numEnemies do
-            local totalWeight = 0
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                totalWeight = totalWeight + enemyOpt.weight
-            end
-            local roll = math.random(totalWeight)
-            local sum = 0
-            local enemyId = possibleEnemies[1].id
-            for _, enemyOpt in ipairs(possibleEnemies) do
-                sum = sum + enemyOpt.weight
-                if roll <= sum then enemyId = enemyOpt.id; break end
-            end
-            local enemyData = ldr().getActor(enemyId)
-            if enemyData then
-                local enemyBattler = session.Battler.new(enemyData, enemyData.level or sess().dungeonFloor)
-                enemyBattler.hp = enemyBattler:getMaxHp(sess())
-                table.insert(enemyList, enemyBattler)
-            end
-        end
+    for _, ev in ipairs(flow.run("battle.battle_start", { session = sess() })) do
+        if ev.type == "spawn_enemies" then enemyList = ev.enemies end
     end
+    if #enemyList == 0 then return end
 
     -- CRITICAL: goto_scene must come FIRST — it creates a fresh scene state (v = {}).
     -- Setting state variables before goto_scene would write to the OLD scene and lose them.

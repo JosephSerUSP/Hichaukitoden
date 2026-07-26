@@ -209,29 +209,33 @@ Removed under this rule (24.07.2026):
   self-initializes now instead of trapping callers who never ran the boot
   sequence.
 
-**Correction (26.07.2026): the purge was not complete.** Three
-`if flow.has(phase) then ... else <legacy Lua> end` fallbacks survived it,
-because they predate the rule and read as deliberate ("SPEC S4 fallback").
-They are not: hosts call flow phases unconditionally and the validator
-requires them, so the `else` arm is unreachable — a second implementation
-kept alive by nothing but its own comment.
+**Correction (26.07.2026): the purge missed three, and they are now gone.**
+Three `if flow.has(phase) then ... else <legacy Lua> end` fallbacks survived
+the first pass, because they predate the rule and read as deliberate ("SPEC
+S4 fallback"). They were not: hosts call flow phases unconditionally and the
+validator requires them, so every `else` arm was unreachable — a second
+implementation kept alive by nothing but its own comment.
 
-The round-end one was deleted after it proved the point. It had already
-drifted: it still branched on `state.id == "regen"` with rates from
-`system.json` after the live path became `HRG`-driven (§1.10), so the two
-paths disagreed about what regeneration *is*. `battle.round_end` joined the
-validator's required-phase list in the same change, since with the fallback
-gone a missing phase would silently skip every end-of-round tick.
-`combat.regenRate` / `combat.poisonRate` went with it — nothing else read
+The round-end one proved the cost. It had already drifted: it still branched
+on `state.id == "regen"` with rates from `system.json` after the live path
+became `HRG`-driven (§1.10), so the two paths disagreed about what
+regeneration *is*. The other two were a full duplicate flee roll (gold
+penalty included) and a full duplicate weighted encounter spawner.
+
+All three are deleted. `battle.round_end`, `battle.flee_attempt` and
+`battle.battle_start` joined the validator's required-phase list in exchange:
+with nothing to fall back to, a missing phase would silently skip every
+end-of-round tick, make fleeing impossible, or spawn an encounter with no
+enemies. That list does not merely check existence — it *runs* each phase
+against a fresh session, so the three gained real smoke coverage in the
+trade. `combat.regenRate` / `combat.poisonRate` went too: nothing else read
 them, and the editor was still offering both as System settings that changed
-nothing.
+nothing. The flee and encounter settings stayed, because `flows.json`
+genuinely consumes those.
 
-**Still outstanding**, same shape, both in the owner-supervised battle path:
-
-- `battle.flee_attempt` (`engine/battle.lua`) — a full duplicate flee roll,
-  gold penalty included;
-- `battle.battle_start` (`engine/scenes/battle.lua`) — a full duplicate
-  weighted encounter spawner.
+`flow.has` now has exactly one caller, the validator's required-phase check
+— which is the job it should have had all along: proving a phase exists, not
+choosing whether to use it.
 
 `presentation/renderer.lua` was investigated and deliberately NOT split: it
 is live shared presentation (§1.2), so a file split would be churn with
