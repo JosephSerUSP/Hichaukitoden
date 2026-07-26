@@ -153,6 +153,21 @@ local function resolveDamage(effectData, a, b, session, context, events)
         local defStat = effectData.defense or DEFENSE_PAIRING[powerStat] or "def"
         local P = traits.getParam(a, powerStat, session)
         local D = traits.getParam(b, defStat, session)
+
+        -- Armor penetration: ignore a share of the defense before the curve
+        -- rather than adding damage after it. That is what makes it a distinct
+        -- answer to a wall instead of a second potency -- against a soft target
+        -- it is worth almost nothing, against Golem it is worth a great deal,
+        -- which is exactly the Pile Bunker's job. The effect's own `penetration`
+        -- and the attacker's PENETRATION trait add, then clamp: a share of a
+        -- stat cannot exceed the stat.
+        local pierce = (effectData.penetration or 0)
+        if a then pierce = pierce + traits.getRate(a, "PENETRATION", session) end
+        if pierce > 0 then
+            if pierce > 1 then pierce = 1 end
+            D = D * (1 - pierce)
+        end
+
         local potency = effectData.potency or 1.0
         raw = potency * (P * P) / (P + D)
     else
@@ -208,6 +223,38 @@ local function stateRate(target, stateId, session)
     return rate
 end
 
+-- Execution: an attacker carrying EXECUTION_THRESHOLD finishes a target left
+-- at or below that fraction of its Max HP. Checked after the damage lands, so
+-- it is a finisher rather than a coin flip on a healthy creature -- Executioner
+-- must execute, and Diablos must close.
+--
+-- Resistance SUBTRACTS from the threshold instead of rolling against it. That
+-- keeps execution deterministic (no draw, so it cannot perturb the golden RNG
+-- stream), makes partial resistance meaningful rather than a second dice roll,
+-- and lets Safety Bit be an ordinary 1.0 that pushes any threshold below zero.
+-- It is separate vocabulary from state resistance on purpose: execution is not
+-- a state, and the ledger asks for it not to be smuggled in as one.
+local function tryExecute(a, b, session, events)
+    if not a or not b or b.hp <= 0 then return end
+    local threshold = traits.getRate(a, "EXECUTION_THRESHOLD", session)
+    if threshold <= 0 then return end
+    threshold = threshold - traits.getRate(b, "EXECUTION_RESIST", session)
+    if threshold <= 0 then return end
+
+    local maxHp = traits.getParam(b, "maxHp", session)
+    if maxHp <= 0 then return end
+    if (b.hp / maxHp) > threshold then return end
+
+    b.hp = 0
+    b:addState("dead")
+    table.insert(events, { type = "execution", target = b, actor = a })
+    table.insert(events, {
+        type = "text",
+        text = session.loader.formatTerm("battle.execution", "- {0} is finished off!", b.name)
+    })
+    table.insert(events, { type = "death", target = b })
+end
+
 -- context (optional): { element = "White", user = <battler>, isItem = true } —
 -- the element of the skill/item driving this effect, the creature performing
 -- the action (used for the two affinity layers on damage), and whether an item
@@ -237,8 +284,13 @@ function effects.apply(effectData, a, b, session, context)
                 type = "death",
                 target = b
             })
+        elseif effectData.power ~= nil then
+            -- Only a survivor can be executed, and only on the relative path:
+            -- direct authored damage is a fixed consequence with no attacker
+            -- whose weapon could finish anyone, the same reason it never crits.
+            tryExecute(a, b, session, events)
         end
-        
+
     elseif effectData.type == "hp_heal" then
         local val = evaluateFormula(effectData.formula, a, b, session, events) * itemRate(b, session, context)
         local maxHp = traits.getParam(b, "maxHp", session)

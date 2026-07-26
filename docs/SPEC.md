@@ -453,6 +453,22 @@ advertise ruinous MDF and never once be hit through it — Golem's entire
 promised identity was unreachable. Archangel's Holy Smite against Golem went
 3 → 15 on this change alone.
 
+**Armor penetration** ignores a share of the defending stat *before* the curve,
+from an effect's `penetration` plus the attacker's `PENETRATION` trait, added
+then clamped at the whole stat. Applied to the defense rather than to the
+damage on purpose: against a soft target it is worth almost nothing, against a
+wall a great deal — which is what separates it from simply hitting harder, and
+is the Pile Bunker's whole job.
+
+**Execution.** An attacker carrying `EXECUTION_THRESHOLD` finishes a *surviving*
+target left at or below that fraction of Max HP. Checked after the hit, so it
+closes a wounded enemy and never gambles on a healthy one. `EXECUTION_RESIST`
+**subtracts** from the threshold rather than rolling against it: that costs no
+randomness (so it cannot perturb the golden stream), makes partial resistance
+exact rather than a second dice roll, and lets Safety Bit be an ordinary 1.0.
+It is separate vocabulary from state resistance because execution is not a
+state and must not be smuggled in as one.
+
 **Direct damage.** An effect authoring `formula` *instead of* `power` is the
 direct path: the authored number lands as-is. A trap that says 20 deals 20. It
 takes no critical and no `DAMAGE_RATE`, matching the rule that guarding does

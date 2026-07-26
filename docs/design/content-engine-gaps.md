@@ -48,7 +48,6 @@ can land ahead of the balance rewrite it will eventually serve.
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Armor penetration | No approved common penetration parameter | Validated effect/trait vocabulary that reduces or bypasses a defined share of defense |
 | The eight authored CRI values were balanced against a system that never ran | Seven weapons and one actor carried `CRI` while nothing in the engine ever rolled a critical, so the values are untested guesses now live as authored (Shattered Edge +25%, Radiant Blade Flavio +20%, Wind Dancer / Water Scepter / Holy Sword Gram +15%, Silver Blade / Dark Scepter Lucille +10%, Shadow Stalker +10%, on a 5% base) | A balance pass over crit rates against the trait budgets in `item-atlas-expansion.md`, which allows ordinary +2-4%, strong +5-8%, signature +10-15% — several shipped values already exceed the signature band |
 | Skill potency and MP bands against authored kits | The eight damaging skills carry provisional potencies (0.80-1.85) read off the potency table; MP costs are untouched and predate the model | Simulation against the skill-class table in `creature-parameters.md` |
 
@@ -58,7 +57,6 @@ can land ahead of the balance rewrite it will eventually serve.
 |---|---|---|
 | Defend protects against magic | Closed — see below; noted here because the old `PARAM_RATE def x2` is gone and any content that assumed doubled DEF should be re-read | — |
 | Ribbon's exact coverage | The mechanism exists (`STATE_CATEGORY_RATE common 0`); the item itself is unauthored, and which states earn `common` is a content decision that grows with the state roster | Author the item, and tag each new state as it lands |
-| Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
 | Blind, Silence, and other named cure targets | Some proposed cure targets do not yet exist as states | Author states and their reusable mechanical traits before shipping their cures |
 | Magic evasion is separate from physical evasion | One `EVA` covers both, so a creature cannot be nimble against blades and helpless against spells | A second evasion channel, if the roster ever needs the distinction; RPG Maker separates them and the current creatures do not obviously require it |
 
@@ -90,7 +88,6 @@ can land ahead of the balance rewrite it will eventually serve.
 | Meals are field-only and often party-wide | Occasion and party targeting now exist separately; no Meal marker ties them together for UI | Meal metadata and presentation on top of `scope: field` + `target: party` |
 | Favorite Food is one saved randomized exact item per creature | No per-instance Favorite Food persistence | Species pools, saved identity/discovery, reactions, and promotion persistence |
 | Savor lasts an authored number of completed battles | No battle-count food state | Saved battle counter and non-refresh rule |
-| Executioner and Diablos execute below an HP threshold | No reusable Execution trait | Kill-credit-aware `EXECUTION_THRESHOLD` and explicit resistance |
 | Forbidden Lamp calls a common event | No approved item common-event effect | Registry-backed `common_event` item effect. Note: `CALL_COMMON_EVENT` is an *interactive* command compiled into the dialogue graph, so this cannot be an `effects.lua` branch — it has to be raised at the item-use sites, which is why it is not part of the additive slice |
 | Monster remains are usable ingredients but never outputs | Expressible now (`craftable: false` alone), but the existing Obsidian Shard / Melted Wax / Ectoplasm are still inert `junk` | Migrate the three to real equipment/consumable forms; validate no inert `junk` remains |
 
@@ -98,8 +95,8 @@ can land ahead of the balance rewrite it will eventually serve.
 
 | Item or family | Required behavior; do not approximate |
 |---|---|
-| Executioner | Execute eligible enemies below its threshold |
-| Pile Bunker | Meaningful defense penetration |
+| Executioner | Execute eligible enemies below its threshold (mechanism exists; the item is unauthored) |
+| Pile Bunker | Meaningful defense penetration (mechanism exists; the item is unauthored) |
 | Healing Staff | Improve healing, not merely add White |
 | Mirror Armor | Authored magical protection; no claim of reflection unless reflection is implemented |
 | Fortress Plate | General direct-damage reduction with an explicit drawback |
@@ -155,6 +152,16 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Armor penetration and Execution, same date. `PENETRATION` (and an effect-level
+`penetration`) ignores a share of the defending stat before the curve;
+`EXECUTION_THRESHOLD` finishes a survivor left under a fraction of Max HP, with
+`EXECUTION_RESIST` subtracting from the threshold rather than rolling, so it
+costs no randomness and Safety Bit is an ordinary 1.0. Neither fires on the
+direct authored-damage path, for the same reason criticals do not. The two open
+questions in the atlas -- whether enemy-side execution may affect player
+creatures, and boss resistance policy -- are answered by data now rather than by
+code: the mechanism is symmetric and the resistance is authorable.
 
 Forced actions, same date. `FORCE_ACTION` names a skill its holder must use,
 applied where the turn queue is built and at the head of the enemy AI, so one

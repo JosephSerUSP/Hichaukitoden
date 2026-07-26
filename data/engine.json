@@ -1771,6 +1771,7 @@
         "potency",
         "power",
         "defense",
+        "penetration",
         "formula"
       ],
       "description": "Relative damage when `power` names an attacker stat: potency * power^2 / (power + defense), where `defense` defaults to the stat `power` is paired with (atk vs def, mat vs mdf). Elemental affinity, then criticals, then DAMAGE_RATE apply after, and the result floors at 1. Authoring `formula` INSTEAD of `power` is direct damage: the authored number lands as-is, unreduced -- that is what a trap or a poison tick is."
@@ -1790,6 +1791,7 @@
         "potency",
         "power",
         "defense",
+        "penetration",
         "formula"
       ],
       "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt."
@@ -2025,6 +2027,24 @@
       "label": "Craft Yield +",
       "usesDataId": false,
       "description": "Multiplies Item Creation yield score (0.25 = +25%)."
+    },
+    {
+      "code": "PENETRATION",
+      "label": "Armor Penetration",
+      "usesDataId": false,
+      "description": "Ignores this share of the target's defending stat before the damage curve (0.3 = 30%). Adds to an effect's own `penetration` and clamps at 1. Applied to the defense rather than the damage on purpose: against a soft target it is worth almost nothing and against a wall it is worth a great deal, which is what separates it from simply hitting harder."
+    },
+    {
+      "code": "EXECUTION_THRESHOLD",
+      "label": "Execution Threshold",
+      "usesDataId": false,
+      "description": "After the holder's damage lands, a surviving target at or below this fraction of its Max HP is finished outright (0.2 = a fifth). A finisher rather than a gamble: it is checked after the hit, so it closes a wounded enemy and does nothing to a healthy one."
+    },
+    {
+      "code": "EXECUTION_RESIST",
+      "label": "Execution Resistance",
+      "usesDataId": false,
+      "description": "Subtracts from an attacker's EXECUTION_THRESHOLD against this holder; 1.0 is outright protection (Safety Bit). Deliberately separate from state resistance -- execution is not a state, and it subtracts rather than rolling, so it costs no randomness and partial resistance means something exact."
     },
     {
       "code": "FORCE_ACTION",

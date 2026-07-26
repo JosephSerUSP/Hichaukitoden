@@ -315,6 +315,102 @@ do
         "every damaging skill authors a power source (" .. #strays .. " do not)")
 end
 
+--------------------------------------------------- penetration & execution --
+
+do
+    withRandom(NO_CRIT, function()
+        local function hit(defense, pierce, trait)
+            local sess, a = rig({ atk = 100, def = 10, mat = 10, mdf = 10, maxHp = 500 })
+            local _, b = rig({ atk = 10, def = defense, mat = 10, mdf = 10, maxHp = 9999 })
+            if trait then a.actorData.traits = { { code = "PENETRATION", value = trait } } end
+            b.hp = 9000
+            local before = b.hp
+            effects.apply({ type = "hp_damage", power = "atk", potency = 1.0,
+                penetration = pierce }, a, b, sess, {})
+            return before - b.hp
+        end
+
+        -- Half the defense ignored: 100^2 / (100 + 150) instead of / (100 + 300).
+        check(hit(300, 0) == 25 and hit(300, 0.5) == 40,
+            "penetration ignores a share of the defending stat")
+
+        -- The point of doing it to defense rather than to damage: it is worth
+        -- far more against a wall than against a soft target.
+        local softGain = hit(10, 0.5) - hit(10, 0)
+        local wallGain = hit(300, 0.5) - hit(300, 0)
+        check(wallGain > softGain * 2,
+            "penetration is worth much more against a wall than a soft target")
+
+        -- 100, not the 99 an undefended target gives: getParam floors a base
+        -- stat at 1, but penetration scales the resolved value and can reach a
+        -- true zero.
+        check(hit(300, 1.0) == 100, "full penetration reduces the target to no defense")
+        check(hit(300, 5.0) == hit(300, 1.0), "penetration clamps at the whole stat")
+
+        -- The trait and the effect param are the same budget.
+        check(hit(300, 0, 0.5) == hit(300, 0.5), "a PENETRATION trait pierces like the param")
+        check(hit(300, 0.25, 0.25) == hit(300, 0.5), "the trait and the param add together")
+    end)
+end
+
+do
+    withRandom(NO_CRIT, function()
+        -- Execution finishes a survivor left under the threshold. It is checked
+        -- after the hit, so it closes a wounded enemy and never gambles on a
+        -- healthy one.
+        local function strike(startHp, threshold, resist)
+            local sess, a = rig({ atk = 20, def = 10, mat = 10, mdf = 10, maxHp = 500 })
+            local _, b = rig({ atk = 10, def = 200, mat = 10, mdf = 10, maxHp = 100 })
+            a.actorData.traits = threshold and { { code = "EXECUTION_THRESHOLD", value = threshold } } or {}
+            if resist then
+                b.actorData.traits = { { code = "EXECUTION_RESIST", value = resist } }
+            end
+            b.hp = startHp
+            local evs = effects.apply({ type = "hp_damage", power = "atk", potency = 1.0 },
+                a, b, sess, {})
+            local executed = false
+            for _, ev in ipairs(evs) do if ev.type == "execution" then executed = true end end
+            return executed, b
+        end
+
+        local executed, b = strike(20, 0.25)
+        check(executed and b.hp == 0 and b:isDead(),
+            "a survivor left under the threshold is executed")
+
+        executed = strike(90, 0.25)
+        check(not executed, "a healthy target is not executed")
+
+        executed = strike(20, nil)
+        check(not executed, "no threshold, no execution")
+
+        -- Resistance subtracts from the threshold rather than rolling, so
+        -- Safety Bit is an ordinary 1.0 and partial resistance is exact.
+        executed = strike(20, 0.25, 1.0)
+        check(not executed, "EXECUTION_RESIST of 1 is outright protection")
+
+        executed = strike(20, 0.25, 0.10)
+        check(not executed, "partial resistance can pull a target out of range")
+
+        executed = strike(20, 0.50, 0.10)
+        check(executed, "...but only as far as it goes")
+    end)
+end
+
+do
+    -- Execution must not fire on the direct path: a trap has no attacker whose
+    -- weapon could finish anyone.
+    withRandom(NO_CRIT, function()
+        local sess, a = rig({ atk = 20, def = 10, mat = 10, mdf = 10, maxHp = 500 })
+        local _, b = rig({ atk = 10, def = 10, mat = 10, mdf = 10, maxHp = 100 })
+        a.actorData.traits = { { code = "EXECUTION_THRESHOLD", value = 0.9 } }
+        b.hp = 50
+        local evs = effects.apply({ type = "hp_damage", formula = "5" }, a, b, sess, {})
+        local executed = false
+        for _, ev in ipairs(evs) do if ev.type == "execution" then executed = true end end
+        check(not executed and b.hp == 45, "direct authored damage never executes")
+    end)
+end
+
 ------------------------------------------------------------ hit and evade --
 
 -- Accuracy is rolled in interpreter.APPLY_EFFECT, not here, so these drive a
