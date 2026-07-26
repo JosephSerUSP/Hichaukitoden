@@ -11,6 +11,9 @@ marked provisional, exact seeded growth packets, skill formulas, item IDs,
 encounter placement, and implementation order remain open. Parameter tables in
 this document are approved working centers, not implemented data.
 
+Approved actor behavior that the live engine cannot yet express is tracked in
+[`content-engine-gaps.md`](content-engine-gaps.md).
+
 ## Purpose
 
 The expanded roster must support three connected games:

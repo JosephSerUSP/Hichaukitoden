@@ -12,6 +12,8 @@ prices, IDs, icons, acquisition, formulas, and balance remain open.
 
 Related roster requirements are recorded in
 [`actor-roster-expansion.md`](actor-roster-expansion.md).
+Approved content that requires new reusable engine vocabulary is tracked in
+[`content-engine-gaps.md`](content-engine-gaps.md).
 
 ## Purpose
 
@@ -131,6 +133,23 @@ Names are attached only after these jobs are reviewed.
 | Execution/penetration weapons | 2 | Specialized finishing or anti-armor |
 | Improvised/remain weapons | 3 | Polyvalent drops and found objects |
 
+Approved weapon names:
+
+| Family | Names |
+|---|---|
+| Physical ladder | Iron Knife, Steel Sword, Knight Sword, Greatsword, Adamant Blade |
+| Magical ladder | Hazel Wand, Silver Rod, Mage Staff, Sage Staff, Ether Staff |
+| Hybrid ladder | War Staff, Rune Knife, Spell Sword, Glass Blade, Comet Edge |
+| Elemental | Flame Saber, Coral Sword, Air Knife, Healing Staff, Death Sickle |
+| Critical/status | Venom Knife, Sleep Blade, Barbed Spear |
+| Signature | Executioner, Pile Bunker |
+| Improvised/remain | Broken Cleaver, Bone Club, Cerberus Fang |
+
+These names are approved atlas entries, not implemented database records.
+`Executioner` must carry Execution, `Pile Bunker` must penetrate defense, and
+the three remains are usable equipment and ingredients but never Item Creation
+outputs.
+
 ### Armor: 28
 
 | Family | Count | Coverage |
@@ -143,18 +162,53 @@ Names are attached only after these jobs are reviewed.
 | Guard/barrier armor | 2 | Damage-rate and defensive-action interaction |
 | Improvised/remain armor | 3 | Polyvalent drops and found objects |
 
+Approved armor names:
+
+| Family | Names |
+|---|---|
+| Physical ladder | Leather Armor, Ring Mail, Chainmail, Plate Armor, Adamant Armor |
+| Magical ladder | Cotton Robe, Silk Robe, Mage Robe, Sage Robe, Ether Robe |
+| Balanced ladder | Traveler Coat, Brigandine, Scale Mail, Dragon Mail, Hero Armor |
+| Elemental | Flame Mail, Coral Mail, Wind Robe, Holy Vestment, Black Robe |
+| Status | Gas Mask, Moth Cloak, Quarantine Coat |
+| Guard/barrier | Mirror Armor, Fortress Plate |
+| Improvised/remain | Tin Armor, Cocoon Husk, Slime Coat |
+
+These names are approved atlas entries, not implemented records. Cocoon Husk
+and Slime Coat are monster remains and cannot be Item Creation outputs.
+Quarantine Coat provides broad partial resistance; full ordinary-status
+protection belongs to the accessory **Ribbon**.
+
 ### Accessories: 36
 
 | Family | Count | Coverage |
 |---|---:|---|
 | Small-stat and crude objects | 5 | Rocks, scraps, minor mixed bonuses |
 | Elemental identity | 5 | One carefully budgeted option per element |
-| Status protection | 7 | Rates, immunity, and cleansing support |
+| Status protection | 7 | Rates, immunity, cleansing support, and the top-end Ribbon |
 | Exploration economy | 5 | Escape, discovery, encounter, and rare MPD interaction |
 | Item/Cooking support | 4 | Item effect, Savor, and food interaction |
 | Initiative/critical/targeting | 4 | Tactical manipulation |
 | Remains and found objects | 3 | Ingredient plus equip use |
 | Rare defensive oddities | 3 | Death wards and other signature protection |
+
+Approved accessory names:
+
+| Family | Names |
+|---|---|
+| Small objects | Rock, Glass Bead, Copper Coin, Iron Nail, Old Bell |
+| Elemental identity | Ruby Ring, Sapphire Ring, Emerald Ring, Pearl Ring, Onyx Ring |
+| Status protection | Star Pendant, Silver Glasses, White Cape, Peace Ring, Earplugs, Safety Bit, Ribbon |
+| Exploration | Compass, Lantern, Thief Glove, Sprint Shoes, Moa Saddle |
+| Item/Cooking | Chef Hat, Apron, Medicine Ring, Mimic Tongue |
+| Tactical | Sniper Eye, Black Belt, Provoke Badge, Cat Bell |
+| Remains | Golem Shard, Moth Scale, Slime Core |
+| Rare defensive | Protect Ring, Angel Feather, Phoenix Pinion |
+
+Ribbon blocks ordinary negative states, not direct damage, permanent death,
+event transformations, or Execution. Safety Bit owns anti-Execution protection.
+Mimic Tongue, Golem Shard, Moth Scale, and Slime Core are monster remains and
+cannot be Item Creation outputs.
 
 An accessory that reduces its wearer's MPD by 1 is potentially worth hundreds
 or thousands of MP across an expedition. Such an effect is late, rare, cannot
@@ -169,10 +223,24 @@ in exchange for a powerful effect is also a valid drawback.
 | MP recovery | 7 | Battle draughts and efficient field recovery |
 | Cures and battle support | 8 | Conditions, buffs, escape, and tactical objects |
 | Cultural foods | 20 | Mixed Meals, snacks, battle foods, and Savor identities |
-| Permanent/teaching/event items | 6 | Small parameter gains, tomes, Lamp-like events |
+| Permanent/event items | 6 | Small parameter gains and Lamp-like events |
 
 The twenty-food roster is not twenty Meals. Occasion, discipline, target, Meal
 marker, and food identity remain independent.
+
+Approved non-food consumable names:
+
+| Family | Names |
+|---|---|
+| HP recovery | Potion, Hi-Potion, X-Potion, Mega-Potion, Healing Water, Soma, Elixir |
+| MP recovery | Ether, Hi-Ether, Dry Ether, Turbo Ether, Ether Drop, Ether Flask, Soma Drop |
+| Cures/support | Antidote, Eye Drops, Echo Herbs, Alarm Clock, Remedy, Smoke Bomb, Hero Drink, Bacchus Wine |
+| Permanent/event | Power Incense, Guard Incense, Magic Incense, Spirit Incense, Ether Seed, Forbidden Lamp |
+
+Phoenix Down is deliberately absent because reaching zero HP causes permanent
+death. Teaching tomes are not reserved in this systemic 150-item pass: they are
+excluded from generative Item Creation by default and added only alongside
+specific authored skills and whitelist-safe acquisition.
 
 ### Promotion keys: 10
 
