@@ -94,7 +94,7 @@ validator.run = function(loader)
 
     -- Item Creation disciplines (engine.json `disciplines`) are named from three
     -- places that used to have nothing tying them together: an item's
-    -- `meta.craftKind`, an actor's `discipline`, and the crafting scene. A typo
+    -- `meta.disciplines`, an actor's `discipline`, and the crafting scene. A typo
     -- in any of them fails silently -- the item simply never appears in a pool,
     -- or the creature can craft nothing -- so it is gated here rather than left
     -- to be noticed in play.
@@ -110,12 +110,80 @@ validator.run = function(loader)
     local disciplineList = table.concat(disciplineNames, ", ")
     if #disciplineNames > 0 then
         for _, item in ipairs(loader.items or {}) do
-            local kind = item.meta and item.meta.craftKind
-            if kind ~= nil and kind ~= "" then
+            for _, kind in ipairs((item.meta and item.meta.disciplines) or {}) do
                 check(knownDisciplines[kind] == true,
                     "item '" .. tostring(item.id) .. "' ('" .. tostring(item.name)
-                    .. "') meta.craftKind '" .. tostring(kind)
-                    .. "' is not a registered discipline (" .. disciplineList .. ")")
+                    .. "') meta.disciplines names '" .. tostring(kind)
+                    .. "', which is not a registered discipline (" .. disciplineList .. ")")
+            end
+        end
+
+        -- An item with no discipline membership is invisible to Item Creation:
+        -- it can never be produced. Often deliberate, so this reports rather
+        -- than fails -- but silently uncraftable content is exactly the kind of
+        -- thing that goes unnoticed for a long time in a growing database.
+        local craftMod = require("engine.craft")
+        local orphans = 0
+        for _, item in ipairs(loader.items or {}) do
+            if (item.meta or {}).craftable ~= false then
+                if #craftMod.disciplinesOf(item, loader) == 0 then
+                    print("[validator] warning: item '" .. tostring(item.id) .. "' ('"
+                        .. tostring(item.name) .. "') has no discipline membership; "
+                        .. "it can never be crafted")
+                    orphans = orphans + 1
+                end
+            end
+        end
+        if orphans > 0 then
+            print("[validator] total items with no discipline membership: " .. orphans)
+        end
+
+        -- Crafting reads element contributions off registry tables and a name
+        -- lexicon. A word or effect naming an element that does not exist adds
+        -- nothing and says nothing -- exactly the silent-no-op this project
+        -- treats as the worst outcome.
+        local function checkElementMap(map, what)
+            for key, weights in pairs(map or {}) do
+                for elem in pairs(weights) do
+                    check(loader.getElement(elem) ~= nil,
+                        "engine.craftElementSources." .. what .. "." .. tostring(key)
+                        .. " names missing element '" .. tostring(elem) .. "'")
+                end
+            end
+        end
+        local ces = (loader.engine and loader.engine.craftElementSources) or {}
+        checkElementMap(ces.effects, "effects")
+        checkElementMap(ces.traits, "traits")
+        checkElementMap(ces.params, "params")
+        for word, elem in pairs((loader.engine and loader.engine.craftLexicon) or {}) do
+            check(loader.getElement(elem) ~= nil,
+                "engine.craftLexicon['" .. tostring(word) .. "'] names missing element '"
+                .. tostring(elem) .. "'")
+        end
+
+        local grades = {}
+        for _, g in ipairs((loader.engine and loader.engine.intensityGrades) or {}) do
+            grades[g.grade] = true
+        end
+        for _, item in ipairs(loader.items or {}) do
+            local grade = item.meta and item.meta.intensityGrade
+            if grade then
+                check(grades[grade] == true,
+                    "item '" .. tostring(item.id) .. "' ('" .. tostring(item.name)
+                    .. "') meta.intensityGrade '" .. tostring(grade)
+                    .. "' is not a registered grade")
+            end
+        end
+
+        -- disciplineDefaults decide membership for every item that does not
+        -- author it, so a typo there silently empties a discipline's pool.
+        local dd = (loader.engine and loader.engine.disciplineDefaults) or {}
+        for _, group in ipairs({ "byEquipType", "byEffect", "byType" }) do
+            for key, kind in pairs(dd[group] or {}) do
+                check(knownDisciplines[kind] == true,
+                    "engine.disciplineDefaults." .. group .. "." .. tostring(key)
+                    .. " names '" .. tostring(kind) .. "', which is not a registered discipline ("
+                    .. disciplineList .. ")")
             end
         end
         for _, actor in ipairs(loader.actors or {}) do
@@ -145,6 +213,13 @@ validator.run = function(loader)
                         ok = (type(v) == "string")
                     elseif reg.type == "flag" then
                         ok = (type(v) == "boolean")
+                    elseif reg.type == "list" then
+                        ok = (type(v) == "table")
+                        if ok and reg.itemType then
+                            for _, entry in ipairs(v) do
+                                if type(entry) ~= reg.itemType then ok = false break end
+                            end
+                        end
                     end
                     check(ok, "meta key '" .. tostring(k) .. "' on entry '" .. tostring(entryId) .. "' in '" .. collName .. "' has wrong type (expected " .. reg.type .. ", got " .. type(v) .. ")")
                 end
@@ -288,6 +363,38 @@ validator.run = function(loader)
         end
         for _, other in ipairs(elem.weakAgainst or {}) do
             check(loader.getElement(other), "element '" .. tostring(id) .. "' weakAgainst missing element '" .. tostring(other) .. "'")
+        end
+    end
+
+    -- Elements: affinity must be reciprocal. Only the ATTACKER's lists are read
+    -- at damage time (engine/effects.lua), so a one-way entry is a penalty or
+    -- bonus that nobody on the other side ever sees -- invisible dead data.
+    -- Two such orphans ("White weak to Green", "Black weak to Red") sat in
+    -- elements.json unnoticed until this check existed. A mutually strong pair
+    -- (White <-> Black) is the deliberate exception: true opposites clash both
+    -- ways, and that shape cannot be expressed as a single directed relation.
+    local function listHas(list, value)
+        for _, v in ipairs(list or {}) do
+            if v == value then return true end
+        end
+        return false
+    end
+    for id, elem in pairs(loader.elements or {}) do
+        for _, other in ipairs(elem.strongAgainst or {}) do
+            local o = loader.getElement(other)
+            if o then
+                check(listHas(o.weakAgainst, id) or listHas(o.strongAgainst, id),
+                    "element '" .. tostring(id) .. "' is strongAgainst '" .. tostring(other) ..
+                    "' but '" .. tostring(other) .. "' lists neither weakAgainst nor strongAgainst '" .. tostring(id) .. "'")
+            end
+        end
+        for _, other in ipairs(elem.weakAgainst or {}) do
+            local o = loader.getElement(other)
+            if o then
+                check(listHas(o.strongAgainst, id),
+                    "element '" .. tostring(id) .. "' is weakAgainst '" .. tostring(other) ..
+                    "' but '" .. tostring(other) .. "' is not strongAgainst '" .. tostring(id) .. "'")
+            end
         end
     end
 

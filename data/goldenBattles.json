@@ -1,0 +1,104 @@
+[
+  {
+    "id": "default",
+    "name": "Three-round party fight, then a victory resolution",
+    "seed": 12345,
+    "encounters": [
+      {
+        "party": [2, 3, 4],
+        "enemies": [{ "actor": 1 }, { "actor": 1 }, { "actor": 1 }],
+        "rounds": [
+          [
+            { "slot": 1, "type": "attack", "target": "e1" },
+            { "slot": 2, "type": "attack", "target": "e1" },
+            { "slot": 3, "type": "attack", "target": "e1" }
+          ],
+          [
+            { "slot": 1, "type": "skill", "id": "soothingMote", "target": "p1" },
+            { "slot": 2, "type": "defend", "target": "p2" },
+            { "slot": 3, "type": "attack", "target": "e2" }
+          ],
+          [
+            { "slot": 1, "type": "flee" },
+            { "slot": 2, "type": "attack", "target": "e2" },
+            { "slot": 3, "type": "attack", "target": "e2" }
+          ]
+        ]
+      },
+      {
+        "party": [2],
+        "enemies": [{ "actor": 1, "hp": 1 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      }
+    ]
+  },
+  {
+    "id": "affinity",
+    "name": "Element affinity probes -- both damage layers at three alignment depths",
+    "seed": 4242,
+    "_note": [
+      "One encounter per matchup, one round each, so the probed action always",
+      "resolves against a full-HP target and cannot be lost to a kill earlier",
+      "in the round. `attack` has no element, which isolates the USER layer;",
+      "shadowClaw and boneRush are Black, which adds the SKILL layer on top.",
+      "Attackers: Shadow Stalker Black/Black/Black, Imp Red, Golem non-elemental.",
+      "Targets: Archangel White/White, Ooze Green, Wisp Blue."
+    ],
+    "encounters": [
+      {
+        "_note": "user layer, deepest case: Black x3 vs White x2 = 6 matchups",
+        "party": [21],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      },
+      {
+        "_note": "user layer control: Red has no relationship to White",
+        "party": [9],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      },
+      {
+        "_note": "user layer control: a non-elemental attacker never gets a bonus",
+        "party": [10],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      },
+      {
+        "_note": "both layers: Black x3 wielding a Black skill into White x2",
+        "party": [21],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "skill", "id": "shadowClaw", "target": "e1" }]]
+      },
+      {
+        "_note": "skill layer alone: a Black skill in Red hands (the tome case)",
+        "party": [9],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "skill", "id": "shadowClaw", "target": "e1" }]]
+      },
+      {
+        "_note": "skill layer alone: a Black skill in non-elemental hands",
+        "party": [10],
+        "enemies": [{ "actor": 5 }],
+        "rounds": [[{ "slot": 1, "type": "skill", "id": "boneRush", "target": "e1" }]]
+      },
+      {
+        "_note": "user layer, single strong match: Red beats Green",
+        "party": [9],
+        "enemies": [{ "actor": 12 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      },
+      {
+        "_note": "user layer, weak side: Red is weak into Blue",
+        "party": [9],
+        "enemies": [{ "actor": 14 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      },
+      {
+        "_note": "depth without a matchup: Black x3 has no relationship to Green",
+        "party": [21],
+        "enemies": [{ "actor": 12 }],
+        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+      }
+    ]
+  }
+]

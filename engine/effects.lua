@@ -3,28 +3,82 @@ local formulaEngine = require("engine.formula")
 
 local effects = {}
 
--- Elemental affinity multiplier: the attack's element vs each of the target's
--- elements, using the strongAgainst/weakAgainst lists in data/elements.json
--- and the multipliers in data/engine.json (elementRules).
-local function elementMultiplier(element, target, session)
-    if not element then return 1.0 end
-    local elemData = session.loader.elements and session.loader.elements[element]
-    if not elemData then return 1.0 end
+-- Elemental affinity. Elements do double duty and the two jobs are separate
+-- channels (docs/SPEC.md, "Elements"):
+--
+--   user layer   the acting creature's own elements vs the target's. Who you
+--                ARE. Cross-product: an intensely Red creature swinging at an
+--                intensely Green one counts every pairing.
+--   skill layer  the element of the skill or item being used vs the target's.
+--                What you WIELD -- a Red creature can learn a Green tome.
+--
+-- Advantage is additive with diminishing returns, so stacking alignment keeps
+-- paying but never runs away. Disadvantage stays multiplicative -- it decays
+-- toward zero instead of marching through it the way additive penalties do --
+-- and is floored so deep mismatch is resistance, never immunity.
+local function stackBonus(rate, decay, n)
+    if n <= 0 then return 0 end
+    if decay >= 1 then return rate * n end
+    return rate * (1 - decay ^ n) / (1 - decay)
+end
 
-    local rules = (session.loader.engine and session.loader.engine.elementRules) or {}
-    local strongMult = rules.strongMultiplier or 1.5
-    local weakMult = rules.weakMultiplier or 0.65
-
-    local mult = 1.0
-    local targetElems = traits.getElements(target, session)
+-- Count (strong, weak) matchups of one element against a list of elements.
+local function countMatches(elements, element, targetElems)
+    local elemData = elements and elements[element]
+    if not elemData then return 0, 0 end
+    local strongN, weakN = 0, 0
     for _, targetElem in ipairs(targetElems) do
         for _, strong in ipairs(elemData.strongAgainst or {}) do
-            if strong == targetElem then mult = mult * strongMult end
+            if strong == targetElem then strongN = strongN + 1 end
         end
         for _, weak in ipairs(elemData.weakAgainst or {}) do
-            if weak == targetElem then mult = mult * weakMult end
+            if weak == targetElem then weakN = weakN + 1 end
         end
     end
+    return strongN, weakN
+end
+
+local function layerMultiplier(strongN, weakN, bonus, decay, weakMult, floor)
+    local mult = 1.0 + stackBonus(bonus, decay, strongN)
+    if weakN > 0 then
+        mult = mult * math.max(floor, weakMult ^ weakN)
+    end
+    return mult
+end
+
+-- user (optional): the battler performing the action, for the user layer.
+--
+-- Exposed on the module (not just local) because the golden battle log barely
+-- exercises this: the scripted encounter's participants have almost no
+-- affinity relationships, so G2 cannot see a regression here. Unit tests own
+-- this behaviour instead -- see tests/test_element_affinity.lua.
+function effects.elementMultiplier(element, user, target, session)
+    local elements = session.loader.elements
+    if not elements then return 1.0 end
+
+    local rules = (session.loader.engine and session.loader.engine.elementRules) or {}
+    local floor = rules.weakFloor or 0.3
+    local targetElems = traits.getElements(target, session)
+    local mult = 1.0
+
+    if element then
+        local strongN, weakN = countMatches(elements, element, targetElems)
+        mult = mult * layerMultiplier(strongN, weakN,
+            rules.skillStrongBonus or 0.5, rules.skillStrongDecay or 0.7,
+            rules.skillWeakMultiplier or 0.65, floor)
+    end
+
+    if user then
+        local strongN, weakN = 0, 0
+        for _, userElem in ipairs(traits.getElements(user, session)) do
+            local s, w = countMatches(elements, userElem, targetElems)
+            strongN, weakN = strongN + s, weakN + w
+        end
+        mult = mult * layerMultiplier(strongN, weakN,
+            rules.userStrongBonus or 0.15, rules.userStrongDecay or 0.8,
+            rules.userWeakMultiplier or 0.9, floor)
+    end
+
     return mult
 end
 
@@ -45,17 +99,20 @@ local function evaluateFormula(expr, a, b, session, events)
     return val
 end
 
--- context (optional): { element = "White" } — the element of the skill/item
--- driving this effect, used for affinity multipliers on damage.
+-- context (optional): { element = "White", user = <battler> } — the element of
+-- the skill/item driving this effect and the creature performing the action,
+-- used for the two affinity layers on damage. `user` is passed separately from
+-- `a` because for items `a` is the recipient, not the wielder.
 function effects.apply(effectData, a, b, session, context)
     local events = {}
     local ctxElement = context and context.element or nil
+    local ctxUser = context and context.user or nil
 
     if effectData.type == "hp_damage" then
         local val = evaluateFormula(effectData.formula, a, b, session, events)
         -- Defense reduction, then elemental affinity
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * effects.elementMultiplier(ctxElement, ctxUser, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         table.insert(events, {
@@ -85,7 +142,7 @@ function effects.apply(effectData, a, b, session, context)
     elseif effectData.type == "hp_drain" then
         local val = evaluateFormula(effectData.formula, a, b, session, events)
         local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def) * elementMultiplier(ctxElement, b, session)))
+        local finalDmg = math.max(1, math.floor(val * (10 / def) * effects.elementMultiplier(ctxElement, ctxUser, b, session)))
         
         b.hp = math.max(0, b.hp - finalDmg)
         a.hp = math.min(traits.getParam(a, "maxHp", session), a.hp + finalDmg)

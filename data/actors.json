@@ -12,7 +12,6 @@
       "sense"
     ],
     "elements": [
-      "Green",
       "Green"
     ],
     "skills": [
@@ -88,8 +87,7 @@
     ],
     "elements": [
       "Green",
-      "Green",
-      "White"
+      "Green"
     ],
     "skills": [
       "windBlade",
@@ -232,9 +230,7 @@
       "holyAura"
     ],
     "elements": [
-      "White",
-      "White",
-      "Blue"
+      "White"
     ],
     "skills": [
       "holySmite",
@@ -310,8 +306,7 @@
     ],
     "elements": [
       "White",
-      "White",
-      "Blue"
+      "White"
     ],
     "skills": [
       "holySmite",
@@ -460,8 +455,7 @@
     ],
     "elements": [
       "Black",
-      "Black",
-      "Blue"
+      "Black"
     ],
     "skills": [
       "shadowClaw",
@@ -527,7 +521,6 @@
       "symbiosis"
     ],
     "elements": [
-      "Black",
       "Black"
     ],
     "skills": [
@@ -597,8 +590,6 @@
       "mischief"
     ],
     "elements": [
-      "Red",
-      "Red",
       "Red"
     ],
     "skills": [
@@ -735,8 +726,6 @@
       "goldDigger"
     ],
     "elements": [
-      "Black",
-      "Black",
       "Black"
     ],
     "skills": [
@@ -941,7 +930,6 @@
       "moveHeal"
     ],
     "elements": [
-      "Blue",
       "Blue"
     ],
     "skills": [
@@ -1073,6 +1061,7 @@
     ],
     "elements": [
       "Red",
+      "Red",
       "White"
     ],
     "skills": [
@@ -1179,6 +1168,7 @@
     "passives": [],
     "elements": [
       "Red",
+      "Red",
       "Black"
     ],
     "skills": [
@@ -1223,7 +1213,6 @@
       "chaosPact"
     ],
     "elements": [
-      "Red",
       "Red",
       "Black"
     ],
@@ -1334,7 +1323,9 @@
     "maxHp": 40,
     "role": "Assassin",
     "elements": [
-      "Shadow"
+      "Black",
+      "Black",
+      "Black"
     ],
     "skills": [
       "shadowClaw",

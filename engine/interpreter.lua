@@ -1239,13 +1239,18 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
     local act = ctx.skill or ctx.item
     if not act then return end
     
-    local isItem = (ctx.item ~= nil)
     local element = act.element
-    
+
     for _, tgt in ipairs(ctx.targets or {}) do
         for _, eff in ipairs(act.effects or {}) do
-            local user = isItem and tgt or ctx.a
-            emitAll(ctx, effects.apply(eff, user, tgt, ctx.session, { element = element }))
+            -- `b` is always the recipient. `a` is whoever is acting -- the
+            -- wielder in battle, and the recipient itself outside of it, where
+            -- there is no separate actor. Items previously forced a = target
+            -- even in battle, which would have made an item's formula read the
+            -- recipient's stats instead of the user's.
+            local a = ctx.a or tgt
+            emitAll(ctx, effects.apply(eff, a, tgt, ctx.session,
+                { element = element, user = ctx.a }))
         end
     end
 end

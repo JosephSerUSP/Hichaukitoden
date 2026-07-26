@@ -3,12 +3,9 @@
     "name": "White",
     "icon": 4,
     "strongAgainst": [
-      "Black",
-      "Shadow"
+      "Black"
     ],
-    "weakAgainst": [
-      "Green"
-    ]
+    "weakAgainst": []
   },
   "Black": {
     "name": "Black",
@@ -16,9 +13,7 @@
     "strongAgainst": [
       "White"
     ],
-    "weakAgainst": [
-      "Red"
-    ]
+    "weakAgainst": []
   },
   "Green": {
     "name": "Green",
@@ -49,21 +44,5 @@
     "weakAgainst": [
       "Green"
     ]
-  },
-  "Shadow": {
-    "name": "Shadow",
-    "icon": 16,
-    "strongAgainst": [
-      "White"
-    ],
-    "weakAgainst": [
-      "White"
-    ]
-  },
-  "Yellow": {
-    "name": "Yellow",
-    "icon": 7,
-    "strongAgainst": [],
-    "weakAgainst": []
   }
 }

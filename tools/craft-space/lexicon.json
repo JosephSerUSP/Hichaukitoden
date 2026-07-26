@@ -1,0 +1,29 @@
+{
+  "_comment": "Name/description keywords that imply an element. Deliberately small -- this is the 'in moderation' signal, weighted well below an ELEMENT_CHANGE trait, so a word can nudge an item but never override what the item mechanically IS. Only the five true elements exist; anything with no hit is non-elemental.",
+
+  "ember": "Red", "flame": "Red", "fire": "Red", "blaze": "Red", "ash": "Red",
+  "ashen": "Red", "wax": "Red", "molten": "Red", "melted": "Red", "crimson": "Red",
+  "scarlet": "Red", "ruby": "Red", "forge": "Red", "coal": "Red", "wine": "Red",
+  "ale": "Red", "mars": "Red", "whetstone": "Red", "philosopher": "Red",
+
+  "wind": "Green", "gale": "Green", "breeze": "Green", "leaf": "Green",
+  "herb": "Green", "root": "Green", "moss": "Green", "verdant": "Green",
+  "emerald": "Green", "vine": "Green", "hermes": "Green", "tonic": "Green",
+
+  "water": "Blue", "aqua": "Blue", "tide": "Blue", "frost": "Blue", "ice": "Blue",
+  "sea": "Blue", "azure": "Blue", "sapphire": "Blue", "mist": "Blue",
+  "ectoplasm": "Blue", "ink": "Blue", "mirror": "Blue", "mercury": "Blue",
+  "rain": "Blue",
+
+  "holy": "White", "light": "White", "sacred": "White", "blessed": "White",
+  "divine": "White", "silver": "White", "pure": "White", "angel": "White",
+  "saint": "White", "halo": "White", "gram": "White", "ward": "White",
+  "warding": "White", "breath": "White", "dawn": "White", "insight": "White",
+  "lesson": "White", "lessons": "White", "whispered": "White", "ambrosia": "White",
+  "seraph": "White",
+
+  "dark": "Black", "shadow": "Black", "bone": "Black", "obsidian": "Black",
+  "void": "Black", "night": "Black", "ebon": "Black", "grave": "Black",
+  "curse": "Black", "cursed": "Black", "tomb": "Black", "stout": "Black",
+  "meteorite": "Black", "vile": "Black", "lucille": "Black"
+}

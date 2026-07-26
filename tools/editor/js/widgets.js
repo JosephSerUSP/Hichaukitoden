@@ -263,7 +263,7 @@
         const SKILL_TARGETS = ['enemy', 'enemy-any', 'ally-any', 'self'];
         function elementOptions(includeNone) {
             const names = Object.keys(dbPayload.elements || {});
-            const opts = names.length ? names : ['White', 'Black', 'Green', 'Red', 'Blue', 'Yellow'];
+            const opts = names.length ? names : ['White', 'Black', 'Green', 'Red', 'Blue'];
             return includeNone ? [''].concat(opts) : opts;
         }
 

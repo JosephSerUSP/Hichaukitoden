@@ -29,10 +29,15 @@ full wasted planning pass.
 `lovec` is LÖVE's console binary. On this machine use the full path:
 `"C:\Program Files\LOVE\lovec.exe"`.
 
+**Invoking the `.ps1` gates bare fails** with `UnauthorizedAccess` under the
+default execution policy. Always run them as
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools\golden\check.ps1`
+(this is what `userPerform/*.bat` does).
+
 | Gate | Command | Guards |
 |---|---|---|
 | G1 | `lovec . validate` → `VALIDATE OK` | Every id cross-reference, command trees vs registry, formula compilation, targeting specs, scene draw modes, zero-SCRIPT battle phases |
-| G2 | `tools/golden/check.ps1` | Battle simulation log byte-identity |
+| G2 | `tools/golden/check.ps1` | Battle simulation log byte-identity, per fixture in `data/goldenBattles.json` |
 | G3 | `tools/golden/check-ui.ps1` | Per-scene UI trace identity |
 | G4 | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches the live engine |
 | unit | `lovec . unittest` → `ALL UNIT TESTS OK` | Behavior the golden gates can't see |

@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Craft Space</title>
+<style>
+  :root {
+    --bg:#14131a; --panel:#1d1c26; --line:#33313f; --ink:#ded9ef;
+    --dim:#8a85a0; --hot:#ffcf6b; --bad:#ff6b7a; --ok:#7fe0a8; --rev:#8fb8ff;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:12px/1.45 "Segoe UI",system-ui,sans-serif; }
+  h1 { font-size:15px; margin:0; letter-spacing:.06em; text-transform:uppercase; }
+  h2 { font-size:11px; margin:0 0 6px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  header { display:flex; align-items:baseline; gap:14px;
+           padding:9px 14px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header .sub { color:var(--dim); font-size:11px; }
+  header .ms { margin-left:auto; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .wrap { display:flex; align-items:flex-start; gap:14px; padding:14px; flex-wrap:wrap; }
+  .panel { background:var(--panel); border:1px solid var(--line); padding:10px; }
+  #controls { width:246px; flex:none; }
+  .row { margin-bottom:9px; }
+  .row label { display:block; color:var(--dim); margin-bottom:2px; }
+  .row output { float:right; color:var(--hot); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; accent-color:var(--hot); }
+  select { width:100%; background:#100f16; color:var(--ink); border:1px solid var(--line); padding:3px; }
+  .chk { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+  .chk input { accent-color:var(--hot); }
+  canvas { display:block; background:#0d0c12; border:1px solid var(--line); }
+  .plots { display:flex; flex-direction:column; gap:12px; flex:none; }
+  .caption { color:var(--dim); margin-top:5px; max-width:460px; }
+  .tables { flex:1; min-width:400px; display:flex; flex-direction:column; gap:12px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; }
+  th { text-align:left; color:var(--dim); font-weight:400; border-bottom:1px solid var(--line); padding:3px 5px; }
+  td { padding:2px 5px; border-bottom:1px solid #26242f; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .scroll { max-height:250px; overflow-y:auto; }
+  .sw { display:inline-block; width:9px; height:9px; border-radius:50%; vertical-align:-1px; margin-right:5px; border:1px solid #0006; }
+  .bad { color:var(--bad); } .ok { color:var(--ok); } .dim { color:var(--dim); } .rev { color:var(--rev); }
+  .bar { height:7px; background:var(--hot); display:inline-block; vertical-align:0; }
+  .multi { color:var(--rev); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Craft Space</h1>
+  <span class="sub">four discipline spaces &middot; derived signatures &middot; reach &amp; scatter</span>
+  <span class="ms" id="perf"></span>
+</header>
+
+<div class="wrap">
+
+  <div class="panel" id="controls">
+    <h2>Space</h2>
+    <div class="row"><select id="disc"></select></div>
+    <div class="row"><select id="crafter"></select></div>
+
+    <h2>Model</h2>
+    <div class="row">
+      <label>crafter pull <output id="oPull"></output></label>
+      <input type="range" id="pull" min="0" max="0.8" step="0.02" value="0.30">
+    </div>
+    <div class="row">
+      <label>alpha (stat &rarr; intensity) <output id="oAlpha"></output></label>
+      <input type="range" id="alpha" min="0" max="1.2" step="0.05" value="0.50">
+    </div>
+    <div class="row">
+      <label>intensity weight <output id="oIntw"></output></label>
+      <input type="range" id="intw" min="0" max="2" step="0.05" value="0.70">
+    </div>
+    <div class="row">
+      <label>scatter (novice) <output id="oScatter"></output></label>
+      <input type="range" id="scatter" min="0" max="0.6" step="0.02" value="0.24">
+    </div>
+    <div class="row">
+      <label>reach base <output id="oReach"></output></label>
+      <input type="range" id="reach" min="0" max="45" step="1" value="14">
+    </div>
+    <div class="row">
+      <label>beyond-reach cost <output id="oReachw"></output></label>
+      <input type="range" id="reachw" min="0" max="0.4" step="0.01" value="0.12">
+    </div>
+    <div class="row">
+      <label>foreign ingredient worth <output id="oForeign"></output></label>
+      <input type="range" id="foreign" min="0" max="1" step="0.05" value="0.20">
+    </div>
+
+    <h2>Rules</h2>
+    <label class="chk"><input type="checkbox" id="dominance" checked> dominance-weighted blending</label>
+    <label class="chk"><input type="checkbox" id="overlap" checked> multi-discipline membership</label>
+    <label class="chk"><input type="checkbox" id="exclQuest" checked> exclude quest items</label>
+
+    <h2>View</h2>
+    <label class="chk"><input type="checkbox" id="showDensity" checked> ideation density</label>
+    <label class="chk"><input type="checkbox" id="showItems" checked> item signatures</label>
+    <label class="chk"><input type="checkbox" id="labels"> labels</label>
+  </div>
+
+  <div class="plots">
+    <div class="panel">
+      <h2>Hue plane &mdash; Red / Green / Blue</h2>
+      <canvas id="wheel" width="440" height="440"></canvas>
+      <div class="caption">Angle is elemental direction, radius is saturation, centre is
+      non-elemental. Dots are the items <em>this discipline can produce</em>, drawn in their own
+      derived colour; the glow is where its crafters' ideations land.</div>
+    </div>
+    <div class="panel">
+      <h2>Value axis &mdash; Black &harr; White &nbsp;(y = intensity)</h2>
+      <canvas id="value" width="440" height="200"></canvas>
+      <div class="caption">The reach line marks where the selected crafter's grasp fades. Items
+      above it are not forbidden, only distant &mdash; scatter occasionally carries a craft up there,
+      which is the whole of the "barely reached it" effect. No anomaly, no crit.</div>
+    </div>
+  </div>
+
+  <div class="tables">
+    <div class="panel">
+      <h2>Coverage by discipline</h2>
+      <table id="byDisc"><thead><tr>
+        <th>Discipline</th><th class="num">items</th><th class="num">shared</th>
+        <th class="num">unreachable</th><th class="num">top share</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel">
+      <h2>Outcomes</h2>
+      <div class="scroll">
+        <table id="reachT"><thead><tr>
+          <th>Outcome</th><th>El</th><th>produced by</th><th class="num">win&nbsp;%</th><th>share</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Derivation audit</h2>
+      <div class="scroll">
+        <table id="audit"><thead><tr>
+          <th>Item</th><th>derived</th><th>legacy</th><th>read from</th>
+          <th class="num">int</th><th>grade</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ------------------------------------------------------------------ *
+ * Data baked in by build.py from data/*.json                          *
+ * ------------------------------------------------------------------ */
+const DATA = {"items":[{"id":1,"name":"HP Tonic","type":"consumable","equipType":null,"category":null,"cost":10,"description":"Heals one member to full HP.","effects":[{"type":"hp","value":999}],"traits":[],"meta":{"tier":1,"potency":10,"craftElement":"Green","craftKind":"alchemy"}},{"id":2,"name":"Sigil Ink","type":"consumable","equipType":null,"category":null,"cost":20,"description":"+2 max HP to one member.","effects":[{"type":"maxHp","value":2}],"traits":[],"meta":{"tier":1,"potency":12,"craftElement":"Blue","craftKind":"alchemy"}},{"id":3,"name":"Whispered Lessons","type":"consumable","equipType":null,"category":null,"cost":64,"description":"+6 XP to one member.","effects":[{"type":"xp","value":6}],"traits":[],"meta":{"tier":2,"potency":18,"craftElement":"White","craftKind":"alchemy"}},{"id":4,"name":"Elixir of Insight","type":"consumable","equipType":null,"category":null,"cost":100,"description":"Grant a small amount of XP to the party.","effects":[{"type":"xp","value":50}],"traits":[],"meta":{"tier":2,"potency":25,"craftElement":"White","craftKind":"alchemy"}},{"id":5,"name":"Silver Blade","type":"equipment","equipType":"Weapon","category":null,"cost":25,"description":"Sharpened steel blade.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":1},{"code":"CRI","value":0.1}],"meta":{"tier":1,"potency":10,"craftElement":"White","craftKind":"blacksmithing"}},{"id":6,"name":"Bone Plate","type":"equipment","equipType":"Armor","category":null,"cost":25,"description":"Sturdy bone harness.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"maxHp","value":3}],"meta":{"tier":1,"potency":8,"craftElement":"Black","craftKind":"blacksmithing"}},{"id":7,"name":"Wind Charm","type":"equipment","equipType":"Accessory","category":null,"cost":35,"description":"A charm of rushing air.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":1},{"code":"PARAM_PLUS","dataId":"maxHp","value":1}],"meta":{"tier":1,"potency":6,"craftElement":"Green","craftKind":"tinkering"}},{"id":8,"name":"Light Amulet","type":"equipment","equipType":"Accessory","category":null,"cost":30,"description":"Glowing amulet.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"maxHp","value":2}],"meta":{"tier":1,"potency":8,"craftElement":"White","craftKind":"tinkering"}},{"id":9,"name":"Alert Charm","type":"equipment","equipType":"Accessory","category":null,"cost":150,"description":"Humming chime.","effects":[],"traits":[{"code":"INITIATIVE","value":0.05}],"meta":{"tier":2,"potency":15,"craftKind":"tinkering"}},{"id":10,"name":"Rear Mirror","type":"equipment","equipType":"Accessory","category":null,"cost":200,"description":"Reflective glass. Prevents sneak attacks if in back row.","effects":[],"traits":[{"code":"REAR_GUARD","value":1}],"meta":{"tier":2,"potency":12,"craftElement":"Blue","craftKind":"tinkering"}},{"id":11,"name":"Mystic Egg","type":"consumable","equipType":null,"category":null,"cost":500,"description":"A mysterious egg that pulses with life. Use to hatch.","effects":[{"type":"recruit_egg","value":15}],"traits":[],"meta":{}},{"id":12,"name":"Golden Egg","type":"equipment","equipType":"Accessory","category":null,"cost":9999,"description":"Beautiful golden egg, sought after by many.","effects":[],"traits":[{"code":"XP_RATE","value":1.5}],"meta":{"tier":3,"potency":50,"craftKind":"tinkering"}},{"id":13,"name":"Vitality Seal 1","type":"equipment","equipType":"Accessory","category":null,"cost":125,"description":"+10% Max HP","effects":[],"traits":[{"code":"PARAM_RATE","dataId":"maxHp","value":1.1}],"meta":{}},{"id":14,"name":"Vitality Seal 2","type":"equipment","equipType":"Accessory","category":null,"cost":400,"description":"+20% Max HP","effects":[],"traits":[{"code":"PARAM_RATE","dataId":"maxHp","value":1.2}],"meta":{}},{"id":15,"name":"Vitality Seal 3","type":"equipment","equipType":"Accessory","category":null,"cost":2800,"description":"+30% Max HP","effects":[],"traits":[{"code":"PARAM_RATE","dataId":"maxHp","value":1.3}],"meta":{}},{"id":16,"name":"Radiant Blade Flavio","type":"equipment","equipType":"Weapon","category":null,"cost":1995,"description":"Lucent blade carrying the blessings of the sun.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":3},{"code":"ELEMENT_CHANGE","dataId":"Red"},{"code":"CRI","value":0.2}],"meta":{"tier":2,"potency":22,"craftElement":"Red","craftKind":"blacksmithing"}},{"id":17,"name":"Wind Dancer","type":"equipment","equipType":"Weapon","category":null,"cost":1520,"description":"Leaf-shaped daggers that strike with the speed of wind.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":3},{"code":"ELEMENT_CHANGE","dataId":"Green"},{"code":"CRI","value":0.15}],"meta":{"tier":2,"potency":20,"craftElement":"Green","craftKind":"blacksmithing"}},{"id":18,"name":"Water Scepter","type":"equipment","equipType":"Weapon","category":null,"cost":1520,"description":"Leaf-shaped daggers that strike with the speed of wind.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":3},{"code":"ELEMENT_CHANGE","dataId":"Blue"},{"code":"CRI","value":0.15}],"meta":{"tier":2,"potency":20,"craftElement":"Blue","craftKind":"blacksmithing"}},{"id":19,"name":"Holy Sword Gram","type":"equipment","equipType":"Weapon","category":null,"cost":1520,"description":"Legendary sword wielded by angels of time immemorial.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":3},{"code":"ELEMENT_CHANGE","dataId":"White"},{"code":"CRI","value":0.15}],"meta":{"tier":3,"potency":35,"craftElement":"White","craftKind":"blacksmithing"}},{"id":20,"name":"Dark Scepter Lucille","type":"equipment","equipType":"Weapon","category":null,"cost":1666,"description":"Cursed sceptre. Once wielded by a fallen queen, or so they say.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":3},{"code":"ELEMENT_CHANGE","dataId":"Black"},{"code":"CRI","value":0.1}],"meta":{"tier":3,"potency":32,"craftElement":"Black","craftKind":"blacksmithing"}},{"id":21,"name":"Mars Emblem","type":"equipment","equipType":"Accessory","category":null,"cost":400,"description":"Its magicked properties imbue the wearer with elemental energy.","effects":[],"traits":[{"code":"ELEMENT_CHANGE","dataId":"Red"}],"meta":{}},{"id":22,"name":"Mercury Crest","type":"equipment","equipType":"Accessory","category":null,"cost":1260,"description":"Ornate and delicate, its blue sheen is comforting.","effects":[],"traits":[{"code":"HRG","value":0.05},{"code":"ELEMENT_CHANGE","dataId":"Blue"}],"meta":{}},{"id":23,"name":"Hermes' Boots","type":"equipment","equipType":"Accessory","category":null,"cost":2100,"description":"Wondrous boots that grant the wearer unimaginable swiftness.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"asp","value":2},{"code":"ELEMENT_CHANGE","dataId":"Green"}],"meta":{}},{"id":24,"name":"Glittering Teardrop","type":"quest","equipType":null,"category":null,"cost":0,"description":"A flawless crystal that catches the faintest light. Alicia believes Laura will love it.","effects":[],"traits":[],"meta":{}},{"id":25,"name":"Untarnished Signet","type":"quest","equipType":null,"category":null,"cost":0,"description":"A heavy golden ring, unmarked and waiting for a new story. Laura can reshape it into something precious.","effects":[],"traits":[],"meta":{}},{"id":26,"name":"Shattered Blade","type":"quest","equipType":null,"category":null,"cost":0,"description":"The rusted, broken remains of a blade that once held great power. The Weaponsmith might be interested.","effects":[],"traits":[],"meta":{}},{"id":27,"name":"Shattered Edge","type":"equipment","equipType":"Weapon","category":null,"cost":4000,"description":"A masterwork blade reforged from ancient scraps. It hums with latent energy.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"atk","value":5},{"code":"CRI","value":0.25}],"meta":{"tier":3,"potency":40,"craftElement":"White","craftKind":"blacksmithing"}},{"id":28,"name":"Meteorite Plate","type":"equipment","equipType":"Armor","category":null,"cost":3500,"description":"Heavy armor forged from star-metal. Incredibly dense.","effects":[],"traits":[{"code":"PARAM_PLUS","dataId":"maxHp","value":10},{"code":"PARAM_PLUS","dataId":"def","value":2}],"meta":{"tier":2,"potency":22,"craftElement":"Black","craftKind":"blacksmithing"}},{"id":29,"name":"Mug of Ale","type":"consumable","equipType":null,"category":null,"cost":5,"description":"Cheap, frothy ale. Refreshes the spirit.","effects":[{"type":"mp_heal","value":10}],"traits":[],"meta":{"tier":1,"potency":5,"craftElement":"Red","craftKind":"cooking"}},{"id":30,"name":"Pint of Stout","type":"consumable","equipType":null,"category":null,"cost":12,"description":"Dark, heavy stout. A meal in a glass.","effects":[{"type":"mp_heal","value":25}],"traits":[],"meta":{"tier":1,"potency":8,"craftElement":"Black","craftKind":"cooking"}},{"id":31,"name":"Glass of Wine","type":"consumable","equipType":null,"category":null,"cost":25,"description":"A surprisingly decent vintage.","effects":[{"type":"mp_heal","value":50},{"type":"remove_status","value":"weakened"}],"traits":[],"meta":{"tier":2,"potency":16,"craftElement":"Red","craftKind":"cooking"}},{"id":32,"name":"Scrap Metal","type":"junk","equipType":null,"category":null,"cost":1,"description":"A lump of useless metal.","effects":[],"traits":[],"meta":{"tier":0,"craftKind":"blacksmithing"}},{"id":33,"name":"Sludge","type":"junk","equipType":null,"category":null,"cost":1,"description":"A smelly, failed alchemical mixture.","effects":[],"traits":[],"meta":{"tier":0,"craftKind":"alchemy"}},{"id":34,"name":"Burnt Slop","type":"junk","equipType":null,"category":null,"cost":1,"description":"Completely charcoal. Inedible.","effects":[],"traits":[],"meta":{"tier":0,"craftKind":"cooking"}},{"id":35,"name":"Broken Spring","type":"junk","equipType":null,"category":null,"cost":1,"description":"A snapped spring and bent gear.","effects":[],"traits":[],"meta":{"tier":0,"craftKind":"tinkering"}},{"id":36,"name":"Ambrosia","type":"consumable","equipType":null,"category":null,"cost":500,"description":"Food of the gods. Restores full HP and MP.","effects":[{"type":"hp","value":999},{"type":"mp_heal","value":999}],"traits":[],"meta":{"tier":3,"craftKind":"cooking","potency":45,"craftElement":"White"}},{"id":37,"name":"Philosopher's Stone","type":"consumable","equipType":null,"category":null,"cost":1000,"description":"A legendary alchemical catalyst.","effects":[{"type":"xp","value":1000}],"traits":[],"meta":{"tier":3,"craftKind":"alchemy","potency":50,"craftElement":"Red"}},{"id":38,"name":"Chrysalis Sigil","type":"quest","equipType":null,"category":"promotion_key","cost":0,"description":"A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.","effects":[],"traits":[],"meta":{"tier":3,"craftKind":"alchemy","potency":50,"craftElement":"White"}},{"id":39,"name":"Obsidian Shard","type":"junk","equipType":null,"category":null,"cost":15,"description":"A sharp shard of dark volcanic glass.","effects":[],"traits":[],"meta":{"tier":1,"craftKind":"blacksmithing","craftElement":"Black"}},{"id":40,"name":"Melted Wax","type":"junk","equipType":null,"category":null,"cost":5,"description":"A glob of warm, pliable candle wax.","effects":[],"traits":[],"meta":{"tier":1,"craftKind":"alchemy","craftElement":"Red"}},{"id":41,"name":"Ectoplasm","type":"junk","equipType":null,"category":null,"cost":12,"description":"Shimmering residue left by spiritual entities.","effects":[],"traits":[],"meta":{"tier":1,"craftKind":"alchemy","craftElement":"Blue"}},{"id":42,"name":"Warding Charm","type":"equipment","equipType":"Accessory","category":null,"cost":400,"description":"Shatters to keep its bearer from passing away. Once.","effects":[],"traits":[{"code":"ON_PERMADEATH","value":1,"mode":"ward","hpFraction":0.1}],"meta":{"tier":2,"potency":20,"craftElement":"White","craftKind":"tinkering"}},{"id":43,"name":"Vial of Second Breath","type":"equipment","equipType":"Accessory","category":null,"cost":650,"description":"Draws the fallen back once the dust settles, then runs dry.","effects":[],"traits":[{"code":"ON_PERMADEATH","value":1,"mode":"revive","hpFraction":0.35}],"meta":{"tier":3,"potency":30,"craftElement":"White","craftKind":"alchemy"}},{"id":44,"name":"Thrice-Blessed Bead","type":"equipment","equipType":"Accessory","category":null,"cost":1200,"description":"Three prayers answered, then only glass.","effects":[],"traits":[{"code":"ON_PERMADEATH","value":1,"mode":"charges","charges":3,"hpFraction":0.2}],"meta":{"tier":3,"potency":40,"craftElement":"White","craftKind":"tinkering"}},{"id":45,"name":"Tome: Wind Blade","type":"consumable","equipType":null,"category":null,"cost":300,"description":"Teaches Wind Blade to one creature.","effects":[{"type":"learn_skill","skill":"windBlade"}],"traits":[],"meta":{"tier":2,"potency":20,"craftElement":"Green","craftKind":"alchemy"}},{"id":46,"name":"Whetstone Draught","type":"consumable","equipType":null,"category":null,"cost":250,"description":"Permanently sharpens a creature's attack.","effects":[{"type":"param_plus","param":"atk","value":2}],"traits":[],"meta":{"tier":2,"potency":18,"craftElement":"Red","craftKind":"alchemy"}}],"actors":[{"id":1,"name":"Pixie","discipline":"cooking","elements":["Green"],"baseParams":{"maxHp":12,"atk":6,"def":10,"mat":15,"mdf":14,"mpd":3,"mxa":4,"mxp":2}},{"id":2,"name":"High Pixie","discipline":"cooking","elements":["Green","Green"],"baseParams":{"maxHp":18,"atk":9,"def":15,"mat":23,"mdf":21,"mpd":5,"mxa":6,"mxp":3}},{"id":3,"name":"Skeleton","discipline":"blacksmithing","elements":["Black"],"baseParams":{"maxHp":11,"atk":16,"def":11,"mat":7,"mdf":8,"mpd":1,"mxa":4,"mxp":2}},{"id":4,"name":"Angel","discipline":"cooking","elements":["White"],"baseParams":{"maxHp":12,"atk":7,"def":11,"mat":13,"mdf":15,"mpd":2,"mxa":5,"mxp":3}},{"id":5,"name":"Archangel","discipline":"cooking","elements":["White","White"],"baseParams":{"maxHp":17,"atk":11,"def":17,"mat":20,"mdf":23,"mpd":3,"mxa":8,"mxp":5}},{"id":6,"name":"Demon","discipline":"alchemy","elements":["Red","Black"],"baseParams":{"maxHp":12,"atk":18,"def":12,"mat":8,"mdf":9,"mpd":1,"mxa":4,"mxp":2}},{"id":7,"name":"Incubus","discipline":"alchemy","elements":["Black","Black"],"baseParams":{"maxHp":22,"atk":24,"def":17,"mat":11,"mdf":12,"mpd":2,"mxa":6,"mxp":3}},{"id":8,"name":"Nurse","discipline":"alchemy","elements":["Black"],"baseParams":{"maxHp":14,"atk":6,"def":10,"mat":15,"mdf":14,"mpd":3,"mxa":4,"mxp":2}},{"id":9,"name":"Imp","discipline":"blacksmithing","elements":["Red"],"baseParams":{"maxHp":11,"atk":16,"def":11,"mat":7,"mdf":8,"mpd":1,"mxa":4,"mxp":2}},{"id":10,"name":"Golem","discipline":"tinkering","elements":[],"baseParams":{"maxHp":15,"atk":9,"def":20,"mat":6,"mdf":17,"mpd":1,"mxa":3,"mxp":2}},{"id":11,"name":"Ghoul","discipline":"tinkering","elements":["Black"],"baseParams":{"maxHp":15,"atk":9,"def":20,"mat":6,"mdf":17,"mpd":1,"mxa":3,"mxp":2}},{"id":12,"name":"Ooze","discipline":"cooking","elements":["Green"],"baseParams":{"maxHp":18,"atk":7,"def":11,"mat":14,"mdf":12,"mpd":3,"mxa":4,"mxp":2}},{"id":13,"name":"Bat","discipline":"blacksmithing","elements":["Black"],"baseParams":{"maxHp":11,"atk":16,"def":11,"mat":7,"mdf":8,"mpd":1,"mxa":4,"mxp":2}},{"id":14,"name":"Wisp","discipline":"alchemy","elements":["Blue"],"baseParams":{"maxHp":12,"atk":5,"def":7,"mat":17,"mdf":15,"mpd":4,"mxa":4,"mxp":2}},{"id":15,"name":"Egg","discipline":"blacksmithing","elements":[],"baseParams":{"maxHp":5,"atk":3,"def":3,"mat":3,"mdf":3,"mpd":0,"mxa":2,"mxp":1}},{"id":16,"name":"Phoenix","discipline":"blacksmithing","elements":["Red","Red","White"],"baseParams":{"maxHp":29,"atk":19,"def":27,"mat":34,"mdf":32,"mpd":8,"mxa":10,"mxp":6}},{"id":17,"name":"Larva","discipline":"tinkering","elements":["Red"],"baseParams":{"maxHp":12,"atk":11,"def":7,"mat":7,"mdf":6,"mpd":3,"mxa":3,"mxp":1}},{"id":18,"name":"Crimson Lord","discipline":"tinkering","elements":["Red","Red","Black"],"baseParams":{"maxHp":55,"atk":27,"def":21,"mat":18,"mdf":18,"mpd":5,"mxa":6,"mxp":3}},{"id":19,"name":"Flauros","discipline":"cooking","elements":["Red","Black"],"baseParams":{"maxHp":19,"atk":19,"def":13,"mat":8,"mdf":10,"mpd":1,"mxa":5,"mxp":2}},{"id":20,"name":"Candle","discipline":"tinkering","elements":["Red","White"],"baseParams":{"maxHp":11,"atk":7,"def":11,"mat":13,"mdf":22,"mpd":2,"mxa":5,"mxp":3}},{"id":21,"name":"Shadow Stalker","discipline":"tinkering","elements":["Black","Black","Black"],"baseParams":{"maxHp":40,"atk":38,"def":13,"mat":11,"mdf":13,"mpd":2,"mxa":6,"mxp":4}},{"id":22,"name":"Alex","discipline":"alchemy","elements":[],"baseParams":{"maxHp":18,"atk":5,"def":9,"mat":16,"mdf":14,"mpd":6,"mxa":5,"mxp":3}}],"disciplines":[{"kind":"blacksmithing","label":"Blacksmithing","stat":"atk","description":"Forge weapons and armor using ATK."},{"kind":"tinkering","label":"Tinkering","stat":"mdf","description":"Assemble accessories using MDF."},{"kind":"alchemy","label":"Alchemy","stat":"mat","description":"Brew potions and ink using MAT."},{"kind":"cooking","label":"Cooking","stat":"maxHp","description":"Cook foods using Max HP."}],"rules":{"strongMultiplier":1.5,"weakMultiplier":0.65},"strong":{"White":["Black"],"Black":["White"],"Green":["Blue"],"Red":["Green"],"Blue":["Red"]},"weak":{"White":[],"Black":[],"Green":["Red"],"Red":["Blue"],"Blue":["Green"]},"lexicon":{"ember":"Red","flame":"Red","fire":"Red","blaze":"Red","ash":"Red","ashen":"Red","wax":"Red","molten":"Red","melted":"Red","crimson":"Red","scarlet":"Red","ruby":"Red","forge":"Red","coal":"Red","wine":"Red","ale":"Red","mars":"Red","whetstone":"Red","philosopher":"Red","wind":"Green","gale":"Green","breeze":"Green","leaf":"Green","herb":"Green","root":"Green","moss":"Green","verdant":"Green","emerald":"Green","vine":"Green","hermes":"Green","tonic":"Green","water":"Blue","aqua":"Blue","tide":"Blue","frost":"Blue","ice":"Blue","sea":"Blue","azure":"Blue","sapphire":"Blue","mist":"Blue","ectoplasm":"Blue","ink":"Blue","mirror":"Blue","mercury":"Blue","rain":"Blue","holy":"White","light":"White","sacred":"White","blessed":"White","divine":"White","silver":"White","pure":"White","angel":"White","saint":"White","halo":"White","gram":"White","ward":"White","warding":"White","breath":"White","dawn":"White","insight":"White","lesson":"White","lessons":"White","whispered":"White","ambrosia":"White","seraph":"White","dark":"Black","shadow":"Black","bone":"Black","obsidian":"Black","void":"Black","night":"Black","ebon":"Black","grave":"Black","curse":"Black","cursed":"Black","tomb":"Black","stout":"Black","meteorite":"Black","vile":"Black","lucille":"Black"},"grades":{"mundane":0.5,"normal":1.0,"precious":2.0,"legendary":3.0},"itemGrades":{"Melted Wax":"precious","Obsidian Shard":"precious","Ectoplasm":"precious","Golden Egg":"mundane"},"itemDisciplines":{"Alert Charm":["tinkering","blacksmithing"],"Rear Mirror":["tinkering","blacksmithing"],"Glass of Wine":["cooking","alchemy"],"Ambrosia":["cooking","alchemy"],"HP Tonic":["alchemy","cooking"],"Whetstone Draught":["alchemy","blacksmithing"],"Vial of Second Breath":["alchemy","tinkering"]}};
+
+/* ------------------------------------------------------------------ *
+ * Element geometry.
+ *
+ * Red > Green > Blue > Red is a CYCLE, so the three sit 120 degrees
+ * apart on a plane -- no two are opposed. White <-> Black is a true
+ * opposition, so it is one signed axis. Non-elemental is the origin of
+ * both. Together that is a hue plane plus a value axis: a colour space.
+ *
+ * FORM is deliberately NOT an axis here. A cook does not make a ring --
+ * not because a threshold forbids it, but because cooking is the act of
+ * making food. Discipline is categorical and comes from the crafter, so
+ * each discipline is its own small dense space of hue x value x
+ * intensity rather than one big sparse space shared by everything.
+ * ------------------------------------------------------------------ */
+const HUE_ORDER = ['Red','Green','Blue'];
+const HUE = { Red:90, Green:210, Blue:330 };
+const RGB = { Red:[236,74,74], Green:[86,200,96], Blue:[80,140,240] };
+const HCOS = HUE_ORDER.map(e => Math.cos(HUE[e]*Math.PI/180));
+const HSIN = HUE_ORDER.map(e => Math.sin(HUE[e]*Math.PI/180));
+const HRGB = HUE_ORDER.map(e => RGB[e]);
+
+function elemVec(w) {
+  let hx = 0, hy = 0, tot = 0;
+  for (let i = 0; i < 3; i++) {
+    const v = w[HUE_ORDER[i]] || 0;
+    hx += v*HCOS[i]; hy += v*HSIN[i];
+  }
+  for (const e in w) tot += Math.abs(w[e]);
+  if (tot <= 0) return { hx:0, hy:0, val:0 };
+  return { hx:hx/tot, hy:hy/tot, val:((w.White||0) - (w.Black||0))/tot };
+}
+
+/* Barycentric projection onto the three hue directions -- clamped dot
+ * products, no atan2 and no sorting, because this runs per ideation
+ * point per redraw. */
+const _rgb = [0,0,0];
+function pointRGB(hx, hy, val) {
+  let wr = hx*HCOS[0] + hy*HSIN[0]; if (wr < 0) wr = 0;
+  let wg = hx*HCOS[1] + hy*HSIN[1]; if (wg < 0) wg = 0;
+  let wb = hx*HCOS[2] + hy*HSIN[2]; if (wb < 0) wb = 0;
+  const t = wr + wg + wb;
+  let r, g, b;
+  if (t <= 1e-6) { r = g = b = 150; }
+  else {
+    r = (HRGB[0][0]*wr + HRGB[1][0]*wg + HRGB[2][0]*wb)/t;
+    g = (HRGB[0][1]*wr + HRGB[1][1]*wg + HRGB[2][1]*wb)/t;
+    b = (HRGB[0][2]*wr + HRGB[1][2]*wg + HRGB[2][2]*wb)/t;
+    let sat = Math.sqrt(hx*hx + hy*hy); if (sat > 1) sat = 1;
+    r = 150 + (r-150)*sat; g = 150 + (g-150)*sat; b = 150 + (b-150)*sat;
+  }
+  let v = val < -1 ? -1 : (val > 1 ? 1 : val);
+  if (v >= 0) { r += (255-r)*v*0.85; g += (255-g)*v*0.85; b += (255-b)*v*0.85; }
+  else { const k = 1 + v*0.8; r *= k; g *= k; b *= k; }
+  _rgb[0] = r < 0 ? 0 : (r > 255 ? 255 : r);
+  _rgb[1] = g < 0 ? 0 : (g > 255 ? 255 : g);
+  _rgb[2] = b < 0 ? 0 : (b > 255 ? 255 : b);
+  return _rgb;
+}
+function css(v, a) {
+  const c = pointRGB(v.hx, v.hy, v.val);
+  return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a === undefined ? 1 : a})`;
+}
+
+/* Seeded PRNG: the win tallies must not jitter between redraws, or a
+ * slider nudge looks like a model change. */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let rnd = mulberry32(1);
+function gauss() { return (rnd() + rnd() + rnd() - 1.5) * 1.4; }
+
+/* ------------------------------------------------------------------ *
+ * Derivation. Element and intensity are READ off properties the item
+ * already carries -- nothing is authored. Discipline membership is the
+ * exception, and deliberately so: "a spring-loaded blade is also
+ * tinkering" is an authorial judgement about the fiction that no
+ * property encodes. It defaults from type, so only exceptions are written.
+ * ------------------------------------------------------------------ */
+const LEX = DATA.lexicon;
+
+const EFFECT_EL = {
+  hp: {Green:1.0}, maxHp: {Green:0.8}, mp_heal: {Red:0.5},
+  remove_status: {White:0.6}, xp: {White:1.0}, learn_skill: {White:1.0},
+  param_plus: {}, recruit_egg: {}
+};
+const TRAIT_EL = {
+  CRI:{}, INITIATIVE:{}, REAR_GUARD:{}, HRG:{Green:0.6},
+  XP_RATE:{}, PARAM_RATE:{}, ON_PERMADEATH:{White:1.4}
+};
+const PARAM_EL = { atk:{Red:1.0}, def:{Black:0.4}, mat:{Blue:0.8}, mdf:{White:0.5}, maxHp:{Green:0.8} };
+
+function addW(dst, src, k) { for (const e in src) dst[e] = (dst[e]||0) + src[e]*k; }
+
+function lexScan(text, dst, k, hits) {
+  // "Philosopher's" must reach the lexicon entry "philosopher"
+  const raw = String(text||'').toLowerCase().match(/[a-z']+/g);
+  if (!raw) return;
+  for (let i = 0; i < raw.length; i++) {
+    const w = raw[i].replace(/'s$/, '').replace(/'/g, '');
+    const el = LEX[w];
+    if (el) { dst[el] = (dst[el]||0) + k; hits.push(w + '→' + el); }
+  }
+}
+
+/* Default membership from what the item plainly is. This reproduced 27 of
+ * 28 of the hand-authored craftKind values, so it earns being the default. */
+function defaultDisciplines(item) {
+  if (item.equipType === 'Weapon' || item.equipType === 'Armor') return ['blacksmithing'];
+  if (item.equipType === 'Accessory') return ['tinkering'];
+  if (item.type === 'consumable') {
+    const hasMp = (item.effects||[]).some(e => e.type === 'mp_heal');
+    return [hasMp ? 'cooking' : 'alchemy'];
+  }
+  // junk has no type signal at all -- its existing craftKind seeds membership
+  const k = (item.meta||{}).craftKind;
+  return k ? [k] : [];
+}
+
+function derive(item, o) {
+  const el = {}, why = [];
+
+  for (const t of item.traits || []) {
+    if (t.code === 'ELEMENT_CHANGE' && t.dataId) {
+      if (HUE[t.dataId] || t.dataId === 'White' || t.dataId === 'Black') {
+        addW(el, {[t.dataId]:3.0}, 1);
+        why.push('ELEMENT_CHANGE:' + t.dataId);
+      }
+    } else if (t.code === 'PARAM_PLUS' && t.dataId) {
+      addW(el, PARAM_EL[t.dataId] || {}, 0.7);
+      why.push('+' + t.dataId);
+    } else if (TRAIT_EL[t.code]) {
+      addW(el, TRAIT_EL[t.code], 1);
+      why.push(t.code);
+    }
+  }
+  for (const ef of item.effects || []) {
+    if (EFFECT_EL[ef.type]) {
+      addW(el, EFFECT_EL[ef.type], 1);
+      why.push(ef.type);
+      if (ef.type === 'param_plus' && ef.param) addW(el, PARAM_EL[ef.param] || {}, 0.7);
+    }
+  }
+  const hits = [];
+  lexScan(item.name, el, 2.0, hits);
+  lexScan(item.description, el, 0.5, hits);
+  if (hits.length) why.push(hits.slice(0,3).join(' '));
+
+  // Intensity from price -- the game's own hand-tuned statement of worth,
+  // log-scaled so 1g..9999g spreads. The one admitted override is a named
+  // grade multiplying it, for items whose cost misstates what they are to
+  // work with.
+  const grade = DATA.itemGrades[item.name] || null;
+  const base = Math.round(100 * Math.log10((item.cost||0) + 1)) / 10;
+  const intensity = Math.round(base * (grade ? DATA.grades[grade] : 1) * 10) / 10;
+
+  const authored = o.overlap ? DATA.itemDisciplines[item.name] : null;
+  const disciplines = authored || defaultDisciplines(item);
+
+  return { el, vec: elemVec(el), intensity, baseIntensity: base, grade,
+           disciplines, authoredDisc: !!authored, why: why.join(', ') || '—' };
+}
+
+/* ------------------------------------------------------------------ *
+ * Blending. Dominance reuses elementRules -- the same table the battle
+ * system uses -- so the stronger element asserts itself in a mixture
+ * instead of meeting at the midpoint.
+ * ------------------------------------------------------------------ */
+const STRONG = DATA.strong, WEAK = DATA.weak;
+const SM = DATA.rules.strongMultiplier, WM = DATA.rules.weakMultiplier;
+
+function dominanceFactor(a, b) {
+  let f = 1, ta = 0, tb = 0;
+  for (const e in a) ta += a[e];
+  for (const g in b) tb += b[g];
+  if (ta <= 0 || tb <= 0) return 1;
+  for (const e in a) {
+    const s = STRONG[e], w = WEAK[e];
+    for (const g in b) {
+      const prod = (a[e]/ta) * (b[g]/tb);
+      if (s && s.indexOf(g) >= 0) f += prod*(SM-1);
+      else if (w && w.indexOf(g) >= 0) f -= prod*(1-WM);
+    }
+  }
+  return f < 0.1 ? 0.1 : f;
+}
+
+/* ------------------------------------------------------------------ */
+const $ = id => document.getElementById(id);
+const SAMPLES = 4;                  // scatter draws per (pair x crafter)
+
+let ITEMS = [], CRAFTERS = [], DISC = [];
+let PAIRS = null, pairKey = '';
+let WINS = null, LAST = null, deriveKey = '';
+
+function opts() {
+  return {
+    pull: +$('pull').value, alpha: +$('alpha').value, intw: +$('intw').value,
+    scatter: +$('scatter').value, reach: +$('reach').value, reachw: +$('reachw').value,
+    foreign: +$('foreign').value,
+    dominance: $('dominance').checked, overlap: $('overlap').checked,
+    exclQuest: $('exclQuest').checked,
+    disc: $('disc').value, crafter: $('crafter').value
+  };
+}
+
+function deriveAll(o) {
+  const key = (o.exclQuest ? 'Q' : '-') + (o.overlap ? 'O' : '-');
+  if (key === deriveKey) return;
+  deriveKey = key;
+  pairKey = '';
+
+  ITEMS = DATA.items
+    .filter(it => !(o.exclQuest && (it.type === 'quest' || it.category === 'promotion_key')))
+    .map(it => Object.assign({}, it, derive(it, o)));
+
+  DISC = DATA.disciplines.map((d, i) => Object.assign({}, d, {
+    bit: 1 << i,
+    members: ITEMS.filter(it => it.disciplines.indexOf(d.kind) >= 0)
+  }));
+  for (const it of ITEMS) {
+    let m = 0;
+    for (const d of DISC) if (it.disciplines.indexOf(d.kind) >= 0) m |= d.bit;
+    it.discMask = m;
+  }
+
+  CRAFTERS = DATA.actors.map(a => {
+    const w = {};
+    for (const e of a.elements || []) if (HUE[e] || e === 'White' || e === 'Black') w[e] = 1;
+    const d = DATA.disciplines.find(x => x.kind === a.discipline);
+    return {
+      id:a.id, name:a.name, discipline:a.discipline, elements:a.elements || [],
+      elemVec: elemVec(w),
+      // Innate elements only. Equipment must never redirect a crafter, or a
+      // bag of element-swapping trinkets collapses the whole roster into one.
+      statVal: ((a.baseParams || {})[d ? d.stat : 'atk'] || 0) / 20
+    };
+  });
+
+  if (!$('disc').options.length) {
+    $('disc').innerHTML = '<option value="">— every discipline —</option>' +
+      DATA.disciplines.map(d => `<option value="${d.kind}">${d.label} · ${d.stat}</option>`).join('');
+    $('crafter').innerHTML = '<option value="">— every crafter —</option>' +
+      CRAFTERS.map(c => `<option value="${c.id}">${c.name} · ${c.discipline} · ${c.elements.join('/') || 'neutral'}</option>`).join('');
+  }
+}
+
+/* Ingredient pairs are ungated: membership says what a craft can PRODUCE,
+ * not what it may consume. A cook may absolutely throw iron filings in the
+ * pot -- it is a source of element and intensity like anything else. */
+function computePairs(o) {
+  const key = deriveKey + (o.dominance ? 'D' : '-');
+  if (key === pairKey) return;
+  pairKey = key;
+
+  PAIRS = [];
+  for (let i = 0; i < ITEMS.length; i++) {
+    const A = ITEMS[i];
+    for (let j = i+1; j < ITEMS.length; j++) {
+      const B = ITEMS[j];
+      const fa = o.dominance ? dominanceFactor(A.el, B.el) : 1;
+      const fb = o.dominance ? dominanceFactor(B.el, A.el) : 1;
+      let hx = 0, hy = 0, tot = 0;
+      for (let h = 0; h < 3; h++) {
+        const e = HUE_ORDER[h];
+        const v = (A.el[e]||0)*fa + (B.el[e]||0)*fb;
+        hx += v*HCOS[h]; hy += v*HSIN[h];
+      }
+      for (const e in A.el) tot += Math.abs(A.el[e])*fa;
+      for (const e in B.el) tot += Math.abs(B.el[e])*fb;
+      const wt = (A.el.White||0)*fa + (B.el.White||0)*fb;
+      const bl = (A.el.Black||0)*fa + (B.el.Black||0)*fb;
+      PAIRS.push({
+        hx: tot > 0 ? hx/tot : 0, hy: tot > 0 ? hy/tot : 0,
+        val: tot > 0 ? (wt-bl)/tot : 0,
+        // Intensity is resolved per crafter, not here: how much of an
+        // ingredient's worth actually transfers depends on whether the craft
+        // knows what to do with it. Elements transfer regardless.
+        iA: A.intensity, iB: B.intensity, mA: A.discMask, mB: B.discMask
+      });
+    }
+  }
+}
+
+function computeSpace(o) {
+  computePairs(o);
+  rnd = mulberry32(20260726);
+
+  const crafters = CRAFTERS.filter(c =>
+    (!o.crafter || String(c.id) === o.crafter) &&
+    (!o.disc || c.discipline === o.disc));
+
+  WINS = new Map();
+  const pts = [];
+  let total = 0;
+
+  let nativeDraws = 0, nativeConcentration = new Map();
+
+  for (const c of crafters) {
+    const dRec = DISC.find(d => d.kind === c.discipline) || {};
+    const pool = dRec.members || [];
+    const bit = dRec.bit || 0;
+    if (!pool.length) continue;
+
+    const k = o.pull, ck = 1-k, cv = c.elemVec;
+    // The crafter must be able to lift a mix ABOVE its ingredients, or nothing
+    // can ever be made that is better than what went in -- which would put the
+    // top of every discipline permanently out of reach. Scaled to the 0..40
+    // intensity range, not to the 0..2 stat range.
+    const dInt = o.alpha * c.statVal * 10;
+    // Scatter shrinks as the discipline stat grows: a novice's hand wanders,
+    // a master lands where they aimed. This IS the "barely reached it"
+    // mechanism -- no crit, no anomaly.
+    const sigma = o.scatter / (1 + 1.2*c.statVal);
+    const reach = o.reach + 14*c.statVal;
+
+    for (const p of PAIRS) {
+      const bx = p.hx*ck + cv.hx*k, by = p.hy*ck + cv.hy*k, bv = p.val*ck + cv.val*k;
+
+      // Foreign ingredients steer but do not empower: an ingredient this craft
+      // has no use for still tints the mix, but contributes little of its
+      // worth. Iron in a stockpot tints the stew and yields slop.
+      const nA = (p.mA & bit) !== 0, nB = (p.mB & bit) !== 0;
+      const f = o.foreign;
+      const bi = (p.iA*(nA ? 1 : f) + p.iB*(nB ? 1 : f))/2 + dInt;
+      const anyNative = nA || nB;
+
+      for (let s = 0; s < SAMPLES; s++) {
+        const hx = bx + gauss()*sigma, hy = by + gauss()*sigma;
+        const vv = bv + gauss()*sigma, inten = bi + gauss()*sigma*26;
+
+        let best = null, bd = Infinity;
+        for (const cand of pool) {
+          const dx = hx - cand.vec.hx, dy = hy - cand.vec.hy, dv = vv - cand.vec.val;
+          // Beyond-reach is distance, not a wall: scatter can still carry you there.
+          const over = cand.intensity - reach;
+          const d = Math.sqrt(dx*dx + dy*dy + dv*dv)
+                  + o.intw*Math.abs(inten - cand.intensity)/40
+                  + (over > 0 ? over*o.reachw : 0);
+          if (d < bd) { bd = d; best = cand; }
+        }
+        if (best) {
+          WINS.set(best.id, (WINS.get(best.id)||0) + 1);
+          // Concentration is only meaningful over crafts the player would
+          // plausibly attempt. Two foreign ingredients is nonsense input, and
+          // all nonsense landing on slop is the model working, not a flaw.
+          if (anyNative) {
+            nativeDraws++;
+            nativeConcentration.set(best.id, (nativeConcentration.get(best.id)||0) + 1);
+          }
+        }
+        total++;
+        if (s === 0) pts.push([hx, hy, vv, inten]);
+      }
+    }
+  }
+  LAST = { pts, total, crafters, nativeDraws, nativeConcentration };
+}
+
+/* ---------------------------- drawing ---------------------------- */
+const CELL = 2;
+let gR, gG, gB, gN, gCv;
+
+function densityGrid(gw, gh, xf, yf, W, H) {
+  const n = gw*gh;
+  if (!gN || gN.length < n) {
+    gR = new Float32Array(n); gG = new Float32Array(n);
+    gB = new Float32Array(n); gN = new Float32Array(n);
+    gCv = document.createElement('canvas');
+  } else { gR.fill(0); gG.fill(0); gB.fill(0); gN.fill(0); }
+
+  let peak = 0;
+  for (const p of LAST.pts) {
+    const x = xf(p), y = yf(p);
+    if (x < 0 || y < 0 || x >= W || y >= H) continue;
+    const gi = (y/CELL|0)*gw + (x/CELL|0);
+    const c = pointRGB(p[0], p[1], p[2]);
+    gR[gi] += c[0]; gG[gi] += c[1]; gB[gi] += c[2];
+    const nn = ++gN[gi];
+    if (nn > peak) peak = nn;
+  }
+  if (!peak) return null;
+
+  gCv.width = gw; gCv.height = gh;
+  const gctx = gCv.getContext('2d');
+  const img = gctx.createImageData(gw, gh);
+  const px = img.data, lp = Math.log1p(peak);
+  for (let i = 0; i < n; i++) {
+    const nn = gN[i];
+    if (!nn) continue;
+    const o = i*4;
+    px[o] = gR[i]/nn; px[o+1] = gG[i]/nn; px[o+2] = gB[i]/nn;
+    px[o+3] = 40 + 205*(Math.log1p(nn)/lp);
+  }
+  gctx.putImageData(img, 0, 0);
+  return gCv;
+}
+
+function shownItems(o) {
+  if (o.disc) return (DISC.find(d => d.kind === o.disc) || {}).members || [];
+  if (o.crafter) {
+    const c = CRAFTERS.find(x => String(x.id) === o.crafter);
+    if (c) return (DISC.find(d => d.kind === c.discipline) || {}).members || [];
+  }
+  return ITEMS;
+}
+
+function drawWheel(o) {
+  const cv = $('wheel'), g = cv.getContext('2d');
+  const W = cv.width, H = cv.height, cx = W/2, cy = H/2, R = 186;
+  g.fillStyle = '#0d0c12'; g.fillRect(0, 0, W, H);
+
+  if ($('showDensity').checked && LAST.pts.length) {
+    const grid = densityGrid(W/CELL|0, H/CELL|0,
+      p => cx + p[0]*R, p => cy - p[1]*R, W, H);
+    if (grid) { g.save(); g.globalAlpha = 0.85; g.drawImage(grid, 0, 0, W, H); g.restore(); }
+  }
+
+  g.strokeStyle = '#3a3849';
+  for (const f of [0.33, 0.66, 1]) { g.beginPath(); g.arc(cx, cy, R*f, 0, Math.PI*2); g.stroke(); }
+  g.font = '11px Segoe UI';
+  for (let i = 0; i < 3; i++) {
+    g.strokeStyle = '#3a3849'; g.beginPath(); g.moveTo(cx, cy);
+    g.lineTo(cx + HCOS[i]*R, cy - HSIN[i]*R); g.stroke();
+    g.fillStyle = `rgb(${HRGB[i].join(',')})`;
+    g.fillText(HUE_ORDER[i], cx + HCOS[i]*(R+8) - 12, cy - HSIN[i]*(R+8) + 4);
+  }
+  g.fillStyle = '#8b86a2'; g.fillText('non-elemental', cx - 36, cy + 14);
+
+  if ($('showItems').checked) {
+    const lab = $('labels').checked;
+    if (lab) g.font = '10px Segoe UI';
+    for (const it of shownItems(o)) {
+      const x = cx + it.vec.hx*R, y = cy - it.vec.hy*R, r = 2.5 + it.intensity/12;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI*2);
+      g.fillStyle = css(it.vec, 1); g.fill();
+      g.strokeStyle = it.disciplines.length > 1 ? '#8fb8ff' : '#000a';
+      g.lineWidth = it.disciplines.length > 1 ? 1.5 : 1; g.stroke();
+      if (lab) { g.fillStyle = '#d5d0e6'; g.fillText(it.name, x + r + 2, y + 3); }
+    }
+  }
+}
+
+function drawValue(o) {
+  const cv = $('value'), g = cv.getContext('2d');
+  const W = cv.width, H = cv.height, pad = 26;
+  const X = v => pad + (v+1)/2*(W-2*pad);
+  const Y = i => H - 18 - (Math.min(i, 45)/45)*(H-34);
+  g.fillStyle = '#0d0c12'; g.fillRect(0, 0, W, H);
+
+  if ($('showDensity').checked && LAST.pts.length) {
+    const grid = densityGrid(W/CELL|0, H/CELL|0, p => X(p[2]), p => Y(p[3]), W, H);
+    if (grid) { g.save(); g.globalAlpha = 0.85; g.drawImage(grid, 0, 0, W, H); g.restore(); }
+  }
+
+  g.strokeStyle = '#3a3849';
+  for (const v of [-1, -0.5, 0, 0.5, 1]) { g.beginPath(); g.moveTo(X(v), 8); g.lineTo(X(v), H-16); g.stroke(); }
+
+  // reach line for the selected crafter (or the roster mean)
+  let reach = o.reach + 14*(LAST.crafters.reduce((s,c)=>s+c.statVal,0) / (LAST.crafters.length||1));
+  g.strokeStyle = 'rgba(255,207,107,0.55)'; g.setLineDash([4,3]);
+  g.beginPath(); g.moveTo(pad, Y(reach)); g.lineTo(W-pad, Y(reach)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = 'rgba(255,207,107,0.8)'; g.font = '10px Segoe UI';
+  g.fillText('reach', W-pad-30, Y(reach)-3);
+
+  g.fillStyle = '#8b86a2';
+  g.fillText('Black', 4, H-4); g.fillText('neutral', W/2-16, H-4); g.fillText('White', W-34, H-4);
+
+  if ($('showItems').checked) {
+    for (const it of shownItems(o)) {
+      g.beginPath(); g.arc(X(it.vec.val), Y(it.intensity), 3.2, 0, Math.PI*2);
+      g.fillStyle = css(it.vec, 1); g.fill();
+      g.strokeStyle = '#000a'; g.stroke();
+    }
+  }
+}
+
+/* ---------------------------- tables ----------------------------- */
+function elName(v) {
+  const r = Math.sqrt(v.hx*v.hx + v.hy*v.hy);
+  if (r < 0.18 && Math.abs(v.val) < 0.18) return 'neutral';
+  if (Math.abs(v.val) >= r) return v.val > 0 ? 'White' : 'Black';
+  let bi = 0, bd = -Infinity;
+  for (let i = 0; i < 3; i++) {
+    const d = v.hx*HCOS[i] + v.hy*HSIN[i];
+    if (d > bd) { bd = d; bi = i; }
+  }
+  return HUE_ORDER[bi];
+}
+
+function tables(o) {
+  const total = LAST.total || 1;
+
+  $('byDisc').tBodies[0].innerHTML = DISC.map(d => {
+    const mem = d.members;
+    const shared = mem.filter(m => m.disciplines.length > 1).length;
+    const wins = mem.map(m => WINS.get(m.id) || 0);
+    const inPlay = wins.reduce((a,b) => a+b, 0);
+    const dead = mem.filter((m,i) => wins[i] === 0).length;
+    const top = Math.max(0, ...wins);
+    return `<tr><td>${d.label}</td><td class="num">${mem.length}</td>` +
+      `<td class="num ${shared?'rev':'dim'}">${shared}</td>` +
+      `<td class="num ${dead?'bad':'ok'}">${dead}</td>` +
+      `<td class="num">${inPlay ? (100*top/inPlay).toFixed(1)+'%' : '<span class="dim">—</span>'}</td></tr>`;
+  }).join('');
+
+  const pool = shownItems(o);
+  const rows = pool.map(it => ({ it, n: WINS.get(it.id) || 0 })).sort((a,b) => b.n - a.n);
+  const shownTotal = rows.reduce((s,r) => s+r.n, 0) || 1;
+
+  $('reachT').tBodies[0].innerHTML = rows.map(r => {
+    const pct = 100*r.n/shownTotal;
+    const ds = r.it.disciplines.map(d => d.slice(0,5)).join('+');
+    return `<tr><td><span class="sw" style="background:${css(r.it.vec,1)}"></span>${r.it.name}</td>` +
+      `<td class="dim">${elName(r.it.vec)}</td>` +
+      `<td class="${r.it.disciplines.length>1?'multi':'dim'}">${ds || '—'}</td>` +
+      `<td class="num ${r.n===0?'bad':''}">${pct.toFixed(1)}</td>` +
+      `<td><span class="bar" style="width:${Math.min(100, pct*3)}px"></span></td></tr>`;
+  }).join('');
+
+  $('audit').tBodies[0].innerHTML = ITEMS.map(it => {
+    const d = elName(it.vec);
+    const a = (it.meta || {}).craftElement || null;
+    const legacy = !a ? '<span class="dim">—</span>' : a;
+    const same = a ? a === d : (d === 'neutral');
+    return `<tr><td><span class="sw" style="background:${css(it.vec,1)}"></span>${it.name}` +
+      (it.authoredDisc ? ' <span class="multi">*</span>' : '') + `</td>` +
+      `<td class="${same ? 'ok' : 'rev'}">${d}</td><td>${legacy}</td>` +
+      `<td class="dim">${it.why}</td><td class="num${it.grade?' rev':''}">${it.intensity}</td>` +
+      `<td>${it.grade ? `<span class="rev">${it.grade}</span>` : '<span class="dim">—</span>'}</td></tr>`;
+  }).join('');
+}
+
+/* ---------------------------- wiring ----------------------------- */
+let pending = false;
+function schedule() {
+  if (pending) return;
+  pending = true;
+  requestAnimationFrame(() => {
+    pending = false;
+    const t0 = performance.now();
+    const o = opts();
+    deriveAll(o); computeSpace(o); drawWheel(o); drawValue(o); tables(o);
+    $('perf').textContent = `${LAST.total.toLocaleString('en-US')} draws · ${(performance.now()-t0).toFixed(0)} ms`;
+  });
+}
+
+const OUT = { pull:'oPull', alpha:'oAlpha', intw:'oIntw', scatter:'oScatter',
+              reach:'oReach', reachw:'oReachw', foreign:'oForeign' };
+for (const id in OUT) {
+  const out = $(OUT[id]);
+  const sync = () => { out.textContent = (+$(id).value).toFixed(2); };
+  $(id).addEventListener('input', () => { sync(); schedule(); });
+  sync();
+}
+for (const id of ['dominance','overlap','exclQuest','disc','crafter',
+                  'showDensity','showItems','labels'])
+  $(id).addEventListener('change', schedule);
+
+schedule();
+</script>
+</body>
+</html>

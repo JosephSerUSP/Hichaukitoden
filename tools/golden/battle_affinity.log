@@ -1,0 +1,46 @@
+GOLDEN BEGIN
+battle|affinity|name|Element affinity probes -- both damage layers at three alignment depths
+action|Shadow Stalker|Archangel||
+damage||Archangel|34|
+death||Archangel||
+victory||||
+action|Imp|Archangel||
+damage||Archangel|9|
+action|Archangel|Archangel||
+state_add||Archangel||regen
+heal||Archangel|1|
+mp_drain|Imp||1|
+action|Golem|Archangel||
+damage||Archangel|5|
+action|Archangel|Golem||
+damage||Golem|3|
+mp_drain|Golem||1|
+action|Shadow Stalker|Archangel||
+damage||Archangel|15|
+action|Archangel|Shadow Stalker||
+damage||Shadow Stalker|18|
+mp_drain|Shadow Stalker||2|
+action|Imp|Archangel||
+damage||Archangel|10|
+action|Archangel|Imp||
+damage||Imp|6|
+mp_drain|Imp||1|
+action|Golem|Archangel||
+damage||Archangel|8|
+action|Archangel|Golem||
+damage||Golem|3|
+mp_drain|Golem||1|
+action|Imp|Ooze||
+damage||Ooze|16|
+action|Ooze|Imp||
+damage||Imp|3|
+mp_drain|Imp||1|
+action|Imp|Wisp||
+damage||Wisp|20|
+death||Wisp||
+victory||||
+action|Shadow Stalker|Ooze||
+damage||Ooze|34|
+death||Ooze||
+victory||||
+GOLDEN END

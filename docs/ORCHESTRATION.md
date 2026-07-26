@@ -33,9 +33,11 @@ Read alongside `docs/archive/plans/<round>/SPEC.md` (architecture + Ground rules
   `[formula] error in 'os.time()'` is an EXPECTED sandbox negative-test, not
   a failure.
 - **G2 — golden:** run `love . validate golden`, extract the lines between
-  `GOLDEN BEGIN` / `GOLDEN END`, and diff against `tools/golden/battle.log`
-  after normalizing line endings (`tr -d '\r'`). Must be byte-identical.
-  **NEVER regenerate `battle.log` to make a red diff green.** Regenerating it
+  `GOLDEN BEGIN` / `GOLDEN END`, split them by the `battle|<key>|name|` header
+  and diff each against `tools/golden/battle_<key>.log` after normalizing line
+  endings (`tr -d '\r'`). Must be byte-identical. Fixtures are authored in
+  `data/goldenBattles.json`, so battle coverage grows without engine edits.
+  **NEVER regenerate a golden log to make a red diff green.** Regenerating it
   is a deliberate, reviewed, local-only action (see §5). `tools/golden/check.*`
   do this comparison for you.
 - **G3 — golden UI:** `tools/golden/check-ui.ps1`. Per-scene UI trace
@@ -112,7 +114,7 @@ These are the real defects caught this project — check for them by reflex:
 
 ## 5. The golden-master discipline
 
-`tools/golden/battle.log` is the equivalence proof for behavior-preserving
+`tools/golden/battle_*.log` are the equivalence proof for behavior-preserving
 refactors. Rules:
 - Behavior-preserving tasks must leave it **byte-identical** (G2).
 - A task that *intentionally* changes battle behavior (bug fix, rebalance)

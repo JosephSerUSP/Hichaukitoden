@@ -1,13 +1,14 @@
 @echo off
 REM ============================================================
 REM  G2 - GOLDEN GATE
-REM  Runs the battle golden-master and diffs it against
-REM  tools\golden\battle.log (line-ending normalized).
+REM  Runs the battle golden-master and diffs each fixture
+REM  against tools\golden\battle_<key>.log (line-ending
+REM  normalized). Fixtures live in data\goldenBattles.json.
 REM  PASS when it prints:  Golden log matches.
 REM
 REM  Delegates to the existing tools\golden\check.ps1 so there
 REM  is a single source of truth for the comparison logic.
-REM  NEVER regenerate battle.log just to make a red diff green.
+REM  NEVER regenerate a golden log just to make a diff green.
 REM ============================================================
 cd /d "%~dp0.."
 echo Running G2 golden...

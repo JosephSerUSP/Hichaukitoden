@@ -8,10 +8,10 @@
     "description": "Heals one member to full HP.",
     "icon": 52,
     "meta": {
-      "tier": 1,
-      "potency": 10,
-      "craftElement": "Green",
-      "craftKind": "alchemy"
+      "disciplines": [
+        "alchemy",
+        "cooking"
+      ]
     },
     "effects": [
       {
@@ -32,13 +32,7 @@
         "type": "maxHp",
         "value": 2
       }
-    ],
-    "meta": {
-      "tier": 1,
-      "potency": 12,
-      "craftElement": "Blue",
-      "craftKind": "alchemy"
-    }
+    ]
   },
   {
     "id": 3,
@@ -52,13 +46,7 @@
         "type": "xp",
         "value": 6
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 18,
-      "craftElement": "White",
-      "craftKind": "alchemy"
-    }
+    ]
   },
   {
     "id": 4,
@@ -74,13 +62,7 @@
         "value": 50
       }
     ],
-    "target": "party",
-    "meta": {
-      "tier": 2,
-      "potency": 25,
-      "craftElement": "White",
-      "craftKind": "alchemy"
-    }
+    "target": "party"
   },
   {
     "id": 5,
@@ -100,13 +82,7 @@
         "code": "CRI",
         "value": 0.1
       }
-    ],
-    "meta": {
-      "tier": 1,
-      "potency": 10,
-      "craftElement": "White",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 6,
@@ -122,13 +98,7 @@
         "dataId": "maxHp",
         "value": 3
       }
-    ],
-    "meta": {
-      "tier": 1,
-      "potency": 8,
-      "craftElement": "Black",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 7,
@@ -149,13 +119,7 @@
         "dataId": "maxHp",
         "value": 1
       }
-    ],
-    "meta": {
-      "tier": 1,
-      "potency": 6,
-      "craftElement": "Green",
-      "craftKind": "tinkering"
-    }
+    ]
   },
   {
     "id": 8,
@@ -171,13 +135,7 @@
         "dataId": "maxHp",
         "value": 2
       }
-    ],
-    "meta": {
-      "tier": 1,
-      "potency": 8,
-      "craftElement": "White",
-      "craftKind": "tinkering"
-    }
+    ]
   },
   {
     "id": 9,
@@ -194,10 +152,10 @@
       }
     ],
     "meta": {
-      "tier": 2,
-      "potency": 15,
-      "craftElement": "Yellow",
-      "craftKind": "tinkering"
+      "disciplines": [
+        "tinkering",
+        "blacksmithing"
+      ]
     }
   },
   {
@@ -215,10 +173,10 @@
       }
     ],
     "meta": {
-      "tier": 2,
-      "potency": 12,
-      "craftElement": "Blue",
-      "craftKind": "tinkering"
+      "disciplines": [
+        "tinkering",
+        "blacksmithing"
+      ]
     }
   },
   {
@@ -251,10 +209,7 @@
       }
     ],
     "meta": {
-      "tier": 3,
-      "potency": 50,
-      "craftElement": "Yellow",
-      "craftKind": "tinkering"
+      "intensityGrade": "mundane"
     }
   },
   {
@@ -327,13 +282,7 @@
         "code": "CRI",
         "value": 0.2
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 22,
-      "craftElement": "Red",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 17,
@@ -357,13 +306,7 @@
         "code": "CRI",
         "value": 0.15
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 20,
-      "craftElement": "Green",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 18,
@@ -387,13 +330,7 @@
         "code": "CRI",
         "value": 0.15
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 20,
-      "craftElement": "Blue",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 19,
@@ -417,13 +354,7 @@
         "code": "CRI",
         "value": 0.15
       }
-    ],
-    "meta": {
-      "tier": 3,
-      "potency": 35,
-      "craftElement": "White",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 20,
@@ -447,13 +378,7 @@
         "code": "CRI",
         "value": 0.1
       }
-    ],
-    "meta": {
-      "tier": 3,
-      "potency": 32,
-      "craftElement": "Black",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 21,
@@ -515,7 +440,10 @@
     "type": "quest",
     "cost": 0,
     "icon": 228,
-    "description": "A flawless crystal that catches the faintest light. Alicia believes Laura will love it."
+    "description": "A flawless crystal that catches the faintest light. Alicia believes Laura will love it.",
+    "meta": {
+      "craftable": false
+    }
   },
   {
     "id": 25,
@@ -523,7 +451,10 @@
     "type": "quest",
     "cost": 0,
     "icon": 218,
-    "description": "A heavy golden ring, unmarked and waiting for a new story. Laura can reshape it into something precious."
+    "description": "A heavy golden ring, unmarked and waiting for a new story. Laura can reshape it into something precious.",
+    "meta": {
+      "craftable": false
+    }
   },
   {
     "id": 26,
@@ -531,7 +462,10 @@
     "type": "quest",
     "cost": 0,
     "icon": 180,
-    "description": "The rusted, broken remains of a blade that once held great power. The Weaponsmith might be interested."
+    "description": "The rusted, broken remains of a blade that once held great power. The Weaponsmith might be interested.",
+    "meta": {
+      "craftable": false
+    }
   },
   {
     "id": 27,
@@ -551,13 +485,7 @@
         "code": "CRI",
         "value": 0.25
       }
-    ],
-    "meta": {
-      "tier": 3,
-      "potency": 40,
-      "craftElement": "White",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 28,
@@ -578,13 +506,7 @@
         "dataId": "def",
         "value": 2
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 22,
-      "craftElement": "Black",
-      "craftKind": "blacksmithing"
-    }
+    ]
   },
   {
     "id": 29,
@@ -599,12 +521,6 @@
         "value": 10
       }
     ],
-    "meta": {
-      "tier": 1,
-      "potency": 5,
-      "craftElement": "Red",
-      "craftKind": "cooking"
-    },
     "target": "none"
   },
   {
@@ -620,12 +536,6 @@
         "value": 25
       }
     ],
-    "meta": {
-      "tier": 1,
-      "potency": 8,
-      "craftElement": "Black",
-      "craftKind": "cooking"
-    },
     "target": "none"
   },
   {
@@ -646,60 +556,72 @@
       }
     ],
     "meta": {
-      "tier": 2,
-      "potency": 16,
-      "craftElement": "Red",
-      "craftKind": "cooking"
+      "disciplines": [
+        "cooking",
+        "alchemy"
+      ]
     }
   },
   {
     "id": 32,
-    "name": "Scrap Metal",
-    "type": "junk",
-    "cost": 1,
+    "name": "Scrap Plating",
+    "type": "equipment",
+    "cost": 4,
     "icon": 180,
-    "description": "A lump of useless metal.",
-    "meta": {
-      "tier": 0,
-      "craftKind": "blacksmithing"
-    }
+    "description": "Barely shaped offcuts, lashed together. It is not nothing.",
+    "equipType": "Armor",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 1
+      }
+    ]
   },
   {
     "id": 33,
     "name": "Sludge",
-    "type": "junk",
-    "cost": 1,
+    "type": "consumable",
+    "cost": 3,
     "icon": 55,
-    "description": "A smelly, failed alchemical mixture.",
-    "meta": {
-      "tier": 0,
-      "craftKind": "alchemy"
-    }
+    "description": "A thin, bitter draught. Drink it quickly.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 5
+      }
+    ]
   },
   {
     "id": 34,
     "name": "Burnt Slop",
-    "type": "junk",
-    "cost": 1,
+    "type": "consumable",
+    "cost": 3,
     "icon": 220,
-    "description": "Completely charcoal. Inedible.",
-    "meta": {
-      "tier": 0,
-      "craftKind": "cooking"
-    }
+    "description": "Charred beyond identification, and still faintly nourishing.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 1
+      }
+    ]
   },
   {
     "id": 35,
     "name": "Broken Spring",
-    "type": "junk",
-    "cost": 1,
+    "type": "equipment",
+    "cost": 4,
     "icon": 174,
-    "description": "A snapped spring and bent gear.",
-    "meta": {
-      "tier": 0,
-      "craftKind": "tinkering"
-    },
-    "effects": []
+    "description": "It still has some tension in it. Some.",
+    "effects": [],
+    "equipType": "Accessory",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 1
+      }
+    ]
   },
   {
     "id": 36,
@@ -720,10 +642,10 @@
       }
     ],
     "meta": {
-      "tier": 3,
-      "craftKind": "cooking",
-      "potency": 45,
-      "craftElement": "White"
+      "disciplines": [
+        "cooking",
+        "alchemy"
+      ]
     }
   },
   {
@@ -738,13 +660,7 @@
         "type": "xp",
         "value": 1000
       }
-    ],
-    "meta": {
-      "tier": 3,
-      "craftKind": "alchemy",
-      "potency": 50,
-      "craftElement": "Red"
-    }
+    ]
   },
   {
     "id": 38,
@@ -756,10 +672,9 @@
     "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
     "category": "promotion_key",
     "meta": {
-      "tier": 3,
-      "craftKind": "alchemy",
-      "potency": 50,
-      "craftElement": "White"
+      "disciplines": [
+        "alchemy"
+      ]
     }
   },
   {
@@ -770,9 +685,10 @@
     "icon": 180,
     "description": "A sharp shard of dark volcanic glass.",
     "meta": {
-      "tier": 1,
-      "craftKind": "blacksmithing",
-      "craftElement": "Black"
+      "disciplines": [
+        "blacksmithing"
+      ],
+      "intensityGrade": "precious"
     }
   },
   {
@@ -783,9 +699,10 @@
     "icon": 220,
     "description": "A glob of warm, pliable candle wax.",
     "meta": {
-      "tier": 1,
-      "craftKind": "alchemy",
-      "craftElement": "Red"
+      "disciplines": [
+        "alchemy"
+      ],
+      "intensityGrade": "precious"
     }
   },
   {
@@ -796,9 +713,10 @@
     "icon": 55,
     "description": "Shimmering residue left by spiritual entities.",
     "meta": {
-      "tier": 1,
-      "craftKind": "alchemy",
-      "craftElement": "Blue"
+      "disciplines": [
+        "alchemy"
+      ],
+      "intensityGrade": "precious"
     }
   },
   {
@@ -816,13 +734,7 @@
         "mode": "ward",
         "hpFraction": 0.1
       }
-    ],
-    "meta": {
-      "tier": 2,
-      "potency": 20,
-      "craftElement": "White",
-      "craftKind": "tinkering"
-    }
+    ]
   },
   {
     "id": 43,
@@ -841,10 +753,10 @@
       }
     ],
     "meta": {
-      "tier": 3,
-      "potency": 30,
-      "craftElement": "White",
-      "craftKind": "alchemy"
+      "disciplines": [
+        "alchemy",
+        "tinkering"
+      ]
     }
   },
   {
@@ -863,13 +775,7 @@
         "charges": 3,
         "hpFraction": 0.2
       }
-    ],
-    "meta": {
-      "tier": 3,
-      "potency": 40,
-      "craftElement": "Yellow",
-      "craftKind": "tinkering"
-    }
+    ]
   },
   {
     "id": 45,
@@ -884,12 +790,6 @@
         "skill": "windBlade"
       }
     ],
-    "meta": {
-      "tier": 2,
-      "potency": 20,
-      "craftElement": "Green",
-      "craftKind": "alchemy"
-    },
     "scope": "field",
     "target": "ally"
   },
@@ -908,10 +808,10 @@
       }
     ],
     "meta": {
-      "tier": 2,
-      "potency": 18,
-      "craftElement": "Red",
-      "craftKind": "alchemy"
+      "disciplines": [
+        "alchemy",
+        "blacksmithing"
+      ]
     },
     "scope": "field",
     "target": "ally"

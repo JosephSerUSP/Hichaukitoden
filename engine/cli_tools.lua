@@ -650,105 +650,107 @@ function cli.runGoldenUI(loader)
     interpreter.runImmediate = originalRunImmediate
 end
 
-function cli.runGolden(loader)
-    math.randomseed(12345)
+-- ---------------------------------------------------------------------------
+-- G2 golden battle harness.
+--
+-- Fixtures are authored in data/goldenBattles.json, not written here, so
+-- battle coverage grows the same way scene coverage does (a scene earns a G3
+-- trace by authoring `goldenScript`, with no engine edits). That symmetry is
+-- the point: while this harness was hardcoded there was exactly one encounter
+-- for years, and a whole damage layer could be added without G2 noticing.
+--
+-- Read straight from data/ rather than through the loader on purpose. Fixtures
+-- are a build artifact, not campaign content -- campaigns/<name>/ roots are
+-- drop-in alternates of the loaded file set, and golden logs are only recorded
+-- against the default campaign anyway.
+-- ---------------------------------------------------------------------------
+local GOLDEN_FIXTURES = "data/goldenBattles.json"
 
-    local vSession = session.GameSession.new(loader)
-
-    -- Explicitly construct party and enemies
-    vSession.party = {}
-
-    -- Fixed party: High Pixie (2), Skeleton (3), Angel (4)
-    local actIds = {2, 3, 4}
-    for _, id in ipairs(actIds) do
-        local actorData = loader.getActor(id)
-        if actorData then
-            local b = session.Battler.new(actorData, 1)
-            b.hp = b:getMaxHp(vSession)
-            table.insert(vSession.party, b)
+local function logEvents(events)
+    for _, ev in ipairs(events) do
+        if ev.type ~= "play_anim" and ev.type ~= "wait" then
+            local t = ev.type or ""
+            local a = ev.actor and ev.actor.name or ""
+            local trg = ev.target and ev.target.name or ""
+            local v = ev.value or ""
+            local s = ev.state or ""
+            print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
         end
+    end
+end
+
+-- "e2" -> enemies[2], "p1" -> party[1]. Unknown or out-of-range refs raise:
+-- a fixture that silently targeted nil would produce a plausible-looking log.
+local function resolveTarget(spec, party, enemies)
+    if spec == nil then return nil end
+    local kind, idx = tostring(spec):match("^([pe])(%d+)$")
+    if not kind then
+        error("golden fixture: bad target '" .. tostring(spec) .. "' (expected p<n> or e<n>)", 0)
+    end
+    local list = (kind == "p") and party or enemies
+    local battler = list[tonumber(idx)]
+    if not battler then
+        error("golden fixture: target '" .. tostring(spec) .. "' does not exist", 0)
+    end
+    return battler
+end
+
+local function buildBattler(loader, vSession, actorId, level, hp)
+    local actorData = loader.getActor(actorId)
+    if not actorData then
+        error("golden fixture: no actor with id " .. tostring(actorId), 0)
+    end
+    local b = session.Battler.new(actorData, level)
+    b.hp = hp or b:getMaxHp(vSession)
+    return b
+end
+
+local function runEncounter(loader, encounter, defaultLevel)
+    local level = encounter.level or defaultLevel
+    local vSession = session.GameSession.new(loader)
+    vSession.party = {}
+    for _, actorId in ipairs(encounter.party or {}) do
+        table.insert(vSession.party, buildBattler(loader, vSession, actorId, level))
     end
 
     local enemies = {}
-    for i=1, 3 do
-        local enemyData = loader.getActor(1) -- Pixie
-        if enemyData then
-            local b = session.Battler.new(enemyData, 1)
-            b.hp = b:getMaxHp(vSession)
-            table.insert(enemies, b)
-        end
+    for _, spec in ipairs(encounter.enemies or {}) do
+        table.insert(enemies, buildBattler(loader, vSession, spec.actor, spec.level or level, spec.hp))
     end
 
     local vBattle = battleSystem.Battle.new(vSession, enemies)
-
-    local function logEvents(events)
-        for _, ev in ipairs(events) do
-            if ev.type ~= "play_anim" and ev.type ~= "wait" then
-                local t = ev.type or ""
-                local a = ev.actor and ev.actor.name or ""
-                local trg = ev.target and ev.target.name or ""
-                local v = ev.value or ""
-                local s = ev.state or ""
-                print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
-            end
+    for _, round in ipairs(encounter.rounds or {}) do
+        local actions = {}
+        for _, a in ipairs(round) do
+            actions[a.slot] = {
+                type = a.type,
+                id = a.id,
+                target = resolveTarget(a.target, vSession.party, enemies),
+            }
         end
+        logEvents(vBattle:resolveRound(actions))
     end
+end
 
-    print("GOLDEN BEGIN")
+function cli.runGolden(loader)
+    local contents = love.filesystem.read(GOLDEN_FIXTURES)
+    if not contents then
+        error("golden fixtures missing: " .. GOLDEN_FIXTURES, 0)
+    end
+    local fixtures = require("data.json").decode(contents)
 
-    -- overhaul-6 F1: the summoner is not a battle participant. All actions
-    -- are indexed 1-4 directly by active-creature slot (no more +1 offset
-    -- for a summoner-first instant action). This fixture uses a 3-member
-    -- party (High Pixie, Skeleton, Angel).
+    for _, fixture in ipairs(fixtures) do
+        -- Seeded once per fixture, not per encounter: encounters within a
+        -- fixture deliberately share one RNG stream.
+        math.randomseed(fixture.seed or 12345)
 
-    -- Round 1: all attack
-    local actionsR1 = {}
-    for i=1, 3 do
-        if vSession.party[i] then
-            actionsR1[i] = { type = "attack", target = enemies[1] }
+        print("GOLDEN BEGIN")
+        print(string.format("battle|%s|name|%s", tostring(fixture.id), fixture.name or ""))
+        for _, encounter in ipairs(fixture.encounters or {}) do
+            runEncounter(loader, encounter, fixture.level or 1)
         end
+        print("GOLDEN END")
     end
-    logEvents(vBattle:resolveRound(actionsR1))
-
-    -- Round 2: skill (High Pixie casts its own soothingMote on itself) +
-    -- defend (party[2]) + attack (party[3]). soothingMote used to arrive
-    -- here as a summoner "spell"; the mechanic is gone (Summoner rework),
-    -- but the same skill cast by its owner keeps the golden log identical.
-    local actionsR2 = {}
-    if vSession.party[1] then
-        actionsR2[1] = { type = "skill", id = "soothingMote", target = vSession.party[1] }
-    end
-
-    if vSession.party[2] then actionsR2[2] = { type = "defend", target = vSession.party[2] } end
-    if vSession.party[3] then actionsR2[3] = { type = "attack", target = enemies[2] } end
-
-    logEvents(vBattle:resolveRound(actionsR2))
-
-    -- Round 3: flee (party[1]) + attacks (party[2], party[3])
-    local actionsR3 = {}
-    if vSession.party[1] then actionsR3[1] = { type = "flee" } end
-    if vSession.party[2] then actionsR3[2] = { type = "attack", target = enemies[2] } end
-    if vSession.party[3] then actionsR3[3] = { type = "attack", target = enemies[2] } end
-    logEvents(vBattle:resolveRound(actionsR3))
-
-    -- One victory resolution against a 1-HP enemy
-    local vSessionVic = session.GameSession.new(loader)
-    vSessionVic.party = {}
-    local bVic = session.Battler.new(loader.getActor(2), 1)
-    bVic.hp = bVic:getMaxHp(vSessionVic)
-    table.insert(vSessionVic.party, bVic)
-
-    local enemiesVic = {}
-    local bVicEnm = session.Battler.new(loader.getActor(1), 1)
-    bVicEnm.hp = 1
-    table.insert(enemiesVic, bVicEnm)
-
-    local vBattleVic = battleSystem.Battle.new(vSessionVic, enemiesVic)
-    local actionsVic = {}
-    actionsVic[1] = { type = "attack", target = enemiesVic[1] }
-    logEvents(vBattleVic:resolveRound(actionsVic))
-
-    print("GOLDEN END")
 end
 
 return cli

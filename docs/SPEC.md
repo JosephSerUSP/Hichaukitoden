@@ -327,7 +327,7 @@ This applies to the editor too: form fields come from the schema layer
 | Gate | Command | Guards |
 |------|---------|--------|
 | G1 validate | `lovec . validate` → `VALIDATE OK` | Cross-references (every id link in data, incl. graphs/quests/scriptIds), command trees vs registry, formula compilation, targeting specs, scene windows, animation tracks, meta keys, zero-SCRIPT battle phases, required flow phases. |
-| G2 golden battle | `tools/golden/check.ps1` | Battle simulation event log byte-identity (`tools/golden/battle.log`). Never regenerate to silence a red diff — regeneration is a reviewed, owner-signed action. |
+| G2 golden battle | `tools/golden/check.ps1` | Battle simulation event log byte-identity, one reference per fixture (`tools/golden/battle_<key>.log`; fixtures authored in `data/goldenBattles.json`). Never regenerate to silence a red diff — regeneration is a reviewed, owner-signed action. |
 | G3 golden UI | `tools/golden/check-ui.ps1` | Per-scene UI trace identity for every scene. |
 | G4 engine state | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches what the engine actually reports (scene inventory + draw modes, registry counts, **registry entries with no implementation**, flow phases, content inventory). |
 

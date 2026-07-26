@@ -1,0 +1,29 @@
+{
+  "_comment": "PROTOTYPE overrides. Intensity is derived from cost; this is the one override the design admits, and it exists to record where the author disagrees with an item's price. Kept here rather than in data/items.json while the model is still moving -- these graduate into meta.intensityGrade once the grades settle. A closed set of named grades on purpose: a free multiplier field would drift from cost exactly the way meta.potency already did.",
+
+  "intensityGrades": [
+    { "grade": "mundane",   "mult": 0.5, "description": "Costs what it's worth, and no more" },
+    { "grade": "normal",    "mult": 1.0, "description": "Price says it all -- the default, never authored" },
+    { "grade": "precious",  "mult": 2.0, "description": "Cheap to buy, potent to work with" },
+    { "grade": "legendary", "mult": 3.0, "description": "Its price cannot express it" }
+  ],
+
+  "_items_comment": "Keyed by item name for legibility in a prototype. Seeded with the reagent class the map turned up on its own: full elemental saturation, near-zero cost. These are the 'cheap yet intense' case.",
+  "items": {
+    "Melted Wax": "precious",
+    "Obsidian Shard": "precious",
+    "Ectoplasm": "precious",
+    "Golden Egg": "mundane"
+  },
+
+  "_disciplines_comment": "Prototype stand-in for meta.disciplines. An item's discipline membership says which crafts can PRODUCE it -- not what it can be used as an ingredient for, which is ungated. Absent means the default: Weapon/Armor -> blacksmithing, Accessory -> tinkering, consumable with mp_heal -> cooking, other consumable -> alchemy, junk -> its existing craftKind. Only the interesting exceptions are written here, and overlap is the cheapest way to make a thin discipline feel furnished.",
+  "disciplines": {
+    "Alert Charm": ["tinkering", "blacksmithing"],
+    "Rear Mirror": ["tinkering", "blacksmithing"],
+    "Glass of Wine": ["cooking", "alchemy"],
+    "Ambrosia": ["cooking", "alchemy"],
+    "HP Tonic": ["alchemy", "cooking"],
+    "Whetstone Draught": ["alchemy", "blacksmithing"],
+    "Vial of Second Breath": ["alchemy", "tinkering"]
+  }
+}

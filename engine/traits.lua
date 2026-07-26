@@ -185,10 +185,17 @@ function traits.getParam(battler, paramName, session)
     return math.max(1, math.floor(base * rate + plus))
 end
 
--- The battler's effective elements: ELEMENT_CHANGE traits (from equipment,
--- passives or states) override the actor's innate element list while active.
+-- The battler's effective elements. ELEMENT_CHANGE traits (from equipment,
+-- passives or states) replace the actor's innate list while active; ELEMENT_ADD
+-- traits then append to whatever the base resolved to, deepening an existing
+-- alignment or adding a new one.
+--
+-- Note this is the EFFECTIVE list, which is what battle wants. Item Creation
+-- deliberately reads `actorData.elements` directly instead: a creature's
+-- crafting identity is what it is, not what it is wearing, or a bag of
+-- element-swapping trinkets would collapse the whole crafter roster into one.
 function traits.getElements(battler, session)
-    local override = nil
+    local override, added = nil, nil
     local activeObjects = traits.getActiveObjects(battler, session)
     for _, obj in ipairs(activeObjects) do
         if traits.evaluateCondition(obj.condition, battler, session) then
@@ -196,12 +203,21 @@ function traits.getElements(battler, session)
                 if t.code == "ELEMENT_CHANGE" and t.dataId then
                     override = override or {}
                     table.insert(override, t.dataId)
+                elseif t.code == "ELEMENT_ADD" and t.dataId then
+                    added = added or {}
+                    table.insert(added, t.dataId)
                 end
             end
         end
     end
-    if override then return override end
-    return (battler.actorData and battler.actorData.elements) or {}
+
+    local base = override or (battler.actorData and battler.actorData.elements) or {}
+    if not added then return base end
+
+    local out = {}
+    for _, e in ipairs(base) do table.insert(out, e) end
+    for _, e in ipairs(added) do table.insert(out, e) end
+    return out
 end
 
 -- Get rate modifiers (e.g. HIT, EVA, CRI, HRG)

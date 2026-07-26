@@ -191,45 +191,31 @@
   ],
   "metaKeys": [
     {
-      "key": "tier",
+      "key": "disciplines",
       "appliesTo": [
         "items"
       ],
-      "type": "number",
-      "description": "Crafting tier/quality of the item"
+      "type": "list",
+      "itemType": "string",
+      "enumFrom": "disciplines",
+      "description": "Which disciplines can PRODUCE this item. Ingredients are ungated -- this does not restrict what the item may be used to make. Absent means the default from disciplineDefaults, so only exceptions are authored. An item may belong to several; overlap is how a thin discipline is furnished without new content."
     },
     {
-      "key": "density",
-      "appliesTo": [
-        "items"
-      ],
-      "type": "number",
-      "description": "Material density"
-    },
-    {
-      "key": "potency",
-      "appliesTo": [
-        "items"
-      ],
-      "type": "number",
-      "description": "Chemical/magical potency"
-    },
-    {
-      "key": "craftElement",
+      "key": "intensityGrade",
       "appliesTo": [
         "items"
       ],
       "type": "string",
-      "description": "Elemental alignment of the ingredient"
+      "enumFrom": "intensityGrades",
+      "description": "The one admitted crafting override. Intensity is derived from cost; a grade multiplies it, recording where the author disagrees with the price (a rare herb that costs nothing and does a lot). Enumerated and multiplicative on purpose -- an absolute field would fork the number and drift the way the old meta.potency did."
     },
     {
-      "key": "craftKind",
+      "key": "craftable",
       "appliesTo": [
         "items"
       ],
-      "type": "string",
-      "description": "Crafting pool category. Must name a kind registered in engine.json disciplines (G1-checked).",
-      "enumFrom": "disciplines"
+      "type": "flag",
+      "description": "Set false to keep an item out of Item Creation entirely (quest and key items). Opt-out, because signatures are derived and every item otherwise acquires one."
     },
     {
       "key": "detect",
@@ -1695,8 +1681,13 @@
     }
   ],
   "elementRules": {
-    "strongMultiplier": 1.5,
-    "weakMultiplier": 0.65
+    "skillStrongBonus": 0.5,
+    "skillStrongDecay": 0.7,
+    "skillWeakMultiplier": 0.65,
+    "userStrongBonus": 0.15,
+    "userStrongDecay": 0.8,
+    "userWeakMultiplier": 0.9,
+    "weakFloor": 0.3
   },
   "battleLayout": {
     "enemyRowWidth": 220,
@@ -1988,6 +1979,12 @@
       "label": "Element Change",
       "usesDataId": true,
       "description": "Overrides the holder's elements with dataId while active."
+    },
+    {
+      "code": "ELEMENT_ADD",
+      "label": "Element Add",
+      "usesDataId": true,
+      "description": "Appends dataId to the holder's elements while active, deepening an existing alignment or adding a new one. Applied after ELEMENT_CHANGE."
     },
     {
       "code": "XP_RATE",
@@ -2425,5 +2422,189 @@
         }
       ]
     }
-  ]
+  ],
+  "intensityGrades": [
+    {
+      "grade": "mundane",
+      "mult": 0.5,
+      "description": "Costs what it's worth, and no more"
+    },
+    {
+      "grade": "normal",
+      "mult": 1.0,
+      "description": "Price says it all -- the default, never authored"
+    },
+    {
+      "grade": "precious",
+      "mult": 2.0,
+      "description": "Cheap to buy, potent to work with"
+    },
+    {
+      "grade": "legendary",
+      "mult": 3.0,
+      "description": "Its price cannot express it"
+    }
+  ],
+  "craftRules": {
+    "crafterPull": 0.3,
+    "alpha": 0.5,
+    "intensityWeight": 0.7,
+    "scatter": 0.24,
+    "scatterFalloff": 1.2,
+    "reachBase": 14.0,
+    "reachPerStat": 14.0,
+    "beyondReachCost": 0.12,
+    "foreignIngredientWorth": 0.2,
+    "statDivisor": 20.0,
+    "intensityScale": 40.0,
+    "crafterIntensityScale": 10.0,
+    "coherenceRange": 1.2
+  },
+  "disciplineDefaults": {
+    "byEquipType": {
+      "Weapon": "blacksmithing",
+      "Armor": "blacksmithing",
+      "Accessory": "tinkering"
+    },
+    "byEffect": {
+      "mp_heal": "cooking"
+    },
+    "byType": {
+      "consumable": "alchemy"
+    }
+  },
+  "craftElementSources": {
+    "elementChangeWeight": 3.0,
+    "paramWeight": 0.7,
+    "nameWeight": 2.0,
+    "descriptionWeight": 0.5,
+    "effects": {
+      "hp": {
+        "Green": 1.0
+      },
+      "maxHp": {
+        "Green": 0.8
+      },
+      "mp_heal": {
+        "Red": 0.5
+      },
+      "remove_status": {
+        "White": 0.6
+      },
+      "xp": {
+        "White": 1.0
+      },
+      "learn_skill": {
+        "White": 1.0
+      }
+    },
+    "traits": {
+      "HRG": {
+        "Green": 0.6
+      },
+      "ON_PERMADEATH": {
+        "White": 1.4
+      }
+    },
+    "params": {
+      "atk": {
+        "Red": 1.0
+      },
+      "def": {
+        "Black": 0.4
+      },
+      "mat": {
+        "Blue": 0.8
+      },
+      "mdf": {
+        "White": 0.5
+      },
+      "maxHp": {
+        "Green": 0.8
+      }
+    }
+  },
+  "craftLexicon": {
+    "ember": "Red",
+    "flame": "Red",
+    "fire": "Red",
+    "blaze": "Red",
+    "ash": "Red",
+    "ashen": "Red",
+    "wax": "Red",
+    "molten": "Red",
+    "melted": "Red",
+    "crimson": "Red",
+    "scarlet": "Red",
+    "ruby": "Red",
+    "forge": "Red",
+    "coal": "Red",
+    "wine": "Red",
+    "ale": "Red",
+    "mars": "Red",
+    "whetstone": "Red",
+    "philosopher": "Red",
+    "wind": "Green",
+    "gale": "Green",
+    "breeze": "Green",
+    "leaf": "Green",
+    "herb": "Green",
+    "root": "Green",
+    "moss": "Green",
+    "verdant": "Green",
+    "emerald": "Green",
+    "vine": "Green",
+    "hermes": "Green",
+    "tonic": "Green",
+    "water": "Blue",
+    "aqua": "Blue",
+    "tide": "Blue",
+    "frost": "Blue",
+    "ice": "Blue",
+    "sea": "Blue",
+    "azure": "Blue",
+    "sapphire": "Blue",
+    "mist": "Blue",
+    "ectoplasm": "Blue",
+    "ink": "Blue",
+    "mirror": "Blue",
+    "mercury": "Blue",
+    "rain": "Blue",
+    "holy": "White",
+    "light": "White",
+    "sacred": "White",
+    "blessed": "White",
+    "divine": "White",
+    "silver": "White",
+    "pure": "White",
+    "angel": "White",
+    "saint": "White",
+    "halo": "White",
+    "gram": "White",
+    "ward": "White",
+    "warding": "White",
+    "breath": "White",
+    "dawn": "White",
+    "insight": "White",
+    "lesson": "White",
+    "lessons": "White",
+    "whispered": "White",
+    "ambrosia": "White",
+    "seraph": "White",
+    "dark": "Black",
+    "shadow": "Black",
+    "bone": "Black",
+    "obsidian": "Black",
+    "void": "Black",
+    "night": "Black",
+    "ebon": "Black",
+    "grave": "Black",
+    "curse": "Black",
+    "cursed": "Black",
+    "tomb": "Black",
+    "stout": "Black",
+    "meteorite": "Black",
+    "vile": "Black",
+    "lucille": "Black"
+  }
 }
