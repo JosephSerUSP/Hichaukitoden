@@ -1326,7 +1326,6 @@
         },
         "style": "panel",
         "title": null,
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -2630,7 +2629,6 @@
       {
         "id": "help",
         "visible": "v.state == 1 or v.state == 2 or v.state == 3",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -3104,7 +3102,6 @@
       },
       {
         "id": "help",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -3732,7 +3729,6 @@
         "visible": "v.state == 2",
         "style": "confirm",
         "title": "Confirm Purchase",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -5014,7 +5010,6 @@
         },
         "style": "panel",
         "visible": "v.page == 1 and v.ritualMode ~= 'promote'",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -5106,7 +5101,6 @@
         },
         "style": "panel",
         "visible": "v.page == 1",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -5141,7 +5135,6 @@
         },
         "style": "panel",
         "visible": "v.page == 2",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -5201,7 +5194,6 @@
         },
         "style": "confirm",
         "visible": "v.state == 3",
-        "lineSpacing": 1,
         "content": [
           {
             "type": "text",
@@ -5294,7 +5286,6 @@
         },
         "style": "confirm",
         "title": "CONFIRM",
-        "lineSpacing": 1,
         "visible": "v.mode == 'confirm'",
         "content": [
           {

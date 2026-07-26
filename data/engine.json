@@ -2128,7 +2128,6 @@
       "title": null,
       "actorStatus": "status_party",
       "contentY": 8.5,
-      "lineSpacing": 1,
       "gauges": [
         {
           "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
@@ -2283,7 +2282,6 @@
       "height": 8,
       "style": "confirm",
       "title": "CONFIRM",
-      "lineSpacing": 1,
       "anim": {
         "open": {
           "duration": 0.18
