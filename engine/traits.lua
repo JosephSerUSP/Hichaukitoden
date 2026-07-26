@@ -23,10 +23,7 @@ end
 
 local function actorBaseParam(data, paramName)
     local params = data.baseParams or {}
-    if params[paramName] ~= nil then return params[paramName] end
-    -- Legacy actor fields remain valid during the data migration.
-    if data[paramName] ~= nil then return data[paramName] end
-    return nil
+    return params[paramName]
 end
 
 -- Returns a list of all trait objects currently active on a battler.

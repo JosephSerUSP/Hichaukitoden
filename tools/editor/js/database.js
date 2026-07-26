@@ -588,8 +588,7 @@
                             id: maxId,
                             name: `New Actor ${maxId}`,
                             role: 'Spirit',
-                            maxHp: 10,
-                            mpd: 2,
+                            baseParams: { maxHp: 10, mpd: 2 },
                             elements: [],
                             skills: []
                         });

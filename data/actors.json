@@ -4,7 +4,6 @@
     "name": "Pixie",
     "level": 1,
     "role": "Healer",
-    "maxHp": 9,
     "spriteKey": "pixie",
     "smallBattler": "pixie[fps=15]",
     "passives": [
@@ -79,7 +78,6 @@
     "name": "High Pixie",
     "level": 6,
     "role": "Healer",
-    "maxHp": 15,
     "spriteKey": "highPixie",
     "smallBattler": "highPixie[fps=15]",
     "passives": [
@@ -145,7 +143,6 @@
     "name": "Skeleton",
     "level": 1,
     "role": "Attacker",
-    "maxHp": 11,
     "spriteKey": "skeleton",
     "smallBattler": "Skeleton",
     "passives": [
@@ -223,7 +220,6 @@
     "name": "Angel",
     "level": 1,
     "role": "Support",
-    "maxHp": 12,
     "spriteKey": "angel",
     "smallBattler": "Angel",
     "passives": [
@@ -298,7 +294,6 @@
     "name": "Archangel",
     "level": 6,
     "role": "Support",
-    "maxHp": 16,
     "spriteKey": "archangel",
     "smallBattler": "Angel",
     "passives": [
@@ -370,7 +365,6 @@
     "name": "Demon",
     "level": 2,
     "role": "Attacker",
-    "maxHp": 12,
     "spriteKey": "demon",
     "smallBattler": "Demon",
     "passives": [
@@ -446,7 +440,6 @@
     "name": "Incubus",
     "level": 6,
     "role": "Attacker",
-    "maxHp": 22,
     "spriteKey": "incubus",
     "smallBattler": "vampireLord[fps=10]",
     "passives": [
@@ -514,7 +507,6 @@
     "name": "Nurse",
     "level": 1,
     "role": "Healer",
-    "maxHp": 14,
     "spriteKey": "nurse",
     "smallBattler": "Nurse",
     "passives": [
@@ -583,7 +575,6 @@
     "name": "Imp",
     "level": 1,
     "role": "Attacker",
-    "maxHp": 8,
     "spriteKey": "imp",
     "smallBattler": "Imp",
     "passives": [
@@ -646,7 +637,6 @@
     "name": "Golem",
     "level": 2,
     "role": "Tank",
-    "maxHp": 15,
     "spriteKey": "golem",
     "smallBattler": "Golem",
     "passives": [
@@ -719,7 +709,6 @@
     "name": "Ghoul",
     "level": 2,
     "role": "Tank",
-    "maxHp": 15,
     "spriteKey": "ghoul",
     "smallBattler": "Ghoul",
     "passives": [
@@ -782,7 +771,6 @@
     "name": "Ooze",
     "level": 1,
     "role": "Debuffer",
-    "maxHp": 18,
     "spriteKey": "ooze",
     "smallBattler": "Ooze",
     "passives": [
@@ -855,7 +843,6 @@
     "name": "Bat",
     "level": 1,
     "role": "Attacker",
-    "maxHp": 10,
     "spriteKey": "bat",
     "smallBattler": "Imp",
     "passives": [
@@ -922,7 +909,6 @@
     "name": "Wisp",
     "level": 1,
     "role": "Caster",
-    "maxHp": 12,
     "spriteKey": "wisp",
     "smallBattler": "wisp",
     "passives": [
@@ -1011,7 +997,6 @@
     ],
     "level": 1,
     "role": "None",
-    "maxHp": 5,
     "spriteKey": "egg",
     "smallBattler": "egg",
     "elements": [],
@@ -1055,7 +1040,6 @@
     "role": "Reviver",
     "spriteKey": "phoenix",
     "smallBattler": "Angel",
-    "maxHp": 25,
     "passives": [
       "rebirth"
     ],
@@ -1107,7 +1091,6 @@
     "name": "Larva",
     "level": 1,
     "role": "Parasite",
-    "maxHp": 12,
     "spriteKey": "larva",
     "smallBattler": "Ooze",
     "passives": [
@@ -1162,7 +1145,6 @@
     "name": "Crimson Lord",
     "level": 6,
     "role": "Vampire",
-    "maxHp": 55,
     "spriteKey": "vampire",
     "smallBattler": "Demon",
     "passives": [],
@@ -1205,7 +1187,6 @@
     "name": "Flauros",
     "level": 3,
     "role": "Attacker",
-    "maxHp": 19,
     "spriteKey": "flauros",
     "smallBattler": "Demon",
     "passives": [
@@ -1261,7 +1242,6 @@
     "name": "Candle",
     "level": 1,
     "role": "Support",
-    "maxHp": 7,
     "spriteKey": "candle",
     "smallBattler": "candle",
     "passives": [
@@ -1320,7 +1300,6 @@
     "id": 21,
     "name": "Shadow Stalker",
     "level": 12,
-    "maxHp": 40,
     "role": "Assassin",
     "elements": [
       "Black",
@@ -1370,7 +1349,6 @@
     "id": 22,
     "name": "Alex",
     "level": 1,
-    "maxHp": 18,
     "maxMp": 820,
     "role": "Summoner",
     "elements": [],

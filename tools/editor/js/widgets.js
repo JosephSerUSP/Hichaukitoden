@@ -1621,7 +1621,7 @@
 
             if (activeDbTab === 'actors') {
                 item.baseParams = item.baseParams || {};
-                const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : (item[key] != null ? item[key] : fallback);
+                const base = (key, fallback) => item.baseParams[key] != null ? item.baseParams[key] : fallback;
 
                 ensurePortraitKeys();
 

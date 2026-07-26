@@ -202,15 +202,6 @@ test("mxa and mxp remain fixed while mpd grows", function()
     assert(traits.getParam(battler, "mpd", mockSession) == 5, "mpd should grow to 5 at level 20")
 end)
 
-test("legacy actor fields remain valid", function()
-    local battler = {
-        actorData = { maxHp = 60, mpd = 3 }, level = 1,
-        passives = {}, equipment = {}, states = {}, paramPlus = {}
-    }
-    assert(traits.getParam(battler, "maxHp", mockSession) == 60, "legacy maxHp fallback failed")
-    assert(traits.getParam(battler, "mpd", mockSession) == 3, "legacy mpd fallback failed")
-end)
-
 print(string.format("=== Tests completed: %d passed, %d failed ===", passed, failed))
 
 if failed > 0 then
