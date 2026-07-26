@@ -2016,8 +2016,8 @@
       }
     ],
     "treasures": [
-      "potion",
-      "antidote"
+      1,
+      2
     ],
     "encounters": [
       {
@@ -2532,8 +2532,8 @@
       }
     ],
     "treasures": [
-      "hi_potion",
-      "iron_sword",
+      3,
+      5,
       24
     ],
     "encounters": [

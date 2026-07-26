@@ -87,6 +87,7 @@ local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
 local isEngineStateMode = false
+local isReachabilityMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
 local triggerTestBattle
@@ -178,6 +179,8 @@ function love.load(arg)
                 isValidateMode = true
             elseif val == "engine-state" then
                 isEngineStateMode = true
+            elseif val == "reachability" then
+                isReachabilityMode = true
             elseif val == "golden" then
                 isGoldenMode = true
             elseif val == "golden-ui" then
@@ -338,6 +341,21 @@ function love.load(arg)
             print("ENGINE STATE END")
         else
             print("ENGINE STATE FAIL: " .. tostring(report))
+        end
+        love.event.quit(ok and 0 or 1)
+        return
+    end
+
+    -- Advisory reachability report: content that resolves but that nothing can
+    -- produce or trigger (`lovec . reachability`). Deliberately not a gate --
+    -- see the header of engine/reachability.lua -- so it always exits 0.
+    if isReachabilityMode then
+        loader.init(cliCampaignRoot)
+        local ok, report = pcall(require("engine.reachability").build, loader)
+        if ok then
+            print(report)
+        else
+            print("REACHABILITY FAIL: " .. tostring(report))
         end
         love.event.quit(ok and 0 or 1)
         return

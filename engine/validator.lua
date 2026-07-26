@@ -19,14 +19,24 @@ validator.run = function(loader)
     -- Battler.new) — the set `param_plus` effects may target.
     local VALID_PARAM_PLUS = { maxHp = true, atk = true, def = true, mat = true, mdf = true }
 
+    -- The params anything ever READS back off a battler (the traits.getParam
+    -- call sites across engine/ and presentation/) — the set PARAM_PLUS and
+    -- PARAM_RATE traits may name in dataId. traits.getParam matches
+    -- `t.dataId == paramName` literally, so a param nobody reads is a trait
+    -- that silently never applies.
+    local VALID_TRAIT_PARAM = { maxHp = true, atk = true, def = true, mat = true,
+        mdf = true, mpd = true, asp = true }
+
     -- Registry lookup sets from data/engine.json
     local validEffectTypes = {}
     for _, et in ipairs((loader.engine and loader.engine.effectTypes) or {}) do
         validEffectTypes[et.id] = true
     end
     local validTraitCodes = {}
+    local traitCodeDefs = {}
     for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
         validTraitCodes[tc.code] = true
+        traitCodeDefs[tc.code] = tc
     end
     local validFogPresets = {}
     for _, fp in ipairs((loader.engine and loader.engine.fogPresets) or {}) do
@@ -260,9 +270,34 @@ validator.run = function(loader)
     if undeclaredWarnings > 0 then
         print("[validator] total undeclared meta warnings: " .. undeclaredWarnings)
     end
+    -- Trait codes must be registered, AND their dataId must agree with the
+    -- registry's `usesDataId` declaration and resolve. Only the code was ever
+    -- checked, so `usesDataId` was a claim nothing enforced: a PARAM_RATE with
+    -- a misspelled param or an ELEMENT_ADD naming a dropped element compares
+    -- unequal forever in traits.getParam / traits.elementsOf and does nothing
+    -- at all. Same shape as the one-way element affinities this file already
+    -- rejects -- paired data where only one side is ever consulted.
     local function checkTraits(traitList, ownerDesc)
         for _, tr in ipairs(traitList or {}) do
-            check(validTraitCodes[tr.code], ownerDesc .. " uses unregistered trait code '" .. tostring(tr.code) .. "'")
+            local def = traitCodeDefs[tr.code]
+            check(def ~= nil, ownerDesc .. " uses unregistered trait code '" .. tostring(tr.code) .. "'")
+            if def then
+                local where = ownerDesc .. " trait '" .. tostring(tr.code) .. "'"
+                if def.usesDataId then
+                    check(tr.dataId ~= nil, where .. " is declared usesDataId in the registry but carries no dataId")
+                    if tr.code == "PARAM_PLUS" or tr.code == "PARAM_RATE" then
+                        check(VALID_TRAIT_PARAM[tr.dataId],
+                            where .. " targets unknown param '" .. tostring(tr.dataId) .. "'")
+                    elseif tr.code == "ELEMENT_CHANGE" or tr.code == "ELEMENT_ADD" then
+                        check(tr.dataId == nil or loader.getElement(tr.dataId) ~= nil,
+                            where .. " references missing element '" .. tostring(tr.dataId) .. "'")
+                    end
+                else
+                    check(tr.dataId == nil,
+                        where .. " carries dataId '" .. tostring(tr.dataId) ..
+                        "' but the registry declares usesDataId=false, so nothing reads it")
+                end
+            end
         end
     end
     local function checkEffects(effList, ownerDesc)
@@ -270,6 +305,12 @@ validator.run = function(loader)
             check(validEffectTypes[eff.type], ownerDesc .. " uses unregistered effect type '" .. tostring(eff.type) .. "'")
             if eff.type == "add_status" then
                 check(loader.getState(eff.status), ownerDesc .. " references missing state '" .. tostring(eff.status) .. "'")
+            elseif eff.type == "remove_status" then
+                -- The cure half of the pair. effects.lua calls
+                -- b:removeState(effectData.value) with no lookup, so a stale
+                -- state name is a consumable that quietly cures nothing.
+                check(loader.getState(eff.value),
+                    ownerDesc .. " (remove_status) references missing state '" .. tostring(eff.value) .. "'")
             elseif eff.type == "learn_skill" then
                 -- Skillbooks name a real skill, or they'd be dud items.
                 local skillId = eff.skill or eff.value
@@ -301,10 +342,27 @@ validator.run = function(loader)
         -- Evolution targets. Candle pointed at a "lantern" that never existed
         -- (dropped 25.07.2026): the creature simply never evolved, with nothing
         -- reporting why -- exactly the silent failure this gate exists for.
+        -- The promotion cost is the other half interpreter.promoteInfo reads:
+        -- a cost.item that is not a real promotion key means the ritual charges
+        -- for something the player can never be holding.
         for _, evo in ipairs(actor.evolutions or {}) do
             check(evo.evolvesTo ~= nil and loader.getActor(evo.evolvesTo) ~= nil,
                 "actor " .. tostring(actor.id) .. " ('" .. tostring(actor.name)
                 .. "') evolves into missing actor '" .. tostring(evo.evolvesTo) .. "'")
+            check(evo.level == nil or type(evo.level) == "number",
+                "actor " .. tostring(actor.id) .. " evolution level must be a number, got '"
+                .. tostring(evo.level) .. "'")
+            local cost = evo.cost
+            if cost and cost.item ~= nil then
+                local key = loader.getItem(cost.item)
+                check(key ~= nil, "actor " .. tostring(actor.id)
+                    .. " evolution cost references missing item '" .. tostring(cost.item) .. "'")
+                if key then
+                    check(key.category == "promotion_key", "actor " .. tostring(actor.id)
+                        .. " evolution costs item '" .. tostring(key.name)
+                        .. "' which is not category 'promotion_key'")
+                end
+            end
         end
         if actor.role then
             check(loader.getRole(actor.role), "actor " .. tostring(actor.id) .. " references missing role '" .. tostring(actor.role) .. "'")
@@ -398,6 +456,59 @@ validator.run = function(loader)
         end
     end
 
+    -- Story flags are the other classic one-way pair: SET_FLAG (and quest
+    -- reward `flags`) writes session.flags, and "flag:<name>" condition strings
+    -- read it, with nothing tying the two halves together. A condition on a
+    -- flag nobody sets is a branch the player can never take -- the Gate
+    -- Guard's "Report Progress" hub asked about `boss_killed_floor_3` and
+    -- `boss_killed_floor_6`, neither of which any event ever set, so two of its
+    -- three replies were unreachable. The reverse (set, never read) is only
+    -- suspicious, not broken: a flag may be staged ahead of the content that
+    -- reads it, so it warns.
+    local flagWrites, flagReads = {}, {}
+    local function collectFlags(node, seen, where)
+        if type(node) ~= "table" then return end
+        seen = seen or {}
+        if seen[node] then return end
+        seen[node] = true
+        -- COMMENT bodies are never evaluated, so a flag named in prose (an
+        -- author's note about content that is not built yet) is not a read.
+        if node.cmd == "COMMENT" then return end
+        if node.cmd == "SET_FLAG" and type(node.flag) == "string" then
+            flagWrites[node.flag] = true
+        end
+        if type(node.setFlag) == "string" then flagWrites[node.setFlag] = true end
+        if type(node.flags) == "table" then
+            for _, f in ipairs(node.flags) do
+                if type(f) == "string" then flagWrites[f] = true end
+            end
+        end
+        for _, val in pairs(node) do
+            if type(val) == "string" then
+                for name in val:gmatch("flag:([%w_]+)") do
+                    flagReads[name] = flagReads[name] or where
+                end
+            else
+                collectFlags(val, seen, where)
+            end
+        end
+    end
+    for name, root in pairs({ scenes = loader.scenes, flows = loader.flows,
+        commonEvents = loader.commonEvents, maps = loader.maps, quests = loader.quests,
+        shops = loader.shops, items = loader.items, actors = loader.actors,
+        system = loader.system }) do
+        collectFlags(root, nil, name)
+    end
+    for name, where in pairs(flagReads) do
+        check(flagWrites[name], "condition reads flag '" .. name .. "' (in " .. where ..
+            ") but no SET_FLAG or quest reward ever sets it -- that branch is unreachable")
+    end
+    for name in pairs(flagWrites) do
+        if not flagReads[name] then
+            print("[validator] warning: flag '" .. name .. "' is set but no condition reads it")
+        end
+    end
+
     -- System config references
     local sys = loader.system or {}
     local combat = sys.combat or {}
@@ -421,6 +532,40 @@ validator.run = function(loader)
                 check(loader.getItem(stock.id), "shop " .. tostring(shopId) .. " stocks missing item '" .. tostring(stock.id) .. "'")
             end
         end
+    end
+
+    -- Map-level id POOLS. These are read only at runtime, by index, from a
+    -- random roll -- `treasures` by CHANGE_ITEM item="random", `recruits` by
+    -- the RECRUIT compile path in main.lua/exploration.lua -- and neither
+    -- resolves the id it picked: session:addItem stores whatever it was handed,
+    -- so a stale id becomes a phantom inventory row instead of an error.
+    -- data/maps.json carried four ("potion", "antidote", "hi_potion",
+    -- "iron_sword") from before items were renumbered, and two floors of chests
+    -- had been handing out nothing at all.
+    for mi, map in ipairs(loader.maps or {}) do
+        local where = "map #" .. mi .. " ('" .. tostring(map.name or map.title or "?") .. "')"
+        for ti, itemId in ipairs(map.treasures or {}) do
+            check(loader.getItem(itemId) ~= nil,
+                where .. " treasures[" .. ti .. "] references missing item '" .. tostring(itemId) .. "'")
+        end
+        for ri, actorId in ipairs(map.recruits or {}) do
+            check(loader.getActor(actorId) ~= nil,
+                where .. " recruits[" .. ri .. "] references missing actor '" .. tostring(actorId) .. "'")
+        end
+        for ei, enc in ipairs(map.encounters or {}) do
+            check(type(enc) == "table" and loader.getActor(enc.id) ~= nil,
+                where .. " encounters[" .. ei .. "] references missing actor '"
+                .. tostring(type(enc) == "table" and enc.id or enc) .. "'")
+        end
+    end
+
+    -- Item Creation disciplines pair a `stat` with the params traits.getParam
+    -- can return; craft.crafterStat falls back silently otherwise, so a typo
+    -- would make a whole discipline's reach a constant.
+    for _, disc in ipairs((loader.engine and loader.engine.disciplines) or {}) do
+        check(VALID_TRAIT_PARAM[disc.stat],
+            "discipline '" .. tostring(disc.kind) .. "' uses stat '" .. tostring(disc.stat)
+            .. "' which is not a readable battler param")
     end
 
     -- Event scriptId links must resolve to a common event, and asset

@@ -43,6 +43,11 @@ default execution policy. Always run them as
 | unit | `lovec . unittest` → `ALL UNIT TESTS OK` | Behavior the golden gates can't see |
 | save | `lovec . savetest` → `SAVETEST OK` | Save/load round-trip |
 
+`lovec . reachability` is a **report, not a gate** (always exits 0): content that
+resolves but that nothing can produce or trigger — unsellable shops, items no
+craft yields, creatures no pool grants. See SPEC §3.1 for why that is advisory
+while paired-data coherence is a G1 failure.
+
 - G2/G3 red = a **behavioral regression**. Investigate. Never regenerate a
   golden log to silence a diff; regeneration is an owner-signed action.
 - G4 red = the **doc is stale**, not the engine. Run

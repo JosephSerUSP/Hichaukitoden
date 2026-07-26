@@ -353,8 +353,47 @@ nothing consuming them — these lie to the player, which is what `ON_PERMADEATH
 did for months while the `rebirth` passive advertised it — and entries declared
 and never referenced at all.
 
+### 3.1 Coherence vs. reachability
+
+G1 asks whether a reference *resolves*. Two further questions do not reduce to
+that, and they are answered in two different places on purpose.
+
+**Coherent pairs are G1's job.** Where two pieces of data name each other but
+only one side is ever read at runtime, the unread side is invisible dead data —
+it cannot fail, it simply never happens. `elements.json` carried "White is weak
+to Green" for a long time while `effects.lua` read only the attacker's lists, so
+that penalty never landed on anyone; G1 now requires affinity to be reciprocal.
+The same shape recurs, and each of these is now a G1 failure: a trait whose
+`dataId` disagrees with the registry's `usesDataId` declaration (or names a param
+`traits.getParam` never reads, or a dropped element); a `remove_status` effect
+naming a state that no longer exists; a map `treasures`/`recruits`/`encounters`
+pool entry that resolves to nothing (these are indexed by a random roll at
+runtime, and `session:addItem` stores whatever it is handed, so a stale id became
+a phantom inventory row — four such ids had two floors of chests handing out
+nothing); an evolution `cost.item` that is not a `promotion_key`; a discipline
+`stat` that is not a readable param; and a `flag:<name>` condition that no
+`SET_FLAG` or quest reward ever writes, which is a branch the player can never
+take. The reverse flag direction (written, never read) only warns: a flag may
+legitimately be staged ahead of the content that reads it.
+
+**Reachability is a report, not a gate:** `lovec . reachability`. It sweeps for
+content that resolves but that nothing can produce — items no reachable shop
+sells and no craft yields, shops no `OPEN_SHOP` opens, creatures no pool or
+promotion path grants, states nothing applies, common events nothing calls — and
+it swings the real Item Creation model over its whole possibility space
+(`engine/craft.lua`, every ingredient pair × every crafter, at the ideation
+centre) rather than re-implementing it. It always exits 0 **by design**: "nothing
+produces this yet" is normally a design observation, and authors legitimately
+build content before its source, so gating it would punish the ordinary order of
+work. Read it, judge each entry, then either wire up the source or delete the
+content. The repo-wide caution about "is this referenced?" sweeps applies to it
+in full: ids are also resolved at runtime from pools and hooks, so each section
+names the exact producers it knows about, and a new kind of producer must be
+taught to the sweep rather than the sweep weakened.
+
 Mechanical-rule enforcement map: registry/context/zero-SCRIPT/dangling-id
-rules → G1; behavioral regressions → G2; scene rendering → G3; the
+rules → G1; **paired-data coherence → G1; reachability → the advisory
+`reachability` report**; behavioral regressions → G2; scene rendering → G3; the
 aesthetic and code-sharing rules (§2) are review-enforced — call them out
 in PR review when violated.
 

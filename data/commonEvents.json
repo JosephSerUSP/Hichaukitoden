@@ -1009,44 +1009,16 @@
             "label": "Report Progress",
             "commands": [
               {
-                "condition": "flag:boss_killed_floor_6",
-                "commands": [
-                  {
-                    "text": "You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner.",
-                    "cmd": "TEXT"
-                  },
-                  {
-                    "label": "gate_guard_pass_hub",
-                    "cmd": "JUMP_TO_LABEL"
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "condition": "flag:boss_killed_floor_3",
-                    "commands": [
-                      {
-                        "text": "The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper.",
-                        "cmd": "TEXT"
-                      },
-                      {
-                        "label": "gate_guard_pass_hub",
-                        "cmd": "JUMP_TO_LABEL"
-                      }
-                    ],
-                    "elseCommands": [
-                      {
-                        "text": "Still alive. That's progress enough for today.",
-                        "cmd": "TEXT"
-                      },
-                      {
-                        "label": "gate_guard_pass_hub",
-                        "cmd": "JUMP_TO_LABEL"
-                      }
-                    ],
-                    "cmd": "CONDITIONAL_BRANCH"
-                  }
-                ],
-                "cmd": "CONDITIONAL_BRANCH"
+                "cmd": "COMMENT",
+                "text": "This hub used to branch on flag:boss_killed_floor_6 / flag:boss_killed_floor_3, but no event in the game ever set either flag -- there are no boss events on floors 3 or 6 -- so two of the three replies were unreachable and only 'Still alive' could ever fire. G1 now rejects a condition on a flag nothing writes. Restore the branches together with the bosses that set the flags; the lines were: floor 6 -- \"You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner.\" / floor 3 -- \"The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper.\""
+              },
+              {
+                "text": "Still alive. That's progress enough for today.",
+                "cmd": "TEXT"
+              },
+              {
+                "label": "gate_guard_pass_hub",
+                "cmd": "JUMP_TO_LABEL"
               }
             ]
           },
