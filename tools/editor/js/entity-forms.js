@@ -36,6 +36,63 @@
             return opts;
         }
 
+        // State categories: a checkbox per registered category, because a state
+        // belongs to several at once (poison is negative, common and physical)
+        // and each is a separate handle STATE_CATEGORY_RATE can grab. Options
+        // come from engine.json, so the editor cannot offer one G1 rejects.
+        // The key is deleted rather than left as [] when nothing is ticked,
+        // keeping unauthored states out of the diff.
+        function buildStateCategoryPicker(container, state) {
+            const registry = (dbPayload.engine && dbPayload.engine.stateCategories) || [];
+            if (registry.length === 0) return;
+
+            const fs = document.createElement('fieldset');
+            fs.style.cssText = 'padding: 4px 6px; margin-top: 4px;';
+            const leg = document.createElement('legend');
+            leg.textContent = 'Categories';
+            fs.appendChild(leg);
+
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'display: flex; flex-wrap: wrap; gap: 2px 10px;';
+
+            registry.forEach(entry => {
+                const label = document.createElement('label');
+                label.style.cssText = 'display: flex; align-items: center; gap: 3px; font-size: 11px;';
+                if (entry.description) label.title = entry.description;
+
+                const box = document.createElement('input');
+                box.type = 'checkbox';
+                box.checked = (state.categories || []).indexOf(entry.category) !== -1;
+                box.onchange = () => {
+                    const current = (state.categories || []).slice();
+                    const at = current.indexOf(entry.category);
+                    if (box.checked && at === -1) {
+                        current.push(entry.category);
+                    } else if (!box.checked && at !== -1) {
+                        current.splice(at, 1);
+                    }
+                    // Keep registry order rather than click order, so the same
+                    // set of ticks always serialises the same way.
+                    const ordered = registry
+                        .map(r => r.category)
+                        .filter(c => current.indexOf(c) !== -1);
+                    if (ordered.length === 0) {
+                        delete state.categories;
+                    } else {
+                        state.categories = ordered;
+                    }
+                    setDirty(true);
+                };
+
+                label.appendChild(box);
+                label.appendChild(document.createTextNode(entry.label || entry.category));
+                wrap.appendChild(label);
+            });
+
+            fs.appendChild(wrap);
+            container.appendChild(fs);
+        }
+
         function buildActionSequencePicker(container, entity) {
             const fs = document.createElement('fieldset');
             fs.style.cssText = 'padding: 6px; margin-top: 6px; display: flex; flex-direction: column; gap: 4px;';
@@ -244,6 +301,13 @@
                     { kind: 'number', key: 'duration', label: 'Duration (turns, 9999 = permanent)',
                       fallback: 0, get: st => st.duration || 3 },
                     { kind: 'checkbox', key: 'removeAtDamage', label: 'Removed when taking damage', deleteIfFalse: true },
+                    // Categories are a LIST, not a single kind: a state is
+                    // routinely several things at once (poison is negative AND
+                    // common AND physical), and each one is a separate handle
+                    // STATE_CATEGORY_RATE can grab. Checkboxes come from the
+                    // engine.json registry, so the editor cannot offer a
+                    // category the validator would reject.
+                    { kind: 'custom', build: (c, st) => buildStateCategoryPicker(c, st) },
                     { kind: 'custom', build: (c, st) => buildTraitsEditor(c, st) }
                 ]
             },

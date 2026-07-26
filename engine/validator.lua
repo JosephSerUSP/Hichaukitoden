@@ -233,6 +233,64 @@ validator.run = function(loader)
         end
     end
 
+    -- State categories. Broad resistances key off these (STATE_CATEGORY_RATE),
+    -- so a typo'd category is worse than a no-op: it produces a state that no
+    -- blanket immunity covers and no cleanse finds, and nothing says so.
+    -- Traits naming a category are checked the same way, since a Ribbon that
+    -- resists "negatve" simply protects against nothing.
+    local knownCategories = {}
+    local categoryNames = {}
+    for _, c in ipairs((loader.engine and loader.engine.stateCategories) or {}) do
+        if c.category then
+            knownCategories[c.category] = true
+            table.insert(categoryNames, c.category)
+        end
+    end
+    table.sort(categoryNames)
+    if #categoryNames > 0 then
+        local categoryList = table.concat(categoryNames, ", ")
+        for stateId, state in pairs(loader.states or {}) do
+            local cats = state.categories
+            if cats ~= nil then
+                check(type(cats) == "table",
+                    "state '" .. tostring(stateId) .. "' categories must be a list")
+                if type(cats) == "table" then
+                    for _, c in ipairs(cats) do
+                        check(knownCategories[c] == true,
+                            "state '" .. tostring(stateId) .. "' names unknown category '"
+                            .. tostring(c) .. "' (" .. categoryList .. ")")
+                    end
+                end
+            end
+        end
+
+        local function checkCategoryTraits(traitList, ownerDesc)
+            for _, t in ipairs(traitList or {}) do
+                if t.code == "STATE_CATEGORY_RATE" then
+                    check(knownCategories[t.dataId] == true,
+                        ownerDesc .. " STATE_CATEGORY_RATE names unknown category '"
+                        .. tostring(t.dataId) .. "' (" .. categoryList .. ")")
+                elseif t.code == "STATE_RATE" then
+                    check(loader.getState(t.dataId) ~= nil,
+                        ownerDesc .. " STATE_RATE names unknown state '"
+                        .. tostring(t.dataId) .. "'")
+                end
+            end
+        end
+        for _, item in ipairs(loader.items or {}) do
+            checkCategoryTraits(item.traits, "item '" .. tostring(item.id) .. "'")
+        end
+        for _, actor in ipairs(loader.actors or {}) do
+            checkCategoryTraits(actor.traits, "actor '" .. tostring(actor.id) .. "'")
+        end
+        for pid, passive in pairs(loader.passives or {}) do
+            checkCategoryTraits(passive.traits, "passive '" .. tostring(pid) .. "'")
+        end
+        for sid, state in pairs(loader.states or {}) do
+            checkCategoryTraits(state.traits, "state '" .. tostring(sid) .. "'")
+        end
+    end
+
     -- An item excluded from ingredient selection AND from output pools can only
     -- be sold or consumed by something other than Item Creation -- that is the
     -- promotion-key shape, and it is deliberate. Reported, not failed, so the

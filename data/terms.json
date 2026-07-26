@@ -52,6 +52,7 @@
     "already_knows": "- {0} already knows that skill.",
     "param_up": "- {0}'s {1} rises by {2}!",
     "miss": "- {0} evades!",
+    "state_immune": "- {0} is unaffected.",
     "max_mp_up": "- Maximum MP rises by {0}!",
     "max_mp_capped": "- Maximum MP is already at its limit.",
     "ward_save": "{0} is pulled back from the brink!",

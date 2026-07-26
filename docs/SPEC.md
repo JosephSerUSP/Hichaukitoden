@@ -218,7 +218,7 @@ implementation kept alive by nothing but its own comment.
 
 The round-end one proved the cost. It had already drifted: it still branched
 on `state.id == "regen"` with rates from `system.json` after the live path
-became `HRG`-driven (§1.10), so the two paths disagreed about what
+became `HRG`-driven (§1.11), so the two paths disagreed about what
 regeneration *is*. The other two were a full duplicate flee roll (gold
 penalty included) and a full duplicate weighted encounter spawner.
 
@@ -374,7 +374,43 @@ counted, or landed on by a cursor. Item Creation must not merely bury a
 promotion key at the bottom of the ingredient list, and every future
 "selectable subset of a list source" is the same problem.
 
-### 1.10 The damage model (26.07.2026)
+### 1.10 States, categories and status infliction (26.07.2026)
+
+A state carries a **list** of categories from `engine.json -> stateCategories`
+(`negative`, `positive`, `physical`, `magical`, `mental`, `common`). A list,
+because a state is routinely several things at once — poison is negative *and*
+common *and* physical — and each tag is a separate handle a resistance can grab.
+G1 fails an unregistered category on a state or on a trait naming one, because a
+resistance keyed to `negatve` protects against nothing and says so nowhere.
+
+**`common` is earned, never inferred.** It marks an ordinary, commonplace
+affliction: the family a broad protection is meant to cover, and the tag a
+Ribbon-style blanket immunity keys off. Nothing is exempted by *absence* of a
+tag. This matters because the obvious alternative is broken: rates multiply, so
+a blanket authored against `negative` would also cover `dead` and quietly make
+its wearer immune to any authored death effect. Death simply never earns
+`common`.
+
+Infliction is a three-part chain, clamped to 0..1:
+
+```text
+final chance = skill chance * attacker STATUS_SUCCESS * target state rate
+```
+
+Splitting it three ways is what lets a control specialist be better at landing
+conditions without rewriting every skill, and a resistant creature shrug them
+off without the skill knowing who it hit. The target rate is itself the product
+of every `STATE_RATE` naming the state and every `STATE_CATEGORY_RATE` naming
+one of its categories — multiplicative, so a narrow and a broad resistance
+compound rather than one silently winning.
+
+**A rate of 0 is absolute immunity**: the state never lands, and a critical hit
+cannot force it. That is the one exemption the critical-status rule in §1.11
+has, and until `STATE_RATE` existed there was nothing for it to respect.
+Immunity emits a `state_immune` event and a line of text rather than passing
+silently, because a status that simply never appears looks identical to a bug.
+
+### 1.11 The damage model (26.07.2026)
 
 Damage is **relative**: a share of the attacker's power decided by the ratio
 to the defender's matching stat, per `docs/design/creature-parameters.md`.

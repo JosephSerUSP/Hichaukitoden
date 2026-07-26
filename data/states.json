@@ -1,6 +1,9 @@
 {
   "dead": {
     "id": "dead",
+    "categories": [
+      "negative"
+    ],
     "name": "Dead",
     "icon": 11,
     "restriction": 4,
@@ -12,6 +15,11 @@
   },
   "sleep": {
     "id": "sleep",
+    "categories": [
+      "negative",
+      "common",
+      "mental"
+    ],
     "name": "Sleep",
     "icon": 21,
     "restriction": 4,
@@ -26,6 +34,10 @@
   },
   "regen": {
     "id": "regen",
+    "categories": [
+      "positive",
+      "magical"
+    ],
     "name": "Regeneration",
     "icon": 22,
     "duration": 5,
@@ -38,6 +50,11 @@
   },
   "berserk": {
     "id": "berserk",
+    "categories": [
+      "negative",
+      "common",
+      "mental"
+    ],
     "name": "Berserk",
     "icon": 23,
     "duration": 3,
@@ -51,6 +68,11 @@
   },
   "weakened": {
     "id": "weakened",
+    "categories": [
+      "negative",
+      "common",
+      "physical"
+    ],
     "name": "Weakened",
     "icon": 24,
     "duration": 9999,
@@ -74,6 +96,11 @@
   },
   "poison": {
     "id": "poison",
+    "categories": [
+      "negative",
+      "common",
+      "physical"
+    ],
     "name": "Poison",
     "icon": 25,
     "duration": 3,
@@ -89,6 +116,10 @@
   },
   "defending": {
     "id": "defending",
+    "categories": [
+      "positive",
+      "physical"
+    ],
     "name": "Defending",
     "icon": 26,
     "duration": 1,
@@ -101,6 +132,10 @@
   },
   "warded": {
     "id": "warded",
+    "categories": [
+      "positive",
+      "magical"
+    ],
     "name": "Warded",
     "icon": 27,
     "duration": 9999,

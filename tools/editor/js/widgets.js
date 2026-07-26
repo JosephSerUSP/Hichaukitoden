@@ -698,6 +698,25 @@
 
         // Editable list of trait rows ({code, dataId?, value}), MZ-style,
         // built on the shared buildRowListEditor engine.
+        // The vocabulary a trait's dataId is drawn from. Each trait's dataId
+        // names a different kind of thing — a parameter, an element, a state,
+        // a state category — and the validator checks it against that kind, so
+        // the editor must offer the same one or it authors guaranteed G1
+        // failures.
+        function traitDataIdOptions(code) {
+            if (code === 'ELEMENT_CHANGE' || code === 'ELEMENT_ADD') {
+                return elementOptions(false);
+            }
+            if (code === 'STATE_RATE') {
+                return Object.keys(dbPayload.states || {});
+            }
+            if (code === 'STATE_CATEGORY_RATE') {
+                return ((dbPayload.engine && dbPayload.engine.stateCategories) || [])
+                    .map(c => ({ value: c.category, label: c.label || c.category }));
+            }
+            return PARAM_IDS;
+        }
+
         function buildTraitsEditor(container, owner, label) {
             owner.traits = owner.traits || [];
             buildRowListEditor(container, owner.traits, {
@@ -712,8 +731,11 @@
                         commit();
                     }, '1'));
                     if (traitUsesDataId(tr.code)) {
-                        // ELEMENT_CHANGE's dataId is an element; param traits use stat ids
-                        const dataIdOpts = tr.code === 'ELEMENT_CHANGE' ? elementOptions(false) : PARAM_IDS;
+                        // What a dataId MEANS depends on the trait, and offering
+                        // the wrong vocabulary produces data G1 rejects. Note
+                        // ELEMENT_ADD was previously offered stat ids like a
+                        // param trait, because only ELEMENT_CHANGE was named.
+                        const dataIdOpts = traitDataIdOptions(tr.code);
                         row.appendChild(makeSelect(dataIdOpts, tr.dataId || dataIdOpts[0], v => { tr.dataId = v; setDirty(true); }));
                     }
                     const v = document.createElement('input');

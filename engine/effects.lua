@@ -181,6 +181,33 @@ local function resolveDamage(effectData, a, b, session, context, events)
     return math.max(1, math.floor(raw)), critical
 end
 
+-- How susceptible `target` is to `stateId`: the product of every STATE_RATE
+-- naming that state and every STATE_CATEGORY_RATE naming one of its categories.
+-- Multiplicative so a narrow resistance and a broad one compound instead of one
+-- silently winning, and so a single 0 anywhere is absolute -- which is what
+-- makes "explicit immunity is a rate of zero" a rule the data can rely on.
+local function stateRate(target, stateId, session)
+    if not target or not session then return 1.0 end
+    local rate = 1.0
+    for _, found in ipairs(traits.findAllSources(target, "STATE_RATE", session)) do
+        if found.trait.dataId == stateId then
+            rate = rate * (found.trait.value or 1.0)
+        end
+    end
+    local state = session.loader.getState and session.loader.getState(stateId)
+    local categories = (state and state.categories) or {}
+    if #categories > 0 then
+        for _, found in ipairs(traits.findAllSources(target, "STATE_CATEGORY_RATE", session)) do
+            for _, category in ipairs(categories) do
+                if found.trait.dataId == category then
+                    rate = rate * (found.trait.value or 1.0)
+                end
+            end
+        end
+    end
+    return rate
+end
+
 -- context (optional): { element = "White", user = <battler>, isItem = true } —
 -- the element of the skill/item driving this effect, the creature performing
 -- the action (used for the two affinity layers on damage), and whether an item
@@ -251,22 +278,56 @@ function effects.apply(effectData, a, b, session, context)
         end
         
     elseif effectData.type == "add_status" then
+        -- The MZ-style infliction chain:
+        --
+        --   skill chance * attacker status-success * target state rate
+        --
+        -- clamped to 0..1. Splitting it three ways is what lets a control
+        -- specialist be better at landing conditions (its own rate) without
+        -- rewriting every skill, and a resistant creature shrug them off (its
+        -- rate) without the skill knowing who it hit.
+        local targetRate = stateRate(b, effectData.status, session)
+
+        -- Immunity first, and above everything. A rate of 0 means the state
+        -- never lands -- not on a lucky roll, and not from a critical hit,
+        -- which is the one thing that otherwise bypasses the roll entirely.
+        -- Announced rather than silent: a status that simply never appears
+        -- looks identical to a bug.
+        if targetRate <= 0 then
+            table.insert(events, {
+                type = "state_immune",
+                target = b,
+                state = effectData.status
+            })
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.state_immune",
+                    "- {0} is unaffected.", b.name)
+            })
+            return events
+        end
+
         -- Brigandine's rule: a damaging action that crits guarantees the status
         -- it carries. `context.critical` is set by the damage effect earlier in
         -- the SAME action, which is why the action context is shared across an
         -- effect list rather than rebuilt per effect. A non-damaging status
         -- action has no damage effect to set it and so never gets the guarantee.
-        --
-        -- NOTE: the design also exempts explicit immunity (target state rate 0),
-        -- which cannot be honored until STATE_RATE exists -- recorded in
-        -- docs/design/content-engine-gaps.md.
         local guaranteed = (context and context.critical) == true
+
+        local success = 1.0
+        if a and a ~= b then
+            success = 1.0 + traits.getRate(a, "STATUS_SUCCESS", session)
+        end
+        local chance = (effectData.chance or 1.0) * success * targetRate
+        if chance > 1.0 then chance = 1.0 end
+        if chance < 0 then chance = 0 end
+
         -- Strictly less-than: math.random() can return 0, and `roll <= chance`
         -- let an authored chance of 0 land on that draw. A 0% chance must mean
         -- never, or "explicit immunity is a rate of zero" is not a rule the
         -- data can rely on.
         local roll = math.random()
-        if guaranteed or roll < (effectData.chance or 1.0) then
+        if guaranteed or roll < chance then
             b:addState(effectData.status, effectData.duration)
             table.insert(events, {
                 type = "state_add",

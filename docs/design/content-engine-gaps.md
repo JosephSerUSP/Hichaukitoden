@@ -49,7 +49,6 @@ can land ahead of the balance rewrite it will eventually serve.
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
 | Armor penetration | No approved common penetration parameter | Validated effect/trait vocabulary that reduces or bypasses a defined share of defense |
-| Critical hits guarantee attached statuses **unless the target is immune** | The guarantee is live, but immunity cannot be expressed: a target state rate of zero has nothing to be zero | Depends on `STATE_RATE` below; until then a critical guarantees a status against every target |
 | The eight authored CRI values were balanced against a system that never ran | Seven weapons and one actor carried `CRI` while nothing in the engine ever rolled a critical, so the values are untested guesses now live as authored (Shattered Edge +25%, Radiant Blade Flavio +20%, Wind Dancer / Water Scepter / Holy Sword Gram +15%, Silver Blade / Dark Scepter Lucille +10%, Shadow Stalker +10%, on a 5% base) | A balance pass over crit rates against the trait budgets in `item-atlas-expansion.md`, which allows ordinary +2-4%, strong +5-8%, signature +10-15% — several shipped values already exceed the signature band |
 | Skill potency and MP bands against authored kits | The eight damaging skills carry provisional potencies (0.80-1.85) read off the potency table; MP costs are untouched and predate the model | Simulation against the skill-class table in `creature-parameters.md` |
 
@@ -57,11 +56,9 @@ can land ahead of the balance rewrite it will eventually serve.
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| MZ-style status chance: skill chance times attacker success rate times target state rate | `add_status` currently rolls only its raw `chance` | Status-success and per-state-rate traits, immunity at rate zero, shared chance resolver |
-| Critical damaging hit guarantees attached statuses unless immune | No critical-to-status relationship | Action/hit context passed to attached status effects |
 | Berserk raises ATK and forces basic Attack | Current Berserk only raises ATK | Reusable action restriction or forced-action trait implemented through battle command selection, not a Berserk-specific branch |
 | Defend protects against magic | Closed — see below; noted here because the old `PARAM_RATE def x2` is gone and any content that assumed doubled DEF should be re-read | — |
-| Ribbon blocks all ordinary negative states | No category-wide ordinary-negative-state immunity | State category metadata plus validated category resistance, or an equivalent general trait |
+| Ribbon's exact coverage | The mechanism exists (`STATE_CATEGORY_RATE common 0`); the item itself is unauthored, and which states earn `common` is a content decision that grows with the state roster | Author the item, and tag each new state as it lands |
 | Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
 | Blind, Silence, and other named cure targets | Some proposed cure targets do not yet exist as states | Author states and their reusable mechanical traits before shipping their cures |
 | Magic evasion is separate from physical evasion | One `EVA` covers both, so a creature cannot be nimble against blades and helpless against spells | A second evasion channel, if the roster ever needs the distinction; RPG Maker separates them and the current creatures do not obviously require it |
@@ -148,7 +145,7 @@ authority on what exists.
 Tested in `tests/test_item_vocabulary.lua`; none of it is observable to G2/G3,
 which is why it is unit-tested rather than left to the golden logs.
 
-Battle mathematics, SPEC §1.10 (26.07.2026). Unlike the item slice, this one
+Battle mathematics, SPEC §1.11 (26.07.2026). Unlike the item slice, this one
 **changed the golden logs**; they were regenerated under owner review, not to
 silence a diff.
 
@@ -159,6 +156,25 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+States and control, same date (SPEC S1.10). States now carry a LIST of
+categories from a registry (`negative`, `positive`, `physical`, `magical`,
+`mental`, `common`), and infliction is the MZ chain: skill chance times the
+attacker's `STATUS_SUCCESS` times the target's rate, that rate being the product
+of every `STATE_RATE` naming the state and every `STATE_CATEGORY_RATE` naming
+one of its categories. A rate of 0 is absolute immunity and a critical cannot
+force it, which closes the one place the critical-status rule overreached.
+
+`common` is an earned tag rather than an inference from `negative`, and that
+distinction is load-bearing: rates multiply, so a Ribbon authored against
+`negative` would also have covered `dead` and quietly made its wearer immune to
+any authored death effect. A test pins it. Tested in
+`tests/test_status_infliction.lua`.
+
+Found while wiring the editor: the traits editor offered stat ids as the dataId
+for ELEMENT_ADD, which is an element -- so that trait could only ever be
+authored into a G1 failure through the UI. Fixed with the same lookup the new
+state traits needed.
 
 Accuracy, same date. `HIT` and `EVA` were registered and `EVA` authored on
 Shadow Stalker, but nothing rolled either: every action always connected.

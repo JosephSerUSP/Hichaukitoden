@@ -2027,6 +2027,24 @@
       "description": "Multiplies Item Creation yield score (0.25 = +25%)."
     },
     {
+      "code": "STATE_RATE",
+      "label": "State Susceptibility %",
+      "usesDataId": true,
+      "description": "Multiplies the chance of the state named by dataId landing on the holder (0.5 = half as likely, 1.5 = half again). A value of 0 is explicit immunity: the state never lands, not even from a critical hit, which is the one thing that otherwise bypasses the roll."
+    },
+    {
+      "code": "STATE_CATEGORY_RATE",
+      "label": "State Category %",
+      "usesDataId": true,
+      "description": "As STATE_RATE, but for every state carrying the category named by dataId (see engine.stateCategories). One trait covers a whole family, which is how a Ribbon blocks ordinary negative states without listing them -- and why `unique` exists, so death and authored curses sit outside such a blanket. Multiplies with STATE_RATE rather than replacing it."
+    },
+    {
+      "code": "STATUS_SUCCESS",
+      "label": "Status Success +",
+      "usesDataId": false,
+      "description": "Multiplies the holder's chance of inflicting states (0.25 = +25%). The attacker's half of the infliction chain, which is what lets a control specialist be better at landing conditions without every one of its skills authoring a higher chance."
+    },
+    {
       "code": "DAMAGE_RATE",
       "label": "Damage Taken %",
       "usesDataId": false,
@@ -2459,6 +2477,38 @@
           "opacity": 0.6
         }
       ]
+    }
+  ],
+  "stateCategories": [
+    {
+      "category": "negative",
+      "label": "Negative",
+      "description": "Something done TO a creature against its interests. The axis broad resistances key off."
+    },
+    {
+      "category": "positive",
+      "label": "Positive",
+      "description": "A benefit. Kept as its own category rather than as the absence of negative, so a cleanse can strip one without touching the other."
+    },
+    {
+      "category": "physical",
+      "label": "Physical",
+      "description": "Afflicts the body: poison, injury, exhaustion."
+    },
+    {
+      "category": "magical",
+      "label": "Magical",
+      "description": "Arcane in origin, whatever it does."
+    },
+    {
+      "category": "mental",
+      "label": "Mental",
+      "description": "Acts on the mind rather than the body: sleep, rage, confusion."
+    },
+    {
+      "category": "common",
+      "label": "Common",
+      "description": "An ordinary, commonplace affliction -- the family a broad protection is meant to cover. This is the tag a Ribbon-style blanket immunity keys off (STATE_CATEGORY_RATE common 0), and it is deliberately a tag a state must EARN rather than a default. Nothing is exempted by inference: death and authored one-off curses simply never carry it, so no blanket can reach them. Resisting `negative` instead would, since rates multiply and death is negative too."
     }
   ],
   "itemScopes": [
