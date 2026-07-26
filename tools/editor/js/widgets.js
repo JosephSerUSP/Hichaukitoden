@@ -1055,8 +1055,6 @@
             'combat.victoryExp':           { label: 'Victory XP per Survivor', min: 0 },
             'combat.baseSpeed':            { label: 'Base Action Speed', min: 0 },
             'combat.speedPerLevel':        { label: 'Action Speed per Level', step: 0.1, min: 0 },
-            'combat.regenRate':            { label: 'Regen State: % Max HP / Turn', step: 0.01, min: 0, max: 1 },
-            'combat.poisonRate':           { label: 'Poison State: % Max HP / Turn', step: 0.01, min: 0, max: 1 },
             'combat.mpExhaustionDamage':   { label: 'MP Exhaustion Damage / Turn', min: 0 },
             'combat.battleItem':           { label: 'Battle "Item" Command Uses', widget: 'itemSelect' },
             'combat.defendSkillId':        { label: '"Defend" Command Skill', widget: 'skillSelect' },

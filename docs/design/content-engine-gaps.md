@@ -64,7 +64,7 @@ can land ahead of the balance rewrite it will eventually serve.
 | Ribbon blocks all ordinary negative states | No category-wide ordinary-negative-state immunity | State category metadata plus validated category resistance, or an equivalent general trait |
 | Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
 | Blind, Silence, and other named cure targets | Some proposed cure targets do not yet exist as states | Author states and their reusable mechanical traits before shipping their cures |
-| Accuracy and evasion are real | `EVA` is assigned to Shadow Stalker and `HIT` is declared, but nothing in the engine rolls to hit or to evade -- every action always connects. Golem, Talos, Giant, Hyperion and Kappa are all specified as inaccurate or low-evasion creatures, and none of that can currently be expressed | A hit/evade roll, which belongs in the owner-supervised battle path; until then no creature's accuracy claim should be written into a description |
+| Magic evasion is separate from physical evasion | One `EVA` covers both, so a creature cannot be nimble against blades and helpless against spells | A second evasion channel, if the roster ever needs the distinction; RPG Maker separates them and the current creatures do not obviously require it |
 
 ## Summoner MP and MPD
 
@@ -159,6 +159,13 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Accuracy, same date. `HIT` and `EVA` were registered and `EVA` authored on
+Shadow Stalker, but nothing rolled either: every action always connected.
+`APPLY_EFFECT` now rolls `HIT * (1 - EVA)` once per target before any effect
+resolves, and a miss skips that target's whole effect list. This is what makes
+the roster's clumsy heavy creatures expressible. It moved no golden line,
+because a certain outcome takes no random draw.
 
 Round-end HP drift, same date. `STATE_TICKS` branched on
 `state.id == "regen"` / `"poison"` with rates from `system.json`. It now sums

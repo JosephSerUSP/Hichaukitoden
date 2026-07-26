@@ -1607,8 +1607,11 @@ elseif paramDef.type == "script" then
     -- the hosts call unconditionally must exist and execute cleanly against
     -- a fresh session (behavioral regressions are covered by the golden
     -- battle log, tools/golden/check).
+    -- battle.round_end joined this list on 26.07.2026, when its Lua duplicate
+    -- in battle.lua was deleted: with no fallback left, a missing phase would
+    -- silently skip every end-of-round tick instead of failing.
     for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.escaped", "battle.encounter_check",
-        "exploration.step" }) do
+        "battle.round_end", "exploration.step" }) do
         check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
         if flow.has(phase) then
             local s = session.GameSession.new(loader)

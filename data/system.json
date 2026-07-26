@@ -131,8 +131,6 @@
     "criticalMultiplier": 1.5,
     "baseSpeed": 10,
     "speedPerLevel": 0.5,
-    "regenRate": 0.1,
-    "poisonRate": 0.1,
     "mpExhaustionDamage": 1,
     "battleItem": 1,
     "defendSkillId": "defend",

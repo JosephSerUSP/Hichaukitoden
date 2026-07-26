@@ -209,10 +209,33 @@ Removed under this rule (24.07.2026):
   self-initializes now instead of trapping callers who never ran the boot
   sequence.
 
-**The purge is complete** — no known dual-read paths, compat shims, or
-legacy fallbacks remain. `presentation/renderer.lua` was investigated and
-deliberately NOT split: it is live shared presentation (§1.2), so a file
-split would be churn with regression risk and no functional gain.
+**Correction (26.07.2026): the purge was not complete.** Three
+`if flow.has(phase) then ... else <legacy Lua> end` fallbacks survived it,
+because they predate the rule and read as deliberate ("SPEC S4 fallback").
+They are not: hosts call flow phases unconditionally and the validator
+requires them, so the `else` arm is unreachable — a second implementation
+kept alive by nothing but its own comment.
+
+The round-end one was deleted after it proved the point. It had already
+drifted: it still branched on `state.id == "regen"` with rates from
+`system.json` after the live path became `HRG`-driven (§1.10), so the two
+paths disagreed about what regeneration *is*. `battle.round_end` joined the
+validator's required-phase list in the same change, since with the fallback
+gone a missing phase would silently skip every end-of-round tick.
+`combat.regenRate` / `combat.poisonRate` went with it — nothing else read
+them, and the editor was still offering both as System settings that changed
+nothing.
+
+**Still outstanding**, same shape, both in the owner-supervised battle path:
+
+- `battle.flee_attempt` (`engine/battle.lua`) — a full duplicate flee roll,
+  gold penalty included;
+- `battle.battle_start` (`engine/scenes/battle.lua`) — a full duplicate
+  weighted encounter spawner.
+
+`presentation/renderer.lua` was investigated and deliberately NOT split: it
+is live shared presentation (§1.2), so a file split would be churn with
+regression risk and no functional gain.
 
 ### 1.6 Map cell overrides (unified, 23.07.2026)
 
@@ -399,6 +422,23 @@ why `APPLY_EFFECT` builds **one context per target** shared across the action's
 effect list — the damage effect records the crit on it and the `add_status`
 effect after it reads it. (The design also exempts explicit immunity, which
 waits on `STATE_RATE`; see the gap ledger.)
+
+**Accuracy** is rolled once per target in `APPLY_EFFECT`, before any effect
+resolves: `HIT` (attacker, base 100%) times `1 - EVA` (target, base 0%). A miss
+skips that target's **whole** effect list, so an attack that misses cannot
+still apply the status it carries, and accuracy is per target, so a multi-target
+attack can connect with one creature and be dodged by the next.
+
+Only offensive actions roll — the test is "carries damage, aimed at someone
+else". A potion fed to an ally and a buff cast on oneself have nothing to
+dodge, and letting them whiff would invent a failure the design never asked
+for. A certain outcome takes no random draw at all, which is why adding
+accuracy moved no existing golden line.
+
+Before this, `HIT` and `EVA` were registered, `EVA` was authored on Shadow
+Stalker, and nothing ever rolled either: every action always connected. Five
+planned creatures (Golem, Talos, Giant, Hyperion, Kappa) are specified as
+inaccurate or low-evasion, and none of that was expressible.
 
 **Round-end HP drift** is the `HRG` trait summed across every source, applied
 by `STATE_TICKS`. Negative is degeneration, so poison is not a second

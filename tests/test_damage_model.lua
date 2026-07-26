@@ -315,5 +315,89 @@ do
         "every damaging skill authors a power source (" .. #strays .. " do not)")
 end
 
+------------------------------------------------------------ hit and evade --
+
+-- Accuracy is rolled in interpreter.APPLY_EFFECT, not here, so these drive a
+-- real action through the interpreter rather than effects.apply directly.
+do
+    local interpreter = require("engine.interpreter")
+
+    local function act(attackerTraits, targetTraits, roll, skillId)
+        local sess, a = rig({ atk = 100, def = 10, mat = 10, mdf = 10, maxHp = 500 })
+        local _, b = rig({ atk = 10, def = 100, mat = 10, mdf = 10, maxHp = 9999 })
+        a.actorData.traits = attackerTraits or {}
+        b.actorData.traits = targetTraits or {}
+        b.hp = 9000
+        local ctx = {
+            session = sess, events = {},
+            a = a, targets = { b },
+            skill = loader.getSkill(skillId or "attack"),
+        }
+        withRandom(roll, function()
+            interpreter.runImmediate({ { cmd = "APPLY_EFFECT" } }, ctx)
+        end)
+        local missed, damaged = false, false
+        for _, ev in ipairs(ctx.events) do
+            if ev.type == "miss" then missed = true end
+            if ev.type == "damage" then damaged = true end
+        end
+        return missed, damaged, b
+    end
+
+    -- Base case: 100% hit, 0% evade -- no roll can miss.
+    local missed, damaged = act(nil, nil, { 0.0 })
+    check(not missed and damaged, "with base accuracy and no evasion, an attack always connects")
+
+    -- 50% evasion against a draw under the connect chance.
+    local eva = { { code = "EVA", value = 0.5 } }
+    missed, damaged = act(nil, eva, { 0.9, NO_CRIT })
+    check(missed and not damaged, "a high draw against an evasive target misses")
+
+    missed, damaged = act(nil, eva, { 0.1, NO_CRIT })
+    check(not missed and damaged, "a low draw against an evasive target connects")
+
+    -- Total evasion cannot be beaten, and takes no draw at all.
+    missed, damaged = act(nil, { { code = "EVA", value = 1.0 } }, { 0.0 })
+    check(missed and not damaged, "100% evasion is never hit")
+
+    -- An inaccurate attacker: the Golem/Kappa case the roster specifies.
+    missed, damaged = act({ { code = "HIT", value = -0.5 } }, nil, { 0.9, NO_CRIT })
+    check(missed and not damaged, "a clumsy attacker misses on a high draw")
+    missed, damaged = act({ { code = "HIT", value = -0.5 } }, nil, { 0.1, NO_CRIT })
+    check(not missed and damaged, "a clumsy attacker still connects on a low draw")
+
+    -- A miss must skip the WHOLE effect list: needleShot carries poison, and an
+    -- attack that missed cannot still poison its target.
+    do
+        local m, d, target = act(nil, { { code = "EVA", value = 1.0 } }, { 0.0 }, "needleShot")
+        local poisoned = false
+        for _, st in ipairs(target.states or {}) do
+            if st.id == "poison" then poisoned = true end
+        end
+        check(m and not d and not poisoned,
+            "a missed attack applies none of its attached statuses")
+    end
+
+    -- Healing and self-buffs have nothing to dodge; they must never whiff.
+    do
+        local sess, a = rig({ atk = 10, def = 10, mat = 100, mdf = 10, maxHp = 500 })
+        a.actorData.traits = { { code = "EVA", value = 1.0 } }
+        a.hp = 10
+        local ctx = {
+            session = sess, events = {}, a = a, targets = { a },
+            skill = loader.getSkill("soothingMote"),
+        }
+        withRandom({ 0.0 }, function()
+            interpreter.runImmediate({ { cmd = "APPLY_EFFECT" } }, ctx)
+        end)
+        local missed, healed = false, false
+        for _, ev in ipairs(ctx.events) do
+            if ev.type == "miss" then missed = true end
+            if ev.type == "heal" then healed = true end
+        end
+        check(not missed and healed, "a heal on oneself never rolls to hit")
+    end
+end
+
 print(("=== Damage Model Tests Completed: %d passed, %d failed ==="):format(passed, failed))
 if failed > 0 then error("damage model tests failed") end

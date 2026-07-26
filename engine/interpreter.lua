@@ -1247,14 +1247,54 @@ handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
 end
 
+-- Whether an action rolls to connect at all. Only offensive actions do: a
+-- potion fed to an ally and a buff cast on oneself have nothing to dodge, and
+-- an engine that let them whiff would be inventing a failure the design never
+-- asked for. The test is "carries damage, aimed at someone else", which is the
+-- smallest rule that makes an inaccurate creature expressible -- Golem, Talos,
+-- Giant, Hyperion and Kappa are all specified as clumsy, and none of it could
+-- be said before HIT/EVA were rolled at all.
+local function rollsToHit(act, actor, target)
+    if not actor or not target or actor == target then return false end
+    for _, eff in ipairs(act.effects or {}) do
+        if eff.type == "hp_damage" or eff.type == "hp_drain" then return true end
+    end
+    return false
+end
+
+-- One draw, not two: HIT is the attacker's accuracy (base 100%) and EVA the
+-- target's evasion (base 0%), so the chance to connect is their product.
+local function connects(actor, target, session)
+    local traitsMod = require("engine.traits")
+    local hit = traitsMod.getRate(actor, "HIT", session)
+    local eva = traitsMod.getRate(target, "EVA", session)
+    local chance = hit * (1 - eva)
+    if chance >= 1 then return true end
+    if chance <= 0 then return false end
+    return math.random() < chance
+end
+
 handlers.APPLY_EFFECT = function(cmd, ctx)
     local effects = require("engine.effects")
     local act = ctx.skill or ctx.item
     if not act then return end
-    
+
     local element = act.element
 
     for _, tgt in ipairs(ctx.targets or {}) do
+        -- Accuracy is per target: a multi-target attack can connect with one
+        -- creature and be dodged by the next, and a miss skips that target's
+        -- WHOLE effect list -- an attack that misses must not still apply the
+        -- status it carries.
+        if rollsToHit(act, ctx.a, tgt) and not connects(ctx.a, tgt, ctx.session) then
+            table.insert(ctx.events, { type = "miss", actor = ctx.a, target = tgt })
+            table.insert(ctx.events, {
+                type = "text",
+                text = ctx.session.loader.formatTerm("battle.miss", "- {0} evades!", tgt.name),
+            })
+            goto nextTarget
+        end
+
         -- ONE context per target, shared by every effect of the action, so an
         -- attached status can see that the damage effect before it landed
         -- critically. Rebuilt per target because a crit on one enemy says
@@ -1269,6 +1309,7 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
             local a = ctx.a or tgt
             emitAll(ctx, effects.apply(eff, a, tgt, ctx.session, actionCtx))
         end
+        ::nextTarget::
     end
 end
 

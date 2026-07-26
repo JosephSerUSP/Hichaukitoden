@@ -465,117 +465,26 @@ function Battle:processRoundEnd(roundEvents)
         return
     end
     
-    if flow.has("battle.round_end") then
-        local flowEvents = flow.run("battle.round_end", {
-            session = self.session,
-            battle = self,
-        })
-        for _, ev in ipairs(flowEvents) do
-            table.insert(roundEvents, ev)
-        end
-        -- Round-end ticks (poison) can wipe the party too
-        if self:isDefeat() and not self:tryDeployWave(roundEvents) then
-            table.insert(roundEvents, { type = "defeat" })
-        end
-        self.round = self.round + 1
-        return
+    -- Called unconditionally: battle.round_end is a required phase (G1 fails
+    -- without it), so there is nothing to fall back to. The Lua duplicate that
+    -- used to sit below this was removed on 26.07.2026 -- it had already
+    -- drifted, still branching on `state.id == "regen"` with rates from
+    -- system.json after the live path became HRG-driven, which is precisely the
+    -- failure "two paths for one behavior is the bug" names.
+    local flowEvents = flow.run("battle.round_end", {
+        session = self.session,
+        battle = self,
+    })
+    for _, ev in ipairs(flowEvents) do
+        table.insert(roundEvents, ev)
     end
-
-    -- Legacy block: runs only when the phase is removed from flows.json
-    -- (SPEC S4 fallback rule)
-    -- Apply end of turn effects (poison, regen, status decay)
-    for _, battler in ipairs(self:getAllActiveBattlers()) do
-        if not battler:isDead() then
-            -- Regeneration
-            for _, state in ipairs(battler.states) do
-                if state.id == "regen" then
-                    local maxHp = traits.getParam(battler, "maxHp", self.session)
-                    local heal = math.floor(maxHp * (config.combat and config.combat.regenRate or 0.1))
-                    battler.hp = math.min(maxHp, battler.hp + heal)
-                    table.insert(roundEvents, {
-                        type = "heal",
-                        target = battler,
-                        value = heal
-                    })
-                elseif state.id == "poison" then
-                    local dmg = math.floor(traits.getParam(battler, "maxHp", self.session) * (config.combat and config.combat.poisonRate or 0.1))
-                    battler.hp = math.max(0, battler.hp - dmg)
-                    table.insert(roundEvents, {
-                        type = "damage",
-                        target = battler,
-                        value = dmg
-                    })
-                    if battler.hp <= 0 then
-                        battler:addState("dead")
-                        table.insert(roundEvents, {
-                            type = "death",
-                            target = battler
-                        })
-                    end
-                end
-            end
-            
-            -- Decay turn counts
-            for i = #battler.states, 1, -1 do
-                local state = battler.states[i]
-                if state.duration and state.duration ~= 9999 then
-                    state.duration = state.duration - 1
-                    if state.duration <= 0 then
-                        table.remove(battler.states, i)
-                        table.insert(roundEvents, {
-                            type = "state_remove",
-                            target = battler,
-                            state = state.id
-                        })
-                    end
-                end
-            end
-        end
-    end
-    
-    -- MP drain at round end for each active monster (no drain on safe maps
-    -- or when no map is loaded, e.g. test battles)
-    local mapData = self.session.currentMapData
-    if not (mapData and mapData.safe) then
-        for i = 1, config.MAX_PARTY_SIZE do
-            local ally = self.allies[i]
-            if ally and not ally:isDead() then
-                local drain = traits.getParam(ally, "mpd", self.session)
-                self.session.mp = math.max(0, self.session.mp - drain)
-                table.insert(roundEvents, {
-                    type = "mp_drain",
-                    value = drain,
-                    actor = ally
-                })
-            end
-        end
-        if self.session.mp <= 0 then
-            -- Party takes progressive damage at 0 MP
-            for i = 1, config.MAX_PARTY_SIZE do
-                local ally = self.allies[i]
-                if ally and not ally:isDead() then
-                    local exhaustDmg = config.combat and config.combat.mpExhaustionDamage or 1
-                    ally.hp = math.max(1, ally.hp - exhaustDmg)
-                    table.insert(roundEvents, {
-                        type = "damage",
-                        target = ally,
-                        value = exhaustDmg
-                    })
-                    table.insert(roundEvents, {
-                        type = "text",
-                        text = self.session.loader.formatTerm("battle.mp_exhaustion", "{0} suffers from MP exhaustion!", ally.name)
-                    })
-                end
-            end
-        end
-    end
-    
     -- Round-end ticks (poison) can wipe the party too
     if self:isDefeat() and not self:tryDeployWave(roundEvents) then
         table.insert(roundEvents, { type = "defeat" })
     end
     self.round = self.round + 1
 end
+
 
 function Battle:resolveRound(collectedActions)
     local roundEvents = {}
