@@ -207,6 +207,47 @@ validator.run = function(loader)
         end
     end
 
+    -- Use occasion. `scope` is the independent axis that decides whether an item
+    -- is offered in battle, in the field, both, or never (engine/usability.lua),
+    -- and it is registry-enumerated so the editor offers the same four words the
+    -- engine understands. Gated because an unknown scope reads as a restriction
+    -- and behaves as none: usability's if-chain falls through to usable
+    -- everywhere, so a typo'd "feild" silently ships a battle-usable meal.
+    local scopeNames = {}
+    local knownScopes = {}
+    for _, s in ipairs((loader.engine and loader.engine.itemScopes) or {}) do
+        if s.scope then
+            knownScopes[s.scope] = true
+            table.insert(scopeNames, s.scope)
+        end
+    end
+    table.sort(scopeNames)
+    if #scopeNames > 0 then
+        for _, item in ipairs(loader.items or {}) do
+            if item.scope ~= nil then
+                check(knownScopes[item.scope] == true,
+                    "item '" .. tostring(item.id) .. "' ('" .. tostring(item.name)
+                    .. "') has unknown scope '" .. tostring(item.scope)
+                    .. "' (" .. table.concat(scopeNames, ", ") .. ")")
+            end
+        end
+    end
+
+    -- An item excluded from ingredient selection AND from output pools can only
+    -- be sold or consumed by something other than Item Creation -- that is the
+    -- promotion-key shape, and it is deliberate. Reported, not failed, so the
+    -- author can see the total is what they meant it to be.
+    local craftInert = 0
+    for _, item in ipairs(loader.items or {}) do
+        local meta = item.meta or {}
+        if meta.craftable == false and meta.craftIngredient == false then
+            craftInert = craftInert + 1
+        end
+    end
+    if craftInert > 0 then
+        print("[validator] items outside Item Creation entirely (neither ingredient nor output): " .. craftInert)
+    end
+
     local undeclaredWarnings = 0
     local function validateMeta(metaObj, collName, entryId)
         if not metaObj then return end
@@ -1785,6 +1826,17 @@ elseif paramDef.type == "script" then
                                 if block.cursor ~= nil then
                                     check(type(block.cursor) == "string",
                                         sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: 'cursor' must be a string expression")
+                                end
+                                -- Row formulas evaluated per row: they cannot be
+                                -- compiled here (the mock context has no row
+                                -- fields), but a non-string is a silent no-op --
+                                -- `filter: true` would drop nothing while reading
+                                -- as if it filtered.
+                                for _, rowKey in ipairs({ "filter", "priority", "highlight" }) do
+                                    if block[rowKey] ~= nil then
+                                        check(type(block[rowKey]) == "string",
+                                            sceneDesc .. " windows[" .. wi .. "] '" .. tostring(winDef.id) .. "' content[" .. bi .. "] list block: '" .. rowKey .. "' must be a string expression")
+                                    end
                                 end
                                 -- Verify known list sources resolve syntactically.
                                 local src = block.listId or ""

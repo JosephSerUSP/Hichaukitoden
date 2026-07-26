@@ -40,6 +40,12 @@ function usability.canUseItem(item, target, context)
                 if (session.mp or 0) >= maxMp then
                     return false, "MP is already full"
                 end
+            elseif eff.type == "max_mp_plus" and session then
+                local sys = (session.loader and session.loader.system
+                    and session.loader.system.summoner) or {}
+                if (session.maxMp or 0) >= (sys.maxMpCap or 9999) then
+                    return false, "Maximum MP is already at its limit"
+                end
             elseif eff.type == "recruit_egg" and session then
                 local partyFull = (#(session.party or {}) >= 4)
                 local reserveFull = (#(session.reserve or {}) >= 16)

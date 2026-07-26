@@ -99,10 +99,21 @@ local function evaluateFormula(expr, a, b, session, events)
     return val
 end
 
--- context (optional): { element = "White", user = <battler> } — the element of
--- the skill/item driving this effect and the creature performing the action,
--- used for the two affinity layers on damage. `user` is passed separately from
--- `a` because for items `a` is the recipient, not the wielder.
+-- ITEM_EFFECT_RATE (RPG Maker's Pharmacology): scales what an item is worth to
+-- the creature receiving it. Read from `b` — the recipient — because field item
+-- use has no separate wielder, so a rate read from the user would silently do
+-- nothing for every meal eaten outside battle. Skills are deliberately not
+-- scaled: this is a constitution, not a spell amplifier.
+local function itemRate(b, session, context)
+    if not (context and context.isItem) or not b or not session then return 1.0 end
+    return 1.0 + traits.getRate(b, "ITEM_EFFECT_RATE", session)
+end
+
+-- context (optional): { element = "White", user = <battler>, isItem = true } —
+-- the element of the skill/item driving this effect, the creature performing
+-- the action (used for the two affinity layers on damage), and whether an item
+-- rather than a skill drives it. `user` is passed separately from `a` because
+-- for items `a` is the recipient, not the wielder.
 function effects.apply(effectData, a, b, session, context)
     local events = {}
     local ctxElement = context and context.element or nil
@@ -129,7 +140,7 @@ function effects.apply(effectData, a, b, session, context)
         end
         
     elseif effectData.type == "hp_heal" then
-        local val = evaluateFormula(effectData.formula, a, b, session, events)
+        local val = evaluateFormula(effectData.formula, a, b, session, events) * itemRate(b, session, context)
         local maxHp = traits.getParam(b, "maxHp", session)
         local healVal = math.min(maxHp - b.hp, math.floor(val))
         b.hp = b.hp + healVal
@@ -182,7 +193,12 @@ function effects.apply(effectData, a, b, session, context)
     -- battle and from the field menu.
     elseif effectData.type == "hp" then
         local maxHp = traits.getParam(b, "maxHp", session)
-        local healVal = math.max(0, math.min(maxHp - b.hp, effectData.value or 0))
+        -- Flat + percentage of the recipient's own Max HP. Both parts are
+        -- optional, so one effect type covers a 30 HP herb, a "restores a
+        -- quarter of HP" meal, and the hybrid foods that are both.
+        local raw = (effectData.value or 0) + maxHp * (effectData.percent or 0)
+        local healVal = math.max(0, math.min(maxHp - b.hp,
+            math.floor(raw * itemRate(b, session, context))))
         b.hp = b.hp + healVal
         table.insert(events, {
             type = "heal",
@@ -313,14 +329,41 @@ function effects.apply(effectData, a, b, session, context)
             })
         end
 
-    -- Restores the summoner's shared MP pool (e.g. pub drinks)
+    -- Restores the summoner's shared MP pool (e.g. pub drinks). Percentage is
+    -- of Max MP, which is what lets a draught stay meaningful as the cap climbs
+    -- from the opening scale toward maxMpCap instead of becoming a rounding
+    -- error. ITEM_EFFECT_RATE reads from the recipient, and the pool has none.
     elseif effectData.type == "mp_heal" then
-        local healVal = math.max(0, math.min(session.maxMp - session.mp, effectData.value or 0))
+        local raw = (effectData.value or 0) + (session.maxMp or 0) * (effectData.percent or 0)
+        local healVal = math.max(0, math.min(session.maxMp - session.mp, math.floor(raw)))
         session.mp = session.mp + healVal
         table.insert(events, {
             type = "text",
             text = session.loader.formatTerm("battle.recovers_mp", "- {0} MP restored.", healVal)
         })
+
+    -- Permanent Summoner Max MP. Capped by system.summoner.maxMpCap and saved
+    -- with the session, so this is the item-scale counterpart of the much
+    -- larger increases major events are meant to grant. Restores the gain too,
+    -- matching how the maxHp effect heals what it adds.
+    elseif effectData.type == "max_mp_plus" then
+        local sys = (session.loader.system and session.loader.system.summoner) or {}
+        local cap = sys.maxMpCap or 9999
+        local gain = math.max(0, math.floor(effectData.value or 0))
+        local applied = math.min(gain, math.max(0, cap - (session.maxMp or 0)))
+        session.maxMp = (session.maxMp or 0) + applied
+        session.mp = math.min(session.maxMp, (session.mp or 0) + applied)
+        if applied > 0 then
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.max_mp_up", "- Maximum MP rises by {0}!", applied)
+            })
+        else
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.max_mp_capped", "- Maximum MP is already at its limit.")
+            })
+        end
 
     -- Cures the state named in value (e.g. wine curing "weakened")
     elseif effectData.type == "remove_status" then

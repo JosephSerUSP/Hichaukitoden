@@ -105,6 +105,7 @@ local function applyWindowEvent(state, ev)
         if w then
             w.listId = ev.listId
             w.format = ev.format
+            w.filter = ev.filter
             w.priority = ev.priority
             w.highlight = ev.highlight
             w.sprite = ev.sprite

@@ -294,6 +294,59 @@ Not in scope for this pass (§3, still open): actual weighted-random
 picks between variants by weight yet), adjacency/context predicates,
 prefabs, and zone/region tagging.
 
+### 1.9 Item vocabulary (26.07.2026)
+
+The item atlas planned in `docs/design/item-atlas-expansion.md` needs an item
+to answer several independent questions at once — when it may be used, what it
+restores, whether Item Creation may consume or produce it — and each of those
+was previously either unauthorable or silently ignored. The primitives below
+exist so that atlas can be authored without content-specific Lua. They are
+reusable and registry-backed; none of them names an item.
+
+**Use occasion.** `item.scope` is the independent occasion axis:
+`always` (the unauthored default), `battle`, `field`, `none`.
+`engine/usability.lua` has always branched on it; what is new is that
+`engine.json -> itemScopes` enumerates the four words, **G1 fails an unknown
+scope**, and the editor's Use Occasion select is built from that registry.
+This is a fail-loud fix, not a feature: an unrecognized scope fell through
+usability's if-chain to "usable everywhere", so a typo'd `feild` read as a
+restriction and behaved as none.
+
+**Percentage recovery.** The `hp` and `mp_heal` effects take `percent`
+alongside `value` — a share of the recipient's Max HP and of the summoner's
+Max MP respectively. Either part may stand alone, so one effect type covers
+flat, percentage and hybrid restoration. The percentage form is what keeps a
+food meaningful across creatures whose Max HP differ by an order of magnitude,
+and a draught meaningful as Max MP climbs.
+
+**Permanent Max MP.** `max_mp_plus` raises `session.maxMp` (already saved),
+clamped to `system.summoner.maxMpCap`, and restores what it added. Usability
+refuses the item at the cap rather than consuming it for nothing, the same
+guard shape full-HP and known-skill items use.
+
+**`ITEM_EFFECT_RATE`.** RPG Maker's Pharmacology: multiplies the magnitude of
+item effects. It is read from the **recipient**, not the wielder, because
+field item use has no separate wielder — a rate read from the user would do
+nothing for every meal eaten outside battle. Skill effects are deliberately
+untouched; this is a constitution, not a spell amplifier. Permanent gains
+(`param_plus`, `maxHp`) are untouched too: an item that grants +1 ATK forever
+grants exactly that.
+
+**Ingredient exclusion.** `meta.craftIngredient: false` keeps an item out of
+Item Creation *ingredient selection*, independent of `meta.craftable: false`,
+which only excludes *outputs*. Both exclusions are needed because the two
+policies differ: monster remains are ingredients that are never produced, and
+a promotion key is neither. `craft.isIngredient` is the one shared reading;
+the crafting scene applies it through the list `filter` below, and G1 reports
+the count of items outside Item Creation entirely.
+
+**List `filter`.** `SET_LIST` (and the equivalent declarative list block)
+takes a `filter` row formula that **drops** rows, where `priority` only sorts
+them first. It runs before the sort, so a hidden row cannot be selected,
+counted, or landed on by a cursor. Item Creation must not merely bury a
+promotion key at the bottom of the ingredient list, and every future
+"selectable subset of a list source" is the same problem.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

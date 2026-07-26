@@ -178,6 +178,20 @@
                       set: (it, v) => {
                           if (v === '') { delete it.target; } else { it.target = v; }
                       } },
+                    // Use occasion. Options come from engine.json itemScopes so
+                    // the editor cannot offer a word the engine does not know;
+                    // '' writes nothing, keeping "always" the unauthored default
+                    // that most items should stay at.
+                    { row: 'main', kind: 'select', key: 'scope', label: 'Use Occasion',
+                      when: it => it.type !== 'equipment',
+                      options: () => [{ value: '', label: 'Battle and field (default)' }].concat(
+                          ((dbPayload.engine && dbPayload.engine.itemScopes) || [])
+                              .filter(s => s.scope !== 'always')
+                              .map(s => ({ value: s.scope, label: s.label || s.scope }))),
+                      get: it => it.scope === 'always' ? '' : (it.scope || ''),
+                      set: (it, v) => {
+                          if (v === '') { delete it.scope; } else { it.scope = v; }
+                      } },
                     { row: 'main', kind: 'number', key: 'cost', label: 'Buy Cost (G)', fallback: 0 },
                     { kind: 'animationSelect', key: 'animation', label: 'Animation',
                       when: it => it.type !== 'equipment' },
@@ -427,6 +441,15 @@
                       } },
                     // Where that membership came from: authored on the item,
                     // implied by disciplineDefaults, or absent.
+                    // Ingredient eligibility is the other half of the crafting
+                    // relationship and is independent of output membership: the
+                    // remains policy is "ingredient, never output", the
+                    // promotion-key policy is neither.
+                    { key: 'craftIngredient', label: 'Usable As Ingredient',
+                      values: it => (it.meta || {}).craftIngredient === false
+                          ? [{ value: 'no', label: 'no',
+                               title: 'Excluded from Item Creation ingredient selection' }]
+                          : [{ value: 'yes', label: 'yes' }] },
                     { key: 'membership', label: 'Membership',
                       values: it => {
                           const meta = it.meta || {};

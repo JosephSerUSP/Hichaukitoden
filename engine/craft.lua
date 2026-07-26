@@ -173,6 +173,16 @@ function craft.pool(kind, loader)
     return out
 end
 
+-- Whether an item may be SELECTED as an ingredient. Independent of
+-- `craft.pool` above, which answers whether an item may be PRODUCED: monster
+-- remains are ingredients that are never output (`craftable: false` alone),
+-- while a promotion key is neither, and only the second exclusion can say so.
+-- One shared reading so the scene's list, the validator and the editor cannot
+-- drift apart on what is selectable.
+function craft.isIngredient(item)
+    return item ~= nil and (item.meta or {}).craftIngredient ~= false
+end
+
 -- -------------------------------------------------------------- blending --
 
 -- The stronger element asserts itself in a mixture instead of meeting at the

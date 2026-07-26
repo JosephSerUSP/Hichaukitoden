@@ -105,6 +105,7 @@
             "type": "list",
             "listId": "inventory",
             "format": "{name} (x{qty})",
+            "filter": "meta.craftIngredient ~= false",
             "priority": "meta.craftKind == v.discKind",
             "cursor": "v.cursorIdx"
           }

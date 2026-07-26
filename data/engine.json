@@ -218,6 +218,14 @@
       "description": "Set false to keep an item out of Item Creation entirely (quest and key items). Opt-out, because signatures are derived and every item otherwise acquires one."
     },
     {
+      "key": "craftIngredient",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "flag",
+      "description": "Set false to keep an item out of Item Creation INGREDIENT selection. Independent of `craftable`, which only excludes outputs: monster remains are ingredients that are never produced (craftable false, craftIngredient absent), while a promotion key is neither (both false). Opt-out for the same reason craftable is."
+    },
+    {
       "key": "detect",
       "appliesTo": [
         "mapEvents",
@@ -1421,6 +1429,10 @@
           "type": "text"
         },
         {
+          "key": "filter",
+          "type": "text"
+        },
+        {
           "key": "priority",
           "type": "text"
         },
@@ -1453,7 +1465,7 @@
         "scene"
       ],
       "interactive": false,
-      "description": "Binds a list source to a window. Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row. slot/member are draw-time formulas for the 'equipSlots' and 'equipment' sources (slot: 1=Weapon 2=Armor 3=Accessory, member: party index)."
+      "description": "Binds a list source to a window. `filter` is a row formula that DROPS rows it rejects, where `priority` only sorts them first -- use it when a row must not be selectable at all (Item Creation hiding meta.craftIngredient == false). Optional row widgets: sprite = row field holding a small battler sheet key; gaugeValue/gaugeMax = row-scoped formulas drawn as a bar under each row. slot/member are draw-time formulas for the 'equipSlots' and 'equipment' sources (slot: 1=Weapon 2=Armor 3=Accessory, member: party index)."
     },
     {
       "id": "SET_TEXT",
@@ -1788,11 +1800,12 @@
     },
     {
       "id": "hp",
-      "label": "Flat HP Restore",
+      "label": "HP Restore",
       "params": [
-        "value"
+        "value",
+        "percent"
       ],
-      "description": "Item-style flat HP restore."
+      "description": "Restores `value` HP plus `percent` of the target's Max HP (0.25 = 25%). Either may stand alone, so one effect covers flat, percentage and hybrid recovery -- a percentage keeps a food relevant to creatures whose Max HP differ by an order of magnitude."
     },
     {
       "id": "maxHp",
@@ -1831,9 +1844,18 @@
       "id": "mp_heal",
       "label": "MP Restore",
       "params": [
+        "value",
+        "percent"
+      ],
+      "description": "Restores `value` MP plus `percent` of the summoner's Max MP (0.10 = 10%) to the shared pool. The percentage form is what keeps a draught meaningful as Max MP climbs."
+    },
+    {
+      "id": "max_mp_plus",
+      "label": "Max MP Up",
+      "params": [
         "value"
       ],
-      "description": "Restores the summoner's shared MP pool."
+      "description": "Permanently raises the summoner's Max MP by value, clamped to system.summoner.maxMpCap, and restores the same amount. Saved with the session, so it is the item-scale counterpart of the large increases major events grant."
     },
     {
       "id": "remove_status",
@@ -1997,6 +2019,12 @@
       "label": "Craft Yield +",
       "usesDataId": false,
       "description": "Multiplies Item Creation yield score (0.25 = +25%)."
+    },
+    {
+      "code": "ITEM_EFFECT_RATE",
+      "label": "Item Effect +",
+      "usesDataId": false,
+      "description": "Multiplies the magnitude of item effects resolved ON the holder (0.5 = +50%), the way RPG Maker's Pharmacology does. Read from the recipient rather than the wielder because field use has no separate wielder: the creature the potion is fed to is the one whose constitution decides what it is worth."
     }
   ],
   "windowLayout": {
@@ -2419,6 +2447,28 @@
           "opacity": 0.6
         }
       ]
+    }
+  ],
+  "itemScopes": [
+    {
+      "scope": "always",
+      "label": "Battle and field",
+      "description": "The default when an item authors no scope."
+    },
+    {
+      "scope": "battle",
+      "label": "Battle only",
+      "description": "Snacks, draughts and tactical objects."
+    },
+    {
+      "scope": "field",
+      "label": "Field only",
+      "description": "Meals and anything that takes time to matter."
+    },
+    {
+      "scope": "none",
+      "label": "Never usable",
+      "description": "Carried, sold or consumed by something other than use."
     }
   ],
   "intensityGrades": [

@@ -770,7 +770,7 @@ handlers.USE_ITEM = function(cmd, ctx)
         for _, member in ipairs(ctx.session.party) do
             local prevHp = member.hp or 0
             for _, eff in ipairs(item.effects or {}) do
-                local evs = effects.apply(eff, member, member, ctx.session)
+                local evs = effects.apply(eff, member, member, ctx.session, { isItem = true })
                 for _, ev in ipairs(evs) do
                     if ev.type == "text" then table.insert(effectLogs, ev.text) end
                 end
@@ -780,7 +780,7 @@ handlers.USE_ITEM = function(cmd, ctx)
         end
     elseif item.target == "none" then
         for _, eff in ipairs(item.effects or {}) do
-            local evs = effects.apply(eff, nil, nil, ctx.session)
+            local evs = effects.apply(eff, nil, nil, ctx.session, { isItem = true })
             for _, ev in ipairs(evs) do
                 if ev.type == "text" then table.insert(effectLogs, ev.text) end
             end
@@ -791,7 +791,7 @@ handlers.USE_ITEM = function(cmd, ctx)
         if target then
             local prevHp = target.hp or 0
             for _, eff in ipairs(item.effects or {}) do
-                local evs = effects.apply(eff, target, target, ctx.session)
+                local evs = effects.apply(eff, target, target, ctx.session, { isItem = true })
                 for _, ev in ipairs(evs) do
                     if ev.type == "text" then table.insert(effectLogs, ev.text) end
                 end
@@ -1140,7 +1140,8 @@ handlers.SET_LIST = function(cmd, ctx)
     table.insert(ctx.events, {
         type = "set_list", windowId = cmd.windowId, listId = cmd.listId,
         -- Optional row template/formulas consumed by the window renderer.
-        format = cmd.format, priority = cmd.priority, highlight = cmd.highlight,
+        format = cmd.format, filter = cmd.filter, priority = cmd.priority,
+        highlight = cmd.highlight,
         -- Row widgets (vocabulary extension 11.07.2026): sprite names a row
         -- field holding a small-battler sheet key; gaugeValue/gaugeMax are
         -- row-scoped formulas drawn as a bar under each row.
@@ -1244,7 +1245,7 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
             -- recipient's stats instead of the user's.
             local a = ctx.a or tgt
             emitAll(ctx, effects.apply(eff, a, tgt, ctx.session,
-                { element = element, user = ctx.a }))
+                { element = element, user = ctx.a, isItem = (ctx.skill == nil) }))
         end
     end
 end

@@ -25,7 +25,7 @@
 -- time (slot: 1=Weapon 2=Armor 3=Accessory, member: party index). The
 -- skill/passive sources read only the member formula.
 --
--- Row templates/formulas (SET_LIST format/highlight/priority) are evaluated
+-- Row templates/formulas (SET_LIST format/highlight/filter/priority) are evaluated
 -- with the row's fields merged over the scene env, so "{name} (x{qty})" and
 -- "meta.craftKind == config.disciplines[v.selectedDisciplineIdx].kind" work.
 -- The scene env also exposes sel("window_id") -> the selected row of another
@@ -416,6 +416,19 @@ local function resolveRows(win, state, sceneData, ctx, env)
         rows = termRows(ctx.loader or (ctx.session and ctx.session.loader), src:sub(6))
     else
         rows = {}
+    end
+
+    -- Row filter: unlike `priority`, which only sorts, this DROPS rows. It runs
+    -- before the sort so a hidden row cannot be selected, counted or landed on
+    -- by a cursor — the case `priority` cannot serve (Item Creation must not
+    -- merely bury a promotion key at the bottom of the ingredient list).
+    if win.filter and win.filter ~= "" then
+        local kept = {}
+        for _, r in ipairs(rows) do
+            local val = formula.eval(win.filter, rowEnv(env, r))
+            if val == true or (tonumber(val) or 0) > 0 then table.insert(kept, r) end
+        end
+        rows = kept
     end
 
     -- Stable priority sort: rows whose priority formula is truthy come first.
@@ -1422,6 +1435,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 gaugeValue = listBlock.gaugeValue,
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
+                filter = listBlock.filter,
                 priority = listBlock.priority,
                 tabs = listBlock.tabs or winDef.tabs,
                 tabVar = listBlock.tabVar or winDef.tabVar,
@@ -1581,6 +1595,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         win.listId, win.format, win.formatRight, win.text, win.cursor = nil, nil, nil, nil, 1
         win.cursorFormula, win.sprite = nil, nil
         win.gaugeValue, win.gaugeMax, win.highlight, win.priority = nil, nil, nil, nil
+        win.filter = nil
         win.tabs, win.tabVar = nil, nil
         win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel = nil, nil, nil
         win.slot, win.member, win.labelField = nil, nil, nil
@@ -1600,6 +1615,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 win.gaugePreviewGain = block.gaugePreviewGain
                 win.gaugePreviewLabel = block.gaugePreviewLabel
                 win.highlight = block.highlight
+                win.filter = block.filter
                 win.priority = block.priority
                 win.tabs = block.tabs or winDef.tabs
                 win.tabVar = block.tabVar or winDef.tabVar
@@ -1894,6 +1910,7 @@ function wr.resolveDataState(sceneData, ctx, state)
                 gaugeValue = listBlock.gaugeValue,
                 gaugeMax = listBlock.gaugeMax,
                 highlight = listBlock.highlight,
+                filter = listBlock.filter,
                 priority = listBlock.priority,
                 slot = listBlock.slot,
                 member = listBlock.member,
