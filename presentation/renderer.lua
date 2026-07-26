@@ -11,6 +11,7 @@ local actor_status = require("presentation.actor_status")
 local animation_player = require("presentation.animation_player")
 local gradient_shader  = require("presentation.gradient_shader")
 local detection = require("engine.detection")
+local compareIds = require("engine.inventory").compareIds
 
 local renderer = {}
 
@@ -1083,13 +1084,6 @@ local function getActionTargetCandidates(act, slotActor, battleState, session)
         if session and session.inventory then
             for itemId, qty in pairs(session.inventory) do
                 if qty > 0 then table.insert(items, itemId) end
-            end
-            local function compareIds(a, b)
-                local na, nb = tonumber(a), tonumber(b)
-                if na and nb then return na < nb end
-                if na then return true end
-                if nb then return false end
-                return tostring(a) < tostring(b)
             end
             table.sort(items, compareIds)
         end
