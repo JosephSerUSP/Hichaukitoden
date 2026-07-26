@@ -23,6 +23,9 @@
                     }
                 });
                 Object.assign(dbPayload, snap);
+                // The collection is a different object graph now, so the list
+                // controls' facet universe and counts have to be rebuilt.
+                resetDbListControls();
                 initMapEditor();
                 initDatabaseEditor();
             },
@@ -57,6 +60,218 @@
             }
 
             initDatabaseEditor();
+        }
+
+        // --- LIST VIEW: search / sort / facets -------------------------------
+        // Interprets an ENTITY_LIST_SCHEMAS entry (entity-forms.js) into the
+        // controls above the list box. Strictly a view: the only thing these
+        // controls mutate is dbListState, never dbPayload, so no amount of
+        // sorting or filtering can reorder or rewrite data/*.json — which the
+        // dev server would otherwise happily save.
+        const dbListState = {};        // per tab: { q, sortKey, dir, facets: { key: Set } }
+        let dbListControlsTab = null;  // tab whose controls are currently built
+        let dbListUpdateCounts = null; // set by buildDbListControls
+
+        function dbListStateFor(tab, schema) {
+            if (!dbListState[tab]) {
+                const def = schema.defaultSort || {};
+                const facets = {};
+                (schema.facets || []).forEach(f => { facets[f.key] = new Set(); });
+                dbListState[tab] = {
+                    q: '',
+                    sortKey: def.key || (schema.sorts && schema.sorts[0] && schema.sorts[0].key) || '',
+                    dir: def.dir || 1,
+                    facets: facets
+                };
+            }
+            return dbListState[tab];
+        }
+
+        // Discard built controls (used when dbPayload is replaced wholesale, so
+        // the facet universe and counts are rebuilt from the new data).
+        function resetDbListControls() {
+            dbListControlsTab = null;
+            dbListUpdateCounts = null;
+        }
+
+        // A facet's values for one entity, normalized to { value, label }.
+        // An empty array means the entity has no value on this axis, so it is
+        // filtered out whenever the facet has any selection.
+        function dbFacetValues(facet, entity) {
+            return (facet.values(entity) || []).map(v =>
+                typeof v === 'string' ? { value: v, label: v } : v);
+        }
+
+        function dbPassesSearch(entity, schema, st) {
+            const q = (st.q || '').trim().toLowerCase();
+            if (!q || !schema.search) return true;
+            return schema.search.match(entity, q);
+        }
+
+        // skipFacetKey excludes one facet from the test, which is how each
+        // facet's own counts stay meaningful (they show what selecting that
+        // value would yield, given the other filters).
+        function dbPassesFilters(entity, schema, st, skipFacetKey) {
+            if (!dbPassesSearch(entity, schema, st)) return false;
+            return (schema.facets || []).every(f => {
+                if (f.key === skipFacetKey) return true;
+                const sel = st.facets[f.key];
+                if (!sel || sel.size === 0) return true;
+                return dbFacetValues(f, entity).some(v => sel.has(v.value));
+            });
+        }
+
+        // Numbers compare numerically, strings lexically, arrays elementwise
+        // (a sort spec returns an array to declare its tie-breakers).
+        function dbCompareSortValues(a, b) {
+            if (Array.isArray(a) && Array.isArray(b)) {
+                for (let i = 0; i < Math.max(a.length, b.length); i++) {
+                    const c = dbCompareSortValues(a[i], b[i]);
+                    if (c !== 0) return c;
+                }
+                return 0;
+            }
+            if (a === undefined || a === null) a = '';
+            if (b === undefined || b === null) b = '';
+            if (typeof a === 'number' && typeof b === 'number') return a - b;
+            return String(a).localeCompare(String(b));
+        }
+
+        function dbApplyListView(items, schema, st) {
+            const view = items.filter(it => it && dbPassesFilters(it, schema, st));
+            const sortSpec = (schema.sorts || []).find(s => s.key === st.sortKey);
+            if (sortSpec) {
+                // Stable within equal keys (Array.sort is stable), so the
+                // collection's own order is the final tie-breaker.
+                view.sort((a, b) => st.dir * dbCompareSortValues(sortSpec.value(a), sortSpec.value(b)));
+            }
+            return view;
+        }
+
+        function buildDbListControls(host, schema, st, items) {
+            host.innerHTML = '';
+            host.style.display = 'block';
+
+            const refresh = () => initDatabaseEditor(true);
+
+            if (schema.search) {
+                const search = document.createElement('input');
+                search.type = 'text';
+                search.className = 'win98-input db-list-search';
+                search.placeholder = schema.search.placeholder || 'search…';
+                search.value = st.q;
+                // The controls live outside #db-list-box and are rebuilt only
+                // on a tab change, so typing here never loses the caret.
+                search.oninput = () => { st.q = search.value; refresh(); };
+                host.appendChild(search);
+            }
+
+            if ((schema.sorts || []).length > 0) {
+                const sortRow = document.createElement('div');
+                sortRow.className = 'db-list-sort-row';
+                const sel = document.createElement('select');
+                sel.className = 'win98-input db-list-sort';
+                schema.sorts.forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.key;
+                    o.textContent = s.label;
+                    if (s.key === st.sortKey) o.selected = true;
+                    sel.appendChild(o);
+                });
+                sel.onchange = () => { st.sortKey = sel.value; refresh(); };
+                sortRow.appendChild(sel);
+
+                const dirBtn = document.createElement('button');
+                dirBtn.className = 'win98-btn db-list-dir';
+                const paintDir = () => {
+                    dirBtn.textContent = st.dir === 1 ? '▲' : '▼';
+                    dirBtn.title = st.dir === 1 ? 'Ascending' : 'Descending';
+                };
+                paintDir();
+                dirBtn.onclick = () => { st.dir = -st.dir; paintDir(); refresh(); };
+                sortRow.appendChild(dirBtn);
+                host.appendChild(sortRow);
+            }
+
+            // Facet groups. The value universe comes from the data, so a new
+            // discipline or item type shows up without touching this code.
+            const countSpans = [];
+            (schema.facets || []).forEach(facet => {
+                const universe = new Map();
+                items.forEach(it => {
+                    if (!it) return;
+                    dbFacetValues(facet, it).forEach(v => {
+                        if (!universe.has(v.value)) universe.set(v.value, v);
+                    });
+                });
+                if (universe.size === 0) return;
+
+                const fs = document.createElement('fieldset');
+                fs.className = 'db-list-facet';
+                const leg = document.createElement('legend');
+                leg.textContent = facet.label;
+                fs.appendChild(leg);
+
+                Array.from(universe.keys()).sort((a, b) => String(a).localeCompare(String(b)))
+                    .forEach(value => {
+                        const row = document.createElement('label');
+                        row.className = 'db-list-facet-row';
+                        const chk = document.createElement('input');
+                        chk.type = 'checkbox';
+                        chk.checked = st.facets[facet.key].has(value);
+                        chk.onchange = () => {
+                            if (chk.checked) st.facets[facet.key].add(value);
+                            else st.facets[facet.key].delete(value);
+                            refresh();
+                        };
+                        const text = document.createElement('span');
+                        text.className = 'db-list-facet-label';
+                        text.textContent = universe.get(value).label;
+                        text.title = universe.get(value).title || universe.get(value).label;
+                        const count = document.createElement('span');
+                        count.className = 'db-list-facet-count';
+                        countSpans.push({ facet: facet, value: value, el: count });
+                        row.appendChild(chk);
+                        row.appendChild(text);
+                        row.appendChild(count);
+                        fs.appendChild(row);
+                    });
+
+                host.appendChild(fs);
+            });
+
+            const footer = document.createElement('div');
+            footer.className = 'db-list-footer';
+            const shown = document.createElement('span');
+            footer.appendChild(shown);
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'win98-btn db-list-clear';
+            clearBtn.textContent = 'Clear';
+            clearBtn.title = 'Clear search and all facet filters';
+            clearBtn.onclick = () => {
+                st.q = '';
+                Object.keys(st.facets).forEach(k => st.facets[k].clear());
+                // Selections changed, so rebuild the controls themselves.
+                resetDbListControls();
+                initDatabaseEditor(true);
+            };
+            footer.appendChild(clearBtn);
+            host.appendChild(footer);
+
+            dbListUpdateCounts = (allItems, viewItems) => {
+                shown.textContent = viewItems.length === allItems.length
+                    ? `${allItems.length} items`
+                    : `${viewItems.length} of ${allItems.length}`;
+                countSpans.forEach(cs => {
+                    let n = 0;
+                    allItems.forEach(it => {
+                        if (!it) return;
+                        if (!dbPassesFilters(it, schema, st, cs.facet.key)) return;
+                        if (dbFacetValues(cs.facet, it).some(v => v.value === cs.value)) n++;
+                    });
+                    cs.el.textContent = String(n);
+                });
+            };
         }
 
         // listOnly = true refreshes the list column without rebuilding the
@@ -108,13 +323,33 @@
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
 
+            // Schema-driven search/sort/facets, when this tab declares them.
+            const listSchema = (window.ENTITY_LIST_SCHEMAS || {})[activeDbTab];
+            const controlsHost = document.getElementById('db-list-controls');
+            let viewItems = items || [];
+            if (listSchema) {
+                const st = dbListStateFor(activeDbTab, listSchema);
+                if (dbListControlsTab !== activeDbTab) {
+                    buildDbListControls(controlsHost, listSchema, st, items || []);
+                    dbListControlsTab = activeDbTab;
+                }
+                viewItems = dbApplyListView(items || [], listSchema, st);
+                if (dbListUpdateCounts) dbListUpdateCounts(items || [], viewItems);
+            } else {
+                controlsHost.innerHTML = '';
+                controlsHost.style.display = 'none';
+                resetDbListControls();
+            }
+
             let selectedItem = null;
-            (items || []).forEach((item, idx) => {
+            viewItems.forEach((item, idx) => {
                 if (!item) return;
                 const btn = document.createElement('button');
                 btn.className = 'db-list-item';
 
-                const idxStr = String(idx + 1).padStart(4, '0');
+                // With a sorted/filtered view the row's position means nothing,
+                // so a schema'd list labels rows with the entity's own id.
+                const idxStr = String(listSchema ? item.id : idx + 1).padStart(4, '0');
                 btn.textContent = activeDbTab === 'system' ? item.name : `${idxStr}: ${item.name || item.id}`;
 
                 if (activeDbItemId === item.id || (activeDbItemId === '' && idx === 0)) {
@@ -137,9 +372,12 @@
                 listContainer.appendChild(btn);
             });
 
-            // Fallback selection if activeDbItemId didn't match any item in current tab
-            if (!selectedItem && items.length > 0) {
-                selectedItem = items[0];
+            // Fallback selection if activeDbItemId didn't match any visible row.
+            // Skipped on a listOnly refresh: an edit that filters the selected
+            // item out of its own view (renaming past the search text) must not
+            // move the selection out from under the open form.
+            if (!selectedItem && !listOnly && viewItems.length > 0) {
+                selectedItem = viewItems[0];
                 activeDbItemId = selectedItem.id;
                 const firstBtn = listContainer.querySelector('.db-list-item');
                 if (firstBtn) firstBtn.classList.add('active');

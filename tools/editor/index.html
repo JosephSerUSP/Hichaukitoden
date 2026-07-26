@@ -361,11 +361,105 @@
         }
 
         .db-items-column {
-            width: 150px;
+            width: 184px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             background-color: var(--cool-bg);
+        }
+
+        /* List controls: deliberately tight, RM2003 groupbox density. */
+        .db-list-controls {
+            flex: 0 0 auto;
+            padding: 2px;
+            border-bottom: 1px solid var(--win-shadow);
+            font-size: 10px;
+            max-height: 46%;
+            overflow-y: auto;
+        }
+
+        .db-list-search {
+            width: 100%;
+            box-sizing: border-box;
+            height: 18px;
+            font-size: 10px;
+        }
+
+        .db-list-sort-row {
+            display: flex;
+            gap: 2px;
+            margin-top: 2px;
+        }
+
+        .db-list-sort {
+            flex: 1;
+            min-width: 0;
+            height: 18px;
+            font-size: 10px;
+        }
+
+        .db-list-dir {
+            width: 20px;
+            padding: 0;
+            font-size: 9px;
+            line-height: 16px;
+        }
+
+        .db-list-facet {
+            /* A fieldset defaults to min-inline-size: min-content, which lets a
+               long facet label push the whole column wider instead of
+               ellipsizing. */
+            min-inline-size: 0;
+            margin: 3px 0 0;
+            padding: 1px 3px 2px;
+            border: 1px solid var(--win-shadow);
+        }
+
+        .db-list-facet legend {
+            font-size: 9px;
+            font-weight: bold;
+            padding: 0 2px;
+        }
+
+        .db-list-facet-row {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            line-height: 13px;
+            cursor: pointer;
+        }
+
+        .db-list-facet-row input {
+            margin: 0;
+            flex: 0 0 auto;
+        }
+
+        .db-list-facet-label {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .db-list-facet-count {
+            flex: 0 0 auto;
+            color: var(--win-dark-shadow);
+        }
+
+        .db-list-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 3px;
+            margin-top: 3px;
+            color: var(--win-dark-shadow);
+        }
+
+        .db-list-clear {
+            font-size: 9px;
+            padding: 0 4px;
+            line-height: 15px;
         }
 
         .db-list-box {
@@ -1202,6 +1296,10 @@
 
                 <!-- Database items list (middle column) -->
                 <div id="db-items-column" class="db-items-column inset-panel">
+                    <!-- Search/sort/facet controls, built from ENTITY_LIST_SCHEMAS.
+                         Outside #db-list-box on purpose: the list box is rebuilt
+                         on every keystroke, these are not. -->
+                    <div id="db-list-controls" class="db-list-controls" style="display: none;"></div>
                     <div id="db-list-box" class="db-list-box">
                         <!-- Loaded dynamically -->
                     </div>

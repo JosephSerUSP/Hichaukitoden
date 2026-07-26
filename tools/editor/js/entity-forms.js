@@ -167,7 +167,7 @@
                     { row: 'top', kind: 'icon', key: 'icon', label: 'Icon' },
                     { row: 'top', kind: 'text', key: 'name', label: 'Name', refreshList: true },
                     { row: 'main', kind: 'select', key: 'type', label: 'Type',
-                      options: ['consumable', 'equipment', 'quest'], fallback: 'consumable', rerender: true },
+                      options: ['consumable', 'equipment', 'quest', 'junk'], fallback: 'consumable', rerender: true },
                     { row: 'main', kind: 'select', key: 'equipType', label: 'Equip Slot',
                       options: ['Weapon', 'Armor', 'Accessory'], fallback: 'Weapon',
                       when: it => it.type === 'equipment' },
@@ -339,6 +339,105 @@
                 ]
             }
         };
+
+        // Label for a discipline kind, from the engine.json registry.
+        function disciplineLabel(kind) {
+            const reg = (dbPayload.engine && dbPayload.engine.disciplines) || [];
+            const hit = reg.find(d => d.kind === kind);
+            return (hit && hit.label) || kind;
+        }
+
+        // Which disciplines can PRODUCE this item: authored `meta.disciplines`
+        // wins, otherwise the default implied by what the item plainly is, and
+        // `meta.craftable = false` opts out entirely. Mirrors
+        // engine/craft.lua's `disciplinesOf` plus the `craftable` gate that
+        // `craft.pool` applies, and G1 already reports items this resolves to
+        // nothing (validator.lua "has no discipline membership").
+        //
+        // This is the one place the editor reproduces an engine rule instead of
+        // reading data straight through. It is here rather than behind a call
+        // into LOVE because the previews reflect the last SAVE, and a facet
+        // filter has to answer for the edit the author just made. The rule is
+        // pure engine.json lookup tables — if `disciplineDefaults` grows a
+        // fourth source, both sides need it.
+        function resolveItemDisciplines(item) {
+            const meta = item.meta || {};
+            if (meta.craftable === false) return [];
+            if (Array.isArray(meta.disciplines) && meta.disciplines.length > 0) {
+                return meta.disciplines.slice();
+            }
+            const d = (dbPayload.engine && dbPayload.engine.disciplineDefaults) || {};
+            let kind = item.equipType && (d.byEquipType || {})[item.equipType];
+            if (!kind) {
+                (item.effects || []).some(ef => {
+                    kind = (d.byEffect || {})[ef.type];
+                    return !!kind;
+                });
+            }
+            if (!kind) kind = (d.byType || {})[item.type];
+            return kind ? [kind] : [];
+        }
+        window.resolveItemDisciplines = resolveItemDisciplines;
+
+        // Schema layer for the LIST column, the counterpart of
+        // ENTITY_FORM_SCHEMAS above: a tab listed here gets search, sort and
+        // facet controls interpreted by database.js, and a tab that is absent
+        // keeps the plain id-ordered list. Declaring the axes here (rather than
+        // hand-building controls per tab) is the same rule the form fields
+        // follow — see AGENTS.md, "no copy-pasted logic".
+        //
+        // Everything below is read-only over the collection: sorting and
+        // filtering build a view array and never reorder dbPayload, so the
+        // underlying data/*.json is untouched by looking at it.
+        const ENTITY_LIST_SCHEMAS = {
+            items: {
+                search: {
+                    placeholder: 'name contains…',
+                    match: (it, q) => (it.name || '').toLowerCase().includes(q)
+                },
+                defaultSort: { key: 'id', dir: 1 },
+                sorts: [
+                    { key: 'id', label: 'ID', value: it => it.id || 0 },
+                    { key: 'name', label: 'Name', value: it => (it.name || '').toLowerCase() },
+                    { key: 'cost', label: 'Buy Cost', value: it => it.cost || 0 },
+                    { key: 'type', label: 'Type', value: it =>
+                        [it.type || '', it.equipType || '', (it.name || '').toLowerCase()] },
+                    // Sorting by membership groups an author's crafting work
+                    // together; items no discipline can produce sort last.
+                    { key: 'discipline', label: 'Discipline', value: it => {
+                        const ds = resolveItemDisciplines(it).slice().sort();
+                        return [ds[0] || '￿', (it.name || '').toLowerCase()];
+                    } }
+                ],
+                facets: [
+                    { key: 'type', label: 'Type',
+                      values: it => [it.type || '(untyped)'] },
+                    // Only equipment carries a slot; a consumable contributes
+                    // no value and so is hidden whenever a slot is selected.
+                    { key: 'equipType', label: 'Equip Slot',
+                      values: it => it.type === 'equipment' ? [it.equipType || '(unset)'] : [] },
+                    { key: 'disciplines', label: 'Produced By',
+                      values: it => {
+                          const ds = resolveItemDisciplines(it);
+                          if (ds.length === 0) {
+                              return [{ value: '(none)', label: '(none)',
+                                        title: 'No discipline can produce this item — it is invisible to Item Creation' }];
+                          }
+                          return ds.map(d => ({ value: d, label: disciplineLabel(d) }));
+                      } },
+                    // Where that membership came from: authored on the item,
+                    // implied by disciplineDefaults, or absent.
+                    { key: 'membership', label: 'Membership',
+                      values: it => {
+                          const meta = it.meta || {};
+                          if (meta.craftable === false) return ['opted out'];
+                          if (Array.isArray(meta.disciplines) && meta.disciplines.length > 0) return ['authored'];
+                          return resolveItemDisciplines(it).length > 0 ? ['default'] : ['none'];
+                      } }
+                ]
+            }
+        };
+        window.ENTITY_LIST_SCHEMAS = ENTITY_LIST_SCHEMAS;
 
         // Interprets an ENTITY_FORM_SCHEMAS entry into the form panel.
         // Returns false when the entity can't be resolved (deleted id).
