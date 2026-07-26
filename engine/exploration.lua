@@ -542,10 +542,11 @@ local function tryMove(session, dx, dy)
         session.playerY = targetY
         exploration.revealFog(session)
 
-        if not session.currentMapData.safe then
-            session.mp = math.max(0, session.mp - dungeonConf("moveMpDrain", 1))
-        end
-
+        -- The step's MP cost is charged by the exploration.step flow (the
+        -- combined MPD of the living party), not here. It used to be a flat
+        -- dungeon.moveMpDrain applied in Lua, which charged the same 1 MP
+        -- whether the Summoner was carrying a Pixie or a Bahamut and so hid
+        -- the entire expedition economy.
         return true -- Moved successfully
     end
     return false -- Blocked by wall

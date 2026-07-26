@@ -218,7 +218,7 @@ implementation kept alive by nothing but its own comment.
 
 The round-end one proved the cost. It had already drifted: it still branched
 on `state.id == "regen"` with rates from `system.json` after the live path
-became `HRG`-driven (§1.11), so the two paths disagreed about what
+became `HRG`-driven (§1.12), so the two paths disagreed about what
 regeneration *is*. The other two were a full duplicate flee roll (gold
 penalty included) and a full duplicate weighted encounter spawner.
 
@@ -386,7 +386,43 @@ counted, or landed on by a cursor. Item Creation must not merely bury a
 promotion key at the bottom of the ingredient list, and every future
 "selectable subset of a list source" is the same problem.
 
-### 1.10 States, categories and status infliction (26.07.2026)
+### 1.10 The Summoner MP economy (26.07.2026)
+
+**A step costs exactly the combined MPD of the living manifested party**, with
+no Summoner base cost — `party.mpd` in `formula.groupView`, charged by the
+`exploration.step` flow. Living only: a creature that dies stops costing
+anything. One shared query, so the traversal cost, Strain and any UI preview
+cannot disagree about what the party costs. It replaced a flat
+`dungeon.moveMpDrain` applied in `exploration.lua`, which charged the same 1 MP
+whether the Summoner was carrying a Pixie or a Bahamut — the entire expedition
+economy was invisible.
+
+**Ordinary battle rounds cost nothing.** Taking a tactical turn is not priced.
+That is a deliberate reversal: every round used to drain each ally's MPD, which
+billed the expedition for simply fighting and made a heavy party unaffordable in
+a way the design explicitly rejects.
+
+**Battle Strain** is the pressure against indefinite combat instead, authored in
+`battle.round_end`:
+
+| Completed round | Cost |
+|---|---|
+| 1–5 | nothing |
+| 6–9 | combined party MPD × 4 |
+| 10–14 | × 8 |
+| 15+ | × 16 |
+
+Opening Max MP is 3000 against a cap of 9999 (`system.summoner`), the scale the
+balance tables in `creature-parameters.md` are written against — 3000 MP buys
+600 steps at party MPD 5.
+
+An accessory may modify a wearer's MPD through the ordinary `PARAM_PLUS` /
+`PARAM_RATE` traits and **can never push it below 1**, because `traits.getParam`
+floors every parameter at 1. That is not a special case for MPD; it is why the
+design's "never below 1" needed no new mechanism, and a test pins it so a future
+change to that floor cannot quietly make an MPD-0 creature possible.
+
+### 1.11 States, categories and status infliction (26.07.2026)
 
 A state carries a **list** of categories from `engine.json -> stateCategories`
 (`negative`, `positive`, `physical`, `magical`, `mental`, `common`). A list,
@@ -429,12 +465,12 @@ one of its categories — multiplicative, so a narrow and a broad resistance
 compound rather than one silently winning.
 
 **A rate of 0 is absolute immunity**: the state never lands, and a critical hit
-cannot force it. That is the one exemption the critical-status rule in §1.11
+cannot force it. That is the one exemption the critical-status rule in §1.12
 has, and until `STATE_RATE` existed there was nothing for it to respect.
 Immunity emits a `state_immune` event and a line of text rather than passing
 silently, because a status that simply never appears looks identical to a bug.
 
-### 1.11 The damage model (26.07.2026)
+### 1.12 The damage model (26.07.2026)
 
 Damage is **relative**: a share of the attacker's power decided by the ratio
 to the defender's matching stat, per `docs/design/creature-parameters.md`.

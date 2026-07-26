@@ -13,9 +13,6 @@ damage||Pixie|9|
 death||Pixie||
 action|Pixie|Angel||
 damage||Angel|9|
-mp_drain|High Pixie||5|
-mp_drain|Skeleton||1|
-mp_drain|Angel||2|
 action|Skeleton|Skeleton||
 state_add||Skeleton||defending
 action|High Pixie|High Pixie||
@@ -30,8 +27,6 @@ action|Pixie|High Pixie||
 damage||High Pixie|7|
 death||High Pixie||
 state_remove||Skeleton||defending
-mp_drain|Skeleton||1|
-mp_drain|Angel||2|
 flee_success||||
 action|High Pixie|Pixie||
 damage||Pixie|4|

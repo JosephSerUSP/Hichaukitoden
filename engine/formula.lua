@@ -117,6 +117,7 @@ end
 function formula.groupView(list, session)
     list = list or {}
     local count, alive, totalLevel, totalMaxHp = 0, 0, 0, 0
+    local totalMpd = 0
     local living = {}
     -- Use numeric for loop (1 to 4 for party, #list for others) instead of
     -- ipairs, so sparse arrays (e.g. party[1] removed, leaving a nil gap)
@@ -132,6 +133,7 @@ function formula.groupView(list, session)
             totalMaxHp = totalMaxHp + (traits.getParam(b, "maxHp", session) or 1)
             if not (b.isDead and b:isDead()) and (b.hp or 0) > 0 then
                 alive = alive + 1
+                totalMpd = totalMpd + (traits.getParam(b, "mpd", session) or 0)
                 table.insert(living, b)
             end
         end
@@ -143,6 +145,13 @@ function formula.groupView(list, session)
         avgLevel = count > 0 and totalLevel / count or 0,
         totalLevel = totalLevel,
         totalMaxHp = totalMaxHp,
+        -- Combined MPD of the LIVING members: the expedition's cost per step,
+        -- and the figure Strain scales. Living only, and deliberately so -- a
+        -- creature that dies stops costing the Summoner anything, which is the
+        -- grim arithmetic the design is built on. One shared query so the
+        -- traversal cost, the battle Strain and any UI preview cannot disagree
+        -- about what the party costs.
+        mpd = totalMpd,
         -- Group trait access: `party.trait.FLEE_CHANCE_BONUS` sums a code across
         -- LIVING members (the flee roll's long-standing rule). Generic for the
         -- same reason as battlerView.trait: the old hand-rolled `fleeBonus`

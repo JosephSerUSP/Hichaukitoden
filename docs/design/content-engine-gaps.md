@@ -62,13 +62,11 @@ can land ahead of the balance rewrite it will eventually serve.
 
 ## Summoner MP and MPD
 
+Closed 26.07.2026 -- see below. What remains is presentation, not mechanism:
+
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Dungeon step cost equals living manifested party MPD, with no Summoner base cost | Current movement and MPD behavior use the old scale | Shared party-MPD query in traversal events and updated Max MP scale |
-| No ordinary round MPD drain | Current round-end flow drains every ally's MPD | Replace the authored round-end drain; do not retain a Lua fallback |
-| Visible Strain begins after five rounds and escalates at rounds 10 and 15 | No Strain phase or presentation | Data-authored round checks, MP change, escalation messages, and cost preview |
-| Max MP grows from 3000 toward 9999 through events and rare items | Session currently uses the old fixed scale | Saved permanent Max MP, event command/effect support, cap validation, UI updates |
-| Equipment may rarely modify form MPD, never below 1 | Ordinary parameter-plus validation excludes MPD and form cost needs a floor | Reusable MPD rate/plus trait with explicit minimum and range preview |
+| The interface announces escalation and shows the upcoming Strain before the player commits actions | Strain is charged and logged, but nothing previews the next round's cost | A battle-UI cost preview reading the same `party.mpd` query |
 
 ## Growth and transformation
 
@@ -151,6 +149,28 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Summoner MP and MPD, same date (SPEC S1.10). A step now costs exactly the
+combined MPD of the LIVING manifested party via a shared `party.mpd` query, with
+no Summoner base cost; the flat `dungeon.moveMpDrain` that charged 1 MP
+regardless of who was manifested is gone, along with its editor field. Ordinary
+rounds cost nothing, and Battle Strain (x4 from round 6, x8 from 10, x16 from
+15) is the pressure against indefinite combat instead. Opening Max MP is 3000
+against the 9999 cap.
+
+The "never below 1" MPD rule needed no new mechanism: `traits.getParam` already
+floors every parameter at 1, so an MPD-reducing accessory is ordinary PARAM_PLUS.
+A test pins it, so a future change to that floor cannot quietly make an MPD-0
+creature possible.
+
+Found while authoring it: the validator's formula mock hand-mirrors
+`formula.groupView` and had drifted -- `party.mpd` had to be added there before
+a flow could charge the cost, and `battle` was absent entirely, so no phase
+formula could read `battle.round` even though every battle phase receives one.
+
+The golden change is nine `mp_drain` lines disappearing and nothing else, which
+is the evidence the round drain was the only behaviour touched. Tested in
+`tests/test_mpd_economy.lua`.
 
 Common-event items, same date. The `common_event` effect raises a request that
 `scene_host` defers with its scene transitions and the host honours through the

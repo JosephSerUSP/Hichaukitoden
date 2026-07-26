@@ -1053,8 +1053,17 @@ validator.run = function(loader)
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
                         combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
                         v = v,
-                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, trait = mockTraits() },
-                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, trait = mockTraits() },
+                        -- These mirror formula.groupView by hand and will drift
+                        -- from it again: `mpd` had to be added here before a
+                        -- flow could charge the party's traversal cost, even
+                        -- though groupView had always been able to answer.
+                        -- Anything groupView returns belongs in both.
+                        party = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, mpd = 2, trait = mockTraits() },
+                        enemies = { size = 1, count = 1, aliveCount = 1, avgLevel = 1, totalLevel = 1, totalMaxHp = 1, mpd = 2, trait = mockTraits() },
+                        -- Battle phases really do receive a battle (the hosts
+                        -- pass one unconditionally), so a phase formula reading
+                        -- battle.round is legitimate and must compile here.
+                        battle = { round = 1 },
                         ingredient1 = { id = 1, name = "Mock Ingredient 1", meta = { potency = 5, tier = 1, craftElement = "fire" } },
                         ingredient2 = { id = 2, name = "Mock Ingredient 2", meta = { potency = 3, tier = 0, craftElement = "water" } },
                         -- Scene-side aliases (crafting scenes read i1/i2/crafter).

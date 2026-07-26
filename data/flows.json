@@ -84,24 +84,39 @@
     "round_end": [
       {
         "cmd": "COMMENT",
-        "text": "End-of-round ticks: regen/poison/decay for everyone, then per-slot MP drain and MP-exhaustion damage off safe maps. Mirrors the legacy engine/battle.lua block exactly, including its slot-1..4 drain loop (task A5b)."
+        "text": "End-of-round ticks: HP drift and state decay for everyone, then Battle Strain and MP-exhaustion damage off safe maps."
       },
       {
         "cmd": "STATE_TICKS"
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Battle Strain. Ordinary rounds cost NOTHING -- taking a tactical turn is not supposed to be priced. Strain is exceptional pressure against indefinite combat: it begins after five completed rounds and escalates at ten and fifteen, scaling the combined MPD of the living party. Rounds 1-5 free, 6-9 x4, 10-14 x8, 15+ x16. This replaced a per-round drain of every ally's MPD, which charged the expedition for simply fighting and made a heavy party unaffordable in a way the design explicitly rejects."
       },
       {
         "cmd": "IF",
         "condition": "not session.mapSafe",
         "then": [
           {
-            "cmd": "FOR_EACH",
-            "scope": "slot_allies",
-            "as": "ally",
-            "do": [
+            "cmd": "SET_VAR",
+            "name": "strainMult",
+            "value": "battle.round >= 15 and 16 or (battle.round >= 10 and 8 or (battle.round >= 6 and 4 or 0))"
+          },
+          {
+            "cmd": "IF",
+            "condition": "v.strainMult > 0 and party.mpd > 0",
+            "then": [
               {
                 "cmd": "CHANGE_MP",
-                "amount": "-(ally.mpd)",
-                "actor": "ally"
+                "amount": "-(party.mpd * v.strainMult)"
+              },
+              {
+                "cmd": "EMIT_TEXT",
+                "term": "battle.strain",
+                "fallback": "The prolonged battle strains the summoning! (-{0} MP)",
+                "args": [
+                  "party.mpd * v.strainMult"
+                ]
               }
             ]
           },
@@ -473,6 +488,20 @@
       {
         "cmd": "COMMENT",
         "text": "Runs once per successful player step (main.lua, before the encounter roll). Per-step trait effects live here so they stay data-authored: MOVE_HEAL regenerates while walking, reusing HEAL's trait form exactly like POST_BATTLE_HEAL does on victory."
+      },
+      {
+        "cmd": "COMMENT",
+        "text": "Traversal cost: exactly the combined MPD of the living manifested party, with no Summoner base cost. A lone MPD-1 creature can walk almost indefinitely; a heavy party pays for every step. Nothing is charged on a safe map. This replaced a flat dungeon.moveMpDrain in exploration.lua, which charged the same 1 MP whether the Summoner was carrying a Pixie or a Bahamut -- the entire expedition economy the design rests on was invisible."
+      },
+      {
+        "cmd": "IF",
+        "condition": "not session.mapSafe",
+        "then": [
+          {
+            "cmd": "CHANGE_MP",
+            "amount": "-(party.mpd)"
+          }
+        ]
       },
       {
         "cmd": "FOR_EACH",

@@ -185,7 +185,6 @@
   },
   "dungeon": {
     "maxFloor": 5,
-    "moveMpDrain": 1,
     "defaultLoot": 1,
     "genWidth": 21,
     "genHeight": 21,
@@ -208,7 +207,7 @@
     }
   },
   "summoner": {
-    "startMp": 820,
+    "startMp": 3000,
     "maxMpCap": 9999,
     "summonCostBase": 10,
     "summonCostPerLevel": 5,

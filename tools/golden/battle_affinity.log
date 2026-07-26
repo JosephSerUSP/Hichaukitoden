@@ -9,7 +9,6 @@ damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
 heal||Archangel|2|
-mp_drain|Imp||1|
 action|Golem|Archangel||
 damage||Archangel|3|
 action|Archangel|Golem||
@@ -30,17 +29,14 @@ damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
 heal||Archangel|2|
-mp_drain|Golem||1|
 action|Imp|Ooze||
 damage||Ooze|10|
 action|Ooze|Imp||
 damage||Imp|6|
-mp_drain|Imp||1|
 action|Imp|Wisp||
 damage||Wisp|10|
 action|Wisp|Wisp||
 heal||Wisp|10|
-mp_drain|Imp||1|
 action|Shadow Stalker|Ooze||
 damage||Ooze|29|
 death||Ooze||
