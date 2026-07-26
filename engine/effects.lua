@@ -565,6 +565,24 @@ function effects.apply(effectData, a, b, session, context)
             })
         end
 
+    -- Runs an authored common event (the Forbidden Lamp shape: an item that
+    -- starts a scripted encounter). Emitted as a request rather than executed
+    -- here: CALL_COMMON_EVENT compiles to a dialogue node and immediate mode
+    -- refuses it, so effects cannot run one. The host picks this event up and
+    -- starts the graph; headless runs simply see the request and carry on,
+    -- which is what keeps the validator and the golden harness working.
+    elseif effectData.type == "common_event" then
+        local ceId = effectData.value
+        local ce = session.loader.commonEvents and session.loader.commonEvents[tostring(ceId)]
+        if not ce then
+            table.insert(events, {
+                type = "text",
+                text = "[effect] common_event: unknown common event '" .. tostring(ceId) .. "'"
+            })
+        else
+            table.insert(events, { type = "run_common_event", id = ceId })
+        end
+
     -- Cures the state named in value (e.g. wine curing "weakened")
     elseif effectData.type == "remove_status" then
         local stateId = effectData.value

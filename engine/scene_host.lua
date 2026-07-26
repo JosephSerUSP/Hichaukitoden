@@ -183,6 +183,13 @@ function scene_host.runHook(hookName, ctx)
                 or ev.type == "set_list" or ev.type == "set_text"
                 or ev.type == "set_cursor" or ev.type == "focus_window" then
                 applyWindowEvent(state, ev)
+            elseif ev.type == "run_common_event" then
+                -- An item asked for a common event (effects.lua cannot start
+                -- one: CALL_COMMON_EVENT is interactive). Deferred with the
+                -- scene transitions rather than run here, so the graph starts
+                -- after this hook finishes and its own scene change lands on a
+                -- settled stack instead of mid-hook.
+                table.insert(transitions, ev)
             end
         end
     end
@@ -197,7 +204,9 @@ function scene_host.runHook(hookName, ctx)
     end
 
     for _, ev in ipairs(transitions) do
-        if ev.kind == "pop" then
+        if ev.type == "run_common_event" then
+            interpreter.startCommonEvent(ev.id)
+        elseif ev.kind == "pop" then
             scene_host.pop(ctx)
         elseif ev.kind == "push" and ev.scene then
             scene_host.push(ev.scene, ctx, ev.vars)

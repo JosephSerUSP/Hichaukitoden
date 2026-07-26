@@ -39,7 +39,15 @@ local interpreter = {}
 local presentation = {}
 
 -- Expected keys: rebindSession(session), isBattleLogRevealing(),
--- finishBattleLogReveal(), isAnimationPlaying().
+-- finishBattleLogReveal(), isAnimationPlaying(), runCommonEvent(id).
+--
+-- runCommonEvent is the odd one out and worth explaining. CALL_COMMON_EVENT is
+-- an INTERACTIVE command: it compiles into a dialogue-graph node, and immediate
+-- mode refuses it outright. So an item that wants to run a common event -- the
+-- Forbidden Lamp calling up a Diablos fight -- cannot simply be an effect
+-- branch, because effects run immediately and have no way to hand control to
+-- the graph walker. It asks the host to start one instead, which is the same
+-- direction of dependency the rest of this table already carries.
 function interpreter.bindPresentation(hooks)
     presentation = hooks or {}
 end
@@ -48,6 +56,13 @@ local function present(name, ...)
     local fn = presentation[name]
     if not fn then return nil end
     return fn(...)
+end
+
+-- Asks the host to start a common event's dialogue graph. Returns false when
+-- nothing is bound (validator, golden harness, any headless run), so callers
+-- can tell "the host declined" from "it ran" without the engine caring which.
+function interpreter.startCommonEvent(id)
+    return present("runCommonEvent", id) and true or false
 end
 
 -- The ids interpreter.compile knows how to turn into dialogue nodes.

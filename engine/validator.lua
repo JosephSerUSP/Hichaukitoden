@@ -421,6 +421,15 @@ validator.run = function(loader)
                 local skillId = eff.skill or eff.value
                 check(loader.getSkill(skillId),
                     ownerDesc .. " (learn_skill) references missing skill '" .. tostring(skillId) .. "'")
+            elseif eff.type == "common_event" then
+                -- An item promising a scripted encounter and naming an event
+                -- that does not exist would be consumed for a line of error
+                -- text. Gated here rather than left to runtime, because the
+                -- item is the whole gate on that content (a Forbidden Lamp is
+                -- the only way to reach what it calls).
+                check(loader.commonEvents and loader.commonEvents[tostring(eff.value)],
+                    ownerDesc .. " (common_event) references missing common event '"
+                    .. tostring(eff.value) .. "'")
             elseif eff.type == "param_plus" then
                 -- Only the params a battler's paramPlus table actually carries
                 -- (engine/session.lua Battler.new) can be raised.

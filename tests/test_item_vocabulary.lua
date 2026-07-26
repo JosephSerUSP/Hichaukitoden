@@ -217,5 +217,55 @@ do
     check(not anyExcluded, "output exclusion still keeps items out of the pool")
 end
 
+--------------------------------------------------- common_event requests ---
+
+-- The Forbidden Lamp shape: an item that opens a scripted encounter.
+-- CALL_COMMON_EVENT is an interactive command that compiles to a dialogue
+-- node, and immediate mode refuses it outright -- so this effect cannot run the
+-- event, only ask the host to. These tests pin that contract from both ends.
+do
+    local interpreter = require("engine.interpreter")
+    local sess = sessionModule.GameSession.new(loader)
+
+    -- Pick any authored common event, so the test does not invent content.
+    local realId
+    for id in pairs(loader.commonEvents or {}) do realId = realId or id end
+    check(realId ~= nil, "the campaign has a common event to call")
+
+    local evs = effects.apply({ type = "common_event", value = realId }, nil, nil, sess, ITEM)
+    local request
+    for _, ev in ipairs(evs) do
+        if ev.type == "run_common_event" then request = ev end
+    end
+    check(request ~= nil and tostring(request.id) == tostring(realId),
+        "a common_event effect raises a request naming the event")
+
+    -- An unknown id says so rather than raising a request the host would
+    -- silently fail to honour.
+    local bad = effects.apply({ type = "common_event", value = "no_such_event" }, nil, nil, sess, ITEM)
+    local raised = false
+    for _, ev in ipairs(bad) do
+        if ev.type == "run_common_event" then raised = true end
+    end
+    check(not raised, "an unknown common event raises no request")
+
+    -- Unbound (validator, golden harness, any headless run) the request is
+    -- simply unclaimed -- it must not error, or every headless path breaks the
+    -- moment an item like this is authored.
+    interpreter.bindPresentation({})
+    check(interpreter.startCommonEvent(realId) == false,
+        "an unbound host declines the request instead of failing")
+
+    -- Bound, the host is asked exactly once with the id it was given.
+    local seen = {}
+    interpreter.bindPresentation({
+        runCommonEvent = function(id) table.insert(seen, id) return true end
+    })
+    check(interpreter.startCommonEvent(realId) == true and #seen == 1
+        and tostring(seen[1]) == tostring(realId),
+        "a bound host is handed the event id to start")
+    interpreter.bindPresentation({})
+end
+
 print(("=== Item Vocabulary Tests Completed: %d passed, %d failed ==="):format(passed, failed))
 if failed > 0 then error("item vocabulary tests failed") end

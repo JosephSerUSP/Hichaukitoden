@@ -359,6 +359,18 @@ untouched; this is a constitution, not a spell amplifier. Permanent gains
 (`param_plus`, `maxHp`) are untouched too: an item that grants +1 ATK forever
 grants exactly that.
 
+**`common_event` items.** An item effect that starts an authored common event
+— the Forbidden Lamp opening a scripted encounter. It cannot run the event
+itself: `CALL_COMMON_EVENT` is an *interactive* command that compiles to a
+dialogue node, and immediate mode refuses it, so effects have no way to hand
+control to the graph walker. The effect raises a `run_common_event` request;
+`scene_host` defers it alongside scene transitions (so the graph starts on a
+settled stack rather than mid-hook) and asks the host through
+`interpreter.bindPresentation`'s `runCommonEvent`. Unbound — the validator, the
+golden harness, any headless run — the request is simply unclaimed and nothing
+errors. G1 fails an effect naming a common event that does not exist, because
+such an item is the only gate on the content it calls.
+
 **Ingredient exclusion.** `meta.craftIngredient: false` keeps an item out of
 Item Creation *ingredient selection*, independent of `meta.craftable: false`,
 which only excludes *outputs*. Both exclusions are needed because the two

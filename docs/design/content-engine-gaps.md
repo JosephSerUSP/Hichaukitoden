@@ -88,7 +88,6 @@ can land ahead of the balance rewrite it will eventually serve.
 | Meals are field-only and often party-wide | Occasion and party targeting now exist separately; no Meal marker ties them together for UI | Meal metadata and presentation on top of `scope: field` + `target: party` |
 | Favorite Food is one saved randomized exact item per creature | No per-instance Favorite Food persistence | Species pools, saved identity/discovery, reactions, and promotion persistence |
 | Savor lasts an authored number of completed battles | No battle-count food state | Saved battle counter and non-refresh rule |
-| Forbidden Lamp calls a common event | No approved item common-event effect | Registry-backed `common_event` item effect. Note: `CALL_COMMON_EVENT` is an *interactive* command compiled into the dialogue graph, so this cannot be an `effects.lua` branch — it has to be raised at the item-use sites, which is why it is not part of the additive slice |
 | Monster remains are usable ingredients but never outputs | Expressible now (`craftable: false` alone), but the existing Obsidian Shard / Melted Wax / Ectoplasm are still inert `junk` | Migrate the three to real equipment/consumable forms; validate no inert `junk` remains |
 
 ## Equipment promises
@@ -152,6 +151,14 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Common-event items, same date. The `common_event` effect raises a request that
+`scene_host` defers with its scene transitions and the host honours through the
+presentation seam, because CALL_COMMON_EVENT is interactive and effects run in
+immediate mode -- there was no way for an effect to hand control to the graph
+walker, which is why this was the one item primitive held back from the additive
+slice. Unbound hosts leave the request unclaimed rather than erroring, so every
+headless path keeps working. G1 fails an effect naming a missing event.
 
 Armor penetration and Execution, same date. `PENETRATION` (and an effect-level
 `penetration`) ignores a share of the defending stat before the curve;

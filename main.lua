@@ -111,6 +111,9 @@ local heldKeys = {}  -- key → { holdTime = seconds, lastFire = count }
 
 -- Forward declarations (defined later in the file, called by update loop)
 local handleKeyPressed
+-- Bound to runEventCommands once it is defined; the presentation seam's
+-- runCommonEvent hook is registered before that point in the file.
+local runEventCommandsRef
 
 local server = require("engine.server")
 config = require("engine.config")
@@ -153,6 +156,19 @@ interpreter.bindPresentation({
     end,
     isAnimationPlaying = function()
         return require("presentation.animation_player").isAnythingPlaying()
+    end,
+    -- An item asked to run a common event (the Forbidden Lamp shape). The
+    -- engine cannot do this itself: CALL_COMMON_EVENT compiles to a dialogue
+    -- node and immediate mode refuses it, so effects.lua raises a request and
+    -- the host -- which owns the graph walker and the dialogue scene -- starts
+    -- it through the same path a map event uses. Bound late (runEventCommands
+    -- is defined further down) via a forward local.
+    runCommonEvent = function(id)
+        local ce = loader.commonEvents and loader.commonEvents[tostring(id)]
+        if not ce or not ce.commands then return false end
+        if not runEventCommandsRef then return false end
+        runEventCommandsRef(ce, ce.commands)
+        return true
     end,
 })
 
@@ -1027,6 +1043,7 @@ local function runEventCommands(eventTarget, commands)
     scene_host.goto_scene("dialogue")
     handleDialogueAction()
 end
+runEventCommandsRef = runEventCommands
 
 local function checkStepEvents()
     local px, py = activeSession.playerX - 1, activeSession.playerY - 1

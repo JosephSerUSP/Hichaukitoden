@@ -1866,6 +1866,14 @@
       "description": "Permanently raises the summoner's Max MP by value, clamped to system.summoner.maxMpCap, and restores the same amount. Saved with the session, so it is the item-scale counterpart of the large increases major events grant."
     },
     {
+      "id": "common_event",
+      "label": "Run Common Event",
+      "params": [
+        "value"
+      ],
+      "description": "Starts the common event named by `value` (the Forbidden Lamp shape: an item that opens a scripted encounter). Raised as a request rather than executed inline, because CALL_COMMON_EVENT compiles to a dialogue node and immediate mode refuses it; the host starts the graph after the current hook settles. In a headless run the request is simply unclaimed."
+    },
+    {
       "id": "remove_status",
       "label": "Remove Status",
       "params": [
