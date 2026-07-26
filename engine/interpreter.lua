@@ -587,6 +587,79 @@ handlers.RECORD_HISTORY = function(cmd, ctx)
     end
 end
 
+-- Change a creature's form from data. The reusable half of Egg hatching, the
+-- Kappa curse and its reversion, and Homunculus metamorphosis -- so none of
+-- them needs engine code that knows what an Egg or a Kappa is.
+--
+--   actor: <id>       become this species
+--   actor: "hatch"    resolve through the actor's hatchOutcomes by provenance
+--   actor: "metamorph" deterministic nearest eligible species (eligibleFrom)
+--   actor: "revert"   return to the remembered origin form
+--
+-- reversible: remember the current form so a later "revert" can restore it.
+-- A natively recruited creature has no remembered form and never reverts,
+-- which is the whole difference between a native Kappa and a cursed one.
+handlers.TRANSFORM_ACTOR = function(cmd, ctx)
+    local session = ctx.session
+    local loader = ctx.loader or session.loader
+    local transform = require("engine.transform")
+
+    local target = resolveRef(cmd.target or "target", ctx)
+    if not target then return end
+
+    -- Find the creature's slot so the replacement lands where it was.
+    local arr, index
+    for i = 1, (config and config.MAX_PARTY_SIZE or 4) do
+        if session.party and session.party[i] == target then arr, index = session.party, i end
+    end
+    if not arr then
+        for k, m in pairs(session.reserve or {}) do
+            if m == target then arr, index = session.reserve, k end
+        end
+    end
+    if not arr then return end
+
+    local spec = cmd.actor
+    local destId, opts = nil, { bonus = cmd.bonus, reversible = cmd.reversible == true }
+
+    if spec == "revert" then
+        destId = target.originForm
+        opts.reversible = false
+        opts.clearOrigin = true
+        if not destId then return end
+    elseif spec == "hatch" then
+        local outcome = transform.hatchOutcome(target, target.actorData)
+        if not outcome then return end
+        destId = outcome.actor or outcome
+        -- Provenance-specific fixed bonus, calibrated to that species' normal
+        -- centre rather than a generic recalculation.
+        if type(outcome) == "table" and outcome.bonus then opts.bonus = outcome.bonus end
+        opts.clearOrigin = true
+    elseif spec == "metamorph" then
+        destId = transform.classify(session, target, (target.actorData or {}).eligibleFrom)
+        if not destId then return end
+        opts.clearOrigin = true
+    else
+        destId = spec
+    end
+
+    local actorData = destId and loader.getActor(destId)
+    if not actorData then
+        table.insert(ctx.events, { type = "text",
+            text = "[TRANSFORM_ACTOR] no destination for '" .. tostring(spec) .. "'" })
+        return
+    end
+
+    local newB = transform.into(session, target, actorData, opts)
+    arr[index] = newB
+    table.insert(ctx.events, { type = "transform", target = newB, from = target.name })
+    table.insert(ctx.events, {
+        type = "text",
+        text = session.loader.formatTerm("battle.transform", "- {0} becomes {1}!",
+            target.name, actorData.name or "?")
+    })
+end
+
 handlers.SYNC_TRAIT_STATE = function(cmd, ctx)
     local target = resolveRef(cmd.target, ctx)
     if not target or not cmd.trait or not cmd.state then return end
@@ -2058,71 +2131,13 @@ local function buildScriptApi(ctx)
             if cost.mp then session.mp = session.mp - cost.mp end
             if cost.item then session:addItem(cost.item, -1) end
         end
-        -- Evolve: keep progression (level/exp/states/equipment), swap actorData.
-        local lvl = b.level
-        local exp = b.exp
-        local states = b.states
-        local equip = b.equipment
-        local newB = require("engine.session").Battler.new(actorData, lvl)
-        newB.name = b.name
-        newB.exp = exp
-        newB.states = states or {}
-        newB.equipment = equip or { nil, nil, nil }
-        -- Promotion mints a new battler for the evolved species, so carry the
-        -- creature's history across: it is the SAME creature, one form later.
-        -- `species` deliberately keeps the original (a Titania remembers the
-        -- Pixie it hatched as); `paramPlus` carries too, or a promotion would
-        -- silently wipe every stat-up item ever fed to it.
-        newB.history = b.history or newB.history
+        -- One shared transformation (engine/transform.lua): promotion, Egg
+        -- hatching, metamorphosis and the Kappa curse all preserve the same
+        -- things and swap the same things, so they are one operation with
+        -- different ways of picking the destination.
+        local transform = require("engine.transform")
+        local newB = transform.into(session, b, actorData, { bonus = e.bonus })
         newB.history.promotions = (newB.history.promotions or 0) + 1
-        newB.paramPlus = b.paramPlus or newB.paramPlus
-        newB.wardCharges = b.wardCharges
-
-        -- PROMOTION NEVER RECALCULATES STATISTICS (creature-parameters.md).
-        -- Battler.new just accumulated the DESTINATION form's band budgets over
-        -- every level this creature has already lived, which would rewrite its
-        -- past as though it had always been the new species. Carry the seed and
-        -- the accumulated record across instead: the levels it earned as a
-        -- Pixie stay exactly what they were, and only FUTURE budgets change --
-        -- automatically, because packetFor reads the new actorData.
-        --
-        -- This is what the whole seeded-growth model was for. Under the old
-        -- smooth curve there was nothing here to preserve.
-        newB.growthSeed = b.growthSeed or newB.growthSeed
-        newB.growth = b.growth or newB.growth
-
-        -- The authored one-time promotion bonus. Fixed, so promoting early is
-        -- rewarded and delaying does not scale it up -- a player who waits has
-        -- already banked more of the cheaper form's growth instead. Folded into
-        -- the permanent record because that is exactly what it is.
-        if e.bonus then
-            local growthMod = require("engine.growth")
-            newB.growth = newB.growth or {}
-            for _, param in ipairs(growthMod.PARAMS) do
-                local gain = tonumber(e.bonus[param])
-                if gain then
-                    newB.growth[param] = (newB.growth[param] or 0) + gain
-                end
-            end
-        end
-        -- HP is clamped only AFTER the growth record and bonus are in place --
-        -- Max HP is not known until then, and clamping against the wrong one
-        -- would quietly cap a promoted creature at its unpromoted maximum.
-        newB.hp = b.hp > 0 and math.min(newB:getMaxHp(session), b.hp) or newB:getMaxHp(session)
-
-        -- Skills the creature LEARNED (skillbooks) are not in either species'
-        -- innate list, so they would vanish with the old battler. Carry over
-        -- anything the previous form knew that the new form doesn't.
-        local innate = {}
-        for _, sk in ipairs((b.actorData and b.actorData.skills) or {}) do innate[sk] = true end
-        local known = {}
-        for _, sk in ipairs(newB.skills or {}) do known[sk] = true end
-        for _, sk in ipairs(b.skills or {}) do
-            if not innate[sk] and not known[sk] then
-                table.insert(newB.skills, sk)
-                known[sk] = true
-            end
-        end
         arr[index] = newB
         return true
     end

@@ -72,16 +72,12 @@ Closed 26.07.2026 -- see below. What remains is presentation, not mechanism:
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Egg hatch uses provenance-specific fixed hatch bonus | Provenance and automatic hatch outcome are not general actor data | Saved provenance, level trigger, authored outcome table, and fixed transformation bonus |
-| Homunculus preview and deterministic parameter-driven destination | No general resolver | Reusable deterministic metamorphosis rules with validated eligibility and preview |
-| Reversible Kappa transformation preserves identity/history | Ordinary evolution is one-way | Saved original form plus reversible transformation command |
 
 ## Items, food, and Item Creation
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
 | Meals are field-only and often party-wide | Occasion and party targeting now exist separately; no Meal marker ties them together for UI | Meal metadata and presentation on top of `scope: field` + `target: party` |
-| Favorite Food is one saved randomized exact item per creature | No per-instance Favorite Food persistence | Species pools, saved identity/discovery, reactions, and promotion persistence |
 | Savor lasts an authored number of completed battles | No battle-count food state | Saved battle counter and non-refresh rule |
 | Monster remains are usable ingredients but never outputs | Expressible now (`craftable: false` alone), but the existing Obsidian Shard / Melted Wax / Ectoplasm are still inert `junk` | Migrate the three to real equipment/consumable forms; validate no inert `junk` remains |
 
@@ -146,6 +142,14 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Transformations, same date (SPEC S1.10). Egg hatching, Homunculus metamorphosis
+and the reversible Kappa curse are one primitive with promotion, exposed to data
+as TRANSFORM_ACTOR, so no engine code knows what an Egg or a Kappa is. Per-
+instance provenance, remembered origin form, and Favorite Food identity all
+persist through every change of form. What remains for these is CONTENT
+(hatch tables, eligibility lists, food pools) and the UI that shows a
+Homunculus its destination -- the mechanisms are in.
 
 Promotion, same date. It carries the growth seed and accumulated record to the
 new form, adds the evolution's fixed authored `bonus`, and lets only future

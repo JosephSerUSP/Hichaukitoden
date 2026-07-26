@@ -49,6 +49,15 @@ local function serializeBattler(b)
         -- level-up, which the design forbids outright.
         growthSeed = b.growthSeed,
         growth = b.growth,
+        -- Per-instance identity that survives every change of form: where the
+        -- creature came from (Egg provenance), what it was before a reversible
+        -- curse, and its one Favorite Food with whether it has been discovered.
+        -- All of it is the creature's own, not its species'.
+        provenance = b.provenance,
+        originForm = b.originForm,
+        originAtLevel = b.originAtLevel,
+        favoriteFood = b.favoriteFood,
+        favoriteFoodFound = b.favoriteFoodFound,
         -- Death-ward charges live on the battler (never on the shared loader
         -- item table), so they must round-trip with it.
         wardCharges = b.wardCharges,
@@ -84,6 +93,11 @@ local function deserializeBattler(data, loader)
     if data.paramPlus then b.paramPlus = data.paramPlus end
     if data.growthSeed then b.growthSeed = data.growthSeed end
     if data.growth then b.growth = data.growth end
+    b.provenance = data.provenance
+    b.originForm = data.originForm
+    b.originAtLevel = data.originAtLevel
+    b.favoriteFood = data.favoriteFood
+    b.favoriteFoodFound = data.favoriteFoodFound
     if data.wardCharges then b.wardCharges = data.wardCharges end
     if data.history then b.history = data.history end
     return b

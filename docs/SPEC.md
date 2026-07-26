@@ -447,6 +447,33 @@ gate, and item placement and rarity are what pace it. An entry without `level`
 used to be silently ineligible forever, so a Mimic that should become Pandora at
 level 1 the moment the item exists could not be authored at all.
 
+**One transformation, four callers** (`engine/transform.lua`). Promotion, Egg
+hatching, Homunculus metamorphosis and the reversible Kappa curse preserve the
+same things (growth record, seed, permanent gains, learned skills, name, level,
+history, provenance, Favorite Food) and swap the same things (MPD, capacities,
+affinities, innate skills/passives). They differ only in how the destination is
+chosen, so they are one primitive rather than four copies that would drift.
+
+`TRANSFORM_ACTOR` exposes it to data — no engine code knows what an Egg or a
+Kappa is:
+
+| `actor` | destination |
+|---|---|
+| `<id>` | that species |
+| `"hatch"` | the actor's `hatchOutcomes` keyed by the instance's saved `provenance` (with a provenance-specific fixed bonus) |
+| `"metamorph"` | deterministic nearest eligible species by permanent parameter profile |
+| `"revert"` | the remembered origin form |
+
+`reversible: true` remembers the current form. A natively recruited creature has
+none and never reverts — the only difference between a native Kappa and a cursed
+one. Metamorphosis is deterministic because the design shows the player its
+destination *before* it happens; a random result would make that preview a lie.
+
+**Favorite Food** is one exact item drawn from the species' authored
+`favoriteFoods` pool, fixed at creation from the growth seed (so a reload cannot
+fish for a better one) and carried through every change of form. It is the
+individual's, not the species'.
+
 ### 1.11 The Summoner MP economy (26.07.2026)
 
 **A step costs exactly the combined MPD of the living manifested party**, with

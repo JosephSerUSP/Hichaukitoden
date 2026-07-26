@@ -63,6 +63,17 @@ function Battler.new(actorData, level, growthSeed)
     -- arrives already levelled (a generated level-20 recruit lives the same
     -- history as one that walked there).
     self.growth = growthMod.accumulate(actorData, self.growthSeed, self.level)
+    -- Favorite Food belongs to the INDIVIDUAL, not the species: one exact item
+    -- drawn once from the species' authored pool and kept for life, through
+    -- promotion, metamorphosis and a reversible curse alike. Hidden until the
+    -- creature is actually given it. Drawn from the same seed rather than
+    -- math.random so it is fixed the moment the creature exists and a reload
+    -- cannot fish for a better one.
+    local pool = actorData.favoriteFoods
+    if pool and #pool > 0 then
+        self.favoriteFood = pool[(self.growthSeed % #pool) + 1]
+        self.favoriteFoodFound = false
+    end
     -- Creature history (proof-build brief): the numbers that turn a generated
     -- creature into "my Pixie". Counted by the RECORD_HISTORY command from
     -- flow phases, so what gets counted is data, not code. `species` keeps the

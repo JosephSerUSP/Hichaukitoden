@@ -1632,6 +1632,20 @@
       "description": "Adds the actor to the party, or the reserve when the active slots are full."
     },
     {
+      "id": "TRANSFORM_ACTOR",
+      "category": "Party",
+      "label": "Transform Creature",
+      "params": [
+        { "key": "target", "type": "battlerRef" },
+        { "key": "actor", "type": "text" },
+        { "key": "reversible", "type": "flag" },
+        { "key": "bonus", "type": "text" }
+      ],
+      "contexts": [ "event", "scene", "flow" ],
+      "interactive": false,
+      "description": "Changes a creature's form while keeping the creature: accumulated growth, seed, permanent gains, learned skills, name, level and history all survive; MPD, capacities, affinities and innate skills come from the new form. `actor` is a species id, or \"hatch\" (resolve the actor's hatchOutcomes by the instance's saved provenance), \"metamorph\" (deterministic nearest eligible species from eligibleFrom), or \"revert\" (return to the remembered origin form). `reversible` remembers the current form so a later revert can restore it -- a natively recruited creature has none and never reverts, which is the only difference between a native Kappa and a cursed one."
+    },
+    {
       "id": "SYNC_TRAIT_STATE",
       "category": "State",
       "label": "Sync Trait -> State",

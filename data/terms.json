@@ -55,6 +55,7 @@
     "state_immune": "- {0} is unaffected.",
     "execution": "- {0} is finished off!",
     "strain": "The prolonged battle strains the summoning! (-{0} MP)",
+    "transform": "- {0} becomes {1}!",
     "max_mp_up": "- Maximum MP rises by {0}!",
     "max_mp_capped": "- Maximum MP is already at its limit.",
     "ward_save": "{0} is pulled back from the brink!",
