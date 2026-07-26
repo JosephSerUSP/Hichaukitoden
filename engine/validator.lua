@@ -274,6 +274,12 @@ validator.run = function(loader)
                     check(loader.getState(t.dataId) ~= nil,
                         ownerDesc .. " STATE_RATE names unknown state '"
                         .. tostring(t.dataId) .. "'")
+                elseif t.code == "FORCE_ACTION" then
+                    -- A forced action naming a missing skill would leave the
+                    -- holder unable to act at all, silently.
+                    check(loader.getSkill(t.dataId) ~= nil,
+                        ownerDesc .. " FORCE_ACTION names unknown skill '"
+                        .. tostring(t.dataId) .. "'")
                 end
             end
         end

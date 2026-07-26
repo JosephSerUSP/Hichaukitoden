@@ -391,6 +391,18 @@ a blanket authored against `negative` would also cover `dead` and quietly make
 its wearer immune to any authored death effect. Death simply never earns
 `common`.
 
+**`FORCE_ACTION`** takes the choice away: the holder uses the skill its `dataId`
+names, whatever it or the player picked, targeted by that skill's own spec. It
+is applied in `Battle:buildTurnQueue` and at the head of `getAIAction`, so **one
+rule binds both sides** — a berserk enemy and a berserk party creature are
+compelled by the same code, and nothing in the engine knows what "berserk"
+means. The battle scene additionally skips compelled creatures in the command
+menu; that is presentation of the rule, not a second copy of it, because
+offering a menu whose result is discarded is worse than not offering one.
+
+The AI check comes *before* its skill roll: choosing and then discarding would
+still consume battle RNG and shift every later roll in the round.
+
 Infliction is a three-part chain, clamped to 0..1:
 
 ```text

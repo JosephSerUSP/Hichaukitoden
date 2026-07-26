@@ -2027,6 +2027,12 @@
       "description": "Multiplies Item Creation yield score (0.25 = +25%)."
     },
     {
+      "code": "FORCE_ACTION",
+      "label": "Forced Action",
+      "usesDataId": true,
+      "description": "The holder can only take the skill named by dataId, whatever it or the player chose. Applied where the turn queue is built, so it constrains an AI enemy and a player creature by the same rule -- Berserk forcing a basic Attack is one authored state, not a branch in the battle code. Target is picked by the forced skill's own targeting spec."
+    },
+    {
       "code": "STATE_RATE",
       "label": "State Susceptibility %",
       "usesDataId": true,

@@ -13,6 +13,20 @@ local function getAttackSkill(session)
     return session.loader.getSkill(id) or session.loader.getSkill("attack")
 end
 
+-- The skill a battler is compelled to use this round, or nil. Checked where the
+-- queue is built rather than in the command menu and again in the AI, so one
+-- rule binds both sides: a berserk enemy and a berserk party creature are
+-- compelled by the same code, and neither battle.lua nor the battle scene
+-- carries a branch that knows what "berserk" means.
+local function forcedSkill(battler, session)
+    for _, found in ipairs(traits.findAllSources(battler, "FORCE_ACTION", session)) do
+        local skill = session.loader.getSkill(found.trait.dataId)
+        if skill then return skill end
+    end
+    return nil
+end
+battle.forcedSkill = forcedSkill
+
 local Battle = {}
 Battle.__index = Battle
 
@@ -88,10 +102,21 @@ end
 function Battle:getAIAction(enemy)
     -- Filter out dead/incapacitated
     if enemy:isDead() then return nil end
-    
+
+    -- A compelled enemy picks nothing, so this returns BEFORE the skill roll
+    -- below. That ordering is deliberate: choosing then discarding would still
+    -- consume battle RNG and shift every later roll in the round.
+    local compelled = forcedSkill(enemy, self.session)
+    if compelled then
+        local targeting = require("engine.targeting")
+        local target = targeting.resolve(enemy, compelled.target, self, nil, compelled)[1]
+        if not target then return nil end
+        return { actor = enemy, skill = compelled, target = target }
+    end
+
     local skills = enemy.skills
     if #skills == 0 then return nil end
-    
+
     -- Pick a random skill, re-rolling up to 3x if it's a heal and nobody on
     -- this side is wounded. Shipped in violation of SPEC S9's original "no
     -- AI targeting intelligence" line; owner-sanctioned retroactively
@@ -199,7 +224,14 @@ function Battle:buildTurnQueue(collectedActions)
             local target
             local itemAct = nil
 
-            if chosenAct then
+            local compelled = forcedSkill(ally, self.session)
+            if compelled then
+                -- Whatever was chosen is discarded, including an item: a
+                -- creature that cannot control itself cannot rummage in a bag.
+                skill = compelled
+                local targeting = require("engine.targeting")
+                target = targeting.resolve(ally, compelled.target, self)[1]
+            elseif chosenAct then
                 if chosenAct.type == "skill" then
                     skill = self.session.loader.getSkill(chosenAct.id) or getAttackSkill(self.session)
                     target = chosenAct.target

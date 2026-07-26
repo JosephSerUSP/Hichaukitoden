@@ -34,7 +34,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 - commands: **68**
 - effect types: **13**
-- trait codes: **28**
+- trait codes: **29**
 - meta keys: **6** (disciplines, intensityGrade, craftable, craftIngredient, detect, detectLevel)
 
 ### Registry entries with no implementation

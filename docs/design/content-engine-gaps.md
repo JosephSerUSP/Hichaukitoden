@@ -56,7 +56,6 @@ can land ahead of the balance rewrite it will eventually serve.
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Berserk raises ATK and forces basic Attack | Current Berserk only raises ATK | Reusable action restriction or forced-action trait implemented through battle command selection, not a Berserk-specific branch |
 | Defend protects against magic | Closed — see below; noted here because the old `PARAM_RATE def x2` is gone and any content that assumed doubled DEF should be re-read | — |
 | Ribbon's exact coverage | The mechanism exists (`STATE_CATEGORY_RATE common 0`); the item itself is unauthored, and which states earn `common` is a content decision that grows with the state roster | Author the item, and tag each new state as it lands |
 | Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
@@ -156,6 +155,16 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Forced actions, same date. `FORCE_ACTION` names a skill its holder must use,
+applied where the turn queue is built and at the head of the enemy AI, so one
+rule binds both sides and nothing in the engine knows what "berserk" means. The
+live Berserk state carries it, so the state finally behaves like the negative /
+common / mental thing it is tagged as -- it had raised ATK and compelled nothing
+since it was written, which made it a pure buff wearing a debuff's name. Tested
+in `tests/test_forced_action.lua`; the golden fixtures cannot see this, because
+no fixture applies berserk and a compelled creature that still obeys produces a
+perfectly stable log.
 
 States and control, same date (SPEC S1.10). States now carry a LIST of
 categories from a registry (`negative`, `positive`, `physical`, `magical`,

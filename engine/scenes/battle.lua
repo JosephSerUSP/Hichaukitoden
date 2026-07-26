@@ -80,12 +80,25 @@ function battle.rebuildLivingMembers()
     for i = 1, config.MAX_PARTY_SIZE do
         local c = sess().party[i]
         if c and not c:isDead() then
-            table.insert(living, { type = "monster", actor = c, index = i })
+            -- A creature under FORCE_ACTION is never asked. buildTurnQueue
+            -- would override its choice anyway, and presenting a menu whose
+            -- result is discarded is the worst of both: the player believes
+            -- they decided something. This is presentation of the rule, not a
+            -- second copy of it -- battle.lua stays authoritative, which is
+            -- why an enemy is compelled without the scene being involved.
+            if not battleSystem.forcedSkill(c, sess()) then
+                table.insert(living, { type = "monster", actor = c, index = i })
+            end
         end
     end
     v.livingMembers = living
     v.activeMemberIdx = 1
     v.collectedActions = {}
+    -- Nobody left to command -- every living creature is compelled. Go straight
+    -- to confirmation, or the round could never be submitted: the jump to the
+    -- confirm phase normally happens when the last member commits, and with an
+    -- empty list nobody ever does.
+    v.confirmPhase = (#living == 0)
 end
 
 -------------------------------------------------------------------------------

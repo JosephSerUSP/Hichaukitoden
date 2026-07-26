@@ -710,6 +710,9 @@
             if (code === 'STATE_RATE') {
                 return Object.keys(dbPayload.states || {});
             }
+            if (code === 'FORCE_ACTION') {
+                return Object.keys(dbPayload.skills || {});
+            }
             if (code === 'STATE_CATEGORY_RATE') {
                 return ((dbPayload.engine && dbPayload.engine.stateCategories) || [])
                     .map(c => ({ value: c.category, label: c.label || c.category }));

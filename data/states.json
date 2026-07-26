@@ -63,6 +63,10 @@
         "code": "PARAM_PLUS",
         "dataId": "atk",
         "value": 3
+      },
+      {
+        "code": "FORCE_ACTION",
+        "dataId": "attack"
       }
     ]
   },
