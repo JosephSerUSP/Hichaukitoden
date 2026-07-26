@@ -3,6 +3,7 @@ local traits = require("engine.traits")
 local config = require("engine.config")
 local flow = require("engine.flow")
 local interpreter = require("engine.interpreter")
+local compareIds = require("engine.inventory").compareIds
 
 local battle = {}
 
@@ -611,13 +612,6 @@ function Battle:applyItem(action, actor, target)
         local stacks = {}
         for itemId, qty in pairs(session.inventory or {}) do
             if qty > 0 then table.insert(stacks, itemId) end
-        end
-        local function compareIds(a, b)
-            local na, nb = tonumber(a), tonumber(b)
-            if na and nb then return na < nb end
-            if na then return true end
-            if nb then return false end
-            return tostring(a) < tostring(b)
         end
         table.sort(stacks, compareIds)
         item = stacks[action.itemIndex] and loader.getItem(stacks[action.itemIndex])

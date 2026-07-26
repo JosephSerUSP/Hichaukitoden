@@ -27,6 +27,7 @@ local session = require("engine.session")
 local config = require("engine.config")
 local loader = require("data.loader")
 local animation_player = require("presentation.animation_player")
+local compareIds = require("engine.inventory").compareIds
 
 local battle = {}
 
@@ -430,13 +431,6 @@ function battle.startTargetSelection(pendingAction)
             local items = {}
             for id, qty in pairs(sess().inventory or {}) do
                 if qty > 0 then table.insert(items, id) end
-            end
-            local function compareIds(a, b)
-                local na, nb = tonumber(a), tonumber(b)
-                if na and nb then return na < nb end
-                if na then return true end
-                if nb then return false end
-                return tostring(a) < tostring(b)
             end
             table.sort(items, compareIds)
             itemId = items[pendingAction.itemIndex]
