@@ -49,8 +49,8 @@ are what's left:
 - **unused** -- declared in the registry and never referenced anywhere.
   Harmless, but dead weight the editor still offers as a choice.
 
-- trait codes (assigned): none
-- trait codes (unused): none
+- trait codes (assigned): `EVA`
+- trait codes (unused): `HIT`
 - effect types (assigned): none
 - effect types (unused): none
 - commands (assigned): none

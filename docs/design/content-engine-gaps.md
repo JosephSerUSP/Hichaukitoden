@@ -64,6 +64,7 @@ can land ahead of the balance rewrite it will eventually serve.
 | Ribbon blocks all ordinary negative states | No category-wide ordinary-negative-state immunity | State category metadata plus validated category resistance, or an equivalent general trait |
 | Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
 | Blind, Silence, and other named cure targets | Some proposed cure targets do not yet exist as states | Author states and their reusable mechanical traits before shipping their cures |
+| Accuracy and evasion are real | `EVA` is assigned to Shadow Stalker and `HIT` is declared, but nothing in the engine rolls to hit or to evade -- every action always connects. Golem, Talos, Giant, Hyperion and Kappa are all specified as inaccurate or low-evasion creatures, and none of that can currently be expressed | A hit/evade roll, which belongs in the owner-supervised battle path; until then no creature's accuracy claim should be written into a description |
 
 ## Summoner MP and MPD
 
@@ -158,6 +159,21 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Round-end HP drift, same date. `STATE_TICKS` branched on
+`state.id == "regen"` / `"poison"` with rates from `system.json`. It now sums
+the `HRG` trait across every source, negative being degeneration -- one trait,
+both directions. That was three faults at once: two content ids hardcoded in
+the engine against the first non-negotiable; `HRG` dead on the `Holy Aura`
+passive and the `Mercury Crest`, both of which advertised regeneration and did
+nothing; and the roster's planned regeneration unauthorable, because only the
+one id the engine named could ever tick. Kirin's party-wide regeneration and
+the 5-8% band in `creature-parameters.md` are now expressible. Tested in
+`tests/test_state_ticks.lua`.
+
+The `regen` state kept its live 0.1 rather than adopting its own declared 0.05,
+so this is a mechanism fix and not a silent rebalance; the 5-8% band is a
+balance decision that belongs with the rest of the potency pass above.
 
 Tested in `tests/test_damage_model.lua`. The golden logs prove the battle is
 *stable*; they cannot prove the curve is the *right* one, because any

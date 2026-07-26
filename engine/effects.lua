@@ -261,8 +261,12 @@ function effects.apply(effectData, a, b, session, context)
         -- which cannot be honored until STATE_RATE exists -- recorded in
         -- docs/design/content-engine-gaps.md.
         local guaranteed = (context and context.critical) == true
+        -- Strictly less-than: math.random() can return 0, and `roll <= chance`
+        -- let an authored chance of 0 land on that draw. A 0% chance must mean
+        -- never, or "explicit immunity is a rate of zero" is not a rule the
+        -- data can rely on.
         local roll = math.random()
-        if guaranteed or roll <= (effectData.chance or 1.0) then
+        if guaranteed or roll < (effectData.chance or 1.0) then
             b:addState(effectData.status, effectData.duration)
             table.insert(events, {
                 type = "state_add",

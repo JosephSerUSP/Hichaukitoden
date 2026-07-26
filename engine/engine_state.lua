@@ -80,15 +80,29 @@ local function appearsIn(blobs, needle, skipPath)
     return false
 end
 
+-- `engine/traits.lua` PROVIDES trait lookups; it does not consume them. Its
+-- getRate tail names HIT/EVA/CRI/HRG only to give them base values, so a code
+-- mentioned solely there is read by nobody -- exactly the shape CRI had while
+-- seven weapons advertised a critical rate that nothing ever rolled, and G4
+-- reported "assigned: none" the whole time. Excluded for the same reason the
+-- declaring registry file is: a definition is not a use.
+--
+-- Deliberately scoped to trait codes. effects.lua and interpreter.lua really do
+-- implement their ids, so nothing equivalent applies to effect types or
+-- commands.
+local TRAIT_PROVIDER_FILES = { ["engine/traits.lua"] = true }
+
 -- True when `needle` appears as a quoted string or a `.needle =` / `.needle(`
--- reference in Lua source.
-local function referencedInCode(sources, needle)
-    for _, body in pairs(sources) do
-        if body:find('"' .. needle .. '"', 1, true)
-            or body:find("'" .. needle .. "'", 1, true)
-            or body:find("%." .. needle .. "%s*=")
-            or body:find("%." .. needle .. "%s*%(") then
-            return true
+-- reference in Lua source. `skipFiles` drops provider modules from the scan.
+local function referencedInCode(sources, needle, skipFiles)
+    for path, body in pairs(sources) do
+        if not (skipFiles and skipFiles[path]) then
+            if body:find('"' .. needle .. '"', 1, true)
+                or body:find("'" .. needle .. "'", 1, true)
+                or body:find("%." .. needle .. "%s*=")
+                or body:find("%." .. needle .. "%s*%(") then
+                return true
+            end
         end
     end
     return false
@@ -97,8 +111,8 @@ end
 -- Classifies a registry id as "lua" (engine code implements it), "data"
 -- (a flow/scene consumes it), "assigned" (content references it but nothing
 -- implements it -- the actionable rot bucket) or "unused" (declared only).
-local function classify(sources, implBlobs, assignBlobs, id, declaringFile)
-    if referencedInCode(sources, id) then return "lua" end
+local function classify(sources, implBlobs, assignBlobs, id, declaringFile, skipFiles)
+    if referencedInCode(sources, id, skipFiles) then return "lua" end
     if appearsIn(implBlobs, id, declaringFile) then return "data" end
     if appearsIn(assignBlobs, id) then return "assigned" end
     return "unused"
@@ -174,13 +188,15 @@ function engine_state.build(loader)
         effectTypes = { assigned = {}, unused = {} },
         commands = { assigned = {}, unused = {} },
     }
-    local function bucket(kind, id)
-        local how = classify(sources, implBlobs, assignBlobs, id, "data/engine.json")
+    local function bucket(kind, id, skipFiles)
+        local how = classify(sources, implBlobs, assignBlobs, id, "data/engine.json", skipFiles)
         if how == "assigned" or how == "unused" then
             table.insert(buckets[kind][how], id)
         end
     end
-    for _, tc in ipairs(eng.traitCodes or {}) do bucket("traitCodes", tc.code) end
+    for _, tc in ipairs(eng.traitCodes or {}) do
+        bucket("traitCodes", tc.code, TRAIT_PROVIDER_FILES)
+    end
     for _, et in ipairs(eng.effectTypes or {}) do bucket("effectTypes", et.id) end
     for _, c in ipairs(eng.commands or {}) do bucket("commands", c.id) end
 

@@ -400,6 +400,15 @@ effect list — the damage effect records the crit on it and the `add_status`
 effect after it reads it. (The design also exempts explicit immunity, which
 waits on `STATE_RATE`; see the gap ledger.)
 
+**Round-end HP drift** is the `HRG` trait summed across every source, applied
+by `STATE_TICKS`. Negative is degeneration, so poison is not a second
+mechanism — one trait, both directions, the way RPG Maker's works. A rate too
+small to move a creature emits no event rather than a `+0` line. This replaced
+a branch on `state.id == "regen"` / `"poison"`, which hardcoded two content ids
+in the engine, left `HRG` dead everywhere it was authored, and meant only the
+one id the engine named could ever regenerate — a second regenerating state
+was unauthorable.
+
 **`DAMAGE_RATE`** multiplies direct HP damage taken by its holder, and is
 **multiplicative** across sources, unlike the additive rate traits — two
 independent 0.5 protections must be a quarter, not zero. Defend is now

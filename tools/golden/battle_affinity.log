@@ -8,7 +8,7 @@ action|Imp|Archangel||
 damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
-heal||Archangel|1|
+heal||Archangel|2|
 mp_drain|Imp||1|
 action|Golem|Archangel||
 damage||Archangel|3|
@@ -29,7 +29,7 @@ action|Golem|Archangel||
 damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
-heal||Archangel|1|
+heal||Archangel|2|
 mp_drain|Golem||1|
 action|Imp|Ooze||
 damage||Ooze|10|

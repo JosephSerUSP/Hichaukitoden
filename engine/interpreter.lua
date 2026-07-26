@@ -609,16 +609,34 @@ handlers.STATE_TICKS = function(cmd, ctx)
     for _, b in ipairs(ctx.enemies or {}) do table.insert(battlers, b) end
     for _, battler in ipairs(battlers) do
         if battler and not battler:isDead() then
-            for _, state in ipairs(battler.states) do
-                if state.id == "regen" then
-                    local maxHp = traits.getParam(battler, "maxHp", ctx.session)
-                    local heal = math.floor(maxHp * (config.combat and config.combat.regenRate or 0.1))
-                    battler.hp = math.min(maxHp, battler.hp + heal)
-                    table.insert(ctx.events, { type = "heal", target = battler, value = heal })
-                elseif state.id == "poison" then
-                    local dmg = math.floor(traits.getParam(battler, "maxHp", ctx.session) * (config.combat and config.combat.poisonRate or 0.1))
-                    battler.hp = math.max(0, battler.hp - dmg)
-                    table.insert(ctx.events, { type = "damage", target = battler, value = dmg })
+            -- Per-round HP drift, driven by the HRG trait summed across every
+            -- source. Negative is degeneration: one trait covers both
+            -- directions, the way RPG Maker's does, so poison is not a second
+            -- mechanism.
+            --
+            -- This used to branch on `state.id == "regen"` / `"poison"` with
+            -- rates from system.json, which hardcoded two content ids in the
+            -- engine and left the HRG trait dead -- the `regen` state declared
+            -- HRG 0.05 while actually ticking combat.regenRate 0.1, and the
+            -- items and passives carrying HRG did nothing at all. It also made
+            -- the roster's planned regeneration unauthorable: a second
+            -- regenerating state (Kirin's party-wide regeneration) or an
+            -- authored 5-8% band could not exist, because only the one id the
+            -- engine named would ever tick.
+            local hrg = traits.getRate(battler, "HRG", ctx.session)
+            if hrg ~= 0 then
+                local maxHp = traits.getParam(battler, "maxHp", ctx.session)
+                local amount = math.floor(maxHp * math.abs(hrg))
+                -- A rate that rounds to nothing on a small creature emits
+                -- nothing: a "+0 HP" line in the log is noise, not a tick.
+                if amount <= 0 then
+                    -- nothing to do
+                elseif hrg > 0 then
+                    battler.hp = math.min(maxHp, battler.hp + amount)
+                    table.insert(ctx.events, { type = "heal", target = battler, value = amount })
+                else
+                    battler.hp = math.max(0, battler.hp - amount)
+                    table.insert(ctx.events, { type = "damage", target = battler, value = amount })
                     if battler.hp <= 0 then
                         battler:addState("dead")
                         table.insert(ctx.events, { type = "death", target = battler })
