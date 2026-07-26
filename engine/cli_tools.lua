@@ -675,6 +675,14 @@ local function logEvents(events)
             local v = ev.value or ""
             local s = ev.state or ""
             print(string.format("%s|%s|%s|%s|%s", t, a, trg, tostring(v), s))
+            -- Criticals are damage multipliers, so without their own line a
+            -- crit and an ordinary hit for the same total are indistinguishable
+            -- to G2 -- and crit rate is rolled per hit, exactly the kind of
+            -- thing that regresses silently. Emitted as an extra line rather
+            -- than a sixth column so the common case leaves the log unchanged.
+            if ev.critical then
+                print(string.format("critical|%s|%s||", a, trg))
+            end
         end
     end
 end

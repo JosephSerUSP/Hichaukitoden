@@ -1768,9 +1768,12 @@
       "id": "hp_damage",
       "label": "HP Damage",
       "params": [
+        "potency",
+        "power",
+        "defense",
         "formula"
       ],
-      "description": "Deals formula damage, reduced by the target's DEF and scaled by elemental affinity."
+      "description": "Relative damage when `power` names an attacker stat: potency * power^2 / (power + defense), where `defense` defaults to the stat `power` is paired with (atk vs def, mat vs mdf). Elemental affinity, then criticals, then DAMAGE_RATE apply after, and the result floors at 1. Authoring `formula` INSTEAD of `power` is direct damage: the authored number lands as-is, unreduced -- that is what a trap or a poison tick is."
     },
     {
       "id": "hp_heal",
@@ -1784,9 +1787,12 @@
       "id": "hp_drain",
       "label": "HP Drain",
       "params": [
+        "potency",
+        "power",
+        "defense",
         "formula"
       ],
-      "description": "Deals formula damage and heals the user for the same amount."
+      "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt."
     },
     {
       "id": "add_status",
@@ -2019,6 +2025,12 @@
       "label": "Craft Yield +",
       "usesDataId": false,
       "description": "Multiplies Item Creation yield score (0.25 = +25%)."
+    },
+    {
+      "code": "DAMAGE_RATE",
+      "label": "Damage Taken %",
+      "usesDataId": false,
+      "description": "Multiplies direct HP damage taken by the holder (0.5 = half). Multiplicative across sources, unlike the additive rate traits, because two independent protections should compound rather than sum past zero. Serves Defend, barriers, protective equipment and vulnerability states alike; it does not reduce authored indirect damage such as poison ticks."
     },
     {
       "code": "ITEM_EFFECT_RATE",

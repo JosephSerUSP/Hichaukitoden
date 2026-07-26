@@ -89,9 +89,8 @@
     "duration": 1,
     "traits": [
       {
-        "code": "PARAM_RATE",
-        "dataId": "def",
-        "value": 2
+        "code": "DAMAGE_RATE",
+        "value": 0.5
       }
     ]
   },

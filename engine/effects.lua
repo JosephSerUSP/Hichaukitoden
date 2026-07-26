@@ -109,6 +109,78 @@ local function itemRate(b, session, context)
     return 1.0 + traits.getRate(b, "ITEM_EFFECT_RATE", session)
 end
 
+-- The stat a power source is measured against. Physical actions meet DEF,
+-- magical actions meet MDF; an exceptional skill may author `defense` to pair
+-- them otherwise. Before this, EVERY action reduced through DEF, which made a
+-- promised magical weakness invisible -- a creature could advertise ruinous MDF
+-- and never once be hit through it.
+local DEFENSE_PAIRING = { atk = "def", mat = "mdf" }
+
+-- Damage taken multiplier: the product of every DAMAGE_RATE on the target.
+-- Multiplicative rather than summed (the shape traits.getRate gives the additive
+-- rates) because two independent 0.5 protections should be a quarter, not zero.
+local function damageRate(b, session)
+    local rate = 1.0
+    for _, found in ipairs(traits.findAllSources(b, "DAMAGE_RATE", session)) do
+        rate = rate * (found.trait.value or 1.0)
+    end
+    return rate
+end
+
+-- One damage resolution for hp_damage and hp_drain, in the order
+-- docs/design/creature-parameters.md fixes:
+--
+--   relative damage -> potency -> element -> critical x1.5 -> damage rate
+--   -> rounding, with a floor of 1
+--
+-- The relative curve is potency * P^2 / (P + D). Its useful property is that
+-- damage is a SHARE of power decided by the defense ratio -- 50% at D = P, 33%
+-- at D = 2P -- so scratch damage is real and a Pixie punching a Golem is
+-- meant to be an almost useless action, which a flat subtraction cannot
+-- express and the old `10 / DEF` divisor got backwards at low DEF.
+--
+-- `formula` without `power` is the direct path: an authored number that lands
+-- as-is. A trap that says 20 deals 20. It takes no DAMAGE_RATE, matching the
+-- rule that guarding does not blunt authored indirect damage.
+local function resolveDamage(effectData, a, b, session, context, events)
+    local ctxElement = context and context.element or nil
+    local ctxUser = context and context.user or nil
+    local relative = (effectData.power ~= nil)
+    local raw
+
+    if relative then
+        local powerStat = effectData.power
+        local defStat = effectData.defense or DEFENSE_PAIRING[powerStat] or "def"
+        local P = traits.getParam(a, powerStat, session)
+        local D = traits.getParam(b, defStat, session)
+        local potency = effectData.potency or 1.0
+        raw = potency * (P * P) / (P + D)
+    else
+        raw = evaluateFormula(effectData.formula, a, b, session, events)
+    end
+
+    raw = raw * effects.elementMultiplier(ctxElement, ctxUser, b, session)
+
+    -- Criticals roll here rather than in battle.lua so that every damaging
+    -- action gets them on one code path, and so a multi-hit action rolls per
+    -- hit exactly as the design requires. Only the relative path crits: a trap
+    -- has no attacker to be skilful.
+    local critical = false
+    if relative and a then
+        local combat = (session.loader.system and session.loader.system.combat) or {}
+        if math.random() < traits.getRate(a, "CRI", session) then
+            critical = true
+            raw = raw * (combat.criticalMultiplier or 1.5)
+        end
+    end
+
+    if relative then
+        raw = raw * damageRate(b, session)
+    end
+
+    return math.max(1, math.floor(raw)), critical
+end
+
 -- context (optional): { element = "White", user = <battler>, isItem = true } —
 -- the element of the skill/item driving this effect, the creature performing
 -- the action (used for the two affinity layers on damage), and whether an item
@@ -120,16 +192,17 @@ function effects.apply(effectData, a, b, session, context)
     local ctxUser = context and context.user or nil
 
     if effectData.type == "hp_damage" then
-        local val = evaluateFormula(effectData.formula, a, b, session, events)
-        -- Defense reduction, then elemental affinity
-        local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def) * effects.elementMultiplier(ctxElement, ctxUser, b, session)))
-        
+        local finalDmg, critical = resolveDamage(effectData, a, b, session, context, events)
+
         b.hp = math.max(0, b.hp - finalDmg)
+        -- Recorded on the shared action context so a status attached to the
+        -- same action can see the hit landed critically (see add_status).
+        if critical and context then context.critical = true end
         table.insert(events, {
             type = "damage",
             target = b,
-            value = finalDmg
+            value = finalDmg,
+            critical = critical or nil
         })
         if b.hp <= 0 then
             b:addState("dead")
@@ -151,17 +224,17 @@ function effects.apply(effectData, a, b, session, context)
         })
         
     elseif effectData.type == "hp_drain" then
-        local val = evaluateFormula(effectData.formula, a, b, session, events)
-        local def = traits.getParam(b, "def", session)
-        local finalDmg = math.max(1, math.floor(val * (10 / def) * effects.elementMultiplier(ctxElement, ctxUser, b, session)))
-        
+        local finalDmg, critical = resolveDamage(effectData, a, b, session, context, events)
+
         b.hp = math.max(0, b.hp - finalDmg)
         a.hp = math.min(traits.getParam(a, "maxHp", session), a.hp + finalDmg)
-        
+        if critical and context then context.critical = true end
+
         table.insert(events, {
             type = "damage",
             target = b,
-            value = finalDmg
+            value = finalDmg,
+            critical = critical or nil
         })
         table.insert(events, {
             type = "heal",
@@ -178,8 +251,18 @@ function effects.apply(effectData, a, b, session, context)
         end
         
     elseif effectData.type == "add_status" then
+        -- Brigandine's rule: a damaging action that crits guarantees the status
+        -- it carries. `context.critical` is set by the damage effect earlier in
+        -- the SAME action, which is why the action context is shared across an
+        -- effect list rather than rebuilt per effect. A non-damaging status
+        -- action has no damage effect to set it and so never gets the guarantee.
+        --
+        -- NOTE: the design also exempts explicit immunity (target state rate 0),
+        -- which cannot be honored until STATE_RATE exists -- recorded in
+        -- docs/design/content-engine-gaps.md.
+        local guaranteed = (context and context.critical) == true
         local roll = math.random()
-        if roll <= (effectData.chance or 1.0) then
+        if guaranteed or roll <= (effectData.chance or 1.0) then
             b:addState(effectData.status, effectData.duration)
             table.insert(events, {
                 type = "state_add",

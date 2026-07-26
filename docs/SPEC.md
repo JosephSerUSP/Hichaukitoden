@@ -347,6 +347,66 @@ counted, or landed on by a cursor. Item Creation must not merely bury a
 promotion key at the bottom of the ingredient list, and every future
 "selectable subset of a list source" is the same problem.
 
+### 1.10 The damage model (26.07.2026)
+
+Damage is **relative**: a share of the attacker's power decided by the ratio
+to the defender's matching stat, per `docs/design/creature-parameters.md`.
+
+```text
+potency * power^2 / (power + defense)
+```
+
+The useful property is the share table — 100% of power at zero defense, 50% at
+`defense = power`, 33% at twice, 25% at three times. It never reaches zero, so
+scratch damage is real and a Pixie punching a Golem is meant to be an almost
+useless action rather than an impossible one. It replaced a `val * (10 / DEF)`
+divisor that got this backwards at low DEF and had no notion of potency.
+
+Resolution order is fixed, and `resolveDamage` in `engine/effects.lua` is the
+one implementation — `hp_damage` and `hp_drain` share it so a drain can never
+drift from the curve:
+
+```text
+relative damage -> potency -> element -> critical x1.5 -> DAMAGE_RATE -> floor 1
+```
+
+**Stat pairing.** `power` names the attacker's stat and `defense` defaults to
+the stat it is paired with: `atk` meets `def`, `mat` meets `mdf`. An
+exceptional skill may author `defense` to cross them. This matters more than it
+sounds: before it, *every* action reduced through DEF, so a creature could
+advertise ruinous MDF and never once be hit through it — Golem's entire
+promised identity was unreachable. Archangel's Holy Smite against Golem went
+3 → 15 on this change alone.
+
+**Direct damage.** An effect authoring `formula` *instead of* `power` is the
+direct path: the authored number lands as-is. A trap that says 20 deals 20. It
+takes no critical and no `DAMAGE_RATE`, matching the rule that guarding does
+not blunt authored indirect damage. These are two authored intents, not a
+compatibility shim — the relative path is for actions with an attacker, the
+direct path for authored consequences.
+
+**Criticals** roll in `effects.lua` rather than `battle.lua`, so every damaging
+action gets them on one code path and a multi-hit action rolls per hit as the
+design requires. Base rate is 5% (`traits.getRate`'s `CRI` default), multiplier
+is `system.combat.criticalMultiplier` (1.5 — permadeath makes larger defaults
+excessively volatile). A critical is reported on the damage event and gets its
+own `critical|` line in the golden log, because a crit and an ordinary hit for
+the same total are otherwise indistinguishable to G2.
+
+Criticals also carry Brigandine's status rule: a damaging action that crits
+guarantees the status attached to it, bypassing the authored chance. That is
+why `APPLY_EFFECT` builds **one context per target** shared across the action's
+effect list — the damage effect records the crit on it and the `add_status`
+effect after it reads it. (The design also exempts explicit immunity, which
+waits on `STATE_RATE`; see the gap ledger.)
+
+**`DAMAGE_RATE`** multiplies direct HP damage taken by its holder, and is
+**multiplicative** across sources, unlike the additive rate traits — two
+independent 0.5 protections must be a quarter, not zero. Defend is now
+`DAMAGE_RATE 0.5` rather than doubled DEF, which was worthless against magic
+and had inconsistent value under the relative curve. The same trait serves
+barriers, protective equipment and vulnerability states.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

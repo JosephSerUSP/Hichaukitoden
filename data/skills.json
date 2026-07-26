@@ -10,7 +10,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "6 + 1.2 * a.level"
+        "potency": 1.2,
+          "power": "mat"
       }
     ]
   },
@@ -26,7 +27,7 @@
     "effects": [
       {
         "type": "hp_heal",
-        "formula": "5 + 1.5 * a.level"
+        "formula": "a.mat * 0.60 + b.maxHp * 0.15"
       }
     ]
   },
@@ -41,7 +42,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "7 + 1.2 * a.level"
+        "potency": 1.25,
+          "power": "atk"
       }
     ]
   },
@@ -57,7 +59,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "6 + 1.4 * a.level"
+        "potency": 1.45,
+          "power": "mat"
       }
     ]
   },
@@ -90,7 +93,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "8 + 1.3 * a.level"
+        "potency": 1.2,
+          "power": "atk"
       }
     ]
   },
@@ -140,7 +144,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "5 + 1.2 * a.level"
+        "potency": 0.8,
+          "power": "atk"
       },
       {
         "type": "add_status",
@@ -160,7 +165,7 @@
     "effects": [
       {
         "type": "hp_heal",
-        "formula": "10 + 2.0 * a.level"
+        "formula": "a.mat * 0.90 + b.maxHp * 0.22"
       }
     ]
   },
@@ -175,7 +180,8 @@
     "effects": [
       {
         "type": "hp_drain",
-        "formula": "4 + 0.6 * a.level"
+        "potency": 0.8,
+          "power": "mat"
       },
       {
         "type": "add_status",
@@ -195,7 +201,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "12 + 1.6 * a.level"
+        "potency": 1.85,
+          "power": "atk"
       }
     ]
   },
@@ -213,7 +220,8 @@
     "effects": [
       {
         "type": "hp_damage",
-        "formula": "a.atk"
+        "potency": 1,
+          "power": "atk"
       }
     ]
   },

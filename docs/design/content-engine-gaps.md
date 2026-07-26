@@ -48,12 +48,10 @@ can land ahead of the balance rewrite it will eventually serve.
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Relative damage: `potency * power^2 / (power + defense)` | HP damage currently evaluates a raw formula and multiplies by `10 / DEF`; magical damage also uses DEF | Registry-backed damage effect parameters for power source, defense source, and potency; one shared implementation for damage and drain |
-| Physical actions use ATK/DEF; magical actions use MAT/MDF | Current `hp_damage` always reduces through DEF | Explicit validated stat pairing |
-| Healing bands use MAT plus target MaxHP | Current heals use only their authored raw formula | Formula tokens already permit composition, but skill data and previews must use and validate the agreed scale |
-| General direct-damage rate | Defend currently doubles DEF and does not protect from magic | Reusable `DAMAGE_RATE` trait respected by all direct HP damage paths |
 | Armor penetration | No approved common penetration parameter | Validated effect/trait vocabulary that reduces or bypasses a defined share of defense |
-| Critical damage at 1.5 times and attached-status guarantee | CRI rate exists, but ordinary HP damage does not currently apply the approved critical behavior | Shared critical resolution, event output, per-hit handling, and status handoff |
+| Critical hits guarantee attached statuses **unless the target is immune** | The guarantee is live, but immunity cannot be expressed: a target state rate of zero has nothing to be zero | Depends on `STATE_RATE` below; until then a critical guarantees a status against every target |
+| The eight authored CRI values were balanced against a system that never ran | Seven weapons and one actor carried `CRI` while nothing in the engine ever rolled a critical, so the values are untested guesses now live as authored (Shattered Edge +25%, Radiant Blade Flavio +20%, Wind Dancer / Water Scepter / Holy Sword Gram +15%, Silver Blade / Dark Scepter Lucille +10%, Shadow Stalker +10%, on a 5% base) | A balance pass over crit rates against the trait budgets in `item-atlas-expansion.md`, which allows ordinary +2-4%, strong +5-8%, signature +10-15% — several shipped values already exceed the signature band |
+| Skill potency and MP bands against authored kits | The eight damaging skills carry provisional potencies (0.80-1.85) read off the potency table; MP costs are untouched and predate the model | Simulation against the skill-class table in `creature-parameters.md` |
 
 ## States and control
 
@@ -62,6 +60,7 @@ can land ahead of the balance rewrite it will eventually serve.
 | MZ-style status chance: skill chance times attacker success rate times target state rate | `add_status` currently rolls only its raw `chance` | Status-success and per-state-rate traits, immunity at rate zero, shared chance resolver |
 | Critical damaging hit guarantees attached statuses unless immune | No critical-to-status relationship | Action/hit context passed to attached status effects |
 | Berserk raises ATK and forces basic Attack | Current Berserk only raises ATK | Reusable action restriction or forced-action trait implemented through battle command selection, not a Berserk-specific branch |
+| Defend protects against magic | Closed — see below; noted here because the old `PARAM_RATE def x2` is gone and any content that assumed doubled DEF should be re-read | — |
 | Ribbon blocks all ordinary negative states | No category-wide ordinary-negative-state immunity | State category metadata plus validated category resistance, or an equivalent general trait |
 | Safety Bit protects against Execution | Execution does not yet exist | Execution resistance vocabulary separate from ordinary states |
 | Blind, Silence, and other named cure targets | Some proposed cure targets do not yet exist as states | Author states and their reusable mechanical traits before shipping their cures |
@@ -147,6 +146,24 @@ authority on what exists.
 
 Tested in `tests/test_item_vocabulary.lua`; none of it is observable to G2/G3,
 which is why it is unit-tested rather than left to the golden logs.
+
+Battle mathematics, SPEC §1.10 (26.07.2026). Unlike the item slice, this one
+**changed the golden logs**; they were regenerated under owner review, not to
+silence a diff.
+
+| Was blocked | Now expressible as |
+|---|---|
+| Relative damage `potency * power^2 / (power + defense)` | `potency` + `power` on `hp_damage`/`hp_drain`, resolved by one shared `resolveDamage` |
+| Physical uses ATK/DEF, magical uses MAT/MDF | `power` names the attacker stat; `defense` defaults to its pair and may be authored to cross them. **This is what made Golem's magical weakness real** — Holy Smite into Golem went 3 -> 15 |
+| Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
+| General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
+| Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Tested in `tests/test_damage_model.lua`. The golden logs prove the battle is
+*stable*; they cannot prove the curve is the *right* one, because any
+consistent arithmetic produces a stable log. The unit tests pin the share
+table, the pairing, and the DAMAGE_RATE algebra so a future change that keeps
+G2 green by regenerating it still has to answer to the design.
 
 ## Known live-data audit rule
 

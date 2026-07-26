@@ -1237,6 +1237,11 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
     local element = act.element
 
     for _, tgt in ipairs(ctx.targets or {}) do
+        -- ONE context per target, shared by every effect of the action, so an
+        -- attached status can see that the damage effect before it landed
+        -- critically. Rebuilt per target because a crit on one enemy says
+        -- nothing about the next.
+        local actionCtx = { element = element, user = ctx.a, isItem = (ctx.skill == nil) }
         for _, eff in ipairs(act.effects or {}) do
             -- `b` is always the recipient. `a` is whoever is acting -- the
             -- wielder in battle, and the recipient itself outside of it, where
@@ -1244,8 +1249,7 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
             -- even in battle, which would have made an item's formula read the
             -- recipient's stats instead of the user's.
             local a = ctx.a or tgt
-            emitAll(ctx, effects.apply(eff, a, tgt, ctx.session,
-                { element = element, user = ctx.a, isItem = (ctx.skill == nil) }))
+            emitAll(ctx, effects.apply(eff, a, tgt, ctx.session, actionCtx))
         end
     end
 end
