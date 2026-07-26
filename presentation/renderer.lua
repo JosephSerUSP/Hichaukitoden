@@ -39,12 +39,7 @@ local function minimapTurnLeftDir(dir)
     return MINIMAP_DIR_ORDER[(idx - 2) % 4 + 1]
 end
 
-local function lerpAngle(a, b, t)
-    local diff = b - a
-    while diff < -math.pi do diff = diff + math.pi * 2 end
-    while diff > math.pi do diff = diff - math.pi * 2 end
-    return a + diff * t
-end
+local lerpAngle = ui.lerpAngle
 
 -- Battle layout accessor: engine.json override -> built-in default.
 -- Defaults + override lookup live in presentation/battle_layout.lua,
@@ -203,8 +198,7 @@ function renderer.update(dt)
     -- overhaul-7 A1: animation player owns all battler animation timing
     animation_player.update(dt)
     animation_player.updateParticles(dt)
-    small_battlers.updateAnims(dt)
-    
+
     -- Smoothly interpolate party HP and the shared party MP pool
     local session = renderer.session
     if session then
@@ -800,28 +794,6 @@ local function getBattlerRect(target, battleState, session)
         end
     end
     return tx, ty, tw, th
-end
-
-local function drawArrow(x1, y1, x2, y2)
-    local angle = math.atan2(y2 - y1, x2 - x1)
-    local size = 8
-    
-    -- Translucent glow line
-    love.graphics.setLineWidth(4)
-    love.graphics.setColor(1, 0.9, 0.4, 0.3)
-    love.graphics.line(x1, y1, x2, y2)
-    
-    -- Brighter inner line
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(1, 0.9, 0.4, 0.7)
-    love.graphics.line(x1, y1, x2, y2)
-    
-    -- Arrowhead
-    local ax = x2 - size * math.cos(angle - math.pi / 6)
-    local ay = y2 - size * math.sin(angle - math.pi / 6)
-    local bx = x2 - size * math.cos(angle + math.pi / 6)
-    local by = y2 - size * math.sin(angle + math.pi / 6)
-    love.graphics.polygon("fill", x2, y2, ax, ay, bx, by)
 end
 
 -- Summoner rework battle-windows conversion: the monolithic drawBattle is

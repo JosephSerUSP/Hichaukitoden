@@ -93,6 +93,22 @@
         }
 
         const TILE_SIZE = 24;
+
+        // Cell coords floor() the pointer position; vertex coords (grid
+        // corners, used by the light tool) round() the same pixel math instead.
+        function pointerToCell(rect, e) {
+            return {
+                x: Math.floor((e.clientX - rect.left) / TILE_SIZE),
+                y: Math.floor((e.clientY - rect.top) / TILE_SIZE)
+            };
+        }
+        function pointerToVertex(rect, e) {
+            return {
+                x: Math.round((e.clientX - rect.left) / TILE_SIZE),
+                y: Math.round((e.clientY - rect.top) / TILE_SIZE)
+            };
+        }
+
         let mapCanvas = null;
         let ctx = null;
         let selectedEvent = null;
@@ -428,8 +444,7 @@
             canvas.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                const { x, y } = pointerToCell(rect, e);
                 showCanvasContextMenu(e, x, y);
             });
 
@@ -438,8 +453,7 @@
                 if (e.button === 2) return; // handled by the contextmenu event instead
 
                 const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                const { x, y } = pointerToCell(rect, e);
 
                 const map = dbPayload.maps[currentMapIndex];
                 if (!map) return;
@@ -456,11 +470,7 @@
                             lightObjectDragging = !!selectedLightObject;
                             return;
                         }
-                        // Light is painted onto grid CORNERS, not cells, so the
-                        // nearest vertex is a round() of the same pixel math the
-                        // cell coords above use a floor() of.
-                        const vx = Math.round((e.clientX - rect.left) / TILE_SIZE);
-                        const vy = Math.round((e.clientY - rect.top) / TILE_SIZE);
+                        const { x: vx, y: vy } = pointerToVertex(rect, e);
                         isMouseDown = true;
                         paintLightAt(vx, vy);
                     }
@@ -486,8 +496,7 @@
 
             canvas.addEventListener('mousemove', (e) => {
                 const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                const { x, y } = pointerToCell(rect, e);
 
                 const map = dbPayload.maps[currentMapIndex];
                 if (!map) return;
@@ -499,8 +508,7 @@
                     if (lightObjectDragging && lightToolMode === 'object' && selectedLightObject) {
                         moveSelectedLamp(x, y);
                     } else if (isMouseDown && lightToolMode !== 'object') {
-                        const vx = Math.round((e.clientX - rect.left) / TILE_SIZE);
-                        const vy = Math.round((e.clientY - rect.top) / TILE_SIZE);
+                        const { x: vx, y: vy } = pointerToVertex(rect, e);
                         paintLightAt(vx, vy);
                     }
                     return;
@@ -534,8 +542,7 @@
             canvas.addEventListener('dblclick', (e) => {
                 e.preventDefault();
                 const rect = canvas.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-                const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+                const { x, y } = pointerToCell(rect, e);
 
                 if (editingMode === 'event') {
                     openEventModal(x, y);

@@ -82,12 +82,6 @@ end
 -- Track evaluation helpers
 ---------------------------------------------------------------------------
 
-local function evalBlend(track, t)
-    -- Blend track: just returns the mode string for the track's duration.
-    -- After the track ends, its effect is removed (caller checks bounds).
-    return track.mode or "alpha"
-end
-
 local function evalTint(track, t)
     -- Tint: interpolate alpha from fromAlpha to toAlpha.
     -- Color stays constant (the track's color field).

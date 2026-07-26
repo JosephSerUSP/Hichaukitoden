@@ -35,21 +35,9 @@ local animation_player = require("presentation.animation_player")
 local gradient_shader  = require("presentation.gradient_shader")
 
 -- Per-battler-object damage feedback is now owned by animation_player.
--- These stubs forward to the player for backward compat during migration.
-function small_battlers.resetAnims()
-    animation_player.reset()
-end
-
 function small_battlers.triggerDamage(battlerRef)
     if not battlerRef then return end
     animation_player.play("system.small_damage", battlerRef)
-end
-
-function small_battlers.updateAnims(dt)
-    -- Animation player handles its own update; this is called from
-    -- renderer.update for backward compat. The player.update is called
-    -- separately by the renderer (which also calls small_battlers.update).
-    -- No-op here — the player's update drives everything.
 end
 
 -- Advance the shared idle-animation clock (renderer.update owns the dt feed).

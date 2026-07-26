@@ -2,6 +2,15 @@ local config = require("engine.config")
 
 local ui = {}
 
+-- Shortest-path angle interpolation (radians), shared by the map/minimap
+-- turn animation (renderer.lua) and the first-person viewport (viewport_3d.lua).
+function ui.lerpAngle(a, b, t)
+    local diff = b - a
+    while diff < -math.pi do diff = diff + math.pi * 2 end
+    while diff > math.pi do diff = diff - math.pi * 2 end
+    return a + diff * t
+end
+
 local iconset
 local iconSize = 8
 local iconQuads = {}

@@ -1183,33 +1183,6 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
     end
 end
 
--- Thin wrapper for backward compatibility: open-only, returns old signature.
-local function openAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts)
-    local px, py, pw, ph, _, animating = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, false)
-    return px, py, pw, ph, animating
-end
-
--- Applies content alpha for fade animations (called in drawWindow).
--- When the fade alpha is < 1, applies a global alpha push so content
--- fades along with the panel, preventing a jarring "panel is transparent
--- but text is opaque" mismatch.
-local function applyContentAlpha(win, layout, ctx, listCache, layouts, closing)
-    local phase = closing and "close" or "open"
-    local anim = layout.anim and layout.anim[phase]
-    if not anim or anim.effect ~= "fade" then return end
-    local _, _, _, _, alpha, animating = windowAnimRect(win, layout, 0, 0, 0, 0, ctx, listCache, layouts, closing)
-    if animating and alpha < 1 then
-        love.graphics.push("all")
-        love.graphics.setColor(1, 1, 1, alpha)
-    end
-end
-
--- Reverses the alpha push if one was applied.
-local function revertContentAlpha()
-    -- Only pop if there's a push (checked at call site via a flag).
-    love.graphics.pop()
-end
-
 -- Style-specific content: called once per window per frame, either directly
 -- (resting state) or inside a scissor clipped to the animated open rect
 -- (while opening) -- content is always laid out at the REAL final x/y/w/h so

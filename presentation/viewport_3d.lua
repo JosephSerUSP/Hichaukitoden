@@ -36,12 +36,7 @@ local function turnRightDir(dir)
     return DIR_ORDER[idx % 4 + 1]
 end
 
-local function lerpAngle(a, b, t)
-    local diff = b - a
-    while diff < -math.pi do diff = diff + math.pi * 2 end
-    while diff > math.pi do diff = diff - math.pi * 2 end
-    return a + diff * t
-end
+local lerpAngle = ui.lerpAngle
 
 -- Tileset atlas configuration. See docs/design/raycaster-tileset-lighting.md.
 -- Grid cells are 64x64px, 4 columns wide. Default row layout (no sidecar
