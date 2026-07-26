@@ -466,6 +466,26 @@ validator.run = function(loader)
             check(evo.level == nil or type(evo.level) == "number",
                 "actor " .. tostring(actor.id) .. " evolution level must be a number, got '"
                 .. tostring(evo.level) .. "'")
+            -- The fixed one-time promotion bonus, folded into the creature's
+            -- permanent growth record. A misspelled parameter here would be
+            -- read by nothing and grant nothing, while still reading in the
+            -- editor as though the promotion rewarded something.
+            if evo.bonus ~= nil then
+                check(type(evo.bonus) == "table",
+                    "actor " .. tostring(actor.id) .. " evolution bonus must be a table")
+                if type(evo.bonus) == "table" then
+                    local growthMod = require("engine.growth")
+                    local known = {}
+                    for _, p in ipairs(growthMod.PARAMS) do known[p] = true end
+                    for param, value in pairs(evo.bonus) do
+                        check(known[param], "actor " .. tostring(actor.id)
+                            .. " evolution bonus names '" .. tostring(param)
+                            .. "', which is not a growing parameter")
+                        check(type(value) == "number", "actor " .. tostring(actor.id)
+                            .. " evolution bonus '" .. tostring(param) .. "' must be a number")
+                    end
+                end
+            end
             local cost = evo.cost
             if cost and cost.item ~= nil then
                 local key = loader.getItem(cost.item)

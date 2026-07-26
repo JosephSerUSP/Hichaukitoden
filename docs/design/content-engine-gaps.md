@@ -72,8 +72,6 @@ Closed 26.07.2026 -- see below. What remains is presentation, not mechanism:
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Promotion preserves exact history and changes only future budgets | Current evolution reconstructs a battler from destination actor data at the same level | Transformation path that preserves accumulated parameters and swaps future growth profile |
-| Item-gated promotions usually have no level requirement | Existing evolution data is level-oriented | Item-consuming promotion condition in data and UI |
 | Egg hatch uses provenance-specific fixed hatch bonus | Provenance and automatic hatch outcome are not general actor data | Saved provenance, level trigger, authored outcome table, and fixed transformation bonus |
 | Homunculus preview and deterministic parameter-driven destination | No general resolver | Reusable deterministic metamorphosis rules with validated eligibility and preview |
 | Reversible Kappa transformation preserves identity/history | Ordinary evolution is one-way | Saved original form plus reversible transformation command |
@@ -148,6 +146,18 @@ silence a diff.
 | Healing bands use MAT plus target MaxHP | The two authored heals now use the agreed scale (`a.mat * 0.60 + b.maxHp * 0.15`, and 0.90/0.22 for the strong band) |
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
+
+Promotion, same date. It carries the growth seed and accumulated record to the
+new form, adds the evolution's fixed authored `bonus`, and lets only future
+levels use the destination's budgets. Note this was BROKEN by the growth change
+an hour earlier and fixed here: Battler.new had begun accumulating the
+destination form's budgets over every level already lived, rewriting a
+creature's past as though it had always been the new species. An evolution's
+`level` is optional now, so an item-only promotion is authorable -- an entry
+without one was previously ineligible forever. Tested in
+`tests/test_promotion.lua`, including the assertion that re-deriving under the
+new form really would give different numbers, so the preservation test cannot
+pass vacuously.
 
 Seeded growth, same date (SPEC S1.10). Stats are `base + accumulated seeded
 packets` now, not a smooth curve re-derived from species and level. Each form

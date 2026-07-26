@@ -427,6 +427,26 @@ how stats are computed — moved zero golden lines. That proved *coverage*, not
 correctness. The `growth` fixture fights at level 14 on both sides so the model
 is gated from now on.
 
+**Promotion never recalculates statistics.** It carries the `growthSeed` and
+the accumulated `growth` record across to the new form, adds the evolution's
+fixed authored `bonus`, and lets only *future* levels draw on the destination's
+band budgets — automatically, since `packetFor` reads the creature's current
+`actorData`. The levels a creature earned as a Pixie stay Pixie levels.
+
+Two details that look small and are not:
+
+- The bonus is **fixed**, so promoting early is rewarded and delaying does not
+  scale it up. A player who waits has banked more of the cheaper form's growth
+  instead — that is the trade, not a larger prize for patience.
+- HP is clamped **after** the growth record is restored. Clamping first would
+  quietly cap a promoted creature at its *unpromoted* maximum.
+
+An evolution's `level` is **optional**. An item-gated promotion normally has no
+additional level requirement: acquiring and choosing to spend the key is the
+gate, and item placement and rarity are what pace it. An entry without `level`
+used to be silently ineligible forever, so a Mimic that should become Pandora at
+level 1 the moment the item exists could not be authored at all.
+
 ### 1.11 The Summoner MP economy (26.07.2026)
 
 **A step costs exactly the combined MPD of the living manifested party**, with

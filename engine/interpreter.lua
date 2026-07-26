@@ -1981,14 +1981,28 @@ local function buildScriptApi(ctx)
     -- {mp = N} = MP, {item = id} = a promotion-key item (category
     -- "promotion_key" in items.json). api.promote performs the evolution,
     -- keeping level/exp/states/equipment and swapping in the new actorData.
+    -- Whether an evolution path is open to this creature right now.
+    --
+    -- `level` is OPTIONAL. An item-gated promotion normally has no additional
+    -- level requirement (creature-parameters.md): acquiring and choosing to
+    -- spend the key IS the gate, and item placement and rarity are what pace
+    -- it. Requiring both is reserved for an explicit exceptional design.
+    -- Previously an entry without `level` was silently never eligible, so a
+    -- Mimic that should promote to Pandora at level 1 the moment the item
+    -- exists could not be authored at all.
+    local function evolutionOpen(b, e)
+        if not e or not e.evolvesTo then return false end
+        if not session.loader.getActor(e.evolvesTo) then return false end
+        if e.level and b.level < e.level then return false end
+        return true
+    end
+
     function api.canPromote(isReserve, index)
         local arr = isReserve and session.reserve or session.party
         local b = arr and arr[index]
         if not b or not b.actorData then return false end
         for _, e in ipairs(b.actorData.evolutions or {}) do
-            if e.level and b.level >= e.level and e.evolvesTo and session.loader.getActor(e.evolvesTo) then
-                return true
-            end
+            if evolutionOpen(b, e) then return true end
         end
         return false
     end
@@ -2000,7 +2014,7 @@ local function buildScriptApi(ctx)
         if not b or not b.actorData then return nil end
         local n = 0
         for _, e in ipairs(b.actorData.evolutions or {}) do
-            if e.level and b.level >= e.level and e.evolvesTo and session.loader.getActor(e.evolvesTo) then
+            if evolutionOpen(b, e) then
                 n = n + 1
                 if n == (choice or 1) then return e end
             end
@@ -2054,7 +2068,6 @@ local function buildScriptApi(ctx)
         newB.exp = exp
         newB.states = states or {}
         newB.equipment = equip or { nil, nil, nil }
-        newB.hp = b.hp > 0 and math.min(newB:getMaxHp(session), b.hp) or newB:getMaxHp(session)
         -- Promotion mints a new battler for the evolved species, so carry the
         -- creature's history across: it is the SAME creature, one form later.
         -- `species` deliberately keeps the original (a Titania remembers the
@@ -2064,6 +2077,39 @@ local function buildScriptApi(ctx)
         newB.history.promotions = (newB.history.promotions or 0) + 1
         newB.paramPlus = b.paramPlus or newB.paramPlus
         newB.wardCharges = b.wardCharges
+
+        -- PROMOTION NEVER RECALCULATES STATISTICS (creature-parameters.md).
+        -- Battler.new just accumulated the DESTINATION form's band budgets over
+        -- every level this creature has already lived, which would rewrite its
+        -- past as though it had always been the new species. Carry the seed and
+        -- the accumulated record across instead: the levels it earned as a
+        -- Pixie stay exactly what they were, and only FUTURE budgets change --
+        -- automatically, because packetFor reads the new actorData.
+        --
+        -- This is what the whole seeded-growth model was for. Under the old
+        -- smooth curve there was nothing here to preserve.
+        newB.growthSeed = b.growthSeed or newB.growthSeed
+        newB.growth = b.growth or newB.growth
+
+        -- The authored one-time promotion bonus. Fixed, so promoting early is
+        -- rewarded and delaying does not scale it up -- a player who waits has
+        -- already banked more of the cheaper form's growth instead. Folded into
+        -- the permanent record because that is exactly what it is.
+        if e.bonus then
+            local growthMod = require("engine.growth")
+            newB.growth = newB.growth or {}
+            for _, param in ipairs(growthMod.PARAMS) do
+                local gain = tonumber(e.bonus[param])
+                if gain then
+                    newB.growth[param] = (newB.growth[param] or 0) + gain
+                end
+            end
+        end
+        -- HP is clamped only AFTER the growth record and bonus are in place --
+        -- Max HP is not known until then, and clamping against the wrong one
+        -- would quietly cap a promoted creature at its unpromoted maximum.
+        newB.hp = b.hp > 0 and math.min(newB:getMaxHp(session), b.hp) or newB:getMaxHp(session)
+
         -- Skills the creature LEARNED (skillbooks) are not in either species'
         -- innate list, so they would vanish with the old battler. Carry over
         -- anything the previous form knew that the new form doesn't.

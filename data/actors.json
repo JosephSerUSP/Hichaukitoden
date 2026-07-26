@@ -29,7 +29,12 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 2
+        "evolvesTo": 2,
+        "bonus": {
+          "maxHp": 8,
+          "mat": 5,
+          "mdf": 3
+        }
       }
     ],
     "initialParty": true,
@@ -322,7 +327,12 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 5
+        "evolvesTo": 5,
+        "bonus": {
+          "maxHp": 10,
+          "mat": 4,
+          "mdf": 3
+        }
       }
     ],
     "initialParty": true,
@@ -530,7 +540,12 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 7
+        "evolvesTo": 7,
+        "bonus": {
+          "maxHp": 10,
+          "atk": 4,
+          "mat": 3
+        }
       }
     ],
     "initialParty": true,
@@ -1554,7 +1569,12 @@
     "evolutions": [
       {
         "level": 6,
-        "evolvesTo": 18
+        "evolvesTo": 18,
+        "bonus": {
+          "maxHp": 12,
+          "atk": 5,
+          "def": 2
+        }
       }
     ],
     "initialParty": false,
