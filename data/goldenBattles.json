@@ -5,30 +5,95 @@
     "seed": 12345,
     "encounters": [
       {
-        "party": [2, 3, 4],
-        "enemies": [{ "actor": 1 }, { "actor": 1 }, { "actor": 1 }],
+        "party": [
+          2,
+          3,
+          4
+        ],
+        "enemies": [
+          {
+            "actor": 1
+          },
+          {
+            "actor": 1
+          },
+          {
+            "actor": 1
+          }
+        ],
         "rounds": [
           [
-            { "slot": 1, "type": "attack", "target": "e1" },
-            { "slot": 2, "type": "attack", "target": "e1" },
-            { "slot": 3, "type": "attack", "target": "e1" }
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            },
+            {
+              "slot": 2,
+              "type": "attack",
+              "target": "e1"
+            },
+            {
+              "slot": 3,
+              "type": "attack",
+              "target": "e1"
+            }
           ],
           [
-            { "slot": 1, "type": "skill", "id": "soothingMote", "target": "p1" },
-            { "slot": 2, "type": "defend", "target": "p2" },
-            { "slot": 3, "type": "attack", "target": "e2" }
+            {
+              "slot": 1,
+              "type": "skill",
+              "id": "soothingMote",
+              "target": "p1"
+            },
+            {
+              "slot": 2,
+              "type": "defend",
+              "target": "p2"
+            },
+            {
+              "slot": 3,
+              "type": "attack",
+              "target": "e2"
+            }
           ],
           [
-            { "slot": 1, "type": "flee" },
-            { "slot": 2, "type": "attack", "target": "e2" },
-            { "slot": 3, "type": "attack", "target": "e2" }
+            {
+              "slot": 1,
+              "type": "flee"
+            },
+            {
+              "slot": 2,
+              "type": "attack",
+              "target": "e2"
+            },
+            {
+              "slot": 3,
+              "type": "attack",
+              "target": "e2"
+            }
           ]
         ]
       },
       {
-        "party": [2],
-        "enemies": [{ "actor": 1, "hp": 1 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          2
+        ],
+        "enemies": [
+          {
+            "actor": 1,
+            "hp": 1
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       }
     ]
   },
@@ -47,57 +112,273 @@
     "encounters": [
       {
         "_note": "user layer, deepest case: Black x3 vs White x2 = 6 matchups",
-        "party": [21],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          21
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "user layer control: Red has no relationship to White",
-        "party": [9],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          9
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "user layer control: a non-elemental attacker never gets a bonus",
-        "party": [10],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          10
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "both layers: Black x3 wielding a Black skill into White x2",
-        "party": [21],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "skill", "id": "shadowClaw", "target": "e1" }]]
+        "party": [
+          21
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "skill",
+              "id": "shadowClaw",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "skill layer alone: a Black skill in Red hands (the tome case)",
-        "party": [9],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "skill", "id": "shadowClaw", "target": "e1" }]]
+        "party": [
+          9
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "skill",
+              "id": "shadowClaw",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "skill layer alone: a Black skill in non-elemental hands",
-        "party": [10],
-        "enemies": [{ "actor": 5 }],
-        "rounds": [[{ "slot": 1, "type": "skill", "id": "boneRush", "target": "e1" }]]
+        "party": [
+          10
+        ],
+        "enemies": [
+          {
+            "actor": 5
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "skill",
+              "id": "boneRush",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "user layer, single strong match: Red beats Green",
-        "party": [9],
-        "enemies": [{ "actor": 12 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          9
+        ],
+        "enemies": [
+          {
+            "actor": 12
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "user layer, weak side: Red is weak into Blue",
-        "party": [9],
-        "enemies": [{ "actor": 14 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          9
+        ],
+        "enemies": [
+          {
+            "actor": 14
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       },
       {
         "_note": "depth without a matchup: Black x3 has no relationship to Green",
-        "party": [21],
-        "enemies": [{ "actor": 12 }],
-        "rounds": [[{ "slot": 1, "type": "attack", "target": "e1" }]]
+        "party": [
+          21
+        ],
+        "enemies": [
+          {
+            "actor": 12
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "id": "growth",
+    "name": "Levelled creatures -- seeded growth is visible to G2",
+    "seed": 20260726,
+    "level": 14,
+    "_note": [
+      "Every other fixture builds its battlers at level 1 (cli_tools passes",
+      "`fixture.level or 1`), so the entire growth model -- the largest single",
+      "determinant of every stat in the game -- was invisible to G2. Rewriting",
+      "growth from a smooth species curve to seeded per-instance packets moved",
+      "zero golden lines, which proved coverage rather than correctness.",
+      "This fixture fights at level 14: mid-band for the 11-20 budgets, so both",
+      "the first band's full total and a partial second band are exercised.",
+      "Both sides are levelled, so a change to accumulation shows up in damage",
+      "dealt AND taken."
+    ],
+    "encounters": [
+      {
+        "_note": "Physical and magical attackers against a levelled wall: reads ATK/DEF and MAT/MDF accumulation at once.",
+        "level": 14,
+        "party": [
+          2,
+          3
+        ],
+        "enemies": [
+          {
+            "actor": 10
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "skill",
+              "id": "holySmite",
+              "target": "e1"
+            },
+            {
+              "slot": 2,
+              "type": "attack",
+              "target": "e1"
+            }
+          ],
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            },
+            {
+              "slot": 2,
+              "type": "skill",
+              "id": "boneRush",
+              "target": "e1"
+            }
+          ]
+        ]
+      },
+      {
+        "_note": "A levelled enemy hitting back, so growth on the receiving side is covered too.",
+        "level": 14,
+        "party": [
+          1
+        ],
+        "enemies": [
+          {
+            "actor": 3
+          }
+        ],
+        "rounds": [
+          [
+            {
+              "slot": 1,
+              "type": "defend"
+            }
+          ],
+          [
+            {
+              "slot": 1,
+              "type": "attack",
+              "target": "e1"
+            }
+          ]
+        ]
       }
     ]
   }

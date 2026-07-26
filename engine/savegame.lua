@@ -43,6 +43,12 @@ local function serializeBattler(b)
         passives = passives,
         skills = skills,
         paramPlus = b.paramPlus,
+        -- Seeded growth. Both halves must round-trip: the seed IS the
+        -- creature's individuality, and the accumulated record is its history.
+        -- Saving only the level and re-deriving would let a reload reroll a
+        -- level-up, which the design forbids outright.
+        growthSeed = b.growthSeed,
+        growth = b.growth,
         -- Death-ward charges live on the battler (never on the shared loader
         -- item table), so they must round-trip with it.
         wardCharges = b.wardCharges,
@@ -76,6 +82,8 @@ local function deserializeBattler(data, loader)
         for _, s in ipairs(data.skills) do table.insert(b.skills, s) end
     end
     if data.paramPlus then b.paramPlus = data.paramPlus end
+    if data.growthSeed then b.growthSeed = data.growthSeed end
+    if data.growth then b.growth = data.growth end
     if data.wardCharges then b.wardCharges = data.wardCharges end
     if data.history then b.history = data.history end
     return b

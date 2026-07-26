@@ -10,11 +10,15 @@ local function growthConf(key, default)
     return default
 end
 
--- Parameters that participate in the creature growth model.  mxa/mxp are
--- intentionally included as fixed parameters: they describe capacity, not
--- level growth, unless a future system explicitly adds that behavior.
+-- Parameters that receive level growth. mpd, mxa and mxp are absent on purpose:
+-- MPD is a form-defined expedition cost and the capacities are form-defined
+-- limits, and none of the three grows with level (creature-parameters.md). MPD
+-- used to grow at 0.05 per level, which quietly made every creature more
+-- expensive to keep manifested the longer you raised it -- the exact opposite
+-- of the economy the design describes, where an early form stays cheap and
+-- promotion is what costs you.
 local GROWTH_PARAMS = {
-    maxHp = true, atk = true, def = true, mat = true, mdf = true, mpd = true
+    maxHp = true, atk = true, def = true, mat = true, mdf = true
 }
 
 local function numberOr(value, fallback)
@@ -146,18 +150,25 @@ function traits.getBaseParam(battler, paramName)
 
     if not GROWTH_PARAMS[paramName] then return base end
 
-    local rates = config.growth and config.growth.growthRates or {}
-    local rate = rates[paramName]
-    if rate == nil then
-        if paramName == "maxHp" then rate = growthConf("hpPerLevelRate", 0.15)
-        elseif paramName == "mpd" then rate = 0
-        else rate = 0 end
+    -- Growth is ACCUMULATED, not recalculated. `battler.growth` holds the sum
+    -- of the seeded packets this instance has actually received (engine/
+    -- growth.lua), so a creature's past is a thing it owns rather than a curve
+    -- re-derived from its current species every time the value is read.
+    --
+    -- That distinction is the whole point: under the old smooth formula there
+    -- was nothing for a promotion to preserve, because changing the species
+    -- silently re-derived every level the creature had ever gained.
+    local gained = battler.growth and battler.growth[paramName]
+    if gained == nil then
+        -- No accumulated record (an enemy built for one battle, a preview, a
+        -- save from before growth was seeded): replay the history the seed
+        -- describes rather than inventing one. Same answer, every time.
+        local growthMod = require("engine.growth")
+        gained = growthMod.accumulate(data,
+            battler.growthSeed or growthMod.defaultSeed(data),
+            battler.level or 1)[paramName] or 0
     end
-    local exponent = growthConf("growthExponent", 1.2)
-    local growthMultiplier = numberOr(data.growthMultiplier, 1.0)
-    local levelOffset = math.max(0, (battler.level or 1) - 1)
-    local growthFactor = 1 + rate * growthMultiplier * (levelOffset ^ exponent)
-    return base * growthFactor
+    return base + gained
 end
 
 -- Get a final parameter value after applying all traits

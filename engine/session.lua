@@ -1,5 +1,6 @@
 local traits = require("engine.traits")
 local config = require("engine.config")
+local growthMod = require("engine.growth")
 local newgame = require("engine.newgame")
 
 local session = {}
@@ -23,7 +24,7 @@ session.randomAllyName = randomAllyName
 local Battler = {}
 Battler.__index = Battler
 
-function Battler.new(actorData, level)
+function Battler.new(actorData, level, growthSeed)
     local self = setmetatable({}, Battler)
     self.actorData = actorData
     self.id = actorData.id
@@ -48,6 +49,20 @@ function Battler.new(actorData, level)
     self.states = {}
     self.hp = 10 -- placeholder, will update to maxHp
     self.paramPlus = { maxHp = 0, atk = 0, def = 0, mat = 0, mdf = 0 }
+    -- Seeded growth (engine/growth.lua). The seed is the creature's identity as
+    -- an individual: it decides how its authored band budgets break into uneven
+    -- per-level packets, so two Pixies of the same level are genuinely
+    -- different creatures. Assigned once, saved, and never rerolled -- reloading
+    -- must not be able to re-roll a level-up.
+    --
+    -- Without an explicit seed the actor's own stable seed is used, so enemies,
+    -- previews and the golden harness stay reproducible; session:recruitActor
+    -- supplies a real per-instance seed for creatures the player keeps.
+    self.growthSeed = growthSeed or growthMod.defaultSeed(actorData)
+    -- Accumulated permanent growth, replayed from the seed for a creature that
+    -- arrives already levelled (a generated level-20 recruit lives the same
+    -- history as one that walked there).
+    self.growth = growthMod.accumulate(actorData, self.growthSeed, self.level)
     -- Creature history (proof-build brief): the numbers that turn a generated
     -- creature into "my Pixie". Counted by the RECORD_HISTORY command from
     -- flow phases, so what gets counted is data, not code. `species` keeps the
@@ -142,6 +157,14 @@ function Battler:gainExp(amount, sess)
         if self.exp >= needed then
             self.exp = self.exp - needed
             self.level = self.level + 1
+            -- Add this level's seeded packet to the permanent record. Additive
+            -- and one-way: nothing recomputes the earlier levels, which is what
+            -- lets a promotion keep them.
+            local packet = growthMod.packetFor(self.actorData, self.growthSeed, self.level)
+            self.growth = self.growth or {}
+            for _, param in ipairs(growthMod.PARAMS) do
+                self.growth[param] = (self.growth[param] or 0) + (packet[param] or 0)
+            end
             leveledUp = true
         else
             break
@@ -240,7 +263,12 @@ function GameSession:recruitActor(actorId, level)
         return nil, "Actor not found"
     end
     level = level or actorData.level or 1
-    local battler = Battler.new(actorData, level)
+    -- A creature the player KEEPS gets a genuine per-instance growth seed, so
+    -- two Pixies recruited from the same pool grow into different creatures.
+    -- Enemies and previews keep the actor's stable default (Battler.new), which
+    -- is what holds the golden harness reproducible: this draw happens only on
+    -- recruitment, a path the fixtures never take.
+    local battler = Battler.new(actorData, level, math.random(1, 2147483646))
     battler.name = randomAllyName(actorData)
     battler.hp = battler:getMaxHp(self)
 

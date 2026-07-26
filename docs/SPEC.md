@@ -218,7 +218,7 @@ implementation kept alive by nothing but its own comment.
 
 The round-end one proved the cost. It had already drifted: it still branched
 on `state.id == "regen"` with rates from `system.json` after the live path
-became `HRG`-driven (§1.12), so the two paths disagreed about what
+became `HRG`-driven (§1.13), so the two paths disagreed about what
 regeneration *is*. The other two were a full duplicate flee roll (gold
 penalty included) and a full duplicate weighted encounter spawner.
 
@@ -386,7 +386,48 @@ counted, or landed on by a cursor. Item Creation must not merely bury a
 promotion key at the bottom of the ingredient list, and every future
 "selectable subset of a list source" is the same problem.
 
-### 1.10 The Summoner MP economy (26.07.2026)
+### 1.10 Creature growth is seeded and accumulated (26.07.2026)
+
+Growth is **additive, permanent, seeded per instance, and intentionally
+uneven** — never recalculated from species and current level.
+
+Each form authors budgets for three bands (levels 2–10, 11–20, 21–30) in
+`actorData.growthBands`. An instance's `growthSeed` divides each budget into
+uneven per-level packets (`engine/growth.lua`), which accumulate into
+`battler.growth`. A stat is then simply `base + accumulated`.
+
+What it replaced: `base * (1 + rate * multiplier * (level-1)^exponent)` — one
+smooth curve every creature of a species shared exactly. Two Pixies at level 12
+were the same Pixie, and **there was nothing for a promotion to preserve**,
+because changing the species silently re-derived every level the creature had
+ever gained. The whole promotion / Egg / Homunculus design depends on a past
+that is owned rather than re-computed.
+
+Rules the model guarantees, each with a test:
+
+- **Deterministic.** A creature generated directly at level 20 replays the same
+  history it would have lived, and a reload can never reroll a level-up.
+- **No global RNG.** `growth.lua` uses its own LCG. Touching `math.random`
+  would make a creature's stats depend on *when* they were computed and shift
+  every battle roll after it.
+- **Within budget.** Per-instance variation is about ±5%: lucky in a stat,
+  never materially richer overall.
+- **HP rises every level**, and not smoothly — a band has memorable spurts,
+  because a level-up showing no change reads as a bug.
+- **Growth stops past the last authored band** rather than extrapolating.
+
+`mpd`, `mxa` and `mxp` do **not** grow: they are form-defined. MPD previously
+grew at 0.05/level, which quietly made a creature more expensive to keep
+manifested the longer you raised it — the reverse of the economy in §1.11,
+where an early form stays cheap and promotion is what costs you.
+
+**A caution about G2 here.** Every other golden fixture builds its battlers at
+level 1 (`fixture.level or 1`), so this rewrite — the largest single change to
+how stats are computed — moved zero golden lines. That proved *coverage*, not
+correctness. The `growth` fixture fights at level 14 on both sides so the model
+is gated from now on.
+
+### 1.11 The Summoner MP economy (26.07.2026)
 
 **A step costs exactly the combined MPD of the living manifested party**, with
 no Summoner base cost — `party.mpd` in `formula.groupView`, charged by the
@@ -422,7 +463,7 @@ floors every parameter at 1. That is not a special case for MPD; it is why the
 design's "never below 1" needed no new mechanism, and a test pins it so a future
 change to that floor cannot quietly make an MPD-0 creature possible.
 
-### 1.11 States, categories and status infliction (26.07.2026)
+### 1.12 States, categories and status infliction (26.07.2026)
 
 A state carries a **list** of categories from `engine.json -> stateCategories`
 (`negative`, `positive`, `physical`, `magical`, `mental`, `common`). A list,
@@ -465,12 +506,12 @@ one of its categories — multiplicative, so a narrow and a broad resistance
 compound rather than one silently winning.
 
 **A rate of 0 is absolute immunity**: the state never lands, and a critical hit
-cannot force it. That is the one exemption the critical-status rule in §1.12
+cannot force it. That is the one exemption the critical-status rule in §1.13
 has, and until `STATE_RATE` existed there was nothing for it to respect.
 Immunity emits a `state_immune` event and a line of text rather than passing
 silently, because a status that simply never appears looks identical to a bug.
 
-### 1.12 The damage model (26.07.2026)
+### 1.13 The damage model (26.07.2026)
 
 Damage is **relative**: a share of the attacker's power decided by the ratio
 to the defender's matching stat, per `docs/design/creature-parameters.md`.

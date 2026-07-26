@@ -71,7 +71,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 20,
+        "atk": 12,
+        "def": 18,
+        "mat": 31,
+        "mdf": 25
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 29,
+        "atk": 18,
+        "def": 26,
+        "mat": 46,
+        "mdf": 37
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 32,
+        "atk": 21,
+        "def": 29,
+        "mat": 50,
+        "mdf": 41
+      }
+    ]
   },
   {
     "id": 2,
@@ -136,7 +164,35 @@
       "mxa": 6,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 30,
+        "atk": 18,
+        "def": 27,
+        "mat": 48,
+        "mdf": 38
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 43,
+        "atk": 28,
+        "def": 39,
+        "mat": 70,
+        "mdf": 55
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 49,
+        "atk": 30,
+        "def": 44,
+        "mat": 78,
+        "mdf": 62
+      }
+    ]
   },
   {
     "id": 3,
@@ -213,7 +269,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 18,
+        "atk": 33,
+        "def": 19,
+        "mat": 14,
+        "mdf": 14
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 27,
+        "atk": 49,
+        "def": 29,
+        "mat": 21,
+        "mdf": 21
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 30,
+        "atk": 54,
+        "def": 33,
+        "mat": 24,
+        "mdf": 24
+      }
+    ]
   },
   {
     "id": 4,
@@ -287,7 +371,35 @@
       "mxa": 5,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 20,
+        "atk": 14,
+        "def": 19,
+        "mat": 27,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 29,
+        "atk": 21,
+        "def": 29,
+        "mat": 39,
+        "mdf": 39
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 32,
+        "atk": 24,
+        "def": 33,
+        "mat": 44,
+        "mdf": 44
+      }
+    ]
   },
   {
     "id": 5,
@@ -358,7 +470,35 @@
       "mxa": 8,
       "mxp": 5
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 28,
+        "atk": 23,
+        "def": 30,
+        "mat": 41,
+        "mdf": 41
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 41,
+        "atk": 33,
+        "def": 45,
+        "mat": 61,
+        "mdf": 61
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 47,
+        "atk": 37,
+        "def": 50,
+        "mat": 68,
+        "mdf": 68
+      }
+    ]
   },
   {
     "id": 6,
@@ -433,7 +573,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 20,
+        "atk": 37,
+        "def": 21,
+        "mat": 16,
+        "mdf": 16
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 29,
+        "atk": 55,
+        "def": 32,
+        "mat": 25,
+        "mdf": 24
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 32,
+        "atk": 61,
+        "def": 35,
+        "mat": 27,
+        "mdf": 26
+      }
+    ]
   },
   {
     "id": 7,
@@ -500,7 +668,35 @@
       "mxa": 6,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 36,
+        "atk": 50,
+        "def": 30,
+        "mat": 23,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 54,
+        "atk": 73,
+        "def": 45,
+        "mat": 33,
+        "mdf": 32
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 60,
+        "atk": 81,
+        "def": 50,
+        "mat": 37,
+        "mdf": 35
+      }
+    ]
   },
   {
     "id": 8,
@@ -568,7 +764,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 23,
+        "atk": 12,
+        "def": 18,
+        "mat": 31,
+        "mdf": 25
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 34,
+        "atk": 18,
+        "def": 26,
+        "mat": 46,
+        "mdf": 37
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 38,
+        "atk": 21,
+        "def": 29,
+        "mat": 50,
+        "mdf": 41
+      }
+    ]
   },
   {
     "id": 9,
@@ -630,7 +854,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 18,
+        "atk": 33,
+        "def": 19,
+        "mat": 14,
+        "mdf": 14
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 27,
+        "atk": 49,
+        "def": 29,
+        "mat": 21,
+        "mdf": 21
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 30,
+        "atk": 54,
+        "def": 33,
+        "mat": 24,
+        "mdf": 24
+      }
+    ]
   },
   {
     "id": 10,
@@ -702,7 +954,35 @@
       "mxa": 3,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 25,
+        "atk": 18,
+        "def": 36,
+        "mat": 12,
+        "mdf": 30
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 36,
+        "atk": 28,
+        "def": 53,
+        "mat": 18,
+        "mdf": 45
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 41,
+        "atk": 30,
+        "def": 58,
+        "mat": 21,
+        "mdf": 50
+      }
+    ]
   },
   {
     "id": 11,
@@ -764,7 +1044,35 @@
       "mxa": 3,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 25,
+        "atk": 18,
+        "def": 36,
+        "mat": 12,
+        "mdf": 30
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 36,
+        "atk": 28,
+        "def": 53,
+        "mat": 18,
+        "mdf": 45
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 41,
+        "atk": 30,
+        "def": 58,
+        "mat": 21,
+        "mdf": 50
+      }
+    ]
   },
   {
     "id": 12,
@@ -836,7 +1144,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 30,
+        "atk": 14,
+        "def": 19,
+        "mat": 29,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 43,
+        "atk": 21,
+        "def": 29,
+        "mat": 42,
+        "mdf": 32
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 49,
+        "atk": 24,
+        "def": 33,
+        "mat": 48,
+        "mdf": 35
+      }
+    ]
   },
   {
     "id": 13,
@@ -902,7 +1238,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 18,
+        "atk": 33,
+        "def": 19,
+        "mat": 14,
+        "mdf": 14
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 27,
+        "atk": 49,
+        "def": 29,
+        "mat": 21,
+        "mdf": 21
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 30,
+        "atk": 54,
+        "def": 33,
+        "mat": 24,
+        "mdf": 24
+      }
+    ]
   },
   {
     "id": 14,
@@ -974,7 +1338,35 @@
       "mxa": 4,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 20,
+        "atk": 10,
+        "def": 12,
+        "mat": 35,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 29,
+        "atk": 15,
+        "def": 19,
+        "mat": 52,
+        "mdf": 39
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 32,
+        "atk": 17,
+        "def": 20,
+        "mat": 58,
+        "mdf": 44
+      }
+    ]
   },
   {
     "id": 15,
@@ -1030,8 +1422,36 @@
       "mxa": 2,
       "mxp": 1
     },
-    "growthMultiplier": 1,
-    "passives": []
+    "passives": [],
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 8,
+        "atk": 6,
+        "def": 5,
+        "mat": 6,
+        "mdf": 5
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 12,
+        "atk": 9,
+        "def": 8,
+        "mat": 9,
+        "mdf": 8
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 14,
+        "atk": 10,
+        "def": 9,
+        "mat": 10,
+        "mdf": 9
+      }
+    ]
   },
   {
     "id": 16,
@@ -1084,7 +1504,35 @@
       "mxa": 10,
       "mxp": 6
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 48,
+        "atk": 39,
+        "def": 49,
+        "mat": 71,
+        "mdf": 58
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 71,
+        "atk": 58,
+        "def": 71,
+        "mat": 103,
+        "mdf": 84
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 78,
+        "atk": 65,
+        "def": 79,
+        "mat": 116,
+        "mdf": 94
+      }
+    ]
   },
   {
     "id": 17,
@@ -1138,7 +1586,35 @@
       "mxa": 3,
       "mxp": 1
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 20,
+        "atk": 23,
+        "def": 12,
+        "mat": 14,
+        "mdf": 10
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 29,
+        "atk": 33,
+        "def": 19,
+        "mat": 21,
+        "mdf": 16
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 32,
+        "atk": 37,
+        "def": 20,
+        "mat": 24,
+        "mdf": 18
+      }
+    ]
   },
   {
     "id": 18,
@@ -1180,7 +1656,35 @@
       "mxa": 6,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 92,
+        "atk": 56,
+        "def": 38,
+        "mat": 37,
+        "mdf": 32
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 133,
+        "atk": 82,
+        "def": 55,
+        "mat": 55,
+        "mdf": 48
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 150,
+        "atk": 92,
+        "def": 62,
+        "mat": 61,
+        "mdf": 53
+      }
+    ]
   },
   {
     "id": 19,
@@ -1235,7 +1739,35 @@
       "mxa": 5,
       "mxp": 2
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 31,
+        "atk": 39,
+        "def": 23,
+        "mat": 16,
+        "mdf": 18
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 47,
+        "atk": 58,
+        "def": 34,
+        "mat": 25,
+        "mdf": 26
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 51,
+        "atk": 65,
+        "def": 39,
+        "mat": 27,
+        "mdf": 29
+      }
+    ]
   },
   {
     "id": 20,
@@ -1294,7 +1826,35 @@
       "mxa": 5,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 18,
+        "atk": 14,
+        "def": 19,
+        "mat": 27,
+        "mdf": 39
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 27,
+        "atk": 21,
+        "def": 29,
+        "mat": 39,
+        "mdf": 58
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 30,
+        "atk": 24,
+        "def": 33,
+        "mat": 44,
+        "mdf": 65
+      }
+    ]
   },
   {
     "id": 21,
@@ -1340,9 +1900,37 @@
       "mxa": 6,
       "mxp": 4
     },
-    "growthMultiplier": 1,
     "passives": [
       "battleStartDamage"
+    ],
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 67,
+        "atk": 79,
+        "def": 23,
+        "mat": 23,
+        "mdf": 23
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 97,
+        "atk": 116,
+        "def": 34,
+        "mat": 33,
+        "mdf": 34
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 108,
+        "atk": 129,
+        "def": 39,
+        "mat": 37,
+        "mdf": 39
+      }
     ]
   },
   {
@@ -1374,6 +1962,34 @@
       "mxa": 5,
       "mxp": 3
     },
-    "growthMultiplier": 1
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 30,
+        "atk": 10,
+        "def": 16,
+        "mat": 33,
+        "mdf": 25
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 43,
+        "atk": 15,
+        "def": 24,
+        "mat": 49,
+        "mdf": 37
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 49,
+        "atk": 17,
+        "def": 26,
+        "mat": 54,
+        "mdf": 41
+      }
+    ]
   }
 ]

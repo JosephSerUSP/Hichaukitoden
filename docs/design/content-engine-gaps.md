@@ -72,7 +72,6 @@ Closed 26.07.2026 -- see below. What remains is presentation, not mechanism:
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Seeded additive growth budgets and uneven saved level packets | Current stats are recalculated from base, level, and a smooth formula | Per-instance growth seed and accumulated permanent natural gains, saved and replayable |
 | Promotion preserves exact history and changes only future budgets | Current evolution reconstructs a battler from destination actor data at the same level | Transformation path that preserves accumulated parameters and swaps future growth profile |
 | Item-gated promotions usually have no level requirement | Existing evolution data is level-oriented | Item-consuming promotion condition in data and UI |
 | Egg hatch uses provenance-specific fixed hatch bonus | Provenance and automatic hatch outcome are not general actor data | Saved provenance, level trigger, authored outcome table, and fixed transformation bonus |
@@ -150,7 +149,27 @@ silence a diff.
 | General direct-damage rate | `DAMAGE_RATE`, multiplicative across sources; Defend is `DAMAGE_RATE 0.5` instead of doubled DEF |
 | Critical damage at 1.5x, per-hit, with status handoff | Rolled in `effects.lua` so every damaging action shares one path; reported on the damage event and given its own `critical|` line in the golden log |
 
-Summoner MP and MPD, same date (SPEC S1.10). A step now costs exactly the
+Seeded growth, same date (SPEC S1.10). Stats are `base + accumulated seeded
+packets` now, not a smooth curve re-derived from species and level. Each form
+authors three band budgets; an instance's saved seed breaks them into uneven
+per-level packets. This is the foundation the rest of this section needs: under
+the old model there was nothing for a promotion to PRESERVE, because changing
+species silently re-derived every level the creature had gained. MPD, MXA and
+MXP no longer grow at all -- MPD grew at 0.05/level, quietly making a creature
+more expensive to keep manifested the longer you raised it.
+
+The migration derived every actor's bands from its own previous curve, and
+retired `growthMultiplier` (baked into the bands), `growth.growthRates`,
+`growthExponent`, `hpPerLevelRate` and `statPerLevel` along with their editor
+fields. The actor stat sparklines were redrawn from bands; left alone they would
+have kept plotting a curve nothing produces.
+
+Found doing it: **every golden battle fixture builds its battlers at level 1**
+(`fixture.level or 1` in cli_tools), so the whole growth model was invisible to
+G2 -- rewriting it moved zero golden lines. A `growth` fixture fighting at level
+14 on both sides now gates it. Tested in `tests/test_growth.lua`.
+
+Summoner MP and MPD, same date (SPEC S1.11). A step now costs exactly the
 combined MPD of the LIVING manifested party via a shared `party.mpd` query, with
 no Summoner base cost; the flat `dungeon.moveMpDrain` that charged 1 MP
 regardless of who was manifested is gone, along with its editor field. Ordinary

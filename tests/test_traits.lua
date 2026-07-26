@@ -180,18 +180,57 @@ end)
 
 print("=== Testing creature parameter growth ===")
 
-test("actor overrides base values and uses exponential-style growth", function()
+test("growth is the accumulated seeded record, not a curve", function()
+    -- Growth is ADDITIVE and per-instance now: a stat is its base plus the
+    -- packets this creature actually received. The old assertion here computed
+    -- `8 * (1 + .15 * 9^1.2)` and expected every creature of a species to land
+    -- on the same number -- which is precisely what the seeded model exists to
+    -- stop.
+    local actorData = {
+        baseParams = { atk = 8 },
+        growthBands = { { from = 2, to = 10, atk = 18 } },
+    }
     local battler = {
-        actorData = { baseParams = { atk = 8 }, growthMultiplier = 1 },
-        level = 10,
+        actorData = actorData, growthSeed = 12345, level = 10,
         passives = {}, equipment = {}, states = {}, paramPlus = {}
     }
+    -- Base 8 plus the level 2-10 budget of 18. The total is not exactly 26:
+    -- an instance's seed perturbs the authored budget by about +-5%, so it may
+    -- be lucky or unlucky in a stat without receiving a materially larger
+    -- lifetime total. The band is the assertion; the exact number is the
+    -- creature's own.
     local atk = traits.getParam(battler, "atk", mockSession)
-    -- 8 * (1 + .15 * 9^1.2) = approximately 24.76
-    assert(atk == 24, "Expected level-10 ATK to resolve to 24, got " .. tostring(atk))
+    assert(atk >= 25 and atk <= 27,
+        "base 8 plus an 18 budget varied by ~5% should land in 25..27, got " .. tostring(atk))
+
+    -- An explicit accumulated record wins over replaying the seed, because it
+    -- is the creature's actual history (a promotion changes future budgets
+    -- without touching what was already earned).
+    battler.growth = { atk = 3 }
+    assert(traits.getParam(battler, "atk", mockSession) == 11,
+        "an accumulated record is used as-is")
 end)
 
-test("mxa and mxp remain fixed while mpd grows", function()
+test("two instances of one species grow differently", function()
+    local actorData = {
+        baseParams = { atk = 10, maxHp = 30 },
+        growthBands = { { from = 2, to = 10, atk = 20, maxHp = 40 } },
+    }
+    local function at(seed, level)
+        return traits.getParam({
+            actorData = actorData, growthSeed = seed, level = level,
+            passives = {}, equipment = {}, states = {}, paramPlus = {}
+        }, "atk", mockSession)
+    end
+    -- Same budget, so the same level-10 total: the variation is in the PATH.
+    local diverged = false
+    for level = 2, 9 do
+        if at(111, level) ~= at(999, level) then diverged = true end
+    end
+    assert(diverged, "different seeds should produce different growth histories")
+end)
+
+test("mpd, mxa and mxp are form-defined and never grow", function()
     local battler = {
         actorData = { baseParams = { mpd = 2, mxa = 4, mxp = 2 } },
         level = 20,
@@ -199,7 +238,12 @@ test("mxa and mxp remain fixed while mpd grows", function()
     }
     assert(traits.getParam(battler, "mxa", mockSession) == 4, "mxa must not grow")
     assert(traits.getParam(battler, "mxp", mockSession) == 2, "mxp must not grow")
-    assert(traits.getParam(battler, "mpd", mockSession) == 5, "mpd should grow to 5 at level 20")
+    -- MPD used to grow at 0.05 a level, so raising a creature quietly made it
+    -- more expensive to keep manifested -- the reverse of the economy the
+    -- design describes, where an early form stays cheap and promotion is what
+    -- costs you. It is a form-defined expedition cost now, full stop.
+    assert(traits.getParam(battler, "mpd", mockSession) == 2,
+        "mpd is form-defined and must not grow with level")
 end)
 
 print(string.format("=== Tests completed: %d passed, %d failed ===", passed, failed))

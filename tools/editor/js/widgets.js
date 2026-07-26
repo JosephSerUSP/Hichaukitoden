@@ -324,7 +324,16 @@
         // mat, mdf, mpd) rises from level 1 to the actor's max level, using
         // the same formula as engine/traits.lua traits.getBaseParam:
         //   value(level) = base * (1 + rate * growthMultiplier * (level-1)^exponent)
-        function buildStatCurve(container, label, base, rate, growthMultiplier, exponent, maxLevel) {
+        // Draws a stat's central level curve from the actor's authored growth
+        // bands: base at level 1, then the band budget accrued evenly across
+        // the band's levels. It is the SPECIES curve, not any one creature's --
+        // an instance's seed breaks each band into uneven packets, so a real
+        // creature wobbles around this line rather than following it.
+        //
+        // Previously this drew `base * (1 + rate * mult * (lvl-1)^exp)`, the
+        // formula the engine used before growth became seeded and additive.
+        // Left alone it would have kept drawing a curve nothing produces.
+        function buildStatCurve(container, label, base, bands, statKey, maxLevel) {
             const box = document.createElement('div');
             box.className = 'stat-curve';
 
@@ -339,13 +348,20 @@
             box.appendChild(head);
 
             const lvls = Math.max(1, maxLevel || 99);
+            const perLevel = {};
+            (bands || []).forEach(band => {
+                const from = band.from || 0, to = band.to || 0;
+                const count = to - from + 1;
+                if (count <= 0) return;
+                const budget = Number(band[statKey]) || 0;
+                for (let l = from; l <= to; l++) perLevel[l] = budget / count;
+            });
             const points = [];
-            let maxVal = 0;
+            let maxVal = 0, running = base;
             for (let lvl = 1; lvl <= lvls; lvl++) {
-                const factor = 1 + rate * growthMultiplier * Math.pow(Math.max(0, lvl - 1), exponent);
-                const val = base * factor;
-                points.push(val);
-                if (val > maxVal) maxVal = val;
+                if (lvl > 1) running += (perLevel[lvl] || 0);
+                points.push(running);
+                if (running > maxVal) maxVal = running;
             }
             valSpan.textContent = Math.round(points[points.length - 1]);
             if (maxVal <= 0) maxVal = 1;
@@ -1084,8 +1100,6 @@
             'combat.battleItem':           { label: 'Battle "Item" Command Uses', widget: 'itemSelect' },
             'combat.defendSkillId':        { label: '"Defend" Command Skill', widget: 'skillSelect' },
             'combat.attackSkillId':        { label: '"Attack" Command Skill', widget: 'skillSelect' },
-            'growth.growthExponent':       { label: 'Growth Curve Exponent', step: 0.1, min: 1,
-                                             help: 'Superlinear growth curve. 1.2 is the default.' },
             'growth.baseParams.maxHp':     { label: 'Default Base Max HP', min: 0 },
             'growth.baseParams.atk':       { label: 'Default Base ATK', min: 0 },
             'growth.baseParams.def':       { label: 'Default Base DEF', min: 0 },
@@ -1094,12 +1108,6 @@
             'growth.baseParams.mpd':       { label: 'Default Base MPD', min: 0 },
             'growth.baseParams.mxa':       { label: 'Default Max Actions (mxa)', min: 0 },
             'growth.baseParams.mxp':       { label: 'Default Max Passives (mxp)', min: 0 },
-            'growth.growthRates.maxHp':    { label: 'Max HP Growth Rate', step: 0.01, min: 0 },
-            'growth.growthRates.atk':      { label: 'ATK Growth Rate', step: 0.01, min: 0 },
-            'growth.growthRates.def':      { label: 'DEF Growth Rate', step: 0.01, min: 0 },
-            'growth.growthRates.mat':      { label: 'MAT Growth Rate', step: 0.01, min: 0 },
-            'growth.growthRates.mdf':      { label: 'MDF Growth Rate', step: 0.01, min: 0 },
-            'growth.growthRates.mpd':      { label: 'MPD Growth Rate', step: 0.01, min: 0 },
             'growth.expPerLevel':          { label: 'XP per Level (× current level)', min: 1,
                                              help: 'XP needed for the next level = this value × the current level.' },
             'dungeon.maxFloor':            { label: 'Deepest Floor', min: 1 },
@@ -2031,9 +2039,6 @@
                         statsGrid.style.gridTemplateColumns = 'repeat(6, 1fr)';
                         statsBox.appendChild(statsGrid);
 
-                        const growthCfg = (dbPayload.system && dbPayload.system.growth) || {};
-                        const exponent = growthCfg.growthExponent != null ? growthCfg.growthExponent : 1.2;
-                        const rates = growthCfg.growthRates || {};
                         const STAT_DEFS = [
                             ['maxHp', 'Max HP'], ['atk', 'ATK'], ['def', 'DEF'],
                             ['mat', 'MAT'], ['mdf', 'MDF'], ['mpd', 'MP Drain']
@@ -2054,9 +2059,8 @@
                                 };
                                 cell.appendChild(input);
                                 statsGrid.appendChild(cell);
-                                const rate = rates[key] != null ? rates[key] : (key === 'maxHp' ? 0.15 : 0);
-                                buildStatCurve(cell, label, base(key, 10), rate,
-                                    item.growthMultiplier == null ? 1 : item.growthMultiplier, exponent, item.maxLevel || 99);
+                                buildStatCurve(cell, label, base(key, 10),
+                                    item.growthBands, key, item.maxLevel || 99);
                             });
                         }
                         renderActorStatCurves();

@@ -1,0 +1,19 @@
+GOLDEN BEGIN
+battle|growth|name|Levelled creatures -- seeded growth is visible to G2
+action|High Pixie|Golem||
+damage||Golem|116|
+death||Golem||
+victory||||
+victory||||
+action|Pixie|Pixie||
+state_add||Pixie||defending
+action|Skeleton|Pixie||
+damage||Pixie|24|
+state_remove||Pixie||defending
+action|Pixie|Skeleton||
+damage||Skeleton|14|
+action|Skeleton|Pixie||
+damage||Pixie|48|
+death||Pixie||
+defeat||||
+GOLDEN END
