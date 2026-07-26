@@ -92,13 +92,7 @@ end
 -- List sources
 -- ---------------------------------------------------------------------------
 
-local function compareIds(a, b)
-    local na, nb = tonumber(a), tonumber(b)
-    if na and nb then return na < nb end
-    if na then return true end
-    if nb then return false end
-    return tostring(a) < tostring(b)
-end
+local compareIds = require("engine.inventory").compareIds
 
 local function inventoryRows(session, env, win)
     local rows = {}

@@ -682,20 +682,14 @@ handlers.CHANGE_ITEM = function(cmd, ctx)
     end
 end
 
-local function compareIds(a, b)
-    local na, nb = tonumber(a), tonumber(b)
-    if na and nb then return na < nb end
-    if na then return true end
-    if nb then return false end
-    return tostring(a) < tostring(b)
-end
+local compareIds = require("engine.inventory").compareIds
 
 -- Field item use as data (items-scene promotion): applies an item's
 -- data-defined effects through the same effects pipeline field and battle
--- use share, then consumes one. itemIndex is 1-based into the id-sorted
--- non-empty inventory — the SAME ordering the window renderer's
--- 'inventory' list source displays (keep them in sync). Items with
--- target 'party' hit every member; otherwise target is a party index.
+-- use share, then consumes one. itemIndex is 1-based into the non-empty
+-- inventory ordered by engine.inventory.compareIds, the same contract the
+-- window renderer's 'inventory' list source displays. Items with target
+-- 'party' hit every member; otherwise target is a party index.
 handlers.USE_ITEM = function(cmd, ctx)
     local idx = tonumber(evalFormula(cmd.itemIndex, ctx)) or 1
     local targetVal = tonumber(evalFormula(cmd.target, ctx)) or 0
@@ -1782,9 +1776,7 @@ local function buildScriptApi(ctx)
         if arr[index] then return false end
         local sessMod = require("engine.session")
         local battler = sessMod.Battler.new(actorData, level or actorData.level or 1)
-        if sessMod.randomAllyName then
-            battler.name = sessMod.randomAllyName(actorData)
-        end
+        battler.name = sessMod.randomAllyName(actorData)
         battler.hp = battler:getMaxHp(session)
         arr[index] = battler
         return true
