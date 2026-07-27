@@ -1530,9 +1530,7 @@ end
 -- run. The renderer is re-pointed because it caches the session reference.
 handlers.RESET_SESSION = function(cmd, ctx)
     local sessionModule = require("engine.session")
-    local developerMode = ctx.session and ctx.session.developerMode == true
     local fresh = sessionModule.GameSession.new(ctx.loader or (ctx.session and ctx.session.loader))
-    fresh.developerMode = developerMode
     fresh:initializeStartingParty()
     _G.activeSession = fresh
     ctx.session = fresh

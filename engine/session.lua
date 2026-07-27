@@ -5,6 +5,13 @@ local newgame = require("engine.newgame")
 
 local session = {}
 
+-- Developer mode is a property of the launch (`lovec . developer`), not of any
+-- one session, so it is stamped onto every GameSession at construction rather
+-- than copied from session to session. Every path that builds a session --
+-- startup, RESET_SESSION, and savegame.deserialize behind LOAD_GAME and F6 --
+-- therefore inherits it without a carry-over step of its own to forget.
+session.developerMode = false
+
 -- Recruited allies (never the Summoner) draw a random name from
 -- actorData.names when one is defined, so starting parties don't all use
 -- the same handful of default names.
@@ -199,6 +206,7 @@ GameSession.__index = GameSession
 function GameSession.new(loader)
     local self = setmetatable({}, GameSession)
     self.loader = loader
+    self.developerMode = session.developerMode
     self.gold = 0
     self.inventory = {}
     self.flags = {}

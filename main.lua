@@ -306,6 +306,7 @@ function love.load(arg)
         dofile("tests/test_promotion.lua")
         dofile("tests/test_transform.lua")
         dofile("tests/test_encounter_levels.lua")
+        dofile("tests/test_developer_mode.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return
@@ -419,9 +420,11 @@ function love.load(arg)
     -- Initialize database loader
     loader.init(cliCampaignRoot)
     
-    -- Initialize activeSession
+    -- Initialize activeSession. The developer flag is set on the module before
+    -- the first session exists, so every session built afterwards -- including
+    -- the ones LOAD_GAME and F6 deserialize -- carries it too.
+    session.developerMode = isDeveloperMode
     activeSession = session.GameSession.new(loader)
-    activeSession.developerMode = isDeveloperMode
     activeSession:initializeStartingParty()
     
     -- Initialize renderer graphics
