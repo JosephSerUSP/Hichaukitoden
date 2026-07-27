@@ -3008,10 +3008,21 @@
         "trigger": "interact",
         "sprite": "assets/sprites/NPC08.png",
         "commands": [
-          {"cmd": "RECOVER_PARTY"},
-          {"cmd": "CHANGE_MP", "amount": "session.maxMp"},
-          {"cmd": "GAIN_GOLD", "amount": "999999"},
-          {"cmd": "TEXT", "text": "Party restored, MP filled, and testing funds supplied."}
+          {
+            "cmd": "RECOVER_PARTY"
+          },
+          {
+            "cmd": "CHANGE_MP",
+            "amount": "session.maxMp"
+          },
+          {
+            "cmd": "GAIN_GOLD",
+            "amount": "999999"
+          },
+          {
+            "cmd": "TEXT",
+            "text": "Party restored, MP filled, and testing funds supplied."
+          }
         ]
       },
       {
@@ -3022,13 +3033,56 @@
         "trigger": "interact",
         "sprite": "assets/sprites/NPC01.png",
         "commands": [
-          {"cmd": "CHOICE", "options": [
-            {"label": "Consumables", "commands": [{"cmd": "OPEN_SHOP", "shopId": 1}]},
-            {"label": "Weapons and Armor", "commands": [{"cmd": "OPEN_SHOP", "shopId": 2}]},
-            {"label": "Accessories", "commands": [{"cmd": "OPEN_SHOP", "shopId": 3}]},
-            {"label": "Keys and Rare Gear", "commands": [{"cmd": "OPEN_SHOP", "shopId": 4}]},
-            {"label": "Food", "commands": [{"cmd": "OPEN_SHOP", "shopId": 5}]}
-          ]}
+          {
+            "cmd": "CHOICE",
+            "options": [
+              {
+                "label": "Consumables",
+                "commands": [
+                  {
+                    "cmd": "OPEN_SHOP",
+                    "shopId": 1
+                  }
+                ]
+              },
+              {
+                "label": "Weapons and Armor",
+                "commands": [
+                  {
+                    "cmd": "OPEN_SHOP",
+                    "shopId": 2
+                  }
+                ]
+              },
+              {
+                "label": "Accessories",
+                "commands": [
+                  {
+                    "cmd": "OPEN_SHOP",
+                    "shopId": 3
+                  }
+                ]
+              },
+              {
+                "label": "Keys and Rare Gear",
+                "commands": [
+                  {
+                    "cmd": "OPEN_SHOP",
+                    "shopId": 4
+                  }
+                ]
+              },
+              {
+                "label": "Food",
+                "commands": [
+                  {
+                    "cmd": "OPEN_SHOP",
+                    "shopId": 5
+                  }
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -3039,7 +3093,10 @@
         "trigger": "interact",
         "sprite": "assets/sprites/NPC04.png",
         "commands": [
-          {"cmd": "TEXT", "text": "Developer mode exposes every species in the Summoning Ritual. Use the party menu to summon, promote, feed, transform, or inspect them."}
+          {
+            "cmd": "TEXT",
+            "text": "Developer mode exposes every species in the Summoning Ritual. Use the party menu to summon, promote, feed, transform, or inspect them."
+          }
         ]
       },
       {
@@ -3050,7 +3107,10 @@
         "trigger": "interact",
         "sprite": "assets/sprites/NPC11.png",
         "commands": [
-          {"cmd": "TEXT", "text": "The campaign warp matrix is awaiting a reusable interactive map-transfer action. The north exit returns to Town."}
+          {
+            "cmd": "TEXT",
+            "text": "The campaign warp matrix is awaiting a reusable interactive map-transfer action. The north exit returns to Town."
+          }
         ]
       },
       {
@@ -3059,7 +3119,12 @@
         "x": 7,
         "y": 0,
         "trigger": "step",
-        "commands": [{"cmd": "LOAD_MAP", "mapId": 1}]
+        "commands": [
+          {
+            "cmd": "LOAD_MAP",
+            "mapId": 1
+          }
+        ]
       }
     ],
     "treasures": [],

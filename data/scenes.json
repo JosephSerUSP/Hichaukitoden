@@ -683,7 +683,12 @@
       },
       {
         "id": "title_menu_developer",
-        "rect": {"x": 21, "y": 18, "w": 10.5, "h": 8},
+        "rect": {
+          "x": 21,
+          "y": 18,
+          "w": 10.5,
+          "h": 8
+        },
         "style": "list",
         "visible": "session.developerMode == true",
         "visibleRows": 6,
@@ -849,7 +854,7 @@
       "on_down": [
         {
           "cmd": "IF",
-            "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx < (session.developerMode and 6 or 5)",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx < (session.developerMode and 6 or 5)",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -1062,18 +1067,27 @@
             }
           ]
         },
-          {
-            "cmd": "IF",
-            "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and session.developerMode == true and v.idx == 6",
-            "then": [
-              {"cmd": "RESET_SESSION"},
-              {"cmd": "LOAD_MAP", "mapId": 8},
-              {"cmd": "SCENE_EVENT", "kind": "goto", "scene": "map"}
-            ]
-          },
-          {
-            "cmd": "IF",
-            "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx == 5",
+        {
+          "cmd": "IF",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and session.developerMode == true and v.idx == 6",
+          "then": [
+            {
+              "cmd": "RESET_SESSION"
+            },
+            {
+              "cmd": "LOAD_MAP",
+              "mapId": 8
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "goto",
+              "scene": "map"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v.pickerOpen ~= true and v.loadPickerOpen ~= true and v.idx == 5",
           "then": [
             {
               "cmd": "SET_VAR",

@@ -56,7 +56,7 @@ function dataDir() {
 function setActiveCampaign(name) {
     if (name && /^[a-z0-9_]+$/.test(name)) {
         activeCampaign = name;
-        fs.writeFileSync(CAMPAIGN_JSON_PATH, JSON.stringify({ active: name }, null, 2));
+        fs.writeFileSync(CAMPAIGN_JSON_PATH, JSON.stringify({ active: name }, null, 2) + '\n');
     } else {
         activeCampaign = null;
         if (fs.existsSync(CAMPAIGN_JSON_PATH)) fs.unlinkSync(CAMPAIGN_JSON_PATH);
@@ -621,10 +621,16 @@ const server = http.createServer((req, res) => {
                     throw new Error(`Save blocked: payload shape doesn't match the file on disk for ${shapeMismatches.join(', ')}.`);
                 }
 
+                // One canonical on-disk form for every data file: two-space
+                // indent and a trailing newline. The editor rewrites a whole
+                // file whenever any field in it changes, so if its output
+                // differs from the repo's formatting even in whitespace, every
+                // save buries the real edit under hundreds of cosmetic lines.
+                // `data/*.json` is stored in this exact form for that reason.
                 const saveFile = (filename, content) => {
                     if (content) {
                         const filePath = path.join(dataDir(), filename);
-                        fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
+                        fs.writeFileSync(filePath, JSON.stringify(content, null, 2) + '\n', 'utf8');
                     }
                 };
 
@@ -886,7 +892,7 @@ const server = http.createServer((req, res) => {
             try {
                 const themes = JSON.parse(body);
                 const filePath = path.join(__dirname, 'themes.json');
-                fs.writeFileSync(filePath, JSON.stringify(themes, null, 2), 'utf8');
+                fs.writeFileSync(filePath, JSON.stringify(themes, null, 2) + '\n', 'utf8');
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true }));
             } catch (e) {
