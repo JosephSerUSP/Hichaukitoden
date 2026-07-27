@@ -1994,7 +1994,12 @@ elseif paramDef.type == "script" then
     -- would silently skip every end-of-round tick, make fleeing impossible, or
     -- spawn an encounter with no enemies -- all quiet, all worse than failing.
     for _, phase in ipairs({ "battle.victory", "battle.defeat", "battle.escaped", "battle.encounter_check",
-        "battle.round_end", "battle.flee_attempt", "battle.battle_start", "exploration.step" }) do
+        "battle.round_end", "battle.flee_attempt", "battle.battle_start",
+        -- round_start and after_action are how a troop acts at the top of a
+        -- round or the instant a blow lands. They are required for the same
+        -- reason as the rest: missing, they would skip every troop event
+        -- declared at them, silently.
+        "battle.round_start", "battle.after_action", "exploration.step" }) do
         check(flow.has(phase), "flows.json is missing required phase '" .. phase .. "'")
         if flow.has(phase) then
             local s = session.GameSession.new(loader)

@@ -31,6 +31,26 @@
         ]
       }
     ],
+    "round_start": [
+      {
+        "cmd": "COMMENT",
+        "text": "Start of a round, before actions are collected. Nothing structural happens here yet -- the phase exists so a troop can act at the top of a round (a boss taunting, a hazard ticking) without that becoming engine code."
+      },
+      {
+        "cmd": "RUN_TROOP_EVENTS",
+        "at": "round_start"
+      }
+    ],
+    "after_action": [
+      {
+        "cmd": "COMMENT",
+        "text": "After a single turn resolves. This is the phase an HP threshold needs -- a boss changing form at half health should do so the moment the blow lands, not at the end of the round."
+      },
+      {
+        "cmd": "RUN_TROOP_EVENTS",
+        "at": "after_action"
+      }
+    ],
     "round_end": [
       {
         "cmd": "COMMENT",

@@ -466,6 +466,18 @@ function Battle:executeTurn(turn, roundEvents)
             end
         end
         
+        -- The troop's after_action events, while the blow that just landed is
+        -- the newest fact. This is the phase an HP threshold needs: a boss
+        -- changing form at half health should do it as the hit lands, not at
+        -- the end of the round. Run before the victory/defeat check below, so
+        -- an event still has the chance to change the outcome it is reacting
+        -- to -- a second form is not much use after the battle has been called.
+        for _, ev in ipairs(flow.run("battle.after_action",
+            { session = self.session, battle = self, party = self.session.party,
+              a = turn.actor, target = turn.target })) do
+            table.insert(roundEvents, ev)
+        end
+
         -- Check for victory/defeat mid-turn. A wipe with reserves left
         -- deploys the emergency wave instead of ending the battle; the
         -- round continues (remaining enemy turns whose targets fell are
@@ -513,10 +525,17 @@ function Battle:resolveRound(collectedActions)
         return roundEvents
     end
 
-    -- 2. Build queue
+    -- 2. Top of the round, before the queue is built, so an event that changes
+    -- who can act still affects this round rather than the next one.
+    for _, ev in ipairs(flow.run("battle.round_start",
+        { session = self.session, battle = self, party = self.session.party })) do
+        table.insert(roundEvents, ev)
+    end
+
+    -- 3. Build queue
     local queue = self:buildTurnQueue(collectedActions)
 
-    -- 3. Execute turns. A successful escape ends the battle where it lands, so
+    -- 4. Execute turns. A successful escape ends the battle where it lands, so
     -- creatures slower than the one that fled do not get a turn -- the party is
     -- already gone.
     local escaped = false
@@ -529,7 +548,7 @@ function Battle:resolveRound(collectedActions)
     end
     if escaped then return roundEvents end
 
-    -- 4. End of round
+    -- 5. End of round
     self:processRoundEnd(roundEvents)
     
     return roundEvents

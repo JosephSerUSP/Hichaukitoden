@@ -59,7 +59,7 @@ are what's left:
 ## Flow phases (data/flows.json)
 
 - `_test`: `scene`, `script_escape`
-- `battle`: `battle_start`, `defeat`, `encounter_check`, `escaped`, `flee_attempt`, `round_end`, `victory`
+- `battle`: `after_action`, `battle_start`, `defeat`, `encounter_check`, `escaped`, `flee_attempt`, `round_end`, `round_start`, `victory`
 - `exploration`: `expedition_start`, `step`
 - `quest`: `complete`, `offer`
 

@@ -156,5 +156,51 @@ check(charged > 0, "an ordinary troop is charged Strain in a long fight")
 check(strainCost({ id = "quiet", members = { { actor = 3 } }, suppress = { "strain" } }) == 0,
     "and a troop that suppresses it is not")
 
+-- round_start and after_action were declared as phases before anything called
+-- them, so an event authored at either would have sat there never firing. These
+-- run a real battle round and watch for the event's own text.
+local battleSystem = require("engine.battle")
+
+local function roundWith(events, hp)
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    s.currentMapData = { safe = true }
+    local enemy = sessionModule.Battler.new(loader.getActor(3), 1)
+    local b = battleSystem.Battle.new(s, { enemy })
+    b.troop = { id = "probe", members = { { actor = 3 } }, inherits = false, events = events }
+    if hp then enemy.hp = math.max(1, math.floor(enemy:getMaxHp(s) * hp)) end
+    local seen = {}
+    for _, ev in ipairs(b:resolveRound({}) or {}) do
+        if ev.type == "text" and ev.text then seen[ev.text] = true end
+    end
+    return seen
+end
+
+local startSeen = roundWith({
+    { id = "taunt", at = "round_start",
+      commands = { { cmd = "EMIT_TEXT", term = "__none", fallback = "TROOP_ROUND_START" } } },
+})
+check(startSeen["TROOP_ROUND_START"], "a round_start event fires at the top of the round")
+
+local actionSeen = roundWith({
+    { id = "react", at = "after_action",
+      commands = { { cmd = "EMIT_TEXT", term = "__none", fallback = "TROOP_AFTER_ACTION" } } },
+})
+check(actionSeen["TROOP_AFTER_ACTION"], "an after_action event fires as a turn resolves")
+
+-- The case after_action exists for: a threshold that must not re-fire.
+local onceSeen = roundWith({
+    { id = "phase2", at = "after_action", once = true,
+      when = "battle.round >= 1",
+      commands = { { cmd = "EMIT_TEXT", term = "__none", fallback = "TROOP_PHASE_TWO" } } },
+})
+check(onceSeen["TROOP_PHASE_TWO"], "a `once` threshold event fires when its condition holds")
+
+local neverSeen = roundWith({
+    { id = "nope", at = "after_action", when = "battle.round >= 99",
+      commands = { { cmd = "EMIT_TEXT", term = "__none", fallback = "TROOP_NEVER" } } },
+})
+check(not neverSeen["TROOP_NEVER"], "and an event whose condition is false does not")
+
 print(string.format("=== Troop Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then error(failed .. " troop test(s) failed") end
