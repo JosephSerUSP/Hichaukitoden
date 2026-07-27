@@ -81,6 +81,9 @@ function loader.init(root)
     loader.engine = J("engine.json")
     -- Phase flows (SPEC S4): scene phase -> command list, run in immediate mode
     loader.flows = J("flows.json")
+    -- Troops: what a battle is made of (member slots, rigid or pooled) and its
+    -- battle events. `base` is inherited by all of them.
+    loader.troops = J("troops.json")
     -- Scenes configuration
     loader.scenes = J("scenes.json")
 

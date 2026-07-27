@@ -106,6 +106,59 @@ validator.run = function(loader)
         }
     end
 
+    -- Troops (data/troops.json). A troop that builds no enemies is a battle
+    -- against nothing, and a slot naming a missing actor is a fight that
+    -- crashes when it starts -- neither shows up until someone walks into it.
+    local baseTroop = loader.troops and loader.troops[require("engine.troop").BASE_ID]
+    check(baseTroop ~= nil,
+        "data/troops.json has no 'base' troop; every troop inherits it")
+    check(baseTroop == nil or baseTroop.abstract == true,
+        "the 'base' troop must be abstract -- it exists to be inherited, not fought")
+    for tid, t in pairs(loader.troops or {}) do
+        local twhere = "troop '" .. tostring(tid) .. "'"
+        check(t.id == nil or t.id == tid,
+            twhere .. " has id '" .. tostring(t.id) .. "', which does not match its key")
+        check(t.abstract == true or #(t.members or {}) > 0,
+            twhere .. " has no members, so fighting it is a battle against nothing"
+            .. " (mark it abstract if it exists only to be inherited)")
+        for si, slot in ipairs(t.members or {}) do
+            local swhere = twhere .. " members[" .. si .. "]"
+            local named = slot.actor ~= nil
+            local pooled = slot.pool ~= nil
+            check(named ~= pooled,
+                swhere .. " must be either a named actor or a weighted pool, not both"
+                .. " and not neither")
+            if named then
+                check(loader.getActor(slot.actor) ~= nil,
+                    swhere .. " names missing actor '" .. tostring(slot.actor) .. "'")
+            end
+            for pi, entry in ipairs(slot.pool or {}) do
+                local pwhere = swhere .. " pool[" .. pi .. "]"
+                check(loader.getActor(entry.actor) ~= nil,
+                    pwhere .. " names missing actor '" .. tostring(entry.actor) .. "'")
+                check(entry.weight == nil or (type(entry.weight) == "number" and entry.weight > 0),
+                    pwhere .. " weight must be a positive number")
+                check(entry.levelMax == nil or entry.levelMin ~= nil,
+                    pwhere .. " levelMax requires levelMin")
+                check(entry.levelMin == nil or entry.levelMax == nil
+                        or entry.levelMax >= entry.levelMin,
+                    pwhere .. " levelMax must be at least levelMin")
+            end
+            check(not pooled or slot.count ~= nil,
+                swhere .. " is a pool and needs a count")
+        end
+        -- Suppressing an id nothing declares is a silent no-op, and reads in
+        -- the data as though a rule were disabled when it is still running.
+        for _, sid in ipairs(t.suppress or {}) do
+            local found = false
+            for _, ev in ipairs((baseTroop and baseTroop.events) or {}) do
+                if ev.id == sid then found = true end
+            end
+            check(found, twhere .. " suppresses '" .. tostring(sid)
+                .. "', which the base troop does not declare")
+        end
+    end
+
     -- Battle commands (engine.json `battleCommands`). A creature whose command
     -- list is wrong is a creature that cannot act, or can act in a way the
     -- design forbids, and neither shows up until someone fights with it.
@@ -875,23 +928,23 @@ validator.run = function(loader)
                 where .. " recruits[" .. ri .. "] actor '" .. tostring(actorId)
                 .. "' is not marked isRecruitable")
         end
+        -- A map's encounter table names TROOPS now, not actors: a wandering
+        -- group is a troop like any other, which is what lets it carry battle
+        -- events. The per-entry levelMin/levelMax that used to live here moved
+        -- onto the troop's pool slot, where the thing being levelled is.
         for ei, enc in ipairs(map.encounters or {}) do
-            check(type(enc) == "table" and loader.getActor(enc.id) ~= nil,
-                where .. " encounters[" .. ei .. "] references missing actor '"
-                .. tostring(type(enc) == "table" and enc.id or enc) .. "'")
+            local encWhere = where .. " encounters[" .. ei .. "]"
+            check(type(enc) == "table" and enc.troop ~= nil,
+                encWhere .. " must name a troop")
             if type(enc) == "table" then
+                check(enc.troop == nil or (loader.troops and loader.troops[tostring(enc.troop)] ~= nil),
+                    encWhere .. " references missing troop '" .. tostring(enc.troop) .. "'")
+                local t = loader.troops and loader.troops[tostring(enc.troop)]
+                check(t == nil or t.abstract ~= true,
+                    encWhere .. " references abstract troop '" .. tostring(enc.troop)
+                    .. "', which exists to be inherited and cannot be fought")
                 check(type(enc.weight) == "number" and enc.weight > 0 and enc.weight == math.floor(enc.weight),
-                    where .. " encounters[" .. ei .. "] weight must be a positive integer")
-                check(enc.levelMin == nil or (type(enc.levelMin) == "number"
-                        and enc.levelMin >= 1 and enc.levelMin == math.floor(enc.levelMin)),
-                    where .. " encounters[" .. ei .. "] levelMin must be a positive integer")
-                check(enc.levelMax == nil or (type(enc.levelMax) == "number"
-                        and enc.levelMax >= 1 and enc.levelMax == math.floor(enc.levelMax)),
-                    where .. " encounters[" .. ei .. "] levelMax must be a positive integer")
-                check(enc.levelMax == nil or enc.levelMin ~= nil,
-                    where .. " encounters[" .. ei .. "] levelMax requires levelMin")
-                check(enc.levelMin == nil or enc.levelMax == nil or enc.levelMax >= enc.levelMin,
-                    where .. " encounters[" .. ei .. "] levelMax must be at least levelMin")
+                    encWhere .. " weight must be a positive integer")
             end
         end
     end

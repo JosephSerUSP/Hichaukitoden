@@ -309,10 +309,10 @@ function love.load(arg)
         dofile("tests/test_growth.lua")
         dofile("tests/test_promotion.lua")
         dofile("tests/test_transform.lua")
-        dofile("tests/test_encounter_levels.lua")
         dofile("tests/test_developer_mode.lua")
         dofile("tests/test_map_transfer.lua")
         dofile("tests/test_battle_commands.lua")
+        dofile("tests/test_troops.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return
@@ -994,7 +994,7 @@ handleDialogueAction = function()
                 victoryNode = node.victoryNode,
                 defeatNode = node.defeatNode,
             }
-            triggerBattle(node.troop, node.level)
+            triggerBattle(node.troop)
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then
             local ce = loader.commonEvents and loader.commonEvents[tostring(node.commonEventId)]
             if ce and ce.commands then
@@ -1097,8 +1097,8 @@ local function checkStepEvents()
     return false
 end
 
-triggerBattle = function(troop, level)
-    require("engine.scenes.battle").triggerBattle(troop, level)
+triggerBattle = function(troopId)
+    require("engine.scenes.battle").triggerBattle(troopId)
 end
 
 -- Resume an event that started a battle. Defeat normally ends the run before

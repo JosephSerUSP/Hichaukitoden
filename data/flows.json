@@ -3,11 +3,10 @@
     "battle_start": [
       {
         "cmd": "COMMENT",
-        "text": "Enemy group composition: count roll then weighted picks from the map's encounter table (task A5d)."
+        "text": "Enemy group composition: the troop named by the BATTLE command, or a weighted roll over the map's encounter table (which holds troop ids). Slot counts and levels belong to the troop, not to this phase."
       },
       {
-        "cmd": "SPAWN_ENEMIES",
-        "count": "random(combat.minEnemies, combat.maxEnemies)"
+        "cmd": "SPAWN_ENEMIES"
       },
       {
         "cmd": "COMMENT",

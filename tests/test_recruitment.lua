@@ -75,8 +75,8 @@ for _, actorData in ipairs(realLoader.actors) do
             for _, c in ipairs(cmds or {}) do
                 if c.cmd == "BATTLE" then
                     withBattle = withBattle + 1
-                    assert(c.troop and #c.troop > 0,
-                        "a recruit battle must name its troop, not roll the map table")
+                    assert(type(c.troop) == "string" and realLoader.troops[c.troop],
+                        "a recruit battle must name a real troop, not roll the map table")
                     assert(c.onVictory and #c.onVictory > 0,
                         "a recruit battle must continue on victory")
                 end

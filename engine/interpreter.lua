@@ -1241,42 +1241,35 @@ end
 -- emits it as a `spawn_enemies` event; the host constructs the Battle. RNG
 -- sequence matches legacy triggerBattle: one count roll (via the count
 -- formula), then one weighted roll per enemy.
+-- Spawns a troop. Named by `troop`, or rolled from the current map's encounter
+-- table when none is given.
+--
+-- The weighted-pick loop that used to live here read the map's `encounters`
+-- table directly, which made a wandering group the one kind of battle that was
+-- not a troop -- and so the one kind that could carry no battle events. Both
+-- kinds are built by engine/troop.lua now; the count formula that used to be a
+-- parameter of this command belongs to the troop's pool slot, which is the
+-- thing that actually has a count.
 handlers.SPAWN_ENEMIES = function(cmd, ctx)
-    local sessionMod = require("engine.session")
-    local mapData = ctx.session.currentMapData
-    local possibleEnemies = mapData and mapData.encounters
-    if not possibleEnemies or #possibleEnemies == 0 then return end
-
-    local count = math.floor(evalFormula(cmd.count, ctx))
-    local enemyList = {}
-    for _ = 1, count do
-        local totalWeight = 0
-        for _, enemyOpt in ipairs(possibleEnemies) do
-            totalWeight = totalWeight + enemyOpt.weight
-        end
-        local roll = math.random(totalWeight)
-        local sum = 0
-        local chosenOpt = possibleEnemies[1]
-        for _, candidate in ipairs(possibleEnemies) do
-            sum = sum + candidate.weight
-            if roll <= sum then
-                chosenOpt = candidate
-                break
-            end
-        end
-
-        local enemyData = (ctx.loader or ctx.session.loader).getActor(chosenOpt.id)
-        if enemyData then
-            local levelMin = chosenOpt.levelMin or enemyData.level or ctx.session.dungeonFloor
-            local levelMax = chosenOpt.levelMax or levelMin
-            local enemyLevel = levelMin
-            if levelMax > levelMin then enemyLevel = math.random(levelMin, levelMax) end
-            local enemyBattler = sessionMod.Battler.new(enemyData, enemyLevel)
-            enemyBattler.hp = enemyBattler:getMaxHp(ctx.session)
-            table.insert(enemyList, enemyBattler)
-        end
+    local troopMod = require("engine.troop")
+    local loader = ctx.loader or ctx.session.loader
+    -- An authored id wins; otherwise the one the caller asked for (BATTLE
+    -- passes its `troop` down through the phase context); otherwise the map
+    -- rolls. Three sources, one order, no second spawn path.
+    local wanted = cmd.troop
+    if wanted == nil or wanted == "" then wanted = ctx.troopId end
+    local troopData
+    if wanted ~= nil and wanted ~= "" then
+        troopData = troopMod.get(wanted, loader)
+    else
+        troopData = troopMod.rollForMap(ctx.session.currentMapData, loader)
     end
-    table.insert(ctx.events, { type = "spawn_enemies", enemies = enemyList })
+    if not troopData then return end
+
+    local enemyList = troopMod.build(troopData, ctx, evalFormula)
+    if #enemyList == 0 then return end
+    ctx.session.currentTroopId = troopData.id
+    table.insert(ctx.events, { type = "spawn_enemies", enemies = enemyList, troop = troopData })
 end
 
 -- Emits a raw event of the given type (e.g. flee_success), optionally with

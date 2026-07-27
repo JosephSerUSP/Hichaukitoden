@@ -305,10 +305,7 @@
             "commands": [
               {
                 "cmd": "BATTLE",
-                "troop": [
-                  3
-                ],
-                "level": 1,
+                "troop": "recruit_skeleton",
                 "onVictory": [
                   {
                     "cmd": "TEXT",
@@ -1201,10 +1198,7 @@
             "commands": [
               {
                 "cmd": "BATTLE",
-                "troop": [
-                  10
-                ],
-                "level": 2,
+                "troop": "recruit_golem",
                 "onVictory": [
                   {
                     "cmd": "TEXT",

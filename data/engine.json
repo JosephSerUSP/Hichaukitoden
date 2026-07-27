@@ -510,11 +510,7 @@
       "params": [
         {
           "key": "troop",
-          "type": "actorList"
-        },
-        {
-          "key": "level",
-          "type": "formula"
+          "type": "troopId"
         },
         {
           "key": "onVictory",
@@ -530,7 +526,7 @@
         "common"
       ],
       "interactive": true,
-      "description": "Starts a battle and resumes the event afterwards. With no `troop`, rolls the current map's encounter table as before; with one, fights exactly those actors (the Forbidden Lamp shape: a scripted encounter that is not a random one), at `level` if given. `onVictory` and `onDefeat` are command lists run after the fight, and both rejoin whatever follows the BATTLE -- so \"beat it and it joins you\" is one event rather than two."
+      "description": "Starts a battle and resumes the event afterwards. `troop` names a troop to fight; without one the current map's encounter table is rolled. `onVictory` and `onDefeat` are command lists run after the fight, both rejoining whatever follows the BATTLE."
     },
     {
       "id": "CALL_COMMON_EVENT",
@@ -1120,19 +1116,15 @@
       "label": "Spawn Enemies",
       "params": [
         {
-          "key": "count",
-          "type": "formula"
-        },
-        {
-          "key": "table",
-          "type": "text"
+          "key": "troop",
+          "type": "troopId"
         }
       ],
       "contexts": [
         "battle_phase"
       ],
       "interactive": false,
-      "description": "Weighted enemy pick from the current map's encounter table; emits a spawn_enemies event with the built group."
+      "description": "Builds a troop and emits a spawn_enemies event with it. Uses the authored `troop` if given, else the one the caller named (BATTLE passes its own down), else a weighted roll over the map's encounter table. Counts and levels belong to the troop's member slots."
     },
     {
       "id": "EMIT_EVENT",

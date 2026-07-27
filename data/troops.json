@@ -1,0 +1,321 @@
+{
+  "base": {
+    "id": "base",
+    "name": "Every Battle",
+    "abstract": true,
+    "description": "Inherited by every troop that does not opt out. Battle events that should apply to all encounters live here rather than in the battle phase flows.",
+    "members": [],
+    "events": []
+  },
+  "town_of_stillnight_wanderers": {
+    "id": "town_of_stillnight_wanderers",
+    "name": "Town of Stillnight wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 1,
+            "weight": 10
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor1_entry_hall_wanderers": {
+    "id": "floor1_entry_hall_wanderers",
+    "name": "Floor 1: Entry Hall wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 1,
+            "weight": 5,
+            "levelMin": 1,
+            "levelMax": 2
+          },
+          {
+            "actor": 3,
+            "weight": 5,
+            "levelMin": 1,
+            "levelMax": 3
+          },
+          {
+            "actor": 9,
+            "weight": 3,
+            "levelMin": 1,
+            "levelMax": 2
+          },
+          {
+            "actor": 25,
+            "weight": 3,
+            "levelMin": 1,
+            "levelMax": 2
+          },
+          {
+            "actor": 27,
+            "weight": 3,
+            "levelMin": 1,
+            "levelMax": 3
+          },
+          {
+            "actor": 30,
+            "weight": 3,
+            "levelMin": 2,
+            "levelMax": 3
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor2_chasm_crossing_wanderers": {
+    "id": "floor2_chasm_crossing_wanderers",
+    "name": "Floor 2: Chasm Crossing wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 3,
+            "weight": 8,
+            "levelMin": 3,
+            "levelMax": 5
+          },
+          {
+            "actor": 9,
+            "weight": 5,
+            "levelMin": 3,
+            "levelMax": 5
+          },
+          {
+            "actor": 14,
+            "weight": 4,
+            "levelMin": 3,
+            "levelMax": 5
+          },
+          {
+            "actor": 12,
+            "weight": 3,
+            "levelMin": 4,
+            "levelMax": 6
+          },
+          {
+            "actor": 23,
+            "weight": 4,
+            "levelMin": 4,
+            "levelMax": 6
+          },
+          {
+            "actor": 50,
+            "weight": 2,
+            "levelMin": 5,
+            "levelMax": 6
+          },
+          {
+            "actor": 58,
+            "weight": 3,
+            "levelMin": 4,
+            "levelMax": 6
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor3_rusted_choir_wanderers": {
+    "id": "floor3_rusted_choir_wanderers",
+    "name": "Floor 3: Rusted Choir wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 10,
+            "weight": 6,
+            "levelMin": 7,
+            "levelMax": 9
+          },
+          {
+            "actor": 6,
+            "weight": 4,
+            "levelMin": 6,
+            "levelMax": 8
+          },
+          {
+            "actor": 4,
+            "weight": 3,
+            "levelMin": 6,
+            "levelMax": 8
+          },
+          {
+            "actor": 32,
+            "weight": 2,
+            "levelMin": 8,
+            "levelMax": 10
+          },
+          {
+            "actor": 45,
+            "weight": 3,
+            "levelMin": 7,
+            "levelMax": 9
+          },
+          {
+            "actor": 52,
+            "weight": 3,
+            "levelMin": 6,
+            "levelMax": 8
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor4_cryptic_vault_wanderers": {
+    "id": "floor4_cryptic_vault_wanderers",
+    "name": "Floor 4: Cryptic Vault wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 6,
+            "weight": 8
+          },
+          {
+            "actor": 2,
+            "weight": 4
+          },
+          {
+            "actor": 11,
+            "weight": 4
+          },
+          {
+            "actor": 24,
+            "weight": 3
+          },
+          {
+            "actor": 26,
+            "weight": 3
+          },
+          {
+            "actor": 31,
+            "weight": 3
+          },
+          {
+            "actor": 59,
+            "weight": 2
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor5_blood_chapel_wanderers": {
+    "id": "floor5_blood_chapel_wanderers",
+    "name": "Floor 5: Blood Chapel wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 18,
+            "weight": 2
+          },
+          {
+            "actor": 6,
+            "weight": 8
+          },
+          {
+            "actor": 2,
+            "weight": 5
+          },
+          {
+            "actor": 35,
+            "weight": 2
+          },
+          {
+            "actor": 37,
+            "weight": 2
+          },
+          {
+            "actor": 39,
+            "weight": 2
+          },
+          {
+            "actor": 41,
+            "weight": 2
+          },
+          {
+            "actor": 43,
+            "weight": 2
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "floor6_stillnight_sanctum_wanderers": {
+    "id": "floor6_stillnight_sanctum_wanderers",
+    "name": "Floor 6: Stillnight Sanctum wanderers",
+    "members": [
+      {
+        "pool": [
+          {
+            "actor": 18,
+            "weight": 10
+          },
+          {
+            "actor": 6,
+            "weight": 5
+          },
+          {
+            "actor": 36,
+            "weight": 2
+          },
+          {
+            "actor": 38,
+            "weight": 2
+          },
+          {
+            "actor": 40,
+            "weight": 2
+          },
+          {
+            "actor": 42,
+            "weight": 2
+          },
+          {
+            "actor": 44,
+            "weight": 2
+          },
+          {
+            "actor": 47,
+            "weight": 1
+          },
+          {
+            "actor": 49,
+            "weight": 1
+          }
+        ],
+        "count": "random(combat.minEnemies, combat.maxEnemies)"
+      }
+    ]
+  },
+  "recruit_skeleton": {
+    "id": "recruit_skeleton",
+    "name": "Challenge: Skeleton",
+    "members": [
+      {
+        "actor": 3,
+        "level": 1
+      }
+    ]
+  },
+  "recruit_golem": {
+    "id": "recruit_golem",
+    "name": "Challenge: Golem",
+    "members": [
+      {
+        "actor": 10,
+        "level": 2
+      }
+    ]
+  }
+}
