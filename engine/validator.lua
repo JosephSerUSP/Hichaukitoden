@@ -147,6 +147,28 @@ validator.run = function(loader)
             check(not pooled or slot.count ~= nil,
                 swhere .. " is a pool and needs a count")
         end
+        -- Battle events. An event declared at a phase nothing runs, or with a
+        -- duplicate id, is an event that quietly never happens -- and `once`
+        -- bookkeeping is keyed by id, so two events sharing one would spend
+        -- each other.
+        local troopMod = require("engine.troop")
+        local seenEventIds = {}
+        for ei, ev in ipairs(t.events or {}) do
+            local ewhere = twhere .. " events[" .. ei .. "]"
+            check(ev.id ~= nil and ev.id ~= "", ewhere .. " needs an id")
+            if ev.id then
+                check(not seenEventIds[ev.id],
+                    ewhere .. " reuses event id '" .. tostring(ev.id) .. "'")
+                seenEventIds[ev.id] = true
+            end
+            local at = ev.at or "round_start"
+            check(troopMod.PHASES[at],
+                ewhere .. " runs at '" .. tostring(at) .. "', which is not a battle event "
+                .. "phase (battle_start, round_start, after_action, round_end)")
+            check(type(ev.commands) == "table" and #ev.commands > 0,
+                ewhere .. " has no commands, so firing it does nothing")
+        end
+
         -- Suppressing an id nothing declares is a silent no-op, and reads in
         -- the data as though a rule were disabled when it is still running.
         for _, sid in ipairs(t.suppress or {}) do

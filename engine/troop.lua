@@ -43,7 +43,11 @@ end
 -- which would just be deleting them.
 function troop.eventsFor(troopData, loader)
     local out = {}
-    local inheritsBase = troopData.inherits ~= false
+    -- The base troop does not inherit itself. It reaches this function like any
+    -- other troop -- a battle with no troop of its own resolves to it -- and
+    -- without this guard its own events would be collected twice, charging
+    -- Strain double for exactly the battles that named no troop.
+    local inheritsBase = troopData.inherits ~= false and troopData.id ~= BASE_ID
     if inheritsBase then
         local suppressed = {}
         for _, id in ipairs(troopData.suppress or {}) do suppressed[id] = true end
@@ -135,6 +139,73 @@ function troop.rollForMap(mapData, loader)
         if roll <= sum then return troop.get(entry.troop, loader) end
     end
     return troop.get(table_[1].troop, loader)
+end
+
+-- The points a battle event can declare itself at. Named rather than free-form
+-- so a typo is a build failure instead of an event that never fires, and
+-- deliberately few: every one of these is a place the round already stops, so
+-- adding an event costs no new machinery.
+troop.PHASES = {
+    battle_start = true,   -- once, as the encounter opens
+    round_start = true,    -- before actions are collected
+    after_action = true,   -- after each turn resolves; for HP thresholds
+    round_end = true,      -- after the round's ticks
+}
+
+-- Troops are reached by two different routes depending on the phase: at
+-- battle_start the Battle object does not exist yet (the phase is what builds
+-- its enemies), so the troop rides on ctx; afterwards it rides on the Battle.
+-- One accessor rather than that distinction leaking into every caller.
+function troop.current(ctx)
+    local found = (ctx.battle and ctx.battle.troop) or ctx.troop
+    if found then return found end
+    -- A battle with no troop of its own is still a battle, and the base troop
+    -- is by definition the rules of every one of them. Returning nil here
+    -- instead would make "no troop named" silently mean "no Strain, no
+    -- ambush" -- a cliff between a fight the player walked into and one a
+    -- harness built, which is exactly the kind of difference that makes a
+    -- test stop testing the real thing.
+    local loader = loaderOf(ctx)
+    return loader and loader.troops and loader.troops[BASE_ID]
+end
+
+-- Where `once` bookkeeping lives. Before the Battle exists there is nothing to
+-- remember across -- battle_start runs exactly once anyway -- so an empty table
+-- is the honest answer rather than a stashed global.
+function troop.firedTable(ctx)
+    if not ctx.battle then return {} end
+    ctx.battle.firedEvents = ctx.battle.firedEvents or {}
+    return ctx.battle.firedEvents
+end
+
+-- The troop's events eligible to run at this phase: declared for it, and not
+-- already spent if they are `once`.
+--
+-- `when` is an ordinary sandboxed formula and `commands` an ordinary command
+-- list, so a battle event is not a new language -- TRANSFORM_ACTOR already
+-- gives a boss its second form, CALL_COMMON_EVENT already gives it dialogue.
+-- Evaluating the condition and running the commands belongs to the
+-- interpreter, which owns both; this only decides what is on the table.
+--
+-- `once` fires an event a single time per battle. Without it an event repeats
+-- every time its condition holds at its phase, which is what a per-round rule
+-- like Strain wants and what an HP threshold very much does not.
+function troop.eventsAt(troopData, phase, loader, fired)
+    if not troopData then return {} end
+    fired = fired or {}
+    local out = {}
+    for _, ev in ipairs(troop.eventsFor(troopData, loader)) do
+        if (ev.at or "round_start") == phase
+            and not (ev.once and fired[tostring(ev.id)]) then
+            table.insert(out, ev)
+        end
+    end
+    return out
+end
+
+-- Records that a `once` event has now fired.
+function troop.markFired(fired, ev)
+    if ev.once and fired then fired[tostring(ev.id)] = true end
 end
 
 troop.BASE_ID = BASE_ID

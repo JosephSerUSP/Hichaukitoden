@@ -32,7 +32,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 ## Registry (data/engine.json)
 
-- commands: **69**
+- commands: **70**
 - effect types: **15**
 - trait codes: **36**
 - meta keys: **7** (tier, disciplines, intensityGrade, craftable, craftIngredient, detect, detectLevel)
@@ -49,7 +49,7 @@ are what's left:
 - **unused** -- declared in the registry and never referenced anywhere.
   Harmless, but dead weight the editor still offers as a choice.
 
-- trait codes (assigned): none
+- trait codes (assigned): `BATTLE_START_DAMAGE`
 - trait codes (unused): none
 - effect types (assigned): none
 - effect types (unused): none

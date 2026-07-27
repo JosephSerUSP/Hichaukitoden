@@ -5,7 +5,128 @@
     "abstract": true,
     "description": "Inherited by every troop that does not opt out. Battle events that should apply to all encounters live here rather than in the battle phase flows.",
     "members": [],
-    "events": []
+    "events": [
+      {
+        "id": "ambush",
+        "at": "battle_start",
+        "note": "Ambush (BATTLE_START_DAMAGE): the party's summed trait rate hits ONE enemy as the battle opens. v.hit guards the FOR_EACH so only the first living enemy is struck -- no engine-side 'first enemy' ref needed. Lifted out of the battle_start flow so a troop can suppress it: an ambush on a boss that opens with a cutscene reads wrong.",
+        "commands": [
+          {
+            "cmd": "SET_VAR",
+            "name": "ambush",
+            "value": "party.trait.BATTLE_START_DAMAGE"
+          },
+          {
+            "cmd": "IF",
+            "condition": "v.ambush > 0",
+            "then": [
+              {
+                "cmd": "SET_VAR",
+                "name": "hit",
+                "value": "0"
+              },
+              {
+                "cmd": "FOR_EACH",
+                "scope": "living_enemies",
+                "as": "enemy",
+                "do": [
+                  {
+                    "cmd": "IF",
+                    "condition": "v.hit == 0",
+                    "then": [
+                      {
+                        "cmd": "DAMAGE",
+                        "target": "enemy",
+                        "amount": "v.ambush",
+                        "pierce": true,
+                        "minHp": 1
+                      },
+                      {
+                        "cmd": "EMIT_TEXT",
+                        "term": "battle.ambush",
+                        "fallback": "{0} is caught off guard!",
+                        "args": [
+                          "enemy.name"
+                        ]
+                      },
+                      {
+                        "cmd": "SET_VAR",
+                        "name": "hit",
+                        "value": "1"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "strain",
+        "at": "round_end",
+        "note": "Battle Strain. Ordinary rounds cost NOTHING -- taking a tactical turn is not supposed to be priced. Strain is exceptional pressure against indefinite combat: it begins after five completed rounds and escalates at ten and fifteen, scaling the combined MPD of the living party. Rounds 1-5 free, 6-9 x4, 10-14 x8, 15+ x16. This replaced a per-round drain of every ally's MPD, which charged the expedition for simply fighting and made a heavy party unaffordable in a way the design explicitly rejects. Lifted out of the round_end flow so a single fight can suppress it -- a scripted duel that is meant to last should not be priced like an expedition that has gone on too long.",
+        "commands": [
+          {
+            "cmd": "IF",
+            "condition": "not session.mapSafe",
+            "then": [
+              {
+                "cmd": "SET_VAR",
+                "name": "strainMult",
+                "value": "battle.round >= 15 and 16 or (battle.round >= 10 and 8 or (battle.round >= 6 and 4 or 0))"
+              },
+              {
+                "cmd": "IF",
+                "condition": "v.strainMult > 0 and party.mpd > 0",
+                "then": [
+                  {
+                    "cmd": "CHANGE_MP",
+                    "amount": "-(party.mpd * v.strainMult)"
+                  },
+                  {
+                    "cmd": "EMIT_TEXT",
+                    "term": "battle.strain",
+                    "fallback": "The prolonged battle strains the summoning! (-{0} MP)",
+                    "args": [
+                      "party.mpd * v.strainMult"
+                    ]
+                  }
+                ]
+              },
+              {
+                "cmd": "IF",
+                "condition": "session.mp <= 0",
+                "then": [
+                  {
+                    "cmd": "FOR_EACH",
+                    "scope": "slot_allies",
+                    "as": "ally",
+                    "do": [
+                      {
+                        "cmd": "DAMAGE",
+                        "target": "ally",
+                        "amount": "combat.mpExhaustionDamage",
+                        "pierce": true,
+                        "minHp": 1
+                      },
+                      {
+                        "cmd": "EMIT_TEXT",
+                        "term": "battle.mp_exhaustion",
+                        "fallback": "{0} suffers from MP exhaustion!",
+                        "args": [
+                          "ally.name"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   "town_of_stillnight_wanderers": {
     "id": "town_of_stillnight_wanderers",

@@ -1269,7 +1269,43 @@ handlers.SPAWN_ENEMIES = function(cmd, ctx)
     local enemyList = troopMod.build(troopData, ctx, evalFormula)
     if #enemyList == 0 then return end
     ctx.session.currentTroopId = troopData.id
+    -- Publish the group to the rest of the phase. Without this, every command
+    -- after SPAWN_ENEMIES in battle_start saw no enemies at all -- `FOR_EACH
+    -- living_enemies` resolves `ctx.enemies or ctx.battle.enemies`, and at this
+    -- point in the phase the Battle object does not exist yet. That is why the
+    -- BATTLE_START_DAMAGE ambush sitting right below it never hit anything.
+    ctx.enemies = enemyList
+    ctx.troop = troopData
     table.insert(ctx.events, { type = "spawn_enemies", enemies = enemyList, troop = troopData })
+end
+
+-- Runs the current troop's battle events for one phase.
+--
+-- Troop events fire from inside the phase flows rather than from a second loop
+-- in Lua, so there is one place a battle's logic runs. That is what lets the
+-- base troop hold rules that used to be written directly into a phase: they
+-- are still reached through the phase, but they are now data attached to the
+-- encounter, and a single troop can suppress one.
+handlers.RUN_TROOP_EVENTS = function(cmd, ctx)
+    local troopMod = require("engine.troop")
+    local phase = cmd.at
+    if not troopMod.PHASES[phase] then
+        error("RUN_TROOP_EVENTS: unknown phase '" .. tostring(phase) .. "'")
+    end
+    local troopData = troopMod.current(ctx)
+    if not troopData then return end
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local fired = troopMod.firedTable(ctx)
+    for _, ev in ipairs(troopMod.eventsAt(troopData, phase, loader, fired)) do
+        local fires = true
+        if ev.when ~= nil and ev.when ~= "" then
+            fires = evalFormula(ev.when, ctx) and true or false
+        end
+        if fires then
+            interpreter.execList(ev.commands or {}, ctx)
+            troopMod.markFired(fired, ev)
+        end
+    end
 end
 
 -- Emits a raw event of the given type (e.g. flee_success), optionally with

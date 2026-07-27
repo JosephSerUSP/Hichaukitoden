@@ -1127,6 +1127,22 @@
       "description": "Builds a troop and emits a spawn_enemies event with it. Uses the authored `troop` if given, else the one the caller named (BATTLE passes its own down), else a weighted roll over the map's encounter table. Counts and levels belong to the troop's member slots."
     },
     {
+      "id": "RUN_TROOP_EVENTS",
+      "category": "Advanced",
+      "label": "Run Troop Events",
+      "params": [
+        {
+          "key": "at",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Runs the current troop's battle events declared for this phase (battle_start, round_start, after_action, round_end), base troop first. Each event fires when its `when` formula holds; `once` spends it for the rest of the battle. Troop events run from inside the phase flows rather than a second loop, so a battle has one place its logic happens."
+    },
+    {
       "id": "EMIT_EVENT",
       "category": "Advanced",
       "label": "Emit Raw Event",

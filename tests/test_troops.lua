@@ -129,5 +129,32 @@ check(true, "every map encounter names a fightable troop")
 
 loader.troops.base.events = realBaseEvents
 
+-- Battle Strain moved out of the battle.round_end flow onto the base troop.
+-- The numbers themselves are covered by test_mpd_economy, which exercises this
+-- exact path and fails loudly if base-troop events stop firing -- the golden
+-- fixtures do NOT cover it, since they never reach round six. What is new here
+-- is that a single fight can now opt out, which is the reason it moved: in a
+-- phase it applied to every battle, always, with no way to say otherwise.
+local flowMod = require("engine.flow")
+
+local function strainCost(troopData)
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    s.currentMapData = { safe = false }
+    s.mp = s.maxMp
+    local before = s.mp
+    flowMod.run("battle.round_end", {
+        session = s, party = s.party, enemies = {},
+        battle = { round = 15, allies = s.party, enemies = {}, troop = troopData },
+        loader = loader,
+    })
+    return before - s.mp
+end
+
+local charged = strainCost({ id = "noisy", members = { { actor = 3 } } })
+check(charged > 0, "an ordinary troop is charged Strain in a long fight")
+check(strainCost({ id = "quiet", members = { { actor = 3 } }, suppress = { "strain" } }) == 0,
+    "and a troop that suppresses it is not")
+
 print(string.format("=== Troop Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then error(failed .. " troop test(s) failed") end
