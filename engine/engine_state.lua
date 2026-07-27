@@ -54,11 +54,15 @@ end
 -- instance). Everything else under data/ (passives, items, actors, states) only
 -- ASSIGNS a code to content, which is not an implementation.
 -- Anything holding command lists counts: flows (phase logic), scenes (hooks and
--- SCRIPT bodies), common events, and maps (their events carry command trees).
+-- SCRIPT bodies), common events, maps (their events carry command trees), and
+-- troops (base/per-troop battle events carry command trees too).
 -- Missing commonEvents.json here once made RECOVERY_XP_BONUS report as dead
--- immediately after it was implemented in the shared recovery event.
+-- immediately after it was implemented in the shared recovery event; missing
+-- troops.json the same way left BATTLE_START_DAMAGE reporting "assigned" (a
+-- false lie-to-player flag) after the base troop's ambush event started
+-- consuming it as `party.trait.BATTLE_START_DAMAGE`.
 local IMPL_DATA_FILES = { "data/flows.json", "data/scenes.json", "data/engine.json",
-    "data/commonEvents.json", "data/maps.json" }
+    "data/commonEvents.json", "data/maps.json", "data/troops.json" }
 local ASSIGN_DATA_FILES = {
     "data/passives.json", "data/items.json", "data/actors.json",
     "data/states.json", "data/skills.json",

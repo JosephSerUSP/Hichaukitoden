@@ -49,7 +49,7 @@ are what's left:
 - **unused** -- declared in the registry and never referenced anywhere.
   Harmless, but dead weight the editor still offers as a choice.
 
-- trait codes (assigned): `BATTLE_START_DAMAGE`
+- trait codes (assigned): none
 - trait codes (unused): none
 - effect types (assigned): none
 - effect types (unused): none
@@ -69,7 +69,7 @@ are what's left:
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx12, cookingx18, tinkeringx17
 - items: **196** (consumablex62, equipmentx120, questx14)
 - skills: **40**, passives: **41**, states: **12**, roles: **13**, elements: **5**
-- maps: **8**, common events: **11**, shops: **6**, quests: **4**
+- maps: **8**, common events: **10**, shops: **6**, quests: **4**
 - animations: **28**, tilesets: **9**
 
 ## Notes for agents
