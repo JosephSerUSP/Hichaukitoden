@@ -670,6 +670,33 @@
         // bodies never bleed into their parents.
         // ------------------------------------------------------------------
         let cmdClipboard = null; // deep-cloned command array
+        // The hostCtx the clipboard was filled from. Purely for the warning
+        // text on a cross-surface paste -- the clipboard itself is deliberately
+        // global, so a rule can move from a battle phase to a troop event, or
+        // a greeting from a map event to a recruit event.
+        let cmdClipboardOrigin = null;
+
+        // Which of these commands (recursively, including branch bodies) the
+        // registry does not allow in `hostCtx`. Returns command ids, deduped.
+        function commandsNotValidIn(cmds, hostCtx) {
+            const allowed = new Set(cmdsForContext(hostCtx).map(c => c.id));
+            const bad = new Set();
+            const walk = (list) => {
+                (list || []).forEach(c => {
+                    const id = cmdId(c);
+                    const def = getCmdDef(id);
+                    // An unknown id is someone else's problem (G1 will name it);
+                    // only flag commands the registry knows and excludes here.
+                    if (def && !allowed.has(id)) bad.add(id);
+                    (c.options || []).forEach(o => walk(o.commands));
+                    walk(c.commands); walk(c.elseCommands);
+                    walk(c['then']); walk(c['else']); walk(c['do']);
+                    walk(c.onVictory); walk(c.onDefeat);
+                });
+            };
+            walk(cmds);
+            return [...bad];
+        }
 
         // After a transformative op (paste/delete/cut/duplicate/insert) the
         // list re-renders and would lose its selection; the op records the
@@ -805,6 +832,12 @@
                 const ctxs = opCtxs();
                 if (!ctxs.length) return;
                 cmdClipboard = ctxs.map(c => cloneCmds(c.commandsArray[c.idx]));
+                // Where it came from, so a paste somewhere else can say whether
+                // the commands can actually run there. Copying between surfaces
+                // is the point -- every one of them speaks the same language --
+                // but not every command is legal in every context, and finding
+                // that out from a G1 failure later is the bad version.
+                cmdClipboardOrigin = ctx.hostCtx;
                 // Best-effort mirror to the OS clipboard; the in-memory buffer
                 // is authoritative (Clipboard API needs a secure context).
                 if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -814,6 +847,17 @@
             const doCut = () => { doCopy(); doDelete(); };
             const doPaste = () => {
                 if (!cmdClipboard || !cmdClipboard.length) return;
+                const foreign = commandsNotValidIn(cmdClipboard, ctx.hostCtx);
+                if (foreign.length > 0) {
+                    const names = foreign.slice(0, 4).join(', ')
+                        + (foreign.length > 4 ? ' and ' + (foreign.length - 4) + ' more' : '');
+                    const from = cmdClipboardOrigin ? (' copied from ' + cmdClipboardOrigin) : '';
+                    if (!confirm('These commands' + from + ' are not registered for \''
+                        + ctx.hostCtx + '\': ' + names
+                        + '.\n\nPasting anyway will fail validation until they are removed. Continue?')) {
+                        return;
+                    }
+                }
                 // Placeholder = insert at its position (the end); a command
                 // row pastes after itself.
                 const at = ctx.placeholder ? ctx.idx : ctx.idx + 1;
@@ -1083,6 +1127,22 @@
                     placeholder: true, onEdit: () => {}
                 });
                 container.appendChild(trailingLine);
+
+                // One quiet line saying the list is editable and that its
+                // clipboard is shared. Every surface -- map events, common
+                // events, troop events, recruit events, quest hooks, battle
+                // phases, action sequences -- runs this same editor off one
+                // clipboard, but nothing on screen said so, so it read as
+                // seven unrelated boxes that happened to look alike.
+                // Top-level only: nested branch bodies would repeat it.
+                if (indent === 0) {
+                    const hint = document.createElement('div');
+                    hint.style.cssText = 'padding:1px 2px; margin-top:2px; font-size:10px; '
+                        + 'color:#808080; font-family:inherit; border-top:1px dotted var(--win-shadow);';
+                    hint.textContent = 'Right-click a line, or Ctrl+C/X/V — copies between '
+                        + 'maps, common events, troops, quests and action sequences.';
+                    container.appendChild(hint);
+                }
             }
 
             applyRowStriping(container);

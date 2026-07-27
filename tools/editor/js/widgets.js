@@ -2051,6 +2051,9 @@
             } else if (activeDbTab === 'actionSequences') {
                 buildActionSequenceForm(formPanel, item.id);
 
+            } else if (activeDbTab === 'troops') {
+                buildTroopForm(formPanel, item.id);
+
             } else if (activeDbTab === 'terms') {
                 if (!dbPayload.terms) dbPayload.terms = {};
                 buildRecursiveForm(formPanel, dbPayload.terms, [], dbPayload.terms);

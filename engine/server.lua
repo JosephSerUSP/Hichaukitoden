@@ -11,7 +11,8 @@ server.configReloaded = false
 local DATA_FILES = {
     "actors", "elements", "items", "maps", "quests", "shops",
     "sounds", "terms", "actionSequences", "system", "commonEvents",
-    "skills", "passives", "states", "roles", "engine", "flows", "scenes"
+    "skills", "passives", "states", "roles", "engine", "flows", "scenes",
+    "troops"
 }
 
 function server.start()

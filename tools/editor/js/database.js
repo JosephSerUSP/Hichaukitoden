@@ -320,6 +320,14 @@
                     .map(k => ({ id: k, name: (dbPayload.actionSequences[k] && dbPayload.actionSequences[k].name) || k }))
                     .sort((a, b) => a.id.localeCompare(b.id));
             }
+            else if (activeDbTab === 'troops') {
+                if (!dbPayload.troops) dbPayload.troops = {};
+                items = Object.keys(dbPayload.troops)
+                    .map(k => ({ id: k, name: (dbPayload.troops[k] && dbPayload.troops[k].name) || k }))
+                    // `base` first: it is the troop every other one inherits,
+                    // so it is the one an author looks for.
+                    .sort((a, b) => (a.id === 'base' ? -1 : b.id === 'base' ? 1 : a.id.localeCompare(b.id)));
+            }
             else if (activeDbTab === 'terms') items = [{ id: 'terms_settings', name: 'Game Terms' }];
             else if (activeDbTab === 'system') items = [{ id: 'system_settings', name: 'System Settings' }];
 
@@ -394,19 +402,25 @@
             // Quests and Themes create entries via their own "+ New" button
             // (string-keyed / self-contained array entries), not the numeric
             // Change Maximum flow.
-            if (activeDbTab === 'quests' || activeDbTab === 'actionSequences') {
+            const STRING_KEYED_NEW = {
+                quests: { label: '＋ New Quest', make: () => createNewQuest() },
+                actionSequences: { label: '＋ New Sequence', make: () => createNewActionSequence() },
+                troops: { label: '＋ New Troop', make: () => createNewTroop() },
+            };
+            if (STRING_KEYED_NEW[activeDbTab]) {
                 const addBtn = document.createElement('button');
                 addBtn.className = 'db-list-item';
                 addBtn.style.cssText = 'font-weight: bold; color: var(--win-highlight);';
-                addBtn.textContent = activeDbTab === 'quests' ? '＋ New Quest' : '＋ New Sequence';
-                addBtn.onclick = () => activeDbTab === 'quests' ? createNewQuest() : createNewActionSequence();
+                addBtn.textContent = STRING_KEYED_NEW[activeDbTab].label;
+                addBtn.onclick = STRING_KEYED_NEW[activeDbTab].make;
                 listContainer.appendChild(addBtn);
             }
 
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.getElementById('db-change-max-btn');
             if (activeDbTab === 'system' || activeDbTab === 'terms'
-                || activeDbTab === 'quests' || activeDbTab === 'actionSequences') {
+                || activeDbTab === 'quests' || activeDbTab === 'actionSequences'
+                || activeDbTab === 'troops') {
                 changeMaxBtn.style.display = 'none';
             } else {
                 changeMaxBtn.style.display = 'block';
@@ -480,6 +494,68 @@
             activeDbItemId = id;
             setDirty(true);
             initDatabaseEditor();
+        }
+
+        // --- TROOPS ---
+        function createNewTroop() {
+            const coll = dbPayload.troops = dbPayload.troops || {};
+            let counter = 1;
+            let id = 'new_troop_' + counter;
+            while (coll[id]) { counter++; id = 'new_troop_' + counter; }
+            // One pooled slot is the shape a wandering encounter wants, and the
+            // easiest thing to turn into a boss by swapping it for a named one.
+            coll[id] = {
+                id: id,
+                name: 'New Troop',
+                members: [ { pool: [], count: 'random(combat.minEnemies, combat.maxEnemies)' } ],
+                events: [],
+            };
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        function renameTroopKey(oldKey, newKey) {
+            newKey = (newKey || '').trim();
+            if (!newKey || newKey === oldKey) return oldKey;
+            if (oldKey === 'base') {
+                showToast("Cannot rename 'base' -- every troop inherits it by that id.");
+                return oldKey;
+            }
+            if (!/^\w+$/.test(newKey)) { showToast('Troop id must be letters/digits/underscore.'); return oldKey; }
+            if (dbPayload.troops[newKey]) { showToast(`Troop id '${newKey}' already exists.`); return oldKey; }
+            const rebuilt = {};
+            Object.keys(dbPayload.troops).forEach(k => {
+                rebuilt[k === oldKey ? newKey : k] = dbPayload.troops[k];
+            });
+            dbPayload.troops = rebuilt;
+            if (dbPayload.troops[newKey]) dbPayload.troops[newKey].id = newKey;
+            // Maps and BATTLE commands reference troops by id; repoint them so a
+            // rename is a rename and not a silent break the validator finds later.
+            let repointed = 0;
+            (dbPayload.maps || []).forEach(m => {
+                (m.encounters || []).forEach(e => {
+                    if (e.troop === oldKey) { e.troop = newKey; repointed++; }
+                });
+            });
+            const walk = (cmds) => {
+                (cmds || []).forEach(c => {
+                    if (c.cmd === 'BATTLE' && c.troop === oldKey) { c.troop = newKey; repointed++; }
+                    (c.options || []).forEach(o => walk(o.commands));
+                    walk(c.commands); walk(c.onVictory); walk(c.onDefeat);
+                    walk(c['then']); walk(c['else']); walk(c.elseCommands);
+                });
+            };
+            Object.values(dbPayload.commonEvents || {}).forEach(ce => walk(ce.commands));
+            (dbPayload.actors || []).forEach(a => { if (Array.isArray(a.recruitEvent)) walk(a.recruitEvent); });
+            (dbPayload.maps || []).forEach(m => (m.events || []).forEach(ev => {
+                walk(ev.commands);
+                (ev.pages || []).forEach(pg => walk(pg.commands));
+            }));
+            if (repointed > 0) showToast(`Renamed, and repointed ${repointed} reference(s).`);
+            activeDbItemId = newKey;
+            setDirty(true);
+            return newKey;
         }
 
         function renameActionSequenceKey(oldKey, newKey) {
@@ -712,6 +788,298 @@
                 body.appendChild(removeBtn);
             };
             render();
+        }
+
+        // --- TROOP FORM ---
+        // Two things a troop is: what it is made of, and what happens during
+        // it. Members are slots (a named actor, or a weighted pool with a
+        // count); events are ordinary event commands under a condition, edited
+        // with the SAME command editor as map events, common events, quest
+        // hooks and battle phases -- so a rule can be copied straight from a
+        // battle phase flow into a troop event, which is exactly how Strain
+        // got here.
+        function buildTroopForm(formPanel, id) {
+            const troop = dbPayload.troops[id];
+            if (!troop) return;
+            const isBase = id === 'base';
+
+            createFormField(formPanel, 'Troop ID', id, val => {
+                const renamed = renameTroopKey(id, val);
+                activeDbItemId = renamed;
+            });
+            createFormField(formPanel, 'Name', troop.name || '', val => {
+                troop.name = val;
+                initDatabaseEditor(true);
+            });
+
+            if (isBase) {
+                const note = makeGroupbox(formPanel, 'The Base Troop');
+                const p = document.createElement('div');
+                p.style.cssText = 'font-size:11px; padding:2px 0;';
+                p.textContent = 'Every troop inherits these events unless it suppresses them '
+                    + 'by id or opts out. Rules that should hold in every battle belong here '
+                    + 'rather than in a battle phase flow, where no single fight could opt '
+                    + 'out. It is never fought itself.';
+                note.appendChild(p);
+            }
+
+            // ---- Members -------------------------------------------------
+            if (!isBase) {
+                const memBox = makeGroupbox(formPanel, 'Members (slots, built in order)');
+                troop.members = troop.members || [];
+                const actorOptions = (sel, current, onPick) => {
+                    (dbPayload.actors || []).forEach(a => {
+                        const o = document.createElement('option');
+                        o.value = a.id;
+                        o.textContent = a.id + ': ' + a.name;
+                        if (String(a.id) === String(current)) o.selected = true;
+                        sel.appendChild(o);
+                    });
+                    sel.onchange = () => onPick(parseInt(sel.value));
+                };
+
+                const slotsHost = document.createElement('div');
+                memBox.appendChild(slotsHost);
+
+                const renderMembers = () => {
+                    slotsHost.innerHTML = '';
+                    troop.members.forEach((slot, si) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'border:1px solid var(--win-shadow); padding:3px; margin-bottom:3px; background:#fff;';
+
+                        const head = document.createElement('div');
+                        head.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:3px;';
+                        const kind = document.createElement('select');
+                        kind.className = 'win98-select';
+                        [['actor', 'Named actor'], ['pool', 'Weighted pool']].forEach(pair => {
+                            const o = document.createElement('option');
+                            o.value = pair[0];
+                            o.textContent = pair[1];
+                            if ((slot.pool !== undefined ? 'pool' : 'actor') === pair[0]) o.selected = true;
+                            kind.appendChild(o);
+                        });
+                        kind.onchange = () => {
+                            // A slot is one or the other, never both -- G1
+                            // rejects a slot that is both or neither.
+                            if (kind.value === 'pool') {
+                                delete slot.actor; delete slot.level;
+                                slot.pool = slot.pool || [];
+                                slot.count = slot.count || 'random(combat.minEnemies, combat.maxEnemies)';
+                            } else {
+                                delete slot.pool; delete slot.count;
+                                delete slot.levelMin; delete slot.levelMax;
+                                slot.actor = slot.actor || (((dbPayload.actors || [])[0] || {}).id || 1);
+                            }
+                            setDirty(true); renderMembers();
+                        };
+                        head.appendChild(kind);
+
+                        const del = document.createElement('button');
+                        del.className = 'win98-btn';
+                        del.textContent = 'x';
+                        del.title = 'Remove slot';
+                        del.onclick = () => { troop.members.splice(si, 1); setDirty(true); renderMembers(); };
+                        head.appendChild(del);
+                        row.appendChild(head);
+
+                        if (slot.pool !== undefined) {
+                            createFormField(row, 'Count (formula)', slot.count || '',
+                                v => { slot.count = v; setDirty(true); }, 'text');
+                            const lv = document.createElement('div');
+                            lv.style.cssText = 'display:flex; gap:6px;';
+                            createFormField(lv, 'Level min', slot.levelMin != null ? slot.levelMin : '',
+                                v => { if (v === '') { delete slot.levelMin; } else { slot.levelMin = parseInt(v); } setDirty(true); }, 'number');
+                            createFormField(lv, 'Level max', slot.levelMax != null ? slot.levelMax : '',
+                                v => { if (v === '') { delete slot.levelMax; } else { slot.levelMax = parseInt(v); } setDirty(true); }, 'number');
+                            row.appendChild(lv);
+
+                            slot.pool.forEach((entry, pi) => {
+                                const pr = document.createElement('div');
+                                pr.style.cssText = 'display:flex; gap:4px; align-items:center; margin-top:2px;';
+                                const sel = document.createElement('select');
+                                sel.className = 'win98-select';
+                                sel.style.flex = '1';
+                                actorOptions(sel, entry.actor, v => { entry.actor = v; setDirty(true); });
+                                pr.appendChild(sel);
+                                const w = document.createElement('input');
+                                w.type = 'number';
+                                w.className = 'win98-input';
+                                w.style.width = '52px';
+                                w.title = 'Weight';
+                                w.value = entry.weight != null ? entry.weight : 1;
+                                w.onchange = () => { entry.weight = parseInt(w.value) || 1; setDirty(true); };
+                                pr.appendChild(w);
+                                const x = document.createElement('button');
+                                x.className = 'win98-btn';
+                                x.textContent = 'x';
+                                x.onclick = () => { slot.pool.splice(pi, 1); setDirty(true); renderMembers(); };
+                                pr.appendChild(x);
+                                row.appendChild(pr);
+                            });
+                            const addP = document.createElement('button');
+                            addP.className = 'win98-btn';
+                            addP.style.marginTop = '2px';
+                            addP.textContent = '+ Pool Entry';
+                            addP.onclick = () => {
+                                slot.pool.push({ actor: (((dbPayload.actors || [])[0] || {}).id || 1), weight: 1 });
+                                setDirty(true); renderMembers();
+                            };
+                            row.appendChild(addP);
+                        } else {
+                            const ar = document.createElement('div');
+                            ar.style.cssText = 'display:flex; gap:6px; align-items:center;';
+                            const sel = document.createElement('select');
+                            sel.className = 'win98-select';
+                            sel.style.flex = '1';
+                            actorOptions(sel, slot.actor, v => { slot.actor = v; setDirty(true); });
+                            ar.appendChild(sel);
+                            createFormField(ar, 'Level', slot.level != null ? slot.level : '',
+                                v => { if (v === '') { delete slot.level; } else { slot.level = parseInt(v); } setDirty(true); }, 'number');
+                            row.appendChild(ar);
+                        }
+                        slotsHost.appendChild(row);
+                    });
+                };
+                renderMembers();
+
+                const addSlot = document.createElement('button');
+                addSlot.className = 'win98-btn';
+                addSlot.textContent = '+ Add Slot';
+                addSlot.onclick = () => {
+                    troop.members.push({ actor: (((dbPayload.actors || [])[0] || {}).id || 1) });
+                    setDirty(true); renderMembers();
+                };
+                memBox.appendChild(addSlot);
+            }
+
+            // ---- Inheritance --------------------------------------------
+            if (!isBase) {
+                const inhBox = makeGroupbox(formPanel, 'Inherited From Base');
+                const baseEvents = (((dbPayload.troops || {}).base) || {}).events || [];
+                const optOut = document.createElement('label');
+                optOut.style.cssText = 'display:flex; gap:4px; align-items:center; font-size:11px;';
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = troop.inherits === false;
+                cb.onchange = () => {
+                    if (cb.checked) { troop.inherits = false; } else { delete troop.inherits; }
+                    setDirty(true); initDatabaseEditor(true);
+                };
+                optOut.appendChild(cb);
+                optOut.appendChild(document.createTextNode('Inherit nothing from the base troop'));
+                inhBox.appendChild(optOut);
+
+                if (troop.inherits !== false) {
+                    if (baseEvents.length === 0) {
+                        const none = document.createElement('div');
+                        none.style.cssText = 'font-size:11px; font-style:italic; padding:2px 0;';
+                        none.textContent = 'The base troop declares no events.';
+                        inhBox.appendChild(none);
+                    }
+                    baseEvents.forEach(ev => {
+                        const l = document.createElement('label');
+                        l.style.cssText = 'display:flex; gap:4px; align-items:center; font-size:11px;';
+                        const c = document.createElement('input');
+                        c.type = 'checkbox';
+                        c.checked = !((troop.suppress || []).indexOf(ev.id) >= 0);
+                        c.onchange = () => {
+                            troop.suppress = troop.suppress || [];
+                            if (c.checked) {
+                                troop.suppress = troop.suppress.filter(x => x !== ev.id);
+                            } else if (troop.suppress.indexOf(ev.id) < 0) {
+                                troop.suppress.push(ev.id);
+                            }
+                            if (troop.suppress.length === 0) delete troop.suppress;
+                            setDirty(true);
+                        };
+                        l.appendChild(c);
+                        l.appendChild(document.createTextNode(ev.id + '  (' + (ev.at || 'round_start') + ')'));
+                        inhBox.appendChild(l);
+                    });
+                }
+            }
+
+            // ---- Battle events -------------------------------------------
+            const evBox = makeGroupbox(formPanel, 'Battle Events');
+            troop.events = troop.events || [];
+            const eventsHost = document.createElement('div');
+            evBox.appendChild(eventsHost);
+
+            const renderEvents = () => {
+                eventsHost.innerHTML = '';
+                troop.events.forEach((ev, ei) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'border:1px solid var(--win-shadow); padding:3px; margin-bottom:4px; background:#fff;';
+
+                    const head = document.createElement('div');
+                    head.style.cssText = 'display:flex; gap:4px; align-items:center; flex-wrap:wrap;';
+                    createFormField(head, 'id', ev.id || '', v => { ev.id = v; setDirty(true); }, 'text', false);
+
+                    const at = document.createElement('select');
+                    at.className = 'win98-select';
+                    at.title = 'Where in the round this event is offered';
+                    ['battle_start', 'round_start', 'after_action', 'round_end'].forEach(ph => {
+                        const o = document.createElement('option');
+                        o.value = ph;
+                        o.textContent = ph;
+                        if ((ev.at || 'round_start') === ph) o.selected = true;
+                        at.appendChild(o);
+                    });
+                    at.onchange = () => { ev.at = at.value; setDirty(true); };
+                    head.appendChild(at);
+
+                    const onceL = document.createElement('label');
+                    onceL.style.cssText = 'display:flex; gap:3px; align-items:center; font-size:11px;';
+                    const once = document.createElement('input');
+                    once.type = 'checkbox';
+                    once.checked = ev.once === true;
+                    once.title = 'Fire at most once per battle';
+                    once.onchange = () => { if (once.checked) { ev.once = true; } else { delete ev.once; } setDirty(true); };
+                    onceL.appendChild(once);
+                    onceL.appendChild(document.createTextNode('once'));
+                    head.appendChild(onceL);
+
+                    const del = document.createElement('button');
+                    del.className = 'win98-btn';
+                    del.textContent = 'x';
+                    del.title = 'Remove event';
+                    del.onclick = () => { troop.events.splice(ei, 1); setDirty(true); renderEvents(); };
+                    head.appendChild(del);
+                    row.appendChild(head);
+
+                    createFormField(row, 'when (formula; blank = always)', ev.when || '',
+                        v => { if (v === '') { delete ev.when; } else { ev.when = v; } setDirty(true); }, 'text');
+
+                    const listBox = document.createElement('div');
+                    listBox.style.cssText = 'border:1px solid var(--win-shadow); background:#fff; '
+                        + 'max-height:200px; overflow-y:auto; padding:3px; display:flex; '
+                        + 'flex-direction:column; gap:2px; font-family:monospace;';
+                    row.appendChild(listBox);
+                    ev.commands = ev.commands || [];
+                    // hostCtx 'battle_phase': the same command set the battle
+                    // phase flows offer, which is what makes copying a rule
+                    // from a phase into a troop event mean anything.
+                    const rerender = () => {
+                        setDirty(true);
+                        renderCommandList(listBox, ev.commands, rerender, false, 0, 'battle_phase');
+                    };
+                    renderCommandList(listBox, ev.commands, rerender, false, 0, 'battle_phase');
+
+                    eventsHost.appendChild(row);
+                });
+            };
+            renderEvents();
+
+            const addEv = document.createElement('button');
+            addEv.className = 'win98-btn';
+            addEv.textContent = '+ Add Battle Event';
+            addEv.onclick = () => {
+                let n = 1;
+                while (troop.events.some(e => e.id === 'event_' + n)) n++;
+                troop.events.push({ id: 'event_' + n, at: 'round_start', commands: [] });
+                setDirty(true); renderEvents();
+            };
+            evBox.appendChild(addEv);
         }
 
         function buildActionSequenceForm(formPanel, id) {
