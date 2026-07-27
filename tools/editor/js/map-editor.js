@@ -1237,12 +1237,12 @@
             const list = document.getElementById('prop-enc-list');
             list.innerHTML = '';
             encounters.forEach((enc, idx) => {
-                const actor = (dbPayload.actors || []).find(a => a.id === enc.id);
+                const actor = (dbPayload.actors || []).find(a => a.id === enc.actor);
                 const item = document.createElement('div');
                 item.style.fontSize = '10px';
                 item.style.padding = '2px 4px';
                 item.style.cursor = 'pointer';
-                item.textContent = `${actor ? actor.name : 'Unknown'} (ID ${enc.id}) — Weight: ${enc.weight || 10}`;
+                item.textContent = `${actor ? actor.name : 'Unknown'} (ID ${enc.actor}) — Weight: ${enc.weight || 10}`;
                 item.onclick = () => {
                     document.querySelectorAll('#prop-enc-list > div').forEach(d => d.style.background = '');
                     item.style.background = 'var(--win-blue)';
@@ -1340,8 +1340,11 @@
                 const weight = parseInt(weightInput.value) || 10;
                 const levelMin = Math.max(1, parseInt(levelMinInput.value) || 1);
                 const levelMax = Math.max(levelMin, parseInt(levelMaxInput.value) || levelMin);
+                // Same shape as a troop's pool entry, deliberately: a map's
+                // encounter table IS a weighted pool, and the `wandering` troop
+                // reads it as one.
                 mapPropsEncounters.push({
-                    id: parseInt(actorSelect.value),
+                    actor: parseInt(actorSelect.value),
                     weight,
                     levelMin,
                     levelMax

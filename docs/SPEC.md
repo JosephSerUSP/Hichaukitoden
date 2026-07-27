@@ -824,6 +824,66 @@ in PR review when violated.
 - Validation goes through the real engine too (`lovec . validate` via
   `GET /validate`) — no duplicated schema in JS.
 
+### 4.1 One event language, one editor, one clipboard (27.07.2026)
+
+The engine is made of event blocks (§0). It follows that **there is exactly one
+way to edit a command list, everywhere one exists.** Map events, common events,
+scene hooks, battle phases, troop battle events, quest hooks, action sequences
+and an actor's recruit event are the *same editor* — `renderCommandList` in
+`events.js` — reading the same registry and sharing one module-level clipboard.
+
+Consequences, all of them load-bearing:
+
+- **Commands copy between surfaces.** Ctrl+C in a battle phase and Ctrl+V in a
+  troop event is a supported move, not a coincidence; that is literally how
+  Battle Strain got from `flows.json` onto the base troop. A rule written in
+  one place can be moved to a better one without retyping it.
+- **A new surface is a call to `renderCommandList`, never a new editor.** If
+  you find yourself writing a second command list UI, stop — the reason Troops
+  shipped as a tab in an afternoon is that only the *container* was new.
+- **The context set is closed and registry-backed.** `engine.json`
+  `commandContexts` is the list; the validator checks commands against it and
+  the editor builds its pickers from it. A command may only declare a context
+  that exists, and every context must say where it is authored — G1 enforces
+  both. This check exists because `TRANSFORM_ACTOR` spent weeks declaring
+  `event` and `flow`, which matched no host context, quietly making it
+  scene-only: a creature could not be transformed by a map event, and nothing
+  failed. **A context with no editor surface is a command nobody can write.**
+- **Pasting across contexts warns rather than silently breaking.** The
+  registry knows which commands are legal where, so a cross-surface paste that
+  cannot run names the offenders first — including ones nested inside branch
+  bodies — instead of producing a G1 failure later that points at the
+  destination rather than the paste.
+- **Say so in the UI.** Every command list ends with a line naming the
+  shortcut and the fact that it crosses surfaces. Seven identical editors that
+  never mention each other read as seven unrelated boxes; the sharing has to be
+  visible or it may as well not exist.
+
+The generalisation: when a capability is already shared, the work is usually to
+*surface* it, not to build it again.
+
+### 4.2 A map owns its roster; a troop owns the shape of the fight (27.07.2026)
+
+`data/troops.json` first gave every floor its own `*_wanderers` troop, whose
+entire content was the weighted pool the map already had. Seven near-identical
+troops, and a rename away from drift.
+
+The split that removes them: **a map's `encounters` table is the floor's
+roster — what can appear — and it stays on the map.** What a wandering
+encounter *is* — how many, at what levels, under which base-troop rules — does
+not vary by floor, so it is defined once as the `wandering` troop, whose one
+member slot is `poolFrom: "map"`: a pool by reference rather than by value.
+`combat.wanderingTroop` names it; a floor that wants something else sets
+`encounterTroop`.
+
+A map encounter entry and a troop pool entry use the *same field names*
+(`actor`, `weight`, `levelMin`, `levelMax`) on purpose — a map's table is a
+troop pool, so one can be pasted into the other, per §4.1.
+
+The rule this is an instance of: **before adding a per-thing copy of a
+definition, check whether the thing already owns the part that actually
+varies.** Usually only the data differs and the shape does not.
+
 ---
 
 ## 5. Process

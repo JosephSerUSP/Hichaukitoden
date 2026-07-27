@@ -114,18 +114,50 @@ check(table.concat(ids, ",") == "strain,ambush,roar",
 check(not pcall(troop.get, "no_such_troop", loader),
     "an unknown troop id raises instead of producing an empty battle")
 
--- Every map that can start a fight rolls a real, fightable troop.
+-- A map owns WHAT can appear; the `wandering` troop owns what a random fight
+-- IS. This split replaced one near-identical troop per floor, each of whose
+-- only content was a pool the map already had.
 for _, map in ipairs(loader.maps) do
-    for _, enc in ipairs(map.encounters or {}) do
-        local t = loader.troops[tostring(enc.troop)]
+    if #(map.encounters or {}) > 0 then
+        local t = troop.rollForMap(map, loader)
         if not t or t.abstract == true then
             failed = failed + 1
-            print("  [FAIL] map " .. tostring(map.id) .. " rolls unusable troop "
-                .. tostring(enc.troop))
+            print("  [FAIL] map " .. tostring(map.id) .. " rolls no fightable troop")
         end
     end
 end
-check(true, "every map encounter names a fightable troop")
+check(true, "every map with an encounter table rolls a fightable troop")
+
+-- A `poolFrom: "map"` slot reads the roster off whichever map the party is on,
+-- so one troop covers every floor.
+do
+    local s = sessionModule.GameSession.new(loader)
+    s:initializeStartingParty()
+    local wandering = loader.troops.wandering
+    local seenPerMap = {}
+    for _, mapId in ipairs({ 2, 4 }) do
+        s.currentMapData = loader.maps[mapId]
+        local allowed = {}
+        for _, e in ipairs(s.currentMapData.encounters or {}) do allowed[e.actor] = true end
+        local ok, sawAny = true, false
+        for _ = 1, 40 do
+            local group = troop.build(wandering, { session = s, loader = loader }, evalNum)
+            for _, b in ipairs(group) do
+                sawAny = true
+                if not allowed[b.actorData.id] then ok = false end
+            end
+        end
+        seenPerMap[mapId] = ok and sawAny
+    end
+    check(seenPerMap[2] and seenPerMap[4],
+        "one wandering troop draws each floor's own roster, and never another's")
+
+    -- The override exists for the floor that wants something else.
+    s.currentMapData = { encounters = loader.maps[2].encounters, encounterTroop = "recruit_skeleton" }
+    local overridden = troop.rollForMap(s.currentMapData, loader)
+    check(overridden and overridden.id == "recruit_skeleton",
+        "a map can name its own encounter troop instead")
+end
 
 loader.troops.base.events = realBaseEvents
 

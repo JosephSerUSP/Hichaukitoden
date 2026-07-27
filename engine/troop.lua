@@ -89,7 +89,17 @@ local function buildSlot(slot, ctx, out, evalFormula)
         return
     end
 
-    local pool = slot.pool or {}
+    -- `poolFrom` is a pool by reference rather than by value. "map" means the
+    -- current map's own encounter table, which is where a floor's roster
+    -- belongs: what can appear differs per map, but the shape of a wandering
+    -- fight does not, so one troop describes every random encounter in the
+    -- game instead of one near-identical troop per floor.
+    local pool = slot.pool
+    if slot.poolFrom == "map" then
+        pool = (ctx.session and ctx.session.currentMapData
+            and ctx.session.currentMapData.encounters) or {}
+    end
+    pool = pool or {}
     if #pool == 0 then return end
     local count = 1
     if slot.count ~= nil then
@@ -123,22 +133,25 @@ function troop.build(troopData, ctx, evalFormula)
     return enemies
 end
 
--- Pick a troop from a map's weighted encounter table. The table holds troop
--- ids now rather than actor ids: a wandering encounter is a troop like any
--- other, so it can carry events too.
+-- The troop a wandering encounter on this map fights.
+--
+-- The map keeps its own weighted actor table -- that roster is the thing that
+-- differs floor to floor. What does NOT differ is the shape of a wandering
+-- fight, so one `wandering` troop describes all of them and reads the table
+-- through a `poolFrom: "map"` slot. Turning each map's table into its own
+-- troop, as this first did, produced seven near-identical troops whose only
+-- content was a pool the map already had.
+--
+-- A floor that wants something else -- a fixed ambush, a table with its own
+-- battle events -- names it in `encounterTroop`.
 function troop.rollForMap(mapData, loader)
-    local table_ = (mapData and mapData.encounters) or {}
-    if #table_ == 0 then return nil end
-    local total = 0
-    for _, entry in ipairs(table_) do total = total + (entry.weight or 1) end
-    if total <= 0 then return nil end
-    local roll = math.random(total)
-    local sum = 0
-    for _, entry in ipairs(table_) do
-        sum = sum + (entry.weight or 1)
-        if roll <= sum then return troop.get(entry.troop, loader) end
-    end
-    return troop.get(table_[1].troop, loader)
+    if not mapData then return nil end
+    local named = mapData.encounterTroop
+    if named and named ~= "" then return troop.get(named, loader) end
+    if #((mapData.encounters) or {}) == 0 then return nil end
+    local default = (loader.system and loader.system.combat
+        and loader.system.combat.wanderingTroop) or "wandering"
+    return troop.get(default, loader)
 end
 
 -- The points a battle event can declare itself at. Named rather than free-form

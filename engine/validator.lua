@@ -106,6 +106,48 @@ validator.run = function(loader)
         }
     end
 
+    -- Command contexts (engine.json `commandContexts`). A context is where a
+    -- command can be authored, and the set is closed: the validator checks
+    -- against it and the editor builds its command pickers from it, so a
+    -- command naming a context nobody honours is a command nobody can author.
+    --
+    -- This check exists because two of them already were. TRANSFORM_ACTOR
+    -- declared `event` and `flow`, and TICK_SAVOR declared `flow` -- labels no
+    -- host context ever matches, which quietly made TRANSFORM_ACTOR scene-only.
+    -- Nothing failed; the command was simply missing from every map and common
+    -- event picker, and there was no way to notice except by looking for it.
+    local knownContexts = {}
+    local contextNames = {}
+    for _, c in ipairs((loader.engine and loader.engine.commandContexts) or {}) do
+        check(c.id ~= nil and c.id ~= "", "engine.json commandContexts entry needs an id")
+        check(c.label ~= nil and c.label ~= "",
+            "engine.json commandContexts '" .. tostring(c.id) .. "' needs a label")
+        check(c.authoredIn ~= nil and c.authoredIn ~= "",
+            "engine.json commandContexts '" .. tostring(c.id) .. "' must say where it is "
+            .. "authored; a context with no editor surface is a command nobody can write")
+        if c.id then
+            knownContexts[c.id] = true
+            table.insert(contextNames, c.id)
+        end
+    end
+    table.sort(contextNames)
+    check(#contextNames > 0, "engine.json declares no commandContexts")
+    local contextList = table.concat(contextNames, ", ")
+    local contextUsed = {}
+    for _, cmd in ipairs((loader.engine and loader.engine.commands) or {}) do
+        for _, ctxName in ipairs(cmd.contexts or {}) do
+            check(knownContexts[ctxName],
+                "command '" .. tostring(cmd.id) .. "' declares context '" .. tostring(ctxName)
+                .. "', which is not a registered command context (" .. contextList .. ")"
+                .. " -- nothing will ever author it there")
+            contextUsed[ctxName] = true
+        end
+    end
+    for _, ctxName in ipairs(contextNames) do
+        check(ctxName == "any" or contextUsed[ctxName],
+            "command context '" .. ctxName .. "' is registered but no command declares it")
+    end
+
     -- Troops (data/troops.json). A troop that builds no enemies is a battle
     -- against nothing, and a slot naming a missing actor is a fight that
     -- crashes when it starts -- neither shows up until someone walks into it.
@@ -123,12 +165,21 @@ validator.run = function(loader)
             .. " (mark it abstract if it exists only to be inherited)")
         for si, slot in ipairs(t.members or {}) do
             local swhere = twhere .. " members[" .. si .. "]"
-            local named = slot.actor ~= nil
-            local pooled = slot.pool ~= nil
-            check(named ~= pooled,
-                swhere .. " must be either a named actor or a weighted pool, not both"
-                .. " and not neither")
-            if named then
+            -- Exactly one of: a named actor, a pool written here, or a pool
+            -- taken from somewhere else (`poolFrom`). Two of them, or none, is
+            -- a slot that cannot be read.
+            local kinds = 0
+            if slot.actor ~= nil then kinds = kinds + 1 end
+            if slot.pool ~= nil then kinds = kinds + 1 end
+            if slot.poolFrom ~= nil then kinds = kinds + 1 end
+            check(kinds == 1,
+                swhere .. " must be exactly one of: a named actor, a `pool`, or a"
+                .. " `poolFrom` source")
+            check(slot.poolFrom == nil or slot.poolFrom == "map",
+                swhere .. " poolFrom '" .. tostring(slot.poolFrom)
+                .. "' is not a pool source; only 'map' (the current map's"
+                .. " encounter table) exists")
+            if slot.actor ~= nil then
                 check(loader.getActor(slot.actor) ~= nil,
                     swhere .. " names missing actor '" .. tostring(slot.actor) .. "'")
             end
@@ -144,8 +195,8 @@ validator.run = function(loader)
                         or entry.levelMax >= entry.levelMin,
                     pwhere .. " levelMax must be at least levelMin")
             end
-            check(not pooled or slot.count ~= nil,
-                swhere .. " is a pool and needs a count")
+            check((slot.pool == nil and slot.poolFrom == nil) or slot.count ~= nil,
+                swhere .. " draws from a pool and needs a count")
         end
         -- Battle events. An event declared at a phase nothing runs, or with a
         -- duplicate id, is an event that quietly never happens -- and `once`
@@ -950,24 +1001,38 @@ validator.run = function(loader)
                 where .. " recruits[" .. ri .. "] actor '" .. tostring(actorId)
                 .. "' is not marked isRecruitable")
         end
-        -- A map's encounter table names TROOPS now, not actors: a wandering
-        -- group is a troop like any other, which is what lets it carry battle
-        -- events. The per-entry levelMin/levelMax that used to live here moved
-        -- onto the troop's pool slot, where the thing being levelled is.
+        -- A map's encounter table is the floor's roster: a weighted pool of
+        -- actors, in exactly the shape a troop's pool slot uses, because the
+        -- `wandering` troop reads it as one. The map owns WHAT can appear; the
+        -- troop owns what a wandering fight is.
         for ei, enc in ipairs(map.encounters or {}) do
             local encWhere = where .. " encounters[" .. ei .. "]"
-            check(type(enc) == "table" and enc.troop ~= nil,
-                encWhere .. " must name a troop")
+            check(type(enc) == "table" and loader.getActor(enc.actor) ~= nil,
+                encWhere .. " references missing actor '"
+                .. tostring(type(enc) == "table" and enc.actor or enc) .. "'")
             if type(enc) == "table" then
-                check(enc.troop == nil or (loader.troops and loader.troops[tostring(enc.troop)] ~= nil),
-                    encWhere .. " references missing troop '" .. tostring(enc.troop) .. "'")
-                local t = loader.troops and loader.troops[tostring(enc.troop)]
-                check(t == nil or t.abstract ~= true,
-                    encWhere .. " references abstract troop '" .. tostring(enc.troop)
-                    .. "', which exists to be inherited and cannot be fought")
                 check(type(enc.weight) == "number" and enc.weight > 0 and enc.weight == math.floor(enc.weight),
                     encWhere .. " weight must be a positive integer")
+                check(enc.levelMin == nil or (type(enc.levelMin) == "number"
+                        and enc.levelMin >= 1 and enc.levelMin == math.floor(enc.levelMin)),
+                    encWhere .. " levelMin must be a positive integer")
+                check(enc.levelMax == nil or (type(enc.levelMax) == "number"
+                        and enc.levelMax >= 1 and enc.levelMax == math.floor(enc.levelMax)),
+                    encWhere .. " levelMax must be a positive integer")
+                check(enc.levelMax == nil or enc.levelMin ~= nil,
+                    encWhere .. " levelMax requires levelMin")
+                check(enc.levelMin == nil or enc.levelMax == nil or enc.levelMax >= enc.levelMin,
+                    encWhere .. " levelMax must be at least levelMin")
             end
+        end
+        -- An override for a floor whose random battles are not ordinary ones.
+        if map.encounterTroop ~= nil then
+            local t = loader.troops and loader.troops[tostring(map.encounterTroop)]
+            check(t ~= nil, where .. " encounterTroop '" .. tostring(map.encounterTroop)
+                .. "' is not a troop")
+            check(t == nil or t.abstract ~= true,
+                where .. " encounterTroop '" .. tostring(map.encounterTroop)
+                .. "' is abstract, so it cannot be fought")
         end
     end
 

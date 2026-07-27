@@ -135,7 +135,8 @@
     "battleItem": 1,
     "defendSkillId": "defend",
     "attackSkillId": "attack",
-    "autoRedirect": false
+    "autoRedirect": false,
+    "wanderingTroop": "wandering"
   },
   "shopMaxStock": 20,
   "growth": {

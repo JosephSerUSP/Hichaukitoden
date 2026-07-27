@@ -101,6 +101,12 @@ it. Practical consequences an agent must internalize:
   (`GET /validate`) — it never re-implements rendering or schema in JS. If you
   find yourself writing a second version of something the engine already does,
   stop.
+- **One event editor, everywhere, sharing one clipboard.** Every command list
+  in the editor — map, common, scene, battle phase, troop event, quest, action
+  sequence, recruit event — is `renderCommandList`, and commands copy between
+  them. A new surface is a call to it, never a second editor. The context set
+  is `engine.json` `commandContexts`, closed and G1-checked: **a context with
+  no editor surface is a command nobody can write.** See SPEC §4.1.
 - **No compatibility shims.** There is no shipped player base and saves are test
   artifacts that may break freely. When a schema changes, migrate the repo's own
   data in place and delete the old read path (SPEC §1.5). A `foo.a or foo.b`

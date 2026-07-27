@@ -1683,9 +1683,10 @@
         }
       ],
       "contexts": [
-        "event",
+        "map",
+        "common",
         "scene",
-        "flow"
+        "battle_phase"
       ],
       "interactive": false,
       "description": "Changes a creature's form while keeping the creature: accumulated growth, seed, permanent gains, learned skills, name, level and history all survive; MPD, capacities, affinities and innate skills come from the new form. `actor` is a species id, or \"hatch\" (resolve the actor's hatchOutcomes by the instance's saved provenance), \"metamorph\" (deterministic nearest eligible species from eligibleFrom), or \"revert\" (return to the remembered origin form). `reversible` remembers the current form so a later revert can restore it -- a natively recruited creature has none and never reverts, which is the only difference between a native Kappa and a cursed one."
@@ -1761,8 +1762,7 @@
         }
       ],
       "contexts": [
-        "battle_phase",
-        "flow"
+        "battle_phase"
       ],
       "interactive": false,
       "description": "Counts one completed battle against the target's active Favorite Food Savor and clears it at zero."
@@ -2969,5 +2969,42 @@
     "defend",
     "item",
     "flee"
+  ],
+  "commandContexts": [
+    {
+      "id": "map",
+      "label": "Map Event",
+      "authoredIn": "Map Editor -- event pages and page command lists"
+    },
+    {
+      "id": "common",
+      "label": "Common Event",
+      "authoredIn": "Database Manager -> Common Events"
+    },
+    {
+      "id": "scene",
+      "label": "Scene Hook",
+      "authoredIn": "Engine Editor -> Scenes (per-hook command lists)"
+    },
+    {
+      "id": "battle_phase",
+      "label": "Battle Phase / Troop Event",
+      "authoredIn": "Engine Editor -> Battle Flow, and Database Manager -> Troops (battle events)"
+    },
+    {
+      "id": "quest",
+      "label": "Quest Hook",
+      "authoredIn": "Database Manager -> Quests"
+    },
+    {
+      "id": "action_sequence",
+      "label": "Action Sequence",
+      "authoredIn": "Database Manager -> Action Sequences, and a skill's inline sequence"
+    },
+    {
+      "id": "any",
+      "label": "Anywhere",
+      "authoredIn": "every command surface"
+    }
   ]
 }

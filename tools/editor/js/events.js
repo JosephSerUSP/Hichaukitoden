@@ -552,7 +552,25 @@
         }
 
         function cmdsForContext(hostCtx) {
+            // A hostCtx must be one the registry declares. Passing an
+            // unregistered one used to yield an empty picker that looked like
+            // "no commands apply here" rather than "this surface is misnamed",
+            // which is the same failure the engine had with `event` and `flow`.
+            const known = ((dbPayload.engine || {}).commandContexts || []).map(c => c.id);
+            if (known.length && known.indexOf(hostCtx) < 0) {
+                console.warn('[editor] unknown command context "' + hostCtx
+                    + '"; engine.json declares: ' + known.join(', '));
+            }
             return cmdRegistry().filter(c => (c.contexts || []).some(ctx => ctx === 'any' || ctx === hostCtx) && !c.deprecatedBy);
+        }
+
+        // Human label for a context, from the registry rather than a list typed
+        // here -- the paste warning and any future surface picker read it, so
+        // adding a context is one edit in engine.json.
+        function contextLabel(hostCtx) {
+            const found = ((dbPayload.engine || {}).commandContexts || [])
+                .find(c => c.id === hostCtx);
+            return (found && found.label) || hostCtx;
         }
         function showCommentsPref() {
             return localStorage.getItem('hkt_showComments') !== '0';
@@ -851,9 +869,10 @@
                 if (foreign.length > 0) {
                     const names = foreign.slice(0, 4).join(', ')
                         + (foreign.length > 4 ? ' and ' + (foreign.length - 4) + ' more' : '');
-                    const from = cmdClipboardOrigin ? (' copied from ' + cmdClipboardOrigin) : '';
-                    if (!confirm('These commands' + from + ' are not registered for \''
-                        + ctx.hostCtx + '\': ' + names
+                    const from = cmdClipboardOrigin
+                        ? (' copied from ' + contextLabel(cmdClipboardOrigin)) : '';
+                    if (!confirm('These commands' + from + ' are not registered for '
+                        + contextLabel(ctx.hostCtx) + ': ' + names
                         + '.\n\nPasting anyway will fail validation until they are removed. Continue?')) {
                         return;
                     }
