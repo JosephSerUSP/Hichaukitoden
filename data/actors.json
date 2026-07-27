@@ -2796,7 +2796,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Cocoon",
-    "smallBattler": "wisp",
+    "smallBattler": "notiluca",
     "elements": [
       "Green",
       "White"
@@ -2888,7 +2888,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Notiluca",
-    "smallBattler": "wisp",
+    "smallBattler": "notiluca",
     "elements": [
       "Green",
       "White",
@@ -2979,7 +2979,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "GblThief",
-    "smallBattler": "Imp",
+    "smallBattler": "gblThief",
     "elements": [
       "Green",
       "Black"
@@ -3075,7 +3075,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "GblPrince",
-    "smallBattler": "Imp",
+    "smallBattler": "gblThief",
     "elements": [
       "Green",
       "Black",
@@ -3167,7 +3167,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Homunculus",
-    "smallBattler": "Nurse",
+    "smallBattler": "homunculus",
     "elements": [],
     "skills": [
       "wait"
@@ -3316,7 +3316,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Mandrake",
-    "smallBattler": "Ooze",
+    "smallBattler": "mandrake",
     "elements": [
       "Green",
       "Green"
@@ -3408,7 +3408,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Alraune",
-    "smallBattler": "Ooze",
+    "smallBattler": "alraune",
     "elements": [
       "Green",
       "Green",
@@ -3499,7 +3499,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Cerberus",
-    "smallBattler": "Demon",
+    "smallBattler": "cerberus",
     "elements": [
       "Red",
       "Black"
@@ -3677,7 +3677,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Dragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Red",
       "Green",
@@ -3788,7 +3788,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "RedDragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Red",
       "Red"
@@ -3884,7 +3884,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Salamander",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Red",
       "Red",
@@ -3975,7 +3975,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "BlueDragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Blue",
       "Blue"
@@ -4071,7 +4071,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Leviathan",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Blue",
       "Blue",
@@ -4162,7 +4162,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "GreenDragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Green",
       "Green"
@@ -4258,7 +4258,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Fafnir",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Green",
       "Green",
@@ -4349,7 +4349,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "WhiteDragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "White",
       "White"
@@ -4446,7 +4446,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Bahamut",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "White",
       "White",
@@ -4537,7 +4537,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "BlackDragon",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Black",
       "Black"
@@ -4634,7 +4634,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Nidhogg",
-    "smallBattler": "Golem",
+    "smallBattler": "dragon",
     "elements": [
       "Black",
       "Black",
@@ -4725,7 +4725,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Giant",
-    "smallBattler": "Golem",
+    "smallBattler": "giant",
     "elements": [
       "Red",
       "Green"
@@ -4821,7 +4821,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "HillGigas",
-    "smallBattler": "Golem",
+    "smallBattler": "giant",
     "elements": [
       "Red",
       "Black"
@@ -4918,7 +4918,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Surtr",
-    "smallBattler": "Golem",
+    "smallBattler": "giant",
     "elements": [
       "Red",
       "Red",
@@ -5008,7 +5008,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Atlas",
-    "smallBattler": "Golem",
+    "smallBattler": "giant",
     "elements": [
       "White",
       "Green"
@@ -5105,7 +5105,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Hyperion",
-    "smallBattler": "Golem",
+    "smallBattler": "giant",
     "elements": [
       "White",
       "White",
@@ -5196,7 +5196,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Mimic",
-    "smallBattler": "Ooze",
+    "smallBattler": "mimic",
     "elements": [
       "Black",
       "White"
@@ -5292,7 +5292,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Pandora",
-    "smallBattler": "Ooze",
+    "smallBattler": "mimic",
     "elements": [
       "Black",
       "White",
@@ -5383,7 +5383,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Unicorn",
-    "smallBattler": "Angel",
+    "smallBattler": "unicorn",
     "elements": [
       "White",
       "Green"
@@ -5485,7 +5485,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Sleipnir",
-    "smallBattler": "Angel",
+    "smallBattler": "unicorn",
     "elements": [
       "White",
       "Green",
@@ -5583,7 +5583,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Kirin",
-    "smallBattler": "Angel",
+    "smallBattler": "unicorn",
     "elements": [
       "White",
       "White",
@@ -5675,7 +5675,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Nightmare",
-    "smallBattler": "Demon",
+    "smallBattler": "unicorn",
     "elements": [
       "Black",
       "Black"
@@ -5765,7 +5765,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Firemane",
-    "smallBattler": "Demon",
+    "smallBattler": "unicorn",
     "elements": [
       "Red",
       "Red"
@@ -6129,7 +6129,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Kappa",
-    "smallBattler": "Ooze",
+    "smallBattler": "kappa",
     "elements": [
       "Blue",
       "Green"
@@ -6224,7 +6224,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Moa",
-    "smallBattler": "Angel",
+    "smallBattler": "moa",
     "elements": [
       "Green"
     ],
