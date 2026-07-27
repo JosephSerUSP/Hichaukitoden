@@ -101,6 +101,10 @@ local triggerTestBattle
 -- Dialogue State
 local activeWalker
 local dialogueSelectIdx = 1
+-- Set when a BATTLE command starts a fight from inside an event; consumed by
+-- the battle scene's outcome hook to resume the event at its onVictory or
+-- onDefeat branch. Nil for a battle the player simply walked into.
+local pendingBattleResume
 
 -- Menu State
 
@@ -982,7 +986,15 @@ handleDialogueAction = function()
                 handleDialogueAction()
             end
         elseif node.action == "START_BATTLE" then
-            triggerBattle()
+            -- Where to pick the event back up once the fight resolves. Held
+            -- here rather than in the battle scene because the walker is the
+            -- host's: the scene reports an outcome and knows nothing about
+            -- events waiting on it.
+            pendingBattleResume = {
+                victoryNode = node.victoryNode,
+                defeatNode = node.defeatNode,
+            }
+            triggerBattle(node.troop, node.level)
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then
             local ce = loader.commonEvents and loader.commonEvents[tostring(node.commonEventId)]
             if ce and ce.commands then
@@ -1008,7 +1020,6 @@ handleDialogueAction = function()
     end
 end
 
-local recruitment = require("engine.recruitment")
 
 -- Translates JSON command lists to dynamic conversation graphs
 local function runEventCommands(eventTarget, commands)
@@ -1035,7 +1046,16 @@ local function runEventCommands(eventTarget, commands)
         actorId = actorId or 1
         local actorData = loader.getActor(actorId)
         if actorData then
-            commands = recruitment.compile(actorData, activeSession and activeSession.dungeonFloor, ictx)
+            -- The actor's recruit event IS an event: an ordinary command list,
+            -- authored and editable like every other. engine/recruitment.lua
+            -- used to BUILD one here from six preset types with the dialogue
+            -- baked into Lua string concatenation -- a content template living
+            -- in the engine, and the reason hostile recruitment never worked.
+            commands = actorData.recruitEvent
+            if not commands then
+                error("actor " .. tostring(actorId) .. " ('" .. tostring(actorData.name)
+                    .. "') is recruitable but authors no recruitEvent")
+            end
         end
     end
 
@@ -1077,8 +1097,24 @@ local function checkStepEvents()
     return false
 end
 
-triggerBattle = function()
-    require("engine.scenes.battle").triggerBattle()
+triggerBattle = function(troop, level)
+    require("engine.scenes.battle").triggerBattle(troop, level)
+end
+
+-- Resume an event that started a battle. Defeat normally ends the run before
+-- this can fire (the scene hands off to game_over), so onDefeat is for the
+-- battles a defeat is survivable in; an escape takes the defeat branch, since
+-- the party did not win and the event should not proceed as though it had.
+require("engine.scenes.battle").onResolved = function(outcome)
+    local resume = pendingBattleResume
+    pendingBattleResume = nil
+    if not resume or not activeWalker then return end
+    local target = (outcome == "victory") and resume.victoryNode or resume.defeatNode
+    if not target or not activeWalker.graph or not activeWalker.graph.nodes[target] then
+        return
+    end
+    activeWalker:goToNode(target)
+    handleDialogueAction()
 end
 
 triggerTestBattle = function()

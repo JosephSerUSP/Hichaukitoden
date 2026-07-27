@@ -1656,7 +1656,15 @@
 
                 // Helper for recruitment editor
                 function buildRecruitmentEditor(parentBox, item) {
-                    const group = makeGroupbox(parentBox, 'Dungeon Recruitment Event Config');
+                    // A recruit event is an ordinary event. This used to be a
+                    // seven-mode selector (heal / gold / aid / hostile / free /
+                    // common / script) mirroring preset types that engine
+                    // Lua expanded into commands at runtime -- so the author
+                    // picked a shape here and never saw the event they had
+                    // actually authored. The presets were baked into real
+                    // command lists, so there is one mode now: the same command
+                    // editor every other event uses.
+                    const group = makeGroupbox(parentBox, 'Dungeon Recruitment Event');
 
                     const bodyContainer = document.createElement('div');
                     bodyContainer.style.cssText = 'margin-top: 4px; display: flex; flex-direction: column; gap: 6px;';
@@ -1667,171 +1675,34 @@
                         if (!item.isRecruitable) {
                             const note = document.createElement('div');
                             note.style.cssText = 'font-size: 11px; color: var(--win-shadow); font-style: italic; padding: 4px 0;';
-                            note.textContent = 'Creature is not recruitable. Enable "Recruitable" in the top header bar above to configure dungeon recruitment events.';
+                            note.textContent = 'Creature is not recruitable. Enable "Recruitable" in the top header bar above to configure its recruitment event.';
                             bodyContainer.appendChild(note);
                             return;
                         }
 
-                        item.recruitEvent = item.recruitEvent || { type: 'free' };
-                        let rec = item.recruitEvent;
-                        if (Array.isArray(rec)) {
-                            item.recruitEvent = { commands: rec };
-                            rec = item.recruitEvent;
-                        } else if (typeof rec === 'number' || (typeof rec === 'string' && !isNaN(rec) && rec !== '')) {
-                            item.recruitEvent = { scriptId: parseInt(rec) };
-                            rec = item.recruitEvent;
-                        }
-
-                        let currentMode = 'free';
-                        if (rec.commands) currentMode = 'script';
-                        else if (rec.scriptId !== undefined) currentMode = 'common';
-                        else if (rec.type) currentMode = rec.type;
-
-                        const typeRow = document.createElement('div');
-                        typeRow.className = 'form-row';
-                        typeRow.style.cssText = 'display:flex; align-items:center; gap:8px;';
-                        
-                        const label = document.createElement('label');
-                        label.textContent = 'Recruitment Event Type:';
-                        label.style.cssText = 'font-size: 10px; font-weight: bold; min-width: 140px;';
-                        typeRow.appendChild(label);
-
-                        const select = document.createElement('select');
-                        select.className = 'win98-select';
-                        select.style.flex = '1';
-
-                        const modes = [
-                            { id: 'heal', label: 'Healing Offer (Restores HP/MP before joining)' },
-                            { id: 'gold', label: 'Gold Demand (Requires Gold payment)' },
-                            { id: 'aid', label: 'Item Aid Required (Requires Potion/Item)' },
-                            { id: 'hostile', label: 'Battle Challenge (Battles first, surrenders on victory)' },
-                            { id: 'free', label: 'Free Join (Joins unconditionally)' },
-                            { id: 'common', label: 'Common Event Reference (Uses scriptId)' },
-                            { id: 'script', label: 'Custom Command Script (Custom sequence)' }
-                        ];
-
-                        modes.forEach(m => {
-                            const opt = document.createElement('option');
-                            opt.value = m.id;
-                            opt.textContent = m.label;
-                            if (m.id === currentMode) opt.selected = true;
-                            select.appendChild(opt);
-                        });
-
-                        select.onchange = (e) => {
-                            const newMode = e.target.value;
-                            if (newMode === 'script') {
-                                item.recruitEvent = { commands: rec.commands || [{ cmd: 'TEXT', text: 'A wild ' + (item.name || 'creature') + ' appears!' }, { cmd: 'RECRUIT_ACTOR', actorId: item.id }, { cmd: 'ERASE_EVENT' }] };
-                            } else if (newMode === 'common') {
-                                item.recruitEvent = { scriptId: rec.scriptId || 1 };
-                            } else {
-                                item.recruitEvent = { type: newMode, greeting: rec.greeting, acceptText: rec.acceptText, declineText: rec.declineText };
-                                if (newMode === 'gold') item.recruitEvent.goldCost = rec.goldCost || (item.gold || 20);
-                                if (newMode === 'aid') item.recruitEvent.itemRequired = rec.itemRequired || 1;
-                            }
+                        if (!Array.isArray(item.recruitEvent)) {
+                            item.recruitEvent = [
+                                { cmd: 'TEXT', text: 'A wandering ' + (item.name || 'creature') + ' offers to join!' },
+                                { cmd: 'CHOICE', options: [
+                                    { label: 'Recruit ' + (item.name || 'creature'), commands: [
+                                        { cmd: 'RECRUIT_ACTOR', actorId: item.id },
+                                        { cmd: 'ERASE_EVENT' }
+                                    ] },
+                                    { label: 'Decline', commands: [] }
+                                ] }
+                            ];
                             setDirty(true);
-                            renderRecruitmentBody();
+                        }
+
+                        const scriptBox = document.createElement('div');
+                        scriptBox.style.cssText = 'border:1px solid var(--win-shadow); padding:4px; background:#fff;';
+                        bodyContainer.appendChild(scriptBox);
+
+                        const rerenderScript = () => {
+                            setDirty(true);
+                            renderCommandList(scriptBox, item.recruitEvent, rerenderScript, false, 0, 'map');
                         };
-                        typeRow.appendChild(select);
-                        bodyContainer.appendChild(typeRow);
-
-                        rec = item.recruitEvent;
-
-                        if (currentMode === 'gold') {
-                            const row = document.createElement('div');
-                            row.className = 'form-row';
-                            createFormField(row, 'Gold Cost Demanded', rec.goldCost || 20, v => {
-                                rec.goldCost = parseInt(v) || 0;
-                                setDirty(true);
-                            }, 'number');
-                            bodyContainer.appendChild(row);
-                        } else if (currentMode === 'aid') {
-                            const row = document.createElement('div');
-                            row.className = 'form-row';
-                            const itemsList = dbPayload.items || [];
-                            const itemSelectRow = document.createElement('div');
-                            itemSelectRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;';
-                            const lbl = document.createElement('label');
-                            lbl.textContent = 'Required Item:';
-                            lbl.style.cssText = 'font-size:10px;min-width:90px;';
-                            const itemSel = document.createElement('select');
-                            itemSel.className = 'win98-select';
-                            itemSel.style.flex = '1';
-                            itemsList.forEach(it => {
-                                const opt = document.createElement('option');
-                                opt.value = it.id;
-                                opt.textContent = `${it.name || 'Item'} (ID ${it.id})`;
-                                if (it.id === (rec.itemRequired || 1)) opt.selected = true;
-                                itemSel.appendChild(opt);
-                            });
-                            itemSel.onchange = (e) => {
-                                rec.itemRequired = parseInt(e.target.value);
-                                setDirty(true);
-                            };
-                            itemSelectRow.appendChild(lbl);
-                            itemSelectRow.appendChild(itemSel);
-                            row.appendChild(itemSelectRow);
-                            bodyContainer.appendChild(row);
-                        } else if (currentMode === 'common') {
-                            const row = document.createElement('div');
-                            row.className = 'form-row';
-                            const commonEvents = dbPayload.commonEvents || {};
-                            const ceRow = document.createElement('div');
-                            ceRow.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;';
-                            const lbl = document.createElement('label');
-                            lbl.textContent = 'Common Event:';
-                            lbl.style.cssText = 'font-size:10px;min-width:90px;';
-                            const ceSel = document.createElement('select');
-                            ceSel.className = 'win98-select';
-                            ceSel.style.flex = '1';
-                            Object.keys(commonEvents).forEach(cid => {
-                                const ce = commonEvents[cid];
-                                const opt = document.createElement('option');
-                                opt.value = cid;
-                                opt.textContent = `${ce.name || 'Common Event'} (ID ${cid})`;
-                                if (parseInt(cid) === (rec.scriptId || 1)) opt.selected = true;
-                                ceSel.appendChild(opt);
-                            });
-                            ceSel.onchange = (e) => {
-                                rec.scriptId = parseInt(e.target.value);
-                                setDirty(true);
-                            };
-                            ceRow.appendChild(lbl);
-                            ceRow.appendChild(ceSel);
-                            row.appendChild(ceRow);
-                            bodyContainer.appendChild(row);
-                        }
-
-                        if (currentMode !== 'script' && currentMode !== 'common') {
-                            const textRow = document.createElement('div');
-                            textRow.style.cssText = 'display:flex; flex-direction:column; gap:4px; margin-top:4px;';
-                            
-                            createFormField(textRow, 'Greeting Text Override (optional)', rec.greeting || '', v => {
-                                rec.greeting = v;
-                                setDirty(true);
-                            }, 'text');
-                            createFormField(textRow, 'Accept Text Override (optional)', rec.acceptText || '', v => {
-                                rec.acceptText = v;
-                                setDirty(true);
-                            }, 'text');
-                            createFormField(textRow, 'Decline Text Override (optional)', rec.declineText || '', v => {
-                                rec.declineText = v;
-                                setDirty(true);
-                            }, 'text');
-
-                            bodyContainer.appendChild(textRow);
-                        } else if (currentMode === 'script') {
-                            const scriptBox = document.createElement('div');
-                            scriptBox.style.cssText = 'margin-top:6px; border:1px solid var(--win-shadow); padding:4px; background:#fff;';
-                            bodyContainer.appendChild(scriptBox);
-                            rec.commands = rec.commands || [];
-
-                            const rerenderScript = () => {
-                                setDirty(true);
-                                renderCommandList(scriptBox, rec.commands, rerenderScript, false, 0, 'map');
-                            };
-                            renderCommandList(scriptBox, rec.commands, rerenderScript, false, 0, 'map');
-                        }
+                        renderCommandList(scriptBox, item.recruitEvent, rerenderScript, false, 0, 'map');
                     }
 
                     renderRecruitmentBody();

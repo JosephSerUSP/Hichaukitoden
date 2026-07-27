@@ -3,7 +3,6 @@
 
 package.path = package.path .. ";./?.lua;./engine/?.lua"
 
-local recruitment = require("engine.recruitment")
 local sessionModule = require("engine.session")
 local interpreter = require("engine.interpreter")
 local GameSession = sessionModule.GameSession
@@ -40,26 +39,58 @@ mockLoader = {
     system = { combat = { encounterChance = 0.1 } }
 }
 
--- Test 1: recruitment.compile outputs expected script commands for each type and format
-local pixieScript = recruitment.compile(mockLoader.actors[1], 1, { loader = mockLoader })
-assert(#pixieScript > 0, "Pixie heal script failed to compile")
-assert(pixieScript[2].cmd == "RECOVER_PARTY", "Pixie script missing RECOVER_PARTY")
+-- Test 1: recruit events are authored events, not Lua-generated ones.
+-- engine/recruitment.lua used to expand six preset types into command lists at
+-- runtime, with the dialogue built by string concatenation in the engine. The
+-- presets were baked into data; these assertions are over what is authored.
+local realLoader = require("data.loader")
+realLoader.init()
 
-local angelScript = recruitment.compile(mockLoader.actors[4], 1, { loader = mockLoader })
-assert(#angelScript > 0, "Angel gold script failed to compile")
-assert(angelScript[2].cmd == "CHOICE", "Angel script missing CHOICE")
-assert(angelScript[2].options[1].condition == "gold:30", "Angel script missing gold condition")
+local recruitables, withBattle = 0, 0
+for _, actorData in ipairs(realLoader.actors) do
+    local ev = actorData.recruitEvent
+    if ev ~= nil then
+        recruitables = recruitables + 1
+        assert(type(ev) == "table" and #ev > 0 and ev[1].cmd,
+            "actor " .. tostring(actorData.id) .. " recruitEvent must be a command list")
 
-local customScript = recruitment.compile(mockLoader.actors[15], 1, { loader = mockLoader })
-assert(#customScript == 1 and customScript[1].text == "Custom event!", "Custom command object failed to compile")
+        -- It has to actually be able to recruit, somewhere down some branch.
+        local found = false
+        local function scan(cmds)
+            for _, c in ipairs(cmds or {}) do
+                if c.cmd == "RECRUIT_ACTOR" then found = true end
+                for _, opt in ipairs(c.options or {}) do scan(opt.commands) end
+                scan(c.commands); scan(c.onVictory); scan(c.onDefeat)
+                scan(c["then"]); scan(c["else"]); scan(c.elseCommands)
+            end
+        end
+        scan(ev)
+        assert(found, "actor " .. tostring(actorData.id)
+            .. " recruitEvent never reaches RECRUIT_ACTOR")
 
-local arrayScript = recruitment.compile(mockLoader.actors[16], 1, { loader = mockLoader })
-assert(#arrayScript == 1 and arrayScript[1].text == "Direct array event!", "Direct command array failed to compile")
-
-local scriptIdScript = recruitment.compile(mockLoader.actors[17], 1, { loader = mockLoader })
-assert(#scriptIdScript == 1 and scriptIdScript[1].text == "Common event recruit!", "ScriptId reference failed to compile")
-
-print("  [PASS] recruitment.compile scripts generated successfully for all types and event formats")
+        -- A challenge recruit fights the creature itself and continues on
+        -- victory. Before BATTLE could carry a troop or resume, it fought the
+        -- map's random encounter and the event ended at the fight.
+        local function scanBattles(cmds)
+            for _, c in ipairs(cmds or {}) do
+                if c.cmd == "BATTLE" then
+                    withBattle = withBattle + 1
+                    assert(c.troop and #c.troop > 0,
+                        "a recruit battle must name its troop, not roll the map table")
+                    assert(c.onVictory and #c.onVictory > 0,
+                        "a recruit battle must continue on victory")
+                end
+                for _, opt in ipairs(c.options or {}) do scanBattles(opt.commands) end
+                scanBattles(c.commands); scanBattles(c.onVictory); scanBattles(c.onDefeat)
+            end
+        end
+        scanBattles(ev)
+    end
+end
+assert(recruitables > 0, "no actor authors a recruit event")
+assert(withBattle > 0, "no recruit event challenges the player to a battle")
+print("  [PASS] " .. recruitables .. " authored recruit events, "
+    .. withBattle .. " of them fighting a named troop and resuming on victory")
 
 -- Test 2: GameSession:recruitActor party vs reserve filling
 local sess = GameSession.new(mockLoader)
@@ -149,6 +180,9 @@ sess.currentMapData = {
 -- The compiled option script mixes interactive commands (TEXT) with
 -- side-effect commands; at runtime the dialogue host renders the former and
 -- runs the latter through runImmediate. Mirror that split here.
+-- Straight off the authored event now, rather than off a script the engine
+-- built a moment earlier -- so this exercises what actually ships.
+local angelScript = realLoader.getActor(4).recruitEvent
 local angelOptScript = {}
 for _, c in ipairs(angelScript[2].options[1].commands) do
     if not interpreter.INTERACTIVE_IDS[c.cmd] then

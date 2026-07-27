@@ -44,11 +44,46 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "heal",
-      "greeting": "A glowing Pixie flutters near you! 'You look exhausted! Let me soothe your wounds.'",
-      "acceptText": "Pixie smiles warmly. 'May I travel with you?'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A glowing Pixie flutters near you! 'You look exhausted! Let me soothe your wounds.'"
+      },
+      {
+        "cmd": "RECOVER_PARTY"
+      },
+      {
+        "cmd": "TEXT",
+        "text": "Pixie smiles warmly. 'May I travel with you?'"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Recruit Pixie",
+            "commands": [
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 1,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You part ways peacefully."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -257,11 +292,71 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "hostile",
-      "greeting": "A Skeleton rattles its blade and tests your fighting spirit!",
-      "acceptText": "The Skeleton lowers its sword in respect. 'Your combat skill is worthy of my blade.'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A Skeleton rattles its blade and tests your fighting spirit!"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Battle Skeleton",
+            "commands": [
+              {
+                "cmd": "BATTLE",
+                "troop": [
+                  3
+                ],
+                "level": 1,
+                "onVictory": [
+                  {
+                    "cmd": "TEXT",
+                    "text": "The Skeleton lowers its sword in respect. 'Your combat skill is worthy of my blade.'"
+                  },
+                  {
+                    "cmd": "CHOICE",
+                    "options": [
+                      {
+                        "label": "Recruit Skeleton",
+                        "commands": [
+                          {
+                            "cmd": "RECRUIT_ACTOR",
+                            "actorId": 3,
+                            "level": 1
+                          },
+                          {
+                            "cmd": "ERASE_EVENT"
+                          }
+                        ]
+                      },
+                      {
+                        "label": "Leave",
+                        "commands": [
+                          {
+                            "cmd": "TEXT",
+                            "text": "You leave the defeated creature behind."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Step Back",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You back away slowly from Skeleton."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -368,12 +463,48 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "gold",
-      "goldCost": 30,
-      "greeting": "A radiant Angel hovers gracefully. 'A modest offering of 30 Gold shall fund my holy crusade.'",
-      "acceptText": "Angel accepts the offering. 'May divine light guide our path.'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A radiant Angel hovers gracefully. 'A modest offering of 30 Gold shall fund my holy crusade.'"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Pay 30 Gold",
+            "condition": "gold:30",
+            "commands": [
+              {
+                "cmd": "GAIN_GOLD",
+                "amount": -30
+              },
+              {
+                "cmd": "TEXT",
+                "text": "Angel accepts the offering. 'May divine light guide our path.'"
+              },
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 4,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Decline",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Angel scoffs. 'No coin, no deal!'"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -787,11 +918,46 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "heal",
-      "greeting": "Nurse approaches softly. 'Hold still, let me mend your injuries.'",
-      "acceptText": "Nurse smiles gently. 'I shall watch over your health.'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "Nurse approaches softly. 'Hold still, let me mend your injuries.'"
+      },
+      {
+        "cmd": "RECOVER_PARTY"
+      },
+      {
+        "cmd": "TEXT",
+        "text": "Nurse smiles gently. 'I shall watch over your health.'"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Recruit Nurse",
+            "commands": [
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 8,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You part ways peacefully."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -893,12 +1059,48 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "gold",
-      "goldCost": 15,
-      "greeting": "A mischievous Imp rattles a pouch of coins. 'Hand over 15 Gold and I'll fight for you!'",
-      "acceptText": "Imp snatches the coins greedily. 'Keke! Deal!'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A mischievous Imp rattles a pouch of coins. 'Hand over 15 Gold and I'll fight for you!'"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Pay 15 Gold",
+            "condition": "gold:15",
+            "commands": [
+              {
+                "cmd": "GAIN_GOLD",
+                "amount": -15
+              },
+              {
+                "cmd": "TEXT",
+                "text": "Imp snatches the coins greedily. 'Keke! Deal!'"
+              },
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 9,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Decline",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Imp scoffs. 'No coin, no deal!'"
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -986,11 +1188,71 @@
     ],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "hostile",
-      "greeting": "A massive Golem looms over you, raising its heavy stone fists!",
-      "acceptText": "The Golem kneels in respect. 'I yield to your power. I shall be your shield.'"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A massive Golem looms over you, raising its heavy stone fists!"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Battle Golem",
+            "commands": [
+              {
+                "cmd": "BATTLE",
+                "troop": [
+                  10
+                ],
+                "level": 2,
+                "onVictory": [
+                  {
+                    "cmd": "TEXT",
+                    "text": "The Golem kneels in respect. 'I yield to your power. I shall be your shield.'"
+                  },
+                  {
+                    "cmd": "CHOICE",
+                    "options": [
+                      {
+                        "label": "Recruit Golem",
+                        "commands": [
+                          {
+                            "cmd": "RECRUIT_ACTOR",
+                            "actorId": 10,
+                            "level": 2
+                          },
+                          {
+                            "cmd": "ERASE_EVENT"
+                          }
+                        ]
+                      },
+                      {
+                        "label": "Leave",
+                        "commands": [
+                          {
+                            "cmd": "TEXT",
+                            "text": "You leave the defeated creature behind."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "Step Back",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You back away slowly from Golem."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -1186,12 +1448,49 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "aid",
-      "itemRequired": 1,
-      "greeting": "A sickly Ooze quivers helplessly, needing a Potion to stabilize...",
-      "acceptText": "The Ooze absorbs the potion and bubbles with delight!"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A sickly Ooze quivers helplessly, needing a Potion to stabilize..."
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Give HP Tonic",
+            "condition": "hasItem:1",
+            "commands": [
+              {
+                "cmd": "CHANGE_ITEM",
+                "item": 1,
+                "count": -1
+              },
+              {
+                "cmd": "TEXT",
+                "text": "The Ooze absorbs the potion and bubbles with delight!"
+              },
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 12,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Ooze groans softly as you step back."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -1293,10 +1592,39 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "free",
-      "greeting": "A friendly Bat flaps softly around your head and offers to join!"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A friendly Bat flaps softly around your head and offers to join!"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Recruit Bat",
+            "commands": [
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 13,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Decline",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You decide not to recruit Bat."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "drops": [
@@ -1403,12 +1731,49 @@
     "evolutions": [],
     "initialParty": true,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "aid",
-      "itemRequired": 1,
-      "greeting": "A weak Wisp flickers faintly on the dungeon floor, needing a Potion...",
-      "acceptText": "The Wisp absorbs the potion and glows brightly with gratitude!"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A weak Wisp flickers faintly on the dungeon floor, needing a Potion..."
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Give HP Tonic",
+            "condition": "hasItem:1",
+            "commands": [
+              {
+                "cmd": "CHANGE_ITEM",
+                "item": 1,
+                "count": -1
+              },
+              {
+                "cmd": "TEXT",
+                "text": "The Wisp absorbs the potion and glows brightly with gratitude!"
+              },
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 14,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Wisp groans softly as you step back."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "unlocked": true,
@@ -1995,10 +2360,39 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "recruitEvent": {
-      "type": "free",
-      "greeting": "A tiny animated Candle flickers cheerfully and wants to accompany you!"
-    },
+    "recruitEvent": [
+      {
+        "cmd": "TEXT",
+        "text": "A tiny animated Candle flickers cheerfully and wants to accompany you!"
+      },
+      {
+        "cmd": "CHOICE",
+        "options": [
+          {
+            "label": "Recruit Candle",
+            "commands": [
+              {
+                "cmd": "RECRUIT_ACTOR",
+                "actorId": 20,
+                "level": 1
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ]
+          },
+          {
+            "label": "Decline",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "You decide not to recruit Candle."
+              }
+            ]
+          }
+        ]
+      }
+    ],
     "isEvolved": false,
     "traits": [],
     "unlocked": false,

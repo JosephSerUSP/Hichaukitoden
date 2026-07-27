@@ -392,13 +392,17 @@ end
 -- compile() branch, so every graph containing them (all recruitment scripts,
 -- any looted-chest event) linked to node ids that were never created.
 do
-    local recruitment = require("engine.recruitment")
     local sess = sessionModule.GameSession.new(loader)
     sess.gold = 500
     local dangling = {}
     local function checkLinks(nodes, label)
         for id, node in pairs(nodes) do
-            local links = { node.next, node.trueNode, node.falseNode }
+            -- victoryNode/defeatNode are BATTLE's post-fight branches. They
+            -- are links like any other, and a dangling one is an event that
+            -- stops dead after the fight -- which is exactly what BATTLE did
+            -- before it had them.
+            local links = { node.next, node.trueNode, node.falseNode,
+                node.victoryNode, node.defeatNode }
             for _, opt in ipairs(node.options or {}) do
                 table.insert(links, opt.target)
             end
@@ -412,7 +416,7 @@ do
     end
 
     for _, actorData in ipairs(loader.actors) do
-        local cmds = recruitment.compile(actorData, 1, { loader = loader, session = sess })
+        local cmds = actorData.recruitEvent
         if cmds and #cmds > 0 then
             local nodes = {}
             interpreter.compileTop(nodes, cmds, "t" .. tostring(actorData.id), nil,

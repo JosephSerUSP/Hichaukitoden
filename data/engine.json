@@ -507,13 +507,30 @@
       "id": "BATTLE",
       "category": "Progression",
       "label": "Start Battle",
-      "params": [],
+      "params": [
+        {
+          "key": "troop",
+          "type": "actorList"
+        },
+        {
+          "key": "level",
+          "type": "formula"
+        },
+        {
+          "key": "onVictory",
+          "type": "commands"
+        },
+        {
+          "key": "onDefeat",
+          "type": "commands"
+        }
+      ],
       "contexts": [
         "map",
         "common"
       ],
       "interactive": true,
-      "description": "Triggers an encounter on the current map."
+      "description": "Starts a battle and resumes the event afterwards. With no `troop`, rolls the current map's encounter table as before; with one, fights exactly those actors (the Forbidden Lamp shape: a scripted encounter that is not a random one), at `level` if given. `onVictory` and `onDefeat` are command lists run after the fight, and both rejoin whatever follows the BATTLE -- so \"beat it and it joins you\" is one event rather than two."
     },
     {
       "id": "CALL_COMMON_EVENT",

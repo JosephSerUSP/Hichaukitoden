@@ -104,20 +104,53 @@ end
 -------------------------------------------------------------------------------
 -- Triggers a battle from the current map's encounter table
 -------------------------------------------------------------------------------
-function battle.triggerBattle()
-    local mapData = sess().currentMapData
-    local possibleEnemies = mapData and mapData.encounters
-    if not possibleEnemies or #possibleEnemies == 0 then return end
+-- Set by the host (main.lua) to be told how a battle ended, so an event that
+-- started one can resume at its onVictory/onDefeat branch. A battle the player
+-- walked into has no listener and simply returns to the map, which is why this
+-- is a hook rather than a branch in here: the scene does not know, and must not
+-- know, whether an event is waiting on it.
+battle.onResolved = nil
 
-    -- Called unconditionally: battle.battle_start is a required phase (G1 fails
-    -- without it). The Lua duplicate that used to sit behind a flow.has check
-    -- -- its own weighted roll over the map's encounter table, its own battler
-    -- construction -- was removed on 26.07.2026 with the other S4 fallbacks.
+local function resolved(outcome)
+    if battle.onResolved then battle.onResolved(outcome) end
+end
+
+-- `troop` fights exactly those actors instead of rolling the map's encounter
+-- table -- a scripted encounter (the Forbidden Lamp, a hostile recruit) rather
+-- than a random one. Without it, nothing changes.
+function battle.triggerBattle(troop, level)
     local enemyList = {}
-    for _, ev in ipairs(flow.run("battle.battle_start", { session = sess() })) do
-        if ev.type == "spawn_enemies" then enemyList = ev.enemies end
+
+    if troop and #troop > 0 then
+        for _, entry in ipairs(troop) do
+            local actorId = type(entry) == "table" and entry.id or entry
+            local actorData = ldr().getActor(actorId)
+            if actorData then
+                local lv = (type(entry) == "table" and entry.level) or level
+                    or actorData.level or 1
+                local b = session.Battler.new(actorData, lv)
+                b.hp = b:getMaxHp(sess())
+                table.insert(enemyList, b)
+            end
+        end
+        if #enemyList == 0 then
+            error("BATTLE: troop names no actor that exists")
+        end
+    else
+        local mapData = sess().currentMapData
+        local possibleEnemies = mapData and mapData.encounters
+        if not possibleEnemies or #possibleEnemies == 0 then return end
+
+        -- Called unconditionally: battle.battle_start is a required phase (G1
+        -- fails without it). The Lua duplicate that used to sit behind a
+        -- flow.has check -- its own weighted roll over the map's encounter
+        -- table, its own battler construction -- was removed on 26.07.2026
+        -- with the other S4 fallbacks.
+        for _, ev in ipairs(flow.run("battle.battle_start", { session = sess() })) do
+            if ev.type == "spawn_enemies" then enemyList = ev.enemies end
+        end
+        if #enemyList == 0 then return end
     end
-    if #enemyList == 0 then return end
 
     -- CRITICAL: goto_scene must come FIRST — it creates a fresh scene state (v = {}).
     -- Setting state variables before goto_scene would write to the OLD scene and lose them.
@@ -585,6 +618,7 @@ function battle.handleTransition(action)
         elseif renderer.getVictoryStage() == 2 then
             -- Drain complete, dismiss
             scene_host.goto_scene("map")
+            resolved("victory")
         end
         return true
     end
@@ -619,6 +653,7 @@ function battle.handleTransition(action)
             v.combatState = "victory"
         elseif nextState == "escaped" then
             scene_host.goto_scene("map")
+            resolved("escaped")
         end
         return true
     end
@@ -717,6 +752,7 @@ function battle.handleTransition(action)
         end
         if not queueReapEvents(flowEvents, "escaped") and toMap then
             scene_host.goto_scene("map")
+            resolved("escaped")
         end
     else
         battle.rebuildLivingMembers()

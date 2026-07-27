@@ -24,7 +24,6 @@ local effects = require("engine.effects")
 local formulaEngine = require("engine.formula")
 local config = require("engine.config")
 local conditions = require("engine.conditions")
-local recruitment = require("engine.recruitment")
 local usability = require("engine.usability")
 
 local interpreter = {}
@@ -189,7 +188,21 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
         elseif id == "BATTLE" then
-            nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
+            -- This node used to have no `next` at all, so an event ENDED at its
+            -- battle: "fight it, and if you win it joins you" could not be
+            -- written, which is why hostile recruitment never worked. Both
+            -- outcomes are command lists that rejoin whatever follows.
+            local winFirst = interpreter.compile(nodes, cmd.onVictory, nodeId .. "_win", nextId, ctx)
+            local loseFirst = interpreter.compile(nodes, cmd.onDefeat, nodeId .. "_lose", nextId, ctx)
+            nodes[nodeId] = {
+                type = "ACTION",
+                action = "START_BATTLE",
+                troop = cmd.troop,
+                level = cmd.level,
+                victoryNode = winFirst or nextId,
+                defeatNode = loseFirst or nextId,
+                next = nextId,
+            }
         elseif id == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
         elseif id == "LABEL" then
