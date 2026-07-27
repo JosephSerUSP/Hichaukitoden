@@ -202,32 +202,15 @@ end
 -- Flee is now any active creature's action -- the first one committed for
 -- the round triggers the party's flee attempt, same odds/penalty as before.)
 
-function Battle:checkFlee(collectedActions, roundEvents)
-    -- 1. Flee: if any creature chose it this round, resolve immediately
-    -- (before the speed-ordered queue runs) and skip the rest of the round.
-    local fleeing = false
-    for i = 1, config.MAX_PARTY_SIZE do
-        local act = collectedActions and collectedActions[i]
-        if act and act.type == "flee" then fleeing = true break end
-    end
-    if fleeing then
-        -- Called unconditionally: battle.flee_attempt is a required phase (G1
-        -- fails without it). The Lua duplicate that used to sit behind a
-        -- flow.has check -- its own roll, its own flee bonus, its own gold
-        -- penalty -- was removed on 26.07.2026 with the other S4 fallbacks.
-        local flowEvents = flow.run("battle.flee_attempt", {
-            session = self.session,
-            battle = self,
-        })
-        local escaped = false
-        for _, ev in ipairs(flowEvents) do
-            table.insert(roundEvents, ev)
-            if ev.type == "flee_success" then escaped = true end
-        end
-        if escaped then return true end
-    end
-
-    -- Check if combat ends immediately
+-- Whether the battle is already over before a single turn is taken.
+--
+-- This used to also scan the committed actions for `act.type == "flee"` and
+-- resolve the escape here, before the queue was built -- one battle verb
+-- resolving somewhere no other verb did. Escaping is an ordinary effect now
+-- (effects.lua `escape`), so it costs a turn and runs in speed order like
+-- everything else, and an escape item is expressible without this function
+-- learning what an item is.
+function Battle:checkImmediateEnd(roundEvents)
     if self:isVictory() then
         table.insert(roundEvents, { type = "victory" })
         return true
@@ -524,20 +507,28 @@ end
 
 function Battle:resolveRound(collectedActions)
     local roundEvents = {}
-    
-    -- 1. Flee
-    if self:checkFlee(collectedActions, roundEvents) then
+
+    -- 1. Already decided before anyone acts
+    if self:checkImmediateEnd(roundEvents) then
         return roundEvents
     end
-    
+
     -- 2. Build queue
     local queue = self:buildTurnQueue(collectedActions)
-    
-    -- 3. Execute turns
+
+    -- 3. Execute turns. A successful escape ends the battle where it lands, so
+    -- creatures slower than the one that fled do not get a turn -- the party is
+    -- already gone.
+    local escaped = false
     for _, turn in ipairs(queue) do
         self:executeTurn(turn, roundEvents)
+        for _, ev in ipairs(roundEvents) do
+            if ev.type == "flee_success" then escaped = true break end
+        end
+        if escaped then break end
     end
-    
+    if escaped then return roundEvents end
+
     -- 4. End of round
     self:processRoundEnd(roundEvents)
     

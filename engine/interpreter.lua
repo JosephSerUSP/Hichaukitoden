@@ -1433,7 +1433,11 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
         -- attached status can see that the damage effect before it landed
         -- critically. Rebuilt per target because a crit on one enemy says
         -- nothing about the next.
-        local actionCtx = { element = element, user = ctx.a, isItem = (ctx.skill == nil) }
+        -- `battle` rides along so an effect that acts on the encounter rather
+        -- than on a battler (escape) can reach it; nil outside battle, which
+        -- is what makes such an effect a no-op in a menu.
+        local actionCtx = { element = element, user = ctx.a, isItem = (ctx.skill == nil),
+            battle = ctx.battle }
         if ctx.item then table.insert(itemTargets, tgt) end
         for _, eff in ipairs(act.effects or {}) do
             local isShared = ctx.item and (eff.type == "mp_heal"

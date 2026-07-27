@@ -59,8 +59,9 @@
           ],
           [
             {
-              "slot": 1,
-              "type": "flee"
+              "type": "skill",
+              "id": "flee",
+              "slot": 1
             },
             {
               "slot": 2,

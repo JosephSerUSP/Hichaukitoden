@@ -28,7 +28,12 @@ action|Pixie|High Pixie||
 damage||High Pixie|7|
 state_remove||Skeleton||defending
 heal||Angel|2|
-flee_success||||
+action|Skeleton|Pixie||
+damage||Pixie|9|
+death||Pixie||
+text||||
+text||||
+heal||Angel|2|
 action|High Pixie|Pixie||
 damage||Pixie|4|
 death||Pixie||

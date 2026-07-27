@@ -61,5 +61,43 @@ local waitSkill = loader.getSkill("wait")
 check(waitSkill and #(waitSkill.effects or {}) == 0,
     "Wait is a genuine no-op -- it spends the turn and does nothing")
 
+-- Escaping is an effect, not a keyword. It used to be `act.type == "flee"`
+-- scanned before the round was built, so it preempted the whole round and no
+-- item could ever carry it. It resolves in speed order now, which is why the
+-- default golden fixture's fleeing Pixie dies to a faster Skeleton first --
+-- that fixture no longer covers a SUCCESSFUL escape, so this does.
+local effects = require("engine.effects")
+
+local fleeSkill = loader.getSkill("flee")
+local escapeEffect
+for _, eff in ipairs(fleeSkill.effects or {}) do
+    if eff.type == "escape" then escapeEffect = eff end
+end
+check(escapeEffect ~= nil, "the Flee skill escapes by declaring an effect, not by its id")
+
+local sess = sessionModule.GameSession.new(loader)
+sess:initializeStartingParty()
+local enemy = sessionModule.Battler.new(loader.getActor(3), 1)
+local arena = battle.Battle.new(sess, { enemy })
+local actor = sess.party[1]
+
+-- The flow decides, so run it enough times to see both branches rather than
+-- reaching past it and asserting the roll.
+local sawSuccess, sawFailure = false, false
+for _ = 1, 200 do
+    local evs = effects.apply(escapeEffect, actor, actor, sess, { battle = arena })
+    for _, ev in ipairs(evs) do
+        if ev.type == "flee_success" then sawSuccess = true end
+        if ev.type == "text" then sawFailure = true end
+    end
+end
+check(sawSuccess, "an escape effect can succeed, emitting flee_success")
+check(sawFailure, "and can fail, which is what makes it a gamble")
+
+-- Outside a battle there is nothing to escape from; a menu must not blow up.
+local outside = effects.apply(escapeEffect, actor, actor, sess, {})
+check(type(outside) == "table" and #outside == 0,
+    "an escape effect outside battle does nothing rather than erroring")
+
 print(string.format("=== Battle Command Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then error(failed .. " battle command test(s) failed") end

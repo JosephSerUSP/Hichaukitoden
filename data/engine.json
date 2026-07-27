@@ -1940,6 +1940,12 @@
         "level"
       ],
       "description": "Recruits actor `value` into the party (reserve when the active slots are full); `level` optional. Used by hatching items like the Mystic Egg."
+    },
+    {
+      "id": "escape",
+      "label": "Escape Battle",
+      "params": [],
+      "description": "Attempts to escape the battle, running the battle.flee_attempt flow (its odds, FLEE_CHANCE_BONUS and gold penalty). Honoured before the round is built, so a creature carrying it escapes the party rather than acting in speed order -- which is why it is declared on a skill rather than resolved in effects.apply."
     }
   ],
   "traitCodes": [
@@ -2915,7 +2921,9 @@
       "help": "Attempt to escape the battle.",
       "resolve": "commit",
       "action": {
-        "type": "flee"
+        "type": "skill",
+        "id": "flee",
+        "target": "self"
       }
     },
     {

@@ -525,18 +525,32 @@ function battle.undoAction()
     v.skillSelect = false
     v.itemSelect = false
     if prevAction then
-        if prevAction.type == "attack" then
-            v.selectedIndex = 1
-        elseif prevAction.type == "skill" then
-            v.selectedIndex = 2
-        elseif prevAction.type == "defend" then
-            v.selectedIndex = 3
-        elseif prevAction.type == "item" then
-            v.selectedIndex = 4
-        elseif prevAction.type == "flee" then
-            v.selectedIndex = 5
-        else
-            v.selectedIndex = 1
+        -- Put the cursor back on the row the undone action came from. These
+        -- were hardcoded 1..5, which is wrong the moment a creature has its
+        -- own command set: row 5 is Flee for a Pixie and does not exist for an
+        -- Egg. Find the command in THIS creature's list instead.
+        local cmds = require("engine.battle").commandsFor(memberInfo.actor, ldr())
+        local wanted
+        for _, cmd in ipairs(cmds) do
+            local act = cmd.action
+            if act and act.type == prevAction.type
+                and (act.id == nil or act.id == prevAction.id) then
+                -- A command that commits this exact action (Defend, Flee, Wait).
+                wanted = cmd.id
+                break
+            elseif cmd.resolve == "target" and act and act.type == prevAction.type then
+                wanted = cmd.id
+                break
+            end
+        end
+        if not wanted then
+            -- Anything chosen through a submenu returns to the submenu's row.
+            if prevAction.type == "skill" then wanted = "skill"
+            elseif prevAction.type == "item" then wanted = "item" end
+        end
+        v.selectedIndex = 1
+        for i, cmd in ipairs(cmds) do
+            if cmd.id == wanted then v.selectedIndex = i break end
         end
     else
         v.selectedIndex = 1

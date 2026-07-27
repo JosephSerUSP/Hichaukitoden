@@ -619,6 +619,25 @@ function effects.apply(effectData, a, b, session, context)
     -- refuses it, so effects cannot run one. The host picks this event up and
     -- starts the graph; headless runs simply see the request and carry on,
     -- which is what keeps the validator and the golden harness working.
+    elseif effectData.type == "escape" then
+        -- Escaping is an action like any other: it costs the turn and resolves
+        -- in speed order, so a faster enemy gets its hit in first. It used to
+        -- preempt the whole round from a `act.type == "flee"` scan in
+        -- Battle:checkFlee, which meant one battle verb resolved somewhere no
+        -- other verb did, and an escape ITEM could not exist at all.
+        --
+        -- The odds, FLEE_CHANCE_BONUS and gold penalty are unchanged -- they
+        -- live in the battle.flee_attempt flow, which is still the only place
+        -- that decides. Emitting flee_success is what ends the battle; the
+        -- battle scene watches for it.
+        local battle = context and context.battle
+        if battle then
+            local flowEvents = require("engine.flow").run("battle.flee_attempt", {
+                session = session,
+                battle = battle,
+            })
+            for _, ev in ipairs(flowEvents) do table.insert(events, ev) end
+        end
     elseif effectData.type == "common_event" then
         local ceId = effectData.value
         local ce = session.loader.commonEvents and session.loader.commonEvents[tostring(ceId)]

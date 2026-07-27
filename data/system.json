@@ -135,9 +135,7 @@
     "battleItem": 1,
     "defendSkillId": "defend",
     "attackSkillId": "attack",
-    "autoRedirect": false,
-    "fleeSkillId": "flee",
-    "waitSkillId": "wait"
+    "autoRedirect": false
   },
   "shopMaxStock": 20,
   "growth": {
