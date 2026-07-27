@@ -2617,6 +2617,19 @@
           "opacity": 0.6
         }
       ]
+    },
+    {
+      "id": "night fog",
+      "label": "Night fog",
+      "color": [
+        0,
+        0.1,
+        0.16
+      ],
+      "density": 0.35,
+      "minFactor": 0.12,
+      "panorama": [],
+      "distance": 5.5
     }
   ],
   "stateCategories": [

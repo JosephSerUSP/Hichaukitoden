@@ -700,6 +700,61 @@ const server = http.createServer((req, res) => {
         });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: 'Game launched!' }));
+    } else if (req.method === 'POST' && req.url === '/screenshots') {
+        const respond = (payload) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(payload));
+        };
+        if (!fs.existsSync(previewExe)) {
+            return respond({ success: false, message: 'LOVE not found at ' + previewExe + ' (set LOVE_PATH)' });
+        }
+        const { execFile } = require('child_process');
+        execFile(previewExe, ['.', 'screenshots'], {
+            cwd: PROJECT_DIR,
+            timeout: 120000,
+            windowsHide: true,
+            maxBuffer: 64 * 1024 * 1024
+        }, (err, stdout) => {
+            const text = String(stdout || '');
+            const begin = text.indexOf('SCREENSHOTS BEGIN');
+            const end = text.indexOf('SCREENSHOTS END', begin);
+            if (begin < 0 || end < 0) {
+                return respond({ success: false, message: err ? err.message : 'capture suite produced no result' });
+            }
+            let payload;
+            try {
+                payload = JSON.parse(text.slice(begin + 'SCREENSHOTS BEGIN'.length, end).trim());
+            } catch (e) {
+                return respond({ success: false, message: 'capture result was not valid JSON: ' + e.message });
+            }
+            if (payload.error) {
+                return respond({ success: false, message: payload.error });
+            }
+
+            const outputDir = path.resolve(PROJECT_DIR, 'screenshots');
+            if (path.dirname(outputDir) !== PROJECT_DIR) {
+                return respond({ success: false, message: 'refusing unsafe screenshot output path' });
+            }
+            fs.rmSync(outputDir, { recursive: true, force: true });
+            for (const capture of payload.captures || []) {
+                if (!/^[a-z0-9_-]+\/[a-z0-9_-]+\/[a-z0-9_.-]+\.png$/.test(capture.path)) {
+                    return respond({ success: false, message: 'invalid capture path: ' + capture.path });
+                }
+                const filePath = path.resolve(outputDir, capture.path);
+                if (!filePath.startsWith(outputDir + path.sep)) {
+                    return respond({ success: false, message: 'refusing capture path outside output directory' });
+                }
+                fs.mkdirSync(path.dirname(filePath), { recursive: true });
+                fs.writeFileSync(filePath, Buffer.from(capture.image, 'base64'));
+            }
+            respond({
+                success: true,
+                count: (payload.captures || []).length,
+                width: payload.width,
+                height: payload.height,
+                directory: outputDir
+            });
+        });
     // ------------------------------------------------------------------
     // Campaign generator bridge (tools/campaign-gen): the editor's
     // Generator window drives one gen.js child process at a time and

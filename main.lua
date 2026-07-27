@@ -13,6 +13,7 @@ local savegame = require("engine.savegame")
 require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
 local small_battlers = require("presentation.small_battlers")
+local frame_renderer = require("presentation.frame_renderer")
 
 -- Setup currentScene interceptor on _G
 setmetatable(_G, {
@@ -90,6 +91,7 @@ local isEngineStateMode = false
 local isReachabilityMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
+local isScreenshotMode = false
 local isDeveloperMode = false
 local triggerTestBattle
 
@@ -206,6 +208,8 @@ function love.load(arg)
                 isGoldenMode = true
             elseif val == "golden-ui" then
                 isGoldenUIMode = true
+            elseif val == "screenshots" then
+                isScreenshotMode = true
             elseif val == "preview-scene" then
                 isPreviewSceneMode = true
                 previewSceneId = arg[i + 1]
@@ -322,6 +326,13 @@ function love.load(arg)
     if isPreviewSceneMode then
         loader.init(cliCampaignRoot)
         cli_tools.runPreviewScene(previewSceneId, loader, gameWidth, gameHeight)
+        love.event.quit(0)
+        return
+    end
+
+    if isScreenshotMode then
+        loader.init(cliCampaignRoot)
+        cli_tools.runScreenshots(loader, gameWidth, gameHeight)
         love.event.quit(0)
         return
     end
@@ -673,65 +684,12 @@ end
 -- its own scene state; battle/dialogue/town build a minimal party-only state
 -- here so the ONE shared HUD appears in every scene (owner direction:
 -- "there should be no place where the declarative one isn't used").
-local function drawSharedPartyHud()
-    local wr = require("presentation.window_renderer")
-    local cursor = 0
-    if scene_host.getCurrent() == "battle" then
-        local bv = require("engine.scenes.battle").getState()
-        if bv and bv.combatState == "input" then
-            local memberInfo = bv.livingMembers and bv.livingMembers[bv.activeMemberIdx or 1]
-            cursor = memberInfo and memberInfo.index or 0
-        end
-    end
-    local state = {
-        winState = { party = { open = true, listId = "party", cursor = cursor } },
-        windowOrder = { "party" },
-    }
-    wr.draw(state, nil, { session = activeSession, loader = loader })
-end
-
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0, 1)
     love.graphics.setColor(1, 1, 1, 1) -- reset color at start of frame
     
-    local ctx = { session = activeSession, loader = loader }
-    -- scene_host.draw covers every scene now (windows and world alike); the
-    -- old legacy-draw fallback branch was purged 24.07.2026.
-    scene_host.draw(ctx)
-    if scene_host.getCurrent() == "dialogue" then
-        local enterTime = _G.dialogueEnterTime or 0
-        if love.timer.getTime() - enterTime < 0.15 then
-            drawSharedPartyHud()
-        end
-    end
-
-    -- Battle is draw:"windows" (scene_host.draw handled its own windows
-    -- array above), but the shared party HUD, target reticles, and the
-    -- screen-flash overlay are cross-cutting — not any one window's
-    -- content — so they run unconditionally for battle, same treatment as
-    -- drawDamagePopups just below.
-    if scene_host.getCurrent() == "battle" then
-        local bv = require("engine.scenes.battle").getState()
-        -- Defeat sequence stage 1 (owner feedback, 17.07.2026): the party
-        -- window slides straight down and off-screen while everything else
-        -- holds. defeatSlideT ramps 0->1 over that one stage only (battle.lua
-        -- battle.update); 0 outside the sequence, so this is a no-op then.
-        local slideT = bv.defeatSlideT or 0
-        if slideT > 0 then
-            love.graphics.push()
-            love.graphics.translate(0, slideT * gameHeight)
-            drawSharedPartyHud()
-            love.graphics.pop()
-        else
-            drawSharedPartyHud()
-        end
-        renderer.drawTargetReticles(bv, bv.combatState or "input", bv.selectedIndex or 1, bv.skillSelect or false, bv.itemSelect or false, bv.livingMembers or {}, bv.activeMemberIdx or 1)
-        renderer.drawScreenFlashOverlay(bv.battle)
-        renderer.drawDefeatFadeOverlay(bv.defeatFinalFade)
-    end
-
-    renderer.drawDamagePopups()
+    frame_renderer.draw(scene_host, renderer, activeSession, loader, gameHeight)
     
     if server.isActive() then
         local blueDotKey = "UI_BlueDot"

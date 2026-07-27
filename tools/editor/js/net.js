@@ -206,6 +206,25 @@
             }
         }
 
+        async function generateScreenshots() {
+            const button = document.getElementById('tool-screenshot-btn');
+            if (button) button.disabled = true;
+            document.getElementById('status-db').textContent = 'Generating screenshots...';
+            try {
+                const res = await fetch(`${API_URL}/screenshots`, { method: 'POST' });
+                const result = await res.json();
+                if (!result.success) throw new Error(result.message || 'capture failed');
+                document.getElementById('status-db').textContent =
+                    `Screenshots: ${result.count} at ${result.width}x${result.height}`;
+                showToast(`Generated ${result.count} screenshots in:\n${result.directory}`);
+            } catch (err) {
+                document.getElementById('status-db').textContent = 'Screenshot generation failed';
+                showToast('Failed to generate screenshots: ' + err.message);
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F5') {
                 e.preventDefault();

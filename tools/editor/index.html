@@ -1088,6 +1088,9 @@
                     <div class="dropdown-item" onclick="testPlay()">
                         <span class="icon-sprite icon-play"></span> Test Play
                     </div>
+                    <div class="dropdown-item" onclick="generateScreenshots()">
+                        Generate Game Screenshots
+                    </div>
                 </div>
             </div>
         </div>
@@ -1126,6 +1129,8 @@
             <button class="win98-btn" style="color: #005500;" onclick="testPlay()" title="Test Play (F5)">
                 <span class="icon-sprite icon-play"></span>
             </button>
+            <button id="tool-screenshot-btn" class="win98-btn" onclick="generateScreenshots()"
+                    title="Generate native-resolution screenshots">PNG</button>
             <div class="toolbar-separator"></div>
             <label for="campaign-picker" style="font-size: 10px; margin-right: 4px;">Campaign:</label>
             <select id="campaign-picker" class="win98-select" style="width: 160px;"

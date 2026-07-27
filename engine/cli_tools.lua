@@ -297,6 +297,125 @@ function cli.runPreviewScene(sceneId, loader, gameWidth, gameHeight)
     print("PREVIEW END")
 end
 
+-- Deterministic native-resolution capture suite. Each scene contributes its
+-- initial state and every authored goldenScript step. The editor server owns
+-- decoding the returned PNGs into the disposable workspace directory.
+function cli.runScreenshots(loader, gameWidth, gameHeight)
+    local json = require("data.json")
+    local scene_host = require("engine.scene_host")
+    local exploration = require("engine.exploration")
+    local viewport_3d = require("presentation.viewport_3d")
+    local frame_renderer = require("presentation.frame_renderer")
+    local captures = {}
+
+    local function slug(value)
+        local s = tostring(value or ""):lower():gsub("[^%w_-]+", "-")
+        return s:gsub("^%-+", ""):gsub("%-+$", "")
+    end
+
+    local function capture(path, vSession)
+        local canvas = love.graphics.newCanvas(gameWidth, gameHeight)
+        love.graphics.setCanvas({ canvas, stencil = true })
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        frame_renderer.draw(scene_host, renderer, vSession, loader, gameHeight)
+        love.graphics.setCanvas()
+        local png = canvas:newImageData():encode("png")
+        table.insert(captures, {
+            path = path,
+            image = love.data.encode("string", "base64", png),
+            scene = tostring(scene_host.getCurrent() or ""),
+        })
+    end
+
+    local ok, err = pcall(function()
+        require("presentation.ui").init()
+        for _, sceneDef in ipairs(loader.scenes or {}) do
+            math.randomseed(12345)
+            local vSession = makeHarnessSession(loader)
+            _G.activeSession = vSession
+            renderer.init(vSession)
+            scene_host.init(nil)
+
+            local sceneId = tostring(sceneDef.id)
+            local folder = slug(sceneDef.kind or "scene") .. "/" .. slug(sceneId)
+            local ctx = {
+                session = vSession, loader = loader,
+                party = vSession.party, events = {},
+            }
+
+            if sceneId == "map" then
+                exploration.loadMap(vSession, 1)
+                viewport_3d.init()
+                scene_host.push(sceneDef.id, ctx)
+            elseif sceneId == "battle" then
+                require("engine.scenes.battle").triggerTestBattle()
+            else
+                scene_host.push(sceneDef.id, ctx)
+            end
+
+            local state = scene_host.getCurrentState()
+            if sceneId == "shop" and state then
+                local keys = {}
+                for k in pairs(loader.shops or {}) do table.insert(keys, tostring(k)) end
+                table.sort(keys)
+                local shopData = keys[1] and loader.shops[keys[1]]
+                if shopData then
+                    state.v.shopName = shopData.name or "Shop"
+                    state.v.items = {}
+                    for _, shopItem in ipairs(shopData.items or {}) do
+                        local item = loader.getItem(shopItem.id)
+                        if item then
+                            table.insert(state.v.items, {
+                                id = item.id, name = item.name, icon = item.icon,
+                                description = item.description,
+                                cost = shopItem.price or item.cost or 0,
+                            })
+                        end
+                    end
+                    state.v.count = #state.v.items
+                end
+            elseif sceneId == "dialogue" and state then
+                exploration.loadMap(vSession, 1)
+                viewport_3d.init()
+                state.v.dialogueMode = "choice"
+                state.v.dialogueSpeaker = "Alicia"
+                state.v.dialoguePortrait = "NPC_Alicia"
+                state.v.dialogueText = "Welcome. What would you like to do?"
+                state.v.dialogueWaiting = false
+                state.v.dialogueOptions = { "Buy Consumables", "Talk", "Leave" }
+                state.v.dialogueCursorIdx = 1
+                state.winState = {}
+                state.windowOrder = {}
+                for _, window in ipairs(sceneDef.windows or {}) do
+                    state.winState[window.id] = { open = true }
+                    table.insert(state.windowOrder, window.id)
+                end
+                _G.dialogueEnterTime = -100
+            end
+
+            capture(folder .. "/00-initial.png", vSession)
+            for index, step in ipairs(sceneDef.screenshotScript or sceneDef.goldenScript or {}) do
+                scene_host.update(0.1, ctx)
+                scene_host.keypressed(step.key, ctx)
+                capture(string.format(
+                    "%s/%02d-after-%s.png", folder, index, slug(step.key or "step")
+                ), vSession)
+            end
+        end
+    end)
+
+    love.graphics.setCanvas()
+    print("SCREENSHOTS BEGIN")
+    print(json.encode(ok and {
+        width = gameWidth, height = gameHeight, captures = captures,
+    } or {
+        error = tostring(err), captures = captures,
+    }))
+    print("SCREENSHOTS END")
+    if not ok then error(err, 0) end
+end
+
 -- E12: headless SINGLE-WINDOW preview (`lovec . preview-window <windowId>
 -- [mockSpecJSON]`) for the reusable-window editor tab. A raw windowLayout
 -- entry has no scene — no hooks ever run — so this bypasses scene_host

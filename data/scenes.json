@@ -3225,6 +3225,26 @@
     "id": "battle",
     "name": "Battle",
     "kind": "battle",
+    "screenshotScript": [
+      {
+        "key": "return"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      }
+    ],
     "hooks": {
       "on_enter": [
         {
