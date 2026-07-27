@@ -159,6 +159,8 @@ function savegame.serialize(sessionObj, loader, sceneName)
         inventory = sessionObj.inventory,
         flags = sessionObj.flags,
         eventOverrides = sessionObj.eventOverrides,
+        mapStates = sessionObj.mapStates,
+        portalReturn = sessionObj.portalReturn,
         dungeonFloor = sessionObj.dungeonFloor,
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
@@ -184,6 +186,11 @@ function savegame.deserialize(data, loader)
     sess.inventory = data.inventory or {}
     sess.flags = data.flags or {}
     sess.eventOverrides = data.eventOverrides or {}
+    sess.mapStates = {}
+    for k, state in pairs(data.mapStates or {}) do
+        sess.mapStates[tonumber(k) or k] = state
+    end
+    sess.portalReturn = data.portalReturn
     sess.dungeonFloor = data.dungeonFloor or 1
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp

@@ -310,19 +310,38 @@ function exploration.generateDungeon(mapData, seed, session)
     
     local placedCount = 1
     
-    -- Spawn exit stairs dynamically
+    -- An authored stairs marker says this floor has a way down; generation
+    -- owns its resolved position. A deepest floor omits the marker and gets no
+    -- phantom exit.
+    local exitScriptId = dungeonConf("exitScriptId", 1)
+    local hasDownStairs = false
+    for _, ev in ipairs(mapData.events or {}) do
+        if ev.scriptId == exitScriptId then hasDownStairs = true break end
+    end
+    if hasDownStairs then
+        table.insert(generatedEvents, {
+            id = 99,
+            x = exitX - 1,
+            y = exitY - 1,
+            scriptId = exitScriptId,
+            sprite = dungeonConf("exitSprite", "assets/sprites/NPC00.png"),
+            trigger = "interact"
+        })
+    end
+
     table.insert(generatedEvents, {
-        id = 99,
-        x = exitX - 1,
-        y = exitY - 1,
-        scriptId = dungeonConf("exitScriptId", 1), -- Stairs trigger descend script
-        sprite = dungeonConf("exitSprite", "assets/sprites/NPC00.png"),
+        id = 98,
+        x = startX - 1,
+        y = startY - 1,
+        scriptId = dungeonConf("entranceScriptId", 40),
+        sprite = dungeonConf("entranceSprite", "assets/sprites/NPC00.png"),
         trigger = "interact"
     })
     
     -- Process events from mapData.events database
     if mapData.events then
         for _, ev in ipairs(mapData.events) do
+            if ev.scriptId ~= exitScriptId then
             local tx, ty
             if ev.spawn == "Fixed" and ev.x and ev.y then
                 tx, ty = ev.x + 1, ev.y + 1
@@ -350,6 +369,7 @@ function exploration.generateDungeon(mapData, seed, session)
                 placed.y = ty - 1
                 placed.trigger = ev.trigger or "interact"
                 table.insert(generatedEvents, placed)
+            end
             end
         end
     end
@@ -387,7 +407,7 @@ function exploration.generateDungeon(mapData, seed, session)
         end
     end
     
-    return grid, startX, startY, generatedEvents, generatedLights
+    return grid, startX, startY, exitX, exitY, generatedEvents, generatedLights
 end
 
 -- Unified per-cell override table (docs/design/tileset-and-events-redesign.md
@@ -418,8 +438,47 @@ function exploration.mutateTile(session, x, y, to)
     return true
 end
 
--- Initialize map state in GameSession
-function exploration.loadMap(session, mapIdx)
+local function cacheCurrentMap(session)
+    local mapData = session.currentMapData
+    if not mapData or mapData.safe == true or not session.currentMapIndex then return end
+    session.mapStates = session.mapStates or {}
+    session.mapStates[session.currentMapIndex] = {
+        mapGrid = session.mapGrid,
+        visitedGrid = session.visitedGrid,
+        events = mapData.events,
+        runtimeLight = mapData.runtimeLight,
+        generatedLightObjects = session.generatedLightObjects,
+        entranceX = mapData.entranceX,
+        entranceY = mapData.entranceY,
+        exitX = mapData.exitX,
+        exitY = mapData.exitY,
+        playerX = session.playerX,
+        playerY = session.playerY,
+        playerDir = session.playerDir,
+    }
+end
+
+local function arrivalBeside(grid, landmarkX, landmarkY)
+    local candidates = {
+        { landmarkX, landmarkY + 1, "N" },
+        { landmarkX, landmarkY - 1, "S" },
+        { landmarkX + 1, landmarkY, "W" },
+        { landmarkX - 1, landmarkY, "E" },
+    }
+    for _, c in ipairs(candidates) do
+        local row = grid[c[2]]
+        if row and row[c[1]] and row[c[1]] ~= "#" then
+            return c[1], c[2], c[3]
+        end
+    end
+    error("exploration.loadMap: no passable arrival tile beside staircase")
+end
+
+-- Initialize or restore map state in GameSession. `arrival` is authored by the
+-- transfer command: entrance when descending, exit when climbing, and resume
+-- for a temporary town portal.
+function exploration.loadMap(session, mapIdx, opts)
+    opts = opts or {}
     local rawMapData = session.loader.maps[mapIdx]
     -- A transfer to a map that does not exist used to load an empty table and
     -- leave the player standing in a blank world; say so instead.
@@ -432,9 +491,14 @@ function exploration.loadMap(session, mapIdx)
     local wasSafe = not (session.currentMapData and session.currentMapData.safe == false)
         and (session.currentMapData == nil or session.currentMapData.safe == true)
     local goingDangerous = not (rawMapData.safe == true)
-    if wasSafe and goingDangerous and session.party then
+    if wasSafe and goingDangerous and opts.arrival ~= "resume" and session.party then
+        -- A completed physical return ends the expedition. The next departure
+        -- gets a fresh labyrinth, while every transfer within an expedition
+        -- restores the cached route. Portal resume is explicitly exempt.
+        session.mapStates = {}
         require("engine.flow").run("exploration.expedition_start", { session = session, party = session.party })
     end
+    cacheCurrentMap(session)
     session.currentMapIndex = mapIdx
     -- How deep the party is, is a property of the map it is standing on, not a
     -- counter that one command remembers to bump. Deriving it here means every
@@ -447,7 +511,7 @@ function exploration.loadMap(session, mapIdx)
     session.currentMapData = mapData
     session.tempEventOverrides = {}
     
-    local grid, startX, startY
+    local grid, startX, startY, startDir
     if mapData.safe then
         -- Load fixed town layout
         grid = {}
@@ -461,6 +525,7 @@ function exploration.loadMap(session, mapIdx)
         local startXDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.x or 10
         local startYDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.y or 17
         startX, startY = startXDef + 1, startYDef + 1 -- Lua is 1-indexed, systems spawn is 0-indexed
+        startDir = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.dir or "N"
 
         -- Safe/authored maps use the same tileset fixture rules as generated
         -- maps. Without this, wall fixtures configured in a tileset never
@@ -475,27 +540,57 @@ function exploration.loadMap(session, mapIdx)
             end
         end
     else
-        -- Procedurally generate floor layout and inject events
-        local generatedEvents, generatedLights
-        grid, startX, startY, generatedEvents, generatedLights = exploration.generateDungeon(mapData, os.time() + mapIdx, session)
-        session.currentMapData.events = generatedEvents
-        session.generatedLightObjects = generatedLights
-        session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
+        local saved = session.mapStates and session.mapStates[mapIdx]
+        if saved then
+            grid = saved.mapGrid
+            session.currentMapData.events = saved.events
+            session.generatedLightObjects = saved.generatedLightObjects
+            session.currentMapData.runtimeLight = saved.runtimeLight
+            session.currentMapData.entranceX = saved.entranceX
+            session.currentMapData.entranceY = saved.entranceY
+            session.currentMapData.exitX = saved.exitX
+            session.currentMapData.exitY = saved.exitY
+            session.visitedGrid = saved.visitedGrid
+        else
+            local entranceX, entranceY, exitX, exitY, generatedEvents, generatedLights
+            grid, entranceX, entranceY, exitX, exitY, generatedEvents, generatedLights =
+                exploration.generateDungeon(mapData, os.time() + mapIdx, session)
+            session.currentMapData.events = generatedEvents
+            session.generatedLightObjects = generatedLights
+            session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
+            session.currentMapData.entranceX = entranceX
+            session.currentMapData.entranceY = entranceY
+            session.currentMapData.exitX = exitX
+            session.currentMapData.exitY = exitY
+        end
+
+        if opts.arrival == "resume" and saved then
+            startX, startY, startDir = saved.playerX, saved.playerY, saved.playerDir
+        elseif opts.arrival == "exit" then
+            startX, startY, startDir = arrivalBeside(
+                grid, session.currentMapData.exitX, session.currentMapData.exitY)
+        else
+            startX, startY, startDir = arrivalBeside(
+                grid, session.currentMapData.entranceX, session.currentMapData.entranceY)
+        end
     end
     
     session.mapGrid = grid
     exploration.buildOverrideIndex(session)
     session.playerX = startX
     session.playerY = startY
-    session.playerDir = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.dir or "N"
+    session.playerDir = startDir or "N"
     
     -- Initialize Fog-of-War (visited tiles)
-    session.visitedGrid = {}
     local isSafeMap = mapData.safe == true
-    for y = 1, #grid do
-        session.visitedGrid[y] = {}
-        for x = 1, #grid[y] do
-            session.visitedGrid[y][x] = isSafeMap
+    local restored = not isSafeMap and session.mapStates and session.mapStates[mapIdx]
+    if not restored then
+        session.visitedGrid = {}
+        for y = 1, #grid do
+            session.visitedGrid[y] = {}
+            for x = 1, #grid[y] do
+                session.visitedGrid[y][x] = isSafeMap
+            end
         end
     end
     if not isSafeMap then

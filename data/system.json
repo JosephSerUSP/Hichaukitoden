@@ -183,6 +183,8 @@
     "genMaxRoomSize": 5,
     "exitSprite": "assets/sprites/NPC00.png",
     "exitScriptId": 1,
+    "entranceSprite": "assets/sprites/NPC00.png",
+    "entranceScriptId": 40,
     "playerLight": {
       "enabled": true,
       "radius": 3.5,

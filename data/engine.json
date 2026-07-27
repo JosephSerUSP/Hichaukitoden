@@ -238,6 +238,14 @@
       "description": "Set false to keep an item out of Item Creation INGREDIENT selection. Independent of `craftable`, which only excludes outputs: monster remains are ingredients that are never produced (craftable false, craftIngredient absent), while a promotion key is neither (both false). Opt-out for the same reason craftable is."
     },
     {
+      "key": "dungeonOnly",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "flag",
+      "description": "When true, field-item usability rejects the item on safe maps before it can be consumed. Used by traversal tools such as Town Portal."
+    },
+    {
       "key": "detect",
       "appliesTo": [
         "mapEvents",
@@ -1236,6 +1244,16 @@
         {
           "key": "mapId",
           "type": "number"
+        },
+        {
+          "key": "arrival",
+          "type": "select",
+          "options": [
+            "entrance",
+            "exit",
+            "resume"
+          ],
+          "optional": true
         }
       ],
       "contexts": [
@@ -1244,7 +1262,37 @@
         "common"
       ],
       "interactive": false,
-      "description": "Loads the map with the given index into the session (title New Game, warps). If mapId is omitted, defaults to system.spawn.mapId."
+      "description": "Loads or restores a map. Dangerous floors persist after first generation. arrival selects the landmark beside which the player appears: entrance when descending, exit when climbing, resume for exact saved position."
+    },
+    {
+      "id": "PORTAL_TO_TOWN",
+      "category": "Progression",
+      "label": "Open Town Portal",
+      "params": [
+        {
+          "key": "mapId",
+          "type": "number",
+          "optional": true
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Stores the current dungeon map and exact position, then temporarily returns to the safe map. Fails loudly if used outside a dungeon."
+    },
+    {
+      "id": "RETURN_TO_PORTAL",
+      "category": "Progression",
+      "label": "Return Through Town Portal",
+      "params": [],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Returns to the exact dungeon tile stored by PORTAL_TO_TOWN, then closes the portal. Fails loudly when no portal is open."
     },
     {
       "id": "QUIT_GAME",

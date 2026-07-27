@@ -706,6 +706,32 @@ independent 0.5 protections must be a quarter, not zero. Defend is now
 and had inconsistent value under the relative curve. The same trait serves
 barriers, protective equipment and vulnerability states.
 
+### 1.14 Persistent expedition routes and Town Portal (27.07.2026)
+
+A procedural floor is generated once per **expedition**, not once per map
+transfer. `GameSession.mapStates` retains each visited dangerous map's grid,
+events, fog, lighting, entrance, exit and last player position. Descending,
+climbing, and portal travel restore that snapshot; a new safe-to-dangerous
+departure clears the completed route and begins a fresh expedition.
+
+Every generated floor has two physical landmarks. Common event 1 is the lower
+stair and loads the next map with `LOAD_MAP arrival: entrance`. Common event 40
+is the upper stair: Floor 1 returns to the safe map, while deeper floors load
+the previous map with `arrival: exit`. Arrival is always on a passable adjacent
+tile facing the relevant stair, never on top of its event.
+
+`LOAD_MAP.arrival` is registry-authored (`entrance`, `exit`, `resume`).
+`PORTAL_TO_TOWN` and `RETURN_TO_PORTAL` are reusable command primitives:
+the first stores map, exact tile and facing before loading safety; the second
+restores that point and closes the seam. Portal resume does not start a new
+expedition or reroll any floor. Both the floor cache and an open portal
+round-trip through `savegame.lua`.
+
+The Town Portal item invokes the primitive through an ordinary common-event
+effect. Its `meta.dungeonOnly` is registered and editor-authorable; usability
+rejects it on safe maps before consumption. Cost, sources and scarcity remain
+content balance rather than engine policy.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

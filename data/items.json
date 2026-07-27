@@ -4484,5 +4484,26 @@
       "craftIngredient": false
     },
     "id": 196
+  },
+  {
+    "name": "Town Portal",
+    "type": "consumable",
+    "cost": 1200,
+    "icon": 103,
+    "description": "Returns temporarily to St. Maria. The open seam leads back to the exact place it was used.",
+    "effects": [
+      {
+        "type": "common_event",
+        "value": 41
+      }
+    ],
+    "scope": "field",
+    "target": "none",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false,
+      "dungeonOnly": true
+    },
+    "id": 197
   }
 ]

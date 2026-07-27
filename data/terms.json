@@ -62,7 +62,7 @@
       "AMR",
       "ACC"
     ],
-    "exit_prompt": "Quit Hichaukitoden and exit to the desktop?",
+    "exit_prompt": "Quit Second Rite and exit to the desktop?",
     "exit_options": [
       "YES",
       "NO"
@@ -122,7 +122,7 @@
     "replace_member": "[Recruit] You replace {0} with {1}."
   },
   "title": {
-    "subtitle": "",
+    "subtitle": "Second Rite: Thestra no Jijou",
     "options": [
       "New Game",
       "Continue",

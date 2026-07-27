@@ -31,6 +31,10 @@ function usability.canUseItem(item, target, context)
     end
 
     local session = context.session
+    if item.meta and item.meta.dungeonOnly
+        and (not session or not session.currentMapData or session.currentMapData.safe == true) then
+        return false, "Can only be used in the dungeon"
+    end
 
     -- Global / No-target checks
     if item.target == "none" or item.target == "party"

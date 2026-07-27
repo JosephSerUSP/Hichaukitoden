@@ -257,6 +257,14 @@
                           if (checked) { it.meal = true; it.scope = 'field'; }
                           else { delete it.meal; }
                       } },
+                    { kind: 'checkbox', key: '_dungeonOnly', label: 'Dungeon use only',
+                      when: it => it.type === 'consumable',
+                      get: it => !!(it.meta || {}).dungeonOnly,
+                      set: (it, checked) => {
+                          it.meta = it.meta || {};
+                          if (checked) it.meta.dungeonOnly = true;
+                          else delete it.meta.dungeonOnly;
+                      } },
                     { kind: 'custom', when: it => it.type === 'consumable',
                       build: (c, it) => buildChecklistField(c, 'Food Tags',
                           ((dbPayload.engine && dbPayload.engine.foodTags) || []).map(x => x.tag),

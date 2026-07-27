@@ -1573,7 +1573,38 @@ handlers.LOAD_MAP = function(cmd, ctx)
     local sys = ctx.session.loader and ctx.session.loader.system
     local spawnMapId = sys and sys.spawn and sys.spawn.mapId
     local mapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx)) or spawnMapId or 1
-    exploration.loadMap(ctx.session, mapId)
+    exploration.loadMap(ctx.session, mapId, { arrival = cmd.arrival })
+end
+
+handlers.PORTAL_TO_TOWN = function(cmd, ctx)
+    local session = ctx.session
+    if not session.currentMapData or session.currentMapData.safe == true then
+        error("PORTAL_TO_TOWN requires the party to be inside a dungeon")
+    end
+    session.portalReturn = {
+        mapIndex = session.currentMapIndex,
+        playerX = session.playerX,
+        playerY = session.playerY,
+        playerDir = session.playerDir,
+    }
+    session.flags.portal_open = true
+    local sys = session.loader and session.loader.system
+    local townMapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx))
+        or (sys and sys.spawn and sys.spawn.mapId) or 1
+    require("engine.exploration").loadMap(session, townMapId)
+end
+
+handlers.RETURN_TO_PORTAL = function(_, ctx)
+    local session = ctx.session
+    local portal = session.portalReturn
+    if not portal then error("RETURN_TO_PORTAL requires an open town portal") end
+    local exploration = require("engine.exploration")
+    exploration.loadMap(session, portal.mapIndex, { arrival = "resume" })
+    session.playerX = portal.playerX
+    session.playerY = portal.playerY
+    session.playerDir = portal.playerDir
+    session.portalReturn = nil
+    session.flags.portal_open = nil
 end
 
 -- E10: quit the game (title Exit). No-op outside a LOVE runtime.

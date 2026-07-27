@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "title": "Town of Stillnight",
-    "intro": "A quiet settlement on the edge of the void.",
+    "title": "St. Maria",
+    "intro": "A remote settlement living from the Labyrinth beneath it.",
     "depth": 0,
     "tileset": "town_default",
     "ceilingStyle": "sky",
@@ -46,7 +46,7 @@
             "sprite": "assets/sprites/NPC10.png",
             "commands": [
               {
-                "commonEventId": 33,
+                "commonEventId": 34,
                 "cmd": "CALL_COMMON_EVENT"
               }
             ]
@@ -458,67 +458,8 @@
         "label": "Yukio",
         "commands": [
           {
-            "name": "yukio_hub",
-            "cmd": "LABEL"
-          },
-          {
-            "text": "Efficiency is key. Do not waste my time.",
-            "cmd": "TEXT"
-          },
-          {
-            "options": [
-              {
-                "label": "You’re a Summoner too.",
-                "commands": [
-                  {
-                    "text": "I summon because I don’t trust people to stand where I need them. Creatures are honest. They take payment and they do the job.",
-                    "cmd": "TEXT"
-                  },
-                  {
-                    "options": [
-                      {
-                        "label": "Sounds lonely.",
-                        "commands": [
-                          {
-                            "text": "Lonely is a luxury. You’ll learn that if you keep surviving.",
-                            "cmd": "TEXT"
-                          },
-                          {
-                            "options": [
-                              {
-                                "label": "Back",
-                                "commands": [
-                                  {
-                                    "label": "yukio_hub",
-                                    "cmd": "JUMP_TO_LABEL"
-                                  }
-                                ]
-                              }
-                            ],
-                            "cmd": "CHOICE"
-                          }
-                        ]
-                      },
-                      {
-                        "label": "Back",
-                        "commands": [
-                          {
-                            "label": "yukio_hub",
-                            "cmd": "JUMP_TO_LABEL"
-                          }
-                        ]
-                      }
-                    ],
-                    "cmd": "CHOICE"
-                  }
-                ]
-              },
-              {
-                "label": "Leave",
-                "commands": []
-              }
-            ],
-            "cmd": "CHOICE"
+            "commonEventId": 36,
+            "cmd": "CALL_COMMON_EVENT"
           }
         ]
       },
@@ -530,6 +471,16 @@
         "trigger": "interact",
         "name": "Laura",
         "label": "Laura",
+        "pages": [
+          {
+            "commands": [
+              {
+                "commonEventId": 39,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ]
+          }
+        ],
         "commands": [
           {
             "condition": "questStatus:golden_promise:active",
@@ -738,6 +689,16 @@
         "trigger": "interact",
         "name": "Alicia",
         "label": "Pink-haired girl",
+        "pages": [
+          {
+            "commands": [
+              {
+                "commonEventId": 38,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ]
+          }
+        ],
         "commands": [
           {
             "condition": "questStatus:silent_shipment:active",
@@ -960,6 +921,16 @@
         "sprite": "assets/sprites/NPC04.png",
         "trigger": "interact",
         "name": "Pub Owner",
+        "pages": [
+          {
+            "commands": [
+              {
+                "commonEventId": 37,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ]
+          }
+        ],
         "commands": [
           {
             "name": "pub_main",
@@ -1551,8 +1522,8 @@
         "label": "Temple",
         "commands": [
           {
-            "text": "The temple is quiet. You feel a sense of peace.",
-            "cmd": "TEXT"
+            "commonEventId": 35,
+            "cmd": "CALL_COMMON_EVENT"
           }
         ]
       },
@@ -1560,7 +1531,7 @@
         "x": 9,
         "y": 6,
         "name": "EV012",
-        "label": "Mysterious Woman",
+        "label": "Sister Agnes",
         "trigger": "interact",
         "sprite": "assets/sprites/NPC11.png",
         "transparent": false,
@@ -1569,39 +1540,32 @@
         "id": 12,
         "commands": [
           {
-            "cmd": "GRANT_XP",
-            "target": "summoner",
-            "amount": "1500"
-          },
-          {
-            "text": "I have granted you a great deal of EXP, summoner.",
-            "speaker": "",
-            "cmd": "TEXT"
-          },
-          {
-            "options": [
+            "condition": "flag:agnes_met",
+            "commands": [
               {
-                "label": "Thank her",
-                "commands": [
-                  {
-                    "text": "My pleasure.",
-                    "speaker": "",
-                    "cmd": "TEXT"
-                  }
-                ]
-              },
-              {
-                "label": "Nod",
-                "commands": [
-                  {
-                    "text": "She nods you back.",
-                    "speaker": "",
-                    "cmd": "TEXT"
-                  }
-                ]
+                "text": "The lantern frames are nearly finished. We begin after your third safe return.",
+                "speaker": "Sister Agnes",
+                "cmd": "TEXT"
               }
             ],
-            "cmd": "CHOICE"
+            "elseCommands": [
+              {
+                "text": "You must be the new Summoner. Welcome to St. Maria. I am Agnes. Please forgive the mess—we are preparing for the Vigil of the Second Bell.",
+                "speaker": "Sister Agnes",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "We celebrate those who returned. At midnight, we remember those who remain below. You arrived between the two lists.",
+                "speaker": "Sister Agnes",
+                "cmd": "TEXT"
+              },
+              {
+                "flag": "agnes_met",
+                "value": true,
+                "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
           }
         ]
       }

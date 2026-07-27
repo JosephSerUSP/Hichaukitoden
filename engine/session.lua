@@ -211,6 +211,8 @@ function GameSession.new(loader)
     self.inventory = {}
     self.flags = {}
     self.dungeonFloor = 1
+    self.mapStates = {}
+    self.portalReturn = nil
     -- The graveyard: one record per creature that left the party permanently
     -- (reaped or sacrificed), keeping its history after the battler object is
     -- gone. This is what makes a loss legible days later instead of a silently

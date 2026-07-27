@@ -658,7 +658,7 @@
         "content": [
           {
             "type": "text",
-            "text": "--\\c[6]HICHAUKITODEN\\c[0]--"
+            "text": "\\c[6]SECOND RITE\\c[0]\\nThestra no Jijou"
           }
         ]
       },
@@ -5349,7 +5349,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Quit Hichaukitoden and exit to the desktop?"
+            "text": "Quit Second Rite and exit to the desktop?"
           },
           {
             "type": "list",

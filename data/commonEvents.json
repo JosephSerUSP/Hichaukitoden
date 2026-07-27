@@ -27,7 +27,8 @@
               },
               {
                 "cmd": "LOAD_MAP",
-                "mapId": "session.floor + 2"
+                "mapId": "session.floor + 2",
+                "arrival": "entrance"
               }
             ]
           },
@@ -837,6 +838,647 @@
           }
         ],
         "cmd": "CHOICE"
+      }
+    ]
+  },
+  "34": {
+    "name": "St. Maria Gate Hub",
+    "commands": [
+      {
+        "name": "st_maria_gate",
+        "cmd": "LABEL"
+      },
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "The wax is still on the stones. One lantern burned until morning. Nobody admits it was theirs.",
+            "speaker": "Gatekeeper",
+            "cmd": "TEXT"
+          }
+        ],
+        "elseCommands": [
+          {
+            "condition": "flag:vigil_ready",
+            "commands": [
+              {
+                "text": "You came back under your own power. Good. Agnes has been waiting at the chapel. The first bell will sound at dusk.",
+                "speaker": "Gatekeeper",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "condition": "flag:first_return",
+                "commands": [
+                  {
+                    "text": "The lanterns gain another layer each time you return. St. Maria is learning the shape of you.",
+                    "speaker": "Gatekeeper",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "Beyond this gate, the boundary between souls gives way. Keep hold of your name. Your creatures can fight for you, but only you can keep summoning yourself.",
+                    "speaker": "Gatekeeper",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      },
+      {
+        "options": [
+          {
+            "label": "Enter the Labyrinth",
+            "commands": [
+              {
+                "flag": "dungeon_entered",
+                "value": true,
+                "cmd": "SET_FLAG"
+              },
+              {
+                "text": "The gate opens. For one breath, you feel yourself standing on both sides of it.",
+                "cmd": "TEXT"
+              },
+              {
+                "cmd": "LOAD_MAP",
+                "mapId": "2"
+              }
+            ]
+          },
+          {
+            "label": "Ask about the Vigil",
+            "commands": [
+              {
+                "text": "One bell for those who came home. The second for those still below. We do not say dead here. The Labyrinth is particular about words.",
+                "speaker": "Gatekeeper",
+                "cmd": "TEXT"
+              },
+              {
+                "label": "st_maria_gate",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Return through the portal",
+            "condition": "flag:portal_open",
+            "commands": [
+              {
+                "cmd": "RETURN_TO_PORTAL"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": []
+          }
+        ],
+        "cmd": "CHOICE"
+      }
+    ]
+  },
+  "35": {
+    "name": "Chapel and Vigil",
+    "commands": [
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "The chapel smells of cold wax and wet flowers. A single unclaimed lantern rests beneath the bell rope.",
+            "cmd": "TEXT"
+          },
+          {
+            "options": [
+              {
+                "label": "Read the lantern.",
+                "commands": [
+                  {
+                    "text": "The card bears one name: THESTRA. The ink is fresh. The handwriting is yours.",
+                    "cmd": "TEXT"
+                  },
+                  {
+                    "flag": "thestra_lantern_seen",
+                    "value": true,
+                    "cmd": "SET_FLAG"
+                  }
+                ]
+              },
+              {
+                "label": "Leave it alone.",
+                "commands": []
+              }
+            ],
+            "cmd": "CHOICE"
+          }
+        ],
+        "elseCommands": [
+          {
+            "condition": "flag:vigil_ready",
+            "commands": [
+              {
+                "text": "Lanterns crowd the chapel steps. Each carries a human name. Agnes holds an empty one aside for you.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Attend the Vigil.",
+                    "commands": [
+                      {
+                        "text": "At dusk, St. Maria closes its shops. Bakers, guards, children and scavengers gather without being called.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "text": "The first bell names the living. When Agnes speaks your name, the village answers: RETURNED.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "text": "At midnight, lanterns are carried to the Labyrinth gate. The second bell names those who remain below.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "text": "After the final name, something beneath St. Maria rings a third time.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "text": "Every flame bends toward the gate. One extinguished lantern relights by itself.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "vigil_held",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Not yet.",
+                    "commands": [
+                      {
+                        "text": "Agnes nods. \"The village can wait. It has practice.\"",
+                        "cmd": "TEXT"
+                      }
+                    ]
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "Lantern frames hang from the chapel eaves. Most are still empty.",
+                "cmd": "TEXT"
+              },
+              {
+                "condition": "flag:first_return",
+                "commands": [
+                  {
+                    "text": "The lantern frames are being painted now. Agnes says the Vigil begins only after St. Maria has seen you leave and return three times.",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "A notice reads: THE VIGIL OF THE SECOND BELL WILL BE HELD AFTER THE NEW SUMMONER'S THIRD SAFE RETURN.",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      }
+    ]
+  },
+  "36": {
+    "name": "Yukio Vigil Hub",
+    "commands": [
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "Three bells. There are only two in the tower. I checked before you arrived.",
+            "speaker": "Yukio",
+            "cmd": "TEXT"
+          },
+          {
+            "options": [
+              {
+                "label": "You attended after all.",
+                "commands": [
+                  {
+                    "text": "I observed. Attendance implies belief.",
+                    "speaker": "Yukio",
+                    "cmd": "TEXT"
+                  }
+                ]
+              },
+              {
+                "label": "Whose lantern did you carry?",
+                "commands": [
+                  {
+                    "text": "You mistake possession for sentiment. A common Summoner's error.",
+                    "speaker": "Yukio",
+                    "cmd": "TEXT"
+                  }
+                ]
+              },
+              {
+                "label": "Leave",
+                "commands": []
+              }
+            ],
+            "cmd": "CHOICE"
+          }
+        ],
+        "elseCommands": [
+          {
+            "text": "You are the new Summoner. Try to survive until the Vigil. The village enjoys having a fresh name to read at the first bell.",
+            "speaker": "Yukio",
+            "cmd": "TEXT"
+          },
+          {
+            "options": [
+              {
+                "label": "You're a Summoner too.",
+                "commands": [
+                  {
+                    "text": "Yes. I simply learned that entering and returning are different disciplines.",
+                    "speaker": "Yukio",
+                    "cmd": "TEXT"
+                  }
+                ]
+              },
+              {
+                "label": "Leave",
+                "commands": []
+              }
+            ],
+            "cmd": "CHOICE"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      }
+    ]
+  },
+  "37": {
+    "name": "Rusty Tankard Vigil Hub",
+    "commands": [
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "The Tankard is open late for cleanup. Half the village is helping; the other half is pretending not to have a headache.",
+            "cmd": "TEXT"
+          },
+          {
+            "options": [
+              {
+                "label": "Ask about the third bell.",
+                "commands": [
+                  {
+                    "text": "The bartender stops wiping the same cup. \"Two bells,\" she says. \"You heard two.\"",
+                    "cmd": "TEXT"
+                  }
+                ]
+              },
+              {
+                "label": "Buy a drink.",
+                "commands": [
+                  {
+                    "shopId": 5,
+                    "cmd": "OPEN_SHOP"
+                  }
+                ]
+              },
+              {
+                "label": "Leave",
+                "commands": []
+              }
+            ],
+            "cmd": "CHOICE"
+          }
+        ],
+        "elseCommands": [
+          {
+            "condition": "flag:first_return",
+            "commands": [
+              {
+                "text": "Tables have been pushed against the walls. Children are threading flowers while the bartender counts cups for the Vigil.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "The Rusty Tankard smells of bread, lamp oil and fresh-cut flowers. Nobody admits that this is festival preparation.",
+                "cmd": "TEXT"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          },
+          {
+            "options": [
+              {
+                "label": "Buy a drink.",
+                "commands": [
+                  {
+                    "shopId": 5,
+                    "cmd": "OPEN_SHOP"
+                  }
+                ]
+              },
+              {
+                "label": "Ask about the lanterns.",
+                "commands": [
+                  {
+                    "text": "\"Missing get a flame until dawn. Dead get darkness. Summons get neither.\" The bartender frowns. \"Old rule.\"",
+                    "cmd": "TEXT"
+                  }
+                ]
+              },
+              {
+                "label": "Leave",
+                "commands": []
+              }
+            ],
+            "cmd": "CHOICE"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      }
+    ]
+  },
+  "38": {
+    "name": "Alicia Vigil Hub",
+    "commands": [
+      {
+        "name": "alicia_vigil_hub",
+        "cmd": "LABEL"
+      },
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "Alicia is scraping wax from a tray. One small lantern, hidden behind the counter, bears no human name.",
+            "speaker": "Alicia",
+            "cmd": "TEXT"
+          }
+        ],
+        "elseCommands": [
+          {
+            "condition": "flag:first_return",
+            "commands": [
+              {
+                "text": "You came back! Sorry—everyone keeps saying that as if we doubted you. I saved you a honey roll before the Vigil crowd takes them.",
+                "speaker": "Alicia",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "Oh! You're the new Summoner. I'm Alicia. Please drink water before you descend. People return looking like they forgot they have bodies.",
+                "speaker": "Alicia",
+                "cmd": "TEXT"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      },
+      {
+        "options": [
+          {
+            "label": "Buy supplies.",
+            "commands": [
+              {
+                "shopId": 1,
+                "cmd": "OPEN_SHOP"
+              },
+              {
+                "label": "alicia_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Ask about summon lanterns.",
+            "commands": [
+              {
+                "condition": "flag:vigil_held",
+                "commands": [
+                  {
+                    "text": "\"The old rule says they don't need them.\" She covers the hidden lantern with a cloth. \"Old rules can be lonely.\"",
+                    "speaker": "Alicia",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "\"Officially? We don't make them.\" Alicia lowers her voice. \"But if one of yours needs a light, tell me its name.\"",
+                    "speaker": "Alicia",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              },
+              {
+                "label": "alicia_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": []
+          }
+        ],
+        "cmd": "CHOICE"
+      }
+    ]
+  },
+  "39": {
+    "name": "Laura Vigil Hub",
+    "commands": [
+      {
+        "name": "laura_vigil_hub",
+        "cmd": "LABEL"
+      },
+      {
+        "condition": "flag:vigil_held",
+        "commands": [
+          {
+            "text": "Laura's forge is cold. She is hammering old lantern frames flat for reuse.",
+            "speaker": "Laura",
+            "cmd": "TEXT"
+          }
+        ],
+        "elseCommands": [
+          {
+            "condition": "flag:first_return",
+            "commands": [
+              {
+                "text": "Back already? Sensible. Agnes wants every forge cold before the second bell. Apparently grief is flammable.",
+                "speaker": "Laura",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "New Summoner? Don't buy a heroic weapon. Buy something that still works while you're running home.",
+                "speaker": "Laura",
+                "cmd": "TEXT"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      },
+      {
+        "options": [
+          {
+            "label": "Shop weapons.",
+            "commands": [
+              {
+                "shopId": 2,
+                "cmd": "OPEN_SHOP"
+              },
+              {
+                "label": "laura_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Ask about the Vigil.",
+            "commands": [
+              {
+                "text": "\"St. Maria mourns beautifully.\" Laura turns a lantern frame in the tongs. \"Then it sends somebody else down.\"",
+                "speaker": "Laura",
+                "cmd": "TEXT"
+              },
+              {
+                "label": "laura_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Leave",
+            "commands": []
+          }
+        ],
+        "cmd": "CHOICE"
+      }
+    ]
+  },
+  "40": {
+    "name": "Dungeon Entrance Stairs",
+    "label": "Stairs Up",
+    "minimapColor": [
+      0,
+      0.8,
+      0.8
+    ],
+    "commands": [
+      {
+        "text": "Climb toward St. Maria?",
+        "cmd": "TEXT"
+      },
+      {
+        "options": [
+          {
+            "label": "Climb up",
+            "commands": [
+              {
+                "condition": "session.floor == 1",
+                "commands": [
+                  {
+                    "flag": "first_return",
+                    "value": true,
+                    "cmd": "SET_FLAG"
+                  },
+                  {
+                    "condition": "flag:incursion_two_completed",
+                    "commands": [
+                      {
+                        "flag": "vigil_ready",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "condition": "flag:incursion_one_completed",
+                        "commands": [
+                          {
+                            "flag": "incursion_two_completed",
+                            "value": true,
+                            "cmd": "SET_FLAG"
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "flag": "incursion_one_completed",
+                            "value": true,
+                            "cmd": "SET_FLAG"
+                          }
+                        ],
+                        "cmd": "CONDITIONAL_BRANCH"
+                      }
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
+                  },
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": "1"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": "session.floor",
+                    "arrival": "exit"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              }
+            ]
+          },
+          {
+            "label": "Stay",
+            "commands": []
+          }
+        ],
+        "cmd": "CHOICE"
+      }
+    ]
+  },
+  "41": {
+    "name": "Town Portal",
+    "commands": [
+      {
+        "text": "A narrow blue seam opens through the boundary.",
+        "cmd": "TEXT"
+      },
+      {
+        "flag": "portal_open",
+        "value": true,
+        "cmd": "SET_FLAG"
+      },
+      {
+        "cmd": "PORTAL_TO_TOWN"
       }
     ]
   }
