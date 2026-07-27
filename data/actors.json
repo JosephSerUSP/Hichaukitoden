@@ -1225,6 +1225,7 @@
       "Puddle",
       "Gunk"
     ],
+    "flavor": "A patient mass that accepts almost anything into itself. Its unusual resilience makes it useful in battle and Item Creation.",
     "baseParams": {
       "maxHp": 65,
       "atk": 7,
@@ -1324,6 +1325,7 @@
       "Belfry",
       "Screech"
     ],
+    "flavor": "A frail cave flier guided by sound rather than sight. Its low burden and speed reward careful positioning.",
     "baseParams": {
       "maxHp": 30,
       "atk": 16,
@@ -1429,6 +1431,7 @@
       "Will-o",
       "Lumen"
     ],
+    "flavor": "A drifting light that quietly mends its companions while traveling. It is fragile, expensive to manifest, and invaluable on long expeditions.",
     "baseParams": {
       "maxHp": 40,
       "atk": 5,
@@ -1493,6 +1496,7 @@
       "Quiche",
       "Coddle"
     ],
+    "flavor": "A creature whose shell conceals an outcome fixed by its provenance. Keep it alive until level ten and the dungeon will reveal what was inside.",
     "level": 1,
     "role": "None",
     "spriteKey": "egg",
@@ -1626,6 +1630,7 @@
       "Ignis",
       "Sol"
     ],
+    "flavor": "A sacred bird hatched from a Mystic Egg. Its tremendous power is matched by an exceptional MP burden.",
     "baseParams": {
       "maxHp": 85,
       "atk": 19,
@@ -1761,6 +1766,7 @@
   {
     "id": 18,
     "name": "Crimson Lord",
+    "names": ["Carmine", "Vlad", "Rubra", "Sangue", "Noctis", "Rosa", "Drake", "Scarlet"],
     "favoriteFoods": [
       172,
       182,
@@ -1836,6 +1842,7 @@
   {
     "id": 19,
     "name": "Flauros",
+    "names": ["Flauros", "Raja", "Brasa", "Leo", "Mane", "Cinza", "Rugido", "Neko"],
     "favoriteFoods": [
       172,
       182,
@@ -1924,6 +1931,7 @@
   {
     "id": 20,
     "name": "Candle",
+    "names": ["Wick", "Tallow", "Lumi", "Chama", "Pavio", "Melt", "Vela", "Flicker"],
     "favoriteFoods": [
       179,
       180,
@@ -2016,6 +2024,8 @@
   {
     "id": 21,
     "name": "Shadow Stalker",
+    "names": ["Umbra", "Sombra", "Nox", "Shade", "Kage", "Velvet", "Murk", "Silêncio"],
+    "flavor": "A patient hunter that steps between shadows. Its speed and critical strikes reward precise aggression.",
     "favoriteFoods": [
       180,
       183,
@@ -2098,6 +2108,8 @@
   {
     "id": 22,
     "name": "Alex",
+    "names": ["Alex"],
+    "flavor": "A summoner bound to creatures by shared MP and shared consequence. Every expedition is shaped by whom Alex chooses to manifest.",
     "level": 1,
     "maxMp": 820,
     "role": "Summoner",
@@ -2157,9 +2169,8 @@
   {
     "id": 23,
     "name": "Undine",
-    "names": [
-      "Undine"
-    ],
+    "names": ["Nami", "Nerissa", "Maré", "Azul", "Rill", "Yara", "Luar", "Mizu"],
+    "flavor": "A water spirit learning to shape cold into magic. Its adaptable spellwork rewards patient raising.",
     "level": 1,
     "role": "None",
     "spriteKey": "Undine",
@@ -2241,9 +2252,8 @@
   {
     "id": 24,
     "name": "Proteus",
-    "names": [
-      "Proteus"
-    ],
+    "names": ["Nami", "Nerissa", "Maré", "Azul", "Rill", "Yara", "Luar", "Mizu"],
+    "flavor": "An androgynous water sage whose fluid body can hold the front line. It exchanges simple frost for healing and protection.",
     "level": 1,
     "role": "None",
     "spriteKey": "Proteus",
@@ -2269,7 +2279,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -2325,9 +2335,8 @@
   {
     "id": 25,
     "name": "Cocoon",
-    "names": [
-      "Cocoon"
-    ],
+    "names": ["Luma", "Seda", "Vesper", "Farol", "Opala", "Lux", "Noct", "Lua"],
+    "flavor": "Something enormous dreams behind the silk. Its patient light unsettles enemies even before it hatches.",
     "level": 1,
     "role": "None",
     "spriteKey": "Cocoon",
@@ -2353,7 +2362,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -2409,9 +2418,8 @@
   {
     "id": 26,
     "name": "Notiluca",
-    "names": [
-      "Notiluca"
-    ],
+    "names": ["Luma", "Seda", "Vesper", "Farol", "Opala", "Lux", "Noct", "Lua"],
+    "flavor": "A giant moth whose wings pulse like a midnight lantern. Its mesmerizing light turns an enemy formation against itself.",
     "level": 1,
     "role": "None",
     "spriteKey": "Notiluca",
@@ -2436,7 +2444,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -2492,9 +2500,8 @@
   {
     "id": 27,
     "name": "Gbl. Thief",
-    "names": [
-      "Gbl. Thief"
-    ],
+    "names": ["Pip", "Grift", "Neco", "Tico", "Sly", "Coin", "Prego", "Jiji"],
+    "flavor": "A quick-fingered goblin who knows when a fight has gone sour. Cheap to maintain, it excels at scouting and escape.",
     "level": 1,
     "role": "None",
     "spriteKey": "GblThief",
@@ -2580,9 +2587,8 @@
   {
     "id": 28,
     "name": "Gbl. Prince",
-    "names": [
-      "Gbl. Prince"
-    ],
+    "names": ["Pip", "Grift", "Neco", "Tico", "Sly", "Coin", "Prego", "Jiji"],
+    "flavor": "A goblin whose stolen crown has become strangely legitimate. It turns underhanded survival tricks into party leadership.",
     "level": 1,
     "role": "None",
     "spriteKey": "GblPrince",
@@ -2608,7 +2614,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -2664,9 +2670,8 @@
   {
     "id": 29,
     "name": "Homunculus",
-    "names": [
-      "Homunculus"
-    ],
+    "names": ["Aleph", "Nix", "Vitra", "Mercury", "Quinta", "Blank", "Soma", "Hom"],
+    "flavor": "An unfinished life cultivated in alchemical glass. Its future form is visible, but the reason for that destiny is deliberately obscure.",
     "level": 1,
     "role": "None",
     "spriteKey": "Homunculus",
@@ -2684,7 +2689,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -2805,9 +2810,8 @@
   {
     "id": 30,
     "name": "Mandrake",
-    "names": [
-      "Mandrake"
-    ],
+    "names": ["Raiz", "Mandie", "Basil", "Dália", "Nabo", "Taro", "Rue", "Salsa"],
+    "flavor": "A stubborn medicinal root with an alarming voice. It is more valuable in the kitchen than its humble appearance suggests.",
     "level": 1,
     "role": "None",
     "spriteKey": "Mandrake",
@@ -2833,7 +2837,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -2889,9 +2893,8 @@
   {
     "id": 31,
     "name": "Alraune",
-    "names": [
-      "Alraune"
-    ],
+    "names": ["Raiz", "Mandie", "Basil", "Dália", "Nabo", "Taro", "Rue", "Salsa"],
+    "flavor": "A flowering plant spirit steeped in restorative sap. Its cooking and support magic can sustain an entire expedition.",
     "level": 1,
     "role": "None",
     "spriteKey": "Alraune",
@@ -2916,7 +2919,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -2972,9 +2975,8 @@
   {
     "id": 32,
     "name": "Cerberus",
-    "names": [
-      "Cerberus"
-    ],
+    "names": ["Fang", "Hachi", "Brasa", "Três", "Nero", "Dante", "Cão", "Guardião"],
+    "flavor": "A three-headed guardian recruited long before most summoners can comfortably afford it. Its early power is balanced by poor growth and a hungry MP burden.",
     "level": 1,
     "role": "None",
     "spriteKey": "Cerberus",
@@ -2997,8 +2999,8 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": true,
-    "unlocked": true,
+    "isEvolved": false,
+    "unlocked": false,
     "tier": 2,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -3057,6 +3059,7 @@
     "names": [
       "Diablos"
     ],
+    "flavor": "A demon sealed inside the Forbidden Lamp. It joins only the summoner who survives its judgment and feeds that master MP with every killing blow.",
     "level": 1,
     "role": "None",
     "spriteKey": "Diablos",
@@ -3084,8 +3087,8 @@
     "evolutions": [],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true,
-    "unlocked": true,
+    "isEvolved": false,
+    "unlocked": false,
     "tier": 3,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -3141,9 +3144,8 @@
   {
     "id": 34,
     "name": "Dragon",
-    "names": [
-      "Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A young dragon whose element has not yet settled. The player may choose which affinity will shape its first promotion.",
     "level": 1,
     "role": "None",
     "spriteKey": "Dragon",
@@ -3187,8 +3189,8 @@
     ],
     "initialParty": false,
     "isRecruitable": false,
-    "isEvolved": true,
-    "unlocked": true,
+    "isEvolved": false,
+    "unlocked": false,
     "tier": 2,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -3244,9 +3246,8 @@
   {
     "id": 35,
     "name": "Red Dragon",
-    "names": [
-      "Red Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A dragon tempered by red flame. Its breath and forgecraft favor direct offense.",
     "level": 1,
     "role": "None",
     "spriteKey": "RedDragon",
@@ -3276,7 +3277,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -3332,9 +3333,8 @@
   {
     "id": 36,
     "name": "Salamander",
-    "names": [
-      "Salamander"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A mythic fire dragon awakened by a branch-specific catalyst. It distills destruction into the finest red creations.",
     "level": 1,
     "role": "None",
     "spriteKey": "Salamander",
@@ -3359,7 +3359,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -3415,9 +3415,8 @@
   {
     "id": 37,
     "name": "Blue Dragon",
-    "names": [
-      "Blue Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A dragon steeped in cold blue currents. It favors magical pressure and water-aligned creation.",
     "level": 1,
     "role": "None",
     "spriteKey": "BlueDragon",
@@ -3447,7 +3446,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -3503,9 +3502,8 @@
   {
     "id": 38,
     "name": "Leviathan",
-    "names": [
-      "Leviathan"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A sovereign sea dragon promoted through a rare blue catalyst. Its immense breath rolls across whole formations.",
     "level": 1,
     "role": "None",
     "spriteKey": "Leviathan",
@@ -3530,7 +3528,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -3586,9 +3584,8 @@
   {
     "id": 39,
     "name": "Green Dragon",
-    "names": [
-      "Green Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A green dragon shaped by wind and living earth. It is the swiftest and most expedition-minded of its siblings.",
     "level": 1,
     "role": "None",
     "spriteKey": "GreenDragon",
@@ -3618,7 +3615,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -3674,9 +3671,8 @@
   {
     "id": 40,
     "name": "Fafnir",
-    "names": [
-      "Fafnir"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A legendary green dragon whose hunger has hardened into cunning. Its craft bends natural ingredients toward rare results.",
     "level": 1,
     "role": "None",
     "spriteKey": "Fafnir",
@@ -3701,7 +3697,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -3757,9 +3753,8 @@
   {
     "id": 41,
     "name": "White Dragon",
-    "names": [
-      "White Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A white dragon radiant with disciplined force. It protects allies without abandoning draconic power.",
     "level": 1,
     "role": "None",
     "spriteKey": "WhiteDragon",
@@ -3790,7 +3785,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -3846,9 +3841,8 @@
   {
     "id": 42,
     "name": "Bahamut",
-    "names": [
-      "Bahamut"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A heavenly dragon released by a sacred catalyst. Its presence turns defense and white creation into acts of majesty.",
     "level": 1,
     "role": "None",
     "spriteKey": "Bahamut",
@@ -3873,7 +3867,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -3929,9 +3923,8 @@
   {
     "id": 43,
     "name": "Black Dragon",
-    "names": [
-      "Black Dragon"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A black dragon carrying the stillness of deep caverns. Its magic erodes defenses before the final strike.",
     "level": 1,
     "role": "None",
     "spriteKey": "BlackDragon",
@@ -3962,7 +3955,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -4018,9 +4011,8 @@
   {
     "id": 44,
     "name": "Nidhogg",
-    "names": [
-      "Nidhogg"
-    ],
+    "names": ["Draco", "Ryū", "Apep", "Ladon", "Long", "Zmey", "Tiamat", "Orochi"],
+    "flavor": "A deathly dragon unlocked by a forbidden black catalyst. It specializes in ruinous magic and dangerous creation.",
     "level": 1,
     "role": "None",
     "spriteKey": "Nidhogg",
@@ -4045,7 +4037,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -4101,9 +4093,8 @@
   {
     "id": 45,
     "name": "Giant",
-    "names": [
-      "Giant"
-    ],
+    "names": ["Brontes", "Oto", "Ymir", "Goliath", "Rocha", "Bento", "Colosso", "Daisuke"],
+    "flavor": "A young giant with strength enough to choose between fury and endurance. Its promotion branch is a direct player decision.",
     "level": 1,
     "role": "None",
     "spriteKey": "Giant",
@@ -4132,8 +4123,8 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": true,
-    "unlocked": true,
+    "isEvolved": false,
+    "unlocked": false,
     "tier": 2,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -4189,9 +4180,8 @@
   {
     "id": 46,
     "name": "Hill Gigas",
-    "names": [
-      "Hill Gigas"
-    ],
+    "names": ["Brontes", "Oto", "Ymir", "Goliath", "Rocha", "Bento", "Colosso", "Daisuke"],
+    "flavor": "A red-and-black giant modeled after the hill titans of old tales. It is the more magical and aggressively destructive branch.",
     "level": 1,
     "role": "None",
     "spriteKey": "HillGigas",
@@ -4222,7 +4212,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -4278,9 +4268,8 @@
   {
     "id": 47,
     "name": "Surtr",
-    "names": [
-      "Surtr"
-    ],
+    "names": ["Brontes", "Oto", "Ymir", "Goliath", "Rocha", "Bento", "Colosso", "Daisuke"],
+    "flavor": "A fire giant awakened by a molten relic. It turns the Hill Gigas's aggression into apocalyptic force.",
     "level": 1,
     "role": "None",
     "spriteKey": "Surtr",
@@ -4304,7 +4293,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
@@ -4360,9 +4349,8 @@
   {
     "id": 48,
     "name": "Atlas",
-    "names": [
-      "Atlas"
-    ],
+    "names": ["Brontes", "Oto", "Ymir", "Goliath", "Rocha", "Bento", "Colosso", "Daisuke"],
+    "flavor": "A white-and-green giant built to bear impossible burdens. It is more physical, defensive, and reliable than Hill Gigas.",
     "level": 1,
     "role": "None",
     "spriteKey": "Atlas",
@@ -4393,7 +4381,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -4449,9 +4437,8 @@
   {
     "id": 49,
     "name": "Hyperion",
-    "names": [
-      "Hyperion"
-    ],
+    "names": ["Brontes", "Oto", "Ymir", "Goliath", "Rocha", "Bento", "Colosso", "Daisuke"],
+    "flavor": "A celestial titan promoted through an adamant relic. Its defense becomes a foundation the whole party can fight around.",
     "level": 1,
     "role": "None",
     "spriteKey": "Hyperion",
@@ -4476,7 +4463,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 4,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -4532,9 +4519,8 @@
   {
     "id": 50,
     "name": "Mimic",
-    "names": [
-      "Mimic"
-    ],
+    "names": ["Chester", "Caixa", "Trinco", "Penny", "Jack", "Boca", "Dobra", "Tesouro"],
+    "flavor": "A living chest with a talent for making items work harder. It is sturdy, opportunistic, and available for promotion immediately.",
     "level": 1,
     "role": "None",
     "spriteKey": "Mimic",
@@ -4563,8 +4549,8 @@
     ],
     "initialParty": false,
     "isRecruitable": true,
-    "isEvolved": true,
-    "unlocked": true,
+    "isEvolved": false,
+    "unlocked": false,
     "tier": 2,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -4620,9 +4606,8 @@
   {
     "id": 51,
     "name": "Pandora",
-    "names": [
-      "Pandora"
-    ],
+    "names": ["Chester", "Caixa", "Trinco", "Penny", "Jack", "Boca", "Dobra", "Tesouro"],
+    "flavor": "A Mimic opened by the Black Hinge into something stranger. It is somewhat stronger and frailer, with exceptional command of items.",
     "level": 1,
     "role": "None",
     "spriteKey": "Pandora",
@@ -4647,7 +4632,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -4703,9 +4688,8 @@
   {
     "id": 52,
     "name": "Unicorn",
-    "names": [
-      "Unicorn"
-    ],
+    "names": ["Celeste", "Estrela", "Amalthea", "Shiro", "Iris", "Neve", "Lança", "Rocinante"],
+    "flavor": "A gentle horned mount with instinctive healing magic. Several promotions let it become a traveler, healer, nightmare, or fire steed.",
     "level": 1,
     "role": "None",
     "spriteKey": "Unicorn",
@@ -4741,7 +4725,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -4797,9 +4781,8 @@
   {
     "id": 53,
     "name": "Sleipnir",
-    "names": [
-      "Sleipnir"
-    ],
+    "names": ["Celeste", "Estrela", "Amalthea", "Shiro", "Iris", "Neve", "Lança", "Rocinante"],
+    "flavor": "An eight-legged mount that trades spectacle for speed and expedition efficiency. It remains capable of basic healing.",
     "level": 1,
     "role": "None",
     "spriteKey": "Sleipnir",
@@ -4831,7 +4814,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -4887,9 +4870,8 @@
   {
     "id": 54,
     "name": "Kirin",
-    "names": [
-      "Kirin"
-    ],
+    "names": ["Celeste", "Estrela", "Amalthea", "Shiro", "Iris", "Neve", "Lança", "Rocinante"],
+    "flavor": "A sacred healer unlocked from Sleipnir by a rare bell. It cleanses afflictions and bestows regeneration on the entire party.",
     "level": 1,
     "role": "None",
     "spriteKey": "Kirin",
@@ -4915,7 +4897,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -4971,9 +4953,8 @@
   {
     "id": 55,
     "name": "Nightmare",
-    "names": [
-      "Nightmare"
-    ],
+    "names": ["Celeste", "Estrela", "Amalthea", "Shiro", "Iris", "Neve", "Lança", "Rocinante"],
+    "flavor": "A Unicorn that surrendered its healing light to black flame. It is the family's lone branch without basic restorative magic.",
     "level": 1,
     "role": "None",
     "spriteKey": "Nightmare",
@@ -4997,7 +4978,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -5053,9 +5034,8 @@
   {
     "id": 56,
     "name": "Firemane",
-    "names": [
-      "Firemane"
-    ],
+    "names": ["Celeste", "Estrela", "Amalthea", "Shiro", "Iris", "Neve", "Lança", "Rocinante"],
+    "flavor": "A fiery mount reached through an accessible catalyst. It preserves simple healing while adding aggressive red magic.",
     "level": 1,
     "role": "None",
     "spriteKey": "Firemane",
@@ -5079,7 +5059,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "alchemy",
     "sacrificeRewards": [],
@@ -5135,9 +5115,8 @@
   {
     "id": 57,
     "name": "Talos",
-    "names": [
-      "Talos"
-    ],
+    "names": ["Rocky", "Pebble", "Titan", "Granite", "Block", "Obsidian", "Boulder", "Clay"],
+    "flavor": "A Golem perfected through a celestial fossil. It remains an uncompromising physical wall with a catastrophic weakness to magic.",
     "level": 1,
     "role": "None",
     "spriteKey": "Talos",
@@ -5158,7 +5137,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -5214,9 +5193,8 @@
   {
     "id": 58,
     "name": "Gargoyle",
-    "names": [
-      "Gargoyle"
-    ],
+    "names": ["Hugo", "Pedra", "Vigia", "Goya", "Sino", "Chuva", "Paris", "Gárgula"],
+    "flavor": "A watchful stone fiend more magical than a Golem. It provokes attacks and raises the party's magical defenses.",
     "level": 1,
     "role": "None",
     "spriteKey": "Gargoyle",
@@ -5245,7 +5223,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -5301,9 +5279,8 @@
   {
     "id": 59,
     "name": "Grotesque",
-    "names": [
-      "Grotesque"
-    ],
+    "names": ["Hugo", "Pedra", "Vigia", "Goya", "Sino", "Chuva", "Paris", "Gárgula"],
+    "flavor": "A Gargoyle whose protective sorcery has grown stranger and stronger. It anchors the party through provocation and magical shelter.",
     "level": 1,
     "role": "None",
     "spriteKey": "Grotesque",
@@ -5329,7 +5306,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 2,
     "discipline": "tinkering",
     "sacrificeRewards": [],
@@ -5385,9 +5362,8 @@
   {
     "id": 60,
     "name": "Kappa",
-    "names": [
-      "Kappa"
-    ],
+    "names": ["Kawataro", "Pepino", "Kame", "Seki", "Nori", "Beto", "Pingo", "Mizu"],
+    "flavor": "A sturdy river creature whose greatest talents lie outside battle. Some victims of kappa curses can regain their former shape by surviving long enough.",
     "level": 1,
     "role": "None",
     "spriteKey": "Kappa",
@@ -5410,7 +5386,7 @@
     "initialParty": false,
     "isRecruitable": true,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -5472,9 +5448,8 @@
   {
     "id": 61,
     "name": "Moa",
-    "names": [
-      "Moa"
-    ],
+    "names": ["Momo", "Rosa", "Bico", "Amano", "Nuvem", "Tori", "Pompom", "Pluma"],
+    "flavor": "A peculiar pink mount bird descended from an Egg. Its strange silhouette hides excellent expedition utility.",
     "level": 1,
     "role": "None",
     "spriteKey": "Moa",
@@ -5496,7 +5471,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": false,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 1,
     "discipline": "cooking",
     "sacrificeRewards": [],
@@ -5552,9 +5527,8 @@
   {
     "id": 62,
     "name": "Titania",
-    "names": [
-      "Titania"
-    ],
+    "names": ["Ariel", "Puck", "Sparky", "Tinker", "Faye", "Mote", "Clover", "Twinkle"],
+    "flavor": "A High Pixie raised all the way to level twenty without a catalyst. The fairy court answers her with powerful support magic.",
     "level": 1,
     "role": "None",
     "spriteKey": "Titania",
@@ -5580,7 +5554,7 @@
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
-    "unlocked": true,
+    "unlocked": false,
     "tier": 3,
     "discipline": "cooking",
     "sacrificeRewards": [],

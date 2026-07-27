@@ -28,7 +28,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `save_menu` | menu | windows | - | 4 | 5 |
 | `shop` | menu | windows | - | 4 | 7 |
 | `status` | menu | windows | - | 11 | 7 |
-| `title` | menu | windows | - | 6 | 5 |
+| `title` | menu | windows | - | 7 | 5 |
 
 ## Registry (data/engine.json)
 
@@ -65,11 +65,11 @@ are what's left:
 
 ## Content inventory
 
-- actors: **62** (44 summonable-from-start, 23 with promotion paths)
+- actors: **62** (6 summonable-from-start, 23 with promotion paths)
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx12, cookingx18, tinkeringx17
 - items: **196** (consumablex62, equipmentx120, questx14)
 - skills: **39**, passives: **41**, states: **12**, roles: **13**, elements: **5**
-- maps: **7**, common events: **11**, shops: **6**, quests: **4**
+- maps: **8**, common events: **11**, shops: **6**, quests: **4**
 - animations: **28**, tilesets: **9**
 
 ## Notes for agents

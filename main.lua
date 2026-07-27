@@ -90,6 +90,7 @@ local isEngineStateMode = false
 local isReachabilityMode = false
 local isGoldenMode = false
 local isGoldenUIMode = false
+local isDeveloperMode = false
 local triggerTestBattle
 
 
@@ -252,6 +253,8 @@ function love.load(arg)
                 isSaveTestMode = true
             elseif val == "unittest" then
                 isUnitTestMode = true
+            elseif val == "developer" then
+                isDeveloperMode = true
             elseif val:match("^campaign=") then
                 -- Overrides the campaign.json pointer for this run (used by
                 -- the generator's validate loops): campaign=<name> loads
@@ -418,6 +421,7 @@ function love.load(arg)
     
     -- Initialize activeSession
     activeSession = session.GameSession.new(loader)
+    activeSession.developerMode = isDeveloperMode
     activeSession:initializeStartingParty()
     
     -- Initialize renderer graphics

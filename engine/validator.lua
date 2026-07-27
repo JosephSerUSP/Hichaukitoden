@@ -453,6 +453,16 @@ validator.run = function(loader)
     -- Actors must reference existing skills/passives/elements/roles
     for _, actor in ipairs(loader.actors) do
         local actorDesc = "actor " .. tostring(actor.id)
+        check(type(actor.names) == "table" and #actor.names > 0,
+            actorDesc .. " ('" .. tostring(actor.name) .. "') needs at least one default personal name")
+        check(type(actor.flavor) == "string" and actor.flavor ~= "",
+            actorDesc .. " ('" .. tostring(actor.name) .. "') needs a biography")
+        check(not actor.isEvolved or actor.unlocked ~= true,
+            actorDesc .. " cannot be both a promotion result and unlocked by default")
+        check(not actor.isEvolved or actor.isRecruitable ~= true,
+            actorDesc .. " cannot be both a promotion result and directly recruitable")
+        check(not actor.isEvolved or actor.initialParty ~= true,
+            actorDesc .. " cannot be both a promotion result and eligible for the initial party")
         for _, skId in ipairs(actor.skills or {}) do
             check(loader.getSkill(skId), "actor " .. tostring(actor.id) .. " references missing skill '" .. tostring(skId) .. "'")
         end

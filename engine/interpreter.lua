@@ -80,6 +80,7 @@ local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     TELEPORT = true, BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
+    LOAD_MAP = true,
     LABEL = true, JUMP_TO_LABEL = true,
 }
 
@@ -1529,7 +1530,9 @@ end
 -- run. The renderer is re-pointed because it caches the session reference.
 handlers.RESET_SESSION = function(cmd, ctx)
     local sessionModule = require("engine.session")
+    local developerMode = ctx.session and ctx.session.developerMode == true
     local fresh = sessionModule.GameSession.new(ctx.loader or (ctx.session and ctx.session.loader))
+    fresh.developerMode = developerMode
     fresh:initializeStartingParty()
     _G.activeSession = fresh
     ctx.session = fresh
@@ -1952,7 +1955,7 @@ local function buildScriptApi(ctx)
                 id = actor.id,
                 name = actor.name or "",
                 icon = actor.icon or 0,
-                unlocked = actor.unlocked or false,
+                unlocked = actor.unlocked or session.developerMode == true,
                 tier = actor.tier or 1,
                 discipline = actor.discipline or "None",
                 meta = actor.meta or {}

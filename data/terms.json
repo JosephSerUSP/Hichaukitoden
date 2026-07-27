@@ -151,6 +151,14 @@
       "Campaigns",
       "Options"
     ],
+    "developerOptions": [
+      "New Game",
+      "Continue",
+      "Exit",
+      "Campaigns",
+      "Options",
+      "Developer Room"
+    ],
     "no_save": "No save data.",
     "copyright": "(C) 2026 SeraphCircle"
   },

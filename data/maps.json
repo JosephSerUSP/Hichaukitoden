@@ -2975,5 +2975,95 @@
       }
     ],
     "recruits": []
+  },
+  {
+    "id": 8,
+    "title": "Developer Room",
+    "intro": "Every impossible convenience has been placed within arm's reach.",
+    "depth": 0,
+    "safe": true,
+    "music": "town1",
+    "image": "TownAlencar.png",
+    "layout": [
+      "###############",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "#######.#######"
+    ],
+    "spawn": {
+      "x": 7,
+      "y": 6,
+      "dir": 0
+    },
+    "events": [
+      {
+        "id": 1,
+        "name": "Recovery Console",
+        "x": 2,
+        "y": 2,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC08.png",
+        "commands": [
+          {"cmd": "RECOVER_PARTY"},
+          {"cmd": "CHANGE_MP", "amount": "session.maxMp"},
+          {"cmd": "GAIN_GOLD", "amount": "999999"},
+          {"cmd": "TEXT", "text": "Party restored, MP filled, and testing funds supplied."}
+        ]
+      },
+      {
+        "id": 2,
+        "name": "Item Depot",
+        "x": 5,
+        "y": 2,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC01.png",
+        "commands": [
+          {"cmd": "CHOICE", "options": [
+            {"label": "Consumables", "commands": [{"cmd": "OPEN_SHOP", "shopId": 1}]},
+            {"label": "Weapons and Armor", "commands": [{"cmd": "OPEN_SHOP", "shopId": 2}]},
+            {"label": "Accessories", "commands": [{"cmd": "OPEN_SHOP", "shopId": 3}]},
+            {"label": "Keys and Rare Gear", "commands": [{"cmd": "OPEN_SHOP", "shopId": 4}]},
+            {"label": "Food", "commands": [{"cmd": "OPEN_SHOP", "shopId": 5}]}
+          ]}
+        ]
+      },
+      {
+        "id": 3,
+        "name": "Roster Curator",
+        "x": 8,
+        "y": 2,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC04.png",
+        "commands": [
+          {"cmd": "TEXT", "text": "Developer mode exposes every species in the Summoning Ritual. Use the party menu to summon, promote, feed, transform, or inspect them."}
+        ]
+      },
+      {
+        "id": 4,
+        "name": "Warp Terminal",
+        "x": 11,
+        "y": 2,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC11.png",
+        "commands": [
+          {"cmd": "TEXT", "text": "The campaign warp matrix is awaiting a reusable interactive map-transfer action. The north exit returns to Town."}
+        ]
+      },
+      {
+        "id": 5,
+        "name": "Exit",
+        "x": 7,
+        "y": 0,
+        "trigger": "step",
+        "commands": [{"cmd": "LOAD_MAP", "mapId": 1}]
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": []
   }
 ]

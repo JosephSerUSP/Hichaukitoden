@@ -16,8 +16,7 @@
       {
         "id": 4,
         "condition": "flag:alicia_trust_earned"
-      }
-,
+      },
       {
         "id": 149
       },
@@ -137,8 +136,7 @@
       {
         "id": 28,
         "condition": "flag:shattered_blade_reforged"
-      }
-,
+      },
       {
         "id": 57
       },
@@ -293,8 +291,7 @@
       {
         "id": 15,
         "condition": "level:10"
-      }
-,
+      },
       {
         "id": 113
       },
@@ -400,8 +397,7 @@
       {
         "id": 23,
         "condition": "level:10"
-      }
-,
+      },
       {
         "id": 47
       },
@@ -506,8 +502,7 @@
       {
         "id": 31,
         "condition": "level:5"
-      }
-,
+      },
       {
         "id": 171
       },
@@ -591,8 +586,7 @@
       {
         "id": 11,
         "condition": "level:10"
-      }
-,
+      },
       {
         "id": 149
       },

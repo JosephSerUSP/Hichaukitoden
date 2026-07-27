@@ -1051,7 +1051,9 @@
         }
       ],
       "contexts": [
-        "scene"
+        "scene",
+        "map",
+        "common"
       ],
       "interactive": false,
       "description": "Applies an item's data-defined effects and consumes one. itemIndex is 1-based into the id-sorted inventory (the window renderer's 'inventory' list order); items with target 'party' hit every member, otherwise target is a party index."
@@ -1224,7 +1226,9 @@
         }
       ],
       "contexts": [
-        "scene"
+        "scene",
+        "map",
+        "common"
       ],
       "interactive": false,
       "description": "Loads the map with the given index into the session (title New Game, warps). If mapId is omitted, defaults to system.spawn.mapId."
@@ -1648,12 +1652,28 @@
       "category": "Party",
       "label": "Transform Creature",
       "params": [
-        { "key": "target", "type": "battlerRef" },
-        { "key": "actor", "type": "text" },
-        { "key": "reversible", "type": "flag" },
-        { "key": "bonus", "type": "text" }
+        {
+          "key": "target",
+          "type": "battlerRef"
+        },
+        {
+          "key": "actor",
+          "type": "text"
+        },
+        {
+          "key": "reversible",
+          "type": "flag"
+        },
+        {
+          "key": "bonus",
+          "type": "text"
+        }
       ],
-      "contexts": [ "event", "scene", "flow" ],
+      "contexts": [
+        "event",
+        "scene",
+        "flow"
+      ],
       "interactive": false,
       "description": "Changes a creature's form while keeping the creature: accumulated growth, seed, permanent gains, learned skills, name, level and history all survive; MPD, capacities, affinities and innate skills come from the new form. `actor` is a species id, or \"hatch\" (resolve the actor's hatchOutcomes by the instance's saved provenance), \"metamorph\" (deterministic nearest eligible species from eligibleFrom), or \"revert\" (return to the remembered origin form). `reversible` remembers the current form so a later revert can restore it -- a natively recruited creature has none and never reverts, which is the only difference between a native Kappa and a cursed one."
     },
@@ -2635,18 +2655,54 @@
     }
   ],
   "foodTags": [
-    { "tag": "sweet", "label": "Sweet" },
-    { "tag": "savory", "label": "Savory" },
-    { "tag": "spicy", "label": "Spicy" },
-    { "tag": "meat", "label": "Meat" },
-    { "tag": "fish", "label": "Fish" },
-    { "tag": "vegetable", "label": "Vegetable" },
-    { "tag": "grain", "label": "Grain" },
-    { "tag": "dairy", "label": "Dairy" },
-    { "tag": "fermented", "label": "Fermented" },
-    { "tag": "fungus", "label": "Fungus" },
-    { "tag": "mineral", "label": "Mineral" },
-    { "tag": "spirit", "label": "Spirit" }
+    {
+      "tag": "sweet",
+      "label": "Sweet"
+    },
+    {
+      "tag": "savory",
+      "label": "Savory"
+    },
+    {
+      "tag": "spicy",
+      "label": "Spicy"
+    },
+    {
+      "tag": "meat",
+      "label": "Meat"
+    },
+    {
+      "tag": "fish",
+      "label": "Fish"
+    },
+    {
+      "tag": "vegetable",
+      "label": "Vegetable"
+    },
+    {
+      "tag": "grain",
+      "label": "Grain"
+    },
+    {
+      "tag": "dairy",
+      "label": "Dairy"
+    },
+    {
+      "tag": "fermented",
+      "label": "Fermented"
+    },
+    {
+      "tag": "fungus",
+      "label": "Fungus"
+    },
+    {
+      "tag": "mineral",
+      "label": "Mineral"
+    },
+    {
+      "tag": "spirit",
+      "label": "Spirit"
+    }
   ],
   "intensityGrades": [
     {
@@ -2656,17 +2712,17 @@
     },
     {
       "grade": "normal",
-      "mult": 1.0,
+      "mult": 1,
       "description": "Price says it all -- the default, never authored"
     },
     {
       "grade": "precious",
-      "mult": 2.0,
+      "mult": 2,
       "description": "Cheap to buy, potent to work with"
     },
     {
       "grade": "legendary",
-      "mult": 3.0,
+      "mult": 3,
       "description": "Its price cannot express it"
     }
   ],
@@ -2676,13 +2732,13 @@
     "intensityWeight": 0.7,
     "scatter": 0.24,
     "scatterFalloff": 1.2,
-    "reachBase": 14.0,
-    "reachPerStat": 14.0,
+    "reachBase": 14,
+    "reachPerStat": 14,
     "beyondReachCost": 0.12,
     "foreignIngredientWorth": 0.2,
-    "statDivisor": 20.0,
-    "intensityScale": 40.0,
-    "crafterIntensityScale": 10.0,
+    "statDivisor": 20,
+    "intensityScale": 40,
+    "crafterIntensityScale": 10,
     "coherenceRange": 1.2
   },
   "disciplineDefaults": {
@@ -2699,13 +2755,13 @@
     }
   },
   "craftElementSources": {
-    "elementChangeWeight": 3.0,
+    "elementChangeWeight": 3,
     "paramWeight": 0.7,
-    "nameWeight": 2.0,
+    "nameWeight": 2,
     "descriptionWeight": 0.5,
     "effects": {
       "hp": {
-        "Green": 1.0
+        "Green": 1
       },
       "maxHp": {
         "Green": 0.8
@@ -2717,10 +2773,10 @@
         "White": 0.6
       },
       "xp": {
-        "White": 1.0
+        "White": 1
       },
       "learn_skill": {
-        "White": 1.0
+        "White": 1
       }
     },
     "traits": {
@@ -2733,7 +2789,7 @@
     },
     "params": {
       "atk": {
-        "Red": 1.0
+        "Red": 1
       },
       "def": {
         "Black": 0.4
