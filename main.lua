@@ -307,6 +307,7 @@ function love.load(arg)
         dofile("tests/test_transform.lua")
         dofile("tests/test_encounter_levels.lua")
         dofile("tests/test_developer_mode.lua")
+        dofile("tests/test_map_transfer.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return
@@ -979,14 +980,6 @@ handleDialogueAction = function()
                 activeWalker:goToNode(targetNode)
                 handleDialogueAction()
             end
-        elseif node.action == "TELEPORT" then
-            local maxFloor = conf("dungeon", "maxFloor", 5)
-            activeSession.dungeonFloor = activeSession.dungeonFloor + 1
-            if activeSession.dungeonFloor > maxFloor then
-                activeSession.dungeonFloor = maxFloor
-            end
-            exploration.loadMap(activeSession, activeSession.dungeonFloor + 1)
-            scene_host.goto_scene("map")
         elseif node.action == "START_BATTLE" then
             triggerBattle()
         elseif node.action == "CALL_COMMON_EVENT_ACTION" then

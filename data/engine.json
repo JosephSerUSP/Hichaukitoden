@@ -122,7 +122,7 @@
     },
     {
       "token": "session.floor",
-      "description": "Current dungeon floor."
+      "description": "Depth of the map the party is on (0 in town)."
     },
     {
       "token": "battle.round",
@@ -451,18 +451,6 @@
       ],
       "interactive": true,
       "description": "Fully restores the party and shows the recovery line."
-    },
-    {
-      "id": "TELEPORT",
-      "category": "Progression",
-      "label": "Teleport",
-      "params": [],
-      "contexts": [
-        "map",
-        "common"
-      ],
-      "interactive": true,
-      "description": "Teleport the party to another location."
     },
     {
       "id": "OPEN_SHOP",

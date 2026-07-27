@@ -90,7 +90,6 @@
   },
   "events": {
     "recover_party": "Your party has been fully recovered!",
-    "teleport": "You are whisked away...",
     "found_item": "Found a {0}!"
   },
   "formation": {

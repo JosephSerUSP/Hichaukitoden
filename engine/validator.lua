@@ -800,6 +800,15 @@ validator.run = function(loader)
     -- had been handing out nothing at all.
     for mi, map in ipairs(loader.maps or {}) do
         local where = "map #" .. mi .. " ('" .. tostring(map.name or map.title or "?") .. "')"
+        -- The shared Stairs Down common event descends with
+        -- `LOAD_MAP mapId: session.floor + 2`, which is only correct while a
+        -- dungeon map's id is its depth plus one. Safe maps (town, the
+        -- developer room) are exempt: they are at depth 0 and nothing
+        -- descends to them by arithmetic.
+        check(map.safe == true or (map.depth or 0) < 1 or map.id == (map.depth or 0) + 1,
+            where .. " is at depth " .. tostring(map.depth) .. " so its id must be "
+            .. tostring((map.depth or 0) + 1) .. " for the stairs to reach it, but it is "
+            .. tostring(map.id))
         for ti, itemId in ipairs(map.treasures or {}) do
             check(loader.getItem(itemId) ~= nil,
                 where .. " treasures[" .. ti .. "] references missing item '" .. tostring(itemId) .. "'")

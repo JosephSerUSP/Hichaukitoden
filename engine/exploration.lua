@@ -420,7 +420,12 @@ end
 
 -- Initialize map state in GameSession
 function exploration.loadMap(session, mapIdx)
-    local rawMapData = session.loader.maps[mapIdx] or {}
+    local rawMapData = session.loader.maps[mapIdx]
+    -- A transfer to a map that does not exist used to load an empty table and
+    -- leave the player standing in a blank world; say so instead.
+    if not rawMapData then
+        error("exploration.loadMap: no map with index " .. tostring(mapIdx))
+    end
     -- An "expedition" is one trip out of safety, not one floor: fire the phase
     -- only on the safe -> dangerous transition. What that phase counts is data
     -- (data/flows.json exploration.expedition_start).
@@ -431,6 +436,12 @@ function exploration.loadMap(session, mapIdx)
         require("engine.flow").run("exploration.expedition_start", { session = session, party = session.party })
     end
     session.currentMapIndex = mapIdx
+    -- How deep the party is, is a property of the map it is standing on, not a
+    -- counter that one command remembers to bump. Deriving it here means every
+    -- transfer keeps it true -- including going back up, which the old
+    -- increment-only counter never did: returning to Town left the party
+    -- "on floor 6" for enemy levels and recruitment.
+    session.dungeonFloor = rawMapData.depth or session.dungeonFloor or 0
     local mapData = {}
     for k, v in pairs(rawMapData) do mapData[k] = v end
     session.currentMapData = mapData

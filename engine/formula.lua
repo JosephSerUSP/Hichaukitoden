@@ -177,7 +177,12 @@ function formula.sessionView(session)
         maxMp = session.maxMp or 0,
         expBank = session.expBank or 0,
         developerMode = session.developerMode == true,
-        floor = session.currentFloor or session.floor or 1,
+        -- `session.currentFloor` and `session.floor` were never set by anything,
+        -- so this token silently read 1 everywhere for as long as it existed --
+        -- including in a trap authored as `4 + session.floor`, which therefore
+        -- dealt a flat 5 on every floor. The depth the party is actually at is
+        -- `dungeonFloor`, maintained by exploration.loadMap.
+        floor = session.dungeonFloor or 0,
         -- Display name of the current map (menu FLOOR readout).
         mapTitle = (session.currentMapData and session.currentMapData.title) or "Town",
         mapSafe = (session.currentMapData and session.currentMapData.safe) and true or false,

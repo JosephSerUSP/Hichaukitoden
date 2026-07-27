@@ -583,8 +583,6 @@
                 return `Text: "${speakerPrefix}${cmd.text}"`;
             } else if (id === 'RECOVER_PARTY') {
                 return 'Recover Party';
-            } else if (id === 'TELEPORT') {
-                return 'Teleport';
             } else if (id === 'BATTLE') {
                 return 'Start Battle';
             } else if (id === 'CALL_COMMON_EVENT') {

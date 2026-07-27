@@ -1110,7 +1110,6 @@
             'growth.baseParams.mxp':       { label: 'Default Max Passives (mxp)', min: 0 },
             'growth.expPerLevel':          { label: 'XP per Level (× current level)', min: 1,
                                              help: 'XP needed for the next level = this value × the current level.' },
-            'dungeon.maxFloor':            { label: 'Deepest Floor', min: 1 },
             'dungeon.defaultLoot':         { label: 'Default Treasure Item', widget: 'itemSelect' },
             'dungeon.genWidth':            { label: 'Generated Map Width' },
             'dungeon.genHeight':           { label: 'Generated Map Height' },

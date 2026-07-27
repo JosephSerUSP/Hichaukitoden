@@ -78,11 +78,18 @@ end
 -- 24.07.2026 legacy purge; a one-time data migration renamed it everywhere).
 local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
-    TELEPORT = true, BATTLE = true, CALL_COMMON_EVENT = true,
+    BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
-    LOAD_MAP = true,
     LABEL = true, JUMP_TO_LABEL = true,
 }
+
+-- Every id above must also have a branch in interpreter.compile below: an id
+-- listed here but unhandled there compiles to no node at all, and the event
+-- chain dead-ends silently at that command. LOAD_MAP was listed here once and
+-- broke every map event that used it, so compile() now errors on the mismatch
+-- rather than leaving a hole. A map transfer is not interactive -- it asks the
+-- player nothing -- so it belongs in the RUN_IMMEDIATE path with the rest of
+-- the registry commands.
 
 local function cmdId(cmd)
     return cmd.cmd
@@ -181,10 +188,6 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
         elseif id == "RECOVER_PARTY" then
             ctx.recoverParty()
             nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.recover_party", "Your party has been fully recovered!"), next = nextId }
-        elseif id == "TELEPORT" then
-            local teleportId = nodeId .. "_teleport"
-            nodes[nodeId] = { type = "TEXT", content = loader.getTerm("events.teleport", "You are whisked away..."), next = teleportId }
-            nodes[teleportId] = { type = "ACTION", action = "TELEPORT" }
         elseif id == "BATTLE" then
             nodes[nodeId] = { type = "ACTION", action = "START_BATTLE" }
         elseif id == "CALL_COMMON_EVENT" then
@@ -210,6 +213,13 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             -- chain intact by letting the previous node's nextId point past
             -- it — easiest is an empty ROUTER-less passthrough node.
             nodes[nodeId] = { type = "ROUTER", condition = "", trueNode = nextId, falseNode = nextId }
+        else
+            -- Declared interactive but not compiled: the bug this guard exists
+            -- to make loud. Falling through here used to leave nodes[nodeId]
+            -- unset, so the previous node pointed at a node that was never
+            -- built and the event simply stopped.
+            error("interpreter.compile: '" .. tostring(id) .. "' is in "
+                .. "INTERACTIVE_COMPILE_IDS but has no compile branch")
         end
         end
     end
@@ -269,7 +279,7 @@ end
 -- immediate-safe via handlers.RECOVER_PARTY; only the confirmation text is
 -- interactive, and that lives in interpreter.compile's node path.
 local INTERACTIVE_IDS = {
-    TEXT = true, CHOICE = true, TELEPORT = true,
+    TEXT = true, CHOICE = true,
     BATTLE = true, CALL_COMMON_EVENT = true,
 }
 
