@@ -229,7 +229,8 @@
                       options: ['Weapon', 'Armor', 'Accessory'], fallback: 'Weapon',
                       when: it => it.type === 'equipment' },
                     { row: 'main', kind: 'select', key: 'target', label: 'Target Scope',
-                      options: [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' }],
+                      options: [{ value: '', label: 'Single member' }, { value: 'party', label: 'Whole party' },
+                                { value: 'none', label: 'No target' }],
                       when: it => it.type !== 'equipment',
                       get: it => it.target || '',
                       set: (it, v) => {
@@ -250,6 +251,31 @@
                           if (v === '') { delete it.scope; } else { it.scope = v; }
                       } },
                     { row: 'main', kind: 'number', key: 'cost', label: 'Buy Cost (G)', fallback: 0 },
+                    { kind: 'checkbox', key: 'meal', label: 'Meal (field-only food)', deleteIfFalse: true,
+                      when: it => it.type === 'consumable',
+                      set: (it, checked) => {
+                          if (checked) { it.meal = true; it.scope = 'field'; }
+                          else { delete it.meal; }
+                      } },
+                    { kind: 'custom', when: it => it.type === 'consumable',
+                      build: (c, it) => buildChecklistField(c, 'Food Tags',
+                          ((dbPayload.engine && dbPayload.engine.foodTags) || []).map(x => x.tag),
+                          tag => tag, () => it.foodTags,
+                          arr => { if (arr.length) it.foodTags = arr; else delete it.foodTags; }) },
+                    { kind: 'checkbox', key: '_savorEnabled', label: 'Favorite Food grants Savor',
+                      when: it => it.type === 'consumable' && (it.meal || (it.foodTags || []).length),
+                      get: it => !!it.savor,
+                      set: (it, checked) => {
+                          if (checked) it.savor = it.savor || { battles: 3, traits: [] };
+                          else delete it.savor;
+                      },
+                      rerender: true },
+                    { kind: 'number', key: '_savorBattles', label: 'Savor Victories', fallback: 3,
+                      when: it => !!it.savor,
+                      get: it => it.savor.battles || 3,
+                      set: (it, value) => { it.savor.battles = Math.max(1, value || 1); } },
+                    { kind: 'custom', when: it => !!it.savor,
+                      build: (c, it) => buildTraitsEditor(c, it.savor, 'Savor Traits') },
                     { kind: 'animationSelect', key: 'animation', label: 'Animation',
                       when: it => it.type !== 'equipment' },
                     { kind: 'custom', when: it => it.type !== 'equipment',

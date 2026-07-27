@@ -233,6 +233,13 @@ them, and the editor was still offering both as System settings that changed
 nothing. The flee and encounter settings stayed, because `flows.json`
 genuinely consumes those.
 
+Map encounter entries may author `levelMin` and `levelMax` alongside `id` and
+`weight`. `SPAWN_ENEMIES` resolves a level independently for every spawned
+enemy and constructs the battler at that level. Omitting both fields preserves
+the actor's authored default level and consumes no additional random draw.
+`levelMax` requires `levelMin`; G1 rejects non-integers, inverted ranges, and
+non-positive weights. The map editor authors and displays the range.
+
 `flow.has` now has exactly one caller, the validator's required-phase check
 — which is the job it should have had all along: proving a phase exists, not
 choosing whether to use it.
@@ -352,12 +359,11 @@ refuses the item at the cap rather than consuming it for nothing, the same
 guard shape full-HP and known-skill items use.
 
 **`ITEM_EFFECT_RATE`.** RPG Maker's Pharmacology: multiplies the magnitude of
-item effects. It is read from the **recipient**, not the wielder, because
-field item use has no separate wielder — a rate read from the user would do
-nothing for every meal eaten outside battle. Skill effects are deliberately
-untouched; this is a constitution, not a spell amplifier. Permanent gains
-(`param_plus`, `maxHp`) are untouched too: an item that grants +1 ATK forever
-grants exactly that.
+item effects. It is read from the **user**, not the recipient. Battle items use
+the acting creature; field items use the best living party carrier because the
+field menu has no separate user selection. Skill effects are deliberately
+untouched. Permanent gains (`param_plus`, `maxHp`) are untouched too: an item
+that grants +1 ATK forever grants exactly that.
 
 **`common_event` items.** An item effect that starts an authored common event
 — the Forbidden Lamp opening a scripted encounter. It cannot run the event
@@ -469,10 +475,50 @@ none and never reverts — the only difference between a native Kappa and a curs
 one. Metamorphosis is deterministic because the design shows the player its
 destination *before* it happens; a random result would make that preview a lie.
 
+`actorData.autoTransforms` applies the same primitive after level gains. A rule
+may name a direct actor, `hatch`, `metamorph`, or `revert`, and gate itself with
+`atLevel` or `afterOriginLevels`. Egg cracking and curse recovery are therefore
+automatic without putting species names in Lua.
+
+Homunculus classification first checks ordered `secretTransforms`. Their
+formulas receive only `intrinsic.level/maxHp/atk/def/mat/mdf`, assembled from
+base parameters, accumulated growth, and permanent item gains. Equipment,
+states, and current HP are absent by construction. The first matching rule
+wins; otherwise classification falls through to nearest `eligibleFrom` profile.
+
 **Favorite Food** is one exact item drawn from the species' authored
 `favoriteFoods` pool, fixed at creation from the growth seed (so a reload cannot
 fish for a better one) and carried through every change of form. It is the
-individual's, not the species'.
+individual's, not the species'. Eating that exact item discovers the preference
+and starts the item's authored `savor` traits. Savor cannot refresh while active,
+is saved on the individual, and `TICK_SAVOR` reduces it after victories only.
+Meals are explicitly marked `meal`, must be field-only, and food identity uses
+the registered `foodTags` vocabulary.
+
+Three general battle traits complete the content vocabulary: `TARGET_RATE`
+weights random enemy AI selection (Provoke), `ELEMENT_RATE` multiplicatively
+modifies damage from one named element, and `KILL_MP_RESTORE` restores flat
+Summoner MP when its carrier personally kills or Executes a target.
+
+The expanded roster uses a shared elemental skill library rather than giving
+each species a private spell list. Red emphasizes escalating damage, Blue mixes
+ice/water pressure with magical defense, Green mixes wind, sleep, regeneration
+and growth, White owns healing/cleansing/protection, and Black owns weakening,
+sleep pressure and dark offense. Creature-named actions are exceptional
+identity rewards, currently Mesmerizing Light, Aqua Dish and Fairy Court.
+
+The systemic item atlas adds 150 authored objects: 28 weapons, 28 armors,
+36 accessories, 48 consumables (including twenty culturally grounded foods),
+and ten promotion keys. Equipment tiers are authoring/placement metadata rather
+than an automatic statistic formula. Remains remain valid ingredients while
+also being wearable, and are excluded only from generated outputs. Promotion
+keys are mechanically gated to have no effects, no equipment slot, and neither
+input nor output membership in Item Creation.
+
+Party meals separate creature-targeted effects from shared Summoner effects:
+HP recovery and Savor resolve for every eater, while MP recovery resolves once
+for the shared pool. `HEAL_RATE` supplies Healing Staff-style skill healing
+without affecting items or permanent gains.
 
 ### 1.11 The Summoner MP economy (26.07.2026)
 

@@ -13,6 +13,30 @@
 local transform = {}
 
 local growth = require("engine.growth")
+local formula = require("engine.formula")
+
+local function intrinsicView(battler)
+    local view = { level = battler.level or 1 }
+    for _, p in ipairs(growth.PARAMS) do
+        view[p] = ((battler.actorData and battler.actorData.baseParams or {})[p] or 0)
+            + ((battler.growth or {})[p] or 0)
+            + ((battler.paramPlus or {})[p] or 0)
+    end
+    return view
+end
+
+-- Ordered authored secrets precede the ordinary classifier. Only permanent
+-- intrinsic development is exposed: equipment, states and current HP cannot
+-- change the preview or destination.
+function transform.secretDestination(session, battler)
+    for _, rule in ipairs((battler.actorData or {}).secretTransforms or {}) do
+        local matched = formula.eval(rule.condition, {
+            intrinsic = intrinsicView(battler)
+        })
+        if matched == true then return rule.actor end
+    end
+    return nil
+end
 
 -- Deterministic destination for a Homunculus: the eligible species whose
 -- authored level-1 profile is closest to this creature's PERMANENT parameter
@@ -21,6 +45,8 @@ local growth = require("engine.growth")
 --
 -- Ties break on actor id, so the answer never depends on table order.
 function transform.classify(session, battler, eligibleIds)
+    local secret = transform.secretDestination(session, battler)
+    if secret and session.loader.getActor(secret) then return secret end
     local loader = session.loader
     local best, bestScore
     local mine = {}
@@ -80,6 +106,7 @@ function transform.into(session, battler, actorData, opts)
     newB.provenance = battler.provenance
     newB.favoriteFood = battler.favoriteFood
     newB.favoriteFoodFound = battler.favoriteFoodFound
+    newB.savor = battler.savor
 
     -- THE rule: never recalculate. Battler.new just accumulated the
     -- DESTINATION form's budgets over every level already lived, which would
@@ -127,6 +154,62 @@ function transform.into(session, battler, actorData, opts)
     local maxHp = newB:getMaxHp(session)
     newB.hp = (battler.hp or 0) > 0 and math.min(maxHp, battler.hp) or maxHp
     return newB
+end
+
+local function replaceInSession(session, old, new)
+    for _, collection in ipairs({ session.party or {}, session.reserve or {} }) do
+        for i, member in ipairs(collection) do
+            if member == old then collection[i] = new end
+        end
+    end
+    if session.summoner == old then session.summoner = new end
+end
+
+-- Resolve authored, level-driven changes of form. Rules live on the current
+-- actor as `autoTransforms`; this primitive only supplies the reusable
+-- vocabulary (direct actor, hatch, metamorph, or reversion).
+function transform.applyAutomatic(session, battler)
+    local current = battler
+    local seen = {}
+    for _ = 1, 8 do
+        local actorData = current.actorData or {}
+        if seen[actorData.id] then break end
+        seen[actorData.id] = true
+        local chosen
+        for _, rule in ipairs(actorData.autoTransforms or {}) do
+            local levelOk = not rule.atLevel or current.level >= rule.atLevel
+            local originOk = not rule.afterOriginLevels
+                or (current.originForm and current.originAtLevel
+                    and current.level >= current.originAtLevel + rule.afterOriginLevels)
+            if levelOk and originOk then chosen = rule break end
+        end
+        if not chosen then break end
+
+        local destination
+        local bonus = chosen.bonus
+        if chosen.actor == "hatch" then
+            local outcome = transform.hatchOutcome(current, actorData)
+            destination = outcome and session.loader.getActor(outcome.actor)
+            if outcome and not bonus then bonus = outcome.bonus end
+        elseif chosen.actor == "metamorph" then
+            local id = transform.classify(session, current, actorData.eligibleFrom)
+            destination = id and session.loader.getActor(id)
+        elseif chosen.actor == "revert" then
+            destination = current.originForm and session.loader.getActor(current.originForm)
+        else
+            destination = session.loader.getActor(chosen.actor)
+        end
+        if not destination or destination.id == actorData.id then break end
+
+        local nextB = transform.into(session, current, destination, {
+            bonus = bonus,
+            reversible = chosen.reversible,
+            clearOrigin = chosen.actor == "revert" or chosen.clearOrigin,
+        })
+        replaceInSession(session, current, nextB)
+        current = nextB
+    end
+    return current
 end
 
 return transform

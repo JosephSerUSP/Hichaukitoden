@@ -278,5 +278,303 @@
         "value": 0.25
       }
     ]
+  },
+  "fluidForm": {
+    "id": "fluidForm",
+    "name": "Fluid Form",
+    "description": "Water yields before impact.",
+    "effect": "Takes 10% less direct damage.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "DAMAGE_RATE",
+        "value": 0.9
+      }
+    ]
+  },
+  "mesmerizing": {
+    "id": "mesmerizing",
+    "name": "Mesmerizing",
+    "description": "Its light makes resistance difficult.",
+    "effect": "Raises status infliction chance by 25%.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "STATUS_SUCCESS",
+        "value": 0.25
+      }
+    ]
+  },
+  "privilege": {
+    "id": "privilege",
+    "name": "Privilege",
+    "description": "Fortune follows the prince.",
+    "effect": "Finds additional gold after victory.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "GOLD_DIGGER",
+        "value": 12
+      }
+    ]
+  },
+  "abundance": {
+    "id": "abundance",
+    "name": "Abundance",
+    "description": "Every meal stretches further.",
+    "effect": "Increases item effects by 20%.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.2
+      }
+    ]
+  },
+  "oldStrength": {
+    "id": "oldStrength",
+    "name": "Old Strength",
+    "description": "Great power already near its limit.",
+    "effect": "Raises ATK, but its species growth remains poor.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 6
+      }
+    ]
+  },
+  "reaper": {
+    "id": "reaper",
+    "name": "Reaper",
+    "description": "The final breath feeds the summoning.",
+    "effect": "A killing blow restores 12 Summoner MP.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "KILL_MP_RESTORE",
+        "value": 12
+      }
+    ]
+  },
+  "burningHeart": {
+    "id": "burningHeart",
+    "name": "Burning Heart",
+    "description": "Heat sharpens every assault.",
+    "effect": "Raises ATK.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "atk",
+        "value": 0.12
+      }
+    ]
+  },
+  "deepCurrent": {
+    "id": "deepCurrent",
+    "name": "Deep Current",
+    "description": "Power gathers beneath still water.",
+    "effect": "Raises MAT and MDF.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "mat",
+        "value": 0.1
+      },
+      {
+        "code": "PARAM_RATE",
+        "dataId": "mdf",
+        "value": 0.1
+      }
+    ]
+  },
+  "ancientGrowth": {
+    "id": "ancientGrowth",
+    "name": "Ancient Growth",
+    "description": "Old life refuses to wither.",
+    "effect": "Regenerates HP each round.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "HRG",
+        "value": 0.05
+      }
+    ]
+  },
+  "sacredScale": {
+    "id": "sacredScale",
+    "name": "Sacred Scale",
+    "description": "A bright scale turns hostile sorcery.",
+    "effect": "Reduces Black damage.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Black",
+        "value": 0.75
+      }
+    ]
+  },
+  "blackHunger": {
+    "id": "blackHunger",
+    "name": "Black Hunger",
+    "description": "Darkness rewards every wound.",
+    "effect": "Raises status pressure.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "STATUS_SUCCESS",
+        "value": 0.18
+      }
+    ]
+  },
+  "eightLegged": {
+    "id": "eightLegged",
+    "name": "Eight-Legged",
+    "description": "No road can hold it.",
+    "effect": "Improves initiative and escape.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "INITIATIVE",
+        "value": 0.25
+      },
+      {
+        "code": "FLEE_CHANCE_BONUS",
+        "value": 0.2
+      }
+    ]
+  },
+  "benediction": {
+    "id": "benediction",
+    "name": "Benediction",
+    "description": "Its presence gently restores the company.",
+    "effect": "Heals the party after battle.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "POST_BATTLE_HEAL",
+        "value": 0.12
+      }
+    ]
+  },
+  "scavenger": {
+    "id": "scavenger",
+    "name": "Scavenger",
+    "description": "Nothing found is ever truly worthless.",
+    "effect": "Increases item effects by 25%.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.25
+      }
+    ]
+  },
+  "openedBox": {
+    "id": "openedBox",
+    "name": "Opened Box",
+    "description": "Every possibility escaped at once.",
+    "effect": "Increases item effects by 50%.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.5
+      }
+    ]
+  },
+  "watchfulStone": {
+    "id": "watchfulStone",
+    "name": "Watchful Stone",
+    "description": "It watches where softer guardians blink.",
+    "effect": "Improves trap detection.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "SEE_TRAPS",
+        "value": 2
+      }
+    ]
+  },
+  "spellFrail": {
+    "id": "spellFrail",
+    "name": "Spell-Frail",
+    "description": "Dense stone gives sorcery a perfect purchase.",
+    "effect": "Takes 50% more elemental damage.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Red",
+        "value": 1.5
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Green",
+        "value": 1.5
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Blue",
+        "value": 1.5
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "White",
+        "value": 1.5
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Black",
+        "value": 1.5
+      }
+    ]
+  },
+  "riverGuide": {
+    "id": "riverGuide",
+    "name": "River Guide",
+    "description": "It knows every wet and hidden path.",
+    "effect": "Improves escape and trap detection.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "FLEE_CHANCE_BONUS",
+        "value": 0.2
+      },
+      {
+        "code": "SEE_TRAPS",
+        "value": 2
+      }
+    ]
+  },
+  "wayfarer": {
+    "id": "wayfarer",
+    "name": "Wayfarer",
+    "description": "Its long stride always finds another road.",
+    "effect": "Greatly improves escape.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "FLEE_CHANCE_BONUS",
+        "value": 0.3
+      }
+    ]
+  },
+  "fairyQueen": {
+    "id": "fairyQueen",
+    "name": "Fairy Queen",
+    "description": "The frail flourish beneath her court.",
+    "effect": "Improves recovery-site experience.",
+    "icon": 103,
+    "traits": [
+      {
+        "code": "RECOVERY_XP_BONUS",
+        "value": 0.35
+      }
+    ]
   }
 }

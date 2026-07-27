@@ -183,6 +183,11 @@ function Battler:gainExp(amount, sess)
     end
     if leveledUp then
         self.hp = self:getMaxHp(sess)
+        if sess then
+            local transformed = require("engine.transform").applyAutomatic(sess, self)
+            transformed.hp = transformed:getMaxHp(sess)
+            return leveledUp, transformed
+        end
     end
     return leveledUp
 end

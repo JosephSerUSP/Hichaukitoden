@@ -1,6 +1,25 @@
 local formula = require("engine.formula")
+local traits = require("engine.traits")
 
 local targeting = {}
+
+local function weightedTarget(list, session)
+    local total = 0
+    local weights = {}
+    for i, battler in ipairs(list) do
+        local weight = math.max(0, 1 + traits.getRate(battler, "TARGET_RATE", session))
+        weights[i] = weight
+        total = total + weight
+    end
+    if total <= 0 then return list[math.random(#list)] end
+    local roll = math.random() * total
+    local cursor = 0
+    for i, battler in ipairs(list) do
+        cursor = cursor + weights[i]
+        if roll < cursor then return battler end
+    end
+    return list[#list]
+end
 
 -- Field values resolve() actually implements. expand() rejects anything
 -- outside these — an unknown spec must ERROR, never silently retarget
@@ -223,8 +242,12 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
         end
         local picked = {}
         for i = 1, count do
-            local idx = math.random(#legal)
-            table.insert(picked, legal[idx])
+            if isAI and exp.side == "enemy" then
+                table.insert(picked, weightedTarget(legal, battleState.session))
+            else
+                local idx = math.random(#legal)
+                table.insert(picked, legal[idx])
+            end
         end
         return picked
     end

@@ -2,6 +2,11 @@
   {
     "id": 1,
     "name": "Pixie",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 1,
     "role": "Healer",
     "spriteKey": "pixie",
@@ -109,6 +114,11 @@
   {
     "id": 2,
     "name": "High Pixie",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 6,
     "role": "Healer",
     "spriteKey": "highPixie",
@@ -128,7 +138,18 @@
     "flavor": "A pixie that has attained a higher state of being.",
     "expGrowth": 3,
     "gold": 30,
-    "evolutions": [],
+    "evolutions": [
+      {
+        "level": 20,
+        "evolvesTo": 62,
+        "bonus": {
+          "maxHp": 18,
+          "mat": 9,
+          "mdf": 7,
+          "def": 3
+        }
+      }
+    ],
     "initialParty": false,
     "isRecruitable": false,
     "isEvolved": true,
@@ -160,7 +181,7 @@
       "Twinkle"
     ],
     "baseParams": {
-      "maxHp": 18,
+      "maxHp": 32,
       "atk": 9,
       "def": 15,
       "mat": 23,
@@ -202,6 +223,11 @@
   {
     "id": 3,
     "name": "Skeleton",
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
     "level": 1,
     "role": "Attacker",
     "spriteKey": "skeleton",
@@ -265,7 +291,7 @@
       "Clack"
     ],
     "baseParams": {
-      "maxHp": 11,
+      "maxHp": 42,
       "atk": 16,
       "def": 11,
       "mat": 7,
@@ -307,6 +333,11 @@
   {
     "id": 4,
     "name": "Angel",
+    "favoriteFoods": [
+      171,
+      179,
+      187
+    ],
     "level": 1,
     "role": "Support",
     "spriteKey": "angel",
@@ -372,7 +403,7 @@
       "Aura"
     ],
     "baseParams": {
-      "maxHp": 12,
+      "maxHp": 44,
       "atk": 7,
       "def": 11,
       "mat": 13,
@@ -414,6 +445,11 @@
   {
     "id": 5,
     "name": "Archangel",
+    "favoriteFoods": [
+      171,
+      179,
+      187
+    ],
     "level": 6,
     "role": "Support",
     "spriteKey": "archangel",
@@ -471,7 +507,7 @@
       "Aura"
     ],
     "baseParams": {
-      "maxHp": 17,
+      "maxHp": 60,
       "atk": 11,
       "def": 17,
       "mat": 20,
@@ -513,6 +549,11 @@
   {
     "id": 6,
     "name": "Demon",
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
     "level": 2,
     "role": "Attacker",
     "spriteKey": "demon",
@@ -579,7 +620,7 @@
       "Cinder"
     ],
     "baseParams": {
-      "maxHp": 12,
+      "maxHp": 44,
       "atk": 18,
       "def": 12,
       "mat": 8,
@@ -621,6 +662,11 @@
   {
     "id": 7,
     "name": "Incubus",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 6,
     "role": "Attacker",
     "spriteKey": "incubus",
@@ -674,7 +720,7 @@
       "Cinder"
     ],
     "baseParams": {
-      "maxHp": 22,
+      "maxHp": 62,
       "atk": 24,
       "def": 17,
       "mat": 11,
@@ -716,6 +762,11 @@
   {
     "id": 8,
     "name": "Nurse",
+    "favoriteFoods": [
+      175,
+      176,
+      187
+    ],
     "level": 1,
     "role": "Healer",
     "spriteKey": "nurse",
@@ -770,7 +821,7 @@
       "Hygiene"
     ],
     "baseParams": {
-      "maxHp": 14,
+      "maxHp": 48,
       "atk": 6,
       "def": 10,
       "mat": 15,
@@ -812,6 +863,11 @@
   {
     "id": 9,
     "name": "Imp",
+    "favoriteFoods": [
+      176,
+      179,
+      186
+    ],
     "level": 1,
     "role": "Attacker",
     "spriteKey": "imp",
@@ -860,7 +916,7 @@
       "Impala"
     ],
     "baseParams": {
-      "maxHp": 11,
+      "maxHp": 38,
       "atk": 16,
       "def": 11,
       "mat": 7,
@@ -902,22 +958,32 @@
   {
     "id": 10,
     "name": "Golem",
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
     "level": 2,
     "role": "Tank",
     "spriteKey": "golem",
     "smallBattler": "Golem",
     "passives": [
       "rearGuard",
-      "goldDigger"
+      "spellFrail"
     ],
     "elements": [],
     "skills": [
-      "boneRush"
+      "stoneFist"
     ],
     "flavor": "An animated statue, slow but incredibly durable.",
     "expGrowth": 8,
     "gold": 40,
-    "evolutions": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 57
+      }
+    ],
     "initialParty": true,
     "isRecruitable": true,
     "recruitEvent": {
@@ -960,12 +1026,12 @@
       "Clay"
     ],
     "baseParams": {
-      "maxHp": 15,
-      "atk": 9,
-      "def": 20,
-      "mat": 6,
-      "mdf": 17,
-      "mpd": 1,
+      "maxHp": 70,
+      "atk": 16,
+      "def": 25,
+      "mat": 5,
+      "mdf": 8,
+      "mpd": 2,
       "mxa": 3,
       "mxp": 2
     },
@@ -973,35 +1039,40 @@
       {
         "from": 2,
         "to": 10,
-        "maxHp": 25,
-        "atk": 18,
-        "def": 36,
-        "mat": 12,
-        "mdf": 30
+        "maxHp": 85,
+        "atk": 19,
+        "def": 30,
+        "mat": 5,
+        "mdf": 7
       },
       {
         "from": 11,
         "to": 20,
-        "maxHp": 36,
+        "maxHp": 115,
         "atk": 28,
-        "def": 53,
-        "mat": 18,
-        "mdf": 45
+        "def": 42,
+        "mat": 5,
+        "mdf": 8
       },
       {
         "from": 21,
         "to": 30,
-        "maxHp": 41,
-        "atk": 30,
-        "def": 58,
-        "mat": 21,
-        "mdf": 50
+        "maxHp": 130,
+        "atk": 32,
+        "def": 48,
+        "mat": 5,
+        "mdf": 9
       }
     ]
   },
   {
     "id": 11,
     "name": "Ghoul",
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
     "level": 2,
     "role": "Tank",
     "spriteKey": "ghoul",
@@ -1050,7 +1121,7 @@
       "Decay"
     ],
     "baseParams": {
-      "maxHp": 15,
+      "maxHp": 58,
       "atk": 9,
       "def": 20,
       "mat": 6,
@@ -1092,6 +1163,11 @@
   {
     "id": 12,
     "name": "Ooze",
+    "favoriteFoods": [
+      178,
+      185,
+      189
+    ],
     "level": 1,
     "role": "Debuffer",
     "spriteKey": "ooze",
@@ -1150,7 +1226,7 @@
       "Gunk"
     ],
     "baseParams": {
-      "maxHp": 18,
+      "maxHp": 65,
       "atk": 7,
       "def": 11,
       "mat": 14,
@@ -1192,6 +1268,11 @@
   {
     "id": 13,
     "name": "Bat",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 1,
     "role": "Attacker",
     "spriteKey": "bat",
@@ -1244,7 +1325,7 @@
       "Screech"
     ],
     "baseParams": {
-      "maxHp": 11,
+      "maxHp": 30,
       "atk": 16,
       "def": 11,
       "mat": 7,
@@ -1286,6 +1367,11 @@
   {
     "id": 14,
     "name": "Wisp",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 1,
     "role": "Caster",
     "spriteKey": "wisp",
@@ -1344,7 +1430,7 @@
       "Lumen"
     ],
     "baseParams": {
-      "maxHp": 12,
+      "maxHp": 40,
       "atk": 5,
       "def": 7,
       "mat": 17,
@@ -1386,6 +1472,11 @@
   {
     "id": 15,
     "name": "Egg",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "names": [
       "Yolko",
       "Eggbert",
@@ -1412,10 +1503,31 @@
     ],
     "expGrowth": 1,
     "gold": 1,
-    "evolutions": [
+    "evolutions": [],
+    "hatchOutcomes": {
+      "mystic": {
+        "actor": 16
+      },
+      "dungeon_larva": {
+        "actor": 17
+      },
+      "dungeon_angel": {
+        "actor": 4
+      },
+      "dungeon_dragon": {
+        "actor": 34
+      },
+      "dungeon_moa": {
+        "actor": 61
+      },
+      "default": {
+        "actor": 17
+      }
+    },
+    "autoTransforms": [
       {
-        "level": 10,
-        "evolvesTo": 16
+        "actor": "hatch",
+        "atLevel": 10
       }
     ],
     "initialParty": false,
@@ -1428,7 +1540,7 @@
     "discipline": "blacksmithing",
     "sacrificeRewards": [],
     "baseParams": {
-      "maxHp": 5,
+      "maxHp": 30,
       "atk": 3,
       "def": 3,
       "mat": 3,
@@ -1442,7 +1554,7 @@
       {
         "from": 2,
         "to": 10,
-        "maxHp": 8,
+        "maxHp": 9,
         "atk": 6,
         "def": 5,
         "mat": 6,
@@ -1471,6 +1583,11 @@
   {
     "id": 16,
     "name": "Phoenix",
+    "favoriteFoods": [
+      172,
+      179,
+      182
+    ],
     "level": 10,
     "role": "Reviver",
     "spriteKey": "phoenix",
@@ -1510,7 +1627,7 @@
       "Sol"
     ],
     "baseParams": {
-      "maxHp": 29,
+      "maxHp": 85,
       "atk": 19,
       "def": 27,
       "mat": 34,
@@ -1552,6 +1669,11 @@
   {
     "id": 17,
     "name": "Larva",
+    "favoriteFoods": [
+      171,
+      182,
+      190
+    ],
     "level": 1,
     "role": "Parasite",
     "spriteKey": "larva",
@@ -1597,7 +1719,7 @@
       "Crawler"
     ],
     "baseParams": {
-      "maxHp": 12,
+      "maxHp": 44,
       "atk": 11,
       "def": 7,
       "mat": 7,
@@ -1639,6 +1761,11 @@
   {
     "id": 18,
     "name": "Crimson Lord",
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
     "level": 6,
     "role": "Vampire",
     "spriteKey": "vampire",
@@ -1667,7 +1794,7 @@
     "discipline": "tinkering",
     "sacrificeRewards": [],
     "baseParams": {
-      "maxHp": 55,
+      "maxHp": 100,
       "atk": 27,
       "def": 21,
       "mat": 18,
@@ -1709,6 +1836,11 @@
   {
     "id": 19,
     "name": "Flauros",
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
     "level": 3,
     "role": "Attacker",
     "spriteKey": "flauros",
@@ -1750,7 +1882,7 @@
       }
     ],
     "baseParams": {
-      "maxHp": 19,
+      "maxHp": 65,
       "atk": 19,
       "def": 13,
       "mat": 8,
@@ -1792,6 +1924,11 @@
   {
     "id": 20,
     "name": "Candle",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
     "level": 1,
     "role": "Support",
     "spriteKey": "candle",
@@ -1837,7 +1974,7 @@
       }
     ],
     "baseParams": {
-      "maxHp": 11,
+      "maxHp": 48,
       "atk": 7,
       "def": 11,
       "mat": 13,
@@ -1879,6 +2016,11 @@
   {
     "id": 21,
     "name": "Shadow Stalker",
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
     "level": 12,
     "role": "Assassin",
     "elements": [
@@ -1911,7 +2053,7 @@
     "discipline": "tinkering",
     "sacrificeRewards": [],
     "baseParams": {
-      "maxHp": 40,
+      "maxHp": 80,
       "atk": 38,
       "def": 13,
       "mat": 11,
@@ -2010,6 +2152,3485 @@
         "mat": 54,
         "mdf": 41
       }
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Undine",
+    "names": [
+      "Undine"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Undine",
+    "smallBattler": "lamia",
+    "elements": [
+      "Blue",
+      "Blue"
+    ],
+    "skills": [
+      "iceShard"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 24
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 44,
+      "atk": 9,
+      "def": 12,
+      "mat": 19,
+      "mdf": 16,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 64,
+        "atk": 18,
+        "def": 21,
+        "mat": 33,
+        "mdf": 26
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 75,
+        "atk": 21,
+        "def": 25,
+        "mat": 38,
+        "mdf": 31
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 77,
+        "atk": 22,
+        "def": 27,
+        "mat": 40,
+        "mdf": 32
+      }
+    ],
+    "favoriteFoods": [
+      184,
+      188,
+      181
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 24,
+    "name": "Proteus",
+    "names": [
+      "Proteus"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Proteus",
+    "smallBattler": "lamia",
+    "elements": [
+      "Blue",
+      "Blue",
+      "Green"
+    ],
+    "skills": [
+      "iceShard",
+      "tidalGuard",
+      "riptide"
+    ],
+    "passives": [
+      "fluidForm"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 58,
+      "atk": 11,
+      "def": 14,
+      "mat": 24,
+      "mdf": 19,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 75,
+        "atk": 22,
+        "def": 25,
+        "mat": 33,
+        "mdf": 25
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 87,
+        "atk": 26,
+        "def": 30,
+        "mat": 38,
+        "mdf": 29
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 89,
+        "atk": 27,
+        "def": 31,
+        "mat": 39,
+        "mdf": 31
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Cocoon",
+    "names": [
+      "Cocoon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Cocoon",
+    "smallBattler": "wisp",
+    "elements": [
+      "Green",
+      "White"
+    ],
+    "skills": [
+      "sleepDust"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 26
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 38,
+      "atk": 8,
+      "def": 16,
+      "mat": 15,
+      "mdf": 18,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 45,
+        "atk": 8,
+        "def": 16,
+        "mat": 27,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 53,
+        "atk": 9,
+        "def": 19,
+        "mat": 31,
+        "mdf": 32
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 54,
+        "atk": 10,
+        "def": 21,
+        "mat": 32,
+        "mdf": 33
+      }
+    ],
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 26,
+    "name": "Notiluca",
+    "names": [
+      "Notiluca"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Notiluca",
+    "smallBattler": "wisp",
+    "elements": [
+      "Green",
+      "White",
+      "White"
+    ],
+    "skills": [
+      "sleepDust",
+      "mesmerizingLight"
+    ],
+    "passives": [
+      "mesmerizing"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 48,
+      "atk": 9,
+      "def": 18,
+      "mat": 21,
+      "mdf": 23,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 60,
+        "atk": 9,
+        "def": 18,
+        "mat": 32,
+        "mdf": 30
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 70,
+        "atk": 11,
+        "def": 21,
+        "mat": 37,
+        "mdf": 35
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 72,
+        "atk": 13,
+        "def": 21,
+        "mat": 38,
+        "mdf": 37
+      }
+    ],
+    "favoriteFoods": [
+      179,
+      180,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 27,
+    "name": "Gbl. Thief",
+    "names": [
+      "Gbl. Thief"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "GblThief",
+    "smallBattler": "Imp",
+    "elements": [
+      "Green",
+      "Black"
+    ],
+    "skills": [
+      "windBlade",
+      "miasma"
+    ],
+    "passives": [
+      "seeTraps",
+      "fleeChanceBonus"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 28
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 45,
+      "atk": 16,
+      "def": 12,
+      "mat": 8,
+      "mdf": 10,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 60,
+        "atk": 22,
+        "def": 15,
+        "mat": 12,
+        "mdf": 13
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 70,
+        "atk": 26,
+        "def": 17,
+        "mat": 14,
+        "mdf": 15
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 70,
+        "atk": 28,
+        "def": 18,
+        "mat": 14,
+        "mdf": 17
+      }
+    ],
+    "favoriteFoods": [
+      176,
+      179,
+      186
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 28,
+    "name": "Gbl. Prince",
+    "names": [
+      "Gbl. Prince"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "GblPrince",
+    "smallBattler": "Imp",
+    "elements": [
+      "Green",
+      "Black",
+      "White"
+    ],
+    "skills": [
+      "windBlade",
+      "miasma"
+    ],
+    "passives": [
+      "privilege",
+      "initiative"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 58,
+      "atk": 18,
+      "def": 16,
+      "mat": 14,
+      "mdf": 18,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 72,
+        "atk": 23,
+        "def": 19,
+        "mat": 19,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 84,
+        "atk": 26,
+        "def": 23,
+        "mat": 23,
+        "mdf": 25
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 86,
+        "atk": 28,
+        "def": 24,
+        "mat": 24,
+        "mdf": 26
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      179,
+      186
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 29,
+    "name": "Homunculus",
+    "names": [
+      "Homunculus"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Homunculus",
+    "smallBattler": "Nurse",
+    "elements": [],
+    "skills": [
+      "wait"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 50,
+      "atk": 12,
+      "def": 12,
+      "mat": 12,
+      "mdf": 12,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 69,
+        "atk": 21,
+        "def": 21,
+        "mat": 21,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 80,
+        "atk": 25,
+        "def": 25,
+        "mat": 25,
+        "mdf": 25
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 81,
+        "atk": 27,
+        "def": 27,
+        "mat": 27,
+        "mdf": 27
+      }
+    ],
+    "favoriteFoods": [
+      180,
+      181,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ],
+    "eligibleFrom": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      37,
+      39,
+      41,
+      43,
+      45,
+      46,
+      48,
+      50,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+    ],
+    "secretTransforms": [
+      {
+        "condition": "intrinsic.maxHp == 666",
+        "actor": 33
+      }
+    ],
+    "autoTransforms": [
+      {
+        "actor": "metamorph",
+        "atLevel": 10
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": "Mandrake",
+    "names": [
+      "Mandrake"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Mandrake",
+    "smallBattler": "Ooze",
+    "elements": [
+      "Green",
+      "Green"
+    ],
+    "skills": [
+      "rootMend"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 31
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 55,
+      "atk": 10,
+      "def": 18,
+      "mat": 15,
+      "mdf": 17,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 69,
+        "atk": 13,
+        "def": 21,
+        "mat": 27,
+        "mdf": 25
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 80,
+        "atk": 15,
+        "def": 25,
+        "mat": 31,
+        "mdf": 29
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 81,
+        "atk": 17,
+        "def": 26,
+        "mat": 32,
+        "mdf": 31
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      182,
+      190
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 31,
+    "name": "Alraune",
+    "names": [
+      "Alraune"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Alraune",
+    "smallBattler": "Ooze",
+    "elements": [
+      "Green",
+      "Green",
+      "White"
+    ],
+    "skills": [
+      "rootMend",
+      "gardensGrace"
+    ],
+    "passives": [
+      "abundance"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 70,
+      "atk": 12,
+      "def": 22,
+      "mat": 21,
+      "mdf": 23,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 82,
+        "atk": 15,
+        "def": 24,
+        "mat": 31,
+        "mdf": 29
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 96,
+        "atk": 17,
+        "def": 28,
+        "mat": 36,
+        "mdf": 33
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 97,
+        "atk": 18,
+        "def": 28,
+        "mat": 37,
+        "mdf": 35
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      182,
+      190
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Cerberus",
+    "names": [
+      "Cerberus"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Cerberus",
+    "smallBattler": "Demon",
+    "elements": [
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "ember",
+      "shadowClaw"
+    ],
+    "passives": [
+      "oldStrength"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 25,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 100,
+      "atk": 30,
+      "def": 22,
+      "mat": 18,
+      "mdf": 15,
+      "mpd": 6,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 54,
+        "atk": 18,
+        "def": 12,
+        "mat": 11,
+        "mdf": 10
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 62,
+        "atk": 21,
+        "def": 15,
+        "mat": 12,
+        "mdf": 12
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 64,
+        "atk": 21,
+        "def": 16,
+        "mat": 14,
+        "mdf": 13
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 33,
+    "name": "Diablos",
+    "names": [
+      "Diablos"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Diablos",
+    "smallBattler": "Demon",
+    "elements": [
+      "Black",
+      "Black",
+      "Red"
+    ],
+    "skills": [
+      "darkside"
+    ],
+    "passives": [
+      "reaper"
+    ],
+    "traits": [
+      {
+        "code": "EXECUTION_THRESHOLD",
+        "value": 0.15
+      }
+    ],
+    "expGrowth": 1,
+    "gold": 100,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 120,
+      "atk": 40,
+      "def": 30,
+      "mat": 45,
+      "mdf": 28,
+      "mpd": 8,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 108,
+        "atk": 31,
+        "def": 22,
+        "mat": 33,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 125,
+        "atk": 36,
+        "def": 26,
+        "mat": 38,
+        "mdf": 25
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 127,
+        "atk": 38,
+        "def": 27,
+        "mat": 39,
+        "mdf": 26
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      179,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 34,
+    "name": "Dragon",
+    "names": [
+      "Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Dragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Green",
+      "Blue",
+      "White",
+      "Black"
+    ],
+    "skills": [
+      "attack"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 35
+      },
+      {
+        "level": 10,
+        "evolvesTo": 37
+      },
+      {
+        "level": 10,
+        "evolvesTo": 39
+      },
+      {
+        "level": 10,
+        "evolvesTo": 41
+      },
+      {
+        "level": 10,
+        "evolvesTo": 43
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 85,
+      "atk": 24,
+      "def": 24,
+      "mat": 24,
+      "mdf": 24,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 82,
+        "atk": 24,
+        "def": 24,
+        "mat": 24,
+        "mdf": 24
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 96,
+        "atk": 28,
+        "def": 28,
+        "mat": 28,
+        "mdf": 28
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 97,
+        "atk": 29,
+        "def": 29,
+        "mat": 29,
+        "mdf": 29
+      }
+    ],
+    "favoriteFoods": [
+      173,
+      177,
+      184
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 35,
+    "name": "Red Dragon",
+    "names": [
+      "Red Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "RedDragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Red"
+    ],
+    "skills": [
+      "ember"
+    ],
+    "passives": [
+      "burningHeart"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 36,
+        "cost": {
+          "item": 50
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 95,
+      "atk": 30,
+      "def": 24,
+      "mat": 25,
+      "mdf": 22,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 94,
+        "atk": 31,
+        "def": 22,
+        "mat": 25,
+        "mdf": 20
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 110,
+        "atk": 36,
+        "def": 26,
+        "mat": 29,
+        "mdf": 23
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 111,
+        "atk": 38,
+        "def": 28,
+        "mat": 31,
+        "mdf": 25
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 36,
+    "name": "Salamander",
+    "names": [
+      "Salamander"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Salamander",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Red",
+      "Red"
+    ],
+    "skills": [
+      "ember",
+      "eruption"
+    ],
+    "passives": [
+      "burningHeart"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 110,
+      "atk": 35,
+      "def": 27,
+      "mat": 29,
+      "mdf": 24,
+      "mpd": 7,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 108,
+        "atk": 36,
+        "def": 26,
+        "mat": 30,
+        "mdf": 22
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 125,
+        "atk": 42,
+        "def": 30,
+        "mat": 35,
+        "mdf": 26
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 127,
+        "atk": 42,
+        "def": 32,
+        "mat": 36,
+        "mdf": 28
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Blue Dragon",
+    "names": [
+      "Blue Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "BlueDragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "Blue",
+      "Blue"
+    ],
+    "skills": [
+      "iceShard"
+    ],
+    "passives": [
+      "deepCurrent"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 38,
+        "cost": {
+          "item": 51
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 92,
+      "atk": 24,
+      "def": 25,
+      "mat": 31,
+      "mdf": 29,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 92,
+        "atk": 22,
+        "def": 24,
+        "mat": 32,
+        "mdf": 30
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 107,
+        "atk": 26,
+        "def": 28,
+        "mat": 38,
+        "mdf": 35
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 109,
+        "atk": 28,
+        "def": 28,
+        "mat": 39,
+        "mdf": 36
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 38,
+    "name": "Leviathan",
+    "names": [
+      "Leviathan"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Leviathan",
+    "smallBattler": "Golem",
+    "elements": [
+      "Blue",
+      "Blue",
+      "Blue"
+    ],
+    "skills": [
+      "iceShard",
+      "tidalGuard"
+    ],
+    "passives": [
+      "deepCurrent"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 108,
+      "atk": 27,
+      "def": 29,
+      "mat": 36,
+      "mdf": 34,
+      "mpd": 7,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 104,
+        "atk": 24,
+        "def": 27,
+        "mat": 37,
+        "mdf": 34
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 121,
+        "atk": 29,
+        "def": 31,
+        "mat": 43,
+        "mdf": 40
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 122,
+        "atk": 30,
+        "def": 33,
+        "mat": 44,
+        "mdf": 42
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Green Dragon",
+    "names": [
+      "Green Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "GreenDragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "Green",
+      "Green"
+    ],
+    "skills": [
+      "windBlade"
+    ],
+    "passives": [
+      "ancientGrowth"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 40,
+        "cost": {
+          "item": 52
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 105,
+      "atk": 25,
+      "def": 28,
+      "mat": 26,
+      "mdf": 28,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 103,
+        "atk": 25,
+        "def": 27,
+        "mat": 26,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 120,
+        "atk": 29,
+        "def": 32,
+        "mat": 31,
+        "mdf": 32
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 122,
+        "atk": 31,
+        "def": 33,
+        "mat": 32,
+        "mdf": 33
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      182,
+      190
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 40,
+    "name": "Fafnir",
+    "names": [
+      "Fafnir"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Fafnir",
+    "smallBattler": "Golem",
+    "elements": [
+      "Green",
+      "Green",
+      "Green"
+    ],
+    "skills": [
+      "windBlade",
+      "gardensGrace"
+    ],
+    "passives": [
+      "ancientGrowth"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 125,
+      "atk": 30,
+      "def": 34,
+      "mat": 31,
+      "mdf": 34,
+      "mpd": 7,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 118,
+        "atk": 28,
+        "def": 31,
+        "mat": 29,
+        "mdf": 31
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 138,
+        "atk": 33,
+        "def": 37,
+        "mat": 34,
+        "mdf": 37
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 139,
+        "atk": 34,
+        "def": 38,
+        "mat": 36,
+        "mdf": 38
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      182,
+      190
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 41,
+    "name": "White Dragon",
+    "names": [
+      "White Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "WhiteDragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "White",
+      "White"
+    ],
+    "skills": [
+      "holySmite",
+      "soothingMote"
+    ],
+    "passives": [
+      "sacredScale"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 42,
+        "cost": {
+          "item": 53
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 98,
+      "atk": 23,
+      "def": 27,
+      "mat": 30,
+      "mdf": 32,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 96,
+        "atk": 21,
+        "def": 26,
+        "mat": 31,
+        "mdf": 33
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 112,
+        "atk": 25,
+        "def": 30,
+        "mat": 36,
+        "mdf": 39
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 114,
+        "atk": 26,
+        "def": 32,
+        "mat": 38,
+        "mdf": 41
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      179,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Bahamut",
+    "names": [
+      "Bahamut"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Bahamut",
+    "smallBattler": "Golem",
+    "elements": [
+      "White",
+      "White",
+      "White"
+    ],
+    "skills": [
+      "holySmite",
+      "sacredRain"
+    ],
+    "passives": [
+      "sacredScale"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 115,
+      "atk": 29,
+      "def": 32,
+      "mat": 37,
+      "mdf": 39,
+      "mpd": 8,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 109,
+        "atk": 25,
+        "def": 30,
+        "mat": 36,
+        "mdf": 39
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 127,
+        "atk": 30,
+        "def": 36,
+        "mat": 43,
+        "mdf": 45
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 129,
+        "atk": 31,
+        "def": 37,
+        "mat": 44,
+        "mdf": 47
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      179,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Black Dragon",
+    "names": [
+      "Black Dragon"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "BlackDragon",
+    "smallBattler": "Golem",
+    "elements": [
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "shadowClaw",
+      "badDream"
+    ],
+    "passives": [
+      "blackHunger"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 44,
+        "cost": {
+          "item": 54
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 94,
+      "atk": 27,
+      "def": 24,
+      "mat": 29,
+      "mdf": 25,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 93,
+        "atk": 27,
+        "def": 21,
+        "mat": 31,
+        "mdf": 24
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 108,
+        "atk": 32,
+        "def": 24,
+        "mat": 37,
+        "mdf": 28
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 110,
+        "atk": 34,
+        "def": 26,
+        "mat": 38,
+        "mdf": 28
+      }
+    ],
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 44,
+    "name": "Nidhogg",
+    "names": [
+      "Nidhogg"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Nidhogg",
+    "smallBattler": "Golem",
+    "elements": [
+      "Black",
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "shadowClaw",
+      "darkside"
+    ],
+    "passives": [
+      "blackHunger"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 112,
+      "atk": 33,
+      "def": 28,
+      "mat": 35,
+      "mdf": 29,
+      "mpd": 8,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 107,
+        "atk": 33,
+        "def": 24,
+        "mat": 36,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 125,
+        "atk": 39,
+        "def": 28,
+        "mat": 42,
+        "mdf": 31
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 126,
+        "atk": 40,
+        "def": 30,
+        "mat": 42,
+        "mdf": 33
+      }
+    ],
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 45,
+    "name": "Giant",
+    "names": [
+      "Giant"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Giant",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Green"
+    ],
+    "skills": [
+      "boulderToss"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 46
+      },
+      {
+        "level": 10,
+        "evolvesTo": 48
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 95,
+      "atk": 28,
+      "def": 24,
+      "mat": 12,
+      "mdf": 16,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 88,
+        "atk": 27,
+        "def": 24,
+        "mat": 15,
+        "mdf": 17
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 103,
+        "atk": 32,
+        "def": 28,
+        "mat": 18,
+        "mdf": 20
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 104,
+        "atk": 33,
+        "def": 29,
+        "mat": 20,
+        "mdf": 22
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Hill Gigas",
+    "names": [
+      "Hill Gigas"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "HillGigas",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "boulderToss",
+      "eruption"
+    ],
+    "passives": [
+      "burningHeart"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 47,
+        "cost": {
+          "item": 55
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 110,
+      "atk": 34,
+      "def": 27,
+      "mat": 23,
+      "mdf": 17,
+      "mpd": 6,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 99,
+        "atk": 28,
+        "def": 23,
+        "mat": 24,
+        "mdf": 17
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 115,
+        "atk": 33,
+        "def": 27,
+        "mat": 28,
+        "mdf": 20
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 116,
+        "atk": 35,
+        "def": 28,
+        "mat": 30,
+        "mdf": 21
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 47,
+    "name": "Surtr",
+    "names": [
+      "Surtr"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Surtr",
+    "smallBattler": "Golem",
+    "elements": [
+      "Red",
+      "Red",
+      "Black"
+    ],
+    "skills": [
+      "eruption"
+    ],
+    "passives": [
+      "burningHeart"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "blacksmithing",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 130,
+      "atk": 40,
+      "def": 31,
+      "mat": 29,
+      "mdf": 20,
+      "mpd": 8,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 117,
+        "atk": 34,
+        "def": 28,
+        "mat": 30,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 136,
+        "atk": 40,
+        "def": 32,
+        "mat": 35,
+        "mdf": 24
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 137,
+        "atk": 41,
+        "def": 34,
+        "mat": 36,
+        "mdf": 25
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 48,
+    "name": "Atlas",
+    "names": [
+      "Atlas"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Atlas",
+    "smallBattler": "Golem",
+    "elements": [
+      "White",
+      "Green"
+    ],
+    "skills": [
+      "boulderToss",
+      "bulwark"
+    ],
+    "passives": [
+      "rearGuard"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 49,
+        "cost": {
+          "item": 56
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 120,
+      "atk": 36,
+      "def": 34,
+      "mat": 14,
+      "mdf": 24,
+      "mpd": 6,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 108,
+        "atk": 29,
+        "def": 31,
+        "mat": 15,
+        "mdf": 24
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 125,
+        "atk": 34,
+        "def": 37,
+        "mat": 17,
+        "mdf": 28
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 127,
+        "atk": 36,
+        "def": 38,
+        "mat": 19,
+        "mdf": 29
+      }
+    ],
+    "favoriteFoods": [
+      173,
+      177,
+      184
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 49,
+    "name": "Hyperion",
+    "names": [
+      "Hyperion"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Hyperion",
+    "smallBattler": "Golem",
+    "elements": [
+      "White",
+      "White",
+      "Green"
+    ],
+    "skills": [
+      "boulderToss",
+      "bulwark"
+    ],
+    "passives": [
+      "rearGuard"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 4,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 145,
+      "atk": 43,
+      "def": 41,
+      "mat": 18,
+      "mdf": 29,
+      "mpd": 8,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 127,
+        "atk": 35,
+        "def": 38,
+        "mat": 18,
+        "mdf": 28
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 148,
+        "atk": 40,
+        "def": 45,
+        "mat": 21,
+        "mdf": 33
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 150,
+        "atk": 42,
+        "def": 46,
+        "mat": 23,
+        "mdf": 35
+      }
+    ],
+    "favoriteFoods": [
+      173,
+      177,
+      184
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 50,
+    "name": "Mimic",
+    "names": [
+      "Mimic"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Mimic",
+    "smallBattler": "Ooze",
+    "elements": [
+      "Black",
+      "White"
+    ],
+    "skills": [
+      "itemToss"
+    ],
+    "passives": [
+      "scavenger"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 51,
+        "cost": {
+          "item": 47
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 80,
+      "atk": 18,
+      "def": 28,
+      "mat": 12,
+      "mdf": 22,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 90,
+        "atk": 20,
+        "def": 29,
+        "mat": 15,
+        "mdf": 23
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 105,
+        "atk": 23,
+        "def": 33,
+        "mat": 18,
+        "mdf": 27
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 105,
+        "atk": 24,
+        "def": 35,
+        "mat": 20,
+        "mdf": 28
+      }
+    ],
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 51,
+    "name": "Pandora",
+    "names": [
+      "Pandora"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Pandora",
+    "smallBattler": "Ooze",
+    "elements": [
+      "Black",
+      "White",
+      "Red"
+    ],
+    "skills": [
+      "itemToss",
+      "miasma"
+    ],
+    "passives": [
+      "openedBox"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 72,
+      "atk": 22,
+      "def": 24,
+      "mat": 18,
+      "mdf": 24,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 83,
+        "atk": 23,
+        "def": 24,
+        "mat": 20,
+        "mdf": 24
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 97,
+        "atk": 27,
+        "def": 28,
+        "mat": 23,
+        "mdf": 28
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 98,
+        "atk": 28,
+        "def": 29,
+        "mat": 24,
+        "mdf": 29
+      }
+    ],
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 52,
+    "name": "Unicorn",
+    "names": [
+      "Unicorn"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Unicorn",
+    "smallBattler": "Angel",
+    "elements": [
+      "White",
+      "Green"
+    ],
+    "skills": [
+      "soothingMote"
+    ],
+    "passives": [],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 53
+      },
+      {
+        "level": 10,
+        "evolvesTo": 55
+      },
+      {
+        "evolvesTo": 56,
+        "cost": {
+          "item": 48
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 52,
+      "atk": 14,
+      "def": 15,
+      "mat": 17,
+      "mdf": 18,
+      "mpd": 2,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 83,
+        "atk": 24,
+        "def": 24,
+        "mat": 26,
+        "mdf": 27
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 97,
+        "atk": 28,
+        "def": 28,
+        "mat": 30,
+        "mdf": 32
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 98,
+        "atk": 29,
+        "def": 28,
+        "mat": 32,
+        "mdf": 33
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 53,
+    "name": "Sleipnir",
+    "names": [
+      "Sleipnir"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Sleipnir",
+    "smallBattler": "Angel",
+    "elements": [
+      "White",
+      "Green",
+      "Green"
+    ],
+    "skills": [
+      "soothingMote",
+      "fleetStep"
+    ],
+    "passives": [
+      "eightLegged"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "evolvesTo": 54,
+        "cost": {
+          "item": 49
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 70,
+      "atk": 22,
+      "def": 20,
+      "mat": 22,
+      "mdf": 24,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 84,
+        "atk": 26,
+        "def": 27,
+        "mat": 26,
+        "mdf": 28
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 98,
+        "atk": 30,
+        "def": 31,
+        "mat": 30,
+        "mdf": 33
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 98,
+        "atk": 32,
+        "def": 32,
+        "mat": 32,
+        "mdf": 35
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 54,
+    "name": "Kirin",
+    "names": [
+      "Kirin"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Kirin",
+    "smallBattler": "Angel",
+    "elements": [
+      "White",
+      "White",
+      "Green"
+    ],
+    "skills": [
+      "soothingMote",
+      "purify",
+      "sacredRain"
+    ],
+    "passives": [
+      "benediction"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 85,
+      "atk": 24,
+      "def": 25,
+      "mat": 31,
+      "mdf": 34,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 87,
+        "atk": 24,
+        "def": 27,
+        "mat": 34,
+        "mdf": 36
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 101,
+        "atk": 28,
+        "def": 31,
+        "mat": 39,
+        "mdf": 42
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 102,
+        "atk": 29,
+        "def": 32,
+        "mat": 41,
+        "mdf": 43
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 55,
+    "name": "Nightmare",
+    "names": [
+      "Nightmare"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Nightmare",
+    "smallBattler": "Demon",
+    "elements": [
+      "Black",
+      "Black"
+    ],
+    "skills": [
+      "badDream",
+      "darkside"
+    ],
+    "passives": [
+      "blackHunger"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 62,
+      "atk": 25,
+      "def": 16,
+      "mat": 26,
+      "mdf": 18,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 71,
+        "atk": 28,
+        "def": 18,
+        "mat": 32,
+        "mdf": 21
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 83,
+        "atk": 33,
+        "def": 21,
+        "mat": 38,
+        "mdf": 25
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 84,
+        "atk": 34,
+        "def": 23,
+        "mat": 39,
+        "mdf": 26
+      }
+    ],
+    "favoriteFoods": [
+      180,
+      183,
+      189
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 56,
+    "name": "Firemane",
+    "names": [
+      "Firemane"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Firemane",
+    "smallBattler": "Demon",
+    "elements": [
+      "Red",
+      "Red"
+    ],
+    "skills": [
+      "soothingMote",
+      "flare"
+    ],
+    "passives": [
+      "burningHeart"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "alchemy",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 72,
+      "atk": 28,
+      "def": 19,
+      "mat": 29,
+      "mdf": 20,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 83,
+        "atk": 29,
+        "def": 21,
+        "mat": 33,
+        "mdf": 22
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 97,
+        "atk": 33,
+        "def": 24,
+        "mat": 38,
+        "mdf": 26
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 98,
+        "atk": 35,
+        "def": 26,
+        "mat": 40,
+        "mdf": 27
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      182,
+      183
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 57,
+    "name": "Talos",
+    "names": [
+      "Talos"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Talos",
+    "smallBattler": "Golem",
+    "elements": [],
+    "skills": [
+      "stoneFist"
+    ],
+    "passives": [
+      "rearGuard",
+      "spellFrail"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 105,
+      "atk": 28,
+      "def": 42,
+      "mat": 4,
+      "mdf": 5,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 136,
+        "atk": 29,
+        "def": 48,
+        "mat": 3,
+        "mdf": 5
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 159,
+        "atk": 33,
+        "def": 57,
+        "mat": 3,
+        "mdf": 6
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 160,
+        "atk": 35,
+        "def": 58,
+        "mat": 5,
+        "mdf": 8
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 58,
+    "name": "Gargoyle",
+    "names": [
+      "Gargoyle"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Gargoyle",
+    "smallBattler": "Demon",
+    "elements": [
+      "Black",
+      "White"
+    ],
+    "skills": [
+      "provoke",
+      "aegisCry"
+    ],
+    "passives": [
+      "watchfulStone"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 59
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 58,
+      "atk": 13,
+      "def": 20,
+      "mat": 17,
+      "mdf": 20,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 81,
+        "atk": 20,
+        "def": 28,
+        "mat": 24,
+        "mdf": 30
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 95,
+        "atk": 23,
+        "def": 33,
+        "mat": 29,
+        "mdf": 35
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 96,
+        "atk": 24,
+        "def": 34,
+        "mat": 30,
+        "mdf": 35
+      }
+    ],
+    "favoriteFoods": [
+      171,
+      176,
+      182
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 59,
+    "name": "Grotesque",
+    "names": [
+      "Grotesque"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Grotesque",
+    "smallBattler": "Demon",
+    "elements": [
+      "Black",
+      "White",
+      "White"
+    ],
+    "skills": [
+      "provoke",
+      "aegisCry",
+      "stoneFist"
+    ],
+    "passives": [
+      "watchfulStone"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 2,
+    "discipline": "tinkering",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 75,
+      "atk": 18,
+      "def": 25,
+      "mat": 23,
+      "mdf": 27,
+      "mpd": 5,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 100,
+        "atk": 23,
+        "def": 34,
+        "mat": 30,
+        "mdf": 36
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 117,
+        "atk": 26,
+        "def": 40,
+        "mat": 35,
+        "mdf": 43
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 118,
+        "atk": 28,
+        "def": 41,
+        "mat": 37,
+        "mdf": 44
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 60,
+    "name": "Kappa",
+    "names": [
+      "Kappa"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Kappa",
+    "smallBattler": "Ooze",
+    "elements": [
+      "Blue",
+      "Green"
+    ],
+    "skills": [
+      "aquaDish"
+    ],
+    "passives": [
+      "riverGuide"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 65,
+      "atk": 12,
+      "def": 24,
+      "mat": 10,
+      "mdf": 22,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 85,
+        "atk": 15,
+        "def": 25,
+        "mat": 13,
+        "mdf": 24
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 99,
+        "atk": 18,
+        "def": 30,
+        "mat": 15,
+        "mdf": 29
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 101,
+        "atk": 20,
+        "def": 31,
+        "mat": 17,
+        "mdf": 30
+      }
+    ],
+    "favoriteFoods": [
+      172,
+      177,
+      184
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ],
+    "autoTransforms": [
+      {
+        "actor": "revert",
+        "afterOriginLevels": 3
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "name": "Moa",
+    "names": [
+      "Moa"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Moa",
+    "smallBattler": "Angel",
+    "elements": [
+      "Green"
+    ],
+    "skills": [
+      "fleetStep"
+    ],
+    "passives": [
+      "wayfarer"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": false,
+    "unlocked": true,
+    "tier": 1,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 60,
+      "atk": 14,
+      "def": 20,
+      "mat": 8,
+      "mdf": 15,
+      "mpd": 1,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 72,
+        "atk": 18,
+        "def": 21,
+        "mat": 9,
+        "mdf": 16
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 84,
+        "atk": 21,
+        "def": 24,
+        "mat": 11,
+        "mdf": 19
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 84,
+        "atk": 22,
+        "def": 25,
+        "mat": 12,
+        "mdf": 20
+      }
+    ],
+    "favoriteFoods": [
+      174,
+      184,
+      187
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
+    ]
+  },
+  {
+    "id": 62,
+    "name": "Titania",
+    "names": [
+      "Titania"
+    ],
+    "level": 1,
+    "role": "None",
+    "spriteKey": "Titania",
+    "smallBattler": "Titania[fps=15]",
+    "elements": [
+      "Green",
+      "White",
+      "White"
+    ],
+    "skills": [
+      "windBlade",
+      "soothingMote",
+      "fairyCourt"
+    ],
+    "passives": [
+      "fairyQueen"
+    ],
+    "traits": [],
+    "expGrowth": 1,
+    "gold": 10,
+    "drops": [],
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "unlocked": true,
+    "tier": 3,
+    "discipline": "cooking",
+    "sacrificeRewards": [],
+    "baseParams": {
+      "maxHp": 36,
+      "atk": 12,
+      "def": 22,
+      "mat": 34,
+      "mdf": 31,
+      "mpd": 4,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 76,
+        "atk": 17,
+        "def": 24,
+        "mat": 42,
+        "mdf": 38
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 88,
+        "atk": 20,
+        "def": 29,
+        "mat": 49,
+        "mdf": 45
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 90,
+        "atk": 21,
+        "def": 30,
+        "mat": 50,
+        "mdf": 46
+      }
+    ],
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "foodReactions": [
+      "Not bad.",
+      "I've had stranger."
     ]
   }
 ]

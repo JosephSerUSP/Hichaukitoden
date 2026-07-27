@@ -146,5 +146,67 @@
     "priority": 50,
     "traits": [],
     "display": {}
+  },
+  "provoke": {
+    "id": "provoke",
+    "categories": [
+      "positive",
+      "physical"
+    ],
+    "name": "Provoke",
+    "icon": 28,
+    "duration": 3,
+    "traits": [
+      {
+        "code": "TARGET_RATE",
+        "value": 3
+      }
+    ]
+  },
+  "magicGuard": {
+    "id": "magicGuard",
+    "categories": [
+      "positive",
+      "magical"
+    ],
+    "name": "Magic Guard",
+    "icon": 29,
+    "duration": 3,
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "mdf",
+        "value": 0.35
+      }
+    ]
+  },
+  "blind": {
+    "id": "blind",
+    "categories": [
+      "negative",
+      "common",
+      "physical"
+    ],
+    "name": "Blind",
+    "icon": 30,
+    "duration": 3,
+    "traits": [
+      {
+        "code": "HIT",
+        "value": -0.4
+      }
+    ]
+  },
+  "silence": {
+    "id": "silence",
+    "categories": [
+      "negative",
+      "common",
+      "magical"
+    ],
+    "name": "Silence",
+    "icon": 31,
+    "duration": 3,
+    "traits": []
   }
 }

@@ -1009,6 +1009,10 @@
                 const ah = (anc.layout || []).length;
                 const aw = ah > 0 ? anc.layout[0].length : 0;
                 item.textContent = `${anc.name || 'Anchor'} (${aw}x${ah} at ${anc.x},${anc.y})`;
+                const levelText = enc.levelMin
+                    ? ` · Lv ${enc.levelMin}${enc.levelMax && enc.levelMax !== enc.levelMin ? `-${enc.levelMax}` : ''}`
+                    : '';
+                item.textContent += levelText;
                 item.onclick = () => {
                     document.querySelectorAll('#prop-anchors-list > div').forEach(d => d.style.background = '');
                     item.style.background = 'var(--win-blue)';
@@ -1298,6 +1302,31 @@
             weightRow.appendChild(weightInput);
             box.appendChild(weightRow);
 
+            const levelRow = document.createElement('div');
+            levelRow.style.cssText = 'display:flex;align-items:center;gap:6px;';
+            const levelLabel = document.createElement('label');
+            levelLabel.textContent = 'Levels:';
+            levelLabel.style.cssText = 'font-size:10px;min-width:50px;';
+            const levelMinInput = document.createElement('input');
+            levelMinInput.type = 'number';
+            levelMinInput.min = '1';
+            levelMinInput.value = '1';
+            levelMinInput.className = 'win98-input';
+            levelMinInput.style.width = '64px';
+            const levelDash = document.createElement('span');
+            levelDash.textContent = 'to';
+            const levelMaxInput = document.createElement('input');
+            levelMaxInput.type = 'number';
+            levelMaxInput.min = '1';
+            levelMaxInput.value = '1';
+            levelMaxInput.className = 'win98-input';
+            levelMaxInput.style.width = '64px';
+            levelRow.appendChild(levelLabel);
+            levelRow.appendChild(levelMinInput);
+            levelRow.appendChild(levelDash);
+            levelRow.appendChild(levelMaxInput);
+            box.appendChild(levelRow);
+
             const btnRow = document.createElement('div');
             btnRow.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;margin-top:4px;';
             const cancelBtn = document.createElement('button');
@@ -1309,7 +1338,14 @@
             okBtn.textContent = 'Add';
             okBtn.onclick = () => {
                 const weight = parseInt(weightInput.value) || 10;
-                mapPropsEncounters.push({ id: parseInt(actorSelect.value), weight: weight });
+                const levelMin = Math.max(1, parseInt(levelMinInput.value) || 1);
+                const levelMax = Math.max(levelMin, parseInt(levelMaxInput.value) || levelMin);
+                mapPropsEncounters.push({
+                    id: parseInt(actorSelect.value),
+                    weight,
+                    levelMin,
+                    levelMax
+                });
                 mapPropsDirty = true;
                 renderEncountersList(mapPropsEncounters);
                 overlay.remove();

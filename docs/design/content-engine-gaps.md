@@ -77,9 +77,17 @@ Closed 26.07.2026 -- see below. What remains is presentation, not mechanism:
 
 | Intent | Current mismatch | Required reusable work |
 |---|---|---|
-| Meals are field-only and often party-wide | Occasion and party targeting now exist separately; no Meal marker ties them together for UI | Meal metadata and presentation on top of `scope: field` + `target: party` |
-| Savor lasts an authored number of completed battles | No battle-count food state | Saved battle counter and non-refresh rule |
 | Monster remains are usable ingredients but never outputs | Expressible now (`craftable: false` alone), but the existing Obsidian Shard / Melted Wax / Ectoplasm are still inert `junk` | Migrate the three to real equipment/consumable forms; validate no inert `junk` remains |
+| Forbidden Lamp begins a fixed Diablos encounter and recruits only after victory | `common_event` can call a common event, but `BATTLE` still starts only the current map's generic encounter and does not resume a victory branch | Reusable fixed-encounter parameters plus a post-battle continuation/result branch; do not approximate this with a random battle |
+| Venom Knife and Sleep Blade attach their named states to ordinary attacks | Status success exists, but equipment cannot yet author an attack-state payload | RPG Maker-style attack-state trait carrying state ID and chance, applied only to ordinary Attack |
+| Silence prevents skill use while preserving Attack, Defend, and Item | The state and cure item exist, but no selective skill-seal restriction exists | Registry-backed skill-seal trait consumed by command availability and AI |
+| Smoke Bomb escapes a battle | The item is authored but has no effect; ordinary flee remains an action, not an item effect | Reusable escape-attempt item effect routed through the same flee flow |
+
+## Presentation assets
+
+| Intent | Current mismatch | Required reusable work |
+|---|---|---|
+| Every new species has its own portrait and battler | Actor data is authored, but only Titania currently has matching art; the others deliberately use existing battlers as visible placeholders | Author and import the roster's portrait/battler set, then replace each placeholder key |
 
 ## Equipment promises
 
@@ -125,7 +133,15 @@ authority on what exists.
 | Battle/field/both item occasion | `item.scope`, enumerated in `engine.json -> itemScopes`; G1 fails an unknown scope; editor select reads the registry |
 | Fixed, percentage, and hybrid HP/MP recovery | `percent` alongside `value` on the `hp` and `mp_heal` effects |
 | Rare items permanently raise Summoner Max MP | `max_mp_plus`, clamped to `system.summoner.maxMpCap`, saved with the session, refused at the cap |
-| Mimic/Pandora scale item effects | `ITEM_EFFECT_RATE`, read from the recipient; skills and permanent gains deliberately untouched |
+| Mimic/Pandora scale item effects | `ITEM_EFFECT_RATE`, read from the acting user or best field carrier; skills and permanent gains deliberately untouched |
+| Meals need explicit identity and field-only enforcement | `meal: true`, registered `foodTags`, G1 scope enforcement, and editor fields |
+| Favorite Food needs a non-refreshing battle cooldown | Saved per-instance `savor` traits, discovered exact item identity, and victory-flow `TICK_SAVOR` |
+| Provoke and authored elemental resistance | `TARGET_RATE` weighted enemy AI selection and element-keyed `ELEMENT_RATE` |
+| Diablos Reaper restores MP on a finishing blow | `KILL_MP_RESTORE`, shared by ordinary lethal damage and Execution |
+| Egg cracking and curse recovery happen without player promotion | Actor-authored `autoTransforms` using the shared transformation primitive |
+| Homunculus rare intrinsic conditions precede ordinary classification | Ordered `secretTransforms` formulas over permanent intrinsic parameters; the live 666 Max HP rule resolves to Diablos |
+| Healing Staff improves healing rather than merely adding White | `HEAL_RATE`, applied to skill healing only |
+| Every atlas object can participate outside crafting | Remains are equippable, foods/consumables usable, equipment wearable; promotion keys and Forbidden Lamp are the deliberate single-purpose exceptions |
 | Promotion keys cannot be Item Creation inputs or outputs | `meta.craftIngredient: false` (inputs) alongside `meta.craftable: false` (outputs); `craft.isIngredient` is the shared reading, applied to the ingredient list through the new `SET_LIST` `filter` row formula |
 
 Tested in `tests/test_item_vocabulary.lua`; none of it is observable to G2/G3,

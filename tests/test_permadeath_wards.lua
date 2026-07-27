@@ -293,10 +293,14 @@ do
     local sess = sessionModule.GameSession.new(loader)
     local dummy = sess:recruitActor(3, 1)
     local before = #sess.party
-    local evs = effects.apply({ type = "recruit_egg", value = 15 }, dummy, dummy, sess)
+    local evs = effects.apply({
+        type = "recruit_egg", value = 15, provenance = "dungeon_angel"
+    }, dummy, dummy, sess)
     check(#sess.party == before + 1, "recruit_egg recruits into a free party slot")
     local hatched = sess.party[#sess.party]
     check(hatched and hatched.id == 15, "recruit_egg recruits the actor named by `value`")
+    check(hatched and hatched.provenance == "dungeon_angel",
+        "recruit_egg fixes the authored hatch provenance on the instance")
     local sawRecruit = false
     for _, ev in ipairs(evs) do if ev.type == "recruit" then sawRecruit = true end end
     check(sawRecruit, "recruit_egg emits a recruit event for presentation")

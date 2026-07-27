@@ -38,6 +38,10 @@ validator.run = function(loader)
         validTraitCodes[tc.code] = true
         traitCodeDefs[tc.code] = tc
     end
+    local validFoodTags = {}
+    for _, tag in ipairs((loader.engine and loader.engine.foodTags) or {}) do
+        validFoodTags[tag.tag] = true
+    end
     local validFogPresets = {}
     for _, fp in ipairs((loader.engine and loader.engine.fogPresets) or {}) do
         validFogPresets[fp.id] = true
@@ -393,9 +397,13 @@ validator.run = function(loader)
                     if tr.code == "PARAM_PLUS" or tr.code == "PARAM_RATE" then
                         check(VALID_TRAIT_PARAM[tr.dataId],
                             where .. " targets unknown param '" .. tostring(tr.dataId) .. "'")
-                    elseif tr.code == "ELEMENT_CHANGE" or tr.code == "ELEMENT_ADD" then
+                    elseif tr.code == "ELEMENT_CHANGE" or tr.code == "ELEMENT_ADD"
+                        or tr.code == "ELEMENT_RATE" then
                         check(tr.dataId == nil or loader.getElement(tr.dataId) ~= nil,
                             where .. " references missing element '" .. tostring(tr.dataId) .. "'")
+                    elseif tr.code == "STATE_RATE" then
+                        check(loader.getState(tr.dataId) ~= nil,
+                            where .. " references missing state '" .. tostring(tr.dataId) .. "'")
                     end
                 else
                     check(tr.dataId == nil,
@@ -444,6 +452,7 @@ validator.run = function(loader)
 
     -- Actors must reference existing skills/passives/elements/roles
     for _, actor in ipairs(loader.actors) do
+        local actorDesc = "actor " .. tostring(actor.id)
         for _, skId in ipairs(actor.skills or {}) do
             check(loader.getSkill(skId), "actor " .. tostring(actor.id) .. " references missing skill '" .. tostring(skId) .. "'")
         end
@@ -498,6 +507,75 @@ validator.run = function(loader)
                 end
             end
         end
+        local lastBandEnd = 1
+        for bi, band in ipairs(actor.growthBands or {}) do
+            local desc = actorDesc .. " growthBands[" .. bi .. "]"
+            check(type(band.from) == "number" and type(band.to) == "number"
+                    and band.from >= 2 and band.to >= band.from,
+                desc .. " needs numeric levels with 2 <= from <= to")
+            if type(band.from) == "number" then
+                check(band.from > lastBandEnd, desc .. " overlaps or is out of order")
+            end
+            if type(band.to) == "number" then lastBandEnd = band.to end
+            for param, value in pairs(band) do
+                if param ~= "from" and param ~= "to" then
+                    check(VALID_PARAM_PLUS[param], desc .. " names unknown growth parameter '" .. tostring(param) .. "'")
+                    check(type(value) == "number" and value >= 0,
+                        desc .. " parameter '" .. tostring(param) .. "' must be a non-negative number")
+                end
+            end
+            if type(band.from) == "number" and type(band.to) == "number" and type(band.maxHp) == "number" then
+                check(band.maxHp >= band.to - band.from + 1,
+                    desc .. " maxHp budget must permit HP to rise by at least 1 each level")
+            end
+        end
+        for fi, itemId in ipairs(actor.favoriteFoods or {}) do
+            local food = loader.getItem(itemId)
+            check(food ~= nil, actorDesc .. " favoriteFoods[" .. fi .. "] references missing item '" .. tostring(itemId) .. "'")
+            if food then
+                check(food.meal == true or #(food.foodTags or {}) > 0,
+                    actorDesc .. " favorite food '" .. tostring(food.name) .. "' is not tagged as food")
+            end
+        end
+        for ri, line in ipairs(actor.foodReactions or {}) do
+            check(type(line) == "string" and line ~= "",
+                actorDesc .. " foodReactions[" .. ri .. "] must be a non-empty string")
+        end
+        for provenance, outcome in pairs(actor.hatchOutcomes or {}) do
+            check(type(outcome) == "table" and loader.getActor(outcome and outcome.actor),
+                actorDesc .. " hatch outcome '" .. tostring(provenance) .. "' references a missing actor")
+        end
+        for ei, eligibleId in ipairs(actor.eligibleFrom or {}) do
+            check(loader.getActor(eligibleId),
+                actorDesc .. " eligibleFrom[" .. ei .. "] references missing actor '" .. tostring(eligibleId) .. "'")
+        end
+        for si, rule in ipairs(actor.secretTransforms or {}) do
+            local desc = actorDesc .. " secretTransforms[" .. si .. "]"
+            check(type(rule.condition) == "string" and rule.condition ~= "",
+                desc .. ".condition must be a non-empty formula")
+            check(loader.getActor(rule.actor),
+                desc .. " references missing actor '" .. tostring(rule.actor) .. "'")
+            if type(rule.condition) == "string" then
+                local _, err = require("engine.formula").eval(rule.condition, {
+                    intrinsic = {
+                        level = 10, maxHp = 100, atk = 20, def = 20,
+                        mat = 20, mdf = 20
+                    }
+                })
+                check(err == nil, desc .. " condition does not compile: " .. tostring(err))
+            end
+        end
+        for ai, rule in ipairs(actor.autoTransforms or {}) do
+            local desc = actorDesc .. " autoTransforms[" .. ai .. "]"
+            local special = rule.actor == "hatch" or rule.actor == "metamorph" or rule.actor == "revert"
+            check(type(rule.actor) == "string" and (special or loader.getActor(rule.actor)),
+                desc .. " references missing actor '" .. tostring(rule.actor) .. "'")
+            check(rule.atLevel == nil or (type(rule.atLevel) == "number" and rule.atLevel >= 1),
+                desc .. ".atLevel must be a positive number")
+            check(rule.afterOriginLevels == nil
+                    or (type(rule.afterOriginLevels) == "number" and rule.afterOriginLevels >= 1),
+                desc .. ".afterOriginLevels must be a positive number")
+        end
         if actor.role then
             check(loader.getRole(actor.role), "actor " .. tostring(actor.id) .. " references missing role '" .. tostring(actor.role) .. "'")
         end
@@ -528,6 +606,25 @@ validator.run = function(loader)
     for _, item in ipairs(loader.items) do
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))
+        for ti, tag in ipairs(item.foodTags or {}) do
+            check(validFoodTags[tag],
+                "item " .. tostring(item.id) .. " foodTags[" .. ti .. "] uses unregistered tag '" .. tostring(tag) .. "'")
+        end
+        if item.meal then
+            check(item.scope == "field",
+                "meal item " .. tostring(item.id) .. " must use scope 'field'")
+        end
+        if item.savor ~= nil then
+            check(item.meal == true or #(item.foodTags or {}) > 0,
+                "item " .. tostring(item.id) .. " has Savor but is not food")
+            check(type(item.savor) == "table"
+                    and (item.savor.battles == nil
+                        or (type(item.savor.battles) == "number" and item.savor.battles >= 1)),
+                "item " .. tostring(item.id) .. " Savor battles must be a positive number")
+            if type(item.savor) == "table" then
+                checkTraits(item.savor.traits, "item " .. tostring(item.id) .. " Savor")
+            end
+        end
         -- An item with effects but a non-consumable `type` is silently
         -- unusable: usability.canUseItem refuses anything that isn't
         -- "consumable", so it never appears as usable in the items menu and its
@@ -539,6 +636,21 @@ validator.run = function(loader)
                 .. "') has effects but type '" .. tostring(item.type)
                 .. "' -- usability.canUseItem only accepts \"consumable\", so it "
                 .. "would be silently unusable")
+        end
+        if item.category == "promotion_key" then
+            check((item.meta or {}).craftable == false
+                    and (item.meta or {}).craftIngredient == false,
+                "promotion key " .. tostring(item.id)
+                    .. " must be excluded from Item Creation inputs and outputs")
+            check(not item.effects or #item.effects == 0,
+                "promotion key " .. tostring(item.id) .. " must have no ordinary use effects")
+            check(item.type ~= "equipment",
+                "promotion key " .. tostring(item.id) .. " must not be equipment")
+        end
+        if item.meta and item.meta.tier ~= nil then
+            check(item.meta.tier >= 1 and item.meta.tier <= 5
+                    and item.meta.tier == math.floor(item.meta.tier),
+                "item " .. tostring(item.id) .. " meta.tier must be an integer from 1 to 5")
         end
         if item.actionSequence then
             check(loader.actionSequences[item.actionSequence] ~= nil, "item '" .. tostring(item.id) .. "' actionSequence references missing sequence '" .. tostring(item.actionSequence) .. "'")
@@ -683,13 +795,31 @@ validator.run = function(loader)
                 where .. " treasures[" .. ti .. "] references missing item '" .. tostring(itemId) .. "'")
         end
         for ri, actorId in ipairs(map.recruits or {}) do
-            check(loader.getActor(actorId) ~= nil,
+            local actor = loader.getActor(actorId)
+            check(actor ~= nil,
                 where .. " recruits[" .. ri .. "] references missing actor '" .. tostring(actorId) .. "'")
+            check(actor == nil or actor.isRecruitable == true,
+                where .. " recruits[" .. ri .. "] actor '" .. tostring(actorId)
+                .. "' is not marked isRecruitable")
         end
         for ei, enc in ipairs(map.encounters or {}) do
             check(type(enc) == "table" and loader.getActor(enc.id) ~= nil,
                 where .. " encounters[" .. ei .. "] references missing actor '"
                 .. tostring(type(enc) == "table" and enc.id or enc) .. "'")
+            if type(enc) == "table" then
+                check(type(enc.weight) == "number" and enc.weight > 0 and enc.weight == math.floor(enc.weight),
+                    where .. " encounters[" .. ei .. "] weight must be a positive integer")
+                check(enc.levelMin == nil or (type(enc.levelMin) == "number"
+                        and enc.levelMin >= 1 and enc.levelMin == math.floor(enc.levelMin)),
+                    where .. " encounters[" .. ei .. "] levelMin must be a positive integer")
+                check(enc.levelMax == nil or (type(enc.levelMax) == "number"
+                        and enc.levelMax >= 1 and enc.levelMax == math.floor(enc.levelMax)),
+                    where .. " encounters[" .. ei .. "] levelMax must be a positive integer")
+                check(enc.levelMax == nil or enc.levelMin ~= nil,
+                    where .. " encounters[" .. ei .. "] levelMax requires levelMin")
+                check(enc.levelMin == nil or enc.levelMax == nil or enc.levelMax >= enc.levelMin,
+                    where .. " encounters[" .. ei .. "] levelMax must be at least levelMin")
+            end
         end
     end
 
@@ -1608,6 +1738,7 @@ elseif paramDef.type == "script" then
             enemies = { tEnemy },
             target = tSession.party[1],
             a = tSession.party[1],
+            battle = { round = 1 },
         }
         local okFlow, flowErr = pcall(flow.run, "_test.scene", tCtx)
         check(okFlow, "_test.scene flow failed: " .. tostring(flowErr))
@@ -1721,7 +1852,9 @@ elseif paramDef.type == "script" then
             local s = session.GameSession.new(loader)
             s:initializeStartingParty()
             for _, c in ipairs(s.party) do c.hp = math.max(1, math.floor(c:getMaxHp(s) / 2)) end
-            local okPhase, phaseErr = pcall(flow.run, phase, { session = s, party = s.party, enemies = {} })
+            local okPhase, phaseErr = pcall(flow.run, phase, {
+                session = s, party = s.party, enemies = {}, battle = { round = 1 }
+            })
             check(okPhase, phase .. " flow failed to execute: " .. tostring(phaseErr))
         end
     end

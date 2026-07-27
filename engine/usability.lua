@@ -33,26 +33,38 @@ function usability.canUseItem(item, target, context)
     local session = context.session
 
     -- Global / No-target checks
-    if item.target == "none" or (item.effects and #item.effects > 0 and not target) then
+    if item.target == "none" or item.target == "party"
+        or (item.effects and #item.effects > 0 and not target) then
+        local canAffect = false
+        local unavailableReason = "No effect"
         for _, eff in ipairs(item.effects or {}) do
             if eff.type == "mp_heal" and session then
                 local maxMp = session.maxMp or 999
-                if (session.mp or 0) >= maxMp then
-                    return false, "MP is already full"
-                end
+                if (session.mp or 0) < maxMp then canAffect = true
+                else unavailableReason = "MP is already full" end
             elseif eff.type == "max_mp_plus" and session then
                 local sys = (session.loader and session.loader.system
                     and session.loader.system.summoner) or {}
-                if (session.maxMp or 0) >= (sys.maxMpCap or 9999) then
-                    return false, "Maximum MP is already at its limit"
-                end
+                if (session.maxMp or 0) < (sys.maxMpCap or 9999) then canAffect = true
+                else unavailableReason = "Maximum MP is already at its limit" end
             elseif eff.type == "recruit_egg" and session then
                 local partyFull = (#(session.party or {}) >= 4)
                 local reserveFull = (#(session.reserve or {}) >= 16)
-                if partyFull and reserveFull then
-                    return false, "Party and reserve are full"
+                if not (partyFull and reserveFull) then canAffect = true
+                else unavailableReason = "Party and reserve are full" end
+            elseif (eff.type == "hp" or eff.type == "hp_heal") and session then
+                for _, member in ipairs(session.party or {}) do
+                    if not member:isDead() and member.hp < member:getMaxHp(session) then
+                        canAffect = true
+                        break
+                    end
                 end
+            else
+                canAffect = true
             end
+        end
+        if item.effects and #item.effects > 0 and not canAffect then
+            return false, unavailableReason
         end
     end
 

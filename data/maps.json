@@ -1848,7 +1848,22 @@
                 "cmd": "CHANGE_ITEM"
               },
               {
-                "text": "Acquired Glittering Teardrop! Alicia will be delighted.",
+                "item": "11",
+                "count": 1,
+                "cmd": "CHANGE_ITEM"
+              },
+              {
+                "item": "171",
+                "count": 1,
+                "cmd": "CHANGE_ITEM"
+              },
+              {
+                "item": "176",
+                "count": 1,
+                "cmd": "CHANGE_ITEM"
+              },
+              {
+                "text": "Acquired Glittering Teardrop, Mystic Egg, Pão de Queijo, and Onigiri!",
                 "cmd": "TEXT"
               }
             ],
@@ -1967,6 +1982,11 @@
                         "count": 1
                       },
                       {
+                        "cmd": "CHANGE_ITEM",
+                        "item": "47",
+                        "count": 1
+                      },
+                      {
                         "cmd": "ERASE_EVENT"
                       }
                     ]
@@ -2008,6 +2028,11 @@
                 "count": 1
               },
               {
+                "cmd": "CHANGE_ITEM",
+                "item": "47",
+                "count": 1
+              },
+              {
                 "cmd": "ERASE_EVENT"
               }
             ]
@@ -2022,15 +2047,39 @@
     "encounters": [
       {
         "id": 1,
-        "weight": 5
+        "weight": 5,
+        "levelMin": 1,
+        "levelMax": 2
       },
       {
         "id": 3,
-        "weight": 5
+        "weight": 5,
+        "levelMin": 1,
+        "levelMax": 3
       },
       {
         "id": 9,
-        "weight": 3
+        "weight": 3,
+        "levelMin": 1,
+        "levelMax": 2
+      },
+      {
+        "id": 25,
+        "weight": 3,
+        "levelMin": 1,
+        "levelMax": 2
+      },
+      {
+        "id": 27,
+        "weight": 3,
+        "levelMin": 1,
+        "levelMax": 3
+      },
+      {
+        "id": 30,
+        "weight": 3,
+        "levelMin": 2,
+        "levelMax": 3
       }
     ],
     "recruits": [
@@ -2039,7 +2088,11 @@
       9,
       14,
       13,
-      20
+      20,
+      25,
+      27,
+      30,
+      60
     ]
   },
   {
@@ -2539,19 +2592,45 @@
     "encounters": [
       {
         "id": 3,
-        "weight": 8
+        "weight": 8,
+        "levelMin": 3,
+        "levelMax": 5
       },
       {
         "id": 9,
-        "weight": 5
+        "weight": 5,
+        "levelMin": 3,
+        "levelMax": 5
       },
       {
         "id": 14,
-        "weight": 4
+        "weight": 4,
+        "levelMin": 3,
+        "levelMax": 5
       },
       {
         "id": 12,
-        "weight": 3
+        "weight": 3,
+        "levelMin": 4,
+        "levelMax": 6
+      },
+      {
+        "id": 23,
+        "weight": 4,
+        "levelMin": 4,
+        "levelMax": 6
+      },
+      {
+        "id": 50,
+        "weight": 2,
+        "levelMin": 5,
+        "levelMax": 6
+      },
+      {
+        "id": 58,
+        "weight": 3,
+        "levelMin": 4,
+        "levelMax": 6
       }
     ],
     "recruits": [
@@ -2560,7 +2639,12 @@
       12,
       10,
       20,
-      19
+      19,
+      23,
+      29,
+      50,
+      52,
+      58
     ],
     "category": "dungeon",
     "generation": "Fixed",
@@ -2611,15 +2695,39 @@
     "encounters": [
       {
         "id": 10,
-        "weight": 6
+        "weight": 6,
+        "levelMin": 7,
+        "levelMax": 9
       },
       {
         "id": 6,
-        "weight": 4
+        "weight": 4,
+        "levelMin": 6,
+        "levelMax": 8
       },
       {
         "id": 4,
-        "weight": 3
+        "weight": 3,
+        "levelMin": 6,
+        "levelMax": 8
+      },
+      {
+        "id": 32,
+        "weight": 2,
+        "levelMin": 8,
+        "levelMax": 10
+      },
+      {
+        "id": 45,
+        "weight": 3,
+        "levelMin": 7,
+        "levelMax": 9
+      },
+      {
+        "id": 52,
+        "weight": 3,
+        "levelMin": 6,
+        "levelMax": 8
       }
     ],
     "recruits": [
@@ -2627,7 +2735,12 @@
       6,
       4,
       17,
-      19
+      19,
+      23,
+      32,
+      45,
+      52,
+      58
     ]
   },
   {
@@ -2686,13 +2799,31 @@
       {
         "id": 11,
         "weight": 4
+      },
+      {
+        "id": 24,
+        "weight": 3
+      },
+      {
+        "id": 26,
+        "weight": 3
+      },
+      {
+        "id": 31,
+        "weight": 3
+      },
+      {
+        "id": 59,
+        "weight": 2
       }
     ],
     "recruits": [
       6,
       4,
       10,
-      19
+      19,
+      29,
+      45
     ]
   },
   {
@@ -2751,11 +2882,33 @@
       {
         "id": 2,
         "weight": 5
+      },
+      {
+        "id": 35,
+        "weight": 2
+      },
+      {
+        "id": 37,
+        "weight": 2
+      },
+      {
+        "id": 39,
+        "weight": 2
+      },
+      {
+        "id": 41,
+        "weight": 2
+      },
+      {
+        "id": 43,
+        "weight": 2
       }
     ],
     "recruits": [
       6,
-      4
+      4,
+      32,
+      45
     ]
   },
   {
@@ -2791,6 +2944,34 @@
       {
         "id": 6,
         "weight": 5
+      },
+      {
+        "id": 36,
+        "weight": 2
+      },
+      {
+        "id": 38,
+        "weight": 2
+      },
+      {
+        "id": 40,
+        "weight": 2
+      },
+      {
+        "id": 42,
+        "weight": 2
+      },
+      {
+        "id": 44,
+        "weight": 2
+      },
+      {
+        "id": 47,
+        "weight": 1
+      },
+      {
+        "id": 49,
+        "weight": 1
       }
     ],
     "recruits": []

@@ -13,6 +13,7 @@ damage||Pixie|9|
 death||Pixie||
 action|Pixie|Angel||
 damage||Angel|9|
+heal||Angel|2|
 action|Skeleton|Skeleton||
 state_add||Skeleton||defending
 action|High Pixie|High Pixie||
@@ -25,8 +26,8 @@ damage||Pixie|4|
 critical||Pixie||
 action|Pixie|High Pixie||
 damage||High Pixie|7|
-death||High Pixie||
 state_remove||Skeleton||defending
+heal||Angel|2|
 flee_success||||
 action|High Pixie|Pixie||
 damage||Pixie|4|

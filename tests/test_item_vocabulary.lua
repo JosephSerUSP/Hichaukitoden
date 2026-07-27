@@ -12,6 +12,8 @@ local sessionModule = require("engine.session")
 local effects = require("engine.effects")
 local usability = require("engine.usability")
 local craft = require("engine.craft")
+local traits = require("engine.traits")
+local interpreter = require("engine.interpreter")
 
 print("[TEST] Starting item vocabulary tests...")
 
@@ -265,6 +267,56 @@ do
         and tostring(seen[1]) == tostring(realId),
         "a bound host is handed the event id to start")
     interpreter.bindPresentation({})
+end
+
+------------------------------------------------ party meals and shared MP --
+
+do
+    local sess = sessionModule.GameSession.new(loader)
+    sess.party = {}
+    local a = sess:recruitActor(3, 4)
+    local b = sess:recruitActor(10, 4)
+    a.hp = 1
+    b.hp = 1
+    sess.mp = sess.maxMp - 1000
+    sess.inventory = {}
+    sess:addItem(174, 1) -- Moonfish Moqueca: party HP + shared MP
+    local before = sess.mp
+    interpreter.runImmediate({
+        { cmd = "USE_ITEM", itemIndex = "1", target = "0" }
+    }, {
+        session = sess, loader = loader, party = sess.party,
+        events = {}, v = { tab = 1 }
+    })
+    check(sess.mp - before == 220,
+        "a party meal restores shared Summoner MP exactly once")
+    check(a.hp > 1 and b.hp > 1,
+        "the same party meal applies creature-targeted HP recovery to everyone")
+end
+
+------------------------------------------------ Favorite Food and Savor --
+
+do
+    local sess, b = freshBattler()
+    local food = {
+        id = 9876, name = "Test Curry", type = "consumable", meal = true,
+        savor = { battles = 3, traits = { { code = "PARAM_PLUS", dataId = "atk", value = 4 } } }
+    }
+    b.favoriteFood = food.id
+    b.favoriteFoodFound = false
+    local evs = effects.finishItemUse(food, nil, { b }, sess)
+    check(b.favoriteFoodFound and #evs >= 2, "a creature discovers its exact Favorite Food")
+    check(b.savor and b.savor.battlesRemaining == 3, "Favorite Food starts its authored Savor")
+    check(traits.getParam(b, "atk", sess) >= b.actorData.baseParams.atk + 4,
+        "Savor traits participate in the ordinary trait pipeline")
+
+    effects.finishItemUse(food, nil, { b }, sess)
+    check(b.savor.battlesRemaining == 3, "feeding during Savor does not refresh its cooldown")
+    for _ = 1, 3 do
+        interpreter.runImmediate({ { cmd = "TICK_SAVOR", target = "target" } },
+            { session = sess, loader = loader, target = b, events = {}, v = {} })
+    end
+    check(b.savor == nil, "Savor expires after its authored number of victories")
 end
 
 print(("=== Item Vocabulary Tests Completed: %d passed, %d failed ==="):format(passed, failed))

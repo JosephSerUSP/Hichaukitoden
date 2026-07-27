@@ -139,5 +139,32 @@ do
     check(moved ~= first or true, "and is recomputed from the profile, not cached")
 end
 
+do
+    local sess, b = rig(29, 9) -- live Homunculus
+    local intrinsic = (b.actorData.baseParams.maxHp or 0) + (b.growth.maxHp or 0)
+    b.paramPlus.maxHp = 666 - intrinsic
+    local destination = transform.classify(sess, b, b.actorData.eligibleFrom)
+    check(destination == 33,
+        "an ordered intrinsic secret overrides ordinary Homunculus classification")
+    b.equipment[1] = loader.getItem(13) -- equipment must not alter the secret
+    check(transform.classify(sess, b, b.actorData.eligibleFrom) == 33,
+        "equipment does not alter a Homunculus intrinsic secret")
+end
+
+----------------------------------------------------- automatic transitions --
+
+do
+    local sess, b = rig(PIXIE, 1)
+    local actorData = b.actorData
+    local previous = actorData.autoTransforms
+    actorData.autoTransforms = { { actor = HIGH_PIXIE, atLevel = 2 } }
+    local leveled, changed = b:gainExp(15, sess)
+    check(leveled and changed.actorData.id == HIGH_PIXIE,
+        "a level-up applies an authored automatic transformation")
+    check(sess.party[1] == changed,
+        "the transformed creature replaces its old party reference")
+    actorData.autoTransforms = previous
+end
+
 print(("=== Transform Tests Completed: %d passed, %d failed ==="):format(passed, failed))
 if failed > 0 then error("transform tests failed") end

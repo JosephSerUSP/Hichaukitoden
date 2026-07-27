@@ -24,6 +24,7 @@
     "mp_exhaustion": "{0} suffers from MP exhaustion!",
     "gains_xp": "- {0} gains {1} XP.",
     "recovers_mp": "- {0} MP restored.",
+    "kill_mp_restore": "- {0}'s finishing blow restores {1} MP.",
     "target_dead": "{0}'s target is already dead!",
     "resolving": "Resolving actions...",
     "reaped": "{0} has passed away.",
@@ -64,6 +65,10 @@
     "ambush": "{0} is caught off guard!",
     "parasite": "{0} feeds on {1}!",
     "hatched": "- {0} joins you!"
+  },
+  "food": {
+    "favorite_found": "- {0} loves {1}!",
+    "reaction": "- {0}: {1}"
   },
   "menu": {
     "main_options": [

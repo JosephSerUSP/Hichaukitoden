@@ -2,19 +2,19 @@ GOLDEN BEGIN
 battle|affinity|name|Element affinity probes -- both damage layers at three alignment depths
 action|Shadow Stalker|Archangel||
 damage||Archangel|40|
-death||Archangel||
-victory||||
+action|Archangel|Archangel||
+state_add||Archangel||regen
+heal||Archangel|9|
 action|Imp|Archangel||
 damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
-heal||Archangel|2|
+heal||Archangel|9|
 action|Golem|Archangel||
-damage||Archangel|3|
+damage||Archangel|7|
 action|Archangel|Golem||
-damage||Golem|15|
-death||Golem||
-defeat||||
+damage||Golem|31|
+heal||Archangel|3|
 action|Shadow Stalker|Archangel||
 damage||Archangel|90|
 death||Archangel||
@@ -22,23 +22,25 @@ victory||||
 action|Imp|Archangel||
 damage||Archangel|25|
 critical||Archangel||
-death||Archangel||
-victory||||
-action|Golem|Archangel||
-damage||Archangel|7|
 action|Archangel|Archangel||
 state_add||Archangel||regen
-heal||Archangel|2|
+heal||Archangel|9|
+action|Golem|Archangel||
+damage||Archangel|17|
+action|Archangel|Archangel||
+state_add||Archangel||regen
+heal||Archangel|9|
 action|Imp|Ooze||
 damage||Ooze|10|
 action|Ooze|Imp||
 damage||Imp|6|
 action|Imp|Wisp||
-damage||Wisp|10|
+damage||Wisp|15|
+critical||Wisp||
 action|Wisp|Wisp||
-heal||Wisp|10|
+heal||Wisp|15|
 action|Shadow Stalker|Ooze||
 damage||Ooze|29|
-death||Ooze||
-victory||||
+action|Ooze|Shadow Stalker||
+damage||Shadow Stalker|8|
 GOLDEN END

@@ -85,6 +85,17 @@ function traits.getActiveObjects(battler, session)
         end
     end
 
+    -- 5. Favorite Food Savor. Stored per instance because its remaining
+    -- battles and exact food belong to the creature, not shared loader data.
+    if battler.savor and (battler.savor.battlesRemaining or 0) > 0 then
+        table.insert(objs, {
+            traits = battler.savor.traits or {},
+            condition = nil,
+            source = "savor",
+            id = battler.savor.itemId
+        })
+    end
+
     return objs
 end
 

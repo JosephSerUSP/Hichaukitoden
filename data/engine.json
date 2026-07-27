@@ -1,6 +1,10 @@
 {
   "formulaHelp": [
     {
+      "token": "intrinsic",
+      "description": "Homunculus secret-transformation view: permanent level, maxHp, atk, def, mat and mdf only; excludes equipment, states and current HP."
+    },
+    {
       "token": "a",
       "description": "The acting battler (view: level, hp, maxHp, atk, def, mat, mdf)."
     },
@@ -190,6 +194,14 @@
     }
   ],
   "metaKeys": [
+    {
+      "key": "tier",
+      "appliesTo": [
+        "items"
+      ],
+      "type": "number",
+      "description": "Equipment/content tier from 1 to 5. Used for authoring, filtering and campaign placement; it does not directly add statistics."
+    },
     {
       "key": "disciplines",
       "appliesTo": [
@@ -1704,6 +1716,23 @@
       ],
       "interactive": false,
       "description": "Increments a creature's history counter (`field` by `amount`), or sets it to `value`. Which events count is decided by the flow that calls this."
+    },
+    {
+      "id": "TICK_SAVOR",
+      "category": "Progression",
+      "label": "Tick Savor",
+      "params": [
+        {
+          "key": "target",
+          "type": "battlerRef"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "flow"
+      ],
+      "interactive": false,
+      "description": "Counts one completed battle against the target's active Favorite Food Savor and clears it at zero."
     }
   ],
   "elementRules": {
@@ -2102,7 +2131,31 @@
       "code": "ITEM_EFFECT_RATE",
       "label": "Item Effect +",
       "usesDataId": false,
-      "description": "Multiplies the magnitude of item effects resolved ON the holder (0.5 = +50%), the way RPG Maker's Pharmacology does. Read from the recipient rather than the wielder because field use has no separate wielder: the creature the potion is fed to is the one whose constitution decides what it is worth."
+      "description": "Multiplies the magnitude of items used by the holder (0.5 = +50%), RPG Maker Pharmacology-style. In battle the acting creature is the user; in the field the best living party carrier supplies the rate because field item use has no separate user selection."
+    },
+    {
+      "code": "HEAL_RATE",
+      "label": "Healing Skill +",
+      "usesDataId": false,
+      "description": "Adds to HP healing performed by the holder's skills (0.25 = +25%). Does not amplify items or permanent gains."
+    },
+    {
+      "code": "TARGET_RATE",
+      "label": "Target Rate +",
+      "usesDataId": false,
+      "description": "Adds to the holder's weight when enemy AI randomly selects an opposing target. Base weight is 1; positive values implement Provoke."
+    },
+    {
+      "code": "ELEMENT_RATE",
+      "label": "Element Damage Taken %",
+      "usesDataId": true,
+      "description": "Multiplies damage received from the element named by dataId (0.5 = half, 1.5 = half again). Applied after identity affinity and multiplicative across sources."
+    },
+    {
+      "code": "KILL_MP_RESTORE",
+      "label": "Summoner MP on Kill",
+      "usesDataId": false,
+      "description": "Restores this flat amount of Summoner MP when the holder personally lands a killing blow, including an Execution."
     }
   ],
   "windowLayout": {
@@ -2580,6 +2633,20 @@
       "label": "Never usable",
       "description": "Carried, sold or consumed by something other than use."
     }
+  ],
+  "foodTags": [
+    { "tag": "sweet", "label": "Sweet" },
+    { "tag": "savory", "label": "Savory" },
+    { "tag": "spicy", "label": "Spicy" },
+    { "tag": "meat", "label": "Meat" },
+    { "tag": "fish", "label": "Fish" },
+    { "tag": "vegetable", "label": "Vegetable" },
+    { "tag": "grain", "label": "Grain" },
+    { "tag": "dairy", "label": "Dairy" },
+    { "tag": "fermented", "label": "Fermented" },
+    { "tag": "fungus", "label": "Fungus" },
+    { "tag": "mineral", "label": "Mineral" },
+    { "tag": "spirit", "label": "Spirit" }
   ],
   "intensityGrades": [
     {

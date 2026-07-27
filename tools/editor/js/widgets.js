@@ -2115,6 +2115,19 @@
                         buildDropsEditor(dropsCol, item);
                         buildEvolutionsEditor(evolutionsCol, item);
 
+                        const foodBox = makeGroupbox(subPageContainer, 'Favorite Food Identity');
+                        buildIdListEditor(foodBox, 'Favorite Food Pool (one is seeded per creature)',
+                            (dbPayload.items || []).filter(it => it.meal || (it.foodTags || []).length).map(it => it.id),
+                            id => {
+                                const found = (dbPayload.items || []).find(it => String(it.id) === String(id));
+                                return found ? found.name : id;
+                            },
+                            () => item.favoriteFoods,
+                            arr => { item.favoriteFoods = arr; setDirty(true); }, '+ Add Food');
+                        item.foodReactions = item.foodReactions || [];
+                        buildStringListEditor(foodBox, 'Non-mechanical Food Reactions',
+                            item.foodReactions, 'e.g. Too salty for me.');
+
                         // Sacrifice rewards row
                         const sacrificeRow = document.createElement('div');
                         subPageContainer.appendChild(sacrificeRow);

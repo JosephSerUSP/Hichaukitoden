@@ -587,6 +587,18 @@ handlers.RECORD_HISTORY = function(cmd, ctx)
     end
 end
 
+handlers.TICK_SAVOR = function(cmd, ctx)
+    local target = resolveRef(cmd.target, ctx)
+    if not target or not target.savor then return end
+    target.savor.battlesRemaining = math.max(0,
+        (target.savor.battlesRemaining or 0) - 1)
+    if target.savor.battlesRemaining <= 0 then
+        local itemId = target.savor.itemId
+        target.savor = nil
+        table.insert(ctx.events, { type = "savor_end", target = target, item = itemId })
+    end
+end
+
 -- Change a creature's form from data. The reusable half of Egg hatching, the
 -- Kappa curse and its reversion, and Homunculus metamorphosis -- so none of
 -- them needs engine code that knows what an Egg or a Kappa is.
@@ -872,21 +884,34 @@ handlers.USE_ITEM = function(cmd, ctx)
 
     local effectLogs = {}
     local hpRestored = 0
+    local itemUser = effects.bestItemUser(ctx.session)
+    local fedTargets = {}
+    local sharedItemEffects = {
+        mp_heal = true, max_mp_plus = true, common_event = true,
+        recruit_egg = true
+    }
+    local sharedApplied = {}
     if item.target == "party" then
         for _, member in ipairs(ctx.session.party) do
+            table.insert(fedTargets, member)
             local prevHp = member.hp or 0
             for _, eff in ipairs(item.effects or {}) do
-                local evs = effects.apply(eff, member, member, ctx.session, { isItem = true })
-                for _, ev in ipairs(evs) do
-                    if ev.type == "text" then table.insert(effectLogs, ev.text) end
+                if not (sharedItemEffects[eff.type] and sharedApplied[eff.type]) then
+                    local evs = effects.apply(eff, member, member, ctx.session,
+                        { isItem = true, user = itemUser })
+                    if sharedItemEffects[eff.type] then sharedApplied[eff.type] = true end
+                    for _, ev in ipairs(evs) do
+                        if ev.type == "text" then table.insert(effectLogs, ev.text) end
+                    end
+                    emitAll(ctx, evs)
                 end
-                emitAll(ctx, evs)
             end
             hpRestored = hpRestored + ((member.hp or 0) - prevHp)
         end
     elseif item.target == "none" then
         for _, eff in ipairs(item.effects or {}) do
-            local evs = effects.apply(eff, nil, nil, ctx.session, { isItem = true })
+            local evs = effects.apply(eff, nil, nil, ctx.session,
+                { isItem = true, user = itemUser })
             for _, ev in ipairs(evs) do
                 if ev.type == "text" then table.insert(effectLogs, ev.text) end
             end
@@ -895,9 +920,11 @@ handlers.USE_ITEM = function(cmd, ctx)
     else
         target = target or ctx.session.party[1]
         if target then
+            table.insert(fedTargets, target)
             local prevHp = target.hp or 0
             for _, eff in ipairs(item.effects or {}) do
-                local evs = effects.apply(eff, target, target, ctx.session, { isItem = true })
+                local evs = effects.apply(eff, target, target, ctx.session,
+                    { isItem = true, user = itemUser })
                 for _, ev in ipairs(evs) do
                     if ev.type == "text" then table.insert(effectLogs, ev.text) end
                 end
@@ -906,6 +933,8 @@ handlers.USE_ITEM = function(cmd, ctx)
             hpRestored = (target.hp or 0) - prevHp
         end
     end
+
+    emitAll(ctx, effects.finishItemUse(item, itemUser, fedTargets, ctx.session))
 
     ctx.session:addItem(item.id, -1)
 
@@ -1203,18 +1232,22 @@ handlers.SPAWN_ENEMIES = function(cmd, ctx)
         end
         local roll = math.random(totalWeight)
         local sum = 0
-        local enemyId = possibleEnemies[1].id
-        for _, enemyOpt in ipairs(possibleEnemies) do
-            sum = sum + enemyOpt.weight
+        local chosenOpt = possibleEnemies[1]
+        for _, candidate in ipairs(possibleEnemies) do
+            sum = sum + candidate.weight
             if roll <= sum then
-                enemyId = enemyOpt.id
+                chosenOpt = candidate
                 break
             end
         end
 
-        local enemyData = (ctx.loader or ctx.session.loader).getActor(enemyId)
+        local enemyData = (ctx.loader or ctx.session.loader).getActor(chosenOpt.id)
         if enemyData then
-            local enemyBattler = sessionMod.Battler.new(enemyData, enemyData.level or ctx.session.dungeonFloor)
+            local levelMin = chosenOpt.levelMin or enemyData.level or ctx.session.dungeonFloor
+            local levelMax = chosenOpt.levelMax or levelMin
+            local enemyLevel = levelMin
+            if levelMax > levelMin then enemyLevel = math.random(levelMin, levelMax) end
+            local enemyBattler = sessionMod.Battler.new(enemyData, enemyLevel)
             enemyBattler.hp = enemyBattler:getMaxHp(ctx.session)
             table.insert(enemyList, enemyBattler)
         end
@@ -1369,6 +1402,8 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
 
     local element = act.element
 
+    local itemTargets = {}
+    local sharedItemApplied = {}
     for _, tgt in ipairs(ctx.targets or {}) do
         -- Accuracy is per target: a multi-target attack can connect with one
         -- creature and be dodged by the next, and a miss skips that target's
@@ -1388,16 +1423,24 @@ handlers.APPLY_EFFECT = function(cmd, ctx)
         -- critically. Rebuilt per target because a crit on one enemy says
         -- nothing about the next.
         local actionCtx = { element = element, user = ctx.a, isItem = (ctx.skill == nil) }
+        if ctx.item then table.insert(itemTargets, tgt) end
         for _, eff in ipairs(act.effects or {}) do
-            -- `b` is always the recipient. `a` is whoever is acting -- the
-            -- wielder in battle, and the recipient itself outside of it, where
-            -- there is no separate actor. Items previously forced a = target
-            -- even in battle, which would have made an item's formula read the
-            -- recipient's stats instead of the user's.
-            local a = ctx.a or tgt
-            emitAll(ctx, effects.apply(eff, a, tgt, ctx.session, actionCtx))
+            local isShared = ctx.item and (eff.type == "mp_heal"
+                or eff.type == "max_mp_plus" or eff.type == "common_event"
+                or eff.type == "recruit_egg")
+            if not (isShared and sharedItemApplied[eff.type]) then
+                -- `b` is always the recipient. `a` is whoever is acting -- the
+                -- wielder in battle, and the recipient itself outside of it,
+                -- where there is no separate actor.
+                local a = ctx.a or tgt
+                emitAll(ctx, effects.apply(eff, a, tgt, ctx.session, actionCtx))
+                if isShared then sharedItemApplied[eff.type] = true end
+            end
         end
         ::nextTarget::
+    end
+    if ctx.item then
+        emitAll(ctx, effects.finishItemUse(ctx.item, ctx.a, itemTargets, ctx.session))
     end
 end
 

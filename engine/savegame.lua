@@ -58,6 +58,7 @@ local function serializeBattler(b)
         originAtLevel = b.originAtLevel,
         favoriteFood = b.favoriteFood,
         favoriteFoodFound = b.favoriteFoodFound,
+        savor = b.savor,
         -- Death-ward charges live on the battler (never on the shared loader
         -- item table), so they must round-trip with it.
         wardCharges = b.wardCharges,
@@ -98,6 +99,7 @@ local function deserializeBattler(data, loader)
     b.originAtLevel = data.originAtLevel
     b.favoriteFood = data.favoriteFood
     b.favoriteFoodFound = data.favoriteFoodFound
+    b.savor = data.savor
     if data.wardCharges then b.wardCharges = data.wardCharges end
     if data.history then b.history = data.history end
     return b

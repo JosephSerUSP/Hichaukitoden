@@ -79,6 +79,14 @@ function effects.elementMultiplier(element, user, target, session)
             rules.userWeakMultiplier or 0.9, floor)
     end
 
+    if element and target then
+        for _, found in ipairs(traits.findAllSources(target, "ELEMENT_RATE", session)) do
+            if found.trait.dataId == element then
+                mult = mult * (found.trait.value or 1.0)
+            end
+        end
+    end
+
     return mult
 end
 
@@ -105,8 +113,21 @@ end
 -- nothing for every meal eaten outside battle. Skills are deliberately not
 -- scaled: this is a constitution, not a spell amplifier.
 local function itemRate(b, session, context)
-    if not (context and context.isItem) or not b or not session then return 1.0 end
-    return 1.0 + traits.getRate(b, "ITEM_EFFECT_RATE", session)
+    if not (context and context.isItem) or not session then return 1.0 end
+    local user = context.user or b
+    if not user then return 1.0 end
+    return 1.0 + traits.getRate(user, "ITEM_EFFECT_RATE", session)
+end
+
+function effects.bestItemUser(session)
+    local best, bestRate = nil, -math.huge
+    for _, battler in ipairs((session and session.party) or {}) do
+        if battler and not battler:isDead() then
+            local rate = traits.getRate(battler, "ITEM_EFFECT_RATE", session)
+            if rate > bestRate then best, bestRate = battler, rate end
+        end
+    end
+    return best
 end
 
 -- The stat a power source is measured against. Physical actions meet DEF,
@@ -253,6 +274,23 @@ local function tryExecute(a, b, session, events)
         text = session.loader.formatTerm("battle.execution", "- {0} is finished off!", b.name)
     })
     table.insert(events, { type = "death", target = b })
+    return true
+end
+
+local function awardKill(a, b, session, events)
+    if not a or not b or not session then return end
+    local amount = math.max(0, math.floor(traits.getRate(a, "KILL_MP_RESTORE", session)))
+    if amount <= 0 then return end
+    local restored = math.min(amount, math.max(0, (session.maxMp or 0) - (session.mp or 0)))
+    session.mp = (session.mp or 0) + restored
+    table.insert(events, { type = "kill_mp_restore", actor = a, target = b, value = restored })
+    if restored > 0 then
+        table.insert(events, {
+            type = "text",
+            text = session.loader.formatTerm("battle.kill_mp_restore",
+                "- {0} restores {1} MP to the Summoner!", a.name, restored)
+        })
+    end
 end
 
 -- context (optional): { element = "White", user = <battler>, isItem = true } —
@@ -284,15 +322,21 @@ function effects.apply(effectData, a, b, session, context)
                 type = "death",
                 target = b
             })
+            awardKill(a, b, session, events)
         elseif effectData.power ~= nil then
             -- Only a survivor can be executed, and only on the relative path:
             -- direct authored damage is a fixed consequence with no attacker
             -- whose weapon could finish anyone, the same reason it never crits.
-            tryExecute(a, b, session, events)
+            if tryExecute(a, b, session, events) then
+                awardKill(a, b, session, events)
+            end
         end
 
     elseif effectData.type == "hp_heal" then
-        local val = evaluateFormula(effectData.formula, a, b, session, events) * itemRate(b, session, context)
+        local skillRate = (context and context.isItem) and 1
+            or (1 + traits.getRate(a, "HEAL_RATE", session))
+        local val = evaluateFormula(effectData.formula, a, b, session, events)
+            * skillRate * itemRate(b, session, context)
         local maxHp = traits.getParam(b, "maxHp", session)
         local healVal = math.min(maxHp - b.hp, math.floor(val))
         b.hp = b.hp + healVal
@@ -327,6 +371,7 @@ function effects.apply(effectData, a, b, session, context)
                 type = "death",
                 target = b
             })
+            awardKill(a, b, session, events)
         end
         
     elseif effectData.type == "add_status" then
@@ -518,6 +563,7 @@ function effects.apply(effectData, a, b, session, context)
                     .. "' (" .. tostring(slotType) .. ")"
             })
         else
+            battler.provenance = effectData.provenance
             table.insert(events, {
                 type = "recruit",
                 target = battler,
@@ -532,9 +578,11 @@ function effects.apply(effectData, a, b, session, context)
     -- Restores the summoner's shared MP pool (e.g. pub drinks). Percentage is
     -- of Max MP, which is what lets a draught stay meaningful as the cap climbs
     -- from the opening scale toward maxMpCap instead of becoming a rounding
-    -- error. ITEM_EFFECT_RATE reads from the recipient, and the pool has none.
+    -- error. Pharmacology belongs to the item user, selected by the item-use
+    -- path even though the shared pool itself has no recipient.
     elseif effectData.type == "mp_heal" then
-        local raw = (effectData.value or 0) + (session.maxMp or 0) * (effectData.percent or 0)
+        local raw = ((effectData.value or 0) + (session.maxMp or 0) * (effectData.percent or 0))
+            * itemRate(nil, session, context)
         local healVal = math.max(0, math.min(session.maxMp - session.mp, math.floor(raw)))
         session.mp = session.mp + healVal
         table.insert(events, {
@@ -596,6 +644,58 @@ function effects.apply(effectData, a, b, session, context)
         end
     end
 
+    return events
+end
+
+local function reactionFor(target, item)
+    local lines = target and target.actorData and target.actorData.foodReactions
+    if not lines or #lines == 0 then return nil end
+    local key = tonumber(item.id) or #tostring(item.id or "")
+    return lines[(key % #lines) + 1]
+end
+
+-- Favorite Food is resolved once per item use, not once per effect. An exact
+-- favorite discovers itself and starts Savor only when no Savor is active;
+-- feeding it again during the cooldown cannot refresh the counter.
+function effects.finishItemUse(item, user, targets, session)
+    local events = {}
+    if not item or not session or (not item.meal and not item.foodTags) then return events end
+    for _, target in ipairs(targets or {}) do
+        if target and target.favoriteFood ~= nil then
+            if tostring(target.favoriteFood) == tostring(item.id) then
+                if not target.favoriteFoodFound then
+                    target.favoriteFoodFound = true
+                    table.insert(events, { type = "favorite_food_found", target = target, item = item.id })
+                    table.insert(events, {
+                        type = "text",
+                        text = session.loader.formatTerm("food.favorite_found",
+                            "- {0} loves {1}!", target.name, item.name)
+                    })
+                end
+                if not target.savor or (target.savor.battlesRemaining or 0) <= 0 then
+                    local authored = item.savor or {}
+                    target.savor = {
+                        itemId = item.id,
+                        battlesRemaining = math.max(1, math.floor(authored.battles or 3)),
+                        traits = authored.traits or {}
+                    }
+                    table.insert(events, {
+                        type = "savor_start", target = target, item = item.id,
+                        battles = target.savor.battlesRemaining
+                    })
+                end
+            else
+                local line = reactionFor(target, item)
+                if line then
+                    table.insert(events, {
+                        type = "text",
+                        text = session.loader.formatTerm("food.reaction",
+                            "- {0}: {1}", target.name, line)
+                    })
+                end
+            end
+        end
+    end
     return events
 end
 

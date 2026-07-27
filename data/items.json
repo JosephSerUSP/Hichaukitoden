@@ -189,7 +189,8 @@
     "effects": [
       {
         "type": "recruit_egg",
-        "value": 15
+        "value": 15,
+        "provenance": "mystic"
       }
     ],
     "target": "none"
@@ -672,51 +673,77 @@
     "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
     "category": "promotion_key",
     "meta": {
-      "disciplines": [
-        "alchemy"
-      ]
+      "craftable": false,
+      "craftIngredient": false
     }
   },
   {
     "id": 39,
     "name": "Obsidian Shard",
-    "type": "junk",
+    "type": "equipment",
+    "equipType": "Accessory",
     "cost": 15,
     "icon": 180,
-    "description": "A sharp shard of dark volcanic glass.",
+    "description": "A sharp shard of dark volcanic glass that grants a trace of defense.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 1
+      }
+    ],
     "meta": {
       "disciplines": [
         "blacksmithing"
       ],
-      "intensityGrade": "precious"
+      "intensityGrade": "precious",
+      "craftable": false
     }
   },
   {
     "id": 40,
     "name": "Melted Wax",
-    "type": "junk",
+    "type": "equipment",
+    "equipType": "Accessory",
     "cost": 5,
     "icon": 220,
-    "description": "A glob of warm, pliable candle wax.",
+    "description": "A glob of warm wax that slightly resists Red damage.",
+    "traits": [
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Red",
+        "value": 0.95
+      }
+    ],
     "meta": {
       "disciplines": [
         "alchemy"
       ],
-      "intensityGrade": "precious"
+      "intensityGrade": "precious",
+      "craftable": false
     }
   },
   {
     "id": 41,
     "name": "Ectoplasm",
-    "type": "junk",
+    "type": "equipment",
+    "equipType": "Accessory",
     "cost": 12,
     "icon": 55,
-    "description": "Shimmering residue left by spiritual entities.",
+    "description": "Shimmering spirit matter that grants a trace of magic.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 2
+      }
+    ],
     "meta": {
       "disciplines": [
         "alchemy"
       ],
-      "intensityGrade": "precious"
+      "intensityGrade": "precious",
+      "craftable": false
     }
   },
   {
@@ -815,5 +842,3647 @@
     },
     "scope": "field",
     "target": "ally"
+  },
+  {
+    "id": 47,
+    "name": "Black Hinge",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 1800,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 48,
+    "name": "Ember Bit",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 2050,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 49,
+    "name": "Qilin Bell",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 2300,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 50,
+    "name": "Cinder Ruby",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 2550,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 51,
+    "name": "Abyssal Pearl",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 2800,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 52,
+    "name": "Verdigris Coin",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 3050,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 53,
+    "name": "Celestial Fossil",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 3300,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 54,
+    "name": "Blackroot",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 3550,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 55,
+    "name": "Molten Manacle",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 3800,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "id": 56,
+    "name": "Adamant Weight",
+    "type": "quest",
+    "category": "promotion_key",
+    "cost": 4050,
+    "icon": 103,
+    "description": "A rare object that unlocks a particular transformation.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    }
+  },
+  {
+    "name": "Iron Knife",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 30,
+    "icon": 103,
+    "description": "Iron Knife.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 4
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 57
+  },
+  {
+    "name": "Steel Sword",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 120,
+    "icon": 103,
+    "description": "Steel Sword.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 9
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 58
+  },
+  {
+    "name": "Knight Sword",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 380,
+    "icon": 103,
+    "description": "Knight Sword.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 16
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 59
+  },
+  {
+    "name": "Greatsword",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1200,
+    "icon": 103,
+    "description": "Greatsword.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 26
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 60
+  },
+  {
+    "name": "Adamant Blade",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 5000,
+    "icon": 103,
+    "description": "Adamant Blade.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 40
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 61
+  },
+  {
+    "name": "Hazel Wand",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 30,
+    "icon": 103,
+    "description": "Hazel Wand.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 4
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 62
+  },
+  {
+    "name": "Silver Rod",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 120,
+    "icon": 103,
+    "description": "Silver Rod.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 9
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 63
+  },
+  {
+    "name": "Mage Staff",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 380,
+    "icon": 103,
+    "description": "Mage Staff.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 16
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 64
+  },
+  {
+    "name": "Sage Staff",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1200,
+    "icon": 103,
+    "description": "Sage Staff.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 26
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 65
+  },
+  {
+    "name": "Ether Staff",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 5000,
+    "icon": 103,
+    "description": "Ether Staff.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 40
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 66
+  },
+  {
+    "name": "War Staff",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 40,
+    "icon": 103,
+    "description": "War Staff.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 3
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 67
+  },
+  {
+    "name": "Rune Knife",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 140,
+    "icon": 103,
+    "description": "Rune Knife.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 6
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 6
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 68
+  },
+  {
+    "name": "Spell Sword",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 420,
+    "icon": 103,
+    "description": "Spell Sword.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 10
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 10
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 69
+  },
+  {
+    "name": "Glass Blade",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1350,
+    "icon": 103,
+    "description": "Glass Blade.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 16
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 16
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 70
+  },
+  {
+    "name": "Comet Edge",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 5500,
+    "icon": 103,
+    "description": "Comet Edge.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 25
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 25
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 71
+  },
+  {
+    "name": "Flame Saber",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 650,
+    "icon": 103,
+    "description": "Flame Saber.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Red"
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 72
+  },
+  {
+    "name": "Coral Sword",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 650,
+    "icon": 103,
+    "description": "Coral Sword.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Blue"
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 73
+  },
+  {
+    "name": "Air Knife",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 650,
+    "icon": 103,
+    "description": "Air Knife.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Green"
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 74
+  },
+  {
+    "name": "Healing Staff",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 650,
+    "icon": 103,
+    "description": "Healing Staff.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 12
+      },
+      {
+        "code": "HEAL_RATE",
+        "value": 0.25
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 75
+  },
+  {
+    "name": "Death Sickle",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 650,
+    "icon": 103,
+    "description": "Death Sickle.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Black"
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 76
+  },
+  {
+    "name": "Venom Knife",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 480,
+    "icon": 103,
+    "description": "Venom Knife.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 12
+      },
+      {
+        "code": "STATUS_SUCCESS",
+        "value": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 77
+  },
+  {
+    "name": "Sleep Blade",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 520,
+    "icon": 103,
+    "description": "Sleep Blade.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 12
+      },
+      {
+        "code": "STATUS_SUCCESS",
+        "value": 0.25
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 78
+  },
+  {
+    "name": "Barbed Spear",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 600,
+    "icon": 103,
+    "description": "Barbed Spear.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 15
+      },
+      {
+        "code": "CRI",
+        "value": 0.1
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 79
+  },
+  {
+    "name": "Executioner",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1800,
+    "icon": 103,
+    "description": "Executioner.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 25
+      },
+      {
+        "code": "EXECUTION_THRESHOLD",
+        "value": 0.18
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 80
+  },
+  {
+    "name": "Pile Bunker",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 1700,
+    "icon": 103,
+    "description": "Pile Bunker.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 23
+      },
+      {
+        "code": "PENETRATION",
+        "value": 0.45
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 81
+  },
+  {
+    "name": "Broken Cleaver",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 20,
+    "icon": 103,
+    "description": "Broken Cleaver.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 3
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ],
+      "craftable": false
+    },
+    "id": 82
+  },
+  {
+    "name": "Bone Club",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 45,
+    "icon": 103,
+    "description": "Bone Club.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 5
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ],
+      "craftable": false
+    },
+    "id": 83
+  },
+  {
+    "name": "Cerberus Fang",
+    "type": "equipment",
+    "equipType": "Weapon",
+    "cost": 260,
+    "icon": 103,
+    "description": "Cerberus Fang.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Red"
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ],
+      "craftable": false
+    },
+    "id": 84
+  },
+  {
+    "name": "Leather Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 35,
+    "icon": 103,
+    "description": "Leather Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 15
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 4
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 85
+  },
+  {
+    "name": "Ring Mail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 130,
+    "icon": 103,
+    "description": "Ring Mail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 35
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 9
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 86
+  },
+  {
+    "name": "Chainmail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 400,
+    "icon": 103,
+    "description": "Chainmail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 70
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 87
+  },
+  {
+    "name": "Plate Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 1300,
+    "icon": 103,
+    "description": "Plate Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 135
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 25
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 88
+  },
+  {
+    "name": "Adamant Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 5200,
+    "icon": 103,
+    "description": "Adamant Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 220
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 38
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 89
+  },
+  {
+    "name": "Cotton Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 35,
+    "icon": 103,
+    "description": "Cotton Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 3
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 4
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 90
+  },
+  {
+    "name": "Silk Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 130,
+    "icon": 103,
+    "description": "Silk Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 7
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 9
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 91
+  },
+  {
+    "name": "Mage Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 400,
+    "icon": 103,
+    "description": "Mage Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 13
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 92
+  },
+  {
+    "name": "Sage Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 1300,
+    "icon": 103,
+    "description": "Sage Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 22
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 25
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 93
+  },
+  {
+    "name": "Ether Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 5200,
+    "icon": 103,
+    "description": "Ether Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 34
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 38
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 94
+  },
+  {
+    "name": "Traveler Coat",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 40,
+    "icon": 103,
+    "description": "Traveler Coat.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 10
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 3
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 3
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 95
+  },
+  {
+    "name": "Brigandine",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 145,
+    "icon": 103,
+    "description": "Brigandine.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 25
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 7
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 7
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 96
+  },
+  {
+    "name": "Scale Mail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 440,
+    "icon": 103,
+    "description": "Scale Mail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 55
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 12
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 12
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 97
+  },
+  {
+    "name": "Dragon Mail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 1450,
+    "icon": 103,
+    "description": "Dragon Mail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 110
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 20
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 20
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 98
+  },
+  {
+    "name": "Hero Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 5800,
+    "icon": 103,
+    "description": "Hero Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 180
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 30
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 30
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 99
+  },
+  {
+    "name": "Flame Mail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 700,
+    "icon": 103,
+    "description": "Flame Mail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Red",
+        "value": 0.65
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 100
+  },
+  {
+    "name": "Coral Mail",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 700,
+    "icon": 103,
+    "description": "Coral Mail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Blue",
+        "value": 0.65
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 101
+  },
+  {
+    "name": "Wind Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 700,
+    "icon": 103,
+    "description": "Wind Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Green",
+        "value": 0.65
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 102
+  },
+  {
+    "name": "Holy Vestment",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 700,
+    "icon": 103,
+    "description": "Holy Vestment.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "White",
+        "value": 0.65
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 103
+  },
+  {
+    "name": "Black Robe",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 700,
+    "icon": 103,
+    "description": "Black Robe.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 14
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Black",
+        "value": 0.65
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 104
+  },
+  {
+    "name": "Gas Mask",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 450,
+    "icon": 103,
+    "description": "Gas Mask.",
+    "traits": [
+      {
+        "code": "STATE_CATEGORY_RATE",
+        "dataId": "physical",
+        "value": 0.5
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 105
+  },
+  {
+    "name": "Moth Cloak",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 520,
+    "icon": 103,
+    "description": "Moth Cloak.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "sleep",
+        "value": 0
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 106
+  },
+  {
+    "name": "Quarantine Coat",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 950,
+    "icon": 103,
+    "description": "Quarantine Coat.",
+    "traits": [
+      {
+        "code": "STATE_CATEGORY_RATE",
+        "dataId": "common",
+        "value": 0.5
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 107
+  },
+  {
+    "name": "Mirror Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 1500,
+    "icon": 103,
+    "description": "Mirror Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 28
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Black",
+        "value": 0.75
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 108
+  },
+  {
+    "name": "Fortress Plate",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 1800,
+    "icon": 103,
+    "description": "Fortress Plate.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 30
+      },
+      {
+        "code": "DAMAGE_RATE",
+        "value": 0.82
+      },
+      {
+        "code": "HIT",
+        "value": -0.15
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 109
+  },
+  {
+    "name": "Tin Armor",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 25,
+    "icon": 103,
+    "description": "Tin Armor.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 3
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 10
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ],
+      "craftable": false
+    },
+    "id": 110
+  },
+  {
+    "name": "Cocoon Husk",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 70,
+    "icon": 103,
+    "description": "Cocoon Husk.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 8
+      },
+      {
+        "code": "STATE_RATE",
+        "dataId": "sleep",
+        "value": 0.7
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ],
+      "craftable": false
+    },
+    "id": 111
+  },
+  {
+    "name": "Slime Coat",
+    "type": "equipment",
+    "equipType": "Armor",
+    "cost": 90,
+    "icon": 103,
+    "description": "Slime Coat.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 7
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Green",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "cooking"
+      ],
+      "craftable": false
+    },
+    "id": 112
+  },
+  {
+    "name": "Rock",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 10,
+    "icon": 103,
+    "description": "Rock.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 113
+  },
+  {
+    "name": "Glass Bead",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 10,
+    "icon": 103,
+    "description": "Glass Bead.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 114
+  },
+  {
+    "name": "Copper Coin",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 10,
+    "icon": 103,
+    "description": "Copper Coin.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 1
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 115
+  },
+  {
+    "name": "Iron Nail",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 10,
+    "icon": 103,
+    "description": "Iron Nail.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "atk",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 116
+  },
+  {
+    "name": "Old Bell",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 10,
+    "icon": 103,
+    "description": "Old Bell.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mat",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 1,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 117
+  },
+  {
+    "name": "Ruby Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Ruby Ring.",
+    "traits": [
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Red"
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Red",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 118
+  },
+  {
+    "name": "Sapphire Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Sapphire Ring.",
+    "traits": [
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Blue"
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Blue",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 119
+  },
+  {
+    "name": "Emerald Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Emerald Ring.",
+    "traits": [
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Green"
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Green",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 120
+  },
+  {
+    "name": "Pearl Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Pearl Ring.",
+    "traits": [
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "White"
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "White",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 121
+  },
+  {
+    "name": "Onyx Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Onyx Ring.",
+    "traits": [
+      {
+        "code": "ELEMENT_ADD",
+        "dataId": "Black"
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Black",
+        "value": 0.8
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 122
+  },
+  {
+    "name": "Star Pendant",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 180,
+    "icon": 103,
+    "description": "Star Pendant.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "poison",
+        "value": 0.4
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 123
+  },
+  {
+    "name": "Silver Glasses",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 180,
+    "icon": 103,
+    "description": "Silver Glasses.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "blind",
+        "value": 0
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 124
+  },
+  {
+    "name": "White Cape",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 240,
+    "icon": 103,
+    "description": "White Cape.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "weakened",
+        "value": 0.4
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 125
+  },
+  {
+    "name": "Peace Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 300,
+    "icon": 103,
+    "description": "Peace Ring.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "berserk",
+        "value": 0
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 126
+  },
+  {
+    "name": "Earplugs",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 160,
+    "icon": 103,
+    "description": "Earplugs.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "sleep",
+        "value": 0.4
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 127
+  },
+  {
+    "name": "Safety Bit",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 1200,
+    "icon": 103,
+    "description": "Safety Bit.",
+    "traits": [
+      {
+        "code": "EXECUTION_RESIST",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 128
+  },
+  {
+    "name": "Ribbon",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 6500,
+    "icon": 103,
+    "description": "Ribbon.",
+    "traits": [
+      {
+        "code": "STATE_CATEGORY_RATE",
+        "dataId": "common",
+        "value": 0
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 129
+  },
+  {
+    "name": "Compass",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 200,
+    "icon": 103,
+    "description": "Compass.",
+    "traits": [
+      {
+        "code": "SEE_TRAPS",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 130
+  },
+  {
+    "name": "Lantern",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 320,
+    "icon": 103,
+    "description": "Lantern.",
+    "traits": [
+      {
+        "code": "SEE_WALLS",
+        "value": 1
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 131
+  },
+  {
+    "name": "Thief Glove",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 480,
+    "icon": 103,
+    "description": "Thief Glove.",
+    "traits": [
+      {
+        "code": "GOLD_DIGGER",
+        "value": 15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 132
+  },
+  {
+    "name": "Sprint Shoes",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 520,
+    "icon": 103,
+    "description": "Sprint Shoes.",
+    "traits": [
+      {
+        "code": "FLEE_CHANCE_BONUS",
+        "value": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 133
+  },
+  {
+    "name": "Moa Saddle",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 1800,
+    "icon": 103,
+    "description": "Moa Saddle.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mpd",
+        "value": -1
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 134
+  },
+  {
+    "name": "Chef Hat",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 420,
+    "icon": 103,
+    "description": "Chef Hat.",
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 135
+  },
+  {
+    "name": "Apron",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 650,
+    "icon": 103,
+    "description": "Apron.",
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.22
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 136
+  },
+  {
+    "name": "Medicine Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 900,
+    "icon": 103,
+    "description": "Medicine Ring.",
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.3
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 137
+  },
+  {
+    "name": "Mimic Tongue",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 350,
+    "icon": 103,
+    "description": "Mimic Tongue.",
+    "traits": [
+      {
+        "code": "ITEM_EFFECT_RATE",
+        "value": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "cooking"
+      ],
+      "craftable": false
+    },
+    "id": 138
+  },
+  {
+    "name": "Sniper Eye",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 700,
+    "icon": 103,
+    "description": "Sniper Eye.",
+    "traits": [
+      {
+        "code": "HIT",
+        "value": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 139
+  },
+  {
+    "name": "Black Belt",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 700,
+    "icon": 103,
+    "description": "Black Belt.",
+    "traits": [
+      {
+        "code": "CRI",
+        "value": 0.12
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "id": 140
+  },
+  {
+    "name": "Provoke Badge",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 500,
+    "icon": 103,
+    "description": "Provoke Badge.",
+    "traits": [
+      {
+        "code": "TARGET_RATE",
+        "value": 2
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 141
+  },
+  {
+    "name": "Cat Bell",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 650,
+    "icon": 103,
+    "description": "Cat Bell.",
+    "traits": [
+      {
+        "code": "EVA",
+        "value": 0.15
+      }
+    ],
+    "meta": {
+      "tier": 3,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 142
+  },
+  {
+    "name": "Golem Shard",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 120,
+    "icon": 103,
+    "description": "Golem Shard.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "def",
+        "value": 8
+      },
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "mdf",
+        "value": -3
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "tinkering"
+      ],
+      "craftable": false
+    },
+    "id": 143
+  },
+  {
+    "name": "Moth Scale",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 140,
+    "icon": 103,
+    "description": "Moth Scale.",
+    "traits": [
+      {
+        "code": "STATE_RATE",
+        "dataId": "sleep",
+        "value": 0.5
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "alchemy"
+      ],
+      "craftable": false
+    },
+    "id": 144
+  },
+  {
+    "name": "Slime Core",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 160,
+    "icon": 103,
+    "description": "Slime Core.",
+    "traits": [
+      {
+        "code": "PARAM_PLUS",
+        "dataId": "maxHp",
+        "value": 30
+      },
+      {
+        "code": "ELEMENT_RATE",
+        "dataId": "Green",
+        "value": 0.85
+      }
+    ],
+    "meta": {
+      "tier": 2,
+      "disciplines": [
+        "cooking"
+      ],
+      "craftable": false
+    },
+    "id": 145
+  },
+  {
+    "name": "Protect Ring",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 1600,
+    "icon": 103,
+    "description": "Protect Ring.",
+    "traits": [
+      {
+        "code": "DAMAGE_RATE",
+        "value": 0.85
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "alchemy"
+      ]
+    },
+    "id": 146
+  },
+  {
+    "name": "Angel Feather",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 2200,
+    "icon": 103,
+    "description": "Angel Feather.",
+    "traits": [
+      {
+        "code": "ON_PERMADEATH",
+        "value": 1,
+        "mode": "destroy",
+        "hpFraction": 0.2
+      }
+    ],
+    "meta": {
+      "tier": 4,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 147
+  },
+  {
+    "name": "Phoenix Pinion",
+    "type": "equipment",
+    "equipType": "Accessory",
+    "cost": 6000,
+    "icon": 103,
+    "description": "Phoenix Pinion.",
+    "traits": [
+      {
+        "code": "ON_PERMADEATH",
+        "value": 1,
+        "mode": "charges",
+        "charges": 3,
+        "hpFraction": 0.25
+      }
+    ],
+    "meta": {
+      "tier": 5,
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "id": 148
+  },
+  {
+    "name": "Potion",
+    "type": "consumable",
+    "cost": 35,
+    "icon": 104,
+    "description": "Potion.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 45,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 149
+  },
+  {
+    "name": "Hi-Potion",
+    "type": "consumable",
+    "cost": 120,
+    "icon": 104,
+    "description": "Hi-Potion.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 100,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 150
+  },
+  {
+    "name": "X-Potion",
+    "type": "consumable",
+    "cost": 380,
+    "icon": 104,
+    "description": "X-Potion.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 210,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 151
+  },
+  {
+    "name": "Mega-Potion",
+    "type": "consumable",
+    "cost": 900,
+    "icon": 104,
+    "description": "Mega-Potion.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 400,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 152
+  },
+  {
+    "name": "Healing Water",
+    "type": "consumable",
+    "cost": 550,
+    "icon": 104,
+    "description": "Healing Water.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 0,
+        "percent": 0.25
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 153
+  },
+  {
+    "name": "Soma",
+    "type": "consumable",
+    "cost": 1800,
+    "icon": 104,
+    "description": "Soma.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 0,
+        "percent": 0.5
+      }
+    ],
+    "scope": "always",
+    "target": "party",
+    "id": 154
+  },
+  {
+    "name": "Elixir",
+    "type": "consumable",
+    "cost": 5000,
+    "icon": 104,
+    "description": "Elixir.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 0,
+        "percent": 1
+      }
+    ],
+    "scope": "always",
+    "target": "party",
+    "id": 155
+  },
+  {
+    "name": "Ether",
+    "type": "consumable",
+    "cost": 60,
+    "icon": 104,
+    "description": "Ether.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 180,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 156
+  },
+  {
+    "name": "Hi-Ether",
+    "type": "consumable",
+    "cost": 180,
+    "icon": 104,
+    "description": "Hi-Ether.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 420,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 157
+  },
+  {
+    "name": "Dry Ether",
+    "type": "consumable",
+    "cost": 420,
+    "icon": 104,
+    "description": "Dry Ether.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 800,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 158
+  },
+  {
+    "name": "Turbo Ether",
+    "type": "consumable",
+    "cost": 900,
+    "icon": 104,
+    "description": "Turbo Ether.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 1600,
+        "percent": 0
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 159
+  },
+  {
+    "name": "Ether Drop",
+    "type": "consumable",
+    "cost": 220,
+    "icon": 104,
+    "description": "Ether Drop.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 0,
+        "percent": 0.06
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 160
+  },
+  {
+    "name": "Ether Flask",
+    "type": "consumable",
+    "cost": 650,
+    "icon": 104,
+    "description": "Ether Flask.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 0,
+        "percent": 0.15
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 161
+  },
+  {
+    "name": "Soma Drop",
+    "type": "consumable",
+    "cost": 2200,
+    "icon": 104,
+    "description": "Soma Drop.",
+    "effects": [
+      {
+        "type": "mp_heal",
+        "value": 0,
+        "percent": 0.3
+      }
+    ],
+    "scope": "always",
+    "target": "none",
+    "id": 162
+  },
+  {
+    "name": "Antidote",
+    "type": "consumable",
+    "cost": 40,
+    "icon": 104,
+    "description": "Antidote.",
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "poison"
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 163
+  },
+  {
+    "name": "Eye Drops",
+    "type": "consumable",
+    "cost": 40,
+    "icon": 104,
+    "description": "Eye Drops.",
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "blind"
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 164
+  },
+  {
+    "name": "Echo Herbs",
+    "type": "consumable",
+    "cost": 40,
+    "icon": 104,
+    "description": "Echo Herbs.",
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "silence"
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 165
+  },
+  {
+    "name": "Alarm Clock",
+    "type": "consumable",
+    "cost": 50,
+    "icon": 104,
+    "description": "Alarm Clock.",
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "sleep"
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 166
+  },
+  {
+    "name": "Remedy",
+    "type": "consumable",
+    "cost": 250,
+    "icon": 104,
+    "description": "Remedy.",
+    "effects": [
+      {
+        "type": "remove_status",
+        "value": "poison"
+      },
+      {
+        "type": "remove_status",
+        "value": "blind"
+      },
+      {
+        "type": "remove_status",
+        "value": "silence"
+      },
+      {
+        "type": "remove_status",
+        "value": "sleep"
+      },
+      {
+        "type": "remove_status",
+        "value": "weakened"
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "id": 167
+  },
+  {
+    "name": "Smoke Bomb",
+    "type": "consumable",
+    "cost": 100,
+    "icon": 104,
+    "description": "Smoke Bomb.",
+    "effects": [],
+    "scope": "battle",
+    "target": "none",
+    "id": 168
+  },
+  {
+    "name": "Hero Drink",
+    "type": "consumable",
+    "cost": 280,
+    "icon": 104,
+    "description": "Hero Drink.",
+    "effects": [
+      {
+        "type": "add_status",
+        "status": "regen",
+        "chance": 1,
+        "duration": 3
+      }
+    ],
+    "scope": "battle",
+    "target": "ally",
+    "id": 169
+  },
+  {
+    "name": "Bacchus Wine",
+    "type": "consumable",
+    "cost": 180,
+    "icon": 104,
+    "description": "Bacchus Wine.",
+    "effects": [
+      {
+        "type": "add_status",
+        "status": "berserk",
+        "chance": 1,
+        "duration": 3
+      }
+    ],
+    "scope": "battle",
+    "target": "ally",
+    "id": 170
+  },
+  {
+    "name": "Pão de Queijo",
+    "type": "consumable",
+    "cost": 90,
+    "icon": 104,
+    "description": "Pão de Queijo.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 80
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "dairy",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_PLUS",
+          "dataId": "def",
+          "value": 3
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 171
+  },
+  {
+    "name": "Coxinha",
+    "type": "consumable",
+    "cost": 70,
+    "icon": 104,
+    "description": "Coxinha.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 100
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "meat",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_PLUS",
+          "dataId": "atk",
+          "value": 3
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 172
+  },
+  {
+    "name": "Feijoada",
+    "type": "consumable",
+    "cost": 260,
+    "icon": 104,
+    "description": "Feijoada.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 190
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "meat",
+      "savory"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "DAMAGE_RATE",
+          "value": 0.9
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 173
+  },
+  {
+    "name": "Moonfish Moqueca",
+    "type": "consumable",
+    "cost": 420,
+    "icon": 104,
+    "description": "Moonfish Moqueca.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 180
+      },
+      {
+        "type": "mp_heal",
+        "value": 220
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "fish",
+      "savory"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_RATE",
+          "dataId": "mdf",
+          "value": 0.12
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 174
+  },
+  {
+    "name": "Mana Congee",
+    "type": "consumable",
+    "cost": 300,
+    "icon": 104,
+    "description": "Mana Congee.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 90
+      },
+      {
+        "type": "mp_heal",
+        "value": 350
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "grain",
+      "spirit"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "ITEM_EFFECT_RATE",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 175
+  },
+  {
+    "name": "Onigiri",
+    "type": "consumable",
+    "cost": 65,
+    "icon": 104,
+    "description": "Onigiri.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 110
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "grain",
+      "savory"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_PLUS",
+          "dataId": "def",
+          "value": 2
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 176
+  },
+  {
+    "name": "Moa Tamagoyaki",
+    "type": "consumable",
+    "cost": 280,
+    "icon": 104,
+    "description": "Moa Tamagoyaki.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 140
+      },
+      {
+        "type": "mp_heal",
+        "value": 100
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "meat",
+      "savory"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "INITIATIVE",
+          "value": 0.15
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 177
+  },
+  {
+    "name": "Slime Natto",
+    "type": "consumable",
+    "cost": 220,
+    "icon": 104,
+    "description": "Slime Natto.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 80
+      },
+      {
+        "type": "mp_heal",
+        "value": 120
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "fermented",
+      "spirit"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "STATE_CATEGORY_RATE",
+          "dataId": "common",
+          "value": 0.8
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 178
+  },
+  {
+    "name": "Mooncake",
+    "type": "consumable",
+    "cost": 120,
+    "icon": 104,
+    "description": "Mooncake.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 40
+      },
+      {
+        "type": "mp_heal",
+        "value": 180
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "sweet",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "XP_RATE",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 179
+  },
+  {
+    "name": "Mochi",
+    "type": "consumable",
+    "cost": 75,
+    "icon": 104,
+    "description": "Mochi.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 70
+      },
+      {
+        "type": "mp_heal",
+        "value": 80
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "sweet",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "EVA",
+          "value": 0.05
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 180
+  },
+  {
+    "name": "Daifuku",
+    "type": "consumable",
+    "cost": 110,
+    "icon": 104,
+    "description": "Daifuku.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 80
+      },
+      {
+        "type": "mp_heal",
+        "value": 150
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "sweet",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_PLUS",
+          "dataId": "mat",
+          "value": 3
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 181
+  },
+  {
+    "name": "Curry",
+    "type": "consumable",
+    "cost": 240,
+    "icon": 104,
+    "description": "Curry.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 160
+      },
+      {
+        "type": "mp_heal",
+        "value": 80
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "spicy",
+      "savory"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_RATE",
+          "dataId": "atk",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 182
+  },
+  {
+    "name": "Stew",
+    "type": "consumable",
+    "cost": 180,
+    "icon": 104,
+    "description": "Stew.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 170
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "meat",
+      "vegetable"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_RATE",
+          "dataId": "def",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 183
+  },
+  {
+    "name": "Sushi",
+    "type": "consumable",
+    "cost": 230,
+    "icon": 104,
+    "description": "Sushi.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 130
+      },
+      {
+        "type": "mp_heal",
+        "value": 110
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "fish",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "HIT",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 184
+  },
+  {
+    "name": "Ramen",
+    "type": "consumable",
+    "cost": 260,
+    "icon": 104,
+    "description": "Ramen.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 220
+      },
+      {
+        "type": "mp_heal",
+        "value": 80
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "grain",
+      "meat"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "HRG",
+          "value": 0.04
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 185
+  },
+  {
+    "name": "Pizza",
+    "type": "consumable",
+    "cost": 280,
+    "icon": 104,
+    "description": "Pizza.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 260
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "dairy",
+      "grain"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "PARAM_PLUS",
+          "dataId": "maxHp",
+          "value": 20
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 186
+  },
+  {
+    "name": "Risotto",
+    "type": "consumable",
+    "cost": 210,
+    "icon": 104,
+    "description": "Risotto.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 140
+      },
+      {
+        "type": "mp_heal",
+        "value": 120
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "grain",
+      "dairy"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "HEAL_RATE",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 187
+  },
+  {
+    "name": "Tempura",
+    "type": "consumable",
+    "cost": 190,
+    "icon": 104,
+    "description": "Tempura.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 150
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "fish",
+      "vegetable"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "INITIATIVE",
+          "value": 0.1
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 188
+  },
+  {
+    "name": "Kimchi",
+    "type": "consumable",
+    "cost": 90,
+    "icon": 104,
+    "description": "Kimchi.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 60
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "foodTags": [
+      "fermented",
+      "spicy"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "STATE_CATEGORY_RATE",
+          "dataId": "common",
+          "value": 0.85
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 189
+  },
+  {
+    "name": "Mandrake Tempura",
+    "type": "consumable",
+    "cost": 320,
+    "icon": 104,
+    "description": "Mandrake Tempura.",
+    "effects": [
+      {
+        "type": "hp",
+        "value": 190
+      },
+      {
+        "type": "mp_heal",
+        "value": 90
+      }
+    ],
+    "scope": "field",
+    "target": "party",
+    "meal": true,
+    "foodTags": [
+      "vegetable",
+      "spirit"
+    ],
+    "savor": {
+      "battles": 3,
+      "traits": [
+        {
+          "code": "POST_BATTLE_HEAL",
+          "value": 0.08
+        }
+      ]
+    },
+    "meta": {
+      "disciplines": [
+        "cooking"
+      ]
+    },
+    "id": 190
+  },
+  {
+    "name": "Power Incense",
+    "type": "consumable",
+    "cost": 700,
+    "icon": 104,
+    "description": "Power Incense.",
+    "effects": [
+      {
+        "type": "param_plus",
+        "param": "atk",
+        "value": 2
+      }
+    ],
+    "scope": "field",
+    "target": "ally",
+    "id": 191
+  },
+  {
+    "name": "Guard Incense",
+    "type": "consumable",
+    "cost": 700,
+    "icon": 104,
+    "description": "Guard Incense.",
+    "effects": [
+      {
+        "type": "param_plus",
+        "param": "def",
+        "value": 2
+      }
+    ],
+    "scope": "field",
+    "target": "ally",
+    "id": 192
+  },
+  {
+    "name": "Magic Incense",
+    "type": "consumable",
+    "cost": 700,
+    "icon": 104,
+    "description": "Magic Incense.",
+    "effects": [
+      {
+        "type": "param_plus",
+        "param": "mat",
+        "value": 2
+      }
+    ],
+    "scope": "field",
+    "target": "ally",
+    "id": 193
+  },
+  {
+    "name": "Spirit Incense",
+    "type": "consumable",
+    "cost": 700,
+    "icon": 104,
+    "description": "Spirit Incense.",
+    "effects": [
+      {
+        "type": "param_plus",
+        "param": "mdf",
+        "value": 2
+      }
+    ],
+    "scope": "field",
+    "target": "ally",
+    "id": 194
+  },
+  {
+    "name": "Ether Seed",
+    "type": "consumable",
+    "cost": 2200,
+    "icon": 104,
+    "description": "Ether Seed.",
+    "effects": [
+      {
+        "type": "max_mp_plus",
+        "value": 80
+      }
+    ],
+    "scope": "field",
+    "target": "none",
+    "id": 195
+  },
+  {
+    "name": "Forbidden Lamp",
+    "type": "consumable",
+    "cost": 5000,
+    "icon": 104,
+    "description": "A sealed lamp. Its fixed Diablos challenge awaits encounter-continuation support.",
+    "effects": [],
+    "scope": "none",
+    "target": "none",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    },
+    "id": 196
   }
 ]

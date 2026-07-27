@@ -127,7 +127,7 @@
     "maxEnemies": 3,
     "victoryGoldMin": 10,
     "victoryGoldMax": 30,
-    "victoryExp": 5,
+    "victoryExp": 15,
     "criticalMultiplier": 1.5,
     "baseSpeed": 10,
     "speedPerLevel": 0.5,
