@@ -106,6 +106,47 @@ validator.run = function(loader)
         }
     end
 
+    -- Battle commands (engine.json `battleCommands`). A creature whose command
+    -- list is wrong is a creature that cannot act, or can act in a way the
+    -- design forbids, and neither shows up until someone fights with it.
+    local knownBattleCommands = {}
+    local battleCommandNames = {}
+    for _, cmd in ipairs((loader.engine and loader.engine.battleCommands) or {}) do
+        local cwhere = "engine.json battleCommands '" .. tostring(cmd.id) .. "'"
+        check(cmd.id ~= nil and cmd.id ~= "", "engine.json battleCommands entry needs an id")
+        check(cmd.label ~= nil and cmd.label ~= "", cwhere .. " needs a label")
+        check(cmd.resolve == "target" or cmd.resolve == "submenu" or cmd.resolve == "commit",
+            cwhere .. " has resolve '" .. tostring(cmd.resolve)
+            .. "'; expected 'target', 'submenu' or 'commit'")
+        if cmd.resolve == "submenu" then
+            check(cmd.submenu == "skill" or cmd.submenu == "item",
+                cwhere .. " opens submenu '" .. tostring(cmd.submenu)
+                .. "'; the console only draws 'skill' and 'item'")
+        end
+        -- A command that commits a skill must name one that exists, or the
+        -- creature spends its turn on nothing.
+        if cmd.action and cmd.action.type == "skill" then
+            check(loader.getSkill(cmd.action.id) ~= nil,
+                cwhere .. " commits missing skill '" .. tostring(cmd.action.id) .. "'")
+            check(cmd.action.target == "self",
+                cwhere .. " commits without target selection, so its target must be 'self'")
+        end
+        if cmd.id then
+            knownBattleCommands[cmd.id] = true
+            table.insert(battleCommandNames, cmd.id)
+        end
+    end
+    table.sort(battleCommandNames)
+    local battleCommandList = table.concat(battleCommandNames, ", ")
+    local defaultCommands = (loader.engine and loader.engine.defaultBattleCommands) or {}
+    check(#defaultCommands > 0,
+        "engine.json defaultBattleCommands is empty, so an ordinary creature could not act")
+    for _, id in ipairs(defaultCommands) do
+        check(knownBattleCommands[id],
+            "engine.json defaultBattleCommands names unknown command '" .. tostring(id)
+            .. "' (known: " .. battleCommandList .. ")")
+    end
+
     -- Item Creation disciplines (engine.json `disciplines`) are named from three
     -- places that used to have nothing tying them together: an item's
     -- `meta.disciplines`, an actor's `discipline`, and the crafting scene. A typo
@@ -453,6 +494,19 @@ validator.run = function(loader)
     -- Actors must reference existing skills/passives/elements/roles
     for _, actor in ipairs(loader.actors) do
         local actorDesc = "actor " .. tostring(actor.id)
+        -- An actor authoring an empty list would sit in battle with no rows to
+        -- pick, which reads as a frozen game rather than a design choice. A
+        -- creature meant to be helpless authors ["wait"], not [].
+        if actor.battleCommands ~= nil then
+            check(type(actor.battleCommands) == "table" and #actor.battleCommands > 0,
+                actorDesc .. " has an empty battleCommands list; author [\"wait\"] for a "
+                .. "creature that should be unable to act")
+            for _, id in ipairs(actor.battleCommands or {}) do
+                check(knownBattleCommands[id],
+                    actorDesc .. " battleCommands names unknown command '" .. tostring(id)
+                    .. "' (known: " .. battleCommandList .. ")")
+            end
+        end
         check(type(actor.names) == "table" and #actor.names > 0,
             actorDesc .. " ('" .. tostring(actor.name) .. "') needs at least one default personal name")
         check(type(actor.flavor) == "string" and actor.flavor ~= "",

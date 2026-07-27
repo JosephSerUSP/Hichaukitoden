@@ -308,6 +308,7 @@ function love.load(arg)
         dofile("tests/test_encounter_levels.lua")
         dofile("tests/test_developer_mode.lua")
         dofile("tests/test_map_transfer.lua")
+        dofile("tests/test_battle_commands.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return

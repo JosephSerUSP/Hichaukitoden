@@ -2875,5 +2875,66 @@
     "meteorite": "Black",
     "vile": "Black",
     "lucille": "Black"
-  }
+  },
+  "battleCommands": [
+    {
+      "id": "attack",
+      "label": "Attack",
+      "help": "Strike with a basic attack.",
+      "resolve": "target",
+      "action": {
+        "type": "attack"
+      }
+    },
+    {
+      "id": "skill",
+      "label": "Skill",
+      "help": "Use one of this creature's skills.",
+      "resolve": "submenu",
+      "submenu": "skill"
+    },
+    {
+      "id": "defend",
+      "label": "Defend",
+      "help": "Brace to reduce incoming damage.",
+      "resolve": "commit",
+      "action": {
+        "type": "defend"
+      }
+    },
+    {
+      "id": "item",
+      "label": "Item",
+      "help": "Use an item from the inventory.",
+      "resolve": "submenu",
+      "submenu": "item"
+    },
+    {
+      "id": "flee",
+      "label": "Flee",
+      "help": "Attempt to escape the battle.",
+      "resolve": "commit",
+      "action": {
+        "type": "flee"
+      }
+    },
+    {
+      "id": "wait",
+      "label": "Wait",
+      "help": "Do nothing this round.",
+      "resolve": "commit",
+      "action": {
+        "type": "skill",
+        "id": "wait",
+        "target": "self"
+      }
+    }
+  ],
+  "defaultBattleCommands": [
+    "attack",
+    "skill",
+    "defend",
+    "item",
+    "flee"
+  ]
 }

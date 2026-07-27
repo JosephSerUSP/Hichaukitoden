@@ -1938,6 +1938,14 @@ local function buildScriptApi(ctx)
         return l and l.formatTerm(key, fallback, ...) or fallback
     end
     -- systemConfig moved to prototype
+    -- The battle commands this battler may choose from (engine.json
+    -- `battleCommands` filtered by the actor's own list). The console renders
+    -- and dispatches off this rather than a fixed five rows, so restricting a
+    -- creature is an authoring act, not a scene edit.
+    function api.battleCommands(battler)
+        local l = ctx.loader or session.loader
+        return require("engine.battle").commandsFor(battler, l)
+    end
     -- Item Creation disciplines (engine.json `disciplines`): the shared
     -- taxonomy that item `meta.craftKind` and actor `discipline` both name.
     -- Registry-backed rather than scene-local, so a second crafting surface

@@ -2065,6 +2065,32 @@
                         renderActorStatCurves();
 
                     } else if (activeActorSubTab === 'combat') {
+                        // Which rows this creature gets in the battle console.
+                        // Options come from the engine.json registry, never a
+                        // list typed here. Leaving it empty means "the default
+                        // set", which is what nearly every creature wants --
+                        // an explicit list is for the Egg-shaped exceptions.
+                        const cmdBox = makeGroupbox(subPageContainer, 'Battle Commands');
+                        const cmdReg = (dbPayload.engine && dbPayload.engine.battleCommands) || [];
+                        const defaults = ((dbPayload.engine && dbPayload.engine.defaultBattleCommands) || [])
+                            .map(id => {
+                                const e = cmdReg.find(c => c.id === id);
+                                return (e && e.label) || id;
+                            }).join(', ');
+                        buildIdListEditor(cmdBox,
+                            'Commands (empty = default: ' + defaults + ')',
+                            cmdReg.map(c => c.id),
+                            id => {
+                                const e = cmdReg.find(c => c.id === id);
+                                return (e && e.label) || id;
+                            },
+                            () => item.battleCommands,
+                            arr => {
+                                if (arr && arr.length) { item.battleCommands = arr; }
+                                else { delete item.battleCommands; }
+                                setDirty(true);
+                            }, '+ Add Command');
+
                         // Three-column grid: Skills, Passives, Traits
                         const threeCol = document.createElement('div');
                         threeCol.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;';

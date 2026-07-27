@@ -29,26 +29,6 @@
     "resolving": "Resolving actions...",
     "reaped": "{0} has passed away.",
     "reserve_wave": "The party has fallen! The reserves rush in -- {0} will not act this round.",
-    "commands_monster": [
-      "Attack",
-      "Skill",
-      "Defend",
-      "Item",
-      "Flee"
-    ],
-    "help_summoner": [
-      "Strike with a basic attack.",
-      "Cast a spell from the grimoire.",
-      "Use an item from the inventory.",
-      "Attempt to escape the battle."
-    ],
-    "help_monster": [
-      "Strike with a basic attack.",
-      "Use one of this creature's skills.",
-      "Brace to reduce incoming damage.",
-      "Use an item from the inventory.",
-      "Attempt to escape the battle."
-    ],
     "learns_skill": "- {0} learns {1}!",
     "already_knows": "- {0} already knows that skill.",
     "param_up": "- {0}'s {1} rises by {2}!",

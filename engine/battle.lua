@@ -27,6 +27,31 @@ local function forcedSkill(battler, session)
 end
 battle.forcedSkill = forcedSkill
 
+-- Which commands a battler may choose from this round.
+--
+-- The console used to draw a fixed five-entry list and dispatch on the row
+-- number, so every creature could do everything and "1" meant Attack forever.
+-- The list is now data: engine.json `battleCommands` declares what a command is
+-- and how it resolves, an actor's `battleCommands` says which of them it has,
+-- and `defaultBattleCommands` covers the ordinary creature that authors none.
+-- An Egg authoring `["wait"]` is the whole of "an Egg can only wait".
+--
+-- Registry order is menu order, so the set an actor authors is displayed in the
+-- registry's sequence rather than the order they happened to list it in.
+function battle.commandsFor(battler, loader)
+    local registry = (loader.engine and loader.engine.battleCommands) or {}
+    local allowed = battler and battler.actorData and battler.actorData.battleCommands
+        or (loader.engine and loader.engine.defaultBattleCommands)
+        or {}
+    local wanted = {}
+    for _, id in ipairs(allowed) do wanted[id] = true end
+    local out = {}
+    for _, cmd in ipairs(registry) do
+        if wanted[cmd.id] then table.insert(out, cmd) end
+    end
+    return out
+end
+
 local Battle = {}
 Battle.__index = Battle
 

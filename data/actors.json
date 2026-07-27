@@ -1582,6 +1582,9 @@
         "mat": 10,
         "mdf": 9
       }
+    ],
+    "battleCommands": [
+      "wait"
     ]
   },
   {
