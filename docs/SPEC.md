@@ -185,8 +185,10 @@ Removed under this rule (24.07.2026):
 - the dual `type`/`cmd` command-key format — **every command stores its id
   under `cmd`**, and the editor no longer mirrors an interactive-id table to
   decide which key to write;
-- the dual `script`/`commands` name for sub-command lists — **`commands` is
-  the only name**, on events, event pages, CHOICE options and recruitEvents;
+- the dual `script`/`commands` name for owned command lists — **`commands` is
+  the only name**, on events, event pages, CHOICE options and recruitEvents
+  (`scriptId` remains the distinct common-event template link described in
+  §4.1; it is not an owned list);
 - the redundant `tiles{}` tileset mirror (`features[]` is the sole source of
   feature ids, per §1.8) and its merge in `viewport_3d.lua`;
 - the `ui.elementIcons` config + hardcoded icon table in `actor_status.lua`
@@ -776,6 +778,13 @@ share this burn-to-black mathematics, while door zoom choreography remains
 specific to doors. Drawing the subtraction during the map or illustrated
 backdrop pass keeps HUD and dialogue UI outside the effect.
 
+Dialogue `TEXT` commands may author `expression` from 1 through 5. Human
+portrait sheets are five 128x192 columns; column 1 is always the default pose.
+The selected column persists into the following choice until another spoken
+line changes it. Expressions are complete character redraws rather than facial
+swaps, and transparent silhouettes may exceed the nominal portrait rectangle
+by half a tile without moving the shared bottom-window footprint.
+
 ### 1.17 String pictures and opening cinematic (28.07.2026)
 
 `SHOW_STRING_PICTURE` creates or replaces a numbered screen-space text object.
@@ -982,6 +991,17 @@ way to edit a command list, everywhere one exists.** Map events, common events,
 scene hooks, battle phases, troop battle events, quest hooks, action sequences
 and an actor's recruit event are the *same editor* — `renderCommandList` in
 `events.js` — reading the same registry and sharing one module-level clipboard.
+
+**Map-event common-event links are templates, not command calls.** A map event
+or event page with `scriptId` is linked to that common event: the linked common
+event supplies the commands, and its `sprite`, `label`, and `minimapColor` are
+presentation defaults when the map event does not override those fields.
+This is the editor's **Link Common Event** mode and is a first-class runtime
+feature. A map event or page with its own `commands` instead uses the editable
+custom command list. `CALL_COMMON_EVENT` is different again: it invokes another
+common event from inside a command list, but does not inherit any of that common
+event's presentation properties. The obsolete field was `script`, not
+`scriptId`; `commands` is the sole field for an owned command list.
 
 Consequences, all of them load-bearing:
 

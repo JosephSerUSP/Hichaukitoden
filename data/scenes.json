@@ -1465,7 +1465,56 @@
     "name": "Map",
     "kind": "map",
     "config": {
-      "windowFootprint": "bottom_hud"
+      "fieldCommands": [
+        {
+          "name": "ITEMS",
+          "help": "Use an item from the inventory."
+        },
+        {
+          "name": "PARTY",
+          "help": "Select a party member."
+        },
+        {
+          "name": "RESERVE",
+          "help": "Manage the four creatures carried in expedition reserve."
+        },
+        {
+          "name": "DATA",
+          "help": "Save or load your progress."
+        },
+        {
+          "name": "QUESTS",
+          "help": "View your active and completed quests."
+        },
+        {
+          "name": "OPTIONS",
+          "help": "Controls and other settings."
+        }
+      ],
+      "dataCommands": [
+        {
+          "name": "SAVE",
+          "help": "Save your progress to a slot."
+        },
+        {
+          "name": "LOAD",
+          "help": "Load your progress from a slot."
+        }
+      ],
+      "unitCommands": [
+        {
+          "name": "STATUS",
+          "help": "View this creature's stats, skills, biography and equipment."
+        },
+        {
+          "name": "ITEM CREATION",
+          "help": "Have this creature attempt to create an item."
+        },
+        {
+          "name": "SWAP",
+          "help": "Swap this creature with one from the reserve roster."
+        }
+      ]
     },
     "hooks": {
       "on_enter": [
@@ -2309,58 +2358,6 @@
               "text": "{sel('map_command').help}"
             }
           ]
-        }
-      ]
-    },
-    "config": {
-      "fieldCommands": [
-        {
-          "name": "ITEMS",
-          "help": "Use an item from the inventory."
-        },
-        {
-          "name": "PARTY",
-          "help": "Select a party member."
-        },
-        {
-          "name": "RESERVE",
-          "help": "Manage the four creatures carried in expedition reserve."
-        },
-        {
-          "name": "DATA",
-          "help": "Save or load your progress."
-        },
-        {
-          "name": "QUESTS",
-          "help": "View your active and completed quests."
-        },
-        {
-          "name": "OPTIONS",
-          "help": "Controls and other settings."
-        }
-      ],
-      "dataCommands": [
-        {
-          "name": "SAVE",
-          "help": "Save your progress to a slot."
-        },
-        {
-          "name": "LOAD",
-          "help": "Load your progress from a slot."
-        }
-      ],
-      "unitCommands": [
-        {
-          "name": "STATUS",
-          "help": "View this creature's stats, skills, biography and equipment."
-        },
-        {
-          "name": "ITEM CREATION",
-          "help": "Have this creature attempt to create an item."
-        },
-        {
-          "name": "SWAP",
-          "help": "Swap this creature with one from the reserve roster."
         }
       ]
     },
@@ -4588,6 +4585,7 @@
             "portraitW": 7.5,
             "portraitH": 10,
             "portraitOverflow": 0.5,
+            "portraitFrame": "v.dialogueExpression",
             "portraitName": "v.dialogueSpeaker"
           }
         ]

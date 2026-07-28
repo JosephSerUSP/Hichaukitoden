@@ -146,7 +146,13 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             local runNext = (j < #commands) and (prefix .. "_" .. (j + 1)) or tailNodeId
             nodes[nodeId] = { type = "ACTION", action = "RUN_IMMEDIATE", commands = run, next = runNext }
         elseif id == "TEXT" then
-            nodes[nodeId] = { type = "TEXT", content = cmd.text, speaker = cmd.speaker, next = nextId }
+            nodes[nodeId] = {
+                type = "TEXT",
+                content = cmd.text,
+                speaker = cmd.speaker,
+                expression = cmd.expression,
+                next = nextId
+            }
         elseif id == "CHOICE" then
             local options = {}
             for oi, opt in ipairs(cmd.options or {}) do

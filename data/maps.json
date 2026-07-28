@@ -1574,6 +1574,7 @@
               {
                 "text": "Agnes is repairing the chapel steps with a patience better suited to embroidery.",
                 "speaker": "Sister Agnes",
+                "expression": 2,
                 "cmd": "TEXT"
               }
             ],
@@ -1581,11 +1582,13 @@
               {
                 "text": "You must be the new Summoner. Welcome to St. Maria. I am Agnes. If you need quiet, the chapel is open. If you need certainty, try somewhere else.",
                 "speaker": "Sister Agnes",
+                "expression": 3,
                 "cmd": "TEXT"
               },
               {
                 "text": "She brushes stone dust from her sleeves and returns to work.",
                 "speaker": "Sister Agnes",
+                "expression": 1,
                 "cmd": "TEXT"
               },
               {
@@ -1616,6 +1619,7 @@
               {
                 "text": "Celina glances at your pass. \"Still legible. A promising start.\"",
                 "speaker": "Registrar Celina",
+                "expression": 4,
                 "cmd": "TEXT"
               },
               {
@@ -1626,6 +1630,7 @@
                       {
                         "text": "\"The village sells meals, beds, steel and funerals. Summoners bring demand for all four.\"",
                         "speaker": "Registrar Celina",
+                        "expression": 2,
                         "cmd": "TEXT"
                       }
                     ]
@@ -1636,6 +1641,7 @@
                       {
                         "text": "\"Return before your MP makes the decision for you. Pride is not accepted as payment at the infirmary.\"",
                         "speaker": "Registrar Celina",
+                        "expression": 5,
                         "cmd": "TEXT"
                       }
                     ]
@@ -1652,11 +1658,13 @@
               {
                 "text": "Celina holds out one hand. \"Your Summoner's seal. Not your name. We keep those separate here.\"",
                 "speaker": "Registrar Celina",
+                "expression": 2,
                 "cmd": "TEXT"
               },
               {
                 "text": "She copies the seal into a narrow ledger. Most of the page is empty. The previous page is not.",
                 "speaker": "Registrar Celina",
+                "expression": 1,
                 "cmd": "TEXT"
               },
               {
@@ -1667,6 +1675,7 @@
               {
                 "text": "Obtained Crossing Writ. \"The guard will let you descend now. Coming back remains your responsibility.\"",
                 "speaker": "Registrar Celina",
+                "expression": 5,
                 "cmd": "TEXT"
               }
             ],

@@ -72,6 +72,20 @@ came back.
 > dead and I used Town Portal. The clever part is that the portal gave me
 > temporary safety without pretending I had completed the trip.
 
+### Optional: Laura's lunch
+
+After the first physical return, ask Alicia about taking Laura's lunch. This
+sets `laura_lunch_carried`; entering Laura's forge completes the delivery,
+sets `laura_lunch_delivered` and pays **25G**. The bundle is not an inventory
+item and occupies no expedition slot.
+
+> **Player commentary:** I expected a fetch quest and got a two-minute walk.
+> The reward barely mattered. What sold it was seeing Alicia physically fold
+> into embarrassment, then Laura take the parcel as though I had handed her
+> something much more dangerous than lunch. On the next visit Alicia already
+> knew the cloth had come back neatly folded. The town had communicated without
+> me.
+
 ## Incursion 2: the salt table
 
 ![The salt table in the complete game frame](images/salt-table.png)

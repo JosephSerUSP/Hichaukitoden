@@ -397,6 +397,13 @@
         {
           "key": "speaker",
           "type": "text"
+        },
+        {
+          "key": "expression",
+          "type": "number",
+          "optional": true,
+          "min": 1,
+          "max": 5
         }
       ],
       "contexts": [
@@ -404,7 +411,7 @@
         "common"
       ],
       "interactive": true,
-      "description": "Shows a dialogue line and waits for input."
+      "description": "Shows a dialogue line and waits for input. Expression selects the 1-5 portrait-sheet column; column 1 is the default."
     },
     {
       "id": "CHOICE",
@@ -1709,24 +1716,100 @@
       "category": "UI",
       "label": "Show String Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "text", "type": "text" },
-        { "key": "x", "type": "number" },
-        { "key": "y", "type": "number" },
-        { "key": "anchor", "type": "select", "options": ["left", "center", "right"] },
-        { "key": "align", "type": "select", "options": ["left", "center", "right"] },
-        { "key": "width", "type": "number", "optional": true },
-        { "key": "font", "type": "text", "optional": true },
-        { "key": "fontSize", "type": "number", "optional": true },
-        { "key": "color", "type": "number", "optional": true },
-        { "key": "opacity", "type": "number", "optional": true },
-        { "key": "scale", "type": "number", "optional": true },
-        { "key": "shadow", "type": "boolean", "optional": true },
-        { "key": "frame", "type": "boolean", "optional": true },
-        { "key": "layer", "type": "select", "options": ["backdrop", "screen", "top"] },
-        { "key": "eraseOnMapChange", "type": "boolean", "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "text",
+          "type": "text"
+        },
+        {
+          "key": "x",
+          "type": "number"
+        },
+        {
+          "key": "y",
+          "type": "number"
+        },
+        {
+          "key": "anchor",
+          "type": "select",
+          "options": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        {
+          "key": "align",
+          "type": "select",
+          "options": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        {
+          "key": "width",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "font",
+          "type": "text",
+          "optional": true
+        },
+        {
+          "key": "fontSize",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "color",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "opacity",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "scale",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "shadow",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "key": "frame",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "key": "layer",
+          "type": "select",
+          "options": [
+            "backdrop",
+            "screen",
+            "top"
+          ]
+        },
+        {
+          "key": "eraseOnMapChange",
+          "type": "boolean",
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Creates or replaces a numbered screen-space text object."
     },
@@ -1735,15 +1818,50 @@
       "category": "UI",
       "label": "Move String Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "x", "type": "number", "optional": true },
-        { "key": "y", "type": "number", "optional": true },
-        { "key": "opacity", "type": "number", "optional": true },
-        { "key": "scale", "type": "number", "optional": true },
-        { "key": "duration", "type": "number", "optional": true },
-        { "key": "easing", "type": "select", "options": ["out", "linear"], "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "x",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "y",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "opacity",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "scale",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "easing",
+          "type": "select",
+          "options": [
+            "out",
+            "linear"
+          ],
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Moves, fades, or scales an existing string picture."
     },
@@ -1752,10 +1870,21 @@
       "category": "UI",
       "label": "Erase String Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "duration", "type": "number", "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Erases a string picture, optionally fading it first."
     },
@@ -1764,7 +1893,11 @@
       "category": "UI",
       "label": "Erase All String Pictures",
       "params": [],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Immediately clears every string picture."
     },
@@ -1773,18 +1906,66 @@
       "category": "UI",
       "label": "Show Image Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "path", "type": "text" },
-        { "key": "x", "type": "number" },
-        { "key": "y", "type": "number" },
-        { "key": "anchor", "type": "select", "options": ["left", "center", "right"] },
-        { "key": "opacity", "type": "number", "optional": true },
-        { "key": "scale", "type": "number", "optional": true },
-        { "key": "rotation", "type": "number", "optional": true },
-        { "key": "layer", "type": "select", "options": ["backdrop", "screen", "top"] },
-        { "key": "eraseOnMapChange", "type": "boolean", "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "path",
+          "type": "text"
+        },
+        {
+          "key": "x",
+          "type": "number"
+        },
+        {
+          "key": "y",
+          "type": "number"
+        },
+        {
+          "key": "anchor",
+          "type": "select",
+          "options": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        {
+          "key": "opacity",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "scale",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "rotation",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "layer",
+          "type": "select",
+          "options": [
+            "backdrop",
+            "screen",
+            "top"
+          ]
+        },
+        {
+          "key": "eraseOnMapChange",
+          "type": "boolean",
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Creates or replaces a numbered screen-space bitmap object."
     },
@@ -1793,16 +1974,55 @@
       "category": "UI",
       "label": "Move Image Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "x", "type": "number", "optional": true },
-        { "key": "y", "type": "number", "optional": true },
-        { "key": "opacity", "type": "number", "optional": true },
-        { "key": "scale", "type": "number", "optional": true },
-        { "key": "rotation", "type": "number", "optional": true },
-        { "key": "duration", "type": "number", "optional": true },
-        { "key": "easing", "type": "select", "options": ["out", "linear"], "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "x",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "y",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "opacity",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "scale",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "rotation",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "easing",
+          "type": "select",
+          "options": [
+            "out",
+            "linear"
+          ],
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Moves, fades, scales, or rotates an existing image picture."
     },
@@ -1811,10 +2031,21 @@
       "category": "UI",
       "label": "Erase Image Picture",
       "params": [
-        { "key": "id", "type": "number" },
-        { "key": "duration", "type": "number", "optional": true }
+        {
+          "key": "id",
+          "type": "number"
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true
+        }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Erases an image picture, optionally fading it first."
     },
@@ -1823,7 +2054,11 @@
       "category": "UI",
       "label": "Erase All Image Pictures",
       "params": [],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Immediately clears every image picture."
     },
@@ -1832,16 +2067,33 @@
       "category": "UI",
       "label": "Set Subtractive Fade",
       "params": [
-        { "key": "amount", "type": "number" },
-        { "key": "duration", "type": "number", "optional": true },
+        {
+          "key": "amount",
+          "type": "number"
+        },
+        {
+          "key": "duration",
+          "type": "number",
+          "optional": true
+        },
         {
           "key": "easing",
           "type": "select",
-          "options": ["burn_in", "smooth", "in", "out", "linear"],
+          "options": [
+            "burn_in",
+            "smooth",
+            "in",
+            "out",
+            "linear"
+          ],
           "optional": true
         }
       ],
-      "contexts": ["scene", "map", "common"],
+      "contexts": [
+        "scene",
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Moves the shared backdrop-only PSX subtractive fade amount; UI remains unaffected."
     },
@@ -1850,9 +2102,15 @@
       "category": "Flow Control",
       "label": "Enable Event Skip",
       "params": [
-        { "key": "label", "type": "text" }
+        {
+          "key": "label",
+          "type": "text"
+        }
       ],
-      "contexts": ["map", "common"],
+      "contexts": [
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Lets Cancel jump the active event to an authored cleanup LABEL."
     },
@@ -1861,7 +2119,10 @@
       "category": "Flow Control",
       "label": "Disable Event Skip",
       "params": [],
-      "contexts": ["map", "common"],
+      "contexts": [
+        "map",
+        "common"
+      ],
       "interactive": false,
       "description": "Disables event skipping."
     },
@@ -1870,9 +2131,14 @@
       "category": "Flow Control",
       "label": "Start Common Event",
       "params": [
-        { "key": "commonEventId", "type": "number" }
+        {
+          "key": "commonEventId",
+          "type": "number"
+        }
       ],
-      "contexts": ["scene"],
+      "contexts": [
+        "scene"
+      ],
       "interactive": false,
       "description": "Starts a common event from a scene hook through the presentation host."
     },
@@ -2428,6 +2694,12 @@
       "label": "Forced Action",
       "usesDataId": true,
       "description": "The holder can only take the skill named by dataId, whatever it or the player chose. Applied where the turn queue is built, so it constrains an AI enemy and a player creature by the same rule -- Berserk forcing a basic Attack is one authored state, not a branch in the battle code. Target is picked by the forced skill's own targeting spec."
+    },
+    {
+      "code": "INVERT_TARGETING",
+      "label": "Invert Targeting",
+      "usesDataId": false,
+      "description": "Inverts targeting groups for the holder while active (`enemy` side targets allies, `ally` side targets enemies). Used by Charm and confusion effects."
     },
     {
       "code": "STATE_RATE",

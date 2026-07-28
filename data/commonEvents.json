@@ -897,7 +897,8 @@
         "commands": [
           {
             "text": "The wax is still on the stones. One lantern burned until morning. Nobody admits it was theirs.",
-            "speaker": "Gatekeeper",
+            "speaker": "Gate Guard",
+            "expression": 5,
             "cmd": "TEXT"
           }
         ],
@@ -907,7 +908,8 @@
             "commands": [
               {
                 "text": "The gate opens onto a town you do not quite recognize. Colored lamps hang from the roofs. Nobody is dressed for work.",
-                "speaker": "Gatekeeper",
+                "speaker": "Gate Guard",
+                "expression": 4,
                 "cmd": "TEXT"
               }
             ],
@@ -917,14 +919,16 @@
                 "commands": [
                   {
                     "text": "Back alive. Good. If you are going down again, eat something first.",
-                    "speaker": "Gatekeeper",
+                    "speaker": "Gate Guard",
+                    "expression": 5,
                     "cmd": "TEXT"
                   }
                 ],
                 "elseCommands": [
                   {
                     "text": "Beyond this gate, the boundary between souls gives way. Keep hold of your name. Your creatures can fight for you, but only you can keep summoning yourself.",
-                    "speaker": "Gatekeeper",
+                    "speaker": "Gate Guard",
+                    "expression": 2,
                     "cmd": "TEXT"
                   }
                 ],
@@ -961,7 +965,8 @@
             "commands": [
               {
                 "text": "Small village. Old chapel. Bad soil. The Labyrinth pays for what the fields cannot.",
-                "speaker": "Gatekeeper",
+                "speaker": "Gate Guard",
+                "expression": 3,
                 "cmd": "TEXT"
               },
               {
@@ -1075,6 +1080,8 @@
                     "commands": [
                       {
                         "text": "Agnes nods. \"The village can wait. It has practice.\"",
+                        "speaker": "Sister Agnes",
+                        "expression": 3,
                         "cmd": "TEXT"
                       }
                     ]
@@ -1115,6 +1122,7 @@
                   {
                     "text": "I observed. Attendance implies belief.",
                     "speaker": "Yukio",
+                    "expression": 4,
                     "cmd": "TEXT"
                   }
                 ]
@@ -1125,6 +1133,7 @@
                   {
                     "text": "You mistake possession for sentiment. A common Summoner's error.",
                     "speaker": "Yukio",
+                    "expression": 5,
                     "cmd": "TEXT"
                   }
                 ]
@@ -1141,6 +1150,7 @@
           {
             "text": "So you're the Summoner everyone keeps glancing at. I wondered whether you would be taller.",
             "speaker": "Yukio",
+            "expression": 2,
             "cmd": "TEXT"
           },
           {
@@ -1151,6 +1161,7 @@
                   {
                     "text": "Unfortunately. Yukio. I came from the north road this morning, which means they have spent all day confusing us.",
                     "speaker": "Yukio",
+                    "expression": 2,
                     "cmd": "TEXT"
                   },
                   {
@@ -1305,6 +1316,7 @@
                   {
                     "text": "Alicia is dressed in white and gold instead of her apron. She is laughing with a customer and does not notice you at first.",
                     "speaker": "Alicia",
+                    "expression": 3,
                     "cmd": "TEXT"
                   }
                 ],
@@ -1322,6 +1334,7 @@
               {
                 "text": "Oh! You're the new Summoner. I'm Alicia. Please drink water before you descend. People return looking like they forgot they have bodies.",
                 "speaker": "Alicia",
+                "expression": 2,
                 "cmd": "TEXT"
               }
             ],
@@ -1346,6 +1359,55 @@
             ]
           },
           {
+            "label": "Take Laura's lunch.",
+            "condition": "flag:first_return",
+            "commands": [
+              {
+                "condition": "flag:laura_lunch_delivered",
+                "commands": [
+                  {
+                    "text": "\"You already did. She sent the cloth back folded into a perfect square.\" Alicia looks absurdly pleased by this.",
+                    "speaker": "Alicia",
+                    "expression": 3,
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "condition": "flag:laura_lunch_carried",
+                    "commands": [
+                      {
+                        "text": "\"It's the warm bundle in your hands.\" Alicia peers over the counter. \"Please don't take it into the Labyrinth.\"",
+                        "speaker": "Alicia",
+                        "expression": 5,
+                        "cmd": "TEXT"
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "text": "Alicia ties bread, cheese and a bruised pear into a cloth. \"Laura forgets lunch when the forge is busy. Don't say I said she forgets.\"",
+                        "speaker": "Alicia",
+                        "expression": 4,
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "laura_lunch_carried",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              },
+              {
+                "label": "alicia_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
             "label": "Ask about the name-cards.",
             "condition": "flag:vigil_ready",
             "commands": [
@@ -1355,6 +1417,7 @@
                   {
                     "text": "\"The old rule says they don't need them.\" She covers the hidden lantern with a cloth. \"Old rules can be lonely.\"",
                     "speaker": "Alicia",
+                    "expression": 5,
                     "cmd": "TEXT"
                   }
                 ],
@@ -1362,6 +1425,7 @@
                   {
                     "text": "\"They're for the Vigil.\" Alicia pauses. \"The village remembers people who don't come back. Officially, summons aren't included.\"",
                     "speaker": "Alicia",
+                    "expression": 5,
                     "cmd": "TEXT"
                   }
                 ],
@@ -1394,6 +1458,44 @@
         "cmd": "LABEL"
       },
       {
+        "condition": "flag:laura_lunch_carried",
+        "commands": [
+          {
+            "text": "Laura looks at the warm cloth bundle, then at you. \"She recruited the Summoner as a delivery service. Efficient.\"",
+            "speaker": "Laura",
+            "expression": 3,
+            "cmd": "TEXT"
+          },
+          {
+            "text": "She takes it with extraordinary care. \"Tell her the pear was unnecessary.\" A pause. \"Don't actually tell her that.\"",
+            "speaker": "Laura",
+            "expression": 4,
+            "cmd": "TEXT"
+          },
+          {
+            "flag": "laura_lunch_carried",
+            "value": false,
+            "cmd": "SET_FLAG"
+          },
+          {
+            "flag": "laura_lunch_delivered",
+            "value": true,
+            "cmd": "SET_FLAG"
+          },
+          {
+            "amount": 25,
+            "cmd": "GAIN_GOLD"
+          },
+          {
+            "text": "Laura presses 25G into your palm as a delivery fee. It is still warm from the forge.",
+            "speaker": "Laura",
+            "expression": 4,
+            "cmd": "TEXT"
+          }
+        ],
+        "cmd": "CONDITIONAL_BRANCH"
+      },
+      {
         "condition": "flag:vigil_held",
         "commands": [
           {
@@ -1412,6 +1514,7 @@
                   {
                     "text": "Laura's forge is cold for the first time since you arrived. She has washed the soot from her face and seems annoyed that you noticed.",
                     "speaker": "Laura",
+                    "expression": 4,
                     "cmd": "TEXT"
                   }
                 ],
@@ -1419,6 +1522,7 @@
                   {
                     "text": "Back already? Sensible. Bring me anything the Labyrinth failed to digest.",
                     "speaker": "Laura",
+                    "expression": 2,
                     "cmd": "TEXT"
                   }
                 ],
@@ -1429,6 +1533,7 @@
               {
                 "text": "New Summoner? Don't buy a heroic weapon. Buy something that still works while you're running home.",
                 "speaker": "Laura",
+                "expression": 3,
                 "cmd": "TEXT"
               }
             ],
@@ -1459,6 +1564,7 @@
               {
                 "text": "\"Open flame stays at the chapel tonight.\" Laura folds her arms. \"St. Maria mourns beautifully. Then it sends somebody else down.\"",
                 "speaker": "Laura",
+                "expression": 5,
                 "cmd": "TEXT"
               },
               {

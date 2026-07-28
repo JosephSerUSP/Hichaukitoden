@@ -1883,6 +1883,12 @@
       "dungeon_moa": {
         "actor": 61
       },
+      "dungeon_lamia": {
+        "actor": 63
+      },
+      "dungeon_cockatrice": {
+        "actor": 65
+      },
       "default": {
         "actor": 17
       }
@@ -2612,7 +2618,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Undine",
-    "smallBattler": "lamia",
+    "smallBattler": "undine",
     "elements": [
       "Blue",
       "Blue"
@@ -2704,7 +2710,7 @@
     "level": 1,
     "role": "None",
     "spriteKey": "Proteus",
-    "smallBattler": "lamia",
+    "smallBattler": "undine",
     "elements": [
       "Blue",
       "Blue",
@@ -6386,5 +6392,258 @@
       "Not bad.",
       "I've had stranger."
     ]
+  },
+  {
+    "id": 63,
+    "name": "Lamia",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "names": [
+      "Serpenta",
+      "Vipera",
+      "Siren",
+      "Coila",
+      "Naga",
+      "Sylphira",
+      "Medusa",
+      "Sorsha"
+    ],
+    "flavor": "A creature of cold scales and hypnotic grace. Her seductive gaze and shadow magic weaken foes before her constriction.",
+    "level": 1,
+    "role": "Debuffer",
+    "discipline": "blacksmithing",
+    "spriteKey": "lamia",
+    "smallBattler": "lamia",
+    "elements": [
+      "Black",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "defend",
+      "drain",
+      "alluringGaze",
+      "miasma"
+    ],
+    "passives": [
+      "mesmerizing"
+    ],
+    "expGrowth": 1,
+    "gold": 2,
+    "evolutions": [
+      {
+        "level": 10,
+        "evolvesTo": 64,
+        "bonus": {
+          "maxHp": 16,
+          "mat": 8,
+          "mdf": 6,
+          "atk": 4
+        }
+      }
+    ],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [],
+    "foodReactions": [
+      "Cold and sweet, just how I like it.",
+      "Mmm... deliciously potent."
+    ],
+    "baseParams": {
+      "maxHp": 42,
+      "atk": 11,
+      "def": 9,
+      "mat": 15,
+      "mdf": 14,
+      "mpd": 2,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 45,
+        "atk": 13,
+        "def": 11,
+        "mat": 22,
+        "mdf": 20
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 55,
+        "atk": 16,
+        "def": 14,
+        "mat": 28,
+        "mdf": 25
+      }
+    ],
+    "sacrificeRewards": []
+  },
+  {
+    "id": 64,
+    "name": "Lamia Queen",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "names": [
+      "Queen Serpenta",
+      "Empress Vipera",
+      "Queen Siren",
+      "Sovereign Coila"
+    ],
+    "flavor": "Ruler of the serpent abyss. Her sovereign charm and dark tides enslave minds and drain life effortlessly.",
+    "level": 10,
+    "role": "Debuffer",
+    "discipline": "blacksmithing",
+    "spriteKey": "lamia",
+    "smallBattler": "lamia",
+    "elements": [
+      "Black",
+      "Black",
+      "Blue"
+    ],
+    "skills": [
+      "attack",
+      "defend",
+      "drain",
+      "alluringGaze",
+      "mesmerizingLight",
+      "miasma"
+    ],
+    "passives": [
+      "mesmerizing"
+    ],
+    "expGrowth": 1,
+    "gold": 5,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": false,
+    "isEvolved": true,
+    "traits": [],
+    "drops": [],
+    "foodReactions": [
+      "Fit for a queen.",
+      "Exquisite flavor."
+    ],
+    "baseParams": {
+      "maxHp": 72,
+      "atk": 18,
+      "def": 16,
+      "mat": 30,
+      "mdf": 28,
+      "mpd": 3,
+      "mxa": 4,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 78,
+        "atk": 20,
+        "def": 18,
+        "mat": 38,
+        "mdf": 35
+      },
+      {
+        "from": 21,
+        "to": 30,
+        "maxHp": 85,
+        "atk": 22,
+        "def": 20,
+        "mat": 45,
+        "mdf": 42
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "name": "Cockatrice",
+    "favoriteFoods": [
+      179,
+      180,
+      181
+    ],
+    "names": [
+      "Basil",
+      "Stony",
+      "Strutter",
+      "Gazer",
+      "Plume",
+      "Clawer",
+      "Crest",
+      "Rost"
+    ],
+    "flavor": "A dangerous hybrid of rooster and serpent born from an egg. Its horrifying gaze turns living prey into motionless stone.",
+    "level": 1,
+    "role": "Assassin",
+    "discipline": "blacksmithing",
+    "spriteKey": "cockatrice",
+    "smallBattler": "cockatrice",
+    "elements": [
+      "Green",
+      "Black"
+    ],
+    "skills": [
+      "attack",
+      "defend",
+      "petrifyingGaze",
+      "assassinate"
+    ],
+    "passives": [
+      "watchfulStone"
+    ],
+    "expGrowth": 1,
+    "gold": 2,
+    "evolutions": [],
+    "initialParty": false,
+    "isRecruitable": true,
+    "isEvolved": false,
+    "traits": [],
+    "drops": [],
+    "foodReactions": [
+      "Pecked clean in seconds!",
+      "A crunchy treat."
+    ],
+    "baseParams": {
+      "maxHp": 48,
+      "atk": 16,
+      "def": 12,
+      "mat": 8,
+      "mdf": 10,
+      "mpd": 2,
+      "mxa": 3,
+      "mxp": 2
+    },
+    "growthBands": [
+      {
+        "from": 2,
+        "to": 10,
+        "maxHp": 52,
+        "atk": 24,
+        "def": 16,
+        "mat": 10,
+        "mdf": 14
+      },
+      {
+        "from": 11,
+        "to": 20,
+        "maxHp": 62,
+        "atk": 32,
+        "def": 22,
+        "mat": 12,
+        "mdf": 18
+      }
+    ],
+    "sacrificeRewards": []
   }
 ]

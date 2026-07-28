@@ -245,6 +245,17 @@ local introGraph = interpreter.runInteractive(intro.commands, {
 })
 check(introGraph.labels and introGraph.labels.intro_cleanup,
     "the opening exposes an authored cleanup label for skipping")
+local actingGraph = interpreter.runInteractive({
+    { cmd = "TEXT", text = "Act.", speaker = "Alicia", expression = 4 }
+}, {
+    session = festivalTown, loader = loader, party = festivalTown.party
+})
+local actingNode
+for _, node in pairs(actingGraph.nodes or {}) do
+    if node.type == "TEXT" then actingNode = node break end
+end
+check(actingNode and actingNode.expression == 4,
+    "TEXT preserves the authored 1-5 portrait expression in the event graph")
 for _, node in pairs(introGraph.nodes or {}) do
     if node.type == "ACTION" and node.action == "RUN_IMMEDIATE" then
         for _, cmd in ipairs(node.commands or {}) do

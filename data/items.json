@@ -190,7 +190,7 @@
       {
         "type": "recruit_egg",
         "value": 15,
-        "provenance": "mystic"
+        "provenance": "random"
       }
     ],
     "target": "none"

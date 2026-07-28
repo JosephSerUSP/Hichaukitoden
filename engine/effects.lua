@@ -563,7 +563,19 @@ function effects.apply(effectData, a, b, session, context)
                     .. "' (" .. tostring(slotType) .. ")"
             })
         else
-            battler.provenance = effectData.provenance
+            local prov = effectData.provenance
+            if (not prov or prov == "random") and battler.actorData and battler.actorData.hatchOutcomes then
+                local outcomes = {}
+                for k in pairs(battler.actorData.hatchOutcomes) do
+                    if k ~= "default" then
+                        table.insert(outcomes, k)
+                    end
+                end
+                if #outcomes > 0 then
+                    prov = outcomes[math.random(#outcomes)]
+                end
+            end
+            battler.provenance = prov
             table.insert(events, {
                 type = "recruit",
                 target = battler,

@@ -573,11 +573,12 @@ local function drawPortrait(layout, env, x, y, title)
     local portraitY = drawY - overflow
     local portraitW = ui.toPx(layout.portraitW or 7.5) + overflow * 2
     local portraitH = ui.toPx(layout.portraitH or 10) + overflow * 2
+    local portraitFrame = layout.portraitFrame and formula.eval(layout.portraitFrame, env) or 1
 
     if img then
         love.graphics.setColor(1, 1, 1, 1)
         if layout.portraitW and layout.portraitH then
-            ui.drawSlicedPortrait(img, portraitX, portraitY, portraitW, portraitH)
+            ui.drawSlicedPortrait(img, portraitX, portraitY, portraitW, portraitH, portraitFrame)
         else
             love.graphics.draw(img, drawX, drawY, 0, 1, 1)
         end
@@ -1673,6 +1674,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 if block.portraitW ~= nil then layout.portraitW = block.portraitW end
                 if block.portraitH ~= nil then layout.portraitH = block.portraitH end
                 if block.portraitOverflow ~= nil then layout.portraitOverflow = block.portraitOverflow end
+                if block.portraitFrame ~= nil then layout.portraitFrame = block.portraitFrame end
                 if block.portraitName ~= nil then layout.portraitName = block.portraitName end
             else
                 -- Unknown block types fail soft (extensibility rule).

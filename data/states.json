@@ -208,5 +208,45 @@
     "icon": 31,
     "duration": 3,
     "traits": []
+  },
+  "petrify": {
+    "id": "petrify",
+    "categories": [
+      "negative",
+      "common",
+      "physical"
+    ],
+    "name": "Petrify",
+    "icon": 32,
+    "restriction": 4,
+    "duration": 3,
+    "traits": [
+      {
+        "code": "PARAM_RATE",
+        "dataId": "def",
+        "value": 1.2
+      }
+    ]
+  },
+  "charm": {
+    "id": "charm",
+    "categories": [
+      "negative",
+      "common",
+      "mental"
+    ],
+    "name": "Charm",
+    "icon": 33,
+    "duration": 3,
+    "traits": [
+      {
+        "code": "FORCE_ACTION",
+        "dataId": "attack"
+      },
+      {
+        "code": "INVERT_TARGETING",
+        "value": 1
+      }
+    ]
   }
 }

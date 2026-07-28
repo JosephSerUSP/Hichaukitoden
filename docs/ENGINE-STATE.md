@@ -35,7 +35,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 - commands: **86**
 - effect types: **15**
-- trait codes: **36**
+- trait codes: **37**
 - meta keys: **8** (tier, disciplines, intensityGrade, craftable, craftIngredient, dungeonOnly, detect, detectLevel)
 
 ### Registry entries with no implementation
@@ -66,10 +66,10 @@ are what's left:
 
 ## Content inventory
 
-- actors: **62** (6 summonable-from-start, 23 with promotion paths)
-- item-creation disciplines across the roster: alchemyx15, blacksmithingx12, cookingx18, tinkeringx17
+- actors: **65** (6 summonable-from-start, 24 with promotion paths)
+- item-creation disciplines across the roster: alchemyx15, blacksmithingx15, cookingx18, tinkeringx17
 - items: **198** (consumablex63, equipmentx120, questx15)
-- skills: **40**, passives: **41**, states: **12**, roles: **13**, elements: **5**
+- skills: **43**, passives: **41**, states: **14**, roles: **13**, elements: **5**
 - maps: **8**, common events: **19**, shops: **6**, quests: **4**
 - animations: **28**, tilesets: **9**
 

@@ -549,6 +549,7 @@ local function syncDialogueWindowState()
             speaker = string.gsub(speaker, "\\eventName", rName)
         end
         v.dialogueSpeaker = speaker or ""
+        v.dialogueExpression = math.max(1, math.min(5, math.floor(tonumber(node.expression) or 1)))
         -- Wrap width mirrors the message window's own draw call: text
         -- starts at the padded content origin (~8px in) with printf limit
         -- w - toPx(1); wrapping to the same width means the pre-broken

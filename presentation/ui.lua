@@ -57,13 +57,15 @@ end
 -- columns); drawing it unsliced squashes the whole sheet into the target
 -- box. Slices the neutral (first) column and scales it to targetW/targetH.
 -- Single-image portraits (width <= 128) draw as-is, scaled the same way.
-function ui.drawSlicedPortrait(img, x, y, targetW, targetH)
+function ui.drawSlicedPortrait(img, x, y, targetW, targetH, frame)
     if not img then return end
     local w = img:getWidth()
     local h = img:getHeight()
     if w > 128 then
         local fw = 128
-        local quad = love.graphics.newQuad(0, 0, fw, h, w, h)
+        local frameCount = math.max(1, math.floor(w / fw))
+        local column = math.max(1, math.min(frameCount, math.floor(tonumber(frame) or 1)))
+        local quad = love.graphics.newQuad((column - 1) * fw, 0, fw, h, w, h)
         love.graphics.draw(img, quad, x, y, 0, targetW / fw, targetH / h)
     else
         love.graphics.draw(img, x, y, 0, targetW / w, targetH / h)

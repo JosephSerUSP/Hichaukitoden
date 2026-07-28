@@ -668,5 +668,62 @@
         "type": "escape"
       }
     ]
+  },
+  "drain": {
+    "id": "drain",
+    "name": "Drain",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "animation": "skill.drain_kiss",
+    "description": "[Enemy] Steals vitality from a foe, dealing Black-elemental damage and restoring HP.",
+    "mpCost": 8,
+    "effects": [
+      {
+        "type": "hp_drain",
+        "potency": 1,
+        "power": "mat"
+      }
+    ]
+  },
+  "alluringGaze": {
+    "id": "alluringGaze",
+    "name": "Alluring Gaze",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "description": "[Enemy] Captivates a foe with a hypnotic gaze, inflicting Charm.",
+    "mpCost": 10,
+    "effects": [
+      {
+        "type": "add_status",
+        "status": "charm",
+        "chance": 0.6,
+        "duration": 3
+      }
+    ]
+  },
+  "petrifyingGaze": {
+    "id": "petrifyingGaze",
+    "name": "Petrifying Gaze",
+    "target": "enemy-any",
+    "element": "Black",
+    "icon": 5,
+    "animation": "skill.shadow_claw",
+    "description": "[Enemy] Gaze of heavy stone, dealing shadow damage and inflicting Petrify.",
+    "mpCost": 10,
+    "effects": [
+      {
+        "type": "hp_damage",
+        "potency": 1.1,
+        "power": "atk"
+      },
+      {
+        "type": "add_status",
+        "status": "petrify",
+        "chance": 0.5,
+        "duration": 3
+      }
+    ]
   }
 }

@@ -7,7 +7,10 @@ local loader = require("data.loader")
 local exploration = {}
 
 -- RPG Maker-style event pages: `ev.pages` is an ordered list of
--- {condition, script/scriptId, sprite, trigger, name, ...} overrides. The
+-- {condition, commands/scriptId, sprite, trigger, name, ...} overrides.
+-- `commands` owns a custom command list; `scriptId` links a common-event
+-- template whose commands and presentation defaults are inherited. The
+-- obsolete `script` field is not supported. The
 -- LAST page whose condition passes wins (so authors order pages
 -- least-to-most specific, same convention as RPG Maker), overriding
 -- whichever fields it defines onto a copy of the base event; an

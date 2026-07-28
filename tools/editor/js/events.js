@@ -1,6 +1,6 @@
 
         // --- EVENT CONTROLLERS ---
-        let activeEventLocalScript = null;
+        let activeEventCommands = null;
 
         let eventModalDirty = false;
         let eventOriginalData = null;
@@ -68,6 +68,7 @@
             });
 
             commonSelect.onchange = () => {
+                eventModalDirty = true;
                 toggleEventLogicType();
             };
 
@@ -86,11 +87,12 @@
                 document.getElementById('event-prop-priority').value = eventData.priority || 'same';
                 document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
 
+                activeEventCommands = Array.isArray(eventData.commands)
+                    ? JSON.parse(JSON.stringify(eventData.commands)) : [];
                 updateEventGraphicPreview(eventData.sprite, eventData.scriptId);
                 setEventColorFields(eventData.minimapColor);
-                activeEventLocalScript = eventData.script ? JSON.parse(JSON.stringify(eventData.script)) : [];
 
-                if (eventData.scriptId) {
+                if (eventData.scriptId != null) {
                     document.getElementById('event-logic-common').checked = true;
                     document.getElementById('event-prop-script-id').value = eventData.scriptId;
                 } else {
@@ -113,8 +115,8 @@
 
                 updateEventGraphicPreview('');
                 setEventColorFields(null);
-                activeEventLocalScript = [];
-                document.getElementById('event-logic-common').checked = true;
+                activeEventCommands = [];
+                document.getElementById('event-logic-custom').checked = true;
             }
 
             activeEventPages = (eventData && Array.isArray(eventData.pages))
@@ -235,14 +237,14 @@
             setOrOmit('sprite', window.activeEventSpritePath || '');
             setOrOmit('trigger', document.getElementById('event-prop-trigger').value);
             if (document.getElementById('event-logic-inherit').checked) {
-                delete page.script;
+                delete page.commands;
                 delete page.scriptId;
             } else if (document.getElementById('event-logic-common').checked) {
                 const sid = document.getElementById('event-prop-script-id').value;
-                if (sid !== '') page.scriptId = parseInt(sid); else delete page.scriptId;
-                delete page.script;
+                if (sid !== '') page.scriptId = parseInt(sid, 10); else delete page.scriptId;
+                delete page.commands;
             } else {
-                page.script = page.script || [];
+                page.commands = page.commands || [];
                 delete page.scriptId;
             }
         }
@@ -272,7 +274,7 @@
                 if (p.scriptId !== undefined) {
                     document.getElementById('event-logic-common').checked = true;
                     document.getElementById('event-prop-script-id').value = String(p.scriptId);
-                } else if (p.script) {
+                } else if (Object.prototype.hasOwnProperty.call(p, 'commands')) {
                     document.getElementById('event-logic-custom').checked = true;
                 } else {
                     document.getElementById('event-logic-inherit').checked = true;
@@ -319,7 +321,7 @@
             renderEventPageTabs();
         }
 
-        function updateEventGraphicPreview(spritePath, scriptId) {
+        function updateEventGraphicPreview(spritePath, commonEventId) {
             const img = document.getElementById('event-graphic-img');
             const none = document.getElementById('event-graphic-none');
             window.activeEventSpritePath = spritePath || '';
@@ -327,8 +329,8 @@
             let effectivePath = spritePath;
             let isInherited = false;
 
-            if (!effectivePath && scriptId != null && dbPayload.commonEvents) {
-                const ce = dbPayload.commonEvents[String(scriptId)];
+            if (!effectivePath && commonEventId != null && dbPayload.commonEvents) {
+                const ce = dbPayload.commonEvents[String(commonEventId)];
                 if (ce && ce.sprite) {
                     effectivePath = ce.sprite;
                     isInherited = true;
@@ -370,7 +372,7 @@
                     const ce = dbPayload.commonEvents && dbPayload.commonEvents[s.scriptId];
                     renderCommandList(container, ce ? ce.commands : [], null, true, 0, 'common');
                 } else {
-                    renderCommandList(container, activeEventLocalScript || [], null, true, 0, 'map');
+                    renderCommandList(container, activeEventCommands || [], null, true, 0, 'map');
                 }
             } else if (isCommon) {
                 const ceId = commonSelect.value;
@@ -380,12 +382,12 @@
                 renderCommandList(container, ce ? ce.commands : [], null, true, 0, 'common');
             } else {
                 // Custom list: on a page tab this targets THE PAGE's own
-                // script array (same editor, different target).
-                let arr = activeEventLocalScript;
+                // commands array (same editor, different target).
+                let arr = activeEventCommands;
                 if (activeEventPageIdx !== -1) {
                     const page = activeEventPages[activeEventPageIdx];
-                    page.script = page.script || [];
-                    arr = page.script;
+                    page.commands = page.commands || [];
+                    arr = page.commands;
                 }
                 renderCommandList(container, arr, () => {
                     eventModalDirty = true;
@@ -438,11 +440,11 @@
 
             const isCommon = document.getElementById('event-logic-common').checked;
             if (isCommon) {
-                eventData.scriptId = parseInt(document.getElementById('event-prop-script-id').value);
-                delete eventData.script;
+                eventData.scriptId = parseInt(document.getElementById('event-prop-script-id').value, 10);
+                delete eventData.commands;
             } else {
                 delete eventData.scriptId;
-                eventData.script = activeEventLocalScript;
+                eventData.commands = activeEventCommands;
             }
 
             // Pages: only written when non-empty; deleting the last page

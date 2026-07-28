@@ -111,6 +111,9 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
     -- widening would otherwise allow.
     local friendlyGroup = actorIsEnemy and enemies or allies
     local opposingGroup = actorIsEnemy and allies or enemies
+    if battleState and battleState.session and traits.getRate(actor, "INVERT_TARGETING", battleState.session) > 0 then
+        friendlyGroup, opposingGroup = opposingGroup, friendlyGroup
+    end
     
     local candidates = {}
     if exp.side == "enemy" then
@@ -270,6 +273,9 @@ function targeting.getCandidates(actor, spec, battleState, actionContext)
     
     local friendlyGroup = actorIsEnemy and enemies or allies
     local opposingGroup = actorIsEnemy and allies or enemies
+    if battleState and battleState.session and traits.getRate(actor, "INVERT_TARGETING", battleState.session) > 0 then
+        friendlyGroup, opposingGroup = opposingGroup, friendlyGroup
+    end
     
     local candidates = {}
     if exp.side == "enemy" then
