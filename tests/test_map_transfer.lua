@@ -256,6 +256,53 @@ for _, node in pairs(actingGraph.nodes or {}) do
 end
 check(actingNode and actingNode.expression == 4,
     "TEXT preserves the authored 1-5 portrait expression in the event graph")
+
+local alicia
+for _, ev in ipairs(loader.maps[1].events or {}) do
+    if ev.name == "Alicia" then alicia = ev break end
+end
+check(alicia and alicia.pages and alicia.pages[1]
+    and alicia.pages[1].condition == "flag:vigil_ready",
+    "Alicia's Vigil page does not hide her introductory event before the Vigil")
+
+local cancelGraph = interpreter.runInteractive({
+    {
+        cmd = "CHOICE",
+        cancelOption = 2,
+        options = {
+            { label = "Stay", commands = {} },
+            { label = "Leave", commands = {
+                { cmd = "SET_FLAG", flag = "choice_cancelled", value = true }
+            } }
+        }
+    }
+}, {
+    session = festivalTown, loader = loader, party = festivalTown.party
+})
+local cancelNode = cancelGraph.nodes[cancelGraph.initialNode]
+check(cancelNode and cancelNode.cancelOption == 2,
+    "CHOICE compiles its authored cancel option")
+
+festivalTown.flags.hide_cancel = true
+local hiddenCancelGraph = interpreter.runInteractive({
+    {
+        cmd = "CHOICE",
+        cancelOption = 2,
+        options = {
+            { label = "Stay", commands = {} },
+            {
+                label = "Hidden leave",
+                condition = "flag:missing_cancel_option",
+                commands = {}
+            }
+        }
+    }
+}, {
+    session = festivalTown, loader = loader, party = festivalTown.party
+})
+local hiddenCancelNode = hiddenCancelGraph.nodes[hiddenCancelGraph.initialNode]
+check(hiddenCancelNode and hiddenCancelNode.cancelOption == nil,
+    "CHOICE disables Cancel when its authored cancel option is hidden")
 for _, node in pairs(introGraph.nodes or {}) do
     if node.type == "ACTION" and node.action == "RUN_IMMEDIATE" then
         for _, cmd in ipairs(node.commands or {}) do

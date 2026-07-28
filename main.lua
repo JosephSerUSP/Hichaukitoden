@@ -1443,6 +1443,13 @@ handleKeyPressed = function(key)
                     if not activeWalker:getCurrentNode() then
                         finishDialogueToMap()
                     end
+                elseif (key == "escape" or key == "backspace") and node.cancelOption then
+                    activeWalker:selectChoice(node.cancelOption)
+                    dialogueSelectIdx = 1
+                    handleDialogueAction()
+                    if not activeWalker:getCurrentNode() then
+                        finishDialogueToMap()
+                    end
                 end
             end
         end

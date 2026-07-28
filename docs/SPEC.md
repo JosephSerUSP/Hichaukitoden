@@ -1003,6 +1003,12 @@ common event from inside a command list, but does not inherit any of that common
 event's presentation properties. The obsolete field was `script`, not
 `scriptId`; `commands` is the sole field for an owned command list.
 
+`CHOICE.cancelOption` provides RPG Maker 2003-style Cancel behavior. It is an
+optional one-based index into the authored options: Escape/Backspace executes
+that option exactly as confirmation would. With the field absent, Cancel is
+disabled. If an indexed option is hidden by its condition, Cancel is disabled
+for that showing rather than entering an invisible branch.
+
 Consequences, all of them load-bearing:
 
 - **Commands copy between surfaces.** Ctrl+C in a battle phase and Ctrl+V in a

@@ -155,6 +155,7 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             }
         elseif id == "CHOICE" then
             local options = {}
+            local cancelOption = nil
             for oi, opt in ipairs(cmd.options or {}) do
                 -- Optional per-option visibility gate (flag:/hasItem:/
                 -- questStatus:), same grammar as CONDITIONAL_BRANCH; an
@@ -172,9 +173,18 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                         setFlag = opt.setFlag,
                         target = optFirst or nextId
                     })
+                    -- cancelOption names the authored (pre-filter) option.
+                    -- It only becomes active when that option is visible.
+                    if tonumber(cmd.cancelOption) == oi then
+                        cancelOption = #options
+                    end
                 end
             end
-            nodes[nodeId] = { type = "CHOICE", options = options }
+            nodes[nodeId] = {
+                type = "CHOICE",
+                options = options,
+                cancelOption = cancelOption
+            }
         elseif id == "OPEN_SHOP" then
             nodes[nodeId] = { type = "ACTION", action = "OPEN_SHOP", shopId = cmd.shopId, next = nextId }
         elseif id == "QUEST_OFFER" then

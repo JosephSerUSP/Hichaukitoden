@@ -421,6 +421,12 @@
         {
           "key": "options",
           "type": "commands"
+        },
+        {
+          "key": "cancelOption",
+          "type": "number",
+          "optional": true,
+          "min": 1
         }
       ],
       "contexts": [
@@ -428,7 +434,7 @@
         "common"
       ],
       "interactive": true,
-      "description": "Presents options; each option carries its own command list."
+      "description": "Presents options; each option carries its own command list. Optional cancelOption is a one-based authored option triggered by Cancel."
     },
     {
       "id": "CONDITIONAL_BRANCH",

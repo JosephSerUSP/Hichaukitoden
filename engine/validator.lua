@@ -1657,6 +1657,13 @@ validator.run = function(loader)
                     check(allowScript, ownerDesc .. " contains a SCRIPT command (S6 zero-SCRIPT rule)")
                 end
 
+                if id == "CHOICE" and cmd.cancelOption ~= nil then
+                    local cancelOption = tonumber(cmd.cancelOption)
+                    check(cancelOption ~= nil and cancelOption % 1 == 0
+                            and cancelOption >= 1 and cancelOption <= #(cmd.options or {}),
+                        ownerDesc .. " command 'CHOICE' cancelOption must be a one-based authored option index")
+                end
+
                 -- Validate params
                 for _, paramDef in ipairs(cmdDef.params or {}) do
                     local val = cmd[paramDef.key]

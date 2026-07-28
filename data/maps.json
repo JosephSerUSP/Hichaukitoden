@@ -718,6 +718,7 @@
         "label": "Pink-haired girl",
         "pages": [
           {
+            "condition": "flag:vigil_ready",
             "commands": [
               {
                 "commonEventId": 38,
