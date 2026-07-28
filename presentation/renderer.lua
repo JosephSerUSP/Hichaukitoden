@@ -685,14 +685,24 @@ local function partyGridOrigin(session)
     return gridX, gridY, cols
 end
 
+-- Enemy slots are evenly spaced across enemyRowWidth starting at
+-- enemyStartX. Every place that positions something relative to an enemy
+-- (damage popups, hit-test rects, the sprite row itself, target indicators)
+-- must derive the same x/width from the same formula or they drift out of
+-- sync with each other and with the sprite row players actually see.
+local function enemySlotGeometry(idx, enemyCount)
+    local spacing = layoutVal("enemyRowWidth") / enemyCount
+    local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+    return ex, spacing
+end
+
 -- Maps a battler to the screen position where damage popups should spawn.
 -- Used by main.lua so popup coordinates always match the drawn battle layout.
 function renderer.getBattlerCoords(battleState, session, target)
     if battleState then
         for idx, enemy in ipairs(battleState.enemies) do
             if enemy == target then
-                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-                local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+                local ex = enemySlotGeometry(idx, #battleState.enemies)
                 return ex + layoutVal("enemyPopupOffsetX"), layoutVal("enemyPopupY")
             end
         end
@@ -765,8 +775,7 @@ local function getBattlerRect(target, battleState, session)
     end
     
     if isEnemy then
-        local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-        local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+        local ex = enemySlotGeometry(enemyIdx, #battleState.enemies)
         local ey = layoutVal("enemyY")
         local portrait = getPortrait(target.spriteKey or target.id)
         tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
@@ -831,10 +840,9 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
     -- Render enemies portraits in viewport with animations driven by the
     -- animation player (overhaul-7 A1): slide-in, damage/action flash,
     -- death effect — all from data/animations.json entries.
-    local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
         local portrait = getPortrait(enemy.spriteKey or enemy.id)
-        local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
+        local ex = enemySlotGeometry(idx, #battleState.enemies)
         local ey = layoutVal("enemyY")
         
         -- Query animation player for current transform, tint, blend, gradient
@@ -1053,32 +1061,27 @@ function renderer.drawScreenFlashOverlay(battleState)
     end
 end
 
+-- Skill and item candidate resolution differ only in how the acted-on entry
+-- (skill vs. item) and its default target spec are looked up; the
+-- expand/random/candidates logic that follows was previously copy-pasted
+-- once per branch and had already drifted (the item branch alone would have
+-- needed to catch up to any future skill-branch fix, and vice versa).
 local function getActionTargetCandidates(act, slotActor, battleState, session)
     if not act or not act.type then return {}, false end
     local loader = require("data.loader")
     local targeting = require("engine.targeting")
-    
+
     if act.type == "attack" then
         if act.target then
             return { act.target }, false
         end
         return {}, false
-    elseif act.type == "skill" then
-        local sk = act.id and loader.getSkill(act.id)
-        local spec = sk and sk.target or "enemy"
-        local exp = targeting.expand(spec)
-        local isRandom = (exp.mode == "random")
-        if isRandom or exp.count == "all" then
-            local candidates = targeting.getCandidates(slotActor, spec, battleState, sk)
-            return candidates, isRandom
-        else
-            if act.target then
-                return { act.target }, false
-            else
-                local candidates = targeting.getCandidates(slotActor, spec, battleState, sk)
-                return candidates, false
-            end
-        end
+    end
+
+    local entry, spec
+    if act.type == "skill" then
+        entry = act.id and loader.getSkill(act.id)
+        spec = entry and entry.target or "enemy"
     elseif act.type == "item" then
         local items = {}
         if session and session.inventory then
@@ -1088,23 +1091,21 @@ local function getActionTargetCandidates(act, slotActor, battleState, session)
             table.sort(items, compareIds)
         end
         local itemId = act.itemIndex and items[act.itemIndex]
-        local item = itemId and loader.getItem(itemId)
-        local spec = item and item.target or "ally"
-        local exp = targeting.expand(spec)
-        local isRandom = (exp.mode == "random")
-        if isRandom or exp.count == "all" then
-            local candidates = targeting.getCandidates(slotActor, spec, battleState, item)
-            return candidates, isRandom
-        else
-            if act.target then
-                return { act.target }, false
-            else
-                local candidates = targeting.getCandidates(slotActor, spec, battleState, item)
-                return candidates, false
-            end
-        end
+        entry = itemId and loader.getItem(itemId)
+        spec = entry and entry.target or "ally"
+    else
+        return {}, false
     end
-    return {}, false
+
+    local exp = targeting.expand(spec)
+    local isRandom = (exp.mode == "random")
+    if isRandom or exp.count == "all" then
+        return targeting.getCandidates(slotActor, spec, battleState, entry), isRandom
+    elseif act.target then
+        return { act.target }, false
+    else
+        return targeting.getCandidates(slotActor, spec, battleState, entry), false
+    end
 end
 
 function renderer.drawTargetIndicators(bv, combatState)
@@ -1161,8 +1162,7 @@ function renderer.drawTargetIndicators(bv, combatState)
             end
 
             if isEnemy then
-                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-                local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+                local ex, spacing = enemySlotGeometry(enemyIdx, #battleState.enemies)
                 local nameY = layoutVal("enemyNameY")
                 local rightEdge = ex + spacing - 4
                 local totalW = (#slotList - 1) * dist + 7
