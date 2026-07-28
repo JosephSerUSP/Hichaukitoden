@@ -747,7 +747,7 @@
         "cmd": "LABEL"
       },
       {
-        "text": "Guild Pass verified. Keep your MP above the red line. Don’t be a hero in there— heroes become stains.",
+        "text": "Crossing Writ verified. Keep your MP above the red line. Don’t be a hero in there— heroes become stains.",
         "cmd": "TEXT"
       },
       {
@@ -791,12 +791,56 @@
             "label": "Report Progress",
             "commands": [
               {
-                "cmd": "COMMENT",
-                "text": "This hub used to branch on flag:boss_killed_floor_6 / flag:boss_killed_floor_3, but no event in the game ever set either flag -- there are no boss events on floors 3 or 6 -- so two of the three replies were unreachable and only 'Still alive' could ever fire. G1 now rejects a condition on a flag nothing writes. Restore the branches together with the bosses that set the flags; the lines were: floor 6 -- \"You... you cleared the Sanctum? The air feels lighter today. Maybe it's not a coincidence. You're making history, Summoner.\" / floor 3 -- \"The Rusted Choir is silent? Good. Those bells were driving the dogs mad. Keep pushing deeper.\""
-              },
-              {
-                "text": "Still alive. That's progress enough for today.",
-                "cmd": "TEXT"
+                "condition": "flag:found_borrowed_room",
+                "commands": [
+                  {
+                    "text": "A copy of your room? Keep your key. Sleep somewhere else tonight. No, I don't care where.",
+                    "cmd": "TEXT"
+                  },
+                  {
+                    "text": "And if you hear yourself moving around in there before you open the door, come find me.",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "condition": "flag:found_salt_table",
+                    "commands": [
+                      {
+                        "text": "A hot meal below the chasm? Don't eat anything the Labyrinth cooks. It learns you through the mouth.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "text": "That blue border was used in town before the chapel roof fell. Nobody sells it now.",
+                        "cmd": "TEXT"
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "condition": "flag:found_ines_mark",
+                        "commands": [
+                          {
+                            "text": "INES. Blue chalk. I was a child when she went below.",
+                            "cmd": "TEXT"
+                          },
+                          {
+                            "text": "She returned three times. On the fourth, only her creatures came back.",
+                            "cmd": "TEXT"
+                          }
+                        ],
+                        "elseCommands": [
+                          {
+                            "text": "Still alive. That's progress enough for today.",
+                            "cmd": "TEXT"
+                          }
+                        ],
+                        "cmd": "CONDITIONAL_BRANCH"
+                      }
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               },
               {
                 "label": "gate_guard_pass_hub",
@@ -862,7 +906,7 @@
             "condition": "flag:vigil_ready",
             "commands": [
               {
-                "text": "You came back under your own power. Good. Agnes has been waiting at the chapel. The first bell will sound at dusk.",
+                "text": "The gate opens onto a town you do not quite recognize. Colored lamps hang from the roofs. Nobody is dressed for work.",
                 "speaker": "Gatekeeper",
                 "cmd": "TEXT"
               }
@@ -872,7 +916,7 @@
                 "condition": "flag:first_return",
                 "commands": [
                   {
-                    "text": "The lanterns gain another layer each time you return. St. Maria is learning the shape of you.",
+                    "text": "Back alive. Good. If you are going down again, eat something first.",
                     "speaker": "Gatekeeper",
                     "cmd": "TEXT"
                   }
@@ -913,10 +957,10 @@
             ]
           },
           {
-            "label": "Ask about the Vigil",
+            "label": "Ask about St. Maria",
             "commands": [
               {
-                "text": "One bell for those who came home. The second for those still below. We do not say dead here. The Labyrinth is particular about words.",
+                "text": "Small village. Old chapel. Bad soil. The Labyrinth pays for what the fields cannot.",
                 "speaker": "Gatekeeper",
                 "cmd": "TEXT"
               },
@@ -948,6 +992,10 @@
     "name": "Chapel and Vigil",
     "commands": [
       {
+        "image": "st_maria_chapel.png",
+        "cmd": "ENTER_LOCATION"
+      },
+      {
         "condition": "flag:vigil_held",
         "commands": [
           {
@@ -962,11 +1010,6 @@
                   {
                     "text": "The card bears one name: THESTRA. The ink is fresh. The handwriting is yours.",
                     "cmd": "TEXT"
-                  },
-                  {
-                    "flag": "thestra_lantern_seen",
-                    "value": true,
-                    "cmd": "SET_FLAG"
                   }
                 ]
               },
@@ -983,7 +1026,7 @@
             "condition": "flag:vigil_ready",
             "commands": [
               {
-                "text": "Lanterns crowd the chapel steps. Each carries a human name. Agnes holds an empty one aside for you.",
+                "text": "The chapel doors stand open. Candlelight pours across the square, and names have been tied to the eaves on narrow cards.",
                 "cmd": "TEXT"
               },
               {
@@ -1015,6 +1058,15 @@
                         "flag": "vigil_held",
                         "value": true,
                         "cmd": "SET_FLAG"
+                      },
+                      {
+                        "cmd": "SET_MAP_PRESENTATION",
+                        "mapId": "1",
+                        "tileset": "town_default",
+                        "fogPreset": "night fog",
+                        "ambientR": "0.12",
+                        "ambientG": "0.12",
+                        "ambientB": "0.12"
                       }
                     ]
                   },
@@ -1033,24 +1085,8 @@
             ],
             "elseCommands": [
               {
-                "text": "Lantern frames hang from the chapel eaves. Most are still empty.",
+                "text": "The chapel is cool and nearly empty. Someone has left a bucket beneath a leak in the roof.",
                 "cmd": "TEXT"
-              },
-              {
-                "condition": "flag:first_return",
-                "commands": [
-                  {
-                    "text": "The lantern frames are being painted now. Agnes says the Vigil begins only after St. Maria has seen you leave and return three times.",
-                    "cmd": "TEXT"
-                  }
-                ],
-                "elseCommands": [
-                  {
-                    "text": "A notice reads: THE VIGIL OF THE SECOND BELL WILL BE HELD AFTER THE NEW SUMMONER'S THIRD SAFE RETURN.",
-                    "cmd": "TEXT"
-                  }
-                ],
-                "cmd": "CONDITIONAL_BRANCH"
               }
             ],
             "cmd": "CONDITIONAL_BRANCH"
@@ -1103,18 +1139,22 @@
         ],
         "elseCommands": [
           {
-            "text": "You are the new Summoner. Try to survive until the Vigil. The village enjoys having a fresh name to read at the first bell.",
+            "text": "So you're the Summoner everyone keeps glancing at. I wondered whether you would be taller.",
             "speaker": "Yukio",
             "cmd": "TEXT"
           },
           {
             "options": [
               {
-                "label": "You're a Summoner too.",
+                "label": "You're a Summoner.",
                 "commands": [
                   {
-                    "text": "Yes. I simply learned that entering and returning are different disciplines.",
+                    "text": "Unfortunately. Yukio. I came from the north road this morning, which means they have spent all day confusing us.",
                     "speaker": "Yukio",
+                    "cmd": "TEXT"
+                  },
+                  {
+                    "text": "Their gaze moves briefly to your creatures—not dismissively, but as if counting a hand of cards.",
                     "cmd": "TEXT"
                   }
                 ]
@@ -1134,6 +1174,10 @@
   "37": {
     "name": "Rusty Tankard Vigil Hub",
     "commands": [
+      {
+        "image": "st_maria_tankard.png",
+        "cmd": "ENTER_LOCATION"
+      },
       {
         "condition": "flag:vigil_held",
         "commands": [
@@ -1174,13 +1218,25 @@
             "condition": "flag:first_return",
             "commands": [
               {
-                "text": "Tables have been pushed against the walls. Children are threading flowers while the bartender counts cups for the Vigil.",
-                "cmd": "TEXT"
+                "condition": "flag:vigil_ready",
+                "commands": [
+                  {
+                    "text": "The tables are outside, the shutters are open, and the bartender is wearing a red coat you have never seen before.",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "The bartender remembers your drink. Nobody applauds your return this time.",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ],
             "elseCommands": [
               {
-                "text": "The Rusty Tankard smells of bread, lamp oil and fresh-cut flowers. Nobody admits that this is festival preparation.",
+                "text": "The Rusty Tankard smells of cheap ale and roasted meat.",
                 "cmd": "TEXT"
               }
             ],
@@ -1198,10 +1254,11 @@
                 ]
               },
               {
-                "label": "Ask about the lanterns.",
+                "label": "What's happening tonight?",
+                "condition": "flag:vigil_ready",
                 "commands": [
                   {
-                    "text": "\"Missing get a flame until dawn. Dead get darkness. Summons get neither.\" The bartender frowns. \"Old rule.\"",
+                    "text": "\"The Vigil.\" The bartender studies your face. \"Nobody told you? No. I suppose we never do.\"",
                     "cmd": "TEXT"
                   }
                 ]
@@ -1222,6 +1279,10 @@
     "name": "Alicia Vigil Hub",
     "commands": [
       {
+        "image": "st_maria_bakery.png",
+        "cmd": "ENTER_LOCATION"
+      },
+      {
         "name": "alicia_vigil_hub",
         "cmd": "LABEL"
       },
@@ -1239,9 +1300,22 @@
             "condition": "flag:first_return",
             "commands": [
               {
-                "text": "You came back! Sorry—everyone keeps saying that as if we doubted you. I saved you a honey roll before the Vigil crowd takes them.",
-                "speaker": "Alicia",
-                "cmd": "TEXT"
+                "condition": "flag:vigil_ready",
+                "commands": [
+                  {
+                    "text": "Alicia is dressed in white and gold instead of her apron. She is laughing with a customer and does not notice you at first.",
+                    "speaker": "Alicia",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "You came back! Sorry—everyone keeps saying that as if we doubted you. I saved you a honey roll.",
+                    "speaker": "Alicia",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ],
             "elseCommands": [
@@ -1272,7 +1346,8 @@
             ]
           },
           {
-            "label": "Ask about summon lanterns.",
+            "label": "Ask about the name-cards.",
+            "condition": "flag:vigil_ready",
             "commands": [
               {
                 "condition": "flag:vigil_held",
@@ -1285,7 +1360,7 @@
                 ],
                 "elseCommands": [
                   {
-                    "text": "\"Officially? We don't make them.\" Alicia lowers her voice. \"But if one of yours needs a light, tell me its name.\"",
+                    "text": "\"They're for the Vigil.\" Alicia pauses. \"The village remembers people who don't come back. Officially, summons aren't included.\"",
                     "speaker": "Alicia",
                     "cmd": "TEXT"
                   }
@@ -1311,6 +1386,10 @@
     "name": "Laura Vigil Hub",
     "commands": [
       {
+        "image": "st_maria_forge.png",
+        "cmd": "ENTER_LOCATION"
+      },
+      {
         "name": "laura_vigil_hub",
         "cmd": "LABEL"
       },
@@ -1328,9 +1407,22 @@
             "condition": "flag:first_return",
             "commands": [
               {
-                "text": "Back already? Sensible. Agnes wants every forge cold before the second bell. Apparently grief is flammable.",
-                "speaker": "Laura",
-                "cmd": "TEXT"
+                "condition": "flag:vigil_ready",
+                "commands": [
+                  {
+                    "text": "Laura's forge is cold for the first time since you arrived. She has washed the soot from her face and seems annoyed that you noticed.",
+                    "speaker": "Laura",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "text": "Back already? Sensible. Bring me anything the Labyrinth failed to digest.",
+                    "speaker": "Laura",
+                    "cmd": "TEXT"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
               }
             ],
             "elseCommands": [
@@ -1361,10 +1453,11 @@
             ]
           },
           {
-            "label": "Ask about the Vigil.",
+            "label": "Why is the forge cold?",
+            "condition": "flag:vigil_ready",
             "commands": [
               {
-                "text": "\"St. Maria mourns beautifully.\" Laura turns a lantern frame in the tongs. \"Then it sends somebody else down.\"",
+                "text": "\"Open flame stays at the chapel tonight.\" Laura folds her arms. \"St. Maria mourns beautifully. Then it sends somebody else down.\"",
                 "speaker": "Laura",
                 "cmd": "TEXT"
               },
@@ -1443,6 +1536,22 @@
                   {
                     "cmd": "LOAD_MAP",
                     "mapId": "1"
+                  },
+                  {
+                    "condition": "flag:vigil_ready",
+                    "commands": [
+                      {
+                        "cmd": "SET_MAP_PRESENTATION",
+                        "mapId": "1",
+                        "tileset": "town_003",
+                        "fogPreset": "purple_dusk",
+                        "ambientR": "0.24",
+                        "ambientG": "0.09",
+                        "ambientB": "0.18"
+                      }
+                    ],
+                    "elseCommands": [],
+                    "cmd": "CONDITIONAL_BRANCH"
                   }
                 ],
                 "elseCommands": [
@@ -1479,6 +1588,357 @@
       },
       {
         "cmd": "PORTAL_TO_TOWN"
+      }
+    ]
+  },
+  "42": {
+    "name": "Opening - Arrival at St. Maria",
+    "scene": "cinematic",
+    "commands": [
+      {
+        "cmd": "ENABLE_EVENT_SKIP",
+        "label": "intro_cleanup"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 99,
+        "text": "ESC: Skip",
+        "x": 246,
+        "y": 225,
+        "anchor": "right",
+        "align": "right",
+        "width": 72,
+        "fontSize": 8,
+        "color": 7,
+        "opacity": 0,
+        "layer": "top",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 99,
+        "opacity": 0.8,
+        "duration": 0.4
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.8
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 10,
+        "path": "assets/cinematics/arrival_cart_psx.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 1,
+        "text": "Every few years, a Summoner\ncomes to St. Maria.",
+        "x": 128,
+        "y": 177,
+        "anchor": "center",
+        "align": "center",
+        "width": 216,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 1,
+        "opacity": 1,
+        "duration": 0.8
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 3
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 1,
+        "duration": 0.6
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 1.1,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 1.25
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 10
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 11,
+        "path": "assets/cinematics/arrival_road_psx.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 2,
+        "text": "The village sells them food,\nsteel, a bed—and the promise\nof what waits below.",
+        "x": 128,
+        "y": 174,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 2,
+        "opacity": 1,
+        "duration": 0.8
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 3.6
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 2,
+        "duration": 0.6
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 1.1,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 1.25
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 11
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 12,
+        "path": "assets/cinematics/labyrinth_threshold_psx.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 3,
+        "text": "Beyond the gate, souls lose\ntheir edges.\n\nA Summoner enters by calling\ntheir own name across.",
+        "x": 128,
+        "y": 156,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 3,
+        "opacity": 1,
+        "duration": 0.8
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 4.5
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 3,
+        "duration": 0.7
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 5,
+        "text": "Some return with impossible things.\nSome return missing things\nno one can name.",
+        "x": 128,
+        "y": 172,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 5,
+        "opacity": 1,
+        "duration": 0.8
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 3.8
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 5,
+        "duration": 0.7
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 6,
+        "text": "You came for the things.",
+        "x": 128,
+        "y": 180,
+        "anchor": "center",
+        "align": "center",
+        "width": 220,
+        "fontSize": 11,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 6,
+        "opacity": 1,
+        "duration": 0.8
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 2.8
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 6,
+        "duration": 0.7
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 1.1,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 1.3
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 12
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 4,
+        "text": "ST. MARIA\nLate Autumn",
+        "x": 128,
+        "y": 91,
+        "anchor": "center",
+        "align": "center",
+        "width": 220,
+        "font": "DotGothic16-Regular",
+        "fontSize": 14,
+        "color": 0,
+        "opacity": 0,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "MOVE_STRING_PICTURE",
+        "id": 4,
+        "opacity": 1,
+        "duration": 0.7
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 2.6
+      },
+      {
+        "cmd": "LABEL",
+        "name": "intro_cleanup"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1
+      },
+      {
+        "cmd": "DISABLE_EVENT_SKIP"
+      },
+      {
+        "cmd": "ERASE_ALL_STRING_PICTURES"
+      },
+      {
+        "cmd": "ERASE_ALL_IMAGE_PICTURES"
+      },
+      {
+        "cmd": "LOAD_MAP",
+        "mapId": 1
+      },
+      {
+        "cmd": "ENTER_LOCATION",
+        "image": "st_maria_home.png"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "TEXT",
+        "text": "PASSAGE HOUSE — ROOM 3\n\n\"This'll be your home for the upcoming months.\" The key is still turning in the lock outside when the footsteps begin to recede."
+      },
+      {
+        "cmd": "TEXT",
+        "text": "The other Summoner rooms are empty. Yours has been cleaned, but not emptied of its previous lives."
+      },
+      {
+        "cmd": "TEXT",
+        "text": "A small Moa waits beside a chipped feed bowl. SABAN is written on the contract tied to his leg. The previous owner's name has been scraped away."
       }
     ]
   }

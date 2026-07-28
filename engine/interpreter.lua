@@ -79,7 +79,7 @@ local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
-    LABEL = true, JUMP_TO_LABEL = true,
+    LABEL = true, JUMP_TO_LABEL = true, WAIT = true,
 }
 
 -- Every id above must also have a branch in interpreter.compile below: an id
@@ -205,6 +205,9 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
             }
         elseif id == "CALL_COMMON_EVENT" then
             nodes[nodeId] = { type = "ACTION", action = "CALL_COMMON_EVENT_ACTION", commonEventId = cmd.commonEventId, next = nextId }
+        elseif id == "WAIT" then
+            nodes[nodeId] = { type = "ACTION", action = "WAIT_EVENT",
+                duration = cmd.duration or 0, next = nextId }
         elseif id == "LABEL" then
             -- Marks a jump target (RPG Maker-style). A no-op passthrough,
             -- like COMMENT, but records its node id under cmd.name so any
@@ -280,7 +283,8 @@ function interpreter.buildGraph(eventTitle, commands, ctx)
     return {
         initialNode = startNode,
         name = eventTitle,
-        nodes = nodes
+        nodes = nodes,
+        labels = ctx.labels,
     }
 end
 
@@ -1037,6 +1041,7 @@ handlers.RECRUIT_ACTOR = function(cmd, ctx)
 
     local battler, slotType = session:recruitActor(actorId, level)
     if battler then
+        if cmd.name and cmd.name ~= "" then battler.name = tostring(cmd.name) end
         local msg
         if slotType == "party" then
             msg = session.loader.formatTerm("recruit.recruited", "{0} recruited to party!", battler.name)
@@ -1421,6 +1426,54 @@ handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
 end
 
+handlers.SHOW_STRING_PICTURE = function(cmd)
+    present("showStringPicture", cmd)
+end
+
+handlers.MOVE_STRING_PICTURE = function(cmd)
+    present("moveStringPicture", cmd)
+end
+
+handlers.ERASE_STRING_PICTURE = function(cmd)
+    present("eraseStringPicture", cmd.id, cmd.duration)
+end
+
+handlers.ERASE_ALL_STRING_PICTURES = function()
+    present("clearStringPictures")
+end
+
+handlers.SHOW_IMAGE_PICTURE = function(cmd)
+    present("showImagePicture", cmd)
+end
+
+handlers.MOVE_IMAGE_PICTURE = function(cmd)
+    present("moveImagePicture", cmd)
+end
+
+handlers.ERASE_IMAGE_PICTURE = function(cmd)
+    present("eraseImagePicture", cmd.id, cmd.duration)
+end
+
+handlers.ERASE_ALL_IMAGE_PICTURES = function()
+    present("clearImagePictures")
+end
+
+handlers.SET_SUBTRACTIVE_FADE = function(cmd)
+    present("setSubtractiveFade", cmd)
+end
+
+handlers.ENABLE_EVENT_SKIP = function(cmd)
+    present("enableEventSkip", cmd.label)
+end
+
+handlers.DISABLE_EVENT_SKIP = function()
+    present("disableEventSkip")
+end
+
+handlers.START_COMMON_EVENT = function(cmd, ctx)
+    table.insert(ctx.events, { type = "run_common_event", id = cmd.commonEventId })
+end
+
 -- Whether an action rolls to connect at all. Only offensive actions do: a
 -- potion fed to an ally and a buff cast on oneself have nothing to dodge, and
 -- an engine that let them whiff would be inventing a failure the design never
@@ -1576,6 +1629,44 @@ handlers.LOAD_MAP = function(cmd, ctx)
     exploration.loadMap(ctx.session, mapId, { arrival = cmd.arrival })
 end
 
+handlers.SET_MAP_PRESENTATION = function(cmd, ctx)
+    local session = ctx.session
+    local mapIdx = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx))
+        or session.currentMapIndex
+    if cmd.tileset and not session.loader.getTileset(cmd.tileset) then
+        error("SET_MAP_PRESENTATION: unknown tileset '" .. tostring(cmd.tileset) .. "'")
+    end
+    if cmd.fogPreset then
+        local found = false
+        for _, preset in ipairs((session.loader.engine and session.loader.engine.fogPresets) or {}) do
+            if preset.id == cmd.fogPreset then found = true break end
+        end
+        if not found then
+            error("SET_MAP_PRESENTATION: unknown fog preset '" .. tostring(cmd.fogPreset) .. "'")
+        end
+    end
+    local ambient = nil
+    if cmd.ambientR ~= nil or cmd.ambientG ~= nil or cmd.ambientB ~= nil then
+        ambient = {
+            tonumber(evalFormula(cmd.ambientR or 0.12, ctx)),
+            tonumber(evalFormula(cmd.ambientG or 0.12, ctx)),
+            tonumber(evalFormula(cmd.ambientB or 0.12, ctx)),
+        }
+    end
+    require("engine.exploration").applyMapPresentation(session, mapIdx, {
+        tileset = cmd.tileset,
+        fogPreset = cmd.fogPreset,
+        ambient = ambient,
+    })
+end
+
+handlers.ENTER_LOCATION = function(cmd, ctx)
+    if not cmd.image or cmd.image == "" then
+        error("ENTER_LOCATION requires an image", 0)
+    end
+    ctx.session.locationArt = cmd.image
+end
+
 handlers.PORTAL_TO_TOWN = function(cmd, ctx)
     local session = ctx.session
     if not session.currentMapData or session.currentMapData.safe == true then
@@ -1621,6 +1712,8 @@ handlers.RESET_SESSION = function(cmd, ctx)
     fresh:initializeStartingParty()
     _G.activeSession = fresh
     ctx.session = fresh
+    present("clearStringPictures")
+    present("disableEventSkip")
     present("rebindSession", fresh)
 end
 
@@ -2289,6 +2382,13 @@ local function buildScriptApi(ctx)
     end
     function api.dungeonFloor()
         return session.dungeonFloor or 1
+    end
+    function api.inDungeon()
+        return session.currentMapData ~= nil
+            and session.currentMapData.safe ~= true
+    end
+    function api.dismissToStorage(isReserve, index)
+        return session:dismissToStorage(isReserve, index)
     end
     function api.reserve(i)
         local out = {}

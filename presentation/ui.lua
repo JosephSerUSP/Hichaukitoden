@@ -33,9 +33,12 @@ function ui.resolvePortraitImage(id)
     id = tostring(id)
     if portraitImageCache[id] then return portraitImageCache[id] end
 
+    local safeId = id:gsub("[^%w]+", "_"):gsub("^_+", ""):gsub("_+$", "")
     local paths = {
         "assets/portraits/" .. id .. ".png",
         "assets/portraits/NPC_" .. id .. ".png",
+        "assets/portraits/" .. safeId .. ".png",
+        "assets/portraits/NPC_" .. safeId .. ".png",
         "assets/portraits/" .. id:lower() .. ".png",
         "assets/portraits/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png"
     }

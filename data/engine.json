@@ -679,6 +679,66 @@
       "description": "Sets or clears a session flag (the same flags conditions read)."
     },
     {
+      "id": "SET_MAP_PRESENTATION",
+      "category": "Map Events",
+      "label": "Set Map Presentation",
+      "params": [
+        {
+          "key": "mapId",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "tileset",
+          "type": "text",
+          "optional": true
+        },
+        {
+          "key": "fogPreset",
+          "type": "text",
+          "optional": true
+        },
+        {
+          "key": "ambientR",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "ambientG",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "key": "ambientB",
+          "type": "number",
+          "optional": true
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Persistently changes a map's tileset, fog preset, and ambient RGB, immediately rebaking live lighting. The override survives transfers and save/load."
+    },
+    {
+      "id": "ENTER_LOCATION",
+      "category": "Presentation",
+      "label": "Enter Illustrated Location",
+      "params": [
+        {
+          "key": "image",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "map",
+        "common"
+      ],
+      "interactive": false,
+      "description": "Uses a static assets/locationArt image behind the current event's dialogue until the conversation returns to the map."
+    },
+    {
       "id": "CHANGE_EVENT_PROPERTIES",
       "category": "Map Events",
       "label": "Change Event Properties",
@@ -1637,10 +1697,184 @@
       ],
       "contexts": [
         "scene",
-        "action_sequence"
+        "action_sequence",
+        "map",
+        "common"
       ],
       "interactive": false,
       "description": "Waits for a duration."
+    },
+    {
+      "id": "SHOW_STRING_PICTURE",
+      "category": "UI",
+      "label": "Show String Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "text", "type": "text" },
+        { "key": "x", "type": "number" },
+        { "key": "y", "type": "number" },
+        { "key": "anchor", "type": "select", "options": ["left", "center", "right"] },
+        { "key": "align", "type": "select", "options": ["left", "center", "right"] },
+        { "key": "width", "type": "number", "optional": true },
+        { "key": "font", "type": "text", "optional": true },
+        { "key": "fontSize", "type": "number", "optional": true },
+        { "key": "color", "type": "number", "optional": true },
+        { "key": "opacity", "type": "number", "optional": true },
+        { "key": "scale", "type": "number", "optional": true },
+        { "key": "shadow", "type": "boolean", "optional": true },
+        { "key": "frame", "type": "boolean", "optional": true },
+        { "key": "layer", "type": "select", "options": ["backdrop", "screen", "top"] },
+        { "key": "eraseOnMapChange", "type": "boolean", "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Creates or replaces a numbered screen-space text object."
+    },
+    {
+      "id": "MOVE_STRING_PICTURE",
+      "category": "UI",
+      "label": "Move String Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "x", "type": "number", "optional": true },
+        { "key": "y", "type": "number", "optional": true },
+        { "key": "opacity", "type": "number", "optional": true },
+        { "key": "scale", "type": "number", "optional": true },
+        { "key": "duration", "type": "number", "optional": true },
+        { "key": "easing", "type": "select", "options": ["out", "linear"], "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Moves, fades, or scales an existing string picture."
+    },
+    {
+      "id": "ERASE_STRING_PICTURE",
+      "category": "UI",
+      "label": "Erase String Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "duration", "type": "number", "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Erases a string picture, optionally fading it first."
+    },
+    {
+      "id": "ERASE_ALL_STRING_PICTURES",
+      "category": "UI",
+      "label": "Erase All String Pictures",
+      "params": [],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Immediately clears every string picture."
+    },
+    {
+      "id": "SHOW_IMAGE_PICTURE",
+      "category": "UI",
+      "label": "Show Image Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "path", "type": "text" },
+        { "key": "x", "type": "number" },
+        { "key": "y", "type": "number" },
+        { "key": "anchor", "type": "select", "options": ["left", "center", "right"] },
+        { "key": "opacity", "type": "number", "optional": true },
+        { "key": "scale", "type": "number", "optional": true },
+        { "key": "rotation", "type": "number", "optional": true },
+        { "key": "layer", "type": "select", "options": ["backdrop", "screen", "top"] },
+        { "key": "eraseOnMapChange", "type": "boolean", "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Creates or replaces a numbered screen-space bitmap object."
+    },
+    {
+      "id": "MOVE_IMAGE_PICTURE",
+      "category": "UI",
+      "label": "Move Image Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "x", "type": "number", "optional": true },
+        { "key": "y", "type": "number", "optional": true },
+        { "key": "opacity", "type": "number", "optional": true },
+        { "key": "scale", "type": "number", "optional": true },
+        { "key": "rotation", "type": "number", "optional": true },
+        { "key": "duration", "type": "number", "optional": true },
+        { "key": "easing", "type": "select", "options": ["out", "linear"], "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Moves, fades, scales, or rotates an existing image picture."
+    },
+    {
+      "id": "ERASE_IMAGE_PICTURE",
+      "category": "UI",
+      "label": "Erase Image Picture",
+      "params": [
+        { "key": "id", "type": "number" },
+        { "key": "duration", "type": "number", "optional": true }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Erases an image picture, optionally fading it first."
+    },
+    {
+      "id": "ERASE_ALL_IMAGE_PICTURES",
+      "category": "UI",
+      "label": "Erase All Image Pictures",
+      "params": [],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Immediately clears every image picture."
+    },
+    {
+      "id": "SET_SUBTRACTIVE_FADE",
+      "category": "UI",
+      "label": "Set Subtractive Fade",
+      "params": [
+        { "key": "amount", "type": "number" },
+        { "key": "duration", "type": "number", "optional": true },
+        {
+          "key": "easing",
+          "type": "select",
+          "options": ["burn_in", "smooth", "in", "out", "linear"],
+          "optional": true
+        }
+      ],
+      "contexts": ["scene", "map", "common"],
+      "interactive": false,
+      "description": "Moves the shared backdrop-only PSX subtractive fade amount; UI remains unaffected."
+    },
+    {
+      "id": "ENABLE_EVENT_SKIP",
+      "category": "Flow Control",
+      "label": "Enable Event Skip",
+      "params": [
+        { "key": "label", "type": "text" }
+      ],
+      "contexts": ["map", "common"],
+      "interactive": false,
+      "description": "Lets Cancel jump the active event to an authored cleanup LABEL."
+    },
+    {
+      "id": "DISABLE_EVENT_SKIP",
+      "category": "Flow Control",
+      "label": "Disable Event Skip",
+      "params": [],
+      "contexts": ["map", "common"],
+      "interactive": false,
+      "description": "Disables event skipping."
+    },
+    {
+      "id": "START_COMMON_EVENT",
+      "category": "Flow Control",
+      "label": "Start Common Event",
+      "params": [
+        { "key": "commonEventId", "type": "number" }
+      ],
+      "contexts": ["scene"],
+      "interactive": false,
+      "description": "Starts a common event from a scene hook through the presentation host."
     },
     {
       "id": "APPLY_EFFECT",
@@ -1699,6 +1933,11 @@
         {
           "key": "level",
           "type": "number"
+        },
+        {
+          "key": "name",
+          "type": "text",
+          "optional": true
         }
       ],
       "contexts": [
@@ -2467,7 +2706,12 @@
       "width": 32,
       "height": 12,
       "style": "partyGrid",
-      "title": null
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.24
+        }
+      }
     },
     "statusPortrait": {
       "x": 21.5,

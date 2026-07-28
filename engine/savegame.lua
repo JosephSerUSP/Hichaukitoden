@@ -119,23 +119,35 @@ local function serializeMap(sessionObj)
         mapGrid = sessionObj.mapGrid,
         visitedGrid = sessionObj.visitedGrid,
         events = sessionObj.currentMapData.events,
+        runtimeLight = sessionObj.currentMapData.runtimeLight,
+        generatedLightObjects = sessionObj.generatedLightObjects,
         dungeonFloor = sessionObj.dungeonFloor,
     }
 end
 
 local function restoreMap(sessionObj, data, loader)
     if not data or not data.mapIndex then return end
-    local mapData = loader.maps[data.mapIndex]
-    if not mapData then return end
+    local rawMapData = loader.maps[data.mapIndex]
+    if not rawMapData then return end
+    local mapData = {}
+    for k, v in pairs(rawMapData) do mapData[k] = v end
     sessionObj.currentMapIndex = data.mapIndex
     sessionObj.currentMapData = mapData
     sessionObj.currentMapData.events = data.events
+    sessionObj.currentMapData.runtimeLight = data.runtimeLight
+    sessionObj.generatedLightObjects = data.generatedLightObjects
     sessionObj.mapGrid = data.mapGrid
     sessionObj.visitedGrid = data.visitedGrid
     sessionObj.playerX = data.playerX
     sessionObj.playerY = data.playerY
     sessionObj.playerDir = data.playerDir
     sessionObj.dungeonFloor = data.dungeonFloor or sessionObj.dungeonFloor
+    local presentation = sessionObj.mapPresentationOverrides
+        and sessionObj.mapPresentationOverrides[data.mapIndex]
+    if presentation then
+        require("engine.exploration").applyMapPresentation(
+            sessionObj, data.mapIndex, presentation)
+    end
 end
 
 -- Builds the full save payload for a session. `sceneName` should be
@@ -145,6 +157,10 @@ function savegame.serialize(sessionObj, loader, sceneName)
     local reserve = {}
     for k, b in pairs(sessionObj.reserve or {}) do
         reserve[tostring(k)] = serializeBattler(b)
+    end
+    local storage = {}
+    for k, b in pairs(sessionObj.storage or {}) do
+        storage[tostring(k)] = serializeBattler(b)
     end
     local party = {}
     for i = 1, config.MAX_PARTY_SIZE do
@@ -161,6 +177,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         eventOverrides = sessionObj.eventOverrides,
         mapStates = sessionObj.mapStates,
         portalReturn = sessionObj.portalReturn,
+        mapPresentationOverrides = sessionObj.mapPresentationOverrides,
         dungeonFloor = sessionObj.dungeonFloor,
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
@@ -171,6 +188,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         summoner = serializeBattler(sessionObj.summoner),
         party = party,
         reserve = reserve,
+        storage = storage,
         map = serializeMap(sessionObj),
     }
 end
@@ -191,6 +209,10 @@ function savegame.deserialize(data, loader)
         sess.mapStates[tonumber(k) or k] = state
     end
     sess.portalReturn = data.portalReturn
+    sess.mapPresentationOverrides = {}
+    for k, state in pairs(data.mapPresentationOverrides or {}) do
+        sess.mapPresentationOverrides[tonumber(k) or k] = state
+    end
     sess.dungeonFloor = data.dungeonFloor or 1
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp
@@ -210,6 +232,12 @@ function savegame.deserialize(data, loader)
     for k, bdata in pairs(data.reserve or {}) do
         local key = tonumber(k) or k
         sess.reserve[key] = deserializeBattler(bdata, loader)
+    end
+
+    sess.storage = {}
+    for k, bdata in pairs(data.storage or {}) do
+        local key = tonumber(k) or k
+        sess.storage[key] = deserializeBattler(bdata, loader)
     end
 
     restoreMap(sess, data.map, loader)

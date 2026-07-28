@@ -732,6 +732,131 @@ effect. Its `meta.dungeonOnly` is registered and editor-authorable; usability
 rejects it on safe maps before consumption. Cost, sources and scarcity remain
 content balance rather than engine policy.
 
+### 1.15 Stateful map presentation (27.07.2026)
+
+`SET_MAP_PRESENTATION` changes a map's tileset, fog preset and ambient light as
+one persistent event-authored state. A change applies immediately when its map
+is active, survives transfers and save/load, and is validated against the
+tileset and fog registries. Campaign events use this to let town-state changes
+announce themselves spatially—for example, St. Maria's first festival arrives
+as an unforeshadowed change in color, light and inhabitants.
+
+### 1.16 Illustrated town interiors (28.07.2026)
+
+`ENTER_LOCATION` selects a static image under `assets/locationArt/` as the
+backdrop for the current map-event conversation. The dialogue scene keeps its
+ordinary windows and command graph; only its map backdrop is replaced. Returning
+to the map clears the location automatically, so exterior conversations cannot
+inherit a previous room.
+
+Location images are still frames. Door events occupy `#` cells and use their
+ordinary `sprite` image as an overlay in the wall compositor, receiving the
+same edge treatment, lighting, fog and raycast projection as the wall itself;
+they never enter the billboard pass. Running forward into a `trigger: bump`
+door starts its event without a confirm press.
+
+The threshold sequence zooms the centered wall door for 0.24 seconds and holds
+that scale while the entire screen fades to black. Only at full black does it
+start the conversation; it then lingers in darkness for 0.10 seconds before
+uncovering the completely static interior through the subtractive fade. Leaving
+burns that unchanged CG to black, after which the map returns
+during a full-black hold, and the enlarged outside door settles back as the map
+is uncovered. The blackout is composited into the map or illustrated-backdrop
+layer; HUD and dialogue windows remain unaffected above it. The room remains
+completely motionless afterward. St. Maria's initial set is the
+assigned home, Alicia's bakery, Laura's forge, the Rusty Tankard and the chapel.
+Their native runtime PNGs are palette-limited, game-resolution derivatives.
+High-resolution generation sources are local working files and are ignored.
+
+The blackout uses the shared subtractive fade primitive rather than an
+alpha-black overlay. At progress `p`, a white fullscreen primitive is drawn
+with subtract blending, producing `max(destination.rgb - p, 0)` per channel.
+Dark channels therefore reach zero before highlights. Cinematics and doors
+share this burn-to-black mathematics, while door zoom choreography remains
+specific to doors. Drawing the subtraction during the map or illustrated
+backdrop pass keeps HUD and dialogue UI outside the effect.
+
+### 1.17 String pictures and opening cinematic (28.07.2026)
+
+`SHOW_STRING_PICTURE` creates or replaces a numbered screen-space text object.
+String pictures expose pixel position, anchor, alignment, wrapping width, font,
+size, palette color, opacity, scale, shadow, optional frame and one of three
+layers: `backdrop` (above the world but below windows), `screen` (above ordinary
+scene UI), or `top`. `MOVE_STRING_PICTURE` interpolates position, opacity and
+scale; `ERASE_STRING_PICTURE` may fade before removal, while
+`ERASE_ALL_STRING_PICTURES` is the unconditional cleanup operation. They are
+presentation objects rather than save state and are cleared by session reset.
+
+`SHOW_IMAGE_PICTURE`, `MOVE_IMAGE_PICTURE`, `ERASE_IMAGE_PICTURE` and
+`ERASE_ALL_IMAGE_PICTURES` provide the bitmap counterpart. An image picture
+names an asset path, numbered slot, screen position, anchor, opacity, scale,
+rotation and layer; move commands interpolate all numeric presentation fields.
+The renderer loads nearest-filtered assets and fails loudly when a path is
+missing. This lets common events crossfade and slowly zoom cinematic plates
+without introducing a cutscene-specific Lua host.
+
+`WAIT` in map/common-event graphs compiles to a pausing node; it does not run as
+part of an immediate command batch. `ENABLE_EVENT_SKIP` names a `LABEL` in the
+same common event. Cancel jumps to that label even during a wait, allowing the
+event author to own cleanup and final state rather than having the host abort a
+script halfway through. G1 rejects missing skip labels.
+
+New Game starts common event 42 in the empty-window `cinematic` scene. Its
+authored sequence crossfades three generated plates—the arriving carriage, the
+rain road and the Labyrinth threshold—under short text movements, follows them
+with a St. Maria location card, exposes `ESC: Skip`, and
+always rejoins at `intro_cleanup`, which clears pictures, disables skipping,
+loads St. Maria, and opens the static Room 3 interior. The player first receives
+control only after the Passage House handoff establishes that this is one of
+five rooms kept for visiting Summoners, that the others are empty, and that the
+named starting Moa Saban is already waiting there. Leaving uses the ordinary
+reverse door transition and places the player beside its exterior door. The
+opening therefore reveals cinematic, room, and navigable town in that order
+instead of cutting directly into free movement. The title scene uses
+`assets/title/st_maria_title_psx.png` as a native-size static backdrop and
+renders its title, subtitle, and copyright through the same string-picture
+commands used by the introduction.
+
+Narrative image batches may be generated as exact contact sheets and split by
+`tools/image/split-contact-sheet.ps1`. The tool takes grid geometry and one
+name per cell and emits only an antialiased, palette-limited 256x240 runtime
+plate. High-resolution generation sheets are local working files outside the
+repository. The retained crops under `assets/cinematics/ideation/` supply the
+four interior studies still referenced by events. The three root-level arrival
+plates supply the prerendered opening.
+
+### 1.18 Opening expedition roster and floor ramp (28.07.2026)
+
+The opening party is authored through `system.newGame.party.fixedMembers` and
+currently contains Saban (actor 61, level 1). A fixed member may carry an
+instance name; new-game construction preserves it rather than assigning a
+random ally name.
+
+The field Reserve scene is now an **Expedition Reserve**: four party slots plus
+four reserve slots are the creatures physically committed to the trip.
+Summoning and the old permanent Sacrifice command are absent from its reachable
+popup and from the field command dock. Their interpreter primitives remain
+available to authored content while the town-only summoning site and
+inheritance/fusion replacement are designed; no field UI invokes either.
+
+`GameSession.storage` is a distinct, save-persistent collection with 99 numbered
+slots. `storeCreature` takes the first free slot and `withdrawCreature` moves an
+existing instance into the first free expedition-reserve slot, refusing when
+that reserve is full. While below, a populated creature context menu also offers
+**Dismiss**. It transfers that exact instance to the first free town-storage
+slot, making expedition room for recruitment; it refuses when storage is full
+or when dismissing an active slot would leave the party empty. Dismiss is hidden
+on safe maps. This is the engine foundation for a future town storage scene;
+there is not yet a player-facing storage interface.
+
+The first three Labyrinth maps author their procedural envelope. Floor 1 is
+17x17 with 3--4 rooms and no random recruitment nodes; it owns a guaranteed
+Cornered Pixie contract event. Floor 2 expands to 23x23 and 5--7 rooms. Floor 3
+expands to 27x27 and 7--9 rooms, where the ordinary dungeon scale and recruit
+pool take over. `exploration.generateDungeon` reads optional per-map room-count
+and room-size bounds, falling back to global dungeon configuration when
+omitted. Generated layouts remain cached for physical backtracking.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

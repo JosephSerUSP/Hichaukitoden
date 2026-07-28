@@ -320,13 +320,25 @@ local skyQuad = nil          -- reused for the sky strip, viewport recomputed pe
 local spriteSliceQuad = nil
 local compositeQuad = nil    -- Quad for baking tile layer composites into a 64x64 canvas
 local compositeCache = {}    -- Cached 64x64 composite tile canvases keyed by tile specs
+local wallOverlayCache = {}
 
-local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay)
+local function getWallOverlay(path)
+    if not path then return nil end
+    if wallOverlayCache[path] ~= nil then return wallOverlayCache[path] or nil end
+    local ok, image = pcall(love.graphics.newImage, path)
+    if not ok then error("wall overlay failed to load: " .. tostring(path), 0) end
+    image:setFilter("nearest", "nearest")
+    wallOverlayCache[path] = image
+    return image
+end
+
+local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay, wallOverlay)
     local key = (atlas.manifest and atlas.manifest.id or "default")
         .. ":" .. originX .. "," .. originY
         .. "|" .. (leftEdgeSpec and (leftEdgeSpec[1] .. "," .. leftEdgeSpec[2] .. "," .. (leftEdgeSpec[3] or 0)) or "")
         .. "|" .. (rightEdgeSpec and (rightEdgeSpec[1] .. "," .. rightEdgeSpec[2] .. "," .. (rightEdgeSpec[3] or 32)) or "")
         .. "|" .. (featureOverlay and featureOverlay.atlas and (featureOverlay.atlas[1] .. "," .. featureOverlay.atlas[2]) or "")
+        .. "|" .. tostring(wallOverlay or "")
 
     if compositeCache[key] then
         return compositeCache[key]
@@ -369,6 +381,16 @@ local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rig
         local fOriginX = featureOverlay.atlas[2] * ATLAS_TILE
         compositeQuad:setViewport(fOriginX, fOriginY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
         love.graphics.draw(atlas.img, compositeQuad, 0, 0)
+    end
+
+    -- 5. Event-authored wall overlay. Doors use the exact same cached
+    -- composite canvas as wall edges and fixtures; they are not billboards.
+    local overlayImage = getWallOverlay(wallOverlay)
+    if overlayImage then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(overlayImage, 0, 0, 0,
+            ATLAS_TILE / overlayImage:getWidth(),
+            ATLAS_TILE / overlayImage:getHeight())
     end
 
     -- Canvas targets are not part of LÖVE's push/pop graphics state. Failing
@@ -646,6 +668,7 @@ function viewport_3d.init()
     skyQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     compositeQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1)
     compositeCache = {}
+    wallOverlayCache = {}
 end
 
 -- Resolves which atlas to draw walls/doors/sky from this frame: the map's
@@ -662,8 +685,8 @@ local function resolveTileset(mapData, session)
 end
 
 -- Doors are ordinary map events (docs/design/raycaster-tileset-lighting.md)
--- flagged door=true; they render into the wall slice instead of as a
--- billboard, so they're normally left without a sprite. Built once per
+-- flagged door=true; they render into the wall composite instead of as a
+-- billboard, so they are left without a sprite. Built once per
 -- frame (not per raycast column) keyed by 1-indexed grid cell.
 local function buildDoorLookup(session)
     local lookup = {}
@@ -671,7 +694,7 @@ local function buildDoorLookup(session)
     if data and data.events then
         for _, ev in ipairs(data.events) do
             if ev.door then
-                lookup[(ev.x + 1) .. "," .. (ev.y + 1)] = true
+                lookup[(ev.x + 1) .. "," .. (ev.y + 1)] = ev
             end
         end
     end
@@ -727,6 +750,17 @@ function viewport_3d.draw(session)
 
     love.graphics.push("all")
     love.graphics.intersectScissor(0, 0, ui.toPx(ui.screenWidthTiles), ui.toPx(18))
+    local doorProgress = require("presentation.door_transition").approachProgress()
+    if doorProgress > 0 then
+        -- A wall-bound door is directly ahead, so a centered screen-space
+        -- push reads as crossing its threshold rather than enlarging a
+        -- freestanding event billboard.
+        local pivotX, pivotY = 128, 72
+        local scale = 1 + doorProgress * 0.22
+        love.graphics.translate(pivotX, pivotY)
+        love.graphics.scale(scale, scale)
+        love.graphics.translate(-pivotX, -pivotY)
+    end
 
     -- ── 1. Calculate Camera State (Interpolated) ─────────────────────────────
     local cx = px - 0.5
@@ -1044,7 +1078,8 @@ function viewport_3d.draw(session)
             if material and material.atlas then
                 originY = material.atlas[1] * ATLAS_TILE
                 originX = material.atlas[2] * ATLAS_TILE
-            elseif doorLookup[mapX .. "," .. mapY] then
+            elseif doorLookup[mapX .. "," .. mapY]
+                and not doorLookup[mapX .. "," .. mapY].sprite then
                 originX = doorVariant(mapX, mapY) * ATLAS_TILE
                 originY = (atlas.doorRow or 2) * ATLAS_TILE
             elseif grid[mapY] and grid[mapY][mapX] == "o" then
@@ -1072,14 +1107,18 @@ function viewport_3d.draw(session)
 
             local leftEdgeSpec = hasLeftEdge and (atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1] and atlas.manifest.base.walls[1].leftEdge) or nil
             local rightEdgeSpec = hasRightEdge and (atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1] and atlas.manifest.base.walls[1].rightEdge) or nil
+            local doorEvent = doorLookup[mapX .. "," .. mapY]
 
-            if not leftEdgeSpec and not rightEdgeSpec and not featureOverlay then
+            if not leftEdgeSpec and not rightEdgeSpec and not featureOverlay
+                and not (doorEvent and doorEvent.sprite) then
                 sliceQuad:setViewport(originX + texX, originY, 1, ATLAS_TILE, atlas.w, atlas.h)
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(litR, litG, litB, fogAlpha)
                 love.graphics.draw(atlas.img, sliceQuad, x, drawStart, 0, 1, lineHeight / ATLAS_TILE)
             else
-                local compositeCanvas = getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay)
+                local compositeCanvas = getCompositeTileCanvas(
+                    atlas, originX, originY, leftEdgeSpec, rightEdgeSpec,
+                    featureOverlay, doorEvent and doorEvent.sprite)
                 sliceQuad:setViewport(texX, 0, 1, ATLAS_TILE, ATLAS_TILE, ATLAS_TILE)
                 love.graphics.setBlendMode("alpha")
                 love.graphics.setColor(litR, litG, litB, fogAlpha)
@@ -1101,7 +1140,7 @@ function viewport_3d.draw(session)
     -- Add coordinate-based events (from maps.json events list)
     if session.currentMapData and session.currentMapData.events then
         for _, ev in ipairs(session.currentMapData.events) do
-            local img = getEventSprite(ev, session)
+            local img = not ev.door and getEventSprite(ev, session) or nil
             if img then
                 table.insert(spritesToDraw, {
                     x = ev.x,
@@ -1197,6 +1236,9 @@ function viewport_3d.draw(session)
     end
 
     love.graphics.pop()
+    -- Keep threshold black below the minimap and all scene windows. The
+    -- viewport is the map layer; its callers add UI only after it returns.
+    require("presentation.door_transition").draw()
 end
 
 return viewport_3d

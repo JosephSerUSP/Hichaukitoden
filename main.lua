@@ -14,6 +14,7 @@ require("engine.scenes.battle")
 local viewport_3d = require("presentation.viewport_3d")
 local small_battlers = require("presentation.small_battlers")
 local frame_renderer = require("presentation.frame_renderer")
+local door_transition = require("presentation.door_transition")
 
 -- Setup currentScene interceptor on _G
 setmetatable(_G, {
@@ -103,6 +104,8 @@ local triggerTestBattle
 -- Dialogue State
 local activeWalker
 local dialogueSelectIdx = 1
+local eventWaitRemaining = 0
+local eventSkipLabel = nil
 -- Set when a BATTLE command starts a fight from inside an event; consumed by
 -- the battle scene's outcome hook to resume the event at its onVictory or
 -- onDefeat branch. Nil for a battle the player simply walked into.
@@ -118,6 +121,7 @@ local heldKeys = {}  -- key → { holdTime = seconds, lastFire = count }
 
 -- Forward declarations (defined later in the file, called by update loop)
 local handleKeyPressed
+local handleDialogueAction
 -- Bound to runEventCommands once it is defined; the presentation seam's
 -- runCommonEvent hook is registered before that point in the file.
 local runEventCommandsRef
@@ -163,6 +167,39 @@ interpreter.bindPresentation({
     end,
     isAnimationPlaying = function()
         return require("presentation.animation_player").isAnythingPlaying()
+    end,
+    showStringPicture = function(spec)
+        require("presentation.string_picture_renderer").show(spec)
+    end,
+    moveStringPicture = function(spec)
+        require("presentation.string_picture_renderer").move(spec)
+    end,
+    eraseStringPicture = function(id, duration)
+        require("presentation.string_picture_renderer").erase(id, duration)
+    end,
+    clearStringPictures = function()
+        require("presentation.string_picture_renderer").clear()
+    end,
+    showImagePicture = function(spec)
+        require("presentation.image_picture_renderer").show(spec)
+    end,
+    moveImagePicture = function(spec)
+        require("presentation.image_picture_renderer").move(spec)
+    end,
+    eraseImagePicture = function(id, duration)
+        require("presentation.image_picture_renderer").erase(id, duration)
+    end,
+    clearImagePictures = function()
+        require("presentation.image_picture_renderer").clear()
+    end,
+    setSubtractiveFade = function(spec)
+        require("presentation.subtractive_transition").set(spec)
+    end,
+    enableEventSkip = function(label)
+        eventSkipLabel = label
+    end,
+    disableEventSkip = function()
+        eventSkipLabel = nil
     end,
     -- An item asked to run a common event (the Forbidden Lamp shape). The
     -- engine cannot do this itself: CALL_COMMON_EVENT compiles to a dialogue
@@ -473,6 +510,22 @@ end
 -- reveal-in-progress substring every frame via renderer.getRevealedDialogueText
 -- (same dialogueReveal tracker isDialogueRevealing/finishDialogueReveal use),
 -- so the typewriter effect keeps working under the new draw path.
+local function finishDialogueToMap()
+    local function returnToMap()
+        activeSession.locationArt = nil
+        require("presentation.location_renderer").clear()
+        scene_host.goto_scene("map")
+    end
+
+    if activeSession.locationArt then
+        if not door_transition.isActive() then
+            door_transition.beginExit(returnToMap)
+        end
+    else
+        returnToMap()
+    end
+end
+
 local function syncDialogueWindowState()
     local state = scene_host.getCurrentState()
     if not state then return end
@@ -482,7 +535,7 @@ local function syncDialogueWindowState()
     -- (shop) with the conversation finished behind it lands here too.
     local node = activeWalker and activeWalker:getCurrentNode()
     if not node then
-        scene_host.goto_scene("map")
+        finishDialogueToMap()
         return
     end
     state.v = state.v or {}
@@ -566,6 +619,25 @@ end
 
 function love.update(dt)
     renderer.update(dt)
+    require("presentation.string_picture_renderer").update(dt)
+    require("presentation.image_picture_renderer").update(dt)
+    require("presentation.subtractive_transition").update(dt)
+    door_transition.update(dt)
+    -- The opening map HUD waits until the door/world reveal is complete.
+    -- SET_LIST in the map scene has already created the runtime window state;
+    -- toggling `open` here lets its ordinary tile-grown window animation begin
+    -- on the first fully revealed map frame instead of underneath blackout.
+    if scene_host.getCurrent() == "map" and not door_transition.isActive() then
+        local mapState = scene_host.getCurrentState()
+        if mapState and mapState.winState and mapState.winState.party
+            and not mapState.winState.party.open then
+            if mapState.v and mapState.v._seamlessWindowFootprint then
+                mapState.winState.party._skipOpenAnim = true
+                mapState.v._seamlessWindowFootprint = nil
+            end
+            mapState.winState.party.open = true
+        end
+    end
     server.update(dt)
     if server.configReloaded then
         server.configReloaded = false
@@ -632,6 +704,20 @@ function love.update(dt)
 
     if scene_host.getCurrent() == "dialogue" then
         syncDialogueWindowState()
+    end
+
+    if eventWaitRemaining > 0 then
+        eventWaitRemaining = math.max(0, eventWaitRemaining - dt)
+        if eventWaitRemaining == 0 and activeWalker then
+            activeWalker:advance()
+            handleDialogueAction()
+        end
+    end
+
+    if scene_host.getCurrent() == "cinematic"
+        and activeWalker and not activeWalker:getCurrentNode() then
+        eventSkipLabel = nil
+        scene_host.goto_scene("map")
     end
 
     -- Shop: grant the pending item after the hook deducted gold
@@ -707,7 +793,6 @@ function love.draw()
     love.graphics.draw(canvas, scaleX, scaleY, 0, scale, scale)
 end
 
-local handleDialogueAction -- forward declaration
 local triggerBattle -- forward declaration
 
 local function isSafeMap()
@@ -813,6 +898,14 @@ end
 handleDialogueAction = function()
     local node, nodeId = activeWalker:getCurrentNode()
     if not node then return end
+
+    -- A cinematic common event may end its picture sequence by loading a map,
+    -- selecting an illustrated location, and continuing with ordinary TEXT.
+    -- TEXT needs the dialogue scene's windows/backdrop; leaving the walker in
+    -- the deliberately empty cinematic scene produces a black soft-lock.
+    if node.type == "TEXT" and scene_host.getCurrent() == "cinematic" then
+        scene_host.goto_scene("dialogue")
+    end
 
     if node.type == "ACTION" then
         if node.action == "RUN_IMMEDIATE" then
@@ -965,6 +1058,12 @@ handleDialogueAction = function()
                 activeWalker:advance()
                 handleDialogueAction()
             end
+        elseif node.action == "WAIT_EVENT" then
+            eventWaitRemaining = math.max(0, tonumber(node.duration) or 0)
+            if eventWaitRemaining == 0 then
+                activeWalker:advance()
+                handleDialogueAction()
+            end
         elseif node.action == "RECOVER_PARTY_ACTION" then
             recoverParty()
 
@@ -1024,10 +1123,36 @@ local function runEventCommands(eventTarget, commands)
 
     activeWalker = director.GraphWalker.new(activeSession, graph)
     activeWalker.eventName = eventTitle
-    scene_host.goto_scene("dialogue")
+    scene_host.goto_scene((activeEv and activeEv.scene) or "dialogue")
     handleDialogueAction()
 end
 runEventCommandsRef = runEventCommands
+
+local function eventAtMapCell(tx, ty)
+    for _, rawEv in ipairs((activeSession.currentMapData or {}).events or {}) do
+        if rawEv.x == tx - 1 and rawEv.y == ty - 1 then
+            return exploration.resolvePage(rawEv, activeSession)
+        end
+    end
+    return nil
+end
+
+local function commandsForMapEvent(ev)
+    if not ev then return nil end
+    if ev.scriptId then
+        local commonEvent = loader.commonEvents and loader.commonEvents[tostring(ev.scriptId)]
+        return commonEvent and commonEvent.commands or nil
+    end
+    return ev.commands
+end
+
+local function enterDoorEvent(ev)
+    local commands = commandsForMapEvent(ev)
+    if not commands then return false end
+    return door_transition.begin(function()
+        runEventCommands(ev, commands)
+    end)
+end
 
 local function checkStepEvents()
     local px, py = activeSession.playerX - 1, activeSession.playerY - 1
@@ -1110,6 +1235,21 @@ end
 handleKeyPressed = function(key)
     if inputCooldown > 0 then return end
     if not activeSession then return end
+    if door_transition.isActive() then return end
+
+    if eventSkipLabel and activeWalker
+        and (key == "escape" or key == "backspace") then
+        local target = activeWalker.graph
+            and activeWalker.graph.labels
+            and activeWalker.graph.labels[eventSkipLabel]
+        if not target then
+            error("event skip references unknown label '" .. tostring(eventSkipLabel) .. "'", 0)
+        end
+        eventWaitRemaining = 0
+        activeWalker:goToNode(target)
+        handleDialogueAction()
+        return
+    end
 
     local ctx = { session = activeSession, loader = loader, party = activeSession.party or {} }
     if scene_host.keypressed(key, ctx) then
@@ -1154,7 +1294,16 @@ handleKeyPressed = function(key)
                 activeSession.transitionTimer = d
                 activeSession.transitionDuration = d
                 activeSession.transitionDir = "forward"
-            elseif not activeSession.bumpTimer or activeSession.bumpTimer <= 0 then
+            else
+                local _, tx, ty = exploration.getFrontTile(activeSession)
+                local doorEvent = eventAtMapCell(tx, ty)
+                if doorEvent and doorEvent.door and doorEvent.trigger == "bump"
+                    and enterDoorEvent(doorEvent) then
+                    activeSession.bumpCooldowns = {}
+                    return
+                end
+            end
+            if not moved and (not activeSession.bumpTimer or activeSession.bumpTimer <= 0) then
                 activeSession.bumpTimer = conf("ui", "bumpDuration", 0.12)
                 activeSession.bumpCooldowns = activeSession.bumpCooldowns or {}
                 activeSession.bumpCooldowns[key] = conf("ui", "bumpCooldown", 0.5)
@@ -1238,26 +1387,10 @@ handleKeyPressed = function(key)
             local frontTile, tx, ty = exploration.getFrontTile(activeSession)
             
             -- Check for coordinate-based events from the map's JSON array
-            local eventObj = nil
-            if activeSession.currentMapData.events then
-                for _, rawEv in ipairs(activeSession.currentMapData.events) do
-                    if rawEv.x == tx - 1 and rawEv.y == ty - 1 then
-                        eventObj = exploration.resolvePage(rawEv, activeSession)
-                        break
-                    end
-                end
-            end
+            local eventObj = eventAtMapCell(tx, ty)
             
             if eventObj and (eventObj.trigger == nil or eventObj.trigger == "interact" or eventObj.trigger == "touch") then
-                local commands = nil
-                if eventObj.scriptId then
-                    local commonEvent = loader.commonEvents and loader.commonEvents[tostring(eventObj.scriptId)]
-                    if commonEvent then
-                        commands = commonEvent.commands
-                    end
-                else
-                    commands = eventObj.commands
-                end
+                local commands = commandsForMapEvent(eventObj)
                 
                 if commands then
                     runEventCommands(eventObj, commands)
@@ -1293,7 +1426,7 @@ handleKeyPressed = function(key)
                         dialogueSelectIdx = 1
                         handleDialogueAction()
                         if not activeWalker:getCurrentNode() then
-                            scene_host.goto_scene("map")
+                            finishDialogueToMap()
                         end
                     end
                 end
@@ -1307,7 +1440,7 @@ handleKeyPressed = function(key)
                     dialogueSelectIdx = 1
                     handleDialogueAction()
                     if not activeWalker:getCurrentNode() then
-                        scene_host.goto_scene("map")
+                        finishDialogueToMap()
                     end
                 end
             end

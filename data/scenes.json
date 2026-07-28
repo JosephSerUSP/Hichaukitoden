@@ -645,23 +645,8 @@
     "name": "Title Screen",
     "kind": "menu",
     "draw": "windows",
+    "backdropImage": "assets/title/st_maria_title_psx.png",
     "windows": [
-      {
-        "id": "title_frame",
-        "rect": {
-          "x": -1,
-          "y": 15.5,
-          "w": 34,
-          "h": 3.5
-        },
-        "style": "frame",
-        "content": [
-          {
-            "type": "text",
-            "text": "\\c[6]SECOND RITE\\c[0]\\nThestra no Jijou"
-          }
-        ]
-      },
       {
         "id": "title_menu",
         "rect": {
@@ -697,15 +682,6 @@
             "type": "list",
             "listId": "term:title.developerOptions",
             "cursor": "v.idx"
-          }
-        ]
-      },
-      {
-        "id": "title_footer",
-        "content": [
-          {
-            "type": "text",
-            "text": "(C) 2026 SeraphCircle"
           }
         ]
       },
@@ -814,6 +790,51 @@
           "cmd": "SET_VAR",
           "name": "loadIdx",
           "value": 1
+        },
+        {
+          "cmd": "SHOW_STRING_PICTURE",
+          "id": 900,
+          "text": "SECOND RITE",
+          "x": 14,
+          "y": 24,
+          "width": 220,
+          "font": "DotGothic16-Regular",
+          "fontSize": 24,
+          "color": 6,
+          "opacity": 1,
+          "layer": "screen",
+          "shadow": true
+        },
+        {
+          "cmd": "SHOW_STRING_PICTURE",
+          "id": 901,
+          "text": "Thestra no Jijou",
+          "x": 18,
+          "y": 51,
+          "width": 180,
+          "fontSize": 8,
+          "color": 0,
+          "opacity": 1,
+          "layer": "screen",
+          "shadow": true
+        },
+        {
+          "cmd": "SHOW_STRING_PICTURE",
+          "id": 902,
+          "text": "(C) 2026 SeraphCircle",
+          "x": 5,
+          "y": 228,
+          "width": 150,
+          "fontSize": 8,
+          "color": 7,
+          "opacity": 0.8,
+          "layer": "screen",
+          "shadow": true
+        }
+      ],
+      "on_exit": [
+        {
+          "cmd": "ERASE_ALL_STRING_PICTURES"
         }
       ],
       "on_up": [
@@ -1023,12 +1044,8 @@
               "cmd": "RESET_SESSION"
             },
             {
-              "cmd": "LOAD_MAP"
-            },
-            {
-              "cmd": "SCENE_EVENT",
-              "kind": "goto",
-              "scene": "map"
+              "cmd": "START_COMMON_EVENT",
+              "commonEventId": 42
             }
           ]
         },
@@ -1102,6 +1119,18 @@
           ]
         }
       ]
+    },
+    "config": {}
+  },
+  {
+    "id": "cinematic",
+    "name": "Cinematic",
+    "kind": "menu",
+    "draw": "windows",
+    "windows": [],
+    "hooks": {
+      "on_enter": [],
+      "on_cancel": []
     },
     "config": {}
   },
@@ -1435,6 +1464,9 @@
     "id": "map",
     "name": "Map",
     "kind": "map",
+    "config": {
+      "windowFootprint": "bottom_hud"
+    },
     "hooks": {
       "on_enter": [
         {
@@ -1453,10 +1485,6 @@
               "value": 1
             }
           ]
-        },
-        {
-          "cmd": "OPEN_WINDOW",
-          "windowId": "party"
         },
         {
           "cmd": "SET_LIST",
@@ -2296,7 +2324,7 @@
         },
         {
           "name": "RESERVE",
-          "help": "Manage your reserve roster, summon, or sacrifice creatures."
+          "help": "Manage the four creatures carried in expedition reserve."
         },
         {
           "name": "DATA",
@@ -2329,10 +2357,6 @@
         {
           "name": "ITEM CREATION",
           "help": "Have this creature attempt to create an item."
-        },
-        {
-          "name": "SACRIFICE",
-          "help": "Sacrifice this creature to bank its EXP and gain materials."
         },
         {
           "name": "SWAP",
@@ -4036,8 +4060,8 @@
     "kind": "menu",
     "config": {
       "terms": {
-        "title": "Reserve Roster",
-        "help": "Select a slot to swap, summon, or sacrifice.  Arrows: move  ESC: back"
+        "title": "Expedition Reserve",
+        "help": "Choose the four creatures carried in expedition reserve.  Arrows: move  ESC: back"
       }
     },
     "hooks": {
@@ -4106,7 +4130,7 @@
             {
               "cmd": "SET_VAR",
               "name": "cursorIdx",
-              "value": "v.cursorIdx < 8 and v.cursorIdx + 1 or v.cursorIdx"
+              "value": "v.cursorIdx < 4 and v.cursorIdx + 1 or v.cursorIdx"
             }
           ]
         }
@@ -4135,7 +4159,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "cursorIdx",
-                  "value": "v.cursorIdx + 4"
+                  "value": "v.cursorIdx + 2"
                 }
               ]
             }
@@ -4147,12 +4171,12 @@
           "then": [
             {
               "cmd": "IF",
-              "condition": "v.cursorIdx > 4",
+              "condition": "v.cursorIdx > 2",
               "then": [
                 {
                   "cmd": "SET_VAR",
                   "name": "cursorIdx",
-                  "value": "v.cursorIdx - 4"
+                  "value": "v.cursorIdx - 2"
                 }
               ]
             }
@@ -4194,12 +4218,12 @@
           "then": [
             {
               "cmd": "IF",
-              "condition": "v.cursorIdx <= 4",
+              "condition": "v.cursorIdx <= 2",
               "then": [
                 {
                   "cmd": "SET_VAR",
                   "name": "cursorIdx",
-                  "value": "v.cursorIdx + 4"
+                  "value": "v.cursorIdx + 2"
                 }
               ],
               "else": [
@@ -4211,7 +4235,7 @@
                 {
                   "cmd": "SET_VAR",
                   "name": "cursorIdx",
-                  "value": "v.cursorIdx - 4"
+                  "value": "v.cursorIdx - 2"
                 }
               ]
             }
@@ -4434,8 +4458,8 @@
       ]
     },
     "scripts": {
-      "setupReservePopup": "\nlocal v = ctx.v\nlocal focusArea = v.focusArea\nlocal cursorIdx = v.cursorIdx\nlocal member = (focusArea == 'party') and api.party(cursorIdx) or api.reserve(cursorIdx)\nlocal options = {}\n\nif member and member.empty then\n    member = nil\nend\n\nv.popupTargetIsReserve = (focusArea == 'reserve')\nv.popupTargetIndex = cursorIdx\nv.popupMemberName = member and (member.name or \"Unknown\") or nil\nv.popupMemberRef = member\n\nif member then\n    table.insert(options, {name = \"Swap\"})\n    table.insert(options, {name = \"Sacrifice\"})\n    if api.canPromote(v.popupTargetIsReserve, v.popupTargetIndex) then\n        table.insert(options, {name = \"Promote\"})\n    end\nelse\n    table.insert(options, {name = \"Summon\"})\n    table.insert(options, {name = \"Swap\"})\nend\ntable.insert(options, {name = \"Cancel\"})\n\nv.popupCount = #options\nv.popupOptions = options\n",
-      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Sacrifice\" then\n    v.ritualPush = \"sacrifice\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Promote\" then\n    v.ritualPush = \"promote\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Summon\" then\n    v.ritualPush = \"summon\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nend\n",
+      "setupReservePopup": "\nlocal v = ctx.v\nlocal focusArea = v.focusArea\nlocal cursorIdx = v.cursorIdx\nlocal member = (focusArea == 'party') and api.party(cursorIdx) or api.reserve(cursorIdx)\nlocal options = {}\n\nif member and member.empty then member = nil end\n\nv.popupTargetIsReserve = (focusArea == 'reserve')\nv.popupTargetIndex = cursorIdx\nv.popupMemberName = member and (member.name or \"Unknown\") or nil\nv.popupMemberRef = member\n\n-- Summoning belongs to a town ritual site. Sacrifice is disabled while its\n-- inheritance-based replacement is designed. Expedition reserve only manages\n-- creatures the player already committed to bringing below.\ntable.insert(options, {name = \"Swap\"})\nif member and api.inDungeon() then\n    table.insert(options, {name = \"Dismiss\"})\nend\nif member and api.canPromote(v.popupTargetIsReserve, v.popupTargetIndex) then\n    table.insert(options, {name = \"Promote\"})\nend\ntable.insert(options, {name = \"Cancel\"})\n\nv.popupCount = #options\nv.popupOptions = options\n",
+      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Dismiss\" then\n    local member, result = api.dismissToStorage(v.popupTargetIsReserve, v.popupTargetIndex)\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    if member then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = member.name .. \" returned to town storage (slot \" .. result .. \").\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = result or \"Dismissal failed.\" })\n    end\nelseif opt == \"Promote\" then\n    v.ritualPush = \"promote\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nend\n",
       "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot leave the party empty!\" })\n    v.mode = 1\n    return\nend\nv.mode = 1\napi.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"{config.terms.help}\" })\n"
     },
     "overlay": true,
@@ -4538,22 +4562,13 @@
     "draw": "windows",
     "backdrop": "map",
     "config": {
-      "note": "Windows-drawn. Reached via scene_host.goto_scene(\"dialogue\") from map step/interact events and CALL_COMMON_EVENT chains. main.lua's handleKeyPressed dialogue branch drives GraphWalker advance/selectChoice directly (unchanged); a per-frame sync in love.update mirrors the active node into v.dialogue* fields these windows bind to, docked over the same footprint the party HUD uses elsewhere so dialogue doesn't take over the whole screen."
+      "note": "Windows-drawn. Reached via scene_host.goto_scene(\"dialogue\") from map step/interact events and CALL_COMMON_EVENT chains. main.lua's handleKeyPressed dialogue branch drives GraphWalker advance/selectChoice directly (unchanged); a per-frame sync in love.update mirrors the active node into v.dialogue* fields these windows bind to, docked over the same footprint the party HUD uses elsewhere so dialogue doesn't take over the whole screen.",
+      "windowFootprint": "bottom_hud"
     },
     "hooks": {
       "on_enter": []
     },
     "windows": [
-      {
-        "id": "dialogue_name",
-        "visible": "v.dialogueSpeaker ~= nil and v.dialogueSpeaker ~= ''",
-        "content": [
-          {
-            "type": "text",
-            "text": "{v.dialogueSpeaker}"
-          }
-        ]
-      },
       {
         "id": "dialogue_portrait",
         "rect": {
@@ -4571,7 +4586,9 @@
             "portraitX": 1,
             "portraitY": 1,
             "portraitW": 7.5,
-            "portraitH": 10
+            "portraitH": 10,
+            "portraitOverflow": 0.5,
+            "portraitName": "v.dialogueSpeaker"
           }
         ]
       },

@@ -19,6 +19,8 @@ end
 
 function frame_renderer.draw(scene_host, renderer, session, loader, gameHeight)
     local ctx = { session = session, loader = loader, party = session and session.party or {} }
+    local stringPictures = require("presentation.string_picture_renderer")
+    local imagePictures = require("presentation.image_picture_renderer")
     scene_host.draw(ctx)
 
     if scene_host.getCurrent() == "dialogue" then
@@ -49,6 +51,10 @@ function frame_renderer.draw(scene_host, renderer, session, loader, gameHeight)
     end
 
     renderer.drawDamagePopups()
+    imagePictures.draw("screen")
+    stringPictures.draw("screen")
+    imagePictures.draw("top")
+    stringPictures.draw("top")
 end
 
 return frame_renderer

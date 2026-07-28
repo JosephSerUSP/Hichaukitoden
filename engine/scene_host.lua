@@ -289,6 +289,18 @@ function scene_host.pop(ctx)
 end
 
 function scene_host.goto_scene(id, ctx, vars)
+    ctx = ctx or lastCtx
+    local outgoing = sceneStack[#sceneStack]
+    local outgoingData = outgoing and getSceneData(ctx, outgoing.id) or nil
+    local incomingData = getSceneData(ctx, id)
+    local outgoingFootprint = outgoingData and outgoingData.config and outgoingData.config.windowFootprint
+    local incomingFootprint = incomingData and incomingData.config and incomingData.config.windowFootprint
+    if outgoingFootprint and outgoingFootprint == incomingFootprint then
+        local seeded = {}
+        for k, value in pairs(vars or {}) do seeded[k] = value end
+        seeded._seamlessWindowFootprint = outgoingFootprint
+        vars = seeded
+    end
     scene_host.pop(ctx)
     scene_host.push(id, ctx, vars)
 end
@@ -315,9 +327,16 @@ end
 -- deterministic golden-ui harness session never calls exploration.loadMap,
 -- so this silently no-ops there rather than erroring the smoke test.
 local function drawBackdrop(sceneData, ctx)
+    if sceneData.backdropImage then
+        require("presentation.static_backdrop").draw(sceneData.backdropImage)
+    end
     if sceneData.backdrop ~= "map" then return end
     local session = ctx.session
     if not (session and session.currentMapData and session.mapGrid) then return end
+    if session.locationArt then
+        require("presentation.location_renderer").draw(session.locationArt)
+        return
+    end
     require("presentation.viewport_3d").draw(session)
 end
 
@@ -345,6 +364,9 @@ function scene_host.draw(ctx)
     else
         drawBackdrop(sceneData, ctx)
     end
+    require("presentation.image_picture_renderer").draw("backdrop")
+    require("presentation.string_picture_renderer").draw("backdrop")
+    require("presentation.subtractive_transition").draw()
     local window_renderer = require("presentation.window_renderer")
     window_renderer.draw(state, sceneData, ctx)
     scene_transition.draw()

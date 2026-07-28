@@ -168,9 +168,13 @@
       6
     ],
     "party": {
-      "twoMemberChance": 0.25,
-      "twoMemberBonusLevels": 3,
-      "defaultSize": 3
+      "fixedMembers": [
+        {
+          "id": 61,
+          "level": 1,
+          "name": "Saban"
+        }
+      ]
     }
   },
   "dungeon": {
@@ -214,8 +218,8 @@
   },
   "spawn": {
     "mapId": 1,
-    "x": 11,
-    "y": 9,
+    "x": 4,
+    "y": 8,
     "dir": "N"
   },
   "permadeath": {

@@ -153,6 +153,10 @@ function exploration.generateDungeon(mapData, seed, session)
     
     local width = mapData.width or dungeonConf("genWidth", 21)
     local height = mapData.height or dungeonConf("genHeight", 21)
+    local genMinRooms = mapData.genMinRooms or dungeonConf("genMinRooms", 4)
+    local genMaxRooms = mapData.genMaxRooms or dungeonConf("genMaxRooms", 6)
+    local genMinRoomSize = mapData.genMinRoomSize or dungeonConf("genMinRoomSize", 3)
+    local genMaxRoomSize = mapData.genMaxRoomSize or dungeonConf("genMaxRoomSize", 5)
     local grid = {}
     for y = 1, height do
         grid[y] = {}
@@ -196,9 +200,9 @@ function exploration.generateDungeon(mapData, seed, session)
     end
 
     -- 2. Carve Procedural Interstitial Rooms around anchors
-    local numProcedural = math.random(dungeonConf("genMinRooms", 4), dungeonConf("genMaxRooms", 6))
-    local minRoom = dungeonConf("genMinRoomSize", 3)
-    local maxRoom = dungeonConf("genMaxRoomSize", 5)
+    local numProcedural = math.random(genMinRooms, genMaxRooms)
+    local minRoom = genMinRoomSize
+    local maxRoom = genMaxRoomSize
 
     local attempts = 0
     local createdProcedural = 0
@@ -458,6 +462,29 @@ local function cacheCurrentMap(session)
     }
 end
 
+function exploration.applyMapPresentation(session, mapIdx, spec)
+    mapIdx = mapIdx or session.currentMapIndex
+    if not mapIdx then error("applyMapPresentation: no target map") end
+    spec = spec or {}
+    session.mapPresentationOverrides = session.mapPresentationOverrides or {}
+    local saved = session.mapPresentationOverrides[mapIdx] or {}
+    if spec.tileset ~= nil then saved.tileset = spec.tileset end
+    if spec.fogPreset ~= nil then saved.fogPreset = spec.fogPreset end
+    if spec.ambient ~= nil then saved.ambient = spec.ambient end
+    session.mapPresentationOverrides[mapIdx] = saved
+
+    if session.currentMapIndex ~= mapIdx or not session.currentMapData then return end
+    local mapData = session.currentMapData
+    if saved.tileset then mapData.tileset = saved.tileset end
+    if saved.fogPreset then mapData.fog = { preset = saved.fogPreset } end
+    if saved.ambient then
+        local sources = {}
+        for _, source in ipairs(mapData.lightObjects or {}) do table.insert(sources, source) end
+        for _, source in ipairs(session.generatedLightObjects or {}) do table.insert(sources, source) end
+        mapData.runtimeLight = lighting.bake(session.mapGrid, sources, saved.ambient)
+    end
+end
+
 local function arrivalBeside(grid, landmarkX, landmarkY)
     local candidates = {
         { landmarkX, landmarkY + 1, "N" },
@@ -508,6 +535,12 @@ function exploration.loadMap(session, mapIdx, opts)
     session.dungeonFloor = rawMapData.depth or session.dungeonFloor or 0
     local mapData = {}
     for k, v in pairs(rawMapData) do mapData[k] = v end
+    local presentationOverride = session.mapPresentationOverrides
+        and session.mapPresentationOverrides[mapIdx]
+    if presentationOverride then
+        if presentationOverride.tileset then mapData.tileset = presentationOverride.tileset end
+        if presentationOverride.fogPreset then mapData.fog = { preset = presentationOverride.fogPreset } end
+    end
     session.currentMapData = mapData
     session.tempEventOverrides = {}
     
@@ -591,6 +624,13 @@ function exploration.loadMap(session, mapIdx, opts)
             for x = 1, #grid[y] do
                 session.visitedGrid[y][x] = isSafeMap
             end
+        end
+        if presentationOverride and presentationOverride.ambient then
+            local lightSources = {}
+            for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
+            for _, source in ipairs(session.generatedLightObjects or {}) do table.insert(lightSources, source) end
+            session.currentMapData.runtimeLight =
+                lighting.bake(grid, lightSources, presentationOverride.ambient)
         end
     end
     if not isSafeMap then

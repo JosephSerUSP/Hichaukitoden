@@ -23,6 +23,69 @@ end
 
 loader.init()
 
+local townDoorCount = 0
+for _, ev in ipairs(loader.maps[1].events or {}) do
+    if ev.door then
+        townDoorCount = townDoorCount + 1
+        local row = loader.maps[1].layout[ev.y + 1]
+        check(row and row:sub(ev.x + 1, ev.x + 1) == "#",
+            ev.name .. " door is authored into a wall cell")
+        check(ev.trigger == "bump" and ev.sprite == "assets/sprites/map_door_001.png",
+            ev.name .. " door uses wall-bump activation and the shared composite sprite")
+    end
+end
+check(townDoorCount == 5, "St. Maria has five wall-bound interior doors")
+
+local doorTransition = require("presentation.door_transition")
+local subtractiveFade = require("presentation.subtractive_fade")
+local fadeCanvas = love.graphics.newCanvas(8, 8)
+local previousCanvas = love.graphics.getCanvas()
+local fadeOk = pcall(function()
+    love.graphics.setCanvas(fadeCanvas)
+    love.graphics.clear(0.75, 0.50, 0.25, 1)
+    subtractiveFade.draw(0.25)
+end)
+love.graphics.setCanvas(previousCanvas)
+check(fadeOk, "the shared subtractive fade renders through LÖVE's subtract blend")
+local doorCovered = false
+check(doorTransition.begin(function() doorCovered = true end),
+    "a door threshold transition starts")
+doorTransition.update(0.24)
+check(not doorCovered, "the event waits until after the door approach")
+check(doorTransition.approachProgress() == 1,
+    "the door remains fully zoomed while black covers it")
+doorTransition.update(0.29)
+check(doorTransition.overlayAlpha() > 0 and doorTransition.overlayAlpha() < 1,
+    "entry fades progressively to black")
+doorTransition.update(0.29)
+check(doorCovered, "the event begins only once the screen is covered")
+check(doorTransition.overlayAlpha() == 1,
+    "entry lingers at full black before revealing the static room")
+doorTransition.update(0.16)
+doorTransition.update(0.34)
+check(doorTransition.overlayAlpha() > 0 and doorTransition.overlayAlpha() < 1,
+    "the static room is progressively revealed")
+doorTransition.update(0.34)
+check(not doorTransition.isActive(), "the interior reveal completes and unlocks input")
+
+local doorExited = false
+check(doorTransition.beginExit(function() doorExited = true end),
+    "an inverse door threshold transition starts on exit")
+doorTransition.update(0.34)
+check(doorTransition.overlayAlpha() > 0 and doorTransition.overlayAlpha() < 1,
+    "the static room fades to black without changing scale")
+doorTransition.update(0.34)
+check(doorExited and doorTransition.overlayAlpha() == 1,
+    "the map returns only at full black and remains hidden during the exit hold")
+doorTransition.update(0.16)
+check(doorTransition.approachProgress() == 1,
+    "the outside door begins fully zoomed behind black")
+doorTransition.update(0.29)
+check(doorTransition.approachProgress() > 0 and doorTransition.approachProgress() < 1,
+    "the outside door reverses its zoom while the map is revealed")
+doorTransition.update(0.29)
+check(not doorTransition.isActive(), "the inverse exit reveal completes")
+
 local portalItem = loader.getItem(197)
 local safeUseSession = sessionModule.GameSession.new(loader)
 safeUseSession.currentMapData = loader.maps[1]
@@ -119,7 +182,6 @@ check(route.party[1].history.expeditions == expeditionCount,
     "temporary portal travel does not count as a new expedition")
 check(route.portalReturn == nil and route.flags.portal_open == nil,
     "the return trip closes the temporary portal")
-
 local completedRoute = route.mapGrid
 exploration.loadMap(route, 1)
 exploration.loadMap(route, 2, { arrival = "entrance" })
@@ -135,6 +197,91 @@ check(restored.mapStates[2] and restored.mapStates[2].mapGrid,
 check(restored.portalReturn and restored.portalReturn.mapIndex == 2
     and restored.portalReturn.playerX == 4,
     "an open portal destination survives save/load")
+-- Town states can replace the whole visual atmosphere without replacing the
+-- map or branching presentation code. This is how the Vigil first announces
+-- itself: palette, fog, and ambient light change together.
+local festivalTown = sessionModule.GameSession.new(loader)
+festivalTown:initializeStartingParty()
+exploration.loadMap(festivalTown, 1)
+local ordinaryLight = festivalTown.currentMapData.runtimeLight
+local presentationCtx = {
+    session = festivalTown, loader = loader, events = {}, party = festivalTown.party
+}
+interpreter.runImmediate({ {
+    cmd = "SET_MAP_PRESENTATION",
+    mapId = 1,
+    tileset = "town_003",
+    fogPreset = "purple_dusk",
+    ambientR = 0.24,
+    ambientG = 0.09,
+    ambientB = 0.18
+} }, presentationCtx)
+check(festivalTown.currentMapData.tileset == "town_003"
+    and festivalTown.currentMapData.fog.preset == "purple_dusk",
+    "SET_MAP_PRESENTATION changes the current map's tileset and fog immediately")
+check(festivalTown.currentMapData.runtimeLight ~= ordinaryLight,
+    "SET_MAP_PRESENTATION rebakes map lighting immediately")
+
+local restoredFestival = savegame.deserialize(
+    savegame.serialize(festivalTown, loader, "town"), loader)
+check(restoredFestival.currentMapData.tileset == "town_003"
+    and restoredFestival.currentMapData.fog.preset == "purple_dusk",
+    "a changed town presentation survives save/load")
+check(restoredFestival.mapPresentationOverrides[1].ambient[1] == 0.24,
+    "the festival ambient-light state survives save/load")
+
+interpreter.runImmediate({ {
+    cmd = "ENTER_LOCATION", image = "st_maria_home.png"
+} }, presentationCtx)
+check(festivalTown.locationArt == "st_maria_home.png",
+    "ENTER_LOCATION selects a static illustrated dialogue backdrop")
+
+local intro = loader.commonEvents["42"]
+check(intro and intro.scene == "cinematic",
+    "New Game's opening is authored as a cinematic common event")
+local introGraph = interpreter.runInteractive(intro.commands, {
+    session = festivalTown, loader = loader, party = festivalTown.party,
+    eventTitle = intro.name
+})
+check(introGraph.labels and introGraph.labels.intro_cleanup,
+    "the opening exposes an authored cleanup label for skipping")
+for _, node in pairs(introGraph.nodes or {}) do
+    if node.type == "ACTION" and node.action == "RUN_IMMEDIATE" then
+        for _, cmd in ipairs(node.commands or {}) do
+            if cmd.cmd == "MOVE_IMAGE_PICTURE" then
+                check(cmd.scale == nil,
+                    "opening cinematic plates crossfade without zooming")
+            end
+        end
+    end
+end
+local hasWaitNode = false
+for _, node in pairs(introGraph.nodes or {}) do
+    if node.action == "WAIT_EVENT" then hasWaitNode = true break end
+end
+check(hasWaitNode,
+    "WAIT compiles to a pausing event-graph node instead of a synchronous no-op")
+check(loader.getScene("title").backdropImage == "assets/title/st_maria_title_psx.png",
+    "the title scene uses the St. Maria labyrinth vista")
+local stringPictures = require("presentation.string_picture_renderer")
+stringPictures.show({ id = 777, text = "scroll", x = 0, y = 0 })
+stringPictures.move({ id = 777, x = 10, duration = 2, easing = "linear" })
+stringPictures.update(1)
+check(stringPictures.get(777).x == 5,
+    "string pictures support constant-speed linear movement for credit-style scrolls")
+stringPictures.clear()
+
+local imagePictures = require("presentation.image_picture_renderer")
+imagePictures.show({
+    id = 778, path = "assets/cinematics/arrival_cart_psx.png",
+    x = 128, y = 120, anchor = "center", opacity = 0, scale = 1,
+})
+imagePictures.move({ id = 778, opacity = 1, scale = 1.1, duration = 2, easing = "linear" })
+imagePictures.update(1)
+check(imagePictures.get(778).opacity == 0.5
+    and imagePictures.get(778).scale == 1.05,
+    "image pictures support event-authored crossfades and slow zooms")
+imagePictures.clear()
 
 -- The bottom of the dungeon is expressed by authoring no stairs there, not by
 -- a number in system.json that has to be kept in step with the map list.

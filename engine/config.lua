@@ -4,7 +4,8 @@ local config = {}
 
 -- Party/reserve size bounds (used engine-wide instead of magic numbers)
 config.MAX_PARTY_SIZE = 4
-config.MAX_RESERVE_SIZE = 8
+config.MAX_RESERVE_SIZE = 4
+config.MAX_STORAGE_SIZE = 99
 
 function config.load()
     -- Follows the active campaign root (see data/loader.lua resolveRoot):
@@ -43,6 +44,7 @@ config.load()
 -- Party/reserve size bounds — engine-wide constants replacing magic numbers.
 -- system.json may override these; these are fallback defaults.
 if not config.MAX_PARTY_SIZE then config.MAX_PARTY_SIZE = 4 end
-if not config.MAX_RESERVE_SIZE then config.MAX_RESERVE_SIZE = 8 end
+if not config.MAX_RESERVE_SIZE then config.MAX_RESERVE_SIZE = 4 end
+if not config.MAX_STORAGE_SIZE then config.MAX_STORAGE_SIZE = 99 end
 
 return config

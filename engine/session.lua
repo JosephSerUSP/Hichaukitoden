@@ -213,6 +213,7 @@ function GameSession.new(loader)
     self.dungeonFloor = 1
     self.mapStates = {}
     self.portalReturn = nil
+    self.mapPresentationOverrides = {}
     -- The graveyard: one record per creature that left the party permanently
     -- (reaped or sacrificed), keeping its history after the battler object is
     -- gone. This is what makes a loss legible days later instead of a silently
@@ -234,8 +235,10 @@ function GameSession.new(loader)
     
     -- Party composition: 1-4 active creatures.
     self.party = {}
-    -- Reserve roster: up to 8 inactive creatures.
+    -- Expedition reserve: four creatures physically brought below.
     self.reserve = {}
+    -- Town storage is deliberately separate from the expedition reserve.
+    self.storage = {}
     
     return self
 end
@@ -254,11 +257,52 @@ function GameSession:initializeStartingParty()
         local actorData = self.loader.getActor(m.id)
         if actorData then
             local battler = Battler.new(actorData, m.level)
-            battler.name = randomAllyName(actorData)
+            battler.name = m.name or randomAllyName(actorData)
             battler.hp = battler:getMaxHp(self)
             table.insert(self.party, battler)
         end
     end
+end
+
+function GameSession:storeCreature(battler)
+    if not battler then return nil, "No creature" end
+    for i = 1, config.MAX_STORAGE_SIZE do
+        if not self.storage[i] then
+            self.storage[i] = battler
+            return i
+        end
+    end
+    return nil, "Storage full"
+end
+
+function GameSession:withdrawCreature(index)
+    local battler = self.storage[index]
+    if not battler then return nil, "Empty slot" end
+    for i = 1, config.MAX_RESERVE_SIZE do
+        if not self.reserve[i] then
+            self.storage[index] = nil
+            self.reserve[i] = battler
+            return battler, i
+        end
+    end
+    return nil, "Expedition reserve full"
+end
+
+function GameSession:dismissToStorage(isReserve, index)
+    local roster = isReserve and self.reserve or self.party
+    local battler = roster and roster[index]
+    if not battler then return nil, "Empty slot" end
+    if not isReserve then
+        local livingParty = 0
+        for _, member in pairs(self.party) do
+            if member then livingParty = livingParty + 1 end
+        end
+        if livingParty <= 1 then return nil, "Cannot dismiss the last active creature" end
+    end
+    local storageSlot, err = self:storeCreature(battler)
+    if not storageSlot then return nil, err end
+    roster[index] = nil
+    return battler, storageSlot
 end
 
 -- Files a creature into the memorial and returns the record. `cause` is a term

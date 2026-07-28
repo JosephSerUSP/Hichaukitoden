@@ -5,6 +5,8 @@ package.path = package.path .. ";./?.lua;./engine/?.lua"
 
 local sessionModule = require("engine.session")
 local interpreter = require("engine.interpreter")
+local config = require("engine.config")
+local savegame = require("engine.savegame")
 local GameSession = sessionModule.GameSession
 
 print("[TEST] Starting creature recruitment system tests...")
@@ -110,6 +112,52 @@ assert(battler5 ~= nil, "Failed to recruit 5th Bat")
 assert(slotType5 == "reserve", "5th Bat should be placed in reserve")
 assert(sess.reserve[1] ~= nil, "Reserve slot 1 should hold 5th Bat")
 print("  [PASS] GameSession:recruitActor places members correctly in party and reserve")
+
+-- The expedition roster is deliberately small. A ninth creature must not
+-- silently expand it or overwrite an existing instance.
+assert(config.MAX_RESERVE_SIZE == 4, "Expedition reserve must contain four slots")
+local capSess = GameSession.new(mockLoader)
+for i = 1, 4 + config.MAX_RESERVE_SIZE do
+    local b, where = capSess:recruitActor(13, 1)
+    assert(b and where == (i <= 4 and "party" or "reserve"),
+        "Expedition roster slot " .. i .. " did not fill")
+end
+local overflow, overflowWhere = capSess:recruitActor(13, 1)
+assert(overflow == nil and overflowWhere == "Full",
+    "Recruitment beyond four party and four reserve slots must fail loudly")
+print("  [PASS] Expedition reserve is capped at four creatures")
+
+-- Town storage is a separate 99-slot collection and survives save/load.
+assert(config.MAX_STORAGE_SIZE == 99, "Town storage must contain 99 slots")
+local storageSess = GameSession.new(mockLoader)
+for i = 1, 8 do assert(storageSess:recruitActor(13, 1)) end
+local stored = storageSess.party[4]
+storageSess.party[4] = nil
+local storageSlot = assert(storageSess:storeCreature(stored))
+assert(storageSlot == 1 and storageSess.storage[1] == stored,
+    "storeCreature must use the first open town-storage slot")
+local payload = savegame.serialize(storageSess, mockLoader, "map")
+local restored = savegame.deserialize(payload, mockLoader)
+assert(restored.storage[1] and restored.storage[1].id == stored.id,
+    "Town storage did not survive save/load")
+local withdrawn, reserveSlot = restored:withdrawCreature(1)
+assert(withdrawn == nil and reserveSlot == "Expedition reserve full"
+        and restored.storage[1] ~= nil,
+    "A full expedition reserve must refuse storage withdrawal")
+restored.reserve[4] = nil
+withdrawn, reserveSlot = restored:withdrawCreature(1)
+assert(withdrawn and reserveSlot == 4 and restored.storage[1] == nil,
+    "Storage withdrawal must move the same instance into an open reserve slot")
+print("  [PASS] Town storage is separate, capped at 99, and save-persistent")
+
+local dismissed, dismissedSlot = restored:dismissToStorage(true, 1)
+assert(dismissed and dismissedSlot == 1 and restored.reserve[1] == nil,
+    "Dismissing a reserve creature must send the same instance to storage")
+for i = 2, 4 do restored.party[i] = nil end
+local refused, refusedReason = restored:dismissToStorage(false, 1)
+assert(refused == nil and refusedReason == "Cannot dismiss the last active creature",
+    "Dismiss must never leave the active party empty")
+print("  [PASS] Dungeon dismissal transfers instances and protects the last active creature")
 
 -- Test 3: Interpreter command handlers (RECRUIT_ACTOR, ERASE_EVENT, CHANGE_ITEM)
 sess.inventory[1] = 5

@@ -6,3 +6,9 @@ campaign.json
 saves/
 screenshots/
 node_modules/
+
+# Local image-generation working files. Runtime art belongs in assets/ at its
+# native game dimensions; high-resolution sources stay outside the repository.
+assets/**/*_master.png
+assets/portraits/source/
+tools/image/*preview*.png

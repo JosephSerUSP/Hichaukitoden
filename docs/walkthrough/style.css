@@ -1,0 +1,52 @@
+:root {
+  --ink: #d8d3bc;
+  --dim: #979481;
+  --paper: #151815;
+  --panel: #20241f;
+  --line: #68624d;
+  --gold: #c7a75a;
+  --link: #9cb7a0;
+}
+* { box-sizing: border-box; }
+html { background: #080a08; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background:
+    linear-gradient(rgba(6,8,6,.82), rgba(6,8,6,.82)),
+    repeating-linear-gradient(135deg, #111 0 3px, #181611 3px 6px);
+  font: 14px/1.65 Georgia, "Times New Roman", serif;
+}
+.page {
+  width: min(820px, calc(100% - 24px));
+  margin: 18px auto;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 0 0 4px #0d0f0c, 0 15px 50px #000;
+}
+header { padding: 28px 34px 22px; text-align: center; border-bottom: 1px solid var(--line); }
+.eyebrow, .chapter, nav, footer { font: 11px/1.4 Verdana, sans-serif; letter-spacing: .16em; color: var(--gold); }
+h1 { margin: 5px 0 0; font-size: clamp(30px, 7vw, 54px); font-weight: normal; line-height: 1; }
+.dek { color: var(--dim); font-style: italic; margin: 9px 0 20px; }
+.hero { width: 100%; max-height: 390px; object-fit: cover; object-position: center; border: 1px solid var(--line); }
+nav { margin-top: 16px; letter-spacing: .05em; }
+a { color: var(--link); }
+main { padding: 22px 34px 40px; }
+.notice { padding: 13px 16px; border: 1px dashed var(--line); color: var(--dim); font-family: Verdana, sans-serif; font-size: 12px; }
+.notice span { color: var(--ink); }
+article { padding-top: 42px; }
+.chapter { margin: 0; }
+h2 { margin: 4px 0 17px; color: #eee8cf; font-size: 27px; font-weight: normal; line-height: 1.2; }
+article > img, figure img { display: block; width: 100%; border: 1px solid var(--line); image-rendering: pixelated; }
+blockquote { margin: 24px 7%; padding: 10px 18px; border-left: 3px solid var(--gold); background: #10130f; color: #efe7c8; font-size: 17px; font-style: italic; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+figure { margin: 0; }
+figcaption { padding-top: 5px; color: var(--dim); font: 10px/1.4 Verdana, sans-serif; }
+.ledger { margin-top: 24px; padding: 13px 17px; border: 1px solid var(--line); background: var(--panel); font-family: Verdana, sans-serif; font-size: 12px; }
+.ledger h3 { margin: 0 0 8px; color: var(--gold); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.ledger p { margin: 5px 0; }
+footer { padding: 16px 34px; border-top: 1px solid var(--line); text-align: center; color: var(--dim); letter-spacing: .05em; }
+@media (max-width: 600px) {
+  header, main { padding-left: 18px; padding-right: 18px; }
+  .pair { grid-template-columns: 1fr; }
+}

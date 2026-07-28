@@ -16,8 +16,9 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 |---|---|---|---|---|---|
 | `1` | menu | windows | - | 7 | 8 |
 | `battle` | battle | windows | - | 5 | 7 |
+| `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 3 | 6 |
-| `dialogue` | menu | windows | - | 4 | 1 |
+| `dialogue` | menu | windows | - | 3 | 1 |
 | `game_over` | menu | windows | - | 3 | 3 |
 | `items` | menu | windows | - | 4 | 8 |
 | `map` | map | world | map | 0 | 7 |
@@ -28,11 +29,11 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `save_menu` | menu | windows | - | 4 | 5 |
 | `shop` | menu | windows | - | 4 | 7 |
 | `status` | menu | windows | - | 11 | 7 |
-| `title` | menu | windows | - | 7 | 5 |
+| `title` | menu | windows | - | 5 | 6 |
 
 ## Registry (data/engine.json)
 
-- commands: **72**
+- commands: **86**
 - effect types: **15**
 - trait codes: **36**
 - meta keys: **8** (tier, disciplines, intensityGrade, craftable, craftIngredient, dungeonOnly, detect, detectLevel)
@@ -67,9 +68,9 @@ are what's left:
 
 - actors: **62** (6 summonable-from-start, 23 with promotion paths)
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx12, cookingx18, tinkeringx17
-- items: **197** (consumablex63, equipmentx120, questx14)
+- items: **198** (consumablex63, equipmentx120, questx15)
 - skills: **40**, passives: **41**, states: **12**, roles: **13**, elements: **5**
-- maps: **8**, common events: **18**, shops: **6**, quests: **4**
+- maps: **8**, common events: **19**, shops: **6**, quests: **4**
 - animations: **28**, tilesets: **9**
 
 ## Notes for agents

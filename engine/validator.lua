@@ -901,7 +901,7 @@ validator.run = function(loader)
     -- three replies were unreachable. The reverse (set, never read) is only
     -- suspicious, not broken: a flag may be staged ahead of the content that
     -- reads it, so it warns.
-    local flagWrites, flagReads = {}, {}
+    local flagWrites, flagReads, conditionItemReads = {}, {}, {}
     local function collectFlags(node, seen, where)
         if type(node) ~= "table" then return end
         seen = seen or {}
@@ -919,10 +919,15 @@ validator.run = function(loader)
                 if type(f) == "string" then flagWrites[f] = true end
             end
         end
-        for _, val in pairs(node) do
+        for key, val in pairs(node) do
             if type(val) == "string" then
                 for name in val:gmatch("flag:([%w_]+)") do
                     flagReads[name] = flagReads[name] or where
+                end
+                if key == "condition" then
+                    for itemRef in val:gmatch("hasItem:([^,%s]+)") do
+                        conditionItemReads[itemRef] = conditionItemReads[itemRef] or where
+                    end
                 end
             else
                 collectFlags(val, seen, where)
@@ -942,6 +947,15 @@ validator.run = function(loader)
     for name in pairs(flagWrites) do
         if not flagReads[name] then
             print("[validator] warning: flag '" .. name .. "' is set but no condition reads it")
+        end
+    end
+    for itemRef, where in pairs(conditionItemReads) do
+        local itemId = tonumber(itemRef)
+        check(itemId ~= nil, "condition reads hasItem:'" .. tostring(itemRef) .. "' (in " ..
+            where .. ") but item condition references must be numeric ids")
+        if itemId ~= nil then
+            check(loader.getItem(itemId), "condition reads hasItem:" .. tostring(itemRef) ..
+                " (in " .. where .. ") but that item does not exist")
         end
     end
 
@@ -1737,6 +1751,35 @@ elseif paramDef.type == "script" then
                         end
                     end
                 end
+
+                if id == "SET_MAP_PRESENTATION" then
+                    if cmd.tileset ~= nil then
+                        check(loader.getTileset(cmd.tileset) ~= nil,
+                            ownerDesc .. " command '" .. id .. "' references unknown tileset '"
+                            .. tostring(cmd.tileset) .. "'")
+                    end
+                    if cmd.fogPreset ~= nil then
+                        check(validFogPresets[cmd.fogPreset] == true,
+                            ownerDesc .. " command '" .. id .. "' references unknown fog preset '"
+                            .. tostring(cmd.fogPreset) .. "'")
+                    end
+                end
+                if id == "ENTER_LOCATION" and cmd.image ~= nil then
+                    check(love.filesystem.getInfo(
+                            "assets/locationArt/" .. tostring(cmd.image)) ~= nil,
+                        ownerDesc .. " command '" .. id .. "' references missing location art '"
+                        .. tostring(cmd.image) .. "'")
+                end
+                if id == "SHOW_IMAGE_PICTURE" and cmd.path ~= nil then
+                    check(love.filesystem.getInfo(tostring(cmd.path)) ~= nil,
+                        ownerDesc .. " command '" .. id .. "' references missing image '"
+                        .. tostring(cmd.path) .. "'")
+                end
+                if id == "START_COMMON_EVENT" and cmd.commonEventId ~= nil then
+                    check(loader.commonEvents[tostring(cmd.commonEventId)] ~= nil,
+                        ownerDesc .. " command '" .. id .. "' references missing common event '"
+                        .. tostring(cmd.commonEventId) .. "'")
+                end
             end
 
             ::continue::
@@ -1835,6 +1878,11 @@ elseif paramDef.type == "script" then
                 local row = map.layout[ev.y + 1]
                 local cell = row and row:sub(ev.x + 1, ev.x + 1)
                 check(cell == "#", desc .. " is a door but its map cell is not a wall ('" .. tostring(cell) .. "')")
+                check(ev.trigger == "bump",
+                    desc .. " is a wall door and must use trigger 'bump'")
+                check(type(ev.sprite) == "string" and ev.sprite ~= ""
+                        and love.filesystem.getInfo(ev.sprite) ~= nil,
+                    desc .. " references missing door sprite '" .. tostring(ev.sprite) .. "'")
             end
             if ev.commands then
                 validateCommands(ev.commands, "map", false, true, desc)
@@ -1852,6 +1900,29 @@ elseif paramDef.type == "script" then
     for ceId, ce in pairs(loader.commonEvents or {}) do
         if ce.commands then
             validateCommands(ce.commands, "common", false, true, "common event '" .. tostring(ceId) .. "'")
+            local labels, skips = {}, {}
+            local function scanSkipTargets(cmds)
+                for _, cmd in ipairs(cmds or {}) do
+                    if cmd.cmd == "LABEL" then labels[cmd.name] = true end
+                    if cmd.cmd == "ENABLE_EVENT_SKIP" then
+                        skips[#skips + 1] = cmd.label
+                    end
+                    for key, val in pairs(cmd) do
+                        if key == "options" and type(val) == "table" then
+                            for _, opt in ipairs(val) do scanSkipTargets(opt.commands) end
+                        elseif type(val) == "table" and val[1]
+                            and type(val[1]) == "table" and val[1].cmd then
+                            scanSkipTargets(val)
+                        end
+                    end
+                end
+            end
+            scanSkipTargets(ce.commands)
+            for _, label in ipairs(skips) do
+                check(labels[label] == true,
+                    "common event '" .. tostring(ceId)
+                    .. "' enables skip to missing LABEL '" .. tostring(label) .. "'")
+            end
         end
     end
 
@@ -2115,6 +2186,11 @@ elseif paramDef.type == "script" then
 
         for _, scene in ipairs(loader.scenes or {}) do
             local sceneDesc = "scene '" .. tostring(scene.id) .. "' (" .. tostring(scene.name) .. ")"
+            if scene.backdropImage then
+                check(love.filesystem.getInfo(scene.backdropImage) ~= nil,
+                    sceneDesc .. " references missing backdropImage '"
+                    .. tostring(scene.backdropImage) .. "'")
+            end
 
             -- One mock context per scene, its `v` seeded from what THIS
             -- scene assigns. Hooks share a single v for the scene's whole

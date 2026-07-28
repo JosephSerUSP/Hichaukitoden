@@ -571,6 +571,42 @@ end
 
 -- Renders the Town Scene
 -- Renders the Map Scene
+local eventLabelAnim = { label = nil, target = nil, changedAt = 0 }
+
+local function drawAnimatedEventLabel(label)
+    local now = love.timer.getTime()
+    if label ~= eventLabelAnim.target then
+        eventLabelAnim.target = label
+        eventLabelAnim.changedAt = now
+        if label then eventLabelAnim.label = label end
+    end
+    local shown = eventLabelAnim.label
+    if not shown then return end
+    local duration = 0.18
+    local p = math.min(1, (now - eventLabelAnim.changedAt) / duration)
+    local open = eventLabelAnim.target ~= nil
+    local amount = open and p or (1 - p)
+    amount = 1 - (1 - amount) * (1 - amount)
+    if not open and p >= 1 then
+        eventLabelAnim.label = nil
+        return
+    end
+
+    local screenW = ui.toPx(ui.screenWidthTiles)
+    local fullW = math.max(120, ui.measureText(shown) + 16)
+    local fullH = 26
+    local w = math.max(16, fullW * amount)
+    local h = math.max(8, fullH * amount)
+    local x = math.floor((screenW - w) / 2)
+    local y = 118 - h / 2
+    ui.drawPanel(x, y, w, h)
+    love.graphics.push("all")
+    love.graphics.setScissor(x, y, w, h)
+    ui.drawString(shown, math.floor((screenW - fullW) / 2) + 4, 112,
+        {1, 1, 0.5, 1}, "center", fullW - 8)
+    love.graphics.pop()
+end
+
 function renderer.drawMap()
     viewport_3d.draw(renderer.session)
     
@@ -618,11 +654,12 @@ function renderer.drawMap()
             end
         end
 
-        local screenW = ui.toPx(ui.screenWidthTiles)
-        local pWidth = math.max(120, ui.measureText(displayLabel) + 16)
-        local pX = math.floor((screenW - pWidth) / 2)
-        ui.drawPanel(pX, 105, pWidth, 26)
-        ui.drawString(displayLabel, pX + 4, 112, {1, 1, 0.5, 1}, "center", pWidth - 8)
+        if require("presentation.door_transition").isActive() then
+            displayLabel = nil
+        end
+        drawAnimatedEventLabel(displayLabel)
+    else
+        drawAnimatedEventLabel(nil)
     end
 end
 

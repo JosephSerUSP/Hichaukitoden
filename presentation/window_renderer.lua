@@ -568,11 +568,16 @@ local function drawPortrait(layout, env, x, y, title)
     local contentX, contentY = contentOrigin(layout, title, x, y)
     local drawX = x + ui.toPx(layout.portraitX or 1)
     local drawY = layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY
+    local overflow = ui.toPx(layout.portraitOverflow or 0)
+    local portraitX = drawX - overflow
+    local portraitY = drawY - overflow
+    local portraitW = ui.toPx(layout.portraitW or 7.5) + overflow * 2
+    local portraitH = ui.toPx(layout.portraitH or 10) + overflow * 2
 
     if img then
         love.graphics.setColor(1, 1, 1, 1)
         if layout.portraitW and layout.portraitH then
-            ui.drawSlicedPortrait(img, drawX, drawY, ui.toPx(layout.portraitW), ui.toPx(layout.portraitH))
+            ui.drawSlicedPortrait(img, portraitX, portraitY, portraitW, portraitH)
         else
             love.graphics.draw(img, drawX, drawY, 0, 1, 1)
         end
@@ -592,6 +597,19 @@ local function drawPortrait(layout, env, x, y, title)
             ui.drawString("?", drawX + pw/2 - 3, drawY + phH/2 - 4, {0.4, 0.4, 0.5, 1})
         end
         love.graphics.pop()
+    end
+
+    if layout.portraitName then
+        local name = formula.eval(layout.portraitName, env)
+        if name and name ~= "" then
+            local pw = ui.toPx(layout.portraitW or 7.5)
+            local ph = ui.toPx(layout.portraitH or 10)
+            local nameH = ui.toPx(2)
+            love.graphics.push("all")
+            ui.drawString(tostring(name), drawX + 3, drawY + ph - nameH + 3,
+                {1, 0.94, 0.76, 1}, "center", pw - 6)
+            love.graphics.pop()
+        end
     end
 end
 
@@ -1116,6 +1134,11 @@ end
 -- the animation start (used by drawWindowFromData to keep close
 -- animation timing across visibility transitions).
 local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, closing, clockOverride)
+    if not closing and win._skipOpenAnim then
+        win._skipOpenAnim = nil
+        openClocks[win] = love.timer.getTime() - ((layout.anim and layout.anim.open and layout.anim.open.duration) or 0)
+        return x, y, w, h, 1, false
+    end
     local phase = closing and "close" or "open"
     local anim = layout.anim and layout.anim[phase]
     if not anim then
@@ -1649,6 +1672,8 @@ function wr.drawWindowFromData(sceneData, state, ctx)
                 -- ui.drawSlicedPortrait.
                 if block.portraitW ~= nil then layout.portraitW = block.portraitW end
                 if block.portraitH ~= nil then layout.portraitH = block.portraitH end
+                if block.portraitOverflow ~= nil then layout.portraitOverflow = block.portraitOverflow end
+                if block.portraitName ~= nil then layout.portraitName = block.portraitName end
             else
                 -- Unknown block types fail soft (extensibility rule).
                 if not warnedBlockTypes[block.type] then

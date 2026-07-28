@@ -4505,5 +4505,17 @@
       "dungeonOnly": true
     },
     "id": 197
+  },
+  {
+    "name": "Crossing Writ",
+    "type": "quest",
+    "cost": 0,
+    "icon": 75,
+    "description": "A narrow stamped writ authorizing one Summoner to cross St. Maria's Labyrinth gate.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    },
+    "id": 198
   }
 ]

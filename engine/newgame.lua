@@ -72,6 +72,22 @@ function newgame.rollMembers(loader)
     local ng = ngConf(loader)
     local partyRules = ng.party or {}
 
+    -- A campaign may author its opening companions exactly. Presence of the
+    -- field is authoritative even when empty; omit it to retain random starts.
+    if partyRules.fixedMembers ~= nil then
+        local fixed = {}
+        for _, member in ipairs(partyRules.fixedMembers or {}) do
+            if loader.getActor(member.id) then
+                table.insert(fixed, {
+                    id = member.id,
+                    level = member.level or 1,
+                    name = member.name,
+                })
+            end
+        end
+        return fixed
+    end
+
     local available = {}
     for _, creature in ipairs(loader.actors) do
         if creature.initialParty then

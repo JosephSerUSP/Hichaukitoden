@@ -87,7 +87,7 @@
             ],
             "elseCommands": [
               {
-                "condition": "flag:dungeon_entered, hasItem:guild_pass",
+                "condition": "flag:dungeon_entered, hasItem:198",
                 "commands": [
                   {
                     "text": "Ready to descend again? Don't make me carry your body out.",
@@ -113,7 +113,7 @@
                     ],
                     "elseCommands": [
                       {
-                        "condition": "hasItem:guild_pass",
+                        "condition": "hasItem:198",
                         "commands": [
                           {
                             "commonEventId": 33,
@@ -122,7 +122,7 @@
                         ],
                         "elseCommands": [
                           {
-                            "text": "No Guild Pass. Speak to the Guildmaster in town. And don’t try to slip past. I’ve buried faster people than you.",
+                            "text": "No Crossing Writ. Speak to the Registrar at the Passage Office. And don’t try to slip past. I’ve buried faster people than you.",
                             "cmd": "TEXT"
                           },
                           {
@@ -456,6 +456,26 @@
         "trigger": "interact",
         "name": "Yukio",
         "label": "Yukio",
+        "pages": [
+          {
+            "sprite": "",
+            "transparent": true,
+            "priority": "below",
+            "commands": []
+          },
+          {
+            "condition": "flag:vigil_ready",
+            "sprite": "assets/sprites/NPC07.png",
+            "transparent": false,
+            "priority": "same",
+            "commands": [
+              {
+                "commonEventId": 36,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ]
+          }
+        ],
         "commands": [
           {
             "commonEventId": 36,
@@ -466,9 +486,10 @@
       {
         "id": 4,
         "x": 15,
-        "y": 7,
-        "sprite": "assets/sprites/NPC03.png",
-        "trigger": "interact",
+        "y": 8,
+        "door": true,
+        "sprite": "assets/sprites/map_door_001.png",
+        "trigger": "bump",
         "name": "Laura",
         "label": "Laura",
         "pages": [
@@ -657,17 +678,22 @@
       {
         "id": 5,
         "x": 4,
-        "y": 8,
-        "sprite": "assets/sprites/NPC08.png",
-        "trigger": "interact",
+        "y": 7,
+        "door": true,
+        "sprite": "assets/sprites/map_door_001.png",
+        "trigger": "bump",
         "name": "Sign",
-        "label": "Town Sign",
+        "label": "Passage House",
         "transparent": true,
         "priority": "same",
         "spawn": "Fixed",
         "commands": [
           {
-            "text": "This abandoned house is now your home. It feels safe here.",
+            "image": "st_maria_home.png",
+            "cmd": "ENTER_LOCATION"
+          },
+          {
+            "text": "PASSAGE HOUSE — ROOM 3\n\n\"This'll be your home for the upcoming months.\" Five rooms open from the common landing. Only yours has a name card.",
             "cmd": "TEXT"
           }
         ]
@@ -683,10 +709,11 @@
       },
       {
         "id": 7,
-        "x": 14,
+        "x": 15,
         "y": 9,
-        "sprite": "assets/sprites/NPC02.png",
-        "trigger": "interact",
+        "door": true,
+        "sprite": "assets/sprites/map_door_001.png",
+        "trigger": "bump",
         "name": "Alicia",
         "label": "Pink-haired girl",
         "pages": [
@@ -917,9 +944,10 @@
       {
         "id": 8,
         "x": 14,
-        "y": 12,
-        "sprite": "assets/sprites/NPC04.png",
-        "trigger": "interact",
+        "y": 13,
+        "door": true,
+        "sprite": "assets/sprites/map_door_001.png",
+        "trigger": "bump",
         "name": "Pub Owner",
         "pages": [
           {
@@ -1515,9 +1543,10 @@
       {
         "id": 10,
         "x": 8,
-        "y": 14,
-        "sprite": "assets/sprites/NPC05.png",
-        "trigger": "interact",
+        "y": 13,
+        "door": true,
+        "sprite": "assets/sprites/map_door_001.png",
+        "trigger": "bump",
         "name": "Temple",
         "label": "Temple",
         "commands": [
@@ -1543,19 +1572,19 @@
             "condition": "flag:agnes_met",
             "commands": [
               {
-                "text": "The lantern frames are nearly finished. We begin after your third safe return.",
+                "text": "Agnes is repairing the chapel steps with a patience better suited to embroidery.",
                 "speaker": "Sister Agnes",
                 "cmd": "TEXT"
               }
             ],
             "elseCommands": [
               {
-                "text": "You must be the new Summoner. Welcome to St. Maria. I am Agnes. Please forgive the mess—we are preparing for the Vigil of the Second Bell.",
+                "text": "You must be the new Summoner. Welcome to St. Maria. I am Agnes. If you need quiet, the chapel is open. If you need certainty, try somewhere else.",
                 "speaker": "Sister Agnes",
                 "cmd": "TEXT"
               },
               {
-                "text": "We celebrate those who returned. At midnight, we remember those who remain below. You arrived between the two lists.",
+                "text": "She brushes stone dust from her sleeves and returns to work.",
                 "speaker": "Sister Agnes",
                 "cmd": "TEXT"
               },
@@ -1563,6 +1592,82 @@
                 "flag": "agnes_met",
                 "value": true,
                 "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "x": 11,
+        "y": 6,
+        "name": "Registrar",
+        "label": "Registrar Celina",
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC06.png",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed",
+        "commands": [
+          {
+            "condition": "hasItem:198",
+            "commands": [
+              {
+                "text": "Celina glances at your pass. \"Still legible. A promising start.\"",
+                "speaker": "Registrar Celina",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Ask about St. Maria.",
+                    "commands": [
+                      {
+                        "text": "\"The village sells meals, beds, steel and funerals. Summoners bring demand for all four.\"",
+                        "speaker": "Registrar Celina",
+                        "cmd": "TEXT"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Ask about the Labyrinth.",
+                    "commands": [
+                      {
+                        "text": "\"Return before your MP makes the decision for you. Pride is not accepted as payment at the infirmary.\"",
+                        "speaker": "Registrar Celina",
+                        "cmd": "TEXT"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "Celina holds out one hand. \"Your Summoner's seal. Not your name. We keep those separate here.\"",
+                "speaker": "Registrar Celina",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "She copies the seal into a narrow ledger. Most of the page is empty. The previous page is not.",
+                "speaker": "Registrar Celina",
+                "cmd": "TEXT"
+              },
+              {
+                "item": "198",
+                "count": 1,
+                "cmd": "CHANGE_ITEM"
+              },
+              {
+                "text": "Obtained Crossing Writ. \"The guard will let you descend now. Coming back remains your responsibility.\"",
+                "speaker": "Registrar Celina",
+                "cmd": "TEXT"
               }
             ],
             "cmd": "CONDITIONAL_BRANCH"
@@ -3707,6 +3812,10 @@
   {
     "id": 2,
     "title": "Floor 1: Entry Hall",
+    "width": 17,
+    "height": 17,
+    "genMinRooms": 3,
+    "genMaxRooms": 4,
     "intro": "You cross the threshold into the dark.",
     "depth": 1,
     "music": "dungeon1",
@@ -4045,6 +4154,138 @@
             ]
           }
         ]
+      },
+      {
+        "id": 11,
+        "name": "Blue Chalk",
+        "label": "Blue Chalk",
+        "spawn": "Random",
+        "sprite": "assets/sprites/NPC11.png",
+        "trigger": "interact",
+        "minimapColor": [
+          0.2,
+          0.55,
+          1
+        ],
+        "commands": [
+          {
+            "image": "campaign_ines_mark.png",
+            "cmd": "ENTER_LOCATION"
+          },
+          {
+            "condition": "flag:found_ines_mark",
+            "commands": [
+              {
+                "text": "The blue line still points toward St. Maria, no matter which side you stand on.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A blue chalk line crosses the wall at shoulder height. It turns every corner without breaking.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Follow the line with your hand.",
+                    "commands": [
+                      {
+                        "text": "The stone is warm. Beneath the line, someone wrote INES backward, then crossed it out from the other side of the wall.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "found_ines_mark",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave it.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "name": "First Contract",
+        "label": "Cornered Pixie",
+        "spawn": "Random",
+        "sprite": "assets/sprites/NPC01.png",
+        "trigger": "interact",
+        "minimapColor": [
+          0.4,
+          0.85,
+          0.75
+        ],
+        "commands": [
+          {
+            "condition": "flag:first_recruit_complete",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Only a few green sparks remain where the creature was cornered."
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "cmd": "TEXT",
+                "text": "Saban scratches twice at the wall, then steps aside. A wounded Pixie is hiding in the seam behind him."
+              },
+              {
+                "cmd": "TEXT",
+                "text": "The creature watches Saban rather than you. It is waiting to see whether your summons are companions or equipment."
+              },
+              {
+                "cmd": "CHOICE",
+                "options": [
+                  {
+                    "label": "Offer a contract.",
+                    "commands": [
+                      {
+                        "cmd": "RECRUIT_ACTOR",
+                        "actorId": 1,
+                        "level": 1
+                      },
+                      {
+                        "cmd": "SET_FLAG",
+                        "flag": "first_recruit_complete",
+                        "value": true
+                      },
+                      {
+                        "cmd": "TEXT",
+                        "text": "The Pixie accepts. PARTY now records two individual creatures; neither can be replaced by summoning from the field."
+                      },
+                      {
+                        "cmd": "ERASE_EVENT"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave it space.",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "The Pixie remains in the seam. You may return if the expedition still has room."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [
@@ -4089,22 +4330,15 @@
         "levelMax": 3
       }
     ],
-    "recruits": [
-      1,
-      3,
-      9,
-      14,
-      13,
-      20,
-      25,
-      27,
-      30,
-      60
-    ]
+    "recruits": []
   },
   {
     "id": 3,
     "title": "Floor 2: Chasm Crossing",
+    "width": 23,
+    "height": 23,
+    "genMinRooms": 5,
+    "genMaxRooms": 7,
     "intro": "Wind howls across a broken bridge.",
     "depth": 2,
     "music": "dungeon1",
@@ -4589,6 +4823,64 @@
             "cmd": "CONDITIONAL_BRANCH"
           }
         ]
+      },
+      {
+        "id": 8,
+        "name": "Table Set for One",
+        "label": "Table Set for One",
+        "spawn": "Random",
+        "sprite": "assets/sprites/NPC10.png",
+        "trigger": "interact",
+        "minimapColor": [
+          0.85,
+          0.72,
+          0.35
+        ],
+        "commands": [
+          {
+            "image": "campaign_salt_table.png",
+            "cmd": "ENTER_LOCATION"
+          },
+          {
+            "condition": "flag:found_salt_table",
+            "commands": [
+              {
+                "text": "The table is bare. A perfect ring of salt remains where the plate stood.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A small table has been laid for one. The bread is warm. The plate bears St. Maria's old blue border.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Break the bread.",
+                    "commands": [
+                      {
+                        "text": "The crust collapses without a sound. There is only wet salt inside.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "found_salt_table",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Do not touch it.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [
@@ -4661,6 +4953,10 @@
   {
     "id": 4,
     "title": "Floor 3: Rusted Choir",
+    "width": 27,
+    "height": 27,
+    "genMinRooms": 7,
+    "genMaxRooms": 9,
     "intro": "Broken bells sway above a dry pit.",
     "depth": 3,
     "music": "emotional1_bitSad",
@@ -4697,6 +4993,68 @@
         "y": 15,
         "spawn": "Random",
         "sprite": "assets/sprites/NPC15.png"
+      },
+      {
+        "id": 5,
+        "name": "Borrowed Room",
+        "label": "Borrowed Room",
+        "spawn": "Random",
+        "sprite": "assets/sprites/NPC11.png",
+        "trigger": "interact",
+        "minimapColor": [
+          0.55,
+          0.35,
+          0.75
+        ],
+        "commands": [
+          {
+            "image": "campaign_borrowed_room.png",
+            "cmd": "ENTER_LOCATION"
+          },
+          {
+            "condition": "flag:found_borrowed_room",
+            "commands": [
+              {
+                "text": "The copied room waits behind the arch. Something has folded back the blanket.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "Beyond a plain stone arch is your room in St. Maria: the narrow bed, the damp stain, the stubborn drawer.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "Your travelling case stands beside the bed. You remember leaving it upstairs.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Open the case.",
+                    "commands": [
+                      {
+                        "text": "It contains a neatly folded change of clothes in your size. They are still warm.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "found_borrowed_room",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Back away.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "encounters": [
