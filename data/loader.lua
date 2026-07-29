@@ -66,6 +66,7 @@ function loader.init(root)
     loader.elements = J("elements.json")
     loader.items = J("items.json")
     loader.maps = J("maps.json")
+    loader.lore = J("lore.json")
     loader.quests = J("quests.json")
     loader.shops = J("shops.json")
     loader.sounds = J("sounds.json")
@@ -171,6 +172,10 @@ end
 -- lookups in main.lua.
 function loader.getQuest(id)
     return loader.quests and loader.quests[tostring(id)]
+end
+
+function loader.getLore(id)
+    return loader.lore and loader.lore[tostring(id)]
 end
 
 -- Looks up a UI/battle string from data/terms.json by dotted path

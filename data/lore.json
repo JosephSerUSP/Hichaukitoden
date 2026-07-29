@@ -1,0 +1,22 @@
+{
+  "second_rite": {
+    "title": "The Second Rite",
+    "category": "Rites",
+    "body": "A summoner's bond is not ownership. The Second Rite names the promise renewed between the caller and the called: strength is shared, memory is kept, and no sacrifice is forgotten.",
+    "order": 10,
+    "unlocked": true
+  },
+  "summoner_mana": {
+    "title": "Summoner Mana",
+    "category": "Rites",
+    "body": "Every manifested creature draws from the Summoner's shared mana. The bond is strongest in battle, but even an expedition taxes it with every step beyond safe ground.",
+    "order": 20,
+    "unlocked": true
+  },
+  "old_gate": {
+    "title": "The Old Gate",
+    "category": "Places",
+    "body": "Weathered marks around the gate do not match the masonry. Someone rebuilt the arch long after the road beneath it was abandoned.",
+    "order": 30
+  }
+}

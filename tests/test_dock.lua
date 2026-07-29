@@ -41,8 +41,8 @@ end
 -- silently showing no dock at runtime.
 local EXPECTED = {
     map = "party_status", items = "party_status", save_menu = "party_status",
-    quest_log = "party_status", options = "party_status",
-    controls = "party_status", battle = "party_status",
+    quest_log = "party_status", datalog = "party_status", options = "party_status",
+    controls = "party_status", battle = "battle",
     dialogue = "dialogue",
 }
 for id, variant in pairs(EXPECTED) do
@@ -83,6 +83,13 @@ end
 -- v the renderer never materializes the window at all.
 dock.reset()
 drawScene("save_menu")
+local initial = dock.__transition()
+check(initial and initial.targetVariant == "party_status",
+    "entering from no dock starts the party_status reveal")
+check(initial and initial.from[1].w == 0 and initial.from[1].h == 0,
+    "an initial dock reveal grows horizontally and vertically from zero")
+dock.__finishTransition()
+drawScene("save_menu")
 check(dock.variant() == "party_status", "entering a party_status scene shows that variant")
 
 local firstWin = dock.__store()._dataWins["party"]
@@ -97,17 +104,47 @@ check(dock.__store()._dataWins["party"] == firstWin,
     "the dock's window table SURVIVES the scene change (no animation replay)")
 check(not dock.__fading(), "a same-variant transition starts no cross-fade")
 
--- A different variant cross-fades instead of cutting, and does not inherit
--- the outgoing variant's table.
+-- A different variant clears content, morphs its N shells, then populates the
+-- destination. It does not inherit the outgoing variant's table.
 drawScene("dialogue")
-check(dock.variant() == "dialogue", "entering dialogue switches the dock variant")
-check(dock.__fading(), "a variant change starts a cross-fade")
+check(dock.variant() == "party_status", "content remains on the source variant during morph")
+check(dock.__fading(), "a variant change starts a shell morph")
 check(dock.__store()._dataWins["party"] ~= firstWin,
-    "the incoming variant starts from a clean store")
+    "the destination starts from a clean content store")
+dock.__finishTransition()
+drawScene("dialogue")
+check(dock.variant() == "dialogue", "dialogue content appears after shell geometry settles")
 
 -- Leaving for a scene that wants no dock retires it.
 drawScene("status")
-check(dock.variant() == nil, "a scene with no config.dock retires the dock")
+check(dock.__fading(), "leaving the dock starts a two-axis shell collapse")
+local retiring = dock.__transition()
+check(retiring and retiring.to[1].w == 0 and retiring.to[1].h == 0,
+    "retiring to no dock collapses horizontally and vertically")
+dock.__finishTransition()
+check(dock.variant() == nil, "a scene with no config.dock retires it after collapse")
+
+-- The shell language is N-wide, not hardcoded to today's two-rect layouts.
+registry.variants.test_three = {
+    primary = "three_empty",
+    shells = {
+        { x = 0, y = 18, w = 8, h = 12 },
+        { x = 8, y = 18, w = 8, h = 12 },
+        { x = 16, y = 18, w = 16, h = 12 },
+    },
+    windows = {
+        { id = "three_empty", rect = { x = 0, y = 18, w = 8, h = 12 }, content = {} },
+    },
+}
+dock.reset()
+drawScene("save_menu")
+dock.__finishTransition()
+drawScene("save_menu")
+local threeScene = { id = "three", config = { dock = { variant = "test_three" } } }
+dock.draw({ v = {} }, threeScene, ctx)
+check(dock.__transition() and #dock.__transition().to == 3,
+    "a destination may add a third horizontally-growing shell")
+registry.variants.test_three = nil
 
 -- Fail loud, never silently (AGENTS.md): a variant name with no registry
 -- entry must raise rather than render nothing.

@@ -18,7 +18,7 @@ const PROJECT_DIR = path.resolve(__dirname, '../..');
 // Single manifest of database files exposed to the editor. Keep in sync with
 // DATA_FILES in engine/server.lua.
 const DATA_FILES = [
-    'actors', 'elements', 'items', 'maps', 'quests', 'shops',
+    'actors', 'elements', 'items', 'maps', 'lore', 'quests', 'shops',
     'sounds', 'terms', 'actionSequences', 'system', 'commonEvents',
     'skills', 'passives', 'states', 'roles', 'engine', 'flows', 'scenes', 'animations',
     'troops'

@@ -529,6 +529,7 @@ validator.run = function(loader)
     local dictColls = {
         elements = loader.elements,
         maps = loader.maps,
+        lore = loader.lore,
         quests = loader.quests,
         shops = loader.shops,
         sounds = loader.sounds,
@@ -1138,6 +1139,39 @@ validator.run = function(loader)
         if quest.completeHook then
             validateCommands(quest.completeHook, "quest", true, false, "quest '" .. tostring(qId) .. "' complete hook")
         end
+    end
+
+    -- Lore is campaign content, and event commands refer to it by id. Validate
+    -- both the authored entry shape and every unlock edge so discoveries can
+    -- never silently point at a missing datalog page.
+    for loreId, entry in pairs(loader.lore or {}) do
+        check(type(loreId) == "string" and loreId ~= "", "lore entry has an empty id")
+        check(type(entry) == "table", "lore '" .. tostring(loreId) .. "' must be an object")
+        if type(entry) == "table" then
+            check(type(entry.title) == "string" and entry.title ~= "",
+                "lore '" .. tostring(loreId) .. "' needs a title")
+            check(type(entry.category) == "string" and entry.category ~= "",
+                "lore '" .. tostring(loreId) .. "' needs a category")
+            check(type(entry.body) == "string" and entry.body ~= "",
+                "lore '" .. tostring(loreId) .. "' needs body text")
+        end
+    end
+    local function validateLoreUnlocks(node, seen, where)
+        if type(node) ~= "table" then return end
+        seen = seen or {}
+        if seen[node] then return end
+        seen[node] = true
+        if node.cmd == "UNLOCK_LORE" then
+            check(type(node.loreId) == "string" and loader.getLore(node.loreId),
+                where .. " UNLOCK_LORE references missing lore '" .. tostring(node.loreId) .. "'")
+        end
+        for _, value in pairs(node) do validateLoreUnlocks(value, seen, where) end
+    end
+    for name, root in pairs({
+        scenes = loader.scenes, flows = loader.flows, commonEvents = loader.commonEvents,
+        maps = loader.maps, quests = loader.quests, actionSequences = loader.actionSequences,
+    }) do
+        validateLoreUnlocks(root, nil, name)
     end
 
 

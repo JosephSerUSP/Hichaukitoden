@@ -357,11 +357,11 @@ function scene_host.draw(ctx)
     require("presentation.string_picture_renderer").draw("backdrop")
     require("presentation.subtractive_transition").draw()
     local window_renderer = require("presentation.window_renderer")
-    window_renderer.draw(state, sceneData, ctx)
-    -- The persistent bottom dock draws above the scene's own windows and
-    -- outlives them (see presentation/dock.lua): it is not owned by any scene,
-    -- only selected by one through `config.dock`.
+    -- The persistent dock owns the bottom windowskin shells. Scene windows draw
+    -- above them, so battle commands can occupy a dock shell without the empty
+    -- shell panel covering their controls.
     require("presentation.dock").draw(state, sceneData, ctx)
+    window_renderer.draw(state, sceneData, ctx)
     scene_transition.draw()
     return true
 end

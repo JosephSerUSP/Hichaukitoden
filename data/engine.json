@@ -692,6 +692,26 @@
       "description": "Sets or clears a session flag (the same flags conditions read)."
     },
     {
+      "id": "UNLOCK_LORE",
+      "category": "Progression",
+      "label": "Unlock Lore",
+      "params": [
+        {
+          "key": "loreId",
+          "type": "text"
+        }
+      ],
+      "contexts": [
+        "battle_phase",
+        "map",
+        "common",
+        "scene",
+        "quest"
+      ],
+      "interactive": false,
+      "description": "Permanently unlocks an authored data/lore.json entry in the current session."
+    },
+    {
       "id": "SET_MAP_PRESENTATION",
       "category": "Map Events",
       "label": "Set Map Presentation",
@@ -1474,6 +1494,17 @@
       ],
       "interactive": false,
       "description": "Fills v.questRows (rows: name, id, summary, objectives, completed) and v.questCount from quests the session has active or completed (session.flags quest:<id>:active/:completed). Quest-level only, no per-objective tracking."
+    },
+    {
+      "id": "LIST_UNLOCKED_LORE",
+      "category": "Advanced",
+      "label": "List Unlocked Lore",
+      "params": [],
+      "contexts": [
+        "scene"
+      ],
+      "interactive": false,
+      "description": "Fills v.loreRows (rows: id, name, title, category, body) and v.loreCount from baseline and session-unlocked lore entries."
     },
     {
       "id": "LIST_INPUT_BINDINGS",
@@ -2985,17 +3016,12 @@
       "title": null
     },
     "party": {
-      "x": 0,
+      "x": 14,
       "y": 18,
-      "width": 32,
+      "width": 18,
       "height": 12,
       "style": "partyGrid",
-      "title": null,
-      "anim": {
-        "open": {
-          "duration": 0.24
-        }
-      }
+      "title": null
     },
     "battle_levelup_head": {
       "x": 3,
@@ -3153,7 +3179,9 @@
       "style": "command",
       "vertical": true,
       "title": null,
-      "slotGap": 0.25
+      "slotGap": 0.25,
+      "slotHeight": 2,
+      "slotInset": 1
     },
     "battle_victory": {
       "x": 6,
@@ -3166,20 +3194,34 @@
     "battle_skill": {
       "x": 0,
       "y": 18,
-      "width": 32,
+      "width": 14,
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5
+      "visibleRows": 5,
+      "anim": {
+        "open": {
+          "duration": 0.12,
+          "effect": "expandRight",
+          "fromWidth": 9.5
+        }
+      }
     },
     "battle_item": {
       "x": 0,
       "y": 18,
-      "width": 32,
+      "width": 14,
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5
+      "visibleRows": 5,
+      "anim": {
+        "open": {
+          "duration": 0.12,
+          "effect": "expandRight",
+          "fromWidth": 9.5
+        }
+      }
     }
   },
   "dock": {
@@ -3190,11 +3232,39 @@
       "w": 32,
       "h": 12
     },
-    "crossfade": 0.18,
+    "transition": {
+      "clearDuration": 0.08,
+      "morphDuration": 0.16
+    },
     "variants": {
       "party_status": {
         "primary": "party",
+        "shells": [
+          {
+            "x": 0,
+            "y": 18,
+            "w": 14,
+            "h": 12
+          },
+          {
+            "x": 14,
+            "y": 18,
+            "w": 18,
+            "h": 12
+          }
+        ],
         "windows": [
+          {
+            "id": "dock_empty",
+            "rect": {
+              "x": 0,
+              "y": 18,
+              "w": 14,
+              "h": 12
+            },
+            "style": "frame",
+            "content": []
+          },
           {
             "id": "party",
             "content": [
@@ -3209,6 +3279,20 @@
       },
       "dialogue": {
         "primary": "dialogue_choices",
+        "shells": [
+          {
+            "x": 0,
+            "y": 18,
+            "w": 9.5,
+            "h": 12
+          },
+          {
+            "x": 9.5,
+            "y": 18,
+            "w": 22.5,
+            "h": 12
+          }
+        ],
         "windows": [
           {
             "id": "dialogue_portrait",
@@ -3242,12 +3326,13 @@
               "w": 22.5,
               "h": 12
             },
+            "style": "frame",
             "shiftWith": "dialogue_portrait",
             "shiftWhenHidden": {
               "x": 0,
               "w": 32
             },
-            "style": "frame",
+            "visible": "v.dialogueMode == 'text'",
             "align": "left",
             "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
             "content": [
@@ -3265,12 +3350,12 @@
               "w": 22.5,
               "h": 12
             },
+            "style": "list",
             "shiftWith": "dialogue_portrait",
             "shiftWhenHidden": {
               "x": 0,
               "w": 32
             },
-            "style": "list",
             "fitRows": "bottom",
             "visible": "v.dialogueMode == 'choice'",
             "content": [
@@ -3286,44 +3371,39 @@
       },
       "battle": {
         "primary": "party",
+        "shells": [
+          {
+            "x": 0,
+            "y": 18,
+            "w": 14,
+            "h": 12
+          },
+          {
+            "x": 14,
+            "y": 18,
+            "w": 18,
+            "h": 12
+          }
+        ],
         "windows": [
           {
-            "id": "party",
+            "id": "battle_dock_empty",
             "rect": {
-              "x": 9.5,
+              "x": 0,
               "y": 18,
-              "w": 22.5,
+              "w": 14,
               "h": 12
             },
+            "style": "frame",
+            "content": []
+          },
+          {
+            "id": "party",
             "content": [
               {
                 "type": "list",
                 "listId": "party",
                 "format": "{name}"
-              }
-            ]
-          },
-          {
-            "id": "battle_skill",
-            "visible": "v.combatState == 'input' and v.skillSelect == true",
-            "content": [
-              {
-                "type": "list",
-                "listId": "v:commandRows",
-                "format": "{name}",
-                "cursor": "v.selectedIndex"
-              }
-            ]
-          },
-          {
-            "id": "battle_item",
-            "visible": "v.combatState == 'input' and v.itemSelect == true",
-            "content": [
-              {
-                "type": "list",
-                "listId": "v:commandRows",
-                "format": "{name}",
-                "cursor": "v.selectedIndex"
               }
             ]
           }

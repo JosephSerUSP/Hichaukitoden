@@ -355,6 +355,7 @@ function love.load(arg)
         dofile("tests/test_map_transfer.lua")
         dofile("tests/test_battle_commands.lua")
         dofile("tests/test_troops.lua")
+        dofile("tests/test_datalog.lua")
         dofile("tests/test_dock.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end

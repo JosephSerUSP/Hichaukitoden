@@ -314,6 +314,11 @@
                 items = Object.keys(dbPayload.quests)
                     .map(k => ({ id: k, name: (dbPayload.quests[k] && dbPayload.quests[k].name) || k }));
             }
+            else if (activeDbTab === 'lore') {
+                if (!dbPayload.lore) dbPayload.lore = {};
+                items = Object.keys(dbPayload.lore)
+                    .map(k => ({ id: k, name: (dbPayload.lore[k] && dbPayload.lore[k].title) || k }));
+            }
             else if (activeDbTab === 'actionSequences') {
                 if (!dbPayload.actionSequences) dbPayload.actionSequences = {};
                 items = Object.keys(dbPayload.actionSequences)
@@ -404,6 +409,7 @@
             // Change Maximum flow.
             const STRING_KEYED_NEW = {
                 quests: { label: '＋ New Quest', make: () => createNewQuest() },
+                lore: { label: '＋ New Lore Entry', make: () => createNewLore() },
                 actionSequences: { label: '＋ New Sequence', make: () => createNewActionSequence() },
                 troops: { label: '＋ New Troop', make: () => createNewTroop() },
             };
@@ -419,7 +425,7 @@
             // Toggle change max visibility (system doesn't need expandable count)
             const changeMaxBtn = document.getElementById('db-change-max-btn');
             if (activeDbTab === 'system' || activeDbTab === 'terms'
-                || activeDbTab === 'quests' || activeDbTab === 'actionSequences'
+                || activeDbTab === 'quests' || activeDbTab === 'lore' || activeDbTab === 'actionSequences'
                 || activeDbTab === 'troops') {
                 changeMaxBtn.style.display = 'none';
             } else {
@@ -482,6 +488,76 @@
             activeDbItemId = '';
             setDirty(true);
             initDatabaseEditor();
+        }
+
+        // --- LORE ---
+        function createNewLore() {
+            const coll = dbPayload.lore = dbPayload.lore || {};
+            let counter = 1;
+            let id = 'new_lore_' + counter;
+            while (coll[id]) { counter++; id = 'new_lore_' + counter; }
+            coll[id] = { title: 'New Lore Entry', category: 'Other', body: '', order: 0 };
+            activeDbItemId = id;
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        function renameLoreKey(oldKey, newKey) {
+            newKey = (newKey || '').trim();
+            if (!newKey || newKey === oldKey) return oldKey;
+            if (!/^\w+$/.test(newKey)) { showToast('Lore id must be letters/digits/underscore.'); return oldKey; }
+            if (dbPayload.lore[newKey]) { showToast(`Lore id '${newKey}' already exists.`); return oldKey; }
+            const rebuilt = {};
+            Object.keys(dbPayload.lore).forEach(k => {
+                rebuilt[k === oldKey ? newKey : k] = dbPayload.lore[k];
+            });
+            dbPayload.lore = rebuilt;
+            activeDbItemId = newKey;
+            setDirty(true);
+            showToast(`Renamed lore to '${newKey}'. Update UNLOCK_LORE commands that referenced '${oldKey}'.`);
+            initDatabaseEditor();
+            return newKey;
+        }
+
+        function deleteLore(id) {
+            if (!confirm(`Delete lore entry '${id}'? This cannot be undone.`)) return;
+            delete dbPayload.lore[id];
+            activeDbItemId = '';
+            setDirty(true);
+            initDatabaseEditor();
+        }
+
+        function buildLoreForm(formPanel, id) {
+            const entry = dbPayload.lore[id];
+            if (!entry) return;
+            createFormField(formPanel, 'Lore ID (key)', id, val => { renameLoreKey(id, val); });
+            createFormField(formPanel, 'Title', entry.title || '', val => {
+                entry.title = val; setDirty(true); initDatabaseEditor(true);
+            });
+            createFormField(formPanel, 'Category', entry.category || '', val => { entry.category = val; });
+            createFormField(formPanel, 'Sort Order', entry.order || 0,
+                val => { entry.order = parseInt(val) || 0; }, 'number');
+            createCheckboxField(formPanel, 'Unlocked by Default', entry.unlocked === true,
+                val => { if (val) entry.unlocked = true; else delete entry.unlocked; setDirty(true); });
+
+            const bodyGroup = document.createElement('div');
+            bodyGroup.className = 'form-group';
+            const bodyLabel = document.createElement('label');
+            bodyLabel.textContent = 'Body';
+            const body = document.createElement('textarea');
+            body.className = 'win98-input';
+            body.style.cssText = 'width: 100%; height: 180px; box-sizing: border-box; resize: vertical;';
+            body.value = entry.body || '';
+            body.oninput = () => { entry.body = body.value; setDirty(true); };
+            bodyGroup.appendChild(bodyLabel);
+            bodyGroup.appendChild(body);
+            formPanel.appendChild(bodyGroup);
+
+            const del = document.createElement('button');
+            del.className = 'win98-btn';
+            del.textContent = 'Delete Lore Entry';
+            del.onclick = () => deleteLore(id);
+            formPanel.appendChild(del);
         }
 
         // --- ACTION SEQUENCES ---

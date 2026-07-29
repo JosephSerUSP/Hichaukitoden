@@ -221,6 +221,7 @@ function GameSession.new(loader)
     self.gold = 0
     self.inventory = {}
     self.flags = {}
+    self.unlockedLore = {}
     self.dungeonFloor = 1
     self.mapStates = {}
     self.portalReturn = nil

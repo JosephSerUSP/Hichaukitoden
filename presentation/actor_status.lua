@@ -283,11 +283,10 @@ function actor_status.draw(battler, x, y, isSelected, session)
     local lineY = y
     local iconW = drawElementIcons(traits.getElements(battler, session), x, lineY - 4, session)
     local nameX = x + iconW + layoutVal(session, "partyGridNameXOffset")
-    local nameClipW = math.max(1, slotContentEndX - nameX)
-    -- Silently truncate name to fit within the column (~6px per char in
-    -- 8px font). No ellipsis — just clean clipping.
-    local maxNameChars = math.floor(nameClipW / 6)
-    local displayName = (battler.name):sub(1, maxNameChars)
+    -- Silently truncate the name to fit the column. No ellipsis — just clean
+    -- clipping, now measured against the real font by the shared helper
+    -- instead of the old ~6px-per-character guess.
+    local displayName = ui.fitText(battler.name, math.max(1, slotContentEndX - nameX))
     ui.drawString(displayName, nameX, lineY, color, "left", 256)
 
     -- Cycling state icon, right-aligned on the name line so it never pushes

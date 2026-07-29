@@ -174,6 +174,7 @@ function savegame.serialize(sessionObj, loader, sceneName)
         gold = sessionObj.gold,
         inventory = sessionObj.inventory,
         flags = sessionObj.flags,
+        unlockedLore = sessionObj.unlockedLore,
         eventOverrides = sessionObj.eventOverrides,
         mapStates = sessionObj.mapStates,
         portalReturn = sessionObj.portalReturn,
@@ -203,6 +204,7 @@ function savegame.deserialize(data, loader)
     sess.gold = data.gold or 0
     sess.inventory = data.inventory or {}
     sess.flags = data.flags or {}
+    sess.unlockedLore = data.unlockedLore or {}
     sess.eventOverrides = data.eventOverrides or {}
     sess.mapStates = {}
     for k, state in pairs(data.mapStates or {}) do

@@ -2179,6 +2179,8 @@
 
             } else if (activeDbTab === 'quests') {
                 buildQuestForm(formPanel, item.id);
+            } else if (activeDbTab === 'lore') {
+                buildLoreForm(formPanel, item.id);
 
             } else if (activeDbTab === 'actionSequences') {
                 buildActionSequenceForm(formPanel, item.id);
@@ -2208,7 +2210,7 @@
                 switch (activeDbTab) {
                     case 'actors': case 'items': return item;
                     case 'skills': case 'passives': case 'states':
-                    case 'elements': case 'roles': return dbPayload[activeDbTab][item.id];
+                    case 'elements': case 'roles': case 'lore': return dbPayload[activeDbTab][item.id];
                     case 'shops': return dbPayload.shops[item.id];
                     case 'commonEvents': return dbPayload.commonEvents[item.id];
                     case 'actionSequences': return dbPayload.actionSequences[item.id];
@@ -2221,7 +2223,7 @@
                 attachJsonToggle(headerHost || formPanel, formPanel, jsonTarget, () => {
                     initDatabaseEditor();
                 });
-                if (activeDbTab !== 'terms' && activeDbTab !== 'system') {
+                if (activeDbTab !== 'terms' && activeDbTab !== 'system' && activeDbTab !== 'lore') {
                     buildMetaEditor(formPanel, jsonTarget, activeDbTab);
                 }
             }

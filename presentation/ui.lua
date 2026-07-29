@@ -267,6 +267,9 @@ end
 -- active choice — the selected party member's cell, the selected command
 -- row, etc. Falls back to the normal windowskin if the asset is missing.
 function ui.drawPanel(x, y, w, h, title, highlight)
+    -- Animated dock shells may briefly be smaller than the windowskin's
+    -- two 8px borders. There is no valid interior/scissor at that size.
+    if w < 16 or h < 16 then return end
     love.graphics.push("all")
 
     local skin = (highlight and windowskinHighlight) or windowskin
@@ -778,6 +781,29 @@ end
 function ui.measureText(text)
     if mainFont then return mainFont:getWidth(text) end
     return #tostring(text) * (ui.fontSize or 8)
+end
+
+-- Longest prefix of `text` that fits in `maxWidth` pixels. Silent truncation,
+-- no ellipsis -- the convention party status cells already used, now measured
+-- against the real font instead of assuming ~6px per character. Multibyte
+-- safe: the cut never lands inside a UTF-8 codepoint, since printf hard-errors
+-- on malformed UTF-8 and item names carry curly quotes.
+function ui.fitText(text, maxWidth)
+    text = tostring(text or "")
+    if maxWidth == nil or maxWidth <= 0 then return "" end
+    if ui.measureText(text) <= maxWidth then return text end
+    local n = #text
+    while n > 0 do
+        local byte = text:byte(n + 1)
+        while n > 0 and byte and byte >= 0x80 and byte < 0xC0 do
+            n = n - 1
+            byte = text:byte(n + 1)
+        end
+        local candidate = text:sub(1, n)
+        if ui.measureText(candidate) <= maxWidth then return candidate end
+        n = n - 1
+    end
+    return ""
 end
 
 return ui

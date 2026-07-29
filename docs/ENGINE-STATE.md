@@ -15,9 +15,10 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | id | kind | draw | world | windows | hooks |
 |---|---|---|---|---|---|
 | `1` | menu | windows | - | 7 | 8 |
-| `battle` | battle | windows | - | 7 | 7 |
+| `battle` | battle | windows | - | 9 | 7 |
 | `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 2 | 6 |
+| `datalog` | menu | windows | - | 3 | 4 |
 | `dialogue` | menu | windows | - | 0 | 1 |
 | `game_over` | menu | windows | - | 3 | 3 |
 | `items` | menu | windows | - | 3 | 8 |
@@ -33,7 +34,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 ## Registry (data/engine.json)
 
-- commands: **86**
+- commands: **88**
 - effect types: **15**
 - trait codes: **37**
 - meta keys: **8** (tier, disciplines, intensityGrade, craftable, craftIngredient, dungeonOnly, detect, detectLevel)
@@ -70,7 +71,7 @@ are what's left:
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx15, cookingx18, tinkeringx17
 - items: **198** (consumablex63, equipmentx120, questx15)
 - skills: **43**, passives: **41**, states: **14**, roles: **13**, elements: **5**
-- maps: **8**, common events: **19**, shops: **6**, quests: **4**
+- maps: **8**, common events: **19**, shops: **6**, quests: **4**, lore entries: **3**
 - animations: **28**, tilesets: **9**
 
 ## Notes for agents

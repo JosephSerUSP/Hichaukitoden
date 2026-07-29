@@ -163,11 +163,15 @@ scene inventing its own chrome:
   Content still binds to the **current** scene, so `v.dialogueText` and
   friends resolve exactly as they did when the scene owned these windows.
 
-  Transitions follow from ownership rather than from special cases:
-  same variant on both sides animates **nothing at all** (the dock stays and
-  its content re-binds); a different variant cross-fades in place over the
-  shared footprint, the incoming one arriving at rest instead of replaying
-  its grow-in; and a scene with no dock lets the outgoing variant fade out.
+  A variant declares an ordered, arbitrary-length `shells` array plus the
+  content windows that occupy those shells. Transitions use one shared
+  language rather than scene-specific effects: same variant on both sides
+  animates nothing; on a variant change all content clears, shared shells
+  morph to their destination rectangles, removed shells collapse horizontally
+  to zero width, added shells grow horizontally from zero width, and only then
+  does destination content appear. Leaving for a scene with no dock collapses
+  every shell. This supports today's two-pane map/battle/dialogue layouts and
+  future three-or-more-pane layouts without another compositor path.
 
   This replaced five copy-pasted `party` windows, a runtime-opened one on
   `map`, and a third copy drawn by `frame_renderer` for battle — plus the
@@ -179,7 +183,7 @@ scene inventing its own chrome:
 
   **Not yet folded in:** `reserve_party` and `status_dock` are still
   scene-owned windows over the same footprint, and until they move those two
-  scenes cut rather than cross-fade. Neither is a simple data edit:
+  scenes cut rather than dock-morph. Neither is a simple data edit:
   `reserve_party` is read by name from Lua (`drawSwapIndicator` in
   `window_renderer.lua`), and `status_dock` binds through
   `sel('status_party')` — a *scene* window — while a dock variant's list cache
@@ -197,7 +201,7 @@ scene inventing its own chrome:
   above all that the dock's window table is the *same table* after a
   same-variant scene change, which is what makes its animation continuous.
 
-  The dock shows one of two things depending on scene:
+  The dock's shells carry scene-specific roles:
   1. **Persistent party status** — the current/selected member's compact
      status, always visible regardless of what's happening above it.
   2. **Context-aware content laid out like the dialogue box** — left pane
@@ -220,6 +224,17 @@ scene inventing its own chrome:
 - A scene can layer scene-specific chrome above this dock (e.g. status's
   equipment-slot header + portrait), but the dock itself — and the
   context-help bar — should look and behave the same everywhere it's used.
+
+### 1.4.1 Datalog
+
+Lore is authored in `data/lore.json`, keyed by stable string id. Each entry has
+a title, category, body, optional numeric order, and optional `unlocked: true`
+for knowledge available from a new game. Runtime discoveries use the registered
+`UNLOCK_LORE` event command; the session stores only unlocked ids and save/load
+round-trips them. The `datalog` scene is an ordinary windows-drawn scene whose
+`LIST_UNLOCKED_LORE` hook command materializes display rows. This keeps lore
+content, discovery triggers, and menu behavior in the same data/event surfaces
+as the rest of the engine.
 
 ### 1.5 Extensibility (round-wide rule since o7, keep it)
 

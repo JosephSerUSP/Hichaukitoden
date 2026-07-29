@@ -278,9 +278,9 @@ function engine_state.build(loader)
     line(("- skills: **%d**, passives: **%d**, states: **%d**, roles: **%d**, elements: **%d**"):format(
         countKeys(loader.skills), countKeys(loader.passives), countKeys(loader.states),
         countKeys(loader.roles), countKeys(loader.elements)))
-    line(("- maps: **%d**, common events: **%d**, shops: **%d**, quests: **%d**"):format(
+    line(("- maps: **%d**, common events: **%d**, shops: **%d**, quests: **%d**, lore entries: **%d**"):format(
         #(loader.maps or {}), countKeys(loader.commonEvents),
-        countKeys(loader.shops), countKeys(loader.quests)))
+        countKeys(loader.shops), countKeys(loader.quests), countKeys(loader.lore)))
     line(("- animations: **%d**, tilesets: **%d**"):format(
         countKeys(loader.animations), countKeys(loader.tilesets)))
     line()

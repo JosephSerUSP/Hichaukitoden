@@ -1442,6 +1442,11 @@ handlers.WAIT = function(cmd, ctx)
     table.insert(ctx.events, { type = "wait", duration = cmd.duration or 0 })
 end
 
+handlers.UNLOCK_LORE = function(cmd, ctx)
+    ctx.session.unlockedLore = ctx.session.unlockedLore or {}
+    ctx.session.unlockedLore[cmd.loreId] = true
+end
+
 handlers.SHOW_STRING_PICTURE = function(cmd)
     present("showStringPicture", cmd)
 end
@@ -1898,6 +1903,34 @@ handlers.LIST_ACTIVE_QUESTS = function(cmd, ctx)
     ctx.v = ctx.v or {}
     ctx.v.questRows = rows
     ctx.v.questCount = #rows
+end
+
+-- Materializes authored lore into scene rows. Unlock state belongs to the
+-- session; `unlocked` entries are baseline knowledge supplied by the campaign.
+handlers.LIST_UNLOCKED_LORE = function(cmd, ctx)
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local unlocked = ctx.session and ctx.session.unlockedLore or {}
+    local rows = {}
+    for id, entry in pairs(loader.lore or {}) do
+        if entry.unlocked == true or unlocked[id] == true then
+            table.insert(rows, {
+                id = id,
+                name = entry.title or id,
+                title = entry.title or id,
+                category = entry.category or "Other",
+                body = entry.body or "",
+                order = entry.order or 0,
+            })
+        end
+    end
+    table.sort(rows, function(a, b)
+        if a.order ~= b.order then return a.order < b.order end
+        if a.category ~= b.category then return a.category < b.category end
+        return a.title < b.title
+    end)
+    ctx.v = ctx.v or {}
+    ctx.v.loreRows = rows
+    ctx.v.loreCount = #rows
 end
 
 -- Fixed display order for the Controls scene's binding list.

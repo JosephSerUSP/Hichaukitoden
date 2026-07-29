@@ -749,17 +749,31 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
             ui.drawString(label, textX, rowY, color)
             textX = textX + ui.measureText(label)
         end
-        local afterTextX = ui.drawIconText(row.icon, interpolate(format, rEnv), textX, rowY, color)
+        -- Clip the label to the window's interior. A list is no longer always
+        -- wide: battle's skill/item lists share the command box's 76px column,
+        -- where an untruncated "HP Tonic x5 [1 pending]" ran straight out of
+        -- the panel and across the party status beside it.
         local scrollPad = 6
+        local rightEdge = spriteField and (x + w - cardPad * 2 - scrollPad)
+            or (x + w - ui.toPx(0.5) - scrollPad)
+
+        -- A right-hand column (qty, price) owns its width; the label gets what
+        -- is left. Strip \c[N] colour codes before measuring, since drawString
+        -- removes them during rendering but measureText counts them.
+        local rightText, rightW = nil, 0
         if win.formatRight and win.formatRight ~= "" then
-            local rightText = interpolate(win.formatRight, rEnv)
-            -- Strip \c[N] color codes before measuring, since drawString
-            -- removes them during rendering but measureText counts them.
-            local measureText = rightText:gsub("\\c%[%d+%]", "")
-            local rightW = ui.measureText(measureText)
-            local rightEdge = spriteField and (x + w - cardPad * 2 - scrollPad) or (x + w - ui.toPx(0.5) - scrollPad)
-            local rightX = rightEdge - rightW
-            ui.drawString(rightText, rightX, rowY, color)
+            rightText = interpolate(win.formatRight, rEnv)
+            rightW = ui.measureText((rightText:gsub("\\c%[%d+%]", ""))) + ui.toPx(0.5)
+        end
+
+        local iconBlockW = (row.icon and row.icon > 0)
+            and (ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)) or 0
+        local labelText = ui.fitText(interpolate(format, rEnv),
+            rightEdge - rightW - textX - iconBlockW)
+        local afterTextX = ui.drawIconText(row.icon, labelText, textX, rowY, color)
+
+        if rightText then
+            ui.drawString(rightText, rightEdge - rightW + ui.toPx(0.5), rowY, color)
         end
         if hasGauge then
             -- (extra parens: see drawLayoutGauges — truncates eval's
@@ -974,18 +988,12 @@ local function drawOptions(rows, cursor, env, x, y, w)
     end
 end
 
--- "command" style: each entry is its own bordered slot (owner direction
--- 13.07.2026), not free-floating text in one shared bar. Slots fill the
--- window's whole x/y/w/h bounding box evenly, each with a small gap.
--- Supports vertical stacking if layout.vertical is true.
+-- "command" style: fixed-size buttons inside one persistent panel. Buttons do
+-- not stretch when a creature authors fewer commands; stable geometry makes
+-- the menu feel like a console rather than an accordion.
 local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     local n = #rows
     if n == 0 then return end
-    -- Gap between slots, in tiles, authored on the window. Five commands
-    -- stacked vertically in the dock's 96px get ~14px each at the old fixed
-    -- 0.5 tiles, which the windowskin's own borders crowd; 0.25 buys ~17px and
-    -- the slots read cleanly. Per-window rather than tightened globally, since
-    -- the horizontal command bars have room to spare.
     local gap = ui.toPx((layout and layout.slotGap) or 0.5)
     local isVertical = layout and (layout.vertical or layout.direction == "vertical")
     -- A row with an icon (skill/passive-style rows) draws as one centered
@@ -1015,14 +1023,17 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     end
 
     if isVertical then
-        local slotH = (h - gap * (n + 1)) / n
+        local inset = ui.toPx((layout and layout.slotInset) or 1)
+        local slotH = ui.toPx((layout and layout.slotHeight) or 2)
+        local slotW = math.max(ui.toPx(2), w - inset * 2)
         for i, row in ipairs(rows) do
             local isSel = (i == cursor)
-            local sy = y + gap + (i - 1) * (slotH + gap)
-            ui.drawPanel(x, sy, w, slotH, nil, isSel)
+            local sy = y + inset + (i - 1) * (slotH + gap)
+            ui.drawPanel(x + inset, sy, slotW, slotH, nil, isSel)
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
             local textY = sy + slotH / 2 - ui.lineHeight / 2
-            drawSlotLabel(row, color, x, w, textY, isSel and (sy + slotH / 2 - 4) or nil)
+            drawSlotLabel(row, color, x + inset, slotW, textY,
+                isSel and (sy + slotH / 2 - 4) or nil)
         end
     else
         local slotW = (w - gap * (n + 1)) / n
@@ -1188,6 +1199,11 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
         local ph = math.max(16, h * ease)
         return cx - pw / 2, cy - ph / 2, pw, ph, 1, true
 
+    elseif effect == "expandRight" then
+        local fromW = ui.toPx(anim.fromWidth or 2)
+        local pw = fromW + (w - fromW) * ease
+        return x, y, pw, h, 1, true
+
     elseif effect == "fade" then
         -- Rect stays fixed, alpha animates.
         local alpha = ease
@@ -1318,7 +1334,7 @@ end
 -- battleLayout, independently of the window's rect (see the Summoner
 -- rework note above drawEnemyRowWindow in renderer.lua) — drawing the
 -- generic outer panel too would double up or mismatch.
-local NO_OUTER_PANEL_STYLES = { command = true, enemyRow = true, battleLog = true, victoryPanel = true }
+local NO_OUTER_PANEL_STYLES = { enemyRow = true, battleLog = true, victoryPanel = true }
 
 -- Applies a layout's shiftWith override after visibility is resolved.
 -- When layout.shiftWith names another window id that is currently hidden,
