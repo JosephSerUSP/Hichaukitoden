@@ -3272,7 +3272,7 @@
         },
         {
           "cmd": "IF",
-          "condition": "(v.combatState == 'log' and not v.hookHandled) or v.combatState == 'victory'",
+          "condition": "(v.combatState == 'log' and not v.hookHandled) or v.combatState == 'victory' or v.combatState == 'levelup'",
           "then": [
             {
               "cmd": "SET_VAR",
@@ -3451,6 +3451,29 @@
         "visible": "v.combatState == 'victory'",
         "style": "victoryPanel",
         "content": []
+      },
+      {
+        "id": "battle_levelup_head",
+        "visible": "v.combatState == 'levelup'",
+        "content": [
+          {
+            "type": "text",
+            "text": "{v.levelUpName}  {v.levelUpCounter}\nLevel {v.levelUpFromLevel} -> {v.levelUpToLevel}\nEXP {v.levelUpExp}/{v.levelUpExpNeeded}\n{v.levelUpNoteText}"
+          }
+        ]
+      },
+      {
+        "id": "battle_levelup_stats",
+        "visible": "v.combatState == 'levelup'",
+        "waitInput": "1",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:levelUpRows",
+            "format": "{label}   {from} -> {to}   {deltaText}",
+            "cursor": "0"
+          }
+        ]
       }
     ],
     "config": {

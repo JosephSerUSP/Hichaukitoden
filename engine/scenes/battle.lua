@@ -28,6 +28,7 @@ local config = require("engine.config")
 local loader = require("data.loader")
 local animation_player = require("presentation.animation_player")
 local compareIds = require("engine.inventory").compareIds
+local progress = require("engine.progress")
 
 local battle = {}
 
@@ -602,7 +603,31 @@ function battle.handleTransition(action)
             -- Press ENTER starts the drain animation
             v.victoryStage = 1
         elseif renderer.getVictoryStage() == 2 then
-            -- Drain complete, dismiss
+            -- Drain complete. Anyone who gained a level gets read one at a
+            -- time before the battle actually ends; with nobody to report,
+            -- this is the same immediate dismissal it always was.
+            if #(v.levelUps or {}) > 0 then
+                v.levelUpIndex = 1
+                progress.publish(v, v.levelUps, 1)
+                v.combatState = "levelup"
+            else
+                scene_host.goto_scene("map")
+                resolved("victory")
+            end
+        end
+        return true
+    end
+
+    -- The level-up report: one creature per confirm press, in party order.
+    -- Everything shown is authored (data/scenes.json windows + engine.json
+    -- windowLayout) over the vars progress.publish sets; the scene only moves
+    -- the cursor through the list.
+    if v.combatState == "levelup" then
+        local nextIndex = (v.levelUpIndex or 1) + 1
+        if nextIndex <= #(v.levelUps or {}) then
+            v.levelUpIndex = nextIndex
+            progress.publish(v, v.levelUps, nextIndex)
+        else
             scene_host.goto_scene("map")
             resolved("victory")
         end
@@ -674,6 +699,10 @@ function battle.handleTransition(action)
         for _, c in ipairs(s.party) do
             before[c] = { level = c.level, exp = c.exp }
         end
+        -- Slot-keyed snapshot for the level-up report (engine/progress.lua).
+        -- Taken here rather than inside the flow because the report is a diff
+        -- across the WHOLE grant, not per GRANT_XP command.
+        local growthBefore = progress.snapshot(s)
         -- battle.victory is a validator-required phase (no legacy fallback);
         -- it also runs the REAP_FALLEN permadeath sweep.
         local flowEvents = flow.run("battle.victory", { session = s, battle = b, party = s.party, enemies = b.enemies })
@@ -698,6 +727,9 @@ function battle.handleTransition(action)
             members = members,
         }
         v.victoryStage = 0
+        v.levelUps = progress.levelUps(s, growthBefore)
+        v.levelUpIndex = 0
+        progress.publish(v, v.levelUps, 0)
         if not queueReapEvents(flowEvents, "victory") then
             v.combatState = "victory"
         end
