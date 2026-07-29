@@ -643,7 +643,8 @@ local function drawActorStatusCell(layout, env, x, y, title, ctx)
     return rowH
 end
 
-local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
+local function drawList(cfg)
+    local win, layout, rows, cursor, env, x, y, w, h, title = cfg.win, cfg.layout, cfg.rows, cfg.cursor, cfg.env, cfg.x, cfg.y, cfg.w, cfg.h, cfg.title
     local contentX, contentY = contentOrigin(layout, title, x, y)
 
     -- Integrated Tab Header Strip (Option 1 / Approach A):
@@ -1231,7 +1232,10 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     if style == "list" then
         local cached = listCache[id]
         if cached then
-            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
+            drawList({
+                win = win, layout = layout, rows = cached.rows, cursor = cached.cursor,
+                env = env, x = x, y = y, w = w, h = h, title = title
+            })
         end
         if text then
             drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
