@@ -3124,6 +3124,110 @@
       "title": null
     }
   },
+  "dock": {
+    "note": "The persistent bottom dock (SPEC 1.4). One surface owned by presentation/dock.lua, NOT a scene's window: its state survives scene changes, so moving between two scenes that want the same variant animates nothing at all. Scenes pick a variant with config.dock in scenes.json; geometry per window still comes from windowLayout above. Adding a variant is a data edit. Still outside the dock: reserve_party (read by name from Lua in window_renderer's drawSwapIndicator) and status_dock (binds sel('status_party'), a SCENE window, which a variant's list cache cannot see) — both need code changes first, not just data.",
+    "footprint": {
+      "x": 0,
+      "y": 18,
+      "w": 32,
+      "h": 12
+    },
+    "crossfade": 0.18,
+    "variants": {
+      "party_status": {
+        "primary": "party",
+        "windows": [
+          {
+            "id": "party",
+            "content": [
+              {
+                "type": "list",
+                "listId": "party",
+                "format": "{name}"
+              }
+            ]
+          }
+        ]
+      },
+      "dialogue": {
+        "primary": "dialogue_choices",
+        "windows": [
+          {
+            "id": "dialogue_portrait",
+            "rect": {
+              "x": 0,
+              "y": 18,
+              "w": 9.5,
+              "h": 12
+            },
+            "style": "frame",
+            "visible": "v.dialoguePortrait ~= nil and v.dialoguePortrait ~= ''",
+            "content": [
+              {
+                "type": "image",
+                "portraitField": "v.dialoguePortrait",
+                "portraitX": 1,
+                "portraitY": 1,
+                "portraitW": 7.5,
+                "portraitH": 10,
+                "portraitOverflow": 0.5,
+                "portraitFrame": "v.dialogueExpression",
+                "portraitName": "v.dialogueSpeaker"
+              }
+            ]
+          },
+          {
+            "id": "dialogue_message",
+            "rect": {
+              "x": 9.5,
+              "y": 18,
+              "w": 22.5,
+              "h": 12
+            },
+            "shiftWith": "dialogue_portrait",
+            "shiftWhenHidden": {
+              "x": 0,
+              "w": 32
+            },
+            "style": "frame",
+            "align": "left",
+            "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
+            "content": [
+              {
+                "type": "text",
+                "text": "{v.dialogueText}"
+              }
+            ]
+          },
+          {
+            "id": "dialogue_choices",
+            "rect": {
+              "x": 9.5,
+              "y": 18,
+              "w": 22.5,
+              "h": 12
+            },
+            "shiftWith": "dialogue_portrait",
+            "shiftWhenHidden": {
+              "x": 0,
+              "w": 32
+            },
+            "style": "list",
+            "fitRows": "bottom",
+            "visible": "v.dialogueMode == 'choice'",
+            "content": [
+              {
+                "type": "list",
+                "listId": "v:dialogueOptions",
+                "format": "{name}",
+                "cursor": "v.dialogueCursorIdx"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
   "fogPresets": [
     {
       "id": "blue_haze",

@@ -354,6 +354,7 @@ function love.load(arg)
         dofile("tests/test_map_transfer.lua")
         dofile("tests/test_battle_commands.lua")
         dofile("tests/test_troops.lua")
+        dofile("tests/test_dock.lua")
         print("ALL UNIT TESTS OK")
         if love.event and love.event.quit then love.event.quit(0) end
         return
@@ -624,21 +625,6 @@ function love.update(dt)
     require("presentation.image_picture_renderer").update(dt)
     require("presentation.subtractive_transition").update(dt)
     door_transition.update(dt)
-    -- The opening map HUD waits until the door/world reveal is complete.
-    -- SET_LIST in the map scene has already created the runtime window state;
-    -- toggling `open` here lets its ordinary tile-grown window animation begin
-    -- on the first fully revealed map frame instead of underneath blackout.
-    if scene_host.getCurrent() == "map" and not door_transition.isActive() then
-        local mapState = scene_host.getCurrentState()
-        if mapState and mapState.winState and mapState.winState.party
-            and not mapState.winState.party.open then
-            if mapState.v and mapState.v._seamlessWindowFootprint then
-                mapState.winState.party._skipOpenAnim = true
-                mapState.v._seamlessWindowFootprint = nil
-            end
-            mapState.winState.party.open = true
-        end
-    end
     server.update(dt)
     if server.configReloaded then
         server.configReloaded = false
