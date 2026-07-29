@@ -2496,6 +2496,38 @@ elseif paramDef.type == "script" then
         shake = true, particles = true, force_field = true,
         gradient_map = true, screen_flash = true,
     }
+    -- Anchor spec (every entry, not just system ones): the drawer RAISES on an
+    -- unknown point rather than quietly centering, so an authoring typo must be
+    -- a build failure instead of a crash the first time the animation plays.
+    local battler_geometry = require("presentation.battler_geometry")
+    for id, entry in pairs(loader.animations or {}) do
+        local anchor = entry.anchor
+        if anchor ~= nil then
+            check(type(anchor) == "table",
+                "animation system: entry '" .. tostring(id) .. "' anchor must be a table")
+            if type(anchor) == "table" then
+                check(anchor.point == nil or battler_geometry.ANCHOR_POINTS[anchor.point],
+                    "animation system: entry '" .. tostring(id) .. "' has unknown anchor point '"
+                    .. tostring(anchor.point) .. "' (expected center, feet, head or top_left)")
+                for _, field in ipairs({ "offsetX", "offsetY", "relativeOffsetX", "relativeOffsetY" }) do
+                    check(anchor[field] == nil or type(anchor[field]) == "number",
+                        "animation system: entry '" .. tostring(id) .. "' anchor." .. field
+                        .. " must be a number")
+                end
+            end
+        end
+    end
+
+    -- The battleLayout anchor defaults are authored data too, and reach the
+    -- same resolver: an invalid point here breaks every animation at once.
+    local battleLayout = (loader.engine or {}).battleLayout or {}
+    for _, key in ipairs({ "popupAnchorPoint", "animationAnchorPoint" }) do
+        local point = battleLayout[key]
+        check(point == nil or battler_geometry.ANCHOR_POINTS[point],
+            "battleLayout." .. key .. " is '" .. tostring(point)
+            .. "' (expected center, feet, head or top_left)")
+    end
+
     for id, entry in pairs(loader.animations or {}) do
         if entry.class == "system" then
             check(type(entry.tracks) == "table",

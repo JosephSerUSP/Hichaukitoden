@@ -165,9 +165,14 @@ end
 -- special case (presentation/renderer.lua drawEnemyRowWindow) — same
 -- pattern, party side. system.swap_in needs no such case: it plays on the
 -- ALIVE incoming battler, which already gets full treatment via `not dead`.
-function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
+function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef, session)
     local ss = small_battlers.get(spriteKey)
     if not (ss and ss.img) then return false end
+
+    -- The box this sprite occupies. Animations anchor against it (feet/head/
+    -- center + size-relative offsets), which is how a party member gets the
+    -- same treatment as an enemy portrait from ONE authored entry.
+    local rect = { x = x, y = y, w = size, h = size }
 
     local isFadingOut = dead and battlerRef and
         (animation_player.isPlaying(battlerRef, "system.reap")
@@ -205,7 +210,7 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
 
     if animated and battlerRef then
         love.graphics.setColor(1, 1, 1, 1)
-        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "back")
+        animation_player.drawParticles(battlerRef, rect, drawSprite, "back", session)
     end
 
     if dead and not isFadingOut then
@@ -230,7 +235,7 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef)
 
     if animated and battlerRef then
         love.graphics.setColor(1, 1, 1, 1)
-        animation_player.drawParticles(battlerRef, drawX + size / 2, y + size, drawSprite, "front")
+        animation_player.drawParticles(battlerRef, rect, drawSprite, "front", session)
     end
 
     love.graphics.setColor(1, 1, 1, 1)

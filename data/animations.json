@@ -194,6 +194,9 @@
     "id": "system.heal",
     "class": "system",
     "duration": 1000,
+    "anchor": {
+      "point": "feet"
+    },
     "tracks": [
       {
         "type": "particles",
@@ -468,6 +471,9 @@
     "id": "skill.holy_smite",
     "class": "assignable",
     "duration": 700,
+    "anchor": {
+      "point": "head"
+    },
     "tracks": [
       {
         "type": "blend",
@@ -569,6 +575,9 @@
     "id": "skill.flame_rebirth",
     "class": "assignable",
     "duration": 900,
+    "anchor": {
+      "point": "feet"
+    },
     "tracks": [
       {
         "type": "blend",
@@ -690,6 +699,9 @@
     "id": "item.heal_tonic",
     "class": "assignable",
     "duration": 1000,
+    "anchor": {
+      "point": "feet"
+    },
     "tracks": [
       {
         "type": "particles",
@@ -985,6 +997,9 @@
     "id": "demo.thunder_strike",
     "class": "assignable",
     "duration": 1000,
+    "anchor": {
+      "point": "head"
+    },
     "tracks": [
       {
         "type": "screen_flash",
