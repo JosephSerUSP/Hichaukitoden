@@ -3415,7 +3415,7 @@
       },
       {
         "id": "battle_command",
-        "visible": "v.combatState == 'input'",
+        "visible": "v.combatState == 'input' and not v.skillSelect and not v.itemSelect",
         "content": [
           {
             "type": "list",
@@ -3478,7 +3478,7 @@
     ],
     "config": {
       "dock": {
-        "variant": "party_status",
+        "variant": "battle",
         "cursor": "v.combatState == 'input' and (v.livingMembers and v.livingMembers[v.activeMemberIdx or 1] and v.livingMembers[v.activeMemberIdx or 1].index or 0) or 0",
         "offsetY": "(v.defeatSlideT or 0) * 240"
       }

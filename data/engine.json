@@ -2349,10 +2349,10 @@
     "headerTileOffset": 1,
     "fallbackX": 128,
     "fallbackY": 70,
-    "enemyY": 44,
+    "enemyY": 60,
     "enemySpriteSize": 64,
     "enemyInfoVisible": true,
-    "enemyInfoWidth": 96,
+    "enemyInfoWidth": 48,
     "enemyInfoClampToSlot": false,
     "enemyInfoOffsetY": -7,
     "enemyInfoBarOffsetY": 12,
@@ -2362,7 +2362,7 @@
     "enemyInfoShowElements": true,
     "enemyFallbackSize": 50,
     "viewportOverlayW": 256,
-    "viewportOverlayH": 140,
+    "viewportOverlayH": 144,
     "logPanelX": 10,
     "logPanelY": 6,
     "logPanelWidth": 236,
@@ -2400,8 +2400,6 @@
     "victoryPanelTileW": 20,
     "victoryPanelTileH": 14,
     "victoryLineSpacing": 12,
-    "commandBarTileH": 2.5,
-    "commandBarTextYOffset": 6,
     "victoryRowHeight": 18,
     "victoryGaugeWidth": 120,
     "victoryGaugeHeight": 3
@@ -3143,17 +3141,19 @@
       "x": 0,
       "y": 0,
       "width": 32,
-      "height": 17.5,
+      "height": 18,
       "style": "enemyRow",
       "title": null
     },
     "battle_command": {
       "x": 0,
-      "y": 15.5,
-      "width": 32,
-      "height": 2.5,
+      "y": 18,
+      "width": 9.5,
+      "height": 12,
       "style": "command",
-      "title": null
+      "vertical": true,
+      "title": null,
+      "slotGap": 0.25
     },
     "battle_victory": {
       "x": 6,
@@ -3162,6 +3162,24 @@
       "height": 14,
       "style": "victoryPanel",
       "title": null
+    },
+    "battle_skill": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "list",
+      "title": null,
+      "visibleRows": 5
+    },
+    "battle_item": {
+      "x": 0,
+      "y": 18,
+      "width": 32,
+      "height": 12,
+      "style": "list",
+      "title": null,
+      "visibleRows": 5
     }
   },
   "dock": {
@@ -3261,6 +3279,51 @@
                 "listId": "v:dialogueOptions",
                 "format": "{name}",
                 "cursor": "v.dialogueCursorIdx"
+              }
+            ]
+          }
+        ]
+      },
+      "battle": {
+        "primary": "party",
+        "windows": [
+          {
+            "id": "party",
+            "rect": {
+              "x": 9.5,
+              "y": 18,
+              "w": 22.5,
+              "h": 12
+            },
+            "content": [
+              {
+                "type": "list",
+                "listId": "party",
+                "format": "{name}"
+              }
+            ]
+          },
+          {
+            "id": "battle_skill",
+            "visible": "v.combatState == 'input' and v.skillSelect == true",
+            "content": [
+              {
+                "type": "list",
+                "listId": "v:commandRows",
+                "format": "{name}",
+                "cursor": "v.selectedIndex"
+              }
+            ]
+          },
+          {
+            "id": "battle_item",
+            "visible": "v.combatState == 'input' and v.itemSelect == true",
+            "content": [
+              {
+                "type": "list",
+                "listId": "v:commandRows",
+                "format": "{name}",
+                "cursor": "v.selectedIndex"
               }
             ]
           }

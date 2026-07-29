@@ -981,7 +981,12 @@ end
 local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     local n = #rows
     if n == 0 then return end
-    local gap = ui.toPx(0.5)
+    -- Gap between slots, in tiles, authored on the window. Five commands
+    -- stacked vertically in the dock's 96px get ~14px each at the old fixed
+    -- 0.5 tiles, which the windowskin's own borders crowd; 0.25 buys ~17px and
+    -- the slots read cleanly. Per-window rather than tightened globally, since
+    -- the horizontal command bars have room to spare.
+    local gap = ui.toPx((layout and layout.slotGap) or 0.5)
     local isVertical = layout and (layout.vertical or layout.direction == "vertical")
     -- A row with an icon (skill/passive-style rows) draws as one centered
     -- "[icon] name" unit via ui.drawIconText, instead of printf's own
