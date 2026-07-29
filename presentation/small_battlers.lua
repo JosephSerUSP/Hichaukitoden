@@ -71,6 +71,13 @@ function small_battlers.resolveFile(spriteKey)
         "assets/system/" .. fileKey .. ".png",
         "assets/system/" .. fileKey:sub(1, 1):upper() .. fileKey:sub(2):lower() .. ".png",
     }
+
+    for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            return { path = p, tokens = overrides }
+        end
+    end
+
     if not small_battlers._fileIndex then
         local index = {}
         for _, dir in ipairs({ "assets/smallBattlers", "assets/sprites", "assets/system" }) do
@@ -92,14 +99,11 @@ function small_battlers.resolveFile(spriteKey)
     end
     local indexed = small_battlers._fileIndex[fileKey:lower()]
     if indexed then
-        table.insert(paths, indexed.path)
         for k, v in pairs(indexed.tokens) do
             if overrides[k] == nil then overrides[k] = v end
         end
-    end
-    for _, p in ipairs(paths) do
-        if love.filesystem.getInfo(p) then
-            return { path = p, tokens = overrides }
+        if love.filesystem.getInfo(indexed.path) then
+            return { path = indexed.path, tokens = overrides }
         end
     end
     return nil
