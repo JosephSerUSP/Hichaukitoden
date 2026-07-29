@@ -292,8 +292,9 @@
 
             // -- Viewer: preview frame at 2X + overlay handles + status chip --
             const stageWrap = document.createElement('div');
+            stageWrap.className = 'transparent-checker';
             stageWrap.style.cssText = 'width: ' + (240 * SCALE) + 'px; height: ' + (240 * SCALE) + 'px; border: 2px inset var(--win-shadow); position: relative; overflow: hidden; user-select: none; margin: 0 auto;'
-                + 'background: repeating-conic-gradient(#2a2a2a 0% 25%, #1c1c1c 0% 50%) 0 0 / 32px 32px;';
+                + '--checker-size: 32px;';
             stageCol.appendChild(stageWrap);
 
             const previewImg = document.createElement('img');

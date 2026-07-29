@@ -44,8 +44,14 @@
             thumbRow.style.cssText = 'display: flex; align-items: center; gap: 6px;';
 
             const thumbWrap = document.createElement('div');
-            thumbWrap.style.cssText = 'width: 48px; height: 48px; border: 1px inset var(--win-shadow); background: #000; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer;';
+            thumbWrap.className = 'transparent-checker';
+            thumbWrap.style.cssText = 'width: 48px; height: 48px; border: 1px inset var(--win-shadow); display: inline-flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; cursor: pointer; --checker-size: 8px;';
             thumbWrap.title = 'Double-click to select image';
+
+            // Sprite strips play on their own layer so the wrapper keeps the
+            // shared transparency checkerboard underneath them.
+            const animLayer = document.createElement('div');
+            animLayer.style.cssText = 'width: 100%; height: 100%; display: none;';
 
             const img = document.createElement('img');
             img.style.cssText = 'max-width: 100%; max-height: 100%; image-rendering: pixelated;';
@@ -59,13 +65,9 @@
             img.onerror = () => { img.style.display = 'none'; noneTxt.style.display = 'block'; };
 
             function updateThumb(path) {
-                thumbWrap.classList.remove('sprite-sheet-anim');
-                thumbWrap.style.backgroundImage = '';
-                // The base thumbWrap style sets "background: #000" as a shorthand,
-                // which (being inline) always outranks the .sprite-sheet-anim
-                // class's background-size/repeat — so those must be set inline too.
-                thumbWrap.style.backgroundRepeat = '';
-                thumbWrap.style.backgroundSize = '';
+                animLayer.classList.remove('sprite-sheet-anim');
+                animLayer.style.display = 'none';
+                animLayer.style.backgroundImage = '';
                 if (path) {
                     path = path.replace(/\\/g, '/');
                     const resolved = (isBareKey && !path.includes('/'))
@@ -90,16 +92,17 @@
                             const boxPx = thumbWrap.clientWidth || 48;
                             const cell = Math.min(probe.naturalWidth, probe.naturalHeight);
                             const frames = Math.max(1, Math.floor(probe.naturalWidth / cell));
-                            thumbWrap.style.backgroundImage = `url('${resolved}')`;
-                            thumbWrap.style.backgroundRepeat = 'no-repeat';
+                            animLayer.style.backgroundImage = `url('${resolved}')`;
+                            animLayer.style.backgroundRepeat = 'no-repeat';
                             // Explicit px sizing (rather than "auto 100%") keeps each
                             // frame exactly boxPx wide, so the steps() animation below
                             // lands precisely on cell boundaries instead of drifting.
-                            thumbWrap.style.backgroundSize = `${frames * boxPx}px ${boxPx}px`;
-                            thumbWrap.style.setProperty('--sprite-frames', frames);
-                            thumbWrap.style.setProperty('--sprite-cell-px', boxPx + 'px');
-                            thumbWrap.style.setProperty('--sprite-dur', (frames / fps) + 's');
-                            thumbWrap.classList.add('sprite-sheet-anim');
+                            animLayer.style.backgroundSize = `${frames * boxPx}px ${boxPx}px`;
+                            animLayer.style.setProperty('--sprite-frames', frames);
+                            animLayer.style.setProperty('--sprite-cell-px', boxPx + 'px');
+                            animLayer.style.setProperty('--sprite-dur', (frames / fps) + 's');
+                            animLayer.style.display = 'block';
+                            animLayer.classList.add('sprite-sheet-anim');
                         };
                         probe.onerror = () => { noneTxt.style.display = 'block'; };
                         probe.src = resolved;
@@ -116,6 +119,7 @@
             updateThumb(value);
 
             thumbWrap.appendChild(img);
+            thumbWrap.appendChild(animLayer);
             thumbWrap.appendChild(noneTxt);
             thumbRow.appendChild(thumbWrap);
 
@@ -140,9 +144,14 @@
             document.getElementById('asset-picker-selected').value = '';
             // Clear preview
             const prevImg = document.getElementById('asset-preview-img');
+            const prevAnim = document.getElementById('asset-preview-anim');
             const prevNone = document.getElementById('asset-preview-none');
             if (prevImg) { prevImg.style.display = 'none'; prevImg.src = ''; }
+            if (prevAnim) { prevAnim.style.display = 'none'; prevAnim.classList.remove('sprite-sheet-anim'); }
             if (prevNone) prevNone.style.display = 'block';
+            const hue = document.getElementById('asset-preview-hue');
+            if (hue) hue.value = 0;
+            setAssetPreviewHue(0);
 
             fetch(`${API_URL}/api/assets?dir=${encodeURIComponent(defaultDir)}`)
                 .then(r => r.json())
@@ -171,56 +180,130 @@
                 });
         }
 
+        // RM2003's Enemy Graphic dialog: a plain name list on the left drives a
+        // single large preview on the right. Selection follows the list cursor,
+        // so arrow keys browse the folder the way the original does.
         function renderAssetPickerFiles(files) {
-            const grid = document.getElementById('asset-picker-grid');
-            grid.innerHTML = '';
+            const list = document.getElementById('asset-picker-list');
+            list.innerHTML = '';
 
-            files.forEach(f => {
-                const card = document.createElement('div');
-                card.style.border = '1px solid #c0c0c0';
-                card.style.padding = '4px';
-                card.style.cursor = 'pointer';
-                card.style.display = 'flex';
-                card.style.flexDirection = 'column';
-                card.style.alignItems = 'center';
-                card.style.justifyContent = 'center';
-                card.style.background = '#f0f0f0';
-                card.style.fontSize = '9px';
-                card.style.textAlign = 'center';
-                card.style.height = '64px';
-                card.style.boxSizing = 'border-box';
+            files.forEach((f, i) => {
+                const row = document.createElement('div');
+                row.className = 'list-row' + (i % 2 ? ' stripe-alt' : '');
+                row.style.cursor = 'default';
+                row.dataset.path = f;
 
-                const img = document.createElement('img');
-                img.src = '/' + f;
-                img.style.maxHeight = '32px';
-                img.style.maxWidth = '100%';
-                img.style.display = 'block';
-                img.style.marginBottom = '2px';
-                card.appendChild(img);
+                const thumb = document.createElement('img');
+                thumb.src = '/' + f;
+                thumb.style.cssText = 'width: 14px; height: 14px; object-fit: contain; image-rendering: pixelated; flex-shrink: 0;';
+                row.appendChild(thumb);
 
-                const name = document.createElement('div');
-                name.textContent = f.split('/').pop();
-                name.style.overflow = 'hidden';
-                name.style.textOverflow = 'ellipsis';
-                name.style.whiteSpace = 'nowrap';
-                name.style.width = '100%';
-                card.appendChild(name);
+                const name = document.createElement('span');
+                name.textContent = f.split('/').pop().replace(/\.[^.]+$/, '');
+                name.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                row.appendChild(name);
 
-                card.onclick = () => {
-                    document.querySelectorAll('#asset-picker-grid > div').forEach(c => c.style.border = '1px solid #c0c0c0');
-                    card.style.border = '2px solid var(--win-blue)';
-                    document.getElementById('asset-picker-selected').value = f;
-                    // Update the full-resolution preview
-                    const prevImg = document.getElementById('asset-preview-img');
-                    const prevNone = document.getElementById('asset-preview-none');
-                    if (prevImg && prevNone) {
-                        prevImg.src = '/' + f;
-                        prevImg.style.display = 'block';
-                        prevNone.style.display = 'none';
-                    }
-                };
+                row.onclick = () => selectAssetRow(row);
+                row.ondblclick = () => { selectAssetRow(row); applyAssetSelection(); };
 
-                grid.appendChild(card);
+                list.appendChild(row);
+            });
+
+            list.onkeydown = (e) => {
+                if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+                e.preventDefault();
+                const rows = Array.from(list.children);
+                if (!rows.length) return;
+                const cur = rows.findIndex(r => r.classList.contains('selected'));
+                if (e.key === 'Enter') { if (cur >= 0) applyAssetSelection(); return; }
+                const next = e.key === 'ArrowDown'
+                    ? Math.min(rows.length - 1, cur + 1)
+                    : Math.max(0, cur < 0 ? 0 : cur - 1);
+                selectAssetRow(rows[next]);
+                rows[next].scrollIntoView({ block: 'nearest' });
+            };
+        }
+
+        function selectAssetRow(row) {
+            const list = document.getElementById('asset-picker-list');
+            Array.from(list.children).forEach(r => r.classList.remove('selected'));
+            row.classList.add('selected');
+            document.getElementById('asset-picker-selected').value = row.dataset.path;
+
+            renderAssetPreview(row.dataset.path);
+        }
+
+        // Dirs whose PNGs the engine reads as horizontal animation strips
+        // (mirrors small_battlers.resolveFile's search paths). Elsewhere a
+        // wide image is just a wide image, so it must not be sliced.
+        const ASSET_STRIP_DIRS = ['smallBattlers', 'sprites', 'system'];
+
+        function renderAssetPreview(path) {
+            const box = document.getElementById('asset-preview-wrap');
+            const img = document.getElementById('asset-preview-img');
+            const anim = document.getElementById('asset-preview-anim');
+            const none = document.getElementById('asset-preview-none');
+            if (!box || !img || !anim || !none) return;
+
+            img.style.display = 'none';
+            img.style.width = '';
+            anim.style.display = 'none';
+            anim.classList.remove('sprite-sheet-anim');
+            none.style.display = 'none';
+
+            const probe = new Image();
+            probe.onerror = () => { none.style.display = 'block'; };
+            probe.onload = () => {
+                const cell = Math.min(probe.naturalWidth, probe.naturalHeight);
+                const frames = Math.max(1, Math.floor(probe.naturalWidth / cell));
+                const isStrip = ASSET_STRIP_DIRS.some(d => path.includes('/' + d + '/'))
+                    && frames > 1
+                    && probe.naturalWidth % cell === 0;
+
+                // Whole-pixel upscale: a 24px sprite would otherwise sit as a
+                // speck in the preview box. Nearest-neighbour keeps it crisp.
+                const zoom = Math.max(1, Math.min(
+                    4,
+                    Math.floor(box.clientWidth / (isStrip ? cell : probe.naturalWidth)),
+                    Math.floor(box.clientHeight / probe.naturalHeight)
+                ));
+
+                if (isStrip) {
+                    // Same convention as the sprite thumbnails above: cell size
+                    // is the image height, [fps=N]/[speed=N] in the filename
+                    // override the engine's default 4fps.
+                    const tokens = {};
+                    path.replace(/\[([^=\]]+)=([^\]]+)\]/g, (m, k, v) => { tokens[k] = parseFloat(v); return ''; });
+                    const fps = tokens.fps || (tokens.speed ? 4 * tokens.speed : 4);
+                    const cellPx = cell * zoom;
+
+                    anim.style.width = cellPx + 'px';
+                    anim.style.height = probe.naturalHeight * zoom + 'px';
+                    anim.style.backgroundImage = `url('/${path}')`;
+                    anim.style.backgroundRepeat = 'no-repeat';
+                    anim.style.backgroundSize = `${frames * cellPx}px ${probe.naturalHeight * zoom}px`;
+                    anim.style.setProperty('--sprite-frames', frames);
+                    anim.style.setProperty('--sprite-cell-px', cellPx + 'px');
+                    anim.style.setProperty('--sprite-dur', (frames / fps) + 's');
+                    anim.style.display = 'block';
+                    anim.classList.add('sprite-sheet-anim');
+                } else {
+                    img.src = '/' + path;
+                    img.style.width = zoom > 1 ? probe.naturalWidth * zoom + 'px' : '';
+                    img.style.display = 'block';
+                }
+                setAssetPreviewHue(document.getElementById('asset-preview-hue').value);
+            };
+            probe.src = '/' + path;
+        }
+
+        // Preview-only tint. Nothing persists a hue offset yet, so this is a
+        // "what would it look like" knob, not a saved property.
+        function setAssetPreviewHue(deg) {
+            const filter = Number(deg) ? `hue-rotate(${deg}deg)` : '';
+            ['asset-preview-img', 'asset-preview-anim'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.filter = filter;
             });
         }
 

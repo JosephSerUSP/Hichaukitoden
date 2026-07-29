@@ -798,6 +798,16 @@
             animation-duration: var(--sprite-dur, 1s);
         }
 
+        /* The editor's one visual language for "this area is transparent":
+           a dark two-tone checkerboard. Any surface showing art over nothing
+           (asset previews, sprite thumbnails, the animation stage) wears this
+           so transparency reads the same everywhere. Override --checker-size
+           on large stages where a 16px tile would look busy. */
+        .transparent-checker {
+            background: repeating-conic-gradient(#2a2a2a 0% 25%, #1c1c1c 0% 50%)
+                        0 0 / var(--checker-size, 16px) var(--checker-size, 16px);
+        }
+
         /* --- STATUS BAR --- */
         .status-bar {
             background-color: var(--win-gray);
@@ -1961,37 +1971,49 @@
 
     <!-- --- ASSET FILE PICKER MODAL --- -->
     <div id="asset-picker-modal" class="modal-overlay" style="z-index: 1300;">
-        <div class="window outset-bevel" style="width: 520px;">
+        <div class="window outset-bevel" style="width: 470px;">
             <div class="title-bar">
                 <div class="title-bar-text">Select Asset File</div>
                 <div class="title-bar-controls">
                     <button class="win-btn-small outset-bevel" onclick="closeAssetPicker()">×</button>
                 </div>
             </div>
-            <div class="window-body" style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <label>Folder:</label>
+            <div class="window-body" style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <label style="font-size: 11px;">Folder:</label>
                     <select id="asset-picker-dir" class="win98-select" style="flex: 1;" onchange="loadAssetPickerFiles()"></select>
                 </div>
-                
-                <div id="asset-picker-grid" style="border: 1px solid var(--win-shadow); background: #fff; height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px;"></div>
-                
-                <!-- Full-resolution preview pane -->
-                <div style="display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--win-shadow); background: #f0f0f0; padding: 8px;">
-                    <div id="asset-preview-wrap" style="width: 96px; height: 96px; border: 1px inset var(--win-shadow); background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                        <img id="asset-preview-img" src="" style="max-width: 96px; max-height: 96px; image-rendering: pixelated; display: none;" />
-                        <span id="asset-preview-none" style="font-size: 10px; color: #888; font-family: monospace;">No selection</span>
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                        <div class="field-row-stacked" style="margin: 0;">
-                            <label style="font-size: 10px;">Selected File:</label>
-                            <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" readonly />
+
+                <!-- RM2003 layout: name list on the left, preview on the right -->
+                <div style="display: flex; gap: 8px; align-items: stretch;">
+                    <div id="asset-picker-list" class="win98-listbox inset-bevel" tabindex="0"
+                         style="width: 200px; height: 260px; background: #fff; flex-shrink: 0; outline: none;"></div>
+
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                        <div id="asset-preview-wrap" class="transparent-checker"
+                             style="height: 170px; border: 1px inset var(--win-shadow); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <img id="asset-preview-img" src="" style="max-width: 100%; max-height: 170px; image-rendering: pixelated; display: none;" />
+                            <!-- Sprite strips play here instead: the steps() animation drives
+                                 background-position, which an <img> can't do. -->
+                            <div id="asset-preview-anim" style="display: none;"></div>
+                            <span id="asset-preview-none" style="font-size: 10px; color: #888; font-family: monospace;">No selection</span>
                         </div>
-                        <div style="display: flex; gap: 6px; margin-top: 4px; justify-content: flex-end;">
-                            <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">Select</button>
-                            <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
-                        </div>
+
+                        <fieldset style="margin: 0; padding: 4px 6px 6px;">
+                            <legend style="font-size: 10px;">Change Hue</legend>
+                            <input type="range" id="asset-preview-hue" min="0" max="360" value="0"
+                                   style="width: 100%;" oninput="setAssetPreviewHue(this.value)" />
+                            <div style="height: 10px; margin-top: 2px; border: 1px inset var(--win-shadow);
+                                 background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);"></div>
+                        </fieldset>
                     </div>
+                </div>
+
+                <input type="text" id="asset-picker-selected" class="win98-input" style="font-family: monospace; font-size: 11px;" readonly />
+
+                <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                    <button class="win98-btn win98-btn-success" style="min-width: 80px;" onclick="applyAssetSelection()">OK</button>
+                    <button class="win98-btn" style="min-width: 80px;" onclick="closeAssetPicker()">Cancel</button>
                 </div>
             </div>
         </div>
