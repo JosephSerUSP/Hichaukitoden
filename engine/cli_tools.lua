@@ -336,6 +336,11 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
             _G.activeSession = vSession
             renderer.init(vSession)
             scene_host.init(nil)
+            -- The dock deliberately outlives scene changes, so this loop --
+            -- which re-enters every scene back to back -- must clear it
+            -- between captures or each shot catches the previous scene's
+            -- dock mid-cross-fade.
+            require("presentation.dock").reset()
 
             local sceneId = tostring(sceneDef.id)
             local folder = slug(sceneDef.kind or "scene") .. "/" .. slug(sceneId)
@@ -684,13 +689,22 @@ function cli.runGoldenUI(loader)
             events = {}
         }
 
-        -- Track event count so we only log NEW events each hook call,
-        -- not the entire accumulated ctx.events.
-        local loggedEventCount = 0
+        -- Track how much of each event list has been logged, so we only log
+        -- NEW events and never re-log an accumulated ctx.events.
+        --
+        -- Keyed by the LIST, not a single counter (fixed 29.07.2026). A shared
+        -- counter was silently lossy: scene_host.runHook gives each hook a
+        -- fresh ctx.events, so any hook returning fewer events than the
+        -- previous high-water mark logged NOTHING at all -- `for i = 5, 2` just
+        -- doesn't run. That is why declarative scenes' traces are so short, and
+        -- it made G3 diffs misleading: removing two commands from one hook
+        -- could make unrelated events from a later hook appear, as though the
+        -- engine had gained behaviour it always had.
+        local loggedCounts = setmetatable({}, { __mode = "k" })
 
         local function logNewEvents(events)
             if not events then return end
-            for i = loggedEventCount + 1, #events do
+            for i = (loggedCounts[events] or 0) + 1, #events do
                 local ev = events[i]
                 if LOGGED_EVENT_TYPES[ev.type] then
                     local w = ev.windowId or ""
@@ -703,7 +717,7 @@ function cli.runGoldenUI(loader)
                     table.insert(uiEvents, string.format("%s|%s|%s|%s", w, a, t, v))
                 end
             end
-            loggedEventCount = #events
+            loggedCounts[events] = #events
         end
 
         interpreter.runImmediate = function(cmds, ctx)

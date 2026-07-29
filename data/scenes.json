@@ -1205,18 +1205,6 @@
             "text": "{v.mode == 'load' and 'Loaded!' or 'Saved!'}"
           }
         ]
-      },
-      {
-        "id": "party",
-        "cursor": 0,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "0"
-          }
-        ]
       }
     ],
     "hooks": {
@@ -1331,7 +1319,12 @@
         }
       ]
     },
-    "config": {}
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "cursor": "0"
+      }
+    }
   },
   {
     "id": "quest_log",
@@ -1400,18 +1393,6 @@
             "text": "{sel('quest_list').summary}\n\nObjectives:\n{sel('quest_list').objectives}"
           }
         ]
-      },
-      {
-        "id": "party",
-        "cursor": 0,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "0"
-          }
-        ]
       }
     ],
     "hooks": {
@@ -1458,7 +1439,12 @@
         }
       ]
     },
-    "config": {}
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "cursor": "0"
+      }
+    }
   },
   {
     "id": "map",
@@ -1514,7 +1500,11 @@
           "name": "SWAP",
           "help": "Swap this creature with one from the reserve roster."
         }
-      ]
+      ],
+      "dock": {
+        "variant": "party_status",
+        "cursor": "v.mode == 4 and v.partyIdx or 0"
+      }
     },
     "hooks": {
       "on_enter": [
@@ -1534,16 +1524,6 @@
               "value": 1
             }
           ]
-        },
-        {
-          "cmd": "SET_LIST",
-          "windowId": "party",
-          "listId": "party"
-        },
-        {
-          "cmd": "SET_CURSOR",
-          "windowId": "party",
-          "index": 0
         }
       ],
       "on_up": [
@@ -1564,11 +1544,6 @@
               "cmd": "SET_VAR",
               "name": "partyIdx",
               "value": "v.partyIdx - 2"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.partyIdx"
             }
           ]
         },
@@ -1634,11 +1609,6 @@
               "cmd": "SET_VAR",
               "name": "partyIdx",
               "value": "v.partyIdx + 2"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.partyIdx"
             }
           ]
         },
@@ -1715,11 +1685,6 @@
               "cmd": "SET_VAR",
               "name": "partyIdx",
               "value": "v.partyIdx - 1"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.partyIdx"
             }
           ]
         },
@@ -1764,11 +1729,6 @@
               "cmd": "SET_VAR",
               "name": "partyIdx",
               "value": "v.partyIdx + 1"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.partyIdx"
             }
           ]
         },
@@ -1827,11 +1787,6 @@
             {
               "cmd": "SCRIPT",
               "ref": "snapPartyIdx"
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": "v.partyIdx"
             },
             {
               "cmd": "SET_TEXT",
@@ -2275,11 +2230,6 @@
               "value": 1
             },
             {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": 0
-            },
-            {
               "cmd": "SET_TEXT",
               "windowId": "help",
               "text": "{sel('map_command').help}"
@@ -2299,11 +2249,6 @@
               "cmd": "SET_VAR",
               "name": "mode",
               "value": 0
-            },
-            {
-              "cmd": "SET_CURSOR",
-              "windowId": "party",
-              "index": 0
             },
             {
               "cmd": "CLOSE_WINDOW",
@@ -2652,7 +2597,13 @@
         }
       ]
     },
-    "config": {},
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "visible": "v.state == 1 or v.state == 2 or v.state == 3",
+        "cursor": "v.state == 2 and v.targetIdx or 0"
+      }
+    },
     "scripts": {},
     "draw": "windows",
     "backdrop": "map",
@@ -2712,19 +2663,6 @@
           {
             "type": "text",
             "text": "{v.popupText}"
-          }
-        ]
-      },
-      {
-        "id": "party",
-        "visible": "v.state == 1 or v.state == 2 or v.state == 3",
-        "cursor": "v.state == 2 and v.targetIdx or 0",
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "v.state == 2 and v.targetIdx or 0"
           }
         ]
       }
@@ -3514,7 +3452,14 @@
         "style": "victoryPanel",
         "content": []
       }
-    ]
+    ],
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "cursor": "v.combatState == 'input' and (v.livingMembers and v.livingMembers[v.activeMemberIdx or 1] and v.livingMembers[v.activeMemberIdx or 1].index or 0) or 0",
+        "offsetY": "(v.defeatSlideT or 0) * 240"
+      }
+    }
   },
   {
     "id": "shop",
@@ -3756,7 +3701,13 @@
       ]
     },
     "scripts": {},
-    "config": {},
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "visible": "v.state == 1 or v.state == 2",
+        "cursor": "0"
+      }
+    },
     "draw": "windows",
     "backdrop": "map",
     "windows": [
@@ -3818,25 +3769,6 @@
             "type": "list",
             "listId": "static:Buy,Cancel",
             "cursor": "v.confirmIdx"
-          }
-        ]
-      },
-      {
-        "id": "shop_party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "visible": "v.state == 1 or v.state == 2",
-        "style": "partyGrid",
-        "cursor": 0,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}"
           }
         ]
       }
@@ -4560,85 +4492,14 @@
     "backdrop": "map",
     "config": {
       "note": "Windows-drawn. Reached via scene_host.goto_scene(\"dialogue\") from map step/interact events and CALL_COMMON_EVENT chains. main.lua's handleKeyPressed dialogue branch drives GraphWalker advance/selectChoice directly (unchanged); a per-frame sync in love.update mirrors the active node into v.dialogue* fields these windows bind to, docked over the same footprint the party HUD uses elsewhere so dialogue doesn't take over the whole screen.",
-      "windowFootprint": "bottom_hud"
+      "dock": {
+        "variant": "dialogue"
+      }
     },
     "hooks": {
       "on_enter": []
     },
-    "windows": [
-      {
-        "id": "dialogue_portrait",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 9.5,
-          "h": 12
-        },
-        "style": "frame",
-        "visible": "v.dialoguePortrait ~= nil and v.dialoguePortrait ~= ''",
-        "content": [
-          {
-            "type": "image",
-            "portraitField": "v.dialoguePortrait",
-            "portraitX": 1,
-            "portraitY": 1,
-            "portraitW": 7.5,
-            "portraitH": 10,
-            "portraitOverflow": 0.5,
-            "portraitFrame": "v.dialogueExpression",
-            "portraitName": "v.dialogueSpeaker"
-          }
-        ]
-      },
-      {
-        "id": "dialogue_message",
-        "rect": {
-          "x": 9.5,
-          "y": 18,
-          "w": 22.5,
-          "h": 12
-        },
-        "shiftWith": "dialogue_portrait",
-        "shiftWhenHidden": {
-          "x": 0,
-          "w": 32
-        },
-        "style": "frame",
-        "align": "left",
-        "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
-        "content": [
-          {
-            "type": "text",
-            "text": "{v.dialogueText}"
-          }
-        ]
-      },
-      {
-        "id": "dialogue_choices",
-        "rect": {
-          "x": 9.5,
-          "y": 18,
-          "w": 22.5,
-          "h": 12
-        },
-        "shiftWith": "dialogue_portrait",
-        "shiftWhenHidden": {
-          "x": 0,
-          "w": 32
-        },
-        "style": "list",
-        "fitRows": "bottom",
-        "visible": "v.dialogueMode == 'choice'",
-        "content": [
-          {
-            "type": "list",
-            "listId": "v:dialogueOptions",
-            "format": "{name}",
-            "cursor": "v.dialogueCursorIdx"
-          }
-        ]
-      }
-    ]
+    "windows": []
   },
   {
     "id": "ritual",
@@ -4647,7 +4508,11 @@
     "draw": "windows",
     "backdrop": "map",
     "config": {
-      "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex. Page 1 = stats/costs, page 2 = portrait/flavor (Q/E/Tab)."
+      "note": "Shared summon/promote/sacrifice scene. Pushed with vars: ritualMode ('summon'|'promote'|'sacrifice'), targetIsReserve, targetIndex. Page 1 = stats/costs, page 2 = portrait/flavor (Q/E/Tab).",
+      "dock": {
+        "variant": "party_status",
+        "cursor": "0"
+      }
     },
     "scripts": {
       "setupRitual": "\nlocal v = ctx.v\nv._guard = 1\nv.state = 1\nv.page = 1\nv.confirmIdx = 1\nv.confirmOptions = { {name = \"Yes\"}, {name = \"No\"} }\nif v.ritualMode == nil then v.ritualMode = \"summon\" end\nif v.targetIsReserve == nil then v.targetIsReserve = true end\nv.targetIndex = v.targetIndex or 1\n\nlocal function actorEntry(id)\n    local pv = api.actorPreview(id)\n    local ad = pv and pv.actorData or {}\n    return {\n        id = id,\n        name = pv and pv.name or \"?\",\n        level = ad.level or 1,\n        tier = ad.tier or 1,\n        spriteKey = ad.smallBattler or ad.spriteKey or \"\",\n        portraitKey = ad.spriteKey or \"\",\n        flavor = ad.flavor or \"\",\n    }\nend\n\nif v.ritualMode == \"summon\" then\n    local pool = {}\n    for _, actor in ipairs(api.allActors()) do\n        if actor.unlocked then table.insert(pool, actorEntry(actor.id)) end\n    end\n    v.pool = pool\n    v.poolIdx = 1\n    v._lastPoolIdx = 0\nelse\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    if member and member.empty then member = nil end\n    v.memberName = member and member.name or \"?\"\nend\nif v.ritualMode == \"promote\" then\n    local member = v.targetIsReserve and api.reserve(v.targetIndex) or api.party(v.targetIndex)\n    local paths = {}\n    if member and not member.empty then\n        for _, e in ipairs((member.actorData and member.actorData.evolutions) or {}) do\n            if e.level and member.level >= e.level and e.evolvesTo then\n                table.insert(paths, e.evolvesTo)\n            end\n        end\n    end\n    v.evoPaths = paths\n    v.evoIdx = 1\nend\n",
@@ -5217,25 +5082,6 @@
         ]
       },
       {
-        "id": "ritual_party",
-        "rect": {
-          "x": 0,
-          "y": 18,
-          "w": 32,
-          "h": 12
-        },
-        "style": "partyGrid",
-        "gridColumns": 2,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "0"
-          }
-        ]
-      },
-      {
         "id": "ritual_confirm",
         "rect": {
           "x": 8,
@@ -5371,18 +5217,6 @@
             "listId": "config:exitOptions",
             "format": "{name}",
             "cursor": "v.confirmIdx"
-          }
-        ]
-      },
-      {
-        "id": "party",
-        "cursor": 0,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "0"
           }
         ]
       }
@@ -5621,7 +5455,11 @@
         {
           "name": "No"
         }
-      ]
+      ],
+      "dock": {
+        "variant": "party_status",
+        "cursor": "0"
+      }
     }
   },
   {
@@ -5664,18 +5502,6 @@
             "type": "list",
             "listId": "v:bindingRows",
             "cursor": "v.idx"
-          }
-        ]
-      },
-      {
-        "id": "party",
-        "cursor": 0,
-        "content": [
-          {
-            "type": "list",
-            "listId": "party",
-            "format": "{name}",
-            "cursor": "0"
           }
         ]
       }
@@ -5798,6 +5624,11 @@
         }
       ]
     },
-    "config": {}
+    "config": {
+      "dock": {
+        "variant": "party_status",
+        "cursor": "0"
+      }
+    }
   }
 ]

@@ -140,7 +140,60 @@ scene inventing its own chrome:
   "UP/DOWN: select ENTER: use" bar — one window, state-dependent text, no
   redundant real estate. (Applied to the `items` scene's `help` window and
   `battle`'s `battle_help` window during `victory`.)
-- **Bottom: a persistent dock**, one of two things depending on scene:
+- **Bottom: a persistent dock.** "Persistent" is now literal (29.07.2026):
+  the dock is **not a scene's window**. It is one surface owned by
+  `presentation/dock.lua`, whose state — window tables, animation clocks,
+  visibility history — lives in that module and therefore survives
+  `scene_host` push/pop/goto untouched. Scenes only declare *which variant*
+  they want, via `config.dock` in `scenes.json`:
+
+  ```json
+  "dock": { "variant": "party_status", "cursor": "v.mode == 4 and v.partyIdx or 0" }
+  ```
+
+  The variants themselves live in `data/engine.json`'s `dock` registry, so
+  adding one is a data edit; `cursor`/`visible` on the scene's dock config
+  apply to the variant's declared `primary` window, and `windows: { <id>: {…} }`
+  overrides any field of any window in it. An optional `offsetY` formula
+  shifts the whole dock in pixels (battle's defeat slide is the only user).
+  Content still binds to the **current** scene, so `v.dialogueText` and
+  friends resolve exactly as they did when the scene owned these windows.
+
+  Transitions follow from ownership rather than from special cases:
+  same variant on both sides animates **nothing at all** (the dock stays and
+  its content re-binds); a different variant cross-fades in place over the
+  shared footprint, the incoming one arriving at rest instead of replaying
+  its grow-in; and a scene with no dock lets the outgoing variant fade out.
+
+  This replaced five copy-pasted `party` windows, a runtime-opened one on
+  `map`, and a third copy drawn by `frame_renderer` for battle — plus the
+  three band-aids that existed because the dock used to be destroyed and
+  rebuilt on every scene change (`config.windowFootprint` /
+  `_seamlessWindowFootprint`, the map-specific `_skipOpenAnim` block in
+  `love.update`, and `frame_renderer`'s 0.15s `dialogueEnterTime` overlap).
+  All are deleted; do not reintroduce a per-scene copy of the dock.
+
+  **Not yet folded in:** `reserve_party` and `status_dock` are still
+  scene-owned windows over the same footprint, and until they move those two
+  scenes cut rather than cross-fade. Neither is a simple data edit:
+  `reserve_party` is read by name from Lua (`drawSwapIndicator` in
+  `window_renderer.lua`), and `status_dock` binds through
+  `sel('status_party')` — a *scene* window — while a dock variant's list cache
+  only covers the dock's own windows. `shop_party` and `ritual_party` had no
+  such coupling and are gone; both are now `party_status` with a scene-level
+  `visible`/`cursor` override. (Note `ritual_party`'s `gridColumns: 2` was
+  inert — that key is only read from `windowLayout`, and 2 is the default.)
+
+  **What actually covers the dock:** not the G3 UI *trace* — those lines are
+  window commands emitted by scene hooks, so a declarative window of any kind
+  is invisible to them (this is why a fully declarative scene's trace is one
+  line). The dock is covered by G3's per-step **draw smoke test**, which calls
+  `scene_host.draw` and fails the gate if drawing throws, and by
+  `tests/test_dock.lua`, which pins the parts that have no visual signature —
+  above all that the dock's window table is the *same table* after a
+  same-variant scene change, which is what makes its animation continuous.
+
+  The dock shows one of two things depending on scene:
   1. **Persistent party status** — the current/selected member's compact
      status, always visible regardless of what's happening above it.
   2. **Context-aware content laid out like the dialogue box** — left pane

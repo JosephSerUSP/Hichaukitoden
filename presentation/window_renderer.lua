@@ -1429,8 +1429,27 @@ local function initVisibilityState(state)
     state._visTrack = state._visTrack or {}
 end
 
-function wr.drawWindowFromData(sceneData, state, ctx)
-    if not sceneData or not sceneData.windows then return end
+-- opts (all optional) lets a caller other than the scene drive this renderer:
+--   windows -- window defs to draw INSTEAD of sceneData.windows
+--   store   -- table holding the persistent `_dataWins` / `_visTrack` bookkeeping.
+--              Defaults to the scene state (destroyed on every scene change);
+--              presentation/dock.lua passes its own module-level store so the
+--              persistent dock's animation clocks survive scene transitions.
+--   alpha   -- global alpha multiplier (dock variant cross-fade).
+-- Everything else -- env, list resolution, v.* bindings -- still comes from the
+-- CURRENT scene, so dock windows bind to the live scene's variables.
+function wr.drawWindowFromData(sceneData, state, ctx, opts)
+    opts = opts or {}
+    local winDefs = opts.windows or (sceneData and sceneData.windows)
+    if not winDefs then return end
+    local store = opts.store or state
+
+    local alphaPushed = false
+    if opts.alpha and opts.alpha < 1 then
+        love.graphics.push("all")
+        love.graphics.setColor(1, 1, 1, opts.alpha)
+        alphaPushed = true
+    end
 
     -- Resolve the list cache and env once, shared by all data windows.
     -- Build a minimal listCache so sel("window_id") works during content
@@ -1440,7 +1459,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
 
     -- Pre-resolve lists for every window that has a list content block,
     -- so sel() lookups and cursor evaluation work.
-    for _, winDef in ipairs(sceneData.windows) do
+    for _, winDef in ipairs(winDefs) do
         local listBlock = nil
         for _, block in ipairs(winDef.content or {}) do
             if block.type == "list" then
@@ -1482,14 +1501,14 @@ function wr.drawWindowFromData(sceneData, state, ctx)
     -- every frame reset the animation each frame and any anim.open window
     -- stayed frozen at its 16px pop-in floor (the reserve popup "sliver"
     -- bug).
-    state._dataWins = state._dataWins or {}
-    initVisibilityState(state)
+    store._dataWins = store._dataWins or {}
+    initVisibilityState(store)
 
     -- ── Pass 1: resolve visibility for all windows into shiftResolved. ──
     -- We need every window's visibility known before any window draws so
     -- shiftWith (which reads another window's visibility) works reliably.
     local shiftResolved = {}
-    for _, winDef in ipairs(sceneData.windows) do
+    for _, winDef in ipairs(winDefs) do
         local visible = true
         if winDef.visible then
             local ok, vv = pcall(formula.eval, winDef.visible, env)
@@ -1500,18 +1519,18 @@ function wr.drawWindowFromData(sceneData, state, ctx)
     end
 
     -- ── Pass 2: draw windows, applying shiftWith and close/open anims. ──
-    for _, winDef in ipairs(sceneData.windows) do
+    for _, winDef in ipairs(winDefs) do
         local visible = shiftResolved[winDef.id].visible
 
         -- Close-animation detection: if this window was visible last frame
         -- and is now hidden, and has anim.close, keep it "alive" through
         -- the close animation before truly hiding it.
-        local prevVis = state._visTrack[winDef.id]
-        state._visTrack[winDef.id] = visible
+        local prevVis = store._visTrack[winDef.id]
+        store._visTrack[winDef.id] = visible
         local closeAnimStart = nil
         local wasVisible = prevVis ~= false -- default true for first frame
         if not visible and wasVisible then
-            local winTable = state._dataWins[winDef.id]
+            local winTable = store._dataWins[winDef.id]
             if winTable then
                 local baseLayout = layouts[winDef.id]
                 local hasClose = false
@@ -1533,7 +1552,7 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         if not visible then
             -- Drop the hidden window's anim clocks so re-showing replays
             -- the animation.
-            local prev = state._dataWins[winDef.id]
+            local prev = store._dataWins[winDef.id]
             if prev then
                 openClocks[prev] = nil
                 closeClocks[prev] = nil
@@ -1583,10 +1602,10 @@ function wr.drawWindowFromData(sceneData, state, ctx)
         -- Grab or create the persistent win entry. If this window is
         -- closing from a prior frame, the existing table is reused so
         -- the close clock (keyed by the win TABLE) survives.
-        local win = state._dataWins[winDef.id]
+        local win = store._dataWins[winDef.id]
         if not win then
             win = {}
-            state._dataWins[winDef.id] = win
+            store._dataWins[winDef.id] = win
         elseif win._closing then
             -- Close animation continued from a prior frame: check if done.
             -- Compute progress; if finished, truly hide and skip drawing.
@@ -1736,6 +1755,8 @@ function wr.drawWindowFromData(sceneData, state, ctx)
 
         ::continue::
     end
+
+    if alphaPushed then love.graphics.pop() end
 end
 
 -- ---------------------------------------------------------------------------

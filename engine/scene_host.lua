@@ -226,9 +226,6 @@ end
 -- (e.g. the ritual scene's ritualMode/targetIndex).
 function scene_host.push(id, ctx, vars)
     ctx = ctx or lastCtx
-    if id == "dialogue" then
-        _G.dialogueEnterTime = love.timer.getTime()
-    end
     table.insert(sceneStack, {
         id = id,
         v = {},
@@ -290,17 +287,9 @@ end
 
 function scene_host.goto_scene(id, ctx, vars)
     ctx = ctx or lastCtx
-    local outgoing = sceneStack[#sceneStack]
-    local outgoingData = outgoing and getSceneData(ctx, outgoing.id) or nil
-    local incomingData = getSceneData(ctx, id)
-    local outgoingFootprint = outgoingData and outgoingData.config and outgoingData.config.windowFootprint
-    local incomingFootprint = incomingData and incomingData.config and incomingData.config.windowFootprint
-    if outgoingFootprint and outgoingFootprint == incomingFootprint then
-        local seeded = {}
-        for k, value in pairs(vars or {}) do seeded[k] = value end
-        seeded._seamlessWindowFootprint = outgoingFootprint
-        vars = seeded
-    end
+    -- Dock continuity across this transition is not handled here any more:
+    -- the dock is a persistent surface that simply notices the incoming
+    -- scene wants the same variant and doesn't re-animate (dock.lua).
     scene_host.pop(ctx)
     scene_host.push(id, ctx, vars)
 end
@@ -369,6 +358,10 @@ function scene_host.draw(ctx)
     require("presentation.subtractive_transition").draw()
     local window_renderer = require("presentation.window_renderer")
     window_renderer.draw(state, sceneData, ctx)
+    -- The persistent bottom dock draws above the scene's own windows and
+    -- outlives them (see presentation/dock.lua): it is not owned by any scene,
+    -- only selected by one through `config.dock`.
+    require("presentation.dock").draw(state, sceneData, ctx)
     scene_transition.draw()
     return true
 end
