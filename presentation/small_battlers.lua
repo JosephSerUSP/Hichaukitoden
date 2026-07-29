@@ -22,6 +22,8 @@ local small_battlers = {}
 local cache = {}
 local animTimer = 0
 
+local SEARCH_DIRS = { "assets/smallBattlers", "assets/sprites", "assets/system" }
+
 -- Dead-tint applied when a battler's game-state is dead (not an animation —
 -- this is the static visual that replaces the sprite for dead party members
 -- in the grid). The death animation (system.death) handles enemy portraits.
@@ -73,7 +75,7 @@ function small_battlers.resolveFile(spriteKey)
     }
     if not small_battlers._fileIndex then
         local index = {}
-        for _, dir in ipairs({ "assets/smallBattlers", "assets/sprites", "assets/system" }) do
+        for _, dir in ipairs(SEARCH_DIRS) do
             for _, f in ipairs(love.filesystem.getDirectoryItems(dir) or {}) do
                 if f:match("%.png$") then
                     local tokens = {}
