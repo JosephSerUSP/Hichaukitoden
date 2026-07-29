@@ -1,0 +1,126 @@
+{
+  "_comment": [
+    "Asset-class registry for tools/asset-gen. This is the single extension point:",
+    "adding an asset class means adding an entry here plus a prompts/<promptFile>,",
+    "never a branch in gen.py. Mirrors the engine's own data-drives-the-code rule.",
+    "",
+    "geometry.size is the FINAL on-disk pixel size the engine expects. geometry.cell",
+    "and geometry.frames describe grid sheets; the post-processing pipeline slices the",
+    "model's output into that grid. 'post' names steps in lib/postprocess.py, applied",
+    "in order."
+  ],
+
+  "styleBible": "Retro JRPG pixel art in the RPG Maker 2003 / late-90s SNES-to-PS1 tradition. Chunky legible pixels, hand-placed dithering rather than smooth gradients, a tight limited palette, strong silhouette readability at small size. Dark low-fantasy dungeon-crawler mood: grimy stone, muted earths and desaturated jewel tones, torch-warm highlights against cold shadow. NEVER: modern vector art, cel-shaded anime line art, watercolour, 3D renders, drop shadows, text, labels, watermarks, signatures, UI frames, or borders.",
+
+  "classes": {
+    "smallBattler": {
+      "label": "Small battler",
+      "dir": "assets/smallBattlers",
+      "promptFile": "smallbattler.md",
+      "filename": "{Name}[fps={fps}].png",
+      "tokenDefaults": { "fps": 15 },
+      "geometry": { "size": [72, 24], "cell": [24, 24], "frames": 3, "transparent": true },
+      "request": { "size": "1024x1024", "gridHint": [3, 1] },
+      "post": ["key_background", "slice_grid", "pixel_fit", "quantize", "harden_alpha"],
+      "quantizeColors": 24,
+      "note": "Idle animation strip drawn in the party grid and status rows. presentation/small_battlers.lua reads the [fps=N] token from the FILENAME."
+    },
+
+    "bigBattler": {
+      "label": "Big battler",
+      "dir": "assets/bigBattlers",
+      "promptFile": "bigbattler.md",
+      "filename": "{Name}.png",
+      "geometry": { "size": [128, 128], "cell": [128, 128], "frames": 1, "transparent": true },
+      "request": { "size": "1024x1024" },
+      "post": ["key_background", "pixel_fit", "quantize", "harden_alpha"],
+      "quantizeColors": 48,
+      "engineWired": false,
+      "note": "NEW CLASS: the full-size enemy/creature battle sprite, split out from the double-duty 'spriteKey' portrait lookup. Generates and promotes today; the engine does not read assets/bigBattlers yet (see README 'Pending engine wiring')."
+    },
+
+    "portrait": {
+      "label": "Portrait (expression sheet)",
+      "dir": "assets/portraits",
+      "promptFile": "portrait.md",
+      "filename": "{Name}.png",
+      "geometry": { "size": [640, 192], "cell": [128, 192], "frames": 5, "transparent": false },
+      "request": { "size": "1024x1024", "gridHint": [5, 1] },
+      "post": ["slice_grid", "pixel_fit", "quantize"],
+      "quantizeColors": 64,
+      "expressions": ["neutral", "happy", "angry", "sad", "surprised"],
+      "note": "presentation/ui.lua slices column 0 as the neutral face; the sheet is 5 x 128x192 columns. NPC files conventionally carry the NPC_ prefix."
+    },
+
+    "sprite": {
+      "label": "World sprite (3D billboard)",
+      "dir": "assets/sprites",
+      "promptFile": "sprite.md",
+      "filename": "{Name}.png",
+      "geometry": { "size": [48, 64], "cell": [48, 64], "frames": 1, "transparent": true },
+      "request": { "size": "1024x1024" },
+      "post": ["key_background", "pixel_fit", "quantize", "harden_alpha"],
+      "quantizeColors": 32,
+      "note": "Drawn as a whole billboard in the raycast viewport (presentation/viewport_3d.lua slices it by column, so it must NOT be a multi-frame sheet). Faces the camera; feet at the bottom edge."
+    },
+
+    "tileset": {
+      "label": "Tileset texture page",
+      "dir": "assets/tilesets",
+      "promptFile": "tileset.md",
+      "filename": "{name}.png",
+      "geometry": { "size": [256, 256], "cell": [64, 64], "frames": 16, "transparent": false },
+      "request": { "size": "1024x1024", "gridHint": [4, 4] },
+      "post": ["slice_grid", "pixel_fit", "quantize"],
+      "quantizeColors": 64,
+      "note": "16 seamlessly-tiling 64x64 surface textures, row-major. Wall/floor/ceiling textures sampled by the raycaster: flat head-on, no perspective, no baked lighting."
+    },
+
+    "panorama": {
+      "label": "Panorama / skybox",
+      "dir": "assets/panorama",
+      "promptFile": "panorama.md",
+      "filename": "{name}.png",
+      "geometry": { "size": [256, 256], "cell": [256, 256], "frames": 1, "transparent": false },
+      "request": { "size": "1024x1024" },
+      "post": ["pixel_fit", "quantize", "seam_blend_x"],
+      "quantizeColors": 48,
+      "note": "Scrolled horizontally behind the dungeon view, so it must wrap left-to-right; seam_blend_x cross-fades the wrap edge."
+    },
+
+    "locationArt": {
+      "label": "Location art",
+      "dir": "assets/locationArt",
+      "promptFile": "locationart.md",
+      "filename": "{Name}.png",
+      "geometry": { "size": [192, 256], "cell": [192, 256], "frames": 1, "transparent": false },
+      "request": { "size": "1024x1024" },
+      "post": ["pixel_fit", "quantize"],
+      "quantizeColors": 64,
+      "note": "Establishing illustration for a town or dungeon region."
+    },
+
+    "eventArt": {
+      "label": "Event art",
+      "dir": "assets/eventArt",
+      "promptFile": "eventart.md",
+      "filename": "{name}.png",
+      "geometry": { "size": [496, 208], "cell": [496, 208], "frames": 1, "transparent": false },
+      "request": { "size": "1536x1024" },
+      "post": ["pixel_fit", "quantize"],
+      "quantizeColors": 64,
+      "note": "Wide cutscene banner shown above dialogue."
+    },
+
+    "animation": {
+      "label": "Particle / animation sheet",
+      "dir": "assets/animation",
+      "promptFile": "animation.md",
+      "filename": "{Name}[{cw}x{ch}][{frames}f].png",
+      "geometry": { "size": null, "cell": [32, 32], "frames": 8, "transparent": true },
+      "request": { "size": "1024x1024", "gridHint": [8, 1] },
+      "post": ["key_background", "slice_grid", "pixel_fit", "greyscale", "harden_alpha"],
+      "note": "Flipbook strip, cells left-to-right, read row-major by the animation player. Tinted at runtime by the track's colour-over-lifetime, so the art is drawn WHITE/GREYSCALE. Final size is cell*frames wide; --cell and --frames override the defaults and are written into the filename tokens."
+    }
+  }
+}

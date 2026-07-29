@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>asset-gen</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <h1>asset-gen</h1>
+  <span class="sub">image models &rarr; game-ready art. Nothing reaches <code>assets/</code> until you promote.</span>
+</header>
+
+<main>
+  <!-- ------------------------------------------------ left: the request -->
+  <section class="col">
+    <fieldset>
+      <legend>Asset</legend>
+      <label>Class <select id="class"></select></label>
+      <p class="note" id="classNote"></p>
+      <label>Name <input id="name" placeholder="Kappa" spellcheck="false"></label>
+      <label class="stack">Description
+        <textarea id="description" rows="4"
+          placeholder="a river-turtle imp, mossy shell, water-filled skull dish on its head"></textarea>
+      </label>
+      <p class="target" id="target"></p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Model</legend>
+      <label>Provider <select id="provider"></select></label>
+      <label>Model <select id="model"></select></label>
+      <label id="qualityRow">Quality <select id="quality">
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+      </select></label>
+      <label>Key <input id="key" type="password" placeholder="from environment" spellcheck="false">
+        <button id="setKey" class="mini">set</button></label>
+      <p class="note" id="keyNote"></p>
+      <label>Variants <input id="variants" type="number" min="1" max="8" value="3"></label>
+      <p class="cost" id="cost"></p>
+      <p class="note" id="costNote"></p>
+    </fieldset>
+
+    <fieldset id="sheetBox">
+      <legend>Sheet</legend>
+      <label>Cell <input id="cell" placeholder="16x16" spellcheck="false"></label>
+      <label>Frames <input id="frames" type="number" min="1" max="32"></label>
+      <label>Ask grid <input id="grid" placeholder="3x1" spellcheck="false"></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Direction</legend>
+      <label class="stack">Extra art direction
+        <textarea id="extra" rows="2" placeholder="colder palette, less busy silhouette"></textarea>
+      </label>
+      <label class="stack">Reference images (one path per line, style matching)
+        <textarea id="refs" rows="2" spellcheck="false"
+          placeholder="assets/smallBattlers/Ghoul.png"></textarea>
+      </label>
+      <label>Filename tokens <input id="tokens" placeholder="fps=15" spellcheck="false"></label>
+    </fieldset>
+
+    <div class="row">
+      <button id="preview">Preview prompt</button>
+      <button id="generate" class="primary">Generate</button>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------- right: the results -->
+  <section class="col wide">
+    <fieldset>
+      <legend>Log</legend>
+      <pre id="log">idle</pre>
+    </fieldset>
+
+    <fieldset>
+      <legend>Staged runs <button id="refresh" class="mini">refresh</button></legend>
+      <div id="runs"></div>
+    </fieldset>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

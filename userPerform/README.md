@@ -21,6 +21,12 @@ Run whichever gates a change could affect. Re-run after each merge.
 | `G4-engine-state.bat` | Docs match the engine | Prints `Engine state doc matches.` |
 | `editor-check.bat` | Editor console (not numbered) | Editor loads, **zero** console errors, Save round-trips |
 
+Not a gate, but it lives here because it needs a browser and a paid API key:
+
+| Script | What | Notes |
+|---|---|---|
+| `runAssetGen.bat` | Art generation UI (`tools/asset-gen`) | Needs Python + `Pillow`/`requests` and `OPENAI_API_KEY`. Writes into `assets/` only when you press Promote. |
+
 Notes:
 - **G1:** the line `[formula] error in 'os.time()'` is an expected sandbox
   negative-test, not a failure.
