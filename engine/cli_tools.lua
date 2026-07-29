@@ -22,6 +22,30 @@ local function makeHarnessSession(loader)
 end
 cli.makeHarnessSession = makeHarnessSession
 
+-- golden-ui and screenshot harnesses drive scripted key sequences
+-- (goldenScript / screenshotScript) through scene_host.keypressed exactly
+-- like real input, which means the title scene's "Continue" reaches the
+-- SAME LOAD_GAME/LIST_SAVES commands a player uses -- and those read the
+-- developer's actual save directory (engine/savegame.lua), not anything
+-- scoped to the harness's synthetic session. A save file left over from
+-- manual playtesting makes the script silently load it and jump the
+-- harness into whatever scene it was saved from, so captured traces (and
+-- G3) depend on what happens to be on disk instead of only on the code.
+-- Stubbing the module for the harness's duration makes every slot read
+-- empty on every machine, matching what the golden reference was recorded
+-- against.
+local function withHermeticSaves(fn)
+    local savegame = require("engine.savegame")
+    local originalList = savegame.list
+    local originalLoad = savegame.load
+    savegame.list = function() return {} end
+    savegame.load = function() return nil, "no save (headless harness)" end
+    local ok, err = pcall(fn)
+    savegame.list = originalList
+    savegame.load = originalLoad
+    if not ok then error(err, 0) end
+end
+
 function cli.runPreviewAnim(animId, animJson, spritePath, loader)
     local json = require("data.json")
     local payload
@@ -329,6 +353,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
     end
 
     local ok, err = pcall(function()
+      withHermeticSaves(function()
         require("presentation.ui").init()
         for _, sceneDef in ipairs(loader.scenes or {}) do
             math.randomseed(12345)
@@ -403,6 +428,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                 ), vSession)
             end
         end
+      end)
     end)
 
     love.graphics.setCanvas()
@@ -650,6 +676,7 @@ function cli.runPreviewFog(fogSpecJson, mapId, loader)
 end
 
 function cli.runGoldenUI(loader)
+  withHermeticSaves(function()
     local LOGGED_EVENT_TYPES = {
         open_window = true,
         close_window = true,
@@ -767,6 +794,7 @@ function cli.runGoldenUI(loader)
     ::continue::
 
     interpreter.runImmediate = originalRunImmediate
+  end)
 end
 
 -- ---------------------------------------------------------------------------
