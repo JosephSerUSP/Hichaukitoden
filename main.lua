@@ -218,10 +218,16 @@ interpreter.bindPresentation({
 
 
 function love.load(arg)
+    -- Overwrite standard math.random with love.math.random for better entropy and security.
+    -- The standard C rand() used by math.random is weak and predictable when seeded with os.time().
+    math.random = love.math.random
+    math.randomseed = love.math.setRandomSeed
+
     -- Seed the RNG with the current time so normal gameplay (outside the
     -- validation/golden/preview harnesses) gets a fresh, non-deterministic
     -- party/inventory every run. The harnesses below reseed to a fixed value
     -- (12345) for reproducible golden logs, so this only affects real play.
+    -- (love.math.setRandomSeed uses a better PRNG algorithm than standard math.randomseed)
     math.randomseed(os.time())
     scene_host.init("title")
     print("--------------------------------------------------")
