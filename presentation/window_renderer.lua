@@ -1334,7 +1334,17 @@ local function applyShiftWith(layout, shiftResolved)
     end
 end
 
-local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache, layouts)
+local function drawWindow(config)
+    local id = config.id
+    local win = config.win
+    local layout = config.layout
+    local state = config.state
+    local sceneData = config.sceneData
+    local ctx = config.ctx
+    local env = config.env
+    local listCache = config.listCache
+    local layouts = config.layouts
+
     layout = resolvePageLayout(layout, env)
     local x, y = ui.toPx(layout.x or 0), ui.toPx(layout.y or 0)
     local w, h = ui.toPx(layout.width or 8), ui.toPx(layout.height or 4)
@@ -1732,7 +1742,17 @@ function wr.drawWindowFromData(sceneData, state, ctx)
             end
         end
 
-        drawWindow(winDef.id, win, layout, state, sceneData, ctx, env, winListCache, layouts)
+        drawWindow({
+            id = winDef.id,
+            win = win,
+            layout = layout,
+            state = state,
+            sceneData = sceneData,
+            ctx = ctx,
+            env = env,
+            listCache = winListCache,
+            layouts = layouts
+        })
 
         ::continue::
     end
@@ -1787,7 +1807,17 @@ function wr.draw(state, sceneData, ctx)
     for _, id in ipairs(state.windowOrder or {}) do
         local win = state.winState[id]
         if win and win.open then
-            drawWindow(id, win, layouts[id] or {}, state, sceneData, ctx, env, listCache, layouts)
+            drawWindow({
+                id = id,
+                win = win,
+                layout = layouts[id] or {},
+                state = state,
+                sceneData = sceneData,
+                ctx = ctx,
+                env = env,
+                listCache = listCache,
+                layouts = layouts
+            })
         elseif win then
             -- Closed windows drop their open-anim clock so re-opening
             -- replays the animation.
