@@ -21,6 +21,15 @@ local function weightedTarget(list, session)
     return list[#list]
 end
 
+local function isEnemy(actor, enemies)
+    for _, e in ipairs(enemies) do
+        if e == actor then
+            return true
+        end
+    end
+    return false
+end
+
 -- Field values resolve() actually implements. expand() rejects anything
 -- outside these — an unknown spec must ERROR, never silently retarget
 -- (T1 acceptance criterion: the old string-ladder's silent fallthrough to
@@ -95,13 +104,7 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
     local enemies = battleState.enemies or {}
 
     -- Check if actor is an enemy
-    local actorIsEnemy = false
-    for _, e in ipairs(enemies) do
-        if e == actor then
-            actorIsEnemy = true
-            break
-        end
-    end
+    local actorIsEnemy = isEnemy(actor, enemies)
 
     -- NOTE: the friendly group INCLUDES the caster (here and in
     -- getCandidates) — a deliberate T1 semantic change from the pre-T1 code,
@@ -263,13 +266,7 @@ function targeting.getCandidates(actor, spec, battleState, actionContext)
     local allies = battleState.allies or {}
     local enemies = battleState.enemies or {}
     
-    local actorIsEnemy = false
-    for _, e in ipairs(enemies) do
-        if e == actor then
-            actorIsEnemy = true
-            break
-        end
-    end
+    local actorIsEnemy = isEnemy(actor, enemies)
     
     local friendlyGroup = actorIsEnemy and enemies or allies
     local opposingGroup = actorIsEnemy and allies or enemies
