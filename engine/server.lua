@@ -4,6 +4,7 @@ local json = require("data.json")
 local server = {}
 local tcpListener = nil
 local active = false
+local authToken = nil
 server.configReloaded = false
 
 -- Single manifest of database files exposed to the editor. Keep in sync with
@@ -20,13 +21,15 @@ function server.start()
     if tcpListener then
         tcpListener:settimeout(0)
         active = true
+        math.randomseed(os.time())
+        authToken = tostring(math.random(1000000, 9999999))
         print("Developer hot-reload server running on http://127.0.0.1:8081/")
         
         -- Ping the editor server to notify successful startup
         pcall(function()
             local http = require("socket.http")
             http.TIMEOUT = 0.5
-            http.request("http://127.0.0.1:8080/ping?scene=game_loaded")
+            http.request("http://127.0.0.1:8080/ping?scene=game_loaded&token=" .. authToken)
         end)
     else
         print("Failed to bind developer hot-reload server to port 8081")
@@ -51,7 +54,7 @@ local function sendResponse(client, status, contentType, body)
         "Content-Type: " .. contentType,
         "Access-Control-Allow-Origin: http://127.0.0.1:8080",
         "Access-Control-Allow-Methods: GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers: Content-Type",
+        "Access-Control-Allow-Headers: Content-Type, Authorization",
         "Content-Length: " .. tostring(#body),
         "Connection: close",
         "",
@@ -71,8 +74,34 @@ function server.update(dt)
         if line then
             local method, path = line:match("^(%S+)%s+(%S+)%s+HTTP/")
             if method then
+                local isAuthValid = false
+                local contentLength = 0
+
+                -- Read headers for all methods except OPTIONS before checking auth,
+                -- so we can drain the request. /save also relies on Content-Length.
+                if method ~= "OPTIONS" then
+                    while true do
+                        local headerLine = client:receive()
+                        if not headerLine or headerLine == "" then break end
+
+                        local auth = headerLine:match("^[Aa]uthorization:%s*Bearer%s+(.+)")
+                        if auth and auth == authToken then
+                            isAuthValid = true
+                        end
+
+                        local len = headerLine:match("^[Cc]ontent%-[Ll]ength:%s*(%d+)")
+                        if len then contentLength = tonumber(len) end
+                    end
+                end
+
                 if method == "OPTIONS" then
                     sendResponse(client, "200 OK", "text/plain", "")
+                elseif not isAuthValid then
+                    -- Discard body if present to clean up the socket stream
+                    if contentLength > 0 then
+                        client:receive(contentLength)
+                    end
+                    sendResponse(client, "401 Unauthorized", "application/json", json.encode({ success = false, message = "Unauthorized" }))
                 elseif method == "GET" and path == "/reload" then
                     -- Reload loader caches
                     local loader = require("data.loader")
@@ -100,14 +129,6 @@ function server.update(dt)
                     sendResponse(client, "200 OK", "application/json", responseBody)
                     
                 elseif method == "POST" and path == "/save" then
-                    local contentLength = 0
-                    while true do
-                        local headerLine = client:receive()
-                        if not headerLine or headerLine == "" then break end
-                        local len = headerLine:match("[Cc]ontent%-[Ll]ength:%s*(%d+)")
-                        if len then contentLength = tonumber(len) end
-                    end
-                    
                     local body = ""
                     if contentLength > 0 then
                         body = client:receive(contentLength)

@@ -14,6 +14,7 @@ let genModelCache = null;
 // alongside a developer's own server on the default 8080.
 const PORT = parseInt(process.env.PORT, 10) || 8080;
 const GAME_PORT = 8081;
+let gameAuthToken = null;
 const PROJECT_DIR = path.resolve(__dirname, '../..');
 // Single manifest of database files exposed to the editor. Keep in sync with
 // DATA_FILES in engine/server.lua.
@@ -147,6 +148,8 @@ const server = http.createServer((req, res) => {
     }
     
     if (req.method === 'GET' && req.url === '/data') {
+        // Now served from disk directly by the editor server since the UI
+        // doesn't have the engine auth token; the editor reads the same data/.
         const getFileContents = (filename) => {
             try {
                 const filePath = path.join(dataDir(), filename);
@@ -640,11 +643,16 @@ const server = http.createServer((req, res) => {
                 });
 
                 // Notify Love2D game to reload if it is running
+                const headers = {};
+                if (gameAuthToken) {
+                    headers['Authorization'] = `Bearer ${gameAuthToken}`;
+                }
                 const notifyReq = http.request({
                     hostname: '127.0.0.1',
                     port: GAME_PORT,
                     path: '/reload',
                     method: 'GET',
+                    headers: headers,
                     timeout: 500
                 }, (notifyRes) => {});
                 notifyReq.on('error', (err) => {
@@ -923,6 +931,10 @@ const server = http.createServer((req, res) => {
     } else if (req.method === 'GET' && req.url.startsWith('/ping')) {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
         const scene = parsedUrl.searchParams.get('scene') || 'unknown';
+        const token = parsedUrl.searchParams.get('token');
+        if (token) {
+            gameAuthToken = token;
+        }
         console.log(`\n[GAME STATUS PING] Game connected! Scene: ${scene.toUpperCase()}`);
         console.log(`[GAME STATUS PING] Build checks: Input Cooldown & Repeat Filters are fully active.\n`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
