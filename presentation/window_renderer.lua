@@ -991,7 +991,11 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
         local label = row.name or ""
         local hasIcon = row.icon and row.icon > 0
         if hasIcon then
-            local textW = ui.measureText(label)
+            local textW = row._textW
+            if not textW then
+                textW = ui.measureText(label)
+                row._textW = textW
+            end
             local iconBlockW = ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)
             local totalW = iconBlockW + textW
             local startX = slotX + (slotW - totalW) / 2
@@ -1001,7 +1005,11 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
             ui.drawIconText(row.icon, label, startX, textY, color)
         else
             if cursorY then
-                local textW = love.graphics.getFont():getWidth(label)
+                local textW = row._textW
+                if not textW then
+                    textW = love.graphics.getFont():getWidth(label)
+                    row._textW = textW
+                end
                 local textX = slotX + (slotW - textW) / 2
                 small_battlers.draw("Cursor", textX - 10, cursorY, 8)
             end
