@@ -1,4 +1,7 @@
 UI GOLDEN BEGIN
 scene|reserve|name|Reserve
 reserve_popup|close_window||
+reserve_popup|close_window||
+reserve_help|set_text||Select a target to swap with.  ESC: cancel
+reserve_help|set_text||{config.terms.help}
 UI GOLDEN END
