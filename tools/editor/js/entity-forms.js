@@ -289,6 +289,8 @@
                     { kind: 'custom', when: it => it.type !== 'equipment',
                       build: (c, it) => buildActionSequencePicker(c, it) },
                     { kind: 'text', key: 'description', label: 'Description' },
+                    { kind: 'text', key: 'condition', label: 'Trait Condition (e.g. HP < 50%)', deleteIfEmpty: true,
+                      when: it => it.type === 'equipment' },
                     { kind: 'custom', when: it => it.type === 'equipment',
                       build: (c, it) => buildTraitsEditor(c, it, 'Equipment Traits') },
                     { kind: 'custom', when: it => it.type !== 'equipment',
@@ -335,6 +337,7 @@
                     { kind: 'number', key: 'duration', label: 'Duration (turns, 9999 = permanent)',
                       fallback: 0, get: st => st.duration || 3 },
                     { kind: 'checkbox', key: 'removeAtDamage', label: 'Removed when taking damage', deleteIfFalse: true },
+                    { kind: 'text', key: 'condition', label: 'Trait Condition (e.g. HP < 50%)', deleteIfEmpty: true },
                     // Categories are a LIST, not a single kind: a state is
                     // routinely several things at once (poison is negative AND
                     // common AND physical), and each one is a separate handle

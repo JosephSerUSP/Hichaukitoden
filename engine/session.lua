@@ -111,6 +111,17 @@ function Battler:getMpd(sess)
     return traits.getParam(self, "mpd", sess)
 end
 
+-- Falls back to the state's own authored duration (data/states.json) when the
+-- inflicting effect/command omits one, rather than a fixed guess -- every
+-- current skill/item/flow that inflicts a state passes an explicit duration,
+-- so this only matters for a future omission, but it means that omission
+-- gets the author's declared default instead of a silent 3.
+local function defaultStateDuration(stateId)
+    local loader = require("data.loader")
+    local stateData = loader.getState(stateId)
+    return (stateData and stateData.duration) or 3
+end
+
 function Battler:addState(stateId, duration)
     -- Check if state already exists
     for _, s in ipairs(self.states) do
@@ -119,7 +130,8 @@ function Battler:addState(stateId, duration)
             return
         end
     end
-    table.insert(self.states, { id = stateId, duration = duration or 3, maxDuration = duration or 3 })
+    local resolved = duration or defaultStateDuration(stateId)
+    table.insert(self.states, { id = stateId, duration = resolved, maxDuration = resolved })
 end
 
 function Battler:removeState(stateId)
