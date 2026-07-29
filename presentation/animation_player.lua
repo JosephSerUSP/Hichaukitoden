@@ -219,12 +219,22 @@ end
 function animation_player.stopAnimation(target, entryId)
     local list = instances[target]
     if not list then return end
-    for i = #list, 1, -1 do
-        if list[i].entryId == entryId then
-            releaseInstanceParticles(list[i])
-            table.remove(list, i)
+
+    local j = 1
+    local len = #list
+    for i = 1, len do
+        local inst = list[i]
+        if inst.entryId == entryId then
+            releaseInstanceParticles(inst)
+        else
+            list[j] = inst
+            j = j + 1
         end
     end
+    for i = len, j, -1 do
+        list[i] = nil
+    end
+
     if #list == 0 then
         instances[target] = nil
         local callbacks = completionCallbacks[target]
@@ -253,7 +263,9 @@ end
 function animation_player.update(dt)
     for target, list in pairs(instances) do
         local anyFinished = false
-        for i = #list, 1, -1 do
+        local j = 1
+        local len = #list
+        for i = 1, len do
             local inst = list[i]
             inst.elapsed = inst.elapsed + dt
             local durSec = (inst.entry.duration or 0) / 1000
@@ -261,6 +273,7 @@ function animation_player.update(dt)
             local infinite = inst.entry.duration == -1 or inst.entry.loopForever
             local loop = inst.entry.loop
             
+            local remove = false
             if infinite then
                 -- Never finishes automatically
             elseif loop then
@@ -271,11 +284,20 @@ function animation_player.update(dt)
                 if inst.elapsed >= durSec then
                     -- Animation complete — remove it
                     releaseInstanceParticles(inst)
-                    table.remove(list, i)
+                    remove = true
                     anyFinished = true
                 end
             end
+
+            if not remove then
+                list[j] = inst
+                j = j + 1
+            end
         end
+        for i = len, j, -1 do
+            list[i] = nil
+        end
+
         if #list == 0 then
             instances[target] = nil
             local callbacks = completionCallbacks[target]
