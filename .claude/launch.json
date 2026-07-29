@@ -7,6 +7,12 @@
       "runtimeArgs": ["tools/editor/server.js"],
       "port": 8080,
       "autoPort": true
+    },
+    {
+      "name": "asset-gen",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["tools/asset-gen/server.py"],
+      "port": 7801
     }
   ]
 }

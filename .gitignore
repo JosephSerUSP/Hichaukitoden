@@ -14,3 +14,10 @@ assets/portraits/source/
 tools/image/*preview*.png
 tmp/imagegen/
 tmp/art-reference/
+
+# Staged art from tools/asset-gen (raw model output + candidates; promote what you keep)
+tools/asset-gen/out/
+
+# Python bytecode from tools/asset-gen
+__pycache__/
+*.pyc

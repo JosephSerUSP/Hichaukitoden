@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "Image providers for tools/asset-gen. Shape deliberately mirrors",
+    "tools/campaign-gen/config.json so the two generators are read the same way.",
+    "Keys are NEVER stored here -- each provider names the env var it reads.",
+    "",
+    "PRICING IS A LOCAL COPY AND IT GOES STALE. Figures are USD per image, by",
+    "quality and requested size, checked on the date below against the official",
+    "pages. The tool only ever calls them an estimate; the invoice is the truth.",
+    "Correct a number by editing it here -- nothing computes prices in code."
+  ],
+  "pricing": {
+    "checkedOn": "2026-07-27",
+    "source": "https://developers.openai.com/api/docs/pricing"
+  },
+  "providers": {
+    "openai": {
+      "label": "OpenAI Images",
+      "baseUrl": "https://api.openai.com/v1",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "type": "openai-images",
+      "model": "gpt-image-1-mini",
+      "quality": "low",
+      "default": true,
+      "models": [
+        {
+          "id": "gpt-image-1-mini",
+          "label": "GPT Image 1 mini -- cheapest, fine for small sprites",
+          "default": true,
+          "prices": {
+            "low":    { "1024x1024": 0.005, "1024x1536": 0.006, "1536x1024": 0.006 },
+            "medium": { "1024x1024": 0.011, "1024x1536": 0.015, "1536x1024": 0.015 },
+            "high":   { "1024x1024": 0.036, "1024x1536": 0.052, "1536x1024": 0.052 }
+          }
+        },
+        {
+          "id": "gpt-image-1.5",
+          "label": "GPT Image 1.5 -- better prompt adherence",
+          "prices": {
+            "low":    { "1024x1024": 0.009, "1024x1536": 0.013, "1536x1024": 0.013 },
+            "medium": { "1024x1024": 0.034, "1024x1536": 0.050, "1536x1024": 0.050 },
+            "high":   { "1024x1024": 0.133, "1024x1536": 0.200, "1536x1024": 0.200 }
+          }
+        },
+        {
+          "id": "gpt-image-1",
+          "label": "GPT Image 1 -- the original",
+          "prices": {
+            "low":    { "1024x1024": 0.011, "1024x1536": 0.016, "1536x1024": 0.016 },
+            "medium": { "1024x1024": 0.042, "1024x1536": 0.063, "1536x1024": 0.063 },
+            "high":   { "1024x1024": 0.167, "1024x1536": 0.250, "1536x1024": 0.250 }
+          }
+        },
+        {
+          "id": "gpt-image-2",
+          "label": "GPT Image 2 -- newest; priced per token, NOT per image",
+          "prices": null,
+          "note": "OpenAI publishes no per-image table for this model (it bills tokens: $8/1M in, $30/1M out), so this tool cannot estimate its cost. Watch your usage dashboard."
+        }
+      ]
+    },
+    "gemini": {
+      "label": "Gemini (image)",
+      "apiKeyEnv": "GEMINI_API_KEY",
+      "type": "gemini-image",
+      "model": "gemini-3.1-flash-lite-image",
+      "models": [
+        { "id": "gemini-3.1-flash-lite-image", "label": "Gemini 3.1 Flash Lite (image)",
+          "default": true, "prices": null,
+          "note": "Priced per token by Gemini; no per-image estimate here." }
+      ]
+    },
+    "openrouter": {
+      "label": "OpenRouter (image-capable chat models)",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "type": "openai-chat-image",
+      "model": "google/gemini-2.5-flash-image-preview",
+      "models": [
+        { "id": "google/gemini-2.5-flash-image-preview", "label": "Gemini 2.5 Flash Image (preview)",
+          "default": true, "prices": null,
+          "note": "OpenRouter bills per token and rates change often; see its model page." }
+      ]
+    }
+  },
+  "generate": {
+    "variants": 3,
+    "timeoutSeconds": 180,
+    "maxRetries": 3,
+    "stagingDir": "tools/asset-gen/out"
+  }
+}

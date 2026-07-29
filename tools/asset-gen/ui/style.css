@@ -1,0 +1,98 @@
+/* Tight RM2003-style groupboxes: dense rows, hairline frames, no touch-target
+   padding. Matches the editor's density on purpose -- this is a desk tool. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #16151c;
+  color: #d7d3e0;
+  font: 12px/1.35 "Segoe UI", Tahoma, sans-serif;
+}
+
+header {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 6px 10px;
+  background: linear-gradient(#2b2740, #1d1b28);
+  border-bottom: 1px solid #453f5e;
+}
+header h1 { margin: 0; font-size: 14px; letter-spacing: .5px; color: #e9e4ff; }
+header .sub { color: #8d87a4; }
+
+main { display: flex; gap: 10px; padding: 10px; align-items: flex-start; }
+.col { flex: 0 0 320px; display: flex; flex-direction: column; gap: 8px; }
+.col.wide { flex: 1 1 auto; min-width: 0; }
+
+fieldset {
+  border: 1px solid #453f5e;
+  background: #1d1b28;
+  padding: 6px 8px 8px;
+  margin: 0;
+}
+legend {
+  padding: 0 4px; color: #b8aee0; font-weight: 600;
+  text-transform: uppercase; font-size: 10px; letter-spacing: .8px;
+}
+
+label {
+  display: flex; align-items: center; gap: 6px;
+  margin: 3px 0; color: #a49dbd;
+}
+label.stack { flex-direction: column; align-items: stretch; gap: 2px; }
+label > input, label > select, label > textarea { flex: 1 1 auto; min-width: 0; }
+
+input, select, textarea {
+  background: #12111a; color: #e4e0f0;
+  border: 1px solid #3a3550; padding: 2px 4px;
+  font: inherit;
+}
+textarea { resize: vertical; font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: 1px solid #7d6bc4; border-color: #7d6bc4; }
+
+button {
+  background: linear-gradient(#3a3455, #29243d);
+  color: #ded8f2; border: 1px solid #574d7a;
+  padding: 3px 10px; cursor: pointer; font: inherit;
+}
+button:hover:not(:disabled) { background: linear-gradient(#4a4270, #322b4c); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { border-color: #8a76d8; color: #fff; }
+button.mini { padding: 1px 6px; font-size: 11px; }
+
+.row { display: flex; gap: 6px; }
+.row button { flex: 1 1 auto; }
+
+.note { margin: 2px 0; color: #7f7899; font-size: 11px; }
+.note.warn { color: #d8a45c; }
+.target { margin: 4px 0 0; color: #7fbf8a; font-family: Consolas, monospace; font-size: 11px; }
+.cost { margin: 4px 0 0; color: #e0c88a; font-weight: 600; }
+.cost.muted { color: #7f7899; font-weight: normal; }
+
+pre#log {
+  margin: 0; max-height: 200px; overflow: auto;
+  background: #12111a; border: 1px solid #3a3550; padding: 6px;
+  font: 11px/1.4 Consolas, monospace; color: #b9b3cc; white-space: pre-wrap;
+}
+pre#log.busy { color: #e0c88a; }
+pre#log.fail { color: #e08a8a; }
+
+/* --- staged runs ---------------------------------------------------- */
+.run { border: 1px solid #3a3550; background: #191822; margin-bottom: 6px; }
+.run > .head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 3px 6px; background: #232030; border-bottom: 1px solid #3a3550;
+}
+.run .cls { color: #b8aee0; font-weight: 600; }
+.run .path { color: #7fbf8a; font-family: Consolas, monospace; font-size: 11px; }
+.run .meta { color: #6f6889; font-size: 11px; margin-left: auto; }
+.run .done { color: #7fbf8a; font-size: 11px; }
+
+.variants { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
+.variant { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.variant .frame {
+  background: #0e0d14 repeating-conic-gradient(#232030 0% 25%, #0e0d14 0% 50%) 0 0 / 12px 12px;
+  border: 1px solid #3a3550; padding: 4px; line-height: 0;
+}
+/* Pixel art must never be smoothed by the browser. */
+.variant img { image-rendering: pixelated; display: block; }
+.variant .cap { color: #6f6889; font-size: 11px; }
