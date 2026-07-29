@@ -146,6 +146,16 @@ function animation_player.getEntry(entryId)
     return entries[entryId]
 end
 
+-- The anchor spec an entry attaches to its target with (data/animations.json
+-- `anchor`), or nil when it authors none -- the drawer then falls back to
+-- engine.json battleLayout.animationAnchorPoint. Pure data: resolving the spec
+-- against a battler's rect is battler_geometry.anchor's job, which is why this
+-- module never needs to know about screen geometry.
+function animation_player.getAnchor(entryId)
+    local entry = entries[entryId]
+    return entry and entry.anchor or nil
+end
+
 -- Start an animation on a target. `target` can be any object used as a key
 -- (enemy battler, party member, etc.). Returns true if the animation was
 -- found and started, false if entryId is unknown. Optionally delays start by delayMs.
@@ -586,6 +596,12 @@ function animation_player.getParticleSystems(target)
                                 y = 0,
                                 layer = track.layer or "front",
                                 parentTransform = parentTf,
+                                -- Per-INSTANCE anchor: two animations on the
+                                -- same battler can attach at different points
+                                -- (a ground burst at the feet under a flash at
+                                -- the head), so it travels with the system
+                                -- rather than being a property of the target.
+                                anchor = entry.anchor,
                             })
                         end
                     end
@@ -798,21 +814,40 @@ function animation_player.updateParticles(dt)
     end
 end
 
--- Draw particles for a target at the given screen position.
+-- Draw particles for a target attached to its battler RECT (the sprite box it
+-- was drawn into -- presentation/battler_geometry.lua builds these). Each
+-- animation resolves its own anchor against that rect, which is what makes one
+-- authored entry sit correctly on a 64px enemy portrait and a 24px party
+-- sprite alike; before this, callers passed a bare point they each computed
+-- differently and party-side animations landed off their creature.
+-- `session` supplies the engine.json default anchor for entries authoring none.
 -- If mask is "target", the particles are clipped to the battler's sprite
 -- using stencil testing against its alpha channel.
 -- `layerFilter` (optional): "back" or "front" draws only that layer, so the
 -- caller can render back-layer particles before the sprite and front-layer
 -- ones after. nil draws all.
-function animation_player.drawParticles(target, drawX, drawY, battlerDrawFn, layerFilter)
+function animation_player.drawParticles(target, rect, battlerDrawFn, layerFilter, session)
     local systems = animation_player.getParticleSystems(target)
-    if not systems then return end
+    if not systems or not rect then return end
+    local geometry = require("presentation.battler_geometry")
+    local battle_layout = require("presentation.battle_layout")
+    local defaultPoint = battle_layout.get(session, "animationAnchorPoint")
     for _, sys in ipairs(systems) do
         if not (layerFilter and (sys.layer or "front") ~= layerFilter) then
         local ps = sys.ps
         local blendMode = sys.blendMode
-        local px = drawX + (sys.x or 0)
-        local py = drawY + (sys.y or 0)
+        local anchor = sys.anchor or { point = defaultPoint }
+        if anchor.point == nil then
+            anchor = {
+                point = defaultPoint,
+                offsetX = anchor.offsetX, offsetY = anchor.offsetY,
+                relativeOffsetX = anchor.relativeOffsetX,
+                relativeOffsetY = anchor.relativeOffsetY,
+            }
+        end
+        local anchorX, anchorY = geometry.anchor(rect, anchor)
+        local px = anchorX + (sys.x or 0)
+        local py = anchorY + (sys.y or 0)
         if sys.parentTransform then
             px = px + sys.parentTransform.offsetX
             py = py + sys.parentTransform.offsetY

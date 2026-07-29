@@ -20,6 +20,7 @@ local config = require("engine.config")
 local traits = require("engine.traits")
 local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
+local battler_geometry = require("presentation.battler_geometry")
 local animation_player = require("presentation.animation_player")
 
 local actor_status = {}
@@ -153,28 +154,12 @@ end
 -- implementation, no duplicate copy.
 actor_status.drawElementIcons = drawElementIcons
 
--- The fixed footprint of one actor-status cell (engine.json battleLayout
--- partyGridColWidth/RowHeight, or the 64x40 built-in default). Callers
--- arranging multiple cells (renderer.drawPartyGrid's 2x2, window_renderer's
--- wrapping grid) use this instead of hardcoding numbers.
-function actor_status.cellSize(session)
-    return layoutVal(session, "partyGridColWidth"), layoutVal(session, "partyGridRowHeight")
-end
-
--- Shared party-grid slot arithmetic: the top-left (x, y) of the cell for a
--- 1-based member `index`, wrapping into `cols` columns (default 2 - the
--- battle/map HUD's 2x2). Every party-grid layout goes through this - the
--- direct-draw grid (renderer.drawPartyGrid), the data-driven window
--- "partyGrid" style (window_renderer), and the damage-popup coordinate
--- lookup (renderer.getBattlerCoords) - so cell size and wrapping can never
--- drift between where a cell is drawn and where its popup spawns.
-function actor_status.gridSlot(originX, originY, index, session, cols)
-    cols = cols or 2
-    local colW, rowH = actor_status.cellSize(session)
-    local col = (index - 1) % cols
-    local row = math.floor((index - 1) / cols)
-    return originX + col * colW, originY + row * rowH
-end
+-- Cell footprint and slot arithmetic live in presentation/battler_geometry.lua
+-- (the single battler-placement authority); these stay as the names existing
+-- callers use. One implementation, so cell size and wrapping can never drift
+-- between where a cell is drawn and what anchors to it.
+actor_status.cellSize = battler_geometry.cellSize
+actor_status.gridSlot = battler_geometry.gridSlot
 
 -- Draws ONE party member's status cell at (x, y) — top-left anchor, cell
 -- size from actor_status.cellSize(). This is verbatim the battle/map HUD's
@@ -266,7 +251,7 @@ end
 function actor_status.draw(battler, x, y, isSelected, session)
     if not battler then return end
     local colW, rowH = actor_status.cellSize(session)
-    local spriteSize = 24 -- B.5: default small battler cell size
+    local spriteSize = layoutVal(session, "partyGridSpriteSize")
     -- drawPanel starts at x - 2 and leaves a 4px border on each side. Keep
     -- text and gauges inside its right-hand interior edge (exclusive).
     local slotContentEndX = x + colW - 8
@@ -282,7 +267,10 @@ function actor_status.draw(battler, x, y, isSelected, session)
     battler.spriteStatic = actor_status.spriteIsStatic(battler, session)
     local spriteKey = battler.actorData and battler.actorData.smallBattler
     local spriteOffsetX = 0
-    if spriteKey and small_battlers.draw(spriteKey, x, y + ui.lineHeight, spriteSize, dead, battler) then
+    -- Sprite top offset comes from battler_geometry so the rect the popup /
+    -- animation anchors resolve against is the box the sprite really occupies.
+    local spriteY = y + battler_geometry.partySpriteTopOffset()
+    if spriteKey and small_battlers.draw(spriteKey, x, spriteY, spriteSize, dead, battler, session) then
         spriteOffsetX = spriteSize - 2 -- 22px; content on lines 2–3 starts after it
     end
 
@@ -301,11 +289,6 @@ function actor_status.draw(battler, x, y, isSelected, session)
     local maxNameChars = math.floor(nameClipW / 6)
     local displayName = (battler.name):sub(1, maxNameChars)
     ui.drawString(displayName, nameX, lineY, color, "left", 256)
-
-    -- Cycling state icon, right-aligned on the name line so it never pushes
-    -- the name around as states come and go.
-    actor_status.syncStateAnimations(battler, session)
-    actor_status.drawStateIcon(battler, slotContentEndX - 8, lineY - 4, session)
 
     -- Cycling state icon, right-aligned on the name line so it never pushes
     -- the name around as states come and go.

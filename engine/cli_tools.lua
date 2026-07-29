@@ -132,6 +132,10 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
             spriteQuad:setViewport(frame * cellW, 0, cellW, cellH)
             local drawX = 120 + tf.offsetX + shakeX
             local drawY = 160 + tf.offsetY -- draw baseline at Y=160
+            -- The rect the preview's dummy sprite occupies, so the editor
+            -- previews an animation's anchor exactly as battle resolves it
+            -- (one implementation -- the preview never re-derives placement).
+            local previewRect = { x = 120 - cellW / 2, y = 160 - cellH, w = cellW, h = cellH }
 
             -- Sprite drawing function for stencil test
             local function drawSprite()
@@ -140,7 +144,7 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
 
             -- Back-layer particles render behind the sprite.
             love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "back")
+            animation_player.drawParticles(dummyTarget, previewRect, drawSprite, "back")
 
             -- Sprite through tint + gradient-map shader (if active).
             love.graphics.setBlendMode(blendMode)
@@ -154,7 +158,7 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
 
             -- Front-layer particles render on top of the sprite.
             love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(dummyTarget, drawX, drawY, drawSprite, "front")
+            animation_player.drawParticles(dummyTarget, previewRect, drawSprite, "front")
 
             -- Full-screen flash overlay, above everything.
             local flash = animation_player.getScreenFlash(dummyTarget)

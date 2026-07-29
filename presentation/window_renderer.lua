@@ -643,7 +643,7 @@ local function drawActorStatusCell(layout, env, x, y, title, ctx)
     return rowH
 end
 
-local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
+local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, session)
     local contentX, contentY = contentOrigin(layout, title, x, y)
 
     -- Integrated Tab Header Strip (Option 1 / Approach A):
@@ -735,7 +735,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title)
         local textX = contentX + ui.toPx(0.5)
         if spriteField then
             local key = row[spriteField]
-            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef) then
+            if key and key ~= "" and small_battlers.draw(key, x + ui.toPx(1), rowY - 2, spriteSize, row.dead, row.battlerRef, session) then
             textX = contentX + ui.toPx(0.5) + spriteSize + 3
             end
         end
@@ -1231,7 +1231,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     if style == "list" then
         local cached = listCache[id]
         if cached then
-            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title)
+            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title, ctx and ctx.session)
         end
         if text then
             drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))

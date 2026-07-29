@@ -104,7 +104,11 @@ Everything in Sec.1 follows from that goal rather than the reverse:
   (tint, blend, transform, shake, particles, force_field, gradient_map,
   screen_flash). `system.*` reserved entries (damage_flash, shake, death,
   …) must exist and hard-validate; assignable entries soft-validate so new
-  track types can ship data-first.
+  track types can ship data-first. An entry may author an `anchor` saying
+  where on its target it attaches — see §2.4.
+- **Battler placement is one module** (`presentation/battler_geometry.lua`):
+  battler → rect, rect + anchor spec → point. Popups, animations, reticles,
+  slot indicators and the enemy info block all read it. See §2.4.
 - **Targeting is one resolver** (`engine/targeting.lua`): declarative
   target specs on skills/items, expanded by `targeting.expand` for both AI
   and player paths. `expand` errors on unknown specs; the validator gates
@@ -962,6 +966,41 @@ This applies to the editor too: form fields come from the schema layer
 - Gauges never jump: smooth interpolation for damage and healing.
 - Actors flash white/cyan on action, red on impact (system animations).
 - Damage numbers launch with velocity and bounce under gravity.
+
+### 2.4 One battler placement, and anchors (29.07.2026)
+
+`presentation/battler_geometry.lua` is the **single authority on where a
+battler is**. It maps a battler to a rect — the sprite box, plus the `frame`
+box that framing UI uses (the portrait for an enemy, the whole status cell for
+a party member) — and everything that attaches to a creature reads it: damage
+popups, animations, target reticles, slot indicators and the enemy info block.
+
+This rule exists because placement was previously computed in four places that
+disagreed, so a popup could spawn at a fixed row y while the creature it
+belonged to was elsewhere, and any layout tweak had to be repeated four times
+or drift. **Never compute battler coordinates locally.**
+
+Anything attaching to a creature does so with an **anchor spec**, resolved by
+`battler_geometry.anchor(rect, spec)`:
+
+| Field | Meaning |
+|---|---|
+| `point` | `center` (default) \| `feet` \| `head` \| `top_left` |
+| `offsetX` / `offsetY` | pixels, applied after the point |
+| `relativeOffsetX` / `relativeOffsetY` | fraction of the battler's OWN width/height |
+
+The relative offsets are what make one authored effect correct at both scales:
+`0.5` is 32px on a 64px enemy portrait and 12px on a 24px party sprite. An
+animation entry authors its anchor in `data/animations.json` (`anchor`);
+entries that author none take `battleLayout.animationAnchorPoint`. Damage
+popups take `battleLayout.popupAnchor*`. An unknown `point` **raises** — G1
+checks every animation entry and both battleLayout defaults, so a typo is a
+build failure, never a silently centered effect.
+
+The enemy info block (element icons + name + HP gauge) is data likewise:
+`battleLayout.enemyInfo*` owns its width (96px default), its offsets **from the
+creature's feet line** rather than an absolute row, and an on/off switch per
+channel.
 
 ---
 

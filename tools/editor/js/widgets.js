@@ -1234,19 +1234,35 @@
                                              help: 'Damage multiplier when the attack element is weak against the target (0.65 = -35%).' },
             'battleLayout.enemyRowWidth':  { label: 'Enemy Row Width (px)' },
             'battleLayout.enemyStartX':    { label: 'Enemy Row Start X (px)' },
-            'battleLayout.enemyPopupOffsetX': { label: 'Enemy Popup Offset X (px)' },
-            'battleLayout.enemyPopupY':    { label: 'Enemy Popup Y (px)' },
+            'battleLayout.popupAnchorPoint': { label: 'Popup Anchor Point', widget: 'select',
+                                             options: ['center', 'feet', 'head', 'top_left'],
+                                             help: 'Where damage/heal numbers attach on a battler. Same spec for enemies and party members.' },
+            'battleLayout.popupAnchorOffsetX': { label: 'Popup Offset X (px)' },
+            'battleLayout.popupAnchorOffsetY': { label: 'Popup Offset Y (px)' },
+            'battleLayout.popupAnchorRelativeX': { label: 'Popup Offset X (x battler width)', step: 0.05,
+                                             help: 'Added on top of the pixel offset, scaled by the battler’s own size: 0.5 is half a sprite width.' },
+            'battleLayout.popupAnchorRelativeY': { label: 'Popup Offset Y (x battler height)', step: 0.05 },
+            'battleLayout.animationAnchorPoint': { label: 'Default Animation Anchor', widget: 'select',
+                                             options: ['center', 'feet', 'head', 'top_left'],
+                                             help: 'Used by animation entries that do not author their own anchor.' },
             'battleLayout.consoleTileY':   { label: 'Console Y (tiles)' },
             'battleLayout.headerTileOffset': { label: 'Console Header Offset (tiles)' },
-            'battleLayout.slotPopupOffsetX': { label: 'Party Popup Offset X (px)' },
-            'battleLayout.slotPopupOffsetY': { label: 'Party Popup Offset Y (px)' },
             'battleLayout.fallbackX':      { label: 'Popup Fallback X (px)' },
             'battleLayout.fallbackY':      { label: 'Popup Fallback Y (px)' },
             'battleLayout.enemyY':         { label: 'Enemy Y (px)' },
-            'battleLayout.enemyNameY':     { label: 'Enemy Name Y (px)' },
-            'battleLayout.enemyHpBarY':    { label: 'Enemy HP Bar Y (px)' },
-            'battleLayout.enemyHpBarWidth': { label: 'Enemy HP Bar Width (px)' },
-            'battleLayout.enemyHpBarHeight': { label: 'Enemy HP Bar Height (px)' },
+            'battleLayout.enemyInfoVisible': { label: 'Enemy Info Block', widget: 'checkbox',
+                                             help: 'Element icons + name + HP gauge under each enemy. Off hides the whole block.' },
+            'battleLayout.enemyInfoWidth': { label: 'Enemy Info Width (px)',
+                                             help: 'Width of the info block and its HP gauge, centred on the creature.' },
+            'battleLayout.enemyInfoClampToSlot': { label: 'Clamp Info to Enemy Slot', widget: 'checkbox',
+                                             help: 'Shrink the block when the row packs enemies closer together than its width.' },
+            'battleLayout.enemyInfoOffsetY': { label: 'Enemy Info Y (px from feet)',
+                                             help: 'Relative to the creature’s feet line, so the block follows the sprite.' },
+            'battleLayout.enemyInfoBarOffsetY': { label: 'Enemy HP Bar Y (px below name)' },
+            'battleLayout.enemyInfoHpBarHeight': { label: 'Enemy HP Bar Height (px)' },
+            'battleLayout.enemyInfoShowName': { label: 'Show Enemy Name', widget: 'checkbox' },
+            'battleLayout.enemyInfoShowHpBar': { label: 'Show Enemy HP Gauge', widget: 'checkbox' },
+            'battleLayout.enemyInfoShowElements': { label: 'Show Enemy Element Icons', widget: 'checkbox' },
             'battleLayout.enemySpriteSize': { label: 'Enemy Sprite Size (px)' },
             'battleLayout.enemyFallbackSize': { label: 'Enemy Fallback Sprite Size (px)' },
             'battleLayout.viewportOverlayW': { label: 'Viewport Overlay Width (px)' },
@@ -1267,6 +1283,8 @@
             'battleLayout.menuChoiceSpacing': { label: 'Menu Choice Spacing (px)' },
             'battleLayout.partyGridColWidth': { label: 'Party Grid Column Width (px)' },
             'battleLayout.partyGridRowHeight': { label: 'Party Grid Row Height (px)' },
+            'battleLayout.partyGridSpriteSize': { label: 'Party Grid Sprite Size (px)',
+                                             help: 'Size of the creature sprite in a status cell. Animations anchored to a battler scale their relative offsets against it.' },
             'battleLayout.partyGridNameXOffset': { label: 'Party Grid Name X Offset (px)' },
             'battleLayout.partyGridHpXOffset': { label: 'Party Grid HP X Offset (px)' },
             'battleLayout.partyGridHpYOffset': { label: 'Party Grid HP Y Offset (px)' },
@@ -1434,6 +1452,33 @@
                     setDirty(true);
                 };
                 group.appendChild(input);
+                appendFieldHelp(group, schema);
+                container.appendChild(group);
+                return true;
+            }
+
+            // Closed-set string field (anchor points): a dropdown, so an
+            // author can't type a value the engine will reject at draw time.
+            if (widget === 'select' && Array.isArray(schema.options)) {
+                const group = document.createElement('div');
+                group.className = useBlockLayout ? 'form-group' : 'form-group field-inline';
+                const lbl = document.createElement('label');
+                lbl.textContent = schema.label || key;
+                group.appendChild(lbl);
+                const select = document.createElement('select');
+                select.className = 'form-control inset-bevel';
+                for (const option of schema.options) {
+                    const opt = document.createElement('option');
+                    opt.value = option;
+                    opt.textContent = option;
+                    if (option === value) opt.selected = true;
+                    select.appendChild(opt);
+                }
+                select.onchange = () => {
+                    setNestedValue(targetRoot, currentPath, key, select.value);
+                    setDirty(true);
+                };
+                group.appendChild(select);
                 appendFieldHelp(group, schema);
                 container.appendChild(group);
                 return true;

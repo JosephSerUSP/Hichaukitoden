@@ -10,25 +10,42 @@ local battle_layout = {}
 local BATTLE_LAYOUT = {
     enemyRowWidth = 220,
     enemyStartX = 18,
-    enemyPopupOffsetX = 28, -- centered over the 56x56 enemy sprite
-    enemyPopupY = 84,
+    -- Damage/heal popups attach to the battler through the shared anchor
+    -- resolver (presentation/battler_geometry.lua), so ONE spec serves both
+    -- the 64px enemy portrait and the 24px party sprite -- the old
+    -- enemyPopupOffsetX/enemyPopupY + slotPopupOffsetX/Y pairs were a second
+    -- opinion on where a creature is, and drifted from where it was drawn.
+    popupAnchorPoint = "center",
+    popupAnchorOffsetX = 0,
+    popupAnchorOffsetY = 0,
+    popupAnchorRelativeX = 0,
+    popupAnchorRelativeY = 0,
+    -- Default anchor for animation entries that do not author their own
+    -- (data/animations.json `anchor`).
+    animationAnchorPoint = "center",
     -- consoleTileY/H match engine.json windowLayout.party exactly (y18.5,
     -- h11.5) so the bottom console sits at the SAME position as the shared
     -- declarative "party" window every other converted scene uses (owner
     -- direction 12.07.2026).
     consoleTileY = 18.5,
     headerTileOffset = 1,
-    slotPopupOffsetX = 27,
-    slotPopupOffsetY = 10,
     fallbackX = 128,
     fallbackY = 70,
     enemyY = 54,
-    enemyNameY = 114,
-    enemyHpBarY = 128,
-    enemyDataWidth = 96,
-    enemyHpBarWidth = 50,
-    enemyHpBarHeight = 4,
     enemySpriteSize = 56,
+    -- Enemy info block (element icons + name + HP gauge). Positioned RELATIVE
+    -- to the creature's feet line, so it follows the sprite instead of sitting
+    -- at an absolute row that a taller portrait would collide with. Every
+    -- channel can be switched off from data.
+    enemyInfoVisible = true,
+    enemyInfoWidth = 96,
+    enemyInfoClampToSlot = false,
+    enemyInfoOffsetY = 4,
+    enemyInfoBarOffsetY = 14,
+    enemyInfoHpBarHeight = 4,
+    enemyInfoShowName = true,
+    enemyInfoShowHpBar = true,
+    enemyInfoShowElements = true,
     enemyFallbackSize = 50,
     viewportOverlayW = 256,
     viewportOverlayH = 140,
@@ -64,6 +81,7 @@ local BATTLE_LAYOUT = {
     menuChoiceSpacing = 16,
     partyGridColWidth = 68,
     partyGridRowHeight = 40,
+    partyGridSpriteSize = 24,
     partyGridNameXOffset = 1,
     partyGridHpXOffset = 8,
     partyGridHpYOffset = 11,

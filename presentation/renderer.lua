@@ -7,6 +7,7 @@ local traits = require("engine.traits")
 local config = require("engine.config")
 local small_battlers = require("presentation.small_battlers")
 local battle_layout = require("presentation.battle_layout")
+local battler_geometry = require("presentation.battler_geometry")
 local actor_status = require("presentation.actor_status")
 local animation_player = require("presentation.animation_player")
 local gradient_shader  = require("presentation.gradient_shader")
@@ -103,17 +104,8 @@ local function getBigBattler(battler)
     return ui.resolveBigBattlerImage(battler and battler.actorData and battler.actorData.bigBattler)
 end
 
-local function enemyAnchor(enemyIdx, enemyCount, image)
-    local spacing = layoutVal("enemyRowWidth") / enemyCount
-    local slotX = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
-    local anchorX = slotX + spacing / 2
-    local dataWidth = math.min(layoutVal("enemyDataWidth"), spacing)
-    local dataX = anchorX - dataWidth / 2
-    local anchorY = layoutVal("enemyY") + layoutVal("enemySpriteSize")
-    local w = image and image:getWidth() or layoutVal("enemyFallbackSize")
-    local h = image and image:getHeight() or layoutVal("enemyFallbackSize")
-    return anchorX, anchorY, w, h, dataX, dataWidth
-end
+-- Placement itself is battler_geometry's job (the single authority); this
+-- module only binds its session and bigBattler cache to it.
 
 function renderer.init(session)
     renderer.session = session
@@ -716,45 +708,17 @@ function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
 end
 
 
--- Reads the "party" window's grid origin (px, tiles->px converted) + column
--- count dynamically from windowLayout, so every consumer of
--- actor_status.gridSlot for the party grid agrees on the same origin
--- (matches drawPartyGrid exactly).
-local function partyGridOrigin(session)
-    local loaderRef = session and session.loader
-    local layouts = loaderRef and loaderRef.engine and loaderRef.engine.windowLayout
-    local partyLayout = layouts and layouts.party or {}
-    local px = ui.toPx(partyLayout.x or 0)
-    local py = ui.toPx(partyLayout.y or 18)
-    local contentX = partyLayout.contentX or partyLayout.textX
-    local contentY = partyLayout.contentY
-
-    local gridX, gridY = ui.panelContentOrigin(px, py, partyLayout.title, contentX, contentY)
-    local cols = partyLayout.gridColumns or 2
-    return gridX, gridY, cols
-end
+-- The "party" window's grid origin (px, tiles->px converted) + column count
+-- live in battler_geometry, the one battler-placement authority.
 
 -- Maps a battler to the screen position where damage popups should spawn.
--- Used by main.lua so popup coordinates always match the drawn battle layout.
+-- Used by main.lua so popup coordinates always match the drawn battle layout:
+-- same rect, same anchor resolver the sprite and its animations use, so a
+-- number can no longer float somewhere its creature isn't.
 function renderer.getBattlerCoords(battleState, session, target)
-    if battleState then
-        for idx, enemy in ipairs(battleState.enemies) do
-            if enemy == target then
-                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-                local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
-                return ex + layoutVal("enemyPopupOffsetX"), layoutVal("enemyPopupY")
-            end
-        end
-
-        local gridX, gridY, cols = partyGridOrigin(session)
-
-        -- Shared 2x2 slot arithmetic (matches drawPartyGrid exactly)
-        for idx, c in ipairs(session.party) do
-            if c == target then
-                local slotX, slotY = actor_status.gridSlot(gridX, gridY, idx, session, cols)
-                return slotX + layoutVal("slotPopupOffsetX"), slotY + layoutVal("slotPopupOffsetY")
-            end
-        end
+    local rect = battler_geometry.rect(battleState, session, target, getBigBattler)
+    if rect then
+        return battler_geometry.popupAnchor(session, rect)
     end
     return layoutVal("fallbackX"), layoutVal("fallbackY")
 end
@@ -798,49 +762,13 @@ local function getHoveredTargets(bv, combatState, selectedIndex, skillSelect, it
     return {}
 end
 
+-- The box a target reticle frames: the rect's `frame`, which is the portrait
+-- itself for an enemy and the whole status cell for a party member.
 local function getBattlerRect(target, battleState, session)
-    if not battleState or not session or not target then return nil, nil, nil, nil end
-    local tx, ty, tw, th
-    
-    -- Is it an enemy?
-    local isEnemy = false
-    local enemyIdx = nil
-    for idx, enemy in ipairs(battleState.enemies) do
-        if enemy == target then
-            isEnemy = true
-            enemyIdx = idx
-            break
-        end
-    end
-    
-    if isEnemy then
-        local image = getBigBattler(target)
-        local anchorX, anchorY
-        anchorX, anchorY, tw, th = enemyAnchor(enemyIdx, #battleState.enemies, image)
-        tx = anchorX - tw / 2
-        ty = anchorY - th
-    else
-        -- It's a party member
-        local allyIdx = nil
-        for idx, c in ipairs(session.party) do
-            if c == target then
-                allyIdx = idx
-                break
-            end
-        end
-        
-        if allyIdx then
-            local gridX, gridY, cols = partyGridOrigin(session)
-            local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
-            
-            local colW, rowH = actor_status.cellSize(session)
-            tx = slotX - 2
-            ty = slotY - 2
-            tw = colW - 2
-            th = rowH - 2
-        end
-    end
-    return tx, ty, tw, th
+    if not session or not target then return nil, nil, nil, nil end
+    local rect = battler_geometry.rect(battleState, session, target, getBigBattler)
+    if not rect then return nil, nil, nil, nil end
+    return rect.frameX, rect.frameY, rect.frameW, rect.frameH
 end
 
 -- Summoner rework battle-windows conversion: the monolithic drawBattle is
@@ -889,16 +817,16 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
 
         -- Source pixels are screen pixels. Positioning owns only the
         -- bottom-centre anchor; authored size, overlap and clipping are kept.
-        local anchorX, anchorY, _, _, enemyHudX, enemyHudWidth =
-            enemyAnchor(idx, #battleState.enemies, bigBattler)
+        local rect = battler_geometry.enemyRect(
+            renderer.session, idx, #battleState.enemies, bigBattler)
+        local _, slotWidth = battler_geometry.enemySlot(
+            renderer.session, idx, #battleState.enemies)
+        local anchorX, anchorY = rect.x + rect.w / 2, rect.y + rect.h
 
         -- Query shake offset and apply it along with transform offsets
         local shakeOff = animation_player.getShakeOffset(enemy)
         local drawX = anchorX + xf.offsetX + shakeOff
         local drawY = anchorY + xf.offsetY
-
-        local partX = drawX
-        local partY = drawY
 
         -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
         local function drawEnemySprite()
@@ -916,7 +844,7 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
 
         if not isDead then
             love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "back")
+            animation_player.drawParticles(enemy, rect, drawEnemySprite, "back", renderer.session)
         end
 
         if isDeathPlaying then
@@ -944,19 +872,31 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
             end
 
             love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(enemy, partX, partY, drawEnemySprite, "front")
+            animation_player.drawParticles(enemy, rect, drawEnemySprite, "front", renderer.session)
 
-            local maxHp = enemy:getMaxHp(renderer.session)
-            love.graphics.setColor(1,1,1,1)
-            local enemyIconW = actor_status.drawElementIcons(
-                traits.getElements(enemy, renderer.session),
-                enemyHudX, layoutVal("enemyNameY") - 4, renderer.session)
-            ui.drawString(enemy.name, enemyHudX + enemyIconW,
-                layoutVal("enemyNameY"), {1, 1, 1, 1})
-            ui.drawBar(enemyHudX, layoutVal("enemyHpBarY"),
-                enemyHudWidth, layoutVal("enemyHpBarHeight"),
-                enemy.displayedHp or enemy.hp, maxHp,
-                {0.8, 0, 0}, {1, 0.3, 0.3})
+            -- Enemy info block: element icons + name + HP gauge. Geometry and
+            -- every on/off switch come from engine.json battleLayout
+            -- (enemyInfo*), anchored to this creature's feet rather than an
+            -- absolute row, so it tracks the sprite instead of drifting from it.
+            local info = battler_geometry.enemyInfo(renderer.session, rect, slotWidth)
+            if info then
+                local maxHp = enemy:getMaxHp(renderer.session)
+                love.graphics.setColor(1, 1, 1, 1)
+                local enemyIconW = 0
+                if info.showElements then
+                    enemyIconW = actor_status.drawElementIcons(
+                        traits.getElements(enemy, renderer.session),
+                        info.x, info.nameY - 4, renderer.session)
+                end
+                if info.showName then
+                    ui.drawString(enemy.name, info.x + enemyIconW, info.nameY, {1, 1, 1, 1})
+                end
+                if info.showHpBar then
+                    ui.drawBar(info.x, info.barY, info.width, info.barHeight,
+                        enemy.displayedHp or enemy.hp, maxHp,
+                        {0.8, 0, 0}, {1, 0.3, 0.3})
+                end
+            end
         end
         -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
@@ -1203,34 +1143,31 @@ function renderer.drawTargetIndicators(bv, combatState)
                 end
             end
 
+            -- Slot numbers ride on the same rect everything else uses: on the
+            -- enemy's info block for enemies, on the status cell for allies.
             if isEnemy then
-                local _, _, _, _, dataX, dataWidth =
-                    enemyAnchor(enemyIdx, #battleState.enemies, getBigBattler(targetBattler))
-                local nameY = layoutVal("enemyNameY")
-                local rightEdge = dataX + dataWidth - 4
-                local indicatorDist = dist
-                if #slotList > 1 then
-                    indicatorDist = math.min(dist, math.max(0, (dataWidth - 15) / (#slotList - 1)))
-                end
-                local totalW = (#slotList - 1) * indicatorDist + 7
-                targetX = rightEdge - totalW + (layoutVal("targetIndicatorEnemyOffsetX") or 0)
-                targetY = nameY - 4 + (layoutVal("targetIndicatorEnemyOffsetY") or 0)
-                targetDist = indicatorDist
-            else
-                local allyIdx = nil
-                for idx, c in ipairs(session.party or {}) do
-                    if c == targetBattler then
-                        allyIdx = idx
-                        break
+                local rect = battler_geometry.enemyRect(session, enemyIdx,
+                    #battleState.enemies, getBigBattler(targetBattler))
+                local _, slotWidth = battler_geometry.enemySlot(session, enemyIdx, #battleState.enemies)
+                local info = battler_geometry.enemyInfo(session, rect, slotWidth)
+                if info then
+                    local rightEdge = info.x + info.width - 4
+                    local indicatorDist = dist
+                    if #slotList > 1 then
+                        indicatorDist = math.min(dist, math.max(0, (info.width - 15) / (#slotList - 1)))
                     end
+                    local totalW = (#slotList - 1) * indicatorDist + 7
+                    targetX = rightEdge - totalW + (layoutVal("targetIndicatorEnemyOffsetX") or 0)
+                    targetY = info.nameY - 4 + (layoutVal("targetIndicatorEnemyOffsetY") or 0)
+                    targetDist = indicatorDist
                 end
-                if allyIdx then
-                    local gridX, gridY, cols = partyGridOrigin(session)
-                    local slotX, slotY = actor_status.gridSlot(gridX, gridY, allyIdx, session, cols)
-                    local colW, _ = actor_status.cellSize(session)
+            else
+                local rect = battler_geometry.rect(battleState, session, targetBattler)
+                if rect and rect.side == "party" then
                     local totalW = (#slotList - 1) * dist + 7
-                    targetX = slotX + colW - totalW - 4 + (layoutVal("targetIndicatorAllyOffsetX") or 0)
-                    targetY = slotY + 2 + (layoutVal("targetIndicatorAllyOffsetY") or 0)
+                    targetX = rect.frameX + rect.frameW - totalW
+                        + (layoutVal("targetIndicatorAllyOffsetX") or 0)
+                    targetY = rect.frameY + 4 + (layoutVal("targetIndicatorAllyOffsetY") or 0)
                 end
             end
 
