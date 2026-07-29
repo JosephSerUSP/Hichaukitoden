@@ -631,14 +631,14 @@ end
 -- drag the cell down to wherever the text starts instead of pinning it to
 -- the window's top-left — exactly the "drawing way lower than it should"
 -- bug this comment is here to stop from recurring.
-local function drawActorStatusCell(layout, env, x, y, title, ctx)
-    if not layout.actorStatus then return 0 end
-    local row = env.sel and env.sel(layout.actorStatus)
+local function drawActorStatusCell(config)
+    if not config.layout.actorStatus then return 0 end
+    local row = config.env.sel and config.env.sel(config.layout.actorStatus)
     local battler = row and row.battlerRef
     if not battler then return 0 end
-    local session = ctx and ctx.session
+    local session = config.ctx and config.ctx.session
     local colW, rowH = actor_status.cellSize(session)
-    local cellX, cellY = ui.panelContentOrigin(x, y, title, nil, nil)
+    local cellX, cellY = ui.panelContentOrigin(config.x, config.y, config.title, nil, nil)
     actor_status.draw(battler, cellX, cellY, false, session)
     return rowH
 end
@@ -1223,7 +1223,14 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     local lineSpacing = ui.toPx(layout.lineSpacing or 1)
 
     drawPortrait(layout, env, x, y, title)
-    drawActorStatusCell(layout, env, x, y, title, ctx)
+    drawActorStatusCell({
+        layout = layout,
+        env = env,
+        x = x,
+        y = y,
+        title = title,
+        ctx = ctx
+    })
     drawLayoutGauges(layout.gauges, env, x, y)
 
     local text = layout.text ~= nil and layout.text or win.text
