@@ -20,6 +20,7 @@
 local small_battlers = {}
 
 local cache = {}
+local resolveCache = {}
 local animTimer = 0
 
 -- Dead-tint applied when a battler's game-state is dead (not an animation —
@@ -55,6 +56,11 @@ end
 -- key-supplied ones.
 function small_battlers.resolveFile(spriteKey)
     if not spriteKey or spriteKey == "" then return nil end
+
+    local keyStr = tostring(spriteKey)
+    if resolveCache[keyStr] ~= nil then
+        return resolveCache[keyStr] or nil
+    end
 
     local overrides = {}
     local fileKey = tostring(spriteKey):gsub("%[([^=]+)=([^%]]+)%]", function(k, v)
@@ -99,9 +105,12 @@ function small_battlers.resolveFile(spriteKey)
     end
     for _, p in ipairs(paths) do
         if love.filesystem.getInfo(p) then
-            return { path = p, tokens = overrides }
+            local result = { path = p, tokens = overrides }
+            resolveCache[keyStr] = result
+            return result
         end
     end
+    resolveCache[keyStr] = false
     return nil
 end
 
