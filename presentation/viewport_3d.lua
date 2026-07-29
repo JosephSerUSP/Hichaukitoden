@@ -2,6 +2,7 @@ local viewport_3d = {}
 local ui = require("presentation.ui")
 local exploration = require("engine.exploration")
 local config = require("engine.config")
+local small_battlers = require("presentation.small_battlers")
 
 -- Direction vectors (matching exploration.lua)
 local DIRS = {
@@ -458,8 +459,9 @@ local function getEventSprite(ev, session)
         return spriteImageCache[path]
     end
 
-    if love.filesystem.getInfo(path) then
-        local img = love.graphics.newImage(path)
+    local resolvedPath = love.filesystem.getInfo(path) and path or small_battlers.resolveFile(path)
+    if resolvedPath then
+        local img = love.graphics.newImage(resolvedPath)
         img:setFilter("nearest", "nearest")
         spriteImageCache[path] = img
         return img

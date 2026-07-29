@@ -280,7 +280,7 @@ function actor_status.draw(battler, x, y, isSelected, session)
     -- (dead tint / flash / shake handled by small_battlers.draw).
     ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2, nil, isSelected)
     battler.spriteStatic = actor_status.spriteIsStatic(battler, session)
-    local spriteKey = (battler.actorData and (battler.actorData.smallBattler or battler.actorData.spriteKey)) or battler.spriteKey
+    local spriteKey = battler.actorData and battler.actorData.smallBattler
     local spriteOffsetX = 0
     if spriteKey and small_battlers.draw(spriteKey, x, y + ui.lineHeight, spriteSize, dead, battler) then
         spriteOffsetX = spriteSize - 2 -- 22px; content on lines 2–3 starts after it

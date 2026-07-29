@@ -2350,6 +2350,7 @@
     "enemyY": 44,
     "enemyNameY": 101,
     "enemyHpBarY": 113,
+    "enemyDataWidth": 96,
     "enemyHpBarWidth": 64,
     "enemyHpBarHeight": 4,
     "enemySpriteSize": 64,

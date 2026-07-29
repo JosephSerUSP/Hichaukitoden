@@ -866,6 +866,24 @@ pool take over. `exploration.generateDungeon` reads optional per-map room-count
 and room-size bounds, falling back to global dungeon configuration when
 omitted. Generated layouts remain cached for physical backtracking.
 
+### 1.19 Explicit actor art roles and native big battlers (29.07.2026)
+
+Every actor authors three distinct visual keys: `smallBattler` is the animated
+compact sheet used by party cells and map recruitment billboards, `portrait`
+is the dramatic cropped illustration used by status and other portrait
+surfaces, and `bigBattler` is the uncropped full-body enemy illustration.
+The former generic actor `spriteKey` no longer exists.
+
+Big battlers render at their PNG's native pixel dimensions. The battle layout
+chooses only a bottom-centre anchor for each troop member; it does not fit,
+normalize, stretch, or otherwise scale artwork to the troop slot or viewport.
+Authored overlap and clipping are therefore intentional presentation outcomes.
+Animation transforms remain relative to that native size.
+
+G1 requires all three actor fields and resolves their assets through the same
+lookup rules used by presentation. The actor editor exposes separate pickers
+and previews for all three roles.
+
 ---
 
 ## 2. Design rules (from the BIBLE — enforced by review)

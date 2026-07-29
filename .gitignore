@@ -12,3 +12,5 @@ node_modules/
 assets/**/*_master.png
 assets/portraits/source/
 tools/image/*preview*.png
+tmp/imagegen/
+tmp/art-reference/

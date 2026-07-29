@@ -99,8 +99,20 @@ end
 -- Delegates to the shared resolver in ui.lua (also used by
 -- window_renderer's data-authored portrait blocks) so both drawing paths
 -- try the same "NPC_" prefix / case-variant filename fallbacks.
-local function getPortrait(id)
-    return ui.resolvePortraitImage(id)
+local function getBigBattler(battler)
+    return ui.resolveBigBattlerImage(battler and battler.actorData and battler.actorData.bigBattler)
+end
+
+local function enemyAnchor(enemyIdx, enemyCount, image)
+    local spacing = layoutVal("enemyRowWidth") / enemyCount
+    local slotX = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+    local anchorX = slotX + spacing / 2
+    local dataWidth = math.min(layoutVal("enemyDataWidth"), spacing)
+    local dataX = anchorX - dataWidth / 2
+    local anchorY = layoutVal("enemyY") + layoutVal("enemySpriteSize")
+    local w = image and image:getWidth() or layoutVal("enemyFallbackSize")
+    local h = image and image:getHeight() or layoutVal("enemyFallbackSize")
+    return anchorX, anchorY, w, h, dataX, dataWidth
 end
 
 function renderer.init(session)
@@ -802,14 +814,11 @@ local function getBattlerRect(target, battleState, session)
     end
     
     if isEnemy then
-        local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-        local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
-        local ey = layoutVal("enemyY")
-        local portrait = getPortrait(target.spriteKey or target.id)
-        tw = portrait and layoutVal("enemySpriteSize") or layoutVal("enemyFallbackSize")
-        th = tw
-        tx = ex
-        ty = ey
+        local image = getBigBattler(target)
+        local anchorX, anchorY
+        anchorX, anchorY, tw, th = enemyAnchor(enemyIdx, #battleState.enemies, image)
+        tx = anchorX - tw / 2
+        ty = anchorY - th
     else
         -- It's a party member
         local allyIdx = nil
@@ -865,14 +874,11 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
     love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
     love.graphics.setColor(1, 1, 1, 1)
 
-    -- Render enemies portraits in viewport with animations driven by the
+    -- Render full-body enemy battlers in viewport with animations driven by the
     -- animation player (overhaul-7 A1): slide-in, damage/action flash,
     -- death effect — all from data/animations.json entries.
-    local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
     for idx, enemy in ipairs(battleState.enemies) do
-        local portrait = getPortrait(enemy.spriteKey or enemy.id)
-        local ex = layoutVal("enemyStartX") + (idx - 1) * spacing
-        local ey = layoutVal("enemyY")
+        local bigBattler = getBigBattler(enemy)
         
         -- Query animation player for current transform, tint, blend, gradient
         local xf    = animation_player.getTransform(enemy)
@@ -881,13 +887,10 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
         local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
         local isDead = deadEnemyFlags[enemy]
 
-        local spriteW = layoutVal("enemySpriteSize")
-        local spriteH = layoutVal("enemySpriteSize")
-
-        -- Anchor at bottom-center of the sprite slot (matches preview).
-        -- ex/ey is the top-left of the slot; anchorX/Y is the bottom-center.
-        local anchorX = ex + spriteW / 2
-        local anchorY = ey + spriteH
+        -- Source pixels are screen pixels. Positioning owns only the
+        -- bottom-centre anchor; authored size, overlap and clipping are kept.
+        local anchorX, anchorY, _, _, enemyHudX, enemyHudWidth =
+            enemyAnchor(idx, #battleState.enemies, bigBattler)
 
         -- Query shake offset and apply it along with transform offsets
         local shakeOff = animation_player.getShakeOffset(enemy)
@@ -899,13 +902,9 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
 
         -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
         local function drawEnemySprite()
-            if portrait then
-                local sx = xf.scaleX * spriteW / portrait:getWidth()
-                local sy = xf.scaleY * spriteH / portrait:getHeight()
-                -- ox/oy: draw with bottom-center as the pivot so scale/offset
-                -- animate from the same anchor the preview uses.
-                love.graphics.draw(portrait, drawX, drawY, 0, sx, sy,
-                    portrait:getWidth() / 2, portrait:getHeight())
+            if bigBattler then
+                love.graphics.draw(bigBattler, drawX, drawY, 0, xf.scaleX, xf.scaleY,
+                    bigBattler:getWidth() / 2, bigBattler:getHeight())
             else
                 local fw = layoutVal("enemyFallbackSize")
                 love.graphics.rectangle("fill",
@@ -949,9 +948,15 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
 
             local maxHp = enemy:getMaxHp(renderer.session)
             love.graphics.setColor(1,1,1,1)
-            local enemyIconW = actor_status.drawElementIcons(traits.getElements(enemy, renderer.session), ex, layoutVal("enemyNameY") - 4, renderer.session)
-            ui.drawString(enemy.name, ex + enemyIconW, layoutVal("enemyNameY"), {1, 1, 1, 1})
-            ui.drawBar(ex, layoutVal("enemyHpBarY"), layoutVal("enemyHpBarWidth"), layoutVal("enemyHpBarHeight"), enemy.displayedHp or enemy.hp, maxHp, {0.8, 0, 0}, {1, 0.3, 0.3})
+            local enemyIconW = actor_status.drawElementIcons(
+                traits.getElements(enemy, renderer.session),
+                enemyHudX, layoutVal("enemyNameY") - 4, renderer.session)
+            ui.drawString(enemy.name, enemyHudX + enemyIconW,
+                layoutVal("enemyNameY"), {1, 1, 1, 1})
+            ui.drawBar(enemyHudX, layoutVal("enemyHpBarY"),
+                enemyHudWidth, layoutVal("enemyHpBarHeight"),
+                enemy.displayedHp or enemy.hp, maxHp,
+                {0.8, 0, 0}, {1, 0.3, 0.3})
         end
         -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
@@ -1187,6 +1192,7 @@ function renderer.drawTargetIndicators(bv, combatState)
             table.sort(slotList, function(a, b) return a.slot < b.slot end)
             
             local targetX, targetY = nil, nil
+            local targetDist = dist
             local isEnemy = false
             local enemyIdx = nil
             for idx, enemy in ipairs(battleState.enemies or {}) do
@@ -1198,13 +1204,18 @@ function renderer.drawTargetIndicators(bv, combatState)
             end
 
             if isEnemy then
-                local spacing = layoutVal("enemyRowWidth") / #battleState.enemies
-                local ex = layoutVal("enemyStartX") + (enemyIdx - 1) * spacing
+                local _, _, _, _, dataX, dataWidth =
+                    enemyAnchor(enemyIdx, #battleState.enemies, getBigBattler(targetBattler))
                 local nameY = layoutVal("enemyNameY")
-                local rightEdge = ex + spacing - 4
-                local totalW = (#slotList - 1) * dist + 7
+                local rightEdge = dataX + dataWidth - 4
+                local indicatorDist = dist
+                if #slotList > 1 then
+                    indicatorDist = math.min(dist, math.max(0, (dataWidth - 15) / (#slotList - 1)))
+                end
+                local totalW = (#slotList - 1) * indicatorDist + 7
                 targetX = rightEdge - totalW + (layoutVal("targetIndicatorEnemyOffsetX") or 0)
-                targetY = nameY + (layoutVal("targetIndicatorEnemyOffsetY") or 0)
+                targetY = nameY - 4 + (layoutVal("targetIndicatorEnemyOffsetY") or 0)
+                targetDist = indicatorDist
             else
                 local allyIdx = nil
                 for idx, c in ipairs(session.party or {}) do
@@ -1237,7 +1248,7 @@ function renderer.drawTargetIndicators(bv, combatState)
                         if (i - 1) == phase then
                             local info = slotList[i]
                             local color = info.isRandom and {1, 0.3, 0.3, 1} or {1, 1, 1, 1}
-                            local offsetX = (i - 1) * dist
+                            local offsetX = (i - 1) * targetDist
                             ui.drawString(tostring(info.slot), targetX + offsetX, targetY, color)
                         end
                     end

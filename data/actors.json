@@ -9,7 +9,6 @@
     ],
     "level": 1,
     "role": "Healer",
-    "spriteKey": "pixie",
     "smallBattler": "pixie[fps=15]",
     "passives": [
       "postBattleHeal",
@@ -144,7 +143,9 @@
         "mat": 50,
         "mdf": 41
       }
-    ]
+    ],
+    "portrait": "pixie",
+    "bigBattler": "pixie"
   },
   {
     "id": 2,
@@ -156,7 +157,6 @@
     ],
     "level": 6,
     "role": "Healer",
-    "spriteKey": "highPixie",
     "smallBattler": "highPixie[fps=15]",
     "passives": [
       "postBattleHeal"
@@ -253,7 +253,9 @@
         "mat": 78,
         "mdf": 62
       }
-    ]
+    ],
+    "portrait": "highPixie",
+    "bigBattler": "highPixie"
   },
   {
     "id": 3,
@@ -265,7 +267,6 @@
     ],
     "level": 1,
     "role": "Attacker",
-    "spriteKey": "skeleton",
     "smallBattler": "Skeleton",
     "passives": [
       "undeadFortitude"
@@ -420,7 +421,9 @@
         "mat": 24,
         "mdf": 24
       }
-    ]
+    ],
+    "portrait": "skeleton",
+    "bigBattler": "skeleton"
   },
   {
     "id": 4,
@@ -432,7 +435,6 @@
     ],
     "level": 1,
     "role": "Support",
-    "spriteKey": "angel",
     "smallBattler": "Angel",
     "passives": [
       "holyAura"
@@ -568,7 +570,9 @@
         "mat": 44,
         "mdf": 44
       }
-    ]
+    ],
+    "portrait": "angel",
+    "bigBattler": "angel"
   },
   {
     "id": 5,
@@ -580,7 +584,6 @@
     ],
     "level": 6,
     "role": "Support",
-    "spriteKey": "archangel",
     "smallBattler": "Angel",
     "passives": [
       "holyAura"
@@ -672,7 +675,9 @@
         "mat": 68,
         "mdf": 68
       }
-    ]
+    ],
+    "portrait": "archangel",
+    "bigBattler": "archangel"
   },
   {
     "id": 6,
@@ -684,7 +689,6 @@
     ],
     "level": 2,
     "role": "Attacker",
-    "spriteKey": "demon",
     "smallBattler": "Demon",
     "passives": [
       "chaosPact"
@@ -785,7 +789,9 @@
         "mat": 27,
         "mdf": 26
       }
-    ]
+    ],
+    "portrait": "demon",
+    "bigBattler": "demon"
   },
   {
     "id": 7,
@@ -797,7 +803,6 @@
     ],
     "level": 6,
     "role": "Attacker",
-    "spriteKey": "incubus",
     "smallBattler": "vampireLord[fps=10]",
     "passives": [
       "chaosPact",
@@ -885,7 +890,9 @@
         "mat": 37,
         "mdf": 35
       }
-    ]
+    ],
+    "portrait": "incubus",
+    "bigBattler": "incubus"
   },
   {
     "id": 8,
@@ -897,7 +904,6 @@
     ],
     "level": 1,
     "role": "Healer",
-    "spriteKey": "nurse",
     "smallBattler": "Nurse",
     "passives": [
       "symbiosis"
@@ -1021,7 +1027,9 @@
         "mat": 50,
         "mdf": 41
       }
-    ]
+    ],
+    "portrait": "nurse",
+    "bigBattler": "nurse"
   },
   {
     "id": 9,
@@ -1033,7 +1041,6 @@
     ],
     "level": 1,
     "role": "Attacker",
-    "spriteKey": "imp",
     "smallBattler": "Imp",
     "passives": [
       "mischief"
@@ -1152,7 +1159,9 @@
         "mat": 24,
         "mdf": 24
       }
-    ]
+    ],
+    "portrait": "imp",
+    "bigBattler": "imp"
   },
   {
     "id": 10,
@@ -1164,7 +1173,6 @@
     ],
     "level": 2,
     "role": "Tank",
-    "spriteKey": "golem",
     "smallBattler": "Golem",
     "passives": [
       "rearGuard",
@@ -1319,7 +1327,9 @@
         "mat": 5,
         "mdf": 9
       }
-    ]
+    ],
+    "portrait": "golem",
+    "bigBattler": "golem"
   },
   {
     "id": 11,
@@ -1331,7 +1341,6 @@
     ],
     "level": 2,
     "role": "Tank",
-    "spriteKey": "ghoul",
     "smallBattler": "Ghoul",
     "passives": [
       "goldDigger"
@@ -1414,7 +1423,9 @@
         "mat": 21,
         "mdf": 50
       }
-    ]
+    ],
+    "portrait": "ghoul",
+    "bigBattler": "ghoul"
   },
   {
     "id": 12,
@@ -1426,7 +1437,6 @@
     ],
     "level": 1,
     "role": "Debuffer",
-    "spriteKey": "ooze",
     "smallBattler": "Ooze",
     "passives": [
       "rearGuard"
@@ -1557,7 +1567,9 @@
         "mat": 48,
         "mdf": 35
       }
-    ]
+    ],
+    "portrait": "ooze",
+    "bigBattler": "ooze"
   },
   {
     "id": 13,
@@ -1569,7 +1581,6 @@
     ],
     "level": 1,
     "role": "Attacker",
-    "spriteKey": "bat",
     "smallBattler": "Imp",
     "passives": [
       "nightVision",
@@ -1686,7 +1697,9 @@
         "mat": 24,
         "mdf": 24
       }
-    ]
+    ],
+    "portrait": "bat",
+    "bigBattler": "bat"
   },
   {
     "id": 14,
@@ -1698,7 +1711,6 @@
     ],
     "level": 1,
     "role": "Caster",
-    "spriteKey": "wisp",
     "smallBattler": "wisp",
     "passives": [
       "etherealBody",
@@ -1829,7 +1841,9 @@
         "mat": 58,
         "mdf": 44
       }
-    ]
+    ],
+    "portrait": "wisp",
+    "bigBattler": "wisp"
   },
   {
     "id": 15,
@@ -1858,7 +1872,6 @@
     "flavor": "A creature whose shell conceals an outcome fixed by its provenance. Keep it alive until level ten and the dungeon will reveal what was inside.",
     "level": 1,
     "role": "None",
-    "spriteKey": "egg",
     "smallBattler": "egg",
     "elements": [],
     "skills": [
@@ -1950,7 +1963,9 @@
     ],
     "battleCommands": [
       "wait"
-    ]
+    ],
+    "portrait": "egg",
+    "bigBattler": "egg"
   },
   {
     "id": 16,
@@ -1962,8 +1977,7 @@
     ],
     "level": 10,
     "role": "Reviver",
-    "spriteKey": "phoenix",
-    "smallBattler": "Angel",
+    "smallBattler": "phoenix",
     "passives": [
       "rebirth"
     ],
@@ -2037,7 +2051,9 @@
         "mat": 116,
         "mdf": 94
       }
-    ]
+    ],
+    "portrait": "phoenix",
+    "bigBattler": "phoenix"
   },
   {
     "id": 17,
@@ -2049,7 +2065,6 @@
     ],
     "level": 1,
     "role": "Parasite",
-    "spriteKey": "larva",
     "smallBattler": "Ooze",
     "passives": [
       "parasite"
@@ -2129,7 +2144,9 @@
         "mat": 24,
         "mdf": 18
       }
-    ]
+    ],
+    "portrait": "larva",
+    "bigBattler": "larva"
   },
   {
     "id": 18,
@@ -2151,7 +2168,6 @@
     ],
     "level": 6,
     "role": "Vampire",
-    "spriteKey": "vampire",
     "smallBattler": "Demon",
     "passives": [],
     "elements": [
@@ -2214,7 +2230,9 @@
         "mat": 61,
         "mdf": 53
       }
-    ]
+    ],
+    "portrait": "vampire",
+    "bigBattler": "vampire"
   },
   {
     "id": 19,
@@ -2236,7 +2254,6 @@
     ],
     "level": 3,
     "role": "Attacker",
-    "spriteKey": "flauros",
     "smallBattler": "Demon",
     "passives": [
       "initiative",
@@ -2312,7 +2329,9 @@
         "mat": 27,
         "mdf": 29
       }
-    ]
+    ],
+    "portrait": "flauros",
+    "bigBattler": "flauros"
   },
   {
     "id": 20,
@@ -2334,7 +2353,6 @@
     ],
     "level": 1,
     "role": "Support",
-    "spriteKey": "candle",
     "smallBattler": "candle",
     "passives": [
       "nightVision",
@@ -2443,7 +2461,9 @@
         "mat": 44,
         "mdf": 65
       }
-    ]
+    ],
+    "portrait": "candle",
+    "bigBattler": "candle"
   },
   {
     "id": 21,
@@ -2485,7 +2505,6 @@
         "value": 0.1
       }
     ],
-    "spriteKey": "ShadowStalker",
     "smallBattler": "Ghoul",
     "gold": 14,
     "expGrowth": 10,
@@ -2536,7 +2555,9 @@
         "mat": 37,
         "mdf": 39
       }
-    ]
+    ],
+    "portrait": "ShadowStalker",
+    "bigBattler": "ShadowStalker"
   },
   {
     "id": 22,
@@ -2551,7 +2572,6 @@
     "elements": [],
     "skills": [],
     "traits": [],
-    "spriteKey": "egg",
     "gold": 0,
     "expGrowth": 20,
     "drops": [],
@@ -2599,7 +2619,9 @@
         "mat": 54,
         "mdf": 41
       }
-    ]
+    ],
+    "portrait": "Alex",
+    "bigBattler": "Alex"
   },
   {
     "id": 23,
@@ -2617,7 +2639,6 @@
     "flavor": "A water spirit learning to shape cold into magic. Its adaptable spellwork rewards patient raising.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Undine",
     "smallBattler": "undine",
     "elements": [
       "Blue",
@@ -2691,7 +2712,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Undine",
+    "bigBattler": "Undine"
   },
   {
     "id": 24,
@@ -2709,7 +2732,6 @@
     "flavor": "An androgynous water sage whose fluid body can hold the front line. It exchanges simple frost for healing and protection.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Proteus",
     "smallBattler": "undine",
     "elements": [
       "Blue",
@@ -2783,7 +2805,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Proteus",
+    "bigBattler": "Proteus"
   },
   {
     "id": 25,
@@ -2801,7 +2825,6 @@
     "flavor": "Something enormous dreams behind the silk. Its patient light unsettles enemies even before it hatches.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Cocoon",
     "smallBattler": "notiluca",
     "elements": [
       "Green",
@@ -2875,7 +2898,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Cocoon",
+    "bigBattler": "Cocoon"
   },
   {
     "id": 26,
@@ -2893,7 +2918,6 @@
     "flavor": "A giant moth whose wings pulse like a midnight lantern. Its mesmerizing light turns an enemy formation against itself.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Notiluca",
     "smallBattler": "notiluca",
     "elements": [
       "Green",
@@ -2966,7 +2990,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Notiluca",
+    "bigBattler": "Notiluca"
   },
   {
     "id": 27,
@@ -2984,7 +3010,6 @@
     "flavor": "A quick-fingered goblin who knows when a fight has gone sour. Cheap to maintain, it excels at scouting and escape.",
     "level": 1,
     "role": "None",
-    "spriteKey": "GblThief",
     "smallBattler": "gblThief",
     "elements": [
       "Green",
@@ -3062,7 +3087,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "GblThief",
+    "bigBattler": "GblThief"
   },
   {
     "id": 28,
@@ -3080,7 +3107,6 @@
     "flavor": "A goblin whose stolen crown has become strangely legitimate. It turns underhanded survival tricks into party leadership.",
     "level": 1,
     "role": "None",
-    "spriteKey": "GblPrince",
     "smallBattler": "gblThief",
     "elements": [
       "Green",
@@ -3154,7 +3180,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "GblPrince",
+    "bigBattler": "GblPrince"
   },
   {
     "id": 29,
@@ -3172,7 +3200,6 @@
     "flavor": "An unfinished life cultivated in alchemical glass. Its future form is visible, but the reason for that destiny is deliberately obscure.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Homunculus",
     "smallBattler": "homunculus",
     "elements": [],
     "skills": [
@@ -3303,7 +3330,9 @@
         "actor": "metamorph",
         "atLevel": 10
       }
-    ]
+    ],
+    "portrait": "Homunculus",
+    "bigBattler": "Homunculus"
   },
   {
     "id": 30,
@@ -3321,7 +3350,6 @@
     "flavor": "A stubborn medicinal root with an alarming voice. It is more valuable in the kitchen than its humble appearance suggests.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Mandrake",
     "smallBattler": "mandrake",
     "elements": [
       "Green",
@@ -3395,7 +3423,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Mandrake",
+    "bigBattler": "Mandrake"
   },
   {
     "id": 31,
@@ -3413,7 +3443,6 @@
     "flavor": "A flowering plant spirit steeped in restorative sap. Its cooking and support magic can sustain an entire expedition.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Alraune",
     "smallBattler": "alraune",
     "elements": [
       "Green",
@@ -3486,7 +3515,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Alraune",
+    "bigBattler": "Alraune"
   },
   {
     "id": 32,
@@ -3504,7 +3535,6 @@
     "flavor": "A three-headed guardian recruited long before most summoners can comfortably afford it. Its early power is balanced by poor growth and a hungry MP burden.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Cerberus",
     "smallBattler": "cerberus",
     "elements": [
       "Red",
@@ -3576,7 +3606,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Cerberus",
+    "bigBattler": "Cerberus"
   },
   {
     "id": 33,
@@ -3587,7 +3619,6 @@
     "flavor": "A demon sealed inside the Forbidden Lamp. It joins only the summoner who survives its judgment and feeds that master MP with every killing blow.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Diablos",
     "smallBattler": "Demon",
     "elements": [
       "Black",
@@ -3664,7 +3695,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Diablos",
+    "bigBattler": "Diablos"
   },
   {
     "id": 34,
@@ -3682,7 +3715,6 @@
     "flavor": "A young dragon whose element has not yet settled. The player may choose which affinity will shape its first promotion.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Dragon",
     "smallBattler": "dragon",
     "elements": [
       "Red",
@@ -3775,7 +3807,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Dragon",
+    "bigBattler": "Dragon"
   },
   {
     "id": 35,
@@ -3793,7 +3827,6 @@
     "flavor": "A dragon tempered by red flame. Its breath and forgecraft favor direct offense.",
     "level": 1,
     "role": "None",
-    "spriteKey": "RedDragon",
     "smallBattler": "dragon",
     "elements": [
       "Red",
@@ -3871,7 +3904,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "RedDragon",
+    "bigBattler": "RedDragon"
   },
   {
     "id": 36,
@@ -3889,7 +3924,6 @@
     "flavor": "A mythic fire dragon awakened by a branch-specific catalyst. It distills destruction into the finest red creations.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Salamander",
     "smallBattler": "dragon",
     "elements": [
       "Red",
@@ -3962,7 +3996,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Salamander",
+    "bigBattler": "Salamander"
   },
   {
     "id": 37,
@@ -3980,7 +4016,6 @@
     "flavor": "A dragon steeped in cold blue currents. It favors magical pressure and water-aligned creation.",
     "level": 1,
     "role": "None",
-    "spriteKey": "BlueDragon",
     "smallBattler": "dragon",
     "elements": [
       "Blue",
@@ -4058,7 +4093,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "BlueDragon",
+    "bigBattler": "BlueDragon"
   },
   {
     "id": 38,
@@ -4076,7 +4113,6 @@
     "flavor": "A sovereign sea dragon promoted through a rare blue catalyst. Its immense breath rolls across whole formations.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Leviathan",
     "smallBattler": "dragon",
     "elements": [
       "Blue",
@@ -4149,7 +4185,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Leviathan",
+    "bigBattler": "Leviathan"
   },
   {
     "id": 39,
@@ -4167,7 +4205,6 @@
     "flavor": "A green dragon shaped by wind and living earth. It is the swiftest and most expedition-minded of its siblings.",
     "level": 1,
     "role": "None",
-    "spriteKey": "GreenDragon",
     "smallBattler": "dragon",
     "elements": [
       "Green",
@@ -4245,7 +4282,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "GreenDragon",
+    "bigBattler": "GreenDragon"
   },
   {
     "id": 40,
@@ -4263,7 +4302,6 @@
     "flavor": "A legendary green dragon whose hunger has hardened into cunning. Its craft bends natural ingredients toward rare results.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Fafnir",
     "smallBattler": "dragon",
     "elements": [
       "Green",
@@ -4336,7 +4374,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Fafnir",
+    "bigBattler": "Fafnir"
   },
   {
     "id": 41,
@@ -4354,7 +4394,6 @@
     "flavor": "A white dragon radiant with disciplined force. It protects allies without abandoning draconic power.",
     "level": 1,
     "role": "None",
-    "spriteKey": "WhiteDragon",
     "smallBattler": "dragon",
     "elements": [
       "White",
@@ -4433,7 +4472,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "WhiteDragon",
+    "bigBattler": "WhiteDragon"
   },
   {
     "id": 42,
@@ -4451,7 +4492,6 @@
     "flavor": "A heavenly dragon released by a sacred catalyst. Its presence turns defense and white creation into acts of majesty.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Bahamut",
     "smallBattler": "dragon",
     "elements": [
       "White",
@@ -4524,7 +4564,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Bahamut",
+    "bigBattler": "Bahamut"
   },
   {
     "id": 43,
@@ -4542,7 +4584,6 @@
     "flavor": "A black dragon carrying the stillness of deep caverns. Its magic erodes defenses before the final strike.",
     "level": 1,
     "role": "None",
-    "spriteKey": "BlackDragon",
     "smallBattler": "dragon",
     "elements": [
       "Black",
@@ -4621,7 +4662,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "BlackDragon",
+    "bigBattler": "BlackDragon"
   },
   {
     "id": 44,
@@ -4639,7 +4682,6 @@
     "flavor": "A deathly dragon unlocked by a forbidden black catalyst. It specializes in ruinous magic and dangerous creation.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Nidhogg",
     "smallBattler": "dragon",
     "elements": [
       "Black",
@@ -4712,7 +4754,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Nidhogg",
+    "bigBattler": "Nidhogg"
   },
   {
     "id": 45,
@@ -4730,7 +4774,6 @@
     "flavor": "A young giant with strength enough to choose between fury and endurance. Its promotion branch is a direct player decision.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Giant",
     "smallBattler": "giant",
     "elements": [
       "Red",
@@ -4808,7 +4851,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Giant",
+    "bigBattler": "Giant"
   },
   {
     "id": 46,
@@ -4826,7 +4871,6 @@
     "flavor": "A red-and-black giant modeled after the hill titans of old tales. It is the more magical and aggressively destructive branch.",
     "level": 1,
     "role": "None",
-    "spriteKey": "HillGigas",
     "smallBattler": "giant",
     "elements": [
       "Red",
@@ -4905,7 +4949,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "HillGigas",
+    "bigBattler": "HillGigas"
   },
   {
     "id": 47,
@@ -4923,7 +4969,6 @@
     "flavor": "A fire giant awakened by a molten relic. It turns the Hill Gigas's aggression into apocalyptic force.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Surtr",
     "smallBattler": "giant",
     "elements": [
       "Red",
@@ -4995,7 +5040,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Surtr",
+    "bigBattler": "Surtr"
   },
   {
     "id": 48,
@@ -5013,7 +5060,6 @@
     "flavor": "A white-and-green giant built to bear impossible burdens. It is more physical, defensive, and reliable than Hill Gigas.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Atlas",
     "smallBattler": "giant",
     "elements": [
       "White",
@@ -5092,7 +5138,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Atlas",
+    "bigBattler": "Atlas"
   },
   {
     "id": 49,
@@ -5110,7 +5158,6 @@
     "flavor": "A celestial titan promoted through an adamant relic. Its defense becomes a foundation the whole party can fight around.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Hyperion",
     "smallBattler": "giant",
     "elements": [
       "White",
@@ -5183,7 +5230,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Hyperion",
+    "bigBattler": "Hyperion"
   },
   {
     "id": 50,
@@ -5201,7 +5250,6 @@
     "flavor": "A living chest with a talent for making items work harder. It is sturdy, opportunistic, and available for promotion immediately.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Mimic",
     "smallBattler": "mimic",
     "elements": [
       "Black",
@@ -5279,7 +5327,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Mimic",
+    "bigBattler": "Mimic"
   },
   {
     "id": 51,
@@ -5297,7 +5347,6 @@
     "flavor": "A Mimic opened by the Black Hinge into something stranger. It is somewhat stronger and frailer, with exceptional command of items.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Pandora",
     "smallBattler": "mimic",
     "elements": [
       "Black",
@@ -5370,7 +5419,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Pandora",
+    "bigBattler": "Pandora"
   },
   {
     "id": 52,
@@ -5388,7 +5439,6 @@
     "flavor": "A gentle horned mount with instinctive healing magic. Several promotions let it become a traveler, healer, nightmare, or fire steed.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Unicorn",
     "smallBattler": "unicorn",
     "elements": [
       "White",
@@ -5472,7 +5522,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Unicorn",
+    "bigBattler": "Unicorn"
   },
   {
     "id": 53,
@@ -5490,7 +5542,6 @@
     "flavor": "An eight-legged mount that trades spectacle for speed and expedition efficiency. It remains capable of basic healing.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Sleipnir",
     "smallBattler": "unicorn",
     "elements": [
       "White",
@@ -5570,7 +5621,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Sleipnir",
+    "bigBattler": "Sleipnir"
   },
   {
     "id": 54,
@@ -5588,7 +5641,6 @@
     "flavor": "A sacred healer unlocked from Sleipnir by a rare bell. It cleanses afflictions and bestows regeneration on the entire party.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Kirin",
     "smallBattler": "unicorn",
     "elements": [
       "White",
@@ -5662,7 +5714,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Kirin",
+    "bigBattler": "Kirin"
   },
   {
     "id": 55,
@@ -5680,7 +5734,6 @@
     "flavor": "A Unicorn that surrendered its healing light to black flame. It is the family's lone branch without basic restorative magic.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Nightmare",
     "smallBattler": "unicorn",
     "elements": [
       "Black",
@@ -5752,7 +5805,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Nightmare",
+    "bigBattler": "Nightmare"
   },
   {
     "id": 56,
@@ -5770,7 +5825,6 @@
     "flavor": "A fiery mount reached through an accessible catalyst. It preserves simple healing while adding aggressive red magic.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Firemane",
     "smallBattler": "unicorn",
     "elements": [
       "Red",
@@ -5842,7 +5896,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Firemane",
+    "bigBattler": "Firemane"
   },
   {
     "id": 57,
@@ -5860,7 +5916,6 @@
     "flavor": "A Golem perfected through a celestial fossil. It remains an uncompromising physical wall with a catastrophic weakness to magic.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Talos",
     "smallBattler": "Golem",
     "elements": [],
     "skills": [
@@ -5929,7 +5984,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Talos",
+    "bigBattler": "Talos"
   },
   {
     "id": 58,
@@ -5947,7 +6004,6 @@
     "flavor": "A watchful stone fiend more magical than a Golem. It provokes attacks and raises the party's magical defenses.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Gargoyle",
     "smallBattler": "Demon",
     "elements": [
       "Black",
@@ -6024,7 +6080,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Gargoyle",
+    "bigBattler": "Gargoyle"
   },
   {
     "id": 59,
@@ -6042,7 +6100,6 @@
     "flavor": "A Gargoyle whose protective sorcery has grown stranger and stronger. It anchors the party through provocation and magical shelter.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Grotesque",
     "smallBattler": "Demon",
     "elements": [
       "Black",
@@ -6116,7 +6173,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Grotesque",
+    "bigBattler": "Grotesque"
   },
   {
     "id": 60,
@@ -6134,7 +6193,6 @@
     "flavor": "A sturdy river creature whose greatest talents lie outside battle. Some victims of kappa curses can regain their former shape by surviving long enough.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Kappa",
     "smallBattler": "kappa",
     "elements": [
       "Blue",
@@ -6211,7 +6269,9 @@
         "actor": "revert",
         "afterOriginLevels": 3
       }
-    ]
+    ],
+    "portrait": "Kappa",
+    "bigBattler": "Kappa"
   },
   {
     "id": 61,
@@ -6229,7 +6289,6 @@
     "flavor": "A peculiar pink mount bird descended from an Egg. Its strange silhouette hides excellent expedition utility.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Moa",
     "smallBattler": "moa",
     "elements": [
       "Green"
@@ -6299,7 +6358,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Moa",
+    "bigBattler": "Moa"
   },
   {
     "id": 62,
@@ -6317,7 +6378,6 @@
     "flavor": "A High Pixie raised all the way to level twenty without a catalyst. The fairy court answers her with powerful support magic.",
     "level": 1,
     "role": "None",
-    "spriteKey": "Titania",
     "smallBattler": "Titania[fps=15]",
     "elements": [
       "Green",
@@ -6391,7 +6451,9 @@
     "foodReactions": [
       "Not bad.",
       "I've had stranger."
-    ]
+    ],
+    "portrait": "Titania",
+    "bigBattler": "Titania"
   },
   {
     "id": 63,
@@ -6415,7 +6477,6 @@
     "level": 1,
     "role": "Debuffer",
     "discipline": "blacksmithing",
-    "spriteKey": "lamia",
     "smallBattler": "lamia",
     "elements": [
       "Black",
@@ -6484,7 +6545,9 @@
         "mdf": 25
       }
     ],
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "portrait": "lamia",
+    "bigBattler": "lamia"
   },
   {
     "id": 64,
@@ -6504,7 +6567,6 @@
     "level": 10,
     "role": "Debuffer",
     "discipline": "blacksmithing",
-    "spriteKey": "lamia",
     "smallBattler": "lamia",
     "elements": [
       "Black",
@@ -6563,7 +6625,9 @@
         "mat": 45,
         "mdf": 42
       }
-    ]
+    ],
+    "portrait": "LamiaQueen",
+    "bigBattler": "LamiaQueen"
   },
   {
     "id": 65,
@@ -6587,7 +6651,6 @@
     "level": 1,
     "role": "Assassin",
     "discipline": "blacksmithing",
-    "spriteKey": "cockatrice",
     "smallBattler": "cockatrice",
     "elements": [
       "Green",
@@ -6644,6 +6707,8 @@
         "mdf": 18
       }
     ],
-    "sacrificeRewards": []
+    "sacrificeRewards": [],
+    "portrait": "cockatrice",
+    "bigBattler": "cockatrice"
   }
 ]

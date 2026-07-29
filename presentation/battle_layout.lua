@@ -25,6 +25,7 @@ local BATTLE_LAYOUT = {
     enemyY = 54,
     enemyNameY = 114,
     enemyHpBarY = 128,
+    enemyDataWidth = 96,
     enemyHpBarWidth = 50,
     enemyHpBarHeight = 4,
     enemySpriteSize = 56,

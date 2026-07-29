@@ -1788,14 +1788,18 @@
                 // Compact Sprite Pickers (Inline)
                 const spritesWrap = document.createElement('div');
                 spritesWrap.style.cssText = 'display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--win-shadow); padding-left: 6px;';
-                window.createSpriteField(spritesWrap, 'Sprite', item.spriteKey || '', (path) => {
-                    item.spriteKey = path;
+                window.createSpriteField(spritesWrap, 'Portrait', item.portrait || '', (path) => {
+                    item.portrait = path;
                     setDirty(true);
                 }, false, 'portraits', true);
-                window.createSpriteField(spritesWrap, 'Battler', item.smallBattler || '', (path) => {
+                window.createSpriteField(spritesWrap, 'Small Battler', item.smallBattler || '', (path) => {
                     item.smallBattler = path;
                     setDirty(true);
                 }, false, 'smallBattlers', true, true);
+                window.createSpriteField(spritesWrap, 'Big Battler', item.bigBattler || '', (path) => {
+                    item.bigBattler = path;
+                    setDirty(true);
+                }, false, 'bigBattlers', true);
                 heroHeader.appendChild(spritesWrap);
 
                 // Primary Quick Flags (Recruitable & Initial Party) - Vertical Stack

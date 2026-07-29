@@ -28,6 +28,30 @@ local popupTextFont
 -- "Alicia", others "NPC_Barkeep" outright), so every caller tries the same
 -- small set of filename variants rather than each guessing its own subset.
 local portraitImageCache = {}
+local bigBattlerImageCache = {}
+local function resolveKeyedImage(id, directory, cache)
+    if not id or id == "" then return nil end
+    id = tostring(id)
+    if cache[id] then return cache[id] end
+
+    local safeId = id:gsub("[^%w]+", "_"):gsub("^_+", ""):gsub("_+$", "")
+    local paths = {
+        directory .. "/" .. id .. ".png",
+        directory .. "/" .. safeId .. ".png",
+        directory .. "/" .. id:lower() .. ".png",
+        directory .. "/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png"
+    }
+    for _, p in ipairs(paths) do
+        if love.filesystem.getInfo(p) then
+            local img = love.graphics.newImage(p)
+            img:setFilter("nearest", "nearest")
+            cache[id] = img
+            return img
+        end
+    end
+    return nil
+end
+
 function ui.resolvePortraitImage(id)
     if not id or id == "" then return nil end
     id = tostring(id)
@@ -51,6 +75,10 @@ function ui.resolvePortraitImage(id)
         end
     end
     return nil
+end
+
+function ui.resolveBigBattlerImage(id)
+    return resolveKeyedImage(id, "assets/bigBattlers", bigBattlerImageCache)
 end
 
 -- Every NPC portrait asset is a 640x192 sheet (5 128x192 expression

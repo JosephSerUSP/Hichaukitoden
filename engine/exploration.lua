@@ -397,7 +397,7 @@ function exploration.generateDungeon(mapData, seed, session)
                 local candidateActorId = mapData.recruits[math.random(#mapData.recruits)]
                 local loader = session and session.loader
                 local actorData = loader and loader.getActor(candidateActorId)
-                local spritePath = (actorData and actorData.spriteKey and ("assets/sprites/" .. actorData.spriteKey .. ".png")) or "assets/sprites/OBJ_Statue_001.png"
+                local spritePath = (actorData and actorData.smallBattler) or "assets/sprites/OBJ_Statue_001.png"
                 table.insert(generatedEvents, {
                     id = "recruit_" .. candidateActorId,
                     type = "recruit",

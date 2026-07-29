@@ -1094,24 +1094,33 @@ validator.run = function(loader)
     end
     for _, actor in ipairs(loader.actors or {}) do
         local who = "actor '" .. tostring(actor.name or actor.id) .. "'"
-        if actor.smallBattler and actor.smallBattler ~= "" then
+        check(type(actor.smallBattler) == "string" and actor.smallBattler ~= "",
+            who .. " must define smallBattler")
+        if type(actor.smallBattler) == "string" and actor.smallBattler ~= "" then
             check(sb.resolveFile(actor.smallBattler) ~= nil,
                 who .. " smallBattler '" .. tostring(actor.smallBattler) .. "' resolves to no file")
         end
-        if actor.spriteKey and actor.spriteKey ~= "" then
-            local id = tostring(actor.spriteKey)
+        check(type(actor.portrait) == "string" and actor.portrait ~= "",
+            who .. " must define portrait")
+        check(type(actor.bigBattler) == "string" and actor.bigBattler ~= "",
+            who .. " must define bigBattler")
+        for _, asset in ipairs({
+            { field = "portrait", directory = "assets/portraits" },
+            { field = "bigBattler", directory = "assets/bigBattlers" },
+        }) do
+            local id = tostring(actor[asset.field] or "")
             local found = false
             for _, p in ipairs({
-                "assets/portraits/" .. id .. ".png",
-                "assets/portraits/NPC_" .. id .. ".png",
-                "assets/portraits/" .. id:lower() .. ".png",
-                "assets/portraits/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png",
+                asset.directory .. "/" .. id .. ".png",
+                asset.directory .. "/" .. id:gsub("[^%w]+", "_"):gsub("^_+", ""):gsub("_+$", "") .. ".png",
+                asset.directory .. "/" .. id:lower() .. ".png",
+                asset.directory .. "/" .. id:sub(1, 1):upper() .. id:sub(2):lower() .. ".png",
             }) do
                 if love.filesystem.getInfo(p) then found = true break end
             end
-            if not found then
-                print("[validator] warning: " .. who .. " spriteKey '" .. id .. "' has no portrait in assets/portraits")
-            end
+            check(id == "" or found,
+                who .. " " .. asset.field .. " '" .. id
+                    .. "' resolves to no image in " .. asset.directory)
         end
     end
 

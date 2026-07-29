@@ -12,7 +12,8 @@
 --
 -- List sources (SET_LIST listId):
 --   "inventory"        session inventory (fields: id, name, icon, qty, meta)
---   "party"            party members (fields: index, name, level, spriteKey)
+--   "party"            party members (fields: index, name, level, spriteKey,
+--                      portraitKey)
 --   "config:<key>"     array from the scene's config (entry fields exposed)
 --   "v:<key>"          array stored in scene v by hooks/SCRIPT
 --   "static:a,b,c"     inline comma-separated labels
@@ -148,9 +149,8 @@ local function battlerListRows(session, sourceArray, maxSlots)
             local view = formula.battlerView(m, session) or {}
             view.index = i
             -- Same sheet-key choice as renderer.drawSmallBattlerCell
-            view.spriteKey = (m.actorData and (m.actorData.smallBattler or m.actorData.spriteKey)) or m.spriteKey
-            -- Portrait art key (assets/portraits), same as the battle renderer
-            view.portraitKey = (m.actorData and m.actorData.spriteKey) or m.spriteKey or ""
+            view.spriteKey = (m.actorData and m.actorData.smallBattler) or ""
+            view.portraitKey = (m.actorData and m.actorData.portrait) or ""
             view.icon = view.icon or 0
             view.dead = m.isDead and m:isDead() or false
             -- Not read by {expr} templates; lets the row's sprite share the
