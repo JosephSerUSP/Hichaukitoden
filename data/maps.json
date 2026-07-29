@@ -9,9 +9,9 @@
     "music": "town1",
     "image": "TownAlencar.png",
     "layout": [
+      "###################",
       "#########.#########",
-      "#########.#########",
-      "#.......#.#.......#",
+      "#.........#.......#",
       "#.###.........###.#",
       "#.###.........###.#",
       "#.#.#.........#.#.#",
@@ -32,10 +32,10 @@
     "events": [
       {
         "id": 1,
-        "x": 9,
-        "y": 0,
+        "x": 8,
+        "y": 2,
         "sprite": "assets/sprites/NPC00.png",
-        "trigger": "step",
+        "trigger": "interact",
         "name": "Gate Guard",
         "label": "Gate Guard",
         "transparent": false,
@@ -170,6 +170,41 @@
                   }
                 ],
                 "cmd": "CONDITIONAL_BRANCH"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "x": 9,
+        "y": 0,
+        "door": true,
+        "sprite": "assets/sprites/labyrinth_gate_bellroot.png",
+        "trigger": "bump",
+        "name": "Labyrinth Gate",
+        "label": "Labyrinth Gate",
+        "priority": "same",
+        "commands": [
+          {
+            "condition": "hasItem:198",
+            "commands": [
+              {
+                "commonEventId": 43,
+                "cmd": "CALL_COMMON_EVENT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "The guard lowers her spear across the threshold. \"Crossing Writ first. The Labyrinth will still be hungry when you return.\"",
+                "speaker": "Gate Guard",
+                "expression": 2,
+                "cmd": "TEXT"
+              },
+              {
+                "commonEventId": 34,
+                "cmd": "CALL_COMMON_EVENT"
               }
             ],
             "cmd": "CONDITIONAL_BRANCH"
@@ -4340,6 +4375,7 @@
         "levelMax": 3
       }
     ],
+    "encounterTroop": "floor_1_wandering",
     "recruits": []
   },
   {

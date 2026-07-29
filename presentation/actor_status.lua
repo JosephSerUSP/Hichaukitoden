@@ -294,14 +294,20 @@ function actor_status.draw(battler, x, y, isSelected, session)
     actor_status.syncStateAnimations(battler, session)
     actor_status.drawStateIcon(battler, slotContentEndX - 8, lineY - 4, session)
 
-    -- LINE 2 (mid): HP fraction text "current/max"
+    -- LINE 2 (mid): current HP only, right-aligned above its gauge. Max HP is
+    -- already communicated by the gauge and needlessly crowds compact cells.
     local dispHp = battler.displayedHp or battler.hp
-    ui.drawString(math.floor(dispHp + 0.5) .. "/" .. maxHp, x + layoutVal(session, "partyGridHpXOffset") + spriteOffsetX, y + layoutVal(session, "partyGridHpYOffset"), hpColor)
-
-    -- LINE 3 (bottom): HP bar, constrained to the panel interior.
     local barX = x + layoutVal(session, "partyGridHpBarXOffset") + spriteOffsetX
-    local barW = math.min(layoutVal(session, "partyGridHpBarWidth"), math.max(4, slotContentEndX - barX))
-    ui.drawBar(barX, y + layoutVal(session, "partyGridHpBarYOffset"), barW, layoutVal(session, "partyGridHpBarHeight"), dispHp, maxHp, { 0.8, 0, 0 }, { 1, 0.3, 0.3 })
+    local barW = math.min(layoutVal(session, "partyGridHpBarWidth"), math.max(4, slotContentEndX - barX - 1))
+    local hpText = tostring(math.floor(dispHp + 0.5))
+    local hpTextY = y + layoutVal(session, "partyGridHpYOffset")
+    ui.drawString(hpText, barX + barW - ui.measureText(hpText),
+        hpTextY, hpColor)
+
+    -- LINE 3 (bottom): HP bar, constrained to the panel interior including
+    -- the shared gauge primitive's one-pixel drop shadow.
+    ui.drawBar(barX, ui.gaugeYBelowText(hpTextY), barW, ui.gaugeHeight,
+        dispHp, maxHp, ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
 end
 
 -- Placeholder for an empty party slot — matches drawPartyGrid's original

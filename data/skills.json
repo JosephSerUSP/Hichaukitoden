@@ -632,6 +632,24 @@
       }
     ]
   },
+  "dartingPeck": {
+    "id": "dartingPeck",
+    "name": "Darting Peck",
+    "target": "enemy",
+    "element": "Green",
+    "icon": 3,
+    "animation": "skill.attack",
+    "description": "[Enemy] Darts through armor with a driving peck.",
+    "mpCost": 0,
+    "effects": [
+      {
+        "type": "hp_damage",
+        "potency": 2.2,
+        "power": "atk",
+        "penetration": 0.35
+      }
+    ]
+  },
   "fairyCourt": {
     "id": "fairyCourt",
     "name": "Fairy Court",

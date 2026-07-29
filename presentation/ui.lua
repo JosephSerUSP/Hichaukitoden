@@ -18,6 +18,7 @@ local windowskin
 local windowskinHighlight
 local targetSkin
 local mainFont
+local mainFontOffsetY = 0
 local popupFont
 local popupNumberFont
 local popupTextFont
@@ -206,6 +207,7 @@ function ui.init()
     -- Load active font from system config
     local fontName = config.ui and config.ui.activeFont or "Lucida"
     local fontSize = config.ui and config.ui.fontSize or 8
+    mainFontOffsetY = config.ui and tonumber(config.ui.fontOffsetY) or 0
 
     ui.setFont(fontName, fontSize)
 
@@ -243,11 +245,24 @@ ui.tileSize   = 8    -- SNES-style 8x8 tile size grid
 ui.lineHeight = ui.tileSize   -- exactly equal to tileHeight (8px)
 ui.screenWidthTiles = 32   -- 256 / 8
 ui.iconSize        = iconSize   -- expose for renderer use
+ui.gaugeHeight     = 2
+ui.gaugeColors = {
+    hp = {
+        dark = { 0.42, 0.16, 0.18 },
+        light = { 0.82, 0.38, 0.34 },
+    },
+}
 ui.screenHeightTiles = 30   -- 240 / 8
 
 -- Utility to convert tile coordinate to pixels
 function ui.toPx(tiles)
     return tiles * ui.tileSize
+end
+
+-- Positions a gauge directly under the visible text row: the gauge acts as
+-- the row's underline/base instead of floating below it with an arbitrary gap.
+function ui.gaugeYBelowText(textY)
+    return textY + ui.lineHeight
 end
 
 -- Shared content origin for every window renderer.  A title earns one extra
@@ -505,6 +520,7 @@ end
 function ui.drawString(text, x, y, color, alignment, limit, eventName, font)
     local r, g, b, a = love.graphics.getColor()
     local currentFont = love.graphics.getFont()
+    if font == nil then y = y + mainFontOffsetY end
     
     color = color or {1, 1, 1, 1}
     alignment = alignment or "left"
@@ -587,7 +603,7 @@ local DEFAULT_PREVIEW_GAIN_COLOR = { 0.35, 1, 0.4, 1 }
 local function drawBarPreview(x, y, w, h, current, maxVal, preview)
     if not preview or not preview.delta or preview.delta == 0 or maxVal <= 0 then return end
     local delta = preview.delta
-    local innerW = w - 2
+    local innerW = w
     local pctCurrent = math.max(0, math.min(1, current / maxVal))
     local color, spanFromPct, spanToPct
 
@@ -607,38 +623,39 @@ local function drawBarPreview(x, y, w, h, current, maxVal, preview)
     local spanToPx = math.ceil(innerW * spanToPct)
     local spanW = math.max(1, spanToPx - spanFromPx)
     love.graphics.setColor(color)
-    love.graphics.rectangle("fill", x + 1 + spanFromPx, y + 1, spanW, h - 2)
+    love.graphics.rectangle("fill", x + spanFromPx, y, spanW, h)
 end
 
 function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
     local r_old, g_old, b_old, a_old = love.graphics.getColor()
+
+    -- Every gauge shares the same one-pixel drop shadow. Keeping this in the
+    -- primitive prevents HP, MP, EXP, shop and ritual gauges from drifting
+    -- into separate presentation rules.
+    love.graphics.setColor(0, 0, 0, 0.65)
+    love.graphics.rectangle("fill", x + 1, y + 1, w, h)
 
     -- Sunken dark navy channel background (matches windowskin frame tone)
     love.graphics.setColor(0.06, 0.08, 0.14, 0.95)
     love.graphics.rectangle("fill", x, y, w, h)
 
     local pct = math.max(0, math.min(1, current / maxVal))
-    local fillW = math.floor((w - 2) * pct)
+    local fillW = math.floor(w * pct)
 
     if fillW > 0 then
         color1 = color1 or { 0.2, 0.45, 0.85 }
         color2 = color2 or { 0.4, 0.7, 1.0 }
-        for i = 0, h - 3 do
-            local factor = (h > 2) and (i / (h - 2)) or 0
+        for i = 0, h - 1 do
+            local factor = (h > 1) and (i / (h - 1)) or 0
             local r = color1[1] * (1 - factor) + color2[1] * factor
             local g = color1[2] * (1 - factor) + color2[2] * factor
             local b = color1[3] * (1 - factor) + color2[3] * factor
             love.graphics.setColor(r, g, b, 1)
-            love.graphics.rectangle("fill", x + 1, y + 1 + i, fillW, 1)
+            love.graphics.rectangle("fill", x, y + i, fillW, 1)
         end
     end
 
     drawBarPreview(x, y, w, h, current, maxVal, preview)
-
-    -- Metallic slate outline
-    love.graphics.setColor(0.32, 0.38, 0.52, 0.95)
-    love.graphics.setLineWidth(1)
-    love.graphics.rectangle("line", x + 0.5, y + 0.5, w - 1, h - 1)
 
     love.graphics.setColor(r_old, g_old, b_old, a_old)
 
@@ -679,12 +696,17 @@ end
 -- call this instead of re-deriving the icon/gap math per caller.
 -- Returns the x position immediately after the drawn text (for callers
 -- that need to continue laying content out on the same line).
+-- nil means ordinary text with no icon block; 0 deliberately reserves the
+-- empty icon cell used by items and skills with no authored icon.
 function ui.drawIconText(iconId, text, x, y, color)
     local textX = x
-    if iconId and iconId > 0 then
-        ui.drawIcon(iconId, textX + ui.toPx(0.25), y - 2)
+    if iconId ~= nil then
+        if iconId > 0 then
+            local iconY = y + math.floor((ui.lineHeight - iconSize) / 2) - 1
+            ui.drawIcon(iconId, textX + ui.toPx(0.25), iconY)
+        end
+        textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
     end
-    textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
     ui.drawString(text, textX, y, color)
     return textX + ui.measureText(text)
 end
@@ -747,6 +769,14 @@ function ui.setFont(name, size)
     if loaded then
         mainFont = loaded
         ui.fontSize = size
+        -- UI geometry stays on the fixed 8px grid even when a font needs a
+        -- larger nominal size to reach the intended visual size. Without this,
+        -- LÖVE advances wrapped text using the font's native height while list
+        -- rows continue to advance by ui.lineHeight.
+        local nativeHeight = mainFont:getHeight()
+        if nativeHeight > 0 then
+            mainFont:setLineHeight(ui.lineHeight / nativeHeight)
+        end
         love.graphics.setFont(mainFont)
     end
 end

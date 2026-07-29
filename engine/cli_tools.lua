@@ -560,14 +560,22 @@ function cli.runPreviewFont(name, size)
         ui.init()
         ui.setFont(name, size)
 
-        local pw, ph = 240, 64
+        local pw, ph = 320, 104
         local previewCanvas = love.graphics.newCanvas(pw, ph)
         love.graphics.setCanvas(previewCanvas)
         love.graphics.clear(0, 0, 0, 1)
         love.graphics.setColor(1, 1, 1, 1)
         ui.drawPanel(4, 4, pw - 8, ph - 8)
-        ui.drawString("The Quick Brown Fox 0123", 12, 16)
-        ui.drawString("HP 42/50  ATK 10  DEF 8", 12, 16 + ui.lineHeight + 4)
+        local previewLines = {
+            "Il1| MW @# 0123456789",
+            "AÇÃO bênção coração",
+            "HP 99/99  MP 32/48",
+            "SABAN attacks the Wight.",
+            "The rite remembers its heirs.",
+        }
+        for i, line in ipairs(previewLines) do
+            ui.drawString(line, 12, 12 + (i - 1) * ui.lineHeight)
+        end
         love.graphics.setCanvas()
 
         local fileData = previewCanvas:newImageData():encode("png")

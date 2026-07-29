@@ -34,6 +34,7 @@ function renderer.show(spec)
         shadow = spec.shadow ~= false,
         frame = spec.frame == true,
         layer = spec.layer or "screen",
+        blend = spec.blend or "alpha",
         eraseOnMapChange = spec.eraseOnMapChange ~= false,
     }
 end
@@ -104,6 +105,7 @@ local function drawPicture(pic)
     elseif pic.anchor == "right" then x = x - width end
 
     love.graphics.push("all")
+    love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.translate(x, pic.y)
     love.graphics.scale(pic.scale, pic.scale)
     if pic.frame then

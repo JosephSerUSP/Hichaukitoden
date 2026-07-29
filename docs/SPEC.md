@@ -159,7 +159,7 @@ scene inventing its own chrome:
   adding one is a data edit; `cursor`/`visible` on the scene's dock config
   apply to the variant's declared `primary` window, and `windows: { <id>: {…} }`
   overrides any field of any window in it. An optional `offsetY` formula
-  shifts the whole dock in pixels (battle's defeat slide is the only user).
+  shifts the whole dock in pixels.
   Content still binds to the **current** scene, so `v.dialogueText` and
   friends resolve exactly as they did when the scene owned these windows.
 
@@ -871,10 +871,13 @@ presentation objects rather than save state and are cleared by session reset.
 `SHOW_IMAGE_PICTURE`, `MOVE_IMAGE_PICTURE`, `ERASE_IMAGE_PICTURE` and
 `ERASE_ALL_IMAGE_PICTURES` provide the bitmap counterpart. An image picture
 names an asset path, numbered slot, screen position, anchor, opacity, scale,
-rotation and layer; move commands interpolate all numeric presentation fields.
+rotation, layer and blend mode (`alpha` or `add`); string pictures expose the
+same blend choice. Move commands interpolate all numeric presentation fields.
 The renderer loads nearest-filtered assets and fails loudly when a path is
-missing. This lets common events crossfade and slowly zoom cinematic plates
-without introducing a cutscene-specific Lua host.
+missing. Additive pictures let luminous sigils and exact engine-rendered titles
+mesh with the live world without baking words into generated art. This lets
+common events crossfade and move cinematic plates without introducing a
+cutscene-specific Lua host.
 
 `WAIT` in map/common-event graphs compiles to a pausing node; it does not run as
 part of an immediate command batch. `ENABLE_EVENT_SKIP` names a `LABEL` in the
@@ -898,6 +901,15 @@ instead of cutting directly into free movement. The title scene uses
 renders its title, subtitle, and copyright through the same string-picture
 commands used by the introduction.
 
+Defeat keeps the persistent battle dock in place through the battle's final
+fade, then hands it to `game_over` for the dock's single close animation. The
+scene reveals `assets/cinematics/game_over_talisman_psx.png` from a full
+subtractive fade and applies a slow vertical drift while its title, aftermath
+message and return prompt open in three timed beats. The plate remains at
+exactly 1x scale throughout: cinematic pictures do not zoom because resampling
+creates visible artifacts. Its `on_exit` hook clears the image picture and
+subtractive fade before the title scene is entered.
+
 Narrative image batches may be generated as exact contact sheets and split by
 `tools/image/split-contact-sheet.ps1`. The tool takes grid geometry and one
 name per cell and emits only an antialiased, palette-limited 256x240 runtime
@@ -909,7 +921,7 @@ plates supply the prerendered opening.
 ### 1.18 Opening expedition roster and floor ramp (28.07.2026)
 
 The opening party is authored through `system.newGame.party.fixedMembers` and
-currently contains Saban (actor 61, level 1). A fixed member may carry an
+currently contains Saban (actor 61, level 3). A fixed member may carry an
 instance name; new-game construction preserves it rather than assigning a
 random ally name.
 
@@ -937,6 +949,17 @@ expands to 27x27 and 7--9 rooms, where the ordinary dungeon scale and recruit
 pool take over. `exploration.generateDungeon` reads optional per-map room-count
 and room-size bounds, falling back to global dungeon configuration when
 omitted. Generated layouts remain cached for physical backtracking.
+
+Those three maps form **Stratum I: The Bellroot Depths**. Strata are authored
+campaign groupings rather than a second map type: their floors remain ordinary
+maps with ordinary depth and stair rules. St. Maria's north approach separates
+the guard from the threshold—the guard occupies a side alcove and handles
+conversation, while a generated stone-and-iron gate is the bump-activated
+entrance. An authorized first descent runs common event 43: it burns the town
+to black, loads Floor 1 underneath, then slowly reveals the live raycaster while
+an additive bell-and-roots plate and exact string-picture title fade away.
+Later descents retain the slow world reveal but do not replay the discovery
+card.
 
 ### 1.19 Explicit actor art roles and native big battlers (29.07.2026)
 

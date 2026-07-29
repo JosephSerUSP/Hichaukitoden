@@ -23,18 +23,27 @@ end
 
 loader.init()
 
-local townDoorCount = 0
+local townDoorCount, interiorDoorCount, labyrinthGateCount = 0, 0, 0
 for _, ev in ipairs(loader.maps[1].events or {}) do
     if ev.door then
         townDoorCount = townDoorCount + 1
         local row = loader.maps[1].layout[ev.y + 1]
         check(row and row:sub(ev.x + 1, ev.x + 1) == "#",
             ev.name .. " door is authored into a wall cell")
-        check(ev.trigger == "bump" and ev.sprite == "assets/sprites/map_door_001.png",
-            ev.name .. " door uses wall-bump activation and the shared composite sprite")
+        if ev.name == "Labyrinth Gate" then
+            labyrinthGateCount = labyrinthGateCount + 1
+            check(ev.trigger == "bump"
+                    and ev.sprite == "assets/sprites/labyrinth_gate_bellroot.png",
+                "the Labyrinth gate uses wall-bump activation and its authored gate plate")
+        else
+            interiorDoorCount = interiorDoorCount + 1
+            check(ev.trigger == "bump" and ev.sprite == "assets/sprites/map_door_001.png",
+                ev.name .. " door uses wall-bump activation and the shared composite sprite")
+        end
     end
 end
-check(townDoorCount == 5, "St. Maria has five wall-bound interior doors")
+check(townDoorCount == 6 and interiorDoorCount == 5 and labyrinthGateCount == 1,
+    "St. Maria has five interior doors and one distinct Labyrinth gate")
 
 local doorTransition = require("presentation.door_transition")
 local subtractiveFade = require("presentation.subtractive_fade")
@@ -332,14 +341,29 @@ stringPictures.clear()
 local imagePictures = require("presentation.image_picture_renderer")
 imagePictures.show({
     id = 778, path = "assets/cinematics/arrival_cart_psx.png",
-    x = 128, y = 120, anchor = "center", opacity = 0, scale = 1,
+    x = 128, y = 120, anchor = "center", opacity = 0, scale = 1, blend = "add",
 })
 imagePictures.move({ id = 778, opacity = 1, scale = 1.1, duration = 2, easing = "linear" })
 imagePictures.update(1)
 check(imagePictures.get(778).opacity == 0.5
-    and imagePictures.get(778).scale == 1.05,
-    "image pictures support event-authored crossfades and slow zooms")
+    and imagePictures.get(778).scale == 1.05
+    and imagePictures.get(778).blend == "add",
+    "image pictures support event-authored crossfades, transforms and additive blend")
 imagePictures.clear()
+
+stringPictures.show({
+    id = 779, text = "glow", x = 0, y = 0, blend = "add",
+})
+check(stringPictures.get(779).blend == "add",
+    "string pictures support event-authored additive blend")
+stringPictures.clear()
+
+local gameOver = loader.getScene("game_over")
+for _, cmd in ipairs((gameOver.hooks and gameOver.hooks.on_enter) or {}) do
+    if cmd.cmd == "MOVE_IMAGE_PICTURE" then
+        check(cmd.scale == nil, "the Game Over sequence never zooms its image")
+    end
+end
 
 -- The bottom of the dungeon is expressed by authoring no stairs there, not by
 -- a number in system.json that has to be kept in step with the map list.

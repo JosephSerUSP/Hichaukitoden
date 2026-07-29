@@ -75,7 +75,7 @@ Saban is in the party before control begins.
 
 | Opening fact | Mechanical effect | Later coverage |
 |---|---|---|
-| Saban is actor 61, level 1 | Occupies one active slot | Enables survival/loss reactions |
+| Saban is actor 61, level 3 | Occupies one active slot | Enables survival/loss reactions |
 | His contract is already named | Name persists through save/load | Distinguishes him from later Moa |
 | The old owner was erased | No immediate answer | Gives the Passage House a quiet suspicion |
 

@@ -37,6 +37,7 @@ local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
 local actor_status = require("presentation.actor_status")
 local battle_layout = require("presentation.battle_layout")
+local subtractive_fade = require("presentation.subtractive_fade")
 -- Summoner rework battle-windows conversion: "enemyRow"/"battleLog"/
 -- "victoryPanel" styles dispatch to renderer.lua, which owns the actual
 -- draw code (animation-player-driven shaders/particles, the reveal-timer
@@ -151,7 +152,6 @@ local function battlerListRows(session, sourceArray, maxSlots)
             -- Same sheet-key choice as renderer.drawSmallBattlerCell
             view.spriteKey = (m.actorData and m.actorData.smallBattler) or ""
             view.portraitKey = (m.actorData and m.actorData.portrait) or ""
-            view.icon = view.icon or 0
             view.dead = m.isDead and m:isDead() or false
             -- Not read by {expr} templates; lets the row's sprite share the
             -- same battle-triggered flash/shake state small_battlers keys by
@@ -342,7 +342,7 @@ local function memberPassiveRows(session, win, env)
     for _, id in ipairs((member and member.actorData and member.actorData.passives) or {}) do
         local passive = loader and loader.getPassive and loader.getPassive(id)
         if passive then
-            table.insert(rows, { id = id, name = passive.name or id, description = passive.description or "", icon = passive.icon or 0 })
+            table.insert(rows, { id = id, name = passive.name or id, description = passive.description or "" })
         end
     end
     if #rows == 0 then
@@ -542,7 +542,7 @@ local function drawLayoutGauges(gauges, env, x, y)
         local maximum = tonumber((formula.eval(gauge.max or "1", env))) or 1
         local preview = buildGaugePreview(gauge.previewCost, gauge.previewGain, gauge.previewLabel, env)
         ui.drawString(interpolate(gauge.label or "", env), gx, gy, COLOR_NORMAL)
-        ui.drawBar(gx, gy + ui.lineHeight, ui.toPx(gauge.width or 18), gauge.height or 3,
+        ui.drawBar(gx, ui.gaugeYBelowText(gy), ui.toPx(gauge.width or 18), ui.gaugeHeight,
             value, maximum, gauge.color or { 0.5, 0, 0 }, gauge.fill or { 1, 0.3, 0.3 }, preview)
     end
 end
@@ -688,7 +688,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
     local cardPad = 2 -- inset of a sprite row's own windowskin card
     local hasGauge = win.gaugeValue and win.gaugeValue ~= "" and win.gaugeMax and win.gaugeMax ~= ""
     local rowPitch = ui.lineHeight
-    if hasGauge then rowPitch = rowPitch + (layout.gaugeHeight or 3) + 3 end
+    if hasGauge then rowPitch = rowPitch + ui.gaugeHeight + 3 end
     if spriteField then rowPitch = math.max(rowPitch, spriteSize + 2) end
     if layout.rowPitch then rowPitch = ui.toPx(layout.rowPitch) end
 
@@ -766,7 +766,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
             rightW = ui.measureText((rightText:gsub("\\c%[%d+%]", ""))) + ui.toPx(0.5)
         end
 
-        local iconBlockW = (row.icon and row.icon > 0)
+        local iconBlockW = (row.icon ~= nil)
             and (ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)) or 0
         local labelText = ui.fitText(interpolate(format, rEnv),
             rightEdge - rightW - textX - iconBlockW)
@@ -789,7 +789,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
             local preview = isSel
                 and buildGaugePreview(win.gaugePreviewCost, win.gaugePreviewGain, win.gaugePreviewLabel, rEnv)
                 or nil
-            ui.drawBar(barX, rowY + ui.lineHeight + 1, barW, layout.gaugeHeight or 3,
+            ui.drawBar(barX, ui.gaugeYBelowText(rowY), barW, ui.gaugeHeight,
                 val, max,
                 win.gaugeColor or { 0.8, 0, 0 }, win.gaugeFill or { 1, 0.3, 0.3 }, preview)
         end
@@ -847,7 +847,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local colW = actor_status.cellSize(session)
     local gridW = cols * colW
     local h = ui.toPx(layout.height or 12)
-    local mpBarH = battle_layout.get(session, "partyGridHpBarHeight") or 3
+    local mpBarH = ui.gaugeHeight
     local mpNum = tostring(math.floor(session.displayedMp or session.mp or 0))
     local mpNumW = ui.measureText(mpNum)
     local gap = 4
@@ -1002,7 +1002,7 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
     -- rows (Attack/Skill/Defend/Item/Flee) are unaffected.
     local function drawSlotLabel(row, color, slotX, slotW, textY, cursorY)
         local label = row.name or ""
-        local hasIcon = row.icon and row.icon > 0
+        local hasIcon = row.icon ~= nil
         if hasIcon then
             local textW = ui.measureText(label)
             local iconBlockW = ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)
@@ -1362,6 +1362,14 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     local style = layout.style or "panel"
     local title = layout.title
     if title then title = interpolate(title, env) end
+
+    -- Confirmation windows are modal: dim everything already drawn behind
+    -- them with the shared PSX subtractive primitive before drawing the
+    -- modal itself. This preserves bright UI colors better than a uniform
+    -- alpha-black overlay and keeps every confirm surface consistent.
+    if style == "confirm" then
+        subtractive_fade.draw(0.4)
+    end
 
     local animOpen = layout.anim and layout.anim.open
     if animOpen and animOpen.anchor then

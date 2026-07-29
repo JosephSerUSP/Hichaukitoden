@@ -41,6 +41,7 @@ function renderer.show(spec)
         rotation = tonumber(spec.rotation) or 0,
         anchor = spec.anchor or "left",
         layer = spec.layer or "screen",
+        blend = spec.blend or "alpha",
         eraseOnMapChange = spec.eraseOnMapChange ~= false,
     }
 end
@@ -111,6 +112,7 @@ local function drawPicture(pic)
         ox = image:getWidth()
     end
     love.graphics.push("all")
+    love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.setColor(1, 1, 1, pic.opacity)
     love.graphics.draw(image, pic.x, pic.y, pic.rotation, pic.scale, pic.scale, ox, oy)
     love.graphics.pop()

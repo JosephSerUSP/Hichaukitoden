@@ -1837,6 +1837,15 @@
           ]
         },
         {
+          "key": "blend",
+          "type": "select",
+          "options": [
+            "alpha",
+            "add"
+          ],
+          "optional": true
+        },
+        {
           "key": "eraseOnMapChange",
           "type": "boolean",
           "optional": true
@@ -1991,6 +2000,15 @@
             "screen",
             "top"
           ]
+        },
+        {
+          "key": "blend",
+          "type": "select",
+          "options": [
+            "alpha",
+            "add"
+          ],
+          "optional": true
         },
         {
           "key": "eraseOnMapChange",
@@ -2386,8 +2404,7 @@
     "enemyInfoWidth": 48,
     "enemyInfoClampToSlot": false,
     "enemyInfoOffsetY": -7,
-    "enemyInfoBarOffsetY": 12,
-    "enemyInfoHpBarHeight": 4,
+    "enemyInfoBarOffsetY": 7,
     "enemyInfoShowName": true,
     "enemyInfoShowHpBar": true,
     "enemyInfoShowElements": true,
@@ -2415,9 +2432,7 @@
     "partyGridHpXOffset": 8,
     "partyGridHpYOffset": 11,
     "partyGridHpBarXOffset": 8,
-    "partyGridHpBarYOffset": 22,
     "partyGridHpBarWidth": 52,
-    "partyGridHpBarHeight": 3,
     "partyGridEmptyYOffset": 8,
     "targetIndicatorDistance": 8,
     "targetIndicatorBlinkSpeed": 0.25,
@@ -2432,8 +2447,7 @@
     "victoryPanelTileH": 14,
     "victoryLineSpacing": 12,
     "victoryRowHeight": 18,
-    "victoryGaugeWidth": 120,
-    "victoryGaugeHeight": 3
+    "victoryGaugeWidth": 120
   },
   "effectTypes": [
     {
@@ -3174,12 +3188,12 @@
     "battle_command": {
       "x": 0,
       "y": 18,
-      "width": 9.5,
+      "width": 14,
       "height": 12,
       "style": "command",
       "vertical": true,
       "title": null,
-      "slotGap": 0.25,
+      "slotGap": 0,
       "slotHeight": 2,
       "slotInset": 1
     },
@@ -3198,14 +3212,7 @@
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5,
-      "anim": {
-        "open": {
-          "duration": 0.12,
-          "effect": "expandRight",
-          "fromWidth": 9.5
-        }
-      }
+      "visibleRows": 5
     },
     "battle_item": {
       "x": 0,
@@ -3214,14 +3221,7 @@
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5,
-      "anim": {
-        "open": {
-          "duration": 0.12,
-          "effect": "expandRight",
-          "fromWidth": 9.5
-        }
-      }
+      "visibleRows": 5
     }
   },
   "dock": {

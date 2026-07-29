@@ -343,6 +343,8 @@
             return code === 'PARAM_PLUS' || code === 'PARAM_RATE' || code === 'ELEMENT_CHANGE';
         }
         const PARAM_IDS = ['maxHp', 'atk', 'def', 'mat', 'mdf', 'asp', 'mpd'];
+        const DAMAGE_POWER_IDS = ['atk', 'mat'];
+        const DAMAGE_DEFENSE_IDS = ['def', 'mdf'];
         const SKILL_TARGETS = ['enemy', 'enemy-any', 'ally-any', 'self'];
         function elementOptions(includeNone) {
             const names = Object.keys(dbPayload.elements || {});
@@ -707,15 +709,33 @@
             const opt = effectTypeOptions().find(o => (o.value !== undefined ? o.value : o) === type);
             return (opt && opt.label) || type;
         }
+        function effectTypeDefinition(type) {
+            const reg = (dbPayload.engine && dbPayload.engine.effectTypes) || [];
+            return reg.find(et => et.id === type) || { id: type, params: ['value'] };
+        }
         function effectContentText(eff) {
-            if (eff.type === 'hp_damage' || eff.type === 'hp_heal' || eff.type === 'hp_drain') {
+            if (eff.type === 'hp_damage' || eff.type === 'hp_drain') {
+                if (eff.power) {
+                    const potency = eff.potency !== undefined ? eff.potency : 1;
+                    const defense = eff.defense || (eff.power === 'mat' ? 'mdf' : 'def');
+                    const pierce = eff.penetration ? `, ${Math.round(eff.penetration * 100)}% pierce` : '';
+                    return `${potency}x ${eff.power} vs ${defense}${pierce}`;
+                }
+                return eff.formula ? `direct: ${eff.formula}` : '(choose relative power or direct formula)';
+            }
+            if (eff.type === 'hp_heal') {
                 return eff.formula || '(no formula)';
             }
             if (eff.type === 'add_status') {
                 const pct = Math.round((eff.chance !== undefined ? eff.chance : 1) * 100);
                 return `${eff.status || '?'} @ ${pct}% for ${eff.duration !== undefined ? eff.duration : 3}t`;
             }
-            return String(eff.value !== undefined ? eff.value : 0);
+            const params = effectTypeDefinition(eff.type).params || [];
+            if (!params.length) return '(no parameters)';
+            return params
+                .filter(key => eff[key] !== undefined && eff[key] !== '')
+                .map(key => `${key}: ${eff[key]}`)
+                .join(', ') || '(not configured)';
         }
 
         function buildEffectsEditor(container, owner) {
@@ -731,7 +751,66 @@
                         reopen(); // rebuild this row's fields (formula vs status vs plain value) without collapsing to summary
                     }));
 
-                    if (eff.type === 'hp_damage' || eff.type === 'hp_heal' || eff.type === 'hp_drain') {
+                    if (eff.type === 'hp_damage' || eff.type === 'hp_drain') {
+                        const mode = eff.power ? 'relative' : 'direct';
+                        row.appendChild(makeSelect([
+                            { value: 'relative', label: 'Relative' },
+                            { value: 'direct', label: 'Direct' }
+                        ], mode, v => {
+                            if (v === 'relative') {
+                                delete eff.formula;
+                                eff.power = 'atk';
+                                if (eff.potency === undefined) eff.potency = 1;
+                            } else {
+                                delete eff.power;
+                                delete eff.defense;
+                                delete eff.potency;
+                                delete eff.penetration;
+                                eff.formula = '';
+                            }
+                            reopen();
+                        }));
+
+                        if (mode === 'relative') {
+                            row.appendChild(makeSelect(DAMAGE_POWER_IDS, eff.power || 'atk',
+                                v => { eff.power = v; setDirty(true); }, '1'));
+                            row.appendChild(makeSelect(
+                                [{ value: '', label: '(paired DEF)' }].concat(DAMAGE_DEFENSE_IDS),
+                                eff.defense || '', v => {
+                                    if (v) eff.defense = v; else delete eff.defense;
+                                    setDirty(true);
+                                }, '1'));
+
+                            const potency = document.createElement('input');
+                            potency.type = 'number'; potency.step = '0.05';
+                            potency.className = 'win98-input'; potency.style.width = '52px';
+                            potency.title = 'Potency multiplier';
+                            potency.value = eff.potency !== undefined ? eff.potency : 1;
+                            potency.oninput = () => { eff.potency = parseFloat(potency.value) || 0; setDirty(true); };
+                            row.appendChild(potency);
+
+                            const penetration = document.createElement('input');
+                            penetration.type = 'number'; penetration.step = '0.05';
+                            penetration.min = '0'; penetration.max = '1';
+                            penetration.className = 'win98-input'; penetration.style.width = '52px';
+                            penetration.title = 'Defense penetration (0-1)';
+                            penetration.value = eff.penetration !== undefined ? eff.penetration : 0;
+                            penetration.oninput = () => {
+                                const value = parseFloat(penetration.value) || 0;
+                                if (value === 0) delete eff.penetration; else eff.penetration = value;
+                                setDirty(true);
+                            };
+                            row.appendChild(penetration);
+                        } else {
+                            const f = document.createElement('input');
+                            f.className = 'win98-input'; f.style.flex = '1';
+                            f.placeholder = 'direct formula, e.g. 20';
+                            f.value = eff.formula || '';
+                            f.oninput = () => { eff.formula = f.value; setDirty(true); };
+                            f.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
+                            row.appendChild(f);
+                        }
+                    } else if (eff.type === 'hp_heal') {
                         const f = document.createElement('input');
                         f.className = 'win98-input';
                         f.style.flex = '1';
@@ -757,15 +836,35 @@
                         dur.oninput = () => { eff.duration = parseInt(dur.value) || 0; setDirty(true); };
                         row.appendChild(dur);
                     } else {
-                        const v = document.createElement('input');
-                        v.type = 'number';
-                        v.className = 'win98-input';
-                        v.style.flex = '1';
-                        v.title = 'Effect value';
-                        v.value = eff.value !== undefined ? eff.value : 0;
-                        v.oninput = () => { eff.value = parseInt(v.value) || 0; setDirty(true); };
-                        v.onkeydown = (e) => { if (e.key === 'Enter') commit(); };
-                        row.appendChild(v);
+                        const params = effectTypeDefinition(eff.type).params || [];
+                        params.forEach(key => {
+                            if (key === 'status' || (key === 'value' && eff.type === 'remove_status')) {
+                                row.appendChild(makeSelect(Object.keys(dbPayload.states || {}), eff[key] || '',
+                                    v => { eff[key] = v; setDirty(true); }, '1'));
+                            } else if (key === 'skill') {
+                                row.appendChild(makeSelect(Object.keys(dbPayload.skills || {}), eff[key] || '',
+                                    v => { eff[key] = v; setDirty(true); }, '1'));
+                            } else if (key === 'param') {
+                                row.appendChild(makeSelect(PARAM_IDS, eff[key] || PARAM_IDS[0],
+                                    v => { eff[key] = v; setDirty(true); }, '1'));
+                            } else {
+                                const input = document.createElement('input');
+                                input.type = 'number';
+                                input.step = (key === 'percent' || key === 'chance') ? '0.05' : '1';
+                                input.className = 'win98-input';
+                                input.style.flex = '1';
+                                input.style.minWidth = '48px';
+                                input.title = key;
+                                input.placeholder = key;
+                                input.value = eff[key] !== undefined ? eff[key] : '';
+                                input.oninput = () => {
+                                    if (input.value === '') delete eff[key];
+                                    else eff[key] = Number(input.value);
+                                    setDirty(true);
+                                };
+                                row.appendChild(input);
+                            }
+                        });
                     }
 
                     const doneBtn = document.createElement('button');
@@ -776,7 +875,7 @@
                     row.appendChild(doneBtn);
                     row.appendChild(makeRowDeleteBtn(() => { owner.effects.splice(idx, 1); commit(); }));
                 },
-                newItem: () => ({ type: 'hp_damage', formula: '' }),
+                newItem: () => ({ type: 'hp_damage', power: 'atk', potency: 1 }),
                 addLabel: '+ Add Effect'
             });
         }
@@ -1141,6 +1240,7 @@
         // Keys not listed fall back to the generic key-name field.
         const CONFIG_SCHEMA = {
             'windowLayout.headerSpacing': { label: 'Header Spacing (px)', type: 'number', step: 1 },
+            'ui.fontOffsetY':              { label: 'Font Vertical Offset (px)', type: 'number', step: 1 },
             'ui.menuSlideDuration':        { label: 'Menu Slide Duration (s)', step: 0.05, min: 0 },
             'ui.moveTransitionDuration':   { label: 'Move Transition (s)', step: 0.05, min: 0 },
             'ui.inputCooldown':            { label: 'Input Cooldown (s)', step: 0.05, min: 0 },

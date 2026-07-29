@@ -1,7 +1,8 @@
 {
   "ui": {
-    "activeFont": "04B_03__",
-    "fontSize": 8,
+    "activeFont": "monogram-extended-italic",
+    "fontSize": 16,
+    "fontOffsetY": -4,
     "fontNormalize": true,
     "menuSlideDuration": 0.15,
     "moveTransitionDuration": 0.15,
@@ -171,7 +172,7 @@
       "fixedMembers": [
         {
           "id": 61,
-          "level": 1,
+          "level": 3,
           "name": "Saban"
         }
       ]

@@ -3654,8 +3654,7 @@
     "config": {
       "dock": {
         "variant": "battle",
-        "cursor": "v.combatState == 'input' and (v.livingMembers and v.livingMembers[v.activeMemberIdx or 1] and v.livingMembers[v.activeMemberIdx or 1].index or 0) or 0",
-        "offsetY": "(v.defeatSlideT or 0) * 240"
+        "cursor": "v.combatState == 'input' and (v.livingMembers and v.livingMembers[v.activeMemberIdx or 1] and v.livingMembers[v.activeMemberIdx or 1].index or 0) or 0"
       }
     }
   },
@@ -3942,7 +3941,7 @@
             "type": "list",
             "listId": "v:items",
             "format": "{name}",
-            "formatRight": "{formatQtyNum(v.qty)} x  {formatPrice(cost, v.maxPrice)}",
+            "formatRight": "{formatPrice(cost, v.maxPrice)}",
             "cursor": "v.idx"
           }
         ]
@@ -3961,7 +3960,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{v.qty}x {sel('shop_list').name}\nTotal: {formatPrice(v.items[v.idx].cost * v.qty, v.maxPrice)}"
+            "text": "{v.qty}x {sel('shop_list').name}\nTotal: {formatPrice(v.items[v.idx].cost * v.qty, v.maxTotalPrice)}"
           },
           {
             "type": "list",
@@ -4065,7 +4064,7 @@
         {
           "cmd": "SET_VAR",
           "name": "step",
-          "value": 0
+          "value": -1
         },
         {
           "cmd": "SET_VAR",
@@ -4073,11 +4072,60 @@
           "value": 1
         },
         {
+          "cmd": "SET_SUBTRACTIVE_FADE",
+          "amount": 1
+        },
+        {
+          "cmd": "SHOW_IMAGE_PICTURE",
+          "id": 20,
+          "path": "assets/cinematics/game_over_talisman_psx.png",
+          "x": 128,
+          "y": 130,
+          "anchor": "center",
+          "opacity": 1,
+          "scale": 1,
+          "layer": "backdrop"
+        },
+        {
+          "cmd": "MOVE_IMAGE_PICTURE",
+          "id": 20,
+          "x": 128,
+          "y": 120,
+          "duration": 7.5,
+          "easing": "linear"
+        },
+        {
+          "cmd": "SET_SUBTRACTIVE_FADE",
+          "amount": 0,
+          "duration": 1.2,
+          "easing": "smooth"
+        },
+        {
           "cmd": "WAIT",
-          "duration": 1.4
+          "duration": 0.8
         }
       ],
       "on_frame": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.step == -1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "step",
+              "value": 0
+            },
+            {
+              "cmd": "WAIT",
+              "duration": 1.1
+            }
+          ]
+        },
         {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.step == 0",
@@ -4094,7 +4142,7 @@
             },
             {
               "cmd": "WAIT",
-              "duration": 1
+              "duration": 1.1
             }
           ]
         },
@@ -4130,6 +4178,15 @@
             }
           ]
         }
+      ],
+      "on_exit": [
+        {
+          "cmd": "ERASE_ALL_IMAGE_PICTURES"
+        },
+        {
+          "cmd": "SET_SUBTRACTIVE_FADE",
+          "amount": 0
+        }
       ]
     },
     "config": {},
@@ -4137,12 +4194,17 @@
       {
         "id": "game_over_frame",
         "rect": {
-          "x": 0,
+          "x": 5,
           "y": 6,
-          "w": 32,
-          "h": 6
+          "w": 22,
+          "h": 5
         },
         "style": "frame",
+        "anim": {
+          "open": {
+            "duration": 0.45
+          }
+        },
         "visible": "v.step >= 0",
         "content": [
           {
@@ -4153,23 +4215,40 @@
       },
       {
         "id": "game_over_message",
+        "rect": {
+          "x": 3,
+          "y": 12,
+          "w": 26,
+          "h": 4
+        },
+        "style": "frame",
+        "anim": {
+          "open": {
+            "duration": 0.3
+          }
+        },
         "visible": "v.step >= 1",
         "content": [
           {
             "type": "text",
-            "text": "The party has fallen..."
+            "text": "The party has fallen.\nTheir expedition ends here."
           }
         ]
       },
       {
         "id": "game_over_menu",
         "rect": {
-          "x": 0,
-          "y": 17,
-          "w": 32,
+          "x": 8,
+          "y": 18,
+          "w": 16,
           "h": 4
         },
         "style": "list",
+        "anim": {
+          "open": {
+            "duration": 0.25
+          }
+        },
         "visible": "v.step >= 2",
         "content": [
           {

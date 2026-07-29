@@ -892,9 +892,9 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
                     ui.drawString(enemy.name, info.x + enemyIconW, info.nameY, {1, 1, 1, 1})
                 end
                 if info.showHpBar then
-                    ui.drawBar(info.x, info.barY, info.width, info.barHeight,
+                    ui.drawBar(info.x, info.barY, info.width, ui.gaugeHeight,
                         enemy.displayedHp or enemy.hp, maxHp,
-                        {0.8, 0, 0}, {1, 0.3, 0.3})
+                        ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
                 end
             end
         end
@@ -986,7 +986,8 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
             ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
         end
         -- Gauge at full width below the name line
-        ui.drawBar(contentX, rowY + 10, layoutVal("victoryGaugeWidth"), layoutVal("victoryGaugeHeight"), a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
+        ui.drawBar(contentX, ui.gaugeYBelowText(rowY), layoutVal("victoryGaugeWidth"),
+            ui.gaugeHeight, a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
     end
 
     -- Bottom prompt: ENTER to start drain, SPACE to dismiss when done

@@ -215,7 +215,6 @@ function battler_geometry.enemyInfo(session, rect, slotWidth)
         width = width,
         nameY = nameY,
         barY = nameY + layoutVal(session, "enemyInfoBarOffsetY"),
-        barHeight = layoutVal(session, "enemyInfoHpBarHeight"),
         showName = layoutVal(session, "enemyInfoShowName") ~= false,
         showHpBar = layoutVal(session, "enemyInfoShowHpBar") ~= false,
         showElements = layoutVal(session, "enemyInfoShowElements") ~= false,

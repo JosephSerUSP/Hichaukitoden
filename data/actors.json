@@ -2831,7 +2831,8 @@
       "White"
     ],
     "skills": [
-      "sleepDust"
+      "sleepDust",
+      "attack"
     ],
     "passives": [],
     "traits": [],
@@ -3356,7 +3357,8 @@
       "Green"
     ],
     "skills": [
-      "rootMend"
+      "rootMend",
+      "attack"
     ],
     "passives": [],
     "traits": [],
@@ -6294,7 +6296,8 @@
       "Green"
     ],
     "skills": [
-      "fleetStep"
+      "fleetStep",
+      "dartingPeck"
     ],
     "passives": [
       "wayfarer"
@@ -6313,7 +6316,7 @@
     "sacrificeRewards": [],
     "baseParams": {
       "maxHp": 60,
-      "atk": 14,
+      "atk": 18,
       "def": 20,
       "mat": 8,
       "mdf": 15,

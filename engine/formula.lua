@@ -28,18 +28,8 @@ local HELPERS = {
             return "x" .. tostring(qty)
         end
     end,
-    -- Formats a quantity NUMBER (no "x" prefix) with a dark-gray leading zero
-    -- when <10, e.g. "01", "15". Used for the "qty×price" shop format.
-    formatQtyNum = function(qty)
-        qty = math.floor(tonumber(qty) or 0)
-        if qty < 10 then
-            return "\\c[7]0\\c[0]" .. tostring(qty)
-        else
-            return tostring(qty)
-        end
-    end,
     -- Formats price with leading zeros padded to the width of the shop's
-    -- maxPrice (20 × most expensive item cost, set as v.maxPrice by openShop).
+    -- maxPrice (the most expensive item cost, set as v.maxPrice by openShop).
     -- Leading zeros are dark gray (palette index 7); the G is yellow (palette 6).
     formatPrice = function(cost, maxPrice)
         cost = math.floor(tonumber(cost) or 0)

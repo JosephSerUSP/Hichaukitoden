@@ -747,17 +747,16 @@ function battle.handleTransition(action)
             end
         end
         if toGameOver then
-            -- Staged defeat sequence (owner feedback, 17.07.2026): background
-            -- fades to fully black -> a dramatic pause -> party window
-            -- slides out downward -> immediately (no pause) a second fade
-            -- covers everything else (monsters included) to full black ->
-            -- THEN hand off to game_over. battle.update drives the stages.
+            -- Staged defeat sequence: background fades to fully black -> a
+            -- dramatic pause -> a second fade covers the party dock and
+            -- monsters -> THEN hand off to game_over. The persistent dock
+            -- remains in place so the destination owns its one close
+            -- animation. battle.update drives the stages.
             v.defeatTargetScene = targetScene
             v.defeatTimer = 0
             v.defeatStage = 0
             v.defeatBgFade = 0
             v.defeatFinalFade = 0
-            v.defeatSlideT = 0
             v.combatState = "defeat_sequence"
         end
     elseif v.escaped then
@@ -806,14 +805,12 @@ local function easeOut(t)
     return 1 - (1 - t) * (1 - t)
 end
 
--- Defeat sequence stage durations (seconds), owner-directed 17.07.2026:
--- background fades to fully black, THEN a dramatic pause, THEN the party
--- window slides out (no pause before this), THEN immediately (no pause)
--- a second fade sweeps everything else (monsters included) to full black.
+-- Defeat sequence stage durations (seconds): background fades to fully black,
+-- THEN a dramatic pause, THEN a second fade sweeps the party dock and monsters
+-- to full black. The game-over scene closes the persistent dock afterward.
 local DEFEAT_STAGE0_DUR = 0.6  -- background fade to 100%
 local DEFEAT_STAGE1_DUR = 0.7  -- dramatic pause, held black background
-local DEFEAT_STAGE2_DUR = 0.45 -- party window slide-out
-local DEFEAT_STAGE3_DUR = 0.6  -- final fade to full black (monsters)
+local DEFEAT_STAGE2_DUR = 0.6  -- final fade to full black
 
 function battle.update(dt)
     local v = battle.getState()
@@ -825,37 +822,26 @@ function battle.update(dt)
     if v.combatState == "defeat_sequence" then
         v.defeatTimer = (v.defeatTimer or 0) + dt
         local t = v.defeatTimer
-        local S0, S1, S2, S3 = DEFEAT_STAGE0_DUR, DEFEAT_STAGE1_DUR, DEFEAT_STAGE2_DUR, DEFEAT_STAGE3_DUR
+        local S0, S1, S2 = DEFEAT_STAGE0_DUR, DEFEAT_STAGE1_DUR, DEFEAT_STAGE2_DUR
         if t < S0 then
             -- Background fades to fully black.
             v.defeatStage = 0
             v.defeatBgFade = easeOut(t / S0)
             v.defeatFinalFade = 0
-            v.defeatSlideT = 0
         elseif t < S0 + S1 then
             -- Dramatic pause: everything holds (background already black,
             -- windows/monsters still visible on top of it).
             v.defeatStage = 1
             v.defeatBgFade = 1
             v.defeatFinalFade = 0
-            v.defeatSlideT = 0
         elseif t < S0 + S1 + S2 then
-            -- Party window slides straight down and off-screen.
+            -- The final fade covers the party dock and monsters together.
             v.defeatStage = 2
             v.defeatBgFade = 1
-            v.defeatFinalFade = 0
-            v.defeatSlideT = easeOut((t - S0 - S1) / S2)
-        elseif t < S0 + S1 + S2 + S3 then
-            -- No pause after the slide: a second fade immediately sweeps
-            -- over everything else (the monsters) to full black.
-            v.defeatStage = 3
-            v.defeatBgFade = 1
-            v.defeatFinalFade = easeOut((t - S0 - S1 - S2) / S3)
-            v.defeatSlideT = 1
+            v.defeatFinalFade = easeOut((t - S0 - S1) / S2)
         else
             v.defeatBgFade = 1
             v.defeatFinalFade = 1
-            v.defeatSlideT = 1
             if v.defeatTargetScene then
                 local target = v.defeatTargetScene
                 v.defeatTargetScene = nil

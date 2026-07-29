@@ -139,6 +139,17 @@
       }
     ]
   },
+  "floor_1_wandering": {
+    "id": "floor_1_wandering",
+    "name": "Floor 1 Wandering Encounter",
+    "description": "The opening floor fields one or two creatures against Saban's one-member starting party. Later floors use the full wandering group size.",
+    "members": [
+      {
+        "poolFrom": "map",
+        "count": "random(1, 2)"
+      }
+    ]
+  },
   "recruit_skeleton": {
     "id": "recruit_skeleton",
     "name": "Challenge: Skeleton",

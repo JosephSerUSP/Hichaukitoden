@@ -355,6 +355,7 @@ function love.load(arg)
         dofile("tests/test_map_transfer.lua")
         dofile("tests/test_battle_commands.lua")
         dofile("tests/test_troops.lua")
+        dofile("tests/test_early_balance.lua")
         dofile("tests/test_datalog.lua")
         dofile("tests/test_dock.lua")
         print("ALL UNIT TESTS OK")
@@ -527,6 +528,19 @@ local function finishDialogueToMap()
     else
         returnToMap()
     end
+end
+
+-- Close the current message before an event action (including fades, map
+-- loads, and scene changes) starts.  The dialogue scene mirrors its TEXT node
+-- into v during update, so without this explicit clear a transition begun
+-- from keypressed() can draw one frame with the previous line still cached.
+-- Choices deliberately retain the preceding question and do not use this.
+local function clearDialogueMessage()
+    local state = scene_host.getCurrentState()
+    if not state or not state.v then return end
+    state.v.dialogueText = ""
+    state.v.dialogueSpeaker = ""
+    state.v.dialogueWaiting = false
 end
 
 local function syncDialogueWindowState()
@@ -830,6 +844,7 @@ local function openShop(shopId)
 
     local items = {}
     local maxCost = 0
+    local maxTotalCost = 0
     if shopData and shopData.items then
         for _, shopItem in ipairs(shopData.items) do
             local allowed = true
@@ -851,7 +866,9 @@ local function openShop(shopId)
                 local itemData = loader.getItem(shopItem.id)
                 if itemData then
                     local cost = shopItem.price or itemData.cost or 0
+                    local stock = shopItem.stock or defaultStock
                     maxCost = math.max(maxCost, cost)
+                    maxTotalCost = math.max(maxTotalCost, cost * stock)
                     -- Plain table (not an __index proxy): the shop scene's
                     -- v:items list source copies row fields with pairs(),
                     -- which cannot see metatable fields. Price honors the
@@ -862,15 +879,15 @@ local function openShop(shopId)
                         icon = itemData.icon or 0,
                         description = itemData.description or "",
                         cost = cost,
-                        stock = shopItem.stock or defaultStock,
+                        stock = stock,
                     })
                 end
             end
         end
     end
 
-    -- maxPrice = 20 * most expensive item for leading-zero padding.
-    local maxPrice = maxCost * 20
+    -- Pad list prices only to the width of the most expensive listed item.
+    local maxPrice = maxCost
 
     -- Push the shop scene and seed its v-state with shop data
     scene_host.push("shop", { session = activeSession, loader = loader, party = activeSession.party })
@@ -881,6 +898,7 @@ local function openShop(shopId)
         state.v.count = #items
         state.v.idx = 1
         state.v.maxPrice = maxPrice
+        state.v.maxTotalPrice = maxTotalCost
     end
 end
 
@@ -1411,6 +1429,12 @@ handleKeyPressed = function(key)
                     if renderer.isDialogueRevealing() then
                         renderer.finishDialogueReveal()
                     else
+                        local nextNode = node.next
+                            and activeWalker.graph
+                            and activeWalker.graph.nodes[node.next]
+                        if not nextNode or nextNode.type == "ACTION" then
+                            clearDialogueMessage()
+                        end
                         activeWalker:advance()
                         dialogueSelectIdx = 1
                         handleDialogueAction()
