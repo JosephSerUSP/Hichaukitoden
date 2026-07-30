@@ -73,16 +73,23 @@ roadmap and the reason §9 puts gate work first.
 | G3 golden UI | No — `tools/golden/scene_map.log` is a 17-line **event trace** (`open_window`, `set_cursor`); it never sees a pixel |
 | G4 ENGINE-STATE | No — doc currency |
 
-The only thing that renders the world for inspection is
-[`cli.runScreenshots`](../../engine/cli_tools.lua:331), which produces PNGs that
-nothing compares. Per the project's own rule — *"enforce with gates, not
-vigilance"* — the first work item is promoting those captures to a real
+The only thing that rendered the world for inspection was
+[`cli.runScreenshots`](../../engine/cli_tools.lua:331), which produced PNGs
+that nothing compared. Per the project's own rule — *"enforce with gates, not
+vigilance"* — the first work item was promoting those captures to a real
 byte-compared gate.
 
-This is not optional bookkeeping. Every subsequent step in this roadmap is a
-change whose regressions are, today, invisible to all six gates. The repo's
+This was not optional bookkeeping. Every subsequent step in this roadmap is a
+change whose regressions would otherwise be invisible to every gate. The repo's
 history already shows what that costs: the golden battle log broke for ~10
 commits before anyone noticed.
+
+**Closed 30.07.2026 by G5** (`tools/golden/check-screens.ps1`, 122 reference
+frames). Verified two ways: two consecutive harness runs produced byte-identical
+output, and a deliberate one-constant change to the raycaster's Y-facing wall
+shading turned exactly the 16 world-rendering frames red (`map`, `battle`, and
+`dialogue`, which draws over the map backdrop) while **G3 stayed fully green** —
+demonstrating both that the blind spot was real and that it is now covered.
 
 ### 3.1 Determinism is the shared prerequisite
 

@@ -21,3 +21,8 @@ tools/asset-gen/out/
 # Python bytecode from tools/asset-gen
 __pycache__/
 *.pyc
+
+# G5 diff output: the frames a failing check-screens run actually produced,
+# written next to their references for eyeballing. Disposable -- the
+# references in tools/golden/screens/ are the tracked artifact.
+tools/golden/screens-actual/

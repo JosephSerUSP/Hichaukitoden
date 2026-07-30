@@ -40,6 +40,7 @@ default execution policy. Always run them as
 | G2 | `tools/golden/check.ps1` | Battle simulation log byte-identity, per fixture in `data/goldenBattles.json` |
 | G3 | `tools/golden/check-ui.ps1` | Per-scene UI trace identity |
 | G4 | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches the live engine |
+| G5 | `tools/golden/check-screens.ps1` → `SCREENS OK` | Rendered frame byte-identity, per scene and per goldenScript step |
 | unit | `lovec . unittest` → `ALL UNIT TESTS OK` | Behavior the golden gates can't see |
 | save | `lovec . savetest` → `SAVETEST OK` | Save/load round-trip |
 
@@ -48,8 +49,16 @@ resolves but that nothing can produce or trigger — unsellable shops, items no
 craft yields, creatures no pool grants. See SPEC §3.1 for why that is advisory
 while paired-data coherence is a G1 failure.
 
-- G2/G3 red = a **behavioral regression**. Investigate. Never regenerate a
-  golden log to silence a diff; regeneration is an owner-signed action.
+- G2/G3/G5 red = a **regression** (behavioral for G2/G3, visual for G5).
+  Investigate. Never regenerate a golden log or recapture screenshots to
+  silence a diff; regeneration is an owner-signed action.
+- **G5 is the only gate that can see the world view.** G1 validates data, G2
+  diffs battle logs, G3 diffs UI *events* — a renderer or presentation change
+  can break none of them and still be badly wrong. Frames that differ are
+  written to `tools/golden/screens-actual/` for side-by-side inspection
+  against `tools/golden/screens/`. G5 byte-compares pixels, so a GPU or
+  driver change can legitimately shift it; that is an owner call, not a
+  silent recapture.
 - G4 red = the **doc is stale**, not the engine. Run
   `tools/golden/capture-state.ps1` and commit the result.
 - `[formula] error in 'os.time()'` during G1 is the sandbox negative test, not a

@@ -19,6 +19,7 @@ Run whichever gates a change could affect. Re-run after each merge.
 | `G2-golden.bat` | Battle golden-master | Prints `Golden log matches.` |
 | `G3-golden-ui.bat` | Per-scene UI traces | Every scene prints `Golden UI log matches` |
 | `G4-engine-state.bat` | Docs match the engine | Prints `Engine state doc matches.` |
+| `G5-golden-screens.bat` | Rendered frame byte-identity | Prints `SCREENS OK` (122/122 match) |
 | `editor-check.bat` | Editor console (not numbered) | Editor loads, **zero** console errors, Save round-trips |
 
 Not a gate, but it lives here because it needs a browser and a paid API key:
@@ -36,6 +37,15 @@ Notes:
 - **G4 is different:** a red G4 means `docs/ENGINE-STATE.md` is *stale*, not
   that the engine is wrong. Fix it by regenerating:
   `powershell -File tools\golden\capture-state.ps1`, then commit the file.
+- **G5 is the only gate that sees the 3D world view.** G1 validates data, G2
+  diffs battle logs, G3 diffs UI *events* — a renderer change can pass all of
+  them and still be visibly broken. Frames that differ are written to
+  `tools/golden/screens-actual/` (gitignored); open them next to
+  `tools/golden/screens/` before touching anything. Same rule as G2/G3: never
+  recapture to clear a red diff. It compares *pixels*, so a GPU/driver change
+  can legitimately shift it — that is a judgement call for you, not a silent
+  `capture-screens.ps1` run. Needs Python (already required by
+  `tools/asset-gen`).
 - **editor-check:** needs Node; close the window (Ctrl+C) to stop the server.
   The editor writes straight to `data/*.json` — run `git diff data/` after.
   (This script used to be called `G3-editor.bat`, which collided with SPEC's
