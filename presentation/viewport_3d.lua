@@ -444,7 +444,7 @@ local function sampleLight(light, x, y, fx, fy)
 end
 
 local spriteImageCache = {}
-local function getEventSprite(ev, session)
+function viewport_3d.resolveEventSpritePath(ev, session)
     if not ev then return nil end
     ev = exploration.resolvePage(ev, session)
     -- Sprite precedence: the map event's own sprite, else the default sprite
@@ -455,19 +455,23 @@ local function getEventSprite(ev, session)
         path = ce and ce.sprite or nil
     end
     if not path or path == "" then return nil end
+
+    if love.filesystem.getInfo(path) then return path end
+    local resolved = small_battlers.resolveFile(path)
+    return resolved and resolved.path or nil
+end
+
+local function getEventSprite(ev, session)
+    local path = viewport_3d.resolveEventSpritePath(ev, session)
+    if not path then return nil end
     if spriteImageCache[path] then
         return spriteImageCache[path]
     end
 
-    local resolvedPath = love.filesystem.getInfo(path) and path or small_battlers.resolveFile(path)
-    if resolvedPath then
-        local img = love.graphics.newImage(resolvedPath)
-        img:setFilter("nearest", "nearest")
-        spriteImageCache[path] = img
-        return img
-    end
-
-    return nil
+    local img = love.graphics.newImage(path)
+    img:setFilter("nearest", "nearest")
+    spriteImageCache[path] = img
+    return img
 end
 
 -- ---------------------------------------------------------------------------

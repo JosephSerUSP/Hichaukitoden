@@ -15,20 +15,20 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | id | kind | draw | world | windows | hooks |
 |---|---|---|---|---|---|
 | `1` | menu | windows | - | 7 | 8 |
-| `battle` | battle | windows | - | 9 | 7 |
+| `battle` | battle | windows | - | 8 | 7 |
 | `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 2 | 6 |
 | `datalog` | menu | windows | - | 3 | 4 |
 | `dialogue` | menu | windows | - | 0 | 1 |
 | `game_over` | menu | windows | - | 3 | 4 |
-| `items` | menu | windows | - | 3 | 8 |
+| `items` | menu | windows | - | 4 | 8 |
 | `map` | map | world | map | 0 | 7 |
 | `options` | menu | windows | - | 3 | 5 |
 | `quest_log` | menu | windows | - | 3 | 4 |
 | `reserve` | menu | windows | - | 5 | 8 |
 | `ritual` | menu | windows | - | 14 | 8 |
 | `save_menu` | menu | windows | - | 3 | 5 |
-| `shop` | menu | windows | - | 3 | 7 |
+| `shop` | menu | windows | - | 4 | 7 |
 | `status` | menu | windows | - | 11 | 7 |
 | `title` | menu | windows | - | 5 | 6 |
 

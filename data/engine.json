@@ -3014,17 +3014,17 @@
       "title": null
     },
     "battle_help": {
-      "x": 1.25,
-      "y": 0.75,
-      "width": 29.5,
+      "x": 0,
+      "y": 0,
+      "width": 32,
       "height": 4,
       "style": "frame",
       "title": null
     },
     "battle_log": {
-      "x": 1.25,
-      "y": 0.75,
-      "width": 29.5,
+      "x": 0,
+      "y": 0,
+      "width": 32,
       "height": 4,
       "style": "battleLog",
       "title": null
@@ -3039,9 +3039,9 @@
     },
     "battle_levelup_head": {
       "x": 3,
-      "y": 2,
+      "y": 5,
       "width": 26,
-      "height": 10,
+      "height": 12,
       "style": "panel",
       "title": "LEVEL UP!",
       "portrait": "v.levelUpPortrait",
@@ -3061,9 +3061,8 @@
       "y": 12,
       "width": 26,
       "height": 7,
-      "style": "list",
+      "style": "levelUpStats",
       "title": null,
-      "contentX": 9.5,
       "anim": {
         "open": {
           "duration": 0.2
@@ -3199,9 +3198,9 @@
     },
     "battle_victory": {
       "x": 6,
-      "y": 4,
+      "y": 5,
       "width": 20,
-      "height": 14,
+      "height": 12,
       "style": "victoryPanel",
       "title": null
     },
@@ -3277,6 +3276,54 @@
           }
         ]
       },
+      "item_inspect": {
+        "primary": "dock_item_info",
+        "shells": [
+          {
+            "x": 0,
+            "y": 18,
+            "w": 14,
+            "h": 12
+          },
+          {
+            "x": 14,
+            "y": 18,
+            "w": 18,
+            "h": 12
+          }
+        ],
+        "windows": [
+          {
+            "id": "dock_item_info",
+            "rect": {
+              "x": 0,
+              "y": 18,
+              "w": 14,
+              "h": 12
+            },
+            "style": "itemInfo",
+            "title": "Effects / Traits",
+            "content": [
+              {
+                "type": "list",
+                "listId": "inventory",
+                "cursor": "v.idx",
+                "tabVar": "v.tab"
+              }
+            ]
+          },
+          {
+            "id": "party",
+            "content": [
+              {
+                "type": "list",
+                "listId": "party",
+                "format": "{name}"
+              }
+            ]
+          }
+        ]
+      },
       "dialogue": {
         "primary": "dialogue_choices",
         "shells": [
@@ -3332,7 +3379,7 @@
               "x": 0,
               "w": 32
             },
-            "visible": "v.dialogueMode == 'text'",
+            "visible": "v.dialogueMode == 'text' or v.dialogueMode == 'choice'",
             "align": "left",
             "waitInput": "v.dialogueMode == 'text' and v.dialogueWaiting == true",
             "content": [
@@ -3351,6 +3398,7 @@
               "h": 12
             },
             "style": "list",
+            "chrome": "none",
             "shiftWith": "dialogue_portrait",
             "shiftWhenHidden": {
               "x": 0,
@@ -3395,6 +3443,38 @@
               "h": 12
             },
             "style": "frame",
+            "visible": "v.combatState ~= 'levelup' and v.combatState ~= 'victory' and not (v.combatState == 'log' and (v.pendingRewardLog ~= nil or v.pendingLevelUpLog == true))",
+            "content": []
+          },
+          {
+            "id": "battle_spoils_dock",
+            "rect": {
+              "x": 0,
+              "y": 18,
+              "w": 14,
+              "h": 12
+            },
+            "style": "frame",
+            "title": "Spoils",
+            "visible": "v.combatState == 'victory' or (v.combatState == 'log' and v.pendingRewardLog ~= nil)",
+            "content": [
+              {
+                "type": "text",
+                "text": "{v.victorySpoilsText}"
+              }
+            ]
+          },
+          {
+            "id": "battle_levelup_dock",
+            "rect": {
+              "x": 0,
+              "y": 18,
+              "w": 14,
+              "h": 12
+            },
+            "style": "levelUpStats",
+            "title": "Level UP!",
+            "visible": "v.combatState == 'levelup' or (v.combatState == 'log' and v.pendingLevelUpLog == true)",
             "content": []
           },
           {

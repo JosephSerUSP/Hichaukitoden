@@ -120,6 +120,15 @@ function progress.levelUps(session, before)
                     and loader.formatTerm("battle.transform", "- {0} becomes {1}!", was.name, after.name)
                     or ("- " .. was.name .. " becomes " .. after.name .. "!"))
             end
+            for _, evolution in ipairs((now.actorData and now.actorData.evolutions) or {}) do
+                local required = tonumber(evolution.level)
+                if required and was.level < required and after.level >= required then
+                    table.insert(notes, (loader and loader.formatTerm)
+                        and loader.formatTerm("battle.potential_unlocked",
+                            "...{0}'s potential has been unlocked!", after.name)
+                        or ("..." .. after.name .. "'s potential has been unlocked!"))
+                end
+            end
 
             table.insert(entries, {
                 name = after.name,

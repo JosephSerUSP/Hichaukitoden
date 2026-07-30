@@ -795,6 +795,13 @@ validator.run = function(loader)
         checkTraits(state.traits, "state '" .. tostring(id) .. "'")
     end
     for _, item in ipairs(loader.items) do
+        if item.keyArt ~= nil then
+            check(type(item.keyArt) == "string" and item.keyArt ~= "",
+                "item " .. tostring(item.id) .. " keyArt must be a non-empty asset path")
+            check(love.filesystem.getInfo(item.keyArt) ~= nil,
+                "item " .. tostring(item.id) .. " keyArt resolves to no asset: "
+                    .. tostring(item.keyArt))
+        end
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))
         for ti, tag in ipairs(item.foodTags or {}) do

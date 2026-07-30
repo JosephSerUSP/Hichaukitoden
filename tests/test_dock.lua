@@ -40,7 +40,7 @@ end
 -- `config.dock` (or a typo in the variant name) fails here rather than
 -- silently showing no dock at runtime.
 local EXPECTED = {
-    map = "party_status", items = "party_status", save_menu = "party_status",
+    map = "party_status", items = "item_inspect", shop = "item_inspect", save_menu = "party_status",
     quest_log = "party_status", datalog = "party_status", options = "party_status",
     controls = "party_status", battle = "battle",
     dialogue = "dialogue",
@@ -59,6 +59,25 @@ for _, variant in pairs(EXPECTED) do
     check(registry and registry.variants and registry.variants[variant] ~= nil,
         "the dock registry defines variant '" .. variant .. "'")
 end
+
+-- A CHOICE is embedded inside the still-open message panel. Pin all three
+-- data-authored pieces because losing any one recreates either the black
+-- message area (message hidden), a doubled frame (choice chrome), or a list
+-- detached from the bottom of the dialogue box (fitRows).
+local dialogueWindows = {}
+for _, w in ipairs(registry.variants.dialogue.windows or {}) do
+    dialogueWindows[w.id] = w
+end
+check(dialogueWindows.dialogue_message
+        and dialogueWindows.dialogue_message.visible
+            == "v.dialogueMode == 'text' or v.dialogueMode == 'choice'",
+    "dialogue message remains visible behind a choice")
+check(dialogueWindows.dialogue_choices
+        and dialogueWindows.dialogue_choices.chrome == "none",
+    "dialogue choices embed without drawing a second frame")
+check(dialogueWindows.dialogue_choices
+        and dialogueWindows.dialogue_choices.fitRows == "bottom",
+    "embedded dialogue choices stay anchored to the panel bottom")
 
 -- No scene may still carry its own copy of a dock window: that is exactly the
 -- duplication the persistent dock replaced.

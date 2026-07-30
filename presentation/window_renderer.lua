@@ -44,6 +44,7 @@ local subtractive_fade = require("presentation.subtractive_fade")
 -- log, the drain-animated victory panel) — no circular require (renderer
 -- does not require window_renderer).
 local renderer = require("presentation.renderer")
+local item_presentation = require("presentation.item_presentation")
 
 local wr = {}
 
@@ -118,15 +119,14 @@ local function inventoryRows(session, env, win)
                 else matches = true end
 
                 if matches then
-                    table.insert(rows, {
+                table.insert(rows, item_presentation.enrich({
                         id = item.id,
                         name = item.name or "",
                         icon = item.icon or 0,
                         qty = qty,
-                        description = item.description or "",
                         meta = item.meta or {},
                         type = item.type,
-                    })
+                    }, item, session.loader))
                 end
             end
         end
@@ -1287,9 +1287,42 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     elseif style == "enemyRow" then
         renderer.drawEnemyRowWindow(env.v and env.v.battle, env.v and env.v.defeatBgFade)
     elseif style == "battleLog" then
-        renderer.drawBattleLogWindow(env.v and env.v.combatLog)
+        renderer.drawBattleLogWindow(env.v and env.v.combatLog, x, y, w, h)
     elseif style == "victoryPanel" then
-        renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory, env.v and env.v.victoryStage or 0, env.v)
+        renderer.drawVictoryPanelWindow(ctx.session, env.v and env.v.victory,
+            env.v and env.v.victoryStage or 0, env.v, x, y, w, h)
+    elseif style == "levelUpStats" then
+        renderer.drawLevelUpStatsWindow(env.v and env.v.levelUpRows, x, y, w, h, title)
+    elseif style == "itemInfo" then
+        local cached = listCache[id]
+        local row = cached and cached.rows[cached.cursor]
+        local text = row and row.gameplayText or "No item selected."
+        drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
+    elseif style == "keyArt" then
+        local cached = listCache[id]
+        local row = cached and cached.rows[cached.cursor]
+        local path = row and row.keyArt
+        if path and path ~= "" and love.filesystem.getInfo(path) then
+            win._keyArtCache = win._keyArtCache or {}
+            local image = win._keyArtCache[path]
+            if not image then
+                image = love.graphics.newImage(path)
+                -- Showcase sources are Lanczos-downsampled to their native UI
+                -- size. Preserve those antialiased edges if a layout applies a
+                -- small fractional scale instead of snapping back to nearest.
+                image:setFilter("linear", "linear")
+                win._keyArtCache[path] = image
+            end
+            local pad = ui.toPx(1)
+            local aw, ah = w - pad * 2, h - pad * 2
+            local scale = math.min(aw / image:getWidth(), ah / image:getHeight())
+            local dw, dh = image:getWidth() * scale, image:getHeight() * scale
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(image, x + (w - dw) / 2, y + (h - dh) / 2, 0, scale, scale)
+        else
+            ui.drawString("NO KEY ART", contentX, y + h / 2 - ui.lineHeight / 2,
+                COLOR_DIM, "center", w - ui.toPx(2))
+        end
     else -- "panel", "frame" and any unknown style: text content
         if text then
             -- Left-justified by default everywhere (owner feedback: too much
@@ -1334,7 +1367,18 @@ end
 -- battleLayout, independently of the window's rect (see the Summoner
 -- rework note above drawEnemyRowWindow in renderer.lua) — drawing the
 -- generic outer panel too would double up or mismatch.
-local NO_OUTER_PANEL_STYLES = { enemyRow = true, battleLog = true, victoryPanel = true }
+local NO_OUTER_PANEL_STYLES = {
+    enemyRow = true, battleLog = true, victoryPanel = true, levelUpStats = true
+}
+
+-- A window may contribute content inside a shell/panel drawn by another
+-- window. `chrome = "none"` keeps every part of the window's content
+-- renderer (lists still draw rows, cursor and highlight) while suppressing
+-- only the generic outer panel. This is data-authored rather than tied to
+-- dialogue so any composite window can embed content the same way.
+local function drawsOuterPanel(layout, style)
+    return layout.chrome ~= "none" and not NO_OUTER_PANEL_STYLES[style]
+end
 
 -- Applies a layout's shiftWith override after visibility is resolved.
 -- When layout.shiftWith names another window id that is currently hidden,
@@ -1395,11 +1439,11 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     if animating then
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(px, py, pw, ph)
-        if not NO_OUTER_PANEL_STYLES[style] then ui.drawPanel(px, py, pw, ph, title) end
+        if drawsOuterPanel(layout, style) then ui.drawPanel(px, py, pw, ph, title) end
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
         if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
     else
-        if not NO_OUTER_PANEL_STYLES[style] then ui.drawPanel(x, y, w, h, title) end
+        if drawsOuterPanel(layout, style) then ui.drawPanel(x, y, w, h, title) end
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     end
 
@@ -1614,6 +1658,7 @@ function wr.drawWindowFromData(sceneData, state, ctx, opts)
         if winDef.visibleRows ~= nil then layout.visibleRows = winDef.visibleRows end
         if winDef.align ~= nil then layout.align = winDef.align end
         if winDef.waitInput ~= nil then layout.waitInput = winDef.waitInput end
+        if winDef.chrome ~= nil then layout.chrome = winDef.chrome end
         -- Propagate shiftWith from winDef to layout (scenes.json overrides
         -- engine.json, so this must happen AFTER baseLayout merge).
         if winDef.shiftWith ~= nil then layout.shiftWith = winDef.shiftWith end

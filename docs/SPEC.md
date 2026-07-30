@@ -224,6 +224,12 @@ scene inventing its own chrome:
 - A scene can layer scene-specific chrome above this dock (e.g. status's
   equipment-slot header + portrait), but the dock itself — and the
   context-help bar — should look and behave the same everywhere it's used.
+- Shop and Items use the `item_inspect` dock variant. Their top help bar shows
+  the selected item's authored description (flavor); the dock's lower-left
+  shell derives gameplay text from the item's live `effects`, `traits`, and
+  Savor traits using registry labels. The untitled upper-right showcase
+  resolves the selected item's optional `keyArt` image, with a clear empty
+  state.
 
 ### 1.4.1 Datalog
 

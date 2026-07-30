@@ -12,6 +12,7 @@ local exploration = require("engine.exploration")
 local formula = require("engine.formula")
 local savegame = require("engine.savegame")
 local usability = require("engine.usability")
+local viewport3d = require("presentation.viewport_3d")
 
 print("[TEST] Starting map transfer tests...")
 
@@ -22,6 +23,14 @@ local function check(cond, msg)
 end
 
 loader.init()
+
+local resolvedEventSprite = viewport3d.resolveEventSpritePath({ sprite = "wisp" })
+check(type(resolvedEventSprite) == "string"
+        and love.filesystem.getInfo(resolvedEventSprite) ~= nil,
+    "3D event sprites resolve small-battler keys to an image path")
+check(viewport3d.resolveEventSpritePath({ sprite = "assets/sprites/NPC00.png" })
+        == "assets/sprites/NPC00.png",
+    "3D event sprites preserve directly authored image paths")
 
 local townDoorCount, interiorDoorCount, labyrinthGateCount = 0, 0, 0
 for _, ev in ipairs(loader.maps[1].events or {}) do

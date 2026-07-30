@@ -2033,6 +2033,9 @@ local SCRIPT_API_PROTOTYPE = {
         end,
         isAnimationPlaying = function()
             return present("isAnimationPlaying") or false
+        end,
+        getVictoryStage = function()
+            return present("getVictoryStage") or 0
         end
     }
 }

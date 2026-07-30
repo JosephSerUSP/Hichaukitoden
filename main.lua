@@ -168,6 +168,9 @@ interpreter.bindPresentation({
     isAnimationPlaying = function()
         return require("presentation.animation_player").isAnythingPlaying()
     end,
+    getVictoryStage = function()
+        return renderer.getVictoryStage()
+    end,
     showStringPicture = function(spec)
         require("presentation.string_picture_renderer").show(spec)
     end,
@@ -873,14 +876,14 @@ local function openShop(shopId)
                     -- v:items list source copies row fields with pairs(),
                     -- which cannot see metatable fields. Price honors the
                     -- per-shop override set in the editor.
-                    table.insert(items, {
+                    local item_presentation = require("presentation.item_presentation")
+                    table.insert(items, item_presentation.enrich({
                         id = itemData.id,
                         name = itemData.name or "",
                         icon = itemData.icon or 0,
-                        description = itemData.description or "",
                         cost = cost,
                         stock = stock,
-                    })
+                    }, itemData, loader))
                 end
             end
         end

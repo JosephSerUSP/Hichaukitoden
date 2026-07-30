@@ -66,6 +66,7 @@ local dialogueReveal = { node = nil, elapsed = 0 }
 -- Victory-window EXP gauge animation (keyed by the victory info table's
 -- identity; a new battle produces a new table and re-seeds the animation).
 local victoryAnim = { source = nil, members = {}, stage = 0, displayedGold = 0 }
+local levelUpAnim = { source = nil, elapsed = 0 }
 
 local function revealDelay()
     return (config.ui and config.ui.textRevealDelay) or 0
@@ -235,6 +236,7 @@ function renderer.update(dt)
     -- the tracked line/node changes)
     battleLogReveal.elapsed = battleLogReveal.elapsed + dt
     dialogueReveal.elapsed = dialogueReveal.elapsed + dt
+    levelUpAnim.elapsed = levelUpAnim.elapsed + dt
 
     -- Victory-window EXP gauges animate toward their post-battle values,
     -- rolling over and incrementing the level as thresholds are crossed.
@@ -244,21 +246,24 @@ function renderer.update(dt)
         local info = victoryAnim.source
         local speed = (config.battle_screen and config.battle_screen.victoryExpPerSecond) or 30
         local expPerLevel = info.expPerLevel or 15
+        local phase = victoryAnim.phase or "spoils"
 
         -- Animate EXP gauges
-        for i, m in ipairs(info.members or {}) do
-            local a = victoryAnim.members[i]
-            if a and (a.level < m.toLevel or a.exp < m.toExp) then
-                a.exp = a.exp + speed * dt
-                local needed = a.level * expPerLevel
-                while a.exp >= needed and a.level < m.toLevel do
-                    a.exp = a.exp - needed
-                    a.level = a.level + 1
-                    needed = a.level * expPerLevel
-                end
-                if a.level >= m.toLevel and a.exp >= m.toExp then
-                    a.level = m.toLevel
-                    a.exp = m.toExp
+        if phase == "exp" then
+            for i, m in ipairs(info.members or {}) do
+                local a = victoryAnim.members[i]
+                if a and (a.level < m.toLevel or a.exp < m.toExp) then
+                    a.exp = a.exp + speed * dt
+                    local needed = a.level * expPerLevel
+                    while a.exp >= needed and a.level < m.toLevel do
+                        a.exp = a.exp - needed
+                        a.level = a.level + 1
+                        needed = a.level * expPerLevel
+                    end
+                    if a.level >= m.toLevel and a.exp >= m.toExp then
+                        a.level = m.toLevel
+                        a.exp = m.toExp
+                    end
                 end
             end
         end
@@ -266,18 +271,22 @@ function renderer.update(dt)
         -- Animate gold drain-down: grant amount (displayedGoldDrain) ticks
         -- from victoryInfo.gold toward 0; party total displayedPartyGold
         -- ticks from preGold toward preGold + victoryInfo.gold.
-        local gs = speed * 3 * dt
+        local gs = phase == "spoils" and speed * 3 * dt or 0
         victoryAnim.displayedGoldDrain = math.max(0, (victoryAnim.displayedGoldDrain or info.gold) - gs)
         local targetGold = (victoryAnim.preGold or 0) + info.gold
         victoryAnim.displayedPartyGold = math.min(targetGold, (victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + gs)
 
         -- Check if all drains complete → advance to stage 2
-        local allDone = victoryAnim.displayedGoldDrain <= 0
-            and victoryAnim.displayedPartyGold >= targetGold
-        for i, m in ipairs(info.members or {}) do
-            local a = victoryAnim.members[i]
-            if a and (a.level < m.toLevel or a.exp < m.toExp) then
-                allDone = false
+        local allDone = true
+        if phase == "spoils" then
+            allDone = victoryAnim.displayedGoldDrain <= 0
+                and victoryAnim.displayedPartyGold >= targetGold
+        else
+            for i, m in ipairs(info.members or {}) do
+                local a = victoryAnim.members[i]
+                if a and (a.level < m.toLevel or a.exp < m.toExp) then
+                    allDone = false
+                end
             end
         end
         if allDone then
@@ -905,9 +914,13 @@ end
 -- Battle log: slim 2-line reveal panel (previous line dimmed above the
 -- currently-revealing one) + [SPACE] prompt. Visible only while
 -- v.combatState == "log" — the window's `visible` formula handles that.
-function renderer.drawBattleLogWindow(combatLog)
+function renderer.drawBattleLogWindow(combatLog, x, y, w, h)
     combatLog = combatLog or {}
-    ui.drawPanel(layoutVal("logPanelX"), layoutVal("logPanelY"), layoutVal("logPanelWidth"), layoutVal("logPanelHeight"))
+    x = x or layoutVal("logPanelX")
+    y = y or layoutVal("logPanelY")
+    w = w or layoutVal("logPanelWidth")
+    h = h or layoutVal("logPanelHeight")
+    ui.drawPanel(x, y, w, h)
     if battleLogReveal.cursor > #combatLog then
         -- Log was cleared (new battle / showMessage): restart
         battleLogReveal.cursor = math.min(1, #combatLog)
@@ -925,14 +938,53 @@ function renderer.drawBattleLogWindow(combatLog)
         shownCount = revealedCount(current, 0)
     end
     local previous = combatLog[battleLogReveal.cursor - 1] or ""
-    ui.drawString(previous, layoutVal("logTextX"), layoutVal("logTextY"), {0.55, 0.55, 0.55, 1}, "left", layoutVal("logTextLimit"))
-    ui.drawString(utf8Prefix(current, shownCount), layoutVal("logTextX"), layoutVal("logTextY") + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", layoutVal("logTextLimit"))
-    ui.drawString("[SPACE]", layoutVal("logSpaceX"), layoutVal("logSpaceY"), {0.5, 0.5, 0.5, 1}, "right", 40)
+    local textX, textY = x + 6, y + 6
+    local textLimit = w - 12
+    ui.drawString(previous, textX, textY, {0.55, 0.55, 0.55, 1}, "left", textLimit)
+    ui.drawString(utf8Prefix(current, shownCount), textX, textY + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", textLimit)
+end
+
+-- Level-up stat report: every row begins at its original value, then rolls to
+-- the new value in sequence. Increased values settle green and their signed
+-- gain appears blue after a short beat. One set of column anchors keeps all
+-- labels, values and gains aligned while using the formerly-empty lower-left.
+function renderer.drawLevelUpStatsWindow(rows, x, y, w, h, title)
+    rows = rows or {}
+    ui.drawPanel(x, y, w, h, title)
+    if levelUpAnim.source ~= rows then
+        levelUpAnim.source = rows
+        levelUpAnim.elapsed = 0
+    end
+
+    local rowDelay, hold, roll, gainDelay = 0.16, 0.22, 0.34, 0.12
+    local labelX = x + 10
+    local valueX = x + (w < 160 and 45 or 74)
+    local gainX = x + (w < 160 and 68 or 116)
+    local firstY, rowH = y + 23, 9
+    for i, row in ipairs(rows) do
+        local localTime = levelUpAnim.elapsed - (i - 1) * rowDelay
+        local from, to = tonumber(row.from) or 0, tonumber(row.to) or 0
+        local delta = tonumber(row.delta) or (to - from)
+        local value, valueColor = from, {1, 1, 1, 1}
+        if localTime >= hold then
+            local t = math.min(1, math.max(0, (localTime - hold) / roll))
+            value = math.floor(from + (to - from) * t + 0.5)
+            if delta > 0 then valueColor = {0.3, 0.8, 0.3, 1} end
+        end
+
+        local rowY = firstY + (i - 1) * rowH
+        ui.drawString(row.label or row.param or "", labelX, rowY, {1, 1, 1, 1})
+        ui.drawString(tostring(value), valueX, rowY, valueColor, "right", 28)
+        if delta ~= 0 and localTime >= hold + roll + gainDelay then
+            local gain = delta > 0 and ("+" .. delta .. "!") or (tostring(delta) .. "!")
+            ui.drawString(gain, gainX, rowY, {0.2, 0.6, 1, 1})
+        end
+    end
 end
 
 -- Victory window: gold/EXP drain animation with per-member gauges. Visible
 -- only while v.combatState == "victory" (window `visible` formula).
-function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
+function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v, x, y, w, h)
     if not victoryInfo then return end
     if victoryAnim.source ~= victoryInfo then
         victoryAnim.source = victoryInfo
@@ -945,14 +997,21 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
             victoryAnim.members[i] = { level = m.fromLevel, exp = m.fromExp }
         end
     end
+    local phase = (v and v.rewardPresentationStage == "exp") and "exp" or "spoils"
+    if victoryAnim.phase ~= phase then
+        victoryAnim.phase = phase
+        victoryAnim.stage = 0
+    end
     -- Sync stage from scene state (battle.handleTransition sets it)
     if victoryAnim.stage == 0 and victoryStage == 1 then
         victoryAnim.stage = 1
     end
 
-    local vx, vy = ui.toPx(layoutVal("victoryPanelTileX")), ui.toPx(layoutVal("victoryPanelTileY"))
-    local vw, vh = ui.toPx(layoutVal("victoryPanelTileW")), ui.toPx(layoutVal("victoryPanelTileH"))
-    ui.drawPanel(vx, vy, vw, vh, session.loader.getTerm("battle.victory_title", "VICTORY!"))
+    local vx = x or ui.toPx(layoutVal("victoryPanelTileX"))
+    local vy = y or ui.toPx(layoutVal("victoryPanelTileY"))
+    local vw = w or ui.toPx(layoutVal("victoryPanelTileW"))
+    local vh = h or ui.toPx(layoutVal("victoryPanelTileH"))
+    ui.drawPanel(vx, vy, vw, vh, phase == "exp" and "Experience" or "Found Items")
 
     local contentX = vx + 10
     local gaugeEndX = contentX + layoutVal("victoryGaugeWidth")
@@ -965,7 +1024,22 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
     local drainGold = math.floor((victoryAnim.displayedGoldDrain or victoryInfo.gold or 0) + 0.5)
     local partyGoldPreview = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
     if v then
-        v.victorySpoilsText = "+" .. drainGold .. "G  EXP +" .. (victoryInfo.exp or 0) .. "\nGold: " .. partyGoldPreview .. " G"
+        v.victorySpoilsText = "Party Gold\n" .. partyGoldPreview
+    end
+
+    if phase == "spoils" then
+        ui.drawString("Gold", contentX, ty, {1, 1, 1, 1})
+        ui.drawString(tostring(drainGold), contentX, ty, {1, 0.85, 0.5, 1},
+            "right", gaugeEndX - contentX)
+        for i, item in ipairs(victoryInfo.items or {}) do
+            local rowY = ty + i * layoutVal("victoryLineSpacing")
+            ui.drawIconText(item.icon or 0, item.name or "?", contentX, rowY)
+            if (item.count or 1) > 1 then
+                ui.drawString("x" .. item.count, contentX, rowY, {0.7, 0.7, 0.7, 1},
+                    "right", gaugeEndX - contentX)
+            end
+        end
+        return
     end
 
     -- Always draw member rows with gauges (pre-drain values in stage 0,
@@ -975,26 +1049,30 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v)
     local rowH = layoutVal("victoryRowHeight")
     for i, m in ipairs(victoryInfo.members or {}) do
         local a = victoryAnim.members[i] or { level = m.fromLevel, exp = m.fromExp }
+        local member = session.party and session.party[i]
         local needed = a.level * expPerLevel
         local rowY = ty + (i - 1) * rowH
         local leveled = a.level > m.fromLevel
-        -- Name on left, "Next: X" right-justified to gauge end, same line
-        ui.drawString(m.name .. "  Lv " .. a.level .. (leveled and "  LV UP!" or ""), contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
-        -- "Next:" shares the line with the name; hide it while "LV UP!"
-        -- is showing or the two overlap (owner feedback 10.07.2026).
+        local levelText = string.format("%02d", a.level)
+        local leading = levelText:match("^(0+)") or ""
+        local levelRich = "Lv" .. (leading ~= "" and ("\\c[7]" .. leading .. "\\c[0]" .. levelText:sub(#leading + 1)) or levelText)
+        ui.drawString(levelRich, contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+        local levelW = ui.measureText("Lv" .. levelText)
+        local iconW = actor_status.drawElementIcons(
+            member and traits.getElements(member, session) or {},
+            contentX + levelW, rowY - 4, session)
+        ui.drawString(m.name .. (leveled and "  LV UP!" or ""),
+            contentX + levelW + iconW, rowY,
+            leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
         if not leveled then
-            ui.drawString("Next: " .. math.max(0, math.ceil(needed - a.exp)), contentX, rowY, {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
+            ui.drawString(tostring(math.max(0, math.ceil(needed - a.exp))), contentX, rowY,
+                {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)
         end
         -- Gauge at full width below the name line
         ui.drawBar(contentX, ui.gaugeYBelowText(rowY), layoutVal("victoryGaugeWidth"),
             ui.gaugeHeight, a.exp, needed, {0.2, 0.5, 0.2}, {0.4, 0.9, 0.4})
     end
 
-    -- Bottom prompt: ENTER to start drain, SPACE to dismiss when done
-    local prompt = (victoryAnim.stage == 0) and "[ENTER]" or (victoryAnim.stage == 2 and "[SPACE]" or "")
-    if prompt ~= "" then
-        ui.drawString(prompt, vx + vw - 50, vy + vh - 12, {0.5, 0.5, 0.5, 1}, "right", 40)
-    end
 end
 
 -- Full-screen flash overlay (screen_flash tracks), above everything — same
