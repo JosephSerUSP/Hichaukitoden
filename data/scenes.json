@@ -237,11 +237,6 @@
       ],
       "on_select": [
         {
-          "cmd": "SET_VAR",
-          "name": "hookHandled",
-          "value": "false"
-        },
-        {
           "cmd": "IF",
           "condition": "v._guard == 0 and v.state == 1 and v.cursorSlot == 1 and (v.hlItemId or 0) ~= 0",
           "then": [
@@ -3560,6 +3555,11 @@
         }
       ],
       "on_select": [
+        {
+          "cmd": "SET_VAR",
+          "name": "hookHandled",
+          "value": "false"
+        },
         {
           "cmd": "IF",
           "condition": "v.combatState == 'input'",
