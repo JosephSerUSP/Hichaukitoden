@@ -1813,6 +1813,11 @@
           "optional": true
         },
         {
+          "key": "reveal",
+          "type": "boolean",
+          "optional": true
+        },
+        {
           "key": "scale",
           "type": "number",
           "optional": true

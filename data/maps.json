@@ -180,7 +180,7 @@
         "id": 14,
         "x": 9,
         "y": 0,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/labyrinth_gate_bellroot.png",
         "trigger": "bump",
         "name": "Labyrinth Gate",
@@ -522,7 +522,7 @@
         "id": 4,
         "x": 15,
         "y": 8,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/map_door_001.png",
         "trigger": "bump",
         "name": "Laura",
@@ -714,7 +714,7 @@
         "id": 5,
         "x": 4,
         "y": 7,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/map_door_001.png",
         "trigger": "bump",
         "name": "Sign",
@@ -746,7 +746,7 @@
         "id": 7,
         "x": 15,
         "y": 9,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/map_door_001.png",
         "trigger": "bump",
         "name": "Alicia",
@@ -981,7 +981,7 @@
         "id": 8,
         "x": 14,
         "y": 13,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/map_door_001.png",
         "trigger": "bump",
         "name": "Pub Owner",
@@ -1580,7 +1580,7 @@
         "id": 10,
         "x": 8,
         "y": 13,
-        "door": true,
+        "wallEvent": true,
         "sprite": "assets/sprites/map_door_001.png",
         "trigger": "bump",
         "name": "Temple",
@@ -3962,8 +3962,9 @@
         "x": 13,
         "y": 10,
         "spawn": "Fixed",
-        "sprite": "assets/sprites/NPC11.png",
-        "trigger": "interact",
+        "sprite": "assets/sprites/dungeon_wall_lever.png",
+        "trigger": "bump",
+        "wallEvent": true,
         "commands": [
           {
             "text": "You pull the ancient iron lever hidden behind the stone slab...",
@@ -3987,7 +3988,7 @@
         "x": 14,
         "y": 11,
         "spawn": "Fixed",
-        "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
+        "sprite": "assets/sprites/dungeon_crystal_pedestal.png",
         "trigger": "interact",
         "commands": [
           {
@@ -4205,8 +4206,9 @@
         "name": "Blue Chalk",
         "label": "Blue Chalk",
         "spawn": "Random",
-        "sprite": "assets/sprites/NPC11.png",
-        "trigger": "interact",
+        "sprite": "assets/sprites/dungeon_blue_chalk_sigil.png",
+        "trigger": "bump",
+        "wallEvent": true,
         "minimapColor": [
           0.2,
           0.55,
@@ -4263,8 +4265,9 @@
         "name": "First Contract",
         "label": "Cornered Pixie",
         "spawn": "Random",
-        "sprite": "assets/sprites/NPC01.png",
-        "trigger": "interact",
+        "sprite": "assets/sprites/dungeon_summoner_contract.png",
+        "trigger": "bump",
+        "wallEvent": true,
         "minimapColor": [
           0.4,
           0.85,
@@ -5045,8 +5048,9 @@
         "name": "Borrowed Room",
         "label": "Borrowed Room",
         "spawn": "Random",
-        "sprite": "assets/sprites/NPC11.png",
-        "trigger": "interact",
+        "sprite": "assets/sprites/dungeon_confessional.png",
+        "trigger": "bump",
+        "wallEvent": true,
         "minimapColor": [
           0.55,
           0.35,
@@ -5193,6 +5197,106 @@
         "y": 16,
         "spawn": "Random",
         "sprite": "assets/sprites/NPC15.png"
+      },
+      {
+        "id": 5,
+        "name": "Misfiled Reliquary",
+        "label": "Misfiled Reliquary",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_reliquary_drawers.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.55,
+          0.72,
+          0.92
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_misfiled_reliquary",
+            "commands": [
+              {
+                "text": "The drawers stand open. Every brass label now bears your room number: 3.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A wall of brass drawers rises from the stone. Each is labelled with the name of a St. Maria household.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "Inside are not relics, but ordinary things: a thimble, a milk tooth, a tavern key, a strip of blue chapel tile.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Read the inventory.",
+                    "commands": [
+                      {
+                        "text": "The final page lists PASSAGE HOUSE — ROOM 3. The contents column has been left blank.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "found_misfiled_reliquary",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Close the drawer.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Counterfeit Stable",
+        "label": "Counterfeit Stable",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_empty_bridle.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.76,
+          0.58,
+          0.32
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_counterfeit_stable",
+            "commands": [
+              {
+                "text": "The stall is empty. Fresh hoofprints circle the post without ever approaching or leaving it.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A clean stable stall has been assembled inside the vault. The straw smells of the road above.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "A contract hangs from the post. It bears Saban's name in your handwriting, repeated until the ink cuts through the paper.",
+                "cmd": "TEXT"
+              },
+              {
+                "flag": "found_counterfeit_stable",
+                "value": true,
+                "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [
@@ -5276,6 +5380,102 @@
         "y": 14,
         "spawn": "Random",
         "sprite": "assets/sprites/NPC15.png"
+      },
+      {
+        "id": 5,
+        "name": "Unfinished Procession",
+        "label": "Unfinished Procession",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_summoner_contract.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.82,
+          0.24,
+          0.28
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_unfinished_procession",
+            "commands": [
+              {
+                "text": "The wax figures still face the empty place in their procession. One has turned its head toward you.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A procession of life-sized wax villagers kneels between the pews. Each carries an unlit Vigil lamp.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "There is a gap in the line shaped for a rider and a small, broad-backed bird.",
+                "cmd": "TEXT"
+              },
+              {
+                "flag": "found_unfinished_procession",
+                "value": true,
+                "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Warm Confessional",
+        "label": "Warm Confessional",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_confessional.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.68,
+          0.18,
+          0.22
+        ],
+        "commands": [
+          {
+            "condition": "flag:heard_warm_confessional",
+            "commands": [
+              {
+                "text": "The wood is cold now. From the other side, something quietly repeats Saban's name.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "The confessional wood is warm. Someone on the other side is breathing at exactly your pace.",
+                "cmd": "TEXT"
+              },
+              {
+                "options": [
+                  {
+                    "label": "Listen.",
+                    "commands": [
+                      {
+                        "text": "\"Tell us which of you is the summon,\" your own voice whispers.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "flag": "heard_warm_confessional",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Step away.",
+                    "commands": []
+                  }
+                ],
+                "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [
@@ -5345,6 +5545,87 @@
         "y": 10,
         "spawn": "Random",
         "sprite": "assets/sprites/NPC16.png"
+      },
+      {
+        "id": 3,
+        "name": "Garden Without Wind",
+        "label": "Garden Without Wind",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_crystal_pedestal.png",
+        "trigger": "interact",
+        "minimapColor": [
+          0.38,
+          0.62,
+          0.72
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_stillnight_garden",
+            "commands": [
+              {
+                "text": "The paper leaves remain still. The one bearing Saban's name has grown a second stem.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "White trees grow from a floor of black water. Their leaves are slips cut from St. Maria's Summoner ledger.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "Most names have become roots. Saban's is still a leaf.",
+                "cmd": "TEXT"
+              },
+              {
+                "flag": "found_stillnight_garden",
+                "value": true,
+                "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "name": "The Empty Bridle",
+        "label": "The Empty Bridle",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_empty_bridle.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.72,
+          0.72,
+          0.88
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_empty_bridle",
+            "commands": [
+              {
+                "text": "The bridle hangs motionless. Its bell rings once when you turn your back.",
+                "cmd": "TEXT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "text": "A traveller's bridle hangs from nothing. Its bit is warm, its leather worn to the shape of Saban's head.",
+                "cmd": "TEXT"
+              },
+              {
+                "text": "There is no contract attached—only a small bell engraved: WHAT ARRIVES TOGETHER MUST BE SEPARATED.",
+                "cmd": "TEXT"
+              },
+              {
+                "flag": "found_empty_bridle",
+                "value": true,
+                "cmd": "SET_FLAG"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "encounters": [

@@ -185,11 +185,15 @@ architectural authority. The Ines mark, salt table and borrowed-room references
 remain under `assets/cinematics/campaign_inspection/`, with their dialogue-safe
 runtime derivatives under `assets/locationArt/campaign_*.png`.
 
-The root-level arrival cart, rain road and Labyrinth threshold plates form the
-current opening. Continuity matters more than any single image's novelty: the
-battered case, coat, rain, time of day, village silhouette and screen direction
-should recur if that sequence is regenerated. Rejected boards, unused variants
-and high-resolution generation sources remain outside the repository.
+The root-level nine-shot Saban arrival family forms the current opening and is
+retained with its 3x3 production sheet. Each cell is composed for a centered
+4:3 runtime crop. Continuity matters more than any single image's novelty, but
+continuity does not mean repeating the creature in every frame: geography,
+object inserts, inhabited architecture, reaction shots and monumental negative
+space carry equal narrative weight. The battered case, bridle, rain, time of
+day, village silhouette and screen direction should recur if the sequence is
+regenerated. Rejected boards, unused variants and high-resolution generation
+sources remain outside the repository.
 
 ## Prompt anchors for St. Maria
 

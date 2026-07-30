@@ -835,6 +835,14 @@ same edge treatment, lighting, fog and raycast projection as the wall itself;
 they never enter the billboard pass. Running forward into a `trigger: bump`
 door starts its event without a confirm press.
 
+That compositor is not door-specific: any map event with `wallEvent: true`
+occupies a `#` cell, uses `trigger: bump`, and draws its ordinary sprite in the
+wall slice rather than as a billboard. Generated up/down stairs and authored
+wall fixtures use this same path. Procedural placement selects a surviving room
+boundary with an adjacent passable approach cell. Dungeon interaction art is
+stored as separate 64x64 sprites under `assets/sprites/dungeon_*.png`; the 3x3
+generation layout is only a contact-sheet workflow, never a runtime sheet.
+
 The threshold sequence zooms the centered wall door for 0.24 seconds and holds
 that scale while the entire screen fades to black. Only at full black does it
 start the conversation; it then lingers in darkness for 0.10 seconds before
@@ -873,6 +881,10 @@ scene UI), or `top`. `MOVE_STRING_PICTURE` interpolates position, opacity and
 scale; `ERASE_STRING_PICTURE` may fade before removal, while
 `ERASE_ALL_STRING_PICTURES` is the unconditional cleanup operation. They are
 presentation objects rather than save state and are cleared by session reset.
+An authored `reveal: true` makes a string picture use the same character timing,
+UTF-8-safe prefixing and `ui.textRevealDelay` setting as ordinary dialogue
+`TEXT`; cinematic captions therefore arrive like SHOW TEXT instead of fading
+as whole blocks.
 
 `SHOW_IMAGE_PICTURE`, `MOVE_IMAGE_PICTURE`, `ERASE_IMAGE_PICTURE` and
 `ERASE_ALL_IMAGE_PICTURES` provide the bitmap counterpart. An image picture
@@ -892,17 +904,24 @@ event author to own cleanup and final state rather than having the host abort a
 script halfway through. G1 rejects missing skip labels.
 
 New Game starts common event 42 in the empty-window `cinematic` scene. Its
-authored sequence crossfades three generated plates—the arriving carriage, the
-rain road and the Labyrinth threshold—under short text movements, follows them
-with a St. Maria location card, exposes `ESC: Skip`, and
+authored sequence moves through nine generated plates from one retained 3x3
+production sheet: distant approach, tactile travel details, the town bell,
+residents reacting in the street, the Passage House courtyard and room, the
+guarded approach, the Labyrinth threshold, and a final close Saban beat.
+Creature appearances alternate with geography, architecture and object
+inserts; every crop is composed for the 4:3 runtime canvas. Character-revealed
+captions accompany the plates, followed by a St. Maria location card. The event
+exposes `ESC: Skip`, and
 always rejoins at `intro_cleanup`, which clears pictures, disables skipping,
-loads St. Maria, and opens the static Room 3 interior. The player first receives
-control only after the Passage House handoff establishes that this is one of
-five rooms kept for visiting Summoners, that the others are empty, and that the
-named starting Moa Saban is already waiting there. Leaving uses the ordinary
-reverse door transition and places the player beside its exterior door. The
-opening therefore reveals cinematic, room, and navigable town in that order
-instead of cutting directly into free movement. The title scene uses
+loads St. Maria, and opens the static Room 3 interior. The arrival plates
+establish that the player rode into St. Maria on Saban, their long-standing
+mount and only summon. The player first receives control only after the Passage
+House handoff establishes that this is one of five rooms kept for visiting
+Summoners, that the others are empty, and that the room has been awkwardly
+adapted for both travellers. Saban is never assigned by St. Maria. Leaving uses
+the ordinary reverse door transition and places the player beside its exterior
+door. The opening therefore reveals cinematic, room, and navigable town in that
+order instead of cutting directly into free movement. The title scene uses
 `assets/title/st_maria_title_psx.png` as a native-size static backdrop and
 renders its title, subtitle, and copyright through the same string-picture
 commands used by the introduction.
@@ -921,15 +940,17 @@ Narrative image batches may be generated as exact contact sheets and split by
 name per cell and emits only an antialiased, palette-limited 256x240 runtime
 plate. High-resolution generation sheets are local working files outside the
 repository. The retained crops under `assets/cinematics/ideation/` supply the
-four interior studies still referenced by events. The three root-level arrival
-plates supply the prerendered opening.
+four interior studies still referenced by events. The retained
+`arrival_saban_contact_sheet.png` and its nine root-level crops supply the
+prerendered opening.
 
 ### 1.18 Opening expedition roster and floor ramp (28.07.2026)
 
 The opening party is authored through `system.newGame.party.fixedMembers` and
 currently contains Saban (actor 61, level 3). A fixed member may carry an
 instance name; new-game construction preserves it rather than assigning a
-random ally name.
+random ally name. Narratively, Saban predates the arrival: he is the player's
+mount, travelling companion, and sole opening summon.
 
 The field Reserve scene is now an **Expedition Reserve**: four party slots plus
 four reserve slots are the creatures physically committed to the trip.
@@ -966,6 +987,15 @@ to black, loads Floor 1 underneath, then slowly reveals the live raycaster while
 an additive bell-and-roots plate and exact string-picture title fade away.
 Later descents retain the slow world reveal but do not replay the discovery
 card.
+
+The authored environmental encounters continue that relationship through the
+deeper floors. The Cryptic Vault inventories St. Maria's ordinary possessions
+and counterfeits Saban's stable; the Blood Chapel stages an unfinished Vigil
+and questions which traveller is the summon; the Stillnight Sanctum turns old
+Summoner records into a garden and threatens to separate what arrived together.
+Each is an ordinary map event with a persistent discovery flag and changed
+revisit text, so the environments participate in the narrative rather than
+serving only as encounter backdrops.
 
 ### 1.19 Explicit actor art roles and native big battlers (29.07.2026)
 

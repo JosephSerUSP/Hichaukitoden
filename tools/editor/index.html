@@ -1588,9 +1588,9 @@
                                     <input type="checkbox" id="event-prop-transparent" />
                                     <label for="event-prop-transparent">Transparent</label>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 4px; font-size: 10px;" title="Renders into the wall slice this event sits on (the atlas's door tile) instead of as a billboard sprite. Must be placed on a wall ('#') cell. See docs/design/raycaster-tileset-lighting.md.">
+                                <div style="display: flex; align-items: center; gap: 4px; font-size: 10px;" title="Renders this event's sprite into its wall slice instead of as a billboard. Must be placed on a wall ('#') cell.">
                                     <input type="checkbox" id="event-prop-door" />
-                                    <label for="event-prop-door">Door (wall-slot graphic)</label>
+                                    <label for="event-prop-door">Wall event (not billboard)</label>
                                 </div>
                                 <button class="win98-btn" style="font-size: 10px; padding: 2px;" onclick="openAssetPickerForEventSprite()">Set...</button>
                                 <button class="win98-btn" style="font-size: 10px; padding: 2px;" title="No graphic (on a page: inherit the base event's graphic)" onclick="updateEventGraphicPreview(''); eventModalDirty = true;">Clear</button>

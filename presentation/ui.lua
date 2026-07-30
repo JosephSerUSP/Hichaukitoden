@@ -808,6 +808,29 @@ function ui.wrapText(text, limit)
     return table.concat(lines, "\n")
 end
 
+-- One RPG-style character reveal shared by dialogue, battle logs, and
+-- authored cinematic captions.
+function ui.revealedCount(text, elapsed)
+    local delay = (config.ui and config.ui.textRevealDelay) or 0
+    if delay <= 0 then return #text end
+    return math.min(#text, math.floor((elapsed or 0) / delay))
+end
+
+function ui.utf8Prefix(text, byteCount)
+    if byteCount >= #text then return text end
+    local nextByte = text:byte(byteCount + 1)
+    while byteCount > 0 and nextByte and nextByte >= 0x80 and nextByte < 0xC0 do
+        byteCount = byteCount - 1
+        nextByte = text:byte(byteCount + 1)
+    end
+    return text:sub(1, byteCount)
+end
+
+function ui.revealedText(text, elapsed)
+    text = tostring(text or "")
+    return ui.utf8Prefix(text, ui.revealedCount(text, elapsed))
+end
+
 function ui.measureText(text)
     if mainFont then return mainFont:getWidth(text) end
     return #tostring(text) * (ui.fontSize or 8)

@@ -690,16 +690,16 @@ local function resolveTileset(mapData, session)
     return nil
 end
 
--- Doors are ordinary map events (docs/design/raycaster-tileset-lighting.md)
--- flagged door=true; they render into the wall composite instead of as a
--- billboard, so they are left without a sprite. Built once per
+-- Wall fixtures are ordinary map events flagged wallEvent=true. Their sprite
+-- renders into the wall composite instead of entering the billboard pass.
+-- Built once per
 -- frame (not per raycast column) keyed by 1-indexed grid cell.
-local function buildDoorLookup(session)
+local function buildWallEventLookup(session)
     local lookup = {}
     local data = session.currentMapData
     if data and data.events then
         for _, ev in ipairs(data.events) do
-            if ev.door then
+            if ev.wallEvent then
                 lookup[(ev.x + 1) .. "," .. (ev.y + 1)] = ev
             end
         end
@@ -933,7 +933,7 @@ function viewport_3d.draw(session)
             {0.14 * ambR, 0.12 * ambG, 0.10 * ambB})
     end
 
-    local doorLookup = buildDoorLookup(session)
+    local doorLookup = buildWallEventLookup(session)
     local materialLookup = buildMaterialLookup(session)
 
     -- ── 3. Perspective Raycasting Loop with Fish-eye Correction ────────────────
@@ -1146,7 +1146,7 @@ function viewport_3d.draw(session)
     -- Add coordinate-based events (from maps.json events list)
     if session.currentMapData and session.currentMapData.events then
         for _, ev in ipairs(session.currentMapData.events) do
-            local img = not ev.door and getEventSprite(ev, session) or nil
+            local img = not ev.wallEvent and getEventSprite(ev, session) or nil
             if img then
                 table.insert(spritesToDraw, {
                     x = ev.x,

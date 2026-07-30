@@ -1927,19 +1927,19 @@ elseif paramDef.type == "script" then
 
         for i, ev in ipairs(map.events or {}) do
             local desc = "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")"
-            -- A door renders into the wall slice it occupies, so it only
+            -- A wall event renders into the wall slice it occupies, so it only
             -- makes sense sitting on a wall cell of a fixed (non-procedural)
             -- layout; procedural dungeons regenerate their grid at runtime
-            -- so authored door positions can't be checked against it here.
-            if ev.door and map.layout then
+            -- so authored positions can't be checked against it here.
+            if ev.wallEvent and map.layout then
                 local row = map.layout[ev.y + 1]
                 local cell = row and row:sub(ev.x + 1, ev.x + 1)
-                check(cell == "#", desc .. " is a door but its map cell is not a wall ('" .. tostring(cell) .. "')")
+                check(cell == "#", desc .. " is a wall event but its map cell is not a wall ('" .. tostring(cell) .. "')")
                 check(ev.trigger == "bump",
-                    desc .. " is a wall door and must use trigger 'bump'")
+                    desc .. " is wall-bound and must use trigger 'bump'")
                 check(type(ev.sprite) == "string" and ev.sprite ~= ""
                         and love.filesystem.getInfo(ev.sprite) ~= nil,
-                    desc .. " references missing door sprite '" .. tostring(ev.sprite) .. "'")
+                    desc .. " references missing wall-event sprite '" .. tostring(ev.sprite) .. "'")
             end
             if ev.commands then
                 validateCommands(ev.commands, "map", false, true, desc)

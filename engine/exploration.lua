@@ -270,14 +270,64 @@ function exploration.generateDungeon(mapData, seed, session)
         end
     end
     
-    local startX, startY = rooms[1].cx, rooms[1].cy
-    local exitX, exitY = rooms[#rooms].cx, rooms[#rooms].cy
+    -- Wall-bound events use the same geometry as town doors: their sprite is
+    -- composited into a solid wall cell, with a passable approach cell beside
+    -- it. Pick surviving room-boundary walls after corridors have been carved.
+    local function wallSlotsForRoom(room)
+        local slots = {}
+        local function add(wx, wy, ax, ay)
+            if grid[wy] and grid[wy][wx] == "#"
+                    and grid[ay] and grid[ay][ax] == "." then
+                table.insert(slots, { x = wx, y = wy })
+            end
+        end
+        for x = room.x, room.x + room.w - 1 do
+            add(x, room.y - 1, x, room.y)
+            add(x, room.y + room.h, x, room.y + room.h - 1)
+        end
+        for y = room.y, room.y + room.h - 1 do
+            add(room.x - 1, y, room.x, y)
+            add(room.x + room.w, y, room.x + room.w - 1, y)
+        end
+        -- A connection can consume every cell on a small room boundary.
+        -- Fall back to surviving walls anywhere in the generated structure,
+        -- ordered by proximity to the intended room.
+        if #slots == 0 then
+            for y = 2, height - 1 do
+                for x = 2, width - 1 do
+                    if grid[y][x] == "#" and (
+                            grid[y - 1][x] == "." or grid[y + 1][x] == "."
+                            or grid[y][x - 1] == "." or grid[y][x + 1] == ".") then
+                        table.insert(slots, { x = x, y = y })
+                    end
+                end
+            end
+            table.sort(slots, function(a, b)
+                local adx, ady = a.x - room.cx, a.y - room.cy
+                local bdx, bdy = b.x - room.cx, b.y - room.cy
+                return adx * adx + ady * ady < bdx * bdx + bdy * bdy
+            end)
+        end
+        return slots
+    end
+
+    local entranceSlots = wallSlotsForRoom(rooms[1])
+    local exitSlots = wallSlotsForRoom(rooms[#rooms])
+    if #entranceSlots == 0 or #exitSlots == 0 then
+        error("generateDungeon: room has no wall slot for staircase")
+    end
+    local startX, startY = entranceSlots[1].x, entranceSlots[1].y
+    local exitX, exitY = exitSlots[1].x, exitSlots[1].y
+    if startX == exitX and startY == exitY and #exitSlots > 1 then
+        exitX, exitY = exitSlots[2].x, exitSlots[2].y
+    end
     
     local generatedEvents = {}
     
     -- Gather candidate open tiles, prioritizing ROOM tiles over corridor tiles
     local roomOpenTiles = {}
     local corridorOpenTiles = {}
+    local wallOpenTiles = {}
     
     for y = 2, height - 1 do
         for x = 2, width - 1 do
@@ -298,6 +348,17 @@ function exploration.generateDungeon(mapData, seed, session)
         end
     end
     
+    for _, room in ipairs(rooms) do
+        if room.allowRandomEvents then
+            for _, tile in ipairs(wallSlotsForRoom(room)) do
+                if not (tile.x == startX and tile.y == startY)
+                        and not (tile.x == exitX and tile.y == exitY) then
+                    table.insert(wallOpenTiles, tile)
+                end
+            end
+        end
+    end
+
     -- Shuffle both pools
     for i = #roomOpenTiles, 2, -1 do
         local j = math.random(i)
@@ -306,6 +367,11 @@ function exploration.generateDungeon(mapData, seed, session)
     for i = #corridorOpenTiles, 2, -1 do
         local j = math.random(i)
         corridorOpenTiles[i], corridorOpenTiles[j] = corridorOpenTiles[j], corridorOpenTiles[i]
+    end
+
+    for i = #wallOpenTiles, 2, -1 do
+        local j = math.random(i)
+        wallOpenTiles[i], wallOpenTiles[j] = wallOpenTiles[j], wallOpenTiles[i]
     end
 
     -- Combined pool: room tiles first, fallback to corridors if rooms run out
@@ -332,7 +398,8 @@ function exploration.generateDungeon(mapData, seed, session)
             y = exitY - 1,
             scriptId = exitScriptId,
             sprite = dungeonConf("exitSprite", "assets/sprites/NPC00.png"),
-            trigger = "interact"
+            trigger = "bump",
+            wallEvent = true
         })
     end
 
@@ -342,7 +409,8 @@ function exploration.generateDungeon(mapData, seed, session)
         y = startY - 1,
         scriptId = dungeonConf("entranceScriptId", 40),
         sprite = dungeonConf("entranceSprite", "assets/sprites/NPC00.png"),
-        trigger = "interact"
+        trigger = "bump",
+        wallEvent = true
     })
     
     -- Process events from mapData.events database
@@ -353,10 +421,11 @@ function exploration.generateDungeon(mapData, seed, session)
             if ev.spawn == "Fixed" and ev.x and ev.y then
                 tx, ty = ev.x + 1, ev.y + 1
             elseif ev.spawn == "Random" or not (ev.x and ev.y) then
-                local tile = openTiles[placedCount]
+                local tile = ev.wallEvent and table.remove(wallOpenTiles)
+                    or openTiles[placedCount]
                 if tile then
                     tx, ty = tile.x, tile.y
-                    placedCount = placedCount + 1
+                    if not ev.wallEvent then placedCount = placedCount + 1 end
                 end
             else
                 tx, ty = ev.x + 1, ev.y + 1
@@ -374,7 +443,7 @@ function exploration.generateDungeon(mapData, seed, session)
                 for k, v in pairs(ev) do placed[k] = v end
                 placed.x = tx - 1
                 placed.y = ty - 1
-                placed.trigger = ev.trigger or "interact"
+                placed.trigger = ev.wallEvent and "bump" or (ev.trigger or "interact")
                 table.insert(generatedEvents, placed)
             end
             end

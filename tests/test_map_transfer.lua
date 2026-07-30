@@ -34,7 +34,7 @@ check(viewport3d.resolveEventSpritePath({ sprite = "assets/sprites/NPC00.png" })
 
 local townDoorCount, interiorDoorCount, labyrinthGateCount = 0, 0, 0
 for _, ev in ipairs(loader.maps[1].events or {}) do
-    if ev.door then
+    if ev.wallEvent then
         townDoorCount = townDoorCount + 1
         local row = loader.maps[1].layout[ev.y + 1]
         check(row and row:sub(ev.x + 1, ev.x + 1) == "#",
@@ -181,7 +181,20 @@ check(math.abs(route.playerX - exitX) + math.abs(route.playerY - exitY) == 1,
 
 local hasEntrance = false
 for _, ev in ipairs(route.currentMapData.events or {}) do
-    if ev.scriptId == 40 then hasEntrance = true end
+    if ev.scriptId == 40 then
+        hasEntrance = true
+        local row = route.mapGrid[ev.y + 1]
+        check(ev.wallEvent == true and ev.trigger == "bump"
+                and row and row[ev.x + 1] == "#"
+                and ev.sprite == "assets/sprites/dungeon_stairs_up.png",
+            "generated entrance stairs occupy a wall and use the wall compositor")
+    elseif ev.scriptId == 1 then
+        local row = route.mapGrid[ev.y + 1]
+        check(ev.wallEvent == true and ev.trigger == "bump"
+                and row and row[ev.x + 1] == "#"
+                and ev.sprite == "assets/sprites/dungeon_stairs_down.png",
+            "generated exit stairs occupy a wall and use the wall compositor")
+    end
 end
 check(hasEntrance, "every generated floor has physical stairs back up")
 
@@ -347,9 +360,16 @@ check(stringPictures.get(777).x == 5,
     "string pictures support constant-speed linear movement for credit-style scrolls")
 stringPictures.clear()
 
+stringPictures.show({ id = 780, text = "typewriter", x = 0, y = 0, reveal = true })
+stringPictures.update(0.25)
+check(stringPictures.get(780).reveal == true
+        and stringPictures.get(780).revealElapsed == 0.25,
+    "string pictures support the shared SHOW TEXT character reveal")
+stringPictures.clear()
+
 local imagePictures = require("presentation.image_picture_renderer")
 imagePictures.show({
-    id = 778, path = "assets/cinematics/arrival_cart_psx.png",
+    id = 778, path = "assets/cinematics/arrival_ride.png",
     x = 128, y = 120, anchor = "center", opacity = 0, scale = 1, blend = "add",
 })
 imagePictures.move({ id = 778, opacity = 1, scale = 1.1, duration = 2, easing = "linear" })

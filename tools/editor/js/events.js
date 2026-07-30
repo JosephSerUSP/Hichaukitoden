@@ -83,7 +83,7 @@
                 document.getElementById('event-prop-label').value = eventData.label || '';
                 document.getElementById('event-prop-trigger').value = eventData.trigger || 'interact';
                 document.getElementById('event-prop-transparent').checked = !!eventData.transparent;
-                document.getElementById('event-prop-door').checked = !!eventData.door;
+                document.getElementById('event-prop-door').checked = !!eventData.wallEvent;
                 document.getElementById('event-prop-priority').value = eventData.priority || 'same';
                 document.getElementById('event-prop-spawn').value = eventData.spawn || 'Fixed';
 
@@ -426,9 +426,9 @@
             eventData.sprite = window.activeEventSpritePath || '';
             eventData.transparent = document.getElementById('event-prop-transparent').checked;
             if (document.getElementById('event-prop-door').checked) {
-                eventData.door = true;
+                eventData.wallEvent = true;
             } else {
-                delete eventData.door;
+                delete eventData.wallEvent;
             }
             eventData.priority = document.getElementById('event-prop-priority').value;
             eventData.spawn = document.getElementById('event-prop-spawn').value;

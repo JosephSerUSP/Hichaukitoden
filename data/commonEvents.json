@@ -1742,7 +1742,7 @@
       {
         "cmd": "SHOW_IMAGE_PICTURE",
         "id": 10,
-        "path": "assets/cinematics/arrival_cart_psx.png",
+        "path": "assets/cinematics/arrival_ride.png",
         "x": 128,
         "y": 120,
         "anchor": "center",
@@ -1767,15 +1767,10 @@
         "width": 216,
         "fontSize": 10,
         "color": 0,
-        "opacity": 0,
+        "opacity": 1,
+        "reveal": true,
         "layer": "screen",
         "shadow": true
-      },
-      {
-        "cmd": "MOVE_STRING_PICTURE",
-        "id": 1,
-        "opacity": 1,
-        "duration": 0.8
       },
       {
         "cmd": "WAIT",
@@ -1784,7 +1779,117 @@
       {
         "cmd": "ERASE_STRING_PICTURE",
         "id": 1,
-        "duration": 0.6
+        "duration": 0
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 10
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 13,
+        "path": "assets/cinematics/arrival_breath.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 1,
+        "text": "You did not come alone.",
+        "x": 128,
+        "y": 180,
+        "anchor": "center",
+        "align": "center",
+        "width": 216,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 1,
+        "reveal": true,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 2.4
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 1
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 13
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 14,
+        "path": "assets/cinematics/arrival_bell.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 1,
+        "text": "Saban carried you through the rain.\nHe was your mount—and your only summon.",
+        "x": 128,
+        "y": 166,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 1,
+        "reveal": true,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 4
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 1
       },
       {
         "cmd": "SET_SUBTRACTIVE_FADE",
@@ -1798,12 +1903,12 @@
       },
       {
         "cmd": "ERASE_IMAGE_PICTURE",
-        "id": 10
+        "id": 14
       },
       {
         "cmd": "SHOW_IMAGE_PICTURE",
         "id": 11,
-        "path": "assets/cinematics/arrival_road_psx.png",
+        "path": "assets/cinematics/arrival_street.png",
         "x": 128,
         "y": 120,
         "anchor": "center",
@@ -1820,7 +1925,7 @@
       {
         "cmd": "SHOW_STRING_PICTURE",
         "id": 2,
-        "text": "The village sells them food,\nsteel, a bed—and the promise\nof what waits below.",
+        "text": "St. Maria noticed him\nbefore it noticed you.",
         "x": 128,
         "y": 174,
         "anchor": "center",
@@ -1828,15 +1933,10 @@
         "width": 224,
         "fontSize": 10,
         "color": 0,
-        "opacity": 0,
+        "opacity": 1,
+        "reveal": true,
         "layer": "screen",
         "shadow": true
-      },
-      {
-        "cmd": "MOVE_STRING_PICTURE",
-        "id": 2,
-        "opacity": 1,
-        "duration": 0.8
       },
       {
         "cmd": "WAIT",
@@ -1845,7 +1945,117 @@
       {
         "cmd": "ERASE_STRING_PICTURE",
         "id": 2,
-        "duration": 0.6
+        "duration": 0
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 11
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 15,
+        "path": "assets/cinematics/arrival_passage.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 2,
+        "text": "The village made room.\nBarely.",
+        "x": 128,
+        "y": 174,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 1,
+        "reveal": true,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 2.6
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 2
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 15
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 16,
+        "path": "assets/cinematics/arrival_room.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 2,
+        "text": "One bed. One bowl.\nFive empty rooms.",
+        "x": 128,
+        "y": 174,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 1,
+        "reveal": true,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 3
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 2
       },
       {
         "cmd": "SET_SUBTRACTIVE_FADE",
@@ -1859,12 +2069,12 @@
       },
       {
         "cmd": "ERASE_IMAGE_PICTURE",
-        "id": 11
+        "id": 16
       },
       {
         "cmd": "SHOW_IMAGE_PICTURE",
         "id": 12,
-        "path": "assets/cinematics/labyrinth_threshold_psx.png",
+        "path": "assets/cinematics/arrival_gate.png",
         "x": 128,
         "y": 120,
         "anchor": "center",
@@ -1881,7 +2091,7 @@
       {
         "cmd": "SHOW_STRING_PICTURE",
         "id": 3,
-        "text": "Beyond the gate, souls lose\ntheir edges.\n\nA Summoner enters by calling\ntheir own name across.",
+        "text": "Below the town, every bond\nis recorded as a debt.",
         "x": 128,
         "y": 156,
         "anchor": "center",
@@ -1889,15 +2099,10 @@
         "width": 224,
         "fontSize": 10,
         "color": 0,
-        "opacity": 0,
+        "opacity": 1,
+        "reveal": true,
         "layer": "screen",
         "shadow": true
-      },
-      {
-        "cmd": "MOVE_STRING_PICTURE",
-        "id": 3,
-        "opacity": 1,
-        "duration": 0.8
       },
       {
         "cmd": "WAIT",
@@ -1906,12 +2111,98 @@
       {
         "cmd": "ERASE_STRING_PICTURE",
         "id": 3,
-        "duration": 0.7
+        "duration": 0
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 12
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 17,
+        "path": "assets/cinematics/arrival_threshold.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
       },
       {
         "cmd": "SHOW_STRING_PICTURE",
         "id": 5,
-        "text": "Some return with impossible things.\nSome return missing things\nno one can name.",
+        "text": "Beyond the gate, souls lose\ntheir edges.",
+        "x": 128,
+        "y": 174,
+        "anchor": "center",
+        "align": "center",
+        "width": 224,
+        "fontSize": 10,
+        "color": 0,
+        "opacity": 1,
+        "reveal": true,
+        "layer": "screen",
+        "shadow": true
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 3.2
+      },
+      {
+        "cmd": "ERASE_STRING_PICTURE",
+        "id": 5
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 1,
+        "duration": 0.8,
+        "easing": "burn_in"
+      },
+      {
+        "cmd": "WAIT",
+        "duration": 0.9
+      },
+      {
+        "cmd": "ERASE_IMAGE_PICTURE",
+        "id": 17
+      },
+      {
+        "cmd": "SHOW_IMAGE_PICTURE",
+        "id": 18,
+        "path": "assets/cinematics/arrival_together.png",
+        "x": 128,
+        "y": 120,
+        "anchor": "center",
+        "opacity": 1,
+        "scale": 1,
+        "layer": "backdrop"
+      },
+      {
+        "cmd": "SET_SUBTRACTIVE_FADE",
+        "amount": 0,
+        "duration": 1.2,
+        "easing": "smooth"
+      },
+      {
+        "cmd": "SHOW_STRING_PICTURE",
+        "id": 6,
+        "text": "You came for impossible things.\nThe first was already beside you.",
         "x": 128,
         "y": 172,
         "anchor": "center",
@@ -1919,54 +2210,18 @@
         "width": 224,
         "fontSize": 10,
         "color": 0,
-        "opacity": 0,
+        "opacity": 1,
+        "reveal": true,
         "layer": "screen",
         "shadow": true
       },
       {
-        "cmd": "MOVE_STRING_PICTURE",
-        "id": 5,
-        "opacity": 1,
-        "duration": 0.8
-      },
-      {
         "cmd": "WAIT",
-        "duration": 3.8
+        "duration": 4
       },
       {
         "cmd": "ERASE_STRING_PICTURE",
-        "id": 5,
-        "duration": 0.7
-      },
-      {
-        "cmd": "SHOW_STRING_PICTURE",
-        "id": 6,
-        "text": "You came for the things.",
-        "x": 128,
-        "y": 180,
-        "anchor": "center",
-        "align": "center",
-        "width": 220,
-        "fontSize": 11,
-        "color": 0,
-        "opacity": 0,
-        "layer": "screen",
-        "shadow": true
-      },
-      {
-        "cmd": "MOVE_STRING_PICTURE",
-        "id": 6,
-        "opacity": 1,
-        "duration": 0.8
-      },
-      {
-        "cmd": "WAIT",
-        "duration": 2.8
-      },
-      {
-        "cmd": "ERASE_STRING_PICTURE",
-        "id": 6,
-        "duration": 0.7
+        "id": 6
       },
       {
         "cmd": "SET_SUBTRACTIVE_FADE",
@@ -1980,7 +2235,7 @@
       },
       {
         "cmd": "ERASE_IMAGE_PICTURE",
-        "id": 12
+        "id": 18
       },
       {
         "cmd": "SHOW_STRING_PICTURE",
@@ -2041,15 +2296,15 @@
       },
       {
         "cmd": "TEXT",
-        "text": "PASSAGE HOUSE — ROOM 3\n\n\"This'll be your home for the upcoming months.\" The key is still turning in the lock outside when the footsteps begin to recede."
+        "text": "PASSAGE HOUSE — ROOM 3\n\n\"This'll be home for both of you.\" The key is still turning in the lock outside when the footsteps begin to recede."
       },
       {
         "cmd": "TEXT",
-        "text": "The other Summoner rooms are empty. Yours has been cleaned, but not emptied of its previous lives."
+        "text": "The other Summoner rooms are empty. Yours has been cleaned, but not emptied of its previous lives. Someone has dragged a feed bowl in from the stable."
       },
       {
         "cmd": "TEXT",
-        "text": "A small Moa waits beside a chipped feed bowl. SABAN is written on the contract tied to his leg. The previous owner's name has been scraped away."
+        "text": "Saban noses the bowl, then leans his familiar weight against you. He carried you to St. Maria; now your mount and only summon will carry you below it."
       }
     ]
   },

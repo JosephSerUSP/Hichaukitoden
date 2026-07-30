@@ -186,9 +186,9 @@
     "genMaxRooms": 6,
     "genMinRoomSize": 3,
     "genMaxRoomSize": 5,
-    "exitSprite": "assets/sprites/NPC00.png",
+    "exitSprite": "assets/sprites/dungeon_stairs_down.png",
     "exitScriptId": 1,
-    "entranceSprite": "assets/sprites/NPC00.png",
+    "entranceSprite": "assets/sprites/dungeon_stairs_up.png",
     "entranceScriptId": 40,
     "playerLight": {
       "enabled": true,

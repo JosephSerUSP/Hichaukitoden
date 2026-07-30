@@ -68,15 +68,9 @@ local dialogueReveal = { node = nil, elapsed = 0 }
 local victoryAnim = { source = nil, members = {}, stage = 0, displayedGold = 0 }
 local levelUpAnim = { source = nil, elapsed = 0 }
 
-local function revealDelay()
-    return (config.ui and config.ui.textRevealDelay) or 0
-end
-
 -- Number of characters of `text` currently visible for `elapsed` seconds.
 local function revealedCount(text, elapsed)
-    local delay = revealDelay()
-    if delay <= 0 then return #text end
-    return math.min(#text, math.floor(elapsed / delay))
+    return ui.revealedCount(text, elapsed)
 end
 
 -- Byte-count prefix that never splits a multibyte UTF-8 character: if the
@@ -84,13 +78,7 @@ end
 -- back to the previous boundary. love.graphics.printf hard-errors on
 -- malformed UTF-8, and dialogue text carries em dashes/curly quotes.
 local function utf8Prefix(text, n)
-    if n >= #text then return text end
-    local nextByte = text:byte(n + 1)
-    while n > 0 and nextByte and nextByte >= 0x80 and nextByte < 0xC0 do
-        n = n - 1
-        nextByte = text:byte(n + 1)
-    end
-    return text:sub(1, n)
+    return ui.utf8Prefix(text, n)
 end
 
 -- overhaul-7 A1: animation constants and timing are owned by

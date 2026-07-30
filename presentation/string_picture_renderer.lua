@@ -36,6 +36,8 @@ function renderer.show(spec)
         layer = spec.layer or "screen",
         blend = spec.blend or "alpha",
         eraseOnMapChange = spec.eraseOnMapChange ~= false,
+        reveal = spec.reveal == true,
+        revealElapsed = 0,
     }
 end
 
@@ -77,6 +79,7 @@ end
 function renderer.update(dt)
     local remove = {}
     for id, pic in pairs(pictures) do
+        pic.revealElapsed = (pic.revealElapsed or 0) + dt
         local m = pic.motion
         if m then
             m.elapsed = math.min(m.duration, m.elapsed + dt)
@@ -108,6 +111,8 @@ local function drawPicture(pic)
     love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.translate(x, pic.y)
     love.graphics.scale(pic.scale, pic.scale)
+    local displayText = pic.reveal and ui.revealedText(pic.text, pic.revealElapsed)
+        or pic.text
     if pic.frame then
         local _, lines = font:getWrap(pic.text, width)
         ui.drawPanel(-4, -4, width + 8, #lines * font:getHeight() + 8)
@@ -116,11 +121,11 @@ local function drawPicture(pic)
     if pic.shadow then
         love.graphics.setFont(font)
         love.graphics.setColor(0, 0, 0, 0.8 * pic.opacity)
-        love.graphics.printf(pic.text, 1, 1, width, pic.align)
+        love.graphics.printf(displayText, 1, 1, width, pic.align)
     end
     love.graphics.setFont(font)
     love.graphics.setColor(c)
-    love.graphics.printf(pic.text, 0, 0, width, pic.align)
+    love.graphics.printf(displayText, 0, 0, width, pic.align)
     love.graphics.pop()
 end
 
