@@ -334,7 +334,12 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
     local exploration = require("engine.exploration")
     local viewport_3d = require("presentation.viewport_3d")
     local frame_renderer = require("presentation.frame_renderer")
+    local window_renderer = require("presentation.window_renderer")
+    local dock = require("presentation.dock")
+    local stringPictures = require("presentation.string_picture_renderer")
+    local imagePictures = require("presentation.image_picture_renderer")
     local captures = {}
+    local captureClock = 0
 
     local function slug(value)
         local s = tostring(value or ""):lower():gsub("[^%w_-]+", "-")
@@ -356,20 +361,92 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         })
     end
 
+    local settleCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
+    local function drawWarmup(vSession)
+        love.graphics.setCanvas({ settleCanvas, stencil = true })
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setColor(1, 1, 1, 1)
+        frame_renderer.draw(scene_host, renderer, vSession, loader, gameHeight)
+        love.graphics.setCanvas()
+    end
+
+    local function sceneById(id)
+        for _, candidate in ipairs(loader.scenes or {}) do
+            if tostring(candidate.id) == tostring(id) then return candidate end
+        end
+        return nil
+    end
+
+    local function advancePresentation(dt)
+        captureClock = captureClock + dt
+        renderer.update(dt)
+        stringPictures.update(dt)
+        imagePictures.update(dt)
+    end
+
+    -- Bring every visual system to a stable, post-transition frame without
+    -- sleeping. Declarative windows and the persistent dock use real-time
+    -- clocks in live play, so logical scene updates alone cannot settle them.
+    local function settleForCapture(vSession)
+        local state = scene_host.getCurrentState()
+        local sceneDef = sceneById(scene_host.getCurrent())
+        if not state or not sceneDef then return end
+
+        -- Seed/finish scene windows before the warm-up so even windows that
+        -- have never drawn get their complete resting geometry immediately.
+        window_renderer.finishAnimationsForCapture(state, sceneDef.windows)
+        drawWarmup(vSession)
+
+        -- The first warm-up starts a dock morph. Complete it through the dock's
+        -- deterministic seam, draw once to materialize its content windows,
+        -- then finish those windows too.
+        dock.__finishTransition()
+        window_renderer.finishAnimationsForCapture(state, sceneDef.windows)
+        drawWarmup(vSession)
+        window_renderer.finishAnimationsForCapture(dock.__store())
+        window_renderer.finishAnimationsForCapture(state, sceneDef.windows)
+
+        -- Advance renderer-owned animation tracks and picture motion/reveal.
+        -- Scene logic itself is deliberately not advanced here.
+        advancePresentation(1)
+    end
+
+    local function resetPresentation()
+        dock.reset()
+        stringPictures.clear()
+        imagePictures.clear()
+        require("presentation.scene_transition").clear()
+        require("presentation.subtractive_transition").clear()
+        require("presentation.ui_anim").reset()
+        require("presentation.animation_player").reset()
+    end
+
+    -- Generated dungeon maps ordinarily seed from wall-clock time. Screenshot
+    -- output must be reproducible, so pin only the map-load call and restore
+    -- os.time immediately afterward.
+    local function loadHarnessMap(vSession, mapIndex)
+        local originalTime = os.time
+        os.time = function() return 12345 end
+        local okLoad, loadErr = pcall(function()
+            exploration.loadMap(vSession, mapIndex)
+        end)
+        os.time = originalTime
+        if not okLoad then error(loadErr, 0) end
+    end
+
+    local originalGetTime = love.timer.getTime
+    love.timer.getTime = function() return captureClock end
     local ok, err = pcall(function()
       withHermeticSaves(function()
         require("presentation.ui").init()
         for _, sceneDef in ipairs(loader.scenes or {}) do
+            captureClock = 0
             math.randomseed(12345)
             local vSession = makeHarnessSession(loader)
             _G.activeSession = vSession
+            resetPresentation()
             renderer.init(vSession)
             scene_host.init(nil)
-            -- The dock deliberately outlives scene changes, so this loop --
-            -- which re-enters every scene back to back -- must clear it
-            -- between captures or each shot catches the previous scene's
-            -- dock mid-cross-fade.
-            require("presentation.dock").reset()
 
             local sceneId = tostring(sceneDef.id)
             local folder = slug(sceneDef.kind or "scene") .. "/" .. slug(sceneId)
@@ -379,10 +456,19 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
             }
 
             if sceneId == "map" then
-                exploration.loadMap(vSession, 1)
+                loadHarnessMap(vSession, 1)
                 viewport_3d.init()
                 scene_host.push(sceneDef.id, ctx)
             elseif sceneId == "battle" then
+                local dungeonMapIndex = 1
+                for index, mapData in ipairs(loader.maps or {}) do
+                    if mapData.safe ~= true then
+                        dungeonMapIndex = index
+                        break
+                    end
+                end
+                loadHarnessMap(vSession, dungeonMapIndex)
+                viewport_3d.init()
                 require("engine.scenes.battle").triggerTestBattle()
             else
                 scene_host.push(sceneDef.id, ctx)
@@ -428,10 +514,13 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                 _G.dialogueEnterTime = -100
             end
 
+            settleForCapture(vSession)
             capture(folder .. "/00-initial.png", vSession)
             for index, step in ipairs(sceneDef.screenshotScript or sceneDef.goldenScript or {}) do
                 scene_host.update(0.1, ctx)
+                advancePresentation(0.1)
                 scene_host.keypressed(step.key, ctx)
+                settleForCapture(vSession)
                 capture(string.format(
                     "%s/%02d-after-%s.png", folder, index, slug(step.key or "step")
                 ), vSession)
@@ -439,6 +528,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         end
       end)
     end)
+    love.timer.getTime = originalGetTime
 
     love.graphics.setCanvas()
     print("SCREENSHOTS BEGIN")
