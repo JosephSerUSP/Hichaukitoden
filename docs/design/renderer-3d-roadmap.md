@@ -376,21 +376,74 @@ is now the dominant unknown.
 calls (`glUseProgram`, `glBindBuffer`, VAO binds) directly in its `.cpp` files.
 Risk §6.5.2 is real and observed, not theoretical.
 
-**Practical notes for whoever builds it:**
+### 6.5.1a Build verified (30.07.2026): MinGW-w64 builds the runtime cleanly
 
-- Clone with `git config core.longpaths true` **and** a sparse checkout of
-  `Dev/Cpp`. A plain clone fails on Windows `MAX_PATH` inside
-  `Dev/Editor/EffekseerCoreGUI/IO/...`. Sparse `Dev/Cpp` is ~54MB.
-- The needed targets are the `Effekseer` core and `EffekseerRendererGL`
-  static libraries, plus the shim; the Editor, Viewer, Material tooling and
-  the DX/Vulkan/Metal renderers are all irrelevant.
-- **Blocked here on toolchain, not on Effekseer.** The dev machine has no C++
-  compiler: VS2022 Community lacks the "Desktop development with C++"
-  workload, and VS2019's `VC/Tools/MSVC/14.29.30133` is a 4KB stub containing
-  only `Auxiliary`. No clang, no MSYS2/MinGW (Git-for-Windows' bundled mingw
-  is runtime-only). See `userPerform/README.md`.
-- A MinGW-w64 build is acceptable: LuaJIT FFI loads any DLL with C linkage, so
-  the shim does not have to be MSVC-built. That is the much smaller install.
+Toolchain installed and the runtime built end to end. **No MSVC required** —
+this matters, because it keeps the native dependency to a ~250MB MSYS2 install
+rather than a multi-GB Visual Studio workload.
+
+Toolchain: MSYS2 (`winget install MSYS2.MSYS2`), then
+
+```
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-make
+```
+
+giving g++ 16.1.0, CMake 4.4.0, Ninja 1.13.2, target `x86_64-w64-mingw32`.
+
+**Clone (order matters, both flags are required):**
+
+```
+git -c core.longpaths=true clone --depth 1 https://github.com/effekseer/Effekseer.git
+```
+
+- Without `core.longpaths=true` the checkout dies on Windows `MAX_PATH` inside
+  `Dev/Editor/EffekseerCoreGUI/IO/mqoToEffekseerModelConverter/...`.
+- **Do not sparse-checkout only `Dev/Cpp`.** It looks right (the Editor is
+  dead weight) but the root `cmake/` directory defines `filterfolder`
+  (`cmake/FilterFolder.cmake`), used by every library's `CMakeLists.txt`, so
+  configure fails with `Unknown CMake command "filterfolder"`.
+- **Clone to a short path.** A deep parent directory blows CMake's
+  `CMAKE_OBJECT_PATH_MAX` (250 chars) during try-compile.
+
+**Configure — every one of these flags is load-bearing:**
+
+```
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_EXAMPLES=OFF -DBUILD_TOOLS=OFF -DBUILD_VIEWER=OFF \
+  -DBUILD_EDITOR=OFF -DBUILD_TEST=OFF \
+  -DBUILD_GL=ON -DBUILD_DX9=OFF -DBUILD_DX11=OFF -DBUILD_DX12=OFF \
+  -DNETWORK_ENABLED=OFF \
+  -DUSE_OPENAL=OFF -DUSE_DSOUND=OFF -DUSE_XAUDIO2=OFF -DUSE_OSM=OFF
+```
+
+The sound flags are not optional housekeeping: `USE_OPENAL` defaults ON, and
+without OpenAL present `Dev/Cpp/CMakeLists.txt:167` does
+`set_property(TARGET EffekseerSoundAL ...)` on a target that was never
+created, and configure fails. We do not want Effekseer's audio anyway — LOVE
+owns sound.
+
+```
+cmake --build build --target Effekseer EffekseerRendererGL
+```
+
+**Result:** 92 targets, clean apart from one benign `stb_image` warning.
+
+| Artifact | Size |
+|---|---|
+| `libEffekseer.a` | 1.5 MB |
+| `libEffekseerRendererCommon.a` | 520 KB |
+| `libEffekseerRendererGL.a` | 2.4 MB |
+
+`nm -C libEffekseer.a` confirms `Effekseer::Manager::Create(int, bool)` and
+`ManagerImplemented::Play(...)` present — as **mangled C++ symbols**, which is
+both proof the libraries are linkable and a concrete restatement of why
+§6.5.1's shim is unavoidable.
+
+**Next:** write the `extern "C"` shim against these three static libraries and
+link it into a single DLL for LuaJIT FFI.
+
+**Remaining scope note:** the Editor, Viewer, Material tooling and the
+DX/Vulkan/Metal renderers are all irrelevant and stay switched off.
 
 ### 6.6 Why this ranks high
 

@@ -60,7 +60,20 @@ the console output G1/G2 need). If your path differs, edit the `.bat`s.
 
 <!-- I append dated entries here as work lands. -->
 
-### 2026-07-30 — Install a C++ toolchain (blocks the Effekseer spike)
+### 2026-07-30 — C++ toolchain installed, Effekseer runtime builds (DONE)
+
+Superseded the entry below. With your approval I installed MSYS2 via winget
+and `mingw-w64-x86_64-{gcc,cmake,make}` via pacman (g++ 16.1.0, CMake 4.4.0,
+Ninja 1.13.2). Effekseer's core + GL renderer now build cleanly from the
+official repo — **no MSVC needed**, which keeps the native dependency to a
+~250MB MSYS2 install instead of a multi-GB Visual Studio workload.
+
+Working tree is at `D:\efk2` (scratch, outside the repo — delete it freely;
+the exact reproducible recipe is recorded in the roadmap §6.5.1a).
+
+Nothing for you to run. Next is the `extern "C"` shim.
+
+### ~~2026-07-30 — Install a C++ toolchain (blocks the Effekseer spike)~~ (done, see above)
 
 The Effekseer spike (`docs/design/renderer-3d-roadmap.md` step 1) is blocked:
 **this machine has no C++ compiler.** VS2022 Community lacks the "Desktop
