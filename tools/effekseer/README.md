@@ -28,7 +28,22 @@ across the effect draw — the states LOVE actually caches. All render correctly
 | `efk_shim.cpp` | The `extern "C"` wrapper. 14 exported functions, ints and floats only; every `RefPtr`/vtable stays sealed C++-side |
 | `spike/main.lua` | LOVE harness: FFI-loads the DLL, plays an effect, auto-captures and exits |
 | `spike/conf.lua` | 800x600 window for the harness |
-| `spike/spike-result.png` | The captured proof frame |
+| `spike/canvas-main.lua` | The one that matters for step 2: effect into a 256x240 canvas with a screen-space ortho camera |
+| `spike/spike-result.png` | Proof frame: effect + LOVE state intact |
+| `spike/spike-zorder-bug.png` | The batch-flush bug, for comparison |
+| `spike/spike-canvas-256x240.png` | Effect rendering inside the game's real canvas |
+
+## Authoring scale (read before making effects)
+
+`efk_load_effect(path, magnification)` exists because effects are authored in
+world units, and under a 1-unit-per-pixel camera a 3D-scale effect renders about
+20px across.
+
+**Magnification is a workaround, not the fix.** Scaling up yields soft, linearly
+filtered gradients that fight hand-authored pixel art. Author effects **at game
+scale** — particles sized in the tens of pixels, small crisp textures, hard
+edges over soft gradients. Cheap now, expensive to retrofit across a finished
+library. See roadmap §6.5.1d.
 
 The built DLL is **not** committed (6.4MB build artifact, gitignored). Build it
 with the recipe in roadmap §6.5.1a, then:

@@ -528,6 +528,46 @@ texture switch forced a flush anyway. Any intervening state change masks this
 bug. Draw-order tests must put the shape under test immediately before the
 foreign draw call, with nothing in between.
 
+### 6.5.1d Canvas + screen-space camera verified (30.07.2026)
+
+The remaining structural unknown for step 2: this game does not render to the
+backbuffer. Everything goes into a **256x240 LOVE Canvas** which is scaled 3x at
+the end. If effects cannot land *in that canvas*, step 2 does not work no matter
+what else was proven.
+
+**They can.** `tools/effekseer/spike/canvas-main.lua` binds the 256x240 canvas,
+draws with an identity view plus the §6.5.1c orthographic recipe (1 unit = 1
+pixel, origin top-left), and the effect renders inside the canvas, above the
+LOVE geometry drawn before it, with LOVE drawing correctly after it. The
+framebuffer binding survives Effekseer's draw — see
+`spike/spike-canvas-256x240.png`.
+
+Confirms in passing that §6.4's "an orthographic screen-space camera is
+sufficient for battle" is not merely plausible: effects are positioned in
+**canvas pixel coordinates**, so `efk_play(id, x, y, 0)` takes exactly the
+numbers `battler_geometry.anchor()` already returns. That is the whole
+integration seam for step 2.
+
+#### Effects must be authored at game scale, not magnified
+
+Effects are authored in world units. Under a 1-unit-per-pixel camera, an effect
+built for a 3D scene renders about 20px across and reads as a speck. Effekseer's
+`Effect::Create` takes a magnification, now exposed as
+`efk_load_effect(path, magnification)` rather than silently hardcoded.
+
+**But magnification is a workaround, not the answer.** At 8x the sample effect
+fills the frame and is visibly soft and blurry: the effect's own textures are
+linearly filtered, so scaling up yields smooth gradients that fight hand-authored
+pixel art. The §4 point about the low framebuffer resolution reconciling 3D with
+pixel art only holds when the source is authored at that resolution.
+
+**Consequence for the owner, before authoring 28 effects:** author at game scale
+(particles sized in the tens of pixels, textures small and crisp) rather than
+authoring large and scaling down, and prefer hard-edged particle textures over
+soft gradients. This is cheap to adopt now and expensive to retrofit across a
+finished effect library — which is the main reason it is written down here
+rather than discovered in step 2.
+
 ### 6.6 Why this ranks high
 
 Two properties no other item on this roadmap has:

@@ -217,13 +217,20 @@ EFK_API void efk_shutdown(void)
     g_renderer.Reset();
 }
 
-EFK_API int efk_load_effect(const char* utf8Path)
+// `magnification` scales the effect at load time. It is NOT cosmetic here:
+// effects are authored in world units, so under the screen-space orthographic
+// camera a battle scene uses (1 unit = 1 pixel at 256x240) an effect authored
+// for a 3D scene renders about 20px across and reads as a speck. Either author
+// effects at game scale or pass a magnification; this exposes the choice
+// instead of silently hardcoding 1.0.
+EFK_API int efk_load_effect(const char* utf8Path, float magnification)
 {
     g_lastError.clear();
     if (!g_manager) { g_lastError = "not initialised"; return -1; }
+    if (magnification <= 0.0f) magnification = 1.0f;
 
     std::u16string path = toU16(utf8Path);
-    auto effect = Effekseer::Effect::Create(g_manager, path.c_str());
+    auto effect = Effekseer::Effect::Create(g_manager, path.c_str(), magnification);
     if (effect == nullptr)
     {
         g_lastError = std::string("Effect::Create failed for ") + utf8Path;
