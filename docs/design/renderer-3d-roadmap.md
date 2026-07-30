@@ -139,6 +139,40 @@ the world at native window resolution.**
 **Estimated scope:** ~1,200 lines rewritten, one file, three call sites
 unchanged, zero data-schema changes, zero art changes, zero engine changes.
 
+### 4.1 Verified: what is NOT coupled to the raycaster
+
+Checked 30.07.2026, because both looked like hidden coupling that would widen
+the blast radius. Neither is.
+
+**Battle placement is independent of the projection.** Every value
+[`battler_geometry.lua`](../../presentation/battler_geometry.lua) resolves comes
+from `battle_layout.get()` (the `BATTLE_LAYOUT` table, overridable from
+`engine.json` `battleLayout`) or from `windowLayout.party` via `ui.toPx` — all
+authored screen-space pixels in the 256x240 canvas. **No file outside
+`viewport_3d.lua` references the projection constants** (`170.6667`,
+`85.3333`); they do not leak. `fallbackY = 70` resembles the raycaster's centre
+row but is a fallback *screen position*, and `viewportOverlayW/H` are overlay
+dimensions, not projection math.
+
+Battlers composite on top of whatever the backdrop is, so replacing the
+backdrop changes nothing they compute. What may want re-tuning is
+**composition** — a different FOV and real geometry change what is visible
+behind the enemy row, so `enemyY`, `enemyStartX` and `enemyInfoOffsetY` are
+authoring adjustments in the Engine editor. That is data, not code, and it
+therefore does not touch the owner-supervised battle files.
+
+**`door_transition.lua` needs no changes.** The module is a clean state machine
+of phase timing and alpha curves. The hack is entirely in its ~8-line consumer
+at [`viewport_3d.lua:760`](../../presentation/viewport_3d.lua:760), which takes
+`approachProgress()` and applies a screen-space scale about pivot (128, 72) to
+fake crossing a threshold.
+
+`approachProgress()` already returns a normalized, eased 0..1 curve — exactly
+the right input for a real camera dolly. Under §4, delete the scale at the call
+site and feed the same value to a forward camera translation. The effect the
+scale was approximating becomes the real thing once §5 supplies a modelled
+doorframe to move through.
+
 ---
 
 ## 5. Kit-piece models — geometry as a tileset variant
