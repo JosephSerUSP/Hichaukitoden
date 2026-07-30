@@ -1741,6 +1741,7 @@
             "elseCommands": [
               {
                 "cmd": "TEXT",
+                "image": "campaign_lost_hound.png",
                 "text": "A scruffy caramel stray dog with floppy ears rests by the basin."
               },
               {
@@ -5078,6 +5079,7 @@
             "elseCommands": [
               {
                 "cmd": "TEXT",
+                "image": "campaign_cerberus_seam.png",
                 "text": "A worn cord collar lies near the stone archway."
               },
               {

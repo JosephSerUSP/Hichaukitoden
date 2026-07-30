@@ -16,9 +16,19 @@ local function easeOut(p)
     return 1 - (1 - p) * (1 - p)
 end
 
+local function wrapPicText(pic)
+    local font = ui.loadFont(pic.font, pic.fontSize)
+    if font and pic.width and pic.width > 0 then
+        local _, lines = font:getWrap(pic.text, pic.width)
+        pic.wrappedText = table.concat(lines, "\n")
+    else
+        pic.wrappedText = pic.text
+    end
+end
+
 function renderer.show(spec)
     local id = assert(tonumber(spec.id), "SHOW_STRING_PICTURE requires a numeric id")
-    pictures[id] = {
+    local pic = {
         id = id,
         text = tostring(spec.text or ""),
         x = tonumber(spec.x) or 0,
@@ -39,6 +49,8 @@ function renderer.show(spec)
         reveal = spec.reveal == true,
         revealElapsed = 0,
     }
+    wrapPicText(pic)
+    pictures[id] = pic
 end
 
 function renderer.move(spec)
@@ -47,6 +59,10 @@ function renderer.move(spec)
     local target = copy(pic)
     for _, key in ipairs({ "x", "y", "opacity", "scale" }) do
         if spec[key] ~= nil then target[key] = tonumber(spec[key]) or pic[key] end
+    end
+    if spec.text ~= nil then
+        target.text = tostring(spec.text)
+        wrapPicText(target)
     end
     local duration = tonumber(spec.duration) or 0
     if duration <= 0 then
@@ -107,14 +123,15 @@ local function drawPicture(pic)
     if pic.anchor == "center" then x = x - width / 2
     elseif pic.anchor == "right" then x = x - width end
 
+    local fullText = pic.wrappedText or pic.text
     love.graphics.push("all")
     love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.translate(x, pic.y)
     love.graphics.scale(pic.scale, pic.scale)
-    local displayText = pic.reveal and ui.revealedText(pic.text, pic.revealElapsed)
-        or pic.text
+    local displayText = pic.reveal and ui.revealedText(fullText, pic.revealElapsed)
+        or fullText
     if pic.frame then
-        local _, lines = font:getWrap(pic.text, width)
+        local _, lines = font:getWrap(fullText, width)
         ui.drawPanel(-4, -4, width + 8, #lines * font:getHeight() + 8)
     end
     local c = { color[1], color[2], color[3], (color[4] or 1) * pic.opacity }
