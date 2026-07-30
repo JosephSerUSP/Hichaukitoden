@@ -294,12 +294,13 @@ renderer.getVictoryStage = function() return victoryAnim.stage end
 
 -- Dialogue text-reveal control for the input layer: a confirm press while
 -- text is still revealing completes it instead of advancing the node.
--- Compares against the pre-wrapped form when one is cached so "done"
--- means the same thing the draw path means by it.
+-- Measured against the resolved content: wrapping only ever swaps a space
+-- for a newline, so the character count -- and therefore "done" -- is the
+-- same whether or not the draw path has wrapped it yet.
 function renderer.isDialogueRevealing()
     local node = dialogueReveal.node
     if not node or node.type ~= "TEXT" then return false end
-    local content = dialogueReveal.wrapped or node.content or ""
+    local content = dialogueReveal.resolved or node.content or ""
     return revealedCount(content, dialogueReveal.elapsed) < #content
 end
 
@@ -670,20 +671,25 @@ function renderer.drawMap()
     end
 end
 
--- Character-by-character reveal for the current dialogue TEXT node's
--- content, shared by the windows-drawn dialogue scene (main.lua's v-sync
--- reads this every frame) and renderer.isDialogueRevealing/
--- finishDialogueReveal, which all key off the same dialogueReveal tracker.
-function renderer.getRevealedDialogueText(node, wrapPx)
+-- The current dialogue TEXT node's FULL content, plus the reveal clock that
+-- drives it. Deliberately NOT pre-wrapped here: this module cannot see the
+-- message window's real draw width (it shifts at runtime with the portrait)
+-- nor the {expr} substitutions applied at draw time, and a wrap computed
+-- against either guess re-flows the moment printf disagrees with it. The
+-- window's own text widget owns wrapping and slicing now; renderer owns only
+-- the clock, shared with isDialogueRevealing/finishDialogueReveal.
+function renderer.getDialogueText(node)
     if not node or node.type ~= "TEXT" then return "" end
     if dialogueReveal.node ~= node then
         dialogueReveal.node = node
         dialogueReveal.elapsed = 0
-        local content = node.content or ""
-        dialogueReveal.wrapped = wrapPx and ui.wrapText(content, wrapPx) or content
+        dialogueReveal.resolved = node.content or ""
     end
-    local content = dialogueReveal.wrapped
-    return utf8Prefix(content, revealedCount(content, dialogueReveal.elapsed))
+    return dialogueReveal.resolved
+end
+
+function renderer.dialogueRevealElapsed()
+    return dialogueReveal.elapsed
 end
 
 -- The 2x2 party grid is now a thin arrangement loop: every party member's

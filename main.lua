@@ -513,10 +513,11 @@ end
 -- v table every frame, so the windows-drawn dialogue scene (data/scenes.json
 -- "dialogue") can bind to it via ordinary formula/list content blocks.
 -- handleKeyPressed still drives activeWalker/dialogueSelectIdx directly
--- (unchanged) -- this only feeds the draw side. dialogueText re-reads the
--- reveal-in-progress substring every frame via renderer.getRevealedDialogueText
--- (same dialogueReveal tracker isDialogueRevealing/finishDialogueReveal use),
--- so the typewriter effect keeps working under the new draw path.
+-- (unchanged) -- this only feeds the draw side. dialogueText carries the FULL
+-- line and dialogueRevealElapsed the clock (renderer.getDialogueText /
+-- renderer.dialogueRevealElapsed, the same dialogueReveal tracker
+-- isDialogueRevealing/finishDialogueReveal use); the message window's text
+-- widget does the wrapping and slicing, since only it knows the real width.
 local function finishDialogueToMap()
     local function returnToMap()
         activeSession.locationArt = nil
@@ -570,21 +571,14 @@ local function syncDialogueWindowState()
         end
         v.dialogueSpeaker = speaker or ""
         v.dialogueExpression = math.max(1, math.min(5, math.floor(tonumber(node.expression) or 1)))
-        -- Wrap width mirrors the message window's own draw call: text
-        -- starts at the padded content origin (~8px in) with printf limit
-        -- w - toPx(1); wrapping to the same width means the pre-broken
-        -- lines never re-wrap at draw time.
-        local uiMod = require("presentation.ui")
-        local wrapPx
-        do
-            local sceneDef = loader.getScene("dialogue")
-            for _, wd in ipairs((sceneDef and sceneDef.windows) or {}) do
-                if wd.id == "dialogue_message" and wd.rect and tonumber(wd.rect.w) then
-                    wrapPx = uiMod.toPx(wd.rect.w - 1) - 8
-                end
-            end
-        end
-        v.dialogueText = renderer.getRevealedDialogueText(node, wrapPx)
+        -- The FULL line goes to the window; the window's text widget wraps
+        -- and slices it against its own real draw width (see the text
+        -- block's `reveal` field in engine.json). This used to re-derive
+        -- the wrap width from the static rect here, which was a tile too
+        -- wide AND blind to the portrait-driven runtime width -- so the
+        -- draw-time printf disagreed and re-flowed words mid-reveal.
+        v.dialogueText = renderer.getDialogueText(node)
+        v.dialogueRevealElapsed = renderer.dialogueRevealElapsed()
         -- Drives the animated waiting-for-input marker on the message
         -- window (waitInput formula), replacing the old "[Press SPACE]".
         v.dialogueWaiting = not renderer.isDialogueRevealing()

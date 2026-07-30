@@ -495,8 +495,17 @@ local function wrappedLineCount(chunk, limit)
     return count + 1
 end
 
-local function drawTextLines(text, env, x, y, lineSpacing, limit, align)
+-- `revealElapsed` (optional) turns this into a typewriter widget. The wrap is
+-- computed HERE and only here: after {expr} interpolation (so a substitution
+-- can't change the text's length out from under the line breaks) and against
+-- the same `limit` ui.drawString hands printf (so printf has nothing left to
+-- re-wrap). Both are why words used to hop to the next line mid-reveal.
+local function drawTextLines(text, env, x, y, lineSpacing, limit, align, revealElapsed)
     local rendered = interpolate(text, env)
+    if revealElapsed then
+        local wrapped = ui.wrapText(rendered, limit)
+        rendered = ui.utf8Prefix(wrapped, ui.revealedCount(wrapped, revealElapsed))
+    end
     local line = 0
     for chunk in (rendered .. "\n"):gmatch("(.-)\n") do
         if chunk ~= "" then
@@ -1340,7 +1349,13 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             -- explicit contentX/contentY (e.g. the name-box style small
             -- panels), not a runtime workaround.
             local padX = contentX - x
-            drawTextLines(text, env, contentX, contentY, lineSpacing, w - 2 * padX, align)
+            local revealElapsed
+            if win.reveal then
+                local ok, secs = pcall(formula.eval, win.reveal, env)
+                if ok then revealElapsed = tonumber(secs) end
+            end
+            drawTextLines(text, env, contentX, contentY, lineSpacing, w - 2 * padX,
+                align, revealElapsed)
         end
     end
 
@@ -1747,6 +1762,9 @@ function wr.drawWindowFromData(sceneData, state, ctx, opts)
                 end
             elseif block.type == "text" then
                 win.text = block.text
+                -- Optional formula yielding seconds elapsed on this text's
+                -- typewriter reveal; absent means "draw it all at once".
+                win.reveal = block.reveal
             elseif block.type == "gauge" then
                 table.insert(gauges, block)
             elseif block.type == "image" then

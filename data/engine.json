@@ -3390,7 +3390,8 @@
             "content": [
               {
                 "type": "text",
-                "text": "{v.dialogueText}"
+                "text": "{v.dialogueText}",
+                "reveal": "v.dialogueRevealElapsed"
               }
             ]
           },
