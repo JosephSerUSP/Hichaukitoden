@@ -1,3 +1,4 @@
+FLUSH = true  -- see tools/effekseer/README.md: "The z-order trap"
 -- Effekseer spike harness: does the shim load and initialise against LOVE's
 -- own GL context, render an effect, and leave LOVE's rendering intact?
 -- The last question is the one that matters -- see roadmap 6.5.2.
@@ -114,7 +115,7 @@ function love.update(dt)
     -- Auto-capture then exit, so the spike proves itself with an image
     -- instead of a window nobody is watching.
     if frame == 45 then
-        love.graphics.captureScreenshot("spike.png")
+        love.graphics.captureScreenshot(FLUSH and "spike-flush.png" or "spike-noflush.png")
     elseif frame == 50 then
         if efk then efk.efk_shutdown() end
         say("clean shutdown")
@@ -138,7 +139,30 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print("LOVE before Effekseer", 20, 90)
 
+    -- Z-ORDER PROBE: a big opaque quad drawn BEFORE the effect, overlapping
+    -- where the laser renders. The effect must appear ON TOP of it. If LOVE's
+    -- batch has not been flushed, this quad reaches the GPU *after* Effekseer
+    -- and covers it -- the bug EffekseerForLove documents.
+    -- The label goes FIRST on purpose. Drawing text between the quad and the
+    -- effect switches to the font texture, which makes LOVE flush its batch as
+    -- a side effect -- silently hiding the very bug being probed for. The
+    -- rectangle must be the last LOVE call before efk_draw.
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("z-order probe quad (effect must cover this)", 310, 180)
+    love.graphics.setColor(0.35, 0.25, 0.10, 1)
+    love.graphics.rectangle("fill", 300, 200, 460, 200)
+
     if efk and effectId >= 0 then
+        if FLUSH then
+            -- Forces LOVE to flush its pending stream draws. flushBatch is the
+            -- direct call; setColorMask is the portable fallback that makes
+            -- LOVE flush as a side effect.
+            if love.graphics.flushBatch then
+                love.graphics.flushBatch()
+            else
+                love.graphics.setColorMask(true, true, true, true)
+            end
+        end
         toBuf(viewBuf, lookAtRH(10, 5, 20, 0, 0, 0))
         toBuf(projBuf, perspectiveRH(90 / 180 * math.pi, 800 / 600, 1.0, 500.0))
         efk.efk_draw(viewBuf, projBuf)

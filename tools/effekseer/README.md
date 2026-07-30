@@ -47,6 +47,32 @@ g++ -shared -O2 -o effekseer_shim.dll efk_shim.cpp \
 being a single self-contained file. As built it depends only on `KERNEL32`,
 `msvcrt` and `OPENGL32`.
 
+## The z-order trap (found via prior art, 30.07.2026)
+
+**LOVE batches draw calls. You must flush its batch before drawing effects, or
+they render behind everything LOVE queued that frame.**
+
+```lua
+love.graphics.flushBatch()   -- present in LOVE 11.5; call before efk_draw
+efk.efk_draw(view, proj)
+```
+
+Credit where due: this came from
+[`gittup/EffekseerForLove`](https://github.com/gittup/EffekseerForLove), which
+documents it in `src/wrap/EffectManager.cpp`. That project has no
+`flushBatch` available in its target and pokes `love.graphics.setColorMask`
+instead, which forces a flush as a side effect. On 11.5 the direct call
+exists, so use it.
+
+`spike/spike-zorder-bug.png` is the failure and `spike/spike-result.png` the
+fix, from the same harness with `FLUSH` toggled.
+
+**Note on how nearly this was missed.** The first probe appeared to pass — but
+it drew a text label between the quad and the effect, and switching to the font
+texture makes LOVE flush anyway, hiding the bug. Any state change that forces a
+batch flush will mask this. When testing draw ordering, the shape under test
+must be the **last** LOVE call before `efk_draw`.
+
 ## The GL state guard
 
 `GLStateGuard` in `efk_shim.cpp` saves and restores the program, VAO, array and

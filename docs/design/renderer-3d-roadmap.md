@@ -485,6 +485,49 @@ open items are the *decisions* (missing-DLL behaviour, effects-as-asset in
 SPEC §1.2), not technical unknowns. The dependency question is now a product
 call, not an engineering gamble.
 
+### 6.5.1c Prior art: `gittup/EffekseerForLove` (reviewed 30.07.2026)
+
+Not usable as a dependency, but it paid for itself in one finding.
+
+**Why not usable:**
+
+- Pinned to **Effekseer 1.60c2** (2021). Current is 1.7x. Effects authored in a
+  modern Effekseer editor are not guaranteed to load in a 1.60 runtime — which
+  matters here, since the whole point is authoring in current tooling.
+- It is a **Lua C module** (`require('effekseer')`), not FFI, so it links
+  against the Lua C API and couples to LOVE's LuaJIT ABI. Our shim's FFI
+  approach has strictly less coupling.
+- Built with **tup**, an unusual build system, and its documented targets are
+  Linux / macOS / love.js / cross-compile-to-macOS. **No native Windows build.**
+- Last commit May 2024.
+
+**What was worth taking:**
+
+1. **The batch-flush requirement — a real bug our spike had and did not
+   notice.** LOVE batches draw calls; without flushing before the effect draw,
+   effects render *behind* everything LOVE queued that frame. Reproduced and
+   fixed: `tools/effekseer/spike/spike-zorder-bug.png` vs `spike-result.png`.
+   LOVE 11.5 exposes `love.graphics.flushBatch()` directly (EffekseerForLove
+   pokes `setColorMask` to force a flush, because its target lacks it).
+2. **A screen-space orthographic camera recipe** for step 2 — build
+   `OrthographicRH(w, h, -512, 512)`, then set `Values[3][0] = -1`, negate
+   `Values[1][1]` and set `Values[3][1] = 1` to put the origin at top-left in
+   LOVE's coordinate system. This is the non-obvious part of §6.4 and is now
+   answered rather than needing derivation.
+3. **Confirmation, not a gap, on vertex attribute arrays.** They reset every
+   `GL_VERTEX_ATTRIB_ARRAY_ENABLED` around the draw — but only under
+   `#ifdef __EMSCRIPTEN__`, because love.js does not use VAOs, so Effekseer has
+   no previous VAO to restore. On desktop, restoring the VAO binding implicitly
+   restores attribute state, which is what §6.5.1b's guard does and why it
+   passed. **The condition under which our guard would break is now known: a GL
+   path without VAOs.** If a web build is ever wanted, that is the code to port.
+
+**Method note worth keeping.** The z-order probe initially appeared to pass,
+because it drew a text label between the quad and the effect and the font
+texture switch forced a flush anyway. Any intervening state change masks this
+bug. Draw-order tests must put the shape under test immediately before the
+foreign draw call, with nothing in between.
+
 ### 6.6 Why this ranks high
 
 Two properties no other item on this roadmap has:
