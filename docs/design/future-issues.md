@@ -49,32 +49,37 @@ defaults, same output).
 
 ---
 
-## 4. `reserve`/`ritual`/`quest_log` scenes haven't fully adopted the §1.4
-context-help-bar convention
+## 4. ~~`reserve`/`ritual`/`quest_log` scenes haven't fully adopted the §1.4
+context-help-bar convention~~ FIXED (30.07.2026), pending owner-signed G3 regen
 
-`docs/SPEC.md` §1.4 describes a shared skeleton for `"draw":"windows"` menu
-scenes: a top context-help bar with formula-driven, state-keyed content, plus
-a bottom dock. It's applied to `status`/`equip`/`items`/`victory`, but:
+`reserve`'s separate `reserve_title` + `reserve_help` windows are gone,
+replaced by one top `help` window (`windowLayout.help`, no scene-owned
+title text — matching `items`/`status`, which show no persistent scene
+name either). The imperative `api.emit({type="set_text", windowId=
+"reserve_help", ...})` calls in `executeReservePopup`/`executeSwap`
+(the exact "old pattern" §1.4 replaces) are gone too, replaced by a
+`v.statusText` variable the bar's formula reads declaratively.
+`reserve_roster`'s `windowLayout` entry grew into the space the old
+bottom bar occupied (`y2 h11.5` -> `y4 h14`).
 
-- `reserve` has a separate static `reserve_title` (top, `y0 h2`) and
-  `reserve_help` (mid-screen, `y13.5`, right above the dock) instead of one
-  top bar with formula content.
-- `ritual` has only a static `ritual_title` (`y0 h2`) — no hint/context bar
-  at all.
-- `quest_log`'s `quest_help` window sits in the right position (`y0 h4`,
-  matching `windowLayout.help`) but its content is a hardcoded string
-  (`'UP/DOWN: select quest   ESC: back'`) rather than a formula keyed on
-  scene state — the exact "old pattern" §1.4 says it replaces.
+`ritual_title` keeps its per-mode text for `v.state == 1` but now branches
+on `v.state == 2`/`3` to show confirm/result hotkeys instead of a stale
+mode header during those overlays — geometry (`y0 h2`) is unchanged, so
+the replacement string had to fit one line at that width; the first
+attempt wrapped and got clipped by the 2-tile height, caught via the
+freshly-fixed screenshot harness (`lovec . screenshots`) and shortened.
 
-All three do correctly use the shared bottom `partyGrid` dock — only the top
-half is unmigrated. `game_over` has neither bar nor dock, which may be
-intentional for a terminal, non-navigable screen rather than an oversight.
+`quest_log`'s `quest_help` text is now a formula keyed on `v.questCount`,
+matching the `datalog_help` precedent, instead of always claiming
+"select quest" even against an empty list.
 
-**Fix idea:** Migrate `reserve`/`ritual` to a single top `help` window
-(reusing `data/engine.json`'s shared `windowLayout.help` entry) with
-formula-driven content per scene state; make `quest_log`'s `quest_help` text
-a formula (e.g. keyed on whether a quest is selected). Needs visual
-verification (dock pixel-fit) before landing, not a blind data edit.
+All three visually verified via `lovec . screenshots` (deterministic
+capture, no wall-clock waits, no overlap/clipping). G1/unit/G2 stay green;
+**G3 is red for `reserve` only** (`quest_log`/`ritual` are invisible to the
+trace — declarative content, not imperative window commands) — the two
+`reserve_help|set_text` lines the old imperative path emitted are gone by
+design. Per AGENTS.md this is a behavioral-change gate diff and needs an
+owner-signed `capture-ui.ps1` regen before merge, not silent regeneration.
 
 ---
 

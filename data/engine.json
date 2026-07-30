@@ -3208,18 +3208,6 @@
         }
       }
     },
-    "reserve_title": {
-      "x": 0,
-      "y": 0,
-      "width": 32,
-      "height": 2
-    },
-    "reserve_help": {
-      "x": 0.5,
-      "y": 14,
-      "width": 31,
-      "height": 3.5
-    },
     "reserve_party": {
       "x": 0,
       "y": 18,
@@ -3230,9 +3218,9 @@
     },
     "reserve_roster": {
       "x": 0,
-      "y": 2,
+      "y": 4,
       "width": 32,
-      "height": 11.5,
+      "height": 14,
       "style": "partyGrid",
       "gridColumns": 4,
       "hideMp": true

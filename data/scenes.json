@@ -1457,7 +1457,7 @@
         "content": [
           {
             "type": "text",
-            "text": "UP/DOWN: select quest   ESC: back"
+            "text": "{(v.questCount or 0) > 0 and 'UP/DOWN: select quest   ESC: back' or 'No active quests.   ESC: back'}"
           }
         ]
       },
@@ -4542,6 +4542,11 @@
         },
         {
           "cmd": "SET_VAR",
+          "name": "statusText",
+          "value": "''"
+        },
+        {
+          "cmd": "SET_VAR",
           "name": "_guard",
           "value": 0
         }
@@ -4918,34 +4923,19 @@
     },
     "scripts": {
       "setupReservePopup": "\nlocal v = ctx.v\nlocal focusArea = v.focusArea\nlocal cursorIdx = v.cursorIdx\nlocal member = (focusArea == 'party') and api.party(cursorIdx) or api.reserve(cursorIdx)\nlocal options = {}\n\nif member and member.empty then member = nil end\n\nv.popupTargetIsReserve = (focusArea == 'reserve')\nv.popupTargetIndex = cursorIdx\nv.popupMemberName = member and (member.name or \"Unknown\") or nil\nv.popupMemberRef = member\n\n-- Summoning belongs to a town ritual site. Sacrifice is disabled while its\n-- inheritance-based replacement is designed. Expedition reserve only manages\n-- creatures the player already committed to bringing below.\ntable.insert(options, {name = \"Swap\"})\nif member and api.inDungeon() then\n    table.insert(options, {name = \"Dismiss\"})\nend\nif member and api.canPromote(v.popupTargetIsReserve, v.popupTargetIndex) then\n    table.insert(options, {name = \"Promote\"})\nend\ntable.insert(options, {name = \"Cancel\"})\n\nv.popupCount = #options\nv.popupOptions = options\n",
-      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Select a target to swap with.  ESC: cancel\" })\nelseif opt == \"Dismiss\" then\n    local member, result = api.dismissToStorage(v.popupTargetIsReserve, v.popupTargetIndex)\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    if member then\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = member.name .. \" returned to town storage (slot \" .. result .. \").\" })\n    else\n        api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = result or \"Dismissal failed.\" })\n    end\nelseif opt == \"Promote\" then\n    v.ritualPush = \"promote\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nend\n",
-      "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    api.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"Cannot leave the party empty!\" })\n    v.mode = 1\n    return\nend\nv.mode = 1\napi.emit({ type = \"set_text\", windowId = \"reserve_help\", text = \"{config.terms.help}\" })\n"
+      "executeReservePopup": "\nlocal v = ctx.v\nlocal opt = v.popupOptions[v.popupIdx].name\nif opt == \"Cancel\" then\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Swap\" then\n    v.mode = 4\n    v.swapSourceIsReserve = v.popupTargetIsReserve\n    v.swapSourceIndex = v.popupTargetIndex\n    v.swapSourceFocus = v.focusArea\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nelseif opt == \"Dismiss\" then\n    local member, result = api.dismissToStorage(v.popupTargetIsReserve, v.popupTargetIndex)\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\n    if member then\n        v.statusText = member.name .. \" returned to town storage (slot \" .. result .. \").\"\n    else\n        v.statusText = result or \"Dismissal failed.\"\n    end\nelseif opt == \"Promote\" then\n    v.ritualPush = \"promote\"\n    v.mode = 1\n    api.emit({ type = \"close_window\", windowId = \"reserve_popup\" })\nend\n",
+      "executeSwap": "\nlocal v = ctx.v\napi.swap(v.swapSourceIndex, v.swapSourceIsReserve, v.cursorIdx, v.focusArea == 'reserve')\nif api.partyCount() <= 0 then\n    api.swap(v.cursorIdx, v.focusArea == 'reserve', v.swapSourceIndex, v.swapSourceIsReserve)\n    v.statusText = \"Cannot leave the party empty!\"\n    v.mode = 1\n    return\nend\nv.mode = 1\nv.statusText = \"\"\n"
     },
     "overlay": true,
     "draw": "windows",
     "backdrop": "map",
     "windows": [
       {
-        "id": "reserve_title",
+        "id": "help",
         "content": [
           {
             "type": "text",
-            "text": "{config.terms.title}"
-          }
-        ]
-      },
-      {
-        "id": "reserve_help",
-        "rect": {
-          "x": 0,
-          "y": 13.5,
-          "w": 32,
-          "h": 4.5
-        },
-        "content": [
-          {
-            "type": "text",
-            "text": "{config.terms.help}"
+            "text": "{v.mode == 4 and 'Select a target to swap with.  ESC: cancel' or ((v.statusText and v.statusText ~= '') and v.statusText or config.terms.help)}"
           }
         ]
       },
@@ -5409,7 +5399,7 @@
         "content": [
           {
             "type": "text",
-            "text": "{v.titleText}"
+            "text": "{v.state == 2 and 'ENTER: confirm   ESC: cancel' or (v.state == 3 and 'ENTER: close' or v.titleText)}"
           }
         ]
       },
