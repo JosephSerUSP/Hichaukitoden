@@ -330,8 +330,8 @@ owner-supervised files.
 2. **GL state pollution.** Effekseer's GL renderer issues its own OpenGL calls;
    LOVE caches GL state and assumes nothing else touches it. Interleaving
    without disciplined save/restore produces corruption that is genuinely nasty
-   to debug. This is the classic failure mode for embedding a foreign renderer
-   in LOVE and the most likely place to lose a week.
+   to debug. This was the classic failure mode and the most likely place to
+   lose a week. **Resolved 30.07.2026 — see §6.5.1b.**
 3. **Determinism** — see §3.1.
 4. **Missing-DLL behaviour.** Gates run headless. "Fail loud, never silently"
    argues for a hard error; practicality argues for effects-disabled-but-
@@ -444,6 +444,46 @@ link it into a single DLL for LuaJIT FFI.
 
 **Remaining scope note:** the Editor, Viewer, Material tooling and the
 DX/Vulkan/Metal renderers are all irrelevant and stay switched off.
+
+### 6.5.1b Spike complete (30.07.2026): it runs inside LOVE, and GL state holds
+
+The shim is written and working. See
+[`tools/effekseer/`](../../tools/effekseer/) for the source, the LOVE harness
+and the captured proof frame.
+
+**Result: every question step 1 existed to answer is answered, favourably.**
+
+- `efk_shim.cpp` — 14 exported `extern "C"` functions, ints and floats only,
+  every `RefPtr`/vtable sealed C++-side. The 15-25 estimate in §6.5.1 held.
+- Built as a **single self-contained 6.4MB DLL** depending only on `KERNEL32`,
+  `msvcrt` and `OPENGL32`. (`-static` is required; without it the DLL drags in
+  `libwinpthread-1.dll` and stops being one file.)
+- `ffi.load` succeeds, `efk_init` succeeds **against LOVE's own GL context**,
+  an effect loads and plays, and 116 instances render inside a normal
+  `love.draw`.
+- Clean shutdown, no crash on exit.
+
+**GL state — the dominant remaining risk — holds.** A `GLStateGuard` around
+each draw saves/restores program, VAO, array + element buffer bindings, active
+texture unit, 2D texture binding, blend/depth-test/cull-face enables and the
+depth write mask. `glGetIntegerv` is GL 1.1 and links directly; the setters are
+GL 2.0+ and resolve at runtime through `wglGetProcAddress`.
+
+This was tested harder than "do simple shapes still draw", because that proves
+almost nothing. The harness runs a **custom shader, a scissor, an additive
+blend mode and a render-to-canvas** across the effect draw — the states LOVE
+actually caches. All render correctly afterwards.
+
+**Caveat, honestly held:** this is one effect in a simple scene. It is strong
+evidence the approach is sound, not proof the guard is complete. The saved set
+is the thing to extend first if LOVE ever renders wrongly *after* an effect —
+and step 2 should add a G5 frame covering an effect, so a regression here is
+caught by a gate rather than by eye.
+
+**Revised risk ranking for §6.5:** with 1 and 2 both resolved, the remaining
+open items are the *decisions* (missing-DLL behaviour, effects-as-asset in
+SPEC §1.2), not technical unknowns. The dependency question is now a product
+call, not an engineering gamble.
 
 ### 6.6 Why this ranks high
 

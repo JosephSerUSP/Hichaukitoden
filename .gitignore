@@ -26,3 +26,6 @@ __pycache__/
 # written next to their references for eyeballing. Disposable -- the
 # references in tools/golden/screens/ are the tracked artifact.
 tools/golden/screens-actual/
+
+# Effekseer shim build artifact (6.4MB; rebuild per tools/effekseer/README.md)
+tools/effekseer/**/*.dll
