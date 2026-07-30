@@ -1898,6 +1898,38 @@ function wr.draw(state, sceneData, ctx)
     end
 end
 
+-- Screenshot/export seam: mark every currently materialized window, plus any
+-- declarative definitions supplied by the caller, as already through its open
+-- animation. Window animations use love.timer.getTime() in live play, which is
+-- correct there but means a headless exporter that renders immediately sees
+-- only the first 16px frame (or no useful content at all). The next draw
+-- consumes _skipOpenAnim and renders the resting geometry without sleeping.
+--
+-- `store` may be a scene state or the persistent dock store. Runtime winState
+-- windows are handled too, so the exporter does not need to know which of the
+-- two generic window paths a scene uses.
+function wr.finishAnimationsForCapture(store, windowDefs)
+    if type(store) ~= "table" then return end
+
+    store._dataWins = store._dataWins or {}
+    for _, winDef in ipairs(windowDefs or {}) do
+        if winDef.id and not store._dataWins[winDef.id] then
+            store._dataWins[winDef.id] = {}
+        end
+    end
+
+    local function finish(win)
+        if type(win) ~= "table" then return end
+        openClocks[win] = nil
+        closeClocks[win] = nil
+        win._closing = nil
+        win._skipOpenAnim = true
+    end
+
+    for _, win in pairs(store._dataWins) do finish(win) end
+    for _, win in pairs(store.winState or {}) do finish(win) end
+end
+
 -- ---------------------------------------------------------------------------
 -- E5: materialize the current window state as plain data for the headless
 -- scene preview (`lovec . preview-scene <id>`). Same resolution code paths
