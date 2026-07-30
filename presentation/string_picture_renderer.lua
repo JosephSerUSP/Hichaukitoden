@@ -128,7 +128,8 @@ local function drawPicture(pic)
     love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.translate(x, pic.y)
     love.graphics.scale(pic.scale, pic.scale)
-    local displayText = pic.reveal and ui.revealedText(fullText, pic.revealElapsed)
+    local shouldPad = (pic.align == "center" or pic.align == "right")
+    local displayText = pic.reveal and ui.revealedText(fullText, pic.revealElapsed, shouldPad)
         or fullText
     if pic.frame then
         local _, lines = font:getWrap(fullText, width)

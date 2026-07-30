@@ -826,9 +826,14 @@ function ui.utf8Prefix(text, byteCount)
     return text:sub(1, byteCount)
 end
 
-function ui.revealedText(text, elapsed)
+function ui.revealedText(text, elapsed, padToLength)
     text = tostring(text or "")
-    return ui.utf8Prefix(text, ui.revealedCount(text, elapsed))
+    local revCount = ui.revealedCount(text, elapsed)
+    local prefix = ui.utf8Prefix(text, revCount)
+    if padToLength and #prefix < #text then
+        return prefix .. string.rep(" ", #text - #prefix)
+    end
+    return prefix
 end
 
 function ui.measureText(text)
