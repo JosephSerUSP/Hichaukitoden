@@ -82,5 +82,44 @@ check(damage > healing,
     string.format("Saban's ordinary Darting Peck (%d) exceeds a level-3 Mandrake heal (%d)",
         damage, healing))
 
+-- Additional early game mechanics & balance checks
+check(peck.element == nil and peck.icon == 6, "Darting Peck is non-elemental with icon 6")
+
+local hasWindBlade = false
+for _, sk in ipairs(saban.actorData.skills or {}) do
+    if sk == "windBlade" then hasWindBlade = true end
+end
+check(hasWindBlade, "Saban carries Wind Blade for Green elemental attacks")
+
+local weakened = loader.getState("weakened")
+check(weakened and weakened.duration == 3, "Weakened status duration is 3 rounds (not infinite)")
+
+local sawBlueEnemy = false
+for _, entry in ipairs(floor1.encounters) do
+    local enemyActor = loader.getActor(entry.actor)
+    for _, elem in ipairs(enemyActor.elements or {}) do
+        if elem == "Blue" then sawBlueEnemy = true end
+    end
+end
+check(sawBlueEnemy, "Floor 1 contains Blue elemental enemies for Saban's Green elemental advantage")
+
+-- Verify map navigation MP drain formula evaluation
+local flow = require("engine.flow")
+sess.party = { saban }
+sess.mp = 50
+sess.maxMp = 50
+sess.mapSafe = false
+flow.run("exploration.step", { session = sess, party = sess.party })
+-- Verify Cerberus actor adjustments & sidequest registration
+local cerberus = loader.getActor(32)
+check(cerberus and cerberus.elements and cerberus.elements[1] == "Black" and cerberus.elements[2] == "White",
+    "Cerberus is aligned to Black and White elements")
+check(cerberus and cerberus.baseParams and cerberus.baseParams.mpd == 6,
+    "Cerberus carries a heavy traversal MPD of 6")
+
+local lostHoundQuest = loader.getQuest and loader.getQuest("lost_hound")
+check(lostHoundQuest and lostHoundQuest.name == "The Stray Hound",
+    "The Stray Hound sidequest is registered in quests.json")
+
 print(string.format("=== Early-game Balance Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then error(failed .. " early-game balance test(s) failed") end

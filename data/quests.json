@@ -105,5 +105,24 @@
       "gold": 250,
       "xp": 500
     }
+  },
+  "lost_hound": {
+    "name": "The Stray Hound",
+    "giver": "Scholar",
+    "portrait": "NPC_Scholar",
+    "summary": "Euler the caramel hound has gone missing in St. Maria.",
+    "description": "The Scholar's caramel stray dog Euler has slipped away from town. He believes Euler may have followed your trail down into the upper Labyrinth.",
+    "objectives": [
+      "Greet Euler by the water basin in St. Maria.",
+      "Look for Euler in the upper Labyrinth.",
+      "Report back to the Scholar in St. Maria."
+    ],
+    "requirements": {
+      "items": []
+    },
+    "rewards": {
+      "gold": 60,
+      "xp": 150
+    }
   }
 }

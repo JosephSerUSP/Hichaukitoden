@@ -3534,13 +3534,13 @@
       "Cão",
       "Guardião"
     ],
-    "flavor": "A three-headed guardian recruited long before most summoners can comfortably afford it. Its early power is balanced by poor growth and a hungry MP burden.",
+    "flavor": "A dark gray hound wrapped in a radiant blue flame mane, its serpentine tail sweeping the stone. Recruited long before most summoners can comfortably afford it, its immense power comes with a hungry MP burden.",
     "level": 1,
     "role": "None",
     "smallBattler": "cerberus",
     "elements": [
-      "Red",
-      "Black"
+      "Black",
+      "White"
     ],
     "skills": [
       "ember",
@@ -5552,7 +5552,7 @@
     ],
     "skills": [
       "soothingMote",
-      "fleetStep"
+      "windBlade"
     ],
     "passives": [
       "eightLegged"
@@ -6296,8 +6296,8 @@
       "Green"
     ],
     "skills": [
-      "fleetStep",
-      "dartingPeck"
+      "dartingPeck",
+      "windBlade"
     ],
     "passives": [
       "wayfarer"
@@ -6662,6 +6662,7 @@
     "skills": [
       "attack",
       "defend",
+      "dartingPeck",
       "petrifyingGaze",
       "assassinate"
     ],

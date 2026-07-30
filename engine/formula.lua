@@ -255,7 +255,8 @@ function formula.makeContext(opts, session)
     for _, key in ipairs({ "a", "b", "target", "enemy", "ally" }) do
         if opts[key] then ctx[key] = formula.battlerView(opts[key], session) end
     end
-    if opts.party then ctx.party = formula.groupView(opts.party, session) end
+    local partyList = opts.party or (session and session.party)
+    if partyList then ctx.party = formula.groupView(partyList, session) end
     if opts.enemies then ctx.enemies = formula.groupView(opts.enemies, session) end
     if session then
         ctx.session = formula.sessionView(session)

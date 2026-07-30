@@ -1413,7 +1413,7 @@ handleKeyPressed = function(key)
             -- exploration.step flow, so a new per-step trait needs no host
             -- change here. Runs before event/encounter resolution and on every
             -- map, safe or not.
-            flow.run("exploration.step", { session = activeSession })
+            flow.run("exploration.step", { session = activeSession, party = activeSession.party })
             local triggered = checkStepEvents()
             if not triggered and not isSafeMap() then
                 for _, ev in ipairs(flow.run("battle.encounter_check", { session = activeSession })) do

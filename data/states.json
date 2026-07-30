@@ -79,7 +79,7 @@
     ],
     "name": "Weakened",
     "icon": 24,
-    "duration": 9999,
+    "duration": 3,
     "traits": [
       {
         "code": "PARAM_RATE",

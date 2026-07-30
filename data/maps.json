@@ -1718,6 +1718,122 @@
             "cmd": "CONDITIONAL_BRANCH"
           }
         ]
+      },
+      {
+        "id": 14,
+        "x": 10,
+        "y": 14,
+        "name": "Euler",
+        "label": "Euler",
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC08.png",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed",
+        "commands": [
+          {
+            "condition": "flag:dungeon_entered",
+            "commands": [
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "cmd": "TEXT",
+                "text": "A scruffy caramel stray dog with floppy ears rests by the basin."
+              },
+              {
+                "cmd": "TEXT",
+                "text": "It sniffs Saban's bridle, wags its tail, and leans its warm weight against your knee."
+              },
+              {
+                "cmd": "SET_FLAG",
+                "flag": "greeted_euler",
+                "value": true
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "x": 12,
+        "y": 14,
+        "name": "Scholar",
+        "label": "Scholar Alchemist",
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC05.png",
+        "transparent": false,
+        "priority": "same",
+        "spawn": "Fixed",
+        "commands": [
+          {
+            "condition": "flag:found_cerberus",
+            "commands": [
+              {
+                "condition": "questStatus:lost_hound:completed",
+                "commands": [
+                  {
+                    "cmd": "TEXT",
+                    "text": "The Scholar nods quietly. \"At least I know he found his place in the dark. Thank you for telling me.\""
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "cmd": "TEXT",
+                    "text": "You tell the Scholar about the blue-flamed dark hound down on Floor 2, and the scent of recognition in its eyes."
+                  },
+                  {
+                    "cmd": "TEXT",
+                    "text": "The Scholar pauses, looking down at his unlit pipe. \"So he's still walking... and still keeping watch. Take care of him out there.\""
+                  },
+                  {
+                    "cmd": "QUEST_COMPLETE",
+                    "questId": "lost_hound"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              }
+            ],
+            "elseCommands": [
+              {
+                "condition": "flag:dungeon_entered",
+                "commands": [
+                  {
+                    "cmd": "TEXT",
+                    "text": "The Scholar looks around the empty basin with an unlit pipe. \"Slipped away while I was boiling root tea. Have you seen him around the square?\""
+                  },
+                  {
+                    "cmd": "QUEST_OFFER",
+                    "questId": "lost_hound"
+                  }
+                ],
+                "elseCommands": [
+                  {
+                    "condition": "flag:greeted_euler",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "The Scholar sees Euler leaning against you. \"Euler doesn't usually move for travellers. Must be the rain on your coat... or the smell of mountain soil.\""
+                      }
+                    ],
+                    "elseCommands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "\"Euler doesn't usually move for travellers. Must be the rain on your coat... or the smell of mountain soil.\""
+                      }
+                    ],
+                    "cmd": "CONDITIONAL_BRANCH"
+                  }
+                ],
+                "cmd": "CONDITIONAL_BRANCH"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [],
@@ -4376,6 +4492,12 @@
         "weight": 3,
         "levelMin": 2,
         "levelMax": 3
+      },
+      {
+        "actor": 23,
+        "weight": 4,
+        "levelMin": 1,
+        "levelMax": 3
       }
     ],
     "encounterTroop": "floor_1_wandering",
@@ -4930,6 +5052,84 @@
             "cmd": "CONDITIONAL_BRANCH"
           }
         ]
+      },
+      {
+        "id": 9,
+        "name": "Contract Seam",
+        "label": "Contract Seam",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_summoner_contract.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.9,
+          0.5,
+          0.2
+        ],
+        "commands": [
+          {
+            "condition": "flag:found_cerberus",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "The quiet seam retains a trace of faint blue warmth on the stone. The contract here has already been sealed."
+              }
+            ],
+            "elseCommands": [
+              {
+                "cmd": "TEXT",
+                "text": "A worn cord collar lies near the stone archway."
+              },
+              {
+                "cmd": "TEXT",
+                "text": "Beyond it in the shadow stands a majestic dark gray hound wrapped in a radiant blue flame mane, its serpentine tail sweeping the stone."
+              },
+              {
+                "cmd": "TEXT",
+                "text": "The eyes of the beast soften with familiar recognition of your coat and scent."
+              },
+              {
+                "cmd": "CHOICE",
+                "options": [
+                  {
+                    "label": "Offer contract to Cerberus",
+                    "commands": [
+                      {
+                        "cmd": "RECRUIT_ACTOR",
+                        "actorId": 32,
+                        "level": 1
+                      },
+                      {
+                        "cmd": "SET_FLAG",
+                        "flag": "found_cerberus",
+                        "value": true
+                      },
+                      {
+                        "cmd": "SET_FLAG",
+                        "flag": "first_recruit_complete",
+                        "value": true
+                      },
+                      {
+                        "cmd": "TEXT",
+                        "text": "The blue flame flares gently. Cerberus steps forward and seals the dual Black and White contract into your parchment."
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave it space for now",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "The blue-flamed hound watches you quietly as you step back."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
       }
     ],
     "treasures": [
@@ -5100,6 +5300,82 @@
                   }
                 ],
                 "cmd": "CHOICE"
+              }
+            ],
+            "cmd": "CONDITIONAL_BRANCH"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Red Dragon Boss",
+        "label": "Red Dragon Guardian",
+        "spawn": "Random",
+        "sprite": "assets/sprites/dungeon_summoner_contract.png",
+        "trigger": "bump",
+        "wallEvent": true,
+        "minimapColor": [
+          0.95,
+          0.25,
+          0.15
+        ],
+        "commands": [
+          {
+            "condition": "flag:defeated_red_dragon",
+            "commands": [
+              {
+                "cmd": "TEXT",
+                "text": "Scorched scales and embers lie cooling near the archway."
+              },
+              {
+                "cmd": "ERASE_EVENT"
+              }
+            ],
+            "elseCommands": [
+              {
+                "cmd": "TEXT",
+                "text": "A towering Red Dragon guards the descent, heat wafting from its crimson scales."
+              },
+              {
+                "cmd": "TEXT",
+                "text": "Saban bristles in fear as the dragon's fiery gaze falls upon your party!"
+              },
+              {
+                "cmd": "CHOICE",
+                "options": [
+                  {
+                    "label": "Engage the Red Dragon!",
+                    "commands": [
+                      {
+                        "cmd": "BATTLE",
+                        "troop": "boss_red_dragon",
+                        "onVictory": [
+                          {
+                            "cmd": "SET_FLAG",
+                            "flag": "defeated_red_dragon",
+                            "value": true
+                          },
+                          {
+                            "cmd": "TEXT",
+                            "text": "With a final roaring collapse, the Red Dragon falls! The archway to the deeper vault is now clear."
+                          },
+                          {
+                            "cmd": "ERASE_EVENT"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Fall back and prepare.",
+                    "commands": [
+                      {
+                        "cmd": "TEXT",
+                        "text": "You pull Saban back out of the dragon's reach."
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "cmd": "CONDITIONAL_BRANCH"

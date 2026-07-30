@@ -149,6 +149,61 @@
           {
             "cmd": "TICK_SAVOR",
             "target": "ally"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "weakened"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "defending"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "blind"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "silence"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "poison"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "berserk"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "provoke"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "magicGuard"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "sleep"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "petrify"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "charm"
           }
         ]
       }
@@ -232,6 +287,61 @@
             "target": "ally",
             "field": "battles",
             "amount": "1"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "weakened"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "defending"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "blind"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "silence"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "poison"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "berserk"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "provoke"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "magicGuard"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "sleep"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "petrify"
+          },
+          {
+            "cmd": "REMOVE_STATE",
+            "target": "ally",
+            "state": "charm"
           }
         ]
       }

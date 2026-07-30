@@ -169,5 +169,16 @@
         "level": 2
       }
     ]
+  },
+  "boss_red_dragon": {
+    "id": "boss_red_dragon",
+    "name": "Boss: Red Dragon",
+    "description": "The Strata 1 climax boss: Red Dragon (Actor 35) guarding the passage down to Strata 2.",
+    "members": [
+      {
+        "actor": 35,
+        "level": 5
+      }
+    ]
   }
 }
