@@ -325,9 +325,8 @@ owner-supervised files.
    runtime is C++; LOVE's LuaJIT FFI means the Lua side needs no build step,
    but a DLL must be compiled. Today the editor is explicitly "no build step"
    and everything runs from a LOVE binary. This changes distribution and
-   affects whether the gates run on a clean machine. **Verify Effekseer's
-   current stable C API surface before anything else** — that single fact
-   determines whether this is a week or a month.
+   affects whether the gates run on a clean machine. **Resolved 30.07.2026 —
+   see §6.5.1.**
 2. **GL state pollution.** Effekseer's GL renderer issues its own OpenGL calls;
    LOVE caches GL state and assumes nothing else touches it. Interleaving
    without disciplined save/restore produces corruption that is genuinely nasty
@@ -337,6 +336,61 @@ owner-supervised files.
 4. **Missing-DLL behaviour.** Gates run headless. "Fail loud, never silently"
    argues for a hard error; practicality argues for effects-disabled-but-
    playable. **Decide once, write it down.**
+
+### 6.5.1 Spike finding (30.07.2026): there is no C API — a shim is required
+
+Checked against a shallow clone of the official
+`github.com/effekseer/Effekseer` repository.
+
+**Finding: `extern "C"` appears nowhere in `Dev/Cpp/Effekseer` or
+`Dev/Cpp/EffekseerRendererGL`.** The runtime is C++-only and idiomatically so:
+`Manager::Create()` returns a `ManagerRef` (an intrusive smart pointer; 117
+`RefPtr<` uses in the core alone), and the API is delivered through
+pure-virtual interfaces. **LuaJIT FFI cannot bind this directly** — FFI speaks
+C ABI, not C++ vtables, name mangling or smart pointers.
+
+**This is not fatal, because the usable surface is handle-based.**
+`Effekseer.Base.Pre.h:106` declares `typedef int Handle`, and the calls that
+matter reduce to plain scalars:
+
+```
+Handle Play(const EffectRef&, float x, float y, float z)
+void   Update(float deltaFrame)
+void   UpdateHandle(Handle, float deltaFrame)
+```
+
+So a C shim's FFI surface is **ints and floats**; every RefPtr, vtable and
+template stays sealed inside the shim. Estimated **15-25 exported functions**:
+create/destroy manager and renderer, load/release effect, play/stop/exists,
+update, draw, set view and projection matrices, set a handle's transform.
+
+**This is the vendor's own pattern for non-C++ hosts** — EffekseerForUnity
+wraps the same runtime in an `extern "C"` layer for P/Invoke. Writing one is
+the expected integration path, not a workaround.
+
+**Revised cost:** the shim is small and mechanical. It does not change the
+week-vs-month question the way a missing API would have; risk §6.5.2 (GL state)
+is now the dominant unknown.
+
+**Corroborated while checking:** `EffekseerRendererGL` issues its own GL state
+calls (`glUseProgram`, `glBindBuffer`, VAO binds) directly in its `.cpp` files.
+Risk §6.5.2 is real and observed, not theoretical.
+
+**Practical notes for whoever builds it:**
+
+- Clone with `git config core.longpaths true` **and** a sparse checkout of
+  `Dev/Cpp`. A plain clone fails on Windows `MAX_PATH` inside
+  `Dev/Editor/EffekseerCoreGUI/IO/...`. Sparse `Dev/Cpp` is ~54MB.
+- The needed targets are the `Effekseer` core and `EffekseerRendererGL`
+  static libraries, plus the shim; the Editor, Viewer, Material tooling and
+  the DX/Vulkan/Metal renderers are all irrelevant.
+- **Blocked here on toolchain, not on Effekseer.** The dev machine has no C++
+  compiler: VS2022 Community lacks the "Desktop development with C++"
+  workload, and VS2019's `VC/Tools/MSVC/14.29.30133` is a 4KB stub containing
+  only `Auxiliary`. No clang, no MSYS2/MinGW (Git-for-Windows' bundled mingw
+  is runtime-only). See `userPerform/README.md`.
+- A MinGW-w64 build is acceptable: LuaJIT FFI loads any DLL with C linkage, so
+  the shim does not have to be MSVC-built. That is the much smaller install.
 
 ### 6.6 Why this ranks high
 
@@ -453,10 +507,15 @@ has value outside this project (§6.6).
 
 ## 10. Open decisions for the owner
 
-1. **Effekseer C API surface** — the go/no-go fact. Resolve in step 1.
-2. **Missing-DLL behaviour** — hard error or degrade? (§6.5.4)
-3. **Texel density standard** for models vs. the 64px atlas (§5.4)
-4. **SPEC §1.2 amendment** recording effects-as-asset (§6.2)
+1. ~~**Effekseer C API surface** — the go/no-go fact.~~ **Resolved 30.07.2026
+   (§6.5.1): no C API exists; a ~15-25 function `extern "C"` shim is required,
+   which is the vendor's own pattern for non-C++ hosts. Not a blocker.**
+2. **Install a C++ toolchain** — now the actual blocker on step 1. Owner
+   action; see `userPerform/README.md`. MinGW-w64 is sufficient and is the
+   smaller install.
+3. **Missing-DLL behaviour** — hard error or degrade? (§6.5.4)
+4. **Texel density standard** for models vs. the 64px atlas (§5.4)
+5. **SPEC §1.2 amendment** recording effects-as-asset (§6.2)
 
 ---
 

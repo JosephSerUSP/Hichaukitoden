@@ -60,6 +60,33 @@ the console output G1/G2 need). If your path differs, edit the `.bat`s.
 
 <!-- I append dated entries here as work lands. -->
 
+### 2026-07-30 — Install a C++ toolchain (blocks the Effekseer spike)
+
+The Effekseer spike (`docs/design/renderer-3d-roadmap.md` step 1) is blocked:
+**this machine has no C++ compiler.** VS2022 Community lacks the "Desktop
+development with C++" workload, VS2019's `VC/Tools/MSVC/14.29.30133` is a 4KB
+stub with only `Auxiliary`, and there is no clang or MSYS2/MinGW (the mingw
+that ships inside Git for Windows is runtime-only, no `gcc`).
+
+The go/no-go question this spike existed to answer is **already resolved** —
+Effekseer has no C API, so a small `extern "C"` shim is required, which is what
+EffekseerForUnity does too. See roadmap §6.5.1. Nothing about that needed a
+compiler. The toolchain is only needed to actually build and run the thing.
+
+**Pick one** (either works — LuaJIT FFI loads any DLL with C linkage, so the
+shim does not have to be MSVC-built):
+
+- **MinGW-w64 via MSYS2** — much smaller, no admin needed. https://www.msys2.org
+  then `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake`
+- **MSVC** — open the Visual Studio Installer, Modify, tick **Desktop
+  development with C++**. Several GB.
+
+Also needed either way: **CMake** (bundled with the MSVC workload; via pacman
+above for MSYS2).
+
+Tell me which you installed and I'll take the spike from there. Nothing to run
+or verify yet — this entry is purely the install.
+
 ### 2026-07-13 — Corruption repair (merged)
 Ran G1/G2/G3 after the NUL-byte + truncation fixes to `main.lua`,
 `engine/scenes/battle.lua`, `engine/scene_host.lua`. — done by José.
