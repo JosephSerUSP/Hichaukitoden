@@ -1306,9 +1306,9 @@ handleKeyPressed = function(key)
                 activeSession.transitionDir = "forward"
             else
                 local _, tx, ty = exploration.getFrontTile(activeSession)
-                local doorEvent = eventAtMapCell(tx, ty)
-                if doorEvent and doorEvent.door and doorEvent.trigger == "bump"
-                    and enterDoorEvent(doorEvent) then
+                local wallEvent = eventAtMapCell(tx, ty)
+                if wallEvent and wallEvent.wallEvent and wallEvent.trigger == "bump"
+                    and enterDoorEvent(wallEvent) then
                     activeSession.bumpCooldowns = {}
                     return
                 end

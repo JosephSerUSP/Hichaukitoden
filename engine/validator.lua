@@ -2304,6 +2304,11 @@ elseif paramDef.type == "script" then
                     check(ok and ferr == nil, sceneDesc .. " config." .. key .. " failed to compile: " .. tostring(ferr or ""))
                 end
             end
+            if scene.id == "map" then
+                local fieldCommands = (scene.config or {}).fieldCommands
+                check(type(fieldCommands) == "table" and #fieldCommands <= 5,
+                    sceneDesc .. " config.fieldCommands must contain at most five main-menu commands")
+            end
 
             -- Scene-local named scripts (SCRIPT ref targets) must be strings
             -- with valid Lua syntax.

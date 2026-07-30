@@ -279,6 +279,12 @@ function renderer.update(dt)
         end
         if allDone then
             victoryAnim.stage = 2
+            -- Publish completion back onto the scene state. Reward flow is
+            -- data-authored, so its transition script must be able to observe
+            -- the completed drain without querying presentation-private state.
+            if victoryAnim.sceneState then
+                victoryAnim.sceneState.victoryStage = 2
+            end
         end
     end
 end
@@ -974,6 +980,7 @@ end
 -- only while v.combatState == "victory" (window `visible` formula).
 function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v, x, y, w, h)
     if not victoryInfo then return end
+    victoryAnim.sceneState = v
     if victoryAnim.source ~= victoryInfo then
         victoryAnim.source = victoryInfo
         victoryAnim.stage = 0
@@ -1012,7 +1019,7 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v, 
     local drainGold = math.floor((victoryAnim.displayedGoldDrain or victoryInfo.gold or 0) + 0.5)
     local partyGoldPreview = math.floor((victoryAnim.displayedPartyGold or victoryAnim.preGold or 0) + 0.5)
     if v then
-        v.victorySpoilsText = "Party Gold\n" .. partyGoldPreview
+        v.victorySpoilsText = tostring(partyGoldPreview) .. "\\c[6]G\\c[0]"
     end
 
     if phase == "spoils" then

@@ -3086,19 +3086,6 @@
       "portraitW": 7.33,
       "portraitH": 9
     },
-    "map_command": {
-      "x": 0,
-      "y": 16,
-      "width": 32,
-      "height": 2.5,
-      "style": "command",
-      "title": null,
-      "anim": {
-        "open": {
-          "duration": 0.18
-        }
-      }
-    },
     "map_member_popup": {
       "x": 10,
       "y": 9,
@@ -3117,7 +3104,20 @@
       "x": 10,
       "y": 9,
       "width": 12,
-      "height": 5,
+      "height": 4,
+      "style": "list",
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.15
+        }
+      }
+    },
+    "map_party_popup": {
+      "x": 10,
+      "y": 8,
+      "width": 12,
+      "height": 6,
       "style": "list",
       "title": null,
       "anim": {

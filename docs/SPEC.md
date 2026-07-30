@@ -242,6 +242,12 @@ round-trips them. The `datalog` scene is an ordinary windows-drawn scene whose
 content, discovery triggers, and menu behavior in the same data/event surfaces
 as the rest of the engine.
 
+The field main menu uses the battle command console's shared geometry and may
+author no more than five top-level commands. Its current four commands are
+Items, Party, Data, and Options. Party opens View, Reserve, Quests, and Notes;
+Notes is the player-facing name for the `datalog` scene. Data contains Save and
+Load.
+
 ### 1.5 Extensibility (round-wide rule since o7, keep it)
 
 Every schema tolerates unknown future fields: readers ignore keys they
