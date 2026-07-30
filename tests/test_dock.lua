@@ -17,6 +17,7 @@ package.path = package.path .. ";./?.lua;./engine/?.lua"
 local loader = require("data.loader")
 local sessionModule = require("engine.session")
 local dock = require("presentation.dock")
+local windowRenderer = require("presentation.window_renderer")
 
 print("[TEST] Starting dock tests...")
 
@@ -171,6 +172,22 @@ dock.reset()
 local bogus = { id = "bogus", config = { dock = { variant = "no_such_variant" } } }
 local ok = pcall(dock.draw, { v = {} }, bogus, ctx)
 check(not ok, "an undeclared dock variant raises instead of silently drawing nothing")
+
+-- Headless captures cannot wait for love.timer-backed open animations. The
+-- exporter seam must materialize declarative windows and mark both them and
+-- runtime winState windows to render at their resting geometry on next draw.
+local captureStore = {
+    _dataWins = {},
+    winState = { runtime = {} },
+}
+windowRenderer.finishAnimationsForCapture(captureStore, {
+    { id = "declarative" },
+})
+check(captureStore._dataWins.declarative
+        and captureStore._dataWins.declarative._skipOpenAnim == true,
+    "capture settling materializes and finishes declarative windows")
+check(captureStore.winState.runtime._skipOpenAnim == true,
+    "capture settling finishes runtime windows")
 
 print("=== Dock Tests: " .. passed .. " passed, " .. failed .. " failed ===")
 if failed > 0 then error("dock tests failed") end
