@@ -123,27 +123,47 @@ local function drawPicture(pic)
     if pic.anchor == "center" then x = x - width / 2
     elseif pic.anchor == "right" then x = x - width end
 
-    local fullText = pic.wrappedText or pic.text
     love.graphics.push("all")
     love.graphics.setBlendMode(pic.blend, "alphamultiply")
     love.graphics.translate(x, pic.y)
     love.graphics.scale(pic.scale, pic.scale)
-    local shouldPad = (pic.align == "center" or pic.align == "right")
-    local displayText = pic.reveal and ui.revealedText(fullText, pic.revealElapsed, shouldPad)
-        or fullText
+    local fullText = pic.wrappedText or pic.text
     if pic.frame then
         local _, lines = font:getWrap(fullText, width)
         ui.drawPanel(-4, -4, width + 8, #lines * font:getHeight() + 8)
     end
     local c = { color[1], color[2], color[3], (color[4] or 1) * pic.opacity }
-    if pic.shadow then
-        love.graphics.setFont(font)
-        love.graphics.setColor(0, 0, 0, 0.8 * pic.opacity)
-        love.graphics.printf(displayText, 1, 1, width, pic.align)
-    end
     love.graphics.setFont(font)
-    love.graphics.setColor(c)
-    love.graphics.printf(displayText, 0, 0, width, pic.align)
+
+    if pic.reveal then
+        -- Reveals draw line by line at pre-measured origins instead of via
+        -- printf: printf re-centres each line on the width of whatever is
+        -- currently visible, which is what made captions creep sideways
+        -- while typing. ui.revealedLines fixes every x from the FINAL line
+        -- width up front, so the block never moves.
+        local lines = ui.revealedLines(pic.text, pic.revealElapsed, {
+            font = font, width = width, align = pic.align,
+        })
+        -- Match printf's own row pitch so revealed and finished text sit on
+        -- identical baselines (printf spaces rows by height * lineHeight).
+        local lineH = font:getHeight() * font:getLineHeight()
+        for i, line in ipairs(lines) do
+            local ly = (i - 1) * lineH
+            if pic.shadow then
+                love.graphics.setColor(0, 0, 0, 0.8 * pic.opacity)
+                love.graphics.print(line.text, line.x + 1, ly + 1)
+            end
+            love.graphics.setColor(c)
+            love.graphics.print(line.text, line.x, ly)
+        end
+    else
+        if pic.shadow then
+            love.graphics.setColor(0, 0, 0, 0.8 * pic.opacity)
+            love.graphics.printf(fullText, 1, 1, width, pic.align)
+        end
+        love.graphics.setColor(c)
+        love.graphics.printf(fullText, 0, 0, width, pic.align)
+    end
     love.graphics.pop()
 end
 

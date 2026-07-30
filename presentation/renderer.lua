@@ -674,17 +674,11 @@ end
 -- content, shared by the windows-drawn dialogue scene (main.lua's v-sync
 -- reads this every frame) and renderer.isDialogueRevealing/
 -- finishDialogueReveal, which all key off the same dialogueReveal tracker.
--- wrapPx (optional): pre-wrap the FULL text to hard breaks at that pixel
--- width ONCE per node, so the reveal can't shift wrap points mid-word --
--- printf re-wrapping a growing string is what made long lines jumpy.
 function renderer.getRevealedDialogueText(node, wrapPx)
     if not node or node.type ~= "TEXT" then return "" end
     if dialogueReveal.node ~= node then
         dialogueReveal.node = node
         dialogueReveal.elapsed = 0
-        dialogueReveal.wrapped = nil
-    end
-    if not dialogueReveal.wrapped then
         local content = node.content or ""
         dialogueReveal.wrapped = wrapPx and ui.wrapText(content, wrapPx) or content
     end

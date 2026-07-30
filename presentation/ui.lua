@@ -802,15 +802,45 @@ end
 -- active font's own wrap logic (Font:getWrap), so a typewriter reveal can
 -- expose it character by character without printf re-wrapping mid-word --
 -- wrap points are decided ONCE for the full text and never move.
-function ui.wrapText(text, limit)
-    if not mainFont or not text then return text or "" end
-    local _, lines = mainFont:getWrap(text, limit)
-    return table.concat(lines, "\n")
+function ui.wrapText(text, limit, font)
+    local targetFont = font or mainFont
+    if not targetFont or not text then return text or "" end
+    -- Inline \c[N] colour codes are parsed OUT before printf ever measures the
+    -- string, so wrapping the raw text overestimates every word carrying one
+    -- and breaks lines printf would not have broken -- that mismatch is what
+    -- let pre-wrapped dialogue still re-flow mid-reveal. Only coloured text
+    -- needs the manual pass; plain text keeps Font:getWrap, so every existing
+    -- wrap point stays byte-identical.
+    if not string.find(text, "\\c%[") then
+        local _, lines = targetFont:getWrap(text, limit)
+        return table.concat(lines, "\n")
+    end
+    if not limit or limit <= 0 then return text end
+    local spaceW = targetFont:getWidth(" ")
+    local out = {}
+    local body = text:sub(-1) == "\n" and text or (text .. "\n")
+    for rawLine in body:gmatch("(.-)\r?\n") do
+        local line, lineW
+        for word in rawLine:gmatch("%S+") do
+            local w = targetFont:getWidth((word:gsub("\\c%[%d+%]", "")))
+            if not line then
+                line, lineW = word, w
+            elseif lineW + spaceW + w <= limit then
+                line, lineW = line .. " " .. word, lineW + spaceW + w
+            else
+                out[#out + 1] = line
+                line, lineW = word, w
+            end
+        end
+        out[#out + 1] = line or ""
+    end
+    return table.concat(out, "\n")
 end
 
 -- One RPG-style character reveal shared by dialogue, battle logs, and
 -- authored cinematic captions.
 function ui.revealedCount(text, elapsed)
+    text = tostring(text or "")
     local delay = (config.ui and config.ui.textRevealDelay) or 0
     if delay <= 0 then return #text end
     return math.min(#text, math.floor((elapsed or 0) / delay))
@@ -826,14 +856,74 @@ function ui.utf8Prefix(text, byteCount)
     return text:sub(1, byteCount)
 end
 
-function ui.revealedText(text, elapsed, padToLength)
+-- Engine-level pre-calculated text reveal.
+-- Wrap points are decided ONCE against the FULL text, so no word can migrate
+-- to the next line as later characters appear. `options.limit`/`options.width`
+-- supplies the wrap width; omit it for text that is already hard-wrapped.
+-- Callers that draw with printf must pass the SAME limit printf gets, or the
+-- pre-wrap is meaningless.
+--
+-- This returns left-aligned-safe text only. Centred and right-aligned reveals
+-- must NOT go through printf at all -- printf re-derives each line's origin
+-- from the width of what is currently visible, so the line slides as it types.
+-- Use ui.revealedLines for those; padding with spaces cannot fix it, because
+-- the padding counts toward printf's own wrap limit and pushes the line over.
+function ui.revealedText(text, elapsed, options)
     text = tostring(text or "")
-    local revCount = ui.revealedCount(text, elapsed)
-    local prefix = ui.utf8Prefix(text, revCount)
-    if padToLength and #prefix < #text then
-        return prefix .. string.rep(" ", #text - #prefix)
+    options = options or {}
+    local limit = options.limit or options.width
+    local fullWrapped = (limit and limit > 0)
+        and ui.wrapText(text, limit, options.font) or text
+    return ui.utf8Prefix(fullWrapped, ui.revealedCount(fullWrapped, elapsed))
+end
+
+-- Pre-calculated reveal LAYOUT: the companion to ui.revealedText for text that
+-- is centred or right-aligned, where position must be fixed before the first
+-- character shows.
+--
+-- Every line's x origin is measured from that line's FINAL, fully-revealed
+-- width, then handed back alongside only the characters visible so far. Draw
+-- each entry with love.graphics.print at its own `x` (never printf, which
+-- would re-wrap and re-centre against the partial string) and the block is
+-- pinned in place for the whole animation.
+--
+-- Returns: array of { text = visible prefix, x = fixed offset, full = final
+-- line } and, second, whether the reveal has finished.
+function ui.revealedLines(text, elapsed, options)
+    text = tostring(text or "")
+    options = options or {}
+    local font = options.font or mainFont
+    local width = options.limit or options.width
+    local align = options.align or "left"
+
+    local fullWrapped = (width and width > 0)
+        and ui.wrapText(text, width, font) or text
+    local revCount = ui.revealedCount(fullWrapped, elapsed)
+    local visible = ui.utf8Prefix(fullWrapped, revCount)
+
+    local function split(s)
+        local lines = {}
+        local body = s:sub(-1) == "\n" and s or (s .. "\n")
+        for line in body:gmatch("(.-)\r?\n") do lines[#lines + 1] = line end
+        return lines
     end
-    return prefix
+
+    local fullLines = split(fullWrapped)
+    local visibleLines = split(visible)
+
+    local out = {}
+    for i, full in ipairs(fullLines) do
+        local shown = visibleLines[i]
+        if shown == nil then break end
+        local x = 0
+        if font and width then
+            local fullW = font:getWidth((full:gsub("\\c%[%d+%]", "")))
+            if align == "center" then x = (width - fullW) / 2
+            elseif align == "right" then x = width - fullW end
+        end
+        out[#out + 1] = { text = shown, x = x, full = full }
+    end
+    return out, revCount >= #fullWrapped
 end
 
 function ui.measureText(text)
