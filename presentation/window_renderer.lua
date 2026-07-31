@@ -1302,6 +1302,8 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             env.v and env.v.victoryStage or 0, env.v, x, y, w, h)
     elseif style == "levelUpStats" then
         renderer.drawLevelUpStatsWindow(env.v and env.v.levelUpRows, x, y, w, h, title)
+    elseif style == "targetInfo" then
+        renderer.drawTargetInfoWindow(ctx and ctx.session, env.v, x, y, w, h)
     elseif style == "itemInfo" then
         local cached = listCache[id]
         local row = cached and cached.rows[cached.cursor]

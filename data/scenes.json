@@ -3753,7 +3753,7 @@
       },
       {
         "id": "battle_command",
-        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and not v.skillSelect and not v.itemSelect",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and not v.targetSelect and not v.skillSelect and not v.itemSelect",
         "content": [
           {
             "type": "list",
@@ -3765,7 +3765,7 @@
       },
       {
         "id": "battle_skill",
-        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.skillSelect == true",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and not v.targetSelect and v.skillSelect == true",
         "content": [
           {
             "type": "list",
@@ -3777,7 +3777,7 @@
       },
       {
         "id": "battle_item",
-        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.itemSelect == true",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and not v.targetSelect and v.itemSelect == true",
         "content": [
           {
             "type": "list",
@@ -3786,6 +3786,12 @@
             "cursor": "v.selectedIndex"
           }
         ]
+      },
+      {
+        "id": "battle_target_info",
+        "visible": "v._dockContentReady ~= false and v.combatState == 'input' and v.targetSelect == true",
+        "style": "targetInfo",
+        "content": []
       },
       {
         "id": "battle_help",

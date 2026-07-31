@@ -1275,15 +1275,6 @@ local function drawWorldSpace(session)
         end
         return maxDepth > 0.05 and minDepth < 32.0, (minDepth + maxDepth) * 0.5
     end
-    local function addVisibleWorldQuad(group, a, b, c, d, uv, colors)
-        local visible, depth = quadVisible(a, b, c, d)
-        if visible then
-            addWorldQuad(group, a, b, c, d, uv, colors)
-            group.depth = depth
-            group.sequence = #surfaces + 1
-            table.insert(surfaces, group)
-        end
-    end
     local mapData = session.currentMapData
     local fog = getFogConfig(session, mapData)
     local atlas = resolveTileset(mapData, session)
@@ -1306,6 +1297,76 @@ local function drawWorldSpace(session)
     local ditherLevels = math.max(0, tonumber(psxCfg.ditherLevels) or 0)
     local function group(texture)
         return { texture = texture, vertices = {} }
+    end
+
+    local BASE_MIN_SUBDIVISION_AREA = 0.15
+
+    local function getQuadArea(a, b, c, d)
+        local abX, abY, abZ = b.x - a.x, b.y - a.y, b.z - a.z
+        local adX, adY, adZ = d.x - a.x, d.y - a.y, d.z - a.z
+        local lenAB = math.sqrt(abX * abX + abY * abY + abZ * abZ)
+        local lenAD = math.sqrt(adX * adX + adY * adY + adZ * adZ)
+        return lenAB * lenAD
+    end
+
+    local function addVisibleWorldQuad(grp, a, b, c, d, uv, colors, maxDepth)
+        maxDepth = maxDepth or 2
+        local visible, depth = quadVisible(a, b, c, d)
+        if not visible then return end
+
+        local centerX = (a.x + b.x + c.x + d.x) * 0.25
+        local centerY = (a.y + b.y + c.y + d.y) * 0.25
+        local centerZ = (a.z + b.z + c.z + d.z) * 0.25
+        local dx, dy, dz = centerX - cameraX, centerY - cameraY, centerZ - cameraZ
+        local distSq = dx * dx + dy * dy + dz * dz
+        local area = getQuadArea(a, b, c, d)
+
+        -- Distance-sensitive area threshold: as distance increases, required face area for subdivision increases
+        local requiredArea = BASE_MIN_SUBDIVISION_AREA * (1.0 + 0.5 * distSq)
+
+        if affineTextures and area >= requiredArea and maxDepth > 0 then
+            local mAB = { x = (a.x + b.x) * 0.5, y = (a.y + b.y) * 0.5, z = (a.z + b.z) * 0.5 }
+            local mBC = { x = (b.x + c.x) * 0.5, y = (b.y + c.y) * 0.5, z = (b.z + c.z) * 0.5 }
+            local mCD = { x = (c.x + d.x) * 0.5, y = (c.y + d.y) * 0.5, z = (c.z + d.z) * 0.5 }
+            local mDA = { x = (d.x + a.x) * 0.5, y = (d.y + a.y) * 0.5, z = (d.z + a.z) * 0.5 }
+            local mCenter = { x = centerX, y = centerY, z = centerZ }
+
+            local u0, v0, u1, v1 = uv[1], uv[2], uv[3], uv[4]
+            local uMid = (u0 + u1) * 0.5
+            local vMid = (v0 + v1) * 0.5
+
+            local uvTL = { u0, v0, uMid, vMid }
+            local uvTR = { uMid, v0, u1, vMid }
+            local uvBR = { uMid, vMid, u1, v1 }
+            local uvBL = { u0, vMid, uMid, v1 }
+
+            local cA, cB, cC, cD = colors[1], colors[2], colors[3], colors[4]
+            local function lerpColor(c1, c2)
+                return {
+                    (c1[1] + c2[1]) * 0.5,
+                    (c1[2] + c2[2]) * 0.5,
+                    (c1[3] + c2[3]) * 0.5,
+                    (c1[4] + c2[4]) * 0.5,
+                }
+            end
+
+            local cAB = lerpColor(cA, cB)
+            local cBC = lerpColor(cB, cC)
+            local cCD = lerpColor(cC, cD)
+            local cDA = lerpColor(cD, cA)
+            local cCenter = lerpColor(cAB, cCD)
+
+            addVisibleWorldQuad(grp, a, mAB, mCenter, mDA, uvTL, { cA, cAB, cCenter, cDA }, maxDepth - 1)
+            addVisibleWorldQuad(grp, mAB, b, mBC, mCenter, uvTR, { cAB, cB, cBC, cCenter }, maxDepth - 1)
+            addVisibleWorldQuad(grp, mCenter, mBC, c, mCD, uvBR, { cCenter, cBC, cC, cCD }, maxDepth - 1)
+            addVisibleWorldQuad(grp, mDA, mCenter, mCD, d, uvBL, { cDA, cCenter, cCD, cD }, maxDepth - 1)
+        else
+            local quadGrp = group(grp.texture)
+            addWorldQuad(quadGrp, a, b, c, d, uv, colors)
+            quadGrp.depth = depth
+            quadGrp.sequence = #surfaces + 1
+            table.insert(surfaces, quadGrp)
+        end
     end
     local function colorAt(x, y, z, sideDarken)
         local ix, iy = math.floor(x), math.floor(y)

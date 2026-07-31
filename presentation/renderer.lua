@@ -945,6 +945,109 @@ function renderer.drawBattleLogWindow(combatLog, x, y, w, h)
     ui.drawString(utf8Prefix(current, shownCount), textX, textY + layoutVal("logLineSpacing"), {1, 1, 1, 1}, "left", textLimit)
 end
 
+-- Target Info Window: replaces the command list during target selection mode
+function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
+    if not bv or not bv.targetSelect then
+        ui.drawPanel(x, y, w, h, "Target")
+        return
+    end
+
+    local targets = getHoveredTargets(bv, bv.combatState, bv.selectedIndex, bv.skillSelect, bv.itemSelect, bv.livingMembers, bv.activeMemberIdx)
+    if not targets or #targets == 0 then
+        ui.drawPanel(x, y, w, h, "Target")
+        return
+    end
+
+    local numTargets = #targets
+    local cycleIdx = 1
+    if numTargets > 1 then
+        cycleIdx = (math.floor(love.timer.getTime() / 1.1) % numTargets) + 1
+    end
+    local target = targets[cycleIdx]
+    if not target then
+        ui.drawPanel(x, y, w, h, "Target")
+        return
+    end
+
+    -- Determine side / alliance for panel title
+    local isEnemy = false
+    if bv.battle and bv.battle.enemies then
+        for _, e in ipairs(bv.battle.enemies) do
+            if e == target then isEnemy = true break end
+        end
+    end
+
+    local panelTitle = isEnemy and (numTargets > 1 and "Enemies" or "Enemy") or (numTargets > 1 and "Allies" or "Ally")
+    ui.drawPanel(x, y, w, h, panelTitle)
+
+    -- Header Counter for multi-target selection
+    local headerY = y + 7
+    if numTargets > 1 then
+        local countText = tostring(cycleIdx) .. "/" .. tostring(numTargets) .. " (All)"
+        ui.drawString(countText, x + w - 8 - ui.measureText(countText), headerY, { 1, 0.9, 0.4, 1 })
+    end
+
+    -- Sprite & Name block
+    local contentY = y + 18
+    local spriteSize = 24
+    local spriteKey = (target.actorData and (target.actorData.smallBattler or target.actorData.spriteKey))
+        or target.smallBattler or target.spriteKey or target.id
+
+    target.spriteStatic = actor_status.spriteIsStatic(target, session)
+    local dead = target:isDead()
+    local spriteDrawn = small_battlers.draw(spriteKey, x + 8, contentY, spriteSize, dead, target, session)
+
+    local startX = x + (spriteDrawn and (8 + spriteSize + 4) or 10)
+
+    -- Element icons (rendered BEFORE the actor's name)
+    local elemW = actor_status.drawElementIcons(traits.getElements(target, session), startX, contentY + 2, session)
+    local nameX = startX + elemW + (elemW > 0 and 2 or 0)
+    local nameW = x + w - 8 - nameX
+
+    -- Target Name & Level
+    local nameText = ui.fitText(target.name or "Target", math.max(10, nameW))
+    local nameColor = dead and { 0.5, 0.5, 0.5, 1 } or { 1, 1, 1, 1 }
+    ui.drawString(nameText, nameX, contentY, nameColor)
+
+    local levelText = target.level and ("Lv. " .. tostring(target.level)) or ""
+    if levelText ~= "" then
+        ui.drawString(levelText, nameX, contentY + 10, { 0.8, 0.8, 0.8, 1 })
+    end
+
+    -- HP Bar & Numerical HP
+    local curHp = target.hp or 0
+    local maxHp = target:getMaxHp(session)
+    if maxHp <= 0 then maxHp = 1 end
+
+    local hpY = contentY + 28
+    local barX = x + 8
+    local barW = w - 16
+
+    local hpStr = "HP " .. tostring(math.floor(curHp + 0.5)) .. "/" .. tostring(math.floor(maxHp + 0.5))
+    local hpColor = dead and { 0.5, 0.5, 0.5, 1 } or { 0.9, 0.9, 0.9, 1 }
+    ui.drawString(hpStr, barX + barW - ui.measureText(hpStr), hpY, hpColor)
+
+    ui.drawBar(barX, ui.gaugeYBelowText(hpY), barW, ui.gaugeHeight, curHp, maxHp, ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
+
+    -- States row
+    local stateY = hpY + 16
+    actor_status.syncStateAnimations(target, session)
+    local iconW = actor_status.drawStateIcon(target, x + 8, stateY - 3, session)
+
+    local stateNames = {}
+    for _, st in ipairs(target.states or {}) do
+        local def = session and session.loader and session.loader.getState(st.id)
+        if def and def.name then
+            table.insert(stateNames, def.name)
+        end
+    end
+
+    local stateStr = #stateNames > 0 and table.concat(stateNames, ", ") or (dead and "Dead" or "Normal")
+    local stateX = x + 8 + (iconW > 0 and (iconW + 2) or 0)
+    local fitStateStr = ui.fitText(stateStr, math.max(10, x + w - 8 - stateX))
+    ui.drawString(fitStateStr, stateX, stateY, { 0.7, 0.7, 0.7, 1 })
+end
+
 -- Level-up stat report: every row begins at its original value, then rolls to
 -- the new value in sequence. Increased values settle green and their signed
 -- gain appears blue after a short beat. One set of column anchors keeps all

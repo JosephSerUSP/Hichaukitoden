@@ -3229,6 +3229,14 @@
       "style": "list",
       "title": null,
       "visibleRows": 5
+    },
+    "battle_target_info": {
+      "x": 0,
+      "y": 18,
+      "width": 14,
+      "height": 12,
+      "style": "targetInfo",
+      "title": null
     }
   },
   "dock": {
