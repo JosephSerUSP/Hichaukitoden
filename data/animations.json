@@ -1476,5 +1476,20 @@
         "toIntensity": 0
       }
     ]
+  },
+  "system.gate_fixture": {
+    "id": "system.gate_fixture",
+    "class": "system",
+    "duration": 1000,
+    "tracks": [
+      {
+        "type": "effekseer",
+        "t0": 0,
+        "effect": "assets/effects/_gate/gate_fixture.efkefc",
+        "anchor": {
+          "point": "center"
+        }
+      }
+    ]
   }
 }

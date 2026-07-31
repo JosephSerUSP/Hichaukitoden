@@ -559,6 +559,36 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
 
             settleForCapture(vSession)
             capture(folder .. "/00-initial.png", vSession)
+            -- G5's Effekseer coverage. A dedicated FROZEN fixture effect
+            -- (assets/effects/_gate/, never edited) played on an enemy in its
+            -- own isolated frame, so the effekseer code path -- placement,
+            -- orientation, batch flush, GL state -- is gated permanently
+            -- without any in-use effect's authoring churn reddening the gate.
+            -- Deliberately after the initial capture and before the scripted
+            -- steps' state changes, and captured to its own file, so it cannot
+            -- perturb any other reference.
+            if sceneId == "battle" then
+                local bv = require("engine.scenes.battle").getState()
+                local fixtureTarget = bv and bv.battle and bv.battle.enemies and bv.battle.enemies[1]
+                if fixtureTarget then
+                    local animation_player = require("presentation.animation_player")
+                    local efk = require("presentation.effekseer")
+                    -- Deliberately NOT settleForCapture again: the scene is
+                    -- already settled, and a second settle advances a
+                    -- presentation clock that is not reset between scenes --
+                    -- which shifted sprite animation frames in every scene
+                    -- captured after battle. One warm-up draw is enough to let
+                    -- the drawer spawn the effect (the track is due at t0=0),
+                    -- then only EFFECT time advances before the capture.
+                    animation_player.play("system.gate_fixture", fixtureTarget)
+                    drawWarmup(vSession)
+                    efk.update(EFFECT_CAPTURE_SECONDS)
+                    capture(folder .. "/99-effekseer-fixture.png", vSession)
+                    animation_player.stop(fixtureTarget)
+                    efk.reset()
+                end
+            end
+
             for index, step in ipairs(sceneDef.screenshotScript or sceneDef.goldenScript or {}) do
                 scene_host.update(0.1, ctx)
                 advancePresentation(0.1)

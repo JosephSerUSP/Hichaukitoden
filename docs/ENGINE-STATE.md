@@ -72,7 +72,7 @@ are what's left:
 - items: **198** (consumablex63, equipmentx120, questx15)
 - skills: **44**, passives: **41**, states: **14**, roles: **13**, elements: **5**
 - maps: **8**, common events: **20**, shops: **6**, quests: **5**, lore entries: **3**
-- animations: **28**, tilesets: **9**
+- animations: **29**, tilesets: **9**
 
 ## Notes for agents
 

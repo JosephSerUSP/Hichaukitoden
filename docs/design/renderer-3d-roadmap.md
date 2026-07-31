@@ -802,6 +802,57 @@ Added:
 authoring surface. The engine ran `effekseer` tracks correctly for three
 commits while no one could create one in the editor.
 
+#### G5 now gates the effect path, via a frozen fixture (30.07.2026)
+
+**First, the empirical question:** Effekseer output *is* byte-reproducible.
+Three full screenshot runs produced 122/122 identical frames including one
+containing a live effect with 100+ particle instances. That only holds because
+`efk_update` is driven by the harness's fixed step rather than a clock of its
+own (§3.1); it is not a property of Effekseer.
+
+**The design tension.** Gating a real, in-use effect would redden G5 on every
+retouch. And a gate that gets recaptured reflexively is worse than no gate — it
+manufactures confidence without checking anything, which is exactly how this
+repo lost ~10 commits to an unread red golden log. But leaving effects
+ungated means the one code path with four bugs already to its name (Y-position
+flip, Y-orientation flip, missing batch flush, GL state corruption) has no
+gate at all.
+
+The owner's observation that this applies to *every* asset type is correct —
+G5 already reddens for any sprite, portrait or tileset change. The distinction
+that actually matters is **churn rate**, not asset-vs-code: settled art
+reddening G5 is a useful "confirm that was intended"; an effect library under
+active authoring reddening it every session is gate fatigue.
+
+**Resolution: gate the integration, not the artwork.**
+
+- `assets/effects/_gate/` — a **frozen duplicate** of a real effect, with its
+  own copied textures so a retouch in `SecondRite/` cannot redden it. Never
+  edited. Its README states the rules.
+- `data/animations.json` -> `system.gate_fixture`, intentionally referenced by
+  no skill, item or flow.
+- Captured to its **own isolated frame**, `battle/battle/99-effekseer-fixture.png`,
+  so it cannot perturb any other reference.
+- A duplicate of a *real* effect rather than something synthetic, deliberately:
+  it exercises the particle types, textures and blend modes actually in use.
+
+Verified end to end: simulating the Y-orientation regression (dropping the
+`(1,-1,1)` mirror) turns **exactly that one frame** red and nothing else.
+
+**One trap found while building it.** The first version called
+`settleForCapture` a second time to settle the fixture — which reddened
+`menu/ritual/00-initial.png`, a completely unrelated scene. `settleForCapture`
+advances a presentation clock that is **not reset between scenes**, so battle's
+extra second shifted sprite animation frames in every scene captured
+afterwards. The fix was to not re-settle at all: the scene is already settled,
+so one warm-up draw (to let the drawer spawn the effect, due at `t0=0`) plus an
+advance of effect time alone is both correct and sufficient.
+
+That is a third instance of the same shape as §6.5.1c and §6.5.1f — **a capture
+procedure quietly corrupting what it captures.** Worth a standing rule: after
+touching the screenshot harness, check the whole diff, not just the frame being
+added.
+
 #### Coverage gap, needs an owner call
 
 Battle's `screenshotScript` is `return, escape, down, return, down, return` —
