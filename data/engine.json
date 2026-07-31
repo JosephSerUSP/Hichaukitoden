@@ -3569,14 +3569,16 @@
       "id": "night fog",
       "label": "Night fog",
       "color": [
-        0,
-        0.1,
-        0.16
+        0.04,
+        0.16,
+        0.25
       ],
-      "density": 0.35,
-      "minFactor": 0.12,
+      "startDist": 1.5,
+      "distance": 7,
+      "sharpness": 1,
+      "minFactor": 0,
       "panorama": [],
-      "distance": 5.5
+      "psxBands": 8
     }
   ],
   "stateCategories": [

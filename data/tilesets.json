@@ -116,6 +116,7 @@
         "id": "town_default",
         "name": "Town Exterior",
         "texture": "assets/tilesets/town_stMaria.png",
+        "skyPanorama": "town_st_maria_sky",
         "tileWidth": 64,
         "tileHeight": 64,
         "base": {

@@ -22,6 +22,50 @@ local function makeHarnessSession(loader)
 end
 cli.makeHarnessSession = makeHarnessSession
 
+-- Renderer-facing fixtures should show geometry in front of the camera, not
+-- begin pressed against a wall. Pick the nearest clear two-tile view to the
+-- authored spawn so lighting, landmarks, and map context remain representative.
+local function positionAtClearCorridor(vSession)
+    local grid = vSession.mapGrid or {}
+    local originX, originY = vSession.playerX or 1, vSession.playerY or 1
+    local originDir = vSession.playerDir
+    local directions = {
+        { id = "N", dx = 0, dy = -1 },
+        { id = "E", dx = 1, dy = 0 },
+        { id = "S", dx = 0, dy = 1 },
+        { id = "W", dx = -1, dy = 0 },
+    }
+    local function isFloor(x, y)
+        return grid[y] and grid[y][x] == "."
+    end
+    local best = nil
+    for y, row in ipairs(grid) do
+        for x = 1, #row do
+            if isFloor(x, y) then
+                for _, direction in ipairs(directions) do
+                    if isFloor(x + direction.dx, y + direction.dy)
+                        and isFloor(x + direction.dx * 2, y + direction.dy * 2) then
+                        local distance = math.abs(x - originX) + math.abs(y - originY)
+                        local turnPenalty = direction.id == originDir and 0 or 1
+                        local score = distance * 4 + turnPenalty
+                        if not best or score < best.score then
+                            best = { x = x, y = y, dir = direction.id, score = score }
+                        end
+                    end
+                end
+            end
+        end
+    end
+    if best then
+        vSession.playerX = best.x
+        vSession.playerY = best.y
+        vSession.playerDir = best.dir
+        return best.x, best.y, best.dir
+    end
+    error("renderer fixture: map has no three-cell clear corridor", 0)
+end
+cli.positionAtClearCorridor = positionAtClearCorridor
+
 -- golden-ui and screenshot harnesses drive scripted key sequences
 -- (goldenScript / screenshotScript) through scene_host.keypressed exactly
 -- like real input, which means the title scene's "Continue" reaches the
@@ -368,8 +412,8 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
 
     local function capture(path, vSession)
         local canvas = love.graphics.newCanvas(gameWidth, gameHeight)
-        love.graphics.setCanvas({ canvas, stencil = true })
-        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+            love.graphics.clear(0, 0, 0, 1, true, true)
         love.graphics.setColor(1, 1, 1, 1)
         frame_renderer.draw(scene_host, renderer, vSession, loader, gameHeight)
         love.graphics.setCanvas()
@@ -383,8 +427,8 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
 
     local settleCanvas = love.graphics.newCanvas(gameWidth, gameHeight)
     local function drawWarmup(vSession)
-        love.graphics.setCanvas({ settleCanvas, stencil = true })
-        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setCanvas({ settleCanvas, depth = true, stencil = true })
+        love.graphics.clear(0, 0, 0, 1, true, true)
         love.graphics.setColor(1, 1, 1, 1)
         frame_renderer.draw(scene_host, renderer, vSession, loader, gameHeight)
         love.graphics.setCanvas()
@@ -500,6 +544,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
 
             if sceneId == "map" then
                 loadHarnessMap(vSession, 1)
+                positionAtClearCorridor(vSession)
                 viewport_3d.init()
                 scene_host.push(sceneDef.id, ctx)
             elseif sceneId == "battle" then
@@ -511,6 +556,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                     end
                 end
                 loadHarnessMap(vSession, dungeonMapIndex)
+                positionAtClearCorridor(vSession)
                 viewport_3d.init()
                 require("engine.scenes.battle").triggerTestBattle()
             else
@@ -540,6 +586,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                 end
             elseif sceneId == "dialogue" and state then
                 exploration.loadMap(vSession, 1)
+                positionAtClearCorridor(vSession)
                 viewport_3d.init()
                 state.v.dialogueMode = "choice"
                 state.v.dialogueSpeaker = "Alicia"
@@ -772,16 +819,20 @@ function cli.runPreviewMap(mapId, x, y, dir, loader)
 
         local vSession = makeHarnessSession(loader)
         exploration.loadMap(vSession, mapIdx)
-        if x then vSession.playerX = tonumber(x) + 1 end
-        if y then vSession.playerY = tonumber(y) + 1 end
-        if dir then vSession.playerDir = dir end
+        if x or y or dir then
+            if x then vSession.playerX = tonumber(x) + 1 end
+            if y then vSession.playerY = tonumber(y) + 1 end
+            if dir then vSession.playerDir = dir end
+        else
+            positionAtClearCorridor(vSession)
+        end
 
         viewport_3d.init()
 
         local pw, ph = 256, 144
         local previewCanvas = love.graphics.newCanvas(pw, ph)
-        love.graphics.setCanvas(previewCanvas)
-        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setCanvas({ previewCanvas, depth = true, stencil = true })
+        love.graphics.clear(0, 0, 0, 1, true, true)
         viewport_3d.draw(vSession)
         love.graphics.setCanvas()
 
@@ -820,6 +871,7 @@ function cli.runPreviewFog(fogSpecJson, mapId, loader)
 
         local vSession = makeHarnessSession(loader)
         exploration.loadMap(vSession, mapIdx)
+        positionAtClearCorridor(vSession)
         if vSession.currentMapData then
             vSession.currentMapData.fog = fogSpec
         end
@@ -831,8 +883,8 @@ function cli.runPreviewFog(fogSpecJson, mapId, loader)
         local previewCanvas = love.graphics.newCanvas(pw, ph)
         previewCanvas:setFilter("nearest", "nearest")
 
-        love.graphics.setCanvas(baseCanvas)
-        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setCanvas({ baseCanvas, depth = true, stencil = true })
+        love.graphics.clear(0, 0, 0, 1, true, true)
         viewport_3d.draw(vSession)
 
         love.graphics.setCanvas(previewCanvas)

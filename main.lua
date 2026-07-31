@@ -777,8 +777,8 @@ end
 -- here so the ONE shared HUD appears in every scene (owner direction:
 -- "there should be no place where the declarative one isn't used").
 function love.draw()
-    love.graphics.setCanvas(canvas)
-    love.graphics.clear(0, 0, 0, 1)
+    love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
     love.graphics.setColor(1, 1, 1, 1) -- reset color at start of frame
     
     frame_renderer.draw(scene_host, renderer, activeSession, loader, gameHeight)

@@ -105,6 +105,7 @@ local function getFogConfig(session, mapData)
         distance  = dDist,
         sharpness = (fog.sharpness ~= nil) and fog.sharpness or FOG_DEFAULTS.sharpness,
         minFactor = (fog.minFactor ~= nil) and fog.minFactor or FOG_DEFAULTS.minFactor,
+        psxBands  = fog.psxBands,
         panorama  = (fog.panorama and #fog.panorama > 0) and fog.panorama or nil,
     }, true
 end
@@ -306,6 +307,7 @@ local function getAtlasByDef(id, tilesetDef)
             floorCol = floorCol,
             ceilingRow = ceilingRow,
             ceilingCol = ceilingCol,
+            skyPanorama = tilesetDef.skyPanorama,
             tiles = tiles,
             manifest = tilesetDef,
         }
@@ -331,6 +333,44 @@ local function getWallOverlay(path)
     image:setFilter("nearest", "nearest")
     wallOverlayCache[path] = image
     return image
+end
+
+-- A dedicated panorama fills the playfield behind world geometry and rotates
+-- with the cardinal camera. Atlas sky tiles remain the fallback for existing
+-- tilesets which have not authored a panorama yet.
+local function drawSkyBackdrop(atlas, screenWpx, screenHpx, cameraAngle)
+    if atlas and atlas.skyPanorama then
+        local img = getPanoramaImage(atlas.skyPanorama)
+        if img then
+            local iw, ih = img:getDimensions()
+            local backdropH = math.floor(screenHpx * 0.5)
+            local scale = backdropH / ih
+            local sourceW = screenWpx / scale
+            local turn = ((cameraAngle or 0) / (math.pi * 2)) % 1
+            local sourceX = turn * iw
+            if not panoramaQuad then panoramaQuad = love.graphics.newQuad(0, 0, 1, 1, 1, 1) end
+            panoramaQuad:setViewport(sourceX, 0, sourceW, ih, iw, ih)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(img, panoramaQuad, 0, 0, 0, scale, scale)
+            return true
+        end
+    end
+    if not atlas or not atlas.skyTiles or #atlas.skyTiles == 0 then return false end
+    local backdropH = math.floor(screenHpx * 0.5)
+    local scale = backdropH / ATLAS_TILE
+    local tileW = ATLAS_TILE * scale
+    local x = 0
+    local tileIndex = 1
+    love.graphics.setColor(1, 1, 1, 1)
+    while x < screenWpx do
+        local tile = atlas.skyTiles[tileIndex]
+        skyQuad:setViewport(tile[2] * ATLAS_TILE, tile[1] * ATLAS_TILE,
+            ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h)
+        love.graphics.draw(atlas.img, skyQuad, x, 0, 0, scale, scale)
+        x = x + tileW
+        tileIndex = (tileIndex % #atlas.skyTiles) + 1
+    end
+    return true
 end
 
 local function getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay, wallOverlay)
@@ -729,6 +769,730 @@ local function buildMaterialLookup(session)
     return lookup
 end
 
+-- Strategy B starts with the wall geometry only.  The floor/ceiling shader and
+-- billboard code below remain the compatibility surface for this first slice;
+-- walls are projected as actual quads and depth-tested by the GPU instead of
+-- being painted one screen column at a time.
+local WALL_MESH_FORMAT = {
+    { "VertexPosition", "float", 2 },
+    { "VertexTexCoord", "float", 2 },
+    { "VertexColor", "float", 4 },
+    { "VertexDepth", "float", 1 },
+}
+
+local WALL_MESH_SHADER_SOURCE = [[
+    #ifdef VERTEX
+    attribute float VertexDepth;
+    varying vec2 wallUV;
+    varying vec4 wallColor;
+
+    vec4 position(mat4 transform_projection, vec4 vertex_position)
+    {
+        wallUV = VertexTexCoord.xy;
+        wallColor = VertexColor;
+        vec4 screenPosition = transform_projection * vec4(VertexPosition.xy, 0.0, 1.0);
+        return vec4(screenPosition.xy, VertexDepth * 2.0 - 1.0, screenPosition.w);
+    }
+
+    #endif
+
+    #ifdef PIXEL
+    varying vec2 wallUV;
+    varying vec4 wallColor;
+    uniform vec3 fogColor;
+
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
+    {
+        vec4 texel = Texel(texture, wallUV);
+        vec3 lit = texel.rgb * wallColor.rgb;
+        vec3 fogged = mix(fogColor, lit, wallColor.a);
+        return vec4(fogged, texel.a);
+    }
+    #endif
+]]
+
+local wallMeshShader = nil
+local wallMeshShaderError = nil
+local whiteWallTexture = nil
+
+local function ensureWallMeshShader()
+    if wallMeshShader ~= nil then return wallMeshShader or nil end
+    local ok, shaderOrErr = pcall(love.graphics.newShader, WALL_MESH_SHADER_SOURCE)
+    if ok then
+        wallMeshShader = shaderOrErr
+    else
+        wallMeshShaderError = tostring(shaderOrErr)
+        wallMeshShader = false
+        print("[viewport_3d] polygonal wall shader failed to compile, keeping raycast walls: " .. wallMeshShaderError)
+    end
+    return wallMeshShader or nil
+end
+
+local function getWhiteWallTexture()
+    if whiteWallTexture then return whiteWallTexture end
+    local imageData = love.image.newImageData(1, 1)
+    imageData:setPixel(0, 0, 1, 1, 1, 1)
+    whiteWallTexture = love.graphics.newImage(imageData)
+    whiteWallTexture:setFilter("nearest", "nearest")
+    return whiteWallTexture
+end
+
+local function wallCell(grid, x, y)
+    return grid[y] and grid[y][x] == "#"
+end
+
+local function floorCell(grid, x, y)
+    return grid[y] and grid[y][x] == "."
+end
+
+local function projectWallPoint(worldX, worldY, worldZ, cameraX, cameraY, dirX, dirY)
+    local dx = worldX - cameraX
+    local dy = worldY - cameraY
+    local forward = dx * dirX + dy * dirY
+    if forward <= 0.05 then return nil end
+    local right = dx * -dirY + dy * dirX
+    local focal = 170.6667
+    return {
+        x = 128 + right / forward * focal,
+        y = 70 - (worldZ - 0.5) / forward * focal,
+        depth = math.min(0.999, math.max(0.001, forward / 32.0)),
+        forward = forward,
+    }
+end
+
+local function addProjectedWallFace(group, points, originX, originY, texW, texH, flipU, litR, litG, litB, fogAlpha)
+    local function uv(localX, localY)
+        local u = flipU and (1 - localX) or localX
+        return (originX + u * ATLAS_TILE) / texW, (originY + localY * ATLAS_TILE) / texH
+    end
+    local u0, v0 = uv(0, 0)
+    local u1, v1 = uv(1, 1)
+    local function vertex(point, u, v)
+        return { point.x, point.y, u, v, litR, litG, litB, fogAlpha, point.depth }
+    end
+    -- Counter-clockwise in screen space is not required for the depth buffer,
+    -- but keeping a consistent winding makes the eventual culling pass safe.
+    table.insert(group.vertices, vertex(points[1], u0, v0))
+    table.insert(group.vertices, vertex(points[2], u1, v0))
+    table.insert(group.vertices, vertex(points[3], u1, v1))
+    table.insert(group.vertices, vertex(points[1], u0, v0))
+    table.insert(group.vertices, vertex(points[3], u1, v1))
+    table.insert(group.vertices, vertex(points[4], u0, v1))
+end
+
+local function raycastDepthBuffer(grid, cx, cy, dirX, dirY, planeX, planeY)
+    local zBuffer = {}
+    for x = 0, 255 do
+        local cameraX = 2 * x / 256 - 1
+        local rx = dirX + planeX * cameraX
+        local ry = dirY + planeY * cameraX
+        local mapX = math.floor(cx) + 1
+        local mapY = math.floor(cy) + 1
+        local deltaDistX = (rx == 0) and 1e30 or math.abs(1 / rx)
+        local deltaDistY = (ry == 0) and 1e30 or math.abs(1 / ry)
+        local stepX, stepY, sideDistX, sideDistY
+        if rx < 0 then
+            stepX = -1
+            sideDistX = (cx + 1 - mapX) * deltaDistX
+        else
+            stepX = 1
+            sideDistX = (mapX - cx) * deltaDistX
+        end
+        if ry < 0 then
+            stepY = -1
+            sideDistY = (cy + 1 - mapY) * deltaDistY
+        else
+            stepY = 1
+            sideDistY = (mapY - cy) * deltaDistY
+        end
+        local side = 0
+        local depth = 0
+        while depth < 16 do
+            if sideDistX < sideDistY then
+                sideDistX = sideDistX + deltaDistX
+                mapX = mapX + stepX
+                side = 0
+            else
+                sideDistY = sideDistY + deltaDistY
+                mapY = mapY + stepY
+                side = 1
+            end
+            depth = depth + 1
+            if not grid[mapY] or not grid[mapY][mapX] or grid[mapY][mapX] == "#" then
+                break
+            end
+        end
+        local perpendicular
+        if side == 0 then
+            perpendicular = (mapX - (cx + 1) + (1 - stepX) / 2) / rx
+        else
+            perpendicular = (mapY - (cy + 1) + (1 - stepY) / 2) / ry
+        end
+        zBuffer[x + 1] = math.max(0.05, perpendicular)
+    end
+    return zBuffer
+end
+
+local function drawPolygonalWalls(session, grid, cameraX, cameraY, dirX, dirY, atlas, light, fog, playerLight, doorLookup, materialLookup)
+    local shader = ensureWallMeshShader()
+    if not shader then return nil end
+
+    local groups = {}
+    local faces = {}
+
+    local function addFace(mapX, mapY, kind, p1, p2, neighborX, neighborY)
+        if wallCell(grid, neighborX, neighborY) then return end
+        local centerX = (p1.x + p2.x) * 0.5
+        local centerY = (p1.y + p2.y) * 0.5
+        local normalX, normalY = 0, 0
+        if kind == "north" then normalY = -1
+        elseif kind == "south" then normalY = 1
+        elseif kind == "west" then normalX = -1
+        else normalX = 1 end
+        local toCameraX, toCameraY = cameraX - centerX, cameraY - centerY
+        if normalX * toCameraX + normalY * toCameraY <= 0 then return end
+        local center = projectWallPoint(centerX, centerY, 0.5, cameraX, cameraY, dirX, dirY)
+        if not center or center.forward > 16 then return end
+        local top1 = projectWallPoint(p1.x, p1.y, 1, cameraX, cameraY, dirX, dirY)
+        local top2 = projectWallPoint(p2.x, p2.y, 1, cameraX, cameraY, dirX, dirY)
+        local bottom2 = projectWallPoint(p2.x, p2.y, 0, cameraX, cameraY, dirX, dirY)
+        local bottom1 = projectWallPoint(p1.x, p1.y, 0, cameraX, cameraY, dirX, dirY)
+        if not top1 or not top2 or not bottom1 or not bottom2 then return end
+
+        local side = (kind == "north" or kind == "south") and 1 or 0
+        local material = atlas and atlas.tiles[materialLookup[mapX .. "," .. mapY] or ""] or nil
+        local featureOverlay = nil
+        if material and material.role == "wall_feature" then
+            featureOverlay = material
+            material = nil
+        end
+        local event = doorLookup[mapX .. "," .. mapY]
+        local originX, originY
+        if material and material.atlas then
+            originY = material.atlas[1] * ATLAS_TILE
+            originX = material.atlas[2] * ATLAS_TILE
+        elseif atlas and event and not event.sprite then
+            originX = doorVariant(mapX, mapY) * ATLAS_TILE
+            originY = (atlas.doorRow or 2) * ATLAS_TILE
+        else
+            local baseWall = atlas and atlas.manifest and atlas.manifest.base
+                and atlas.manifest.base.walls and atlas.manifest.base.walls[1]
+            if baseWall and baseWall.middle then
+                originX = baseWall.middle[2] * ATLAS_TILE
+                originY = baseWall.middle[1] * ATLAS_TILE
+            else
+                local variant = wallVariant(mapX, mapY, math.max(1, atlas and atlas.wallVariants or 1))
+                originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
+                originY = (atlas and atlas.wallRows and atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] or 1) * ATLAS_TILE
+            end
+        end
+
+        local hasLeftEdge = (side == 0 and floorCell(grid, mapX, mapY - 1)) or (side == 1 and floorCell(grid, mapX - 1, mapY))
+        local hasRightEdge = (side == 0 and floorCell(grid, mapX, mapY + 1)) or (side == 1 and floorCell(grid, mapX + 1, mapY))
+        local wallSpec = atlas and atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1]
+        local leftEdgeSpec = hasLeftEdge and wallSpec and wallSpec.leftEdge or nil
+        local rightEdgeSpec = hasRightEdge and wallSpec and wallSpec.rightEdge or nil
+        local texture = getWhiteWallTexture()
+        local textureOriginX, textureOriginY, textureW, textureH = 0, 0, 1, 1
+        if atlas then
+            if not leftEdgeSpec and not rightEdgeSpec and not featureOverlay and not (event and event.sprite) then
+                texture = atlas.img
+                textureOriginX, textureOriginY, textureW, textureH = originX, originY, atlas.w, atlas.h
+            else
+                texture = getCompositeTileCanvas(atlas, originX, originY, leftEdgeSpec, rightEdgeSpec, featureOverlay, event and event.sprite)
+                textureOriginX, textureOriginY, textureW, textureH = 0, 0, ATLAS_TILE, ATLAS_TILE
+            end
+        end
+
+        local litR, litG, litB = sampleLight(light, math.floor(centerX), math.floor(centerY), centerX - math.floor(centerX), centerY - math.floor(centerY))
+        if playerLight.active then
+            local dx, dy = centerX - cameraX, centerY - cameraY
+            local distance = math.sqrt(dx * dx + dy * dy)
+            if distance < playerLight.radius then
+                local strength = (1 - distance / playerLight.radius) ^ playerLight.falloff
+                litR = math.min(1, litR + playerLight.color[1] * strength)
+                litG = math.min(1, litG + playerLight.color[2] * strength)
+                litB = math.min(1, litB + playerLight.color[3] * strength)
+            end
+        end
+        if side == 1 then litR, litG, litB = litR * 0.76, litG * 0.76, litB * 0.76 end
+        local fogAlpha = calcFogAlpha(center.forward, fog)
+        local group = groups[texture]
+        if not group then
+            group = { texture = texture, vertices = {} }
+            groups[texture] = group
+            table.insert(faces, group)
+        end
+        local flipU = kind == "west" or kind == "south"
+        addProjectedWallFace(group, { top1, top2, bottom2, bottom1 }, textureOriginX, textureOriginY, textureW, textureH, flipU, litR, litG, litB, fogAlpha)
+    end
+
+    for mapY, row in ipairs(grid) do
+        for mapX, value in ipairs(row) do
+            if value == "#" then
+                addFace(mapX, mapY, "north", { x = mapX, y = mapY }, { x = mapX + 1, y = mapY }, mapX, mapY - 1)
+                addFace(mapX, mapY, "south", { x = mapX + 1, y = mapY + 1 }, { x = mapX, y = mapY + 1 }, mapX, mapY + 1)
+                addFace(mapX, mapY, "west", { x = mapX, y = mapY + 1 }, { x = mapX, y = mapY }, mapX - 1, mapY)
+                addFace(mapX, mapY, "east", { x = mapX + 1, y = mapY }, { x = mapX + 1, y = mapY + 1 }, mapX + 1, mapY)
+            end
+        end
+    end
+
+    love.graphics.setDepthMode("always", true)
+    love.graphics.setShader(shader)
+    shader:send("fogColor", fog.color)
+    love.graphics.setColor(1, 1, 1, 1)
+    for _, group in ipairs(faces) do
+        if #group.vertices > 0 then
+            local mesh = love.graphics.newMesh(WALL_MESH_FORMAT, group.vertices, "triangles", "stream")
+            mesh:setTexture(group.texture)
+            love.graphics.draw(mesh)
+            mesh:release()
+        end
+    end
+    love.graphics.setShader()
+    -- The billboards still use the renderer's explicit zBuffer below.  Turn
+    -- the hardware test off before those ordinary 2D draws and before the
+    -- scene UI resumes, so a depth-enabled canvas does not hide HUD sprites.
+    love.graphics.setDepthMode("always", false)
+    return raycastDepthBuffer(grid, cameraX - 1, cameraY - 1, dirX, dirY, -dirY * 0.75, dirX * 0.75)
+end
+
+-- Full world-space path. Every visible surface is authored in map/world
+-- coordinates and projected by the same perspective shader.
+local WORLD_MESH_FORMAT = {
+    { "VertexPosition", "float", 2 },
+    { "VertexTexCoord", "float", 2 },
+    { "VertexColor", "float", 4 },
+    { "SurfaceLight", "float", 3 },
+    { "FogVisibility", "float", 1 },
+    { "WorldHeight", "float", 1 },
+}
+
+local WORLD_SHADER_SOURCE = [[
+    #ifdef VERTEX
+    varying vec2 worldUV;
+    varying float affineScale;
+    varying vec4 worldColor;
+    varying float fogVisibility;
+    attribute float WorldHeight;
+    attribute float FogVisibility;
+    attribute vec3 SurfaceLight;
+    uniform vec3 cameraPosition;
+    uniform vec2 cameraForward;
+    uniform vec2 cameraRight;
+    uniform float fovHalfX;
+    uniform float fovHalfY;
+    uniform float nearPlane;
+    uniform float farPlane;
+    uniform float baseViewportWidth;
+    uniform float baseViewportHeight;
+    uniform float targetWidth;
+    uniform float targetHeight;
+    uniform float viewportCenterY;
+    uniform float affineTextures;
+    uniform float vertexSnapPixels;
+
+    vec4 position(mat4 transform_projection, vec4 vertex_position)
+    {
+        vec3 relative = vec3(VertexPosition.xy, WorldHeight) - cameraPosition;
+        float depth = dot(relative.xy, cameraForward);
+        float safeDepth = depth;
+        worldUV = mix(VertexTexCoord.xy, VertexTexCoord.xy * safeDepth, affineTextures);
+        affineScale = mix(1.0, safeDepth, affineTextures);
+        worldColor = vec4(SurfaceLight, 1.0);
+        fogVisibility = FogVisibility;
+        float horizontal = dot(relative.xy, cameraRight);
+        float vertical = relative.z;
+        float ndcDepth = (safeDepth - nearPlane) / (farPlane - nearPlane) * 2.0 - 1.0;
+        float viewportTop = (2.0 * viewportCenterY / targetHeight) - 1.0;
+        float ndcX = horizontal / (fovHalfX * safeDepth) * (baseViewportWidth / targetWidth);
+        float ndcY = viewportTop
+            - vertical / (fovHalfY * safeDepth) * (baseViewportHeight / targetHeight);
+        if (vertexSnapPixels > 0.0) {
+            float pixelX = (ndcX + 1.0) * targetWidth * 0.5;
+            float pixelY = (ndcY + 1.0) * targetHeight * 0.5;
+            pixelX = floor(pixelX / vertexSnapPixels + 0.5) * vertexSnapPixels;
+            pixelY = floor(pixelY / vertexSnapPixels + 0.5) * vertexSnapPixels;
+            ndcX = pixelX * 2.0 / targetWidth - 1.0;
+            ndcY = pixelY * 2.0 / targetHeight - 1.0;
+        }
+        return vec4(ndcX * safeDepth, ndcY * safeDepth, ndcDepth * safeDepth, safeDepth);
+    }
+    #endif
+
+    #ifdef PIXEL
+    varying vec2 worldUV;
+    varying float affineScale;
+    varying vec4 worldColor;
+    varying float fogVisibility;
+    uniform vec3 fogColor;
+    uniform float ditherLevels;
+
+    float orderedDither(vec2 position)
+    {
+        vec2 cell = mod(floor(position), 4.0);
+        float x = cell.x;
+        float y = cell.y;
+        float row0 = (x < 1.0) ? 0.0 : ((x < 2.0) ? 8.0 : ((x < 3.0) ? 2.0 : 10.0));
+        float row1 = (x < 1.0) ? 12.0 : ((x < 2.0) ? 4.0 : ((x < 3.0) ? 14.0 : 6.0));
+        float row2 = (x < 1.0) ? 3.0 : ((x < 2.0) ? 11.0 : ((x < 3.0) ? 1.0 : 9.0));
+        float row3 = (x < 1.0) ? 15.0 : ((x < 2.0) ? 7.0 : ((x < 3.0) ? 13.0 : 5.0));
+        return ((y < 1.0) ? row0 : ((y < 2.0) ? row1 : ((y < 3.0) ? row2 : row3))) / 16.0;
+    }
+
+    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords)
+    {
+        vec4 texel = Texel(texture, worldUV / affineScale);
+        if (texel.a < 0.01) discard;
+        vec3 lit = texel.rgb * worldColor.rgb;
+        vec3 fogged = mix(fogColor, lit, fogVisibility);
+        if (ditherLevels > 1.0) {
+            float threshold = orderedDither(screen_coords) - 0.5;
+            fogged = floor(clamp(fogged + threshold / ditherLevels, 0.0, 1.0) * ditherLevels + 0.5) / ditherLevels;
+        }
+        return vec4(fogged, texel.a) * color;
+    }
+    #endif
+]]
+
+local worldShader = nil
+local worldShaderError = nil
+
+local function ensureWorldShader()
+    if worldShader ~= nil then return worldShader or nil end
+    local ok, shaderOrErr = pcall(love.graphics.newShader, WORLD_SHADER_SOURCE)
+    if ok then
+        worldShader = shaderOrErr
+    else
+        worldShaderError = tostring(shaderOrErr)
+        worldShader = false
+        print("[viewport_3d] world shader failed to compile: " .. worldShaderError)
+    end
+    return worldShader or nil
+end
+
+local function atlasUV(originX, originY, width, height, texW, texH, flipU)
+    -- Address texel centres, not atlas-cell borders. Exact-border UVs can
+    -- resolve to the neighbouring tile under perspective interpolation and
+    -- expose a one-pixel seam even with nearest filtering.
+    local u0 = (originX + 0.5) / texW
+    local u1 = (originX + width - 0.5) / texW
+    local v0 = (originY + 0.5) / texH
+    local v1 = (originY + height - 0.5) / texH
+    if flipU then u0, u1 = u1, u0 end
+    return u0, v0, u1, v1
+end
+
+local function addWorldVertex(group, x, y, z, u, v, r, g, b, fogFactor)
+    -- VertexColor feeds LÖVE's built-in `color` shader argument. Keep it
+    -- neutral and carry authored lighting separately so it is applied once,
+    -- before the fog mix rather than again after it.
+    table.insert(group.vertices, { x, y, u, v, 1, 1, 1, 1, r, g, b, fogFactor, z })
+end
+
+local function addWorldQuad(group, a, b, c, d, uv, colors)
+    addWorldVertex(group, a.x, a.y, a.z, uv[1], uv[2], colors[1][1], colors[1][2], colors[1][3], colors[1][4])
+    addWorldVertex(group, b.x, b.y, b.z, uv[3], uv[2], colors[2][1], colors[2][2], colors[2][3], colors[2][4])
+    addWorldVertex(group, c.x, c.y, c.z, uv[3], uv[4], colors[3][1], colors[3][2], colors[3][3], colors[3][4])
+    addWorldVertex(group, a.x, a.y, a.z, uv[1], uv[2], colors[1][1], colors[1][2], colors[1][3], colors[1][4])
+    addWorldVertex(group, c.x, c.y, c.z, uv[3], uv[4], colors[3][1], colors[3][2], colors[3][3], colors[3][4])
+    addWorldVertex(group, d.x, d.y, d.z, uv[1], uv[4], colors[4][1], colors[4][2], colors[4][3], colors[4][4])
+end
+
+local function drawWorldSpace(session)
+    if not skyQuad then viewport_3d.init() end
+    local grid = session.mapGrid
+    if not grid then return end
+
+    local shader = ensureWorldShader()
+    if not shader then error("world renderer unavailable: " .. tostring(worldShaderError), 0) end
+
+    -- The game canvas is 256x240, but the first-person playfield remains the
+    -- original 256x144. Keep the camera's pixel scale fixed so a future wider
+    -- canvas adds view at the sides instead of changing the scene's framing.
+    local targetWidth, targetHeight = 256, 144
+    local targetCanvas = love.graphics.getCanvas()
+    if targetCanvas then
+        targetWidth, targetHeight = targetCanvas:getDimensions()
+    end
+    local baseViewportWidth, baseViewportHeight = 256, 144
+    local viewportWidth = targetWidth
+    local viewportHeight = math.min(baseViewportHeight, targetHeight)
+    local viewportCenterY = 70
+
+    local px, py, pdir = session.playerX, session.playerY, session.playerDir
+    local cx, cy = px - 0.5, py - 0.5
+    local cAngle = DIR_ANGLES[pdir]
+    if session.transitionTimer and session.transitionTimer > 0 then
+        local duration = session.transitionDuration or 0.15
+        local frac = duration > 0 and session.transitionTimer / duration or 1
+        local df = DIRS[pdir]
+        local dr = DIRS[turnRightDir(pdir)]
+        if session.transitionDir == "forward" then
+            cx, cy = cx - df.dx * frac, cy - df.dy * frac
+        elseif session.transitionDir == "backward" then
+            cx, cy = cx + df.dx * frac, cy + df.dy * frac
+        elseif session.transitionDir == "strafe_left" then
+            cx, cy = cx + dr.dx * frac, cy + dr.dy * frac
+        elseif session.transitionDir == "strafe_right" then
+            cx, cy = cx - dr.dx * frac, cy - dr.dy * frac
+        elseif session.transitionDir == "turn_left" then
+            cAngle = lerpAngle(DIR_ANGLES[turnRightDir(pdir)], cAngle, 1 - frac)
+        elseif session.transitionDir == "turn_right" then
+            cAngle = lerpAngle(DIR_ANGLES[turnLeftDir(pdir)], cAngle, 1 - frac)
+        end
+    end
+
+    if session.bumpTimer and session.bumpTimer > 0 then
+        local bumpDur = (config.ui and config.ui.bumpDuration) or 0.12
+        local frac = bumpDur > 0 and session.bumpTimer / bumpDur or 1
+        local nudge = frac * ((config.ui and config.ui.bumpNudge) or 0.12)
+        local fwd = DIRS[pdir]
+        local key = session.bumpNudgeKey
+        local nx, ny = fwd.dx, fwd.dy
+        if key == "down" or key == "s" then nx, ny = -fwd.dx, -fwd.dy
+        elseif key == "q" then local ld = DIRS[turnLeftDir(pdir)]; nx, ny = ld.dx, ld.dy
+        elseif key == "e" then local rd = DIRS[turnRightDir(pdir)]; nx, ny = rd.dx, rd.dy end
+        cx, cy = cx + nx * nudge, cy + ny * nudge
+    end
+
+    local dirX, dirY = math.cos(cAngle), math.sin(cAngle)
+    local rightX, rightY = -dirY, dirX
+    local doorProgress = require("presentation.door_transition").approachProgress()
+    if doorProgress > 0 then
+        cx, cy = cx + dirX * doorProgress * 0.22, cy + dirY * doorProgress * 0.22
+    end
+    local cameraX, cameraY = cx + 1, cy + 1
+    local cameraZ = 0.5
+    local surfaces = {}
+    local function quadVisible(a, b, c, d)
+        local minDepth, maxDepth = math.huge, -math.huge
+        for _, point in ipairs({ a, b, c, d }) do
+            local depth = (point.x - cameraX) * dirX + (point.y - cameraY) * dirY
+            minDepth = math.min(minDepth, depth)
+            maxDepth = math.max(maxDepth, depth)
+        end
+        return maxDepth > 0.05 and minDepth < 32.0, (minDepth + maxDepth) * 0.5
+    end
+    local function addVisibleWorldQuad(group, a, b, c, d, uv, colors)
+        local visible, depth = quadVisible(a, b, c, d)
+        if visible then
+            addWorldQuad(group, a, b, c, d, uv, colors)
+            group.depth = depth
+            group.sequence = #surfaces + 1
+            table.insert(surfaces, group)
+        end
+    end
+    local mapData = session.currentMapData
+    local fog = getFogConfig(session, mapData)
+    local atlas = resolveTileset(mapData, session)
+    local light = (mapData and (mapData.runtimeLight or mapData.light)) or nil
+    local pLightCfg = session.loader and session.loader.system and session.loader.system.dungeon
+        and session.loader.system.dungeon.playerLight
+    local playerLight = {
+        enabled = (pLightCfg == nil or pLightCfg.enabled == nil) and true or pLightCfg.enabled,
+        radius = (pLightCfg and pLightCfg.radius) or 3.5,
+        color = (pLightCfg and pLightCfg.color) or { 0.35, 0.3, 0.22 },
+        falloff = (pLightCfg and pLightCfg.falloff) or 1.5,
+        onlyInDungeons = (pLightCfg == nil or pLightCfg.onlyInDungeons == nil) and true or pLightCfg.onlyInDungeons,
+    }
+    playerLight.active = playerLight.enabled and (not playerLight.onlyInDungeons or not (mapData and mapData.safe)) and playerLight.radius > 0
+    local psxCfg = session.loader and session.loader.system and session.loader.system.dungeon
+        and session.loader.system.dungeon.psxRendering or {}
+    local affineTextures = psxCfg.affineTextures ~= false
+    local vertexSnapPixels = math.max(0, tonumber(psxCfg.vertexSnapPixels) or 0)
+    local fogBands = math.max(0, math.floor(tonumber(fog.psxBands) or tonumber(psxCfg.fogBands) or 0))
+    local ditherLevels = math.max(0, tonumber(psxCfg.ditherLevels) or 0)
+    local function group(texture)
+        return { texture = texture, vertices = {} }
+    end
+    local function colorAt(x, y, z, sideDarken)
+        local ix, iy = math.floor(x), math.floor(y)
+        local r, g, b = sampleLight(light, ix, iy, x - ix, y - iy)
+        if playerLight.active then
+            local dx, dy = x - cameraX, y - cameraY
+            local dist = math.sqrt(dx * dx + dy * dy)
+            if dist < playerLight.radius then
+                local strength = (1 - dist / playerLight.radius) ^ playerLight.falloff
+                r = math.min(1, r + playerLight.color[1] * strength)
+                g = math.min(1, g + playerLight.color[2] * strength)
+                b = math.min(1, b + playerLight.color[3] * strength)
+            end
+        end
+        if sideDarken then r, g, b = r * 0.76, g * 0.76, b * 0.76 end
+        local depth = (x - cameraX) * dirX + (y - cameraY) * dirY
+        local fogVisibility = calcFogAlpha(math.max(0.05, depth), fog)
+        if fogBands > 1 then
+            fogVisibility = math.floor(fogVisibility * fogBands + 0.5) / fogBands
+        end
+        return { r, g, b, fogVisibility }
+    end
+    local function textureInfo(originX, originY, texture)
+        if texture == atlas.img then return atlasUV(originX, originY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h, false) end
+        return 0, 0, 1, 1
+    end
+
+    local floorTexture = atlas and atlas.img or getWhiteWallTexture()
+    local floorOriginX = atlas and (atlas.floorCol or 0) * ATLAS_TILE or 0
+    local floorOriginY = atlas and (atlas.floorRow or 3) * ATLAS_TILE or 0
+    local ceilingTexture = atlas and atlas.img or getWhiteWallTexture()
+    local ceilingOriginX = atlas and (atlas.ceilingCol or 0) * ATLAS_TILE or 0
+    local ceilingOriginY = atlas and (atlas.ceilingRow or 0) * ATLAS_TILE or 0
+    local floorUV = atlas and { atlasUV(floorOriginX, floorOriginY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h, false) } or { 0, 0, 1, 1 }
+    local ceilingUV = atlas and { atlasUV(ceilingOriginX, ceilingOriginY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h, false) } or { 0, 0, 1, 1 }
+    for y, row in ipairs(grid) do
+        for x, value in ipairs(row) do
+            if value ~= "#" then
+                local floorGroup = group(floorTexture)
+                addVisibleWorldQuad(floorGroup,
+                    { x = x, y = y, z = 0 }, { x = x + 1, y = y, z = 0 },
+                    { x = x + 1, y = y + 1, z = 0 }, { x = x, y = y + 1, z = 0 },
+                    floorUV, { colorAt(x, y, 0, false), colorAt(x + 1, y, 0, false), colorAt(x + 1, y + 1, 0, false), colorAt(x, y + 1, 0, false) })
+                if not (mapData and mapData.ceilingStyle == "sky") then
+                    local ceilingGroup = group(ceilingTexture)
+                    addVisibleWorldQuad(ceilingGroup,
+                        { x = x, y = y + 1, z = 1 }, { x = x + 1, y = y + 1, z = 1 },
+                        { x = x + 1, y = y, z = 1 }, { x = x, y = y, z = 1 },
+                        ceilingUV, { colorAt(x, y + 1, 1, false), colorAt(x + 1, y + 1, 1, false), colorAt(x + 1, y, 1, false), colorAt(x, y, 1, false) })
+                end
+            end
+        end
+    end
+
+    local doorLookup = buildWallEventLookup(session)
+    local materialLookup = buildMaterialLookup(session)
+    local function addWall(mapX, mapY, kind, p1, p2, nx, ny)
+        if wallCell(grid, nx, ny) then return end
+        local centerX, centerY = (p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5
+        local normalX, normalY = 0, 0
+        if kind == "north" then normalY = -1 elseif kind == "south" then normalY = 1 elseif kind == "west" then normalX = -1 else normalX = 1 end
+        if normalX * (cameraX - centerX) + normalY * (cameraY - centerY) <= 0 then return end
+        local material = atlas and atlas.tiles[materialLookup[mapX .. "," .. mapY] or ""] or nil
+        local featureOverlay = nil
+        if material and material.role == "wall_feature" then featureOverlay, material = material, nil end
+        local event = doorLookup[mapX .. "," .. mapY]
+        local originX, originY = 0, 0
+        if material and material.atlas then originY, originX = material.atlas[1] * ATLAS_TILE, material.atlas[2] * ATLAS_TILE
+        elseif atlas and event and not event.sprite then originX, originY = doorVariant(mapX, mapY) * ATLAS_TILE, (atlas.doorRow or 2) * ATLAS_TILE
+        elseif atlas then
+            local baseWall = atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1]
+            if baseWall and baseWall.middle then originX, originY = baseWall.middle[2] * ATLAS_TILE, baseWall.middle[1] * ATLAS_TILE
+            else
+                local variant = wallVariant(mapX, mapY, math.max(1, atlas.wallVariants))
+                originX = (variant % ATLAS_WALL_COLS) * ATLAS_TILE
+                originY = (atlas.wallRows[math.floor(variant / ATLAS_WALL_COLS) + 1] or 1) * ATLAS_TILE
+            end
+        end
+        local side = (kind == "north" or kind == "south") and 1 or 0
+        local hasLeft = (side == 0 and floorCell(grid, mapX, mapY - 1)) or (side == 1 and floorCell(grid, mapX - 1, mapY))
+        local hasRight = (side == 0 and floorCell(grid, mapX, mapY + 1)) or (side == 1 and floorCell(grid, mapX + 1, mapY))
+        local wallSpec = atlas and atlas.manifest and atlas.manifest.base and atlas.manifest.base.walls and atlas.manifest.base.walls[1]
+        local leftSpec, rightSpec = hasLeft and wallSpec and wallSpec.leftEdge or nil, hasRight and wallSpec and wallSpec.rightEdge or nil
+        local texture = getWhiteWallTexture()
+        local uv = { 0, 0, 1, 1 }
+        if atlas then
+            if leftSpec or rightSpec or featureOverlay or (event and event.sprite) then
+                texture = getCompositeTileCanvas(atlas, originX, originY, leftSpec, rightSpec, featureOverlay, event and event.sprite)
+            else
+                texture = atlas.img
+                uv = { atlasUV(originX, originY, ATLAS_TILE, ATLAS_TILE, atlas.w, atlas.h, kind == "west" or kind == "south") }
+            end
+        end
+        local wallGroup = group(texture)
+        if texture ~= atlas.img then uv = { 0, 0, 1, 1 } end
+        -- LÖVE image V=0 is the top edge.  These vertices are authored
+        -- bottom-to-top, so reverse only V; floor/ceiling UV orientation is
+        -- already correct in world space.
+        uv[2], uv[4] = uv[4], uv[2]
+        addVisibleWorldQuad(wallGroup,
+            { x = p1.x, y = p1.y, z = 0 }, { x = p2.x, y = p2.y, z = 0 },
+            { x = p2.x, y = p2.y, z = 1 }, { x = p1.x, y = p1.y, z = 1 }, uv,
+            { colorAt(p1.x, p1.y, 0, side == 1), colorAt(p2.x, p2.y, 0, side == 1), colorAt(p2.x, p2.y, 1, side == 1), colorAt(p1.x, p1.y, 1, side == 1) })
+    end
+    for y, row in ipairs(grid) do
+        for x, value in ipairs(row) do
+            if value == "#" then
+                addWall(x, y, "north", { x = x, y = y }, { x = x + 1, y = y }, x, y - 1)
+                addWall(x, y, "south", { x = x + 1, y = y + 1 }, { x = x, y = y + 1 }, x, y + 1)
+                addWall(x, y, "west", { x = x, y = y + 1 }, { x = x, y = y }, x - 1, y)
+                addWall(x, y, "east", { x = x + 1, y = y }, { x = x + 1, y = y + 1 }, x + 1, y)
+            end
+        end
+    end
+
+    local function addBillboard(image, x, y)
+        local centerX, centerY = x + 1.5, y + 1.5
+        local groupForSprite = group(image)
+        local u0, v0, u1, v1 = 0, 1, 1, 0
+        local function spriteColor(wx, wy, z)
+            local c = colorAt(wx, wy, z, false)
+            return c
+        end
+        addVisibleWorldQuad(groupForSprite,
+            { x = centerX - rightX * 0.5, y = centerY - rightY * 0.5, z = 0 },
+            { x = centerX + rightX * 0.5, y = centerY + rightY * 0.5, z = 0 },
+            { x = centerX + rightX * 0.5, y = centerY + rightY * 0.5, z = 1 },
+            { x = centerX - rightX * 0.5, y = centerY - rightY * 0.5, z = 1 },
+            { u0, v0, u1, v1 },
+            { spriteColor(centerX, centerY, 0), spriteColor(centerX, centerY, 0), spriteColor(centerX, centerY, 1), spriteColor(centerX, centerY, 1) })
+    end
+    if mapData and mapData.events then
+        for _, ev in ipairs(mapData.events) do
+            if not ev.wallEvent then
+                local image = getEventSprite(ev, session)
+                if image then addBillboard(image, ev.x, ev.y) end
+            end
+        end
+    end
+
+    love.graphics.push("all")
+    love.graphics.intersectScissor(0, 0, viewportWidth, viewportHeight)
+    drawFogBackground(fog, viewportWidth, viewportHeight)
+    if mapData and mapData.ceilingStyle == "sky" then
+        drawSkyBackdrop(atlas, viewportWidth, viewportHeight, cAngle)
+    end
+    love.graphics.setShader(shader)
+    shader:send("cameraPosition", { cameraX, cameraY, cameraZ })
+    shader:send("cameraForward", { dirX, dirY })
+    shader:send("cameraRight", { rightX, rightY })
+    shader:send("fovHalfX", 0.75)
+    shader:send("fovHalfY", 0.421875)
+    shader:send("nearPlane", 0.05)
+    shader:send("farPlane", 32.0)
+    shader:send("baseViewportWidth", baseViewportWidth)
+    shader:send("baseViewportHeight", baseViewportHeight)
+    shader:send("targetWidth", targetWidth)
+    shader:send("targetHeight", targetHeight)
+    shader:send("viewportCenterY", viewportCenterY)
+    shader:send("affineTextures", affineTextures and 1.0 or 0.0)
+    shader:send("vertexSnapPixels", vertexSnapPixels)
+    shader:send("fogColor", fog.color)
+    shader:send("ditherLevels", ditherLevels)
+    love.graphics.setColor(1, 1, 1, 1)
+    -- Distance fade is a color mix toward the fog/background, never a
+    -- translucent polygon. Keep the material batches painter-ordered for now;
+    -- the geometry is still fully world-space and perspective projected.
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setDepthMode("always", true)
+    table.sort(surfaces, function(a, b)
+        if a.depth == b.depth then return a.sequence < b.sequence end
+        return a.depth > b.depth
+    end)
+    for _, g in ipairs(surfaces) do
+        if #g.vertices > 0 then
+            local mesh = love.graphics.newMesh(WORLD_MESH_FORMAT, g.vertices, "triangles", "stream")
+            mesh:setTexture(g.texture)
+            love.graphics.draw(mesh)
+            mesh:release()
+        end
+    end
+    love.graphics.setDepthMode("always", false)
+    love.graphics.setShader()
+    love.graphics.pop()
+    require("presentation.door_transition").draw()
+end
+
 -- Draw a vertical gradient block for ceiling/floor
 local function drawVerticalGradient(x, y, w, h, colTop, colBottom)
     local verts = {
@@ -743,6 +1507,14 @@ local function drawVerticalGradient(x, y, w, h, colTop, colBottom)
 end
 
 function viewport_3d.draw(session)
+    -- All world surfaces use one world-space camera and one perspective
+    -- shader. The legacy body below is unreachable and retained only as
+    -- reference while the remaining presentation details are migrated.
+    return drawWorldSpace(session)
+
+    --[[
+    Legacy raycaster body retained below for historical reference only.
+
     -- Self-initialize rather than requiring every caller to have called init()
     -- first: the map scene draws through scene_host now (24.07.2026), so the
     -- world view is reachable from hosts that never ran the boot sequence
@@ -937,8 +1709,16 @@ function viewport_3d.draw(session)
     local materialLookup = buildMaterialLookup(session)
 
     -- ── 3. Perspective Raycasting Loop with Fish-eye Correction ────────────────
-    local zBuffer = {}
+    local zBuffer = drawPolygonalWalls(
+        session, grid, cx + 1, cy + 1, dirX, dirY,
+        atlas, light, fog, playerLight, doorLookup, materialLookup)
+    if not zBuffer then
+        -- A shader compile failure is already reported by ensureWallMeshShader;
+        -- keep billboard occlusion deterministic while the failure is visible.
+        zBuffer = raycastDepthBuffer(grid, cx, cy, dirX, dirY, planeX, planeY)
+    end
 
+    if false then
     for x = 0, 255 do
         -- x-coordinate in camera space (from -1 to 1)
         local cameraX = 2 * x / 256 - 1
@@ -1141,6 +1921,10 @@ function viewport_3d.draw(session)
     end
 
     -- ── 4. Collect and Sort Sprite Objects by Distance ───────────────────
+    -- The old column loop is retained behind the first-slice checkpoint until
+    -- the polygon pass has cleared the visual gate.
+    end
+
     local spritesToDraw = {}
 
     -- Add coordinate-based events (from maps.json events list)
@@ -1245,6 +2029,7 @@ function viewport_3d.draw(session)
     -- Keep threshold black below the minimap and all scene windows. The
     -- viewport is the map layer; its callers add UI only after it returns.
     require("presentation.door_transition").draw()
+    ]]
 end
 
 return viewport_3d

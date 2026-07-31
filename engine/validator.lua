@@ -71,6 +71,9 @@ validator.run = function(loader)
         check(fog.minFactor == nil or (type(fog.minFactor) == "number"
                 and fog.minFactor >= 0 and fog.minFactor <= 1),
             desc .. ".minFactor (" .. tostring(fog.minFactor) .. ") must be a number in 0..1")
+        check(fog.psxBands == nil or (type(fog.psxBands) == "number"
+                and fog.psxBands >= 2 and fog.psxBands == math.floor(fog.psxBands)),
+            desc .. ".psxBands (" .. tostring(fog.psxBands) .. ") must be an integer >= 2")
         if fog.panorama ~= nil then
             if check(type(fog.panorama) == "table", desc .. ".panorama must be a list") then
                 for pi, layer in ipairs(fog.panorama) do
@@ -1859,6 +1862,13 @@ elseif paramDef.type == "script" then
                 local tsPath = tsDef.texture or ("assets/tilesets/" .. tostring(map.tileset) .. ".png")
                 check(love.filesystem.getInfo(tsPath) ~= nil,
                     "map '" .. tostring(map.name) .. "' tileset '" .. tostring(map.tileset) .. "' texture missing (" .. tsPath .. ")")
+                if tsDef.skyPanorama then
+                    local skyName = tostring(tsDef.skyPanorama):gsub("^assets/panorama/", ""):gsub("%.png$", "")
+                    local skyPath = "assets/panorama/" .. skyName .. ".png"
+                    check(love.filesystem.getInfo(skyPath) ~= nil,
+                        "map '" .. tostring(map.name) .. "' tileset '" .. tostring(map.tileset)
+                        .. "' sky panorama missing (" .. skyPath .. ")")
+                end
             end
         end
         if map.light and map.layout then

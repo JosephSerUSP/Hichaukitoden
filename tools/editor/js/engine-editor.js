@@ -677,6 +677,7 @@
                 slidersCol.appendChild(createParamRow('Fog Distance (How far fog extends past start):', 'distance', 0.5, 32.0, 0.5, 8.0));
                 slidersCol.appendChild(createParamRow('Sharpness (1.0 = linear, >1.0 = sharp threshold):', 'sharpness', 0.1, 10.0, 0.1, 1.0));
                 slidersCol.appendChild(createParamRow('Min Visibility Floor (0.0 to 0.5):', 'minFactor', 0.0, 0.5, 0.01, 0.12));
+                slidersCol.appendChild(createParamRow('PSX Fog Bands (vertex visibility steps):', 'psxBands', 2, 32, 1, 8));
 
                 layoutWrap.appendChild(slidersCol);
                 paramFs.appendChild(layoutWrap);
