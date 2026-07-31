@@ -795,12 +795,16 @@
                 dbPayload.system.battle_screen = dbPayload.system.battle_screen || {};
                 dbPayload.engine.battleLayout = dbPayload.engine.battleLayout || {};
                 dbPayload.engine.windowLayout = dbPayload.engine.windowLayout || {};
+                // One constant normalising the Effekseer library's authoring
+                // scale to canvas pixels -- editable here rather than repeated
+                // on every animation track.
+                dbPayload.engine.effekseer = dbPayload.engine.effekseer || {};
                 buildRecursiveForm(panel, {
                     ui: dbPayload.system.ui,
                     physics: dbPayload.system.physics,
                     battle_screen: dbPayload.system.battle_screen
                 }, [], dbPayload.system);
-                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout, windowLayout: dbPayload.engine.windowLayout }, [], dbPayload.engine);
+                buildRecursiveForm(panel, { battleLayout: dbPayload.engine.battleLayout, windowLayout: dbPayload.engine.windowLayout, effekseer: dbPayload.engine.effekseer }, [], dbPayload.engine);
                 buildBattleScreenPreview(panel);
                 attachJsonToggle(header, panel, dbPayload.engine.battleLayout, rerender);
             } else if (tabName === 'tileset') {

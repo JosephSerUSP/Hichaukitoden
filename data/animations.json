@@ -199,39 +199,6 @@
     },
     "tracks": [
       {
-        "type": "particles",
-        "t0": 100,
-        "duration": 100,
-        "direction": 270,
-        "speed": 94,
-        "spread": 306,
-        "rate": 557,
-        "lifetime": 0.3,
-        "gravity": 9,
-        "sizeStart": 1,
-        "sizeEnd": 0,
-        "colorOverLife": [
-          [
-            0.667,
-            1,
-            0.667,
-            1
-          ],
-          [
-            0.4,
-            0.9,
-            0.5,
-            1
-          ]
-        ],
-        "blendMode": "add",
-        "easing": "ease_out",
-        "layer": "front",
-        "speedMax": 6,
-        "x": 0,
-        "y": -12
-      },
-      {
         "type": "gradient_map",
         "t0": 0,
         "duration": 100,
@@ -284,6 +251,14 @@
         ],
         "fromIntensity": 1,
         "toIntensity": 0
+      },
+      {
+        "type": "effekseer",
+        "t0": 0,
+        "effect": "assets/effects/SecondRite/recovery_001.efkefc",
+        "anchor": {
+          "point": "center"
+        }
       }
     ]
   },
@@ -1312,8 +1287,7 @@
         "effect": "assets/effects/SecondRite/basic_attack.efkefc",
         "anchor": {
           "point": "center"
-        },
-        "magnification": 3.2
+        }
       }
     ]
   },

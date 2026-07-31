@@ -683,6 +683,40 @@ Two equivalent fixes, and the choice is the owner's:
 The second is probably better long-term for exactly that reason, but it is a
 decision about the effect library, not about the engine.
 
+#### Scale is now ONE registry constant (30.07.2026, owner direction)
+
+Superseding the per-track magnification above. The effect library is authored
+to a scale shared with the owner's other commercial assets, so the conversion
+to canvas pixels is a **property of the library, not of any one effect** —
+which makes it registry data, editable in the Engine editor, not a number
+copied onto every track.
+
+- `data/engine.json` -> `effekseer.magnification` (currently **6.4**)
+- A track's own `magnification` still exists and now **multiplies** the global
+  rather than replacing it, so it means "this effect is bigger than house
+  scale", and a track that wants house scale simply omits it.
+- Exposed in the Engine editor through the existing `buildRecursiveForm` call
+  beside `battleLayout`/`windowLayout` — schema-driven, no hand-written DOM.
+- G1 rejects a non-positive value: it would collapse every effect at once,
+  which is precisely the invisible whole-system breakage the validator exists
+  to catch.
+
+The owner halved the authoring scale (cells 4x -> 2x in Effekseer), so the
+constant doubled 3.2 -> 6.4. Verified: the old 4x asset at 3.2 rendered
+17x18 px; the new 2x asset at 6.4 renders 16x21 px, and the captured pixels are
+hard-edged with no interpolation blur. Same on-screen size, same crispness --
+the two changes cancel exactly, as expected.
+
+**G1 caught a genuine modelling error during this change.** `system.heal` is a
+system-class entry, and the validator requires `duration` on every track of
+one. An `effekseer` track has no meaningful duration -- it is a one-shot spawn
+at `t0` and the runtime owns the lifetime afterwards -- so the track type is
+now explicitly exempt. Supplying a duration would have been worse than omitting
+it: a number nothing reads, that reads as authoritative.
+
+`system.heal`'s LOVE `particles` track is likewise replaced, by
+`recovery_001.efkefc`. Two of the 28 entries are now migrated.
+
 #### Coverage gap, needs an owner call
 
 Battle's `screenshotScript` is `return, escape, down, return, down, return` —

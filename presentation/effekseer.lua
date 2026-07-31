@@ -23,6 +23,8 @@ local initialised = false
 local failed = false
 local warned = false
 local suppressed = false
+-- engine.json effekseer.magnification; 1.0 until init(loader) supplies it.
+local globalMagnification = 1.0
 local effectCache = {}   -- path|magnification -> effect id
 local liveHandles = {}
 
@@ -96,7 +98,18 @@ end
 -- Loads the DLL and initialises the runtime. Safe to call repeatedly; only the
 -- first call does work. Requires a live GL context, so call it after the
 -- window exists, never at require time.
-function effekseer.init()
+--
+-- `loader` supplies engine.json's `effekseer.magnification`: ONE constant
+-- normalising the effect library's authoring scale to canvas pixels, rather
+-- than the same number repeated on every track. Effekseer's units are
+-- arbitrary, so this is purely a property of how the effects were authored --
+-- exactly the kind of number that belongs in the registry and the Engine
+-- editor, not scattered through animations.json.
+function effekseer.init(loader)
+    if loader and loader.engine and loader.engine.effekseer
+        and type(loader.engine.effekseer.magnification) == "number" then
+        globalMagnification = loader.engine.effekseer.magnification
+    end
     if initialised or failed then return initialised end
     if not ok_ffi then failed = true warnOnce("LuaJIT FFI unavailable") return false end
 
@@ -129,13 +142,20 @@ function effekseer.available()
     return initialised and not failed
 end
 
--- Loads (and caches) an effect. `magnification` matters: effects are authored
--- in world units, so a 3D-scale effect renders ~20px wide under the 1-unit-
--- per-pixel camera. Prefer authoring at game scale over magnifying -- scaling
--- up yields soft filtered gradients that fight pixel art (roadmap 6.5.1d).
+-- Loads (and caches) an effect.
+--
+-- Effective scale is the GLOBAL constant (engine.json `effekseer.magnification`
+-- -- the library's authoring convention) MULTIPLIED by the track's own optional
+-- magnification (an artistic tweak for one effect). A track that wants the
+-- house scale simply omits it.
+--
+-- Effekseer's units are arbitrary, and the screen-space camera makes one unit
+-- one canvas pixel, so this constant is what puts a source texel on a canvas
+-- pixel. Off it in either direction costs sharpness: below, the texture is
+-- minified; above, interpolated and soft (roadmap 6.5.1d).
 function effekseer.loadEffect(path, magnification)
     if not effekseer.available() then return nil end
-    magnification = magnification or 1.0
+    magnification = globalMagnification * (magnification or 1.0)
     local key = path .. "|" .. tostring(magnification)
     if effectCache[key] ~= nil then
         return effectCache[key] or nil

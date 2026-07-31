@@ -2544,6 +2544,21 @@ elseif paramDef.type == "script" then
         effekseer = true,
     }
 
+    -- The one constant normalising the effect library's authoring scale to
+    -- canvas pixels. A zero or negative value would collapse every effect at
+    -- once, which is exactly the sort of invisible whole-system breakage the
+    -- validator exists to turn into a build failure.
+    local efkCfg = (loader.engine or {}).effekseer
+    if efkCfg ~= nil then
+        check(type(efkCfg) == "table", "engine.effekseer must be a table")
+        if type(efkCfg) == "table" then
+            check(efkCfg.magnification == nil
+                or (type(efkCfg.magnification) == "number" and efkCfg.magnification > 0),
+                "engine.effekseer.magnification must be a positive number (got "
+                .. tostring(efkCfg.magnification) .. ")")
+        end
+    end
+
     -- An `effekseer` track names an external .efk asset. The FILE is opaque to
     -- the validator, exactly as a PNG is (SPEC: effects are assets, not data),
     -- but the REFERENCE is ours to check: a typo would otherwise become an
@@ -2608,8 +2623,15 @@ elseif paramDef.type == "script" then
                 if type(track) == "table" then
                     check(VALID_TRACK_TYPES[track.type],
                         "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " has unknown type '" .. tostring(track.type) .. "'")
-                    check(type(track.duration) == "number",
-                        "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " missing numeric duration")
+                    -- `effekseer` is exempt from `duration`: the track is a
+                    -- one-shot spawn at t0 and the Effekseer runtime owns the
+                    -- effect's lifetime thereafter. A duration here would be a
+                    -- number nothing reads -- worse than absent, because it
+                    -- would read as authoritative.
+                    if track.type ~= "effekseer" then
+                        check(type(track.duration) == "number",
+                            "animation system: entry '" .. tostring(id) .. "' track " .. ti .. " missing numeric duration")
+                    end
                 end
             end
         end

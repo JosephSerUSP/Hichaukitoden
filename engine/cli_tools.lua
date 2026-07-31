@@ -464,7 +464,7 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         -- -- would be blind to exactly the thing it was built for. Degrades to
         -- a no-op when the shim DLL is absent, so the gate still runs on a
         -- machine with no native build.
-        require("presentation.effekseer").init()
+        require("presentation.effekseer").init(loader)
         for _, sceneDef in ipairs(loader.scenes or {}) do
             captureClock = 0
             math.randomseed(12345)

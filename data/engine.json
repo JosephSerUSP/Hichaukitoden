@@ -2454,6 +2454,9 @@
     "victoryRowHeight": 18,
     "victoryGaugeWidth": 120
   },
+  "effekseer": {
+    "magnification": 6.4
+  },
   "effectTypes": [
     {
       "id": "hp_damage",

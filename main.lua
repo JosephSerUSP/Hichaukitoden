@@ -504,7 +504,7 @@ function love.load(arg)
     -- require time. A missing shim DLL logs once and disables effects instead
     -- of raising, so a clean checkout still runs (owner decision 30.07.2026,
     -- docs/design/renderer-3d-roadmap.md 10.3).
-    require("presentation.effekseer").init()
+    require("presentation.effekseer").init(loader)
     
     -- Start developer server
     server.start()
