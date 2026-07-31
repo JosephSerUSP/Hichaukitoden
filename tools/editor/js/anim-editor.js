@@ -26,10 +26,14 @@
             blend:        { label: 'Blend',        icon: '◐',  color: '#862e9c' },
             shake:        { label: 'Shake',        icon: '〰', color: '#e8590c' },
             screen_flash: { label: 'Screen Flash', icon: '⚡', color: '#f59f00' },
-            gradient_map: { label: 'Gradient Map', icon: '🌈', color: '#7048e8' }
+            gradient_map: { label: 'Gradient Map', icon: '🌈', color: '#7048e8' },
+            effekseer:    { label: 'Effekseer',    icon: '💥', color: '#0b7285' }
         };
 
         const TYPE_DEFAULTS = {
+            // No `duration`: an effekseer track is a one-shot spawn at t0 and the
+            // Effekseer runtime owns the effect's lifetime (validator exempts it).
+            effekseer:    { effect: '' },
             transform:    { fromX: 0, toX: 0, fromY: 0, toY: 0 },
             particles:    { direction: 270, speed: 50, spread: 45, rate: 20, lifetime: 0.6, gravity: 0, x: 0, y: 0, sizeStart: 1, sizeEnd: 0, layer: 'front', spawnShape: 'point', spawnRadiusX: 0, spawnRadiusY: 0, spawnAngle: 0, spawnDirectionOutward: false },
             force_field:  { field: 'gravity', strength: 60, angle: 90 },
@@ -1200,7 +1204,67 @@
                 });
 
                 // -- Type-specific --
-                if (tr.type === 'transform') {
+                if (tr.type === 'effekseer') {
+                    // The .efk itself is an opaque asset (authored in the
+                    // Effekseer editor), so what is authored HERE is the
+                    // reference plus placement -- matching how the validator
+                    // checks it: the file is opaque, the reference is ours.
+                    const efk = section(inspectorCol, 'Effect');
+                    const sel = document.createElement('select');
+                    sel.className = 'win98-input';
+                    sel.style.gridColumn = '1 / -1';
+                    const cur = tr.effect || '';
+                    const setOpts = (files) => {
+                        sel.innerHTML = '';
+                        const none = document.createElement('option');
+                        none.value = ''; none.textContent = files.length ? 'Pick an effect…' : 'No .efkefc under assets/effects';
+                        sel.appendChild(none);
+                        files.forEach(f => {
+                            const o = document.createElement('option');
+                            o.value = f; o.textContent = f.replace('assets/effects/', '');
+                            sel.appendChild(o);
+                        });
+                        // Keep an unknown authored path selectable rather than
+                        // silently dropping it on the next save.
+                        if (cur && !files.includes(cur)) {
+                            const o = document.createElement('option');
+                            o.value = cur; o.textContent = cur + '  (missing)';
+                            sel.appendChild(o);
+                        }
+                        sel.value = cur;
+                    };
+                    setOpts([]);
+                    fetch('/api/effects')
+                        .then(r => r.json())
+                        .then(d => setOpts(d.files || []))
+                        .catch(() => setOpts([]));
+                    sel.onchange = () => {
+                        if (sel.value) tr.effect = sel.value; else delete tr.effect;
+                        markChange();
+                        renderTimeline();
+                    };
+                    efk.appendChild(sel);
+                    noteRow(efk, 'Authored in the Effekseer editor; this only references it.');
+
+                    const place = section(inspectorCol, 'Placement');
+                    tr.anchor = tr.anchor || {};
+                    selectCell(place, 'Anchor', [
+                        { value: 'center', label: 'Center' },
+                        { value: 'feet', label: 'Feet' },
+                        { value: 'head', label: 'Head' },
+                        { value: 'top_left', label: 'Top Left' }
+                    ], tr.anchor.point || 'center', val => { tr.anchor.point = val; markChange(); });
+                    numCell(place, 'Offset X', tr.anchor, 'offsetX', 0, { int: true, help: '_none' });
+                    numCell(place, 'Offset Y', tr.anchor, 'offsetY', 0, { int: true, help: '_none' });
+                    numCell(place, 'Rel X', tr.anchor, 'relativeOffsetX', 0, { step: '0.1', help: '_none' });
+                    numCell(place, 'Rel Y', tr.anchor, 'relativeOffsetY', 0, { step: '0.1', help: '_none' });
+                    noteRow(place, 'Rel X/Y are fractions of the battler’s own size, so one effect fits a 24px party sprite and a 64px enemy alike.');
+
+                    const sc = section(inspectorCol, 'Scale');
+                    numCell(sc, 'Magnification', tr, 'magnification', 1.0, { step: '0.1', min: 0.01, help: '_none' });
+                    noteRow(sc, 'Multiplies engine.json effekseer.magnification (the library-wide constant). Leave at 1 for house scale.');
+
+                } else if (tr.type === 'transform') {
                     const motion = section(inspectorCol, 'Motion (px)');
                     numCell(motion, 'From X', tr, 'fromX', 0, { int: true, handles: true, help: '_none' });
                     numCell(motion, 'To X', tr, 'toX', 0, { int: true, handles: true, help: '_none' });

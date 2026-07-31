@@ -50,6 +50,7 @@ void efk_stop(int handle);
 void efk_stop_all(void);
 int  efk_exists(int handle);
 void efk_set_location(int handle, float x, float y, float z);
+void efk_set_scale(int handle, float x, float y, float z);
 int  efk_instance_count(void);
 void efk_update(float deltaFrame);
 void efk_set_time(float seconds);
@@ -190,7 +191,14 @@ function effekseer.play(path, x, y, magnification)
     local id = effekseer.loadEffect(path, magnification)
     if not id then return nil end
     local handle = lib.efk_play(id, x, y, 0)
-    if handle >= 0 then liveHandles[handle] = true end
+    if handle >= 0 then
+        -- Effekseer authors with +Y UP; a 2D canvas has +Y DOWN, so an effect
+        -- plays upside down. Mirror it about its own origin, which leaves the
+        -- world position (already correct) untouched. Doing this in the
+        -- projection instead would move the effect as well as flip it.
+        lib.efk_set_scale(handle, 1.0, -1.0, 1.0)
+        liveHandles[handle] = true
+    end
     return handle
 end
 

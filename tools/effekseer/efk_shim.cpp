@@ -281,6 +281,18 @@ EFK_API void efk_set_location(int handle, float x, float y, float z)
         g_manager->SetLocation((Effekseer::Handle)handle, Effekseer::Vector3D(x, y, z));
 }
 
+// Scale is applied about the effect's OWN origin, which is what makes it the
+// right tool for the Y-axis mismatch: Effekseer authors with +Y up, a 2D canvas
+// has +Y down, so an effect plays upside down. Mirroring via scale (1,-1,1)
+// flips the effect's geometry in place, leaving its world position -- already
+// verified correct -- untouched. Doing this in the projection instead would
+// move the effect as well as flip it.
+EFK_API void efk_set_scale(int handle, float x, float y, float z)
+{
+    if (g_manager)
+        g_manager->SetScale((Effekseer::Handle)handle, x, y, z);
+}
+
 EFK_API int efk_instance_count(void)
 {
     return g_manager ? g_manager->GetTotalInstanceCount() : 0;

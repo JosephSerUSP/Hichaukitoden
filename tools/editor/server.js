@@ -167,6 +167,28 @@ const server = http.createServer((req, res) => {
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
+    } else if (req.method === 'GET' && req.url === '/api/effects') {
+        // Effekseer effects, for the animation editor's effect dropdown.
+        // Separate from /api/assets because that one is image-only and does not
+        // recurse, while effects live in per-library subfolders under
+        // assets/effects (e.g. assets/effects/SecondRite/basic_attack.efkefc).
+        const root = path.join(PROJECT_DIR, 'assets', 'effects');
+        const out = [];
+        const walk = (dir) => {
+            let entries = [];
+            try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (e) { return; }
+            entries.forEach(ent => {
+                const full = path.join(dir, ent.name);
+                if (ent.isDirectory()) { walk(full); return; }
+                if (!/\.efkefc?$/i.test(ent.name)) return;
+                out.push(path.relative(PROJECT_DIR, full).split(path.sep).join('/'));
+            });
+        };
+        walk(root);
+        out.sort();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ files: out }));
+
     } else if (req.method === 'GET' && req.url.startsWith('/api/assets')) {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1:8080');
         const subDir = parsedUrl.searchParams.get('dir') || 'sprites';

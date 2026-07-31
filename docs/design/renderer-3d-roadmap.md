@@ -756,6 +756,52 @@ it: a number nothing reads, that reads as authoritative.
 `system.heal`'s LOVE `particles` track is likewise replaced, by
 `recovery_001.efkefc`. Two of the 28 entries are now migrated.
 
+#### The Y axis, part two: effects played upside down
+
+Position was fixed in §6.5.1e; **orientation was still wrong**, and the two are
+genuinely separate problems.
+
+**Effekseer authors with +Y up. A 2D canvas has +Y down.** So an effect placed
+at the correct pixel still plays inverted — sparks fall instead of rising.
+
+The projection cannot fix this. Its Y sign controls placement *and* orientation
+together, so flipping it to correct the orientation re-breaks the position (that
+is precisely the 153-vs-78 bug). What is needed is a mirror about the **effect's
+own origin**, leaving its world position alone — which is exactly what
+`Manager::SetScale` does, since scale is applied in the effect's local space.
+
+`efk_set_scale` was added to the shim and `effekseer.play` now applies
+`(1, -1, 1)`. Measured before and after on the same preview frame: the effect's
+bounding box went from `y 143..158` to `y 138..153` — a clean mirror about
+y≈148, the anchor point — with X unchanged.
+
+#### The editor could not author `effekseer` tracks
+
+The animation editor showed *"Unknown track type — shown read-only"*. §4.1's
+rule ("a context with no editor surface is a command nobody can write") applies
+just as much to track types: a track the engine runs but the editor cannot
+create is authorable only by hand-editing JSON.
+
+Added:
+
+- `effekseer` in `TRACK_META` and `TYPE_DEFAULTS` (no `duration` default — the
+  validator exempts the type, so offering the field would invite a number
+  nothing reads).
+- An inspector form: **effect dropdown**, anchor point, pixel offsets,
+  size-relative offsets, and magnification. What is authored here is the
+  *reference plus placement*, mirroring exactly what G1 checks — the `.efk` is
+  opaque, the reference is ours.
+- `GET /api/effects` in the editor server: a recursive listing of
+  `assets/effects/**/*.efkefc`. `/api/assets` could not serve this — it is
+  image-only and does not recurse, and effects live in per-library subfolders.
+- An authored path that no longer exists stays selectable and is marked
+  `(missing)`, so opening an animation cannot silently drop it on save.
+
+**Note the pattern.** Both of these, and the preview gap before them, were
+"integration is done" claims that were true of the engine and false of the
+authoring surface. The engine ran `effekseer` tracks correctly for three
+commits while no one could create one in the editor.
+
 #### Coverage gap, needs an owner call
 
 Battle's `screenshotScript` is `return, escape, down, return, down, return` —
