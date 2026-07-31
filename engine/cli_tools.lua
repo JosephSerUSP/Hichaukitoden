@@ -109,6 +109,15 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
         -- Gradient-map shader: shared module (same shader used in battle).
         local gradient_shader = require("presentation.gradient_shader")
 
+        -- Effekseer tracks must preview too, or the editor silently shows an
+        -- animation missing its most visible layer. The preview canvas is
+        -- 240x240, not the game's 256x240, so the camera is retargeted -- and
+        -- effects are cleared first so a previous preview cannot bleed in.
+        local effekseer = require("presentation.effekseer")
+        effekseer.init(loader)
+        effekseer.setViewport(240, 240)
+        effekseer.reset()
+
         animation_player.reset()
         animation_player.play(animId, dummyTarget)
 
@@ -145,6 +154,9 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
             -- Back-layer particles render behind the sprite.
             love.graphics.setColor(1, 1, 1, 1)
             animation_player.drawParticles(dummyTarget, previewRect, drawSprite, "back")
+            -- Same seam battle uses: the drawer owns the rect, so it resolves
+            -- the anchor and spawns. One implementation, not a preview copy.
+            effekseer.spawnFor(dummyTarget, previewRect)
 
             -- Sprite through tint + gradient-map shader (if active).
             love.graphics.setBlendMode(blendMode)
@@ -159,6 +171,10 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
             -- Front-layer particles render on top of the sprite.
             love.graphics.setColor(1, 1, 1, 1)
             animation_player.drawParticles(dummyTarget, previewRect, drawSprite, "front")
+
+            -- Effects above the sprite, below the flash -- the same ordering
+            -- frame_renderer uses in game.
+            effekseer.draw()
 
             -- Full-screen flash overlay, above everything.
             local flash = animation_player.getScreenFlash(dummyTarget)
@@ -181,6 +197,7 @@ function cli.runPreviewAnim(animId, animJson, spritePath, loader)
             -- Advance time
             animation_player.update(step)
             animation_player.updateParticles(step)
+            effekseer.update(step)
             elapsed = elapsed + step
         end
 

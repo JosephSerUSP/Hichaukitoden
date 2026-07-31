@@ -250,22 +250,42 @@ identical arches in a row reads much worse than four identical wall textures.
 
 From `data/animations.json` (28 entries, 8 track kinds):
 
-| Track kind | Instances | Subsumed by Effekseer? |
+**Corrected 30.07.2026 (owner).** An earlier version of this table claimed
+`tint`, `gradient_map` and `blend` were subsumed. They are not, and the
+distinction is structural rather than a matter of degree:
+
+> **Effekseer does not own the battler sprite, so it cannot do anything that
+> operates ON that sprite.**
+
+`gradient_map`, `tint` and `blend` all wrap the battler's own draw call —
+`gradient_shader.drawWithGradient(target, drawFn, ...)` literally takes the
+sprite-drawing function as an argument. Effekseer draws its own quads in its
+own pass; it has no access to ours. Only the tracks that ARE a particle system
+can migrate.
+
+| Track kind | Instances | Migrates? |
 |---|---|---|
-| `particles` | 18 | **Yes, completely** |
-| `tint` | 14 | Mostly |
-| `gradient_map` | 11 | **Yes** |
-| `blend` | 10 | **Yes** |
-| `force_field` | 4 | **Yes** |
-| `transform` | 14 | **No** — battler choreography (`step_forward_party`, `enemy_slide_in`, `swap_in/out`) |
+| `particles` | 18 | **Yes** — this is the particle system |
+| `force_field` | 4 | **Yes** — only feeds particle acceleration, so it goes with them |
+| `tint` | 14 | No — tints the battler sprite |
+| `gradient_map` | 11 | No — a shader over the battler sprite |
+| `blend` | 10 | No — the battler sprite's blend mode |
+| `transform` | 14 | No — battler choreography (`step_forward_party`, `enemy_slide_in`, `swap_in/out`) |
 | `shake` | 5 | No — screen/camera level |
 | `screen_flash` | 4 | No — screen level |
 
-So [`animation_player.lua`](../../presentation/animation_player.lua) does not go
-away; it gets **thin**. It keeps owning timing, per-target instances, anchors,
-completion callbacks, and the transform/shake/flash tracks, and delegates the
-entire visual layer. The particle/tint/gradient/blend/force-field machinery —
-the bulk of the interesting code — is what leaves.
+So **22 of 80 track instances migrate, not the ~57 the old table implied**, and
+only entries that actually emit particles need touching at all. Several of the
+28 entries need no migration whatsoever.
+
+[`animation_player.lua`](../../presentation/animation_player.lua) therefore gets
+**less thin than previously claimed**. It keeps timing, per-target instances,
+anchors, completion callbacks, and every sprite-affecting and screen-affecting
+track. What leaves is the particle machinery specifically.
+
+That is still a worthwhile trade — the particle code is the fiddliest part, and
+authoring in Effekseer beats hand-writing emitter JSON — but the honest pitch is
+"replaces the particle system", not "replaces the animation system".
 
 ### 6.2 An `.efk` is an asset, not data
 
@@ -301,6 +321,25 @@ The editor renders nothing itself and must continue to render nothing itself.
 
 The one condition is §3.1: Effekseer's stepping must be driven by that explicit
 `step` value, not its own clock.
+
+**Wired 30.07.2026.** The claim above was architecturally true but had not been
+implemented — `runPreviewAnim` drew tint/gradient/particles and simply ignored
+`effekseer` tracks, so the editor showed an animation missing its most visible
+layer. It now inits Effekseer, spawns through the same
+`effekseer.spawnFor(target, rect)` seam battle uses (one implementation, not a
+preview copy), draws above the sprite and below the screen flash exactly as
+`frame_renderer` orders them, and steps effect time with the preview's own
+fixed 0.05s step.
+
+One real difference had to be handled: **the preview canvas is 240x240, the
+game's is 256x240.** Since the projection is what makes one unit one canvas
+pixel, previewing through the game's projection placed effects at the wrong
+offset — so `effekseer.setViewport(w, h)` retargets the camera. A preview that
+lies about placement is worse than no preview.
+
+Verified by A/B: previewing `skill.attack` with and without its `effekseer`
+track differs by 68 px in a 15x16 box — the expected ~16px at magnification
+6.4.
 
 ### 6.4 Battle first — Strategy B is not a prerequisite
 

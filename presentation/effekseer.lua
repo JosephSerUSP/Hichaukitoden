@@ -142,6 +142,18 @@ function effekseer.available()
     return initialised and not failed
 end
 
+-- Retargets the screen-space camera at a different canvas size.
+--
+-- The game canvas is 256x240, but the editor's animation preview renders into
+-- a 240x240 one. Since the projection is what makes one unit one canvas pixel,
+-- previewing through the game's projection would place effects at the wrong
+-- offset -- and the preview exists precisely so authors can trust what they
+-- see. Callers that use the game canvas never need this.
+function effekseer.setViewport(w, h)
+    if not effekseer.available() then return end
+    toBuf(projBuf, orthoScreen(w, h, -512, 512))
+end
+
 -- Loads (and caches) an effect.
 --
 -- Effective scale is the GLOBAL constant (engine.json `effekseer.magnification`
