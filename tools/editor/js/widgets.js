@@ -2279,8 +2279,6 @@
 
             } else if (activeDbTab === 'quests') {
                 buildQuestForm(formPanel, item.id);
-            } else if (activeDbTab === 'lore') {
-                buildLoreForm(formPanel, item.id);
 
             } else if (activeDbTab === 'actionSequences') {
                 buildActionSequenceForm(formPanel, item.id);

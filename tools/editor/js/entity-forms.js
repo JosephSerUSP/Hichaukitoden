@@ -477,6 +477,38 @@
                         container.appendChild(listWrapper);
                     } }
                 ]
+            },
+            lore: {
+                resolve: item => dbPayload.lore[item.id],
+                fields: [
+                    { kind: 'custom', build: (c, entry, item) =>
+                        createFormField(c, 'Lore ID (key)', item.id, val => renameLoreKey(item.id, val)) },
+                    { kind: 'text', key: 'title', label: 'Title', refreshList: true },
+                    { kind: 'text', key: 'category', label: 'Category' },
+                    { kind: 'number', key: 'order', label: 'Sort Order', fallback: 0 },
+                    { kind: 'checkbox', key: 'unlocked', label: 'Unlocked by Default', deleteIfFalse: true },
+                    { kind: 'custom', build: (c, entry) => {
+                        const bodyGroup = document.createElement('div');
+                        bodyGroup.className = 'form-group';
+                        const bodyLabel = document.createElement('label');
+                        bodyLabel.textContent = 'Body';
+                        const body = document.createElement('textarea');
+                        body.className = 'win98-input';
+                        body.style.cssText = 'width: 100%; height: 180px; box-sizing: border-box; resize: vertical;';
+                        body.value = entry.body || '';
+                        body.oninput = () => { entry.body = body.value; setDirty(true); };
+                        bodyGroup.appendChild(bodyLabel);
+                        bodyGroup.appendChild(body);
+                        c.appendChild(bodyGroup);
+                    } },
+                    { kind: 'custom', build: (c, entry, item) => {
+                        const del = document.createElement('button');
+                        del.className = 'win98-btn';
+                        del.textContent = 'Delete Lore Entry';
+                        del.onclick = () => deleteLore(item.id);
+                        c.appendChild(del);
+                    } }
+                ]
             }
         };
 

@@ -527,39 +527,6 @@
             initDatabaseEditor();
         }
 
-        function buildLoreForm(formPanel, id) {
-            const entry = dbPayload.lore[id];
-            if (!entry) return;
-            createFormField(formPanel, 'Lore ID (key)', id, val => { renameLoreKey(id, val); });
-            createFormField(formPanel, 'Title', entry.title || '', val => {
-                entry.title = val; setDirty(true); initDatabaseEditor(true);
-            });
-            createFormField(formPanel, 'Category', entry.category || '', val => { entry.category = val; });
-            createFormField(formPanel, 'Sort Order', entry.order || 0,
-                val => { entry.order = parseInt(val) || 0; }, 'number');
-            createCheckboxField(formPanel, 'Unlocked by Default', entry.unlocked === true,
-                val => { if (val) entry.unlocked = true; else delete entry.unlocked; setDirty(true); });
-
-            const bodyGroup = document.createElement('div');
-            bodyGroup.className = 'form-group';
-            const bodyLabel = document.createElement('label');
-            bodyLabel.textContent = 'Body';
-            const body = document.createElement('textarea');
-            body.className = 'win98-input';
-            body.style.cssText = 'width: 100%; height: 180px; box-sizing: border-box; resize: vertical;';
-            body.value = entry.body || '';
-            body.oninput = () => { entry.body = body.value; setDirty(true); };
-            bodyGroup.appendChild(bodyLabel);
-            bodyGroup.appendChild(body);
-            formPanel.appendChild(bodyGroup);
-
-            const del = document.createElement('button');
-            del.className = 'win98-btn';
-            del.textContent = 'Delete Lore Entry';
-            del.onclick = () => deleteLore(id);
-            formPanel.appendChild(del);
-        }
-
         // --- ACTION SEQUENCES ---
         function createNewActionSequence() {
             const coll = dbPayload.actionSequences = dbPayload.actionSequences || {};
