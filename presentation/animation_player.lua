@@ -178,8 +178,56 @@ function animation_player.play(entryId, target, delayMs)
         elapsed = -(delayMs or 0) / 1000,
         done = false,
         particleSystems = {},
+        efkFired = {},
     })
     return true
+end
+
+---------------------------------------------------------------------------
+-- Effekseer tracks
+---------------------------------------------------------------------------
+-- An `effekseer` track spawns a native Effekseer effect once, at its t0, and
+-- Effekseer then owns its lifetime -- unlike the LOVE ParticleSystem tracks,
+-- which this module keeps updating frame by frame.
+--
+-- Spawning needs a SCREEN POSITION, and this module deliberately knows nothing
+-- about screen geometry (see the header): resolving an anchor spec against a
+-- battler's rect is battler_geometry's job, and only the drawer holds the rect.
+-- So the player queues due spawns and the drawer consumes them, exactly as it
+-- already resolves anchors for particle systems.
+--
+-- `efkFired` guards one-shot semantics: consumeEffekseerSpawns is called every
+-- frame by the drawer, but a given track must spawn exactly once per instance.
+
+-- Returns due, not-yet-fired effekseer spawns for `target` and marks them
+-- fired. Each entry: { effect, magnification, anchor }. The caller resolves
+-- `anchor` against the target's rect and passes the result to effekseer.play.
+function animation_player.consumeEffekseerSpawns(target)
+    local list = instances[target]
+    if not list then return nil end
+    local due = nil
+    for _, inst in ipairs(list) do
+        local entry = inst.entry
+        if entry and entry.tracks then
+            for ti, track in ipairs(entry.tracks) do
+                if track.type == "effekseer" and not inst.efkFired[ti] then
+                    local t0 = (track.t0 or 0) / 1000
+                    if inst.elapsed >= t0 then
+                        inst.efkFired[ti] = true
+                        due = due or {}
+                        table.insert(due, {
+                            effect = track.effect,
+                            magnification = track.magnification,
+                            -- Track anchor wins over the entry's, so one entry
+                            -- can place several effects at different points.
+                            anchor = track.anchor or entry.anchor,
+                        })
+                    end
+                end
+            end
+        end
+    end
+    return due
 end
 
 local function releaseInstanceParticles(inst)

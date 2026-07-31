@@ -499,6 +499,12 @@ function love.load(arg)
 
     -- Initialize 3D viewport textures
     viewport_3d.init()
+
+    -- Effekseer needs a live GL context, so it initialises here rather than at
+    -- require time. A missing shim DLL logs once and disables effects instead
+    -- of raising, so a clean checkout still runs (owner decision 30.07.2026,
+    -- docs/design/renderer-3d-roadmap.md 10.3).
+    require("presentation.effekseer").init()
     
     -- Start developer server
     server.start()

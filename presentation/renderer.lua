@@ -192,6 +192,9 @@ function renderer.update(dt)
     -- overhaul-7 A1: animation player owns all battler animation timing
     animation_player.update(dt)
     animation_player.updateParticles(dt)
+    -- Effekseer steps from the same dt, never from a clock of its own, so the
+    -- screenshot gate and the editor's preview filmstrip stay deterministic.
+    require("presentation.effekseer").update(dt)
 
     -- Smoothly interpolate party HP and the shared party MP pool
     local session = renderer.session
@@ -848,6 +851,10 @@ function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
         if not isDead then
             love.graphics.setColor(1, 1, 1, 1)
             animation_player.drawParticles(enemy, rect, drawEnemySprite, "back", renderer.session)
+            -- Native Effekseer tracks spawn here because this is where the
+            -- rect exists; Effekseer then owns the effect's lifetime and
+            -- draws it itself, once per frame, from frame_renderer.
+            require("presentation.effekseer").spawnFor(enemy, rect)
         end
 
         if isDeathPlaying then

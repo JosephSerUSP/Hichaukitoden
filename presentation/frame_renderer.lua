@@ -22,6 +22,14 @@ function frame_renderer.draw(scene_host, renderer, session, loader, gameHeight)
         renderer.drawDefeatFadeOverlay(bv.defeatFinalFade)
     end
 
+    -- Effekseer draws ALL live effects in one call, not per battler: the
+    -- runtime owns their lifetime once spawned. Placed here so effects sit
+    -- above battlers and reticles but below damage popups and pictures --
+    -- a number must stay readable through whatever is going off behind it.
+    -- effekseer.draw() flushes LOVE's batch first; without that the effects
+    -- land behind everything queued this frame (roadmap 6.5.1c).
+    require("presentation.effekseer").draw()
+
     renderer.drawDamagePopups()
     imagePictures.draw("screen")
     stringPictures.draw("screen")

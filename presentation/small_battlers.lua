@@ -211,6 +211,11 @@ function small_battlers.draw(spriteKey, x, y, size, dead, battlerRef, session)
     if animated and battlerRef then
         love.graphics.setColor(1, 1, 1, 1)
         animation_player.drawParticles(battlerRef, rect, drawSprite, "back", session)
+        -- Party-side counterpart of the enemy spawn in renderer.lua: the rect
+        -- is only known here, and the size-relative anchor offsets mean one
+        -- authored effect sits correctly on a 24px party sprite and a 64px
+        -- enemy alike.
+        require("presentation.effekseer").spawnFor(battlerRef, rect)
     end
 
     if dead and not isFadingOut then

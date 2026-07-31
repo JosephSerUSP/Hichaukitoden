@@ -2541,7 +2541,31 @@ elseif paramDef.type == "script" then
         tint = true, blend = true, transform = true,
         shake = true, particles = true, force_field = true,
         gradient_map = true, screen_flash = true,
+        effekseer = true,
     }
+
+    -- An `effekseer` track names an external .efk asset. The FILE is opaque to
+    -- the validator, exactly as a PNG is (SPEC: effects are assets, not data),
+    -- but the REFERENCE is ours to check: a typo would otherwise become an
+    -- effect that silently never plays, which is the outcome the
+    -- non-negotiables call the worst one.
+    for id, entry in pairs(loader.animations or {}) do
+        for ti, track in ipairs((type(entry) == "table" and entry.tracks) or {}) do
+            if type(track) == "table" and track.type == "effekseer" then
+                check(type(track.effect) == "string" and track.effect ~= "",
+                    "animation system: entry '" .. tostring(id) .. "' track " .. ti
+                    .. " is an effekseer track with no `effect` path")
+                if type(track.effect) == "string" and track.effect ~= "" then
+                    check(love.filesystem.getInfo(track.effect) ~= nil,
+                        "animation system: entry '" .. tostring(id) .. "' track " .. ti
+                        .. " references missing effect file '" .. tostring(track.effect) .. "'")
+                end
+                check(track.magnification == nil or type(track.magnification) == "number",
+                    "animation system: entry '" .. tostring(id) .. "' track " .. ti
+                    .. " magnification must be a number")
+            end
+        end
+    end
     -- Anchor spec (every entry, not just system ones): the drawer RAISES on an
     -- unknown point rather than quietly centering, so an authoring typo must be
     -- a build failure instead of a crash the first time the animation plays.

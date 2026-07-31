@@ -412,6 +412,10 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
     end
 
     local function resetPresentation()
+        -- Effects outlive the scene that spawned them (Effekseer owns their
+        -- lifetime), so without this a leftover effect would bleed into the
+        -- next scene's capture and make G5 order-dependent.
+        require("presentation.effekseer").reset()
         dock.reset()
         stringPictures.clear()
         imagePictures.clear()
@@ -439,6 +443,11 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
     local ok, err = pcall(function()
       withHermeticSaves(function()
         require("presentation.ui").init()
+        -- Effects must be capturable, or G5 -- the only gate that can see them
+        -- -- would be blind to exactly the thing it was built for. Degrades to
+        -- a no-op when the shim DLL is absent, so the gate still runs on a
+        -- machine with no native build.
+        require("presentation.effekseer").init()
         for _, sceneDef in ipairs(loader.scenes or {}) do
             captureClock = 0
             math.randomseed(12345)

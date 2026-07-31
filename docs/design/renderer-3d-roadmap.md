@@ -568,6 +568,67 @@ soft gradients. This is cheap to adopt now and expensive to retrofit across a
 finished effect library — which is the main reason it is written down here
 rather than discovered in step 2.
 
+### 6.5.1e Step 2 landed (30.07.2026): Effekseer wired into the engine
+
+Owner decisions taken: **wire it in for real**, and **degrade (do not raise)
+when the shim DLL is absent**.
+
+**Shape of the integration** — deliberately following the existing seams rather
+than adding new ones:
+
+- `presentation/effekseer.lua` — FFI binding. Loads the DLL under `pcall`,
+  logs **once** and disables effects if absent. Presentation-only; the engine
+  never calls it.
+- **A new `effekseer` animation track type**, so effects are authored in
+  `data/animations.json` alongside `particles`/`tint`/`transform` rather than
+  through a parallel mechanism. G1 accepts the type and checks the reference.
+- Spawning is one-shot at the track's `t0`. `animation_player` queues due
+  spawns (`consumeEffekseerSpawns`) and the **drawers** resolve the anchor,
+  preserving that module's stated invariant of knowing nothing about screen
+  geometry. `effekseer.spawnFor(target, rect)` is the bridge, placed there
+  because `battler_geometry` is the bottom of the dependency stack and may not
+  reach upward.
+- One `effekseer.draw()` per frame in `frame_renderer`, above battlers and
+  reticles but **below damage popups and pictures** — a number must stay
+  readable through whatever is going off behind it.
+- `effekseer.update(dt)` rides the existing `renderer.update` tick, stepping
+  from the caller's dt rather than any clock of Effekseer's own (§3.1).
+
+**Because effects are `.efk` assets and G1 cannot read them, the reference is
+checked instead**: a track must name a non-empty `effect`, and that file must
+exist. A typo would otherwise be an effect that silently never plays.
+
+#### The Y-flip bug, and why the spike could not have caught it
+
+An effect anchored to an enemy's centre landed at **y=153 instead of y=78** —
+an exact mirror about the canvas midline.
+
+`EffekseerForLove`'s recipe negates Y to get a top-left origin because it draws
+to the **backbuffer**. This game always renders into a **Canvas**, and an
+OpenGL FBO's origin is already bottom-left, so the flip is applied for us and
+negating again inverts everything.
+
+**The spike played its test effect at (128, 120) — the exact centre of a
+256x240 canvas — where a Y-flip is invisible.** The standalone canvas test in
+§6.5.1d passed for that reason and only that reason. The bug surfaced the
+moment a real anchor put an effect off-centre.
+
+Two things worth keeping from that:
+
+- **Centred test fixtures hide symmetric bugs.** Position probes must be
+  off-centre in both axes.
+- **G5 is what caught it.** The frame diff gave the exact centroid (71, 86)
+  against the expected (73, 78), turning "looks wrong" into a measurement. The
+  gate built in step 0 paid for itself on the first real change it saw.
+
+#### Status
+
+Plumbing is complete and verified in the real battle scene. **No `.efk` assets
+are committed**, so nothing renders yet and all seven gates are green
+unchanged. The 28 existing `animations.json` entries are untouched; migrating
+them is §6.1's work and depends on effects being authored first (§6.5.1d:
+author at game scale).
+
 ### 6.6 Why this ranks high
 
 Two properties no other item on this roadmap has:

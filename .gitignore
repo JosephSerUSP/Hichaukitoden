@@ -29,3 +29,4 @@ tools/golden/screens-actual/
 
 # Effekseer shim build artifact (6.4MB; rebuild per tools/effekseer/README.md)
 tools/effekseer/**/*.dll
+effekseer_shim.dll
