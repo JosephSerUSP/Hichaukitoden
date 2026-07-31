@@ -14,8 +14,15 @@ end
 local iconset
 local iconSize = 8
 local iconQuads = {}
-local windowskin
-local windowskinHighlight
+-- Three windowskins, one per structural role (31.07.2026). `back` is the
+-- semitransparent shell behind menus and panels -- the world view now renders
+-- the full canvas height, so what shows through it is the 3D scene. `button`
+-- and `buttonHighlight` are the solid skins for interactive cells (command
+-- rows, party slots, tabs): a button that let the dungeon through would be
+-- unreadable, so only shells are transparent.
+local windowskinBack
+local windowskinButton
+local windowskinButtonHighlight
 local targetSkin
 local mainFont
 local mainFontOffsetY = 0
@@ -164,11 +171,24 @@ function ui.init()
         iconset:setFilter("nearest", "nearest")
     end
     
-    if love.filesystem.getInfo("assets/system/PRINCESSTHEKING.png") then
-        windowskin = love.graphics.newImage("assets/system/PRINCESSTHEKING.png")
-        windowskin:setFilter("nearest", "nearest")
+    local function loadSkin(name)
+        local path = "assets/system/" .. name .. ".png"
+        if not love.filesystem.getInfo(path) then return nil end
+        local image = love.graphics.newImage(path)
+        image:setFilter("nearest", "nearest")
+        return image
+    end
 
-        local wsW, wsH = windowskin:getDimensions()
+    -- All three skins share one quad layout, so the quads are built once. A
+    -- skin whose file is missing falls back to `back` in drawPanel rather than
+    -- being silently skipped -- a panel that draws nothing is worse than a
+    -- panel wearing the wrong skin.
+    windowskinBack = loadSkin("windowskin_back")
+    windowskinButton = loadSkin("windowskin_button")
+    windowskinButtonHighlight = loadSkin("windowskin_button_highlight")
+
+    if windowskinBack then
+        local wsW, wsH = windowskinBack:getDimensions()
         panelQuads.top = love.graphics.newQuad(40, 0, 16, 8, wsW, wsH)
         panelQuads.bot = love.graphics.newQuad(40, 24, 16, 8, wsW, wsH)
         panelQuads.left = love.graphics.newQuad(32, 8, 8, 16, wsW, wsH)
@@ -182,11 +202,6 @@ function ui.init()
         panelQuads.scrollThumb = love.graphics.newQuad(48, 32, 16, 16, wsW, wsH)
         panelQuads.arrowUp = love.graphics.newQuad(40, 8, 16, 8, wsW, wsH)
         panelQuads.arrowDown = love.graphics.newQuad(40, 16, 16, 8, wsW, wsH)
-    end
-
-    if love.filesystem.getInfo("assets/system/WSkin_Highlight.png") then
-        windowskinHighlight = love.graphics.newImage("assets/system/WSkin_Highlight.png")
-        windowskinHighlight:setFilter("nearest", "nearest")
     end
 
     if love.filesystem.getInfo("assets/system/UI_Target.png") then
@@ -278,16 +293,31 @@ end
 -- Layout specifications:
 -- First 32x32: seamlessly tiling background
 -- Next 32x32 (x=32..64, y=0..32): 8px borders
--- `highlight` swaps in WSkin_Highlight.png (same quad layout) to mark the
--- active choice — the selected party member's cell, the selected command
--- row, etc. Falls back to the normal windowskin if the asset is missing.
-function ui.drawPanel(x, y, w, h, title, highlight)
+-- `role` selects the skin, all three sharing this quad layout:
+--   nil / "back"             -- window shells and panels; semitransparent
+--   "button"                 -- an interactive cell at rest
+--   "button_highlight"       -- that same cell selected
+-- The distinction is structural, not decorative: a shell shows the 3D world
+-- through it, a button must stay readable, so the choice belongs to the
+-- caller rather than to a boolean that only knew "selected or not".
+-- Every interactive cell picks its skin the same way, so the mapping lives
+-- here instead of being spelled out at each of the eight call sites.
+function ui.buttonRole(selected)
+    return selected and "button_highlight" or "button"
+end
+
+function ui.drawPanel(x, y, w, h, title, role)
     -- Animated dock shells may briefly be smaller than the windowskin's
     -- two 8px borders. There is no valid interior/scissor at that size.
     if w < 16 or h < 16 then return end
     love.graphics.push("all")
 
-    local skin = (highlight and windowskinHighlight) or windowskin
+    local skin = windowskinBack
+    if role == "button" then
+        skin = windowskinButton or skin
+    elseif role == "button_highlight" then
+        skin = windowskinButtonHighlight or windowskinButton or skin
+    end
     if skin then
         local wsW, wsH = skin:getDimensions()
         
@@ -359,7 +389,7 @@ end
 -- The reticle size alternates between the base target size and target size + 2.
 function ui.drawTargetReticle(x, y, w, h)
     love.graphics.push("all")
-    local skin = targetSkin or windowskin
+    local skin = targetSkin or windowskinButton
     if skin then
         local wsW, wsH = skin:getDimensions()
         
@@ -408,7 +438,10 @@ function ui.drawScrollbar(x, y, w, h, totalRows, visibleRows, startOffset)
 
     love.graphics.push("all")
 
-    local skin = windowskin
+    -- The scrollbar is chrome on a shell but has to stay legible against
+    -- whatever the transparent shell reveals, so it samples the solid button
+    -- skin rather than `back`.
+    local skin = windowskinButton or windowskinBack
     local maxScroll = totalRows - visibleRows
     local scrollPos = math.max(0, math.min(maxScroll, (startOffset or 1) - 1))
 

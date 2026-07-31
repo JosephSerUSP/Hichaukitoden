@@ -668,7 +668,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
             local isTabSel = (tIdx == activeTab)
             local tabX = contentX + (tIdx - 1) * tabW
             if isTabSel then
-                ui.drawPanel(tabX + 1, contentY - 2, tabW - 2, ui.lineHeight + 3, nil, true)
+                ui.drawPanel(tabX + 1, contentY - 2, tabW - 2, ui.lineHeight + 3, nil, "button_highlight")
             end
             local label = tabName
             local color = isTabSel and COLOR_SELECTED or COLOR_DIM
@@ -738,7 +738,7 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
         -- party slot (owner direction 11.07.2026 — one shared look for
         -- party status everywhere it's drawn).
         if spriteField then
-            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, nil, isSel)
+            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, nil, ui.buttonRole(isSel))
         end
 
         local textX = contentX + ui.toPx(0.5)
@@ -893,7 +893,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
         if row.battlerRef then
             actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
         else
-            ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, i == cursor)
+            ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, ui.buttonRole(i == cursor))
             if i == cursor then
                 small_battlers.draw("Cursor", cx - 6, cy, 8)
             end
@@ -951,7 +951,7 @@ local function drawSwapIndicator(state, sceneData, ctx)
         if battler then
             actor_status.draw(battler, 2, 2, false, session)
         else
-            ui.drawPanel(0, 0, colW - 2, rowH - 2, nil, true)
+            ui.drawPanel(0, 0, colW - 2, rowH - 2, nil, "button_highlight")
         end
         love.graphics.setCanvas()
         love.graphics.pop()
@@ -978,7 +978,7 @@ local function drawSwapIndicator(state, sceneData, ctx)
 end
 
 -- Horizontal option row (confirm/command style): options spread across the
--- width. The active choice gets a small WSkin_Highlight backdrop behind its
+-- width. The active choice gets a small button_highlight backdrop behind its
 -- text (ui.drawPanel's `highlight` param), same idea as the actor_status
 -- cell highlight — one shared way to mark "this is the current selection".
 local function drawOptions(rows, cursor, env, x, y, w)
@@ -990,7 +990,7 @@ local function drawOptions(rows, cursor, env, x, y, w)
         local color = isSel and COLOR_SELECTED or COLOR_NORMAL
         local slotX = x + math.floor((i - 1) * slot)
         if isSel then
-            ui.drawPanel(slotX + ui.toPx(0.5), y - ui.toPx(0.5), math.floor(slot) - ui.toPx(1), ui.lineHeight + ui.toPx(1), nil, true)
+            ui.drawPanel(slotX + ui.toPx(0.5), y - ui.toPx(0.5), math.floor(slot) - ui.toPx(1), ui.lineHeight + ui.toPx(1), nil, "button_highlight")
             small_battlers.draw("Cursor", slotX + ui.toPx(1), y, 8)
         end
         ui.drawString(row.name or "", slotX + ui.toPx(2), y, color)
@@ -1038,7 +1038,7 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
         for i, row in ipairs(rows) do
             local isSel = (i == cursor)
             local sy = y + inset + (i - 1) * (slotH + gap)
-            ui.drawPanel(x + inset, sy, slotW, slotH, nil, isSel)
+            ui.drawPanel(x + inset, sy, slotW, slotH, nil, ui.buttonRole(isSel))
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
             local textY = sy + slotH / 2 - ui.lineHeight / 2
             drawSlotLabel(row, color, x + inset, slotW, textY,
@@ -1049,7 +1049,7 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h)
         for i, row in ipairs(rows) do
             local isSel = (i == cursor)
             local sx = x + gap + (i - 1) * (slotW + gap)
-            ui.drawPanel(sx, y, slotW, h, nil, isSel)
+            ui.drawPanel(sx, y, slotW, h, nil, ui.buttonRole(isSel))
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
             local textY = y + h / 2 - ui.lineHeight / 2
             drawSlotLabel(row, color, sx, slotW, textY, isSel and (y + h / 2 - 4) or nil)

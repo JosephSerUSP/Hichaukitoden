@@ -1208,17 +1208,26 @@ local function drawWorldSpace(session)
     local shader = ensureWorldShader()
     if not shader then error("world renderer unavailable: " .. tostring(worldShaderError), 0) end
 
-    -- The game canvas is 256x240, but the first-person playfield remains the
-    -- original 256x144. Keep the camera's pixel scale fixed so a future wider
-    -- canvas adds view at the sides instead of changing the scene's framing.
-    local targetWidth, targetHeight = 256, 144
+    -- The world now fills the whole 256x240 canvas rather than stopping at the
+    -- old 256x144 playfield (31.07.2026). The windowskin shells are
+    -- semitransparent, so the region behind the bottom dock is visible and has
+    -- to contain scene rather than nothing.
+    --
+    -- This is an unclip, not a re-framing. `baseViewportWidth/Height` stay
+    -- 256x144: they are the camera's *pixel scale*, and the shader divides
+    -- them by the target size, so a taller target extends the view downward at
+    -- a fixed scale exactly as a wider one extends it sideways. The horizon
+    -- stays pinned at `viewportCenterY`, so existing composition is unchanged
+    -- and what appears below y=144 is floor that was already being projected
+    -- and then scissored away.
+    local targetWidth, targetHeight = 256, 240
     local targetCanvas = love.graphics.getCanvas()
     if targetCanvas then
         targetWidth, targetHeight = targetCanvas:getDimensions()
     end
     local baseViewportWidth, baseViewportHeight = 256, 144
     local viewportWidth = targetWidth
-    local viewportHeight = math.min(baseViewportHeight, targetHeight)
+    local viewportHeight = targetHeight
     local viewportCenterY = 70
 
     local px, py, pdir = session.playerX, session.playerY, session.playerDir

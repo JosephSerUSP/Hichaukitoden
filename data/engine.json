@@ -2421,7 +2421,7 @@
     "enemyInfoShowElements": true,
     "enemyFallbackSize": 50,
     "viewportOverlayW": 256,
-    "viewportOverlayH": 144,
+    "viewportOverlayH": 240,
     "logPanelX": 10,
     "logPanelY": 6,
     "logPanelWidth": 236,
