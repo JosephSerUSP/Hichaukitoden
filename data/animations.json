@@ -1307,32 +1307,13 @@
         "easing": "linear"
       },
       {
-        "type": "particles",
+        "type": "effekseer",
         "t0": 0,
-        "duration": 100,
-        "rate": 291,
-        "lifetime": 0.3,
-        "spread": 360,
-        "speed": 87,
-        "gravity": 100,
-        "sizeStart": 1.2,
-        "sizeEnd": 0.3,
-        "colorOverLife": [
-          [
-            1,
-            0.9,
-            0.4,
-            1
-          ],
-          [
-            1,
-            0.3,
-            0.1,
-            0
-          ]
-        ],
-        "blendMode": "add",
-        "easing": "ease_out"
+        "effect": "assets/effects/SecondRite/basic_attack.efkefc",
+        "anchor": {
+          "point": "center"
+        },
+        "magnification": 3.2
       }
     ]
   },

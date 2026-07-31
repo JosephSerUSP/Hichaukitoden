@@ -22,6 +22,7 @@ local lib = nil
 local initialised = false
 local failed = false
 local warned = false
+local suppressed = false
 local effectCache = {}   -- path|magnification -> effect id
 local liveHandles = {}
 
@@ -187,8 +188,20 @@ end
 -- rather than any clock of Effekseer's own, so the screenshot gate and the
 -- editor's preview-anim filmstrip can step it deterministically (roadmap 3.1).
 function effekseer.update(dt)
-    if not effekseer.available() then return end
+    if not effekseer.available() or suppressed then return end
     lib.efk_update(dt * 60.0)
+end
+
+-- Freezes effect time without stopping effects.
+--
+-- The screenshot harness settles animations by advancing a whole second in one
+-- step, which is right for panels and gauges but fatal for effects: anything
+-- shorter than 1s is over before the frame is captured, so G5 -- the only gate
+-- that can see effects -- would be blind to every short one. The harness
+-- suppresses during the settle, then advances effects by a small fixed amount,
+-- capturing them mid-life and deterministically.
+function effekseer.setSuppressed(value)
+    suppressed = value and true or false
 end
 
 function effekseer.setTime(seconds)

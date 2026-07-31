@@ -44,9 +44,13 @@ local function orthoScreen(w, h, zn, zf)
         0, 0, 1 / (zn - zf), 0,
         0, 0, zn / (zn - zf), 1,
     }
+    -- NOTE: no y negation. EffekseerForLove negates because it draws to the
+    -- BACKBUFFER; we render into a Canvas, whose FBO origin is already
+    -- bottom-left, so negating again mirrors everything about the midline.
+    -- See roadmap 6.5.1e -- this harness originally had the bug and could not
+    -- show it, because it played its effect at the exact canvas centre.
     m[13] = -1            -- Values[3][0]
-    m[6]  = -m[6]         -- Values[1][1] negated -> y grows downward
-    m[14] = 1             -- Values[3][1]
+    m[14] = -1            -- Values[3][1]
     return m
 end
 

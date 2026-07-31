@@ -329,6 +329,9 @@ end
 -- initial state and every authored goldenScript step. The editor server owns
 -- decoding the returned PNGs into the disposable workspace directory.
 function cli.runScreenshots(loader, gameWidth, gameHeight)
+    -- How far into an effect's life the capture lands. Small enough that short
+    -- effects are still alive, large enough to be past frame 0's empty spawn.
+    local EFFECT_CAPTURE_SECONDS = 0.15
     local json = require("data.json")
     local scene_host = require("engine.scene_host")
     local exploration = require("engine.exploration")
@@ -392,6 +395,9 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         local sceneDef = sceneById(scene_host.getCurrent())
         if not state or not sceneDef then return end
 
+        -- Freeze effect time for the whole settle; released at the end.
+        require("presentation.effekseer").setSuppressed(true)
+
         -- Seed/finish scene windows before the warm-up so even windows that
         -- have never drawn get their complete resting geometry immediately.
         window_renderer.finishAnimationsForCapture(state, sceneDef.windows)
@@ -409,6 +415,17 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         -- Advance renderer-owned animation tracks and picture motion/reveal.
         -- Scene logic itself is deliberately not advanced here.
         advancePresentation(1)
+
+        -- Effects are the one thing the settle must NOT fast-forward. Panels
+        -- and gauges want to be at rest; an effect at rest is an effect that
+        -- already finished, and most are far shorter than the 1s settle. So
+        -- effect time is frozen for the settle above and advanced here by a
+        -- small fixed amount instead, capturing effects mid-life and
+        -- deterministically. Without this, G5 -- the only gate that can see
+        -- effects at all -- is blind to every effect shorter than a second.
+        local efk = require("presentation.effekseer")
+        efk.setSuppressed(false)
+        efk.update(EFFECT_CAPTURE_SECONDS)
     end
 
     local function resetPresentation()

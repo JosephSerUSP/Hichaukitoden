@@ -629,6 +629,69 @@ unchanged. The 28 existing `animations.json` entries are untouched; migrating
 them is §6.1's work and depends on effects being authored first (§6.5.1d:
 author at game scale).
 
+### 6.5.1f First authored effect (30.07.2026): scale and capture findings
+
+`assets/effects/SecondRite/basic_attack.efkefc` is the first owner-authored
+effect. `skill.attack`'s LOVE `particles` track is replaced by an `effekseer`
+track referencing it — the first actual step of the §6.1 migration, not a demo.
+
+`.efkefc` loads directly (it is a container and carries its own textures), so
+no export-to-`.efk` step is needed.
+
+#### Finding 1: the settle killed every short effect
+
+The screenshot harness settles by advancing **one second** in a single step.
+That is right for panels and gauges — at rest is what you want to capture — but
+an effect at rest is an effect that has already finished, and this one lives
+about 24 frames. Result: **G5 could not see effects at all**, which would have
+quietly defeated the whole reason §6.5.1b wanted a G5 frame containing one.
+
+Fixed by freezing effect time for the settle (`effekseer.setSuppressed`) and
+advancing it afterwards by `EFFECT_CAPTURE_SECONDS = 0.15`, so effects are
+captured mid-life and deterministically. Confirmed: with the fix, a probe
+effect turns the battle frame red; without it, G5 reports a clean pass on a
+frame that visibly contains an effect.
+
+**This is the second time a capture procedure hid the thing it was meant to
+catch** (the first being §6.5.1c's self-flushing z-order probe). Both were
+green-looking failures, which is the dangerous kind.
+
+#### Finding 2: authored effects need a scale conversion
+
+Effekseer node sizes are arbitrary units; the screen-space camera makes one
+unit one canvas pixel. Measured, at 0.15s into this effect:
+
+| magnification | rendered size |
+|---|---|
+| 1.0 | 5 x 5 px |
+| **3.2** | **17 x 18 px** |
+| 6.4 | 34 x 35 px |
+
+Perfectly linear, so the conversion is a single constant. **3.2 puts a 16x16
+source texture on 16x16 canvas pixels — one texel per pixel**, which is the
+value that keeps pixel art crisp. Below it the texture is minified; above it,
+interpolated and soft (§6.5.1d).
+
+So the authored effect is about 3.2x too small for a 1-unit-per-pixel camera.
+Two equivalent fixes, and the choice is the owner's:
+
+- **Set `magnification: 3.2` on the track** (done for `skill.attack`). Keeps
+  the Effekseer project as authored.
+- **Author node sizes 3.2x larger** and leave magnification at 1. Makes the
+  editor preview match the game, which matters more as the library grows.
+
+The second is probably better long-term for exactly that reason, but it is a
+decision about the effect library, not about the engine.
+
+#### Coverage gap, needs an owner call
+
+Battle's `screenshotScript` is `return, escape, down, return, down, return` —
+it never resolves an attack, so `skill.attack` never plays during capture and
+**G5 does not currently cover the effect**. Closing that means extending the
+script so an attack lands, which adds new capture frames and therefore needs an
+owner-signed `capture-screens.ps1` run. Worth doing before the migration gets
+far: otherwise the 28 entries get ported with no gate watching any of them.
+
 ### 6.6 Why this ranks high
 
 Two properties no other item on this roadmap has:
