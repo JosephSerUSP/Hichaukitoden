@@ -408,7 +408,14 @@ function Battle:executeTurn(turn, roundEvents)
     end
 
     if not turn.actor:isDead() then
-        if targetDead then
+        if turn.actor.isRestricted and turn.actor:isRestricted() then
+            local loader = self.session and self.session.loader
+            local msg = (loader and loader.formatTerm) and loader.formatTerm("battle.is_asleep", "{0} is unable to act!", turn.actor.name) or (turn.actor.name .. " is unable to act!")
+            table.insert(roundEvents, {
+                type = "text",
+                text = msg
+            })
+        elseif targetDead then
             local loader = self.session and self.session.loader
             local msg = (loader and loader.formatTerm) and loader.formatTerm("battle.target_dead", "{0}'s target is already dead!", turn.actor.name) or (turn.actor.name .. "'s target is already dead!")
             table.insert(roundEvents, {

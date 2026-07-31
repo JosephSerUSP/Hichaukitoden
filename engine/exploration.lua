@@ -626,11 +626,16 @@ function exploration.loadMap(session, mapIdx, opts)
                 grid[y][x] = rowStr:sub(x, x)
             end
         end
-        -- Spawn point configuration from system settings
-        local startXDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.x or 10
-        local startYDef = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.y or 17
-        startX, startY = startXDef + 1, startYDef + 1 -- Lua is 1-indexed, systems spawn is 0-indexed
-        startDir = session.loader.system and session.loader.system.spawn and session.loader.system.spawn.dir or "N"
+        -- An authored safe map owns its own entry point. Maps without one
+        -- (Town) retain the campaign-wide system spawn as their fallback.
+        -- Both schemas store zero-indexed coordinates; the runtime grid is
+        -- one-indexed.
+        local systemSpawn = session.loader.system and session.loader.system.spawn or {}
+        local authoredSpawn = mapData.spawn or systemSpawn
+        local startXDef = authoredSpawn.x ~= nil and authoredSpawn.x or 10
+        local startYDef = authoredSpawn.y ~= nil and authoredSpawn.y or 17
+        startX, startY = startXDef + 1, startYDef + 1
+        startDir = authoredSpawn.dir or "N"
 
         -- Safe/authored maps use the same tileset fixture rules as generated
         -- maps. Without this, wall fixtures configured in a tileset never

@@ -141,6 +141,14 @@ check(sess.dungeonFloor == 5, "Floor 5 is depth 5")
 exploration.loadMap(sess, 1)
 check(sess.dungeonFloor == 0, "returning to Town puts the party back at depth 0")
 
+-- Safe maps may be smaller than Town and therefore cannot inherit Town's
+-- system spawn. Developer Room authors its own open-tile entry point.
+exploration.loadMap(sess, 8)
+check(sess.playerX == 8 and sess.playerY == 7 and sess.mapGrid[7][8] == ".",
+    "an authored safe-map spawn places the player on its declared open tile")
+check(sess.playerDir == "N",
+    "an authored safe-map spawn controls the arrival facing")
+
 -- Descending from Floor 5 reached Floor 5 again under the old maxFloor=5 clamp,
 -- which made the deepest authored map unreachable.
 local function descend(fromMapId)

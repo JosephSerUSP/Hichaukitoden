@@ -247,7 +247,7 @@
       },
       {
         "cmd": "GAIN_GOLD",
-        "amount": "random(combat.victoryGoldMin, combat.victoryGoldMax) + party.trait.GOLD_DIGGER"
+        "amount": "combat.victoryGoldBase + combat.victoryGoldPerEnemy * enemies.count + enemies.totalLevel + party.trait.GOLD_DIGGER"
       },
       {
         "cmd": "FOR_EACH",
@@ -257,7 +257,7 @@
           {
             "cmd": "GRANT_XP",
             "target": "ally",
-            "amount": "combat.victoryExp"
+            "amount": "round(combat.victoryExpBase + combat.victoryExpLevelScale * enemies.totalLevel)"
           },
           {
             "cmd": "HEAL",

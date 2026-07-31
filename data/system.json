@@ -126,9 +126,10 @@
     "encounterChance": 0.1,
     "minEnemies": 1,
     "maxEnemies": 3,
-    "victoryGoldMin": 10,
-    "victoryGoldMax": 30,
-    "victoryExp": 15,
+    "victoryGoldBase": 5,
+    "victoryGoldPerEnemy": 5,
+    "victoryExpBase": 10,
+    "victoryExpLevelScale": 0.5,
     "criticalMultiplier": 1.5,
     "baseSpeed": 10,
     "speedPerLevel": 0.5,
@@ -214,14 +215,8 @@
     "summonCostBase": 10,
     "summonCostPerLevel": 5,
     "summonCostPerTier": 15,
-    "sacrificeExpRate": 0.8,
-    "defaultSacrificeRewards": [
-      {
-        "itemId": 1,
-        "chance": 0.5,
-        "count": 1
-      }
-    ]
+    "sacrificeExpRate": 0,
+    "defaultSacrificeRewards": []
   },
   "spawn": {
     "mapId": 1,

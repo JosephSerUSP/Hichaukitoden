@@ -1268,7 +1268,9 @@ validator.run = function(loader)
         check(okReap, "REAP_FALLEN failed: " .. tostring(reapEvs))
         local slotOfDeadSpirit = nil
         if okReap then
-            check((s.expBank or 0) > bankBefore, "REAP_FALLEN banked no EXP for the fallen")
+            local sys = loader and loader.system
+            local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
+            check((s.expBank or 0) > bankBefore or rate == 0, "REAP_FALLEN banked no EXP for the fallen")
             check(#wb.fallen == 0, "REAP_FALLEN did not clear battle.fallen")
             check(s.party[2] == deadSpirit, "REAP_FALLEN must not remove party members itself -- that's deferred to animation completion")
             check(s.party[1] ~= nil, "REAP_FALLEN removed a living spirit")
@@ -1481,7 +1483,7 @@ validator.run = function(loader)
                         a = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
                         b = { level = 1, hp = 1, maxHp = 1, atk = 1, def = 1, mat = 1, mdf = 1, mpd = 1, trait = mockTraits() },
                         session = { gold = 100, mp = 20, maxMp = 30, floor = 3, mapSafe = false, encounterRate = 0.1, itemCount = 3, equipCount = { 1, 1, 1 } },
-                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryExp = 10, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
+                        combat = { minEnemies = 1, maxEnemies = 3, victoryGoldMin = 1, victoryGoldMax = 5, victoryGoldBase = 5, victoryGoldPerEnemy = 5, victoryExp = 10, victoryExpBase = 10, victoryExpLevelScale = 0.5, baseFleeChance = 0.5, goldLossOnFleeMin = 1, goldLossOnFleeMax = 5, mpExhaustionDamage = 5 },
                         v = v,
                         -- These mirror formula.groupView by hand and will drift
                         -- from it again: `mpd` had to be added here before a

@@ -150,6 +150,23 @@ function Battler:isDead()
     return self.hp <= 0
 end
 
+function Battler:hasState(stateId)
+    for _, s in ipairs(self.states or {}) do
+        if s.id == stateId then return true end
+    end
+    return false
+end
+
+function Battler:isRestricted()
+    if self:isDead() then return true end
+    for _, s in ipairs(self.states or {}) do
+        if s.id == "sleep" or s.id == "petrify" or s.id == "stun" then
+            return true
+        end
+    end
+    return false
+end
+
 -- EXP the growth curve charges to go from fromLevel to toLevel (exclusive of
 -- residual). Same linear curve gainExp levels through: each level l costs
 -- l * growth.expPerLevel. Shared by summon pricing and sacrifice yields so

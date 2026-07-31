@@ -1402,12 +1402,18 @@
       "id": "RESET_SESSION",
       "category": "Advanced",
       "label": "Reset Session",
-      "params": [],
+      "params": [
+        {
+          "key": "developerMode",
+          "type": "formula",
+          "optional": true
+        }
+      ],
       "contexts": [
         "scene"
       ],
       "interactive": false,
-      "description": "Discards the current session and starts a fresh one with the starting party (game over / new game)."
+      "description": "Discards the current session and starts a fresh one with the starting party (game over / new game). Optional developerMode overrides the launch default for the new session."
     },
     {
       "id": "LIST_CAMPAIGNS",

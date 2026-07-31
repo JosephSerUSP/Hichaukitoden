@@ -30,7 +30,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `save_menu` | menu | windows | - | 3 | 5 |
 | `shop` | menu | windows | - | 4 | 7 |
 | `status` | menu | windows | - | 11 | 7 |
-| `title` | menu | windows | - | 5 | 6 |
+| `title` | menu | windows | - | 4 | 6 |
 
 ## Registry (data/engine.json)
 
@@ -71,7 +71,7 @@ are what's left:
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx15, cookingx18, tinkeringx17
 - items: **198** (consumablex63, equipmentx120, questx15)
 - skills: **44**, passives: **41**, states: **14**, roles: **13**, elements: **5**
-- maps: **8**, common events: **20**, shops: **6**, quests: **5**, lore entries: **3**
+- maps: **8**, common events: **20**, shops: **8**, quests: **5**, lore entries: **3**
 - animations: **29**, tilesets: **9**
 
 ## Notes for agents

@@ -3,9 +3,9 @@
     "id": 1,
     "name": "HP Tonic",
     "type": "consumable",
-    "cost": 10,
+    "cost": 30,
     "animation": "item.heal_tonic",
-    "description": "Heals one member to full HP.",
+    "description": "Restores 60 HP to one member.",
     "keyArt": "assets/keyArt/item-001-hp-tonic.png",
     "icon": 52,
     "meta": {
@@ -17,7 +17,7 @@
     "effects": [
       {
         "type": "hp",
-        "value": 999
+        "value": 60
       }
     ]
   },

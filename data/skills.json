@@ -638,15 +638,16 @@
     "target": "enemy",
     "element": null,
     "icon": 6,
+    "speed": 25,
     "animation": "skill.attack",
-    "description": "[Enemy] Darts through armor with a driving peck.",
+    "description": "[Enemy] A swift, precise peck that acts early and bypasses 15% of the target's DEF.",
     "mpCost": 0,
     "effects": [
       {
         "type": "hp_damage",
-        "potency": 2.2,
+        "potency": 1.0,
         "power": "atk",
-        "penetration": 0.35
+        "penetration": 0.15
       }
     ]
   },

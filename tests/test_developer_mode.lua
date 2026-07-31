@@ -8,6 +8,7 @@ local loader = require("data.loader")
 local sessionModule = require("engine.session")
 local savegame = require("engine.savegame")
 local formula = require("engine.formula")
+local interpreter = require("engine.interpreter")
 
 print("[TEST] Starting developer mode tests...")
 
@@ -47,6 +48,16 @@ sessionModule.developerMode = false
 local afterPlainLaunch = savegame.deserialize(data, loader)
 check(afterPlainLaunch.developerMode == false,
     "and an ordinary launch loading that same save is not")
+
+-- The title's Developer Room command is intentionally available in an
+-- ordinary launch. Its RESET_SESSION override makes that one fresh session a
+-- real developer session, without changing the launch-wide default.
+local resetCtx = { session = afterPlainLaunch, loader = loader, events = {} }
+interpreter.runImmediate({ { cmd = "RESET_SESSION", developerMode = "true" } }, resetCtx)
+check(resetCtx.session.developerMode == true,
+    "RESET_SESSION can explicitly create a developer-room session")
+check(sessionModule.developerMode == false,
+    "the developer-room override does not change the launch default")
 
 sessionModule.developerMode = launchFlag
 

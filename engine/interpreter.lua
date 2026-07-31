@@ -1730,6 +1730,9 @@ end
 handlers.RESET_SESSION = function(cmd, ctx)
     local sessionModule = require("engine.session")
     local fresh = sessionModule.GameSession.new(ctx.loader or (ctx.session and ctx.session.loader))
+    if cmd.developerMode ~= nil then
+        fresh.developerMode = evalFormula(cmd.developerMode, ctx) == true
+    end
     fresh:initializeStartingParty()
     _G.activeSession = fresh
     ctx.session = fresh

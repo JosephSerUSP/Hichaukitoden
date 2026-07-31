@@ -55,8 +55,10 @@ do
     local reap = firstEvent(events, "reap")
     check(reap ~= nil and firstEvent(events, "ward_save") == nil,
         "unwarded creature is reaped, not saved")
-    check(reap and reap.exp and reap.exp > 0 and (sess.expBank or 0) > 0,
-        "reaping banks EXP")
+    local sys = loader.system
+    local rate = sys and sys.summoner and sys.summoner.sacrificeExpRate or 1.0
+    check(reap ~= nil and (rate == 0 or (reap.exp and reap.exp > 0 and (sess.expBank or 0) > 0)),
+        "reaping banks EXP (or 0 when rate is 0)")
 end
 
 -- 2. ward mode: survives, equipment destroyed.

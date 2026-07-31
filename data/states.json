@@ -56,7 +56,7 @@
       "mental"
     ],
     "name": "Berserk",
-    "icon": 23,
+    "icon": 116,
     "duration": 3,
     "traits": [
       {
@@ -188,7 +188,7 @@
       "physical"
     ],
     "name": "Blind",
-    "icon": 30,
+    "icon": 114,
     "duration": 3,
     "traits": [
       {
@@ -236,7 +236,7 @@
       "mental"
     ],
     "name": "Charm",
-    "icon": 33,
+    "icon": 8,
     "duration": 3,
     "traits": [
       {

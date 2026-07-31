@@ -80,7 +80,7 @@ function battle.rebuildLivingMembers()
     local living = {}
     for i = 1, config.MAX_PARTY_SIZE do
         local c = sess().party[i]
-        if c and not c:isDead() then
+        if c and not c:isDead() and not (c.isRestricted and c:isRestricted()) then
             -- A creature under FORCE_ACTION is never asked. buildTurnQueue
             -- would override its choice anyway, and presenting a menu whose
             -- result is discarded is the worst of both: the player believes

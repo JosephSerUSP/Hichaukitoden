@@ -291,7 +291,7 @@
                 "label": "Buy Weapons",
                 "commands": [
                   {
-                    "shopId": 2,
+                    "shopId": 8,
                     "cmd": "OPEN_SHOP"
                   },
                   {
@@ -623,7 +623,7 @@
                             "cmd": "SET_FLAG"
                           },
                           {
-                            "shopId": 2,
+                            "shopId": 8,
                             "cmd": "OPEN_SHOP"
                           },
                           {
@@ -651,7 +651,7 @@
                                     "cmd": "SET_FLAG"
                                   },
                                   {
-                                    "shopId": 2,
+                                    "shopId": 8,
                                     "cmd": "OPEN_SHOP"
                                   },
                                   {
@@ -839,7 +839,7 @@
                             "cmd": "CHANGE_EVENT_PROPERTIES"
                           },
                           {
-                            "shopId": 1,
+                            "shopId": 7,
                             "cmd": "OPEN_SHOP"
                           },
                           {
@@ -881,7 +881,7 @@
                                             "cmd": "SET_EVENT_LABEL"
                                           },
                                           {
-                                            "shopId": 1,
+                                            "shopId": 7,
                                             "cmd": "OPEN_SHOP"
                                           },
                                           {
@@ -932,7 +932,7 @@
                                     "cmd": "SET_EVENT_LABEL"
                                   },
                                   {
-                                    "shopId": 1,
+                                    "shopId": 7,
                                     "cmd": "OPEN_SHOP"
                                   },
                                   {
@@ -4412,6 +4412,10 @@
                 "text": "The creature watches Saban rather than you. It is waiting to see whether your summons are companions or equipment."
               },
               {
+                "cmd": "TEXT",
+                "text": "Pixie's manifestation drain is 3. Saban alone costs 1 per step. Together, every tile will cost 4 — roughly a quarter of your current range."
+              },
+              {
                 "cmd": "CHOICE",
                 "options": [
                   {
@@ -5091,6 +5095,10 @@
                 "text": "The eyes of the beast soften with familiar recognition of your coat and scent."
               },
               {
+                "cmd": "TEXT",
+                "text": "Cerberus's manifestation drain is 6 — the heaviest you have encountered. Every step with him will cost six more MP than it does now. The power is real; so is the distance it will take from you."
+              },
+              {
                 "cmd": "CHOICE",
                 "options": [
                   {
@@ -5199,7 +5207,8 @@
     "category": "dungeon",
     "generation": "Fixed",
     "bgm": "",
-    "encounterSteps": 0
+    "encounterSteps": 0,
+    "encounterTroop": "wandering_x2"
   },
   {
     "id": 4,
@@ -5967,7 +5976,7 @@
     "spawn": {
       "x": 7,
       "y": 6,
-      "dir": 0
+      "dir": "N"
     },
     "events": [
       {
@@ -6093,6 +6102,25 @@
           {
             "cmd": "LOAD_MAP",
             "mapId": 1
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "name": "Effekseer Battle Console",
+        "x": 7,
+        "y": 5,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC06.png",
+        "commands": [
+          {
+            "cmd": "BATTLE",
+            "troop": "recruit_skeleton",
+            "onVictory": [
+              {
+                "cmd": "RECOVER_PARTY"
+              }
+            ]
           }
         ]
       }

@@ -336,6 +336,14 @@ EFK_API void efk_draw(const float* view16, const float* proj16)
 
     GLStateGuard guard;
 
+    // This integration renders screen-space effects after LOVE has finished
+    // the 3D viewport. The canvas depth attachment still contains the world
+    // geometry at that point; leaving it intact makes effects over enemies
+    // fail their authored depth test while the same effects over depth-free UI
+    // pixels remain visible. Effekseer owns depth relationships within this
+    // overlay pass, but it must not inherit depth from the earlier world pass.
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     Effekseer::Matrix44 view, proj;
     toMatrix(view16, view);
     toMatrix(proj16, proj);

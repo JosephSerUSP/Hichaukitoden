@@ -307,6 +307,12 @@ function effects.apply(effectData, a, b, session, context)
         local finalDmg, critical = resolveDamage(effectData, a, b, session, context, events)
 
         b.hp = math.max(0, b.hp - finalDmg)
+        if b.hp > 0 and b.hasState and b:hasState("sleep") then
+            b:removeState("sleep")
+            local ldr = session and session.loader
+            local msg = (ldr and ldr.formatTerm) and ldr.formatTerm("status.woke_up", "{0} woke up!", b.name) or (b.name .. " woke up!")
+            table.insert(events, { type = "text", text = msg })
+        end
         -- Recorded on the shared action context so a status attached to the
         -- same action can see the hit landed critically (see add_status).
         if critical and context then context.critical = true end
