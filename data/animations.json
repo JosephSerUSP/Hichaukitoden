@@ -366,8 +366,6 @@
       {
         "type": "effekseer",
         "t0": 0,
-        "duration": 1250,
-        "easing": "linear",
         "effect": "assets/effects/SecondRite/windBlade001.efkefc",
         "anchor": {},
         "magnification": 1

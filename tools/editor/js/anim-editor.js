@@ -1189,11 +1189,19 @@
                 // -- Timing --
                 const timing = section(inspectorCol, 'Timing');
                 numCell(timing, 'Start (f)', tr, 't0', 0, { frames: true, retime: true, help: '_none' });
-                numCell(timing, 'Length (f)', tr, 'duration', 100, { frames: true, min: FRAME_MS, retime: true, help: '_none' });
-                selectCell(timing, 'Easing', [
-                    { value: 'linear', label: 'Linear' },
-                    { value: 'ease_out', label: 'Ease Out' }
-                ], tr.easing || 'linear', val => { tr.easing = val; markChange(); });
+                if (tr.type === 'effekseer') {
+                    // The Effekseer runtime owns the effect's lifetime after
+                    // the one-shot spawn at t0 -- duration/easing controls
+                    // here would edit fields nothing reads (see validator's
+                    // exemption for this track type).
+                    noteRow(timing, 'One-shot spawn at Start -- the effect owns its own lifetime, so there is no Length/Easing to set.');
+                } else {
+                    numCell(timing, 'Length (f)', tr, 'duration', 100, { frames: true, min: FRAME_MS, retime: true, help: '_none' });
+                    selectCell(timing, 'Easing', [
+                        { value: 'linear', label: 'Linear' },
+                        { value: 'ease_out', label: 'Ease Out' }
+                    ], tr.easing || 'linear', val => { tr.easing = val; markChange(); });
+                }
                 selectCell(timing, 'Type', Object.keys(TRACK_META).map(t => ({ value: t, label: TRACK_META[t].label })), tr.type, val => {
                     Object.keys(tr).forEach(k => { if (!SHARED_KEYS.includes(k)) delete tr[k]; });
                     tr.type = val;
