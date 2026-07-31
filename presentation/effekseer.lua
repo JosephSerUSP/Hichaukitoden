@@ -258,8 +258,19 @@ end
 -- tools/effekseer/spike/spike-zorder-bug.png).
 function effekseer.draw()
     if not effekseer.available() then return end
+    local sx, sy, sw, sh = love.graphics.getScissor()
     love.graphics.flushBatch()
+    -- Scene windows legitimately leave a content scissor active while they
+    -- draw. Effekseer renders every live instance in one late, full-frame
+    -- pass, so inheriting that scissor clips party effects to their status
+    -- cell and hides enemy effects outside it entirely.
+    love.graphics.setScissor()
     lib.efk_draw(viewBuf, projBuf)
+    if sx then
+        love.graphics.setScissor(sx, sy, sw, sh)
+    else
+        love.graphics.setScissor()
+    end
 end
 
 -- Spawns any due `effekseer` tracks for `target`, anchored against its rect.
