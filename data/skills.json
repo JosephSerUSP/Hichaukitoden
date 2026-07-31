@@ -230,7 +230,7 @@
     "name": "Defend",
     "target": "self",
     "element": null,
-    "icon": 0,
+    "icon": 6,
     "description": "[Self] Brace for impact, reducing incoming damage this round.",
     "speed": 50,
     "effects": [
@@ -247,7 +247,7 @@
     "name": "Ice Shard",
     "target": "enemy-any",
     "element": "Blue",
-    "icon": 1,
+    "icon": 3,
     "description": "[Enemy] Ice Shard.",
     "mpCost": 8,
     "effects": [
@@ -263,7 +263,7 @@
     "name": "Tidal Guard",
     "target": "ally-all",
     "element": "Blue",
-    "icon": 2,
+    "icon": 3,
     "description": "[Party] Raises magical defense.",
     "mpCost": 16,
     "effects": [
@@ -280,7 +280,7 @@
     "name": "Riptide",
     "target": "enemy-any",
     "element": "Blue",
-    "icon": 1,
+    "icon": 3,
     "description": "[Enemy] Riptide.",
     "mpCost": 10,
     "effects": [
@@ -296,7 +296,7 @@
     "name": "Sleep Dust",
     "target": "enemy-all",
     "element": "Green",
-    "icon": 3,
+    "icon": 2,
     "description": "[Enemies] Scatters sleep-inducing dust.",
     "mpCost": 14,
     "effects": [
@@ -330,7 +330,7 @@
     "name": "Root Mend",
     "target": "ally-any",
     "element": "Green",
-    "icon": 3,
+    "icon": 2,
     "description": "[Ally] Restores HP with living roots.",
     "mpCost": 7,
     "effects": [
@@ -345,7 +345,7 @@
     "name": "Garden's Grace",
     "target": "ally-all",
     "element": "Green",
-    "icon": 3,
+    "icon": 2,
     "description": "[Party] Bestows regeneration.",
     "mpCost": 20,
     "effects": [
@@ -395,7 +395,7 @@
     "name": "Darkside",
     "target": "enemy-any",
     "element": "Black",
-    "icon": 1,
+    "icon": 5,
     "description": "[Enemy] Darkside.",
     "mpCost": 20,
     "effects": [
@@ -411,7 +411,7 @@
     "name": "Boulder Toss",
     "target": "enemy-any",
     "element": null,
-    "icon": 1,
+    "icon": 6,
     "description": "[Enemy] Boulder Toss.",
     "mpCost": 0,
     "effects": [
@@ -460,7 +460,7 @@
     "name": "Item Toss",
     "target": "enemy-any",
     "element": null,
-    "icon": 1,
+    "icon": 6,
     "description": "[Enemy] Item Toss.",
     "mpCost": 0,
     "effects": [
@@ -476,7 +476,7 @@
     "name": "Bad Dream",
     "target": "enemy-any",
     "element": "Black",
-    "icon": 1,
+    "icon": 5,
     "description": "[Enemy] Bad Dream.",
     "mpCost": 12,
     "effects": [
@@ -588,7 +588,7 @@
     "name": "Stone Fist",
     "target": "enemy-any",
     "element": null,
-    "icon": 1,
+    "icon": 6,
     "description": "[Enemy] Stone Fist.",
     "mpCost": 0,
     "effects": [
@@ -604,7 +604,7 @@
     "name": "Aqua Dish",
     "target": "enemy-any",
     "element": "Blue",
-    "icon": 1,
+    "icon": 3,
     "description": "[Enemy] Aqua Dish.",
     "mpCost": 5,
     "effects": [
@@ -620,7 +620,7 @@
     "name": "Fleet Step",
     "target": "self",
     "element": "Green",
-    "icon": 3,
+    "icon": 2,
     "description": "[Self] Braces before darting away.",
     "mpCost": 0,
     "effects": [
