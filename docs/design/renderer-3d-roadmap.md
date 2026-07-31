@@ -767,13 +767,14 @@ at the correct pixel still plays inverted — sparks fall instead of rising.
 The projection cannot fix this. Its Y sign controls placement *and* orientation
 together, so flipping it to correct the orientation re-breaks the position (that
 is precisely the 153-vs-78 bug). What is needed is a mirror about the **effect's
-own origin**, leaving its world position alone — which is exactly what
-`Manager::SetScale` does, since scale is applied in the effect's local space.
+own origin**, leaving its world position alone.
 
-`efk_set_scale` was added to the shim and `effekseer.play` now applies
-`(1, -1, 1)`. Measured before and after on the same preview frame: the effect's
-bounding box went from `y 143..158` to `y 138..153` — a clean mirror about
-y≈148, the anchor point — with X unchanged.
+The shim now uses Effekseer's render-only `SetEffectFlip` for this. It is
+deliberately not `SetScale(1, -1, 1)`: changing the SRT matrix before billboard
+calculation changes the handedness of rotating animation cells, so their
+textures can point in different directions even when the particle layout is
+correct. `SetEffectFlip` mirrors the rendered geometry about the effect root
+without changing particle simulation or per-particle rotation.
 
 #### The editor could not author `effekseer` tracks
 

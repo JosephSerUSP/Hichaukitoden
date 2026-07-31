@@ -293,6 +293,21 @@ EFK_API void efk_set_scale(int handle, float x, float y, float z)
         g_manager->SetScale((Effekseer::Handle)handle, x, y, z);
 }
 
+// Mirror only the rendered effect about its root-local axes. Unlike
+// SetScale(), SetEffectFlip() does not modify the simulation transform, so
+// billboard orientation, particle directions, and per-particle rotation are
+// computed from the authored effect exactly as they were in Effekseer.
+EFK_API void efk_set_effect_flip(int handle, int flipX, int flipY, int flipZ)
+{
+    if (!g_manager) return;
+
+    Effekseer::EffectFlipParameter flip;
+    flip.FlipX = flipX != 0;
+    flip.FlipY = flipY != 0;
+    flip.FlipZ = flipZ != 0;
+    g_manager->SetEffectFlip((Effekseer::Handle)handle, flip);
+}
+
 EFK_API int efk_instance_count(void)
 {
     return g_manager ? g_manager->GetTotalInstanceCount() : 0;

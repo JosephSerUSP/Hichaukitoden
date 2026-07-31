@@ -328,47 +328,6 @@
         "easing": "ease_out"
       },
       {
-        "type": "particles",
-        "t0": 0,
-        "duration": 750,
-        "direction": 321,
-        "speed": 221,
-        "spread": 0,
-        "rate": 40,
-        "lifetime": 0.3,
-        "sizeStart": 1,
-        "sizeEnd": 1,
-        "particleTexture": "assets/animation/WindSlash[32x32][5f].png",
-        "cellW": 32,
-        "cellH": 32,
-        "cellStart": 0,
-        "cellCount": 5,
-        "cellMode": "random",
-        "colorOverLife": [
-          [
-            0.7,
-            1,
-            0.7,
-            1
-          ],
-          [
-            0.4,
-            0.9,
-            0.5,
-            0
-          ]
-        ],
-        "blendMode": "add",
-        "easing": "linear",
-        "cellLoops": 18,
-        "spawnShape": "circle",
-        "spawnRadiusX": 10,
-        "spawnRadiusY": 3,
-        "spawnAngle": 0,
-        "x": -19,
-        "y": 7
-      },
-      {
         "type": "gradient_map",
         "t0": 750,
         "duration": 100,
@@ -405,40 +364,13 @@
         "toIntensity": 1
       },
       {
-        "type": "particles",
-        "t0": 400,
-        "duration": 50,
-        "easing": "ease_out",
-        "direction": 277,
-        "speed": 101,
-        "spread": 372,
-        "rate": 970,
-        "lifetime": 0.3,
-        "gravity": 0,
-        "x": -2,
-        "y": -11,
-        "sizeStart": 0.4,
-        "sizeEnd": 0.4,
-        "layer": "front",
-        "spawnShape": "point",
-        "spawnRadiusX": 20,
-        "spawnRadiusY": 20,
-        "spawnAngle": 0,
-        "spawnDirectionOutward": false,
-        "colorOverLife": [
-          [
-            1,
-            1,
-            1,
-            1
-          ],
-          [
-            1,
-            1,
-            1,
-            0
-          ]
-        ]
+        "type": "effekseer",
+        "t0": 0,
+        "duration": 1250,
+        "easing": "linear",
+        "effect": "assets/effects/SecondRite/windBlade001.efkefc",
+        "anchor": {},
+        "magnification": 1
       }
     ]
   },
