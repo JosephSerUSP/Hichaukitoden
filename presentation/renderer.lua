@@ -966,16 +966,13 @@ function renderer.drawBattlerCard(session, target, x, y, w, h, title, opts)
         or (x + (spriteDrawn and (8 + spriteSize + 4) or 10))
     local textY = narrow and (contentY + spriteSize + 2) or contentY
 
-    -- Element icons (rendered BEFORE the actor's name)
-    local elemW = actor_status.drawElementIcons(traits.getElements(target, session), startX, textY + 2, session)
-    local nameX = startX + elemW + (elemW > 0 and 2 or 0)
-    local nameW = x + w - 8 - nameX
     contentY = textY
 
-    -- Target Name & Level
-    local nameText = ui.fitText(target.name or "", math.max(10, nameW))
+    -- Name (element icons + name, one unit — see actor_status.drawCreatureName)
     local nameColor = dead and { 0.5, 0.5, 0.5, 1 } or { 1, 1, 1, 1 }
-    ui.drawString(nameText, nameX, contentY, nameColor)
+    local nameX = startX
+    actor_status.drawCreatureName(target, startX, contentY + 2, session, nameColor,
+        math.max(10, x + w - 8 - startX), 2)
 
     local levelText = target.level and ("Lv. " .. tostring(target.level)) or ""
     if levelText ~= "" then
@@ -1199,12 +1196,18 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v, 
         local levelRich = "Lv" .. (leading ~= "" and ("\\c[7]" .. leading .. "\\c[0]" .. levelText:sub(#leading + 1)) or levelText)
         ui.drawString(levelRich, contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
         local levelW = ui.measureText("Lv" .. levelText)
-        local iconW = actor_status.drawElementIcons(
-            member and traits.getElements(member, session) or {},
-            contentX + levelW, rowY - 4, session)
-        ui.drawString(m.name .. (leveled and "  LV UP!" or ""),
-            contentX + levelW + iconW, rowY,
-            leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+        local nameColor = leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        -- Icons + name as one unit. `member` may be nil (a creature that left
+        -- the party mid-battle), so fall back to the recorded name.
+        local nameW = actor_status.drawCreatureName(member, contentX + levelW, rowY,
+            session, nameColor, nil, 0)
+        if nameW == 0 then
+            ui.drawString(m.name, contentX + levelW, rowY, nameColor)
+            nameW = ui.measureText(m.name)
+        end
+        if leveled then
+            ui.drawString("  LV UP!", contentX + levelW + nameW, rowY, nameColor)
+        end
         if not leveled then
             ui.drawString(tostring(math.max(0, math.ceil(needed - a.exp))), contentX, rowY,
                 {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)

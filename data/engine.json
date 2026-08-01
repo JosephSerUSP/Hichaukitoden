@@ -2954,10 +2954,10 @@
       "y": 4.5,
       "width": 20.5,
       "height": 2,
-      "style": "panel",
+      "style": "creatureHeader",
       "title": null,
       "contentY": 0.5,
-      "text": "{sel('status_party').name}   Lv {sel('status_party').level}   {sel('status_party').role}"
+      "member": "v.idx"
     },
     "status_skills": {
       "x": 0.5,

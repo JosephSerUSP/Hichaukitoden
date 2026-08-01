@@ -1557,6 +1557,32 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         renderer.drawLevelUpStatsWindow(env.v and env.v.levelUpRows, x, y, w, h, title)
     elseif style == "targetInfo" then
         renderer.drawTargetInfoWindow(ctx and ctx.session, env.v, x, y, w, h)
+    elseif style == "creatureHeader" then
+        -- A creature's name headline. Its own style rather than a `text`
+        -- window, because the rule is that a creature's name ALWAYS carries
+        -- its element icons, and an interpolated "{name}   Lv {level}" string
+        -- can only ever produce bare text -- which is exactly how the most
+        -- prominent name on the status screen ended up as the one without
+        -- icons.
+        local memberIdx = tonumber((formula.eval(layout.member or win.member, env))) or 1
+        local session = ctx and ctx.session
+        local member = session and session.party and session.party[memberIdx]
+        if member then
+            local nameW = actor_status.drawCreatureName(member, contentX, contentY,
+                session, COLOR_NORMAL, nil, 2)
+            local rest = {}
+            if member.level then table.insert(rest, "Lv " .. tostring(member.level)) end
+            -- "None" is a placeholder role, not a role. Printing it puts the
+            -- word "None" in the headline of every creature that has not been
+            -- given one, which reads as a missing value rather than an absent
+            -- one.
+            local role = member.actorData and member.actorData.role
+            if role and role ~= "" and role ~= "None" then table.insert(rest, role) end
+            if #rest > 0 then
+                ui.drawString(table.concat(rest, "   "),
+                    contentX + nameW + ui.toPx(1.5), contentY, COLOR_DIM)
+            end
+        end
     elseif style == "statBlock" then
         drawStatBlock(layout, win, env, x, y, w, h, title, ctx and ctx.session)
     elseif style == "battlerInfo" then

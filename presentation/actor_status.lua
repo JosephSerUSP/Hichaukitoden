@@ -154,6 +154,35 @@ end
 -- implementation, no duplicate copy.
 actor_status.drawElementIcons = drawElementIcons
 
+--- A creature's NAME, which in this game always means its element icons and
+--- then its name — "🟢Saban", never a bare "Saban".
+---
+--- One function because the sequence (resolve effective elements, draw the
+--- icons, measure them, offset the name by that width, then truncate the name
+--- against what is left) was hand-rolled at every site that showed a creature,
+--- and every hand-rolled copy was a chance to forget the icons entirely. Some
+--- had: the party cell, the battle target card and the victory report drew
+--- them; the reserve list, the ritual rows and the level-up report did not, so
+--- the same creature was a different thing depending on which menu you were in.
+---
+--- @param battler   any battler (nil draws nothing, returns 0)
+--- @param maxWidth  space available for the WHOLE unit; the name is clipped to
+---                  whatever the icons leave. nil = no clipping.
+--- @param gap       pixels between the icons and the name (default 1)
+--- @return width actually drawn
+function actor_status.drawCreatureName(battler, x, y, session, color, maxWidth, gap)
+    if not battler then return 0 end
+    local traits = require("engine.traits")
+    local iconW = drawElementIcons(traits.getElements(battler, session), x, y - 4, session)
+    local nameX = x + iconW + (iconW > 0 and (gap or 1) or 0)
+    local name = battler.name or ""
+    if maxWidth then
+        name = ui.fitText(name, math.max(1, x + maxWidth - nameX))
+    end
+    ui.drawString(name, nameX, y, color)
+    return (nameX - x) + ui.measureText(name)
+end
+
 -- Cell footprint and slot arithmetic live in presentation/battler_geometry.lua
 -- (the single battler-placement authority); these stay as the names existing
 -- callers use. One implementation, so cell size and wrapping can never drift
@@ -286,13 +315,10 @@ function actor_status.draw(battler, x, y, isSelected, session, panelX, panelY, p
     -- LINE 1: the name gets the full top line. The small battler begins on
     -- line 2, leaving this row clear even when the actor has a sprite.
     local lineY = y
-    local iconW = drawElementIcons(traits.getElements(battler, session), x, lineY - 4, session)
-    local nameX = x + iconW + layoutVal(session, "partyGridNameXOffset")
-    -- Silently truncate the name to fit the column. No ellipsis — just clean
-    -- clipping, now measured against the real font by the shared helper
-    -- instead of the old ~6px-per-character guess.
-    local displayName = ui.fitText(battler.name, math.max(1, slotContentEndX - nameX))
-    ui.drawString(displayName, nameX, lineY, color, "left", 256)
+    -- Icons + name as one unit (drawCreatureName), clipped to the column.
+    -- No ellipsis — just clean clipping, measured against the real font.
+    actor_status.drawCreatureName(battler, x, lineY, session, color,
+        slotContentEndX - x, layoutVal(session, "partyGridNameXOffset"))
 
     -- Cycling state icon, right-aligned on the name line so it never pushes
     -- the name around as states come and go.

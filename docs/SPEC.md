@@ -212,6 +212,20 @@ scene inventing its own chrome:
      gauge, battle does not — because the rows a creature needs differ by
      where you are reading it. That is a flag on one card, never a second
      lookalike card.
+
+     **A creature's name always carries its element icons** — "🟢Saban", never
+     a bare "Saban" — and that is one function,
+     `actor_status.drawCreatureName`, not a convention each surface remembers
+     to follow. The sequence it owns (resolve effective elements, draw icons,
+     measure, offset the name, clip the name to what is left) used to be
+     hand-rolled per site, and the sites that forgot it were the tell: the
+     party cell, target card and victory report drew icons; the level-up
+     report and the status headline did not, so the same creature read as two
+     different things depending on the menu. A name rendered from an
+     interpolated `"{name}"` string can never satisfy the rule, which is why
+     the status headline is a `creatureHeader` window rather than a `text`
+     one. Sentences in the battle log are the deliberate exception: prose
+     names a creature mid-clause, where an icon would break the line.
   2. **Context-aware content laid out like the dialogue box** — left pane
      is an info panel (portrait/name/stat summary), right pane is the
      larger, interactive pane (lists, explanations, previews — anything
