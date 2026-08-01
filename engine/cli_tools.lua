@@ -560,6 +560,18 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                 viewport_3d.init()
                 require("engine.scenes.battle").triggerTestBattle()
             else
+                -- A scene declaring `backdrop: "map"` is composited over the
+                -- world in play, so capturing it over a void tested a
+                -- composite that never occurs -- and with semitransparent
+                -- windowskins that is precisely what needs testing. Ten of the
+                -- seventeen scenes were captured that way because the map load
+                -- was hard-coded to map/battle/dialogue; it is driven off the
+                -- scene's own declaration instead.
+                if sceneDef.backdrop == "map" then
+                    loadHarnessMap(vSession, 1)
+                    positionAtClearCorridor(vSession)
+                    viewport_3d.init()
+                end
                 scene_host.push(sceneDef.id, ctx)
             end
 
@@ -585,9 +597,10 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                     state.v.count = #state.v.items
                 end
             elseif sceneId == "dialogue" and state then
-                exploration.loadMap(vSession, 1)
-                positionAtClearCorridor(vSession)
-                viewport_3d.init()
+                -- The map load moved to the generic `backdrop: "map"` path
+                -- above, which routes through loadHarnessMap and therefore
+                -- pins os.time; calling exploration.loadMap directly here
+                -- skipped that pin.
                 state.v.dialogueMode = "choice"
                 state.v.dialogueSpeaker = "Alicia"
                 state.v.dialoguePortrait = "NPC_Alicia"
