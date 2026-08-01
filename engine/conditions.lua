@@ -11,8 +11,24 @@ local conditions = {}
 --                      outcome of that prefix's check
 --   matched = false -> not a prefixed condition; the caller applies its own
 --                      fallback (result is nil)
-function conditions.evalPrefixed(condStr, session)
+-- `battler` is optional and only the battler-scoped prefixes (state:) need it;
+-- every existing caller passes session alone and keeps working.
+function conditions.evalPrefixed(condStr, session, battler)
     if type(condStr) ~= "string" then return false end
+
+    -- "state:<id>" -- the holder is currently afflicted. Added for skill
+    -- availability conditions ("only usable while Blind"), but deliberately
+    -- put HERE rather than in a private parser in skill_cost.lua: this module
+    -- exists so the director's ROUTER, the interpreter's IF and skill gates
+    -- cannot drift into three grammars.
+    local stateId = condStr:match("^state:(.+)")
+    if stateId then
+        if not battler then return true, false end
+        for _, s in ipairs(battler.states or {}) do
+            if s.id == stateId then return true, true end
+        end
+        return true, false
+    end
 
     local flag = condStr:match("^flag:(.+)")
     if flag then
@@ -55,7 +71,7 @@ function conditions.evalPrefixed(condStr, session)
         local allTrue = true
         for part in condStr:gmatch("[^,]+") do
             local trimmed = part:match("^%s*(.-)%s*$")
-            local matched, result = conditions.evalPrefixed(trimmed, session)
+            local matched, result = conditions.evalPrefixed(trimmed, session, battler)
             if not matched then
                 allMatched = false
                 break

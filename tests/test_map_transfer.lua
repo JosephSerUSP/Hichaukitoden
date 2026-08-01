@@ -425,4 +425,4 @@ check(not pcall(exploration.loadMap, sess, 999),
     "a transfer to a map that does not exist raises")
 
 print(string.format("=== Map Transfer Tests: %d passed, %d failed ===", passed, failed))
-if failed > 0 then error(failed .. " map transfer test(s) failed") end
+if failed > 0 then require("tests.fail_fast")(failed .. " map transfer test(s) failed", failed) end

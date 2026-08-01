@@ -496,4 +496,4 @@ do
 end
 
 print(("=== Damage Model Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("damage model tests failed") end
+if failed > 0 then require("tests.fail_fast")("damage model tests failed", failed) end

@@ -62,4 +62,4 @@ check(sessionModule.developerMode == false,
 sessionModule.developerMode = launchFlag
 
 print(string.format("=== Developer Mode Tests: %d passed, %d failed ===", passed, failed))
-if failed > 0 then error(failed .. " developer mode test(s) failed") end
+if failed > 0 then require("tests.fail_fast")(failed .. " developer mode test(s) failed", failed) end

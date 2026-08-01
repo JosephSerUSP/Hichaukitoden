@@ -4,6 +4,8 @@ local config = require("engine.config")
 local flow = require("engine.flow")
 local interpreter = require("engine.interpreter")
 local compareIds = require("engine.inventory").compareIds
+local usability = require("engine.usability")
+local skill_cost = require("engine.skill_cost")
 
 local battle = {}
 
@@ -72,6 +74,12 @@ function Battle.new(session, enemies)
     for i, ally in ipairs(self.allies) do
         ally.row = ally.row or ((i <= 2) and "front" or "back")
     end
+    -- Skill cooldowns/warmups are battle-scoped: cleared here, armed here, and
+    -- never carried out of the fight they were spent in. Charges are the
+    -- opposite -- creature state that persists until Rest -- and are
+    -- deliberately untouched by this.
+    for _, b in ipairs(self.allies) do skill_cost.beginBattle(b, session.loader) end
+    for _, b in ipairs(enemies) do skill_cost.beginBattle(b, session.loader) end
     return self
 end
 
@@ -139,8 +147,35 @@ function Battle:getAIAction(enemy)
         return { actor = enemy, skill = compelled, target = target }
     end
 
-    local skills = enemy.skills
-    if #skills == 0 then return nil end
+    -- Only skills the enemy can actually pay for and is allowed to use right
+    -- now: charges, cooldown, warmup, condition. One rule binds both sides --
+    -- the player's menu greys the same rows this filter drops, because both go
+    -- through usability.canUseSkill. An enemy at zero charges is simply out of
+    -- that spell; enemies never Overcast (no Summoner, no MP pool), which is
+    -- the intended pressure release for a long fight.
+    --
+    -- Filtering BEFORE the roll (rather than rolling and rejecting) keeps the
+    -- number of math.random calls a function of the usable list, matching how
+    -- the compelled-action check above avoids a discarded roll.
+    local skills = {}
+    for _, id in ipairs(enemy.skills or {}) do
+        local sk = self.session.loader.getSkill(id)
+        if sk and usability.canUseSkill(sk, enemy, nil,
+                { session = self.session, battle = self, isEnemy = true }) then
+            table.insert(skills, id)
+        end
+    end
+    -- Out of everything it knows, an enemy still takes its turn: it falls back
+    -- to the basic attack, which is authored with no cost for exactly this
+    -- reason (there must always be something to do).
+    if #skills == 0 then
+        local fallback = getAttackSkill(self.session)
+        if not fallback then return nil end
+        local targeting = require("engine.targeting")
+        local target = targeting.resolve(enemy, fallback.target, self, nil, fallback)[1]
+        if not target then return nil end
+        return { actor = enemy, skill = fallback, target = target }
+    end
 
     -- Pick a random skill, re-rolling up to 3x if it's a heal and nobody on
     -- this side is wounded. Shipped in violation of SPEC S9's original "no
@@ -432,7 +467,29 @@ function Battle:executeTurn(turn, roundEvents)
         else
             local loader = self.session.loader
             local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
-            
+
+            -- Pay for the casting HERE -- the one place a skill actually
+            -- resolves -- so the charge path and the Overcast path cannot
+            -- drift apart, and so a skill that never resolves (actor died,
+            -- target gone) is never charged for.
+            local isEnemy = false
+            for _, e in ipairs(self.enemies or {}) do
+                if e == turn.actor then isEnemy = true break end
+            end
+            local paid = skill_cost.spend(turn.skill, turn.actor, self.session, isEnemy)
+            skill_cost.startCooldown(turn.skill, turn.actor)
+            if paid == "overcast" then
+                table.insert(roundEvents, {
+                    type = "overcast",
+                    actor = turn.actor,
+                    skill = turn.skill,
+                    value = turn.skill.overcast and turn.skill.overcast.mp or 0,
+                    text = loader.formatTerm("battle.overcast",
+                        "- {0} overcasts {1}! ({2} MP)", turn.actor.name,
+                        turn.skill.name, turn.skill.overcast and turn.skill.overcast.mp or 0),
+                })
+            end
+
             table.insert(roundEvents, {
                 type = "action",
                 actor = turn.actor,

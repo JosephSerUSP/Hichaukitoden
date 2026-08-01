@@ -243,4 +243,4 @@ do
 end
 
 print(("=== Growth Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("growth tests failed") end
+if failed > 0 then require("tests.fail_fast")("growth tests failed", failed) end

@@ -149,4 +149,4 @@ do
 end
 
 print(("=== Forced Action Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("forced action tests failed") end
+if failed > 0 then require("tests.fail_fast")("forced action tests failed", failed) end

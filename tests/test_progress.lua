@@ -116,4 +116,4 @@ do
 end
 
 print(("=== Progress Tests: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("progress tests failed") end
+if failed > 0 then require("tests.fail_fast")("progress tests failed", failed) end

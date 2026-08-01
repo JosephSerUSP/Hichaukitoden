@@ -572,7 +572,7 @@ validator.run = function(loader)
                         or tr.code == "ELEMENT_RATE" then
                         check(tr.dataId == nil or loader.getElement(tr.dataId) ~= nil,
                             where .. " references missing element '" .. tostring(tr.dataId) .. "'")
-                    elseif tr.code == "STATE_RATE" then
+                    elseif tr.code == "STATE_RATE" or tr.code == "STATE_IMMUNITY" then
                         check(loader.getState(tr.dataId) ~= nil,
                             where .. " references missing state '" .. tostring(tr.dataId) .. "'")
                     end
@@ -580,6 +580,19 @@ validator.run = function(loader)
                     check(tr.dataId == nil,
                         where .. " carries dataId '" .. tostring(tr.dataId) ..
                         "' but the registry declares usesDataId=false, so nothing reads it")
+                end
+
+                -- A rate is a slope, not a switch: 0 makes a state vanishingly
+                -- unlikely but a critical still forces it. Anyone authoring 0
+                -- means immunity and would otherwise never find out they did
+                -- not get it -- so say so instead of accepting it.
+                if tr.code == "STATE_RATE" or tr.code == "STATE_CATEGORY_RATE" then
+                    check(tonumber(tr.value) ~= 0, where
+                        .. " is authored as a rate of 0. Rates no longer mean immunity"
+                        .. " (a critical hit bypasses them); use "
+                        .. (tr.code == "STATE_RATE" and "STATE_IMMUNITY" or "STATE_CATEGORY_IMMUNITY")
+                        .. " for absolute immunity, or a small non-zero rate for"
+                        .. " 'almost never'.")
                 end
             end
         end
@@ -776,6 +789,18 @@ validator.run = function(loader)
         checkTraits(actor.traits, "actor " .. tostring(actor.id))
     end
 
+    -- Stand-in caster for the skill-cost formula sweep below: the fields a
+    -- real formula.battlerView exposes, including the `base` table the charge
+    -- formulas read (`b.base.mdf`).
+    local formulaEngine = require("engine.formula")
+    local MOCK_SKILL_ENV = {
+        level = 5, hp = 40, maxHp = 60,
+        atk = 12, def = 10, mat = 14, mdf = 11, mpd = 3, asp = 10,
+        row = "front", meta = {},
+        base = { maxHp = 60, atk = 12, def = 10, mat = 14, mdf = 11, mpd = 3, asp = 10 },
+        trait = setmetatable({}, { __index = function() return 0 end }),
+    }
+
     -- Skills: effect types, states and elements must exist
     for id, skill in pairs(loader.skills) do
         checkEffects(skill.effects, "skill '" .. tostring(id) .. "'")
@@ -787,6 +812,76 @@ validator.run = function(loader)
         end
         if skill.actionSequenceCommands then
             validateCommands(skill.actionSequenceCommands, "action_sequence", true, false, "skill '" .. tostring(id) .. "' custom action sequence")
+        end
+
+        -- Skill costs (docs/design/skill-costs.md). No skill costs MP: the
+        -- fields are gone, not tolerated, per the no-compat decision. Both were
+        -- authored across the database and read by NOTHING -- exactly the kind
+        -- of decorative field that silently reappears unless a gate says no.
+        local where = "skill '" .. tostring(id) .. "'"
+        check(skill.mpCost == nil, where
+            .. " still carries mpCost -- no skill costs MP. Magic spends charges"
+            .. " (with Overcast as the one path to the Summoner's pool); physical"
+            .. " skills use cooldown/warmup/condition.")
+        check(skill.spCost == nil, where .. " carries spCost, which nothing reads")
+
+        -- Cost formulas must actually evaluate, against the same shape the
+        -- caster view provides at runtime (b.base.mdf and friends). Same
+        -- reason the effect formulas are swept: a formula that only fails when
+        -- a specific creature casts a specific spell is a crash the player
+        -- finds, not the author.
+        local costEnv = {
+            a = MOCK_SKILL_ENV, b = MOCK_SKILL_ENV,
+        }
+        if skill.charges ~= nil then
+            if type(skill.charges) == "number" then
+                check(skill.charges >= 0, where .. " has a negative charges count")
+            else
+                check(type(skill.charges) == "string",
+                    where .. " charges must be a number or a formula string")
+                if type(skill.charges) == "string" then
+                    local val, ferr = formulaEngine.eval(skill.charges, costEnv)
+                    check(ferr == nil and type(val) == "number",
+                        where .. " has an uncompilable charges formula: " .. tostring(ferr or val))
+                end
+            end
+        end
+
+        -- Overcast needs a pool to exhaust, even a permanently empty one:
+        -- `charges: 0` is the Overcast-only shape (a dragon's Breath). Without
+        -- a charges key the skill never reaches the zero-charge branch, so the
+        -- Overcast cost would simply never be paid.
+        if skill.overcast ~= nil then
+            check(skill.charges ~= nil, where
+                .. " declares overcast but no charges; Overcast is only offered at"
+                .. " zero charges, so use \"charges\": 0 for an Overcast-only skill")
+            check(type(skill.overcast) == "table" and tonumber(skill.overcast.mp),
+                where .. " overcast must carry a numeric mp cost")
+        end
+
+        for _, field in ipairs({ "cooldown", "warmup" }) do
+            local v = skill[field]
+            if v ~= nil then
+                check(type(v) == "number" and v >= 0 and math.floor(v) == v,
+                    where .. " " .. field .. " must be a non-negative whole number of turns")
+            end
+        end
+
+        -- A formula cannot produce readable text, and a greyed row with no
+        -- reason is a bug report waiting to happen.
+        if skill.condition ~= nil then
+            check(type(skill.condition) == "string",
+                where .. " condition must be a string")
+            check(skill.conditionText ~= nil and skill.conditionText ~= "",
+                where .. " has a condition but no conditionText to explain it when blocked")
+            -- A prefixed condition (state:, flag:, hasItem:, ...) is grammar
+            -- engine/conditions.lua owns; only the formula fallback is swept.
+            if type(skill.condition) == "string"
+                and not skill.condition:match("^[%w_]+:") then
+                local _, ferr = formulaEngine.eval(skill.condition, costEnv)
+                check(ferr == nil,
+                    where .. " has an uncompilable condition formula: " .. tostring(ferr))
+            end
         end
     end
 

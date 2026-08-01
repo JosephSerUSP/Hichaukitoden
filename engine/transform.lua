@@ -102,6 +102,11 @@ function transform.into(session, battler, actorData, opts)
     newB.equipment = battler.equipment or { nil, nil, nil }
     newB.paramPlus = battler.paramPlus or newB.paramPlus
     newB.wardCharges = battler.wardCharges
+    -- Spell charges are deliberately NOT carried over: promotion is a rest.
+    -- It is rare, it rebuilds the creature, and it happens in the ritual -- the
+    -- same ceremony summoning happens in. Leaving `charges` nil means "full"
+    -- (skill_cost.getCharges), which is also the only sane answer when the new
+    -- form's max charges are computed from a different stat line.
     newB.history = battler.history or newB.history
     newB.provenance = battler.provenance
     newB.favoriteFood = battler.favoriteFood

@@ -337,32 +337,26 @@ function love.load(arg)
 
     if isUnitTestMode then
         loader.init(cliCampaignRoot)
-        dofile("tests/test_traits.lua")
-        dofile("tests/test_recruitment.lua")
-        dofile("tests/test_target_redirection.lua")
-        dofile("tests/test_permadeath_wards.lua")
-        dofile("tests/test_item_menu_targeting.lua")
-        dofile("tests/test_element_affinity.lua")
-        dofile("tests/test_craft.lua")
-        dofile("tests/test_item_vocabulary.lua")
-        dofile("tests/test_damage_model.lua")
-        dofile("tests/test_state_ticks.lua")
-        dofile("tests/test_status_infliction.lua")
-        dofile("tests/test_forced_action.lua")
-        dofile("tests/test_mpd_economy.lua")
-        dofile("tests/test_growth.lua")
-        dofile("tests/test_progress.lua")
-        dofile("tests/test_promotion.lua")
-        dofile("tests/test_transform.lua")
-        dofile("tests/test_developer_mode.lua")
-        dofile("tests/test_map_transfer.lua")
-        dofile("tests/test_battle_commands.lua")
-        dofile("tests/test_troops.lua")
-        dofile("tests/test_early_balance.lua")
-        dofile("tests/test_datalog.lua")
-        dofile("tests/test_dock.lua")
-        print("ALL UNIT TESTS OK")
-        if love.event and love.event.quit then love.event.quit(0) end
+        -- Every suite runs, even after one goes red, and a suite that CRASHES
+        -- is caught rather than dropping LÖVE into its interactive error screen
+        -- (which waits for a human to close a window). fail_fast collects the
+        -- results and owns the exit code. Before this, the first red suite both
+        -- hung the run and hid every suite after it.
+        local failFast = require("tests.fail_fast")
+        for _, suite in ipairs({
+            "test_traits", "test_recruitment", "test_target_redirection",
+            "test_permadeath_wards", "test_item_menu_targeting",
+            "test_element_affinity", "test_craft", "test_item_vocabulary",
+            "test_damage_model", "test_state_ticks", "test_status_infliction",
+            "test_skill_costs", "test_forced_action", "test_mpd_economy",
+            "test_growth", "test_progress", "test_promotion", "test_transform",
+            "test_developer_mode", "test_map_transfer", "test_battle_commands",
+            "test_troops", "test_early_balance", "test_datalog", "test_dock",
+        }) do
+            local ok, err = pcall(dofile, "tests/" .. suite .. ".lua")
+            if not ok then failFast.crashed(suite, err) end
+        end
+        failFast.finish()
         return
     end
 
@@ -810,13 +804,10 @@ end
 
 -- Fully restores HP/MP and revives the whole party
 local function recoverParty()
-    activeSession.mp = activeSession.maxMp
-    for _, c in ipairs(activeSession.party) do
-        c.hp = c:getMaxHp(activeSession)
-        c:removeState("dead")
-    end
-    activeSession.summoner.hp = activeSession.summoner:getMaxHp(activeSession)
-    activeSession.summoner:removeState("dead")
+    -- The rule itself lives on GameSession:rest so the interpreter's
+    -- RECOVER_PARTY fallback shares it verbatim (HP/MP/dead-state plus the
+    -- spell-charge refill across reserve and storage).
+    activeSession:rest()
 end
 
 -- Field item use lives in the USE_ITEM command (engine/interpreter.lua) now;

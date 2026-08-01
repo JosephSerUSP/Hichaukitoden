@@ -122,4 +122,4 @@ check(lostHoundQuest and lostHoundQuest.name == "The Stray Hound",
     "The Stray Hound sidequest is registered in quests.json")
 
 print(string.format("=== Early-game Balance Tests: %d passed, %d failed ===", passed, failed))
-if failed > 0 then error(failed .. " early-game balance test(s) failed") end
+if failed > 0 then require("tests.fail_fast")(failed .. " early-game balance test(s) failed", failed) end
