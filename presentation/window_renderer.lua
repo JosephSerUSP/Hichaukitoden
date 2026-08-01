@@ -883,8 +883,13 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     -- its nominal 16 while UI geometry deliberately stays on the 8px grid (see
     -- ui.setFont), and this row -- the only place using fontSize as a height --
     -- silently rose 8px into the slot panels above it.
-    local numberY = y + h - ui.lineHeight + (battle_layout.get(session, "partyMpRowOffsetY") or 0)
-    local gaugeY = numberY + math.floor((ui.lineHeight - mpBarH) / 2)
+    local rowY = y + h - ui.lineHeight + (battle_layout.get(session, "partyMpRowOffsetY") or 0)
+    local gaugeY = rowY + math.floor((ui.lineHeight - mpBarH) / 2)
+    -- The label and value sit `partyMpTextOffsetY` from the row the gauge is
+    -- centred on, so the two can be nudged independently: the text wants to
+    -- ride a little higher than the bar it labels, and moving the whole row
+    -- would take the gauge with it.
+    local numberY = rowY + (battle_layout.get(session, "partyMpTextOffsetY") or 0)
     local gaugeX = contentX + labelW + labelGap
     local availW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
 
@@ -909,7 +914,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     if not layout.hideMp then
         love.graphics.push()
         local mpCenterX = contentX + gridW / 2
-        local mpCenterY = numberY + ui.lineHeight / 2
+        local mpCenterY = rowY + ui.lineHeight / 2
         love.graphics.translate(mpCenterX, mpCenterY)
         love.graphics.scale(scale, scale)
         love.graphics.translate(-mpCenterX, -mpCenterY)

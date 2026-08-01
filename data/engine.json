@@ -2446,6 +2446,7 @@
     "partyGridHpBarWidth": 52,
     "partyGridEmptyYOffset": 8,
     "partyMpRowOffsetY": 0,
+    "partyMpTextOffsetY": -3,
     "partyMpGaugeReferenceMax": 9999,
     "targetIndicatorDistance": 8,
     "targetIndicatorBlinkSpeed": 0.25,
