@@ -98,11 +98,15 @@ Enter-to-commit added. No data shape changes.
 
 ---
 
-## 7. ~~Editor: `alert()` vs the app's own `showToast()`~~ FIXED (22.07.2026)
+## 7. ~~Editor: `alert()` vs the app's own `showToast()`~~ FIXED (22.07.2026, corrected 01.08.2026)
 
 All 8 call sites swapped to `showToast()`; each was a pure informational
 message followed immediately by `return`, so no blocking-confirmation
 behavior was lost.
+
+**Correction:** the 22.07 pass missed `tools/editor/js/tileset-editor.js`
+(7 more `alert()` sites, same shape). Fixed 01.08.2026 -- no `alert()`
+remains anywhere in `tools/editor/js/`.
 
 ---
 
