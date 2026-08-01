@@ -188,6 +188,11 @@
                     return;
                 }
             }
+        } else if (key === 'blocksMovement') {
+            // Omit rather than store false: absent means passable, and a field
+            // that is present but false invites the reader to think it is doing
+            // something.
+            if (value) { v.blocksMovement = true; } else { delete v.blocksMovement; }
         } else if (key === 'emitsLightToggle') {
             if (value) {
                 v.emitsLight = v.emitsLight || { color: [1, 0.58, 0.22], radius: 4, falloff: 2 };
@@ -593,6 +598,10 @@
         document.getElementById('ts-v-inject-row').style.display = isFeature ? 'flex' : 'none';
         document.getElementById('ts-v-where-row').style.display = isFeature ? 'flex' : 'none';
         document.getElementById('ts-v-light-row').style.display = isFeature ? 'flex' : 'none';
+        // Floor fixtures only: a wall fixture already stands on a wall, and G1
+        // rejects the flag there rather than let it read as authoritative.
+        document.getElementById('ts-v-solid-row').style.display =
+            (activeRole === 'floor_feature') ? 'flex' : 'none';
         if (isFeature) {
             const prefabSelect = document.getElementById('ts-v-prefab');
             prefabSelect.innerHTML = '<option value="">Custom rule</option>';
@@ -607,6 +616,7 @@
             document.getElementById('ts-v-where').value = v.where
                 ? JSON.stringify(v.where, null, 2) : '';
             document.getElementById('ts-v-where').disabled = !!v.prefab;
+            document.getElementById('ts-v-blocks-movement').checked = !!v.blocksMovement;
             const emits = !!v.emitsLight;
             document.getElementById('ts-v-emits-light').checked = emits;
             document.getElementById('ts-v-light-fields').style.display = emits ? 'flex' : 'none';

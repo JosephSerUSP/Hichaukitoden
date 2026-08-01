@@ -2277,6 +2277,11 @@
                                 onchange="updateSelectedVariant('whereJson', this.value)"></textarea>
                         </div>
 
+                        <div class="field-row-stacked" id="ts-v-solid-row" style="display: none;"
+                             title="Solid: the player cannot walk through it. Placement refuses any spot where blocking would cut the map off, so a corridor can never be sealed -- the fixture is simply not placed there.">
+                            <label><input type="checkbox" id="ts-v-blocks-movement" onchange="updateSelectedVariant('blocksMovement', this.checked)" /> Blocks movement (solid)</label>
+                        </div>
+
                         <div class="field-row-stacked" id="ts-v-light-row" style="display: none;">
                             <label><input type="checkbox" id="ts-v-emits-light" onchange="updateSelectedVariant('emitsLightToggle', this.checked)" /> Emits light</label>
                             <div id="ts-v-light-fields" style="display: flex; gap: 6px; margin-top: 4px;">

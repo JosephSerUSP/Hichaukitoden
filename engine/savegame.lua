@@ -148,6 +148,7 @@ local function restoreMap(sessionObj, data, loader)
     sessionObj.currentMapData.runtimeLight = data.runtimeLight
     sessionObj.generatedLightObjects = data.generatedLightObjects
     sessionObj.generatedFeatures = data.generatedFeatures
+    sessionObj.fixtureBlockIndex = nil  -- rebuilt lazily from the restored placements
     sessionObj.generatedZones = data.generatedZones
     sessionObj.mapGrid = data.mapGrid
     sessionObj.visitedGrid = data.visitedGrid

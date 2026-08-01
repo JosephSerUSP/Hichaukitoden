@@ -86,11 +86,94 @@ local DIRS = {
 }
 local DIR_ORDER = { "N", "E", "S", "W" }
 
+-- Cells reachable on foot from (startX, startY), as a set of "x,y" keys.
+-- `blocked` is the set of floor cells occupied by solid fixtures.
+local function reachableCells(grid, blocked, startX, startY)
+    local seen, stack, count = {}, { { startX, startY } }, 0
+    local startKey = startX .. "," .. startY
+    seen[startKey] = true
+    count = 1
+    while #stack > 0 do
+        local cell = table.remove(stack)
+        for _, dir in ipairs(DIR_ORDER) do
+            local d = DIRS[dir]
+            local nx, ny = cell[1] + d.dx, cell[2] + d.dy
+            local key = nx .. "," .. ny
+            local row = grid[ny]
+            if not seen[key] and row and row[nx] and row[nx] ~= "#" and not blocked[key] then
+                seen[key] = true
+                count = count + 1
+                stack[#stack + 1] = { nx, ny }
+            end
+        end
+    end
+    return seen, count
+end
+
+-- Cells a solid fixture must never occupy, whatever the predicates say: the
+-- spawn, the entrance/exit staircases, and any cell carrying an event. Blocking
+-- one of these does not sever the map, so the reachability rule below would let
+-- it through -- it just makes something unusable, which is worse for being
+-- subtle. Keys are 1-indexed grid coordinates; the sources are all 0-indexed.
+local function protectedFixtureCells(mapData, generatedZones)
+    local protected = {}
+    local function mark(x, y)
+        if x and y then protected[(x + 1) .. "," .. (y + 1)] = true end
+    end
+    local spawn = mapData and mapData.spawn
+    if spawn then mark(spawn.x, spawn.y) end
+    for _, ev in ipairs((mapData and mapData.events) or {}) do
+        mark(ev.x, ev.y)
+    end
+    for _, zone in ipairs(generatedZones or {}) do
+        for _, tag in ipairs(zone.tags or {}) do
+            if tag == "entrance" or tag == "exit" or tag == "anchor" then
+                mark(zone.x, zone.y)
+            end
+        end
+    end
+    return protected
+end
+
+-- Is a solid fixture standing on this cell? Coordinates are 0-indexed, matching
+-- the placement records.
+--
+-- The answer is read from the PLACEMENT (`blocks`), not re-resolved from the
+-- tileset, so it survives save/load without the tileset having to be resolved
+-- again -- and so a map already in a save keeps whatever solidity it was
+-- generated with, rather than silently changing under an edited tileset.
+function exploration.fixtureBlocksAt(session, x, y)
+    local index = session.fixtureBlockIndex
+    if index == nil then
+        index = {}
+        for _, placement in ipairs(session.generatedFeatures or {}) do
+            if placement.blocks then index[placement.x .. "," .. placement.y] = true end
+        end
+        session.fixtureBlockIndex = index
+    end
+    return index[x .. "," .. y] == true
+end
+
 -- Generate random room-based dungeon map
 -- Resolve the visual fixtures defined by a tileset into per-map material
 -- placements. This applies to authored safe maps as well as generated
 -- dungeons, so a fixture configured in Tileset Studio is actually visible
 -- when testing a town map.
+--
+-- A fixture with `blocksMovement` is SOLID -- a barrel stack is two metres of
+-- timber and the player should not walk through it. That cannot simply be
+-- switched on at movement time, because a solid fixture dropped in a one-wide
+-- corridor severs the map and a fixture in an alcove mouth strands whatever is
+-- behind it, and the predicates that place fixtures know nothing about
+-- topology. So solidity is decided HERE, against one invariant:
+--
+--   blocking a cell may remove ONLY THAT CELL from the reachable set.
+--
+-- That single rule covers both failures: a severed corridor loses many cells, a
+-- stranded alcove loses a few, and a harmless barrel against a room wall loses
+-- exactly one. Placements are validated incrementally in authored order, so
+-- fixtures that are each individually safe but jointly a cut are caught too --
+-- the second one is tested against a map that already contains the first.
 function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
     local tilesetDef = tilesetResolver.resolve(loader, mapData)
     local featureList = (tilesetDef and tilesetDef.features) or {}
@@ -101,6 +184,62 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
     local generated, lights, occupied = {}, {}, {}
     local predicateContext = fixturePredicates.newContext(grid, mapData, generatedZones)
     local height = #grid
+
+    -- Solid-fixture bookkeeping. Built lazily: a tileset with no `blocksMovement`
+    -- feature never pays for a flood fill.
+    local blocked = {}
+    local protected = nil
+    local reachStartX, reachStartY, reachCount = nil, nil, nil
+    local function ensureReachability()
+        if reachCount then return reachCount ~= nil end
+        protected = protectedFixtureCells(mapData, generatedZones)
+        -- Start from the spawn where there is one, so "reachable" means
+        -- "reachable by the player" rather than by some arbitrary pocket.
+        local spawn = mapData and mapData.spawn
+        if spawn and spawn.x and spawn.y
+            and grid[spawn.y + 1] and grid[spawn.y + 1][spawn.x + 1]
+            and grid[spawn.y + 1][spawn.x + 1] ~= "#" then
+            reachStartX, reachStartY = spawn.x + 1, spawn.y + 1
+        else
+            for zy = 1, height do
+                for zx = 1, #grid[zy] do
+                    if grid[zy][zx] ~= "#" then
+                        reachStartX, reachStartY = zx, zy
+                        break
+                    end
+                end
+                if reachStartX then break end
+            end
+        end
+        if not reachStartX then return false end
+        local _, count = reachableCells(grid, blocked, reachStartX, reachStartY)
+        reachCount = count
+        return true
+    end
+
+    -- May this cell become solid? See the invariant in the header comment.
+    local function mayBlock(x, y)
+        if not ensureReachability() then return false end
+        local key = x .. "," .. y
+        if protected[key] then return false end
+        if x == reachStartX and y == reachStartY then return false end
+        blocked[key] = true
+        local seen, count = reachableCells(grid, blocked, reachStartX, reachStartY)
+        -- Exactly one cell lost -- this one -- and nothing that must stay
+        -- usable became unreachable.
+        local ok = (count == reachCount - 1)
+        if ok then
+            for protectedKey in pairs(protected) do
+                if not seen[protectedKey] then ok = false break end
+            end
+        end
+        if ok then
+            reachCount = count
+        else
+            blocked[key] = nil
+        end
+        return ok
+    end
     for featureIndex, feat in ipairs(featureList) do
         local prefab = feat.prefab and prefabById[feat.prefab] or nil
         if feat.prefab and not prefab then
@@ -125,9 +264,19 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
                     local roll = exploration.cellHash(x, y,
                         15485863 + featureIndex * 32452843,
                         49979687 + featureIndex * 67867967) / 2147483647
+                    -- `blocksMovement` is a floor-fixture property: a wall
+                    -- fixture already stands on a "#", which blocks anyway.
+                    local wantsSolid = feat.blocksMovement == true and not wantsWall
                     if fixturePredicates.matches(predicate, predicateContext, x, y)
-                            and roll < prob then
+                            and roll < prob
+                            -- Topology has the last word. A fixture the
+                            -- predicates happily allow is still refused here if
+                            -- it would cut the map, and the cell simply stays
+                            -- empty -- silently dropping the decoration is much
+                            -- cheaper than an unwinnable floor.
+                            and (not wantsSolid or mayBlock(x, y)) then
                         local placement = { x = x - 1, y = y - 1, material = feat.id }
+                        if wantsSolid then placement.blocks = true end
                         generated[#generated + 1] = placement
                         occupied[key] = true
                         fixturePredicates.addFeature(predicateContext, x, y, feat.id)
@@ -734,6 +883,7 @@ function exploration.loadMap(session, mapIdx, opts)
         session.generatedZones = {}
         session.generatedFeatures, session.generatedLightObjects =
             exploration.injectTilesetFeatures(grid, mapData, session.generatedZones)
+        session.fixtureBlockIndex = nil
         if not mapData.light then
             local lightSources = {}
             for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
@@ -748,6 +898,7 @@ function exploration.loadMap(session, mapIdx, opts)
             grid = saved.mapGrid
             session.currentMapData.events = saved.events
             session.generatedFeatures = saved.generatedFeatures
+            session.fixtureBlockIndex = nil
             session.generatedLightObjects = saved.generatedLightObjects
             session.generatedZones = saved.generatedZones
             session.currentMapData.runtimeLight = saved.runtimeLight
@@ -764,6 +915,7 @@ function exploration.loadMap(session, mapIdx, opts)
                 exploration.generateDungeon(mapData, os.time() + mapIdx, session)
             session.currentMapData.events = generatedEvents
             session.generatedFeatures = generatedFeatures
+            session.fixtureBlockIndex = nil
             session.generatedLightObjects = generatedLights
             session.generatedZones = generatedZones
             session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
@@ -859,6 +1011,15 @@ local function tryMove(session, dx, dy)
         passable = ov.passable -- illusory wall (true) / one-way wall (false) override the char
     else
         passable = row and row[targetX] and row[targetX] ~= "#"
+    end
+    -- A solid fixture stands ON a floor cell, so the grid still reads passable.
+    -- Injection already proved this cell can be blocked without cutting the map
+    -- (see injectTilesetFeatures), so refusing the step here is safe. An
+    -- override wins: an authored `passable` is a deliberate statement about
+    -- this exact cell and outranks a decoration that happened to land on it.
+    if passable and not (ov and ov.passable ~= nil)
+            and exploration.fixtureBlocksAt(session, targetX - 1, targetY - 1) then
+        passable = false
     end
     if passable then
         session.playerX = targetX

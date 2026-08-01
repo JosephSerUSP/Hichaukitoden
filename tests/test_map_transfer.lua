@@ -138,6 +138,72 @@ check(#suppressedFixtures == 0,
     "feature injection consumes the same sparse tileset override as rendering")
 loader.tilesets.fixture_injection_test = nil
 
+-- Solid fixtures must never cut the map. The danger is not the flag, it is that
+-- the predicates placing fixtures know nothing about topology: one barrel in a
+-- one-wide corridor strands everything past it.
+loader.tilesets.solid_fixture_test = {
+    id = "solid_fixture_test",
+    features = {
+        { id = "barrel", role = "floor_feature", atlas = { 0, 0 },
+            injectProbability = 1, blocksMovement = true },
+    },
+}
+-- Two rooms joined by a single one-wide corridor: every corridor cell is a cut
+-- vertex, so a correct guard places nothing there and fills the rooms instead.
+local pinchGrid = {
+    { "#", "#", "#", "#", "#", "#", "#" },
+    { "#", ".", ".", "#", ".", ".", "#" },
+    { "#", ".", ".", ".", ".", ".", "#" },
+    { "#", ".", ".", "#", ".", ".", "#" },
+    { "#", "#", "#", "#", "#", "#", "#" },
+}
+local pinchMap = { tileset = "solid_fixture_test", spawn = { x = 1, y = 1 } }
+local solidPlacements = exploration.injectTilesetFeatures(pinchGrid, pinchMap, {})
+local blockedKeys, corridorBlocked = {}, false
+for _, placement in ipairs(solidPlacements) do
+    if placement.blocks then
+        blockedKeys[placement.x .. "," .. placement.y] = true
+        -- The single cell joining the two rooms: 1-indexed (4,3), stored 0-indexed.
+        if placement.x == 3 and placement.y == 2 then corridorBlocked = true end
+    end
+end
+check(not corridorBlocked,
+    "a solid fixture is refused on the one-wide corridor joining two rooms")
+
+-- And the invariant itself: with every accepted fixture in place, the map is
+-- still fully walkable except for the fixture cells.
+local function walkableFrom(grid, blocked, sx, sy)
+    local seen, stack = { [sx .. "," .. sy] = true }, { { sx, sy } }
+    local n = 1
+    while #stack > 0 do
+        local cell = table.remove(stack)
+        for _, d in ipairs({ { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }) do
+            local nx, ny = cell[1] + d[1], cell[2] + d[2]
+            local key = nx .. "," .. ny
+            if not seen[key] and grid[ny] and grid[ny][nx] and grid[ny][nx] ~= "#"
+                    and not blocked[(nx - 1) .. "," .. (ny - 1)] then
+                seen[key] = true
+                n = n + 1
+                stack[#stack + 1] = { nx, ny }
+            end
+        end
+    end
+    return n
+end
+local totalFloor = 0
+for gy = 1, #pinchGrid do
+    for gx = 1, #pinchGrid[gy] do
+        if pinchGrid[gy][gx] ~= "#" then totalFloor = totalFloor + 1 end
+    end
+end
+local blockedCount = 0
+for _ in pairs(blockedKeys) do blockedCount = blockedCount + 1 end
+check(blockedCount > 0
+        and walkableFrom(pinchGrid, blockedKeys, 2, 2) == totalFloor - blockedCount,
+    "every cell stays reachable except the ones solid fixtures occupy"
+        .. " (floor=" .. totalFloor .. ", solid=" .. blockedCount .. ")")
+loader.tilesets.solid_fixture_test = nil
+
 local fixturePredicates = require("engine.fixture_predicates")
 local predicateZones = {
     { id = "flooded", x = 1, y = 1, width = 2, height = 2 },

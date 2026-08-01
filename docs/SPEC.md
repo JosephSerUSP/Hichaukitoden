@@ -541,6 +541,27 @@ Atlas-only variants continue unchanged. Base-wall/floor/ceiling model roles
 remain closed; G1 rejects them rather than silently accepting a model the
 renderer would ignore.
 
+A floor feature variant may author `blocksMovement: true`, making it SOLID --
+the player cannot walk through it. G1 rejects the flag on a wall feature, which
+already stands on a `"#"`.
+
+Solidity is resolved at PLACEMENT time, not at movement time, because the
+predicates that place fixtures know nothing about topology: a solid fixture in a
+one-wide corridor severs the map and one in an alcove mouth strands what is
+behind it. Injection therefore enforces one invariant --
+
+> blocking a cell may remove ONLY THAT CELL from the reachable set
+
+-- which covers both failures at once, and additionally refuses the spawn, the
+entrance/exit staircases and any cell carrying an event, since blocking those
+severs nothing but makes something unusable. Candidates are validated
+incrementally in authored order, so fixtures that are individually safe but
+jointly a cut are caught too. A refused fixture is simply not placed; losing a
+decoration is far cheaper than an unwinnable floor. Placement records carry
+`blocks`, so solidity survives save/load without re-resolving the tileset, and a
+map already in a save keeps the solidity it was generated with. An authored
+per-cell `passable` override outranks a fixture that happened to land there.
+
 Wall and floor feature variants may also author an Effekseer `.efkefc` asset,
 plus optional `effectHeight` and positive `effectMagnification`. G1 verifies
 the project path and parameter types, and Tileset Studio exposes the same

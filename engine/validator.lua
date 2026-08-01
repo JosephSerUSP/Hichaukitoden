@@ -2108,6 +2108,16 @@ elseif paramDef.type == "script" then
                                 and variant.emitsLight.radius > 0,
                             where .. " emitsLight radius must be positive")
                     end
+                    if variant.blocksMovement ~= nil then
+                        check(type(variant.blocksMovement) == "boolean",
+                            where .. " blocksMovement must be true or false")
+                        -- A wall fixture stands on a "#", which already blocks.
+                        -- Accepting it there would be a flag that reads as
+                        -- authoritative and does nothing.
+                        check(variant.role ~= "wall_feature",
+                            where .. " blocksMovement applies to floor fixtures;"
+                                .. " a wall fixture already stands on a wall")
+                    end
                     if variant.effect ~= nil then
                         check(type(variant.effect) == "string"
                                 and variant.effect:match("%.efkefc$") ~= nil,
