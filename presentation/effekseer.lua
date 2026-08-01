@@ -55,6 +55,7 @@ void efk_set_effect_flip(int handle, int flipX, int flipY, int flipZ);
 int  efk_instance_count(void);
 void efk_update(float deltaFrame);
 void efk_set_time(float seconds);
+void efk_set_random_seed(unsigned int seed);
 void efk_draw(const float* view16, const float* proj16);
 const char* efk_last_error(void);
 ]]
@@ -151,6 +152,15 @@ end
 -- previewing through the game's projection would place effects at the wrong
 -- offset -- and the preview exists precisely so authors can trust what they
 -- see. Callers that use the game canvas never need this.
+-- Pins effect randomness. Effekseer seeds each instance from the shim's
+-- generator, so a fixed seed here makes playback byte-reproducible -- which is
+-- what lets G5 hold a reference frame containing a live effect. A DLL built
+-- before this export exists simply keeps its own default seed.
+function effekseer.setRandomSeed(seed)
+    if not lib then return end
+    pcall(function() lib.efk_set_random_seed(seed or 12345) end)
+end
+
 function effekseer.setViewport(w, h)
     if not effekseer.available() then return end
     toBuf(projBuf, orthoScreen(w, h, -512, 512))

@@ -33,6 +33,30 @@ std::vector<Effekseer::EffectRef> g_effects;
 std::string g_lastError;
 float g_time = 0.0f;
 
+// Deterministic randomness.
+//
+// Effekseer seeds each played instance from Manager's rand func, which
+// defaults to ManagerImplemented::Rand -> plain rand(). That reads the C
+// runtime's process-global RNG state, which nothing in this project pins:
+// math.randomseed seeds LuaJIT's own PRNG, not srand. The result was an
+// effect that replayed differently every process, so the G5 fixture frame
+// containing a live effect could never be byte-reproduced.
+//
+// Owning the generator here removes the dependency instead of trying to
+// control every other caller of srand. xorshift32, returning a non-negative
+// int like rand() does.
+unsigned int g_randState = 12345u;
+
+int nextRand()
+{
+    unsigned int x = g_randState;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    g_randState = x ? x : 12345u;
+    return static_cast<int>(x & 0x7FFFFFFFu);
+}
+
 // Effekseer takes UTF-16 paths. Minimal UTF-8 -> UTF-16 conversion covering
 // the BMP plus surrogate pairs; asset paths here are ASCII in practice, but
 // silently mangling a non-ASCII path would be the kind of quiet failure the
@@ -195,6 +219,10 @@ EFK_API int efk_init(int instanceMax, int squareMaxCount)
     g_manager = Effekseer::Manager::Create(instanceMax);
     if (g_manager == nullptr) { g_lastError = "Manager::Create failed"; return 0; }
 
+    // Before anything can be played, so no instance is ever seeded from the
+    // C runtime's rand().
+    g_manager->SetRandFunc(nextRand);
+
     g_manager->SetSpriteRenderer(g_renderer->CreateSpriteRenderer());
     g_manager->SetRibbonRenderer(g_renderer->CreateRibbonRenderer());
     g_manager->SetRingRenderer(g_renderer->CreateRingRenderer());
@@ -323,6 +351,14 @@ EFK_API void efk_update(float deltaFrame)
     param.DeltaFrame = deltaFrame;
     g_manager->Update(param);
     g_time += deltaFrame / 60.0f;
+}
+
+// Reseeds the generator above. The screenshot harness calls this before
+// capturing so a run's effect playback does not depend on how many effects
+// any earlier scene happened to play.
+EFK_API void efk_set_random_seed(unsigned int seed)
+{
+    g_randState = seed ? seed : 12345u;
 }
 
 EFK_API void efk_set_time(float seconds)

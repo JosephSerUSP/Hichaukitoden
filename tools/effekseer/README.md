@@ -25,7 +25,7 @@ across the effect draw — the states LOVE actually caches. All render correctly
 
 | File | What |
 |---|---|
-| `efk_shim.cpp` | The `extern "C"` wrapper. 14 exported functions, ints and floats only; every `RefPtr`/vtable stays sealed C++-side |
+| `efk_shim.cpp` | The `extern "C"` wrapper. 15 exported functions, ints and floats only; every `RefPtr`/vtable stays sealed C++-side |
 | `spike/main.lua` | LOVE harness: FFI-loads the DLL, plays an effect, auto-captures and exits |
 | `spike/conf.lua` | 800x600 window for the harness |
 | `spike/canvas-main.lua` | The one that matters for step 2: effect into a 256x240 canvas with a screen-space ortho camera |
@@ -110,3 +110,21 @@ than working around it at the call site.
 - Determinism plumbing. `efk_update` already takes an explicit delta in
   Effekseer frame units rather than reading a clock, which is what §3.1
   requires, but nothing drives it from the harness clock yet.
+
+## Determinism: the shim owns the RNG (01.08.2026)
+
+**Rebuild the DLL if yours predates this** — `efk_set_random_seed` is a new
+export, and without it effect playback is not reproducible.
+
+Effekseer seeds every played instance from `Manager`'s rand func, which
+defaults to `ManagerImplemented::Rand` -> plain `rand()`. That reads the C
+runtime's **process-global** RNG state, which nothing in this project pins:
+`math.randomseed` seeds LuaJIT's own PRNG, not `srand`. So the same effect
+played from the same fixed clock rendered differently in every process, and
+G5's fixture frame could never be byte-reproduced.
+
+The shim now installs its own xorshift32 via `SetRandFunc` at `efk_init`, and
+exposes `efk_set_random_seed(seed)`; the screenshot harness reseeds per scene
+alongside `math.randomseed`. Verified: two consecutive full runs are 123/123
+identical **including** the frame with a live effect, and changing the seed to
+999 changes that frame and only that frame.

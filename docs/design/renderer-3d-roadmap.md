@@ -811,6 +811,16 @@ containing a live effect with 100+ particle instances. That only holds because
 `efk_update` is driven by the harness's fixed step rather than a clock of its
 own (§3.1); it is not a property of Effekseer.
 
+> **Amended 01.08.2026 — that claim was only half true, and the missing half
+> broke the gate.** A fixed *clock* is necessary but not sufficient: Effekseer
+> also seeds each instance from `Manager`'s rand func, which defaults to
+> `rand()` and therefore reads the C runtime's process-global state. Nothing
+> pinned it (`math.randomseed` seeds LuaJIT's PRNG, not `srand`), so the
+> fixture frame in fact differed on every run — a ~20x19px region — and G5 sat
+> permanently red on it. Fixed by having the shim own the generator
+> (`SetRandFunc` + `efk_set_random_seed`, reseeded per scene by the harness).
+> Whatever made the original three runs agree, it was not this code path.
+
 **The design tension.** Gating a real, in-use effect would redden G5 on every
 retouch. And a gate that gets recaptured reflexively is worse than no gate — it
 manufactures confidence without checking anything, which is exactly how this

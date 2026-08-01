@@ -529,6 +529,11 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         for _, sceneDef in ipairs(loader.scenes or {}) do
             captureClock = 0
             math.randomseed(12345)
+            -- Effect randomness is seeded per scene for the same reason the
+            -- Lua RNG is: otherwise a frame containing a live effect depends
+            -- on how many effects earlier scenes happened to play, and cannot
+            -- be held as a reference.
+            require("presentation.effekseer").setRandomSeed(12345)
             local vSession = makeHarnessSession(loader)
             _G.activeSession = vSession
             resetPresentation()
