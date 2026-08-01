@@ -310,9 +310,33 @@ end
 -- dt is SECONDS; Effekseer counts in 60fps frames. Driven by the caller's dt
 -- rather than any clock of Effekseer's own, so the screenshot gate and the
 -- editor's preview-anim filmstrip can step it deterministically (roadmap 3.1).
+--
+-- SUB-STEPPED, and that is not a refinement. Handing Effekseer one large
+-- deltaFrame does not fast-forward the simulation, it SKIPS it: emitters fire
+-- per simulated frame, so a single 400-frame update produced 1,338 mist
+-- instances where 400 one-frame updates produce 1,904, and -- worse -- left the
+-- manager in a state where the NEXT effect played emitted nothing at all but
+-- its root. That is what made env_rain look like a perspective-renderer failure
+-- when it renders correctly; see the roadmap section 6.5.1g.
+--
+-- Real frames never deliver a dt this large, which is why the game looked fine.
+-- Anything that advances effect time in bulk hits it: the screenshot harness's
+-- one-second settle, the editor filmstrip, a load hitch, a resumed alt-tab.
+local FRAME_SECONDS = 1 / 60
+-- Ten seconds of catch-up. Beyond this the caller has been stalled so long that
+-- simulating every frame would stall it further; effects are ambient, so
+-- dropping the excess is better than a visible freeze.
+local MAX_CATCHUP_FRAMES = 600
+
 function effekseer.update(dt)
     if not effekseer.available() or suppressed then return end
-    lib.efk_update(dt * 60.0)
+    if not dt or dt <= 0 then return end
+    local frames = dt / FRAME_SECONDS
+    if frames > MAX_CATCHUP_FRAMES then frames = MAX_CATCHUP_FRAMES end
+    local whole = math.floor(frames)
+    for _ = 1, whole do lib.efk_update(1.0) end
+    local remainder = frames - whole
+    if remainder > 0 then lib.efk_update(remainder) end
 end
 
 -- Freezes effect time without stopping effects.

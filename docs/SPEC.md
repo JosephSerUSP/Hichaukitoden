@@ -550,13 +550,23 @@ exposed face, and invalidation/map replacement stops them. They advance through
 the shared deterministic Effekseer clock. World effects bridge the game's X/Y
 floor and Z-up coordinates to Effekseer's X/Z floor and Y-up convention, then
 draw directly through the polygonal camera while preserving its depth
-attachment. `env_mist` is deterministically sampled at its authored frame-400
-opacity milestone and visibly changes the live viewport while that depth buffer
-is populated. `env_rain` loads, emits, and renders in the screen-space pass at
-frame 100, but produces no pixels through the perspective pass even after its
-texture, secondary alpha texture, and axis-fixed sprite configuration were
-removed. Rain remains a perspective-renderer compatibility follow-up rather
-than a failure of the asset, clock, or world placement.
+attachment. Both `env_mist` and `env_rain` are deterministically sampled down a
+corridor at frame 400 and visibly change the live viewport while that depth
+buffer is populated.
+
+Effect time is advanced in **one-frame sub-steps**. A single large `deltaFrame`
+does not fast-forward Effekseer's simulation, it skips it — emitters fire per
+simulated frame — and it also leaves the manager unable to emit for the next
+effect played. Anything that advances effect time in bulk depends on this: the
+screenshot harness's settle, the editor filmstrip, a load hitch.
+
+Two rules follow for anything that measures a world effect, both learned by
+getting them wrong (§6.5.1g of the roadmap): observe down a view with **receding
+depth**, because a camera facing a near wall has every particle rejected by the
+depth buffer and reports zero pixels while the effect emits healthily; and
+sample while the effect is **alive**, because a finite effect past its end also
+reports zero. Together those two produced a recorded claim that `env_rain`
+"produces no pixels through the perspective pass" when it renders correctly.
 
 ### 1.9 Item vocabulary (26.07.2026)
 

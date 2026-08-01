@@ -172,7 +172,34 @@ screen-space overlay. It preserves LOVE's populated world depth attachment and
 draws directly into the full 256x240 world canvas. Lua bridges the game's X/Y
 floor, Z-up convention to Effekseer's conventional X/Z floor, Y-up axes. The
 `env_mist` is gated visibly at its authored frame-400 opacity milestone while
-the populated world depth attachment is preserved. `env_rain` loads, emits and
-renders in the screen-space pass at frame 100, but produces no pixels through
-the perspective pass even without textures or an axis-fixed sprite. It remains
-a perspective-renderer compatibility follow-up.
+the populated world depth attachment is preserved.
+
+### `env_rain` was never broken (corrected 01.08.2026)
+
+This file previously recorded that `env_rain` "produces no pixels through the
+perspective pass" and called it a renderer compatibility follow-up. **It is
+not.** Rain renders correctly through the world camera. Two faults in how it was
+being *observed* stacked up to make it look otherwise, and both are traps for
+the next person:
+
+1. **The observation had no receding depth.** The fixture used a 3x3 grid with
+   the camera facing a wall one cell away, so the depth buffer rejected every
+   particle. Measured: 111 live instances, 0 pixels. The effect was emitting
+   perfectly the whole time. Down a 20-cell corridor the same effect at the same
+   frame paints visible streaks.
+2. **A single large `deltaFrame` skips the simulation rather than
+   fast-forwarding it.** Emitters fire per simulated frame, so one 400-frame
+   update yielded 1,338 mist instances where 400 one-frame updates yield 1,904 —
+   and, worse, left the manager unable to emit anything but the root for the
+   *next* effect played, which is what made the second effect in any A/B look
+   dead. `effekseer.update` now sub-steps.
+
+A finite effect sampled past its end is a third way to read zero, so a milestone
+frame belongs to an effect, not to the suite.
+
+**The pattern, for the fourth time in this integration** (after the self-flushing
+z-order probe, the settle that killed short effects, and the settle that
+corrupted unrelated scenes): the measurement was wrong, not the thing measured,
+and it failed in the direction that looks like a real defect. A world-effect
+observation that reports zero should be assumed unable to see before it is
+assumed to have found something.

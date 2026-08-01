@@ -264,37 +264,114 @@ check(fixtureModelsOk and fixtureModelDraws >= 2,
             or (": " .. tostring(fixtureModelsError))))
 check(fixtureModelsOk and (viewport3d.getLastFrameStats().worldEffectHandles or 0) == 1,
     "an authored fixture effect spawns in the world camera pass")
--- The creation frame owns a live native handle but has not emitted particles
--- yet. Advance the real runtime, then draw the already-prepared world again so
--- this assertion measures world-camera presentation rather than handle setup.
-require("presentation.effekseer").update(400 / 60)
-local worldEffectInstances = require("presentation.effekseer").instanceCount()
-love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
-love.graphics.clear(0, 0, 0, 1, true, true)
-viewport3d.draw(fixtureModelSession)
-love.graphics.setCanvas(previousCanvas)
-local withWorldEffect = modelCanvas:newImageData()
-viewport3d.invalidateStructure(fixtureModelSession)
-require("presentation.effekseer").reset()
-loader.tilesets.model_fixture_render_test.features[3].effect = nil
-love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
-love.graphics.clear(0, 0, 0, 1, true, true)
-viewport3d.draw(fixtureModelSession)
-love.graphics.setCanvas(previousCanvas)
-local withoutWorldEffect = modelCanvas:newImageData()
-local effectPixels = 0
-for py = 0, 239 do
-    for px = 0, 255 do
-        local ar, ag, ab, aa = withWorldEffect:getPixel(px, py)
-        local br, bg, bb, ba = withoutWorldEffect:getPixel(px, py)
-        if ar ~= br or ag ~= bg or ab ~= bb or aa ~= ba then effectPixels = effectPixels + 1 end
-    end
+-- World effects need a view with RECEDING DEPTH to be observable at all. The
+-- 3x3 fixture above faces a wall one cell away, so the depth buffer rejects
+-- particles behind it and every effect measures as zero pixels no matter how
+-- healthily it is emitting -- which is exactly how env_rain came to be recorded
+-- as "produces no pixels through the perspective pass" when it does. Look down
+-- a corridor instead.
+local corridorGrid = {}
+for corridorY = 1, 20 do
+    corridorGrid[corridorY] = {
+        "#", (corridorY == 1 or corridorY == 20) and "#" or ".", "#",
+    }
 end
-check(worldEffectInstances > 0 and effectPixels > 0,
-    "world-authored mist is visible at its frame-400 opacity milestone"
-        .. " (instances=" .. worldEffectInstances .. ", pixels=" .. effectPixels .. ")")
-viewport3d.invalidateStructure(fixtureModelSession)
-require("presentation.effekseer").reset()
+
+-- Each effect is also sampled while it is ALIVE. Both ambient effects are
+-- authored endless, so one milestone serves both; a finite effect would need
+-- its own, because sampling past the end measures zero instances and reads as
+-- a renderer failure rather than a finished effect.
+local worldEffectCases = {
+    { effect = "assets/effects/SecondRite/env_mist.efkefc", frames = 400, label = "mist" },
+    { effect = "assets/effects/SecondRite/env_rain.efkefc", frames = 400, label = "rain" },
+}
+
+-- Each case gets its OWN tileset id. Rewriting one shared fixture's `effect`
+-- field between cases made the second case reuse the first's cached resolved
+-- structure -- so it reported a live handle that was really the previous,
+-- already-stopped effect, and measured as one instance emitting nothing. That
+-- is the engine's "loader data is shared and immutable" rule biting a test that
+-- mutated it in place, not a renderer fault.
+for caseIndex, case in ipairs(worldEffectCases) do
+    local tilesetId = "world_effect_render_test_" .. caseIndex
+    loader.tilesets[tilesetId] = {
+        id = tilesetId, texture = baseModelTileset.texture,
+        base = baseModelTileset.base, doors = baseModelTileset.doors,
+        features = {
+            { id = "world_effect", role = "floor_feature", atlas = { 0, 0 },
+                effect = case.effect,
+                effectHeight = 0.25, effectMagnification = 0.15625 },
+        },
+    }
+    local effectSession = sessionModule.GameSession.new(loader)
+    effectSession.mapGrid = corridorGrid
+    effectSession.currentMapData = {
+        tileset = tilesetId, ceilingStyle = "solid", events = {},
+    }
+    effectSession.generatedFeatures = { { x = 1, y = 6, material = "world_effect" } }
+    effectSession.playerX, effectSession.playerY, effectSession.playerDir = 1, 1, "S"
+
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(effectSession)      -- spawn frame: handle exists, nothing emitted
+    love.graphics.setCanvas(previousCanvas)
+
+    require("presentation.effekseer").update(case.frames / 60)
+    local worldEffectInstances = require("presentation.effekseer").instanceCount()
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(effectSession)
+    love.graphics.setCanvas(previousCanvas)
+    local withWorldEffect = modelCanvas:newImageData()
+
+    -- The baseline draws the identical corridor through a distinct tileset that
+    -- authors no effect, so the diff isolates the effect's pixels without
+    -- editing loader data underneath a live cache.
+    viewport3d.invalidateStructure(effectSession)
+    require("presentation.effekseer").reset()
+    local baselineId = tilesetId .. "_baseline"
+    loader.tilesets[baselineId] = {
+        id = baselineId, texture = baseModelTileset.texture,
+        base = baseModelTileset.base, doors = baseModelTileset.doors,
+        features = {
+            { id = "world_effect", role = "floor_feature", atlas = { 0, 0 },
+                effectHeight = 0.25, effectMagnification = 0.15625 },
+        },
+    }
+    local baselineSession = sessionModule.GameSession.new(loader)
+    baselineSession.mapGrid = corridorGrid
+    baselineSession.currentMapData = {
+        tileset = baselineId, ceilingStyle = "solid", events = {},
+    }
+    baselineSession.generatedFeatures = { { x = 1, y = 6, material = "world_effect" } }
+    baselineSession.playerX, baselineSession.playerY, baselineSession.playerDir = 1, 1, "S"
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(baselineSession)
+    love.graphics.setCanvas(previousCanvas)
+    local withoutWorldEffect = modelCanvas:newImageData()
+
+    local effectPixels = 0
+    for py = 0, 239 do
+        for px = 0, 255 do
+            local ar, ag, ab, aa = withWorldEffect:getPixel(px, py)
+            local br, bg, bb, ba = withoutWorldEffect:getPixel(px, py)
+            if ar ~= br or ag ~= bg or ab ~= bb or aa ~= ba then
+                effectPixels = effectPixels + 1
+            end
+        end
+    end
+    check(worldEffectInstances > 0 and effectPixels > 0,
+        "world-authored " .. case.label .. " is visible down a corridor at frame "
+            .. case.frames .. " (instances=" .. worldEffectInstances
+            .. ", pixels=" .. effectPixels .. ")")
+    viewport3d.invalidateStructure(effectSession)
+    viewport3d.invalidateStructure(baselineSession)
+    require("presentation.effekseer").reset()
+    require("presentation.effekseer").update(1 / 60)
+    loader.tilesets[tilesetId] = nil
+    loader.tilesets[baselineId] = nil
+end
 loader.tilesets.model_fixture_render_test = nil
 
 local cacheProbe = {

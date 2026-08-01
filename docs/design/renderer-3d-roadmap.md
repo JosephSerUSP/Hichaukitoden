@@ -873,6 +873,55 @@ script so an attack lands, which adds new capture frames and therefore needs an
 owner-signed `capture-screens.ps1` run. Worth doing before the migration gets
 far: otherwise the 28 entries get ported with no gate watching any of them.
 
+### 6.5.1g World effects: rain was never broken (01.08.2026)
+
+Steps 3, 4 and 5 have all landed since this document's §9 was written (see the
+amended table there). The one named open technical item from step 4 —
+*"`env_rain` produces no pixels through the perspective pass"* — was **not a
+renderer defect**. Rain renders correctly through the world camera. The
+observation was broken, in two independent ways that stacked:
+
+1. **No receding depth.** The world-effect fixture used a 3x3 grid with the
+   camera facing a wall one cell away. World effects are depth-tested against
+   real geometry, so every particle was rejected. Measured: **111 live
+   instances, 0 pixels** — an effect emitting perfectly and reporting as dead.
+   The same effect down a 20-cell corridor paints visible streaks.
+2. **A single large `deltaFrame` skips simulation rather than fast-forwarding
+   it.** Emitters fire per simulated frame. One 400-frame update produced 1,338
+   mist instances where 400 one-frame updates produce 1,904 — and it left the
+   manager unable to emit anything but the root for the *next* effect played,
+   so whichever effect ran second in an A/B measured as dead regardless of its
+   own health. `effekseer.update` now sub-steps in one-frame increments, capped
+   at ten seconds of catch-up.
+
+A third way to read zero: sampling a **finite** effect past its end. A milestone
+frame therefore belongs to an effect, not to the suite.
+
+Fault 2 is a real engine fix with reach beyond the tests — the screenshot
+harness's settle, the editor filmstrip, and any load hitch or resumed alt-tab
+all advance effect time in bulk. Ordinary frames never do, which is why the
+game looked fine and only bulk-advancing callers were wrong.
+
+**This is the fourth capture/observation procedure in this integration to hide
+the thing it existed to catch** — after §6.5.1c's self-flushing z-order probe,
+§6.5.1f's settle that outlived every short effect, and the settle that corrupted
+unrelated scenes. All four failed toward a confident wrong answer. Standing
+rule: **a world-effect measurement that reports zero should be assumed unable to
+see before it is assumed to have found something.**
+
+#### The open question this raises: ambient effects are not fixtures
+
+One endless `env_mist` placement reaches **1,904 live instances** — against an
+`efk_init(2000, 2000)` budget. A second ambient placement exhausts the manager,
+and the symptom is silent: later effects spawn a root and emit nothing, exactly
+the signature above. Cell-anchored ambient weather is also wrong spatially — walk
+ten cells and the rain stays behind you.
+
+Cell-anchored *fixtures* (torches, braziers) are correctly modelled as they are:
+one endless handle per placement, each small. **Weather is a different role** and
+wants one map-level handle repositioned to the camera each frame. That is an
+owner decision, recorded here rather than assumed; see §10.
+
 ### 6.6 Why this ranks high
 
 Two properties no other item on this roadmap has:
@@ -970,15 +1019,23 @@ a **game design** question first, and never entered through the renderer.
 
 ## 9. Sequencing
 
-| # | Step | Why here |
-|---|---|---|
-| 0 | Deterministic clock + screenshot gate (§3, §3.1) | Prerequisite for everything; closes the blind spot; one piece of work serves both the gate and editor preview |
-| 1 | **Effekseer spike** — DLL loads, one effect on screen | An afternoon. Answers the only question that can sink §6 |
-| 2 | **Effekseer in battle** (§6.4) — ortho camera + filmstrip preview | No renderer rewrite needed; all 28 entries live here |
-| 3 | **Strategy B** (§4) — polygonal renderer, real matrices | The renderer rewrite |
-| 4 | Effekseer in the world | Needs #3's matrices |
-| 5 | Weighted variant resolution (§5.5), then kit pieces (§5) | |
-| 6 | 3D townsfolk (§7) | |
+**Status amended 01.08.2026.** Steps 0–5 have all landed. This table said
+otherwise for three steps, which is the kind of drift that makes a design doc
+read as status; `docs/ENGINE-STATE.md` remains the authority.
+
+| # | Step | Status | Why here |
+|---|---|---|---|
+| 0 | Deterministic clock + screenshot gate (§3, §3.1) | **done** 30.07 | Prerequisite for everything; closes the blind spot; one piece of work serves both the gate and editor preview |
+| 1 | **Effekseer spike** — DLL loads, one effect on screen | **done** 30.07 | An afternoon. Answers the only question that can sink §6 |
+| 2 | **Effekseer in battle** (§6.4) — ortho camera + filmstrip preview | **done** 30.07 | No renderer rewrite needed; all 28 entries live here |
+| 3 | **Strategy B** (§4) — polygonal renderer, real matrices | **done** 01.08 | The renderer rewrite. The raycaster body was deleted in `f305b7f` |
+| 4 | Effekseer in the world | **done** 01.08 | Needs #3's matrices. See §6.5.1g — its one recorded open item was a measurement fault, not a defect |
+| 5 | Weighted variant resolution (§5.5), then kit pieces (§5) | **done** 01.08 | Weighted pools, `where` predicates, prefabs, `tilesetOverride`, OBJ loader, model-backed doors/openings/fixtures |
+| 6 | 3D townsfolk (§7) | **not started** | The only unstarted step |
+
+Two things are open that are not steps: the **ambient-vs-fixture effect role**
+(§6.5.1g), and the §6.1 migration of the remaining `animations.json` particle
+tracks, which is gated on effects being authored rather than on engine work.
 
 Steps 1-2 are deliberately ahead of the renderer rewrite: they are independently
 valuable, they do not depend on §4, and they front-load the work whose output
@@ -994,9 +1051,19 @@ has value outside this project (§6.6).
 2. **Install a C++ toolchain** — now the actual blocker on step 1. Owner
    action; see `userPerform/README.md`. MinGW-w64 is sufficient and is the
    smaller install.
-3. **Missing-DLL behaviour** — hard error or degrade? (§6.5.4)
+3. ~~**Missing-DLL behaviour** — hard error or degrade?~~ **Resolved 30.07.2026:
+   degrade.** Extended 01.08.2026 to a *stale* DLL, which used to die mid-draw
+   on an unresolved symbol; init now rejects it by name and degrades the same
+   way, and `tools/effekseer/build.ps1` makes rebuilding one command.
 4. **Texel density standard** for models vs. the 64px atlas (§5.4)
 5. **SPEC §1.2 amendment** recording effects-as-asset (§6.2)
+6. **Ambient effects vs. cell fixtures** (§6.5.1g) — one endless mist placement
+   costs 1,904 of a 2,000 instance budget, and cell-anchored weather stays
+   behind the player. Should rain/mist become a map-level handle that follows
+   the camera, leaving per-cell effects to fixtures like torches?
+7. **G5 coverage of `skill.attack`** (§6.5.1f) — battle's capture script never
+   resolves an attack, so the migrated effect is still ungated. Closing it adds
+   frames and needs an owner-signed capture.
 
 ---
 
