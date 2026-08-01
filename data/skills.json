@@ -52,7 +52,8 @@
         "potency": 1.25,
         "power": "atk"
       }
-    ]
+    ],
+    "hpCost": "a.maxHp * 0.05"
   },
   "holySmite": {
     "id": "holySmite",
@@ -129,7 +130,8 @@
     "charges": "1 + b.base.mdf / 16",
     "overcast": {
       "mp": 250
-    }
+    },
+    "hpCost": "a.maxHp * 0.10"
   },
   "wait": {
     "id": "wait",
@@ -233,7 +235,8 @@
     ],
     "cooldown": 4,
     "condition": "a.hp >= a.maxHp",
-    "conditionText": "Only at full HP"
+    "conditionText": "Only at full HP",
+    "hpCost": "a.maxHp * 0.15"
   },
   "attack": {
     "id": "attack",
@@ -458,7 +461,8 @@
     "charges": "2 + b.base.mdf / 10",
     "overcast": {
       "mp": 260
-    }
+    },
+    "hpCost": "a.maxHp * 0.20"
   },
   "boulderToss": {
     "id": "boulderToss",

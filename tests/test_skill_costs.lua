@@ -310,5 +310,84 @@ do
         "the basic attack carries no cost or gate")
 end
 
+------------------------------------------------------------------ HP cost --
+
+do
+    local sess, fighter = rig()
+    skill_cost.beginBattle(fighter, loader)
+    fighter.hp = fighter:getMaxHp(sess)
+    local maxHp = fighter.hp
+
+    local flat = { id = "gash", hpCost = 10 }
+    check(skill_cost.hpCost(flat, fighter, sess) == 10, "a flat hpCost reads as authored")
+
+    local scaled = { id = "allIn", hpCost = "a.maxHp * 0.15" }
+    check(skill_cost.hpCost(scaled, fighter, sess) == math.floor(maxHp * 0.15),
+        "a formula hpCost scales with the user")
+
+    skill_cost.spend(flat, fighter, sess, false)
+    check(fighter.hp == maxHp - 10, "using it pays out of the user's own HP")
+
+    -- A skill is never a suicide button: paying floors at 1 HP, and the gate
+    -- refuses before it gets there.
+    fighter.hp = 5
+    check(skill_cost.blockedReason(flat, fighter, sess, false) == "Not enough HP",
+        "a cost the creature cannot survive blocks the skill")
+    fighter.hp = 11
+    check(skill_cost.blockedReason(flat, fighter, sess, false) == nil,
+        "...and exactly enough to survive is allowed")
+
+    -- HP stacks with the magic path rather than replacing it.
+    sess.mp = 0
+    local both = { id = "both", hpCost = 5, charges = 1 }
+    fighter.hp = maxHp
+    skill_cost.spend(both, fighter, sess, false)
+    check(fighter.hp == maxHp - 5
+        and select(1, skill_cost.getCharges(fighter, "both", both, sess)) == 0,
+        "a skill may cost both HP and a charge")
+end
+
+------------------------------------------------------------ cost display --
+
+do
+    -- The row the player reads and the rule the engine enforces come from the
+    -- same module, so they cannot disagree.
+    local sess, caster = rig()
+    skill_cost.beginBattle(caster, loader)
+    caster.hp = caster:getMaxHp(sess)
+    sess.mp = 1000
+
+    local spell = { id = "spell", charges = 3, overcast = { mp = 150 } }
+    local segs = skill_cost.displayCost(spell, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "3" and segs[1].color == "charges",
+        "a charged spell shows its REMAINING count in the charges colour")
+
+    skill_cost.spend(spell, caster, sess, false)
+    skill_cost.spend(spell, caster, sess, false)
+    skill_cost.spend(spell, caster, sess, false)
+    segs = skill_cost.displayCost(spell, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "150MP" and segs[1].color == "mp",
+        "an emptied pool shows the Overcast price in the MP colour instead")
+
+    -- An enemy has no Overcast, so it must not be shown one.
+    segs = skill_cost.displayCost(spell, caster, sess, true)
+    check(#segs == 1 and segs[1].text == "0",
+        "an enemy sees the empty pool, never an Overcast price")
+
+    local finite = { id = "finite", charges = 2 }
+    caster.charges.finite = 0
+    segs = skill_cost.displayCost(finite, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "0" and segs[1].color == "charges",
+        "a spent spell with no Overcast shows its empty pool rather than nothing")
+
+    local bloody = { id = "bloody", hpCost = 12 }
+    segs = skill_cost.displayCost(bloody, caster, sess, false)
+    check(#segs == 1 and segs[1].text == "12HP" and segs[1].color == "hp",
+        "an HP cost shows in the HP colour")
+
+    check(#skill_cost.displayCost({ id = "free" }, caster, sess, false) == 0,
+        "a free skill shows no cost at all")
+end
+
 print(("=== Skill Cost Tests Completed: %d passed, %d failed ==="):format(passed, failed))
 if failed > 0 then require("tests.fail_fast")("skill cost tests failed", failed) end
