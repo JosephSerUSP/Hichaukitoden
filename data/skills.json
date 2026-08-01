@@ -720,11 +720,12 @@
     "effects": [
       {
         "type": "hp_damage",
-        "potency": 1.0,
+        "potency": 1,
         "power": "atk",
         "penetration": 0.15
       }
-    ]
+    ],
+    "cooldown": 1
   },
   "fairyCourt": {
     "id": "fairyCourt",

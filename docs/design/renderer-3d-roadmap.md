@@ -5,8 +5,8 @@
 > [`docs/ENGINE-STATE.md`](../ENGINE-STATE.md) (gated by G4); for how the engine
 > works, `docs/SPEC.md`. Where this document and those disagree, they win.
 
-Status: **proposed, nothing implemented.** Written 30.07.2026 from a feasibility
-pass over [`presentation/viewport_3d.lua`](../../presentation/viewport_3d.lua).
+Written 30.07.2026 from a feasibility pass over
+[`presentation/viewport_3d.lua`](../../presentation/viewport_3d.lua).
 Supersedes nothing; extends the analysis in
 [`widescreen-performance-study.md`](widescreen-performance-study.md), which
 studied resolution scaling of the *existing* raycaster and deliberately did not

@@ -1310,6 +1310,54 @@ local function drawWorldSpace(session)
 
     local BASE_MIN_SUBDIVISION_AREA = 0.15
 
+    -- Hardware depth testing exposes geometry which crosses the camera plane:
+    -- projecting a negative-depth vertex turns the whole quad inside out and
+    -- can make a nearby floor tile occlude the room. Clip leaf polygons to the
+    -- near plane before they reach the GPU, interpolating every vertex field.
+    local function addNearClippedQuad(grp, a, b, c, d, uv, colors)
+        local polygon = {
+            { p = a, u = uv[1], v = uv[2], color = colors[1] },
+            { p = b, u = uv[3], v = uv[2], color = colors[2] },
+            { p = c, u = uv[3], v = uv[4], color = colors[3] },
+            { p = d, u = uv[1], v = uv[4], color = colors[4] },
+        }
+        local function depth(vertex)
+            return (vertex.p.x - cameraX) * dirX + (vertex.p.y - cameraY) * dirY
+        end
+        local function intersection(from, to, fromDepth, toDepth)
+            local t = (0.05 - fromDepth) / (toDepth - fromDepth)
+            local function lerp(x, y) return x + (y - x) * t end
+            return {
+                p = { x = lerp(from.p.x, to.p.x), y = lerp(from.p.y, to.p.y), z = lerp(from.p.z, to.p.z) },
+                u = lerp(from.u, to.u), v = lerp(from.v, to.v),
+                color = {
+                    lerp(from.color[1], to.color[1]), lerp(from.color[2], to.color[2]),
+                    lerp(from.color[3], to.color[3]), lerp(from.color[4], to.color[4]),
+                },
+            }
+        end
+        local clipped = {}
+        local previous = polygon[#polygon]
+        local previousDepth = depth(previous)
+        for _, current in ipairs(polygon) do
+            local currentDepth = depth(current)
+            local previousInside, currentInside = previousDepth >= 0.05, currentDepth >= 0.05
+            if previousInside ~= currentInside then
+                table.insert(clipped, intersection(previous, current, previousDepth, currentDepth))
+            end
+            if currentInside then table.insert(clipped, current) end
+            previous, previousDepth = current, currentDepth
+        end
+        if #clipped < 3 then return end
+        local first = clipped[1]
+        for i = 2, #clipped - 1 do
+            for _, vertex in ipairs({ first, clipped[i], clipped[i + 1] }) do
+                addWorldVertex(grp, vertex.p.x, vertex.p.y, vertex.p.z, vertex.u, vertex.v,
+                    vertex.color[1], vertex.color[2], vertex.color[3], vertex.color[4])
+            end
+        end
+    end
+
     local function getQuadArea(a, b, c, d)
         local abX, abY, abZ = b.x - a.x, b.y - a.y, b.z - a.z
         local adX, adY, adZ = d.x - a.x, d.y - a.y, d.z - a.z
@@ -1371,7 +1419,7 @@ local function drawWorldSpace(session)
             addVisibleWorldQuad(grp, mDA, mCenter, mCD, d, uvBL, { cDA, cCenter, cCD, cD }, maxDepth - 1)
         else
             local quadGrp = group(grp.texture)
-            addWorldQuad(quadGrp, a, b, c, d, uv, colors)
+            addNearClippedQuad(quadGrp, a, b, c, d, uv, colors)
             quadGrp.depth = depth
             quadGrp.sequence = #surfaces + 1
             table.insert(surfaces, quadGrp)
@@ -1470,7 +1518,7 @@ local function drawWorldSpace(session)
             end
         end
         local wallGroup = group(texture)
-        if texture ~= atlas.img then uv = { 0, 0, 1, 1 } end
+        if not atlas or texture ~= atlas.img then uv = { 0, 0, 1, 1 } end
         -- LÖVE image V=0 is the top edge.  These vertices are authored
         -- bottom-to-top, so reverse only V; floor/ceiling UV orientation is
         -- already correct in world space.
@@ -1541,8 +1589,8 @@ local function drawWorldSpace(session)
     shader:send("ditherLevels", ditherLevels)
     love.graphics.setColor(1, 1, 1, 1)
     -- Distance fade is a color mix toward the fog/background, never a
-    -- translucent polygon. Keep the material batches painter-ordered for now;
-    -- the geometry is still fully world-space and perspective projected.
+    -- translucent polygon. Keep the established far-to-near presentation
+    -- order until the depth-tested output receives owner visual approval.
     love.graphics.setBlendMode("alpha")
     love.graphics.setDepthMode("always", true)
     table.sort(surfaces, function(a, b)

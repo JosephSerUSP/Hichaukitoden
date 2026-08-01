@@ -361,10 +361,11 @@ hatch, replacing the old dead `tiles{}` grid and the lamp's free-text
 player walks through (design doc §2/§6), distinct from a decorative
 `wall_event` door which sits on an actual `"#"` and is never passable. `"o"`
 is passable by the existing `~= "#"` movement check (no change needed there)
-but, unlike `"."`, still stops the raycaster's DDA loop and renders a frame
-— `presentation/viewport_3d.lua`'s wall column loop treats `"o"` as a hit
-alongside `"#"`, currently borrowing the door atlas row as a stand-in visual
-(no dedicated weighted/adjacency-resolved opening variant yet — that's §3).
+but, unlike `"."`, is intended to carry structural renderer geometry. The
+retired raycaster rendered it with the door atlas row; the polygonal world path
+currently treats it as an ordinary floor cell. Restoring a visible opening
+frame, then giving it dedicated weighted/adjacency-resolved variants, remains
+open work (§3).
 Authored via the map editor's Layout brush (`tools/editor/js/map-editor.js:
 setPaintTool('opening', ...)`) or as a `MUTATE_TILE ... to="o"` runtime
 mutation (hidden-passage reveal, per the override's `mutateTo`).
