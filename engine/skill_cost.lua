@@ -60,6 +60,33 @@ function skill_cost.getCharges(battler, skillId, skill, session)
     return math.max(0, math.min(stored, max)), max
 end
 
+-- ---------------------------------------------------------------------
+-- HP cost (mostly physical)
+-- ---------------------------------------------------------------------
+
+--- What `skill` costs its user in HP. A flat number or a formula against the
+--- user, so "a tenth of your max HP" scales with the creature.
+---
+--- HP is the one cost paid from a resource the player is ALREADY spending
+--- defensively, which is what makes it interesting on a physical skill: the
+--- price is measured in survivability, not in supply. It stacks with the other
+--- gates rather than replacing them -- a skill may cost HP and have a cooldown.
+function skill_cost.hpCost(skill, battler, session)
+    if not skill or skill.hpCost == nil then return 0 end
+    if type(skill.hpCost) == "number" then return math.max(0, math.floor(skill.hpCost)) end
+    local view = formula.battlerView(battler, session)
+    return math.max(0, math.floor(tonumber(formula.eval(skill.hpCost, { a = view, b = view })) or 0))
+end
+
+--- A skill may never be the thing that kills its user: paying must leave at
+--- least 1 HP. Suicide would also hand the player a way to dodge permadeath's
+--- consequences by choosing the moment, which the design does not want.
+function skill_cost.canPayHp(skill, battler, session)
+    local cost = skill_cost.hpCost(skill, battler, session)
+    if cost <= 0 then return true end
+    return (battler.hp or 0) > cost
+end
+
 --- Can this actor pay for one casting, and how?
 -- Returns "charge", "overcast", or nil plus a reason.
 --
@@ -85,6 +112,13 @@ end
 --- Spends the cost decided by `payment`. Called from the ONE place a skill
 --- actually resolves, so the charge path and the Overcast path cannot drift.
 function skill_cost.spend(skill, battler, session, isEnemy)
+    -- HP is charged alongside whatever the magic path decides, not instead of
+    -- it: the two are independent costs, and a skill may carry both.
+    local hp = skill_cost.hpCost(skill, battler, session)
+    if hp > 0 then
+        battler.hp = math.max(1, (battler.hp or 1) - hp)
+    end
+
     local how = skill_cost.payment(skill, battler, session, isEnemy)
     if how == "charge" then
         local current, max = skill_cost.getCharges(battler, skill.id, skill, session)
@@ -235,10 +269,57 @@ function skill_cost.blockedReason(skill, battler, session, isEnemy)
         return skill.conditionText or "Unavailable"
     end
 
+    if not skill_cost.canPayHp(skill, battler, session) then
+        return "Not enough HP"
+    end
+
     local how, reason = skill_cost.payment(skill, battler, session, isEnemy)
     if not how then return reason or "Unavailable" end
 
     return nil
+end
+
+--- What a skill's cost LOOKS like, as coloured segments, for any surface that
+--- lists skills (the battle console, the status page).
+---
+--- Built here rather than in the scene script because the cost display and the
+--- cost rules must not be able to disagree: a row that shows "3/6" and a
+--- predicate that says "out of charges" would be a bug the player sees before
+--- anyone else. Each segment is { text, color }, where color names a key in
+--- ui.costColors -- the engine says WHICH resource, presentation owns the tone.
+---
+--- Charges show as the REMAINING count alone, not "remaining/max": the battle
+--- console's skill column is ~76px wide, and "8/8" cost enough of it to
+--- truncate "Wind Blade" into "Wind Blad". Remaining-only also reads the way
+--- the resource actually behaves -- a magazine count -- and the maximum is
+--- already on the status page, where there is room for it.
+---
+--- Overcast replaces the count once the pool is empty, because that IS the
+--- cost at that point.
+function skill_cost.displayCost(skill, battler, session, isEnemy)
+    local segments = {}
+    if not skill or not battler then return segments end
+
+    local hp = skill_cost.hpCost(skill, battler, session)
+    if hp > 0 then
+        table.insert(segments, { text = tostring(hp) .. "HP", color = "hp" })
+    end
+
+    local current, max = skill_cost.getCharges(battler, skill.id, skill, session)
+    if current ~= nil then
+        if current > 0 then
+            table.insert(segments, { text = tostring(current), color = "charges" })
+        elseif skill.overcast and skill.overcast.mp and not isEnemy then
+            table.insert(segments, {
+                text = tostring(skill.overcast.mp) .. "MP", color = "mp" })
+        elseif max and max > 0 then
+            -- Spent, with no Overcast to fall back on. Show the empty pool
+            -- rather than nothing, so the row explains itself.
+            table.insert(segments, { text = "0", color = "charges" })
+        end
+    end
+
+    return segments
 end
 
 return skill_cost

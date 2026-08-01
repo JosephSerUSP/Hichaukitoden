@@ -726,8 +726,15 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
         local row = rows[i]
         local rEnv = rowEnv(env, row)
         local isSel = (i == cursor)
-        local color = isSel and COLOR_SELECTED or (row.dead and COLOR_DIM or COLOR_NORMAL)
-        if not isSel and not row.dead and win.highlight and win.highlight ~= "" then
+        -- `row.disabled` dims exactly like `row.dead` does, and for the same
+        -- reason: the row still exists and is still selectable (so the player
+        -- can read WHY it is unavailable in the help bar), it just cannot be
+        -- acted on. Selection still wins, or the cursor would vanish onto an
+        -- unusable row.
+        local color = isSel and COLOR_SELECTED
+            or ((row.dead or row.disabled) and COLOR_DIM or COLOR_NORMAL)
+        if not isSel and not row.dead and not row.disabled
+            and win.highlight and win.highlight ~= "" then
             local hv = formula.eval(win.highlight, rEnv)
             if hv == true then color = COLOR_HIGHLIGHT end
         end
@@ -779,6 +786,29 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
             rightW = ui.measureText((rightText:gsub("\\c%[%d+%]", ""))) + ui.toPx(0.5)
         end
 
+        -- Skill costs (row.costSegments, from engine/skill_cost.displayCost).
+        -- Named `costSegments`, NOT `cost`: shop rows already carry a numeric
+        -- `cost` (the price), and reusing the name crashed the shop list the
+        -- moment a renderer tried to take its length.
+        --
+        -- They claim the
+        -- same right-hand column as formatRight, but each segment carries its
+        -- OWN colour naming the resource it spends -- yellow charges, blue MP,
+        -- red HP -- so the player reads WHAT is being spent before how much.
+        -- A row that cannot be paid for greys its numbers rather than hiding
+        -- them: seeing what you cannot afford is the useful part.
+        --
+        -- Measured here and subtracted from the label's width below, so a long
+        -- skill name is truncated by the cost column instead of running under
+        -- it. Costs are data on the row, not a format string, because their
+        -- number and colour vary per row.
+        local costSegs = row.costSegments
+        if costSegs and #costSegs > 0 then
+            for _, seg in ipairs(costSegs) do
+                rightW = rightW + ui.measureText(seg.text or "") + ui.toPx(0.5)
+            end
+        end
+
         local iconBlockW = (row.icon ~= nil)
             and (ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)) or 0
         local labelText = ui.fitText(interpolate(format, rEnv),
@@ -787,6 +817,21 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
 
         if rightText then
             ui.drawString(rightText, rightEdge - rightW + ui.toPx(0.5), rowY, color)
+        end
+
+        -- Cost segments, right-aligned to the row's edge so every price in the
+        -- list lines up in one column regardless of name length.
+        if costSegs and #costSegs > 0 then
+            local cx = rightEdge
+            for i = #costSegs, 1, -1 do
+                local seg = costSegs[i]
+                local text = seg.text or ""
+                cx = cx - ui.measureText(text)
+                ui.drawString(text, cx, rowY,
+                    row.disabled and ui.costColors.blocked
+                        or (ui.costColors[seg.color] or ui.costColors.charges))
+                cx = cx - ui.toPx(0.5)
+            end
         end
         if hasGauge then
             -- (extra parens: see drawLayoutGauges — truncates eval's
@@ -1056,14 +1101,47 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h, animP)
     -- "[icon] name" unit via ui.drawIconText, instead of printf's own
     -- "center" alignment (which only knows about the text) — icon-less
     -- rows (Attack/Skill/Defend/Item/Flee) are unaffected.
+    -- Cost segments ({text, color} from engine/skill_cost.displayCost) draw
+    -- right-aligned inside the slot, so the eye finds every price in the same
+    -- column regardless of how long the skill names are. Colour names the
+    -- RESOURCE -- yellow charges, blue MP, red HP -- because the player should
+    -- read what is being spent before reading how much. A blocked row keeps its
+    -- numbers but greys them: seeing WHAT you cannot pay is the useful part.
+    local function drawSlotCost(row, slotX, slotW, textY)
+        local segments = row.costSegments
+        if not segments or #segments == 0 then return end
+        local pad = ui.toPx(0.5)
+        local x2 = slotX + slotW - pad
+        for i = #segments, 1, -1 do
+            local seg = segments[i]
+            local text = seg.text or ""
+            local color = row.disabled and ui.costColors.blocked
+                or (ui.costColors[seg.color] or ui.costColors.charges)
+            x2 = x2 - ui.measureText(text)
+            ui.drawString(text, x2, textY, color)
+            x2 = x2 - pad
+        end
+        return x2
+    end
+
     local function drawSlotLabel(row, color, slotX, slotW, textY, cursorY)
         local label = row.name or ""
+        -- A row that cannot be used says so in its own colour, not only in the
+        -- help bar: the menu has to be readable at a glance.
+        if row.disabled then color = COLOR_DIM end
+        -- Reserve the cost column so a long name cannot overlap the price.
+        local costLimit = drawSlotCost(row, slotX, slotW, textY)
+        local labelW = costLimit and math.max(ui.toPx(2), costLimit - slotX) or slotW
         local hasIcon = row.icon ~= nil
         if hasIcon then
             local textW = ui.measureText(label)
             local iconBlockW = ui.toPx(0.25) + ui.iconSize + ui.toPx(0.25)
             local totalW = iconBlockW + textW
-            local startX = slotX + (slotW - totalW) / 2
+            -- With a cost present the label is left-aligned against the icon
+            -- instead of centred, so names and prices form two clean columns.
+            local startX = row.costSegments and #row.costSegments > 0
+                and (slotX + ui.toPx(0.5))
+                or (slotX + (labelW - totalW) / 2)
             if cursorY then
                 small_battlers.draw("Cursor", startX - 10, cursorY, 8)
             end
@@ -1071,10 +1149,10 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h, animP)
         else
             if cursorY then
                 local textW = love.graphics.getFont():getWidth(label)
-                local textX = slotX + (slotW - textW) / 2
+                local textX = slotX + (labelW - textW) / 2
                 small_battlers.draw("Cursor", textX - 10, cursorY, 8)
             end
-            ui.drawString(label, slotX, textY, color, "center", slotW)
+            ui.drawString(label, slotX, textY, color, "center", labelW)
         end
     end
 

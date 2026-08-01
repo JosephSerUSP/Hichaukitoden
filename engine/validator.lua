@@ -859,6 +859,23 @@ validator.run = function(loader)
                 where .. " overcast must carry a numeric mp cost")
         end
 
+        -- HP cost: a flat number or a formula against the user. Paying can
+        -- never kill (skill_cost floors the payer at 1 HP), so a skill is never
+        -- a suicide button and cannot be used to dodge permadeath's timing.
+        if skill.hpCost ~= nil then
+            if type(skill.hpCost) == "number" then
+                check(skill.hpCost >= 0, where .. " has a negative hpCost")
+            else
+                check(type(skill.hpCost) == "string",
+                    where .. " hpCost must be a number or a formula string")
+                if type(skill.hpCost) == "string" then
+                    local val, ferr = formulaEngine.eval(skill.hpCost, costEnv)
+                    check(ferr == nil and type(val) == "number",
+                        where .. " has an uncompilable hpCost formula: " .. tostring(ferr or val))
+                end
+            end
+        end
+
         for _, field in ipairs({ "cooldown", "warmup" }) do
             local v = skill[field]
             if v ~= nil then

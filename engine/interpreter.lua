@@ -2179,6 +2179,25 @@ local function buildScriptApi(ctx)
         local l = ctx.loader or session.loader
         return require("engine.battle").commandsFor(battler, l)
     end
+    -- What a skill costs this creature right now, and whether it can be used:
+    --   { cost = { {text,color}, ... }, blocked = bool, reason = string|nil }
+    --
+    -- A scene lists skills; it must not also decide what they cost or whether
+    -- they are affordable, or the row the player sees and the rule the engine
+    -- enforces could disagree. Both halves come from engine/skill_cost.lua --
+    -- the same module Battle:getAIAction consults.
+    function api.skillCost(battler, skillId)
+        local l = ctx.loader or session.loader
+        local skill = l and l.getSkill and l.getSkill(skillId)
+        if not skill or not battler then return { cost = {}, blocked = false } end
+        local skill_cost = require("engine.skill_cost")
+        local reason = skill_cost.blockedReason(skill, battler, session, false)
+        return {
+            cost = skill_cost.displayCost(skill, battler, session, false),
+            blocked = (reason ~= nil),
+            reason = reason,
+        }
+    end
     -- Item Creation disciplines (engine.json `disciplines`): the shared
     -- taxonomy that item `meta.craftKind` and actor `discipline` both name.
     -- Registry-backed rather than scene-local, so a second crafting surface

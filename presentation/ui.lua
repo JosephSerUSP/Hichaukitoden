@@ -267,6 +267,21 @@ ui.gaugeColors = {
         light = { 0.82, 0.38, 0.34 },
     },
 }
+
+-- What a skill costs, by resource, so the player reads the resource before the
+-- number (owner direction 01.08.2026). One table because these are also the
+-- colours the gauges use: MP matches the party HUD's MP readout exactly, HP is
+-- the HP gauge's light tone, and charges are the one resource with no gauge, so
+-- yellow is theirs alone and never means anything else.
+ui.costColors = {
+    charges = { 1.00, 0.85, 0.25, 1 },
+    mp      = { 0.80, 0.90, 1.00, 1 },
+    hp      = { 0.82, 0.38, 0.34, 1 },
+    -- An unaffordable/unavailable cost still shows its number, greyed: the
+    -- player must be able to see WHAT they cannot pay, not just that they
+    -- cannot act.
+    blocked = { 0.45, 0.45, 0.45, 1 },
+}
 ui.screenHeightTiles = 30   -- 240 / 8
 
 -- Utility to convert tile coordinate to pixels
