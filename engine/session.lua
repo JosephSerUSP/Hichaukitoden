@@ -414,6 +414,40 @@ function GameSession:hasItem(itemId, amount)
     return (self.inventory[id] or 0) >= amount
 end
 
+--- Rest: the one definition of what recovering costs nothing and restores
+--- everything means. Entering town rests you; a dungeon rest site is an event
+--- that calls RECOVER_PARTY; promotion is a rest (it is rare, it rebuilds the
+--- creature, and it happens in the ritual). Levelling is NOT -- it raises max
+--- charges without refilling current.
+--
+-- Called by BOTH main.lua's recoverParty callback and the interpreter's
+-- RECOVER_PARTY fallback, which previously carried two hand-copied versions of
+-- the HP/MP/dead-state reset and would now have needed a third copy of the
+-- charge refill.
+--
+-- HP/MP/state reach only the fielded party (what "the party" has always meant
+-- here), but CHARGES reach reserve and storage too: rest is a location, not an
+-- activity, so a creature sitting in town is resting whether or not it is
+-- fielded. Otherwise swapping in a reserve creature would hand the player a
+-- spent one and quietly make the bench useless.
+function GameSession:rest()
+    local skill_cost = require("engine.skill_cost")
+    self.mp = self.maxMp or self.mp
+    for _, actor in ipairs(self.party) do
+        actor.hp = actor:getMaxHp(self)
+        actor:removeState("dead")
+    end
+    if self.summoner then
+        self.summoner.hp = self.summoner:getMaxHp(self)
+        self.summoner:removeState("dead")
+    end
+    for _, group in ipairs({ self.party, self.reserve, self.storage }) do
+        for _, b in pairs(group or {}) do
+            if b then skill_cost.restAll(b) end
+        end
+    end
+end
+
 function GameSession:isPartyEmpty()
     for i = 1, config.MAX_PARTY_SIZE do
         if self.party[i] then return false end

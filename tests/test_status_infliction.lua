@@ -2,11 +2,14 @@
 --
 --   final chance = skill chance * attacker STATUS_SUCCESS * target state rate
 --
--- clamped to 0..1, with a target rate of 0 meaning explicit immunity that even
--- a critical hit cannot bypass. Target rate is itself the product of every
--- STATE_RATE naming the state and every STATE_CATEGORY_RATE naming one of its
--- categories, which is how a Ribbon-style blanket resists a whole family
--- without listing its members.
+-- floored at 0. Target rate is itself the product of every STATE_RATE naming
+-- the state and every STATE_CATEGORY_RATE naming one of its categories.
+--
+-- A rate is a SLOPE, not a switch: driving it to 0 makes a state vanishingly
+-- unlikely, but a critical hit still forces it through. Absolute immunity is
+-- its own trait (STATE_IMMUNITY / STATE_CATEGORY_IMMUNITY) and is the only
+-- thing a critical cannot bypass -- which is also how a Ribbon-style blanket
+-- covers a whole family without listing its members.
 package.path = package.path .. ";./?.lua;./engine/?.lua"
 
 local loader = require("data.loader")
@@ -123,8 +126,25 @@ do
     -- on a 0 draw. STATE_RATE 0 as immunity depends on this.
     check(not inflict(sess, attacker, target, "poison", 0, 0.0),
         "an authored chance of 0 never lands, even on a zero draw")
-    check(inflict(sess, attacker, target, "poison", 1.0, 0.99),
-        "an authored chance of 1 always lands")
+    -- A chance of 1 is certainty only before the target's own resistance. The
+    -- stat-derived curve (base DEF against `physical`) shaves a little off
+    -- every affliction, so nothing is ever quite 100% against a creature with
+    -- a body -- which is the point of giving the defensive stats a second job.
+    check(inflict(sess, attacker, target, "poison", 1.0, 0.5),
+        "an authored chance of 1 lands on any ordinary draw")
+end
+
+do
+    -- Defensive stats resist AFFLICTIONS ONLY. `physical` and `magical` are
+    -- shape tags, not intent tags: `defending` is positive AND physical, and a
+    -- creature whose own VIT resisted its own Defend would brace less reliably
+    -- the sturdier it got.
+    local sess, tanky = rig()
+    local _, attacker = rig()
+    check(inflict(sess, attacker, tanky, "defending", 1.0, 0.999),
+        "a creature's own defensive stat never resists a positive state")
+    check(inflict(sess, attacker, tanky, "regen", 1.0, 0.999),
+        "...including a magical one")
 end
 
 do
@@ -156,19 +176,21 @@ end
 
 do
     -- The Ribbon shape: one trait, a whole family, no state named.
-    local sess, ribboned = rig({ { code = "STATE_CATEGORY_RATE", dataId = "common", value = 0 } })
+    local sess, ribboned = rig({ { code = "STATE_CATEGORY_IMMUNITY", dataId = "common" } })
     local _, attacker = rig()
 
     check(not inflict(sess, attacker, ribboned, "poison", 1.0, 0.0),
-        "a category rate of 0 blocks a state in that category")
+        "a category immunity blocks a state in that category")
     check(not inflict(sess, attacker, ribboned, "sleep", 1.0, 0.0),
         "the same trait blocks every other state in the family")
+    check(not inflict(sess, attacker, ribboned, "poison", 1.0, 0.0, { critical = true }),
+        "and a critical hit does not get past it either")
 
     -- The reason `common` is earned rather than inferred from `negative`.
-    -- Rates multiply, so a blanket on `negative` would have covered death as
-    -- well and quietly made its wearer unkillable by any authored death
-    -- effect. Nothing is exempted by absence of a tag; death simply never
-    -- earns the tag a blanket keys off.
+    -- A blanket on `negative` would have covered death as well and quietly
+    -- made its wearer unkillable by any authored death effect. Nothing is
+    -- exempted by absence of a tag; death simply never earns the tag a
+    -- blanket keys off.
     check(inflict(sess, attacker, ribboned, "dead", 1.0, 0.0),
         "a common-state blanket does not confer immunity to death")
 
@@ -210,21 +232,35 @@ end
 ------------------------------------------------------------------- immunity --
 
 do
-    local sess, immune = rig({ { code = "STATE_RATE", dataId = "poison", value = 0 } })
+    -- A rate is a SLOPE, not a switch. Driving it to 0 makes the state
+    -- vanishingly unlikely on the ordinary path, but it is NOT immunity: a
+    -- critical still forces it through. That separation is what lets the
+    -- stat-derived resistance curves reach zero safely.
+    local sess, resisted = rig({ { code = "STATE_RATE", dataId = "poison", value = 0 } })
     local _, attacker = rig()
 
-    local landed, events = inflict(sess, attacker, immune, "poison", 1.0, 0.0)
-    check(not landed, "a state rate of 0 is absolute immunity")
-    check(firstEvent(events, "state_immune") ~= nil,
+    local landed, events = inflict(sess, attacker, resisted, "poison", 1.0, 0.0)
+    check(not landed, "a state rate of 0 never lands on the ordinary path")
+    check(firstEvent(events, "state_immune") == nil,
+        "a rate of 0 is not immunity, so nothing is announced as immune")
+
+    landed = inflict(sess, attacker, resisted, "poison", 1.0, 0.0, { critical = true })
+    check(landed, "a critical hit forces a state through a rate of 0")
+
+    -- Immunity is its own trait, and it is the only thing a critical cannot
+    -- get past.
+    local isess, immune = rig({ { code = "STATE_IMMUNITY", dataId = "poison" } })
+    local _, iattacker = rig()
+
+    local ilanded, ievents = inflict(isess, iattacker, immune, "poison", 1.0, 0.0)
+    check(not ilanded, "STATE_IMMUNITY blocks the state outright")
+    check(firstEvent(ievents, "state_immune") ~= nil,
         "immunity is announced rather than silently doing nothing")
-    check(firstEvent(events, "state_add") == nil,
+    check(firstEvent(ievents, "state_add") == nil,
         "an immune target reports no state_add")
 
-    -- The critical guarantee is the one thing that bypasses the roll. It must
-    -- not bypass immunity -- the design says "never immunity", and until now
-    -- the guarantee had nothing to respect.
-    landed = inflict(sess, attacker, immune, "poison", 1.0, 0.0, { critical = true })
-    check(not landed, "a critical hit cannot force a state past immunity")
+    ilanded = inflict(isess, iattacker, immune, "poison", 1.0, 0.0, { critical = true })
+    check(not ilanded, "a critical hit cannot force a state past STATE_IMMUNITY")
 
     -- ...but a critical still guarantees against a merely resistant target.
     local _, resistant = rig({ { code = "STATE_RATE", dataId = "poison", value = 0.01 } })
@@ -242,4 +278,4 @@ do
 end
 
 print(("=== Status Infliction Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("status infliction tests failed") end
+if failed > 0 then require("tests.fail_fast")("status infliction tests failed", failed) end

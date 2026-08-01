@@ -138,7 +138,12 @@
     "defendSkillId": "defend",
     "attackSkillId": "attack",
     "autoRedirect": false,
-    "wanderingTroop": "wandering"
+    "wanderingTroop": "wandering",
+    "stateResistFromStat": {
+      "physical": "1 - b.base.def / 400",
+      "magical": "1 - b.base.mdf / 400",
+      "mental": "1 - b.base.mdf / 400"
+    }
   },
   "shopMaxStock": 20,
   "growth": {

@@ -78,6 +78,26 @@ function formula.battlerView(battler, session)
         -- expedition, 11 battles" without engine changes (engine/session.lua
         -- Battler.new; counted by the RECORD_HISTORY command).
         history = battler.history or {},
+        -- BASE parameter access: `b.base.mdf`, `a.base.def`, ... resolves to
+        -- traits.getBaseParam -- the actor's base plus its accumulated growth,
+        -- BEFORE equipment/state/passive PARAM_PLUS and PARAM_RATE.
+        --
+        -- Base stats say who the creature is; final stats say how hard it is to
+        -- hurt right now. Economy and resistance read this; damage reads the
+        -- flat fields above. Concretely, that is what stops an accessory from
+        -- buying spell charges, stops a PARAM_RATE debuff from shrinking a
+        -- creature's MAXIMUM charges while it holds spent ones (current above
+        -- max, or silent losses), and stops unequipping mid-dungeon from
+        -- shifting max charges under the creature's feet.
+        --
+        -- Lazy for the same reason `trait` below is: building every param on
+        -- every view would replay accumulated growth once per field, per
+        -- formula evaluation.
+        base = setmetatable({}, {
+            __index = function(_, paramName)
+                return traits.getBaseParam(battler, paramName)
+            end
+        }),
         -- Generic trait access: `a.trait.GOLD_DIGGER`, `ally.trait.MOVE_HEAL`,
         -- ... resolves to traits.getRate for ANY registered code, so a new
         -- trait becomes usable from data (flows, scene hooks, item/skill

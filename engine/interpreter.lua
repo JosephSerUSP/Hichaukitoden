@@ -525,19 +525,13 @@ end
 handlers.RECOVER_PARTY = function(cmd, ctx)
     if ctx.recoverParty then
         ctx.recoverParty()
-    elseif ctx.session and ctx.session.party then
-        -- Mirrors main.lua's recoverParty: MP is session-level (summoner
-        -- economy), and recovery clears only the "dead" state.
-        local sess = ctx.session
-        sess.mp = sess.maxMp or sess.mp
-        for _, actor in ipairs(sess.party) do
-            actor.hp = actor:getMaxHp(sess)
-            actor:removeState("dead")
-        end
-        if sess.summoner then
-            sess.summoner.hp = sess.summoner:getMaxHp(sess)
-            sess.summoner:removeState("dead")
-        end
+    elseif ctx.session and ctx.session.rest then
+        -- Same one definition main.lua's recoverParty callback uses
+        -- (GameSession:rest): MP is session-level, recovery clears only the
+        -- "dead" state, and spell charges refill across reserve and storage.
+        -- This was a hand-copied second version of that reset; a third copy
+        -- would have silently skipped the charge refill.
+        ctx.session:rest()
     end
 end
 
@@ -747,6 +741,20 @@ end
 -- in engine/battle.lua resolveRound is deliberately RETAINED as the SPEC S4
 -- fallback (runs only if battle.round_end is removed from flows.json), not
 -- deleted — keep the two in sync if this logic changes.
+-- One round elapsed for every battler's skill cooldowns and warmups. Authored
+-- into battle.round_end rather than hardcoded beside self.round + 1, for the
+-- same reason STATE_TICKS is: the end of a round is a phase made of steps, and
+-- a new step should be a line of data.
+handlers.TICK_SKILL_TIMERS = function(cmd, ctx)
+    local skill_cost = require("engine.skill_cost")
+    for _, b in ipairs(ctx.party or {}) do
+        if b then skill_cost.tick(b) end
+    end
+    for _, b in ipairs(ctx.enemies or {}) do
+        if b then skill_cost.tick(b) end
+    end
+end
+
 handlers.STATE_TICKS = function(cmd, ctx)
     local battlers = {}
     for _, b in ipairs(ctx.party or {}) do table.insert(battlers, b) end

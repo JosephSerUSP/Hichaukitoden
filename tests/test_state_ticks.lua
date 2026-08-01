@@ -188,4 +188,4 @@ do
 end
 
 print(("=== State Tick Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("state tick tests failed") end
+if failed > 0 then require("tests.fail_fast")("state tick tests failed", failed) end

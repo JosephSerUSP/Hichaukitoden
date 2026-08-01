@@ -1090,6 +1090,17 @@
       "description": "Runs the regen/poison/duration-decay block for all battlers."
     },
     {
+      "id": "TICK_SKILL_TIMERS",
+      "category": "Battler",
+      "label": "Tick Skill Timers",
+      "params": [],
+      "contexts": [
+        "battle_phase"
+      ],
+      "interactive": false,
+      "description": "Counts down one round on every battler's skill cooldowns and warmups. Battle-scoped: these timers are cleared when a battle starts and never enter a save, unlike spell charges."
+    },
+    {
       "id": "EMIT_TEXT",
       "category": "Message",
       "label": "Emit Text",
@@ -2569,6 +2580,15 @@
       "description": "Permanently raises the summoner's Max MP by value, clamped to system.summoner.maxMpCap, and restores the same amount. Saved with the session, so it is the item-scale counterpart of the large increases major events grant."
     },
     {
+      "id": "restore_charges",
+      "label": "Restore Charges",
+      "params": [
+        "amount",
+        "skill"
+      ],
+      "description": "Restores `amount` spell charges to the target creature -- every skill it knows, or just the one named by `skill`. `amount: \"all\"` is a full refill, the same one Rest performs. Charges are per-creature and per-skill and only otherwise come back at Rest, so this is the food/restorative channel into the magic economy."
+    },
+    {
       "id": "common_event",
       "label": "Run Common Event",
       "params": [
@@ -2629,7 +2649,13 @@
       "code": "CRI",
       "label": "Critical Rate",
       "usesDataId": false,
-      "description": "Modifies crit chance (base 5%)."
+      "description": "Modifies crit chance (base 5%). The effective rate against a given target is CRI minus that target's CEV."
+    },
+    {
+      "code": "CEV",
+      "label": "Critical Evasion",
+      "usesDataId": false,
+      "description": "Subtracts from an attacker's CRI against this holder. Worth twice what it looks like: a critical is also the universal status backdoor (it forces the affliction attached to the action past the chance roll), so being hard to crit means less burst damage AND fewer forced states. Deliberately trait-driven only -- gear and passives buy it, no stat derives it, or DEF would become a super-stat on top of mitigation and physical-ailment resistance."
     },
     {
       "code": "HRG",
@@ -2779,7 +2805,19 @@
       "code": "STATE_RATE",
       "label": "State Susceptibility %",
       "usesDataId": true,
-      "description": "Multiplies the chance of the state named by dataId landing on the holder (0.5 = half as likely, 1.5 = half again). A value of 0 is explicit immunity: the state never lands, not even from a critical hit, which is the one thing that otherwise bypasses the roll."
+      "description": "Multiplies the chance of the state named by dataId landing on the holder (0.5 = half as likely, 1.5 = half again). A rate is a SLOPE, not a switch: driving it to 0 makes the state vanishingly unlikely on the ordinary path, but a critical hit still forces it. For 'never, not even on a crit', use STATE_IMMUNITY -- and G1 rejects a rate of 0 outright, because anyone authoring that almost certainly means immunity."
+    },
+    {
+      "code": "STATE_IMMUNITY",
+      "label": "State Immunity",
+      "usesDataId": true,
+      "description": "Absolute immunity to the state named by dataId: it never lands, including from a critical hit. Immunity is its own trait rather than a rate of zero (RPG Maker MZ's shape) so that rates can stay a slope all the way down -- a very high VIT creature is functionally unpoisonable without ever becoming categorically immune by accident -- and so 'never' is something an author states outright."
+    },
+    {
+      "code": "STATE_CATEGORY_IMMUNITY",
+      "label": "State Category Immunity",
+      "usesDataId": true,
+      "description": "As STATE_IMMUNITY, but for every state carrying the category named by dataId. This is a Ribbon's actual spelling (`common`), replacing the old STATE_CATEGORY_RATE-of-0 idiom."
     },
     {
       "code": "STATE_CATEGORY_RATE",
@@ -3687,7 +3725,7 @@
     {
       "category": "common",
       "label": "Common",
-      "description": "An ordinary, commonplace affliction -- the family a broad protection is meant to cover. This is the tag a Ribbon-style blanket immunity keys off (STATE_CATEGORY_RATE common 0), and it is deliberately a tag a state must EARN rather than a default. Nothing is exempted by inference: death and authored one-off curses simply never carry it, so no blanket can reach them. Resisting `negative` instead would, since rates multiply and death is negative too."
+      "description": "An ordinary, commonplace affliction -- the family a broad protection is meant to cover. This is the tag a Ribbon-style blanket immunity keys off (STATE_CATEGORY_IMMUNITY common), and it is deliberately a tag a state must EARN rather than a default. Nothing is exempted by inference: death and authored one-off curses simply never carry it, so no blanket can reach them. Blanketing `negative` instead would reach them, since death is negative too."
     }
   ],
   "itemScopes": [

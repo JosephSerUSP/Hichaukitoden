@@ -2363,9 +2363,8 @@
     "keyArt": "assets/keyArt/item-106-moth-cloak.png",
     "traits": [
       {
-        "code": "STATE_RATE",
-        "dataId": "sleep",
-        "value": 0
+        "code": "STATE_IMMUNITY",
+        "dataId": "sleep"
       }
     ],
     "meta": {
@@ -2833,9 +2832,8 @@
     "keyArt": "assets/keyArt/item-124-silver-glasses.png",
     "traits": [
       {
-        "code": "STATE_RATE",
-        "dataId": "blind",
-        "value": 0
+        "code": "STATE_IMMUNITY",
+        "dataId": "blind"
       }
     ],
     "meta": {
@@ -2879,9 +2877,8 @@
     "keyArt": "assets/keyArt/item-126-peace-ring.png",
     "traits": [
       {
-        "code": "STATE_RATE",
-        "dataId": "berserk",
-        "value": 0
+        "code": "STATE_IMMUNITY",
+        "dataId": "berserk"
       }
     ],
     "meta": {
@@ -2947,9 +2944,8 @@
     "keyArt": "assets/keyArt/item-129-ribbon.png",
     "traits": [
       {
-        "code": "STATE_CATEGORY_RATE",
-        "dataId": "common",
-        "value": 0
+        "code": "STATE_CATEGORY_IMMUNITY",
+        "dataId": "common"
       }
     ],
     "meta": {

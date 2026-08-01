@@ -204,7 +204,20 @@ local function resolveDamage(effectData, a, b, session, context, events)
     local critical = false
     if relative and a then
         local combat = (session.loader.system and session.loader.system.combat) or {}
-        if math.random() < traits.getRate(a, "CRI", session) then
+        -- Effective critical rate is the attacker's CRI minus the target's CEV.
+        -- Critical defense matters twice over, because a critical is also the
+        -- universal status backdoor (see add_status): being hard to crit means
+        -- less burst AND fewer forced afflictions. Trait-driven only -- gear and
+        -- passives buy it, no stat derives it, or DEF would quietly become a
+        -- super-stat on top of its mitigation and physical-resistance jobs.
+        --
+        -- The roll happens unconditionally even when CEV has driven the rate to
+        -- zero: skipping the draw would consume one fewer math.random and shift
+        -- every later roll in the round, so a defensive trait would silently
+        -- rewrite the whole battle's RNG stream (and G2 with it).
+        local critRate = traits.getRate(a, "CRI", session)
+            - (b and traits.getRate(b, "CEV", session) or 0)
+        if math.random() < critRate then
             critical = true
             raw = raw * (combat.criticalMultiplier or 1.5)
         end
@@ -220,8 +233,21 @@ end
 -- How susceptible `target` is to `stateId`: the product of every STATE_RATE
 -- naming that state and every STATE_CATEGORY_RATE naming one of its categories.
 -- Multiplicative so a narrow resistance and a broad one compound instead of one
--- silently winning, and so a single 0 anywhere is absolute -- which is what
--- makes "explicit immunity is a rate of zero" a rule the data can rely on.
+-- silently winning.
+--
+-- Also folded in: the target's own BASE def/mdf, through the authored
+-- `stateResistFromStat` curves in engine.json. That is what gives the defensive
+-- stats a job beyond mitigation -- DEF as the body's resilience (physical
+-- afflictions), MDF as the spirit's (magical, mental) -- and it needed no new
+-- mechanism, because this product already multiplies.
+--
+-- BASE, not final: gear that raises a defensive stat buys damage mitigation,
+-- while anti-poison gear stays authorable as an explicit STATE_RATE, which is
+-- more honest because it says what it does.
+--
+-- A rate of 0 is NOT immunity any more (see add_status) -- immunity is a trait.
+-- So these curves are free to reach or pass zero without a stat quietly
+-- drifting into absolute immunity.
 local function stateRate(target, stateId, session)
     if not target or not session then return 1.0 end
     local rate = 1.0
@@ -237,6 +263,34 @@ local function stateRate(target, stateId, session)
             for _, category in ipairs(categories) do
                 if found.trait.dataId == category then
                     rate = rate * (found.trait.value or 1.0)
+                end
+            end
+        end
+
+        -- Stat-derived category resistance. One authored curve per category,
+        -- evaluated against the target's base stats, so the shape stays a data
+        -- knob rather than a constant in here.
+        -- ...but only against AFFLICTIONS. `physical` and `magical` are shape
+        -- tags, not intent tags: `defending` and `provoke` are positive AND
+        -- physical, `regen` and `magicGuard` positive AND magical. Without this
+        -- guard a creature's own VIT would resist its own Defend, and the
+        -- sturdier it got the more often bracing would silently fail.
+        --
+        -- Explicit STATE_RATE traits above are deliberately NOT gated this way:
+        -- an author who writes a rate against a positive state means it.
+        local isAffliction = false
+        for _, category in ipairs(categories) do
+            if category == "negative" then isAffliction = true break end
+        end
+        if isAffliction then
+            local combat = (session.loader.system and session.loader.system.combat) or {}
+            local curves = combat.stateResistFromStat or {}
+            local view = nil
+            for _, category in ipairs(categories) do
+                local curve = curves[category]
+                if curve then
+                    view = view or formulaEngine.battlerView(target, session)
+                    rate = rate * (tonumber(formulaEngine.eval(curve, { b = view, a = view })) or 1.0)
                 end
             end
         end
@@ -391,12 +445,19 @@ function effects.apply(effectData, a, b, session, context)
         -- rate) without the skill knowing who it hit.
         local targetRate = stateRate(b, effectData.status, session)
 
-        -- Immunity first, and above everything. A rate of 0 means the state
-        -- never lands -- not on a lucky roll, and not from a critical hit,
-        -- which is the one thing that otherwise bypasses the roll entirely.
+        -- Immunity first, and above everything -- but immunity is now a TRAIT
+        -- (STATE_IMMUNITY / STATE_CATEGORY_IMMUNITY), not a rate of zero.
+        --
+        -- Overloading 0 cost a special case here and a paragraph in two spec
+        -- sections. Now a rate of 0 (or below) means vanishingly unlikely, not
+        -- immune: a high-VIT creature is functionally unpoisonable, and a
+        -- critical still gets through. Only a trait says never -- which also
+        -- frees the derived DEF/MDF resistance curve to reach zero without a
+        -- stat drifting into accidental absolute immunity.
+        --
         -- Announced rather than silent: a status that simply never appears
         -- looks identical to a bug.
-        if targetRate <= 0 then
+        if traits.hasStateImmunity(b, effectData.status, session) then
             table.insert(events, {
                 type = "state_immune",
                 target = b,
@@ -427,8 +488,9 @@ function effects.apply(effectData, a, b, session, context)
 
         -- Strictly less-than: math.random() can return 0, and `roll <= chance`
         -- let an authored chance of 0 land on that draw. A 0% chance must mean
-        -- never, or "explicit immunity is a rate of zero" is not a rule the
-        -- data can rely on.
+        -- never on the ordinary path, even though a critical (above) can still
+        -- force it -- that asymmetry is the point of §7: rates are a slope,
+        -- immunity is a trait.
         local roll = math.random()
         if guaranteed or roll < chance then
             b:addState(effectData.status, effectData.duration)
@@ -607,6 +669,24 @@ function effects.apply(effectData, a, b, session, context)
             type = "text",
             text = session.loader.formatTerm("battle.recovers_mp", "- {0} MP restored.", healVal)
         })
+
+    -- Spell charges (food and restoratives). The item/food channel into the
+    -- charge economy, and the partial counterpart of Rest: `amount: "all"`
+    -- routes through the SAME skill_cost.restore that RECOVER_PARTY's full
+    -- refill uses, so a Mana Nut and a night in town cannot disagree about what
+    -- "full" means. An omitted `skill` restores every skill the creature knows;
+    -- naming one restores just that.
+    elseif effectData.type == "restore_charges" then
+        local skill_cost = require("engine.skill_cost")
+        local restored = skill_cost.restore(b, session, session.loader,
+            effectData.skill, effectData.amount or 1)
+        if restored > 0 then
+            table.insert(events, {
+                type = "text",
+                text = session.loader.formatTerm("battle.recovers_charges",
+                    "- {0} recovers {1} charges.", b and b.name or "?", restored)
+            })
+        end
 
     -- Permanent Summoner Max MP. Capped by system.summoner.maxMpCap and saved
     -- with the session, so this is the item-scale counterpart of the much

@@ -684,11 +684,50 @@ of every `STATE_RATE` naming the state and every `STATE_CATEGORY_RATE` naming
 one of its categories — multiplicative, so a narrow and a broad resistance
 compound rather than one silently winning.
 
-**A rate of 0 is absolute immunity**: the state never lands, and a critical hit
-cannot force it. That is the one exemption the critical-status rule in §1.13
-has, and until `STATE_RATE` existed there was nothing for it to respect.
+**A rate is a slope, not a switch (01.08.2026).** Driving one to 0 makes a state
+vanishingly unlikely on the ordinary path, but a critical hit still forces it
+through. **Absolute immunity is its own trait** — `STATE_IMMUNITY` naming a
+state, `STATE_CATEGORY_IMMUNITY` naming a category (a Ribbon's actual spelling)
+— and it is the only thing a critical cannot bypass.
+
+That separation replaced "a rate of 0 is immunity", which had overloaded one
+number with two meanings. It **deleted** the critical-status exemption §1.13
+used to carry, and it freed the stat-derived resistance curves below to reach or
+pass zero without a stat quietly drifting into categorical immunity. G1 rejects
+a `STATE_RATE`/`STATE_CATEGORY_RATE` authored as 0 outright, because anyone
+writing that means immunity and would otherwise never learn they did not get it.
+
 Immunity emits a `state_immune` event and a line of text rather than passing
 silently, because a status that simply never appears looks identical to a bug.
+
+**Defensive stats resist afflictions (01.08.2026).** The target's own *base*
+`def` and `mdf` fold into the same product, through the `stateResistFromStat`
+curves in `system.json` — DEF as the body's resilience against `physical`
+afflictions, MDF as the spirit's against `magical` and `mental`. It needed no
+new mechanism because the rate is already a product. This is what gives the
+defensive stats a job beyond mitigation, per the wider reading of the stat names
+(`mdf` is Spirit, `def` is Vitality) in `docs/design/skill-costs.md`.
+
+Two guards, both load-bearing:
+
+- **Base, not final.** Gear that raises a defensive stat buys damage mitigation;
+  anti-affliction gear stays authorable as an explicit `STATE_RATE`, which says
+  what it does. Same rule the charge economy follows (§1.20).
+- **Afflictions only.** `physical` and `magical` are *shape* tags, not intent
+  tags: `defending` and `provoke` are positive **and** physical, `regen` and
+  `magicGuard` positive **and** magical. Without gating the curves on
+  `negative`, a creature's own VIT would resist its own Defend, and the sturdier
+  it got the more often bracing would silently fail. Explicit trait rates are
+  deliberately *not* gated this way — an author who writes a rate against a
+  positive state means it.
+
+**Critical evasion.** Because a critical is the universal status backdoor, being
+hard to crit is worth twice what it looks like: less burst damage *and* fewer
+forced afflictions. `CEV` subtracts from the attacker's `CRI`. It is
+trait-driven only — gear and passives buy it, no stat derives it, or DEF would
+become a super-stat on top of mitigation and affliction resistance. The roll
+happens even when `CEV` has driven the rate to zero, because skipping the draw
+would consume one fewer `math.random` and shift every later roll in the round.
 
 ### 1.13 The damage model (26.07.2026)
 
@@ -756,8 +795,11 @@ Criticals also carry Brigandine's status rule: a damaging action that crits
 guarantees the status attached to it, bypassing the authored chance. That is
 why `APPLY_EFFECT` builds **one context per target** shared across the action's
 effect list — the damage effect records the crit on it and the `add_status`
-effect after it reads it. (The design also exempts explicit immunity, which
-waits on `STATE_RATE`; see the gap ledger.)
+effect after it reads it. The rule has **no exemption for resistance**: a crit
+forces the status through any rate, however low. The only thing that stops it is
+an explicit `STATE_IMMUNITY` / `STATE_CATEGORY_IMMUNITY` trait (§1.12).
+
+The effective critical rate is the attacker's `CRI` minus the target's `CEV`.
 
 **Accuracy** is rolled once per target in `APPLY_EFFECT`, before any effect
 resolves: `HIT` (attacker, base 100%) times `1 - EVA` (target, base 0%). A miss
@@ -1022,6 +1064,63 @@ lookup rules used by presentation. The actor editor exposes separate pickers
 and previews for all three roles.
 
 ---
+
+### 1.20 Skill costs: charges, Overcast, availability (01.08.2026)
+
+**No ability costs MP.** MP is the Summoner's shared expedition pool (§1.11);
+charging a per-skill cost against it meant every heal a creature cast came out
+of the party's remaining walking distance, and gave every caster the same
+wallet. `mpCost` (and `spCost`) are removed from the data and rejected by G1 —
+they were authored across most of the database and read by *nothing*, so there
+was no balance behind them to preserve. Design intent and the full rationale
+live in `docs/design/skill-costs.md`.
+
+Two families, one predicate:
+
+| Family | Resource | Question it answers |
+|---|---|---|
+| Magic | **Charges**, refilled at Rest | "How many more times today?" |
+| Physical | **Cooldown / warmup / condition** | "Can I do it *this turn*?" |
+
+`usability.canUseSkill` is the single authority, consulted by the player's
+battle submenu, `Battle:getAIAction` **and** the status scene — so a row the
+player sees greyed is a skill the AI cannot pick either, the same "one rule
+binds both sides" principle `FORCE_ACTION` follows (§1.12). A known skill is
+never hidden; it is shown with its reason, because a row that vanishes looks
+like a bug. This is also why `conditionText` is mandatory alongside `condition`:
+a formula cannot produce readable text.
+
+**Charges** are authored as a formula against the caster (`4 + b.base.mdf / 4`),
+so a promoted caster gains castings without the skill row changing, and they
+live per-creature *and* per-skill on the battler — saved, like `wardCharges`,
+because they are creature state. Missing key means full, so an old save or a new
+summon arrives rested rather than mute.
+
+**Overcast** is the one path from a skill to the shared pool, offered *only* at
+zero charges (never as a cheaper alternative, so there is nothing to optimize)
+and never to enemies, who have no Summoner. `"charges": 0` is a pool that exists
+and is permanently empty — the Overcast-only shape, intended for a dragon's
+Breath, which is not a daily supply but something drawn out of its Summoner.
+
+**Rest** is `GameSession:rest()` — one definition shared by `RECOVER_PARTY` and
+main.lua's callback, which previously carried two hand-copied versions of the
+same reset. HP/MP reach the fielded party; **charges reach reserve and storage
+too**, because rest is a location, not an activity, and a bench that stayed
+spent would make swapping useless. **Promotion is a rest**; levelling is not.
+
+**Cooldown and warmup are battle-scoped** and never enter a save: charges answer
+"how much is left of the day", these answer "what can I do this turn". They are
+ticked by `TICK_SKILL_TIMERS` authored into `battle.round_end`, not by a branch
+beside the round counter — the end of a round is a phase made of steps, and a
+new step should be a line of data.
+
+**Base stats, not final.** Charge formulas read `b.base.*` (a lazy accessor over
+`traits.getBaseParam`, mirroring `b.trait.<CODE>`). Equipment must not buy
+castings; a `PARAM_RATE` debuff must not shrink a *maximum* while the creature
+holds spent charges; unequipping mid-dungeon must not shift max charges under a
+creature's feet. Same rule the stat-derived affliction resistance follows
+(§1.12): **base stats say who a creature is, final stats say how hard it is to
+hurt right now.**
 
 ## 2. Design rules (from the BIBLE — enforced by review)
 

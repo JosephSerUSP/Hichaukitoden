@@ -62,6 +62,12 @@ local function serializeBattler(b)
         -- Death-ward charges live on the battler (never on the shared loader
         -- item table), so they must round-trip with it.
         wardCharges = b.wardCharges,
+        -- Spell charges, same precedent as wardCharges: creature state, not
+        -- loader state, so it must round-trip with the creature. Note the
+        -- battle-scoped skillTimers (cooldown/warmup) are deliberately NOT
+        -- here -- they answer "what can I do this turn", not "how much is left
+        -- of the day", and a save is only ever taken outside battle anyway.
+        charges = b.charges,
         history = b.history,
     }
 end
@@ -101,6 +107,9 @@ local function deserializeBattler(data, loader)
     b.favoriteFoodFound = data.favoriteFoodFound
     b.savor = data.savor
     if data.wardCharges then b.wardCharges = data.wardCharges end
+    -- Absent = full, which is exactly what a save written before charges
+    -- existed should mean: the creature arrives rested, not mute.
+    if data.charges then b.charges = data.charges end
     if data.history then b.history = data.history end
     return b
 end

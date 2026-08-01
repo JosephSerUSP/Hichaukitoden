@@ -60,6 +60,9 @@
         "cmd": "STATE_TICKS"
       },
       {
+        "cmd": "TICK_SKILL_TIMERS"
+      },
+      {
         "cmd": "RUN_TROOP_EVENTS",
         "at": "round_end"
       },

@@ -180,4 +180,4 @@ do
 end
 
 print(("=== MPD Economy Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("MPD economy tests failed") end
+if failed > 0 then require("tests.fail_fast")("MPD economy tests failed", failed) end

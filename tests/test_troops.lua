@@ -235,4 +235,4 @@ local neverSeen = roundWith({
 check(not neverSeen["TROOP_NEVER"], "and an event whose condition is false does not")
 
 print(string.format("=== Troop Tests: %d passed, %d failed ===", passed, failed))
-if failed > 0 then error(failed .. " troop test(s) failed") end
+if failed > 0 then require("tests.fail_fast")(failed .. " troop test(s) failed", failed) end

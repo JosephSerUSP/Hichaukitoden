@@ -100,4 +100,4 @@ check(type(outside) == "table" and #outside == 0,
     "an escape effect outside battle does nothing rather than erroring")
 
 print(string.format("=== Battle Command Tests: %d passed, %d failed ===", passed, failed))
-if failed > 0 then error(failed .. " battle command test(s) failed") end
+if failed > 0 then require("tests.fail_fast")(failed .. " battle command test(s) failed", failed) end

@@ -190,4 +190,4 @@ check(captureStore.winState.runtime._skipOpenAnim == true,
     "capture settling finishes runtime windows")
 
 print("=== Dock Tests: " .. passed .. " passed, " .. failed .. " failed ===")
-if failed > 0 then error("dock tests failed") end
+if failed > 0 then require("tests.fail_fast")("dock tests failed", failed) end

@@ -312,7 +312,31 @@
                       set: (sk, v) => { sk.element = (v === '') ? null : v; } },
                     { kind: 'animationSelect', key: 'animation', label: 'Animation' },
                     { kind: 'custom', build: (c, sk) => buildActionSequencePicker(c, sk) },
-                    { row: 'cost', kind: 'number', key: 'mpCost', label: 'MP Cost', fallback: 0 },
+                    // No skill costs MP. Magic spends CHARGES (refilled at
+                    // Rest, or Overcast out of the Summoner's pool when spent);
+                    // physical skills are gated by cooldown/warmup/condition.
+                    // `charges: 0` is the Overcast-only shape (dragon Breath).
+                    { row: 'cost', kind: 'text', key: 'charges',
+                      label: 'Charges (formula, 0 = Overcast-only)', deleteIfEmpty: true },
+                    // The 'number' kind coerces a blank input to 0, so these
+                    // three delete on 0 rather than authoring a meaningless
+                    // `cooldown: 0` / free Overcast into every skill row.
+                    { row: 'cost', kind: 'number', key: 'overcast.mp', label: 'Overcast MP',
+                      get: sk => (sk.overcast || {}).mp,
+                      set: (sk, v) => {
+                          if (!v) { delete sk.overcast; } else { sk.overcast = { mp: Number(v) }; }
+                      } },
+                    { row: 'gate', kind: 'number', key: 'cooldown', label: 'Cooldown (turns)',
+                      set: (sk, v) => { if (!v) { delete sk.cooldown; } else { sk.cooldown = Number(v); } } },
+                    { row: 'gate', kind: 'number', key: 'warmup', label: 'Warmup (turns)',
+                      set: (sk, v) => { if (!v) { delete sk.warmup; } else { sk.warmup = Number(v); } } },
+                    { kind: 'text', key: 'condition',
+                      label: 'Condition (formula, or state:/flag:/hasItem:)', deleteIfEmpty: true },
+                    // Required alongside condition (G1 enforces it): a formula
+                    // cannot produce readable text, and an unexplained greyed
+                    // row in the battle menu is a bug report waiting to happen.
+                    { kind: 'text', key: 'conditionText',
+                      label: 'Condition Text (shown when blocked)', deleteIfEmpty: true },
                     { row: 'cost', kind: 'number', key: 'speed', label: 'Speed Bonus', fallback: 0 },
                     { kind: 'custom', build: (c, sk) => buildEffectsEditor(c, sk) }
                 ]

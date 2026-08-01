@@ -123,6 +123,34 @@ function traits.findAllSources(battler, traitCode, session)
     return found
 end
 
+-- Absolute immunity to a state: STATE_IMMUNITY naming the state, or
+-- STATE_CATEGORY_IMMUNITY naming one of its categories.
+--
+-- Immunity is a trait rather than a rate of zero (RPG Maker MZ's shape). That
+-- separation is what lets a rate be a slope all the way down -- a very high VIT
+-- creature is functionally unpoisonable, but a critical still gets through --
+-- while "never, not even on a crit" stays something an author states outright.
+-- It also deleted the critical-status exemption that overloading 0 required in
+-- effects.lua, and freed the stat-derived resistance curves to reach zero.
+function traits.hasStateImmunity(battler, stateId, session)
+    if not battler or not stateId then return false end
+
+    for _, found in ipairs(traits.findAllSources(battler, "STATE_IMMUNITY", session)) do
+        if found.trait.dataId == stateId then return true end
+    end
+
+    local state = session and session.loader and session.loader.getState
+        and session.loader.getState(stateId)
+    local categories = (state and state.categories) or {}
+    if #categories == 0 then return false end
+    for _, found in ipairs(traits.findAllSources(battler, "STATE_CATEGORY_IMMUNITY", session)) do
+        for _, category in ipairs(categories) do
+            if found.trait.dataId == category then return true end
+        end
+    end
+    return false
+end
+
 -- Evaluates if a condition is met
 function traits.evaluateCondition(condition, battler, session)
     if not condition then return true end

@@ -1,4 +1,5 @@
 local targeting = require("engine.targeting")
+local skill_cost = require("engine.skill_cost")
 
 local usability = {}
 
@@ -104,6 +105,32 @@ function usability.canUseItem(item, target, context)
                 -- Skillbooks: refuse a creature that already knows the skill, so
                 -- the item can't be consumed for nothing (same guard shape as the
                 -- full-HP check above; effects.lua also fails soft if it slips by).
+                -- Charge restoratives: refuse a creature whose charges are
+                -- already full, in the same shape as the full-HP guard above.
+                -- A Mana Nut must not be consumable for nothing, and "full"
+                -- has to mean the same thing here as it does at Rest -- so it
+                -- is skill_cost that answers, not a second copy of the rule.
+                for _, eff in ipairs(item.effects) do
+                    if eff.type == "restore_charges" then
+                        local skill_cost = require("engine.skill_cost")
+                        local anyRoom = false
+                        for _, id in ipairs(target.skills or {}) do
+                            if eff.skill == nil or eff.skill == id then
+                                local sk = context.session and context.session.loader
+                                    and context.session.loader.getSkill(id)
+                                local cur, max = skill_cost.getCharges(target, id, sk, context.session)
+                                if cur and max and max > 0 and cur < max then
+                                    anyRoom = true
+                                    break
+                                end
+                            end
+                        end
+                        if not anyRoom then
+                            return false, "Charges are already full"
+                        end
+                    end
+                end
+
                 for _, eff in ipairs(item.effects) do
                     if eff.type == "learn_skill" then
                         local skillId = eff.skill or eff.value
@@ -129,13 +156,27 @@ end
 -- @return boolean usable, string reason
 function usability.canUseSkill(skill, actor, target, context)
     if not skill then return false, "No skill" end
+    context = context or {}
 
-    -- Resource check
-    if skill.mpCost and actor then
-        local actorMp = actor.mp or 0
-        if actorMp < skill.mpCost then
-            return false, "Not enough MP"
+    -- Cost and availability: charges/Overcast for magic, warmup/cooldown/
+    -- condition for physical. skill_cost owns the whole answer so that the
+    -- player's menu, Battle:getAIAction and the status scene cannot disagree
+    -- about whether a row is selectable -- one rule binds both sides, the same
+    -- way FORCE_ACTION does (SPEC S1.12).
+    --
+    -- No skill costs MP any more. The only path from a skill to the Summoner's
+    -- pool is Overcast, decided inside skill_cost.payment.
+    if actor then
+        local session = context.session
+            or (context.battle and context.battle.session)
+        local isEnemy = context.isEnemy
+        if isEnemy == nil and context.battle and context.battle.enemies then
+            for _, e in ipairs(context.battle.enemies) do
+                if e == actor then isEnemy = true break end
+            end
         end
+        local blocked = skill_cost.blockedReason(skill, actor, session, isEnemy)
+        if blocked then return false, blocked end
     end
 
     -- Target validation if target provided

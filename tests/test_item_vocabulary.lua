@@ -320,4 +320,4 @@ do
 end
 
 print(("=== Item Vocabulary Tests Completed: %d passed, %d failed ==="):format(passed, failed))
-if failed > 0 then error("item vocabulary tests failed") end
+if failed > 0 then require("tests.fail_fast")("item vocabulary tests failed", failed) end
