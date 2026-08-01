@@ -157,6 +157,15 @@ local function beginTransition(reg, wantVariant)
     }
     -- Destination content gets a clean cache and remains absent until morphing
     -- finishes. The shells themselves are drawn directly throughout.
+    --
+    -- The outgoing variant's cache is handed to the transition rather than
+    -- dropped: under `staticShell` the shell no longer animates, so the clear
+    -- phase is where the OUTGOING content plays its close animation, and
+    -- window_renderer can only run one for a window it already has a
+    -- `_dataWins` entry for. Without this the party slots simply blinked out
+    -- on the way to a variant that has no slots.
+    transition.fromVariant = currentVariant
+    transition.fromStore = store
     store = { _dataWins = {}, _visTrack = {} }
 end
 
@@ -217,7 +226,19 @@ function dock.draw(state, sceneData, ctx)
                 transition = nil
                 if state and state.v then state.v._dockContentReady = true end
             end
-        elseif not staticShell then
+        elseif staticShell then
+            -- Clear phase: the outgoing content is still drawn, forced hidden,
+            -- so each window runs its own close animation over the static
+            -- shell. Anything without an `anim.close` just stops drawing, which
+            -- is the previous behaviour.
+            if transition.fromVariant and state then
+                local closing = resolveDefs(reg, { variant = transition.fromVariant })
+                for _, def in ipairs(closing) do def.visible = "false" end
+                require("presentation.window_renderer").drawWindowFromData(
+                    sceneData, state, ctx,
+                    { windows = closing, store = transition.fromStore })
+            end
+        else
             drawShells(transition.from)
         end
     elseif currentVariant and state then

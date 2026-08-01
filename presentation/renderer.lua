@@ -940,13 +940,13 @@ end
 -- Target Info Window: replaces the command list during target selection mode
 function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
     if not bv or not bv.targetSelect then
-        ui.drawPanel(x, y, w, h, "Target")
+        ui.drawPanelTitle("Target", x, y)
         return
     end
 
     local targets = getHoveredTargets(bv, bv.combatState, bv.selectedIndex, bv.skillSelect, bv.itemSelect, bv.livingMembers, bv.activeMemberIdx)
     if not targets or #targets == 0 then
-        ui.drawPanel(x, y, w, h, "Target")
+        ui.drawPanelTitle("Target", x, y)
         return
     end
 
@@ -957,7 +957,7 @@ function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
     end
     local target = targets[cycleIdx]
     if not target then
-        ui.drawPanel(x, y, w, h, "Target")
+        ui.drawPanelTitle("Target", x, y)
         return
     end
 
@@ -970,7 +970,7 @@ function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
     end
 
     local panelTitle = isEnemy and (numTargets > 1 and "Enemies" or "Enemy") or (numTargets > 1 and "Allies" or "Ally")
-    ui.drawPanel(x, y, w, h, panelTitle)
+    ui.drawPanelTitle(panelTitle, x, y)
 
     -- Header Counter for multi-target selection
     local headerY = y + 7

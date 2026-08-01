@@ -601,7 +601,6 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                     state.winState[window.id] = { open = true }
                     table.insert(state.windowOrder, window.id)
                 end
-                _G.dialogueEnterTime = -100
             end
 
             settleForCapture(vSession)

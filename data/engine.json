@@ -3049,7 +3049,17 @@
       "width": 18,
       "height": 12,
       "style": "partyGrid",
-      "title": null
+      "title": null,
+      "anim": {
+        "open": {
+          "duration": 0.16,
+          "effect": "grow"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "grow"
+        }
+      }
     },
     "battle_levelup_head": {
       "x": 3,
@@ -3259,7 +3269,7 @@
     },
     "staticShell": true,
     "transition": {
-      "clearDuration": 0.08,
+      "clearDuration": 0.1,
       "morphDuration": 0.16
     },
     "variants": {

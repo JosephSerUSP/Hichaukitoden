@@ -300,6 +300,15 @@ end
 -- The distinction is structural, not decorative: a shell shows the 3D world
 -- through it, a button must stay readable, so the choice belongs to the
 -- caller rather than to a boolean that only knew "selected or not".
+-- A panel's title header, drawn on its own so a window whose surface is
+-- supplied by something else (the dock's static shell) can keep the title
+-- without drawing a second background to hang it on.
+function ui.drawPanelTitle(title, x, y)
+    love.graphics.setColor(1, 1, 0.7, 1)
+    ui.drawString(title, x + ui.tileSize * 0.5, y)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 -- Every interactive cell picks its skin the same way, so the mapping lives
 -- here instead of being spelled out at each of the eight call sites.
 function ui.buttonRole(selected)
@@ -307,6 +316,20 @@ function ui.buttonRole(selected)
 end
 
 function ui.drawPanel(x, y, w, h, title, role)
+    -- Snap to whole pixels before anything is measured from the rect.
+    --
+    -- The open/close animations ("grow") produce fractional rects, and the
+    -- background pass derives its tiling bounds AND its scissor from them.
+    -- At a fractional rect those two round differently from the border quads
+    -- drawn at 8px offsets, so the interior stopped a fraction short of the
+    -- frame and left an uncovered strip -- the seam between the tiled middle
+    -- and the border that showed for the few frames a panel was animating.
+    -- Rounding the two edges (rather than position and size separately) keeps
+    -- the far edge from jittering as the near one rounds.
+    local left, top = math.floor(x + 0.5), math.floor(y + 0.5)
+    local right, bottom = math.floor(x + w + 0.5), math.floor(y + h + 0.5)
+    x, y, w, h = left, top, right - left, bottom - top
+
     -- Below the windowskin's two 8px borders there is no interior left, so
     -- the top and bottom edges overlap and the panel reads as a single frame.
     -- That is legitimate for a short button (a 1.5-tile command slot is 12px)
@@ -380,12 +403,8 @@ function ui.drawPanel(x, y, w, h, title, role)
         love.graphics.rectangle("line", x + 2, y + 2, w - 4, h - 4)
     end
     
-    -- Draw title header if specified
-    if title then
-        love.graphics.setColor(1, 1, 0.7, 1)
-        ui.drawString(title, x + ui.tileSize * 0.5, y)
-    end
-    
+    if title then ui.drawPanelTitle(title, x, y) end
+
     love.graphics.pop()
 end
 

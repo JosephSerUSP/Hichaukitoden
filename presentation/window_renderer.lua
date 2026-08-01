@@ -834,18 +834,18 @@ local function drawMpReadout(session, gaugeX, gaugeY, gaugeW, numX, numY, mpBarH
     ui.drawString(tostring(mp), numX, numY, {0.80, 0.90, 1.0, 1})
 end
 
-local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title)
+local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title, w)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
+    -- The slots scale with the window's animated width, so opening and closing
+    -- them is an ordinary `anim` on the layout like every other window. This
+    -- replaces a hard-coded "if the scene is dialogue, shrink over 0.15s"
+    -- special case keyed off a global: the dock now moves between plenty of
+    -- variants that have no party slots, and only the one it knew about
+    -- animated at all.
     local scale = 1
-    local scene_host = require("engine.scene_host")
-    if scene_host.getCurrent() == "dialogue" then
-        local enterTime = _G.dialogueEnterTime or 0
-        local now = love.timer.getTime()
-        local dur = 0.15
-        local p = math.min(1, dur <= 0 and 1 or (now - enterTime) / dur)
-        scale = 1 - p
-    end
+    local authored = ui.toPx(layout.width or 18)
+    if w and authored > 0 then scale = math.max(0, math.min(1, w / authored)) end
     if scale <= 0 then return end
 
     -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
@@ -1291,7 +1291,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     elseif style == "partyGrid" then
         local cached = listCache[id]
         if cached then
-            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title)
+            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title, w)
         end
     elseif style == "enemyRow" then
         renderer.drawEnemyRowWindow(env.v and env.v.battle)
