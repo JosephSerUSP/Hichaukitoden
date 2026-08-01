@@ -1717,6 +1717,10 @@
                                <option value="Procedural">Procedural (Runtime Generated)</option>
                            </select>
                         </div>
+                        <div id="prop-map-generation-profile-row" class="field-row-stacked" style="margin-top: 6px;">
+                           <label>Generation Profile:</label>
+                           <select id="prop-map-generation-profile" class="win98-select"></select>
+                        </div>
                         <div style="display: flex; gap: 10px; margin-top: 6px;">
                            <div class="field-row-stacked" style="flex: 1;">
                                <label>Width:</label>
@@ -1726,6 +1730,10 @@
                                <label>Height:</label>
                                <input type="number" id="prop-map-height" class="win98-input" min="3" max="100" />
                            </div>
+                        </div>
+                        <div id="prop-map-openings-row" style="display: flex; align-items: center; gap: 4px; margin-top: 6px;">
+                           <input type="checkbox" id="prop-map-openings" />
+                           <label for="prop-map-openings" style="font-size: 10px;">Generate structural openings at room thresholds</label>
                         </div>
                         <div class="field-row-stacked" style="margin-top: 6px;">
                            <label>BGM Music Path:</label>
@@ -1853,6 +1861,22 @@
                            <button class="win98-btn" onclick="addRecruitToMap()" style="flex: 1; font-size: 10px;">Add</button>
                            <button class="win98-btn" onclick="removeRecruitFromMap()" style="flex: 1; font-size: 10px;">Remove</button>
                        </div>
+                    </fieldset>
+
+                    <fieldset style="flex: 1; display: flex; flex-direction: column;">
+                       <legend>Authored Zones</legend>
+                       <label style="font-size: 10px;">JSON rectangles or explicit cells; overlapping records give a cell multiple tags.</label>
+                       <textarea id="prop-map-zones" class="win98-input"
+                           style="height: 120px; font-family: monospace; font-size: 10px;"
+                           placeholder='[{"id":"market","x":2,"y":3,"width":6,"height":4}]'></textarea>
+                    </fieldset>
+
+                    <fieldset style="flex: 1; display: flex; flex-direction: column;">
+                       <legend>Tileset Override</legend>
+                       <label style="font-size: 10px;">Sparse JSON delta. Pool entries merge by ID; use {"id":"...","remove":true} to remove one.</label>
+                       <textarea id="prop-map-tileset-override" class="win98-input"
+                           style="height: 120px; font-family: monospace; font-size: 10px;"
+                           placeholder='{"features":[{"id":"wall_torch","injectProbability":0.08}]}'></textarea>
                     </fieldset>
 
                     <fieldset style="flex: 1; display: flex; flex-direction: column;">
@@ -2160,6 +2184,13 @@
 
                     <button class="win98-btn" onclick="addPoolVariant()">➕ Add Tile</button>
 
+                    <div id="ts-prefab-library-row" class="field-row-stacked" style="display: none;">
+                        <label>Fixture prefab library (JSON array):</label>
+                        <textarea id="ts-prefab-library" class="win98-input" rows="6"
+                            placeholder='[{"id":"near_opening","where":{"distance":{"zone":"entrance","max":3}},"probability":{"min":0.05,"max":0.3,"default":0.12}}]'
+                            onchange="updateFixturePrefabs(this.value)"></textarea>
+                    </div>
+
                     <div id="ts-variant-list" style="max-height: 140px; overflow-y: auto; border: 1px solid var(--win-shadow); background: #fff;"></div>
 
                     <div id="ts-variant-detail" style="display: none; flex-direction: column; gap: 6px; border-top: 1px solid var(--win-shadow); padding-top: 6px;">
@@ -2171,6 +2202,26 @@
                         <div class="field-row-stacked" id="ts-v-weight-row">
                             <label>Weight (only used when this role has multiple tiles):</label>
                             <input type="number" id="ts-v-weight" class="win98-input" min="1" max="1000" oninput="updateSelectedVariant('weight', this.value)" />
+                        </div>
+                        <div class="field-row-stacked" id="ts-v-model-row">
+                            <label>OBJ Model (optional, project path)</label>
+                            <input type="text" id="ts-v-model" class="win98-input"
+                                placeholder="assets/models/dungeon_arch.obj"
+                                oninput="updateSelectedVariant('model', this.value)" />
+                        </div>
+                        <div class="field-row-stacked" id="ts-v-effect-row" style="display: none;">
+                            <label>World Effect (optional .efkefc)</label>
+                            <input type="text" id="ts-v-effect" class="win98-input"
+                                placeholder="assets/effects/torch.efkefc"
+                                oninput="updateSelectedVariant('effect', this.value)" />
+                            <div style="display: flex; gap: 4px;">
+                                <input type="number" id="ts-v-effect-height" class="win98-input"
+                                    step="0.05" placeholder="height"
+                                    oninput="updateSelectedVariant('effectHeight', this.value)" />
+                                <input type="number" id="ts-v-effect-mag" class="win98-input"
+                                    step="0.1" min="0.01" placeholder="magnification"
+                                    oninput="updateSelectedVariant('effectMagnification', this.value)" />
+                            </div>
                         </div>
 
                         <!-- Wall-only: a base wall is a fixed 128x64 block -- click the
@@ -2197,8 +2248,18 @@
                             <input type="number" id="ts-v-inject" class="win98-input" min="0" max="100" oninput="updateSelectedVariant('injectProbability', this.value)" />
                         </div>
 
-                        <div class="field-row-stacked" id="ts-v-adjfloor-row" style="display: none;">
-                            <label><input type="checkbox" id="ts-v-adjfloor" onchange="updateSelectedVariant('requiresAdjacentFloor', this.checked)" /> Requires adjacent floor cell</label>
+                        <div class="field-row-stacked" id="ts-v-where-row" style="display: none;">
+                            <label>Placement prefab:</label>
+                            <div style="display: flex; gap: 4px;">
+                                <select id="ts-v-prefab" class="win98-input" style="flex: 1;"
+                                    onchange="updateSelectedVariant('prefab', this.value)"></select>
+                                <button class="win98-btn" onclick="copyPrefabToCustomRule()"
+                                    title="Detach and copy the preset predicate for custom editing">Copy to custom</button>
+                            </div>
+                            <label>Placement predicate (JSON; all/any/not/adjacent/distance/zone):</label>
+                            <textarea id="ts-v-where" class="win98-input" rows="5"
+                                placeholder='{"adjacent":"floor"}'
+                                onchange="updateSelectedVariant('whereJson', this.value)"></textarea>
                         </div>
 
                         <div class="field-row-stacked" id="ts-v-light-row" style="display: none;">

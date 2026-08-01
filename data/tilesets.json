@@ -90,6 +90,20 @@
                 ]
             }
         ],
+        "fixturePrefabs": [
+            {
+                "id": "wall_beside_floor",
+                "name": "Wall beside walkable floor",
+                "where": {
+                    "adjacent": "floor"
+                },
+                "probability": {
+                    "min": 0.05,
+                    "max": 0.5,
+                    "default": 0.12
+                }
+            }
+        ],
         "features": [
             {
                 "id": "wall_torch",
@@ -99,7 +113,7 @@
                     0
                 ],
                 "injectProbability": 0.33,
-                "requiresAdjacentFloor": true,
+                "prefab": "wall_beside_floor",
                 "emitsLight": {
                     "color": [
                         1,
@@ -536,7 +550,9 @@
                     3
                 ],
                 "injectProbability": 0.12,
-                "requiresAdjacentFloor": true,
+                "where": {
+                    "adjacent": "floor"
+                },
                 "emitsLight": {
                     "color": [
                         1,

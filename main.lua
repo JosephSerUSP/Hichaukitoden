@@ -85,6 +85,9 @@ local previewMapId = nil
 local previewMapX = nil
 local previewMapY = nil
 local previewMapDir = nil
+local isProfile3DMode = false
+local profile3DMapId = nil
+local profile3DFrames = nil
 local isPreviewFogMode = false
 local previewFogSpec = nil
 local previewFogMapId = nil
@@ -297,6 +300,11 @@ function love.load(arg)
                     i = i + 1
                 end
                 i = i + 1
+            elseif val == "profile-3d" then
+                isProfile3DMode = true
+                profile3DMapId = arg[i + 1]
+                profile3DFrames = arg[i + 2]
+                i = i + 2
             elseif val == "savetest" then
                 isSaveTestMode = true
             elseif val == "unittest" then
@@ -404,6 +412,13 @@ function love.load(arg)
     if isPreviewMapMode then
         loader.init(cliCampaignRoot)
         cli_tools.runPreviewMap(previewMapId, previewMapX, previewMapY, previewMapDir, loader)
+        love.event.quit(0)
+        return
+    end
+
+    if isProfile3DMode then
+        loader.init(cliCampaignRoot)
+        cli_tools.runProfile3D(profile3DMapId or 1, profile3DFrames, loader)
         love.event.quit(0)
         return
     end

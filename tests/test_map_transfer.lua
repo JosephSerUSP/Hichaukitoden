@@ -13,6 +13,7 @@ local formula = require("engine.formula")
 local savegame = require("engine.savegame")
 local usability = require("engine.usability")
 local viewport3d = require("presentation.viewport_3d")
+local objModel = require("presentation.obj_model")
 
 print("[TEST] Starting map transfer tests...")
 
@@ -31,6 +32,295 @@ check(type(resolvedEventSprite) == "string"
 check(viewport3d.resolveEventSpritePath({ sprite = "assets/sprites/NPC00.png" })
         == "assets/sprites/NPC00.png",
     "3D event sprites preserve directly authored image paths")
+
+local eastWestOpening = {
+    { "#", "#", "#" },
+    { ".", "o", "." },
+    { "#", "#", "#" },
+}
+local northSouthOpening = {
+    { "#", ".", "#" },
+    { "#", "o", "#" },
+    { "#", ".", "#" },
+}
+check(viewport3d.resolveOpeningAxis(eastWestOpening, 2, 2) == "x",
+    "3D structural openings align across an east-west passage")
+check(viewport3d.resolveOpeningAxis(northSouthOpening, 2, 2) == "y",
+    "3D structural openings align across a north-south passage")
+check(viewport3d.resolveOpeningAxis({ { "o" } }, 1, 1) == "x",
+    "an isolated structural opening resolves deterministically")
+
+local weightedPool = {
+    { id = "common", weight = 2 },
+    { id = "rare", weight = 1 },
+}
+check(viewport3d.resolveWeightedVariant(weightedPool, 1, 0, 1, 0).id == "common"
+        and viewport3d.resolveWeightedVariant(weightedPool, 2, 0, 1, 0).id == "rare",
+    "3D tileset pools resolve authored weights rather than array position")
+check(viewport3d.resolveWeightedVariant(weightedPool, 77, 31).id
+        == viewport3d.resolveWeightedVariant(weightedPool, 77, 31).id,
+    "3D weighted variants are stable for one map cell")
+check(viewport3d.resolveWeightedVariant({ { id = "default" } }, 4, 9).id == "default",
+    "a tileset variant without an explicit weight defaults to one")
+
+local tilesetResolver = require("engine.tileset_resolver")
+local baseDungeonTileset = loader.tilesets.dungeon_default
+local overrideMap = {
+    tileset = "dungeon_default",
+    tilesetOverride = {
+        features = {
+            { id = "wall_torch", injectProbability = 0.07 },
+            { id = "floor_marker", role = "floor_feature", atlas = { 0, 0 },
+                injectProbability = 0 },
+        },
+        doors = { { id = "dungeon_door", remove = true } },
+    },
+}
+local resolvedOverride, overrideCacheKey = tilesetResolver.resolve(loader, overrideMap)
+check(resolvedOverride.features[1].injectProbability == 0.07
+        and resolvedOverride.features[1].emitsLight ~= nil
+        and resolvedOverride.features[2].id == "floor_marker"
+        and #resolvedOverride.doors == 0,
+    "sparse map tileset overrides merge, append and remove pool entries by id")
+check(baseDungeonTileset.features[1].injectProbability == 0.33
+        and #baseDungeonTileset.doors > 0 and overrideCacheKey ~= "dungeon_default",
+    "map tileset overrides preserve immutable loader data and own a cache identity")
+
+loader.tilesets.fixture_injection_test = {
+    id = "fixture_injection_test",
+    fixturePrefabs = {
+        { id = "wall_beside_floor", where = { adjacent = "floor" },
+            probability = { min = 0.5, max = 1, default = 1 } },
+    },
+    features = {
+        { id = "wall_fixture", role = "wall_feature", atlas = { 0, 0 },
+            prefab = "wall_beside_floor",
+            emitsLight = { color = { 1, 0.5, 0.25 }, radius = 3, falloff = 2 } },
+        { id = "floor_fixture", role = "floor_feature", atlas = { 0, 1 },
+            injectProbability = 1 },
+    },
+}
+local injectionGrid = {
+    { "#", "#", "#", "#", "#" },
+    { "#", ".", ".", ".", "#" },
+    { "#", ".", "#", ".", "#" },
+    { "#", ".", ".", ".", "#" },
+    { "#", "#", "#", "#", "#" },
+}
+math.randomseed(2468)
+local expectedRandom = math.random()
+math.randomseed(2468)
+local injectedFeatures, injectedLights = exploration.injectTilesetFeatures(
+    injectionGrid, { tileset = "fixture_injection_test" })
+local randomAfterInjection = math.random()
+local injectedAgain = exploration.injectTilesetFeatures(
+    injectionGrid, { tileset = "fixture_injection_test" })
+check(#injectedFeatures > #injectedLights and #injectedLights > 0,
+    "tileset injection places wall and floor fixtures but lights only emitters")
+check(#injectedFeatures == #injectedAgain
+        and injectedFeatures[1].x == injectedAgain[1].x
+        and injectedFeatures[1].y == injectedAgain[1].y,
+    "tileset fixture placement is deterministic per cell")
+check(randomAfterInjection == expectedRandom,
+    "tileset fixture injection consumes no gameplay RNG")
+check(#injectedLights > 0,
+    "a fixture prefab supplies its predicate and default injection probability")
+local suppressedFixtures = exploration.injectTilesetFeatures(injectionGrid, {
+    tileset = "fixture_injection_test",
+    tilesetOverride = {
+        features = {
+            { id = "wall_fixture", injectProbability = 0 },
+            { id = "floor_fixture", remove = true },
+        },
+    },
+})
+check(#suppressedFixtures == 0,
+    "feature injection consumes the same sparse tileset override as rendering")
+loader.tilesets.fixture_injection_test = nil
+
+local fixturePredicates = require("engine.fixture_predicates")
+local predicateZones = {
+    { id = "flooded", x = 1, y = 1, width = 2, height = 2 },
+    { id = "crypt", cells = { { x = 2, y = 2 } } },
+}
+local generatedZones = {
+    { x = 1, y = 1, tags = { "room" } },
+    { x = 3, y = 3, tags = { "entrance" } },
+}
+local predicateContext = fixturePredicates.newContext(
+    injectionGrid, { zones = predicateZones }, generatedZones)
+fixturePredicates.addFeature(predicateContext, 2, 2, "torch")
+check(fixturePredicates.matches({ all = {
+        { zone = "flooded" }, { adjacent = "wall" },
+        { ["not"] = { zone = "entrance" } },
+    } }, predicateContext, 2, 2),
+    "fixture predicates compose all/not across authored and generated zones")
+check(fixturePredicates.matches({ any = {
+        { zone = "missing" }, { adjacent = { feature = "torch", diagonal = true } },
+    } }, predicateContext, 3, 3),
+    "fixture predicates compose any with diagonal feature adjacency")
+check(fixturePredicates.matches({ distance = { zone = "entrance", min = 4, max = 4 } },
+        predicateContext, 2, 2)
+        and fixturePredicates.matches({ distance = { feature = "torch", max = 2 } },
+            predicateContext, 3, 3),
+    "fixture distance targets zones and previously placed features")
+
+local parsedKit = objModel.parse(love.filesystem.read("tests/fixtures/kit_piece.obj"), "kit fixture")
+check(parsedKit.vertexCount == 6 and #parsedKit.groups == 1,
+    "OBJ kit-piece loader triangulates a quad and accepts negative indices")
+local loadedKit = objModel.load("tests/fixtures/kit_piece.obj")
+check(loadedKit.vertexCount == 6 and loadedKit.groups[1].mesh ~= nil,
+    "OBJ kit-piece loader builds a cached GPU mesh with its MTL material")
+check(objModel.load("tests/fixtures/kit_piece.obj") == loadedKit,
+    "OBJ kit-piece meshes are reused instead of rebuilt")
+local malformedObjOk = pcall(objModel.parse, "v 0 0 0\nf 1 2 3\n", "bad fixture")
+check(not malformedObjOk, "OBJ kit-piece loader fails loudly on invalid faces")
+
+local baseModelTileset = loader.tilesets.dungeon_default
+loader.tilesets.model_render_test = {
+    id = "model_render_test",
+    texture = baseModelTileset.texture,
+    base = baseModelTileset.base,
+    doors = { { id = "fixture", role = "door", weight = 1,
+        model = "tests/fixtures/kit_piece.obj" } },
+    features = {},
+}
+local modelSession = sessionModule.GameSession.new(loader)
+modelSession.mapGrid = eastWestOpening
+modelSession.currentMapData = { tileset = "model_render_test", ceilingStyle = "solid", events = {} }
+modelSession.playerX, modelSession.playerY, modelSession.playerDir = 0, 1, "E"
+local previousCanvas = love.graphics.getCanvas()
+local modelCanvas = love.graphics.newCanvas(256, 240)
+local modelRenderOk, modelRenderError = pcall(function()
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(modelSession)
+end)
+love.graphics.setCanvas(previousCanvas)
+local renderedModelDraws = viewport3d.getLastFrameStats().modelDraws or 0
+check(modelRenderOk and renderedModelDraws == 1,
+    "a model-backed opening renders through the live depth-tested world path"
+        .. (modelRenderOk and (" (draws=" .. renderedModelDraws .. ")")
+            or (": " .. tostring(modelRenderError))))
+viewport3d.invalidateStructure(modelSession)
+
+local wallModelSession = sessionModule.GameSession.new(loader)
+wallModelSession.mapGrid = {
+    { "#", "#", "#" },
+    { ".", "#", "." },
+    { "#", "#", "#" },
+}
+wallModelSession.currentMapData = {
+    tileset = "model_render_test", ceilingStyle = "solid",
+    events = { { id = 1, x = 1, y = 1, wallEvent = true, trigger = "bump" } },
+}
+wallModelSession.playerX, wallModelSession.playerY, wallModelSession.playerDir = 0, 1, "E"
+local wallModelRenderOk, wallModelRenderError = pcall(function()
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(wallModelSession)
+end)
+love.graphics.setCanvas(previousCanvas)
+local wallModelDraws = viewport3d.getLastFrameStats().modelDraws or 0
+check(wallModelRenderOk and wallModelDraws >= 1,
+    "a wall-event door model resolves onto its visible wall face"
+        .. (wallModelRenderOk and (" (draws=" .. wallModelDraws .. ")")
+            or (": " .. tostring(wallModelRenderError))))
+viewport3d.invalidateStructure(wallModelSession)
+loader.tilesets.model_render_test = nil
+
+loader.tilesets.model_fixture_render_test = {
+    id = "model_fixture_render_test", texture = baseModelTileset.texture,
+    base = baseModelTileset.base, doors = baseModelTileset.doors,
+    features = {
+        { id = "wall_model", role = "wall_feature", model = "tests/fixtures/kit_piece.obj" },
+        { id = "floor_model", role = "floor_feature", model = "tests/fixtures/kit_piece.obj" },
+        { id = "world_effect", role = "floor_feature", atlas = { 0, 0 },
+            effect = "assets/effects/SecondRite/env_mist.efkefc",
+            effectHeight = 0.25, effectMagnification = 0.15625 },
+    },
+}
+local fixtureModelSession = sessionModule.GameSession.new(loader)
+fixtureModelSession.mapGrid = wallModelSession.mapGrid
+fixtureModelSession.currentMapData = {
+    tileset = "model_fixture_render_test", ceilingStyle = "solid", events = {},
+}
+fixtureModelSession.generatedFeatures = {
+    { x = 1, y = 1, material = "wall_model" },
+    { x = 0, y = 1, material = "floor_model" },
+    { x = 2, y = 1, material = "world_effect" },
+}
+fixtureModelSession.playerX, fixtureModelSession.playerY, fixtureModelSession.playerDir = 0, 1, "E"
+local fixtureModelsOk, fixtureModelsError = pcall(function()
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(fixtureModelSession)
+end)
+love.graphics.setCanvas(previousCanvas)
+local fixtureModelDraws = viewport3d.getLastFrameStats().modelDraws or 0
+check(fixtureModelsOk and fixtureModelDraws >= 2,
+    "model-backed wall and floor fixtures share the live world model path"
+        .. (fixtureModelsOk and (" (draws=" .. fixtureModelDraws .. ")")
+            or (": " .. tostring(fixtureModelsError))))
+check(fixtureModelsOk and (viewport3d.getLastFrameStats().worldEffectHandles or 0) == 1,
+    "an authored fixture effect spawns in the world camera pass")
+-- The creation frame owns a live native handle but has not emitted particles
+-- yet. Advance the real runtime, then draw the already-prepared world again so
+-- this assertion measures world-camera presentation rather than handle setup.
+require("presentation.effekseer").update(400 / 60)
+local worldEffectInstances = require("presentation.effekseer").instanceCount()
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(fixtureModelSession)
+love.graphics.setCanvas(previousCanvas)
+local withWorldEffect = modelCanvas:newImageData()
+viewport3d.invalidateStructure(fixtureModelSession)
+require("presentation.effekseer").reset()
+loader.tilesets.model_fixture_render_test.features[3].effect = nil
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(fixtureModelSession)
+love.graphics.setCanvas(previousCanvas)
+local withoutWorldEffect = modelCanvas:newImageData()
+local effectPixels = 0
+for py = 0, 239 do
+    for px = 0, 255 do
+        local ar, ag, ab, aa = withWorldEffect:getPixel(px, py)
+        local br, bg, bb, ba = withoutWorldEffect:getPixel(px, py)
+        if ar ~= br or ag ~= bg or ab ~= bb or aa ~= ba then effectPixels = effectPixels + 1 end
+    end
+end
+check(worldEffectInstances > 0 and effectPixels > 0,
+    "world-authored mist is visible at its frame-400 opacity milestone"
+        .. " (instances=" .. worldEffectInstances .. ", pixels=" .. effectPixels .. ")")
+viewport3d.invalidateStructure(fixtureModelSession)
+require("presentation.effekseer").reset()
+loader.tilesets.model_fixture_render_test = nil
+
+local cacheProbe = {
+    mapGrid = eastWestOpening,
+    currentMapData = { events = {} },
+}
+local preparedOnce = viewport3d.prepareStructure(cacheProbe)
+local preparedTwice = viewport3d.prepareStructure(cacheProbe)
+check(preparedOnce == preparedTwice and preparedTwice.hits == 1,
+    "3D structural topology is reused while the map is unchanged")
+local resolvedStructureOnce, resolvedFacesOnce = viewport3d.prepareResolvedStructure(cacheProbe)
+local resolvedStructureTwice, resolvedFacesTwice = viewport3d.prepareResolvedStructure(cacheProbe)
+check(resolvedStructureOnce == resolvedStructureTwice
+        and resolvedFacesOnce == resolvedFacesTwice and #resolvedFacesOnce > 0,
+    "resolved 3D wall descriptors and composites are reused between frames")
+exploration.mutateTile(cacheProbe, 1, 1, ".")
+local preparedAfterMutation = viewport3d.prepareStructure(cacheProbe)
+check(preparedAfterMutation ~= preparedOnce
+        and #preparedAfterMutation.openingCells == 0,
+    "a structural mutation invalidates cached 3D topology")
+local _, resolvedFacesAfterMutation = viewport3d.prepareResolvedStructure(cacheProbe)
+check(resolvedFacesAfterMutation ~= resolvedFacesOnce,
+    "a structural mutation invalidates resolved 3D wall descriptors")
+cacheProbe.mapPresentationRevision = (cacheProbe.mapPresentationRevision or 0) + 1
+check(viewport3d.prepareStructure(cacheProbe) ~= preparedAfterMutation,
+    "a map presentation revision invalidates cached 3D lookups")
 
 local townDoorCount, interiorDoorCount, labyrinthGateCount = 0, 0, 0
 for _, ev in ipairs(loader.maps[1].events or {}) do
@@ -130,6 +420,33 @@ sess:initializeStartingParty()
 
 exploration.loadMap(sess, 2)
 check(sess.dungeonFloor == 1, "entering Floor 1 puts the party at depth 1")
+local generatedTagCounts = {}
+for _, cell in ipairs(sess.generatedZones or {}) do
+    for _, tag in ipairs(cell.tags or {}) do
+        generatedTagCounts[tag] = (generatedTagCounts[tag] or 0) + 1
+    end
+end
+check((generatedTagCounts.room or 0) > 0 and (generatedTagCounts.corridor or 0) > 0
+        and generatedTagCounts.entrance == 1 and generatedTagCounts.exit == 1,
+    "dungeon generation tags rooms, corridors, entrance and exit")
+local openingMap = {}
+for k, v in pairs(loader.maps[2]) do openingMap[k] = v end
+check(openingMap.generationProfile == "entry"
+        and loader.system.dungeon.generationProfiles.entry.minRooms == 3
+        and openingMap.genMinRooms == nil,
+    "procedural floors select validated generation profiles instead of legacy fields")
+openingMap.generateOpenings = true
+local openingGrid = exploration.generateDungeon(openingMap, 97531, sess)
+local repeatedOpeningGrid = exploration.generateDungeon(openingMap, 97531, sess)
+local openingCount, openingsStable = 0, true
+for y, row in ipairs(openingGrid) do
+    for x, cell in ipairs(row) do
+        if cell == "o" then openingCount = openingCount + 1 end
+        if cell ~= repeatedOpeningGrid[y][x] then openingsStable = false end
+    end
+end
+check(openingCount > 0 and openingsStable,
+    "procedural maps opt into deterministic room-threshold openings")
 check(formula.sessionView(sess).floor == 1,
     "and the `floor` token reports it -- it used to always read 1")
 
@@ -233,6 +550,8 @@ route.portalReturn = { mapIndex = 2, playerX = 4, playerY = 5, playerDir = "S" }
 local restored = savegame.deserialize(savegame.serialize(route, loader, "map"), loader)
 check(restored.mapStates[2] and restored.mapStates[2].mapGrid,
     "generated floor snapshots survive save/load")
+check(restored.mapStates[2] and #(restored.mapStates[2].generatedZones or {}) > 0,
+    "generated structural zones survive off-floor save/load")
 check(restored.portalReturn and restored.portalReturn.mapIndex == 2
     and restored.portalReturn.playerX == 4,
     "an open portal destination survives save/load")

@@ -130,6 +130,8 @@ local function serializeMap(sessionObj)
         events = sessionObj.currentMapData.events,
         runtimeLight = sessionObj.currentMapData.runtimeLight,
         generatedLightObjects = sessionObj.generatedLightObjects,
+        generatedFeatures = sessionObj.generatedFeatures,
+        generatedZones = sessionObj.generatedZones,
         dungeonFloor = sessionObj.dungeonFloor,
     }
 end
@@ -145,6 +147,8 @@ local function restoreMap(sessionObj, data, loader)
     sessionObj.currentMapData.events = data.events
     sessionObj.currentMapData.runtimeLight = data.runtimeLight
     sessionObj.generatedLightObjects = data.generatedLightObjects
+    sessionObj.generatedFeatures = data.generatedFeatures
+    sessionObj.generatedZones = data.generatedZones
     sessionObj.mapGrid = data.mapGrid
     sessionObj.visitedGrid = data.visitedGrid
     sessionObj.playerX = data.playerX

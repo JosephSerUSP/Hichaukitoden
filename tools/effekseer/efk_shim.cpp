@@ -165,7 +165,9 @@ struct GLStateGuard
     GLint program = 0, vao = 0, arrayBuf = 0, elemBuf = 0;
     GLint activeTex = GL_TEXTURE0_, texture2D = 0;
     GLboolean blend = GL_FALSE, depthTest = GL_FALSE, cullFace = GL_FALSE;
+    GLboolean scissorTest = GL_FALSE;
     GLboolean depthMask = GL_TRUE;
+    GLint scissorBox[4] = {0, 0, 0, 0};
 
     GLStateGuard()
     {
@@ -178,6 +180,8 @@ struct GLStateGuard
         blend     = glIsEnabled(GL_BLEND);
         depthTest = glIsEnabled(GL_DEPTH_TEST);
         cullFace  = glIsEnabled(GL_CULL_FACE);
+        scissorTest = glIsEnabled(GL_SCISSOR_TEST);
+        glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
         glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
     }
 
@@ -196,6 +200,8 @@ struct GLStateGuard
         if (blend)     glEnable(GL_BLEND);     else glDisable(GL_BLEND);
         if (depthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
         if (cullFace)  glEnable(GL_CULL_FACE);  else glDisable(GL_CULL_FACE);
+        if (scissorTest) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+        glScissor(scissorBox[0], scissorBox[1], scissorBox[2], scissorBox[3]);
         glDepthMask(depthMask);
     }
 };
@@ -228,6 +234,8 @@ EFK_API int efk_init(int instanceMax, int squareMaxCount)
     g_manager->SetRingRenderer(g_renderer->CreateRingRenderer());
     g_manager->SetTrackRenderer(g_renderer->CreateTrackRenderer());
     g_manager->SetModelRenderer(g_renderer->CreateModelRenderer());
+    g_manager->SetGpuParticleFactory(g_renderer->CreateGpuParticleFactory());
+    g_manager->SetGpuParticleSystem(g_renderer->CreateGpuParticleSystem());
 
     g_manager->SetTextureLoader(g_renderer->CreateTextureLoader());
     g_manager->SetModelLoader(g_renderer->CreateModelLoader());
@@ -392,6 +400,32 @@ EFK_API void efk_draw(const float* view16, const float* proj16)
     Effekseer::Manager::DrawParameter drawParameter;
     drawParameter.ZNear = 0.0f;
     drawParameter.ZFar = 1.0f;
+    drawParameter.ViewProjectionMatrix = g_renderer->GetCameraProjectionMatrix();
+    g_manager->Draw(drawParameter);
+    g_renderer->EndRendering();
+}
+
+// World-camera pass. Unlike the screen overlay, it preserves LOVE's populated
+// world depth attachment so world-authored particles can be occluded by the
+// same walls/floors as meshes. The world fills the entire canvas, so no native
+// scissor is required.
+EFK_API void efk_draw_world(const float* view16, const float* proj16, float zNear, float zFar)
+{
+    if (!g_manager || !g_renderer) return;
+
+    GLStateGuard guard;
+    Effekseer::Matrix44 view, proj;
+    toMatrix(view16, view);
+    toMatrix(proj16, proj);
+
+    g_renderer->SetTime(g_time);
+    g_renderer->SetCameraMatrix(view);
+    g_renderer->SetProjectionMatrix(proj);
+    g_renderer->BeginRendering();
+
+    Effekseer::Manager::DrawParameter drawParameter;
+    drawParameter.ZNear = zNear;
+    drawParameter.ZFar = zFar;
     drawParameter.ViewProjectionMatrix = g_renderer->GetCameraProjectionMatrix();
     g_manager->Draw(drawParameter);
     g_renderer->EndRendering();

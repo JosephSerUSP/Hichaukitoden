@@ -83,7 +83,35 @@ Everything in Sec.1 follows from that goal rather than the reverse:
   - `"draw": "world"` — a world view named by `world` (registry:
     `presentation/world_renderer.lua`), with the scene's windows layered on
     top by the same window renderer. Only `map` (`world: "map"`, the
-    raycaster) uses this. The old `town` scene — legacy-drawn, unreachable,
+    polygonal world renderer) uses this. Its world-space surfaces use hardware
+    depth testing; the renderer clears only depth before later 2D presentation
+    layers so battlers, effects and windows remain screen-space overlays.
+    Camera-independent topology (floor/wall/opening cell lists plus wall-event
+    and material lookups) is cached per session. Exposed wall faces then cache
+    their resolved material, atlas UV orientation, edge overlays, event sprite
+    composites and texture canvases per atlas. Map loads, `MUTATE_TILE`,
+    `ERASE_EVENT`, and `SET_MAP_PRESENTATION` advance explicit revisions.
+    Baked map light remains a static vertex attribute; player-light distance,
+    fog visibility/banding and their nonlinear falloff now run in the world
+    vertex shader from camera uniforms. Resolved walls, floors and ceilings own
+    persistent three-level surface quadtrees; the live camera selects the same
+    distance/area subdivision nodes the earlier stream-mesh path built. Selected
+    nodes update an index list on one resident mesh per texture, so ordinary
+    structural geometry is drawn in texture batches without rebuilding vertex
+    buffers. A surface crossing the near plane deliberately falls back to the
+    dynamic clipped path. Those clipped leaves are accumulated into one stream
+    mesh per texture and surface category for the frame, rather than submitted
+    as one GPU draw per leaf. These stream meshes are resident, grow to the next
+    power-of-two capacity when necessary, and receive new vertices/draw ranges
+    in place instead of being created and destroyed each frame. Root points,
+    UVs and baked-light colors also live with the cached surface descriptor.
+    Openings, billboards, visibility and near-plane
+    clipping remain camera-dependent per-frame work rather than stale cached
+    approximations. `lovec . profile-3d <mapId> <frames>` profiles this live
+    path against a deterministic generated-map topology and reports structural
+    batches, dynamic sources, dynamic mesh draws, timing percentiles and memory.
+    The
+    old `town` scene — legacy-drawn, unreachable,
     superseded by the town *map* — was deleted in the purge.
 - **The Summoner rework is live**: per-round MP drain in battle
   (`engine/battle.lua`), per-step field drain (`engine/exploration.lua`),
@@ -386,18 +414,29 @@ hatch, replacing the old dead `tiles{}` grid and the lamp's free-text
 player walks through (design doc §2/§6), distinct from a decorative
 `wall_event` door which sits on an actual `"#"` and is never passable. `"o"`
 is passable by the existing `~= "#"` movement check (no change needed there)
-but, unlike `"."`, is intended to carry structural renderer geometry. The
-retired raycaster rendered it with the door atlas row; the polygonal world path
-currently treats it as an ordinary floor cell. Restoring a visible opening
-frame, then giving it dedicated weighted/adjacency-resolved variants, remains
-open work (§3).
+but, unlike `"."`, carries structural renderer geometry. The polygonal world
+path resolves its axis from the surrounding wall pair and draws a passable
+three-piece frame (two jambs and a lintel) sampled from a deterministic weighted
+pick in the tileset's door pool, or draws that variant's model when authored.
 Authored via the map editor's Layout brush (`tools/editor/js/map-editor.js:
 setPaintTool('opening', ...)`) or as a `MUTATE_TILE ... to="o"` runtime
 mutation (hidden-passage reveal, per the override's `mutateTo`).
 
-Still open design work: decoration-layer weighted variants, adjacency
-predicates, prefabs (§3 of the redesign doc), and dungeon-generation
-authorship of `opening` cells (currently hand-authored only).
+Procedural maps may opt into `generateOpenings:true`. During corridor carving,
+the generator records cells actually cut out of walls and turns only those on a
+room's outside threshold into `"o"`; room floors cannot become openings, and
+entrance/exit stair walls are excluded. The result is deterministic for the map
+seed, participates in generated corridor zones and ordinary fixture predicates,
+and persists as part of the cached map grid. Map Properties exposes the option
+only for procedural maps.
+
+Room-count and room-size authoring lives in reusable
+`system.dungeon.generationProfiles`, with one registered default selected by
+`system.dungeon.generationProfile`. A procedural map may select another profile
+with `generationProfile`; Map Properties lists the registered choices. The
+repository's former per-map `genMinRooms`/`genMaxRooms` and system `gen*` fields
+were migrated and have no compatibility read path. G1 validates profile ranges,
+the default reference, every map reference, and rejects the removed fields.
 
 ### 1.8 Tileset Studio: variant pools, not cell painting (23.07.2026)
 
@@ -435,10 +474,89 @@ the wall, then (1,2)/(1,3) for the two wall fixtures. The underlying schema
 edges elsewhere in the atlas still renders — only new authoring assumes the
 fixed layout.
 
-Not in scope for this pass (§3, still open): actual weighted-random
-*resolution* at render/generation time (the pools are real now, but nothing
-picks between variants by weight yet), adjacency/context predicates,
-prefabs, and zone/region tagging.
+The renderer now resolves base wall, floor, ceiling, door and opening pools by
+authored positive weight. Picks are hashed from the map cell and a role-specific
+salt: revisiting or reloading a cell cannot reshuffle it, rendering consumes no
+gameplay RNG, and all faces of one wall cell share one variant. Omitted weights
+default to one. G1 rejects non-positive weights and missing wall-middle or atlas
+coordinates. Tileset wall/floor features resolve `injectProbability`
+deterministically per cell and may author a recursive `where` predicate; placement
+consumes no gameplay RNG. One feature occupies a cell. Placements persist in
+`session.generatedFeatures`, separately from `generatedLightObjects`, so a
+non-emitting fixture never acquires an implicit torch light. Wall features bake
+their atlas cell into exposed wall composites; floor features draw a
+depth-tested overlay above the base floor. Both roles may instead name a model:
+wall models attach to visible faces, while floor models use cell centre.
+
+`where` is a single-operator object composed from `all`, `any`, `not`,
+`adjacent`, `distance`, and `zone`. Adjacency targets a tile class (`wall`,
+`floor`, `opening`), a zone tag, or a feature placed earlier in tileset order;
+it is cardinal unless `diagonal:true`. Distance is Manhattan distance and
+explicitly targets either a zone or an earlier feature, with optional inclusive
+`min`/`max`. G1 rejects malformed predicates, ranges and feature references.
+The removed `requiresAdjacentFloor` field was migrated to
+`where:{"adjacent":"floor"}`; there is no dual-read compatibility path.
+
+Authored maps may declare overlapping `zones[]` as zero-indexed rectangles or
+explicit cell lists, with one `id` or several `tags`. Generated dungeons persist
+per-cell structural tags for `room`, `corridor`, `anchor`, `entrance`, and
+`exit`. Both sources build one runtime index, so cells may carry several tags.
+Tileset Studio edits predicates and Map Properties edits authored zone records.
+Tilesets may define reusable `fixturePrefabs[]`. Each prefab has a unique `id`,
+a validated `where` predicate, and an optional probability `{min,max,default}`
+range. A feature authors either `prefab` or a custom `where`, never both; its
+probability must remain inside the selected prefab's range. Tileset Studio
+exposes the library and a prefab selector, and can detach a selection by copying
+its predicate into the custom-rule editor. Runtime placement still evaluates
+the same predicate implementation, so prefabs introduce no parallel rule path.
+
+A map may author a sparse `tilesetOverride` instead of duplicating its base
+tileset. The delta mirrors the pool structure (`base.walls/floors/ceilings/skies`,
+`doors`, `features`, `fixturePrefabs`): entries merge by `id`, new ids append,
+and an existing entry may be removed with `{id,remove:true}`. Nested objects
+merge while coordinate/color arrays replace. `engine/tileset_resolver.lua` is
+the single immutable resolver used by both fixture injection and the renderer;
+loader-owned data is never modified, and overridden maps receive distinct atlas
+cache identities. G1 rejects unknown delta fields, duplicate ids, malformed
+removals, invalid resolved feature roles, predicates, prefab references and
+probabilities. Map Properties exposes the sparse delta as JSON.
+
+Door and fixture variants may also author an optional `model` project path
+naming a static `.obj` kit piece. Tileset Studio exposes the field on those
+pools and G1 requires the file to exist; a model-backed variant does not also
+need atlas coordinates.
+`presentation/obj_model.lua` is the single runtime loader: it supports OBJ
+positions/UVs/normals, polygon triangulation, negative indices, generated face
+normals, and MTL `Kd`/`map_Kd`, with nearest-filtered textures and one cached
+static GPU mesh per material group. Unsupported directives, invalid indices,
+degenerate faces, and missing MTL/texture files fail loudly. World kit pieces
+use a cell-centred convention: OBJ `(0,0,0)` is the centre of the owning map
+cell at floor level, one model unit is one cell, X/Y are the floor plane and Z
+is up. Opening-axis changes rotate about that centre. Model-backed structural
+openings render cached material groups through the same depth, fog, player
+light and vertex-light path as procedural structure; their OBJ normals add
+directional shading. Model-backed wall-event doors attach to their exposed
+face, wall fixtures use that same face rule, and floor fixtures use cell centre.
+Atlas-only variants continue unchanged. Base-wall/floor/ceiling model roles
+remain closed; G1 rejects them rather than silently accepting a model the
+renderer would ignore.
+
+Wall and floor feature variants may also author an Effekseer `.efkefc` asset,
+plus optional `effectHeight` and positive `effectMagnification`. G1 verifies
+the project path and parameter types, and Tileset Studio exposes the same
+fields. The prepared 3D structure owns the resulting native handles: floor
+effects start at cell centre, wall effects attach just outside their first
+exposed face, and invalidation/map replacement stops them. They advance through
+the shared deterministic Effekseer clock. World effects bridge the game's X/Y
+floor and Z-up coordinates to Effekseer's X/Z floor and Y-up convention, then
+draw directly through the polygonal camera while preserving its depth
+attachment. `env_mist` is deterministically sampled at its authored frame-400
+opacity milestone and visibly changes the live viewport while that depth buffer
+is populated. `env_rain` loads, emits, and renders in the screen-space pass at
+frame 100, but produces no pixels through the perspective pass even after its
+texture, secondary alpha texture, and axis-fixed sprite configuration were
+removed. Rain remains a perspective-renderer compatibility follow-up rather
+than a failure of the asset, clock, or world placement.
 
 ### 1.9 Item vocabulary (26.07.2026)
 
@@ -1057,7 +1175,7 @@ maps with ordinary depth and stair rules. St. Maria's north approach separates
 the guard from the threshold—the guard occupies a side alcove and handles
 conversation, while a generated stone-and-iron gate is the bump-activated
 entrance. An authorized first descent runs common event 43: it burns the town
-to black, loads Floor 1 underneath, then slowly reveals the live raycaster while
+to black, loads Floor 1 underneath, then slowly reveals the live polygonal world while
 an additive bell-and-roots plate and exact string-picture title fade away.
 Later descents retain the slow world reveal but do not replay the discovery
 card.

@@ -27,11 +27,13 @@ local suppressed = false
 local globalMagnification = 1.0
 local effectCache = {}   -- path|magnification -> effect id
 local liveHandles = {}
+local skipNextScreenDraw = false
 
 -- Effekseer positions effects in the coordinates the projection defines. Under
 -- the screen-space orthographic camera below that is CANVAS PIXELS, which is
 -- why play() takes the same numbers battler_geometry.anchor() returns.
 local GAME_W, GAME_H = 256, 240
+local screenW, screenH = GAME_W, GAME_H
 
 local function warnOnce(reason)
     if warned then return end
@@ -57,6 +59,7 @@ void efk_update(float deltaFrame);
 void efk_set_time(float seconds);
 void efk_set_random_seed(unsigned int seed);
 void efk_draw(const float* view16, const float* proj16);
+void efk_draw_world(const float* view16, const float* proj16, float zNear, float zFar);
 const char* efk_last_error(void);
 ]]
 
@@ -86,6 +89,31 @@ local function orthoScreen(w, h, zn, zf)
     m[13] = -1        -- Values[3][0]
     m[14] = -1        -- Values[3][1]
     return m
+end
+
+-- Row-vector matrices matching Effekseer's Matrix44 layout. Game world space
+-- is X/Y on the floor and +Z upward; authored Effekseer effects conventionally
+-- use X/Z on the floor and +Y upward. This view performs that axis bridge once
+-- so assets keep their native authoring orientation.
+local function worldCameraMatrices(camera)
+    local rx, ry = camera.rightX, camera.rightY
+    local fx, fy = camera.dirX, camera.dirY
+    local cx, cy, cz = camera.x, camera.y, camera.z
+    local view = {
+        rx, 0, -fx, 0,
+        0,  1, 0,   0,
+        ry, 0, -fy, 0,
+        -(cx * rx + cy * ry), -cz, cx * fx + cy * fy, 1,
+    }
+    local zn, zf = camera.nearPlane or 0.05, camera.farPlane or 32
+    local offsetY = (2 * camera.viewportCenterY / camera.targetHeight) - 1
+    local projection = {
+        1 / camera.fovHalfX, 0, 0, 0,
+        0, -1 / camera.fovHalfY, 0, 0,
+        0, -offsetY, zf / (zn - zf), -1,
+        0, 0, zn * zf / (zn - zf), 0,
+    }
+    return view, projection
 end
 
 local function toBuf(buf, m)
@@ -163,6 +191,7 @@ end
 
 function effekseer.setViewport(w, h)
     if not effekseer.available() then return end
+    screenW, screenH = w, h
     toBuf(projBuf, orthoScreen(w, h, -512, 512))
 end
 
@@ -212,6 +241,15 @@ function effekseer.play(path, x, y, magnification)
         lib.efk_set_effect_flip(handle, 0, 1, 0)
         liveHandles[handle] = true
     end
+    return handle
+end
+
+function effekseer.playWorld(path, x, y, z, magnification)
+    if not effekseer.available() then return nil end
+    local id = effekseer.loadEffect(path, magnification)
+    if not id then return nil end
+    local handle = lib.efk_play(id, x, z or 0, y)
+    if handle >= 0 then liveHandles[handle] = true end
     return handle
 end
 
@@ -268,6 +306,7 @@ end
 -- tools/effekseer/spike/spike-zorder-bug.png).
 function effekseer.draw()
     if not effekseer.available() then return end
+    if skipNextScreenDraw then skipNextScreenDraw = false return end
     local sx, sy, sw, sh = love.graphics.getScissor()
     love.graphics.flushBatch()
     -- Scene windows legitimately leave a content scissor active while they
@@ -281,6 +320,18 @@ function effekseer.draw()
     else
         love.graphics.setScissor()
     end
+end
+
+function effekseer.drawWorld(camera)
+    if not effekseer.available() then return end
+    local view, projection = worldCameraMatrices(camera)
+    toBuf(viewBuf, view)
+    toBuf(projBuf, projection)
+    love.graphics.flushBatch()
+    lib.efk_draw_world(viewBuf, projBuf, camera.nearPlane or 0.05, camera.farPlane or 32)
+    toBuf(viewBuf, IDENTITY)
+    toBuf(projBuf, orthoScreen(screenW, screenH, -512, 512))
+    skipNextScreenDraw = true
 end
 
 -- Spawns any due `effekseer` tracks for `target`, anchored against its rect.
@@ -307,6 +358,7 @@ end
 
 function effekseer.reset()
     effekseer.stopAll()
+    skipNextScreenDraw = false
 end
 
 return effekseer

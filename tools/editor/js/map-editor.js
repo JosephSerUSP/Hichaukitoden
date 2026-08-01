@@ -919,6 +919,17 @@
             document.getElementById('prop-map-title').value = map.title || map.name || '';
             document.getElementById('prop-map-category').value = getMapCategory(map, currentMapIndex);
             document.getElementById('prop-map-gen').value = map.generation || 'Fixed';
+            const profileSelect = document.getElementById('prop-map-generation-profile');
+            profileSelect.innerHTML = '';
+            const dungeonConfig = dbPayload.system?.dungeon || {};
+            for (const id of Object.keys(dungeonConfig.generationProfiles || {})) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = id;
+                profileSelect.appendChild(option);
+            }
+            profileSelect.value = map.generationProfile || dungeonConfig.generationProfile || '';
+            document.getElementById('prop-map-openings').checked = !!map.generateOpenings;
             document.getElementById('prop-map-width').value = map.width || (map.layout ? map.layout[0].length : 15);
             document.getElementById('prop-map-height').value = map.height || (map.layout ? map.layout.length : 15);
             document.getElementById('prop-map-bgm').value = map.bgm || '';
@@ -977,6 +988,7 @@
                 document.getElementById('prop-map-fog-minfactor-val').textContent = '0.12';
             }
             toggleFogFields();
+            window.togglePropGenMode();
 
             // Label preset and draw preview
             const fhex = document.getElementById('prop-map-fog-color').value.toUpperCase();
@@ -987,6 +999,9 @@
             mapPropsEncounters = JSON.parse(JSON.stringify(map.encounters || []));
             mapPropsRecruits = JSON.parse(JSON.stringify(map.recruits || []));
             mapPropsAnchors = JSON.parse(JSON.stringify(map.anchors || []));
+            document.getElementById('prop-map-zones').value = JSON.stringify(map.zones || [], null, 2);
+            document.getElementById('prop-map-tileset-override').value = JSON.stringify(
+                map.tilesetOverride || {}, null, 2);
             renderEncountersList(mapPropsEncounters);
             renderRecruitsList(mapPropsRecruits);
             renderAnchorsList(mapPropsAnchors);
@@ -1231,7 +1246,11 @@
             document.getElementById('map-properties-modal').classList.remove('active');
         }
 
-        function togglePropGenMode() {}
+        window.togglePropGenMode = function() {
+            const procedural = document.getElementById('prop-map-gen').value === 'Procedural';
+            document.getElementById('prop-map-openings-row').style.display = procedural ? 'flex' : 'none';
+            document.getElementById('prop-map-generation-profile-row').style.display = procedural ? 'flex' : 'none';
+        };
 
         function renderEncountersList(encounters) {
             const list = document.getElementById('prop-enc-list');
@@ -1387,11 +1406,47 @@
             map.title = newTitle;
             map.category = document.getElementById('prop-map-category').value;
             map.generation = newGen;
+            if (newGen === 'Procedural') {
+                const selectedProfile = document.getElementById('prop-map-generation-profile').value;
+                const defaultProfile = dbPayload.system?.dungeon?.generationProfile;
+                if (selectedProfile && selectedProfile !== defaultProfile) {
+                    map.generationProfile = selectedProfile;
+                } else {
+                    delete map.generationProfile;
+                }
+            } else {
+                delete map.generationProfile;
+            }
+            if (newGen === 'Procedural' && document.getElementById('prop-map-openings').checked) {
+                map.generateOpenings = true;
+            } else {
+                delete map.generateOpenings;
+            }
             map.bgm = newBgm;
             map.encounterSteps = newSteps;
             map.encounters = mapPropsEncounters;
             map.recruits = mapPropsRecruits;
             map.anchors = mapPropsAnchors;
+            try {
+                const zones = JSON.parse(document.getElementById('prop-map-zones').value || '[]');
+                if (!Array.isArray(zones)) throw new Error('zones must be a JSON array');
+                if (zones.length > 0) map.zones = zones; else delete map.zones;
+            } catch (error) {
+                showToast('Cannot save map zones: ' + error.message, 'error');
+                return;
+            }
+            try {
+                const delta = JSON.parse(
+                    document.getElementById('prop-map-tileset-override').value || '{}');
+                if (!delta || Array.isArray(delta) || typeof delta !== 'object') {
+                    throw new Error('tileset override must be a JSON object');
+                }
+                if (Object.keys(delta).length > 0) map.tilesetOverride = delta;
+                else delete map.tilesetOverride;
+            } catch (error) {
+                showToast('Cannot save tileset override: ' + error.message, 'error');
+                return;
+            }
 
             const rateRaw = document.getElementById('prop-map-enc-rate').value;
             if (rateRaw === '') {

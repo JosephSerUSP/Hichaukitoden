@@ -186,12 +186,33 @@
   },
   "dungeon": {
     "defaultLoot": 1,
-    "genWidth": 21,
-    "genHeight": 21,
-    "genMinRooms": 4,
-    "genMaxRooms": 6,
-    "genMinRoomSize": 3,
-    "genMaxRoomSize": 5,
+    "generationProfile": "standard",
+    "generationProfiles": {
+      "entry": {
+        "minRooms": 3,
+        "maxRooms": 4,
+        "minRoomSize": 3,
+        "maxRoomSize": 5
+      },
+      "standard": {
+        "minRooms": 4,
+        "maxRooms": 6,
+        "minRoomSize": 3,
+        "maxRoomSize": 5
+      },
+      "broad": {
+        "minRooms": 5,
+        "maxRooms": 7,
+        "minRoomSize": 3,
+        "maxRoomSize": 5
+      },
+      "deep": {
+        "minRooms": 7,
+        "maxRooms": 9,
+        "minRoomSize": 3,
+        "maxRoomSize": 5
+      }
+    },
     "exitSprite": "assets/sprites/dungeon_stairs_down.png",
     "exitScriptId": 1,
     "entranceSprite": "assets/sprites/dungeon_stairs_up.png",

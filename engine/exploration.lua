@@ -3,6 +3,8 @@ local conditions = require("engine.conditions")
 local formulaEngine = require("engine.formula")
 local lighting = require("engine.lighting")
 local loader = require("data.loader")
+local fixturePredicates = require("engine.fixture_predicates")
+local tilesetResolver = require("engine.tileset_resolver")
 
 local exploration = {}
 
@@ -89,62 +91,83 @@ local DIR_ORDER = { "N", "E", "S", "W" }
 -- placements. This applies to authored safe maps as well as generated
 -- dungeons, so a fixture configured in Tileset Studio is actually visible
 -- when testing a town map.
-function exploration.injectTilesetFeatures(grid, mapData)
-    local tilesetDef = loader.getTileset(mapData and mapData.tileset)
-    local featureList = (tilesetDef and tilesetDef.features) or {
-        { id = "wall_torch", role = "wall_feature", injectProbability = 0.11, requiresAdjacentFloor = true, emitsLight = { color = { 1, 0.58, 0.22 }, radius = 4 } }
-    }
-    local generated = {}
+function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
+    local tilesetDef = tilesetResolver.resolve(loader, mapData)
+    local featureList = (tilesetDef and tilesetDef.features) or {}
+    local prefabById = {}
+    for _, prefab in ipairs((tilesetDef and tilesetDef.fixturePrefabs) or {}) do
+        prefabById[prefab.id] = prefab
+    end
+    local generated, lights, occupied = {}, {}, {}
+    local predicateContext = fixturePredicates.newContext(grid, mapData, generatedZones)
     local height = #grid
-    for _, feat in ipairs(featureList) do
-        local prob = feat.injectProbability or 0.1
+    for featureIndex, feat in ipairs(featureList) do
+        local prefab = feat.prefab and prefabById[feat.prefab] or nil
+        if feat.prefab and not prefab then
+            error("fixture '" .. tostring(feat.id) .. "' references unknown prefab '"
+                .. tostring(feat.prefab) .. "'")
+        end
+        if feat.prefab and feat.where ~= nil then
+            error("fixture '" .. tostring(feat.id) .. "' cannot author both prefab and where")
+        end
+        local probability = prefab and prefab.probability or nil
+        local prob = feat.injectProbability
+            or (probability and probability.default) or 0.1
+        local predicate = prefab and prefab.where or feat.where
         for y = 2, height - 1 do
             local width = #grid[y]
             for x = 2, width - 1 do
-                if feat.role == "wall_feature" and grid[y][x] == "#" then
-                    local adjFloor = (grid[y - 1] and grid[y - 1][x] == ".")
-                        or (grid[y + 1] and grid[y + 1][x] == ".")
-                        or grid[y][x - 1] == "." or grid[y][x + 1] == "."
-                    if (not feat.requiresAdjacentFloor or adjFloor) and math.random() < prob then
-                        local lColor = feat.emitsLight and feat.emitsLight.color or { 1, 0.58, 0.22 }
-                        local lRadius = feat.emitsLight and feat.emitsLight.radius or 4
-                        table.insert(generated, { x = x - 1, y = y - 1, material = feat.id, color = lColor, radius = lRadius })
+                local key = x .. "," .. y
+                local wantsWall = feat.role == "wall_feature"
+                local eligibleCell = (wantsWall and grid[y][x] == "#")
+                    or (feat.role == "floor_feature" and grid[y][x] ~= "#")
+                if eligibleCell and not occupied[key] then
+                    local roll = exploration.cellHash(x, y,
+                        15485863 + featureIndex * 32452843,
+                        49979687 + featureIndex * 67867967) / 2147483647
+                    if fixturePredicates.matches(predicate, predicateContext, x, y)
+                            and roll < prob then
+                        local placement = { x = x - 1, y = y - 1, material = feat.id }
+                        generated[#generated + 1] = placement
+                        occupied[key] = true
+                        fixturePredicates.addFeature(predicateContext, x, y, feat.id)
+                        if feat.emitsLight then
+                            lights[#lights + 1] = {
+                                x = placement.x, y = placement.y, material = feat.id,
+                                color = feat.emitsLight.color,
+                                radius = feat.emitsLight.radius,
+                                falloff = feat.emitsLight.falloff,
+                            }
+                        end
                     end
                 end
             end
         end
     end
-    return generated
+    return generated, lights
 end
 
 -- Selects a weighted variant from a variant pool (walls/floors/ceilings)
 -- deterministically based on seed key (e.g. "x,y") or randomly.
-function exploration.resolveTilesetVariant(pool, seedKey)
-    if not pool or #pool == 0 then return nil end
-    if #pool == 1 then return pool[1] end
+function exploration.cellHash(mapX, mapY, saltA, saltB)
+    local h = (mapX * saltA + mapY * saltB) % 2147483647
+    if h < 0 then h = -h end
+    return h
+end
 
+function exploration.resolveTilesetVariant(pool, mapX, mapY, saltA, saltB)
+    if not pool or #pool == 0 then return nil end
     local totalWeight = 0
     for _, item in ipairs(pool) do
         totalWeight = totalWeight + (item.weight or 1)
     end
-    if totalWeight <= 0 then return pool[1] end
-
-    local r
-    if seedKey then
-        local hash = 0
-        local str = tostring(seedKey)
-        for i = 1, #str do
-            hash = (hash * 31 + str:byte(i)) % 100000
-        end
-        r = (hash / 100000) * totalWeight
-    else
-        r = math.random() * totalWeight
-    end
+    if totalWeight <= 0 then error("tileset variant pool has no positive weight", 0) end
+    local r = exploration.cellHash(mapX, mapY, saltA, saltB) % totalWeight
 
     local accumulated = 0
     for _, item in ipairs(pool) do
         accumulated = accumulated + (item.weight or 1)
-        if r <= accumulated then
+        if r < accumulated then
             return item
         end
     end
@@ -154,12 +177,16 @@ end
 function exploration.generateDungeon(mapData, seed, session)
     if seed then math.randomseed(seed) end
     
-    local width = mapData.width or dungeonConf("genWidth", 21)
-    local height = mapData.height or dungeonConf("genHeight", 21)
-    local genMinRooms = mapData.genMinRooms or dungeonConf("genMinRooms", 4)
-    local genMaxRooms = mapData.genMaxRooms or dungeonConf("genMaxRooms", 6)
-    local genMinRoomSize = mapData.genMinRoomSize or dungeonConf("genMinRoomSize", 3)
-    local genMaxRoomSize = mapData.genMaxRoomSize or dungeonConf("genMaxRoomSize", 5)
+    local dungeon = loader.system and loader.system.dungeon or {}
+    local profileId = mapData.generationProfile or dungeon.generationProfile
+    local profile = dungeon.generationProfiles and dungeon.generationProfiles[profileId]
+    if not profile then
+        error("generateDungeon: unknown generation profile '" .. tostring(profileId) .. "'")
+    end
+    local width = mapData.width or 21
+    local height = mapData.height or 21
+    local genMinRooms, genMaxRooms = profile.minRooms, profile.maxRooms
+    local genMinRoomSize, genMaxRoomSize = profile.minRoomSize, profile.maxRoomSize
     local grid = {}
     for y = 1, height do
         grid[y] = {}
@@ -255,18 +282,25 @@ function exploration.generateDungeon(mapData, seed, session)
     end
     
     -- 3. Connect rooms (Anchors + Procedural) with Hallways
+    local corridorCarved = {}
+    local function carveCorridor(x, y)
+        if grid[y][x] == "#" then
+            grid[y][x] = "."
+            corridorCarved[x .. "," .. y] = true
+        end
+    end
     for i = 1, #rooms - 1 do
         local r1 = rooms[i]
         local r2 = rooms[i+1]
         
         local x1, x2 = math.min(r1.cx, r2.cx), math.max(r1.cx, r2.cx)
         for x = x1, x2 do
-            if grid[r1.cy][x] == "#" then grid[r1.cy][x] = "." end
+            carveCorridor(x, r1.cy)
         end
         
         local y1, y2 = math.min(r1.cy, r2.cy), math.max(r1.cy, r2.cy)
         for y = y1, y2 do
-            if grid[y][r2.cx] == "#" then grid[y][r2.cx] = "." end
+            carveCorridor(r2.cx, y)
         end
     end
     
@@ -320,6 +354,33 @@ function exploration.generateDungeon(mapData, seed, session)
     local exitX, exitY = exitSlots[1].x, exitSlots[1].y
     if startX == exitX and startY == exitY and #exitSlots > 1 then
         exitX, exitY = exitSlots[2].x, exitSlots[2].y
+    end
+
+    -- Optional structural thresholds. Only cells actually carved out of wall
+    -- by the corridor pass qualify; ordinary room floors therefore never turn
+    -- into openings. The outside edge of each room is deterministic and an
+    -- opening remains an ordinary passable cell to movement/pathing.
+    if mapData.generateOpenings == true then
+        local marked = {}
+        local function mark(x, y)
+            local key = x .. "," .. y
+            if corridorCarved[key] and not marked[key]
+                    and not (x == startX and y == startY)
+                    and not (x == exitX and y == exitY) then
+                grid[y][x] = "o"
+                marked[key] = true
+            end
+        end
+        for _, room in ipairs(rooms) do
+            for x = room.x, room.x + room.w - 1 do
+                mark(x, room.y - 1)
+                mark(x, room.y + room.h)
+            end
+            for y = room.y, room.y + room.h - 1 do
+                mark(room.x - 1, y)
+                mark(room.x + room.w, y)
+            end
+        end
     end
     
     local generatedEvents = {}
@@ -379,7 +440,32 @@ function exploration.generateDungeon(mapData, seed, session)
     for _, t in ipairs(roomOpenTiles) do table.insert(openTiles, t) end
     for _, t in ipairs(corridorOpenTiles) do table.insert(openTiles, t) end
 
-    local generatedLights = exploration.injectTilesetFeatures(grid, mapData)
+    local generatedZones = {}
+    local function addZone(x, y, tags)
+        generatedZones[#generatedZones + 1] = { x = x - 1, y = y - 1, tags = tags }
+    end
+    for y = 1, height do
+        for x = 1, width do
+            if grid[y][x] ~= "#" then
+                local tags, roomMatch = {}, nil
+                for _, room in ipairs(rooms) do
+                    if x >= room.x and x < room.x + room.w
+                            and y >= room.y and y < room.y + room.h then
+                        roomMatch = room
+                        break
+                    end
+                end
+                tags[#tags + 1] = roomMatch and "room" or "corridor"
+                if roomMatch and roomMatch.isAnchor then tags[#tags + 1] = "anchor" end
+                addZone(x, y, tags)
+            end
+        end
+    end
+    addZone(startX, startY, { "entrance" })
+    addZone(exitX, exitY, { "exit" })
+
+    local generatedFeatures, generatedLights =
+        exploration.injectTilesetFeatures(grid, mapData, generatedZones)
     
     local placedCount = 1
     
@@ -483,7 +569,8 @@ function exploration.generateDungeon(mapData, seed, session)
         end
     end
     
-    return grid, startX, startY, exitX, exitY, generatedEvents, generatedLights
+    return grid, startX, startY, exitX, exitY, generatedEvents,
+        generatedFeatures, generatedLights, generatedZones
 end
 
 -- Unified per-cell override table (docs/design/tileset-and-events-redesign.md
@@ -509,6 +596,7 @@ function exploration.mutateTile(session, x, y, to)
     local row = session.mapGrid[gy]
     if not row then return false end
     row[gx] = to
+    session.mapStructureRevision = (session.mapStructureRevision or 0) + 1
     local ov = session.overrideIndex and session.overrideIndex[gx .. "," .. gy]
     if ov then ov.mutateTo = nil end -- consumed: already applied to the grid
     return true
@@ -524,6 +612,8 @@ local function cacheCurrentMap(session)
         events = mapData.events,
         runtimeLight = mapData.runtimeLight,
         generatedLightObjects = session.generatedLightObjects,
+        generatedFeatures = session.generatedFeatures,
+        generatedZones = session.generatedZones,
         entranceX = mapData.entranceX,
         entranceY = mapData.entranceY,
         exitX = mapData.exitX,
@@ -555,6 +645,7 @@ function exploration.applyMapPresentation(session, mapIdx, spec)
         for _, source in ipairs(session.generatedLightObjects or {}) do table.insert(sources, source) end
         mapData.runtimeLight = lighting.bake(session.mapGrid, sources, saved.ambient)
     end
+    session.mapPresentationRevision = (session.mapPresentationRevision or 0) + 1
 end
 
 local function arrivalBeside(grid, landmarkX, landmarkY)
@@ -640,7 +731,9 @@ function exploration.loadMap(session, mapIdx, opts)
         -- Safe/authored maps use the same tileset fixture rules as generated
         -- maps. Without this, wall fixtures configured in a tileset never
         -- appeared while testing a town.
-        session.generatedLightObjects = exploration.injectTilesetFeatures(grid, mapData)
+        session.generatedZones = {}
+        session.generatedFeatures, session.generatedLightObjects =
+            exploration.injectTilesetFeatures(grid, mapData, session.generatedZones)
         if not mapData.light then
             local lightSources = {}
             for _, source in ipairs(mapData.lightObjects or {}) do table.insert(lightSources, source) end
@@ -654,7 +747,9 @@ function exploration.loadMap(session, mapIdx, opts)
         if saved then
             grid = saved.mapGrid
             session.currentMapData.events = saved.events
+            session.generatedFeatures = saved.generatedFeatures
             session.generatedLightObjects = saved.generatedLightObjects
+            session.generatedZones = saved.generatedZones
             session.currentMapData.runtimeLight = saved.runtimeLight
             session.currentMapData.entranceX = saved.entranceX
             session.currentMapData.entranceY = saved.entranceY
@@ -662,11 +757,15 @@ function exploration.loadMap(session, mapIdx, opts)
             session.currentMapData.exitY = saved.exitY
             session.visitedGrid = saved.visitedGrid
         else
-            local entranceX, entranceY, exitX, exitY, generatedEvents, generatedLights
-            grid, entranceX, entranceY, exitX, exitY, generatedEvents, generatedLights =
+            local entranceX, entranceY, exitX, exitY, generatedEvents,
+                generatedFeatures, generatedLights, generatedZones
+            grid, entranceX, entranceY, exitX, exitY, generatedEvents,
+                generatedFeatures, generatedLights, generatedZones =
                 exploration.generateDungeon(mapData, os.time() + mapIdx, session)
             session.currentMapData.events = generatedEvents
+            session.generatedFeatures = generatedFeatures
             session.generatedLightObjects = generatedLights
+            session.generatedZones = generatedZones
             session.currentMapData.runtimeLight = lighting.bake(grid, generatedLights)
             session.currentMapData.entranceX = entranceX
             session.currentMapData.entranceY = entranceY
@@ -686,6 +785,7 @@ function exploration.loadMap(session, mapIdx, opts)
     end
     
     session.mapGrid = grid
+    session.mapStructureRevision = (session.mapStructureRevision or 0) + 1
     exploration.buildOverrideIndex(session)
     session.playerX = startX
     session.playerY = startY

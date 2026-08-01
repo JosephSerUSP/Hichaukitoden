@@ -868,6 +868,96 @@ function cli.runPreviewMap(mapId, x, y, dir, loader)
     print("PREVIEW END")
 end
 
+-- Deterministic headless 3D renderer profile. `flush` makes each sample include
+-- command submission instead of measuring only Lua-side queue construction.
+function cli.runProfile3D(mapId, frameCount, loader)
+    local json = require("data.json")
+    local exploration = require("engine.exploration")
+    local viewport_3d = require("presentation.viewport_3d")
+    local mapIdx
+    for idx, map in ipairs(loader.maps or {}) do
+        if tostring(map.id) == tostring(mapId) then mapIdx = idx break end
+    end
+    if not mapIdx then error("map not found: " .. tostring(mapId)) end
+
+    local session = makeHarnessSession(loader)
+    -- Generated dungeon maps normally seed from wall-clock time. Pin that
+    -- input so repeated profiles compare the same topology and draw workload.
+    local originalTime = os.time
+    os.time = function() return 1735689600 end
+    local loaded, loadError = pcall(exploration.loadMap, session, mapIdx)
+    os.time = originalTime
+    if not loaded then error(loadError, 0) end
+    positionAtClearCorridor(session)
+    viewport_3d.init()
+    local canvas = love.graphics.newCanvas(256, 240)
+    love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+
+    local function renderSample()
+        love.graphics.clear(0, 0, 0, 1, true, true)
+        local started = love.timer.getTime()
+        viewport_3d.draw(session)
+        love.graphics.flushBatch()
+        return (love.timer.getTime() - started) * 1000
+    end
+    collectgarbage("collect")
+    local statsBefore = love.graphics.getStats()
+    local luaKbBefore = collectgarbage("count")
+    local coldMs = renderSample()
+    for _ = 1, 20 do renderSample() end
+
+    local count = math.max(1, math.floor(tonumber(frameCount) or 300))
+    local samples, total = {}, 0
+    for i = 1, count do
+        samples[i] = renderSample()
+        total = total + samples[i]
+    end
+    table.sort(samples)
+    local function percentile(p)
+        return samples[math.max(1, math.min(count, math.ceil(count * p)))]
+    end
+    local statsAfter = love.graphics.getStats()
+    local structure = viewport_3d.prepareStructure(session)
+    local frameStats = viewport_3d.getLastFrameStats()
+    local batchCount, residentVertices, selectedNodes = 0, 0, 0
+    for _, batch in pairs(structure.surfaceBatches or {}) do
+        batchCount = batchCount + 1
+        residentVertices = residentVertices + #(batch.vertices or {})
+        selectedNodes = selectedNodes + #(batch.selected or {})
+    end
+    love.graphics.setCanvas()
+    local payload = {
+        mapId = mapId,
+        frames = count,
+        coldMs = coldMs,
+        meanMs = total / count,
+        medianMs = percentile(0.50),
+        p95Ms = percentile(0.95),
+        p99Ms = percentile(0.99),
+        minMs = samples[1],
+        maxMs = samples[count],
+        approximateFps = 1000 / (total / count),
+        drawCallsPerFrame = ((statsAfter.drawcalls or 0) - (statsBefore.drawcalls or 0)) / (count + 21),
+        canvasSwitchesPerFrame = ((statsAfter.canvasswitches or 0) - (statsBefore.canvasswitches or 0)) / (count + 21),
+        textureMemoryBytes = statsAfter.texturememory,
+        luaMemoryDeltaKb = collectgarbage("count") - luaKbBefore,
+        structuralCacheHits = structure.hits,
+        textureBatches = batchCount,
+        residentStructuralVertices = residentVertices,
+        selectedStructuralNodes = selectedNodes,
+        persistentBatchDraws = frameStats.persistentBatchDraws,
+        dynamicMeshDraws = frameStats.dynamicMeshDraws,
+        modelDraws = frameStats.modelDraws,
+        worldEffectHandles = frameStats.worldEffectHandles,
+        dynamicByCategory = frameStats.dynamicByCategory,
+        dynamicSourceQuads = frameStats.dynamicSourceQuads,
+        queuedSurfaces = frameStats.queuedSurfaces,
+    }
+    print("PROFILE 3D BEGIN")
+    print(json.encode(payload))
+    print("PROFILE 3D END")
+end
+
 -- Headless fog preview (`lovec . preview-fog <fogSpecJson> [mapId]`):
 -- loads a map (or the first map), overrides its fog settings with fogSpecJson,
 -- and renders a 3D viewport frame to PNG base64 for the editor preview pane.

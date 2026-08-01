@@ -34,7 +34,7 @@ across the effect draw — the states LOVE actually caches. All render correctly
 
 | File | What |
 |---|---|
-| `efk_shim.cpp` | The `extern "C"` wrapper. 15 exported functions, ints and floats only; every `RefPtr`/vtable stays sealed C++-side |
+| `efk_shim.cpp` | The `extern "C"` wrapper. Plain ints/floats only; every `RefPtr`/vtable stays sealed C++-side. Separate entry points own screen-overlay and world-camera draws |
 | `spike/main.lua` | LOVE harness: FFI-loads the DLL, plays an effect, auto-captures and exits |
 | `spike/conf.lua` | 800x600 window for the harness |
 | `spike/canvas-main.lua` | The one that matters for step 2: effect into a 256x240 canvas with a screen-space ortho camera |
@@ -138,3 +138,15 @@ exposes `efk_set_random_seed(seed)`; the screenshot harness reseeds per scene
 alongside `math.randomseed`. Verified: two consecutive full runs are 123/123
 identical **including** the frame with a live effect, and changing the seed to
 999 changes that frame and only that frame.
+
+## World-camera pass (01.08.2026)
+
+`efk_draw_world(view, projection, zNear, zFar)` is distinct from the late
+screen-space overlay. It preserves LOVE's populated world depth attachment and
+draws directly into the full 256x240 world canvas. Lua bridges the game's X/Y
+floor, Z-up convention to Effekseer's conventional X/Z floor, Y-up axes. The
+`env_mist` is gated visibly at its authored frame-400 opacity milestone while
+the populated world depth attachment is preserved. `env_rain` loads, emits and
+renders in the screen-space pass at frame 100, but produces no pixels through
+the perspective pass even without textures or an axis-fixed sprite. It remains
+a perspective-renderer compatibility follow-up.

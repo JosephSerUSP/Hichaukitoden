@@ -1960,8 +1960,366 @@ elseif paramDef.type == "script" then
         end
     end
 
+    local function validateFixturePredicate(predicate, where, featureIds)
+        check(type(predicate) == "table", where .. " must be an object")
+        if type(predicate) ~= "table" then return end
+        local operators = { "all", "any", "not", "adjacent", "distance", "zone" }
+        local present = {}
+        for _, operator in ipairs(operators) do
+            if predicate[operator] ~= nil then present[#present + 1] = operator end
+        end
+        check(#present == 1, where .. " must contain exactly one predicate operator")
+        if #present ~= 1 then return end
+        local operator, value = present[1], predicate[present[1]]
+        if operator == "all" or operator == "any" then
+            check(type(value) == "table" and #value > 0,
+                where .. "." .. operator .. " must be a non-empty array")
+            if type(value) == "table" then
+                for i, child in ipairs(value) do
+                    validateFixturePredicate(child, where .. "." .. operator .. "[" .. i .. "]", featureIds)
+                end
+            end
+        elseif operator == "not" then
+            validateFixturePredicate(value, where .. ".not", featureIds)
+        elseif operator == "zone" then
+            check(type(value) == "string" and value ~= "", where .. ".zone must be a non-empty string")
+        elseif operator == "adjacent" then
+            if type(value) == "string" then
+                check(value == "wall" or value == "floor" or value == "opening",
+                    where .. ".adjacent has unknown tile class '" .. tostring(value) .. "'")
+            else
+                check(type(value) == "table", where .. ".adjacent must be a tile string or object")
+                if type(value) == "table" then
+                    local targets = (value.tile and 1 or 0) + (value.zone and 1 or 0)
+                        + (value.feature and 1 or 0)
+                    check(targets == 1, where .. ".adjacent requires exactly one of tile, zone or feature")
+                    if value.tile then
+                        check(value.tile == "wall" or value.tile == "floor" or value.tile == "opening",
+                            where .. ".adjacent.tile has unknown class '" .. tostring(value.tile) .. "'")
+                    end
+                    if value.zone then check(type(value.zone) == "string" and value.zone ~= "",
+                        where .. ".adjacent.zone must be a non-empty string") end
+                    if value.feature then check(featureIds[value.feature] == true,
+                        where .. ".adjacent.feature references unknown feature '" .. tostring(value.feature) .. "'") end
+                    check(value.diagonal == nil or type(value.diagonal) == "boolean",
+                        where .. ".adjacent.diagonal must be boolean")
+                end
+            end
+        elseif operator == "distance" then
+            check(type(value) == "table", where .. ".distance must be an object")
+            if type(value) == "table" then
+                local targets = (value.zone and 1 or 0) + (value.feature and 1 or 0)
+                check(targets == 1, where .. ".distance requires exactly one of zone or feature")
+                if value.zone then check(type(value.zone) == "string" and value.zone ~= "",
+                    where .. ".distance.zone must be a non-empty string") end
+                if value.feature then check(featureIds[value.feature] == true,
+                    where .. ".distance.feature references unknown feature '" .. tostring(value.feature) .. "'") end
+                check(value.min == nil or (type(value.min) == "number" and value.min >= 0),
+                    where .. ".distance.min must be non-negative")
+                check(value.max == nil or (type(value.max) == "number" and value.max >= 0),
+                    where .. ".distance.max must be non-negative")
+                if type(value.min) == "number" and type(value.max) == "number" then
+                    check(value.min <= value.max, where .. ".distance min exceeds max")
+                end
+            end
+        end
+    end
+
+    -- Tileset variant pools are resolved deterministically by authored weight.
+    -- Reject malformed weights here rather than letting one bad pool make a
+    -- renderer choice disappear or fall through silently.
+    for tilesetId, tileset in pairs(loader.tilesets or {}) do
+        local featureIds = {}
+        for _, feature in ipairs(tileset.features or {}) do featureIds[feature.id] = true end
+        local prefabIds = {}
+        for pi, prefab in ipairs(tileset.fixturePrefabs or {}) do
+            local where = "tileset '" .. tostring(tilesetId) .. "' fixturePrefabs[" .. pi .. "]"
+            check(type(prefab.id) == "string" and prefab.id ~= "", where .. " needs a non-empty id")
+            if type(prefab.id) == "string" then
+                check(not prefabIds[prefab.id], where .. " duplicates prefab id '" .. prefab.id .. "'")
+                prefabIds[prefab.id] = true
+            end
+            validateFixturePredicate(prefab.where, where .. ".where", featureIds)
+            if prefab.probability ~= nil then
+                local range = prefab.probability
+                check(type(range) == "table", where .. ".probability must be an object")
+                if type(range) == "table" then
+                    local min, max, default = range.min or 0, range.max or 1, range.default
+                    check(type(min) == "number" and min >= 0 and min <= 1,
+                        where .. ".probability.min must be between 0 and 1")
+                    check(type(max) == "number" and max >= 0 and max <= 1,
+                        where .. ".probability.max must be between 0 and 1")
+                    check(type(min) ~= "number" or type(max) ~= "number" or min <= max,
+                        where .. ".probability min exceeds max")
+                    check(default == nil or (type(default) == "number"
+                            and type(min) == "number" and type(max) == "number"
+                            and default >= min and default <= max),
+                        where .. ".probability.default must be inside min/max")
+                end
+            end
+        end
+        local pools = {
+            walls = tileset.base and tileset.base.walls,
+            floors = tileset.base and tileset.base.floors,
+            ceilings = tileset.base and tileset.base.ceilings,
+            doors = tileset.doors,
+            features = tileset.features,
+        }
+        for poolName, pool in pairs(pools) do
+            for vi, variant in ipairs(pool or {}) do
+                local where = "tileset '" .. tostring(tilesetId) .. "' "
+                    .. poolName .. "[" .. vi .. "]"
+                check(type(variant.weight or 1) == "number" and (variant.weight or 1) > 0,
+                    where .. " weight must be a positive number")
+                if poolName == "features" then
+                    check(variant.role == "wall_feature" or variant.role == "floor_feature",
+                        where .. " role must be wall_feature or floor_feature")
+                    check(type(variant.injectProbability or 0.1) == "number"
+                            and (variant.injectProbability or 0.1) >= 0
+                            and (variant.injectProbability or 0.1) <= 1,
+                        where .. " injectProbability must be between 0 and 1")
+                    check(variant.requiresAdjacentFloor == nil,
+                        where .. " uses removed requiresAdjacentFloor; author where.adjacent instead")
+                    check(not (variant.prefab ~= nil and variant.where ~= nil),
+                        where .. " cannot author both prefab and where")
+                    if variant.prefab ~= nil then
+                        check(type(variant.prefab) == "string" and prefabIds[variant.prefab] == true,
+                            where .. " references unknown fixture prefab '"
+                                .. tostring(variant.prefab) .. "'")
+                        local prefab
+                        for _, candidate in ipairs(tileset.fixturePrefabs or {}) do
+                            if candidate.id == variant.prefab then prefab = candidate break end
+                        end
+                        local range = prefab and prefab.probability
+                        if range and variant.injectProbability ~= nil then
+                            check(variant.injectProbability >= (range.min or 0)
+                                    and variant.injectProbability <= (range.max or 1),
+                                where .. " injectProbability is outside prefab range")
+                        end
+                    end
+                    if variant.where ~= nil then
+                        validateFixturePredicate(variant.where, where .. ".where", featureIds)
+                    end
+                    if variant.emitsLight then
+                        check(type(variant.emitsLight.color) == "table"
+                                and #variant.emitsLight.color == 3,
+                            where .. " emitsLight needs an RGB color")
+                        check(type(variant.emitsLight.radius) == "number"
+                                and variant.emitsLight.radius > 0,
+                            where .. " emitsLight radius must be positive")
+                    end
+                    if variant.effect ~= nil then
+                        check(type(variant.effect) == "string"
+                                and variant.effect:match("%.efkefc$") ~= nil,
+                            where .. " effect must name an .efkefc file")
+                        check(type(variant.effect) ~= "string"
+                                or love.filesystem.getInfo(variant.effect) ~= nil,
+                            where .. " effect is missing (" .. tostring(variant.effect) .. ")")
+                        check(variant.effectHeight == nil or type(variant.effectHeight) == "number",
+                            where .. " effectHeight must be numeric")
+                        check(variant.effectMagnification == nil
+                                or (type(variant.effectMagnification) == "number"
+                                    and variant.effectMagnification > 0),
+                            where .. " effectMagnification must be positive")
+                    end
+                end
+                if variant.model ~= nil then
+                    check(poolName == "doors" or poolName == "features",
+                        where .. " model is currently supported only for door/opening or fixture variants")
+                    check(type(variant.model) == "string" and variant.model:match("%.obj$") ~= nil,
+                        where .. " model must name an .obj file")
+                    check(type(variant.model) ~= "string" or love.filesystem.getInfo(variant.model) ~= nil,
+                        where .. " model is missing (" .. tostring(variant.model) .. ")")
+                elseif poolName == "walls" then
+                    check(type(variant.middle) == "table" and #variant.middle >= 2,
+                        where .. " needs middle atlas coordinates or model")
+                else
+                    check(type(variant.atlas) == "table" and #variant.atlas >= 2,
+                        where .. " needs atlas coordinates or model")
+                end
+            end
+        end
+    end
+
+    local dungeonConfig = loader.system and loader.system.dungeon or {}
+    local generationProfiles = dungeonConfig.generationProfiles or {}
+    check(type(dungeonConfig.generationProfile) == "string"
+            and generationProfiles[dungeonConfig.generationProfile] ~= nil,
+        "system.dungeon.generationProfile must reference a generation profile")
+    for profileId, profile in pairs(generationProfiles) do
+        local where = "system.dungeon.generationProfiles." .. tostring(profileId)
+        check(type(profile.minRooms) == "number" and profile.minRooms >= 1,
+            where .. ".minRooms must be at least 1")
+        check(type(profile.maxRooms) == "number" and type(profile.minRooms) == "number"
+                and profile.maxRooms >= profile.minRooms,
+            where .. ".maxRooms must be at least minRooms")
+        check(type(profile.minRoomSize) == "number" and profile.minRoomSize >= 3,
+            where .. ".minRoomSize must be at least 3")
+        check(type(profile.maxRoomSize) == "number" and type(profile.minRoomSize) == "number"
+                and profile.maxRoomSize >= profile.minRoomSize,
+            where .. ".maxRoomSize must be at least minRoomSize")
+    end
+
+    for mi, map in ipairs(loader.maps or {}) do
+        for _, removed in ipairs({ "genMinRooms", "genMaxRooms", "genMinRoomSize", "genMaxRoomSize" }) do
+            check(map[removed] == nil,
+                "map[" .. mi .. "] uses removed " .. removed .. "; select generationProfile instead")
+        end
+        if map.generationProfile ~= nil then
+            check(type(map.generationProfile) == "string"
+                    and generationProfiles[map.generationProfile] ~= nil,
+                "map[" .. mi .. "] references unknown generationProfile '"
+                    .. tostring(map.generationProfile) .. "'")
+        end
+        if map.tilesetOverride ~= nil then
+            local delta = map.tilesetOverride
+            local owner = "map[" .. mi .. "].tilesetOverride"
+            check(type(delta) == "table", owner .. " must be an object")
+            if type(delta) == "table" then
+                local allowed = { features = true, doors = true, fixturePrefabs = true, base = true }
+                for key in pairs(delta) do
+                    check(allowed[key] == true, owner .. " has unknown field '" .. tostring(key) .. "'")
+                end
+                local baseTileset = loader.getTileset(map.tileset)
+                local function validateDeltaPool(patches, basePool, where)
+                    check(type(patches) == "table", where .. " must be an array")
+                    if type(patches) ~= "table" then return end
+                    local baseIds, seen = {}, {}
+                    for _, entry in ipairs(basePool or {}) do baseIds[entry.id] = true end
+                    for i, entry in ipairs(patches) do
+                        local item = where .. "[" .. i .. "]"
+                        check(type(entry) == "table", item .. " must be an object")
+                        if type(entry) == "table" then
+                            check(type(entry.id) == "string" and entry.id ~= "", item .. " needs an id")
+                            if type(entry.id) == "string" then
+                                check(not seen[entry.id], item .. " duplicates id '" .. entry.id .. "'")
+                                seen[entry.id] = true
+                            end
+                            if entry.remove == true then
+                                check(baseIds[entry.id] == true,
+                                    item .. " cannot remove missing base id '" .. tostring(entry.id) .. "'")
+                                for key in pairs(entry) do
+                                    check(key == "id" or key == "remove",
+                                        item .. " remove entry cannot also author '" .. tostring(key) .. "'")
+                                end
+                            else
+                                check(entry.remove == nil, item .. ".remove must be true or omitted")
+                            end
+                        end
+                    end
+                end
+                if delta.features ~= nil then
+                    validateDeltaPool(delta.features, baseTileset and baseTileset.features,
+                        owner .. ".features")
+                end
+                if delta.doors ~= nil then
+                    validateDeltaPool(delta.doors, baseTileset and baseTileset.doors,
+                        owner .. ".doors")
+                end
+                if delta.fixturePrefabs ~= nil then
+                    validateDeltaPool(delta.fixturePrefabs, baseTileset and baseTileset.fixturePrefabs,
+                        owner .. ".fixturePrefabs")
+                end
+                if delta.base ~= nil then
+                    check(type(delta.base) == "table", owner .. ".base must be an object")
+                    if type(delta.base) == "table" then
+                        local allowedBase = { walls = true, floors = true, ceilings = true, skies = true }
+                        for key in pairs(delta.base) do
+                            check(allowedBase[key] == true,
+                                owner .. ".base has unknown field '" .. tostring(key) .. "'")
+                        end
+                        for _, pool in ipairs({ "walls", "floors", "ceilings", "skies" }) do
+                            if delta.base[pool] ~= nil then
+                                validateDeltaPool(delta.base[pool],
+                                    baseTileset and baseTileset.base and baseTileset.base[pool],
+                                    owner .. ".base." .. pool)
+                            end
+                        end
+                    end
+                end
+
+                local resolved = require("engine.tileset_resolver").resolve(loader, map)
+                local prefabIds, resolvedFeatureIds = {}, {}
+                for _, feature in ipairs((resolved and resolved.features) or {}) do
+                    resolvedFeatureIds[feature.id] = true
+                end
+                for pi, prefab in ipairs((resolved and resolved.fixturePrefabs) or {}) do
+                    local where = owner .. " resolved fixturePrefabs[" .. pi .. "]"
+                    check(type(prefab.id) == "string" and prefab.id ~= "", where .. " needs an id")
+                    if type(prefab.id) == "string" then
+                        check(not prefabIds[prefab.id], where .. " duplicates id '" .. prefab.id .. "'")
+                        prefabIds[prefab.id] = true
+                    end
+                    validateFixturePredicate(prefab.where, where .. ".where", resolvedFeatureIds)
+                    if prefab.probability ~= nil then
+                        local range = prefab.probability
+                        check(type(range) == "table", where .. ".probability must be an object")
+                        if type(range) == "table" then
+                            local min, max, default = range.min or 0, range.max or 1, range.default
+                            check(type(min) == "number" and min >= 0 and min <= 1,
+                                where .. ".probability.min must be between 0 and 1")
+                            check(type(max) == "number" and max >= 0 and max <= 1,
+                                where .. ".probability.max must be between 0 and 1")
+                            check(type(min) ~= "number" or type(max) ~= "number" or min <= max,
+                                where .. ".probability min exceeds max")
+                            check(default == nil or (type(default) == "number"
+                                    and type(min) == "number" and type(max) == "number"
+                                    and default >= min and default <= max),
+                                where .. ".probability.default must be inside min/max")
+                        end
+                    end
+                end
+                for fi, feature in ipairs((resolved and resolved.features) or {}) do
+                    local where = owner .. " resolved features[" .. fi .. "]"
+                    check(feature.role == "wall_feature" or feature.role == "floor_feature",
+                        where .. " role must be wall_feature or floor_feature")
+                    check(type(feature.injectProbability or 0.1) == "number"
+                            and (feature.injectProbability or 0.1) >= 0
+                            and (feature.injectProbability or 0.1) <= 1,
+                        where .. " injectProbability must be between 0 and 1")
+                    check(not (feature.prefab ~= nil and feature.where ~= nil),
+                        where .. " cannot author both prefab and where")
+                    if feature.prefab ~= nil then
+                        check(prefabIds[feature.prefab] == true,
+                            where .. " references unknown fixture prefab '"
+                                .. tostring(feature.prefab) .. "'")
+                    elseif feature.where ~= nil then
+                        validateFixturePredicate(feature.where, where .. ".where", resolvedFeatureIds)
+                    end
+                    check(feature.model ~= nil or (type(feature.atlas) == "table" and #feature.atlas >= 2),
+                        where .. " needs atlas coordinates or model")
+                end
+            end
+        end
+        for zi, zone in ipairs(map.zones or {}) do
+            local where = "map[" .. mi .. "] zone[" .. zi .. "]"
+            local tags = zone.tags or { zone.id }
+            check(type(tags) == "table" and #tags > 0, where .. " requires id or non-empty tags")
+            for ti, tag in ipairs(tags) do
+                check(type(tag) == "string" and tag ~= "", where .. " tag[" .. ti .. "] must be non-empty")
+            end
+            if zone.cells ~= nil then
+                check(type(zone.cells) == "table" and #zone.cells > 0,
+                    where .. ".cells must be a non-empty array")
+                for ci, cell in ipairs(zone.cells or {}) do
+                    check(type(cell.x) == "number" and type(cell.y) == "number",
+                        where .. ".cells[" .. ci .. "] requires numeric x/y")
+                end
+                check(zone.x == nil and zone.y == nil and zone.width == nil and zone.height == nil,
+                    where .. " cannot combine cells with rectangle fields")
+            else
+                check(type(zone.x) == "number" and type(zone.y) == "number"
+                        and type(zone.width) == "number" and zone.width > 0
+                        and type(zone.height) == "number" and zone.height > 0,
+                    where .. " rectangle requires numeric x/y and positive width/height")
+            end
+        end
+    end
+
     -- Run the tree walker over all data files
     for _, map in ipairs(loader.maps or {}) do
+        check(map.generateOpenings == nil or type(map.generateOpenings) == "boolean",
+            "map '" .. tostring(map.name) .. "' generateOpenings must be boolean")
         -- docs/design/raycaster-tileset-lighting.md: per-map ceiling flag and
         -- optional vertex-light grid. Both are additive/optional so older
         -- maps without them still validate cleanly.

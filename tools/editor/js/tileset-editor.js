@@ -10,10 +10,7 @@
 // against. Clicking the atlas now assigns coordinates into whichever pool
 // entry is selected in the list -- or creates a new one if none is selected.
 //
-// Weighted/adjacency-predicate RESOLUTION (§3: real random selection at
-// generation/render time, prefabs, zone tags) is still open design work.
-// This module only fixes the AUTHORING side: it's now possible to actually
-// create a second variant to weigh against the first.
+// Base and door pools resolve deterministic authored weights in the renderer.
 // ============================================================================
 (function() {
     let currentTilesetId = 'dungeon_default';
@@ -111,7 +108,7 @@
             variant = { id: nextVariantId('ceiling'), role: 'base_ceiling', atlas: [0, 0], weight: 100 };
             tilesetData.base.ceilings.push(variant);
         } else if (activeRole === 'door') {
-            variant = { id: nextVariantId('door'), role: 'door', atlas: [0, 0] };
+            variant = { id: nextVariantId('door'), role: 'door', atlas: [0, 0], weight: 100 };
             tilesetData.doors.push(variant);
         } else { // wall_feature | floor_feature
             variant = { id: nextVariantId(activeRole), role: activeRole, atlas: [0, 0], injectProbability: 0.12 };
@@ -153,14 +150,44 @@
         } else if (key === 'weight') {
             const n = parseInt(value);
             v.weight = isNaN(n) ? 100 : Math.max(1, n);
+        } else if (key === 'model') {
+            const path = value.trim();
+            if (path) v.model = path; else delete v.model;
+        } else if (key === 'effect') {
+            const path = value.trim();
+            if (path) v.effect = path; else delete v.effect;
+        } else if (key === 'effectHeight' || key === 'effectMagnification') {
+            const n = parseFloat(value);
+            if (Number.isFinite(n)) v[key] = n; else delete v[key];
         } else if (key === 'heightOffset') {
             const n = parseFloat(value);
             v.heightOffset = isNaN(n) ? 0 : n;
         } else if (key === 'injectProbability') {
             const n = parseFloat(value);
             v.injectProbability = isNaN(n) ? 0.12 : Math.max(0, Math.min(100, n)) / 100;
-        } else if (key === 'requiresAdjacentFloor') {
-            if (value) v.requiresAdjacentFloor = true; else delete v.requiresAdjacentFloor;
+        } else if (key === 'prefab') {
+            if (value) {
+                v.prefab = value;
+                delete v.where;
+                const preset = (tilesetData.fixturePrefabs || []).find(p => p.id === value);
+                if (preset && preset.probability && preset.probability.default !== undefined) {
+                    v.injectProbability = preset.probability.default;
+                }
+            } else {
+                delete v.prefab;
+            }
+        } else if (key === 'whereJson') {
+            const text = value.trim();
+            if (!text) {
+                delete v.where;
+            } else {
+                try {
+                    v.where = JSON.parse(text);
+                } catch (error) {
+                    showToast('Placement predicate is not valid JSON: ' + error.message, 'error');
+                    return;
+                }
+            }
         } else if (key === 'emitsLightToggle') {
             if (value) {
                 v.emitsLight = v.emitsLight || { color: [1, 0.58, 0.22], radius: 4, falloff: 2 };
@@ -183,6 +210,28 @@
         renderVariantDetail();
         renderAtlasCanvas();
         renderCompositePreview();
+    };
+
+    window.updateFixturePrefabs = function(text) {
+        if (!tilesetData) return;
+        try {
+            const parsed = JSON.parse(text || '[]');
+            if (!Array.isArray(parsed)) throw new Error('the prefab library must be an array');
+            tilesetData.fixturePrefabs = parsed;
+            renderVariantDetail();
+        } catch (error) {
+            showToast('Fixture prefab library is not valid JSON: ' + error.message, 'error');
+        }
+    };
+
+    window.copyPrefabToCustomRule = function() {
+        if (!selectedVariantRef || !selectedVariantRef.prefab) return;
+        const preset = (tilesetData.fixturePrefabs || [])
+            .find(p => p.id === selectedVariantRef.prefab);
+        if (!preset || !preset.where) return;
+        selectedVariantRef.where = JSON.parse(JSON.stringify(preset.where));
+        delete selectedVariantRef.prefab;
+        renderVariantDetail();
     };
 
     function hexToRgb01(hex) {
@@ -260,6 +309,7 @@
         tilesetData.base.ceilings = tilesetData.base.ceilings || [];
         tilesetData.doors = tilesetData.doors || [];
         tilesetData.features = tilesetData.features || [];
+        tilesetData.fixturePrefabs = tilesetData.fixturePrefabs || [];
 
         const nameInput = document.getElementById('ts-tileset-name');
         if (nameInput) nameInput.value = tilesetData.name || id;
@@ -494,6 +544,12 @@
     function renderVariantDetail() {
         const detail = document.getElementById('ts-variant-detail');
         if (!detail) return;
+        const featureRole = activeRole === 'wall_feature' || activeRole === 'floor_feature';
+        document.getElementById('ts-prefab-library-row').style.display = featureRole ? 'flex' : 'none';
+        if (featureRole) {
+            document.getElementById('ts-prefab-library').value = JSON.stringify(
+                tilesetData.fixturePrefabs || [], null, 2);
+        }
         if (!selectedVariantRef) {
             detail.style.display = 'none';
             return;
@@ -503,9 +559,15 @@
 
         document.getElementById('ts-v-id').value = v.id || '';
 
-        const isWeighted = activeRole === 'wall' || activeRole === 'floor' || activeRole === 'ceiling';
+        const isWeighted = activeRole === 'wall' || activeRole === 'floor'
+            || activeRole === 'ceiling' || activeRole === 'door';
         document.getElementById('ts-v-weight-row').style.display = isWeighted ? 'flex' : 'none';
         if (isWeighted) document.getElementById('ts-v-weight').value = v.weight || 100;
+
+        const supportsModel = activeRole === 'door'
+            || activeRole === 'wall_feature' || activeRole === 'floor_feature';
+        document.getElementById('ts-v-model-row').style.display = supportsModel ? 'flex' : 'none';
+        document.getElementById('ts-v-model').value = v.model || '';
 
         const isWall = activeRole === 'wall';
         document.getElementById('ts-v-wallslot-row').style.display = isWall ? 'block' : 'none';
@@ -524,12 +586,27 @@
         if (isFloor) document.getElementById('ts-v-height').value = v.heightOffset || 0;
 
         const isFeature = activeRole === 'wall_feature' || activeRole === 'floor_feature';
+        document.getElementById('ts-v-effect-row').style.display = isFeature ? 'flex' : 'none';
+        document.getElementById('ts-v-effect').value = v.effect || '';
+        document.getElementById('ts-v-effect-height').value = v.effectHeight ?? '';
+        document.getElementById('ts-v-effect-mag').value = v.effectMagnification ?? '';
         document.getElementById('ts-v-inject-row').style.display = isFeature ? 'flex' : 'none';
-        document.getElementById('ts-v-adjfloor-row').style.display = isFeature ? 'flex' : 'none';
+        document.getElementById('ts-v-where-row').style.display = isFeature ? 'flex' : 'none';
         document.getElementById('ts-v-light-row').style.display = isFeature ? 'flex' : 'none';
         if (isFeature) {
+            const prefabSelect = document.getElementById('ts-v-prefab');
+            prefabSelect.innerHTML = '<option value="">Custom rule</option>';
+            for (const prefab of (tilesetData.fixturePrefabs || [])) {
+                const option = document.createElement('option');
+                option.value = prefab.id;
+                option.textContent = prefab.name || prefab.id;
+                prefabSelect.appendChild(option);
+            }
+            prefabSelect.value = v.prefab || '';
             document.getElementById('ts-v-inject').value = Math.round((v.injectProbability ?? 0.12) * 100);
-            document.getElementById('ts-v-adjfloor').checked = !!v.requiresAdjacentFloor;
+            document.getElementById('ts-v-where').value = v.where
+                ? JSON.stringify(v.where, null, 2) : '';
+            document.getElementById('ts-v-where').disabled = !!v.prefab;
             const emits = !!v.emitsLight;
             document.getElementById('ts-v-emits-light').checked = emits;
             document.getElementById('ts-v-light-fields').style.display = emits ? 'flex' : 'none';
