@@ -1397,6 +1397,22 @@ local function drawsOuterPanel(layout, style)
     return layout.chrome ~= "none" and not NO_OUTER_PANEL_STYLES[style]
 end
 
+-- A window's title was drawn BY its outer panel, so suppressing the panel
+-- (`chrome = "none"`, for content sitting on the dock's shared shell) silently
+-- took the title with it -- `dock_item_info` lost its "Effects / Traits"
+-- header that way. The title belongs to the window, not to its background.
+local function drawPanelOrTitle(layout, style, title, x, y, w, h)
+    if drawsOuterPanel(layout, style) then
+        ui.drawPanel(x, y, w, h, title)
+    elseif title and layout.chrome == "none" and not NO_OUTER_PANEL_STYLES[style] then
+        -- Only when the panel was suppressed by `chrome`. A NO_OUTER_PANEL
+        -- style draws its own panel, title included (drawLevelUpStatsWindow
+        -- and drawVictoryPanelWindow both do), so adding one here would
+        -- render the title twice.
+        ui.drawPanelTitle(title, x, y)
+    end
+end
+
 -- Applies a layout's shiftWith override after visibility is resolved.
 -- When layout.shiftWith names another window id that is currently hidden,
 -- the shiftWhenHidden rect (table with x/y/w/h overrides) is merged in.
@@ -1456,11 +1472,11 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
     if animating then
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(px, py, pw, ph)
-        if drawsOuterPanel(layout, style) then ui.drawPanel(px, py, pw, ph, title) end
+        drawPanelOrTitle(layout, style, title, px, py, pw, ph)
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
         if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
     else
-        if drawsOuterPanel(layout, style) then ui.drawPanel(x, y, w, h, title) end
+        drawPanelOrTitle(layout, style, title, x, y, w, h)
         drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx)
     end
 
