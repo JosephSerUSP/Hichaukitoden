@@ -2973,7 +2973,17 @@
             "type": "text",
             "text": "{v.popupText}"
           }
-        ]
+        ],
+        "anim": {
+          "open": {
+            "duration": 0.16,
+            "effect": "rescale"
+          },
+          "close": {
+            "duration": 0.1,
+            "effect": "rescale"
+          }
+        }
       }
     ],
     "goldenScript": [

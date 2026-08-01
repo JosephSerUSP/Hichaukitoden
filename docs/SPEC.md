@@ -1080,7 +1080,36 @@ build failure, never a silently centered effect.
 The enemy info block (element icons + name + HP gauge) is data likewise:
 `battleLayout.enemyInfo*` owns its width (96px default), its offsets **from the
 creature's feet line** rather than an absolute row, and an on/off switch per
-channel.
+channel. It is **off** by default as of 31.07.2026: target selection already
+shows the same name, HP and elements for the creature under the cursor, and
+showing it permanently for every enemy duplicated that on top of the art.
+
+### 2.5 When a window animates (31.07.2026)
+
+Window open/close animation was assigned ad hoc — some popups had an open with
+no close, three different effects, four different durations — which read as
+inconsistency rather than as intent. The rule:
+
+1. **Overlays animate.** A window that appears *over* what is already on
+   screen — a popup, a confirm, the dock's party slots — opens and closes with
+   `rescale`, **0.16s open / 0.10s close**.
+2. **Siblings sharing a surface do not.** A window that replaces a peer on the
+   same footprint (battle's command ↔ skill ↔ item ↔ target info) swaps
+   instantly. There is nothing to reveal: the replacement is already there.
+   Animating the outgoing one also re-resolves its content from live state
+   while it closes, which is why the closing command window used to flash the
+   skill list for a few frames.
+3. **Scene furniture does not.** The panels that make up a scene's own layout
+   arrive with the scene; the scene transition owns that beat, not each panel.
+
+`dialogue_name` keeps its slide as a deliberate exception — it is a nameplate
+attaching to a portrait, not a menu surface.
+
+The motion itself is `ui.rescaleRect`: the windowskin is **rebuilt** at the
+intermediate size with real 9-slice borders (never scaled as a bitmap), the
+content is drawn at full size and **scissored** to it (never squashed), and
+both axes advance at the same **pixel rate** — so a wide button reaches full
+height almost at once and then unrolls sideways.
 
 ---
 

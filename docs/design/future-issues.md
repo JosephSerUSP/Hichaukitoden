@@ -113,3 +113,45 @@ Audited `shop` and `items` in `data/scenes.json`:
 ## 9. ~~G2 golden battle log & G3 UI logs updated~~ FIXED (24.07.2026)
 
 Sanctioned update of `tools/golden/battle.log` and `scene_*.log` golden references following the actor stat rebalance. G2 (`check.ps1`) and G3 (`check-ui.ps1`) now pass 100% clean.
+
+---
+
+## 10. Editing game interfaces in the editor is a wall of fields (31.07.2026)
+
+Raised by the owner while turning off the battle enemy info block. That change
+was a single data flag, which is the system working as intended — but finding
+and setting it meant scrolling a flat list of `battleLayout` keys
+(`enemyInfoVisible`, `enemyInfoWidth`, `enemyInfoOffsetY`,
+`enemyInfoBarOffsetY`, `enemyInfoShowName`, `enemyInfoShowHpBar`,
+`enemyInfoShowElements`, ...) with no picture of what any of them do.
+
+The same shape recurs across every interface-shaping registry: `windowLayout`
+(rects in tiles, per-window `anim`, `chrome`, `slotHeight`/`slotGap`),
+`battleLayout`, the `dock` variants and their shells. All of it is
+schema-driven form generation via `buildRecursiveForm`, which is why adding a
+field costs nothing — and also why editing one feels like editing a config file
+rather than a layout.
+
+**The complaint is not that the data model is wrong.** Data-driven layout is
+load-bearing and should stay. The gap is that the editor renders a *spatial*
+domain as a *textual* one: numbers whose only meaning is where something lands
+on a 256x240 canvas are typed blind, then verified by launching the game.
+
+Directions worth weighing before building anything:
+
+- The engine can already render any scene or window headlessly through the
+  real presentation stack (`lovec . preview-scene`, `preview-window`,
+  `preview-anim`, and the G5 screenshot harness). An interface editor that
+  showed the live frame beside the fields — or let a rect be dragged and wrote
+  the numbers back — would reuse that, not reimplement it. **The editor must
+  keep rendering nothing itself** (SPEC 1.2); it asks the engine for a frame.
+- Grouping matters as much as visualisation: the `enemyInfo*` keys are one
+  feature spread across seven sibling fields. Whether that becomes a nested
+  object in data or is only grouped in the form is a real decision -- the
+  first changes the schema and every reader, the second does not.
+- Scope is the risk. This touches the editor's most generic machinery, so it
+  wants a narrow first target (one registry, e.g. `battleLayout`) rather than
+  a general "visual layout editor" rewrite.
+
+Not scheduled. Recorded so the next person to add a layout field has the
+argument in front of them instead of rediscovering it.

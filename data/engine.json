@@ -2411,7 +2411,7 @@
     "fallbackY": 70,
     "enemyY": 60,
     "enemySpriteSize": 64,
-    "enemyInfoVisible": true,
+    "enemyInfoVisible": false,
     "enemyInfoWidth": 48,
     "enemyInfoClampToSlot": false,
     "enemyInfoOffsetY": -7,
@@ -3076,7 +3076,12 @@
       "contentX": 9.5,
       "anim": {
         "open": {
-          "duration": 0.2
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3089,7 +3094,12 @@
       "title": null,
       "anim": {
         "open": {
-          "duration": 0.2
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3114,8 +3124,13 @@
       "title": null,
       "anim": {
         "open": {
-          "duration": 0.15,
+          "duration": 0.16,
+          "effect": "rescale",
           "anchor": "cellOf:party"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3128,7 +3143,12 @@
       "title": null,
       "anim": {
         "open": {
-          "duration": 0.15
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3141,7 +3161,12 @@
       "title": null,
       "anim": {
         "open": {
-          "duration": 0.15
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3154,7 +3179,12 @@
       "title": "CONFIRM",
       "anim": {
         "open": {
-          "duration": 0.18
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "rescale"
         }
       }
     },
@@ -3195,7 +3225,11 @@
       "style": "command",
       "anim": {
         "open": {
-          "duration": 0.2,
+          "duration": 0.16,
+          "effect": "rescale"
+        },
+        "close": {
+          "duration": 0.1,
           "effect": "rescale"
         }
       },
@@ -3220,17 +3254,7 @@
       "slotGap": 0.5,
       "slotHeight": 1.5,
       "slotInset": 1,
-      "chrome": "none",
-      "anim": {
-        "open": {
-          "duration": 0.16,
-          "effect": "rescale"
-        },
-        "close": {
-          "duration": 0.1,
-          "effect": "rescale"
-        }
-      }
+      "chrome": "none"
     },
     "battle_victory": {
       "x": 6,
