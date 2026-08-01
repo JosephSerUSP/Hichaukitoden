@@ -494,6 +494,12 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
         -- lifetime), so without this a leftover effect would bleed into the
         -- next scene's capture and make G5 order-dependent.
         require("presentation.effekseer").reset()
+        -- The small-battler idle clock is module-level and accumulates for the
+        -- life of the process. Without rewinding it, every scene's sprite frames
+        -- depend on how much time the scenes captured BEFORE it consumed, so
+        -- editing one scene's script reddens unrelated frames and G5 is
+        -- order-dependent.
+        require("presentation.small_battlers").reset()
         dock.reset()
         stringPictures.clear()
         imagePictures.clear()
@@ -648,6 +654,27 @@ function cli.runScreenshots(loader, gameWidth, gameHeight)
                     drawWarmup(vSession)
                     efk.update(EFFECT_CAPTURE_SECONDS)
                     capture(folder .. "/99-effekseer-fixture.png", vSession)
+                    animation_player.stop(fixtureTarget)
+                    efk.reset()
+
+                    -- skill.attack, the first MIGRATED effect, gated on the
+                    -- real in-use asset (owner call 01.08.2026).
+                    --
+                    -- The scripted steps cannot cover it: settleForCapture
+                    -- suppresses effect time and advances a whole second, so
+                    -- any frame captured after an action resolves shows the
+                    -- aftermath, never the effect. That is precisely the gap
+                    -- roadmap 6.5.1f left open. Same isolated recipe as the
+                    -- fixture above, and its own file so it perturbs nothing.
+                    --
+                    -- Unlike the frozen fixture this WILL redden when the
+                    -- effect is retouched. That is the accepted cost of gating
+                    -- the asset that actually ships: confirm the change was
+                    -- intended, then recapture.
+                    animation_player.play("skill.attack", fixtureTarget)
+                    drawWarmup(vSession)
+                    efk.update(EFFECT_CAPTURE_SECONDS)
+                    capture(folder .. "/98-skill-attack.png", vSession)
                     animation_player.stop(fixtureTarget)
                     efk.reset()
                 end

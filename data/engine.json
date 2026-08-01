@@ -2475,7 +2475,9 @@
     "victoryGaugeWidth": 120
   },
   "effekseer": {
-    "magnification": 6.4
+    "magnification": 6.4,
+    "instanceMax": 8192,
+    "squareMaxCount": 16384
   },
   "effectTypes": [
     {

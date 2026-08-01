@@ -1075,9 +1075,16 @@ has value outside this project (§6.6).
 6. ~~**Ambient effects vs. cell fixtures**~~ **Resolved 01.08.2026: split them.**
    Weather is a map-level `ambientEffect` following the camera; per-cell effects
    stay for fixtures like torches (§6.5.1g).
-7. **G5 coverage of `skill.attack`** (§6.5.1f) — battle's capture script never
-   resolves an attack, so the migrated effect is still ungated. Closing it adds
-   frames and needs an owner-signed capture.
+7. ~~**G5 coverage of `skill.attack`**~~ **Resolved 01.08.2026 (§6.5.1i):** the
+   round now executes in the script, and the effect itself is gated by an
+   isolated `98-skill-attack.png`. Required fixing a shared sprite clock that
+   had made G5 order-dependent.
+8. **Weather during battle and menus** — the map is the backdrop for both, so an
+   ambient effect will draw behind them, which is wanted. But `drawWorld()` sets
+   `skipNextScreenDraw`, and both shim passes draw *every* live instance, so a
+   map with any world effect would suppress battle's screen-space effects
+   entirely. Needs per-pass instance grouping (Effekseer group masks) before
+   weather can ship on a battle map. **Open.**
 
 ---
 
@@ -1112,3 +1119,64 @@ Two lessons from that history apply directly:
    (wall column / floor shader / sprite stripe, each with its own fog and light
    code) into one. §8.3 does the opposite, which is part of why it is deferred.
 2. **The recurring failure mode is the ungated change.** Hence §3 first.
+
+### 6.5.1h Instance budget, measured (01.08.2026)
+
+`efk_init(2000, 2000)` was inherited from a sample, not chosen. It is now
+`engine.json` -> `effekseer.instanceMax` / `squareMaxCount`, set from
+measurement.
+
+**Can we "handle a million particles" because the framebuffer is small?** No,
+and the framebuffer is the trap in that reasoning: the cost is CPU-side
+simulation and vertex generation, not fill. 256x144 is 36,864 pixels, so a
+million particles would be **27 particles per pixel** — pure overdraw with
+nothing gained.
+
+| instanceMax | init cost | note |
+|---|---|---|
+| 2,000 | 47 MB | the old value |
+| 8,192 | 44-53 MB | chosen |
+| 50,000 | 144 MB | |
+| 1,000,000 | **2,385 MB** | slots are allocated EAGERLY at init, used or not |
+
+Roughly **2.2 KB per instance slot**, and about **1 microsecond per live
+instance per frame** for update plus draw submission (measured linear from 3k to
+50k): 50,000 instances cost 51 ms/frame; a million would be about a second per
+frame. `squareMaxCount` is cheap by comparison — it only sizes a vertex buffer at
+`4 * 88` bytes per square.
+
+**8,192 chosen**: ~4x one endless `env_mist` (1,904 instances, the heaviest thing
+authored), ~8 ms/frame if actually saturated — reachable but visibly slow, which
+is what a ceiling should be. Typical load is ~2 ms.
+
+Exhausting the pool is the nastiest failure this runtime has because it is
+**silent and lands on the wrong effect**: whatever is already playing consumes
+the pool, and the *next* effect spawns its root and emits nothing. It reads as
+"that effect is broken" — which is how a healthy `env_rain` came to be recorded
+as a renderer bug. `effekseer.update` now warns once past 90% of the budget.
+
+### 6.5.1i G5 covers skill.attack, and scenes are now independent
+
+**The blocker first.** Adding one step to battle's `screenshotScript` reddened
+**ten frames in four unrelated menu scenes**. Cause: `small_battlers`' idle
+animation clock is module-level and accumulated for the life of the process, so
+every scene's sprite frames depended on how much time the scenes captured
+*before* it had consumed. G5 was order-dependent, and any script edit looked like
+a regression somewhere else.
+
+`small_battlers.reset()` now rewinds it per scene alongside the harness's other
+resets. Verified: after a one-time recapture, adding the battle steps changes
+**only** the new battle frames — 129/131, zero unrelated mismatches.
+
+**Coverage.** Two additions, because they cover different things:
+
+- Script steps 07/08 execute the round, so the action-resolution path is gated.
+- `98-skill-attack.png`, an isolated frame on the real in-use asset. The scripted
+  steps *cannot* show an effect: `settleForCapture` suppresses effect time and
+  advances a whole second, so any frame after an action resolves shows the
+  aftermath. Same isolated recipe as the frozen fixture.
+
+Unlike the frozen fixture this frame **will** redden when the effect is
+retouched — the accepted cost of gating the asset that ships. Verified as a real
+gate: reintroducing the Y-orientation regression reddens exactly the two effect
+frames and nothing else.

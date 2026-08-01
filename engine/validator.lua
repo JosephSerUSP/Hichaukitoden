@@ -3065,6 +3065,18 @@ elseif paramDef.type == "script" then
                 or (type(efkCfg.magnification) == "number" and efkCfg.magnification > 0),
                 "engine.effekseer.magnification must be a positive number (got "
                 .. tostring(efkCfg.magnification) .. ")")
+            -- Both are allocated eagerly at init, so a typo here is startup
+            -- memory rather than a gradual slowdown: instanceMax costs ~2.2KB
+            -- per slot (a million slots is 2.4GB) and squareMaxCount sizes a
+            -- vertex buffer at 4 * 88 bytes per square.
+            for _, field in ipairs({ "instanceMax", "squareMaxCount" }) do
+                local value = efkCfg[field]
+                check(value == nil
+                    or (type(value) == "number" and value > 0 and value == math.floor(value)),
+                    "engine.effekseer." .. field
+                        .. " must be a positive whole number (got "
+                        .. tostring(value) .. ")")
+            end
         end
     end
 

@@ -25,6 +25,29 @@ local warned = false
 local suppressed = false
 -- engine.json effekseer.magnification; 1.0 until init(loader) supplies it.
 local globalMagnification = 1.0
+
+-- Runtime budget, measured 01.08.2026 rather than inherited from a sample.
+--
+-- MEMORY: Effekseer allocates every instance slot EAGERLY at init, ~2.2KB each
+-- whether used or not. instanceMax=1,000,000 costs 2,385 MB at startup.
+-- CPU: roughly 1 microsecond per live instance per frame for update + draw
+-- submission, measured linear from 3k to 50k instances. 50,000 instances cost
+-- 51 ms/frame; a million would be about a second per frame.
+--
+-- The low framebuffer does NOT buy headroom here, which is the intuitive trap:
+-- the cost is CPU-side simulation and vertex generation, not fill. 256x144 is
+-- 36,864 pixels, so a million particles would be 27 particles per pixel --
+-- pure overdraw, nothing gained.
+--
+-- 8192 is ~4x one endless env_mist (1,904 instances, the heaviest thing
+-- authored) and costs ~8 ms/frame if actually saturated -- reachable but
+-- visibly slow, which is what a ceiling should be. Typical load is ~2 ms.
+-- squareMaxCount only sizes a vertex buffer (4 * 88 bytes per square), so
+-- headroom there is cheap at 5.5 MB.
+local DEFAULT_INSTANCE_MAX = 8192
+local DEFAULT_SQUARE_MAX = 16384
+local instanceMax = DEFAULT_INSTANCE_MAX
+local budgetWarned = false
 local effectCache = {}   -- path|magnification -> effect id
 local liveHandles = {}
 local skipNextScreenDraw = false
@@ -145,9 +168,14 @@ end
 -- exactly the kind of number that belongs in the registry and the Engine
 -- editor, not scattered through animations.json.
 function effekseer.init(loader)
-    if loader and loader.engine and loader.engine.effekseer
-        and type(loader.engine.effekseer.magnification) == "number" then
-        globalMagnification = loader.engine.effekseer.magnification
+    local cfg = loader and loader.engine and loader.engine.effekseer
+    local squareMaxCount = DEFAULT_SQUARE_MAX
+    if cfg then
+        if type(cfg.magnification) == "number" then
+            globalMagnification = cfg.magnification
+        end
+        if type(cfg.instanceMax) == "number" then instanceMax = cfg.instanceMax end
+        if type(cfg.squareMaxCount) == "number" then squareMaxCount = cfg.squareMaxCount end
     end
     if initialised or failed then return initialised end
     if not ok_ffi then failed = true warnOnce("LuaJIT FFI unavailable") return false end
@@ -181,7 +209,7 @@ function effekseer.init(loader)
         end
     end
 
-    if lib.efk_init(2000, 2000) == 0 then
+    if lib.efk_init(instanceMax, squareMaxCount) == 0 then
         failed = true
         warnOnce("efk_init failed: " .. ffi.string(lib.efk_last_error()))
         return false
@@ -346,6 +374,20 @@ function effekseer.update(dt)
     for _ = 1, whole do lib.efk_update(1.0) end
     local remainder = frames - whole
     if remainder > 0 then lib.efk_update(remainder) end
+
+    -- Running out of instances is the nastiest failure this runtime has, because
+    -- it is SILENT and it lands on the wrong effect: the pool is consumed by
+    -- whatever is already playing, and the NEXT effect played spawns its root
+    -- and emits nothing. It reads as "that effect is broken" -- which is exactly
+    -- how a healthy env_rain came to be recorded as a renderer bug. So say so.
+    if not budgetWarned and lib.efk_instance_count() > instanceMax * 0.9 then
+        budgetWarned = true
+        print("[effekseer] instance budget nearly exhausted ("
+            .. lib.efk_instance_count() .. "/" .. instanceMax
+            .. "): further effects will spawn but emit nothing.")
+        print("[effekseer] raise engine.json effekseer.instanceMax, or author"
+            .. " fewer/lighter simultaneous effects. ~2.2KB and ~1us/frame each.")
+    end
 end
 
 -- Freezes effect time without stopping effects.

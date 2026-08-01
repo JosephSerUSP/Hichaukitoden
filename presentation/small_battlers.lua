@@ -45,6 +45,19 @@ function small_battlers.update(dt)
     animTimer = animTimer + dt
 end
 
+-- Rewinds that shared clock.
+--
+-- It is module-level and accumulates every dt the process ever feeds it, which
+-- is right in play (one continuous idle animation) and wrong for the screenshot
+-- harness: the frame each sprite lands on then depends on the TOTAL time every
+-- previously captured scene consumed. Adding one step to battle's script
+-- shifted sprites in ten unrelated menu frames -- G5 became order-dependent,
+-- and any script edit looked like a regression somewhere else entirely.
+-- The harness calls this per scene alongside its other resets.
+function small_battlers.reset()
+    animTimer = 0
+end
+
 -- Resolves a sprite key to { path, tokens } WITHOUT loading the image --
 -- shared by get() below and the validator's asset-reference sweep, so
 -- "does this key resolve" is answered by the exact same logic that will
