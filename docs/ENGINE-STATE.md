@@ -25,7 +25,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `map` | map | world | map | 0 | 7 |
 | `options` | menu | windows | - | 3 | 5 |
 | `quest_log` | menu | windows | - | 3 | 4 |
-| `reserve` | menu | windows | - | 5 | 8 |
+| `reserve` | menu | windows | - | 4 | 8 |
 | `ritual` | menu | windows | - | 14 | 8 |
 | `save_menu` | menu | windows | - | 3 | 5 |
 | `shop` | menu | windows | - | 4 | 7 |
