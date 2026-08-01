@@ -120,6 +120,14 @@ local function toBuf(buf, m)
     for i = 1, 16 do buf[i - 1] = m[i] end
 end
 
+-- Every function name CDEF declares. Parsed from the declaration rather than
+-- listed a second time, so a new export is covered the moment it is added.
+local function declaredSymbols()
+    local names = {}
+    for name in CDEF:gmatch("(efk_[%w_]+)%s*%(") do names[#names + 1] = name end
+    return names
+end
+
 local function dllPath()
     -- Next to the game, not inside the .love archive: FFI needs a real file on
     -- disk, which love.filesystem paths inside an archive are not.
@@ -154,6 +162,25 @@ function effekseer.init(loader)
     if not okLoad then failed = true warnOnce("effekseer_shim.dll not found") return false end
     lib = loaded
 
+    -- An OUT OF DATE DLL is the failure this catches, and it is nastier than a
+    -- missing one: ffi.load succeeds, init succeeds, and the process dies much
+    -- later at the first call to a symbol the old build never exported --
+    -- deep in a draw, with an FFI message that names a symbol and nothing
+    -- else. That is exactly the "silently does nothing until it explodes
+    -- somewhere unrelated" outcome the non-negotiables rank worst, and it cost
+    -- a debugging cycle when the shim gained efk_set_effect_flip. Resolving
+    -- the whole surface up front turns it into the same one-line degradation
+    -- as an absent DLL, naming the symbol AND the fix.
+    for _, name in ipairs(declaredSymbols()) do
+        if not pcall(function() return lib[name] end) then
+            failed = true
+            lib = nil
+            warnOnce("effekseer_shim.dll is out of date: it does not export '"
+                .. name .. "'")
+            return false
+        end
+    end
+
     if lib.efk_init(2000, 2000) == 0 then
         failed = true
         warnOnce("efk_init failed: " .. ffi.string(lib.efk_last_error()))
@@ -182,11 +209,16 @@ end
 -- see. Callers that use the game canvas never need this.
 -- Pins effect randomness. Effekseer seeds each instance from the shim's
 -- generator, so a fixed seed here makes playback byte-reproducible -- which is
--- what lets G5 hold a reference frame containing a live effect. A DLL built
--- before this export exists simply keeps its own default seed.
+-- what lets G5 hold a reference frame containing a live effect.
+--
+-- This used to swallow the call in a pcall so an older DLL "simply kept its own
+-- default seed". That is the wrong trade: an unseeded generator is precisely
+-- the bug that sat G5 permanently red on its fixture frame (roadmap 6.5.1f),
+-- and silently reintroducing it is worse than not running. init() now rejects
+-- a DLL missing any export, so reaching here means the symbol is there.
 function effekseer.setRandomSeed(seed)
     if not lib then return end
-    pcall(function() lib.efk_set_random_seed(seed or 12345) end)
+    lib.efk_set_random_seed(seed or 12345)
 end
 
 function effekseer.setViewport(w, h)

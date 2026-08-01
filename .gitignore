@@ -30,6 +30,9 @@ tools/golden/screens-actual/
 # G5 gallery output
 tools/golden/gallery/
 
-
+# Effekseer shim build artifact (6.1MB). Rebuild with tools/effekseer/build.ps1.
+# Nothing here is a fallback: a stale shim is refused at init by name, so if a
+# gate says the DLL is out of date, rebuild rather than hunting for a copy.
 tools/effekseer/**/*.dll
 effekseer_shim.dll
+effekseer_shim.dll.*

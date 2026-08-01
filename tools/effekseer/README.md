@@ -54,22 +54,48 @@ scale** — particles sized in the tens of pixels, small crisp textures, hard
 edges over soft gradients. Cheap now, expensive to retrofit across a finished
 library. See roadmap §6.5.1d.
 
-The built DLL is **not** committed (6.4MB build artifact, gitignored). Build it
-with the recipe in roadmap §6.5.1a, then:
+## Building the DLL
+
+The built DLL is **not** committed (6.1MB build artifact, gitignored). That
+policy only holds if rebuilding is one command, so it is one:
 
 ```bash
-g++ -shared -O2 -o effekseer_shim.dll efk_shim.cpp \
-  -I <efk>/Dev/Cpp/Effekseer -I <efk>/Dev/Cpp/EffekseerRendererGL \
-  -I <efk>/Dev/Cpp/EffekseerRendererCommon \
-  -L <build>/Dev/Cpp/Effekseer -L <build>/Dev/Cpp/EffekseerRendererGL \
-  -L <build>/Dev/Cpp/EffekseerRendererCommon \
-  -lEffekseerRendererGL -lEffekseerRendererCommon -lEffekseer -lopengl32 -lgdi32 \
-  -static -static-libgcc -static-libstdc++ -Wl,--exclude-all-symbols
+.\tools\effekseer\build.ps1
 ```
+
+`build.ps1` is the executable form of roadmap §6.5.1a — it clones and
+configures Effekseer if needed (every load-bearing CMake flag, and the reasons,
+are comments in the script), builds the two static libraries, links the shim,
+and writes `effekseer_shim.dll` to the repo root. `-EffekseerRoot` and
+`-MinGWBin` override the defaults. Requires MinGW-w64 via MSYS2, **not MSVC**.
 
 `-static` matters: without it the DLL pulls in `libwinpthread-1.dll` and stops
 being a single self-contained file. As built it depends only on `KERNEL32`,
 `msvcrt` and `OPENGL32`.
+
+Verified 01.08.2026: a from-source rebuild renders G5's 129 reference frames
+byte-identically, including the effect fixture frame — so the script reproduces
+*the* shim, not merely *a* shim.
+
+### A stale DLL used to be worse than a missing one
+
+An absent DLL has always degraded gracefully (owner decision, §6.5.1e). An
+**out of date** one did not: `ffi.load` succeeded, `efk_init` succeeded, and the
+process died much later at the first call to a symbol that build never exported
+— deep inside a draw, with an FFI message naming a symbol and nothing else.
+This bit a worktree running a shim from before `efk_set_effect_flip` existed.
+
+`presentation/effekseer.lua` now resolves **every** symbol its `CDEF` declares
+at init and degrades on the first missing one, naming the symbol and the fix.
+`build.ps1` cross-checks the same two lists after linking. The list is parsed
+from the declarations at both ends rather than written a third time, so a new
+export is covered the moment it is added.
+
+The consequence worth stating: **rebuild after pulling** if the shim gained
+exports. There is no committed fallback binary to fall back to — there was one
+briefly, `effekseer_shim.dll.bak-preseed`, committed by accident inside an
+assets commit and deleted 01.08.2026. It was a pre-flip, pre-RNG-seed build
+sitting in the repo under a name that read like a safety net.
 
 ## The z-order trap (found via prior art, 30.07.2026)
 
