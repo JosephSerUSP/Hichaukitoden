@@ -3311,7 +3311,7 @@
       "width": 15,
       "height": 12,
       "style": "list",
-      "title": null,
+      "title": "SKILLS",
       "visibleRows": 5,
       "chrome": "none"
     },
@@ -3321,7 +3321,7 @@
       "width": 15,
       "height": 12,
       "style": "list",
-      "title": null,
+      "title": "ITEMS",
       "visibleRows": 5,
       "chrome": "none"
     },
