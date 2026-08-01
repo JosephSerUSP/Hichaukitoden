@@ -300,6 +300,25 @@ end
 -- The distinction is structural, not decorative: a shell shows the 3D world
 -- through it, a button must stay readable, so the choice belongs to the
 -- caller rather than to a boolean that only knew "selected or not".
+-- The opening/closing rect for a panel, centred on its settled rect.
+--
+-- Both axes grow at the SAME pixel rate rather than at the same fraction of
+-- their own length, so a wide button reaches full height long before it
+-- reaches full width -- it unrolls sideways instead of inflating. The rate is
+-- set so the longer axis completes exactly at p = 1, which keeps the caller's
+-- authored duration meaning "time until fully open".
+--
+-- The result is a real rect, not a transform: callers pass it to drawPanel so
+-- the windowskin is REBUILT at that size with proper borders, and scissor
+-- their content to it rather than scaling the content.
+function ui.rescaleRect(x, y, w, h, p)
+    p = math.max(0, math.min(1, p or 1))
+    local reach = math.max(w, h) * p
+    local nw = math.min(w, math.max(reach, math.min(w, 16)))
+    local nh = math.min(h, math.max(reach, math.min(h, 9)))
+    return x + (w - nw) / 2, y + (h - nh) / 2, nw, nh
+end
+
 -- A panel's title header, drawn on its own so a window whose surface is
 -- supplied by something else (the dock's static shell) can keep the title
 -- without drawing a second background to hang it on.

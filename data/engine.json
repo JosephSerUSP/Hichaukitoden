@@ -3053,11 +3053,11 @@
       "anim": {
         "open": {
           "duration": 0.16,
-          "effect": "grow"
+          "effect": "rescale"
         },
         "close": {
           "duration": 0.1,
-          "effect": "grow"
+          "effect": "rescale"
         }
       }
     },
@@ -3195,7 +3195,8 @@
       "style": "command",
       "anim": {
         "open": {
-          "duration": 0.2
+          "duration": 0.2,
+          "effect": "rescale"
         }
       },
       "vertical": true
@@ -3223,11 +3224,11 @@
       "anim": {
         "open": {
           "duration": 0.16,
-          "effect": "grow"
+          "effect": "rescale"
         },
         "close": {
           "duration": 0.1,
-          "effect": "grow"
+          "effect": "rescale"
         }
       }
     },

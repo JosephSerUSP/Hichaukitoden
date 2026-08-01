@@ -652,7 +652,7 @@ local function drawActorStatusCell(layout, env, x, y, title, ctx)
     return rowH
 end
 
-local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, session, animScale)
+local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, session, animP)
     local contentX, contentY = contentOrigin(layout, title, x, y)
 
     -- Integrated Tab Header Strip (Option 1 / Approach A):
@@ -738,20 +738,11 @@ local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, sessi
         -- party slot (owner direction 11.07.2026 — one shared look for
         -- party status everywhere it's drawn).
         if spriteField then
-            -- Sprite rows draw a real button card, so they pop with the
-            -- window like command slots rather than being wiped by the scissor.
-            local cardScale = animScale or 1
-            local cardPopped = cardScale < 1
-            local cardCx = x + cardPad + (w - cardPad * 2) / 2
-            local cardCy = rowY - cardPad + (rowPitch - cardPad) / 2
-            if cardPopped then
-                love.graphics.push()
-                love.graphics.translate(cardCx, cardCy)
-                love.graphics.scale(cardScale, cardScale)
-                love.graphics.translate(-cardCx, -cardCy)
-            end
-            ui.drawPanel(x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, nil, ui.buttonRole(isSel))
-            if cardPopped then love.graphics.pop() end
+            -- A sprite row's card is a button too, so it opens the same way:
+            -- rebuilt at the opening size, never scaled.
+            local cx0, cy0, cw0, ch0 = ui.rescaleRect(
+                x + cardPad, rowY - cardPad, w - cardPad * 2, rowPitch - cardPad, animP or 1)
+            ui.drawPanel(cx0, cy0, cw0, ch0, nil, ui.buttonRole(isSel))
         end
 
         local textX = contentX + ui.toPx(0.5)
@@ -847,7 +838,7 @@ local function drawMpReadout(session, gaugeX, gaugeY, gaugeW, numX, numY, mpBarH
     ui.drawString(tostring(mp), numX, numY, {0.80, 0.90, 1.0, 1})
 end
 
-local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title, animScale)
+local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, title, animP)
     local cols = layout.gridColumns or 2
     local contentX, contentY = contentOrigin(layout, title, x, y)
     -- The slots scale with the window's animated width, so opening and closing
@@ -856,8 +847,11 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     -- special case keyed off a global: the dock now moves between plenty of
     -- variants that have no party slots, and only the one it knew about
     -- animated at all.
-    local scale = animScale or 1
-    if scale <= 0 then return end
+    local progress = animP or 1
+    if progress <= 0 then return end
+    -- The MP sliver still fades/scales with progress; the SLOTS below are
+    -- rebuilt panels (ui.rescaleRect), not scaled content.
+    local scale = progress
 
     -- F2 (overhaul-6): the 2x2 actor grid stays at its natural left position
     -- (contentX) so the map party popup — anchored to the grid cells via
@@ -896,15 +890,18 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     for i, row in ipairs(rows) do
         local cx, cy = actor_status.gridSlot(contentX, contentY, i, session, cols)
         local colW, rowH = actor_status.cellSize(session)
-        local scx, scy = cx + colW / 2, cy + rowH / 2
-        love.graphics.push()
-        love.graphics.translate(scx, scy)
-        love.graphics.scale(scale, scale)
-        love.graphics.translate(-scx, -scy)
+        -- Each slot is its own panel: rebuilt at the opening size with real
+        -- windowskin borders, its contents drawn at full size and scissored.
+        local slotX, slotY, slotW2, slotH2 =
+            ui.rescaleRect(cx - 2, cy - 2, colW - 2, rowH - 2, progress)
+        local sx0, sy0, sw0, sh0 = love.graphics.getScissor()
+        if progress < 1 then
+            love.graphics.intersectScissor(slotX, slotY, slotW2, slotH2)
+        end
         if row.battlerRef then
-            actor_status.draw(row.battlerRef, cx, cy, i == cursor, session)
+            actor_status.draw(row.battlerRef, cx, cy, i == cursor, session, slotX, slotY, slotW2, slotH2)
         else
-            ui.drawPanel(cx - 2, cy - 2, colW - 2, rowH - 2, nil, ui.buttonRole(i == cursor))
+            ui.drawPanel(slotX, slotY, slotW2, slotH2, nil, ui.buttonRole(i == cursor))
             if i == cursor then
                 small_battlers.draw("Cursor", cx - 6, cy, 8)
             end
@@ -912,7 +909,10 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
             local textW = ui.measureText(text)
             ui.drawString(text, cx + (colW - textW) / 2, cy + (rowH - ui.lineHeight) / 2, { 0.4, 0.4, 0.4, 1 })
         end
-        love.graphics.pop()
+        if progress < 1 then
+            if sx0 then love.graphics.setScissor(sx0, sy0, sw0, sh0)
+            else love.graphics.setScissor() end
+        end
     end
 end
 
@@ -1011,8 +1011,8 @@ end
 -- "command" style: fixed-size buttons inside one persistent panel. Buttons do
 -- not stretch when a creature authors fewer commands; stable geometry makes
 -- the menu feel like a console rather than an accordion.
-local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h, animScale)
-    animScale = animScale or 1
+local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h, animP)
+    animP = animP or 1
     local n = #rows
     if n == 0 then return end
     local gap = ui.toPx((layout and layout.slotGap) or 0.5)
@@ -1050,39 +1050,35 @@ local function drawCommandSlots(layout, rows, cursor, env, x, y, w, h, animScale
         for i, row in ipairs(rows) do
             local isSel = (i == cursor)
             local sy = y + inset + (i - 1) * (slotH + gap)
-            -- Each button scales about its own centre, so a menu opens as a
-            -- set of buttons appearing rather than a panel being wiped.
-            local popped = animScale < 1
-            if popped then
-                love.graphics.push()
-                love.graphics.translate(x + inset + slotW / 2, sy + slotH / 2)
-                love.graphics.scale(animScale, animScale)
-                love.graphics.translate(-(x + inset + slotW / 2), -(sy + slotH / 2))
-            end
-            ui.drawPanel(x + inset, sy, slotW, slotH, nil, ui.buttonRole(isSel))
+            -- Each button is its own panel, rebuilt at the opening size and
+            -- clipping its own label. A command slot is far wider than it is
+            -- tall, so at a fixed pixel rate it reaches full height almost at
+            -- once and then unrolls sideways.
+            local bx, by, bw, bh = ui.rescaleRect(x + inset, sy, slotW, slotH, animP)
+            ui.drawPanel(bx, by, bw, bh, nil, ui.buttonRole(isSel))
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
             local textY = sy + slotH / 2 - ui.lineHeight / 2
+            local sx0, sy0, sw0, sh0 = love.graphics.getScissor()
+            love.graphics.intersectScissor(bx, by, bw, bh)
             drawSlotLabel(row, color, x + inset, slotW, textY,
                 isSel and (sy + slotH / 2 - 4) or nil)
-            if popped then love.graphics.pop() end
+            if sx0 then love.graphics.setScissor(sx0, sy0, sw0, sh0)
+            else love.graphics.setScissor() end
         end
     else
         local slotW = (w - gap * (n + 1)) / n
         for i, row in ipairs(rows) do
             local isSel = (i == cursor)
             local sx = x + gap + (i - 1) * (slotW + gap)
-            local popped = animScale < 1
-            if popped then
-                love.graphics.push()
-                love.graphics.translate(sx + slotW / 2, y + h / 2)
-                love.graphics.scale(animScale, animScale)
-                love.graphics.translate(-(sx + slotW / 2), -(y + h / 2))
-            end
-            ui.drawPanel(sx, y, slotW, h, nil, ui.buttonRole(isSel))
+            local bx, by, bw, bh = ui.rescaleRect(sx, y, slotW, h, animP)
+            ui.drawPanel(bx, by, bw, bh, nil, ui.buttonRole(isSel))
             local color = isSel and COLOR_SELECTED or COLOR_NORMAL
             local textY = y + h / 2 - ui.lineHeight / 2
+            local sx0, sy0, sw0, sh0 = love.graphics.getScissor()
+            love.graphics.intersectScissor(bx, by, bw, bh)
             drawSlotLabel(row, color, sx, slotW, textY, isSel and (y + h / 2 - 4) or nil)
-            if popped then love.graphics.pop() end
+            if sx0 then love.graphics.setScissor(sx0, sy0, sw0, sh0)
+            else love.graphics.setScissor() end
         end
     end
 end
@@ -1193,14 +1189,14 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
     if not closing and win._skipOpenAnim then
         win._skipOpenAnim = nil
         openClocks[win] = love.timer.getTime() - ((layout.anim and layout.anim.open and layout.anim.open.duration) or 0)
-        return x, y, w, h, 1, false
+        return x, y, w, h, 1, false, 1
     end
     local phase = closing and "close" or "open"
     local anim = layout.anim and layout.anim[phase]
     if not anim then
         openClocks[win] = nil
         closeClocks[win] = nil
-        return x, y, w, h, 1, false
+        return x, y, w, h, 1, false, 1
     end
 
     local clockTable = closing and closeClocks or openClocks
@@ -1220,7 +1216,7 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
         if closing then
             closeClocks[win] = nil
         end
-        return x, y, w, h, 1, false
+        return x, y, w, h, 1, false, 1
     end
 
     local easing = anim.easing
@@ -1228,7 +1224,13 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
     local effect = anim.effect or "grow"
     local offset = closing and (anim.toOffset or 0) or (anim.fromOffset or 0)
 
-    if effect == "grow" or effect == "scale" then
+    if effect == "rescale" then
+        -- Fixed pixel rate on both axes, panel rebuilt at that size by
+        -- drawPanel; content is scissored, never scaled. See ui.rescaleRect.
+        local rx, ry, rw, rh = ui.rescaleRect(x, y, w, h, ease)
+        return rx, ry, rw, rh, 1, true, ease
+
+    elseif effect == "grow" or effect == "scale" then
         local ax, ay = resolveAnchor(anim.anchor, ctx, listCache, layouts)
         local growFromX, growFromY = ax or (x + w / 2), ay or (y + h / 2)
         local realCx, realCy = x + w / 2, y + h / 2
@@ -1236,41 +1238,41 @@ local function windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, 
         local cy = growFromY + (realCy - growFromY) * ease
         local pw = math.max(16, w * ease)
         local ph = math.max(16, h * ease)
-        return cx - pw / 2, cy - ph / 2, pw, ph, 1, true
+        return cx - pw / 2, cy - ph / 2, pw, ph, 1, true, ease
 
     elseif effect == "expandRight" then
         local fromW = ui.toPx(anim.fromWidth or 2)
         local pw = fromW + (w - fromW) * ease
-        return x, y, pw, h, 1, true
+        return x, y, pw, h, 1, true, ease
 
     elseif effect == "fade" then
         -- Rect stays fixed, alpha animates.
         local alpha = ease
-        return x, y, w, h, alpha, true
+        return x, y, w, h, alpha, true, ease
 
     elseif effect == "slideUp" then
         local offPx = offset or h
         local slideY = y + offPx * (1 - ease)
-        return x, slideY, w, h, 1, true
+        return x, slideY, w, h, 1, true, ease
 
     elseif effect == "slideDown" then
         local offPx = offset or h
         local slideY = y - offPx * (1 - ease)
-        return x, slideY, w, h, 1, true
+        return x, slideY, w, h, 1, true, ease
 
     elseif effect == "slideLeft" then
         local offPx = offset or w
         local slideX = x + offPx * (1 - ease)
-        return slideX, y, w, h, 1, true
+        return slideX, y, w, h, 1, true, ease
 
     elseif effect == "slideRight" then
         local offPx = offset or w
         local slideX = x - offPx * (1 - ease)
-        return slideX, y, w, h, 1, true
+        return slideX, y, w, h, 1, true, ease
 
     else
         -- Unknown effect: fall back to instant.
-        return x, y, w, h, 1, false
+        return x, y, w, h, 1, false, 1
     end
 end
 
@@ -1278,13 +1280,13 @@ end
 -- (resting state) or inside a scissor clipped to the animated open rect
 -- (while opening) -- content is always laid out at the REAL final x/y/w/h so
 -- it never reflows, it's simply revealed as the box grows.
--- `animScale` (0..1) is how far through an open/close animation this window
--- is, as a fraction of its settled width. Styles made of discrete cells --
--- party slots, command buttons -- scale each cell about its own centre by it,
--- so they animate as individual panels rather than being wiped by the scissor.
--- 1 whenever no animation is running.
-local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx, animScale)
-    animScale = animScale or 1
+-- `animP` (0..1) is the window's eased open/close progress, 1 when at rest.
+-- Styles made of discrete cells -- party slots, command buttons -- rebuild
+-- each cell's panel at ui.rescaleRect(p) and scissor that cell's content to
+-- it, so a cell opens as a real windowskin growing at a fixed pixel rate
+-- rather than a scaled bitmap or a wipe.
+local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx, animP)
+    animP = animP or 1
     local contentX, contentY = contentOrigin(layout, title, x, y)
     local lineSpacing = ui.toPx(layout.lineSpacing or 1)
 
@@ -1297,7 +1299,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     if style == "list" then
         local cached = listCache[id]
         if cached then
-            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title, ctx and ctx.session, animScale)
+            drawList(win, layout, cached.rows, cached.cursor, env, x, y, w, h, title, ctx and ctx.session, animP)
         end
         if text then
             drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
@@ -1317,7 +1319,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         -- window's whole visible surface.
         local cached = listCache[id]
         if cached then
-            drawCommandSlots(layout, cached.rows, cached.cursor, env, x, y, w, h, animScale)
+            drawCommandSlots(layout, cached.rows, cached.cursor, env, x, y, w, h, animP)
         end
     elseif style == "roulette" then
         local cached = listCache[id]
@@ -1327,7 +1329,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     elseif style == "partyGrid" then
         local cached = listCache[id]
         if cached then
-            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title, animScale)
+            drawPartyGridStyle(layout, cached.rows, cached.cursor, env, x, y, ctx.session, title, animP)
         end
     elseif style == "enemyRow" then
         renderer.drawEnemyRowWindow(env.v and env.v.battle)
@@ -1504,13 +1506,12 @@ local function drawWindow(id, win, layout, state, sceneData, ctx, env, listCache
         end
     end
 
-    local px, py, pw, ph, _, animating = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, win._closing)
+    local px, py, pw, ph, _, animating, animP = windowAnimRect(win, layout, x, y, w, h, ctx, listCache, layouts, win._closing)
     if animating then
         local sx, sy, sw, sh = love.graphics.getScissor()
         love.graphics.intersectScissor(px, py, pw, ph)
         drawPanelOrTitle(layout, style, title, px, py, pw, ph)
-        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx,
-            (w > 0) and math.max(0, math.min(1, pw / w)) or 1)
+        drawWindowContent(id, win, layout, style, title, x, y, w, h, env, listCache, ctx, animP)
         if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
     else
         drawPanelOrTitle(layout, style, title, x, y, w, h)

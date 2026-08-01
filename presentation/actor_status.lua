@@ -248,7 +248,11 @@ function actor_status.drawStateIcon(battler, x, y, session)
     return 10
 end
 
-function actor_status.draw(battler, x, y, isSelected, session)
+-- panelX/Y/W/H (optional) override the cell's windowskin rect while the slot
+-- is opening or closing: the panel is REBUILT at that size by drawPanel, with
+-- this cell's contents drawn at full size and scissored by the caller. The
+-- cell content is never scaled.
+function actor_status.draw(battler, x, y, isSelected, session, panelX, panelY, panelW, panelH)
     if not battler then return end
     local colW, rowH = actor_status.cellSize(session)
     local spriteSize = layoutVal(session, "partyGridSpriteSize")
@@ -263,7 +267,8 @@ function actor_status.draw(battler, x, y, isSelected, session)
 
     -- Windowskin panel behind the whole cell, then the animated sprite
     -- (dead tint / flash / shake handled by small_battlers.draw).
-    ui.drawPanel(x - 2, y - 2, colW - 2, rowH - 2, nil, ui.buttonRole(isSelected))
+    ui.drawPanel(panelX or (x - 2), panelY or (y - 2),
+        panelW or (colW - 2), panelH or (rowH - 2), nil, ui.buttonRole(isSelected))
     battler.spriteStatic = actor_status.spriteIsStatic(battler, session)
     local spriteKey = battler.actorData and battler.actorData.smallBattler
     local spriteOffsetX = 0

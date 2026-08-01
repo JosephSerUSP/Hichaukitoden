@@ -56,7 +56,12 @@ local function shellsFor(reg, name)
 end
 
 local function resolveDefs(reg, cfg)
+    cfg = cfg or {}
     local variant = variantFor(reg, cfg.variant)
+    -- No variant named at all is "this scene has no dock", which is a normal
+    -- state, not an error -- variantFor already raises for a name the registry
+    -- does not define, which is the case worth failing on.
+    if not variant then return {} end
     local perWindow = cfg.windows or {}
     local out = {}
     for _, def in ipairs(variant.windows or {}) do
@@ -239,9 +244,13 @@ function dock.draw(state, sceneData, ctx)
     -- through the transition, from the carried-over cache, so they neither
     -- animate nor blink. Without this the party slots vanished for the
     -- clear+morph duration on every dock change and popped back.
-    if transition and staticShell and state and transition.persisting then
+    -- Only when there IS a destination variant. Leaving the dock entirely
+    -- (the status scene declares no dock at all) means nothing persists, and
+    -- asking for the defs of a nil variant used to crash here.
+    if transition and staticShell and state and cfg and cfg.variant
+        and transition.persisting and next(transition.persisting) then
         local persisting = {}
-        for _, def in ipairs(resolveDefs(reg, cfg or {})) do
+        for _, def in ipairs(resolveDefs(reg, cfg)) do
             if transition.persisting[def.id] then table.insert(persisting, def) end
         end
         if #persisting > 0 then
