@@ -347,7 +347,7 @@
         // A wall occupies a two-cell block: its main texture plus an adjacent
         // edge cell. Do not let a click at the right edge create bad data.
         if (activeRole === 'wall' && col + 1 >= atlasCols) {
-            alert('A Wall needs two adjacent cells: main wall on the left, autotile edges on the right.');
+            showToast('A Wall needs two adjacent cells: main wall on the left, autotile edges on the right.');
             return;
         }
 
@@ -608,12 +608,12 @@
             if (resp.ok && data.success) {
                 currentTilesetId = cleanId;
                 await loadTilesetList();
-                alert(`New tileset '${cleanId}' created!`);
+                showToast(`New tileset '${cleanId}' created!`);
             } else {
-                alert('Error creating tileset: ' + (data.message || 'Unknown error'));
+                showToast('Error creating tileset: ' + (data.message || 'Unknown error'));
             }
         } catch (e) {
-            alert('Failed to create tileset: ' + e.message);
+            showToast('Failed to create tileset: ' + e.message);
         }
     };
 
@@ -640,14 +640,14 @@
             });
             const resData = await resp.json();
             if (resp.ok && resData.success) {
-                alert(`Tileset '${currentTilesetId}' saved successfully!`);
+                showToast(`Tileset '${currentTilesetId}' saved successfully!`);
                 await loadTilesetList();
             } else {
-                alert('Failed to save tileset data: ' + (resData.message || 'Unknown error'));
+                showToast('Failed to save tileset data: ' + (resData.message || 'Unknown error'));
             }
         } catch (e) {
             console.error('Save tileset error:', e);
-            alert('Error saving tileset: ' + e.message);
+            showToast('Error saving tileset: ' + e.message);
         }
     };
 })();
