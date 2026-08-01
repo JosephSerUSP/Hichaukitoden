@@ -321,11 +321,25 @@ local function memberSkillRows(session, win, env)
     local memberIdx = tonumber((formula.eval(win.member, env))) or 1
     local member = session and session.party and session.party[memberIdx]
     local loader = session and session.loader
+    local skill_cost = require("engine.skill_cost")
     local rows = {}
-    for _, id in ipairs((member and member.actorData and member.actorData.skills) or {}) do
+    -- `member.skills`, not `member.actorData.skills`: the battler's own list is
+    -- the authority. The species list omits anything the CREATURE learned --
+    -- a skillbook's skill, or one carried across a promotion (transform.into
+    -- deliberately preserves those) -- so the status page was hiding skills
+    -- their owner could actually use.
+    local known = (member and member.skills) or (member and member.actorData and member.actorData.skills) or {}
+    for _, id in ipairs(known) do
         local skill = loader and loader.getSkill and loader.getSkill(id)
         if skill then
-            table.insert(rows, { id = id, name = skill.name or id, description = skill.description or "", icon = skill.icon or 0 })
+            table.insert(rows, {
+                id = id, name = skill.name or id,
+                description = skill.description or "", icon = skill.icon or 0,
+                -- Verbose costs: this pane is 20.5 tiles, and out of battle the
+                -- player is deciding whether to walk back to town, so the
+                -- MAXIMUM matters as much as what is left.
+                costSegments = skill_cost.displayCost(skill, member, session, false, true),
+            })
         end
     end
     if #rows == 0 then

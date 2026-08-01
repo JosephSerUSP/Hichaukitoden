@@ -296,7 +296,13 @@ end
 ---
 --- Overcast replaces the count once the pool is empty, because that IS the
 --- cost at that point.
-function skill_cost.displayCost(skill, battler, session, isEnemy)
+---
+--- `verbose` is the roomier reading for the status page, where the pane is
+--- 20.5 tiles instead of 15 and the player is planning rather than acting:
+--- charges show as remaining/max, and an Overcast price is shown ALONGSIDE
+--- them rather than only once the pool runs dry -- out of battle, knowing what
+--- the spell will cost you when it does run dry is the useful part.
+function skill_cost.displayCost(skill, battler, session, isEnemy, verbose)
     local segments = {}
     if not skill or not battler then return segments end
 
@@ -306,12 +312,22 @@ function skill_cost.displayCost(skill, battler, session, isEnemy)
     end
 
     local current, max = skill_cost.getCharges(battler, skill.id, skill, session)
+    local overcastMp = skill.overcast and skill.overcast.mp
     if current ~= nil then
-        if current > 0 then
+        if verbose then
+            -- An Overcast-only skill (max 0) has no pool worth printing --
+            -- "0/0" says nothing. Its price is the MP segment below.
+            if max and max > 0 then
+                table.insert(segments, {
+                    text = tostring(current) .. "/" .. tostring(max), color = "charges" })
+            end
+            if overcastMp and not isEnemy then
+                table.insert(segments, { text = tostring(overcastMp) .. "MP", color = "mp" })
+            end
+        elseif current > 0 then
             table.insert(segments, { text = tostring(current), color = "charges" })
-        elseif skill.overcast and skill.overcast.mp and not isEnemy then
-            table.insert(segments, {
-                text = tostring(skill.overcast.mp) .. "MP", color = "mp" })
+        elseif overcastMp and not isEnemy then
+            table.insert(segments, { text = tostring(overcastMp) .. "MP", color = "mp" })
         elseif max and max > 0 then
             -- Spent, with no Overcast to fall back on. Show the empty pool
             -- rather than nothing, so the row explains itself.
