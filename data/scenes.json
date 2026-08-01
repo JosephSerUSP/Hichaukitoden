@@ -3393,6 +3393,23 @@
         "key": "escape"
       }
     ],
+    "screenshotScript": [
+      {
+        "key": "right"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "right"
+      },
+      {
+        "key": "left"
+      },
+      {
+        "key": "left"
+      }
+    ],
     "windows": [
       {
         "id": "status_party",

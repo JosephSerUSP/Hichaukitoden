@@ -389,5 +389,30 @@ do
         "a free skill shows no cost at all")
 end
 
+do
+    -- The status page's roomier reading: remaining/max, and the Overcast price
+    -- shown ALONGSIDE the pool rather than only once it is dry. Out of battle
+    -- the player is deciding whether to walk back to town, so both halves are
+    -- the useful information.
+    local sess, caster = rig()
+    sess.mp = 1000
+    local spell = { id = "spell", charges = 4, overcast = { mp = 150 } }
+
+    local segs = skill_cost.displayCost(spell, caster, sess, false, true)
+    check(#segs == 2 and segs[1].text == "4/4" and segs[1].color == "charges"
+        and segs[2].text == "150MP" and segs[2].color == "mp",
+        "verbose shows remaining/max AND the Overcast price together")
+
+    skill_cost.spend(spell, caster, sess, false)
+    segs = skill_cost.displayCost(spell, caster, sess, false, true)
+    check(segs[1].text == "3/4", "...and the pool counts down in place")
+
+    -- An Overcast-only skill has no pool worth printing: "0/0" says nothing.
+    local breath = { id = "breath", charges = 0, overcast = { mp = 400 } }
+    segs = skill_cost.displayCost(breath, caster, sess, false, true)
+    check(#segs == 1 and segs[1].text == "400MP",
+        "an Overcast-only skill shows only its price, never an empty 0/0")
+end
+
 print(("=== Skill Cost Tests Completed: %d passed, %d failed ==="):format(passed, failed))
 if failed > 0 then require("tests.fail_fast")("skill cost tests failed", failed) end
