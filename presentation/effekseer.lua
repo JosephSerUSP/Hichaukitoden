@@ -302,6 +302,15 @@ function effekseer.setLocation(handle, x, y)
     lib.efk_set_location(handle, x, y, 0)
 end
 
+-- World-space move, in MAP CELLS -- the counterpart to playWorld() and applying
+-- the same X/Y-floor, Z-up to X/Z-floor, Y-up bridge. setLocation() above is the
+-- screen-space one (canvas pixels, z pinned to 0) and cannot express a height,
+-- so an ambient effect that follows the camera needs this instead.
+function effekseer.setWorldLocation(handle, x, y, z)
+    if not effekseer.available() or not handle then return end
+    lib.efk_set_location(handle, x, z or 0, y)
+end
+
 function effekseer.instanceCount()
     if not effekseer.available() then return 0 end
     return lib.efk_instance_count()

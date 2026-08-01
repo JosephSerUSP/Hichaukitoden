@@ -372,6 +372,120 @@ for caseIndex, case in ipairs(worldEffectCases) do
     loader.tilesets[tilesetId] = nil
     loader.tilesets[baselineId] = nil
 end
+
+-- Ambient weather is a MAP-level effect, not a cell fixture: one handle for the
+-- whole map, kept at the camera. Anchored to a cell it would stay behind the
+-- player, and one endless placement costs ~1,900 of a 2,000 instance budget, so
+-- a per-cell weather idiom starves every other effect (roadmap 6.5.1g).
+loader.tilesets.ambient_render_test = {
+    id = "ambient_render_test", texture = baseModelTileset.texture,
+    base = baseModelTileset.base, doors = baseModelTileset.doors,
+}
+local ambientSession = sessionModule.GameSession.new(loader)
+ambientSession.mapGrid = corridorGrid
+ambientSession.currentMapData = {
+    tileset = "ambient_render_test", ceilingStyle = "solid", events = {},
+    ambientEffect = {
+        effect = "assets/effects/SecondRite/env_rain.efkefc", height = 1.5,
+    },
+}
+ambientSession.generatedFeatures = {}
+ambientSession.playerX, ambientSession.playerY, ambientSession.playerDir = 1, 1, "S"
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(ambientSession)
+love.graphics.setCanvas(previousCanvas)
+local ambientStats = viewport3d.getLastFrameStats()
+check(ambientStats.ambientEffect == true and (ambientStats.worldEffectHandles or 0) == 0,
+    "a map-level ambient effect spawns one handle and no cell fixtures")
+
+-- Walking the corridor must not leave the weather behind. Drawing from a cell
+-- 10 further down produces different pixels only because the effect moved with
+-- the camera; a cell-anchored effect would simply fall out of view.
+require("presentation.effekseer").update(120 / 60)
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(ambientSession)
+love.graphics.setCanvas(previousCanvas)
+ambientSession.playerY = 11
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(ambientSession)      -- applies the follow to the effect root
+love.graphics.setCanvas(previousCanvas)
+-- Particles already in flight are in WORLD space and stay where they were
+-- emitted, so the root arriving is not the same as rain arriving: the new
+-- location needs time to emit. Ordinary movement is a cell at a time and never
+-- notices, but a teleport (a map transfer, a debug warp) leaves a brief gap.
+-- Advance far enough here that the assertion measures the steady state.
+require("presentation.effekseer").update(60 / 60)
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(ambientSession)
+love.graphics.setCanvas(previousCanvas)
+local ambientFar = modelCanvas:newImageData()
+require("presentation.effekseer").reset()
+require("presentation.effekseer").update(1 / 60)
+
+-- The comparison that actually separates the two designs: the SAME corridor,
+-- the SAME far camera cell, with no ambient effect. A cell-anchored effect
+-- spawned back at the start would be behind the camera by now and these two
+-- frames would be identical.
+local ambientBaselineSession = sessionModule.GameSession.new(loader)
+ambientBaselineSession.mapGrid = corridorGrid
+ambientBaselineSession.currentMapData = {
+    tileset = "ambient_render_test", ceilingStyle = "solid", events = {},
+}
+ambientBaselineSession.generatedFeatures = {}
+ambientBaselineSession.playerX, ambientBaselineSession.playerY = 1, 11
+ambientBaselineSession.playerDir = "S"
+love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+love.graphics.clear(0, 0, 0, 1, true, true)
+viewport3d.draw(ambientBaselineSession)
+love.graphics.setCanvas(previousCanvas)
+local ambientBaseline = modelCanvas:newImageData()
+local ambientFarPixels = 0
+for py = 0, 239 do
+    for px = 0, 255 do
+        local ar, ag, ab, aa = ambientFar:getPixel(px, py)
+        local br, bg, bb, ba = ambientBaseline:getPixel(px, py)
+        if ar ~= br or ag ~= bg or ab ~= bb or aa ~= ba then
+            ambientFarPixels = ambientFarPixels + 1
+        end
+    end
+end
+check(ambientFarPixels > 0,
+    "ambient weather is still in view ten cells down the corridor"
+        .. " (pixels=" .. ambientFarPixels .. ")")
+
+-- The pixel test above proves the effect RENDERS, not that it FOLLOWS: at house
+-- magnification the volume is wide enough to cover this corridor from either
+-- end, so it passes with the follow removed. (Verified by disabling it -- 93
+-- pixels either way.) Assert the seam itself, which nothing can cover for.
+local effekseerModule = require("presentation.effekseer")
+local originalSetWorldLocation = effekseerModule.setWorldLocation
+local followedTo = {}
+effekseerModule.setWorldLocation = function(handle, x, y, z)
+    followedTo[#followedTo + 1] = { x = x, y = y, z = z }
+    return originalSetWorldLocation(handle, x, y, z)
+end
+for _, cellY in ipairs({ 3, 15 }) do
+    ambientSession.playerY = cellY
+    love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
+    love.graphics.clear(0, 0, 0, 1, true, true)
+    viewport3d.draw(ambientSession)
+    love.graphics.setCanvas(previousCanvas)
+end
+effekseerModule.setWorldLocation = originalSetWorldLocation
+check(#followedTo == 2 and followedTo[1].y ~= followedTo[2].y
+        and math.abs(followedTo[2].y - followedTo[1].y - 12) < 0.001
+        and followedTo[1].z == 1.5,
+    "the ambient handle is moved to the camera cell every frame at its authored height"
+        .. " (y " .. tostring(followedTo[1] and followedTo[1].y)
+        .. " -> " .. tostring(followedTo[2] and followedTo[2].y) .. ")")
+viewport3d.invalidateStructure(ambientSession)
+viewport3d.invalidateStructure(ambientBaselineSession)
+require("presentation.effekseer").reset()
+loader.tilesets.ambient_render_test = nil
 loader.tilesets.model_fixture_render_test = nil
 
 local cacheProbe = {

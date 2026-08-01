@@ -560,6 +560,19 @@ simulated frame — and it also leaves the manager unable to emit for the next
 effect played. Anything that advances effect time in bulk depends on this: the
 screenshot harness's settle, the editor filmstrip, a load hitch.
 
+A map may author one `ambientEffect` (`{effect, height, magnification}`) for
+**weather**, which is a different role from a cell fixture rather than a
+shorthand for one. It spawns a single handle per map and is moved to the camera
+cell every frame at its authored height, so it always fills the view. Two
+reasons it cannot be a per-cell feature: anchored to a cell it stays behind the
+player, and one endless placement reaches ~1,900 live instances against a 2,000
+manager budget, so a second would starve every other effect into spawning a root
+that emits nothing. Cell fixtures (torches, braziers) keep one handle per
+placement, which is correct and small. G1 validates the reference, the field set,
+and a positive magnification; Map Properties authors it. Particles already in
+flight are world-space and stay where they were emitted, so a teleport leaves a
+brief gap while the new location emits — ordinary movement never notices.
+
 Two rules follow for anything that measures a world effect, both learned by
 getting them wrong (§6.5.1g of the roadmap): observe down a view with **receding
 depth**, because a camera facing a near wall has every particle rejected by the

@@ -1768,6 +1768,21 @@
                                <option value="sky">Sky (outdoor)</option>
                            </select>
                         </div>
+                        <!-- --- AMBIENT EFFECT (weather) --- -->
+                        <div class="field-row-stacked" style="margin-top: 6px;" title="Map-wide weather: ONE Effekseer effect that follows the camera, so it always fills the view. Use this for rain and mist. A per-cell fixture effect (Tileset Studio) is for things anchored in the world, like a torch.">
+                           <label>Ambient Effect:</label>
+                           <select id="prop-map-ambient-effect" class="win98-select" style="width: 100%;"></select>
+                           <div style="display: flex; gap: 4px; margin-top: 2px;">
+                               <div style="flex: 1;">
+                                   <label style="font-size: 10px;">Height:</label>
+                                   <input type="number" step="0.1" id="prop-map-ambient-height" class="win98-input" style="width: 100%;" title="Cells above the floor. Rain sits overhead; mist sits near eye level (0.5)." />
+                               </div>
+                               <div style="flex: 1;">
+                                   <label style="font-size: 10px;">Magnification:</label>
+                                   <input type="number" step="0.1" min="0" id="prop-map-ambient-mag" class="win98-input" style="width: 100%;" title="Multiplies engine.json effekseer.magnification. Leave blank for house scale." />
+                               </div>
+                           </div>
+                        </div>
                         <!-- --- FOG SETTINGS --- -->
                         <div class="field-row-stacked" style="margin-top: 6px;">
                            <div style="display: flex; align-items: center; gap: 4px;">

@@ -938,6 +938,41 @@
             document.getElementById('prop-map-safe').checked = !!map.safe;
             document.getElementById('prop-map-ceiling').value = map.ceilingStyle || 'solid';
 
+            // Map-wide weather. Same listing and missing-path handling the
+            // animation editor's effekseer track uses, so an authored path that
+            // no longer exists stays selectable instead of being silently
+            // dropped on save.
+            const ambient = map.ambientEffect || {};
+            const ambientSelect = document.getElementById('prop-map-ambient-effect');
+            const setAmbientOptions = (files) => {
+                const current = ambient.effect || '';
+                ambientSelect.innerHTML = '';
+                const none = document.createElement('option');
+                none.value = '';
+                none.textContent = files.length ? 'None' : 'No .efkefc under assets/effects';
+                ambientSelect.appendChild(none);
+                files.forEach(f => {
+                    const o = document.createElement('option');
+                    o.value = f; o.textContent = f.replace('assets/effects/', '');
+                    ambientSelect.appendChild(o);
+                });
+                if (current && !files.includes(current)) {
+                    const o = document.createElement('option');
+                    o.value = current; o.textContent = current + '  (missing)';
+                    ambientSelect.appendChild(o);
+                }
+                ambientSelect.value = current;
+            };
+            setAmbientOptions([]);
+            fetch('/api/effects')
+                .then(r => r.json())
+                .then(d => setAmbientOptions(d.files || []))
+                .catch(() => setAmbientOptions([]));
+            document.getElementById('prop-map-ambient-height').value =
+                (ambient.height !== undefined) ? ambient.height : '';
+            document.getElementById('prop-map-ambient-mag').value =
+                (ambient.magnification !== undefined) ? ambient.magnification : '';
+
             // Populate tileset select with registered tilesets from data/tilesets.json
             (async () => {
                 try {
@@ -1421,6 +1456,17 @@
                 map.generateOpenings = true;
             } else {
                 delete map.generateOpenings;
+            }
+            const ambientEffect = document.getElementById('prop-map-ambient-effect').value;
+            if (ambientEffect) {
+                const record = { effect: ambientEffect };
+                const ambientHeight = parseFloat(document.getElementById('prop-map-ambient-height').value);
+                if (!Number.isNaN(ambientHeight)) record.height = ambientHeight;
+                const ambientMag = parseFloat(document.getElementById('prop-map-ambient-mag').value);
+                if (!Number.isNaN(ambientMag) && ambientMag > 0) record.magnification = ambientMag;
+                map.ambientEffect = record;
+            } else {
+                delete map.ambientEffect;
             }
             map.bgm = newBgm;
             map.encounterSteps = newSteps;

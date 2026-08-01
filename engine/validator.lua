@@ -2171,6 +2171,33 @@ elseif paramDef.type == "script" then
                 "map[" .. mi .. "] references unknown generationProfile '"
                     .. tostring(map.generationProfile) .. "'")
         end
+        -- Ambient (map-level, camera-following) weather. Checked exactly like a
+        -- tileset variant's effect: the .efkefc is opaque to G1, so the
+        -- REFERENCE is what gets validated. A typo would otherwise be weather
+        -- that silently never plays on one map.
+        if map.ambientEffect ~= nil then
+            local ambient = map.ambientEffect
+            local owner = "map[" .. mi .. "].ambientEffect"
+            check(type(ambient) == "table", owner .. " must be an object")
+            if type(ambient) == "table" then
+                for key in pairs(ambient) do
+                    check(key == "effect" or key == "height" or key == "magnification",
+                        owner .. " has unknown field '" .. tostring(key) .. "'")
+                end
+                check(type(ambient.effect) == "string"
+                        and ambient.effect:match("%.efkefc$") ~= nil,
+                    owner .. ".effect must name an .efkefc file")
+                check(type(ambient.effect) ~= "string"
+                        or love.filesystem.getInfo(ambient.effect) ~= nil,
+                    owner .. ".effect is missing (" .. tostring(ambient.effect) .. ")")
+                check(ambient.height == nil or type(ambient.height) == "number",
+                    owner .. ".height must be numeric")
+                check(ambient.magnification == nil
+                        or (type(ambient.magnification) == "number"
+                            and ambient.magnification > 0),
+                    owner .. ".magnification must be positive")
+            end
+        end
         if map.tilesetOverride ~= nil then
             local delta = map.tilesetOverride
             local owner = "map[" .. mi .. "].tilesetOverride"

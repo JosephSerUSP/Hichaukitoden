@@ -817,6 +817,10 @@ local function releasePreparedStructure(prepared)
     for _, handle in ipairs((prepared and prepared.worldEffectHandles) or {}) do
         require("presentation.effekseer").stop(handle)
     end
+    if prepared and prepared.ambientEffectHandle then
+        require("presentation.effekseer").stop(prepared.ambientEffectHandle)
+        prepared.ambientEffectHandle = nil
+    end
     if prepared then prepared.dynamicMeshPool = nil end
     if prepared then prepared.modelSurfaces = nil end
     if prepared then prepared.worldEffectHandles = nil end
@@ -1562,6 +1566,29 @@ local function drawWorldSpace(session)
                 if handle then structure.worldEffectHandles[#structure.worldEffectHandles + 1] = handle end
             end
         end
+
+        -- AMBIENT effects are a different role from cell fixtures, not a
+        -- convenience over them. Weather has no location in the map: anchored to
+        -- a cell it stays behind the player, and it is the wrong cost shape --
+        -- one endless mist placement reaches ~1,900 live instances against a
+        -- 2,000 manager budget, so a second one starves every other effect into
+        -- spawning a root that emits nothing. One handle per MAP, kept at the
+        -- camera, is bounded regardless of map size and wastes no particle
+        -- off-screen. See the roadmap section 6.5.1g.
+        local ambient = mapData and mapData.ambientEffect
+        if ambient and ambient.effect and ambient.effect ~= "" then
+            structure.ambientEffectHandle = effekseer.playWorld(
+                ambient.effect, cameraX, cameraY,
+                tonumber(ambient.height) or 0.5, ambient.magnification)
+        end
+    end
+    -- Follow the camera. Height is authored, so an effect can sit overhead
+    -- (rain) or at eye level (mist) without moving its emitter shape.
+    if structure.ambientEffectHandle then
+        local ambient = mapData and mapData.ambientEffect
+        require("presentation.effekseer").setWorldLocation(
+            structure.ambientEffectHandle, cameraX, cameraY,
+            tonumber(ambient and ambient.height) or 0.5)
     end
     for _, batch in pairs(structure.surfaceBatches or {}) do batch.selected = {} end
     local light = (mapData and (mapData.runtimeLight or mapData.light)) or nil
@@ -2166,7 +2193,7 @@ local function drawWorldSpace(session)
         end
     end
     love.graphics.setShader()
-    if #(structure.worldEffectHandles or {}) > 0 then
+    if #(structure.worldEffectHandles or {}) > 0 or structure.ambientEffectHandle then
         require("presentation.effekseer").drawWorld({
             x = cameraX, y = cameraY, z = cameraZ,
             dirX = dirX, dirY = dirY, rightX = rightX, rightY = rightY,
@@ -2196,6 +2223,7 @@ local function drawWorldSpace(session)
         dynamicMeshDraws = dynamicMeshDraws,
         modelDraws = modelDraws,
         worldEffectHandles = #(structure.worldEffectHandles or {}),
+        ambientEffect = structure.ambientEffectHandle and true or false,
         queuedSurfaces = #surfaces,
         selectedStructuralNodes = selectedNodes,
         residentStructuralVertices = residentVertices,

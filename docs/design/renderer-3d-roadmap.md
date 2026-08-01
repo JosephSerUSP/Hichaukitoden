@@ -919,8 +919,23 @@ ten cells and the rain stays behind you.
 
 Cell-anchored *fixtures* (torches, braziers) are correctly modelled as they are:
 one endless handle per placement, each small. **Weather is a different role** and
-wants one map-level handle repositioned to the camera each frame. That is an
-owner decision, recorded here rather than assumed; see §10.
+wants one map-level handle repositioned to the camera each frame.
+
+**Owner decision 01.08.2026: implement the split.** Done — a map authors one
+`ambientEffect`; see SPEC §1.8. Effects stay **endless emitters**; the
+alternative considered and rejected was spawning a short effect per drop per
+frame, which would reimplement in Lua the emission the `.efkefc` already
+describes (against "one implementation, never an approximation"), and would make
+the instance population a function of how often `update` is called rather than of
+simulated time — permanently entrenching the class of bug fixed above.
+
+One trap worth keeping from building the test for it. The obvious assertion —
+"the effect still paints pixels ten cells further down the corridor" — **passes
+with the camera-follow removed**, because at house magnification the volume is
+wide enough to cover the corridor from either end. It was only caught by running
+the negative control. The assertion that actually holds is on the seam: the
+handle is moved to the camera cell every frame. *Write the negative control
+before believing a rendering test.*
 
 ### 6.6 Why this ranks high
 
@@ -1057,10 +1072,9 @@ has value outside this project (§6.6).
    way, and `tools/effekseer/build.ps1` makes rebuilding one command.
 4. **Texel density standard** for models vs. the 64px atlas (§5.4)
 5. **SPEC §1.2 amendment** recording effects-as-asset (§6.2)
-6. **Ambient effects vs. cell fixtures** (§6.5.1g) — one endless mist placement
-   costs 1,904 of a 2,000 instance budget, and cell-anchored weather stays
-   behind the player. Should rain/mist become a map-level handle that follows
-   the camera, leaving per-cell effects to fixtures like torches?
+6. ~~**Ambient effects vs. cell fixtures**~~ **Resolved 01.08.2026: split them.**
+   Weather is a map-level `ambientEffect` following the camera; per-cell effects
+   stay for fixtures like torches (§6.5.1g).
 7. **G5 coverage of `skill.attack`** (§6.5.1f) — battle's capture script never
    resolves an attack, so the migrated effect is still ungated. Closing it adds
    frames and needs an owner-signed capture.
