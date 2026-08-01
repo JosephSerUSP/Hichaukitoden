@@ -938,6 +938,105 @@ function renderer.drawBattleLogWindow(combatLog, x, y, w, h)
 end
 
 -- Target Info Window: replaces the command list during target selection mode
+--- One creature, read at a glance: sprite, elements, name, level, HP bar and
+--- states. Extracted from the battle target pane so the STATUS menu can show
+--- the identical card -- the readout a player learns while fighting is the one
+--- they get while planning, instead of two lookalike blocks drifting apart.
+--- `target` is any battler; the caller owns the panel title.
+function renderer.drawBattlerCard(session, target, x, y, w, h, title, opts)
+    if title then ui.drawPanelTitle(title, x, y) end
+    if not target then return end
+
+    -- Sprite & Name block
+    local contentY = y + 18
+    local spriteSize = 24
+    local spriteKey = (target.actorData and (target.actorData.smallBattler or target.actorData.spriteKey))
+        or target.smallBattler or target.spriteKey or target.id
+
+    target.spriteStatic = actor_status.spriteIsStatic(target, session)
+    local dead = target:isDead()
+    local spriteDrawn = small_battlers.draw(spriteKey, x + 8, contentY, spriteSize, dead, target, session)
+
+    -- Narrow panes stack the name UNDER the sprite instead of beside it. The
+    -- card was built for the battle pane (15 tiles); in the status dock's 9.5
+    -- the side-by-side layout left ~28px for the name and rendered "Saban" as
+    -- "Sab". Same card, same information, one branch on the room available.
+    local narrow = w < ui.toPx(13)
+    local startX = narrow and (x + 8)
+        or (x + (spriteDrawn and (8 + spriteSize + 4) or 10))
+    local textY = narrow and (contentY + spriteSize + 2) or contentY
+
+    contentY = textY
+
+    -- Name (element icons + name, one unit — see actor_status.drawCreatureName)
+    local nameColor = dead and { 0.5, 0.5, 0.5, 1 } or { 1, 1, 1, 1 }
+    local nameX = startX
+    actor_status.drawCreatureName(target, startX, contentY + 2, session, nameColor,
+        math.max(10, x + w - 8 - startX), 2)
+
+    local levelText = target.level and ("Lv. " .. tostring(target.level)) or ""
+    if levelText ~= "" then
+        ui.drawString(levelText, nameX, contentY + 10, { 0.8, 0.8, 0.8, 1 })
+    end
+
+    -- HP Bar & Numerical HP
+    local curHp = target.hp or 0
+    local maxHp = target:getMaxHp(session)
+    if maxHp <= 0 then maxHp = 1 end
+
+    local hpY = contentY + 28
+    local barX = x + 8
+    local barW = w - 16
+
+    -- Label left, value right, gauge spanning between them: the label names a
+    -- fixed thing so it anchors to the left edge, while the number changes
+    -- width as it counts down and would otherwise wander. Right-aligning it
+    -- keeps the digits in one column across every row and every creature.
+    local hpVal = tostring(math.floor(curHp + 0.5)) .. "/" .. tostring(math.floor(maxHp + 0.5))
+    local hpColor = dead and { 0.5, 0.5, 0.5, 1 } or { 0.9, 0.9, 0.9, 1 }
+    ui.drawString("HP", barX, hpY, hpColor)
+    ui.drawString(hpVal, barX + barW - ui.measureText(hpVal), hpY, hpColor)
+
+    ui.drawBar(barX, ui.gaugeYBelowText(hpY), barW, ui.gaugeHeight, curHp, maxHp, ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
+
+    -- The card is ONE renderer but not one fixed set of rows: what a creature
+    -- needs to say differs by where you are reading it. In battle, HP and
+    -- states are the whole question. Out of battle, progress toward the next
+    -- level matters and nothing is being targeted. So EXP is opt-in per caller
+    -- rather than a second near-identical card.
+    local stateY = hpY + 16
+    if opts and opts.exp then
+        local expPerLevel = (session and session.loader and session.loader.system
+            and session.loader.system.growth and session.loader.system.growth.expPerLevel) or 15
+        local exp = target.exp or 0
+        local needed = (target.level or 1) * expPerLevel
+        local expColor = { 0.75, 0.8, 0.9, 1 }
+        local expVal = tostring(math.floor(exp)) .. "/" .. tostring(math.floor(needed))
+        ui.drawString("EXP", barX, stateY, expColor)
+        ui.drawString(expVal, barX + barW - ui.measureText(expVal), stateY, expColor)
+        ui.drawBar(barX, ui.gaugeYBelowText(stateY), barW, ui.gaugeHeight,
+            exp, needed, { 0.1, 0.2, 0.5 }, { 0.3, 0.6, 1 })
+        stateY = stateY + 16
+    end
+
+    -- States row
+    actor_status.syncStateAnimations(target, session)
+    local iconW = actor_status.drawStateIcon(target, x + 8, stateY - 3, session)
+
+    local stateNames = {}
+    for _, st in ipairs(target.states or {}) do
+        local def = session and session.loader and session.loader.getState(st.id)
+        if def and def.name then
+            table.insert(stateNames, def.name)
+        end
+    end
+
+    local stateStr = #stateNames > 0 and table.concat(stateNames, ", ") or (dead and "Dead" or "Normal")
+    local stateX = x + 8 + (iconW > 0 and (iconW + 2) or 0)
+    local fitStateStr = ui.fitText(stateStr, math.max(10, x + w - 8 - stateX))
+    ui.drawString(fitStateStr, stateX, stateY, { 0.7, 0.7, 0.7, 1 })
+end
+
 function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
     if not bv or not bv.targetSelect then
         ui.drawPanelTitle("Target", x, y)
@@ -979,65 +1078,7 @@ function renderer.drawTargetInfoWindow(session, bv, x, y, w, h)
         ui.drawString(countText, x + w - 8 - ui.measureText(countText), headerY, { 1, 0.9, 0.4, 1 })
     end
 
-    -- Sprite & Name block
-    local contentY = y + 18
-    local spriteSize = 24
-    local spriteKey = (target.actorData and (target.actorData.smallBattler or target.actorData.spriteKey))
-        or target.smallBattler or target.spriteKey or target.id
-
-    target.spriteStatic = actor_status.spriteIsStatic(target, session)
-    local dead = target:isDead()
-    local spriteDrawn = small_battlers.draw(spriteKey, x + 8, contentY, spriteSize, dead, target, session)
-
-    local startX = x + (spriteDrawn and (8 + spriteSize + 4) or 10)
-
-    -- Element icons (rendered BEFORE the actor's name)
-    local elemW = actor_status.drawElementIcons(traits.getElements(target, session), startX, contentY + 2, session)
-    local nameX = startX + elemW + (elemW > 0 and 2 or 0)
-    local nameW = x + w - 8 - nameX
-
-    -- Target Name & Level
-    local nameText = ui.fitText(target.name or "Target", math.max(10, nameW))
-    local nameColor = dead and { 0.5, 0.5, 0.5, 1 } or { 1, 1, 1, 1 }
-    ui.drawString(nameText, nameX, contentY, nameColor)
-
-    local levelText = target.level and ("Lv. " .. tostring(target.level)) or ""
-    if levelText ~= "" then
-        ui.drawString(levelText, nameX, contentY + 10, { 0.8, 0.8, 0.8, 1 })
-    end
-
-    -- HP Bar & Numerical HP
-    local curHp = target.hp or 0
-    local maxHp = target:getMaxHp(session)
-    if maxHp <= 0 then maxHp = 1 end
-
-    local hpY = contentY + 28
-    local barX = x + 8
-    local barW = w - 16
-
-    local hpStr = "HP " .. tostring(math.floor(curHp + 0.5)) .. "/" .. tostring(math.floor(maxHp + 0.5))
-    local hpColor = dead and { 0.5, 0.5, 0.5, 1 } or { 0.9, 0.9, 0.9, 1 }
-    ui.drawString(hpStr, barX + barW - ui.measureText(hpStr), hpY, hpColor)
-
-    ui.drawBar(barX, ui.gaugeYBelowText(hpY), barW, ui.gaugeHeight, curHp, maxHp, ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
-
-    -- States row
-    local stateY = hpY + 16
-    actor_status.syncStateAnimations(target, session)
-    local iconW = actor_status.drawStateIcon(target, x + 8, stateY - 3, session)
-
-    local stateNames = {}
-    for _, st in ipairs(target.states or {}) do
-        local def = session and session.loader and session.loader.getState(st.id)
-        if def and def.name then
-            table.insert(stateNames, def.name)
-        end
-    end
-
-    local stateStr = #stateNames > 0 and table.concat(stateNames, ", ") or (dead and "Dead" or "Normal")
-    local stateX = x + 8 + (iconW > 0 and (iconW + 2) or 0)
-    local fitStateStr = ui.fitText(stateStr, math.max(10, x + w - 8 - stateX))
-    ui.drawString(fitStateStr, stateX, stateY, { 0.7, 0.7, 0.7, 1 })
+    renderer.drawBattlerCard(session, target, x, y, w, h, nil, nil)
 end
 
 -- Level-up stat report: every row begins at its original value, then rolls to
@@ -1155,12 +1196,18 @@ function renderer.drawVictoryPanelWindow(session, victoryInfo, victoryStage, v, 
         local levelRich = "Lv" .. (leading ~= "" and ("\\c[7]" .. leading .. "\\c[0]" .. levelText:sub(#leading + 1)) or levelText)
         ui.drawString(levelRich, contentX, rowY, leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
         local levelW = ui.measureText("Lv" .. levelText)
-        local iconW = actor_status.drawElementIcons(
-            member and traits.getElements(member, session) or {},
-            contentX + levelW, rowY - 4, session)
-        ui.drawString(m.name .. (leveled and "  LV UP!" or ""),
-            contentX + levelW + iconW, rowY,
-            leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1})
+        local nameColor = leveled and {1, 1, 0.5, 1} or {1, 1, 1, 1}
+        -- Icons + name as one unit. `member` may be nil (a creature that left
+        -- the party mid-battle), so fall back to the recorded name.
+        local nameW = actor_status.drawCreatureName(member, contentX + levelW, rowY,
+            session, nameColor, nil, 0)
+        if nameW == 0 then
+            ui.drawString(m.name, contentX + levelW, rowY, nameColor)
+            nameW = ui.measureText(m.name)
+        end
+        if leveled then
+            ui.drawString("  LV UP!", contentX + levelW + nameW, rowY, nameColor)
+        end
         if not leveled then
             ui.drawString(tostring(math.max(0, math.ceil(needed - a.exp))), contentX, rowY,
                 {0.7, 0.7, 0.7, 1}, "right", gaugeEndX - contentX)

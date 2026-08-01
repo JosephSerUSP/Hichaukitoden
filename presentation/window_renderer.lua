@@ -261,24 +261,37 @@ local SLOT_TYPES = { "Weapon", "Armor", "Accessory" }
 -- "ATK:3->5  DEF:2->4" summary of what trial-equipping `newItem` (nil =
 -- unequip) into the member's slot would change — the legacy
 -- getStatPreview logic, moved here so equip pickers stay data-authored.
-local function equipPreviewString(member, slot, newItem, session)
+-- The trial equip itself: swap the item in, read every parameter, swap it back.
+-- Returns (before, after) tables so a caller can render the change however it
+-- likes -- the help bar wants a sentence, the stat block wants per-row arrows.
+-- One trial, so the sentence and the block can never disagree about what a
+-- piece of gear does.
+local STAT_ROWS = {
+    { "maxHp", "HP" }, { "atk", "ATK" }, { "def", "DEF" }, { "mat", "MAT" },
+    { "mdf", "MDF" }, { "asp", "ASP" }, { "mpd", "MPD" },
+}
+
+local function equipStatSnapshot(member, slot, newItem, session)
     local traits = require("engine.traits")
     local function snapshot()
-        return {
-            hp = member:getMaxHp(session),
-            atk = traits.getParam(member, "atk", session),
-            def = traits.getParam(member, "def", session),
-            mat = traits.getParam(member, "mat", session),
-            mdf = traits.getParam(member, "mdf", session),
-        }
+        local s = {}
+        for _, f in ipairs(STAT_ROWS) do
+            s[f[1]] = traits.getParam(member, f[1], session)
+        end
+        return s
     end
     local prev = member.equipment[slot]
     local before = snapshot()
     member.equipment[slot] = newItem
     local after = snapshot()
     member.equipment[slot] = prev
+    return before, after
+end
+
+local function equipPreviewString(member, slot, newItem, session)
+    local before, after = equipStatSnapshot(member, slot, newItem, session)
     local changes = {}
-    for _, f in ipairs({ { "hp", "HP" }, { "atk", "ATK" }, { "def", "DEF" }, { "mat", "MAT" }, { "mdf", "MDF" } }) do
+    for _, f in ipairs(STAT_ROWS) do
         if before[f[1]] ~= after[f[1]] then
             table.insert(changes, string.format("%s:%d->%d", f[2], before[f[1]], after[f[1]]))
         end
@@ -664,6 +677,81 @@ local function drawActorStatusCell(layout, env, x, y, title, ctx)
     local cellX, cellY = ui.panelContentOrigin(x, y, title, nil, nil)
     actor_status.draw(battler, cellX, cellY, false, session)
     return rowH
+end
+
+-- The parameter block, living WITH the equipment page and reacting to what the
+-- cursor is hovering in the equip picker -- the same "here is what this would
+-- do to you" reading the level-up report gives, applied to gear.
+--
+-- It replaced a three-line text block in the 9.5-tile dock, where every line
+-- ("ATK 23  DEF 23") was wider than the 60px wrap limit, so each wrapped to two
+-- and the last rows fell off the bottom of the screen: ASP and MPD were
+-- authored but had never once been visible.
+--
+-- Two columns because six stats in one column is a scroll, and this pane is
+-- 20.5 tiles -- wide enough that a stat, its value and an arrow to the new
+-- value all fit without abbreviating anything.
+local function drawStatBlock(layout, win, env, x, y, w, h, title, session)
+    local traits = require("engine.traits")
+    local contentX, contentY = contentOrigin(layout, title, x, y)
+    local memberIdx = tonumber((formula.eval(win.member or layout.member, env))) or 1
+    local member = session and session.party and session.party[memberIdx]
+    if not member then return end
+
+    -- A preview is live only while the equip picker is open AND sitting on a
+    -- row. Otherwise the block is a plain readout -- no arrows, no colour.
+    local before, after = nil, nil
+    local previewList = layout.previewList
+    local active = layout.previewWhen == nil
+        or formula.eval(layout.previewWhen, env) == true
+    if active and previewList and env.sel then
+        local row = env.sel(previewList)
+        if row then
+            local slot = tonumber((formula.eval(layout.slot or win.slot, env))) or 1
+            local item = (row.id ~= nil and row.id ~= "empty")
+                and session.loader.getItem(row.id) or nil
+            before, after = equipStatSnapshot(member, slot, item, session)
+        end
+    end
+    if not before then
+        before = {}
+        for _, f in ipairs(STAT_ROWS) do
+            before[f[1]] = traits.getParam(member, f[1], session)
+        end
+    end
+
+    local colW = (w - ui.toPx(2)) / 2
+    local lineH = ui.lineHeight + 2
+    for i, f in ipairs(STAT_ROWS) do
+        local key, label = f[1], f[2]
+        local col = (i - 1) % 2
+        local rowN = math.floor((i - 1) / 2)
+        local cx = contentX + col * colW
+        local cy = contentY + rowN * lineH
+
+        ui.drawString(label, cx, cy, COLOR_DIM)
+        -- 2.5 tiles clears a three-letter label; the arrow pair below is what
+        -- had to get tighter, not this.
+        local valueX = cx + ui.toPx(2.5)
+        local oldV = before[key] or 0
+        local newV = after and after[key] or nil
+
+        if newV and newV ~= oldV then
+            -- Signed direction is the whole point of the preview, so it is
+            -- carried by colour AND by an arrow -- colour alone would be
+            -- invisible to anyone who cannot separate the two hues.
+            -- Tight "110>113": at a 74px column, spacing either side of the
+            -- arrow pushed the pair into the next column's label.
+            local up = newV > oldV
+            ui.drawString(tostring(oldV), valueX, cy, COLOR_DIM)
+            local arrowX = valueX + ui.measureText(tostring(oldV)) + 1
+            ui.drawString(">", arrowX, cy, COLOR_DIM)
+            ui.drawString(tostring(newV), arrowX + ui.measureText(">") + 1, cy,
+                up and { 0.5, 1.0, 0.5, 1 } or { 1.0, 0.5, 0.5, 1 })
+        else
+            ui.drawString(tostring(oldV), valueX, cy, COLOR_NORMAL)
+        end
+    end
 end
 
 local function drawList(win, layout, rows, cursor, env, x, y, w, h, title, session, animP)
@@ -1469,6 +1557,43 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
         renderer.drawLevelUpStatsWindow(env.v and env.v.levelUpRows, x, y, w, h, title)
     elseif style == "targetInfo" then
         renderer.drawTargetInfoWindow(ctx and ctx.session, env.v, x, y, w, h)
+    elseif style == "creatureHeader" then
+        -- A creature's name headline. Its own style rather than a `text`
+        -- window, because the rule is that a creature's name ALWAYS carries
+        -- its element icons, and an interpolated "{name}   Lv {level}" string
+        -- can only ever produce bare text -- which is exactly how the most
+        -- prominent name on the status screen ended up as the one without
+        -- icons.
+        local memberIdx = tonumber((formula.eval(layout.member or win.member, env))) or 1
+        local session = ctx and ctx.session
+        local member = session and session.party and session.party[memberIdx]
+        if member then
+            local nameW = actor_status.drawCreatureName(member, contentX, contentY,
+                session, COLOR_NORMAL, nil, 2)
+            local rest = {}
+            if member.level then table.insert(rest, "Lv " .. tostring(member.level)) end
+            -- "None" is a placeholder role, not a role. Printing it puts the
+            -- word "None" in the headline of every creature that has not been
+            -- given one, which reads as a missing value rather than an absent
+            -- one.
+            local role = member.actorData and member.actorData.role
+            if role and role ~= "" and role ~= "None" then table.insert(rest, role) end
+            if #rest > 0 then
+                ui.drawString(table.concat(rest, "   "),
+                    contentX + nameW + ui.toPx(1.5), contentY, COLOR_DIM)
+            end
+        end
+    elseif style == "statBlock" then
+        drawStatBlock(layout, win, env, x, y, w, h, title, ctx and ctx.session)
+    elseif style == "battlerInfo" then
+        -- The SAME card the battle target pane draws, pointed at a party
+        -- member instead of a hovered target. One renderer, so the creature
+        -- readout the player learns in battle is the one the status menu uses.
+        local memberIdx = tonumber((formula.eval(layout.member or win.member, env))) or 1
+        local session = ctx and ctx.session
+        local member = session and session.party and session.party[memberIdx]
+        renderer.drawBattlerCard(session, member, x, y, w, h, title,
+            { exp = layout.showExp == true })
     elseif style == "itemInfo" then
         local cached = listCache[id]
         local row = cached and cached.rows[cached.cursor]

@@ -29,7 +29,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `ritual` | menu | windows | - | 14 | 8 |
 | `save_menu` | menu | windows | - | 3 | 5 |
 | `shop` | menu | windows | - | 4 | 7 |
-| `status` | menu | windows | - | 11 | 7 |
+| `status` | menu | windows | - | 12 | 7 |
 | `title` | menu | windows | - | 4 | 6 |
 
 ## Registry (data/engine.json)

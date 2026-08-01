@@ -204,6 +204,28 @@ scene inventing its own chrome:
   The dock's shells carry scene-specific roles:
   1. **Persistent party status** — the current/selected member's compact
      status, always visible regardless of what's happening above it.
+     The creature card in that pane is **one renderer**
+     (`renderer.drawBattlerCard`): sprite, elements, name, level, HP bar and
+     states, drawn identically by battle's target pane and the status menu, so
+     the readout a player learns while fighting is the one they get while
+     planning. What it *shows* varies by caller — status opts into an EXP
+     gauge, battle does not — because the rows a creature needs differ by
+     where you are reading it. That is a flag on one card, never a second
+     lookalike card.
+
+     **A creature's name always carries its element icons** — "🟢Saban", never
+     a bare "Saban" — and that is one function,
+     `actor_status.drawCreatureName`, not a convention each surface remembers
+     to follow. The sequence it owns (resolve effective elements, draw icons,
+     measure, offset the name, clip the name to what is left) used to be
+     hand-rolled per site, and the sites that forgot it were the tell: the
+     party cell, target card and victory report drew icons; the level-up
+     report and the status headline did not, so the same creature read as two
+     different things depending on the menu. A name rendered from an
+     interpolated `"{name}"` string can never satisfy the rule, which is why
+     the status headline is a `creatureHeader` window rather than a `text`
+     one. Sentences in the battle log are the deliberate exception: prose
+     names a creature mid-clause, where an icon would break the line.
   2. **Context-aware content laid out like the dialogue box** — left pane
      is an info panel (portrait/name/stat summary), right pane is the
      larger, interactive pane (lists, explanations, previews — anything
@@ -211,8 +233,11 @@ scene inventing its own chrome:
   Both variants share the dialogue scene's exact footprint and column
   split: left column width starts from `battle_layout.partyGridColWidth`
   (68px = 8.5 tiles — the same fixed cell width `actor_status.draw` uses
-  everywhere else) but widens as needed (currently 9.5 tiles, to fit the
-  status dock's stats), right column takes the remaining width. **The
+  everywhere else) but widens as needed. It is **15 tiles** as of
+  01.08.2026: battle's target pane was already 15 while status's was 9.5,
+  which is exactly the drift the rule below forbids, and the creature card
+  they now share is unreadable narrower (it rendered "Saban" as "Sab").
+  The right column takes the remaining width. **The
   left column's width is the authority**: if a scene's info panel needs
   more room to read cleanly, widen the shared dialogue footprint to match
   rather than shrinking the info panel's content — don't let two scenes
