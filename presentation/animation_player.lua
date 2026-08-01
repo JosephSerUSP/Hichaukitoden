@@ -18,6 +18,8 @@
 -- Unknown track types: one log message, then skipped — future track types
 -- never crash old engine builds.
 
+local putil = require("presentation.util")
+
 local animation_player = {}
 
 -- Loaded animation entries: id -> entry table
@@ -43,14 +45,6 @@ local unknownTrackWarnings = {}
 -- Easing functions
 ---------------------------------------------------------------------------
 
-local function easeLinear(t)
-    return t
-end
-
-local function easeOut(t)
-    -- Quadratic ease-out: fast start, slow end
-    return 1 - (1 - t) * (1 - t)
-end
 local function evalNum(val)
     if type(val) == "number" then
         return val
@@ -74,8 +68,8 @@ local function evalNum(val)
     return 0
 end
 local function easingFn(name)
-    if name == "ease_out" then return easeOut end
-    return easeLinear
+    if name == "ease_out" then return putil.easeOut end
+    return putil.easeLinear
 end
 
 ---------------------------------------------------------------------------

@@ -1,19 +1,11 @@
 -- Numbered screen-space image objects authored by events. This is the bitmap
 -- counterpart to string pictures: cutscenes can crossfade and gently move
 -- generated plates without giving a common event a bespoke presentation path.
+local putil = require("presentation.util")
+
 local renderer = {}
 local pictures = {}
 local cache = {}
-
-local function copy(t)
-    local out = {}
-    for k, v in pairs(t or {}) do out[k] = v end
-    return out
-end
-
-local function easeOut(p)
-    return 1 - (1 - p) * (1 - p)
-end
 
 local function load(path)
     local image = cache[path]
@@ -51,7 +43,7 @@ function renderer.move(spec)
     if not pic then
         error("MOVE_IMAGE_PICTURE references missing id " .. tostring(spec.id), 0)
     end
-    local target = copy(pic)
+    local target = putil.copy(pic)
     for _, key in ipairs({ "x", "y", "opacity", "scale", "rotation" }) do
         if spec[key] ~= nil then target[key] = tonumber(spec[key]) or pic[key] end
     end
@@ -61,7 +53,7 @@ function renderer.move(spec)
         pic.motion = nil
     else
         pic.motion = {
-            from = copy(pic), target = target, elapsed = 0, duration = duration,
+            from = putil.copy(pic), target = target, elapsed = 0, duration = duration,
             easing = spec.easing or "out",
         }
     end
@@ -90,7 +82,7 @@ function renderer.update(dt)
         if m then
             m.elapsed = math.min(m.duration, m.elapsed + dt)
             local raw = m.elapsed / m.duration
-            local p = m.easing == "linear" and raw or easeOut(raw)
+            local p = m.easing == "linear" and raw or putil.easeOut(raw)
             for _, key in ipairs({ "x", "y", "opacity", "scale", "rotation" }) do
                 pic[key] = m.from[key] + (m.target[key] - m.from[key]) * p
             end

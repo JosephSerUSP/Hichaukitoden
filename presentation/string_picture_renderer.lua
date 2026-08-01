@@ -3,18 +3,10 @@
 local ui = require("presentation.ui")
 local config = require("engine.config")
 
+local putil = require("presentation.util")
+
 local renderer = {}
 local pictures = {}
-
-local function copy(t)
-    local out = {}
-    for k, v in pairs(t or {}) do out[k] = v end
-    return out
-end
-
-local function easeOut(p)
-    return 1 - (1 - p) * (1 - p)
-end
 
 local function wrapPicText(pic)
     local font = ui.loadFont(pic.font, pic.fontSize)
@@ -56,7 +48,7 @@ end
 function renderer.move(spec)
     local pic = pictures[tonumber(spec.id)]
     if not pic then error("MOVE_STRING_PICTURE references missing id " .. tostring(spec.id), 0) end
-    local target = copy(pic)
+    local target = putil.copy(pic)
     for _, key in ipairs({ "x", "y", "opacity", "scale" }) do
         if spec[key] ~= nil then target[key] = tonumber(spec[key]) or pic[key] end
     end
@@ -70,7 +62,7 @@ function renderer.move(spec)
         pic.motion = nil
     else
         pic.motion = {
-            from = copy(pic), target = target, elapsed = 0, duration = duration,
+            from = putil.copy(pic), target = target, elapsed = 0, duration = duration,
             easing = spec.easing or "out",
         }
     end
@@ -100,7 +92,7 @@ function renderer.update(dt)
         if m then
             m.elapsed = math.min(m.duration, m.elapsed + dt)
             local raw = m.elapsed / m.duration
-            local p = m.easing == "linear" and raw or easeOut(raw)
+            local p = m.easing == "linear" and raw or putil.easeOut(raw)
             for _, key in ipairs({ "x", "y", "opacity", "scale" }) do
                 pic[key] = m.from[key] + (m.target[key] - m.from[key]) * p
             end
