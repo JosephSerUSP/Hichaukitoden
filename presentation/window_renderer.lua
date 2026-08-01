@@ -868,18 +868,48 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local label = "MP"
     local labelW = ui.measureText(label)
     local labelGap = 4
-    -- F2 (overhaul-6): the gauge AND the numeric value both shift up 3px; an
-    -- "MP" label sits to the LEFT of the gauge, and the gauge length is reduced
-    -- by the label width so label + gauge + number still span the grid width.
-    local numberY = y + h - ui.fontSize - 3
-    local gaugeY = numberY + math.floor((ui.fontSize - mpBarH) / 2)
+    -- An "MP" label sits to the LEFT of the gauge, and the row is sized so
+    -- label + gauge + number span the grid width.
+    --
+    -- `partyMpRowOffsetY` places the row (31.07.2026). It used to be a
+    -- hardcoded -3, which the font change turned into an overlap: the label
+    -- and value ended up under the slot panels above and the value ran off
+    -- the right edge of the canvas. It is data now because the right value
+    -- depends on the font, and the row is allowed to sit over the windowskin
+    -- frame -- the semitransparent skin makes that read as intended rather
+    -- than as a collision.
+    -- ui.lineHeight, NOT ui.fontSize. The two were both 8 when this row was
+    -- written, so the difference did not show; the font change set fontSize to
+    -- its nominal 16 while UI geometry deliberately stays on the 8px grid (see
+    -- ui.setFont), and this row -- the only place using fontSize as a height --
+    -- silently rose 8px into the slot panels above it.
+    local numberY = y + h - ui.lineHeight + (battle_layout.get(session, "partyMpRowOffsetY") or 0)
+    local gaugeY = numberY + math.floor((ui.lineHeight - mpBarH) / 2)
     local gaugeX = contentX + labelW + labelGap
-    local gaugeW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
-    local numberX = gaugeX + gaugeW + gap
+    local availW = math.max(8, gridW - labelW - labelGap - mpNumW - gap)
+
+    -- The TRACK length is proportional to this party's max MP against the
+    -- game's ceiling, not a full-width bar that merely fills up: a Summoner
+    -- with 3000 of a possible 9999 gets a gauge about a third as long, so an
+    -- MP Up reward visibly lengthens the bar itself. Because drawBar fills
+    -- its own width by mp/maxMp, the LIT pixels then come out proportional to
+    -- absolute MP -- the same number of lit pixels always means the same MP.
+    local refMax = battle_layout.get(session, "partyMpGaugeReferenceMax") or 9999
+    local partyMaxMp = math.max(0, math.floor(session.maxMp or 0))
+    local share = 1
+    if refMax > 0 then share = math.max(0, math.min(1, partyMaxMp / refMax)) end
+    local gaugeW = math.max(4, math.floor(availW * share))
+
+    -- The value is pinned to the RIGHT of the row, not trailing the gauge's
+    -- end: it marks where a full-length bar would reach, so a short gauge
+    -- reads as room to grow into rather than as the row being small. Raising
+    -- max MP then lengthens the bar toward a fixed number instead of shoving
+    -- it sideways.
+    local numberX = contentX + gridW - mpNumW
     if not layout.hideMp then
         love.graphics.push()
         local mpCenterX = contentX + gridW / 2
-        local mpCenterY = numberY + ui.fontSize / 2
+        local mpCenterY = numberY + ui.lineHeight / 2
         love.graphics.translate(mpCenterX, mpCenterY)
         love.graphics.scale(scale, scale)
         love.graphics.translate(-mpCenterX, -mpCenterY)
