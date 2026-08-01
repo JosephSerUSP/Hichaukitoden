@@ -1,0 +1,11 @@
+# Material library for gothic_relic_chest.obj
+
+newmtl dark_oak
+Kd 0.3200 0.2000 0.1000
+
+newmtl wrought_black_iron
+Kd 0.1500 0.1600 0.1800
+
+newmtl antique_brass
+Kd 0.8000 0.6200 0.1800
+

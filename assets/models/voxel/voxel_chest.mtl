@@ -1,0 +1,11 @@
+# Material library for voxel_chest.obj
+
+newmtl pixel_wood
+Kd 0.5500 0.3500 0.1800
+
+newmtl pixel_iron
+Kd 0.3000 0.3000 0.3500
+
+newmtl pixel_gold
+Kd 0.9000 0.7500 0.1500
+

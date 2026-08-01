@@ -115,11 +115,18 @@ end
 -- one of these does not sever the map, so the reachability rule below would let
 -- it through -- it just makes something unusable, which is worse for being
 -- subtle. Keys are 1-indexed grid coordinates; the sources are all 0-indexed.
-local function protectedFixtureCells(mapData, generatedZones)
+local function protectedFixtureCells(mapData, generatedZones, spawnCell)
     local protected = {}
     local function mark(x, y)
         if x and y then protected[(x + 1) .. "," .. (y + 1)] = true end
     end
+    -- The RESOLVED spawn, passed in by the caller, not `mapData.spawn` alone.
+    -- Most maps do not author a spawn and fall back to system.json's, so
+    -- reading only the map's own field protected nothing on exactly the maps
+    -- that needed it -- and a 1.1-cell-tall street lamp landed on the town's
+    -- start cell, putting the camera inside the model and filling the screen
+    -- with its interior faces. G5 caught it.
+    if spawnCell then mark(spawnCell.x, spawnCell.y) end
     local spawn = mapData and mapData.spawn
     if spawn then mark(spawn.x, spawn.y) end
     for _, ev in ipairs((mapData and mapData.events) or {}) do
@@ -174,7 +181,7 @@ end
 -- exactly one. Placements are validated incrementally in authored order, so
 -- fixtures that are each individually safe but jointly a cut are caught too --
 -- the second one is tested against a map that already contains the first.
-function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
+function exploration.injectTilesetFeatures(grid, mapData, generatedZones, spawnCell)
     local tilesetDef = tilesetResolver.resolve(loader, mapData)
     local featureList = (tilesetDef and tilesetDef.features) or {}
     local prefabById = {}
@@ -192,13 +199,29 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
     local reachStartX, reachStartY, reachCount = nil, nil, nil
     local function ensureReachability()
         if reachCount then return reachCount ~= nil end
-        protected = protectedFixtureCells(mapData, generatedZones)
-        -- Start from the spawn where there is one, so "reachable" means
-        -- "reachable by the player" rather than by some arbitrary pocket.
+        protected = protectedFixtureCells(mapData, generatedZones, spawnCell)
+        -- "Reachable" has to mean "reachable BY THE PLAYER", so the flood must
+        -- start where the player actually arrives. Getting this wrong is subtle:
+        -- flooding from an arbitrary cell validates fixtures against the wrong
+        -- component, and a fixture in a region the player cannot reach passes a
+        -- check that meant nothing. Prefer the generated entrance, then an
+        -- authored spawn, and only then fall back to scan order.
+        local function usable(gx, gy)
+            return grid[gy] and grid[gy][gx] and grid[gy][gx] ~= "#"
+        end
+        for _, zone in ipairs(generatedZones or {}) do
+            for _, tag in ipairs(zone.tags or {}) do
+                if tag == "entrance" and usable(zone.x + 1, zone.y + 1) then
+                    reachStartX, reachStartY = zone.x + 1, zone.y + 1
+                end
+            end
+        end
         local spawn = mapData and mapData.spawn
-        if spawn and spawn.x and spawn.y
-            and grid[spawn.y + 1] and grid[spawn.y + 1][spawn.x + 1]
-            and grid[spawn.y + 1][spawn.x + 1] ~= "#" then
+        if reachStartX then
+            -- entrance wins
+        elseif spawnCell and usable(spawnCell.x + 1, spawnCell.y + 1) then
+            reachStartX, reachStartY = spawnCell.x + 1, spawnCell.y + 1
+        elseif spawn and spawn.x and spawn.y and usable(spawn.x + 1, spawn.y + 1) then
             reachStartX, reachStartY = spawn.x + 1, spawn.y + 1
         else
             for zy = 1, height do
@@ -224,15 +247,20 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones)
         if protected[key] then return false end
         if x == reachStartX and y == reachStartY then return false end
         blocked[key] = true
-        local seen, count = reachableCells(grid, blocked, reachStartX, reachStartY)
-        -- Exactly one cell lost -- this one -- and nothing that must stay
-        -- usable became unreachable.
+        local _, count = reachableCells(grid, blocked, reachStartX, reachStartY)
+        -- Exactly one cell left the reachable set, and it must be this one --
+        -- blocking a cell can only remove cells, and this cell is certainly
+        -- gone. So a loss of exactly one proves nothing else was cut off, and
+        -- the `protected` early-return above already kept this cell from being
+        -- one that matters. No separate protected-reachability sweep is needed.
+        --
+        -- An earlier version did sweep, requiring every protected cell to be
+        -- reachable -- which quietly refused EVERY solid fixture on a real map,
+        -- because protected cells include event tiles that are walls or sit
+        -- outside the walkable component, and those are never in `seen`.
+        -- A cell that was already unreachable also fails here, correctly: the
+        -- count would not drop at all.
         local ok = (count == reachCount - 1)
-        if ok then
-            for protectedKey in pairs(protected) do
-                if not seen[protectedKey] then ok = false break end
-            end
-        end
         if ok then
             reachCount = count
         else
@@ -882,7 +910,8 @@ function exploration.loadMap(session, mapIdx, opts)
         -- appeared while testing a town.
         session.generatedZones = {}
         session.generatedFeatures, session.generatedLightObjects =
-            exploration.injectTilesetFeatures(grid, mapData, session.generatedZones)
+            exploration.injectTilesetFeatures(grid, mapData, session.generatedZones,
+                { x = authoredSpawn.x, y = authoredSpawn.y })
         session.fixtureBlockIndex = nil
         if not mapData.light then
             local lightSources = {}

@@ -1,0 +1,8 @@
+# Material library for town_wooden_sign.obj
+
+newmtl bracket_iron
+Kd 0.2000 0.2000 0.2200
+
+newmtl sign_wood
+Kd 0.5500 0.3800 0.2200
+

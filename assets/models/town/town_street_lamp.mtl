@@ -1,0 +1,11 @@
+# Material library for town_street_lamp.obj
+
+newmtl wrought_iron
+Kd 0.1800 0.1800 0.2000
+
+newmtl lantern_glass
+Kd 0.9500 0.8500 0.4000
+
+newmtl lamp_glow
+Kd 1.0000 0.9000 0.5000
+

@@ -1,0 +1,8 @@
+# Material library for voxel_column.obj
+
+newmtl voxel_stone_base
+Kd 0.4000 0.4000 0.4500
+
+newmtl voxel_stone_shaft
+Kd 0.5500 0.5500 0.6000
+

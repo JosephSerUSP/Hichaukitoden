@@ -112,6 +112,7 @@
                     1,
                     0
                 ],
+                "model": "assets/models/dungeon/dungeon_torch_bracket.obj",
                 "injectProbability": 0.33,
                 "prefab": "wall_beside_floor",
                 "emitsLight": {
@@ -123,6 +124,36 @@
                     "radius": 4,
                     "falloff": 4
                 }
+            },
+            {
+                "id": "dungeon_column",
+                "role": "floor_feature",
+                "model": "assets/models/dungeon/dungeon_column.obj",
+                "injectProbability": 0.15,
+                "blocksMovement": true
+            },
+            {
+                "id": "dungeon_chest",
+                "role": "floor_feature",
+                "model": "assets/models/dungeon/dungeon_chest.obj",
+                "injectProbability": 0.1,
+                "blocksMovement": true
+            },
+            {
+                "id": "ruins_crystal",
+                "role": "floor_feature",
+                "model": "assets/models/ruins/ruins_crystal_cluster.obj",
+                "injectProbability": 0.08,
+                "emitsLight": {
+                    "color": [
+                        0.2,
+                        0.7,
+                        0.95
+                    ],
+                    "radius": 3,
+                    "falloff": 3
+                },
+                "blocksMovement": true
             }
         ]
     },
@@ -252,6 +283,29 @@
                     1
                 ],
                 "injectProbability": 0.12
+            },
+            {
+                "id": "town_street_lamp",
+                "role": "floor_feature",
+                "model": "assets/models/town/town_street_lamp.obj",
+                "injectProbability": 0.15,
+                "emitsLight": {
+                    "color": [
+                        1,
+                        0.85,
+                        0.4
+                    ],
+                    "radius": 5,
+                    "falloff": 3
+                },
+                "blocksMovement": true
+            },
+            {
+                "id": "town_barrel_stack",
+                "role": "floor_feature",
+                "model": "assets/models/town/town_barrel_stack.obj",
+                "injectProbability": 0.12,
+                "blocksMovement": true
             }
         ]
     },

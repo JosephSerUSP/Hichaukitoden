@@ -1,0 +1,11 @@
+# Material library for gothic_street_lamp.obj
+
+newmtl gothic_iron
+Kd 0.1400 0.1400 0.1600
+
+newmtl stained_amber_glass
+Kd 0.9500 0.7000 0.2500
+
+newmtl gothic_flame_glow
+Kd 1.0000 0.8000 0.3000
+

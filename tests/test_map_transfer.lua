@@ -77,9 +77,18 @@ local overrideMap = {
     },
 }
 local resolvedOverride, overrideCacheKey = tilesetResolver.resolve(loader, overrideMap)
-check(resolvedOverride.features[1].injectProbability == 0.07
-        and resolvedOverride.features[1].emitsLight ~= nil
-        and resolvedOverride.features[2].id == "floor_marker"
+-- Looked up by id rather than by array position: the base tileset gains
+-- fixtures over time, and an appended entry's index is not part of the
+-- contract -- only "merge by id, append new ids, remove on request" is.
+local function featureById(pool, id)
+    for _, entry in ipairs(pool or {}) do
+        if entry.id == id then return entry end
+    end
+end
+local patchedTorch = featureById(resolvedOverride.features, "wall_torch")
+check(patchedTorch and patchedTorch.injectProbability == 0.07
+        and patchedTorch.emitsLight ~= nil
+        and featureById(resolvedOverride.features, "floor_marker") ~= nil
         and #resolvedOverride.doors == 0,
     "sparse map tileset overrides merge, append and remove pool entries by id")
 check(baseDungeonTileset.features[1].injectProbability == 0.33
@@ -203,6 +212,72 @@ check(blockedCount > 0
     "every cell stays reachable except the ones solid fixtures occupy"
         .. " (floor=" .. totalFloor .. ", solid=" .. blockedCount .. ")")
 loader.tilesets.solid_fixture_test = nil
+
+-- The fixture map above is a hand-built pinch. Real generated dungeons are the
+-- case that actually matters, and they caught a bug the fixture could not: an
+-- earlier guard additionally required every PROTECTED cell to be reachable,
+-- which silently refused every solid fixture on every real map, because
+-- protected cells include event tiles that are walls or sit outside the walkable
+-- component and so are never in the reachable set. The fixture map had no such
+-- events, so it passed while the real game placed nothing at all.
+--
+-- Two assertions, and the first is what makes the second meaningful: fixtures
+-- must actually BE placed, or "nothing is stranded" is trivially true.
+for _, mapIndex in ipairs({ 2, 3, 4 }) do
+    local realSession = sessionModule.GameSession.new(loader)
+    local loadedReal = pcall(exploration.loadMap, realSession, mapIndex)
+    if loadedReal and realSession.mapGrid then
+        local realGrid = realSession.mapGrid
+        local realBlocked, solidCount = {}, 0
+        for _, placement in ipairs(realSession.generatedFeatures or {}) do
+            if placement.blocks then
+                realBlocked[(placement.x + 1) .. "," .. (placement.y + 1)] = true
+                solidCount = solidCount + 1
+            end
+        end
+        local floorCells = 0
+        for gy = 1, #realGrid do
+            for gx = 1, #realGrid[gy] do
+                if realGrid[gy][gx] ~= "#" then floorCells = floorCells + 1 end
+            end
+        end
+        -- Compare SETS, not counts. A count expectation of
+        -- `reached - solidCount` silently assumes every solid fixture sits on a
+        -- player-reachable cell; one placed in a pocket the player cannot get
+        -- to makes the count higher than expected, which is harmless but reads
+        -- as a failure. The property that actually matters is one-directional:
+        -- nothing that was reachable becomes unreachable except the fixture
+        -- cells themselves.
+        local function floodSet(blockedSet)
+            local seen = { [realSession.playerX .. "," .. realSession.playerY] = true }
+            local stack = { { realSession.playerX, realSession.playerY } }
+            while #stack > 0 do
+                local cell = table.remove(stack)
+                for _, d in ipairs({ { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }) do
+                    local nx, ny = cell[1] + d[1], cell[2] + d[2]
+                    local key = nx .. "," .. ny
+                    if not seen[key] and realGrid[ny] and realGrid[ny][nx]
+                            and realGrid[ny][nx] ~= "#" and not blockedSet[key] then
+                        seen[key] = true
+                        stack[#stack + 1] = { nx, ny }
+                    end
+                end
+            end
+            return seen
+        end
+        local before, after = floodSet({}), floodSet(realBlocked)
+        local stranded = 0
+        for key in pairs(before) do
+            if not after[key] and not realBlocked[key] then stranded = stranded + 1 end
+        end
+        check(solidCount > 0,
+            "map " .. mapIndex .. " actually places solid fixtures"
+                .. " (solid=" .. solidCount .. " of " .. floorCells .. " floor cells)")
+        check(stranded == 0,
+            "map " .. mapIndex .. " strands nothing behind its solid fixtures"
+                .. " (stranded=" .. stranded .. ")")
+    end
+end
 
 local fixturePredicates = require("engine.fixture_predicates")
 local predicateZones = {

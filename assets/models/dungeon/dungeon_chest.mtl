@@ -1,0 +1,11 @@
+# Material library for dungeon_chest.obj
+
+newmtl wood_body
+Kd 0.4200 0.2600 0.1400
+
+newmtl iron_trim
+Kd 0.2200 0.2400 0.2600
+
+newmtl gold_lock
+Kd 0.8500 0.7000 0.2000
+

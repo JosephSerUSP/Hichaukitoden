@@ -1,0 +1,11 @@
+# Material library for dungeon_column.obj
+
+newmtl stone_base
+Kd 0.3800 0.3600 0.3500
+
+newmtl stone_shaft
+Kd 0.4800 0.4600 0.4400
+
+newmtl stone_top
+Kd 0.5500 0.5200 0.4900
+

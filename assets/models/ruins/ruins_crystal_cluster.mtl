@@ -1,0 +1,11 @@
+# Material library for ruins_crystal_cluster.obj
+
+newmtl stone_outcrop
+Kd 0.3000 0.3000 0.3200
+
+newmtl crystal_core
+Kd 0.6000 0.9000 1.0000
+
+newmtl mana_crystal
+Kd 0.2000 0.7000 0.9500
+

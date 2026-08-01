@@ -1,0 +1,8 @@
+# Material library for town_barrel_stack.obj
+
+newmtl barrel_wood
+Kd 0.5000 0.3500 0.2000
+
+newmtl iron_ring
+Kd 0.2500 0.2500 0.2800
+

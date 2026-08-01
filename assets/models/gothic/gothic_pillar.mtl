@@ -1,0 +1,11 @@
+# Material library for gothic_pillar.obj
+
+newmtl gothic_dark_stone
+Kd 0.2800 0.2700 0.2900
+
+newmtl gothic_fluted_stone
+Kd 0.4200 0.4000 0.4300
+
+newmtl gothic_capital_stone
+Kd 0.4800 0.4600 0.4900
+
