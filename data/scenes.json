@@ -3408,6 +3408,33 @@
       },
       {
         "key": "left"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "return"
+      },
+      {
+        "key": "down"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
+      },
+      {
+        "key": "escape"
       }
     ],
     "windows": [
@@ -3460,6 +3487,11 @@
             "member": "v.idx"
           }
         ]
+      },
+      {
+        "id": "equip_stats",
+        "visible": "(v.page or 1) == 1",
+        "content": []
       },
       {
         "id": "status_dock",

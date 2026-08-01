@@ -2991,54 +2991,33 @@
     "status_dock": {
       "x": 0,
       "y": 18,
-      "width": 9.5,
+      "width": 15,
       "height": 12,
-      "style": "panel",
+      "style": "battlerInfo",
       "title": null,
-      "actorStatus": "status_party",
-      "contentY": 8.5,
-      "gauges": [
-        {
-          "label": "EXP  {sel('status_party').exp}/{sel('status_party').expNeeded}",
-          "value": "sel('status_party').exp",
-          "max": "sel('status_party').expNeeded",
-          "x": 0.5,
-          "y": 6.5,
-          "width": 8.5,
-          "color": [
-            0.1,
-            0.2,
-            0.5
-          ],
-          "fill": [
-            0.3,
-            0.6,
-            1
-          ]
-        }
-      ],
-      "text": "ATK {sel('status_party').atk}  DEF {sel('status_party').def}\nMAT {sel('status_party').mat}  MDF {sel('status_party').mdf}\nASP {sel('status_party').asp}  MPD {sel('status_party').mpd}"
+      "member": "v.idx",
+      "showExp": true
     },
     "equip_slots": {
       "x": 0.5,
       "y": 6.5,
       "width": 20.5,
-      "height": 11,
+      "height": 5.5,
       "style": "list",
       "title": "EQUIP"
     },
     "equip_list_frame": {
-      "x": 9.5,
+      "x": 15,
       "y": 18,
-      "width": 22.5,
+      "width": 17,
       "height": 12,
       "style": "frame",
       "title": null
     },
     "equip_list": {
-      "x": 9.5,
+      "x": 15,
       "y": 18,
-      "width": 22.5,
+      "width": 17,
       "height": 12,
       "style": "list",
       "title": "SELECT"
@@ -3333,6 +3312,19 @@
       "style": "targetInfo",
       "title": null,
       "chrome": "none"
+    },
+    "equip_stats": {
+      "x": 0.5,
+      "y": 11.5,
+      "width": 20.5,
+      "height": 6,
+      "style": "statBlock",
+      "title": null,
+      "member": "v.idx",
+      "slot": "v.slot",
+      "previewList": "equip_list",
+      "previewWhen": "v.state == 3",
+      "contentY": 0.5
     }
   },
   "dock": {
