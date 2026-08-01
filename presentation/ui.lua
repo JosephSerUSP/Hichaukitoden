@@ -307,9 +307,13 @@ function ui.buttonRole(selected)
 end
 
 function ui.drawPanel(x, y, w, h, title, role)
-    -- Animated dock shells may briefly be smaller than the windowskin's
-    -- two 8px borders. There is no valid interior/scissor at that size.
-    if w < 16 or h < 16 then return end
+    -- Below the windowskin's two 8px borders there is no interior left, so
+    -- the top and bottom edges overlap and the panel reads as a single frame.
+    -- That is legitimate for a short button (a 1.5-tile command slot is 12px)
+    -- and the background pass below is inset by 4, so it still has area.
+    -- Only genuinely degenerate geometry bails -- an animated dock shell
+    -- passes through zero mid-collapse and must not reach LOVE's scissor.
+    if w < 16 or h < 9 then return end
     love.graphics.push("all")
 
     local skin = windowskinBack
@@ -344,9 +348,11 @@ function ui.drawPanel(x, y, w, h, title, role)
         love.graphics.setScissor(sx, sy, sw, sh) -- restore scissor
         
         -- 2. Draw 8px Edges (tiled/stretched)
-        local edgeW = w - 16
-        local edgeH = h - 16
-        
+        -- Clamped at 0: a panel shorter than its two borders would otherwise
+        -- scale the side edges by a negative factor, flipping them upward.
+        local edgeW = math.max(0, w - 16)
+        local edgeH = math.max(0, h - 16)
+
         -- Top side edge (x=40, y=0, w=16, h=8)
         love.graphics.draw(skin, panelQuads.top, x + 8, y, 0, edgeW / 16, 1)
 

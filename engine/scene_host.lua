@@ -315,7 +315,29 @@ end
 -- rather than a scene swap. Guarded on real map state existing: the
 -- deterministic golden-ui harness session never calls exploration.loadMap,
 -- so this silently no-ops there rather than erroring the smoke test.
-local function drawBackdrop(sceneData, ctx)
+local function drawBackdropFade(sceneData, state)
+    -- `backdropFade` (0..1, number or formula) dims the backdrop so a scene's
+    -- own content stays legible over it. It belongs to this stage rather than
+    -- to a window because the dock draws between the backdrop and the scene
+    -- windows: dimming from a window would darken the dock along with the
+    -- world, which is not what "fade the background" means.
+    local fade = sceneData.backdropFade
+    if not fade then return end
+    local value = fade
+    if type(fade) == "string" then
+        local ok, result = pcall(require("engine.formula").eval, fade,
+            { v = (state and state.v) or {} })
+        value = (ok and type(result) == "number") and result or 0
+    end
+    if type(value) ~= "number" or value <= 0 then return end
+    local ui = require("presentation.ui")
+    love.graphics.setColor(0, 0, 0, math.min(1, value))
+    love.graphics.rectangle("fill", 0, 0,
+        ui.toPx(ui.screenWidthTiles), ui.toPx(ui.screenHeightTiles))
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function drawBackdrop(sceneData, ctx, state)
     if sceneData.backdropImage then
         require("presentation.static_backdrop").draw(sceneData.backdropImage)
     end
@@ -324,9 +346,11 @@ local function drawBackdrop(sceneData, ctx)
     if not (session and session.currentMapData and session.mapGrid) then return end
     if session.locationArt then
         require("presentation.location_renderer").draw(session.locationArt)
+        drawBackdropFade(sceneData, state)
         return
     end
     require("presentation.viewport_3d").draw(session)
+    drawBackdropFade(sceneData, state)
 end
 
 -- Every scene declares how it draws (scenes.json `draw`):
@@ -351,7 +375,7 @@ function scene_host.draw(ctx)
             .. "(expected \"windows\" or \"world\", got '"
             .. tostring(sceneData.draw) .. "')", 0)
     else
-        drawBackdrop(sceneData, ctx)
+        drawBackdrop(sceneData, ctx, state)
     end
     require("presentation.image_picture_renderer").draw("backdrop")
     require("presentation.string_picture_renderer").draw("backdrop")

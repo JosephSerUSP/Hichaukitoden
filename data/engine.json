@@ -3206,9 +3206,10 @@
       "style": "command",
       "vertical": true,
       "title": null,
-      "slotGap": 0,
-      "slotHeight": 2,
-      "slotInset": 1
+      "slotGap": 0.5,
+      "slotHeight": 1.5,
+      "slotInset": 1,
+      "chrome": "none"
     },
     "battle_victory": {
       "x": 6,
@@ -3225,7 +3226,8 @@
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5
+      "visibleRows": 5,
+      "chrome": "none"
     },
     "battle_item": {
       "x": 0,
@@ -3234,7 +3236,8 @@
       "height": 12,
       "style": "list",
       "title": null,
-      "visibleRows": 5
+      "visibleRows": 5,
+      "chrome": "none"
     },
     "battle_target_info": {
       "x": 0,
@@ -3242,7 +3245,8 @@
       "width": 14,
       "height": 12,
       "style": "targetInfo",
-      "title": null
+      "title": null,
+      "chrome": "none"
     }
   },
   "dock": {
@@ -3253,6 +3257,7 @@
       "w": 32,
       "h": 12
     },
+    "staticShell": true,
     "transition": {
       "clearDuration": 0.08,
       "morphDuration": 0.16
@@ -3284,7 +3289,8 @@
               "h": 12
             },
             "style": "frame",
-            "content": []
+            "content": [],
+            "chrome": "none"
           },
           {
             "id": "party",
@@ -3294,7 +3300,8 @@
                 "listId": "party",
                 "format": "{name}"
               }
-            ]
+            ],
+            "chrome": "none"
           }
         ]
       },
@@ -3332,7 +3339,8 @@
                 "cursor": "v.idx",
                 "tabVar": "v.tab"
               }
-            ]
+            ],
+            "chrome": "none"
           },
           {
             "id": "party",
@@ -3342,7 +3350,8 @@
                 "listId": "party",
                 "format": "{name}"
               }
-            ]
+            ],
+            "chrome": "none"
           }
         ]
       },
@@ -3385,7 +3394,8 @@
                 "portraitFrame": "v.dialogueExpression",
                 "portraitName": "v.dialogueSpeaker"
               }
-            ]
+            ],
+            "chrome": "none"
           },
           {
             "id": "dialogue_message",
@@ -3410,7 +3420,8 @@
                 "text": "{v.dialogueText}",
                 "reveal": "v.dialogueRevealElapsed"
               }
-            ]
+            ],
+            "chrome": "none"
           },
           {
             "id": "dialogue_choices",
@@ -3467,7 +3478,8 @@
             },
             "style": "frame",
             "visible": "v.combatState ~= 'levelup' and v.combatState ~= 'victory' and not (v.combatState == 'log' and (v.pendingRewardLog ~= nil or v.pendingLevelUpLog == true))",
-            "content": []
+            "content": [],
+            "chrome": "none"
           },
           {
             "id": "battle_spoils_dock",
@@ -3485,7 +3497,8 @@
                 "type": "text",
                 "text": "{v.victorySpoilsText}"
               }
-            ]
+            ],
+            "chrome": "none"
           },
           {
             "id": "battle_levelup_dock",
@@ -3498,7 +3511,8 @@
             "style": "levelUpStats",
             "title": "Level UP!",
             "visible": "v.combatState == 'levelup' or (v.combatState == 'log' and v.pendingLevelUpLog == true)",
-            "content": []
+            "content": [],
+            "chrome": "none"
           },
           {
             "id": "party",
@@ -3508,7 +3522,8 @@
                 "listId": "party",
                 "format": "{name}"
               }
-            ]
+            ],
+            "chrome": "none"
           }
         ]
       }

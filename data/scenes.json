@@ -3493,6 +3493,8 @@
     "id": "battle",
     "name": "Battle",
     "kind": "battle",
+    "backdrop": "map",
+    "backdropFade": "v.defeatBgFade or 0.35",
     "screenshotScript": [
       {
         "key": "return"

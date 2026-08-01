@@ -788,25 +788,17 @@ end
 -- style window (data-listed rows via v.commandRows) since its content is
 -- now built by the battle scene's own scripts, not this module.
 
--- Enemy row: viewport background + darken overlay + per-enemy sprites with
--- their full animation/shader/particle treatment (unchanged from before).
--- bgFadeOverride (0..1, defeat sequence stage 0 — owner feedback
--- 17.07.2026): when set, replaces the normal subtle 0.35 darken with an
--- animated value ramping toward fully black, drawn BEHIND the enemy
--- sprites (same as the normal overlay) so "the background fades" reads as
--- its own beat, distinct from the later full-screen fade that covers the
--- monsters too (renderer.drawDefeatFadeOverlay).
-function renderer.drawEnemyRowWindow(battleState, bgFadeOverride)
+-- Enemy row: per-enemy sprites with their full animation/shader/particle
+-- treatment (unchanged from before).
+--
+-- The world view and its darken overlay used to be drawn here. They moved to
+-- the backdrop stage (scenes.json `backdrop`/`backdropFade`) on 31.07.2026,
+-- when the world grew to fill the whole canvas: scene windows draw AFTER the
+-- dock, so a world-drawing window painted straight over the party HUD. Dimming
+-- had to move with it -- from a window it would have darkened the dock too.
+function renderer.drawEnemyRowWindow(battleState)
     if not battleState then return end
     renderer.activeBattle = battleState
-
-    -- Draw 3D dungeon view behind battle scene
-    viewport_3d.draw(renderer.session)
-
-    local bgAlpha = bgFadeOverride or 0.35
-    love.graphics.setColor(0, 0, 0, bgAlpha)
-    love.graphics.rectangle("fill", 0, 0, layoutVal("viewportOverlayW"), layoutVal("viewportOverlayH"))
-    love.graphics.setColor(1, 1, 1, 1)
 
     -- Render full-body enemy battlers in viewport with animations driven by the
     -- animation player (overhaul-7 A1): slide-in, damage/action flash,

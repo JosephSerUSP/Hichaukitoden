@@ -189,20 +189,36 @@ function dock.draw(state, sceneData, ctx)
         love.graphics.translate(0, offsetY)
     end
 
+    -- `staticShell` (engine.json dock registry): one windowskin spanning the
+    -- whole footprint, drawn once and never animated, with every variant's
+    -- content composited on top of it. Two things motivate it, both from the
+    -- windowskin going semitransparent: per-variant shells that morph made the
+    -- dock's outline move against a world now visible through it, and any two
+    -- panels sharing a rect (dialogue_message and dialogue_choices do exactly
+    -- that) stacked two translucent skins and read twice as dark.
+    -- Variant content windows carry `chrome: "none"` so nothing draws a second
+    -- skin inside this one.
+    local staticShell = reg.staticShell and (currentVariant or transition)
+    if staticShell then
+        drawShells({ copyRect(reg.footprint or { x = 0, y = 18, w = 32, h = 12 }) })
+    end
+
     if transition then
         local elapsed = love.timer.getTime() - transition.started
-        if elapsed < transition.clearDuration then
-            drawShells(transition.from)
-        else
+        if elapsed >= transition.clearDuration then
             local p = math.min(1,
                 (elapsed - transition.clearDuration) / transition.morphDuration)
-            drawShells(interpolateShells(transition.from, transition.to, p))
+            if not staticShell then
+                drawShells(interpolateShells(transition.from, transition.to, p))
+            end
             if p >= 1 then
                 currentVariant = transition.targetVariant
                 currentShells = currentVariant and transition.to or nil
                 transition = nil
                 if state and state.v then state.v._dockContentReady = true end
             end
+        elseif not staticShell then
+            drawShells(transition.from)
         end
     elseif currentVariant and state then
         lastV = state.v
