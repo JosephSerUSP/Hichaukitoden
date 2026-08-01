@@ -3219,7 +3219,17 @@
       "slotGap": 0.5,
       "slotHeight": 1.5,
       "slotInset": 1,
-      "chrome": "none"
+      "chrome": "none",
+      "anim": {
+        "open": {
+          "duration": 0.16,
+          "effect": "grow"
+        },
+        "close": {
+          "duration": 0.1,
+          "effect": "grow"
+        }
+      }
     },
     "battle_victory": {
       "x": 6,

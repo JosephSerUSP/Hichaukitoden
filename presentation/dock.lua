@@ -166,7 +166,30 @@ local function beginTransition(reg, wantVariant)
     -- on the way to a variant that has no slots.
     transition.fromVariant = currentVariant
     transition.fromStore = store
-    store = { _dataWins = {}, _visTrack = {} }
+
+    -- A window the incoming variant ALSO has is not opening -- it is simply
+    -- still there. The party slots survive map -> items and exploration ->
+    -- battle, so wiping the whole cache made them replay their open animation
+    -- on every variant change for no reason. Carry those entries over; only
+    -- genuinely new windows start fresh, and only genuinely departing ones
+    -- close (below).
+    local carried = { _dataWins = {}, _visTrack = {} }
+    local incoming = {}
+    -- No destination variant (the dock is going away entirely): nothing
+    -- persists, so every window closes.
+    if wantVariant then
+        for _, def in ipairs(resolveDefs(reg, { variant = wantVariant })) do
+            incoming[def.id] = true
+        end
+    end
+    for id, win in pairs(store._dataWins or {}) do
+        if incoming[id] then carried._dataWins[id] = win end
+    end
+    for id, vis in pairs(store._visTrack or {}) do
+        if incoming[id] then carried._visTrack[id] = vis end
+    end
+    transition.persisting = incoming
+    store = carried
 end
 
 function dock.draw(state, sceneData, ctx)
@@ -212,6 +235,21 @@ function dock.draw(state, sceneData, ctx)
         drawShells({ copyRect(reg.footprint or { x = 0, y = 18, w = 32, h = 12 }) })
     end
 
+    -- Windows the outgoing and incoming variants share keep drawing right
+    -- through the transition, from the carried-over cache, so they neither
+    -- animate nor blink. Without this the party slots vanished for the
+    -- clear+morph duration on every dock change and popped back.
+    if transition and staticShell and state and transition.persisting then
+        local persisting = {}
+        for _, def in ipairs(resolveDefs(reg, cfg or {})) do
+            if transition.persisting[def.id] then table.insert(persisting, def) end
+        end
+        if #persisting > 0 then
+            require("presentation.window_renderer").drawWindowFromData(
+                sceneData, state, ctx, { windows = persisting, store = store })
+        end
+    end
+
     if transition then
         local elapsed = love.timer.getTime() - transition.started
         if elapsed >= transition.clearDuration then
@@ -232,11 +270,21 @@ function dock.draw(state, sceneData, ctx)
             -- shell. Anything without an `anim.close` just stops drawing, which
             -- is the previous behaviour.
             if transition.fromVariant and state then
-                local closing = resolveDefs(reg, { variant = transition.fromVariant })
-                for _, def in ipairs(closing) do def.visible = "false" end
-                require("presentation.window_renderer").drawWindowFromData(
-                    sceneData, state, ctx,
-                    { windows = closing, store = transition.fromStore })
+                local closing = {}
+                for _, def in ipairs(resolveDefs(reg, { variant = transition.fromVariant })) do
+                    -- A window the destination also has is not closing; it is
+                    -- carried over untouched and keeps drawing from the new
+                    -- store, so animating it out here would be a flicker.
+                    if not (transition.persisting or {})[def.id] then
+                        def.visible = "false"
+                        table.insert(closing, def)
+                    end
+                end
+                if #closing > 0 then
+                    require("presentation.window_renderer").drawWindowFromData(
+                        sceneData, state, ctx,
+                        { windows = closing, store = transition.fromStore })
+                end
             end
         else
             drawShells(transition.from)
