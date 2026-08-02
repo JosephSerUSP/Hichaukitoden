@@ -6084,8 +6084,22 @@
         "sprite": "assets/sprites/NPC11.png",
         "commands": [
           {
-            "cmd": "TEXT",
-            "text": "The campaign warp matrix is awaiting a reusable interactive map-transfer action. The north exit returns to Town."
+            "cmd": "CHOICE",
+            "options": [
+              {
+                "label": "Thestra Showcase Room",
+                "commands": [
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 9
+                  }
+                ]
+              },
+              {
+                "label": "Stay here",
+                "commands": []
+              }
+            ]
           }
         ]
       },
@@ -6151,7 +6165,26 @@
     "category": "dungeon",
     "safe": true,
     "encounterSteps": 0,
-    "events": [],
+    "events": [
+      {
+        "id": 1,
+        "name": "Return Terminal",
+        "x": 1,
+        "y": 8,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC11.png",
+        "commands": [
+          {
+            "cmd": "TEXT",
+            "text": "Thestra showcase. Limestone and shrine recess are one composed surface; the idol is a front/back shell, the pillar a radial unwrap, the chest an ordinary model."
+          },
+          {
+            "cmd": "LOAD_MAP",
+            "mapId": 8
+          }
+        ]
+      }
+    ],
     "treasures": [],
     "encounters": [],
     "recruits": [],
@@ -6212,6 +6245,11 @@
           }
         ]
       }
-    ]
+    ],
+    "spawn": {
+      "x": 6,
+      "y": 8,
+      "dir": "N"
+    }
   }
 ]

@@ -6,5 +6,6 @@
   "heightOperation": "replace",
   "heightScale": 0.14,
   "meshColumns": 16,
-  "meshRows": 16
+  "meshRows": 16,
+  "offset": 0.15
 }

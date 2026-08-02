@@ -66,6 +66,29 @@ local function inspect(spec)
             warnings[#warnings + 1] = spec.label
                 .. ": heightScale is 0, so this asset carries no geometry"
         end
+        -- Same rule the builder enforces, checked here so a wall relief that
+        -- would sink behind its structural wall is a BUILD failure rather than
+        -- a texture that looks broken the first time it is walked past.
+        if spec.surface == "wall" then
+            local layer = { {
+                data = height, scale = spec.heightScale, operation = spec.heightOperation,
+            } }
+            local deepest = math.huge
+            for row = 0, spec.meshRows do
+                for column = 0, spec.meshColumns do
+                    local lift = plane.sampleField(layer,
+                        column / spec.meshColumns, row / spec.meshRows) + spec.offset
+                    if lift < deepest then deepest = lift end
+                end
+            end
+            if deepest < 0 then
+                error(spec.label .. ": displacement reaches "
+                    .. string.format("%.4f", deepest) .. " behind the wall plane."
+                    .. " Raise 'offset' to at least "
+                    .. string.format("%.4f", spec.offset - deepest)
+                    .. ", or reduce the recessed depth", 0)
+            end
+        end
     end
     return albedo, height, warnings
 end

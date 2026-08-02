@@ -78,17 +78,31 @@ function plane.build(spec, layers, uv)
 
     -- Sample once per intersection rather than per triangle corner: adjacent
     -- quads must agree exactly or the surface develops seams.
-    local grid = {}
+    local grid, deepest = {}, math.huge
     for row = 0, rows do
         grid[row] = {}
         local v = row / rows
         for column = 0, columns do
             local u = column / columns
             local lift = plane.sampleField(layers, u, v) + spec.offset
+            if lift < deepest then deepest = lift end
             local x, y, z = position(spec.surface, u, v, lift)
             local tu, tv = uv(u, v)
             grid[row][column] = { x, y, z, tu, tv }
         end
+    end
+    -- A wall relief sits IN FRONT of the structural wall, which still renders
+    -- behind it. Anything sinking past the wall plane is depth-occluded by it,
+    -- and the symptom is the base atlas tile showing through the recessed
+    -- parts -- which reads as a broken texture, not as geometry inside a wall.
+    -- A true cavity therefore needs the whole surface pushed out, not the
+    -- recess pushed in.
+    if spec.surface == "wall" and deepest < 0 then
+        error(spec.label .. ": displacement reaches "
+            .. string.format("%.4f", deepest) .. " behind the wall plane."
+            .. " Raise 'offset' to at least "
+            .. string.format("%.4f", spec.offset - deepest)
+            .. ", or reduce the recessed depth", 0)
     end
 
     local flip = SURFACES[spec.surface].flip
