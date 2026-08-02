@@ -23,9 +23,8 @@ function createIconField(container, labelText, value, onChange, compact) {
             swatch.style.backgroundPosition = '-0px -0px';
             return;
         }
-        const col = (id - 1) % 10;
-        const row = Math.floor((id - 1) / 10);
-        swatch.style.backgroundPosition = `-${col * 24}px -${row * 24}px`;
+        const { x, y } = iconGridPos(id, 24);
+        swatch.style.backgroundPosition = `-${x}px -${y}px`;
     }
     updateSwatch(value);
 
