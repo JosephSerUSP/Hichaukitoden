@@ -197,7 +197,20 @@ function shell.build(spec, height)
     -- let a collapse pull one face through the other.
     local dense = { vertices = {}, faces = {} }
     local frontIndex, backIndex = {}, {}
+    -- Where a tapering field brings both surfaces to the central plane, front
+    -- and back are the SAME point. Interning them separately leaves two
+    -- coincident sheets that z-fight into a dark seam along the silhouette and
+    -- hand the decimator a tangle of zero-thickness slivers. Welding there
+    -- closes the shell into one surface instead.
+    local SEAM = 1e-4
+    local function seamWelded(row, column)
+        return math.abs(front[row][column][1]) < SEAM
+            and math.abs(back[row][column][1]) < SEAM
+    end
     local function intern(store, row, column, vertex)
+        -- A welded seam vertex lives in the front store, and the back store
+        -- points at the same index.
+        if seamWelded(row, column) then store = frontIndex end
         store[row] = store[row] or {}
         if not store[row][column] then
             dense.vertices[#dense.vertices + 1] = vertex

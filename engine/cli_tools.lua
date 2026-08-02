@@ -948,7 +948,7 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
             -- An object fixture needs room to be walked around; a surface
             -- fixture is judged down a one-cell corridor, where oblique
             -- viewing is what makes displacement legible.
-            local width, height = 14, spec.role == "objectFixture" and 5 or 3
+            local width, height = 14, spec.role == "objectFixture" and 7 or 3
             local grid = {}
             for y = 1, height do
                 grid[y] = {}
@@ -967,7 +967,7 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
                 -- the silhouette, far enough to judge it at distance.
                 for _, featureX in ipairs({ 6, 8, 10 }) do
                     previewSession.generatedFeatures[#previewSession.generatedFeatures + 1] =
-                        { x = featureX, y = 2, material = "preview" }
+                        { x = featureX, y = 3, material = "preview" }
                 end
             elseif displaced then
                 -- Cover both corridor walls so displacement changes the whole
@@ -989,11 +989,13 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
             -- object or inside a wall.
             local viewpoints = { { x = 4, y = 2, dir = "E", angle = "front" } }
             if spec.role == "objectFixture" then
-                viewpoints[1] = { x = 3, y = 3, dir = "E", angle = "front" }
+                viewpoints[1] = { x = 3, y = 4, dir = "E", angle = "front" }
                 -- Stand in the row BESIDE the middle object and look across
                 -- it: a shell that reads well head-on can still be a slab in
                 -- profile, and only this view shows that.
-                viewpoints[#viewpoints + 1] = { x = 9, y = 4, dir = "N", angle = "side" }
+                -- Two cells back, not one: pressed right against the object
+                -- the near plane clips it and nothing about the profile reads.
+                viewpoints[#viewpoints + 1] = { x = 9, y = 6, dir = "N", angle = "side" }
             end
             for _, viewpoint in ipairs(viewpoints) do
                 for _, wireframe in ipairs({ false, true }) do

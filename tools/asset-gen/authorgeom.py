@@ -176,15 +176,21 @@ def sacred_idol():
                 continue
 
             weather = smooth_noise(x % half, y, 7, 9.0)
-            # Depth MUST reach zero at the contour, or front and back never
-            # meet and the object is a slab with a flat vertical rim -- a head
-            # comes out a cylinder instead of a sphere. An earlier version had
-            # a 0.35 floor here, which is exactly what that looked like.
+            # Depth is distance from the central plane, so near-black must mean
+            # near the middle. Two earlier attempts got this wrong:
             #
-            # This is the elliptical profile: at distance (1 - core) from the
-            # centre of the form, half-thickness is sqrt(1 - (1 - core)^2), so
-            # a circular silhouette sweeps a sphere.
-            depth = math.sqrt(max(0.0, 1.0 - (1.0 - core) ** 2))
+            #   0.35 + 0.65*sqrt(core)   -- a floor, so the halves never meet
+            #                               and the form is a slab with a rim
+            #   sqrt(1 - (1-core)^2)     -- the true ellipse. Correct for a
+            #                               sphere, but a sphere is VERTICAL at
+            #                               its silhouette, so one pixel inside
+            #                               the contour it is already at 0.36
+            #                               and the rim is still thick
+            #
+            # Smoothstep instead: zero value AND zero slope at the contour, so
+            # the surface meets the central plane tangentially and the halves
+            # close cleanly, while staying full through the middle.
+            depth = core * core * (3.0 - 2.0 * core)
 
             if back:
                 tone = 0.52 + 0.16 * (weather - 0.5)
