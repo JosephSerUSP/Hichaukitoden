@@ -114,6 +114,18 @@ construction and each is easier to paint than a signed coordinate field. Modes:
 faces -- slabs, idols, chests) or `pinch` (both depths converge near the
 silhouette -- leaves, blades, masks).
 
+**The depth field must reach zero at the contour** for a rounded form. This is
+the single least obvious thing about authoring a shell. Depth is distance from
+the central plane, so wherever it stays above zero the front and back never
+meet: the object gets a flat vertical rim and reads as a slab, and a circular
+silhouette sweeps a cylinder rather than a sphere. A profile with a floor in it
+-- `0.35 + 0.65 * f` -- produces exactly that. For a round form use the
+elliptical profile: at distance `d` from the centre of the shape,
+half-thickness is `sqrt(1 - d^2)`.
+
+A deliberate rim is a legitimate choice for slabs, tablets and seals; it should
+just be a decision rather than a leftover.
+
 In `frontBack` mode the height-alpha masks must match. Equal masks do not
 themselves create the side surface; they guarantee that the same outer contour
 and holes exist on both sides, and the compiler -- not the artist -- guarantees

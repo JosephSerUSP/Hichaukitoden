@@ -5,7 +5,7 @@
   "layout": "frontBackHorizontal",
   "surfaceMode": "frontBack",
   "albedoMode": "frontBack",
-  "depthScale": 0.3,
+  "depthScale": 0.22,
   "requireMatchingMasks": true,
   "edgeMode": "stitch",
   "edgeColor": "darkenedBlend",

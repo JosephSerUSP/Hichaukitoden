@@ -176,9 +176,15 @@ def sacred_idol():
                 continue
 
             weather = smooth_noise(x % half, y, 7, 9.0)
-            # Rounded body: depth follows the core, so the form reads as carved
-            # rather than as a flat cut-out.
-            depth = 0.35 + 0.65 * math.sqrt(core)
+            # Depth MUST reach zero at the contour, or front and back never
+            # meet and the object is a slab with a flat vertical rim -- a head
+            # comes out a cylinder instead of a sphere. An earlier version had
+            # a 0.35 floor here, which is exactly what that looked like.
+            #
+            # This is the elliptical profile: at distance (1 - core) from the
+            # centre of the form, half-thickness is sqrt(1 - (1 - core)^2), so
+            # a circular silhouette sweeps a sphere.
+            depth = math.sqrt(max(0.0, 1.0 - (1.0 - core) ** 2))
 
             if back:
                 tone = 0.52 + 0.16 * (weather - 0.5)
@@ -212,7 +218,7 @@ def sacred_idol():
         "layout": "frontBackHorizontal",
         "surfaceMode": "frontBack",
         "albedoMode": "frontBack",
-        "depthScale": 0.30,
+        "depthScale": 0.22,
         "requireMatchingMasks": True,
         "edgeMode": "stitch",
         "edgeColor": "darkenedBlend",

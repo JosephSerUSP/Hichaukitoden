@@ -945,7 +945,10 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
                     role = spec.role == "objectFixture" and "floor_feature" or "wall_feature",
                 } } or {},
             }
-            local width, height = 14, 3
+            -- An object fixture needs room to be walked around; a surface
+            -- fixture is judged down a one-cell corridor, where oblique
+            -- viewing is what makes displacement legible.
+            local width, height = 14, spec.role == "objectFixture" and 5 or 3
             local grid = {}
             for y = 1, height do
                 grid[y] = {}
@@ -964,7 +967,7 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
                 -- the silhouette, far enough to judge it at distance.
                 for _, featureX in ipairs({ 6, 8, 10 }) do
                     previewSession.generatedFeatures[#previewSession.generatedFeatures + 1] =
-                        { x = featureX, y = 1, material = "preview" }
+                        { x = featureX, y = 2, material = "preview" }
                 end
             elseif displaced then
                 -- Cover both corridor walls so displacement changes the whole
@@ -976,18 +979,46 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
                         { x = featureX, y = height - 1, material = "preview" }
                 end
             end
-            previewSession.playerX, previewSession.playerY, previewSession.playerDir = 4, 2, "E"
-            local canvas = love.graphics.newCanvas(payload.width, payload.height)
-            love.graphics.setCanvas({ canvas, depth = true, stencil = true })
-            love.graphics.clear(0, 0, 0, 1, true, true)
-            viewport_3d.draw(previewSession)
-            love.graphics.setCanvas()
-            payload.captures[#payload.captures + 1] = {
-                displaced = displaced,
-                image = love.data.encode("string", "base64",
-                    canvas:newImageData():encode("png")),
-            }
-            viewport_3d.invalidateStructure(previewSession)
+            -- An object fixture is judged on its silhouette from every side,
+            -- not just head-on: a shell that reads well from the front can be
+            -- a slab from the side. A surface fixture only ever presents its
+            -- one face, so one viewpoint is the honest test for it.
+            -- Session player coordinates are ONE-based while generated feature
+            -- placements are zero-based, so an object placed at y=2 stands on
+            -- player row 3. Getting this wrong puts the camera inside the
+            -- object or inside a wall.
+            local viewpoints = { { x = 4, y = 2, dir = "E", angle = "front" } }
+            if spec.role == "objectFixture" then
+                viewpoints[1] = { x = 3, y = 3, dir = "E", angle = "front" }
+                -- Stand in the row BESIDE the middle object and look across
+                -- it: a shell that reads well head-on can still be a slab in
+                -- profile, and only this view shows that.
+                viewpoints[#viewpoints + 1] = { x = 9, y = 4, dir = "N", angle = "side" }
+            end
+            for _, viewpoint in ipairs(viewpoints) do
+                for _, wireframe in ipairs({ false, true }) do
+                    previewSession.playerX = viewpoint.x
+                    previewSession.playerY = viewpoint.y
+                    previewSession.playerDir = viewpoint.dir
+                    local canvas = love.graphics.newCanvas(payload.width, payload.height)
+                    love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+                    love.graphics.clear(0, 0, 0, 1, true, true)
+                    -- Wireframe is a driver-level mode, so it shows the exact
+                    -- triangulation the GPU receives rather than a redrawing
+                    -- of what the compiler believes it emitted.
+                    if wireframe then love.graphics.setWireframe(true) end
+                    viewport_3d.draw(previewSession)
+                    if wireframe then love.graphics.setWireframe(false) end
+                    love.graphics.setCanvas()
+                    payload.captures[#payload.captures + 1] = {
+                        displaced = displaced, angle = viewpoint.angle,
+                        wireframe = wireframe,
+                        image = love.data.encode("string", "base64",
+                            canvas:newImageData():encode("png")),
+                    }
+                    viewport_3d.invalidateStructure(previewSession)
+                end
+            end
             loader.tilesets[tilesetId] = nil
         end
     end)
