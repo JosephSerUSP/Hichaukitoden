@@ -5679,6 +5679,196 @@
     ]
   },
   {
+    "id": "developer_menu",
+    "name": "Developer",
+    "kind": "menu",
+    "draw": "windows",
+    "backdrop": "map",
+    "windows": [
+      {
+        "id": "help",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "w": 32,
+          "h": 4
+        },
+        "style": "frame",
+        "title": null,
+        "content": [
+          {
+            "type": "text",
+            "text": "{sel('developer_list').help}"
+          }
+        ]
+      },
+      {
+        "id": "developer_list",
+        "rect": {
+          "x": 4,
+          "y": 5,
+          "w": 24,
+          "h": 7
+        },
+        "style": "list",
+        "visibleRows": 3,
+        "title": "Developer",
+        "content": [
+          {
+            "type": "list",
+            "listId": "config:developerCommands",
+            "formatRight": "{id == 'wireframe' and (v.wireframe and 'ON' or 'OFF') or (id == 'server' and (v.server and 'ON' or 'OFF') or '')}",
+            "cursor": "v.idx"
+          }
+        ]
+      }
+    ],
+    "goldenScript": [
+      {
+        "key": "down"
+      },
+      {
+        "key": "up"
+      },
+      {
+        "key": "escape"
+      }
+    ],
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SET_VAR",
+          "assignments": [
+            {
+              "name": "idx",
+              "value": 1
+            },
+            {
+              "name": "_guard",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "cmd": "SCRIPT",
+          "code": "ctx.v.wireframe = api.getWireframe()\nctx.v.server = api.developerServerActive()"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx > 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx - 1"
+            }
+          ]
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "IF",
+          "condition": "v.idx < 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "idx",
+              "value": "v.idx + 1"
+            }
+          ]
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 1",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SET_VAR",
+              "name": "wireframe",
+              "value": "not (v.wireframe or false)"
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.setWireframe(ctx.v.wireframe)"
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 2",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCENE_EVENT",
+              "kind": "pop"
+            },
+            {
+              "cmd": "LOAD_MAP",
+              "mapId": 8
+            }
+          ]
+        },
+        {
+          "cmd": "IF",
+          "condition": "v._guard == 0 and v.idx == 3",
+          "then": [
+            {
+              "cmd": "SET_VAR",
+              "name": "_guard",
+              "value": 1
+            },
+            {
+              "cmd": "SCRIPT",
+              "code": "api.toggleDeveloperServer()\nctx.v.server = api.developerServerActive()"
+            }
+          ]
+        },
+        {
+          "cmd": "SET_VAR",
+          "name": "_guard",
+          "value": 0
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "SCENE_EVENT",
+          "kind": "pop"
+        }
+      ]
+    },
+    "config": {
+      "developerCommands": [
+        {
+          "id": "wireframe",
+          "name": "WIREFRAME",
+          "help": "Draw the world as triangle edges. Shows what the geometry compiler actually emitted."
+        },
+        {
+          "id": "devroom",
+          "name": "DEVELOPER ROOM",
+          "help": "Warp to the Developer Room."
+        },
+        {
+          "id": "server",
+          "name": "HOT-RELOAD SERVER",
+          "help": "Toggle the editor hot-reload server. This was F9 before the developer menu took that key."
+        }
+      ]
+    }
+  },
+  {
     "id": "options",
     "name": "Options",
     "kind": "menu",

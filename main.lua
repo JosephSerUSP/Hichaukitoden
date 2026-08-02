@@ -1561,12 +1561,15 @@ function love.keypressed(key, scancode, isrepeat)
         return
     end
 
+    -- F9 opens the developer menu. The hot-reload server it used to toggle
+    -- directly is now an entry in that menu, so nothing was lost -- but a bare
+    -- keypress no longer silently changes engine state.
     if key == "f9" then
-        if server.isActive() then
-            server.stop()
-            print("Developer server stopped.")
-        else
-            server.start()
+        if activeSession and scene_host.getCurrent() ~= "developer_menu" then
+            scene_host.push("developer_menu", {
+                session = activeSession, loader = loader,
+                party = activeSession.party or {},
+            })
         end
         return
     end

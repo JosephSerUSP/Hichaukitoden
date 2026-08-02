@@ -2229,6 +2229,9 @@ local function drawWorldSpace(session)
     -- ties, while the depth buffer decides actual surface visibility.
     love.graphics.setBlendMode("alpha")
     love.graphics.setDepthMode("less", true)
+    -- Developer wireframe. Wrapped around the world pass only, and always
+    -- restored, so the 2D HUD and menus drawn afterwards stay solid.
+    if viewport_3d.wireframe then love.graphics.setWireframe(true) end
     table.sort(surfaces, function(a, b)
         if a.depth == b.depth then return a.sequence < b.sequence end
         return a.depth > b.depth
@@ -2286,6 +2289,10 @@ local function drawWorldSpace(session)
     -- outside the push/pop boundary.
     love.graphics.setDepthMode()
     love.graphics.setShader()
+    -- Same reasoning as the depth mode above: wireframe is a global raster
+    -- state, so it is cleared outside the push/pop boundary rather than
+    -- trusted to the attribute stack.
+    love.graphics.setWireframe(false)
     love.graphics.clear(false, false, 1)
     local selectedNodes, residentVertices = 0, 0
     for _, batch in pairs(structure.surfaceBatches or {}) do

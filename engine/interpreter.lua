@@ -2505,6 +2505,24 @@ local function buildScriptApi(ctx)
         cfg.combat = cfg.combat or {}
         cfg.combat.autoRedirect = val and true or false
     end
+    -- Developer wireframe: a presentation toggle with no session state, so it
+    -- is deliberately not saved and resets on launch.
+    function api.setWireframe(val)
+        require("presentation.viewport_3d").wireframe = val and true or false
+    end
+    function api.getWireframe()
+        return require("presentation.viewport_3d").wireframe == true
+    end
+    -- The hot-reload server had F9 as its only binding; it moved into the
+    -- developer menu when F9 became that menu, so it needs a scriptable toggle.
+    function api.toggleDeveloperServer()
+        local server = require("engine.server")
+        if server.isActive() then server.stop() else server.start() end
+        return server.isActive()
+    end
+    function api.developerServerActive()
+        return require("engine.server").isActive()
+    end
     function api.getAutoRedirect()
         if session and session.autoRedirect ~= nil then return session.autoRedirect end
         local cfg = require("engine.config")
