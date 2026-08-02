@@ -18,6 +18,8 @@ from pathlib import Path
 
 from PIL import Image
 
+import heightgen
+
 SIZE = 128
 NEUTRAL = 128
 ROOT = Path("assets/geometry")
@@ -117,32 +119,26 @@ def limestone_wall():
     }
 
 
-def idol_silhouette(u, v):
-    """Shared front/back silhouette: a shouldered votive slab with a head.
+def idol_mask(width, height):
+    """The idol's silhouette, as a union of primitives.
 
-    Returns coverage in 0..1 and a 0..1 'core' value that is 1 at the middle of
-    the form and falls to 0 at the contour, which the depth field shapes.
+    Deliberately NOT a per-region depth recipe. Earlier versions computed a
+    separate falloff for the head, the neck and the body, so each tapered to
+    zero at its own boundary -- and the head dropped to nothing exactly where
+    the neck was thickest, a cliff from 12/255 to 247/255 down the centre line.
+    Declaring the SHAPE and letting one distance transform round the whole
+    silhouette makes the joins correct by construction.
     """
-    x = (u - 0.5) * 2.0                      # -1..1 across
-    y = v                                    # 0 at top, 1 at bottom
-
-    if y < 0.30:                             # head: a circle
-        cx, cy, r = 0.0, 0.16, 0.145
-        d = math.hypot(x * 0.5, y - cy)
-        return (1.0 if d < r else 0.0), max(0.0, 1.0 - d / r)
-    if y < 0.38:                             # neck
-        # In x-units, where the body's narrowest is 0.16 and the head's radius
-        # is 0.29. An earlier version used 0.10 here while measuring the head
-        # in half-units, which made the neck half as wide as intended -- thin
-        # enough that a coarse mesh dropped it entirely.
-        half = 0.15
-        inside = abs(x) < half
-        return (1.0 if inside else 0.0), max(0.0, 1.0 - abs(x) / half)
-    # body: shoulders taper outward then run straight to the base
-    shoulder = min(1.0, (y - 0.38) / 0.14)
-    half = 0.16 + 0.26 * shoulder
-    inside = abs(x) < half
-    return (1.0 if inside else 0.0), max(0.0, 1.0 - abs(x) / half)
+    u, v = heightgen.grid(width, height)
+    # aspect squashes x so that a radius means the same distance on both axes
+    # in a non-square image half.
+    aspect = width / height
+    return heightgen.solid(
+        heightgen.disc(u, v, 0.5, 0.17, 0.155, aspect),                 # head
+        heightgen.capsule(u, v, 0.5, 0.24, 0.5, 0.46, 0.075, aspect),   # neck
+        heightgen.box(u, v, 0.5, 0.72, 0.21, 0.28),                     # body
+        heightgen.capsule(u, v, 0.5, 0.44, 0.5, 0.52, 0.20, aspect),    # shoulders
+    )
 
 
 def sacred_idol():
@@ -153,6 +149,11 @@ def sacred_idol():
     stitch the side deterministically.
     """
     half = 64
+    mask = idol_mask(half, half)
+    # `smooth` meets the central plane with zero slope, so the halves close and
+    # the compiler welds the seam instead of leaving two coincident sheets.
+    field = heightgen.thickness(mask, profile="smooth")
+
     albedo = Image.new("RGBA", (half * 2, half))
     height = Image.new("RGBA", (half * 2, half))
     apx, hpx = [], []
@@ -160,45 +161,30 @@ def sacred_idol():
     for y in range(half):
         for x in range(half * 2):
             back = x >= half
-            u = (x % half) / (half - 1)
-            v = y / (half - 1)
-            coverage, core = idol_silhouette(u, v)
+            column = x % half
+            inside = bool(mask[y][column])
+            depth = float(field[y][column])
 
-            if coverage == 0.0:
-                # Coverage lives in the HEIGHT alpha, which is what the
-                # compiler reads to decide the silhouette. The albedo stays
-                # OPAQUE outside it: the shader discards transparent texels,
-                # and a boundary quad interpolating into transparent albedo
-                # punches holes that tear the model apart. Colour outside the
-                # silhouette is simply never sampled.
+            if not inside:
+                # Coverage lives in the HEIGHT alpha. The albedo stays OPAQUE
+                # outside it: the shader discards transparent texels, and a
+                # boundary quad interpolating into transparent albedo punches
+                # holes that tear the model apart.
                 apx.append((90, 86, 74, 255))
                 hpx.append((0, 0, 0, 0))
                 continue
 
-            weather = smooth_noise(x % half, y, 7, 9.0)
-            # Depth is distance from the central plane, so near-black must mean
-            # near the middle. Two earlier attempts got this wrong:
-            #
-            #   0.35 + 0.65*sqrt(core)   -- a floor, so the halves never meet
-            #                               and the form is a slab with a rim
-            #   sqrt(1 - (1-core)^2)     -- the true ellipse. Correct for a
-            #                               sphere, but a sphere is VERTICAL at
-            #                               its silhouette, so one pixel inside
-            #                               the contour it is already at 0.36
-            #                               and the rim is still thick
-            #
-            # Smoothstep instead: zero value AND zero slope at the contour, so
-            # the surface meets the central plane tangentially and the halves
-            # close cleanly, while staying full through the middle.
-            depth = core * core * (3.0 - 2.0 * core)
+            u = column / (half - 1)
+            v = y / (half - 1)
+            weather = smooth_noise(column, y, 7, 9.0)
 
             if back:
                 tone = 0.52 + 0.16 * (weather - 0.5)
                 depth *= 0.72                # the back is a shallower relief
             else:
                 # A recessed sigil: a vertical bar with a crossing band.
-                bar = abs(u - 0.5) < 0.045 and 0.46 < v < 0.86
-                band = abs(v - 0.62) < 0.035 and abs(u - 0.5) < 0.20
+                bar = abs(u - 0.5) < 0.045 and 0.52 < v < 0.86
+                band = abs(v - 0.66) < 0.035 and abs(u - 0.5) < 0.20
                 tone = 0.66 + 0.14 * (weather - 0.5)
                 if bar or band:
                     depth *= 0.62
