@@ -17,4 +17,20 @@ function util.easeOut(t)
     return 1 - (1 - t) * (1 - t)
 end
 
+function util.easeInCubic(t)
+    return t * t * t
+end
+
+function util.easeOutCubic(t)
+    return 1 - (1 - t) * (1 - t) * (1 - t)
+end
+
+function util.smoothstep(t)
+    return t * t * (3 - 2 * t)
+end
+
+function util.clamp01(x)
+    return math.max(0, math.min(1, x))
+end
+
 return util

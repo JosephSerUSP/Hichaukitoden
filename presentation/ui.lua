@@ -1,4 +1,5 @@
 local config = require("engine.config")
+local util = require("presentation.util")
 
 local ui = {}
 
@@ -327,7 +328,7 @@ end
 -- the windowskin is REBUILT at that size with proper borders, and scissor
 -- their content to it rather than scaling the content.
 function ui.rescaleRect(x, y, w, h, p)
-    p = math.max(0, math.min(1, p or 1))
+    p = util.clamp01(p or 1)
     local reach = math.max(w, h) * p
     local nw = math.min(w, math.max(reach, math.min(w, 16)))
     local nh = math.min(h, math.max(reach, math.min(h, 9)))
@@ -696,7 +697,7 @@ local function drawBarPreview(x, y, w, h, current, maxVal, preview)
     if not preview or not preview.delta or preview.delta == 0 or maxVal <= 0 then return end
     local delta = preview.delta
     local innerW = w
-    local pctCurrent = math.max(0, math.min(1, current / maxVal))
+    local pctCurrent = util.clamp01(current / maxVal)
     local color, spanFromPct, spanToPct
 
     if delta < 0 then
@@ -731,7 +732,7 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
     love.graphics.setColor(0.06, 0.08, 0.14, 0.95)
     love.graphics.rectangle("fill", x, y, w, h)
 
-    local pct = math.max(0, math.min(1, current / maxVal))
+    local pct = util.clamp01(current / maxVal)
     local fillW = math.floor(w * pct)
 
     if fillW > 0 then

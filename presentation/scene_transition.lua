@@ -2,6 +2,7 @@
 -- Handles fadeIn, fadeOut, and custom overlays for scene switches.
 
 local ui = require("presentation.ui")
+local util = require("presentation.util")
 
 local scene_transition = {}
 
@@ -50,7 +51,7 @@ function scene_transition.draw()
 
     local t = activeTransition
     local p = math.min(1, t.elapsed / t.duration)
-    local ease = 1 - (1 - p) * (1 - p) -- ease out
+    local ease = util.easeOut(p)
 
     local alpha = 0
     if t.effect == "fadeIn" or (t.kind == "enter" and t.effect == "fade") then

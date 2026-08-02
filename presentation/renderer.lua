@@ -1,4 +1,5 @@
 local ui = require("presentation.ui")
+local util = require("presentation.util")
 local viewport_3d = require("presentation.viewport_3d")
 local exploration = require("engine.exploration")
 local battleSystem = require("engine.battle")
@@ -597,7 +598,7 @@ local function drawAnimatedEventLabel(label)
     local p = math.min(1, (now - eventLabelAnim.changedAt) / duration)
     local open = eventLabelAnim.target ~= nil
     local amount = open and p or (1 - p)
-    amount = 1 - (1 - amount) * (1 - amount)
+    amount = util.easeOut(amount)
     if not open and p >= 1 then
         eventLabelAnim.label = nil
         return

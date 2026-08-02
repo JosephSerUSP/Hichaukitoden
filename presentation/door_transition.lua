@@ -1,6 +1,7 @@
 -- Symmetric threshold transition for wall-bound door events. Scene changes
 -- happen only at full black, with a short dark hold on either side.
 local subtractive_fade = require("presentation.subtractive_fade")
+local util = require("presentation.util")
 
 local door_transition = {}
 local state = nil
@@ -63,13 +64,13 @@ function door_transition.approachProgress()
     if not state then return 0 end
     if state.phase == "entry_approach" then
         local p = math.min(1, state.elapsed / DURATIONS.entry_approach)
-        return 1 - (1 - p) * (1 - p)
+        return util.easeOut(p)
     elseif state.phase == "entry_cover"
         or state.phase == "exit_hold" then
         return 1
     elseif state.phase == "exit_reveal" then
         local p = math.min(1, state.elapsed / DURATIONS.exit_reveal)
-        return (1 - p) * (1 - p)
+        return 1 - util.easeOut(p)
     end
     return 0
 end
@@ -78,18 +79,18 @@ function door_transition.overlayAlpha()
     if not state then return 0 end
     if state.phase == "entry_cover" then
         local p = math.min(1, state.elapsed / DURATIONS.entry_cover)
-        return p * p * p
+        return util.easeInCubic(p)
     elseif state.phase == "entry_hold" or state.phase == "exit_hold" then
         return 1
     elseif state.phase == "entry_reveal" then
         local p = math.min(1, state.elapsed / DURATIONS.entry_reveal)
-        return 1 - p * p * (3 - 2 * p)
+        return 1 - util.smoothstep(p)
     elseif state.phase == "exit_cover" then
         local p = math.min(1, state.elapsed / DURATIONS.exit_cover)
-        return p * p * p
+        return util.easeInCubic(p)
     elseif state.phase == "exit_reveal" then
         local p = math.min(1, state.elapsed / DURATIONS.exit_reveal)
-        return 1 - p * p * (3 - 2 * p)
+        return 1 - util.smoothstep(p)
     end
     return 0
 end

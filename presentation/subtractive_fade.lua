@@ -6,11 +6,12 @@
 -- hidden beneath a uniform alpha-black sheet. Callers own choreography and
 -- scope by invoking this while their world/backdrop layer is still active.
 local ui = require("presentation.ui")
+local util = require("presentation.util")
 
 local subtractive_fade = {}
 
 function subtractive_fade.draw(amount)
-    amount = math.max(0, math.min(1, tonumber(amount) or 0))
+    amount = util.clamp01(tonumber(amount) or 0)
     if amount <= 0 then return end
 
     love.graphics.push("all")

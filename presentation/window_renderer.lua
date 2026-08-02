@@ -33,6 +33,7 @@
 -- window's list, for detail panels.
 
 local ui = require("presentation.ui")
+local util = require("presentation.util")
 local formula = require("engine.formula")
 local small_battlers = require("presentation.small_battlers")
 local actor_status = require("presentation.actor_status")
@@ -1353,8 +1354,8 @@ end
 -- Evaluate the eased progress value using the layout's easing field (or
 -- quadratic ease-out by default, matching the existing grow animation).
 local function animEase(p, easing)
-    if easing == "linear" then return p end
-    return 1 - (1 - p) * (1 - p) -- quadratic ease-out
+    if easing == "linear" then return util.easeLinear(p) end
+    return util.easeOut(p)
 end
 
 -- Resolves an anchor spec to a pixel point the window grows FROM. Currently

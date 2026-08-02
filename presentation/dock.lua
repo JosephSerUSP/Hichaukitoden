@@ -8,6 +8,7 @@
 -- engine.json dock.variants.<id>.windows.
 
 local ui = require("presentation.ui")
+local util = require("presentation.util")
 
 local dock = {}
 
@@ -91,7 +92,7 @@ local function drawShells(shells)
 end
 
 local function interpolateShells(from, to, p)
-    local eased = 1 - (1 - p) * (1 - p)
+    local eased = util.easeOut(p)
     local out = {}
     for i = 1, math.max(#from, #to) do
         local a, b = from[i], to[i]
