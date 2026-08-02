@@ -184,6 +184,12 @@ tools/editor/            Node + vanilla JS editor (no build step)
 tools/asset-gen/         image-model art generation (Python) + its own local web
                          UI (server.py + ui/); staged, then promoted into
                          assets/ by hand. Deliberately NOT part of the editor.
+                         Runs against hosted models OR the local GPU
+                         (`forge.py start`, then `--provider forge-lcm`), which
+                         is free and carries this project's retro style LoRAs.
+                         Seamless textures are scored, not eyeballed: see the
+                         "Local generation" section of its README before
+                         touching anything that tiles.
 tools/golden/            gate scripts + reference logs
 tests/                   unit suites, registered in main.lua's unittest branch
 userPerform/             .bat gate runners for the owner to run locally

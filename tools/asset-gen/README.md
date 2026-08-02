@@ -44,6 +44,8 @@ and a `manifest.json` recording the prompt, provider, model and target path.
 | `runs` | List staged runs and which have been promoted |
 | `reprocess [run]` | Re-run the pixel pipeline on staged raw output. **No API call, no cost** |
 | `promote [run] --variant N` | Copy one variant to its real path in `assets/` |
+| `tilecheck [run]` | Score a run's seams and write a 3x3 layout of each variant |
+| `batch <jobs.json>` | Generate many assets from one job file, sequentially |
 
 Useful `generate` flags: `--variants N`, `--provider`, `--model`, `--ref <png>`
 (style-match an existing asset; repeatable), `--cell WxH` / `--frames N` (sheet
@@ -104,10 +106,95 @@ the environment only, never from the config file or a flag.
 | `openai` (default) | `OPENAI_API_KEY` | `openai-images` | `gpt-image-1-mini` |
 | `gemini` | `GEMINI_API_KEY` | `gemini-image` | `gemini-3.1-flash-lite-image` |
 | `openrouter` | `OPENROUTER_API_KEY` | `openai-chat-image` | an image-capable chat model |
+| `forge-lcm` | none (local) | `sdapi` | `dreamshaper_8LCM` -- ~30s per tile |
+| `forge-retro` | none (local) | `sdapi` | `v1-5-pruned-emaonly` + a retro style LoRA |
 
 Override per run with `--provider` / `--model`, or set `ASSET_GEN_PROVIDER`.
 All three accept `--ref` style conditioning; on OpenAI that switches the call to
 `/images/edits`, the only route there that takes reference images.
+
+## Local generation (the `forge-*` providers)
+
+Free, offline, and the only way to get art in this project's own retro-game
+style, because the style LoRAs live on this machine and no hosted model has
+them. It drives an existing Forge install (`FORGE_HOME`, default
+`D:\AI\webui_forge_cu121_torch231`) through its HTTP API.
+
+```
+python tools/asset-gen/forge.py start       # detached; first start is slow
+python tools/asset-gen/forge.py models      # what checkpoints and LoRAs exist
+python tools/asset-gen/gen.py generate surface mossy_limestone "damp grey limestone blocks" \
+    --provider forge-lcm --variants 4 --promote
+python tools/asset-gen/gen.py tilecheck
+python tools/asset-gen/forge.py stop
+```
+
+`forge.py` never modifies the install: it sets `COMMANDLINE_ARGS` itself and
+calls `webui.bat`, because Forge's own `webui-user.bat` hard-codes those args
+and would drop `--api`.
+
+Extra `generate` flags, local only: `--steps`, `--cfg`, `--sampler`, `--seed`
+(variants walk upward from it, so a run is reproducible), `--no-tiling`,
+`--height <png>`, `--promote`, `--force-dirty`.
+
+### Seamless is done here, not by the model
+
+Forge accepts `tiling` in its payload and **silently ignores it** --
+`modules_forge/utils.py:apply_circular_forge` has its body commented out and
+prints "Tiling is currently under maintenance". So a tiling class gets its wrap
+from a second pass instead: the picture is rolled by half its size, which puts
+the four borders in the middle and makes the new border former-interior, and
+then only that middle cross is inpainted. The outer edge is masked off and
+restored afterwards, so the wrap is exact by construction.
+
+Measured on limestone: seam ratio 6.9 before, 0.5-1.0 after.
+
+### Reading the numbers
+
+`tilecheck` and every `generate` print four ratios. 1.0 means "as smooth as the
+rest of the texture"; over 2.0 is a join you will see once the texture repeats
+down a corridor.
+
+- `x` / `y` -- the wrap, at the tile edge.
+- `centre_x` / `centre_y` -- the middle, where the seamless pass *relocates* the
+  discontinuity. Judging on the wrap alone systematically prefers the variants
+  where that went worst, so both are ranked together.
+
+An axis reads `unmeasurable` when the edges are transparent: that is a cut-out,
+not a tile, and it scores last rather than perfect.
+
+### Conditioning on an authored height map
+
+`--height assets/geometry/<name>/height.png` adds a ControlNet depth unit so the
+albedo follows relief the mesh will actually have. Verified by measurement:
+edge-structure correlation with the height map rose from +0.09 to +0.25.
+Direction matters -- height is authored by `heightgen.py` and the *picture* is
+made to agree with it. Height is never estimated from art; that was measured
+useless on this project's pixel work.
+
+**A height map that does not tile cannot produce an albedo that does.** The
+conditioning re-imposes its own border discontinuity and the seamless pass then
+fights it: on `limestone_wall`, whose height map scores 20.1, conditioning took
+the albedo's seam from ~1.0 to ~3.8. `generate` warns when it sees this. Fix the
+height map first.
+
+### Batches
+
+```json
+[
+  { "name": "mossy_limestone", "description": "damp grey limestone blocks", "variants": 4 },
+  { "name": "cracked_flagstone", "description": "worn grey flagstone floor", "provider": "forge-retro" }
+]
+```
+
+`python tools/asset-gen/gen.py batch jobs.json --promote` runs them one at a
+time -- 4 GB of VRAM holds one model, so parallelism would only thrash the
+checkpoint -- and prints a pass/fail summary.
+
+`--promote` takes the best-scoring variant, and refuses if its seam is over the
+threshold or if the destination has **uncommitted changes**: art gets
+hand-corrected between runs, and overwriting an edit that exists nowhere else
+has already cost real work here. `--force-dirty` overrides.
 
 ### Models and what they cost
 

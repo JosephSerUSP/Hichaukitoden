@@ -15,6 +15,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 
 from . import classes
 
@@ -67,7 +68,35 @@ def resolve_run(staging_root, ref):
     raise FileNotFoundError(f"no staged run '{ref}'")
 
 
-def promote(staging_root, ref, variant, rename, force):
+def _edited_by_hand(path):
+    """Does this tracked file have uncommitted changes?
+
+    The guard on automatic promotion. Art here gets hand-corrected between runs,
+    and a generator that overwrites a file someone has been editing destroys work
+    that exists nowhere else -- which has already happened twice on this project.
+    Git is the authority: if the file is clean, the worst an overwrite can cost
+    is a `git checkout`.
+
+    Unknown answers are treated as SAFE-to-write rather than blocking, since an
+    untracked new asset is the normal case for generation; the plain existence
+    check above already covers overwriting.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--", path],
+            cwd=classes.ROOT, capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if result.returncode != 0:
+        return False
+    for line in result.stdout.splitlines():
+        # "?? path" is untracked -- new, so nothing to lose.
+        if line[:2].strip() and not line.startswith("??"):
+            return True
+    return False
+
+
+def promote(staging_root, ref, variant, rename, force, force_dirty=False):
     """Copy one processed variant into its engine path. Returns the destination."""
     path = resolve_run(staging_root, ref)
     manifest = read_manifest(path)
@@ -83,11 +112,18 @@ def promote(staging_root, ref, variant, rename, force):
     ctx = classes.resolve(manifest["class"], manifest.get("options", {}))
     target_name = rename or manifest["name"]
     dest_dir = os.path.join(classes.ROOT, ctx["dir"])
-    os.makedirs(dest_dir, exist_ok=True)
     dest = os.path.join(dest_dir, classes.filename(ctx, target_name, manifest.get("tokens")))
+    # dirname(dest), not dest_dir: a class whose filename carries a folder --
+    # "{name}/albedo.png" for image-authored geometry -- lands one level deeper.
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
 
     if os.path.exists(dest) and not force:
         raise FileExistsError(f"{dest} already exists (pass --force to overwrite)")
+    if os.path.exists(dest) and force and not force_dirty and _edited_by_hand(dest):
+        raise RuntimeError(
+            f"{os.path.relpath(dest, classes.ROOT)} has uncommitted changes -- it has "
+            "been edited since it was last committed, and promoting would destroy that "
+            "work. Commit or discard it first, or pass --force-dirty if you mean it.")
 
     shutil.copyfile(os.path.join(path, chosen["file"]), dest)
     manifest.setdefault("promoted", []).append({

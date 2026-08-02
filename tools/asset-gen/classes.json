@@ -76,6 +76,19 @@
       "note": "16 seamlessly-tiling 64x64 surface textures, row-major. Wall/floor/ceiling textures sampled by the raycaster: flat head-on, no perspective, no baked lighting."
     },
 
+    "surface": {
+      "label": "Image-authored geometry surface (albedo)",
+      "dir": "assets/geometry",
+      "promptFile": "surface.md",
+      "filename": "{name}/albedo.png",
+      "tiles": true,
+      "geometry": { "size": [128, 128], "cell": [128, 128], "frames": 1, "transparent": false },
+      "request": { "size": "512x512" },
+      "post": ["pixel_fit", "quantize", "tile_score"],
+      "quantizeColors": 48,
+      "note": "The albedo half of an engine/geometry asset -- one seamless material, rendered at 512 and downsampled 4x. Registration is a hard rule: the albedo must match its sibling height.png pixel for pixel, so pass --cell WxH when re-skinning an asset whose height map is not 128x128."
+    },
+
     "panorama": {
       "label": "Panorama / skybox",
       "dir": "assets/panorama",

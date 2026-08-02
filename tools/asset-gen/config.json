@@ -70,6 +70,53 @@
           "note": "Priced per token by Gemini; no per-image estimate here." }
       ]
     },
+    "forge-lcm": {
+      "label": "Local SD1.5 via Forge -- LCM (fast)",
+      "baseUrl": "http://127.0.0.1:7860",
+      "apiKeyEnv": "",
+      "local": true,
+      "type": "sdapi",
+      "model": "dreamshaper_8LCM",
+      "sampling": {
+        "steps": 6,
+        "cfgScale": 2.0,
+        "sampler": "LCM",
+        "tiling": true,
+        "negativePrompt": "photo, photograph, 3d render, perspective, vanishing point, drop shadow, vignette, watermark, text, signature, blurry, depth of field, frame, border"
+      },
+      "models": [
+        { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 6 steps, seconds per tile",
+          "default": true, "prices": null, "note": "Local: no cost, no key." },
+        { "id": "anyloraCheckpoint_lcm", "label": "AnyLoRA LCM -- flatter, takes style LoRAs well",
+          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "everyjourneylcm_v10Ace", "label": "EveryJourney LCM",
+          "prices": null, "note": "Local: no cost, no key." }
+      ]
+    },
+    "forge-retro": {
+      "label": "Local SD1.5 via Forge -- retro style pass",
+      "baseUrl": "http://127.0.0.1:7860",
+      "apiKeyEnv": "",
+      "local": true,
+      "type": "sdapi",
+      "model": "v1-5-pruned-emaonly",
+      "sampling": {
+        "steps": 24,
+        "cfgScale": 7.0,
+        "sampler": "DPM++ 2M",
+        "tiling": true,
+        "loras": [{ "name": "1990's_PC_v2", "weight": 0.7 }],
+        "negativePrompt": "photo, photograph, 3d render, perspective, vanishing point, drop shadow, vignette, watermark, text, signature, blurry, depth of field, frame, border"
+      },
+      "models": [
+        { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- cleanest response to style LoRAs",
+          "default": true, "prices": null, "note": "Local: no cost, no key." },
+        { "id": "newERANewEstheticRetro_retroV60VAE", "label": "New Era Retro",
+          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM",
+          "prices": null, "note": "Local: no cost, no key." }
+      ]
+    },
     "openrouter": {
       "label": "OpenRouter (image-capable chat models)",
       "baseUrl": "https://openrouter.ai/api/v1",
@@ -82,6 +129,18 @@
           "note": "OpenRouter bills per token and rates change often; see its model page." }
       ]
     }
+  },
+  "local": {
+    "_comment": [
+      "Settings for the sdapi providers above. The ControlNet model conditions a",
+      "generated albedo on an ALREADY AUTHORED height map (gen.py --height), so",
+      "paint lands in the grooves the mesh will actually have. Note the direction:",
+      "height is never estimated from the art -- estimation was measured useless on",
+      "this project's pixel work -- it is authored by tools/asset-gen/heightgen.py",
+      "and the picture is made to agree with it."
+    ],
+    "controlnetDepthModel": "control_v11f1p_sd15_depth",
+    "depthWeight": 0.6
   },
   "generate": {
     "variants": 3,

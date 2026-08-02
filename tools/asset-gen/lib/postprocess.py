@@ -90,21 +90,43 @@ def slice_grid(img, ctx):
     return sheet
 
 
-def _downscale(img, size):
+def _downscale(img, size, wrap=False):
     """Shrink to pixel-art scale without the mush a plain LANCZOS pass leaves.
 
     A light sharpen before the reduction keeps the chunky edges that make the
     result read as pixel art rather than as a photograph of pixel art.
+
+    `wrap` matters for anything that has to tile. Both the sharpen kernel and
+    the LANCZOS window are clamped at the image border, so the outermost pixels
+    are computed from less information than their neighbours -- which quietly
+    damages a wrap that was exact on the way in. Padding the image with copies
+    of itself first, and cropping afterwards, means every pixel including the
+    edges sees a full neighbourhood, and the tile survives the reduction.
     """
     if img.size == tuple(size):
         return img
-    if img.size[0] > size[0] * 2:
-        img = img.filter(ImageFilter.SHARPEN)
-    return img.resize(tuple(size), Image.LANCZOS)
+    if not wrap:
+        if img.size[0] > size[0] * 2:
+            img = img.filter(ImageFilter.SHARPEN)
+        return img.resize(tuple(size), Image.LANCZOS)
+
+    width, height = img.size
+    # A whole number of DESTINATION pixels, so the crop lands on an exact
+    # boundary and no half-pixel shift creeps in.
+    margin = 4
+    pad_x, pad_y = margin * width // size[0], margin * height // size[1]
+    padded = Image.new(img.mode, (width + 2 * pad_x, height + 2 * pad_y))
+    for column in (-1, 0, 1):
+        for row in (-1, 0, 1):
+            padded.paste(img, (pad_x + column * width, pad_y + row * height))
+    if width > size[0] * 2:
+        padded = padded.filter(ImageFilter.SHARPEN)
+    padded = padded.resize((size[0] + 2 * margin, size[1] + 2 * margin), Image.LANCZOS)
+    return padded.crop((margin, margin, margin + size[0], margin + size[1]))
 
 
 def pixel_fit(img, ctx):
-    return _downscale(img, ctx["size"])
+    return _downscale(img, ctx["size"], wrap=ctx["classDef"].get("tiles", False))
 
 
 def quantize(img, ctx):
@@ -153,8 +175,105 @@ def seam_blend_x(img, ctx):
     return img
 
 
+def tile_seam_score(img):
+    """How visible is the wrap seam, relative to this texture's own busyness?
+
+    A RATIO, not a difference. The absolute gap between the first and last
+    column says nothing on its own: a noisy granite texture has large
+    column-to-column differences everywhere, and a flat plaster one has almost
+    none, so the same absolute number means "invisible" in the first and
+    "glaring" in the second. Dividing by the mean difference between ADJACENT
+    INTERIOR columns asks the only question that matters -- does the seam look
+    like any other place in the image?
+
+      ~1.0  the wrap is indistinguishable from the interior
+      >2    a join a player will see once the texture repeats down a corridor
+
+    Returned per axis, because a wall tiles horizontally while a floor tiles
+    both ways, and a texture can be perfect on one axis and broken on the other.
+
+    An axis whose two edges are TRANSPARENT returns None, not a perfect score.
+    A cut-out figure has nothing at its left and right edges, so the naive ratio
+    calls it a flawless tile -- that is the metric failing to see, not the
+    texture passing. Caught by scoring a figure asset as a negative control,
+    which is the only reason to ever run one.
+
+    A flat but OPAQUE edge is measured normally: a texture banded horizontally
+    has an identical run of colour down both sides and genuinely does tile that
+    way. An earlier version rejected those as unmeasurable and threw away the
+    one case that is trivially correct.
+    """
+    import numpy
+
+    rgba = numpy.asarray(img.convert("RGBA"), dtype=numpy.float32)
+    pixels, alpha = rgba[:, :, :3], rgba[:, :, 3]
+    if pixels.shape[0] < 3 or pixels.shape[1] < 3:
+        return {"x": None, "y": None, "note": "too small to score"}
+
+    result = {}
+    for axis in ("x", "y"):
+        if axis == "x":
+            near, far = pixels[:, 0, :], pixels[:, -1, :]
+            near_a, far_a = alpha[:, 0], alpha[:, -1]
+            interior = numpy.abs(numpy.diff(pixels, axis=1)).mean()
+        else:
+            near, far = pixels[0, :, :], pixels[-1, :, :]
+            near_a, far_a = alpha[0, :], alpha[-1, :]
+            interior = numpy.abs(numpy.diff(pixels, axis=0)).mean()
+
+        # Nothing at the edges to compare: this is a cut-out, not a tile.
+        if max(float(near_a.mean()), float(far_a.mean())) < 8:
+            result[axis] = None
+            result["note"] = (result.get("note", "")
+                              + f"{axis}: edges are transparent, not a tiling surface. ")
+            continue
+
+        wrap = float(numpy.abs(near - far).mean())
+        # A texture with no interior variation has nothing to normalise against;
+        # then the wrap difference IS the answer, in 0-255 terms.
+        result[axis] = round(wrap if interior < 0.5 else wrap / interior, 3)
+
+    # The line down the MIDDLE, on the same scale.
+    #
+    # Measuring only the border is how a seam hides. Offset-and-inpaint does not
+    # remove a texture's discontinuity, it RELOCATES it to the centre -- so a
+    # texture can score a perfect wrap while carrying a hard line down its
+    # middle, which is exactly what the first version of this function called
+    # seamless. Checking the centre specifically, rather than the worst line
+    # anywhere, is deliberate: a brick texture is SUPPOSED to have hard lines at
+    # its mortar, and a metric that punished those would be useless on the very
+    # material this project is mostly made of.
+    for axis, step_axis in (("x", 1), ("y", 0)):
+        steps = numpy.abs(numpy.diff(pixels, axis=step_axis)).mean(
+            axis=tuple(index for index in (0, 1, 2) if index != step_axis))
+        typical = float(numpy.median(steps))
+        middle = len(steps) // 2
+        # A window, not a single line: mask blur spreads the repaint over a few
+        # pixels and the exact centre can land either side of the join.
+        centre = float(steps[max(0, middle - 2):middle + 2].max())
+        result[f"centre_{axis}"] = round(centre if typical < 0.5 else centre / typical, 3)
+    return result
+
+
+def tile_score(img, ctx):
+    """Measure the wrap seam and record it in ctx. Does not touch the pixels."""
+    ctx["tileScore"] = tile_seam_score(img)
+    return img
+
+
+def tiled_sheet(path, repeat=3, scale=2):
+    """The texture laid out `repeat` times each way -- what the seam looks like."""
+    tile = Image.open(path).convert("RGBA")
+    sheet = Image.new("RGBA", (tile.width * repeat, tile.height * repeat))
+    for row in range(repeat):
+        for column in range(repeat):
+            sheet.paste(tile, (column * tile.width, row * tile.height))
+    return sheet.resize((sheet.width * scale, sheet.height * scale), Image.NEAREST)
+
+
 STEPS = {
     "key_background": key_background,
+    "tile_score": tile_score,
     "slice_grid": slice_grid,
     "pixel_fit": pixel_fit,
     "quantize": quantize,

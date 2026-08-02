@@ -77,7 +77,22 @@ def price_per_image(cfg, provider_entry, size):
     return by_size[size], None
 
 
+def _variant_seed(sampling, index):
+    """Distinct seeds per variant, reproducible when one was asked for.
+
+    Reusing one seed across variants would render the same picture N times; -1
+    lets the server roll its own. An explicit seed walks upward so the whole run
+    can be reproduced from the manifest.
+    """
+    seed = sampling.get("seed")
+    if seed is None or seed < 0:
+        return -1
+    return seed + index - 1
+
+
 def _cost_line(cfg, provider_entry, size, variants):
+    if provider_entry.get("local"):
+        return "  cost: free (local GPU)"
     unit, why = price_per_image(cfg, provider_entry, size)
     checked = cfg.get("pricing", {}).get("checkedOn", "?")
     if unit is None:
@@ -120,9 +135,13 @@ def cmd_models(args):
           f"against {pricing.get('source', 'the provider')}.")
     print("These are ESTIMATES from a local table -- your invoice is the truth.\n")
     for pid, entry in cfg["providers"].items():
-        key = "set" if os.environ.get(entry["apiKeyEnv"], "").strip() else "MISSING"
+        if entry.get("local"):
+            status = "local GPU, no key needed"
+        else:
+            status = (f"{entry['apiKeyEnv']}: "
+                      + ("set" if os.environ.get(entry["apiKeyEnv"], "").strip() else "MISSING"))
         mark = " (default)" if entry.get("default") else ""
-        print(f"{entry['label']}{mark}  [{entry['apiKeyEnv']}: {key}]")
+        print(f"{entry['label']}{mark}  [{status}]")
         for model in entry.get("models", []):
             active = " <- current" if model["id"] == entry["model"] else ""
             prices = model.get("prices")
@@ -160,10 +179,47 @@ def _process_variant(raw_bytes, ctx, run_path, index, verbose=True):
         handle.write(raw_bytes)
 
     img = Image.open(io.BytesIO(raw_bytes))
+    ctx.pop("tileScore", None)
     out = postprocess.run(img, ctx, verbose=verbose)
     out_name = f"variant-{index}.png"
     out.save(os.path.join(run_path, out_name))
-    return {"index": index, "raw": raw_name, "file": out_name}
+    row = {"index": index, "raw": raw_name, "file": out_name}
+    # Left behind by the tile_score post step, for classes that declare it.
+    score = ctx.pop("tileScore", None)
+    if score:
+        row["tileScore"] = score
+        if verbose:
+            print(f"  seam: wrap x={score.get('x')} y={score.get('y')}"
+                  f"  centre x={score.get('centre_x')} y={score.get('centre_y')}"
+                  + (f"  ({score['note'].strip()})" if score.get("note") else ""))
+    return row
+
+
+# How the seam ratio is read everywhere. 1.0 is "indistinguishable from the
+# interior"; the threshold is where a join starts being visible once a texture
+# repeats across a corridor, and is deliberately one number in one place.
+SEAM_GOOD = 2.0
+
+
+SEAM_AXES = ("x", "y", "centre_x", "centre_y")
+
+
+def seam_rank(row, axes=SEAM_AXES):
+    """Sort key for picking the best variant: worst measured axis first.
+
+    The centre readings are ranked alongside the wrap ones deliberately. The
+    technique that produces the wrap moves the discontinuity into the middle of
+    the texture, so judging on the wrap alone would systematically prefer
+    exactly the variants where that relocation went worst.
+
+    An unmeasurable axis is not a free pass -- it sorts last, because a texture
+    whose seam cannot be seen is not a texture whose seam is known to be good.
+    """
+    scores = [row.get("tileScore", {}).get(axis) for axis in axes]
+    measured = [s for s in scores if isinstance(s, (int, float))]
+    if not measured:
+        return (1, 0.0)
+    return (0, max(measured))
 
 
 def _finish(run_path, manifest):
@@ -177,6 +233,69 @@ def _finish(run_path, manifest):
     print(f"  preview: {os.path.join(run_path, 'contact-sheet.png')}")
     print(f"  promote: python tools/asset-gen/gen.py promote "
           f"{os.path.basename(run_path)} --variant {manifest['variants'][0]['index']}")
+
+
+def _sampling_overrides(args):
+    """CLI knobs that only the local sdapi provider understands."""
+    override = {}
+    for flag, key in (("steps", "steps"), ("cfg", "cfgScale"), ("sampler", "sampler"),
+                      ("seed", "seed")):
+        value = getattr(args, flag, None)
+        if value is not None:
+            override[key] = value
+    if getattr(args, "no_tiling", False):
+        override["tiling"] = False
+    return override
+
+
+def _control_from_height(cfg, args):
+    """Build the ControlNet unit for --height, or None."""
+    path = getattr(args, "height", None)
+    if not path:
+        return None, None
+    full = path if os.path.isabs(path) else os.path.join(classes.ROOT, path)
+    if not os.path.isfile(full):
+        raise SystemExit(f"height map not found: {full}")
+    # A control map that does not tile cannot produce art that tiles: the
+    # conditioning re-imposes its own discontinuity at the border, and the
+    # seamless pass then has to fight it. Measured on this project's own
+    # limestone wall -- whose height map has a hard join -- conditioning took the
+    # seam from ~1.0 to ~3.8. Say so, rather than hand back a worse texture with
+    # no explanation.
+    if getattr(args, "asset_class", None) == "surface":
+        score = postprocess.tile_seam_score(Image.open(full))
+        worst = max((v for v in (score.get("x"), score.get("y"))
+                     if isinstance(v, (int, float))), default=0)
+        if worst > SEAM_GOOD:
+            print(f"  warning: {path} does not tile (seam {worst}). Conditioning on it "
+                  "will push that seam into the albedo; the height map has to wrap first.")
+
+    local = cfg.get("local", {})
+    unit = provider.controlnet_depth(
+        _provider(cfg, args.provider, args.model).get("baseUrl", ""),
+        full, local.get("controlnetDepthModel"), local.get("depthWeight", 0.6))
+    return unit, os.path.relpath(full, classes.ROOT).replace("\\", "/")
+
+
+def _auto_promote(cfg, run_path, manifest, force_dirty=False):
+    """Promote the best-scoring variant. Returns the destination, or None."""
+    scored = [v for v in manifest["variants"] if v.get("tileScore")]
+    if not scored:
+        return None
+    best = min(scored, key=seam_rank)
+    worst_axis = seam_rank(best)
+    if worst_axis[0] == 1:
+        print("  auto-promote skipped: no variant has a measurable seam")
+        return None
+    if worst_axis[1] > SEAM_GOOD:
+        print(f"  auto-promote skipped: the best seam is {worst_axis[1]}, over the "
+              f"{SEAM_GOOD} threshold -- none of these tile well enough")
+        return None
+    dest = staging.promote(_staging_root(cfg), os.path.basename(run_path),
+                           best["index"], None, force=True, force_dirty=force_dirty)
+    print(f"  auto-promoted variant {best['index']} (seam {worst_axis[1]}) -> "
+          f"{os.path.relpath(dest, classes.ROOT)}")
+    return dest
 
 
 def cmd_generate(args):
@@ -212,6 +331,9 @@ def cmd_generate(args):
         if not os.path.isfile(ref):
             raise SystemExit(f"reference image not found: {ref}")
 
+    sampling = _sampling_overrides(args)
+    control, control_source = _control_from_height(cfg, args)
+
     variants = args.variants or cfg["generate"]["variants"]
     run_path = staging.run_dir(_staging_root(cfg), args.asset_class, args.name)
     manifest = {
@@ -221,7 +343,9 @@ def cmd_generate(args):
         "options": opts,
         "tokens": tokens,
         "provider": {"id": prov["id"], "model": prov["model"],
-                     "quality": prov.get("quality")},
+                     "quality": prov.get("quality"),
+                     "sampling": dict(prov.get("sampling") or {}, **sampling) or None,
+                     "heightControl": control_source},
         "estimatedCostUsd": (lambda unit: unit and round(unit * variants, 4))(
             price_per_image(cfg, prov, ctx["requestSize"])[0]),
         "refs": [os.path.relpath(r, classes.ROOT).replace("\\", "/") for r in refs],
@@ -249,6 +373,8 @@ def cmd_generate(args):
                 max_retries=cfg["generate"]["maxRetries"],
                 transparent=ctx["transparent"],
                 quality=prov.get("quality"),
+                sampling=dict(sampling, seed=_variant_seed(sampling, index)),
+                control=control,
             )
             print(f"  received in {time.time() - mark:.0f}s")
             manifest["variants"].append(_process_variant(raw, ctx, run_path, index))
@@ -263,6 +389,8 @@ def cmd_generate(args):
         print(f"\nno variants succeeded; run kept at {run_path}")
         return 1
     _finish(run_path, manifest)
+    if args.promote:
+        _auto_promote(cfg, run_path, manifest, args.force_dirty)
     return 0
 
 
@@ -288,10 +416,81 @@ def cmd_reprocess(args):
     return 0
 
 
+def cmd_tilecheck(args):
+    """Score a staged run's seams and lay each variant out 3x3 to see them.
+
+    The numbers are the point -- they are what lets a batch be triaged without
+    anyone opening an image -- but the sheet is what catches the failure the
+    numbers cannot describe: a texture that wraps perfectly and still reads as
+    obvious repetition because one feature dominates the middle.
+    """
+    cfg = _config()
+    run_path = staging.resolve_run(_staging_root(cfg), args.run)
+    manifest = staging.read_manifest(run_path)
+    rows = []
+    for variant in manifest["variants"]:
+        path = os.path.join(run_path, variant["file"])
+        score = postprocess.tile_seam_score(Image.open(path))
+        variant["tileScore"] = score
+        sheet_name = f"tiled-{variant['index']}.png"
+        postprocess.tiled_sheet(path, args.repeat).save(os.path.join(run_path, sheet_name))
+        rows.append((variant["index"], score, sheet_name))
+
+    staging.write_manifest(run_path, manifest)
+    print(f"{os.path.basename(run_path)}  [{manifest['class']}] {manifest['name']}")
+    print(f"  ratios: 1.0 = as smooth as the interior, over {SEAM_GOOD} = visible join.")
+    print("  wrap = the tile edge; centre = the join the seamless pass relocates inward")
+    ranked = sorted(rows, key=lambda row: seam_rank({"tileScore": row[1]}))
+    for position, (index, score, sheet) in enumerate(ranked):
+        parts = [f"{axis}={score.get(axis) if score.get(axis) is not None else 'unmeasurable'}"
+                 for axis in SEAM_AXES]
+        best = "  <- best" if position == 0 else ""
+        print(f"  variant {index}: {'  '.join(parts)}   {sheet}{best}")
+        if score.get("note"):
+            print(f"      {score['note'].strip()}")
+    return 0
+
+
+def cmd_batch(args):
+    """Run many assets from one job file, into one staging run each.
+
+    Sequential on purpose: 4 GB of VRAM holds exactly one model, and running
+    these in parallel would only thrash the checkpoint in and out.
+    """
+    with open(args.jobs, "r", encoding="utf-8") as handle:
+        jobs = json.load(handle)
+    if isinstance(jobs, dict):
+        jobs = jobs.get("jobs", [])
+
+    results = []
+    for position, job in enumerate(jobs, 1):
+        print(f"\n=== [{position}/{len(jobs)}] {job.get('class')} '{job.get('name')}' ===")
+        argv = [job.get("class", args.default_class), job["name"], job.get("description", "")]
+        for flag in ("provider", "variants", "extra", "height", "steps", "cfg",
+                     "sampler", "seed", "cell", "model"):
+            if job.get(flag) is not None:
+                argv += [f"--{flag}", str(job[flag])]
+        if job.get("promote", args.promote):
+            argv.append("--promote")
+        if args.force_dirty:
+            argv.append("--force-dirty")
+        try:
+            code = main(["generate"] + argv)
+        except SystemExit as err:            # argparse inside the nested call
+            code = err.code or 1
+        results.append((job.get("name"), code))
+
+    print("\n=== batch summary ===")
+    for name, code in results:
+        print(f"  {'ok  ' if code == 0 else 'FAIL'} {name}")
+    return 0 if all(code == 0 for _, code in results) else 1
+
+
 def cmd_promote(args):
     cfg = _config()
     dest = staging.promote(
-        _staging_root(cfg), args.run, args.variant, args.rename, args.force
+        _staging_root(cfg), args.run, args.variant, args.rename, args.force,
+        args.force_dirty
     )
     print(f"promoted -> {os.path.relpath(dest, classes.ROOT)}")
     print("Review it in-game, then commit the binary deliberately.")
@@ -327,6 +526,19 @@ def main(argv=None):
                      help="filename token, e.g. --token fps=12; repeatable")
     gen.add_argument("--extra", default="", help="extra prompt direction")
     gen.add_argument("--dry-run", action="store_true", help="print the prompt, call nothing")
+    # Local-model knobs. Ignored by the cloud providers, which have no equivalent.
+    gen.add_argument("--steps", type=int, help="[local] denoising steps")
+    gen.add_argument("--cfg", type=float, help="[local] CFG scale")
+    gen.add_argument("--sampler", help="[local] sampler name, e.g. LCM")
+    gen.add_argument("--seed", type=int, help="[local] base seed; variants walk upward")
+    gen.add_argument("--no-tiling", action="store_true",
+                     help="[local] disable circular padding (tiles are seamless by default)")
+    gen.add_argument("--height", help="[local] condition on an authored height map "
+                                      "via ControlNet depth, e.g. assets/geometry/x/height.png")
+    gen.add_argument("--promote", action="store_true",
+                     help="promote the best-scoring variant automatically")
+    gen.add_argument("--force-dirty", action="store_true",
+                     help="allow promoting over a file with uncommitted changes")
 
     rep = sub.add_parser("reprocess", help="re-run post-processing on staged raw output")
     rep.add_argument("run", nargs="?", default="latest")
@@ -336,11 +548,27 @@ def main(argv=None):
     pro.add_argument("--variant", type=int, default=1)
     pro.add_argument("--rename", help="promote under a different asset name")
     pro.add_argument("--force", action="store_true", help="overwrite an existing file")
+    pro.add_argument("--force-dirty", action="store_true",
+                     help="overwrite even if the target has uncommitted changes")
+
+    tile = sub.add_parser("tilecheck", help="score a run's seams and lay it out 3x3")
+    tile.add_argument("run", nargs="?", default="latest")
+    tile.add_argument("--repeat", type=int, default=3, help="tiles per side (default 3)")
+
+    bat = sub.add_parser("batch", help="generate many assets from a job file")
+    bat.add_argument("jobs", help="JSON list of {class, name, description, ...}")
+    bat.add_argument("--default-class", default="surface",
+                     help="class for jobs that do not name one")
+    bat.add_argument("--promote", action="store_true",
+                     help="promote the best variant of every job")
+    bat.add_argument("--force-dirty", action="store_true",
+                     help="allow promoting over files with uncommitted changes")
 
     args = parser.parse_args(argv)
     handler = {
         "classes": cmd_classes, "models": cmd_models, "runs": cmd_runs,
         "generate": cmd_generate, "reprocess": cmd_reprocess, "promote": cmd_promote,
+        "tilecheck": cmd_tilecheck, "batch": cmd_batch,
     }[args.command]
     try:
         return handler(args)
