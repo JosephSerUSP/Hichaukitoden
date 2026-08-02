@@ -136,8 +136,48 @@ function plane.build(spec, layers, uv)
         end
     end
 
+    -- Seam bookkeeping. A plane is a TILE: the mesh is instanced once per cell,
+    -- so its own left border sits against a copy of its own right border. The
+    -- decimator therefore has to be told two things it cannot see from the
+    -- triangle soup.
+    --
+    -- Which border a vertex lives on, so it reduces along that border instead
+    -- of being averaged inward -- the quadric penalty alone only made drift
+    -- expensive, and "expensive" still happens.
+    --
+    -- And which vertices are the SAME point on the opposite border, so both
+    -- sides reduce in lockstep. Even with a perfectly seamless texture the two
+    -- borders of one mesh have different neighbourhoods, so decimated
+    -- independently they keep different vertices and the tiles stop meeting.
+    --
+    -- Only the WRAPPING borders are declared. A wall wraps along +u into the
+    -- next cell, so its left and right borders are the tiling seam; its top and
+    -- bottom meet a ceiling and a floor, whose own borders are straight lines at
+    -- a fixed height, and a straight border cannot gap against those wherever
+    -- its vertices happen to fall. A floor or ceiling wraps both ways. Declaring
+    -- only what actually tiles matters: a declared border cannot be absorbed by
+    -- the interior, so declaring all four walls the interior in behind a rim and
+    -- leaves a flat surface carrying an order of magnitude more triangles than
+    -- it needs.
+    local border, locked, mirror = {}, {}, {}
+    -- A corner sits on two seams at once and answers to both, so it moves for
+    -- neither -- and it is deliberately left unmirrored: on a floor it would
+    -- need one partner per axis, and a single wrong partner would collapse two
+    -- unrelated vertices together.
+    for _, corner in ipairs({ at(0, 0), at(0, columns), at(rows, 0), at(rows, columns) }) do
+        locked[corner] = true
+    end
+    local function seam(a, b, id)
+        border[a], border[b] = id .. "0", id .. "1"
+        if not locked[a] and not locked[b] then mirror[a], mirror[b] = b, a end
+    end
+    for row = 0, rows do seam(at(row, 0), at(row, columns), "u") end
+    if spec.surface ~= "wall" then
+        for column = 0, columns do seam(at(0, column), at(rows, column), "v") end
+    end
+
     local reduced = decimate.run(dense, quality.budget(spec.triangleBudget),
-        quality.maxError())
+        quality.maxError(), { border = border, locked = locked, mirror = mirror })
 
     local flip = SURFACES[spec.surface].flip
     for _, face in ipairs(reduced.faces) do

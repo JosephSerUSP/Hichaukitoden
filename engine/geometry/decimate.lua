@@ -99,9 +99,29 @@ end
 -- is what lets a flat wall fall to a handful of triangles instead of sitting at
 -- whatever the budget allowed. Without it a coplanar region keeps hundreds of
 -- triangles that describe nothing -- the budget is a ceiling, not a target.
-function decimate.run(mesh, targetFaces, maxError)
+--
+-- `options` lets a caller that KNOWS its boundary is a tiling seam say so. The
+-- quadric constraint above is a soft penalty, and a soft penalty is the wrong
+-- tool for a seam: it makes drifting inward expensive, not impossible, so a
+-- wall's border still creeps and the copy of that wall in the next cell no
+-- longer meets it. A caller supplies:
+--
+--   options.border[i] = "u0" | "u1" | ...   which seam plane vertex i lives on
+--   options.locked[i] = true                a corner: never collapse it
+--   options.mirror[i] = j                   i and j are the same point on
+--                                           opposite seams of a tiling asset
+--
+-- Border vertices then collapse only ALONG their own seam (the midpoint of two
+-- vertices sharing a seam plane is still in that plane, so the border can never
+-- leave it), and a mirrored pair is decimated in lockstep: both sides pay the
+-- worse of the two costs and both collapse together. That is what makes tile
+-- meet tile -- without it each edge of the SAME mesh reduces differently, and
+-- copies of it placed side by side disagree about where their vertices are.
+function decimate.run(mesh, targetFaces, maxError, options)
     local vertices, faces = mesh.vertices, mesh.faces
     maxError = maxError or 0
+    options = options or {}
+    local border, locked, mirror = options.border or {}, options.locked or {}, options.mirror or {}
     if #faces <= targetFaces and maxError <= 0 then return mesh end
 
     local quadrics = {}
@@ -143,12 +163,17 @@ function decimate.run(mesh, targetFaces, maxError)
                     local length = math.sqrt(nx * nx + ny * ny + nz * nz)
                     if length > 1e-12 then
                         nx, ny, nz = nx / length, ny / length, nz / length
-                        local plane = quadricFromPlane(nx, ny, nz,
-                            -(nx * vi[1] + ny * vi[2] + nz * vi[3]))
-                        for entry = 1, 10 do plane[entry] = plane[entry] * BOUNDARY_WEIGHT end
-                        quadricAdd(quadrics[i], plane)
-                        quadricAdd(quadrics[j], quadricFromPlane(nx, ny, nz,
-                            -(nx * vi[1] + ny * vi[2] + nz * vi[3])))
+                        local offset = -(nx * vi[1] + ny * vi[2] + nz * vi[3])
+                        -- BOTH endpoints carry the weighted constraint. Giving
+                        -- j an unweighted copy made the penalty depend on which
+                        -- way the face happened to wind, so half of every
+                        -- boundary was a thousand times cheaper to pull inward
+                        -- than the other half.
+                        for _, index in ipairs({ i, j }) do
+                            local plane = quadricFromPlane(nx, ny, nz, offset)
+                            for entry = 1, 10 do plane[entry] = plane[entry] * BOUNDARY_WEIGHT end
+                            quadricAdd(quadrics[index], plane)
+                        end
                     end
                 end
             end
@@ -171,21 +196,89 @@ function decimate.run(mesh, targetFaces, maxError)
     -- Collapse to the midpoint: solving for the optimal position gives a
     -- slightly tighter fit but drifts vertices off the authored surface, which
     -- costs more visually here than the error it saves.
+    -- How immovable a vertex is: a corner outranks a seam, a seam outranks the
+    -- interior. The higher rank always survives a collapse and keeps its exact
+    -- position, so the interior can be eaten away against a seam without the
+    -- seam itself shifting by a hair. Averaging there is what dragged borders
+    -- inward; refusing the collapse outright instead left a dense rim wrapped
+    -- around a coarse middle, which is the other half of the same artefact.
+    local function rank(index)
+        if locked[index] then return 2 elseif border[index] then return 1 end
+        return 0
+    end
+
+    -- Which of the two survives. Deterministic and symmetric, so edgeCost(i, j)
+    -- and edgeCost(j, i) agree -- the lazy-invalidation check compares costs for
+    -- equality and would loop forever otherwise.
+    local function orient(i, j)
+        local ri, rj = rank(i), rank(j)
+        if ri ~= rj then
+            if ri > rj then return i, j end
+            return j, i
+        end
+        if i <= j then return i, j end
+        return j, i
+    end
+
+    -- Note the survivor keeps its position for ANY seam collapse, not only a
+    -- mixed-rank one: a decimated seam is then a SUBSET of the sample points it
+    -- was built from rather than a chain of drifting midpoints, so the profile
+    -- stays on the authored surface and the collapse disturbs no face that does
+    -- not contain the vertex being removed.
     local function collapseTarget(i, j)
         local vi, vj = vertices[i], vertices[j]
+        if rank(i) > 0 then return vi[1], vi[2], vi[3], vi[4], vi[5] end
         return (vi[1] + vj[1]) * 0.5, (vi[2] + vj[2]) * 0.5, (vi[3] + vj[3]) * 0.5,
             (vi[4] + vj[4]) * 0.5, (vi[5] + vj[5]) * 0.5
     end
 
-    local function edgeCost(i, j)
+    local function rawCost(i, j)
+        i, j = orient(i, j)
         local x, y, z = collapseTarget(i, j)
         local combined = {}
         for entry = 1, 10 do combined[entry] = quadrics[i][entry] + quadrics[j][entry] end
         return quadricError(combined, x, y, z)
     end
 
+    -- A mirrored pair is one decision, so it is priced as one: the worse of the
+    -- two sides. Pricing them separately is how the two seams of a tiling asset
+    -- end up choosing different vertices to keep.
+    local function edgeCost(i, j)
+        local cost = rawCost(i, j)
+        local mi, mj = mirror[i], mirror[j]
+        if mi and mj and alive[mi] and alive[mj] then
+            local partner = rawCost(mi, mj)
+            if partner > cost then cost = partner end
+        end
+        return cost
+    end
+
+    -- Two seams never merge into each other, two corners never merge at all,
+    -- and a mirrored vertex is only ever removed together with its partner --
+    -- so the interior can never eat into a seam, and a seam can never be eaten
+    -- from one end only while the tile beside it keeps its copy.
+    local function collapsible(i, j)
+        if locked[i] and locked[j] then return false end
+        local bi, bj = border[i], border[j]
+        if bi and bj and bi ~= bj then return false end
+        local _, removed = orient(i, j)
+        if mirror[removed] and not mirror[i == removed and j or i] then return false end
+        return true
+    end
+
     local heap = {}
     local seen = {}
+
+    -- `real` is the collapse's actual quadric error; `cost` is only its heap
+    -- priority. They differ for a refused collapse, which is requeued behind
+    -- everything else at a large penalty. Keeping the two apart matters: the
+    -- termination test asks "is the cheapest remaining collapse worth
+    -- refusing?", and a penalty is not an answer to that question.
+    local function offer(i, j)
+        if not collapsible(i, j) then return end
+        local cost = edgeCost(i, j)
+        heapPush(heap, { i = i, j = j, cost = cost, real = cost })
+    end
 
     for _, face in ipairs(faces) do
         for corner = 1, 3 do
@@ -193,7 +286,7 @@ function decimate.run(mesh, targetFaces, maxError)
             local key = edgeKey(i, j)
             if not seen[key] then
                 seen[key] = true
-                heapPush(heap, { i = i, j = j, cost = edgeCost(i, j) })
+                offer(i, j)
             end
         end
     end
@@ -213,6 +306,11 @@ function decimate.run(mesh, targetFaces, maxError)
                     end
                     local before = { facePlane(vertices[face[1]], vertices[face[2]], vertices[face[3]]) }
                     local after = { facePlane(p[1], p[2], p[3]) }
+                    -- Flattening a face to zero area counts as a fold and is
+                    -- refused. It looks harmless -- the face draws nothing --
+                    -- but it is how a surface loses AREA: allowing it let the
+                    -- interior snap onto a seam one vertex at a time until a
+                    -- whole side of the tile had been retired as degenerate.
                     if not after[1] then return true end
                     if before[1] then
                         local dot = before[1] * after[1] + before[2] * after[2] + before[3] * after[3]
@@ -224,7 +322,62 @@ function decimate.run(mesh, targetFaces, maxError)
         return false
     end
 
+    -- Merge j into i and retire the faces that degenerate. Split out because a
+    -- mirrored seam performs two of these as one atomic step.
     local liveFaces = #faces
+    local function performCollapse(i, j)
+        i, j = orient(i, j)
+        local x, y, z, u, v = collapseTarget(i, j)
+        vertices[i] = { x, y, z, u, v }
+        alive[j] = false
+        quadricAdd(quadrics[i], quadrics[j])
+        for faceIndex in pairs(vertexFaces[j]) do
+            if faceAlive[faceIndex] then
+                local face = faces[faceIndex]
+                local touchesI = face[1] == i or face[2] == i or face[3] == i
+                if touchesI then
+                    faceAlive[faceIndex] = false
+                    liveFaces = liveFaces - 1
+                else
+                    for corner = 1, 3 do
+                        if face[corner] == j then face[corner] = i end
+                    end
+                    vertexFaces[i][faceIndex] = true
+                end
+            end
+        end
+        vertexFaces[j] = {}
+        -- Retire whatever the merge flattened. These faces have zero area and
+        -- draw nothing; leaving them alive would let the budget be spent on
+        -- triangles that are not there.
+        for faceIndex in pairs(vertexFaces[i]) do
+            if faceAlive[faceIndex] then
+                local face = faces[faceIndex]
+                if not facePlane(vertices[face[1]], vertices[face[2]], vertices[face[3]]) then
+                    faceAlive[faceIndex] = false
+                    liveFaces = liveFaces - 1
+                end
+            end
+        end
+        -- Requeue the ring around the surviving vertex.
+        for faceIndex in pairs(vertexFaces[i]) do
+            if faceAlive[faceIndex] then
+                local face = faces[faceIndex]
+                for corner = 1, 3 do
+                    local other = face[corner]
+                    if other ~= i and alive[other] then offer(i, other) end
+                end
+            end
+        end
+    end
+
+    -- Is this collapse, together with its mirror, safe to apply?
+    local function folds(i, j)
+        i, j = orient(i, j)
+        local x, y, z = collapseTarget(i, j)
+        return wouldFlip(i, j, x, y, z) or wouldFlip(j, i, x, y, z)
+    end
+
     -- A backstop, not the termination condition -- the no-progress counter
     -- below is. Generous on purpose: refused collapses are retried at a
     -- penalty, so the pop count legitimately runs to many times the face
@@ -245,16 +398,17 @@ function decimate.run(mesh, targetFaces, maxError)
         -- Stop only when the mesh is inside budget AND the cheapest remaining
         -- collapse would actually cost something. Flat regions keep collapsing
         -- past the budget because they cost nothing to lose.
-        if liveFaces <= targetFaces and edge.cost > maxError then break end
+        if liveFaces <= targetFaces and edge.real > maxError then break end
         local i, j = edge.i, edge.j
         if alive[i] and alive[j] and i ~= j then
             -- Lazy invalidation: recompute and requeue if this entry is stale.
             local current = edgeCost(i, j)
-            if math.abs(current - edge.cost) > 1e-12 then
-                heapPush(heap, { i = i, j = j, cost = current })
+            if math.abs(current - edge.real) > 1e-12 then
+                heapPush(heap, { i = i, j = j, cost = current, real = current })
             else
-                local x, y, z, u, v = collapseTarget(i, j)
-                if wouldFlip(i, j, x, y, z) or wouldFlip(j, i, x, y, z) then
+                local mi, mj = mirror[i], mirror[j]
+                local mirrored = mi and mj and alive[mi] and alive[mj] and mi ~= mj
+                if folds(i, j) or (mirrored and folds(mi, mj)) then
                     -- Requeue at a penalty so it is retried only after
                     -- everything cheaper: a fold often stops being a fold once
                     -- a neighbour collapses, and simply dropping these stalls
@@ -262,40 +416,14 @@ function decimate.run(mesh, targetFaces, maxError)
                     -- no-progress counter below, NOT from the budget -- relying
                     -- on the budget is what made this loop hang when every
                     -- remaining collapse was refused.
-                    heapPush(heap, { i = i, j = j, cost = current + 1e6 })
+                    heapPush(heap, { i = i, j = j, cost = current + 1e6, real = current })
                 else
-                    vertices[i] = { x, y, z, u, v }
                     sinceProgress = 0
-                    alive[j] = false
-                    quadricAdd(quadrics[i], quadrics[j])
-                    for faceIndex in pairs(vertexFaces[j]) do
-                        if faceAlive[faceIndex] then
-                            local face = faces[faceIndex]
-                            local touchesI = face[1] == i or face[2] == i or face[3] == i
-                            if touchesI then
-                                faceAlive[faceIndex] = false
-                                liveFaces = liveFaces - 1
-                            else
-                                for corner = 1, 3 do
-                                    if face[corner] == j then face[corner] = i end
-                                end
-                                vertexFaces[i][faceIndex] = true
-                            end
-                        end
-                    end
-                    vertexFaces[j] = {}
-                    -- Requeue the ring around the surviving vertex.
-                    for faceIndex in pairs(vertexFaces[i]) do
-                        if faceAlive[faceIndex] then
-                            local face = faces[faceIndex]
-                            for corner = 1, 3 do
-                                local other = face[corner]
-                                if other ~= i and alive[other] then
-                                    heapPush(heap, { i = i, j = other, cost = edgeCost(i, other) })
-                                end
-                            end
-                        end
-                    end
+                    performCollapse(i, j)
+                    -- The far seam takes the same step, and takes it now: a
+                    -- mirrored pair that reduced at different moments would be
+                    -- priced against different neighbourhoods and diverge.
+                    if mirrored then performCollapse(mi, mj) end
                 end
             end
         end

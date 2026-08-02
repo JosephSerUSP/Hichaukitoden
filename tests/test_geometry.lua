@@ -330,6 +330,41 @@ check(math.abs(minY + 0.5) < 1e-6 and math.abs(maxY - 0.5) < 1e-6,
 check(math.abs(minZ) < 1e-6 and math.abs(maxZ - 1) < 1e-6,
     "decimation preserves floor and ceiling contact")
 
+-- The tiling invariant. A wall mesh is instanced once per cell, so its own
+-- y = -0.5 border sits against a copy of its own y = +0.5 border. Decimated
+-- independently the two borders keep different vertices, and the tiles stop
+-- meeting -- a crack no test of the mesh's EXTENT can see, because both borders
+-- still reach the cell edge while disagreeing about everything in between.
+local relief = geometry.load(FIXTURES .. "valid_plane")
+local function borderProfile(model, y)
+    local seen, profile = {}, {}
+    for _, group in ipairs(model.groups) do
+        for _, vertex in ipairs(group.vertices) do
+            if math.abs(vertex[2] - y) < 1e-9 then
+                local key = string.format("%.9f|%.9f", vertex[3], vertex[1])
+                if not seen[key] then
+                    seen[key] = true
+                    profile[#profile + 1] = { vertex[3], vertex[1] }
+                end
+            end
+        end
+    end
+    table.sort(profile, function(a, b) return a[1] < b[1] end)
+    return profile
+end
+local left, right = borderProfile(relief, -0.5), borderProfile(relief, 0.5)
+local matched = #left > 0 and #left == #right
+if matched then
+    for index, point in ipairs(left) do
+        if math.abs(point[1] - right[index][1]) > 1e-9
+            or math.abs(point[2] - right[index][2]) > 1e-9 then
+            matched = false
+        end
+    end
+end
+check(matched,
+    "the two tiling seams of a wall decimate identically, so tile meets tile")
+
 -- Determinism matters more here than anywhere else: the golden gates
 -- byte-compare frames rendered from these meshes.
 geometry.forget()
