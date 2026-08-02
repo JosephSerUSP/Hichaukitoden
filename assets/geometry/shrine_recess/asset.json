@@ -1,0 +1,10 @@
+{
+  "id": "shrine_recess",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "replace",
+  "heightScale": 0.14,
+  "meshColumns": 16,
+  "meshRows": 16
+}

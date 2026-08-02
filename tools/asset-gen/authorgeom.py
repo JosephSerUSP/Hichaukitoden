@@ -278,8 +278,86 @@ def fluted_pillar():
     }
 
 
+def shrine_recess():
+    """Surface fixture: an arched votive cavity cut into a wall.
+
+    Uses the `replace` height operation, so inside the arch the wall's own
+    block relief is REPLACED by the cavity rather than added to it -- a recess
+    that inherited the wall's mortar lines would not read as a cut.
+
+    Height alpha is geometric influence: opaque inside the arch, transparent
+    outside, so the wall is untouched beyond the fixture's footprint.
+    """
+    albedo = Image.new("RGBA", (SIZE, SIZE))
+    height = Image.new("RGBA", (SIZE, SIZE))
+    apx, hpx = [], []
+
+    cx = 0.5
+    top, bottom = 0.20, 0.80
+    half_width = 0.20
+
+    for y in range(SIZE):
+        v = y / (SIZE - 1)
+        for x in range(SIZE):
+            u = x / (SIZE - 1)
+            dx = abs(u - cx)
+
+            # Arch: a rectangle below the springline, a semicircle above it.
+            springline = 0.42
+            if v < springline:
+                r = math.hypot(dx, (springline - v) * (half_width / (springline - top)))
+                inside = r < half_width and v > top
+                edge = 1.0 - min(1.0, r / half_width)
+            else:
+                inside = dx < half_width and v < bottom
+                edge = 1.0 - min(1.0, dx / half_width)
+
+            if not inside:
+                apx.append((0, 0, 0, 0))
+                hpx.append((NEUTRAL, NEUTRAL, NEUTRAL, 0))   # zero influence
+                continue
+
+            # A true cavity: deepest at the back, with a chamfered rim so the
+            # opening reads as cut stone rather than a painted hole.
+            rim = min(1.0, edge / 0.22)
+            depth = -0.30 - 0.62 * rim
+
+            grain = smooth_noise(x, y, 31, 10.0)
+            shade = 0.30 + 0.26 * (1.0 - rim) + 0.08 * (grain - 0.5)
+
+            # A votive slab sits at the base of the cavity.
+            if 0.62 < v < 0.74 and dx < half_width * 0.78:
+                depth = -0.30
+                shade = 0.52 + 0.10 * (grain - 0.5)
+
+            depth = max(-1.0, min(1.0, depth))
+            shade = max(0.0, min(1.0, shade))
+            apx.append((
+                int(255 * shade * 0.96),
+                int(255 * shade * 0.92),
+                int(255 * shade * 0.80),
+                255,
+            ))
+            level = int(round(NEUTRAL + depth * 127))
+            hpx.append((level, level, level, 255))
+
+    albedo.putdata(apx)
+    height.putdata(hpx)
+    return albedo, height, {
+        "id": "shrine_recess",
+        "role": "surfaceFixture",
+        "topology": "plane",
+        "surface": "wall",
+        "heightOperation": "replace",
+        "heightScale": 0.14,
+        "meshColumns": 16,
+        "meshRows": 16,
+    }
+
+
 ASSETS = {
     "limestone_wall": limestone_wall,
+    "shrine_recess": shrine_recess,
     "sacred_idol": sacred_idol,
     "fluted_pillar": fluted_pillar,
 }

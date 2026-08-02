@@ -222,5 +222,66 @@ for _, group in ipairs(pillar.groups) do
 end
 check(cappedTop, "capTop fans a closed lid to the central axis")
 
+print("=== Surface Composition ===")
+
+local BASE, OVERLAY = FIXTURES .. "valid_plane", FIXTURES .. "valid_overlay"
+local plain = geometry.load(BASE)
+local composed = geometry.load({ BASE, OVERLAY })
+check(composed ~= plain and #composed.groups == 1,
+    "a base and its surface fixture compile to ONE mesh, not two")
+check(#composed.specs == 2 and composed.specs[2].id == "fixture_overlay",
+    "the composed model records its layer stack in order")
+check(composed.groups[1].texture ~= nil,
+    "a composed surface is textured by its composed albedo")
+
+-- The fixture must actually change the surface, or composition is a no-op that
+-- would pass every structural check while doing nothing.
+local plainDepth, composedDepth = 0, 0
+for _, vertex in ipairs(plain.groups[1].vertices) do
+    plainDepth = math.max(plainDepth, vertex[1])
+end
+for _, vertex in ipairs(composed.groups[1].vertices) do
+    composedDepth = math.max(composedDepth, vertex[1])
+end
+check(math.abs(plainDepth - composedDepth) > 1e-6,
+    "composing a fixture changes the surface it composes onto")
+
+local function refuses2(paths, label)
+    check(not pcall(geometry.load, paths), label)
+end
+refuses2({ BASE, FIXTURES .. "overlay_wrong_size" },
+    "a layer of different dimensions is refused; registration cannot hold")
+refuses2({ BASE, FIXTURES .. "overlay_wrong_surface" },
+    "a floor fixture is refused when composing onto a wall")
+refuses2({ BASE, FIXTURES .. "overlay_is_object" },
+    "an object fixture is refused as a composition layer")
+refuses2({ BASE, FIXTURES .. "valid_shell" },
+    "a shell is refused as a composition layer")
+
+print("=== Composition Cache ===")
+
+check(geometry.load({ BASE, OVERLAY }) == composed,
+    "an identical composition is compiled once and reused")
+check(geometry.compositionKey({ BASE, OVERLAY })
+    ~= geometry.compositionKey({ OVERLAY, BASE }),
+    "layer ORDER is part of the cache identity, since height ops do not commute")
+check(geometry.compositionKey(BASE) ~= geometry.compositionKey({ BASE, OVERLAY }),
+    "a composition is not confused with its base alone")
+check(geometry.compositionKey(BASE):find("v" .. geometry.COMPILER_VERSION, 1, true) ~= nil,
+    "the compiler version is part of the cache identity")
+
+print("=== Diagnostics ===")
+
+local albedoField, heightField = geometry.debugFields({ BASE, OVERLAY })
+check(albedoField:getWidth() == heightField:getWidth()
+    and albedoField:getHeight() == heightField:getHeight(),
+    "the final composed pair is emitted in register, same dimensions")
+local baseAlbedo = images.data(BASE .. "/albedo.png")
+check(albedoField:getWidth() == baseAlbedo:getWidth(),
+    "the composed pair is emitted at texture resolution, not mesh resolution")
+local midGrey = select(1, heightField:getPixel(8, 8))
+check(midGrey >= 0 and midGrey <= 1,
+    "the composed heightfield is emitted as a viewable normalized image")
+
 print(string.format("=== Geometry Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " geometry test(s) failed", failed) end

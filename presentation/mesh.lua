@@ -124,7 +124,10 @@ function Builder:build()
 end
 
 -- Bind materials and upload. `materials` maps a material name to
--- { color = {r,g,b,a}, texture = path }; `base` resolves relative texture paths.
+-- { color = {r,g,b,a}, texture = path } or { color, image = <Drawable> };
+-- `base` resolves relative texture paths. An `image` is used as-is, which is
+-- how a composed surface passes the canvas it baked rather than a file that
+-- does not exist on disk.
 -- Kept separate from building so a model can be compiled and validated without
 -- a graphics device.
 function mesh.finalize(model, materials, base)
@@ -132,7 +135,10 @@ function mesh.finalize(model, materials, base)
         local material = (materials or {})[group.material] or { color = { 1, 1, 1, 1 } }
         group.mesh = love.graphics.newMesh(mesh.FORMAT, group.vertices, "triangles", "static")
         group.color = material.color
-        if material.texture then
+        if material.image then
+            group.texture = material.image
+            group.mesh:setTexture(group.texture)
+        elseif material.texture then
             group.texture = mesh.texture(mesh.joined(base or "", material.texture))
             group.mesh:setTexture(group.texture)
         end

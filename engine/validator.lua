@@ -2140,8 +2140,11 @@ elseif paramDef.type == "script" then
                     -- Checking it here turns a malformed asset into a build
                     -- failure rather than a crash the first time a player walks
                     -- into the cell that uses it.
-                    check(poolName == "doors" or poolName == "features",
-                        where .. " geometry is currently supported only for door/opening or fixture variants")
+                    -- Base walls MAY carry geometry, unlike models: an
+                    -- image-authored wall is the surface a fixture composes
+                    -- onto, and without it there is nothing to compose into.
+                    check(poolName == "doors" or poolName == "features" or poolName == "walls",
+                        where .. " geometry is supported only for wall, door/opening or fixture variants")
                     if type(variant.geometry) ~= "string" then
                         check(false, where .. " geometry must name an asset directory")
                     else

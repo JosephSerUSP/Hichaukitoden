@@ -903,7 +903,7 @@ end
 -- displacement is only legible obliquely, and a flat-on view mostly tests
 -- albedo. Each asset is captured undisplaced and displaced so the pair shows
 -- what the height field actually contributed.
-function cli.runPreviewGeometry(assetPath, loader)
+function cli.runPreviewGeometry(assetPath, loader, overlayPath)
     local json = require("data.json")
     local payload = { captures = {}, width = 256, height = 144 }
     local ok, err = pcall(function()
@@ -911,8 +911,23 @@ function cli.runPreviewGeometry(assetPath, loader)
         local geometry = require("engine.geometry")
         local base = assert(loader.tilesets.dungeon_default, "dungeon_default tileset missing")
         local spec = geometry.check(assetPath)
+        -- An overlay makes this a COMPOSITION preview: base surface plus a
+        -- surface fixture, meshed as one coherent surface.
+        local layers = { assetPath }
+        if overlayPath then
+            geometry.check(overlayPath)
+            layers[#layers + 1] = overlayPath
+        end
         payload.asset = { id = spec.id, topology = spec.topology, role = spec.role,
-            surface = spec.surface, heightScale = spec.heightScale }
+            surface = spec.surface, heightScale = spec.heightScale, layers = layers }
+
+        -- The final composed pair, always emitted: it is the diagnostic that
+        -- says whether a problem is in the art, the composition or the mesh.
+        local albedoField, heightField = geometry.debugFields(layers)
+        payload.fields = {
+            albedo = love.data.encode("string", "base64", albedoField:encode("png")),
+            height = love.data.encode("string", "base64", heightField:encode("png")),
+        }
         viewport_3d.init()
         for _, displaced in ipairs({ false, true }) do
             -- Resolver output is cached by tileset identity, so each case needs
@@ -926,7 +941,7 @@ function cli.runPreviewGeometry(assetPath, loader)
                 -- belongs on the wall face. Previewing either in the other's
                 -- placement says nothing useful about the asset.
                 features = displaced and { {
-                    id = "preview", geometry = assetPath,
+                    id = "preview", geometry = overlayPath and layers or assetPath,
                     role = spec.role == "objectFixture" and "floor_feature" or "wall_feature",
                 } } or {},
             }

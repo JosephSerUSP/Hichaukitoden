@@ -1,0 +1,10 @@
+{
+  "id": "fixture_overlay_floor",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "floor",
+  "heightOperation": "replace",
+  "heightScale": 0.1,
+  "meshColumns": 4,
+  "meshRows": 4
+}

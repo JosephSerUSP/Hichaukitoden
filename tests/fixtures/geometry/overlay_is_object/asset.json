@@ -1,0 +1,10 @@
+{
+  "id": "fixture_overlay_object",
+  "role": "objectFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "replace",
+  "heightScale": 0.1,
+  "meshColumns": 4,
+  "meshRows": 4
+}

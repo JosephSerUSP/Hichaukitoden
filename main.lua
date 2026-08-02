@@ -87,6 +87,7 @@ local previewMapY = nil
 local previewMapDir = nil
 local isPreviewGeometryMode = false
 local previewGeometryAsset = nil
+local previewGeometryOverlay = nil
 local isProfile3DMode = false
 local profile3DMapId = nil
 local profile3DFrames = nil
@@ -297,6 +298,13 @@ function love.load(arg)
             elseif val == "preview-geometry" then
                 isPreviewGeometryMode = true
                 previewGeometryAsset = arg[i + 1]
+                -- An optional second asset composes onto the first. Guarded the
+                -- same way preview-map guards its positional slots, so a
+                -- trailing campaign=<name> is not swallowed as an overlay path.
+                if arg[i + 2] and not arg[i + 2]:match("^campaign=") then
+                    previewGeometryOverlay = arg[i + 2]
+                    i = i + 1
+                end
                 i = i + 1
             elseif val == "preview-fog" then
                 isPreviewFogMode = true
@@ -426,7 +434,7 @@ function love.load(arg)
     -- Isolated image-authored geometry comparison through the real renderer.
     if isPreviewGeometryMode then
         loader.init(cliCampaignRoot)
-        cli_tools.runPreviewGeometry(previewGeometryAsset, loader)
+        cli_tools.runPreviewGeometry(previewGeometryAsset, loader, previewGeometryOverlay)
         love.event.quit(0)
         return
     end

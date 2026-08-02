@@ -44,6 +44,10 @@ end
 -- Sample the composite height field at one grid intersection. `layers` is an
 -- ordered list of { data, operation, scale }; the first entry is the base and
 -- later entries compose onto it per the design doc's height operations.
+--
+-- `scale` is ABSOLUTE (in map cells), not relative to the base, because a
+-- composed surface mixes layers authored at different depths -- a shrine recess
+-- cutting 0.14 into a wall whose own block relief is 0.06.
 function plane.sampleField(layers, u, v)
     local value = 0
     for index, layer in ipairs(layers) do
@@ -80,7 +84,7 @@ function plane.build(spec, layers, uv)
         local v = row / rows
         for column = 0, columns do
             local u = column / columns
-            local lift = plane.sampleField(layers, u, v) * spec.heightScale + spec.offset
+            local lift = plane.sampleField(layers, u, v) + spec.offset
             local x, y, z = position(spec.surface, u, v, lift)
             local tu, tv = uv(u, v)
             grid[row][column] = { x, y, z, tu, tv }

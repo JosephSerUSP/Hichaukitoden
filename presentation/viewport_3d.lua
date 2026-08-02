@@ -27,9 +27,28 @@ local DIR_ANGLES = {
 -- question instead of testing two fields. Pure and exported so it is gated.
 function viewport_3d.meshSource(spec)
     if type(spec) ~= "table" then return nil end
+    if type(spec.geometry) == "table" then
+        -- A composed surface: base first, then its fixtures in order. Order is
+        -- part of the identity, since height operations do not commute.
+        return "geom:" .. table.concat(spec.geometry, "+")
+    end
     if spec.geometry then return "geom:" .. tostring(spec.geometry) end
     if spec.model then return "obj:" .. tostring(spec.model) end
     return nil
+end
+
+-- When a base wall is image-authored geometry, the wall and any surface
+-- fixture on it are ONE composed surface rather than a mesh floating over
+-- another -- which is what makes a recess read as cut into the wall instead of
+-- pasted onto it. Returns nil when the base wall is an ordinary atlas tile, so
+-- a fixture on a plain wall keeps its own standalone mesh.
+function viewport_3d.composedWallSpec(baseWall, featureOverlay)
+    local base = baseWall and baseWall.geometry
+    if type(base) ~= "string" then return nil end
+    local layers = { base }
+    local fixture = featureOverlay and featureOverlay.geometry
+    if type(fixture) == "string" then layers[#layers + 1] = fixture end
+    return { geometry = layers }
 end
 
 -- Transform a model's horizontal local axes into a visible wall-face frame.
@@ -1433,6 +1452,7 @@ local function prepareResolvedWallFaces(structure, atlas)
             -- The variant itself, not just its path: the placement site needs
             -- the spec to compile either mesh source from it.
             meshSpec = (event and doorSpec and viewport_3d.meshSource(doorSpec) and doorSpec)
+                or viewport_3d.composedWallSpec(baseWall, featureOverlay)
                 or (viewport_3d.meshSource(featureOverlay) and featureOverlay) or nil,
             mapX = mapX, mapY = mapY,
         })
