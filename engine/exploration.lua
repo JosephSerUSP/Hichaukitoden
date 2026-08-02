@@ -86,6 +86,31 @@ local DIRS = {
 }
 local DIR_ORDER = { "N", "E", "S", "W" }
 
+-- Where the player actually stands when they arrive at a staircase. Entrance
+-- and exit staircases are WALL events -- they are carved into the rock, so the
+-- landmark cell itself is a "#" and nobody ever stands on it. The party arrives
+-- on the passable cell beside it, facing the stairs.
+--
+-- `soft` returns nil instead of raising when the landmark is walled in on all
+-- four sides; fixture validation asks speculatively and has a fallback, while
+-- map loading genuinely cannot continue.
+function exploration.arrivalBeside(grid, landmarkX, landmarkY, soft)
+    local candidates = {
+        { landmarkX, landmarkY + 1, "N" },
+        { landmarkX, landmarkY - 1, "S" },
+        { landmarkX + 1, landmarkY, "W" },
+        { landmarkX - 1, landmarkY, "E" },
+    }
+    for _, c in ipairs(candidates) do
+        local row = grid[c[2]]
+        if row and row[c[1]] and row[c[1]] ~= "#" then
+            return c[1], c[2], c[3]
+        end
+    end
+    if soft then return nil end
+    error("exploration.loadMap: no passable arrival tile beside staircase")
+end
+
 -- Cells reachable on foot from (startX, startY), as a set of "x,y" keys.
 -- `blocked` is the set of floor cells occupied by solid fixtures.
 local function reachableCells(grid, blocked, startX, startY)
@@ -115,7 +140,7 @@ end
 -- one of these does not sever the map, so the reachability rule below would let
 -- it through -- it just makes something unusable, which is worse for being
 -- subtle. Keys are 1-indexed grid coordinates; the sources are all 0-indexed.
-local function protectedFixtureCells(mapData, generatedZones, spawnCell)
+local function protectedFixtureCells(grid, mapData, generatedZones, spawnCell)
     local protected = {}
     local function mark(x, y)
         if x and y then protected[(x + 1) .. "," .. (y + 1)] = true end
@@ -136,6 +161,16 @@ local function protectedFixtureCells(mapData, generatedZones, spawnCell)
         for _, tag in ipairs(zone.tags or {}) do
             if tag == "entrance" or tag == "exit" or tag == "anchor" then
                 mark(zone.x, zone.y)
+            end
+            -- Marking the staircase cell alone protects nothing usable: a
+            -- staircase is a wall event, so no fixture could stand there
+            -- anyway. What has to stay clear is the cell the party ARRIVES on
+            -- -- sealing that is legal under the one-cell rule (it removes
+            -- exactly itself) and still makes the stairs unusable, or, at the
+            -- entrance, drops the party into a one-cell tomb.
+            if tag == "entrance" or tag == "exit" then
+                local ax, ay = exploration.arrivalBeside(grid, zone.x + 1, zone.y + 1, true)
+                if ax then mark(ax - 1, ay - 1) end
             end
         end
     end
@@ -199,7 +234,7 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones, spawnC
     local reachStartX, reachStartY, reachCount = nil, nil, nil
     local function ensureReachability()
         if reachCount then return reachCount ~= nil end
-        protected = protectedFixtureCells(mapData, generatedZones, spawnCell)
+        protected = protectedFixtureCells(grid, mapData, generatedZones, spawnCell)
         -- "Reachable" has to mean "reachable BY THE PLAYER", so the flood must
         -- start where the player actually arrives. Getting this wrong is subtle:
         -- flooding from an arbitrary cell validates fixtures against the wrong
@@ -209,10 +244,23 @@ function exploration.injectTilesetFeatures(grid, mapData, generatedZones, spawnC
         local function usable(gx, gy)
             return grid[gy] and grid[gy][gx] and grid[gy][gx] ~= "#"
         end
+        -- The entrance staircase is a wall event, so the entrance CELL is
+        -- normally a "#" and `usable` rejects it. Reading that as "no entrance"
+        -- and falling through to scan order was the bug this guard exists to
+        -- prevent: validation then ran from an arbitrary far corner, where
+        -- sealing the party's own arrival cell removes exactly one cell and so
+        -- passes the rule -- a generated floor that starts with the party
+        -- bricked into a one-tile pocket. Resolve the arrival cell instead.
         for _, zone in ipairs(generatedZones or {}) do
             for _, tag in ipairs(zone.tags or {}) do
-                if tag == "entrance" and usable(zone.x + 1, zone.y + 1) then
-                    reachStartX, reachStartY = zone.x + 1, zone.y + 1
+                if tag == "entrance" then
+                    if usable(zone.x + 1, zone.y + 1) then
+                        reachStartX, reachStartY = zone.x + 1, zone.y + 1
+                    else
+                        local ax, ay = exploration.arrivalBeside(
+                            grid, zone.x + 1, zone.y + 1, true)
+                        if ax then reachStartX, reachStartY = ax, ay end
+                    end
                 end
             end
         end
@@ -825,21 +873,7 @@ function exploration.applyMapPresentation(session, mapIdx, spec)
     session.mapPresentationRevision = (session.mapPresentationRevision or 0) + 1
 end
 
-local function arrivalBeside(grid, landmarkX, landmarkY)
-    local candidates = {
-        { landmarkX, landmarkY + 1, "N" },
-        { landmarkX, landmarkY - 1, "S" },
-        { landmarkX + 1, landmarkY, "W" },
-        { landmarkX - 1, landmarkY, "E" },
-    }
-    for _, c in ipairs(candidates) do
-        local row = grid[c[2]]
-        if row and row[c[1]] and row[c[1]] ~= "#" then
-            return c[1], c[2], c[3]
-        end
-    end
-    error("exploration.loadMap: no passable arrival tile beside staircase")
-end
+local arrivalBeside = exploration.arrivalBeside
 
 -- Initialize or restore map state in GameSession. `arrival` is authored by the
 -- transfer command: entrance when descending, exit when climbing, and resume
@@ -941,7 +975,12 @@ function exploration.loadMap(session, mapIdx, opts)
                 generatedFeatures, generatedLights, generatedZones
             grid, entranceX, entranceY, exitX, exitY, generatedEvents,
                 generatedFeatures, generatedLights, generatedZones =
-                exploration.generateDungeon(mapData, os.time() + mapIdx, session)
+                -- `opts.seed` pins the layout. Play never passes one and gets a
+                -- fresh labyrinth per expedition; tests pass one so that a
+                -- topology assertion is reproducible instead of re-rolling a
+                -- different dungeon on every run -- a severing regression that
+                -- only some layouts expose must fail the same way every time.
+                exploration.generateDungeon(mapData, opts.seed or (os.time() + mapIdx), session)
             session.currentMapData.events = generatedEvents
             session.generatedFeatures = generatedFeatures
             session.fixtureBlockIndex = nil

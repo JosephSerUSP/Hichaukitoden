@@ -223,59 +223,87 @@ loader.tilesets.solid_fixture_test = nil
 --
 -- Two assertions, and the first is what makes the second meaningful: fixtures
 -- must actually BE placed, or "nothing is stranded" is trivially true.
+--
+-- SEEDED, and deliberately swept over several layouts. This used to load each
+-- map once on the ambient `os.time()` seed, so it tested a different dungeon on
+-- every run: it went red roughly one run in three and green the rest, and the
+-- severing bug it was catching (the party bricked into a one-cell pocket beside
+-- the entrance stairs, because fixture validation flooded from a scan-order
+-- fallback instead of the arrival cell) read as flakiness rather than as a
+-- regression. One fixed seed would be reproducible but would only ever exercise
+-- one topology; a fixed SWEEP is both.
+local strandSeeds = { 1007, 1041, 1057, 1101, 1202, 1303 }
 for _, mapIndex in ipairs({ 2, 3, 4 }) do
-    local realSession = sessionModule.GameSession.new(loader)
-    local loadedReal = pcall(exploration.loadMap, realSession, mapIndex)
-    if loadedReal and realSession.mapGrid then
-        local realGrid = realSession.mapGrid
-        local realBlocked, solidCount = {}, 0
-        for _, placement in ipairs(realSession.generatedFeatures or {}) do
-            if placement.blocks then
-                realBlocked[(placement.x + 1) .. "," .. (placement.y + 1)] = true
-                solidCount = solidCount + 1
-            end
-        end
-        local floorCells = 0
-        for gy = 1, #realGrid do
-            for gx = 1, #realGrid[gy] do
-                if realGrid[gy][gx] ~= "#" then floorCells = floorCells + 1 end
-            end
-        end
-        -- Compare SETS, not counts. A count expectation of
-        -- `reached - solidCount` silently assumes every solid fixture sits on a
-        -- player-reachable cell; one placed in a pocket the player cannot get
-        -- to makes the count higher than expected, which is harmless but reads
-        -- as a failure. The property that actually matters is one-directional:
-        -- nothing that was reachable becomes unreachable except the fixture
-        -- cells themselves.
-        local function floodSet(blockedSet)
-            local seen = { [realSession.playerX .. "," .. realSession.playerY] = true }
-            local stack = { { realSession.playerX, realSession.playerY } }
-            while #stack > 0 do
-                local cell = table.remove(stack)
-                for _, d in ipairs({ { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }) do
-                    local nx, ny = cell[1] + d[1], cell[2] + d[2]
-                    local key = nx .. "," .. ny
-                    if not seen[key] and realGrid[ny] and realGrid[ny][nx]
-                            and realGrid[ny][nx] ~= "#" and not blockedSet[key] then
-                        seen[key] = true
-                        stack[#stack + 1] = { nx, ny }
-                    end
+    local worstStranded, totalSolid, minSolid, loadedAny = 0, 0, nil, false
+    local worstSeed
+    for _, seed in ipairs(strandSeeds) do
+        local realSession = sessionModule.GameSession.new(loader)
+        local loadedReal = pcall(exploration.loadMap, realSession, mapIndex, { seed = seed })
+        if loadedReal and realSession.mapGrid then
+            loadedAny = true
+            local realGrid = realSession.mapGrid
+            local realBlocked, solidCount = {}, 0
+            for _, placement in ipairs(realSession.generatedFeatures or {}) do
+                if placement.blocks then
+                    realBlocked[(placement.x + 1) .. "," .. (placement.y + 1)] = true
+                    solidCount = solidCount + 1
                 end
             end
-            return seen
+            totalSolid = totalSolid + solidCount
+            if minSolid == nil or solidCount < minSolid then minSolid = solidCount end
+            -- Compare SETS, not counts. A count expectation of
+            -- `reached - solidCount` silently assumes every solid fixture sits
+            -- on a player-reachable cell; one placed in a pocket the player
+            -- cannot get to makes the count higher than expected, which is
+            -- harmless but reads as a failure. The property that actually
+            -- matters is one-directional: nothing that was reachable becomes
+            -- unreachable except the fixture cells themselves.
+            --
+            -- And the flood starts where the PARTY stands, not where fixture
+            -- validation chose to start. That is the whole point: the two
+            -- agreeing is the invariant under test.
+            local function floodSet(blockedSet)
+                local seen = { [realSession.playerX .. "," .. realSession.playerY] = true }
+                local stack = { { realSession.playerX, realSession.playerY } }
+                while #stack > 0 do
+                    local cell = table.remove(stack)
+                    for _, d in ipairs({ { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } }) do
+                        local nx, ny = cell[1] + d[1], cell[2] + d[2]
+                        local key = nx .. "," .. ny
+                        if not seen[key] and realGrid[ny] and realGrid[ny][nx]
+                                and realGrid[ny][nx] ~= "#" and not blockedSet[key] then
+                            seen[key] = true
+                            stack[#stack + 1] = { nx, ny }
+                        end
+                    end
+                end
+                return seen
+            end
+            local before, after = floodSet({}), floodSet(realBlocked)
+            local stranded = 0
+            for key in pairs(before) do
+                if not after[key] and not realBlocked[key] then stranded = stranded + 1 end
+            end
+            if stranded > worstStranded then worstStranded, worstSeed = stranded, seed end
+            -- The way down has to still be usable. Sealing the cell beside the
+            -- exit staircase costs exactly one cell, so the one-cell rule alone
+            -- permits it -- and leaves a floor with no way off it.
+            local ax, ay = exploration.arrivalBeside(realGrid,
+                realSession.currentMapData.exitX, realSession.currentMapData.exitY, true)
+            check(ax ~= nil and after[ax .. "," .. ay] ~= nil,
+                "map " .. mapIndex .. " seed " .. seed
+                    .. " leaves the exit staircase reachable past its solid fixtures")
         end
-        local before, after = floodSet({}), floodSet(realBlocked)
-        local stranded = 0
-        for key in pairs(before) do
-            if not after[key] and not realBlocked[key] then stranded = stranded + 1 end
-        end
-        check(solidCount > 0,
-            "map " .. mapIndex .. " actually places solid fixtures"
-                .. " (solid=" .. solidCount .. " of " .. floorCells .. " floor cells)")
-        check(stranded == 0,
+    end
+    if loadedAny then
+        check(minSolid ~= nil and minSolid > 0,
+            "map " .. mapIndex .. " actually places solid fixtures on every seeded layout"
+                .. " (fewest=" .. tostring(minSolid) .. ", total=" .. totalSolid
+                .. " over " .. #strandSeeds .. " layouts)")
+        check(worstStranded == 0,
             "map " .. mapIndex .. " strands nothing behind its solid fixtures"
-                .. " (stranded=" .. stranded .. ")")
+                .. " (worst=" .. worstStranded
+                .. (worstSeed and (" on seed " .. worstSeed) or "") .. ")")
     end
 end
 
