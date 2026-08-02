@@ -118,6 +118,11 @@ function schema.parse(assetPath)
             math.min(48, parsed.meshColumns * 4), 1, 96)
         parsed.sampleRows = integer(meta, "sampleRows", label,
             math.min(48, parsed.meshRows * 4), 1, 96)
+        -- A CEILING on triangles, not a target -- the error threshold usually
+        -- lands well under it. Deliberately NOT derived from the mesh grid: an
+        -- authored 16x16 once meant a 512-triangle budget for a single wall,
+        -- which is more than a whole PSX character.
+        parsed.triangleBudget = integer(meta, "triangleBudget", label, 64, 2, 4096)
         -- Stand-off keeps a relief from z-fighting the structural surface it
         -- sits on; it is not part of the authored height field.
         parsed.offset = number(meta, "offset", label, 0.004, 0, 0.25)
@@ -138,6 +143,9 @@ function schema.parse(assetPath)
             math.min(56, parsed.meshColumns * 4), 1, 96)
         parsed.sampleRows = integer(meta, "sampleRows", label,
             math.min(56, parsed.meshRows * 4), 1, 96)
+        -- Higher than a plane's: a shell is two surfaces plus a stitched rim,
+        -- and it is usually the thing being looked at.
+        parsed.triangleBudget = integer(meta, "triangleBudget", label, 200, 4, 4096)
         -- Painting front and back independently is a separate decision from
         -- deriving the rear DEPTH from the front, so an asset may mirror its
         -- geometry while still carrying two painted faces.

@@ -4192,6 +4192,10 @@
         "label": "Darkened blend",
         "description": "Darkened average; reinforces volume and separates the painted faces."
       }
-    ]
+    ],
+    "quality": {
+      "densityScale": 1.0,
+      "maxError": 0.0001
+    }
   }
 }

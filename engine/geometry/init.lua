@@ -112,7 +112,8 @@ geometry.COMPILER_VERSION = 1
 -- metadata during authoring invalidates the mesh without a restart.
 function geometry.compositionKey(assetPaths)
     if type(assetPaths) == "string" then assetPaths = { assetPaths } end
-    local parts = { "v" .. geometry.COMPILER_VERSION }
+    local parts = { "v" .. geometry.COMPILER_VERSION,
+        require("engine.geometry.quality").key() }
     for index, assetPath in ipairs(assetPaths) do
         parts[#parts + 1] = index .. ":" .. assetPath
         for _, path in ipairs({ schema.paths(assetPath) }) do

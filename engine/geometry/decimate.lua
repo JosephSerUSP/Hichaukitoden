@@ -94,9 +94,15 @@ end
 -- stays free while pulling a boundary inward becomes expensive. Freezing them
 -- outright would leave a dense rim around a coarse interior, and a wall whose
 -- border drifted would gap against its neighbour.
-function decimate.run(mesh, targetFaces)
+-- `maxError` is the quadric error below which a collapse is considered free.
+-- Those collapses happen even when the mesh is already inside its budget, which
+-- is what lets a flat wall fall to a handful of triangles instead of sitting at
+-- whatever the budget allowed. Without it a coplanar region keeps hundreds of
+-- triangles that describe nothing -- the budget is a ceiling, not a target.
+function decimate.run(mesh, targetFaces, maxError)
     local vertices, faces = mesh.vertices, mesh.faces
-    if #faces <= targetFaces then return mesh end
+    maxError = maxError or 0
+    if #faces <= targetFaces and maxError <= 0 then return mesh end
 
     local quadrics = {}
     for index = 1, #vertices do quadrics[index] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } end
@@ -180,6 +186,7 @@ function decimate.run(mesh, targetFaces)
 
     local heap = {}
     local seen = {}
+
     for _, face in ipairs(faces) do
         for corner = 1, 3 do
             local i, j = face[corner], face[corner % 3 + 1]
@@ -218,9 +225,27 @@ function decimate.run(mesh, targetFaces)
     end
 
     local liveFaces = #faces
-    while liveFaces > targetFaces do
+    -- A backstop, not the termination condition -- the no-progress counter
+    -- below is. Generous on purpose: refused collapses are retried at a
+    -- penalty, so the pop count legitimately runs to many times the face
+    -- count. Set too tight, this silently truncates reduction and every
+    -- quality setting produces the same mesh.
+    local guard = #faces * 200 + 100000
+    -- Pops since the last successful collapse. Once every remaining candidate
+    -- has been tried and refused, no amount of further popping helps.
+    local sinceProgress, patience = 0, 0
+    while true do
+        guard = guard - 1
+        if guard <= 0 then break end
         local edge = heapPop(heap)
         if not edge then break end
+        sinceProgress = sinceProgress + 1
+        patience = #heap + 64
+        if sinceProgress > patience then break end
+        -- Stop only when the mesh is inside budget AND the cheapest remaining
+        -- collapse would actually cost something. Flat regions keep collapsing
+        -- past the budget because they cost nothing to lose.
+        if liveFaces <= targetFaces and edge.cost > maxError then break end
         local i, j = edge.i, edge.j
         if alive[i] and alive[j] and i ~= j then
             -- Lazy invalidation: recompute and requeue if this entry is stale.
@@ -230,10 +255,17 @@ function decimate.run(mesh, targetFaces)
             else
                 local x, y, z, u, v = collapseTarget(i, j)
                 if wouldFlip(i, j, x, y, z) or wouldFlip(j, i, x, y, z) then
-                    -- Retire this edge; another will be cheaper.
+                    -- Requeue at a penalty so it is retried only after
+                    -- everything cheaper: a fold often stops being a fold once
+                    -- a neighbour collapses, and simply dropping these stalls
+                    -- reduction far above budget. Termination comes from the
+                    -- no-progress counter below, NOT from the budget -- relying
+                    -- on the budget is what made this loop hang when every
+                    -- remaining collapse was refused.
                     heapPush(heap, { i = i, j = j, cost = current + 1e6 })
                 else
                     vertices[i] = { x, y, z, u, v }
+                    sinceProgress = 0
                     alive[j] = false
                     quadricAdd(quadrics[i], quadrics[j])
                     for faceIndex in pairs(vertexFaces[j]) do

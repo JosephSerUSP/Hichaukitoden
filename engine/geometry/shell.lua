@@ -15,6 +15,7 @@
 local mesh = require("presentation.mesh")
 local images = require("engine.geometry.images")
 local decimate = require("engine.geometry.decimate")
+local quality = require("engine.geometry.quality")
 
 local shell = {}
 
@@ -247,7 +248,8 @@ function shell.build(spec, height)
         shell.stitch(dense, intern, frontIndex, backIndex, front, back, mask, columns, rows)
     end
 
-    local reduced = decimate.run(dense, spec.meshColumns * spec.meshRows * 2)
+    local reduced = decimate.run(dense, quality.budget(spec.triangleBudget),
+        quality.maxError())
     for _, triangle in ipairs(reduced.faces) do
         builder:triangle(reduced.vertices[triangle[1]],
             reduced.vertices[triangle[2]], reduced.vertices[triangle[3]])

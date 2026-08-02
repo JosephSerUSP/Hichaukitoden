@@ -21,7 +21,12 @@ local radial = {}
 -- meant to remove. Vertices are generated once per segment and the last quad
 -- closes back onto the first.
 function radial.build(spec, height)
-    local segments, rings = spec.angularSegments, spec.verticalSegments
+    -- A revolve has no decimation pass: its segments ARE its facets, so the
+    -- density setting has to reach it here or the menu would silently skip
+    -- every pillar in the room.
+    local quality = require("engine.geometry.quality")
+    local segments = quality.segments(spec.angularSegments, 3)
+    local rings = quality.segments(spec.verticalSegments, 1)
     local builder = mesh.newBuilder(spec.label)
     builder:setMaterial(spec.id)
 
@@ -60,8 +65,8 @@ function radial.build(spec, height)
         end
     end
 
-    if spec.capTop then radial.cap(builder, spec, vertex, 0, true) end
-    if spec.capBottom then radial.cap(builder, spec, vertex, rings, false) end
+    if spec.capTop then radial.cap(builder, spec, vertex, 0, true, segments, rings) end
+    if spec.capBottom then radial.cap(builder, spec, vertex, rings, false, segments, rings) end
 
     return builder:build()
 end
@@ -85,9 +90,10 @@ end
 
 -- A cap is a triangle fan to the axis. Winding differs by end so both face
 -- away from the solid interior.
-function radial.cap(builder, spec, vertex, ring, top)
-    local segments = spec.angularSegments
-    local z = (1 - ring / spec.verticalSegments) * spec.height
+function radial.cap(builder, spec, vertex, ring, top, segments, rings)
+    -- Takes the SCALED counts, not the authored ones: a cap fanned at a
+    -- different resolution than its ring leaves a gap around the rim.
+    local z = (1 - ring / rings) * spec.height
     local centre = { 0, 0, z, 0.5, 0.5 }
     for segment = 0, segments - 1 do
         local a = vertex(segment, ring)

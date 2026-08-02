@@ -16,6 +16,7 @@
 local mesh = require("presentation.mesh")
 local images = require("engine.geometry.images")
 local decimate = require("engine.geometry.decimate")
+local quality = require("engine.geometry.quality")
 
 local plane = {}
 
@@ -135,7 +136,8 @@ function plane.build(spec, layers, uv)
         end
     end
 
-    local reduced = decimate.run(dense, spec.meshColumns * spec.meshRows * 2)
+    local reduced = decimate.run(dense, quality.budget(spec.triangleBudget),
+        quality.maxError())
 
     local flip = SURFACES[spec.surface].flip
     for _, face in ipairs(reduced.faces) do

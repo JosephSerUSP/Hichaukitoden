@@ -90,8 +90,14 @@ check(math.abs(ignored - baseValue) < 1e-9,
 print("=== Plane Meshing ===")
 
 local model = geometry.load(FIXTURES .. "valid_plane")
-check(model.vertexCount == 4 * 4 * 2 * 3,
-    "a 4x4 grid emits two triangles per cell")
+-- The fixture is painted flat, so quadric error is zero everywhere and the
+-- decimator should reduce it to the two triangles a quad needs -- regardless of
+-- how densely it was sampled or what budget it was allowed. A flat surface
+-- carrying hundreds of triangles is the defect this asserts against.
+check(model.vertexCount / 3 <= 8,
+    "a flat surface collapses to a handful of triangles, not its budget")
+check(model.vertexCount / 3 >= 2,
+    "a flat surface still emits a surface")
 check(model.groups[1].mesh ~= nil and model.groups[1].texture ~= nil,
     "a compiled plane uploads a GPU mesh textured by its own albedo")
 check(geometry.load(FIXTURES .. "valid_plane") == model,

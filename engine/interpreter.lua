@@ -2523,6 +2523,24 @@ local function buildScriptApi(ctx)
     function api.developerServerActive()
         return require("engine.server").isActive()
     end
+    -- Geometry quality. Every setter invalidates the compiled-mesh cache, so a
+    -- change is visible on the next frame rather than at the next map load.
+    function api.cycleGeometryQuality()
+        local quality = require("engine.geometry.quality")
+        local index = (quality.presetIndex() or 0) % #quality.PRESETS + 1
+        return quality.applyPreset(index).label
+    end
+    function api.stepGeometryDensity(direction)
+        local quality = require("engine.geometry.quality")
+        quality.setDensity(quality.density() * (direction > 0 and 1.5 or 1 / 1.5))
+        return quality.density()
+    end
+    function api.geometryQualityLabel()
+        return require("engine.geometry.quality").presetLabel()
+    end
+    function api.geometryDensity()
+        return string.format("%.2f", require("engine.geometry.quality").density())
+    end
     function api.getAutoRedirect()
         if session and session.autoRedirect ~= nil then return session.autoRedirect end
         local cfg = require("engine.config")

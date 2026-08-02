@@ -19,6 +19,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `cinematic` | menu | windows | - | 0 | 2 |
 | `controls` | menu | windows | - | 2 | 6 |
 | `datalog` | menu | windows | - | 3 | 4 |
+| `developer_3d` | menu | windows | - | 3 | 5 |
 | `developer_menu` | menu | windows | - | 2 | 5 |
 | `dialogue` | menu | windows | - | 0 | 1 |
 | `game_over` | menu | windows | - | 3 | 4 |

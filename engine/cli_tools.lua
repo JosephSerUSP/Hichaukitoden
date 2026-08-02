@@ -920,6 +920,12 @@ function cli.runPreviewGeometry(assetPath, loader, overlayPath)
         end
         payload.asset = { id = spec.id, topology = spec.topology, role = spec.role,
             surface = spec.surface, heightScale = spec.heightScale, layers = layers }
+        -- Triangle count is the number that matters for a low-poly target and
+        -- is otherwise invisible; report it rather than making it be measured
+        -- by eye off a wireframe.
+        local compiled = geometry.load(layers)
+        payload.asset.triangles = compiled.vertexCount / 3
+        payload.asset.vertices = compiled.vertexCount
 
         -- The final composed pair, always emitted: it is the diagnostic that
         -- says whether a problem is in the art, the composition or the mesh.
