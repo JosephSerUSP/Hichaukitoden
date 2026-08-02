@@ -82,19 +82,45 @@ def write_height(path, field, mask=None, size=None):
     return image
 
 
-def mask_from_image(path, threshold=0.5):
+def mask_from_image(path, threshold=0.5, key=None, tolerance=0.04):
     """Silhouette from a drawing.
 
-    Uses alpha when the image has any transparency -- the usual case for art
-    drawn on a transparent layer -- and otherwise treats non-black luminance as
-    the shape, so a plain black-and-white sketch works too.
+    Three ways a silhouette gets expressed, in the order they are preferred:
+
+      alpha        art drawn on a transparent layer
+      colour key   art on a flat background, which is what pixel art usually
+                   is; `key` may be "auto" to take the corner colour
+      luminance    a plain black-and-white sketch
+
+    Luminance alone is the wrong default for coloured art: a figure's own dark
+    outline and shadows sit below any threshold that excludes the background,
+    so the silhouette comes out full of holes.
     """
     image = Image.open(path).convert("RGBA")
     data = np.asarray(image).astype(np.float64) / 255.0
     alpha = data[..., 3]
     if alpha.min() < 1.0:
         return alpha > threshold
-    luminance = data[..., :3].mean(axis=2)
+
+    rgb = data[..., :3]
+    if key is not None:
+        if key == "auto":
+            # All four corners agree on a keyed background; disagreement means
+            # the guess is unsafe and should be stated rather than assumed.
+            corners = [tuple(rgb[0, 0]), tuple(rgb[0, -1]),
+                       tuple(rgb[-1, 0]), tuple(rgb[-1, -1])]
+            if len(set(corners)) != 1:
+                raise SystemExit(
+                    "heightgen: --key-color auto needs all four corners to be "
+                    "the same colour; pass an explicit #RRGGBB instead")
+            colour = np.array(corners[0])
+        else:
+            text = key.lstrip("#")
+            colour = np.array([int(text[i:i + 2], 16) for i in (0, 2, 4)]) / 255.0
+        distance = np.abs(rgb - colour).max(axis=2)
+        return distance > tolerance
+
+    luminance = rgb.mean(axis=2)
     return luminance > threshold
 
 
@@ -148,6 +174,14 @@ def main():
                            help="distance from the edge at which full depth is "
                                 "reached, in pixels; default is the shape's own "
                                 "thickest point")
+    from_mask.add_argument("--key-color", default=None,
+                           help="treat this background colour as empty; "
+                                "\"auto\" takes it from the image corners. Use "
+                                "for art on a flat background rather than a "
+                                "transparent layer")
+    from_mask.add_argument("--tolerance", type=float, default=0.04,
+                           help="how close a pixel must be to the key colour to "
+                                "count as background (0..1)")
     from_mask.add_argument("--halves", action="store_true",
                            help="treat the image as a front/back atlas and bake "
                                 "each half separately, so depth cannot bleed "
@@ -155,7 +189,8 @@ def main():
 
     args = parser.parse_args()
     if args.command == "from-mask":
-        mask = mask_from_image(args.source)
+        mask = mask_from_image(args.source, key=args.key_color,
+                               tolerance=args.tolerance)
         field = np.zeros(mask.shape, dtype=np.float64)
         if args.halves:
             middle = mask.shape[1] // 2

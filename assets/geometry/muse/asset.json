@@ -1,0 +1,15 @@
+{
+  "id": "muse",
+  "role": "objectFixture",
+  "topology": "shell",
+  "layout": "frontBackHorizontal",
+  "surfaceMode": "frontBack",
+  "albedoMode": "frontBack",
+  "depthScale": 0.18,
+  "requireMatchingMasks": true,
+  "edgeMode": "stitch",
+  "edgeColor": "darkenedBlend",
+  "meshColumns": 18,
+  "meshRows": 22,
+  "blocksMovement": true
+}
