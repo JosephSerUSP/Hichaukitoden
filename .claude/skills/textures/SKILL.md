@@ -36,6 +36,36 @@ python tools/asset-gen/gen.py generate surface mossy_limestone \
 - `--seed N` makes a run reproducible; variants walk upward from it.
 - `--promote` takes the best-scoring variant automatically.
 
+## Always hand back a page, not a paragraph
+
+```bash
+python tools/asset-gen/gen.py report            # -> out/report.html
+```
+
+Self-contained HTML: every variant's tile, its 3x3 layout, its score, and the
+exact prompt and sampler settings. Pass several run names to compare them.
+**Produce this whenever you generate anything and tell the user where it is** --
+art cannot be reviewed from numbers, and every failure so far has been a
+flawless tile of the wrong material.
+
+`gen.py audit --out audit.html` does the same for art already on disk.
+
+## Prompting a local SD1.5 model
+
+Do not write prose for the `forge-*` providers. It is handled for you -- they
+declare `promptStyle: "tags"` -- but if you touch a prompt template, keep to it:
+
+- Material first, comma-separated keywords, style last. CLIP weights the
+  earliest tokens and reads 75 per chunk.
+- **Never write a prohibition into the prompt.** SD has no negation; "no
+  perspective" adds perspective. Prohibitions go in `negativePrompt` in
+  `config.json`.
+- Keep it under ~75 tokens. The prose template measured ~400 and did not reach
+  the material until token 100, which is why early tiles ignored the request.
+
+Steps: 20-30 for ordinary checkpoints, **4-8 for the LCM ones** (they are
+distilled for it; more does not help). `--steps` overrides.
+
 ## Judge by the numbers, then confirm by eye
 
 Every run prints four ratios, and `tilecheck` re-prints them ranked with a 3x3

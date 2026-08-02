@@ -30,7 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib import classes, postprocess, provider, staging  # noqa: E402
+from lib import classes, postprocess, provider, report, staging  # noqa: E402
 
 
 def _config():
@@ -312,7 +312,10 @@ def cmd_generate(args):
 
     ctx = classes.resolve(args.asset_class, opts)
     tokens = dict(t.split("=", 1) for t in (args.token or []))
-    text = classes.prompt(ctx, args.name, args.description, args.extra)
+    # The provider decides how its model wants to be talked to, not the class.
+    prov_style = (getattr(args, "prompt_style", None)
+                  or _provider(cfg, args.provider, args.model).get("promptStyle", "prose"))
+    text = classes.prompt(ctx, args.name, args.description, args.extra, prov_style)
 
     if args.dry_run:
         preview = _provider(cfg, args.provider, args.model, args.quality)
@@ -451,6 +454,95 @@ def cmd_tilecheck(args):
     return 0
 
 
+def cmd_audit(args):
+    """Score the tiling of art that already exists on disk.
+
+    Generation is not the only thing that can produce a texture that does not
+    wrap; hands can too, and did. Every plane asset is instanced once per cell,
+    so its albedo AND its height map both have to tile, and a height map that
+    does not is the harder failure -- it puts a ridge across the mesh that no
+    amount of decimation care will hide.
+    """
+    root = os.path.join(classes.ROOT, args.dir)
+    rows = []
+    for name in sorted(os.listdir(root)):
+        folder = os.path.join(root, name)
+        if not os.path.isdir(folder):
+            continue
+        entry = {"name": name}
+        for kind in ("albedo", "height"):
+            path = os.path.join(folder, f"{kind}.png")
+            if os.path.isfile(path):
+                entry[kind] = postprocess.tile_seam_score(Image.open(path))
+        rows.append(entry)
+
+    def worst(score):
+        values = [v for k, v in (score or {}).items()
+                  if k in SEAM_AXES and isinstance(v, (int, float))]
+        return max(values) if values else None
+
+    print(f"{'asset':22s} {'albedo':>10s} {'height':>10s}   verdict")
+    for entry in rows:
+        a, h = worst(entry.get("albedo")), worst(entry.get("height"))
+        bad = [k for k, v in (("albedo", a), ("height", h)) if v is not None and v > SEAM_GOOD]
+        verdict = "tiles" if not bad else "DOES NOT TILE: " + ", ".join(bad)
+        print(f"{entry['name']:22s} {a if a is not None else '-':>10} "
+              f"{h if h is not None else '-':>10}   {verdict}")
+    print(f"\n1.0 = seam as smooth as the interior; over {SEAM_GOOD} = a visible join.")
+    print("A figure or fixture is not meant to tile, and its score is meaningless.")
+
+    if args.out:
+        cards = []
+        for entry in rows:
+            folder = os.path.join(root, entry["name"])
+            images, body = [], []
+            for kind in ("albedo", "height"):
+                path = os.path.join(folder, f"{kind}.png")
+                if os.path.isfile(path):
+                    images.append((f"{kind} 3x3", postprocess.tiled_sheet(path, 3, scale=1), 1))
+                    value = worst(entry.get(kind))
+                    body.append(f"{kind}: {report._verdict(value)}")
+            cards.append({"title": entry["name"], "images": images,
+                          "body": '<div class="scores">' + "<br>".join(body) + "</div>"})
+        report.write(args.out, "Tiling audit of existing geometry art",
+                     "Each asset repeated three by three. A join you can see in the "
+                     "picture is a join the renderer draws in every corridor.",
+                     [report.image_cards(args.dir, "worst seam ratio per map; "
+                                         f"over {SEAM_GOOD} does not tile", cards)])
+        print(f"wrote {args.out}")
+    return 0
+
+
+def cmd_report(args):
+    """Write a self-contained HTML page showing what a run actually produced.
+
+    Exists because the scores cannot answer the question that has failed most
+    often: is this the material that was asked for? A ratio of 0.6 describes a
+    perfect tile of a red hallway just as happily as a perfect tile of grey
+    limestone. The page puts the picture next to the number next to the prompt.
+    """
+    cfg = _config()
+    refs = args.runs or ["latest"]
+    sections = []
+    for ref in refs:
+        run_path = staging.resolve_run(_staging_root(cfg), ref)
+        manifest = staging.read_manifest(run_path)
+        # Always re-score rather than trusting the manifest. The metric has been
+        # corrected twice; a page mixing numbers from different versions of it
+        # would be worse than no page.
+        for variant in manifest.get("variants", []):
+            variant["tileScore"] = postprocess.tile_seam_score(
+                Image.open(os.path.join(run_path, variant["file"])))
+        sections.append(report.run_section(run_path, manifest, rank=seam_rank))
+
+    out = args.out or os.path.join(_staging_root(cfg), "report.html")
+    report.write(out, args.title or "asset-gen run report",
+                 f"wrap and centre seam ratios; 1.0 is as smooth as the texture's "
+                 f"own interior, over {SEAM_GOOD} is a join you will see.", sections)
+    print(f"wrote {out}")
+    return 0
+
+
 def cmd_batch(args):
     """Run many assets from one job file, into one staging run each.
 
@@ -531,6 +623,8 @@ def main(argv=None):
     gen.add_argument("--cfg", type=float, help="[local] CFG scale")
     gen.add_argument("--sampler", help="[local] sampler name, e.g. LCM")
     gen.add_argument("--seed", type=int, help="[local] base seed; variants walk upward")
+    gen.add_argument("--prompt-style", choices=["prose", "tags"],
+                     help="override how the prompt is written (default: the provider's)")
     gen.add_argument("--no-tiling", action="store_true",
                      help="[local] disable circular padding (tiles are seamless by default)")
     gen.add_argument("--height", help="[local] condition on an authored height map "
@@ -555,6 +649,15 @@ def main(argv=None):
     tile.add_argument("run", nargs="?", default="latest")
     tile.add_argument("--repeat", type=int, default=3, help="tiles per side (default 3)")
 
+    aud = sub.add_parser("audit", help="score the tiling of art already on disk")
+    aud.add_argument("dir", nargs="?", default="assets/geometry")
+    aud.add_argument("--out", help="also write a visual HTML report here")
+
+    rep_html = sub.add_parser("report", help="write a self-contained HTML page for run(s)")
+    rep_html.add_argument("runs", nargs="*", help="run names, or none for the latest")
+    rep_html.add_argument("--out", help="output path (default out/report.html)")
+    rep_html.add_argument("--title", help="page title")
+
     bat = sub.add_parser("batch", help="generate many assets from a job file")
     bat.add_argument("jobs", help="JSON list of {class, name, description, ...}")
     bat.add_argument("--default-class", default="surface",
@@ -568,7 +671,7 @@ def main(argv=None):
     handler = {
         "classes": cmd_classes, "models": cmd_models, "runs": cmd_runs,
         "generate": cmd_generate, "reprocess": cmd_reprocess, "promote": cmd_promote,
-        "tilecheck": cmd_tilecheck, "batch": cmd_batch,
+        "tilecheck": cmd_tilecheck, "batch": cmd_batch, "report": cmd_report, "audit": cmd_audit,
     }[args.command]
     try:
         return handler(args)

@@ -54,6 +54,7 @@ def resolve(class_id, opts):
         "id": class_id,
         "classDef": class_def,
         "styleBible": reg["styleBible"],
+        "styleTags": reg.get("styleTags", ""),
         "size": size,
         "cell": cell,
         "frames": frames,
@@ -91,8 +92,24 @@ def filename(ctx, name, tokens=None):
     return pattern.format(**values)
 
 
-def prompt(ctx, name, description, extra=""):
-    path = os.path.join(TOOL_DIR, "prompts", ctx["classDef"]["promptFile"])
+def prompt(ctx, name, description, extra="", style="prose"):
+    """Render the class's prompt. `style` picks which template a provider wants.
+
+    "prose" is the default and is what the hosted models are given: they read
+    instructions, including negative ones, and reward a paragraph.
+
+    "tags" is for local Stable Diffusion 1.5, whose text encoder is a different
+    animal. CLIP sees 75 tokens per chunk and weights the earliest most, so a
+    paragraph of art direction buries the thing being drawn -- measured, the
+    prose template runs to roughly 400 tokens and does not reach the material
+    until token ~100. It also cannot represent negation at all: "no perspective"
+    contributes "perspective". The tag template puts the material first in
+    comma-separated keywords and leaves every prohibition to the provider's
+    negative prompt, which is where SD can actually act on it.
+    """
+    class_def = ctx["classDef"]
+    file_key = "promptFile" + ("Tags" if style == "tags" else "")
+    path = os.path.join(TOOL_DIR, "prompts", class_def.get(file_key, class_def["promptFile"]))
     with open(path, "r", encoding="utf-8") as handle:
         template = handle.read()
 
@@ -100,6 +117,7 @@ def prompt(ctx, name, description, extra=""):
             if ctx["gridHint"] != [1, 1] else "a single image, no grid")
     replacements = {
         "STYLE_BIBLE": ctx["styleBible"],
+        "STYLE_TAGS": ctx["styleTags"],
         "NAME": str(name),
         "DESCRIPTION": description or "",
         "GRID": grid,

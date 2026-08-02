@@ -75,6 +75,7 @@
       "baseUrl": "http://127.0.0.1:7860",
       "apiKeyEnv": "",
       "local": true,
+      "promptStyle": "tags",
       "type": "sdapi",
       "model": "dreamshaper_8LCM",
       "sampling": {
@@ -82,7 +83,7 @@
         "cfgScale": 2.0,
         "sampler": "LCM",
         "tiling": true,
-        "negativePrompt": "photo, photograph, 3d render, perspective, vanishing point, drop shadow, vignette, watermark, text, signature, blurry, depth of field, frame, border"
+        "negativePrompt": "perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 6 steps, seconds per tile",
@@ -98,6 +99,7 @@
       "baseUrl": "http://127.0.0.1:7860",
       "apiKeyEnv": "",
       "local": true,
+      "promptStyle": "tags",
       "type": "sdapi",
       "model": "v1-5-pruned-emaonly",
       "sampling": {
@@ -106,7 +108,7 @@
         "sampler": "DPM++ 2M",
         "tiling": true,
         "loras": [{ "name": "1990's_PC_v2", "weight": 0.7 }],
-        "negativePrompt": "photo, photograph, 3d render, perspective, vanishing point, drop shadow, vignette, watermark, text, signature, blurry, depth of field, frame, border"
+        "negativePrompt": "perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- cleanest response to style LoRAs",

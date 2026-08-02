@@ -175,6 +175,17 @@ def seam_blend_x(img, ctx):
     return img
 
 
+def _step_scale(steps):
+    """What counts as a strong edge in this texture: the 95th-percentile step.
+
+    Not the mean, which a mostly-smooth material drags to near zero, and not the
+    maximum, which one stray pixel row can own.
+    """
+    import numpy
+
+    return max(float(numpy.percentile(steps, 95)), 0.5)
+
+
 def tile_seam_score(img):
     """How visible is the wrap seam, relative to this texture's own busyness?
 
@@ -182,9 +193,18 @@ def tile_seam_score(img):
     column says nothing on its own: a noisy granite texture has large
     column-to-column differences everywhere, and a flat plaster one has almost
     none, so the same absolute number means "invisible" in the first and
-    "glaring" in the second. Dividing by the mean difference between ADJACENT
-    INTERIOR columns asks the only question that matters -- does the seam look
-    like any other place in the image?
+    "glaring" in the second. It is compared against the STRONGEST transitions
+    the texture already contains -- the 95th percentile of the steps between
+    adjacent interior lines -- which asks the only question that matters: would
+    this join look out of place among the edges this material already has?
+
+    Normalising against the MEAN interior step, as this first did, fails on the
+    most common texture in the project. A brick wall is mostly smooth field with
+    a few hard mortar lines, so the mean is tiny; when a mortar line lands on the
+    wrap -- which is what a well-made brick tile does deliberately -- the ratio
+    read 10 and the audit called a perfectly tiling hand-made wall broken.
+    Measured on that wall: wrap step 54, mean interior step 5.5, but the mortar
+    lines themselves step 47-49. The seam is one of its own edges.
 
       ~1.0  the wrap is indistinguishable from the interior
       >2    a join a player will see once the texture repeats down a corridor
@@ -215,11 +235,11 @@ def tile_seam_score(img):
         if axis == "x":
             near, far = pixels[:, 0, :], pixels[:, -1, :]
             near_a, far_a = alpha[:, 0], alpha[:, -1]
-            interior = numpy.abs(numpy.diff(pixels, axis=1)).mean()
+            interior = _step_scale(numpy.abs(numpy.diff(pixels, axis=1)).mean(axis=(0, 2)))
         else:
             near, far = pixels[0, :, :], pixels[-1, :, :]
             near_a, far_a = alpha[0, :], alpha[-1, :]
-            interior = numpy.abs(numpy.diff(pixels, axis=0)).mean()
+            interior = _step_scale(numpy.abs(numpy.diff(pixels, axis=0)).mean(axis=(1, 2)))
 
         # Nothing at the edges to compare: this is a cut-out, not a tile.
         if max(float(near_a.mean()), float(far_a.mean())) < 8:
@@ -246,7 +266,7 @@ def tile_seam_score(img):
     for axis, step_axis in (("x", 1), ("y", 0)):
         steps = numpy.abs(numpy.diff(pixels, axis=step_axis)).mean(
             axis=tuple(index for index in (0, 1, 2) if index != step_axis))
-        typical = float(numpy.median(steps))
+        typical = _step_scale(steps)
         middle = len(steps) // 2
         # A window, not a single line: mask blur spreads the repaint over a few
         # pixels and the exact centre can land either side of the join.

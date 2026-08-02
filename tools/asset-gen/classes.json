@@ -10,6 +10,14 @@
     "in order."
   ],
 
+  "_styleTagsComment": [
+    "The same style, as TAGS, for local Stable Diffusion 1.5. Not a stylistic",
+    "preference: CLIP reads 75 tokens per chunk and weights the earliest most,",
+    "so the prose bible above buries the material being drawn. It also cannot",
+    "negate -- the bible's NEVER list actively summons what it forbids -- so",
+    "every prohibition lives in the providers' negativePrompt instead."
+  ],
+  "styleTags": "16-bit pixel art, snes jrpg game texture, chunky pixels, hand dithered, limited muted palette, grimy dark fantasy dungeon, desaturated earth tones, sharp crisp pixels",
   "styleBible": "Retro JRPG pixel art in the RPG Maker 2003 / late-90s SNES-to-PS1 tradition. Chunky legible pixels, hand-placed dithering rather than smooth gradients, a tight limited palette, strong silhouette readability at small size. Dark low-fantasy dungeon-crawler mood: grimy stone, muted earths and desaturated jewel tones, torch-warm highlights against cold shadow. NEVER: modern vector art, cel-shaded anime line art, watercolour, 3D renders, drop shadows, text, labels, watermarks, signatures, UI frames, or borders.",
 
   "classes": {
@@ -80,6 +88,7 @@
       "label": "Image-authored geometry surface (albedo)",
       "dir": "assets/geometry",
       "promptFile": "surface.md",
+      "promptFileTags": "surface.tags.md",
       "filename": "{name}/albedo.png",
       "tiles": true,
       "geometry": { "size": [128, 128], "cell": [128, 128], "frames": 1, "transparent": false },

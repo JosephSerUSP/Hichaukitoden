@@ -46,6 +46,8 @@ and a `manifest.json` recording the prompt, provider, model and target path.
 | `promote [run] --variant N` | Copy one variant to its real path in `assets/` |
 | `tilecheck [run]` | Score a run's seams and write a 3x3 layout of each variant |
 | `batch <jobs.json>` | Generate many assets from one job file, sequentially |
+| `report [run ...]` | Self-contained HTML: every variant, its score, its prompt |
+| `audit [dir] --out x.html` | Score the tiling of art already on disk |
 
 Useful `generate` flags: `--variants N`, `--provider`, `--model`, `--ref <png>`
 (style-match an existing asset; repeatable), `--cell WxH` / `--frames N` (sheet
@@ -162,6 +164,55 @@ down a corridor.
 
 An axis reads `unmeasurable` when the edges are transparent: that is a cut-out,
 not a tile, and it scores last rather than perfect.
+
+### Prompts: SD1.5 is not a hosted model and will not read a paragraph
+
+The hosted models take the prose template in `prompts/<class>.md`, including its
+prohibitions. Local SD1.5 gets `prompts/<class>.tags.md` instead, chosen by the
+provider's `promptStyle: "tags"`, and the difference is not cosmetic:
+
+- **CLIP reads 75 tokens per chunk and weights the earliest most.** Measured, the
+  prose template runs to about 400 tokens and does not reach the material until
+  roughly token 100 -- so the model was being asked for "retro JRPG pixel art in
+  the RPG Maker 2003 tradition" and only faintly for limestone. That is the real
+  reason early tiles came out as red hallways.
+- **SD cannot negate.** "no perspective, no baked lighting" contributes
+  *perspective* and *lighting* to the picture. Every prohibition belongs in the
+  provider's `negativePrompt`, which is where it actually subtracts.
+- **Material first, then framing, then style**, comma-separated.
+
+`styleTags` in `classes.json` is the style bible in that form. Override per run
+with `--prompt-style prose|tags` to compare.
+
+### Steps: LCM checkpoints are the exception, not the rule
+
+20-30 steps is right for an ordinary checkpoint, and `forge-retro` uses 24. The
+LCM checkpoints are distilled to converge in **4-8** steps at low CFG (~2), and
+running them longer does not improve them. `--steps` overrides either. The
+sweep behind these defaults is reproducible:
+
+```
+python tools/asset-gen/gen.py generate surface probe "grey limestone" \
+    --provider forge-lcm --steps 4 --seed 4242 --variants 2
+python tools/asset-gen/gen.py report <run> <run> --out compare.html
+```
+
+### Looking at the results
+
+```
+python tools/asset-gen/gen.py report            # latest run -> out/report.html
+python tools/asset-gen/gen.py audit --out audit.html
+```
+
+`report` writes one self-contained page -- images inlined as base64, no external
+anything -- with each variant's tile, its 3x3 layout, its scores and the exact
+prompt and sampler settings that made it. Pass several run names to compare them
+side by side. The scores cannot tell you whether the picture is the material you
+asked for; the page can.
+
+`audit` scores art that already exists. Both the albedo and the height map of a
+plane asset have to tile, and a height map that does not is the worse failure:
+it puts a ridge across the mesh no amount of decimation care can hide.
 
 ### Conditioning on an authored height map
 
