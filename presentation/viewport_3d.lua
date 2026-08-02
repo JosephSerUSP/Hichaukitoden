@@ -21,6 +21,14 @@ local DIR_ANGLES = {
     W = math.pi
 }
 
+-- Transform a model's horizontal local axes into a visible wall-face frame.
+-- Local +X is outward depth and local +Y is wall tangent. Kept pure and
+-- exported so all four normal signs are mechanically gated.
+function viewport_3d.wallModelFrame(x, y, normalX, normalY)
+    local tangentX, tangentY = -normalY, normalX
+    return normalX * x + tangentX * y, normalY * x + tangentY * y
+end
+
 -- Direction helpers for turn interpolation
 local function turnLeftDir(dir)
     local idx = 1
@@ -1124,7 +1132,9 @@ local function drawPolygonalWalls(session, grid, cameraX, cameraY, dirX, dirY, a
         local texture = getWhiteWallTexture()
         local textureOriginX, textureOriginY, textureW, textureH = 0, 0, 1, 1
         if atlas then
-            if not leftEdgeSpec and not rightEdgeSpec and not featureOverlay and not (event and event.sprite) then
+            if not leftEdgeSpec and not rightEdgeSpec
+                    and not (featureOverlay and featureOverlay.atlas)
+                    and not (event and event.sprite) then
                 texture = atlas.img
                 textureOriginX, textureOriginY, textureW, textureH = originX, originY, atlas.w, atlas.h
             else
@@ -1298,6 +1308,10 @@ local WORLD_SHADER_SOURCE = [[
     {
         vec4 texel = Texel(texture, worldUV / affineScale);
         if (texel.a < 0.01) discard;
+        // VertexColor carries an OBJ material's diffuse colour. Apply it to
+        // the surface before fogging; multiplying the final result by color
+        // would also multiply the fog colour, making tinted OBJ meshes look
+        // untouched by fog. Ordinary world meshes use neutral white here.
         vec3 lit = texel.rgb * worldColor.rgb;
         vec3 fogged = mix(fogColor, lit, fogVisibility);
         if (ditherLevels > 1.0) {
@@ -1385,7 +1399,8 @@ local function prepareResolvedWallFaces(structure, atlas)
         local rightSpec = hasRight and baseWall and baseWall.rightEdge or nil
         local texture, uv = getWhiteWallTexture(), { 0, 0, 1, 1 }
         if atlas then
-            if leftSpec or rightSpec or featureOverlay or (event and event.sprite) then
+            if leftSpec or rightSpec or (featureOverlay and featureOverlay.atlas)
+                    or (event and event.sprite) then
                 texture = getCompositeTileCanvas(
                     atlas, originX, originY, leftSpec, rightSpec, featureOverlay, event and event.sprite)
             else
@@ -1923,7 +1938,7 @@ local function drawWorldSpace(session)
 
     structure.modelSurfaces = structure.modelSurfaces or {}
     local objModel = require("presentation.obj_model")
-    local function ensurePlacedModel(spec, cacheKey, originX, originY, axis)
+    local function ensurePlacedModel(spec, cacheKey, originX, originY, axis, normalX, normalY)
         if structure.modelSurfaces[cacheKey] then return structure.modelSurfaces[cacheKey] end
         local model, placed = objModel.load(spec.model), {}
         for _, modelGroup in ipairs(model.groups) do
@@ -1931,7 +1946,14 @@ local function drawWorldSpace(session)
             for _, vertex in ipairs(modelGroup.vertices) do
                 local lx, ly, lz = vertex[1], vertex[2], vertex[3]
                 local nx, ny, nz = vertex[6], vertex[7], vertex[8]
-                if axis == "y" then
+                if normalX or normalY then
+                    -- Wall models use a stable local frame: +X is depth out
+                    -- of the wall, +Y runs along it, and +Z is up. Mapping by
+                    -- the actual visible-face normal (not only its axis) keeps
+                    -- one-sided reliefs outside all four wall orientations.
+                    lx, ly = viewport_3d.wallModelFrame(lx, ly, normalX, normalY)
+                    nx, ny = viewport_3d.wallModelFrame(nx, ny, normalX, normalY)
+                elseif axis == "y" then
                     lx, ly = -ly, lx
                     nx, ny = -ny, nx
                 end
@@ -1993,14 +2015,14 @@ local function drawWorldSpace(session)
                     wall.uv, wall.colors, nil, "wall_clip")
             end
             if face.model then
-                local axis = face.normalX ~= 0 and "x" or "y"
                 local offset = 0.002
                 queuePlacedModels(ensurePlacedModel(face,
                     "wall:" .. face.mapX .. "," .. face.mapY .. ":"
                         .. face.centerX .. "," .. face.centerY .. ":"
-                        .. axis .. ":" .. tostring(face.model),
+                        .. face.normalX .. "," .. face.normalY .. ":" .. tostring(face.model),
                     face.centerX + face.normalX * offset,
-                    face.centerY + face.normalY * offset, axis))
+                    face.centerY + face.normalY * offset, nil,
+                    face.normalX, face.normalY))
             end
         end
     end

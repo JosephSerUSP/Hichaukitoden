@@ -1,6 +1,8 @@
 -- Strict, deliberately small OBJ/MTL loader for static dungeon kit pieces.
--- Supports positions, UVs, normals, polygon triangulation, negative indices,
--- mtllib/usemtl, Kd and map_Kd. Unsupported geometry fails at load time.
+-- Supports standard Y-up OBJ positions, UVs, normals, polygon triangulation,
+-- negative indices, mtllib/usemtl, Kd and map_Kd. Parsed positions are
+-- normalized to the engine's Z-up world coordinates. Unsupported geometry
+-- fails at load time.
 local obj_model = {}
 
 local cache = {}
@@ -62,6 +64,12 @@ local function faceNormal(a, b, c)
     return { nx / length, ny / length, nz / length }
 end
 
+local function objToWorld(x, y, z)
+    -- OBJ exporters such as Blender's default preset write Y-up with forward
+    -- along -Z. The dungeon world is Z-up with forward in its XY plane.
+    return x, -z, y
+end
+
 function obj_model.parse(text, label)
     local positions, uvs, normals = {}, {}, {}
     local groups, groupOrder = {}, {}
@@ -81,7 +89,8 @@ function obj_model.parse(text, label)
         if op == "v" then
             local x, y, z = rest:match("^(%S+)%s+(%S+)%s+(%S+)")
             if not x then error((label or "OBJ") .. ":" .. lineNumber .. " malformed vertex", 0) end
-            positions[#positions + 1] = { assert(tonumber(x)), assert(tonumber(y)), assert(tonumber(z)) }
+            x, y, z = objToWorld(assert(tonumber(x)), assert(tonumber(y)), assert(tonumber(z)))
+            positions[#positions + 1] = { x, y, z }
         elseif op == "vt" then
             local u, v = rest:match("^(%S+)%s+(%S+)")
             if not u then error((label or "OBJ") .. ":" .. lineNumber .. " malformed UV", 0) end
@@ -89,7 +98,8 @@ function obj_model.parse(text, label)
         elseif op == "vn" then
             local x, y, z = rest:match("^(%S+)%s+(%S+)%s+(%S+)")
             if not x then error((label or "OBJ") .. ":" .. lineNumber .. " malformed normal", 0) end
-            normals[#normals + 1] = { assert(tonumber(x)), assert(tonumber(y)), assert(tonumber(z)) }
+            x, y, z = objToWorld(assert(tonumber(x)), assert(tonumber(y)), assert(tonumber(z)))
+            normals[#normals + 1] = { x, y, z }
         elseif op == "mtllib" then
             mtllib = rest
         elseif op == "usemtl" then

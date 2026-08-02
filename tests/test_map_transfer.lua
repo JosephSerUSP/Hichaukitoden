@@ -309,6 +309,9 @@ check(fixturePredicates.matches({ distance = { zone = "entrance", min = 4, max =
 local parsedKit = objModel.parse(love.filesystem.read("tests/fixtures/kit_piece.obj"), "kit fixture")
 check(parsedKit.vertexCount == 6 and #parsedKit.groups == 1,
     "OBJ kit-piece loader triangulates a quad and accepts negative indices")
+local uprightVertex = parsedKit.groups[1].vertices[3]
+check(uprightVertex[2] == 0.5 and uprightVertex[3] == 1,
+    "OBJ kit-piece loader converts standard Y-up geometry into the Z-up world")
 local loadedKit = objModel.load("tests/fixtures/kit_piece.obj")
 check(loadedKit.vertexCount == 6 and loadedKit.groups[1].mesh ~= nil,
     "OBJ kit-piece loader builds a cached GPU mesh with its MTL material")
@@ -316,6 +319,21 @@ check(objModel.load("tests/fixtures/kit_piece.obj") == loadedKit,
     "OBJ kit-piece meshes are reused instead of rebuilt")
 local malformedObjOk = pcall(objModel.parse, "v 0 0 0\nf 1 2 3\n", "bad fixture")
 check(not malformedObjOk, "OBJ kit-piece loader fails loudly on invalid faces")
+
+local wallFrameCases = {
+    { normal = { 1, 0 }, depth = { 1, 0 }, tangent = { 0, 1 } },
+    { normal = { -1, 0 }, depth = { -1, 0 }, tangent = { 0, -1 } },
+    { normal = { 0, 1 }, depth = { 0, 1 }, tangent = { -1, 0 } },
+    { normal = { 0, -1 }, depth = { 0, -1 }, tangent = { 1, 0 } },
+}
+local wallFramesOk = true
+for _, case in ipairs(wallFrameCases) do
+    local dx, dy = viewport3d.wallModelFrame(1, 0, case.normal[1], case.normal[2])
+    local tx, ty = viewport3d.wallModelFrame(0, 1, case.normal[1], case.normal[2])
+    wallFramesOk = wallFramesOk and dx == case.depth[1] and dy == case.depth[2]
+        and tx == case.tangent[1] and ty == case.tangent[2]
+end
+check(wallFramesOk, "wall-model local depth points outward on all four face normals")
 
 local baseModelTileset = loader.tilesets.dungeon_default
 loader.tilesets.model_render_test = {
@@ -392,6 +410,17 @@ fixtureModelSession.generatedFeatures = {
     { x = 2, y = 1, material = "world_effect" },
 }
 fixtureModelSession.playerX, fixtureModelSession.playerY, fixtureModelSession.playerDir = 0, 1, "E"
+local _, resolvedFixtureFaces = viewport3d.prepareResolvedStructure(fixtureModelSession)
+local modelOnlyFeatureKeepsAtlas = false
+for _, face in ipairs(resolvedFixtureFaces or {}) do
+    if face.model then
+        local textureWidth, textureHeight = face.texture:getDimensions()
+        modelOnlyFeatureKeepsAtlas = textureWidth > 64 and textureHeight > 64
+        break
+    end
+end
+check(modelOnlyFeatureKeepsAtlas,
+    "a model-only wall feature keeps the base atlas instead of forcing a 64px overlay composite")
 local fixtureModelsOk, fixtureModelsError = pcall(function()
     love.graphics.setCanvas({ modelCanvas, depth = true, stencil = true })
     love.graphics.clear(0, 0, 0, 1, true, true)
