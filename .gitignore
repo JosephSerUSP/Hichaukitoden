@@ -36,3 +36,6 @@ tools/golden/gallery/
 tools/effekseer/**/*.dll
 effekseer_shim.dll
 effekseer_shim.dll.*
+
+# Local ML venv for the depth tooling (multi-GB torch); see docs/design/image-authored-geometry.md
+tools/asset-gen/.venv/

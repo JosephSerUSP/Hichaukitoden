@@ -160,6 +160,63 @@ def solid(*parts):
     return result
 
 
+def estimate_depth(image, model_id="depth-anything/Depth-Anything-V2-Small-hf",
+                   resolution=518):
+    """Monocular depth estimate, higher is nearer.
+
+    Imported lazily: the distance-field path is the default and must keep
+    working on a machine with no torch at all.
+    """
+    import torch
+    from transformers import AutoImageProcessor, AutoModelForDepthEstimation
+
+    processor = AutoImageProcessor.from_pretrained(model_id)
+    model = AutoModelForDepthEstimation.from_pretrained(model_id)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device).eval()
+    # These models read photographs. Sprite-sized input is far out of
+    # distribution, so upscale before inference rather than after.
+    large = image.convert("RGB").resize((resolution, resolution), Image.LANCZOS)
+    with torch.no_grad():
+        inputs = {k: v.to(device) for k, v in
+                  processor(images=large, return_tensors="pt").items()}
+        depth = model(**inputs).predicted_depth
+    return depth.squeeze().float().cpu().numpy()
+
+
+def thickness_from_depth(image, mask, radius=None, profile="smooth",
+                         strength=0.65, model_id=None):
+    """Combine an estimated depth with the distance field.
+
+    The estimate supplies INTERIOR form; the distance field supplies the
+    contour. Multiplying them is what makes this safe: whatever the model
+    hallucinates, depth still reaches zero at the silhouette, so a shell's
+    halves close and the mesh stays valid.
+
+    Using the estimate alone does not work. A monocular model reports distance
+    from the CAMERA, not half-thickness about a central plane, and on flat
+    sprite art it reports almost nothing at all -- measured on a 64px figure it
+    varied less inside the silhouette (sd 47) than across the blank background
+    (sd 209).
+    """
+    kwargs = {"model_id": model_id} if model_id else {}
+    raw = estimate_depth(image, **kwargs)
+    estimate = np.array(Image.fromarray(raw).resize(
+        (mask.shape[1], mask.shape[0]), Image.BILINEAR))
+
+    inside = estimate[mask]
+    if inside.size == 0 or inside.max() <= inside.min():
+        return thickness(mask, radius, profile)
+    # Normalize within the silhouette only: background depth is meaningless
+    # here and would otherwise dominate the range.
+    normalized = np.clip((estimate - inside.min()) / (inside.max() - inside.min()), 0.0, 1.0)
+
+    base = thickness(mask, radius, profile)
+    # strength=0 is the pure distance field; 1 lets the estimate fully shape
+    # the interior. The product always vanishes at the contour.
+    return base * ((1.0 - strength) + strength * normalized)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -187,7 +244,42 @@ def main():
                                 "each half separately, so depth cannot bleed "
                                 "across the seam")
 
+    from_depth = sub.add_parser("from-depth",
+                                help="bake a height map from a monocular depth "
+                                     "estimate, bounded by the silhouette")
+    from_depth.add_argument("source")
+    from_depth.add_argument("output")
+    from_depth.add_argument("--profile", choices=sorted(PROFILES), default="smooth")
+    from_depth.add_argument("--radius", type=float, default=None)
+    from_depth.add_argument("--key-color", default=None)
+    from_depth.add_argument("--tolerance", type=float, default=0.04)
+    from_depth.add_argument("--halves", action="store_true")
+    from_depth.add_argument("--strength", type=float, default=0.65,
+                            help="0 is the pure distance field, 1 lets the "
+                                 "estimate fully shape the interior")
+    from_depth.add_argument("--model",
+                            default="depth-anything/Depth-Anything-V2-Small-hf")
+
     args = parser.parse_args()
+    if args.command == "from-depth":
+        mask = mask_from_image(args.source, key=args.key_color,
+                               tolerance=args.tolerance)
+        image = Image.open(args.source)
+        field = np.zeros(mask.shape, dtype=np.float64)
+        if args.halves:
+            middle = mask.shape[1] // 2
+            for lo, hi in ((0, middle), (middle, mask.shape[1])):
+                half = image.crop((lo, 0, hi, mask.shape[0]))
+                field[:, lo:hi] = thickness_from_depth(
+                    half, mask[:, lo:hi], args.radius, args.profile,
+                    args.strength, args.model)
+        else:
+            field = thickness_from_depth(image, mask, args.radius, args.profile,
+                                         args.strength, args.model)
+        write_height(args.output, field, mask)
+        print(args.output)
+        return
+
     if args.command == "from-mask":
         mask = mask_from_image(args.source, key=args.key_color,
                                tolerance=args.tolerance)
