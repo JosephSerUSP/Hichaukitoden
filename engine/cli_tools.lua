@@ -922,9 +922,13 @@ function cli.runPreviewGeometry(assetPath, loader)
                 id = tilesetId, texture = base.texture,
                 tileWidth = base.tileWidth, tileHeight = base.tileHeight,
                 base = base.base, doors = {},
-                features = displaced
-                    and { { id = "preview", role = "wall_feature", geometry = assetPath } }
-                    or {},
+                -- An object fixture stands in the cell; a surface fixture
+                -- belongs on the wall face. Previewing either in the other's
+                -- placement says nothing useful about the asset.
+                features = displaced and { {
+                    id = "preview", geometry = assetPath,
+                    role = spec.role == "objectFixture" and "floor_feature" or "wall_feature",
+                } } or {},
             }
             local width, height = 14, 3
             local grid = {}
@@ -940,7 +944,14 @@ function cli.runPreviewGeometry(assetPath, loader)
                 tileset = tilesetId, ceilingStyle = "solid", events = {},
             }
             previewSession.generatedFeatures = {}
-            if displaced then
+            if displaced and spec.role == "objectFixture" then
+                -- A few spaced along the corridor floor: near enough to read
+                -- the silhouette, far enough to judge it at distance.
+                for _, featureX in ipairs({ 6, 8, 10 }) do
+                    previewSession.generatedFeatures[#previewSession.generatedFeatures + 1] =
+                        { x = featureX, y = 1, material = "preview" }
+                end
+            elseif displaced then
                 -- Cover both corridor walls so displacement changes the whole
                 -- side profile rather than one distant panel.
                 for featureX = 4, width - 2 do

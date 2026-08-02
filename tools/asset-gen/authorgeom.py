@@ -110,7 +110,102 @@ def limestone_wall():
     }
 
 
-ASSETS = {"limestone_wall": limestone_wall}
+def idol_silhouette(u, v):
+    """Shared front/back silhouette: a shouldered votive slab with a head.
+
+    Returns coverage in 0..1 and a 0..1 'core' value that is 1 at the middle of
+    the form and falls to 0 at the contour, which the depth field shapes.
+    """
+    x = (u - 0.5) * 2.0                      # -1..1 across
+    y = v                                    # 0 at top, 1 at bottom
+
+    if y < 0.30:                             # head: a circle
+        cx, cy, r = 0.0, 0.16, 0.145
+        d = math.hypot(x * 0.5, y - cy)
+        return (1.0 if d < r else 0.0), max(0.0, 1.0 - d / r)
+    if y < 0.38:                             # neck
+        half = 0.10
+        inside = abs(x) < half
+        return (1.0 if inside else 0.0), max(0.0, 1.0 - abs(x) / half)
+    # body: shoulders taper outward then run straight to the base
+    shoulder = min(1.0, (y - 0.38) / 0.14)
+    half = 0.16 + 0.26 * shoulder
+    inside = abs(x) < half
+    return (1.0 if inside else 0.0), max(0.0, 1.0 - abs(x) / half)
+
+
+def sacred_idol():
+    """Front/back shell: independently painted faces, one shared silhouette.
+
+    Front carries a carved sigil; the back is plain, weathered stone. Both
+    halves share the coverage mask exactly, which is what lets the compiler
+    stitch the side deterministically.
+    """
+    half = 64
+    albedo = Image.new("RGBA", (half * 2, half))
+    height = Image.new("RGBA", (half * 2, half))
+    apx, hpx = [], []
+
+    for y in range(half):
+        for x in range(half * 2):
+            back = x >= half
+            u = (x % half) / (half - 1)
+            v = y / (half - 1)
+            coverage, core = idol_silhouette(u, v)
+
+            if coverage == 0.0:
+                apx.append((0, 0, 0, 0))
+                hpx.append((0, 0, 0, 0))
+                continue
+
+            weather = smooth_noise(x % half, y, 7, 9.0)
+            # Rounded body: depth follows the core, so the form reads as carved
+            # rather than as a flat cut-out.
+            depth = 0.35 + 0.65 * math.sqrt(core)
+
+            if back:
+                tone = 0.52 + 0.16 * (weather - 0.5)
+                depth *= 0.72                # the back is a shallower relief
+            else:
+                # A recessed sigil: a vertical bar with a crossing band.
+                bar = abs(u - 0.5) < 0.045 and 0.46 < v < 0.86
+                band = abs(v - 0.62) < 0.035 and abs(u - 0.5) < 0.20
+                tone = 0.66 + 0.14 * (weather - 0.5)
+                if bar or band:
+                    depth *= 0.62
+                    tone *= 0.72
+
+            depth = max(0.0, min(1.0, depth))
+            tone = max(0.0, min(1.0, tone))
+            apx.append((
+                int(255 * tone * 0.97),
+                int(255 * tone * 0.94),
+                int(255 * tone * 0.82),
+                255,
+            ))
+            level = int(round(depth * 255))
+            hpx.append((level, level, level, 255))
+
+    albedo.putdata(apx)
+    height.putdata(hpx)
+    return albedo, height, {
+        "id": "sacred_idol",
+        "role": "objectFixture",
+        "topology": "shell",
+        "layout": "frontBackHorizontal",
+        "surfaceMode": "frontBack",
+        "albedoMode": "frontBack",
+        "depthScale": 0.30,
+        "requireMatchingMasks": True,
+        "edgeMode": "stitch",
+        "edgeColor": "darkenedBlend",
+        "meshColumns": 18,
+        "meshRows": 20,
+        "blocksMovement": True,
+    }
+
+
+ASSETS = {"limestone_wall": limestone_wall, "sacred_idol": sacred_idol}
 
 
 def main():

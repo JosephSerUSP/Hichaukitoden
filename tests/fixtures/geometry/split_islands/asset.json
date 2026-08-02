@@ -1,0 +1,13 @@
+{
+  "role": "objectFixture",
+  "topology": "shell",
+  "layout": "frontBackHorizontal",
+  "surfaceMode": "frontBack",
+  "albedoMode": "frontBack",
+  "depthScale": 0.3,
+  "edgeMode": "stitch",
+  "edgeColor": "darkenedBlend",
+  "meshColumns": 8,
+  "meshRows": 8,
+  "id": "fixture_islands"
+}

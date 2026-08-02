@@ -115,5 +115,65 @@ for _, group in ipairs(model.groups) do
 end
 check(outward, "every wall-plane face normal points out of the wall")
 
+print("=== Shell Topology ===")
+
+local shellSpec = geometry.check(FIXTURES .. "valid_shell")
+check(shellSpec.surfaceMode == "frontBack" and shellSpec.edgeMode == "stitch"
+    and shellSpec.edgeColor == "darkenedBlend",
+    "a shell asset parses its surface mode and edge treatment")
+check(shellSpec.symmetry.imageX == false and shellSpec.symmetry.frontBack == false,
+    "image symmetry and front/back reflection default off and stay separate")
+
+refuses("mismatched_masks",
+    "a frontBack shell with differing coverage masks is refused")
+refuses("split_islands",
+    "a coverage mask with more than one island is refused")
+refuses("empty_mask", "a coverage mask with no silhouette is refused")
+refuses("frontback_needs_layout",
+    "frontBack mode without a front/back atlas layout is refused")
+
+local shellModel = geometry.load(FIXTURES .. "valid_shell")
+check(shellModel.vertexCount > 0 and shellModel.groups[1].mesh ~= nil,
+    "a stitched shell compiles and uploads")
+
+-- Volume is the whole point: a shell must occupy depth on BOTH sides of its
+-- central plane, or it is just a plane wearing a mask.
+local hasFront, hasBack = false, false
+for _, group in ipairs(shellModel.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        if vertex[1] > 1e-6 then hasFront = true end
+        if vertex[1] < -1e-6 then hasBack = true end
+    end
+end
+check(hasFront and hasBack,
+    "a shell occupies depth on both sides of its central plane")
+
+-- Front and rear must face opposite ways, or the rear is invisible.
+local facesForward, facesBackward = false, false
+for _, group in ipairs(shellModel.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        if vertex[6] > 0.5 then facesForward = true end
+        if vertex[6] < -0.5 then facesBackward = true end
+    end
+end
+check(facesForward and facesBackward,
+    "the rear grid is wound in reverse so both faces are visible")
+
+-- Stitching is what makes the silhouette closed; without side faces the shell
+-- is two loose sheets and the gap is visible from any oblique angle.
+local pinched = geometry.load(FIXTURES .. "pinch_shell")
+check(pinched.vertexCount < shellModel.vertexCount,
+    "pinch mode closes the edge without the side faces stitch emits")
+
+local mirrored = geometry.load(FIXTURES .. "mirror_shell")
+local symmetric = true
+for _, group in ipairs(mirrored.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        symmetric = symmetric and math.abs(vertex[1]) <= mirrored.bounds.maxX + 1e-6
+    end
+end
+check(symmetric and math.abs(mirrored.bounds.maxX + mirrored.bounds.minX) < 1e-6,
+    "mirrorDepth produces geometry symmetric about the central plane")
+
 print(string.format("=== Geometry Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " geometry test(s) failed", failed) end

@@ -4129,6 +4129,69 @@
         "label": "Replace",
         "description": "mix(base, overlay, alpha)."
       }
+    ],
+    "shellModes": [
+      {
+        "id": "frontOnly",
+        "label": "Front only",
+        "description": "One surface; a one-sided or compiler-thickened object."
+      },
+      {
+        "id": "mirrorDepth",
+        "label": "Mirrored depth",
+        "description": "One depth field reflected through the central plane."
+      },
+      {
+        "id": "frontBack",
+        "label": "Front / back",
+        "description": "Independent front and rear depth fields sharing one silhouette."
+      }
+    ],
+    "layouts": [
+      {
+        "id": "single",
+        "label": "Single",
+        "description": "One region covering the whole image."
+      },
+      {
+        "id": "frontBackHorizontal",
+        "label": "Front/back horizontal",
+        "description": "Front in the left half, back in the right half."
+      }
+    ],
+    "edgeModes": [
+      {
+        "id": "stitch",
+        "label": "Stitch",
+        "description": "Bridge front and rear contours with explicit side faces."
+      },
+      {
+        "id": "pinch",
+        "label": "Pinch",
+        "description": "Converge both depths near the silhouette into a thin edge."
+      }
+    ],
+    "edgeColors": [
+      {
+        "id": "blend",
+        "label": "Blend",
+        "description": "Average the front and rear boundary colours."
+      },
+      {
+        "id": "front",
+        "label": "Front",
+        "description": "Sample the front boundary colour."
+      },
+      {
+        "id": "back",
+        "label": "Back",
+        "description": "Sample the rear boundary colour."
+      },
+      {
+        "id": "darkenedBlend",
+        "label": "Darkened blend",
+        "description": "Darkened average; reinforces volume and separates the painted faces."
+      }
     ]
   }
 }

@@ -113,6 +113,39 @@ function schema.parse(assetPath)
         -- Stand-off keeps a relief from z-fighting the structural surface it
         -- sits on; it is not part of the authored height field.
         parsed.offset = number(meta, "offset", label, 0.004, 0, 0.25)
+    elseif topology.id == "shell" then
+        parsed.surfaceMode =
+            oneOf(meta.surfaceMode, registered.shellModes, "surfaceMode", label).id
+        parsed.layout = oneOf(meta.layout or "single", registered.layouts, "layout", label).id
+        parsed.edgeMode = oneOf(meta.edgeMode or "stitch", registered.edgeModes, "edgeMode", label).id
+        parsed.edgeColor =
+            oneOf(meta.edgeColor or "darkenedBlend", registered.edgeColors, "edgeColor", label).id
+        parsed.depthScale = number(meta, "depthScale", label, nil, 0, 2)
+        parsed.meshColumns = integer(meta, "meshColumns", label, nil, 1, 64)
+        parsed.meshRows = integer(meta, "meshRows", label, nil, 1, 64)
+        parsed.pinchWidth = number(meta, "pinchWidth", label, 2, 0, 16)
+        -- Painting front and back independently is a separate decision from
+        -- deriving the rear DEPTH from the front, so an asset may mirror its
+        -- geometry while still carrying two painted faces.
+        parsed.albedoMode = meta.albedoMode == "frontBack" and "frontBack" or "single"
+        parsed.requireMatchingMasks = meta.requireMatchingMasks ~= false
+        local symmetry = meta.symmetry or {}
+        if type(symmetry) ~= "table" then
+            error(label .. ": 'symmetry' must be an object", 0)
+        end
+        -- Image-plane symmetry and front/back reflection are named separately
+        -- on purpose; conflating them removes the ability to paint asymmetry.
+        parsed.symmetry = {
+            imageX = symmetry.imageX == true,
+            imageY = symmetry.imageY == true,
+            frontBack = symmetry.frontBack == true,
+        }
+        if parsed.surfaceMode == "frontBack" and parsed.layout == "single" then
+            error(label .. ": surfaceMode 'frontBack' needs a front/back atlas layout", 0)
+        end
+        if parsed.albedoMode == "frontBack" and parsed.layout == "single" then
+            error(label .. ": albedoMode 'frontBack' needs a front/back atlas layout", 0)
+        end
     else
         error(label .. ": topology '" .. topology.id .. "' is declared but not yet compiled", 0)
     end

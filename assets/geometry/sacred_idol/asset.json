@@ -1,0 +1,15 @@
+{
+  "id": "sacred_idol",
+  "role": "objectFixture",
+  "topology": "shell",
+  "layout": "frontBackHorizontal",
+  "surfaceMode": "frontBack",
+  "albedoMode": "frontBack",
+  "depthScale": 0.3,
+  "requireMatchingMasks": true,
+  "edgeMode": "stitch",
+  "edgeColor": "darkenedBlend",
+  "meshColumns": 18,
+  "meshRows": 20,
+  "blocksMovement": true
+}

@@ -15,6 +15,7 @@
 local schema = require("engine.geometry.schema")
 local images = require("engine.geometry.images")
 local plane = require("engine.geometry.plane")
+local shell = require("engine.geometry.shell")
 local mesh = require("presentation.mesh")
 
 local geometry = {}
@@ -35,6 +36,13 @@ local function inspect(spec)
     if not images.checkGrayscale(height, 0) then
         warnings[#warnings + 1] = spec.label
             .. ": height map is not grayscale; only its red channel is read"
+    end
+    -- Topology-specific pixel checks belong here rather than at build time, so
+    -- geometry.check -- and therefore G1 -- rejects a broken mask without ever
+    -- needing a graphics device.
+    if spec.topology == "shell" then
+        shell.checkMasks(spec, height, spec.meshColumns, spec.meshRows)
+        shell.checkSingleComponent(spec, height, spec.meshColumns, spec.meshRows)
     end
     -- Mesh density that cannot reproduce the authored field is the most common
     -- cause of "my relief disappeared", so it is worth saying out loud.
@@ -78,13 +86,20 @@ function geometry.load(assetPath)
     if compiled[key] then return compiled[key] end
 
     local spec = schema.parse(assetPath)
-    local albedo = inspect(spec)
+    inspect(spec)
 
-    -- One layer for now: the asset's own field. Composing a surface fixture
-    -- onto a base wall adds entries here, which is why sampleField already
-    -- takes a stack rather than a single map.
-    local layers = { { data = images.data(spec.heightPath), scale = 1, operation = spec.heightOperation } }
-    local model = plane.build(spec, layers, function(u, v) return u, v end)
+    local model
+    if spec.topology == "shell" then
+        model = shell.build(spec, images.data(spec.heightPath))
+    else
+        -- One layer for now: the asset's own field. Composing a surface fixture
+        -- onto a base wall adds entries here, which is why sampleField already
+        -- takes a stack rather than a single map.
+        local layers = { {
+            data = images.data(spec.heightPath), scale = 1, operation = spec.heightOperation,
+        } }
+        model = plane.build(spec, layers, function(u, v) return u, v end)
+    end
 
     mesh.finalize(model, {
         [spec.id] = { color = { 1, 1, 1, 1 }, texture = spec.albedoPath },
