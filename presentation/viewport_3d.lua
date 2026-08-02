@@ -1323,13 +1323,13 @@ local WORLD_SHADER_SOURCE = [[
         // the surface before fogging; multiplying the final result by color
         // would also multiply the fog colour, making tinted OBJ meshes look
         // untouched by fog. Ordinary world meshes use neutral white here.
-        vec3 lit = texel.rgb * worldColor.rgb;
+        vec3 lit = texel.rgb * color.rgb * worldColor.rgb;
         vec3 fogged = mix(fogColor, lit, fogVisibility);
         if (ditherLevels > 1.0) {
             float threshold = orderedDither(screen_coords) - 0.5;
             fogged = floor(clamp(fogged + threshold / ditherLevels, 0.0, 1.0) * ditherLevels + 0.5) / ditherLevels;
         }
-        return vec4(fogged, texel.a) * color;
+        return vec4(fogged, texel.a * color.a);
     }
     #endif
 ]]
