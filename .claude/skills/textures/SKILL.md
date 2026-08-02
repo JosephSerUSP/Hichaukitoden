@@ -31,8 +31,9 @@ python tools/asset-gen/gen.py generate surface mossy_limestone \
   the 3D compiler skins a plane with. `tileset`, `sprite`, `smallBattler` and
   the rest still work; `gen.py classes` lists them.
 - `--provider forge-lcm` is fast (~30s a tile) and loose with the prompt.
-  `--provider forge-retro` is slower (~60-90s) and much closer to the intended
-  look. **Prefer forge-retro whenever the art matters**; use LCM to explore.
+  `--provider forge-quality` is slower (~90s) and the one that actually obeys
+  the prompt. **Prefer forge-quality whenever the art matters**; LCM is for
+  exploring shapes, not for producing anything.
 - `--seed N` makes a run reproducible; variants walk upward from it.
 - `--promote` takes the best-scoring variant automatically.
 
@@ -49,6 +50,18 @@ art cannot be reviewed from numbers, and every failure so far has been a
 flawless tile of the wrong material.
 
 `gen.py audit --out audit.html` does the same for art already on disk.
+
+## Never ask the model for pixel art
+
+The retro look comes from the pipeline, not the prompt: render at 512, reduce 4x
+to 128, clamp the palette. That reduction *is* the pixelation, and it gives true
+hard pixels. Ask SD1.5 for "16-bit pixel art" and you get a blurry imitation of
+pixel art which then reduces to mush.
+
+Prompt for the best, sharpest, most detailed version of the **real material**.
+`pixel art, pixelated, low resolution` belong in the negative prompt. This
+applies to the local `forge-*` providers only; the hosted models are drawing
+finished sprites and still get the prose style bible.
 
 ## Prompting a local SD1.5 model
 

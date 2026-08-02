@@ -71,7 +71,7 @@
       ]
     },
     "forge-lcm": {
-      "label": "Local SD1.5 via Forge -- LCM (fast)",
+      "label": "Local SD1.5 via Forge -- LCM (fast, loose)",
       "baseUrl": "http://127.0.0.1:7860",
       "apiKeyEnv": "",
       "local": true,
@@ -83,10 +83,10 @@
         "cfgScale": 2.0,
         "sampler": "LCM",
         "tiling": true,
-        "negativePrompt": "perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
-        { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 6 steps, seconds per tile",
+        { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 4-8 steps; fast to explore, poor at obeying",
           "default": true, "prices": null, "note": "Local: no cost, no key." },
         { "id": "anyloraCheckpoint_lcm", "label": "AnyLoRA LCM -- flatter, takes style LoRAs well",
           "prices": null, "note": "Local: no cost, no key." },
@@ -94,26 +94,29 @@
           "prices": null, "note": "Local: no cost, no key." }
       ]
     },
-    "forge-retro": {
-      "label": "Local SD1.5 via Forge -- retro style pass",
+    "forge-quality": {
+      "label": "Local SD1.5 via Forge -- detailed material (default local)",
       "baseUrl": "http://127.0.0.1:7860",
       "apiKeyEnv": "",
       "local": true,
       "promptStyle": "tags",
       "type": "sdapi",
-      "model": "v1-5-pruned-emaonly",
+      "model": "perfectWorld_v3Baked",
       "sampling": {
-        "steps": 24,
+        "steps": 26,
         "cfgScale": 7.0,
         "sampler": "DPM++ 2M",
         "tiling": true,
-        "loras": [{ "name": "1990's_PC_v2", "weight": 0.7 }],
-        "negativePrompt": "perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
-        { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- cleanest response to style LoRAs",
+        { "id": "perfectWorld_v3Baked", "label": "Perfect World -- detailed, even materials",
           "default": true, "prices": null, "note": "Local: no cost, no key." },
-        { "id": "newERANewEstheticRetro_retroV60VAE", "label": "New Era Retro",
+        { "id": "lyriel_v16", "label": "Lyriel -- painterly fantasy surfaces",
+          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "chilloutmix_NiPrunedFp32Fix", "label": "Chillout -- photographic materials",
+          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- plainest response to LoRAs",
           "prices": null, "note": "Local: no cost, no key." },
         { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM",
           "prices": null, "note": "Local: no cost, no key." }

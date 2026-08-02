@@ -11,13 +11,23 @@
   ],
 
   "_styleTagsComment": [
-    "The same style, as TAGS, for local Stable Diffusion 1.5. Not a stylistic",
-    "preference: CLIP reads 75 tokens per chunk and weights the earliest most,",
-    "so the prose bible above buries the material being drawn. It also cannot",
-    "negate -- the bible's NEVER list actively summons what it forbids -- so",
-    "every prohibition lives in the providers' negativePrompt instead."
+    "Tags for local Stable Diffusion 1.5, and deliberately NOT the retro pixel",
+    "style the prose bible describes.",
+    "",
+    "Two reasons. CLIP reads 75 tokens per chunk and weights the earliest most,",
+    "so the prose bible buries the material being drawn, and it cannot negate --",
+    "the bible's NEVER list actively summons what it forbids. Prohibitions live",
+    "in the providers' negativePrompt instead.",
+    "",
+    "But the bigger reason is that ASKING for pixel art is the wrong request.",
+    "SD1.5 renders 'pixel art' as a blurry imitation of it. Ask instead for the",
+    "best, sharpest, most detailed version of the real material, and let the",
+    "pipeline do the conversion: rendering at 512 and reducing 4x to 128 with a",
+    "palette clamp IS the pixelation, and it produces true hard pixels rather",
+    "than a picture of some. Detail in the source becomes legible texture after",
+    "the squash; mush in the source becomes mush."
   ],
-  "styleTags": "16-bit pixel art, snes jrpg game texture, chunky pixels, hand dithered, limited muted palette, grimy dark fantasy dungeon, desaturated earth tones, sharp crisp pixels",
+  "styleTags": "masterpiece, best quality, highly detailed, sharp focus, 4k, substance designer material, pbr albedo map, uniform detail, no focal point",
   "styleBible": "Retro JRPG pixel art in the RPG Maker 2003 / late-90s SNES-to-PS1 tradition. Chunky legible pixels, hand-placed dithering rather than smooth gradients, a tight limited palette, strong silhouette readability at small size. Dark low-fantasy dungeon-crawler mood: grimy stone, muted earths and desaturated jewel tones, torch-warm highlights against cold shadow. NEVER: modern vector art, cel-shaded anime line art, watercolour, 3D renders, drop shadows, text, labels, watermarks, signatures, UI frames, or borders.",
 
   "classes": {

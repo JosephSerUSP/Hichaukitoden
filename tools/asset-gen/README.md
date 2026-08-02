@@ -109,7 +109,7 @@ the environment only, never from the config file or a flag.
 | `gemini` | `GEMINI_API_KEY` | `gemini-image` | `gemini-3.1-flash-lite-image` |
 | `openrouter` | `OPENROUTER_API_KEY` | `openai-chat-image` | an image-capable chat model |
 | `forge-lcm` | none (local) | `sdapi` | `dreamshaper_8LCM` -- ~30s per tile |
-| `forge-retro` | none (local) | `sdapi` | `v1-5-pruned-emaonly` + a retro style LoRA |
+| `forge-quality` | none (local) | `sdapi` | `perfectWorld_v3Baked`, 26 steps -- the default local one |
 
 Override per run with `--provider` / `--model`, or set `ASSET_GEN_PROVIDER`.
 All three accept `--ref` style conditioning; on OpenAI that switches the call to
@@ -165,6 +165,27 @@ down a corridor.
 An axis reads `unmeasurable` when the edges are transparent: that is a cut-out,
 not a tile, and it scores last rather than perfect.
 
+### Do not ask for pixel art. Ask for a good texture and let the pipeline squash it
+
+The retro look is produced by the *post-processing*, not by the prompt. The
+model renders at 512, `pixel_fit` reduces that 4x to 128, and `quantize` clamps
+it to a small palette -- and that reduction IS the pixelation. It produces true
+hard-edged pixels on a tight palette.
+
+Asking SD1.5 for "16-bit pixel art" instead gets you a soft, blurry *imitation*
+of pixel art, which then goes through the same reduction and comes out as mush.
+Detail in the source survives the squash as legible texture; mush does not.
+
+So the local prompt asks for the best, sharpest, most detailed version of the
+real material -- `masterpiece, best quality, highly detailed, sharp focus, 4k,
+substance designer material` -- and `pixel art, pixelated, low resolution` are
+in the *negative* prompt. The style bible's retro prose is still what the hosted
+models get, since they are being asked to draw a finished sprite rather than
+source material for a reduction.
+
+`forge-quality` (Perfect World, 26 steps, CFG 7, no style LoRA) is the default
+local provider for this reason.
+
 ### Prompts: SD1.5 is not a hosted model and will not read a paragraph
 
 The hosted models take the prose template in `prompts/<class>.md`, including its
@@ -186,7 +207,7 @@ with `--prompt-style prose|tags` to compare.
 
 ### Steps: LCM checkpoints are the exception, not the rule
 
-20-30 steps is right for an ordinary checkpoint, and `forge-retro` uses 24. The
+20-30 steps is right for an ordinary checkpoint, and `forge-quality` uses 26. The
 LCM checkpoints are distilled to converge in **4-8** steps at low CFG (~2), and
 running them longer does not improve them. `--steps` overrides either. The
 sweep behind these defaults is reproducible:
@@ -234,7 +255,7 @@ height map first.
 ```json
 [
   { "name": "mossy_limestone", "description": "damp grey limestone blocks", "variants": 4 },
-  { "name": "cracked_flagstone", "description": "worn grey flagstone floor", "provider": "forge-retro" }
+  { "name": "cracked_flagstone", "description": "worn grey flagstone floor", "provider": "forge-lcm" }
 ]
 ```
 
