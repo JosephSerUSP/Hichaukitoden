@@ -110,6 +110,14 @@ function schema.parse(assetPath)
         parsed.heightScale = number(meta, "heightScale", label, nil, 0, 1)
         parsed.meshColumns = integer(meta, "meshColumns", label, nil, 1, 64)
         parsed.meshRows = integer(meta, "meshRows", label, nil, 1, 64)
+        -- Sampling resolution is independent of the triangle budget: the field
+        -- is meshed densely and then decimated, so a joint or a neck narrower
+        -- than a budget cell still reaches the decimator instead of being
+        -- averaged out of existence. Capped because this runs at load.
+        parsed.sampleColumns = integer(meta, "sampleColumns", label,
+            math.min(48, parsed.meshColumns * 4), 1, 96)
+        parsed.sampleRows = integer(meta, "sampleRows", label,
+            math.min(48, parsed.meshRows * 4), 1, 96)
         -- Stand-off keeps a relief from z-fighting the structural surface it
         -- sits on; it is not part of the authored height field.
         parsed.offset = number(meta, "offset", label, 0.004, 0, 0.25)
@@ -124,6 +132,12 @@ function schema.parse(assetPath)
         parsed.meshColumns = integer(meta, "meshColumns", label, nil, 1, 64)
         parsed.meshRows = integer(meta, "meshRows", label, nil, 1, 64)
         parsed.pinchWidth = number(meta, "pinchWidth", label, 2, 0, 16)
+        -- Dense sampling then decimation, same as plane: at the budget
+        -- resolution a silhouette narrower than two cells simply disappears.
+        parsed.sampleColumns = integer(meta, "sampleColumns", label,
+            math.min(56, parsed.meshColumns * 4), 1, 96)
+        parsed.sampleRows = integer(meta, "sampleRows", label,
+            math.min(56, parsed.meshRows * 4), 1, 96)
         -- Painting front and back independently is a separate decision from
         -- deriving the rear DEPTH from the front, so an asset may mirror its
         -- geometry while still carrying two painted faces.

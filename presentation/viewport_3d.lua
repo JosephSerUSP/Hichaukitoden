@@ -48,7 +48,12 @@ function viewport_3d.composedWallSpec(baseWall, featureOverlay)
     local layers = { base }
     local fixture = featureOverlay and featureOverlay.geometry
     if type(fixture) == "string" then layers[#layers + 1] = fixture end
-    return { geometry = layers }
+    -- A base-wall surface spans its whole cell by construction, so the atlas
+    -- wall behind it is not merely redundant: drawing it means any recess
+    -- deeper than the stand-off is depth-occluded by it. Suppressing it lets a
+    -- cavity cut INTO the wall, rather than forcing the entire surface to be
+    -- pushed out into the corridor to stay in front of a tile nobody sees.
+    return { geometry = layers, coversFace = true }
 end
 
 -- Transform a model's horizontal local axes into a visible wall-face frame.
@@ -2049,11 +2054,15 @@ local function drawWorldSpace(session)
                 }
             end
             local wall = face.surface
-            if queueMeshNodes(ensureSurfaceMeshTree(face, face.texture,
-                    wall.a, wall.b, wall.c, wall.d, wall.uv, wall.colors)) == false then
-                local wallGroup = group(face.texture)
-                addVisibleWorldQuad(wallGroup, wall.a, wall.b, wall.c, wall.d,
-                    wall.uv, wall.colors, nil, "wall_clip")
+            -- Compiled geometry that spans the whole face replaces the atlas
+            -- wall rather than layering over it; see composedWallSpec.
+            if not (face.meshSpec and face.meshSpec.coversFace) then
+                if queueMeshNodes(ensureSurfaceMeshTree(face, face.texture,
+                        wall.a, wall.b, wall.c, wall.d, wall.uv, wall.colors)) == false then
+                    local wallGroup = group(face.texture)
+                    addVisibleWorldQuad(wallGroup, wall.a, wall.b, wall.c, wall.d,
+                        wall.uv, wall.colors, nil, "wall_clip")
+                end
             end
             if face.meshSpec then
                 local offset = 0.002

@@ -131,7 +131,11 @@ def idol_silhouette(u, v):
         d = math.hypot(x * 0.5, y - cy)
         return (1.0 if d < r else 0.0), max(0.0, 1.0 - d / r)
     if y < 0.38:                             # neck
-        half = 0.10
+        # In x-units, where the body's narrowest is 0.16 and the head's radius
+        # is 0.29. An earlier version used 0.10 here while measuring the head
+        # in half-units, which made the neck half as wide as intended -- thin
+        # enough that a coarse mesh dropped it entirely.
+        half = 0.15
         inside = abs(x) < half
         return (1.0 if inside else 0.0), max(0.0, 1.0 - abs(x) / half)
     # body: shoulders taper outward then run straight to the base

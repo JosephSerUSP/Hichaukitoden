@@ -14,6 +14,7 @@
 -- shell exactly like any other model: +X is depth, +Y runs across, +Z is up.
 local mesh = require("presentation.mesh")
 local images = require("engine.geometry.images")
+local decimate = require("engine.geometry.decimate")
 
 local shell = {}
 
@@ -134,7 +135,12 @@ end
 
 -- Build the front and rear grids plus the edge that joins them.
 function shell.build(spec, height)
-    local columns, rows = spec.meshColumns, spec.meshRows
+    -- Sample densely, decimate after. On a coarse grid a quad survives only
+    -- when all four corners are covered, so anything narrower than two cells
+    -- vanishes -- which erased a statue's neck outright and left its head
+    -- floating. Sampling fine keeps the silhouette; the decimator then spends
+    -- the budget on the form rather than on the grid.
+    local columns, rows = spec.sampleColumns, spec.sampleRows
     shell.checkMasks(spec, height, columns, rows)
     shell.checkSingleComponent(spec, height, columns, rows)
 
@@ -186,29 +192,53 @@ function shell.build(spec, height)
             and mask[row + 1][column] and mask[row + 1][column + 1]
     end
 
+    -- Indexed so the decimator can collapse shared vertices. Front and rear
+    -- stay separate vertex sets even where they coincide: welding them would
+    -- let a collapse pull one face through the other.
+    local dense = { vertices = {}, faces = {} }
+    local frontIndex, backIndex = {}, {}
+    local function intern(store, row, column, vertex)
+        store[row] = store[row] or {}
+        if not store[row][column] then
+            dense.vertices[#dense.vertices + 1] = vertex
+            store[row][column] = #dense.vertices
+        end
+        return store[row][column]
+    end
+    local function face(a, b, c) dense.faces[#dense.faces + 1] = { a, b, c } end
+
     for row = 0, rows - 1 do
         for column = 0, columns - 1 do
             if quadInside(row, column) then
-                local a, b = front[row][column], front[row][column + 1]
-                local c, d = front[row + 1][column + 1], front[row + 1][column]
+                local a = intern(frontIndex, row, column, front[row][column])
+                local b = intern(frontIndex, row, column + 1, front[row][column + 1])
+                local c = intern(frontIndex, row + 1, column + 1, front[row + 1][column + 1])
+                local d = intern(frontIndex, row + 1, column, front[row + 1][column])
                 -- Front faces +X.
-                builder:triangle(a, d, c)
-                builder:triangle(a, c, b)
+                face(a, d, c)
+                face(a, c, b)
                 if spec.surfaceMode ~= "frontOnly" then
-                    local e, f = back[row][column], back[row][column + 1]
-                    local g, h = back[row + 1][column + 1], back[row + 1][column]
+                    local e = intern(backIndex, row, column, back[row][column])
+                    local f = intern(backIndex, row, column + 1, back[row][column + 1])
+                    local g = intern(backIndex, row + 1, column + 1, back[row + 1][column + 1])
+                    local h = intern(backIndex, row + 1, column, back[row + 1][column])
                     -- Rear winding is reversed so it faces -X.
-                    builder:triangle(e, g, h)
-                    builder:triangle(e, f, g)
+                    face(e, g, h)
+                    face(e, f, g)
                 end
             end
         end
     end
 
     if spec.surfaceMode ~= "frontOnly" and spec.edgeMode == "stitch" then
-        shell.stitch(builder, front, back, mask, columns, rows)
+        shell.stitch(dense, intern, frontIndex, backIndex, front, back, mask, columns, rows)
     end
 
+    local reduced = decimate.run(dense, spec.meshColumns * spec.meshRows * 2)
+    for _, triangle in ipairs(reduced.faces) do
+        builder:triangle(reduced.vertices[triangle[1]],
+            reduced.vertices[triangle[2]], reduced.vertices[triangle[3]])
+    end
     return builder:build()
 end
 
@@ -216,7 +246,7 @@ end
 -- is one where an inside quad meets an outside quad (or the grid border);
 -- joining those in order closes the shell around its silhouette and its holes
 -- alike, without the artist authoring a side texture.
-function shell.stitch(builder, front, back, mask, columns, rows)
+function shell.stitch(dense, intern, frontIndex, backIndex, front, back, mask, columns, rows)
     local function inside(row, column)
         if row < 0 or column < 0 or row >= rows or column >= columns then return false end
         return mask[row][column] and mask[row][column + 1]
@@ -244,8 +274,12 @@ function shell.stitch(builder, front, back, mask, columns, rows)
                         -- skipped rather than raising: a pinched silhouette is
                         -- allowed to close to nothing.
                         if math.abs(fa[1] - ba[1]) > 1e-6 or math.abs(fb[1] - bb[1]) > 1e-6 then
-                            builder:triangle(fa, fb, bb)
-                            builder:triangle(fa, bb, ba)
+                            local ia = intern(frontIndex, ar, ac, fa)
+                            local ib = intern(frontIndex, br, bc, fb)
+                            local ja = intern(backIndex, ar, ac, ba)
+                            local jb = intern(backIndex, br, bc, bb)
+                            dense.faces[#dense.faces + 1] = { ia, ib, jb }
+                            dense.faces[#dense.faces + 1] = { ia, jb, ja }
                         end
                     end
                 end

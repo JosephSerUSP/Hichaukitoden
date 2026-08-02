@@ -283,5 +283,67 @@ local midGrey = select(1, heightField:getPixel(8, 8))
 check(midGrey >= 0 and midGrey <= 1,
     "the composed heightfield is emitted as a viewable normalized image")
 
+print("=== Dense Sampling and Decimation ===")
+
+local decimate = require("engine.geometry.decimate")
+
+-- A thin feature is the whole reason for sampling dense: on a budget-sized
+-- grid a quad needs all four corners covered, so anything narrower than two
+-- cells disappears. This grid is 2 units wide with a 1-unit notch.
+local thin = { vertices = {}, faces = {} }
+for row = 0, 8 do
+    for column = 0, 8 do
+        thin.vertices[#thin.vertices + 1] = { column / 8, row / 8, 0, column / 8, row / 8 }
+    end
+end
+for row = 0, 7 do
+    for column = 0, 7 do
+        local a = row * 9 + column + 1
+        thin.faces[#thin.faces + 1] = { a, a + 1, a + 10 }
+        thin.faces[#thin.faces + 1] = { a, a + 10, a + 9 }
+    end
+end
+local before = #thin.faces
+local reduced = decimate.run({ vertices = thin.vertices, faces = thin.faces }, 32)
+check(#reduced.faces <= 32 and #reduced.faces > 0,
+    "decimation reaches its triangle budget")
+check(before > #reduced.faces, "decimation actually reduces the mesh")
+
+-- The cell seam is the hard constraint: a wall whose border drifted inward
+-- would gap against the wall beside it.
+local flat = geometry.load(FIXTURES .. "valid_plane")
+local minY, maxY, minZ, maxZ = math.huge, -math.huge, math.huge, -math.huge
+for _, group in ipairs(flat.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        minY, maxY = math.min(minY, vertex[2]), math.max(maxY, vertex[2])
+        minZ, maxZ = math.min(minZ, vertex[3]), math.max(maxZ, vertex[3])
+    end
+end
+check(math.abs(minY + 0.5) < 1e-6 and math.abs(maxY - 0.5) < 1e-6,
+    "decimation preserves the cell seam across the wall")
+check(math.abs(minZ) < 1e-6 and math.abs(maxZ - 1) < 1e-6,
+    "decimation preserves floor and ceiling contact")
+
+-- Determinism matters more here than anywhere else: the golden gates
+-- byte-compare frames rendered from these meshes.
+geometry.forget()
+local again = geometry.load(FIXTURES .. "valid_plane")
+local identical = again.vertexCount == flat.vertexCount
+if identical then
+    for index, vertex in ipairs(again.groups[1].vertices) do
+        local original = flat.groups[1].vertices[index]
+        for component = 1, 3 do
+            if math.abs(vertex[component] - original[component]) > 1e-9 then
+                identical = false
+            end
+        end
+    end
+end
+check(identical, "decimation is deterministic across a fresh compile")
+
+-- Sampling resolution is independent of the budget, which is the point.
+check(spec.sampleColumns > spec.meshColumns and spec.sampleRows > spec.meshRows,
+    "an asset samples its field more finely than its triangle budget")
+
 print(string.format("=== Geometry Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " geometry test(s) failed", failed) end

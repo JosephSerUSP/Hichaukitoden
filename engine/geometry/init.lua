@@ -66,27 +66,27 @@ local function inspect(spec)
             warnings[#warnings + 1] = spec.label
                 .. ": heightScale is 0, so this asset carries no geometry"
         end
-        -- Same rule the builder enforces, checked here so a wall relief that
-        -- would sink behind its structural wall is a BUILD failure rather than
-        -- a texture that looks broken the first time it is walked past.
+        -- Same rule the builder enforces, checked here so a cavity that would
+        -- break through its own wall is a BUILD failure rather than a hole
+        -- someone finds by walking into it.
         if spec.surface == "wall" then
             local layer = { {
                 data = height, scale = spec.heightScale, operation = spec.heightOperation,
             } }
             local deepest = math.huge
-            for row = 0, spec.meshRows do
-                for column = 0, spec.meshColumns do
+            for row = 0, spec.sampleRows do
+                for column = 0, spec.sampleColumns do
                     local lift = plane.sampleField(layer,
-                        column / spec.meshColumns, row / spec.meshRows) + spec.offset
+                        column / spec.sampleColumns, row / spec.sampleRows) + spec.offset
                     if lift < deepest then deepest = lift end
                 end
             end
-            if deepest < 0 then
+            if deepest < -0.5 then
                 error(spec.label .. ": displacement reaches "
-                    .. string.format("%.4f", deepest) .. " behind the wall plane."
-                    .. " Raise 'offset' to at least "
-                    .. string.format("%.4f", spec.offset - deepest)
-                    .. ", or reduce the recessed depth", 0)
+                    .. string.format("%.4f", deepest)
+                    .. " into the wall, which is more than half a cell --"
+                    .. " the cavity would break through to the far side."
+                    .. " Reduce heightScale or raise 'offset'", 0)
             end
         end
     end

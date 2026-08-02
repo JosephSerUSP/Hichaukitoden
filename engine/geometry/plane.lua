@@ -15,6 +15,7 @@
 -- 16,384 vertices.
 local mesh = require("presentation.mesh")
 local images = require("engine.geometry.images")
+local decimate = require("engine.geometry.decimate")
 
 local plane = {}
 
@@ -72,7 +73,11 @@ function plane.build(spec, layers, uv)
     if not SURFACES[spec.surface] then
         error(spec.label .. ": unsupported plane surface '" .. tostring(spec.surface) .. "'", 0)
     end
-    local columns, rows = spec.meshColumns, spec.meshRows
+    -- Sample densely, then decimate to the authored budget. meshColumns and
+    -- meshRows now declare how many triangles the asset is WORTH, not where
+    -- its vertices must fall -- so relief narrower than a grid cell survives
+    -- instead of being averaged away.
+    local columns, rows = spec.sampleColumns, spec.sampleRows
     local builder = mesh.newBuilder(spec.label)
     builder:setMaterial(spec.id)
 
@@ -91,40 +96,51 @@ function plane.build(spec, layers, uv)
             grid[row][column] = { x, y, z, tu, tv }
         end
     end
-    -- A wall relief sits IN FRONT of the structural wall, which still renders
-    -- behind it. Anything sinking past the wall plane is depth-occluded by it,
-    -- and the symptom is the base atlas tile showing through the recessed
-    -- parts -- which reads as a broken texture, not as geometry inside a wall.
-    -- A true cavity therefore needs the whole surface pushed out, not the
-    -- recess pushed in.
-    if spec.surface == "wall" and deepest < 0 then
+    -- A recess cuts INTO the wall's own volume, which is fine -- a base-wall
+    -- surface suppresses the atlas tile behind it. What is not fine is cutting
+    -- clean through: past half a cell the cavity emerges inside whatever is on
+    -- the far side of that wall.
+    if spec.surface == "wall" and deepest < -0.5 then
         error(spec.label .. ": displacement reaches "
-            .. string.format("%.4f", deepest) .. " behind the wall plane."
-            .. " Raise 'offset' to at least "
-            .. string.format("%.4f", spec.offset - deepest)
-            .. ", or reduce the recessed depth", 0)
+            .. string.format("%.4f", deepest)
+            .. " into the wall, which is more than half a cell --"
+            .. " the cavity would break through to the far side."
+            .. " Reduce heightScale or raise 'offset'", 0)
     end
 
-    local flip = SURFACES[spec.surface].flip
-    local function emit(p, q, r)
-        if flip then builder:triangle(p, r, q) else builder:triangle(p, q, r) end
+    -- Indexed, because decimation collapses shared vertices; the mesh builder
+    -- takes the soup afterwards.
+    local dense = { vertices = {}, faces = {} }
+    local indexOf = {}
+    for row = 0, rows do
+        for column = 0, columns do
+            dense.vertices[#dense.vertices + 1] = grid[row][column]
+            indexOf[row * (columns + 1) + column] = #dense.vertices
+        end
     end
+    local function at(row, column) return indexOf[row * (columns + 1) + column] end
     for row = 0, rows - 1 do
         for column = 0, columns - 1 do
-            local a = grid[row][column]
-            local b = grid[row][column + 1]
-            local c = grid[row + 1][column + 1]
-            local d = grid[row + 1][column]
-            -- Alternate the diagonal so a coarse grid does not read as a
-            -- single-direction sawtooth across the whole panel.
+            local a, b = at(row, column), at(row, column + 1)
+            local c, d = at(row + 1, column + 1), at(row + 1, column)
+            -- Alternate the diagonal so the dense grid carries no
+            -- single-direction bias into the decimator.
             if (column + row) % 2 == 0 then
-                emit(a, b, c)
-                emit(a, c, d)
+                dense.faces[#dense.faces + 1] = { a, b, c }
+                dense.faces[#dense.faces + 1] = { a, c, d }
             else
-                emit(a, b, d)
-                emit(b, c, d)
+                dense.faces[#dense.faces + 1] = { a, b, d }
+                dense.faces[#dense.faces + 1] = { b, c, d }
             end
         end
+    end
+
+    local reduced = decimate.run(dense, spec.meshColumns * spec.meshRows * 2)
+
+    local flip = SURFACES[spec.surface].flip
+    for _, face in ipairs(reduced.faces) do
+        local p, q, r = reduced.vertices[face[1]], reduced.vertices[face[2]], reduced.vertices[face[3]]
+        if flip then builder:triangle(p, r, q) else builder:triangle(p, q, r) end
     end
     return builder:build()
 end
