@@ -52,7 +52,11 @@ def limestone_wall():
     apx, hpx = [], []
     course = SIZE // 4          # four block courses
     block = SIZE // 2           # two blocks per course, alternating offset
-    mortar = 3
+    # Mortar must be wide enough for the declared mesh grid to resolve. At
+    # 16x16 over 128px each cell is 8px, so a 3px joint falls between samples
+    # and aliases into steep dark ramps that read as detached blocks. Six
+    # pixels is the narrowest joint this density can actually represent.
+    mortar = 6
 
     for y in range(SIZE):
         row = y // course
@@ -70,7 +74,10 @@ def limestone_wall():
             grain = noise(x, y, 4)
 
             if in_mortar:
-                depth = -0.55 - 0.20 * broad
+                # Shallow on purpose: a deep joint at this mesh density becomes
+                # a near-vertical facet whose normal faces away from every
+                # light, which reads as a gap rather than a recess.
+                depth = -0.30 - 0.10 * broad
                 tone = 0.44 + 0.10 * broad
             else:
                 # Each block gets its own slight set, so courses do not look
@@ -154,7 +161,13 @@ def sacred_idol():
             coverage, core = idol_silhouette(u, v)
 
             if coverage == 0.0:
-                apx.append((0, 0, 0, 0))
+                # Coverage lives in the HEIGHT alpha, which is what the
+                # compiler reads to decide the silhouette. The albedo stays
+                # OPAQUE outside it: the shader discards transparent texels,
+                # and a boundary quad interpolating into transparent albedo
+                # punches holes that tear the model apart. Colour outside the
+                # silhouette is simply never sampled.
+                apx.append((90, 86, 74, 255))
                 hpx.append((0, 0, 0, 0))
                 continue
 

@@ -772,5 +772,113 @@
                 "injectProbability": 0.12
             }
         ]
+    },
+    "showcase_thestra": {
+        "id": "showcase_thestra",
+        "name": "Thestra Showcase",
+        "texture": "assets/tilesets/dungeon_001.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "thestra_limestone",
+                    "role": "base_wall",
+                    "middle": [
+                        1,
+                        1
+                    ],
+                    "geometry": "assets/geometry/limestone_wall",
+                    "weight": 1
+                }
+            ],
+            "floors": [
+                {
+                    "id": "dungeon_floor_1",
+                    "role": "base_floor",
+                    "atlas": [
+                        3,
+                        0
+                    ],
+                    "weight": 70,
+                    "heightOffset": 0
+                },
+                {
+                    "id": "dungeon_floor_2",
+                    "role": "base_floor",
+                    "atlas": [
+                        0,
+                        1
+                    ],
+                    "weight": 30,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "dungeon_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [
+                        0,
+                        0
+                    ],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [],
+        "fixturePrefabs": [
+            {
+                "id": "wall_beside_floor",
+                "where": {
+                    "adjacent": "floor"
+                },
+                "probability": {
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.5
+                }
+            }
+        ],
+        "features": [
+            {
+                "id": "thestra_shrine_recess",
+                "role": "wall_feature",
+                "geometry": "assets/geometry/shrine_recess",
+                "injectProbability": 1.0,
+                "where": {
+                    "zone": "shrine"
+                }
+            },
+            {
+                "id": "thestra_idol",
+                "role": "floor_feature",
+                "geometry": "assets/geometry/sacred_idol",
+                "injectProbability": 1.0,
+                "blocksMovement": true,
+                "where": {
+                    "zone": "dais"
+                }
+            },
+            {
+                "id": "thestra_pillar",
+                "role": "floor_feature",
+                "geometry": "assets/geometry/fluted_pillar",
+                "injectProbability": 1.0,
+                "blocksMovement": true,
+                "where": {
+                    "zone": "colonnade"
+                }
+            },
+            {
+                "id": "thestra_chest",
+                "role": "floor_feature",
+                "model": "assets/models/dungeon/dungeon_chest.obj",
+                "injectProbability": 1.0,
+                "where": {
+                    "zone": "prop"
+                }
+            }
+        ]
     }
 }

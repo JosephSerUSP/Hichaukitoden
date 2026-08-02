@@ -6125,5 +6125,93 @@
     "treasures": [],
     "encounters": [],
     "recruits": []
+  },
+  {
+    "id": 9,
+    "title": "Thestra Showcase Room",
+    "intro": "Limestone, carved cavities, and civic stone under one vault.",
+    "depth": 1,
+    "tileset": "showcase_thestra",
+    "ceilingStyle": "solid",
+    "music": "dungeon1",
+    "image": "DungeonFloors1.png",
+    "layout": [
+      "#############",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#....###....#",
+      "#....###....#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#############"
+    ],
+    "generation": "Fixed",
+    "category": "dungeon",
+    "safe": true,
+    "encounterSteps": 0,
+    "events": [],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "zones": [
+      {
+        "id": "colonnade",
+        "cells": [
+          {
+            "x": 3,
+            "y": 3
+          },
+          {
+            "x": 9,
+            "y": 3
+          },
+          {
+            "x": 3,
+            "y": 6
+          },
+          {
+            "x": 9,
+            "y": 6
+          }
+        ]
+      },
+      {
+        "id": "shrine",
+        "cells": [
+          {
+            "x": 5,
+            "y": 5
+          },
+          {
+            "x": 6,
+            "y": 5
+          },
+          {
+            "x": 7,
+            "y": 5
+          }
+        ]
+      },
+      {
+        "id": "dais",
+        "cells": [
+          {
+            "x": 6,
+            "y": 6
+          }
+        ]
+      },
+      {
+        "id": "prop",
+        "cells": [
+          {
+            "x": 10,
+            "y": 7
+          }
+        ]
+      }
+    ]
   }
 ]

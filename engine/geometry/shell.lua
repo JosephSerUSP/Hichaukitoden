@@ -114,6 +114,24 @@ function shell.checkSingleComponent(spec, height, columns, rows)
     end
 end
 
+-- Report albedo that is transparent where the coverage mask says there IS
+-- geometry. Sampled on the mesh grid rather than per texel: the failure only
+-- matters where a quad's interpolation actually reaches.
+function shell.hasTransparentCoverage(spec, albedo, height)
+    local columns, rows = spec.meshColumns, spec.meshRows
+    local area = region(spec, "front")
+    for row = 0, rows do
+        for column = 0, columns do
+            local u, v = column / columns, row / rows
+            if covered(height, area, u, v) then
+                local _, _, _, alpha = sampleRegion(albedo, area, u, v)
+                if alpha < 0.5 then return true end
+            end
+        end
+    end
+    return false
+end
+
 -- Build the front and rear grids plus the edge that joins them.
 function shell.build(spec, height)
     local columns, rows = spec.meshColumns, spec.meshRows

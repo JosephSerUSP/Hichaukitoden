@@ -44,6 +44,15 @@ local function inspect(spec)
     if spec.topology == "shell" then
         shell.checkMasks(spec, height, spec.meshColumns, spec.meshRows)
         shell.checkSingleComponent(spec, height, spec.meshColumns, spec.meshRows)
+        -- Geometry with transparent albedo tears the model apart rather than
+        -- merely looking wrong: the shader discards transparent texels, so a
+        -- boundary quad interpolating into them punches holes. Coverage is the
+        -- HEIGHT alpha's job; the albedo should stay opaque across it.
+        if shell.hasTransparentCoverage(spec, albedo, height) then
+            warnings[#warnings + 1] = spec.label
+                .. ": albedo is transparent inside the coverage mask;"
+                .. " covered geometry will be discarded and appear torn"
+        end
     end
     -- Mesh density that cannot reproduce the authored field is the most common
     -- cause of "my relief disappeared", so it is worth saying out loud.

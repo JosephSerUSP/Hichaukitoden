@@ -71,8 +71,8 @@ are what's left:
 - item-creation disciplines across the roster: alchemyx15, blacksmithingx15, cookingx18, tinkeringx17
 - items: **198** (consumablex63, equipmentx120, questx15)
 - skills: **44**, passives: **41**, states: **14**, roles: **13**, elements: **5**
-- maps: **8**, common events: **20**, shops: **8**, quests: **5**, lore entries: **3**
-- animations: **29**, tilesets: **9**
+- maps: **9**, common events: **20**, shops: **8**, quests: **5**, lore entries: **3**
+- animations: **29**, tilesets: **10**
 
 ## Notes for agents
 
