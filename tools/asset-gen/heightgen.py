@@ -124,6 +124,39 @@ def mask_from_image(path, threshold=0.5, key=None, tolerance=0.04):
     return luminance > threshold
 
 
+def bleed(image, mask, iterations=6):
+    """Push edge colour outward into the background.
+
+    The compiler discards transparent texels and the mesh stops at the
+    silhouette, but a boundary triangle still INTERPOLATES its UVs slightly
+    past the mask -- so whatever colour sits just outside shows as a fringe.
+    On art keyed off white that reads as a bright halo around the model; off
+    black, as a dark outline.
+
+    Repeatedly averaging known neighbours into the unknown region replaces the
+    background with a continuation of the art, so the fringe is the figure's
+    own colour and becomes invisible. Standard texture-atlas practice, and the
+    reason `--bleed` is on by default.
+    """
+    rgb = np.asarray(image.convert("RGB")).astype(np.float64)
+    known = mask.copy()
+    filled = rgb.copy()
+    for _ in range(iterations):
+        if known.all():
+            break
+        # 4-neighbour sums of known pixels
+        total = np.zeros_like(filled)
+        count = np.zeros(known.shape, dtype=np.float64)
+        for axis, shift in ((0, 1), (0, -1), (1, 1), (1, -1)):
+            total += np.roll(np.where(known[..., None], filled, 0), shift, axis=axis)
+            count += np.roll(known.astype(np.float64), shift, axis=axis)
+        frontier = (~known) & (count > 0)
+        safe = np.where(count > 0, count, 1)[..., None]
+        filled = np.where(frontier[..., None], total / safe, filled)
+        known = known | frontier
+    return Image.fromarray(np.clip(filled, 0, 255).astype(np.uint8), mode="RGB")
+
+
 # --- script-side shape helpers -------------------------------------------
 #
 # Coordinates are normalized 0..1 over the field, so a recipe is independent of
@@ -185,7 +218,7 @@ def estimate_depth(image, model_id="depth-anything/Depth-Anything-V2-Small-hf",
 
 
 def thickness_from_depth(image, mask, radius=None, profile="smooth",
-                         strength=0.65, model_id=None):
+                         strength=0.65, model_id=None, percentiles=(2, 98)):
     """Combine an estimated depth with the distance field.
 
     The estimate supplies INTERIOR form; the distance field supplies the
@@ -193,11 +226,16 @@ def thickness_from_depth(image, mask, radius=None, profile="smooth",
     hallucinates, depth still reaches zero at the silhouette, so a shell's
     halves close and the mesh stays valid.
 
-    Using the estimate alone does not work. A monocular model reports distance
-    from the CAMERA, not half-thickness about a central plane, and on flat
-    sprite art it reports almost nothing at all -- measured on a 64px figure it
-    varied less inside the silhouette (sd 47) than across the blank background
-    (sd 209).
+    Using the estimate alone still does not work: a monocular model reports
+    distance from the CAMERA, not half-thickness about a central plane, so it
+    knows nothing about the back of the object and cannot be trusted to reach
+    zero at the contour.
+
+    How much the estimate is WORTH depends entirely on the art. Flat four-colour
+    sprites give nothing readable. The same figure redrawn with real shading and
+    contrast resolves clearly -- crossed arms correctly read as the nearest
+    part -- but only once normalized against percentiles, because the raw values
+    are packed into a narrow band.
     """
     kwargs = {"model_id": model_id} if model_id else {}
     raw = estimate_depth(image, **kwargs)
@@ -207,9 +245,15 @@ def thickness_from_depth(image, mask, radius=None, profile="smooth",
     inside = estimate[mask]
     if inside.size == 0 or inside.max() <= inside.min():
         return thickness(mask, radius, profile)
-    # Normalize within the silhouette only: background depth is meaningless
-    # here and would otherwise dominate the range.
-    normalized = np.clip((estimate - inside.min()) / (inside.max() - inside.min()), 0.0, 1.0)
+    # Normalize within the silhouette only -- background depth is meaningless
+    # here -- and to PERCENTILES rather than min/max. A handful of outlier
+    # pixels otherwise eat most of the range and squash all the real structure
+    # into a few levels: measured on a 64px figure, 2% of pixels occupied 17%
+    # of the min..max span. The form is there; it just needs the contrast.
+    low, high = np.percentile(inside, percentiles[0]), np.percentile(inside, percentiles[1])
+    if high <= low:
+        return thickness(mask, radius, profile)
+    normalized = np.clip((estimate - low) / (high - low), 0.0, 1.0)
 
     base = thickness(mask, radius, profile)
     # strength=0 is the pure distance field; 1 lets the estimate fully shape
