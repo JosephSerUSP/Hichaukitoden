@@ -6142,8 +6142,8 @@
   },
   {
     "id": 9,
-    "title": "Thestra Showcase Room",
-    "intro": "Limestone, carved cavities, and civic stone under one vault.",
+    "title": "St. Maria Museum: Foundations",
+    "intro": "The first hall of the museum, where the town keeps what it has managed to raise from the Labyrinth.",
     "depth": 1,
     "tileset": "showcase_thestra",
     "ceilingStyle": "solid",
@@ -6241,6 +6241,15 @@
         "cells": [
           {
             "x": 10,
+            "y": 7
+          }
+        ]
+      },
+      {
+        "id": "gallery",
+        "cells": [
+          {
+            "x": 8,
             "y": 7
           }
         ]

@@ -878,6 +878,16 @@
                 "where": {
                     "zone": "prop"
                 }
+            },
+            {
+                "id": "thestra_muse",
+                "role": "floor_feature",
+                "geometry": "assets/geometry/muse",
+                "where": {
+                    "zone": "gallery"
+                },
+                "injectProbability": 1.0,
+                "blocksMovement": true
             }
         ]
     }
