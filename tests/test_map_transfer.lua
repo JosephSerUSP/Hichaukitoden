@@ -319,6 +319,35 @@ check(objModel.load("tests/fixtures/kit_piece.obj") == loadedKit,
     "OBJ kit-piece meshes are reused instead of rebuilt")
 local malformedObjOk = pcall(objModel.parse, "v 0 0 0\nf 1 2 3\n", "bad fixture")
 check(not malformedObjOk, "OBJ kit-piece loader fails loudly on invalid faces")
+local degenerateObj = "v 0 0 0\nv 1 0 0\nv 2 0 0\nvn 0 1 0\nf 1//1 2//1 3//1\n"
+check(not pcall(objModel.parse, degenerateObj, "flat fixture"),
+    "a zero-area face fails even when every vertex carries an authored normal")
+
+-- The shared mesh layer is what both geometry producers converge on, so its
+-- grouping, generated normals and bounds are gated independently of OBJ text.
+local meshLayer = require("presentation.mesh")
+local meshBuilder = meshLayer.newBuilder("builder fixture")
+meshBuilder:setMaterial("stone")
+meshBuilder:triangle({ 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0 }, { 1, 1, 0, 1, 1 })
+meshBuilder:setMaterial("metal")
+meshBuilder:triangle({ 0, 0, 2, 0, 0 }, { 1, 0, 2, 1, 0 }, { 1, 1, 2, 1, 1 })
+local builtMesh = meshBuilder:build()
+check(builtMesh.vertexCount == 6 and #builtMesh.groups == 2,
+    "mesh builder keeps one group per material in authored order")
+check(builtMesh.groups[1].material == "stone" and builtMesh.groups[2].material == "metal",
+    "mesh builder preserves material order")
+local generatedNormal = builtMesh.groups[1].vertices[1]
+check(generatedNormal[6] == 0 and generatedNormal[7] == 0 and math.abs(generatedNormal[8]) == 1,
+    "mesh builder generates a face normal for vertices that omit one")
+check(builtMesh.bounds.minX == 0 and builtMesh.bounds.maxX == 1
+    and builtMesh.bounds.minZ == 0 and builtMesh.bounds.maxZ == 2,
+    "mesh builder reports bounds across every group")
+check(not pcall(function()
+    local degenerate = meshLayer.newBuilder("degenerate fixture")
+    degenerate:triangle({ 0, 0, 0, 0, 0 }, { 1, 0, 0, 1, 0 }, { 2, 0, 0, 1, 1 })
+end), "mesh builder refuses a degenerate triangle")
+check(not pcall(function() meshLayer.newBuilder("empty fixture"):build() end),
+    "mesh builder refuses a model with no faces")
 
 local wallFrameCases = {
     { normal = { 1, 0 }, depth = { 1, 0 }, tangent = { 0, 1 } },
