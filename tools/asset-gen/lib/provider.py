@@ -221,7 +221,19 @@ def _sdapi(base, model, prompt, refs, size, timeout, options, control=None):
         # Seamless output. The whole reason a texture pipeline wants a local model.
         "tiling": bool(options.get("tiling", False)),
         "override_settings": {"sd_model_checkpoint": model},
-        "override_settings_restore_afterwards": False,
+        # TRUE, which is also Forge's own default, and setting it to False was a
+        # genuinely damaging mistake. `override_settings` does not scope a
+        # setting to one request: processing.py restores the previous values in
+        # its finally block ONLY when this is true. With it false, every call
+        # here permanently repointed the server's checkpoint, so the web UI went
+        # on showing the model the user had chosen while generating with
+        # whichever one this tool loaded last -- an SD1.5 checkpoint rendering an
+        # SDXL workflow at 800x1200, which comes out as incoherent smear.
+        #
+        # The cost of doing it correctly is a model reload when our checkpoint
+        # differs from the session's. That is seconds. The alternative silently
+        # sabotages someone else's work in the same application.
+        "override_settings_restore_afterwards": True,
     }
     if options.get("clipSkip"):
         body["override_settings"]["CLIP_stop_at_last_layers"] = options["clipSkip"]
@@ -322,7 +334,19 @@ def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, con
         "inpainting_fill": 1,          # keep the original pixels as the start
         "inpaint_full_res": False,     # repaint in place, at the real resolution
         "override_settings": {"sd_model_checkpoint": model},
-        "override_settings_restore_afterwards": False,
+        # TRUE, which is also Forge's own default, and setting it to False was a
+        # genuinely damaging mistake. `override_settings` does not scope a
+        # setting to one request: processing.py restores the previous values in
+        # its finally block ONLY when this is true. With it false, every call
+        # here permanently repointed the server's checkpoint, so the web UI went
+        # on showing the model the user had chosen while generating with
+        # whichever one this tool loaded last -- an SD1.5 checkpoint rendering an
+        # SDXL workflow at 800x1200, which comes out as incoherent smear.
+        #
+        # The cost of doing it correctly is a model reload when our checkpoint
+        # differs from the session's. That is seconds. The alternative silently
+        # sabotages someone else's work in the same application.
+        "override_settings_restore_afterwards": True,
     }
     if control:
         # The control map has to travel with the picture. Conditioning a ROLLED
