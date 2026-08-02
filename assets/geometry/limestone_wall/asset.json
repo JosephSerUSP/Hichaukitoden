@@ -1,0 +1,10 @@
+{
+  "id": "limestone_wall",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "add",
+  "heightScale": 0.06,
+  "meshColumns": 16,
+  "meshRows": 16
+}

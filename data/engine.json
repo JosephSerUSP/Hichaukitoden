@@ -4065,5 +4065,70 @@
       "label": "Anywhere",
       "authoredIn": "every command surface"
     }
-  ]
+  ],
+  "geometry": {
+    "topologies": [
+      {
+        "id": "plane",
+        "label": "Plane",
+        "description": "A displaced rectangular surface: walls, floors, ceilings, doors, shallow fixtures."
+      },
+      {
+        "id": "shell",
+        "label": "Shell",
+        "description": "One or two displaced surfaces joined around a shared silhouette."
+      },
+      {
+        "id": "radial",
+        "label": "Radial",
+        "description": "A surface storing radius over angle and height."
+      }
+    ],
+    "roles": [
+      {
+        "id": "surfaceFixture",
+        "label": "Surface fixture",
+        "description": "Composited into architectural albedo and height before meshing."
+      },
+      {
+        "id": "objectFixture",
+        "label": "Object fixture",
+        "description": "A separately placed mesh."
+      }
+    ],
+    "planeSurfaces": [
+      {
+        "id": "wall",
+        "label": "Wall",
+        "description": "Stands on a wall face; local +X is depth out of the wall."
+      },
+      {
+        "id": "floor",
+        "label": "Floor",
+        "description": "Lies on the cell floor; displacement is upward."
+      },
+      {
+        "id": "ceiling",
+        "label": "Ceiling",
+        "description": "Hangs from the cell ceiling; displacement is downward."
+      }
+    ],
+    "heightOperations": [
+      {
+        "id": "none",
+        "label": "None",
+        "description": "Ignore height; composite albedo only."
+      },
+      {
+        "id": "add",
+        "label": "Add",
+        "description": "base + signedOverlay * alpha."
+      },
+      {
+        "id": "replace",
+        "label": "Replace",
+        "description": "mix(base, overlay, alpha)."
+      }
+    ]
+  }
 }

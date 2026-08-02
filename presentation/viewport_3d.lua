@@ -21,6 +21,17 @@ local DIR_ANGLES = {
     W = math.pi
 }
 
+-- A variant's mesh source: either a hand-modelled OBJ path or an
+-- image-authored geometry asset directory. Returns a cache-key fragment, or
+-- nil when the variant is atlas-only, so every placement site asks one
+-- question instead of testing two fields. Pure and exported so it is gated.
+function viewport_3d.meshSource(spec)
+    if type(spec) ~= "table" then return nil end
+    if spec.geometry then return "geom:" .. tostring(spec.geometry) end
+    if spec.model then return "obj:" .. tostring(spec.model) end
+    return nil
+end
+
 -- Transform a model's horizontal local axes into a visible wall-face frame.
 -- Local +X is outward depth and local +Y is wall tangent. Kept pure and
 -- exported so all four normal signs are mechanically gated.
@@ -1419,8 +1430,10 @@ local function prepareResolvedWallFaces(structure, atlas)
             normalX = normalX, normalY = normalY,
             centerX = (p1.x + p2.x) * 0.5, centerY = (p1.y + p2.y) * 0.5,
             texture = texture, uv = uv,
-            model = (event and doorSpec and doorSpec.model)
-                or (featureOverlay and featureOverlay.model) or nil,
+            -- The variant itself, not just its path: the placement site needs
+            -- the spec to compile either mesh source from it.
+            meshSpec = (event and doorSpec and viewport_3d.meshSource(doorSpec) and doorSpec)
+                or (viewport_3d.meshSource(featureOverlay) and featureOverlay) or nil,
             mapX = mapX, mapY = mapY,
         })
     end
@@ -1883,10 +1896,12 @@ local function drawWorldSpace(session)
                 floor.uv, floor.colors, nil, "floor_clip")
         end
         local floorFeature = atlas and atlas.tiles[structure.materialLookup[x .. "," .. y] or ""]
-        if floorFeature and floorFeature.role == "floor_feature" and floorFeature.model then
+        local floorMesh = floorFeature and floorFeature.role == "floor_feature"
+            and viewport_3d.meshSource(floorFeature) or nil
+        if floorMesh then
             pendingFloorModels[#pendingFloorModels + 1] = {
                 spec = floorFeature, x = x + 0.5, y = y + 0.5,
-                key = "floor-feature:" .. x .. "," .. y .. ":" .. tostring(floorFeature.model),
+                key = "floor-feature:" .. x .. "," .. y .. ":" .. floorMesh,
             }
         end
         if floorFeature and floorFeature.role == "floor_feature" and floorFeature.atlas then
@@ -1940,7 +1955,13 @@ local function drawWorldSpace(session)
     local objModel = require("presentation.obj_model")
     local function ensurePlacedModel(spec, cacheKey, originX, originY, axis, normalX, normalY)
         if structure.modelSurfaces[cacheKey] then return structure.modelSurfaces[cacheKey] end
-        local model, placed = objModel.load(spec.model), {}
+        -- A variant names either a hand-modelled OBJ or an image-authored
+        -- geometry asset. Both compile to the same representation, so this is
+        -- the only place the world renderer knows the difference.
+        local model = spec.geometry
+            and require("engine.geometry").load(spec.geometry)
+            or objModel.load(spec.model)
+        local placed = {}
         for _, modelGroup in ipairs(model.groups) do
             local vertices = {}
             for _, vertex in ipairs(modelGroup.vertices) do
@@ -2014,12 +2035,13 @@ local function drawWorldSpace(session)
                 addVisibleWorldQuad(wallGroup, wall.a, wall.b, wall.c, wall.d,
                     wall.uv, wall.colors, nil, "wall_clip")
             end
-            if face.model then
+            if face.meshSpec then
                 local offset = 0.002
-                queuePlacedModels(ensurePlacedModel(face,
+                queuePlacedModels(ensurePlacedModel(face.meshSpec,
                     "wall:" .. face.mapX .. "," .. face.mapY .. ":"
                         .. face.centerX .. "," .. face.centerY .. ":"
-                        .. face.normalX .. "," .. face.normalY .. ":" .. tostring(face.model),
+                        .. face.normalX .. "," .. face.normalY .. ":"
+                        .. viewport_3d.meshSource(face.meshSpec),
                     face.centerX + face.normalX * offset,
                     face.centerY + face.normalY * offset, nil,
                     face.normalX, face.normalY))
@@ -2063,9 +2085,10 @@ local function drawWorldSpace(session)
             local x, y, axis = cell.x, cell.y, cell.axis
             local doorSpec = viewport_3d.resolveWeightedVariant(
                 atlas.manifest and atlas.manifest.doors, x, y, 83492791, 39916801)
-            if doorSpec and doorSpec.model then
+            local doorMesh = viewport_3d.meshSource(doorSpec)
+            if doorMesh then
                 queuePlacedModels(ensurePlacedModel(doorSpec,
-                    "opening:" .. x .. "," .. y .. ":" .. axis .. ":" .. tostring(doorSpec.model),
+                    "opening:" .. x .. "," .. y .. ":" .. axis .. ":" .. doorMesh,
                     x + 0.5, y + 0.5, axis))
             else
                 local doorOriginX = doorSpec and doorSpec.atlas and doorSpec.atlas[2] * ATLAS_TILE or 0

@@ -2133,7 +2133,27 @@ elseif paramDef.type == "script" then
                             where .. " effectMagnification must be positive")
                     end
                 end
-                if variant.model ~= nil then
+                check(variant.model == nil or variant.geometry == nil,
+                    where .. " authors both model and geometry; a variant has one mesh source")
+                if variant.geometry ~= nil then
+                    -- Image-authored geometry compiles from a PNG pair at load.
+                    -- Checking it here turns a malformed asset into a build
+                    -- failure rather than a crash the first time a player walks
+                    -- into the cell that uses it.
+                    check(poolName == "doors" or poolName == "features",
+                        where .. " geometry is currently supported only for door/opening or fixture variants")
+                    if type(variant.geometry) ~= "string" then
+                        check(false, where .. " geometry must name an asset directory")
+                    else
+                        local okGeometry, errGeometry = pcall(function()
+                            local _, warnings = require("engine.geometry").check(variant.geometry)
+                            for _, warning in ipairs(warnings) do
+                                print("[validator] " .. warning)
+                            end
+                        end)
+                        check(okGeometry, where .. " geometry is invalid: " .. tostring(errGeometry))
+                    end
+                elseif variant.model ~= nil then
                     check(poolName == "doors" or poolName == "features",
                         where .. " model is currently supported only for door/opening or fixture variants")
                     check(type(variant.model) == "string" and variant.model:match("%.obj$") ~= nil,

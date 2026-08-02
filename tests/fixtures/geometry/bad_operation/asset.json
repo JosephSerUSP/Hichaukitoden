@@ -1,0 +1,10 @@
+{
+  "id": "fixture_operation",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "multiply",
+  "heightScale": 0.05,
+  "meshColumns": 4,
+  "meshRows": 4
+}

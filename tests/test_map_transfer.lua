@@ -442,7 +442,7 @@ fixtureModelSession.playerX, fixtureModelSession.playerY, fixtureModelSession.pl
 local _, resolvedFixtureFaces = viewport3d.prepareResolvedStructure(fixtureModelSession)
 local modelOnlyFeatureKeepsAtlas = false
 for _, face in ipairs(resolvedFixtureFaces or {}) do
-    if face.model then
+    if face.meshSpec then
         local textureWidth, textureHeight = face.texture:getDimensions()
         modelOnlyFeatureKeepsAtlas = textureWidth > 64 and textureHeight > 64
         break

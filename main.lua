@@ -85,14 +85,8 @@ local previewMapId = nil
 local previewMapX = nil
 local previewMapY = nil
 local previewMapDir = nil
-local isPreviewReliefMode = false
-local previewReliefFlat = nil
-local previewReliefCoarse = nil
-local previewReliefPanel = nil
-local previewReliefTileset = nil
-local isPreviewReliefAtlasMode = false
-local previewReliefAtlasDir = nil
-local previewReliefAtlasTexture = nil
+local isPreviewGeometryMode = false
+local previewGeometryAsset = nil
 local isProfile3DMode = false
 local profile3DMapId = nil
 local profile3DFrames = nil
@@ -300,18 +294,10 @@ function love.load(arg)
                 if isPositional(arg[i + 2]) then previewMapY = arg[i + 2]; i = i + 1 end
                 if isPositional(arg[i + 2]) then previewMapDir = arg[i + 2]; i = i + 1 end
                 i = i + 1
-            elseif val == "preview-relief" then
-                isPreviewReliefMode = true
-                previewReliefFlat = arg[i + 1]
-                previewReliefCoarse = arg[i + 2]
-                previewReliefPanel = arg[i + 3]
-                previewReliefTileset = arg[i + 4]
-                i = i + 4
-            elseif val == "preview-relief-atlas" then
-                isPreviewReliefAtlasMode = true
-                previewReliefAtlasDir = arg[i + 1]
-                previewReliefAtlasTexture = arg[i + 2]
-                i = i + 2
+            elseif val == "preview-geometry" then
+                isPreviewGeometryMode = true
+                previewGeometryAsset = arg[i + 1]
+                i = i + 1
             elseif val == "preview-fog" then
                 isPreviewFogMode = true
                 previewFogSpec = arg[i + 1]
@@ -380,6 +366,7 @@ function love.load(arg)
             "test_growth", "test_progress", "test_promotion", "test_transform",
             "test_developer_mode", "test_map_transfer", "test_battle_commands",
             "test_troops", "test_early_balance", "test_datalog", "test_dock",
+            "test_geometry",
         }) do
             local ok, err = pcall(dofile, "tests/" .. suite .. ".lua")
             if not ok then failFast.crashed(suite, err) end
@@ -436,19 +423,10 @@ function love.load(arg)
         return
     end
 
-    -- Isolated bas-relief comparison through the real world renderer.
-    if isPreviewReliefMode then
+    -- Isolated image-authored geometry comparison through the real renderer.
+    if isPreviewGeometryMode then
         loader.init(cliCampaignRoot)
-        cli_tools.runPreviewRelief(previewReliefFlat, previewReliefCoarse,
-            previewReliefPanel, previewReliefTileset, loader)
-        love.event.quit(0)
-        return
-    end
-
-    if isPreviewReliefAtlasMode then
-        loader.init(cliCampaignRoot)
-        cli_tools.runPreviewReliefAtlas(previewReliefAtlasDir,
-            previewReliefAtlasTexture, loader)
+        cli_tools.runPreviewGeometry(previewGeometryAsset, loader)
         love.event.quit(0)
         return
     end

@@ -895,159 +895,83 @@ function cli.runPreviewMap(mapId, x, y, dir, loader)
     print("PREVIEW END")
 end
 
--- Experimental bas-relief contact sheet. Models are passed explicitly and
--- installed only in a temporary in-memory tileset, so this preview cannot
--- change campaign data, procedural placement, or golden captures.
-function cli.runPreviewRelief(flatPath, coarsePath, panelPath, tilesetTexture, loader)
-    local json = require("data.json")
-    local payload = { captures = {} }
-    local ok, err = pcall(function()
-        local viewport_3d = require("presentation.viewport_3d")
-        local base = assert(loader.tilesets.dungeon_default, "dungeon_default tileset missing")
-        viewport_3d.init()
-        local cases = {
-            { id = "baseline", path = nil },
-            { id = "flat", path = flatPath },
-            { id = "coarse", path = coarsePath },
-            { id = "panel", path = panelPath },
-        }
-        for _, case in ipairs(cases) do
-            -- Resolver output is immutable and cached by tileset identity, so
-            -- each comparison case gets a distinct ephemeral identity.
-            local tilesetId = "relief_preview_" .. case.id
-            loader.tilesets[tilesetId] = {
-                id = tilesetId, texture = tilesetTexture or base.texture,
-                tileWidth = base.tileWidth, tileHeight = base.tileHeight,
-                base = tilesetTexture and {
-                    walls = { { id = "preview_wall", role = "base_wall", middle = { 0, 0 }, weight = 1 } },
-                    floors = { { id = "preview_floor", role = "base_floor", atlas = { 3, 2 }, weight = 1 } },
-                    ceilings = { { id = "preview_ceiling", role = "base_ceiling", atlas = { 0, 1 }, weight = 1 } },
-                } or base.base,
-                doors = {},
-                features = {
-                    case.path and { id = "relief", role = "wall_feature", model = case.path }
-                        or nil,
-                },
-            }
-            for distance = 1, 3 do
-                -- Look east along a genuine one-cell corridor while the test
-                -- panel sits on its north wall. This oblique view makes real
-                -- displacement visible; a head-on wall mostly tests albedo.
-                local width, height = 10, 3
-                local grid = {}
-                for y = 1, height do
-                    grid[y] = {}
-                    for x = 1, width do
-                        local boundary = y == 1 or y == height or x == 1 or x == width
-                        grid[y][x] = boundary and "#" or "."
-                    end
-                end
-                local vSession = session.GameSession.new(loader)
-                vSession.mapGrid = grid
-                vSession.currentMapData = {
-                    tileset = tilesetId, ceilingStyle = "solid", events = {},
-                }
-                vSession.generatedFeatures = case.path and {
-                    { x = distance + 1, y = 0, material = "relief" },
-                } or {}
-                -- Session player coordinates are one-based; generated feature
-                -- placements are zero-based map coordinates.
-                vSession.playerX, vSession.playerY, vSession.playerDir = 2, 2, "E"
-                local canvas = love.graphics.newCanvas(256, 144)
-                love.graphics.setCanvas({ canvas, depth = true, stencil = true })
-                love.graphics.clear(0, 0, 0, 1, true, true)
-                viewport_3d.draw(vSession)
-                love.graphics.setCanvas()
-                local fileData = canvas:newImageData():encode("png")
-                payload.captures[#payload.captures + 1] = {
-                    id = case.id, distance = distance,
-                    image = love.data.encode("string", "base64", fileData),
-                }
-                viewport_3d.invalidateStructure(vSession)
-            end
-            loader.tilesets[tilesetId] = nil
-        end
-        payload.width, payload.height = 256, 144
-    end)
-    loader.tilesets.relief_preview_flat = nil
-    loader.tilesets.relief_preview_baseline = nil
-    loader.tilesets.relief_preview_coarse = nil
-    loader.tilesets.relief_preview_panel = nil
-    love.graphics.setCanvas()
-    if not ok then payload = { error = tostring(err) } end
-    print("RELIEF PREVIEW BEGIN")
-    print(json.encode(payload))
-    print("RELIEF PREVIEW END")
-end
-
--- Complete-atlas relief gallery. Each atlas cell is rendered in its own
--- isolated corridor so one malformed/projected mesh cannot corrupt the other
--- comparisons in the contact sheet.
-function cli.runPreviewReliefAtlas(modelDir, texturePath, loader)
+-- Image-authored geometry contact sheet. The asset is installed only in a
+-- temporary in-memory tileset, so a preview can never change campaign data,
+-- procedural placement or golden captures.
+--
+-- Renders down a genuine one-cell corridor rather than at a head-on wall:
+-- displacement is only legible obliquely, and a flat-on view mostly tests
+-- albedo. Each asset is captured undisplaced and displaced so the pair shows
+-- what the height field actually contributed.
+function cli.runPreviewGeometry(assetPath, loader)
     local json = require("data.json")
     local payload = { captures = {}, width = 256, height = 144 }
     local ok, err = pcall(function()
         local viewport_3d = require("presentation.viewport_3d")
+        local geometry = require("engine.geometry")
+        local base = assert(loader.tilesets.dungeon_default, "dungeon_default tileset missing")
+        local spec = geometry.check(assetPath)
+        payload.asset = { id = spec.id, topology = spec.topology, role = spec.role,
+            surface = spec.surface, heightScale = spec.heightScale }
         viewport_3d.init()
-        for index = 0, 15 do
-            local row, col = math.floor(index / 4), index % 4
-            for displaced = 0, 1 do
-                local tilesetId = string.format("relief_atlas_preview_%02d_%d", index, displaced)
-                local features = displaced == 1 and { {
-                    id = "relief", role = "wall_feature",
-                    model = string.format("%s/tile_%d_%d.obj", modelDir, row, col),
-                } } or {}
+        for _, displaced in ipairs({ false, true }) do
+            -- Resolver output is cached by tileset identity, so each case needs
+            -- a distinct ephemeral identity.
+            local tilesetId = "geometry_preview_" .. tostring(displaced)
             loader.tilesets[tilesetId] = {
-                id = tilesetId, texture = texturePath, tileWidth = 64, tileHeight = 64,
-                base = {
-                    walls = { { id = "wall", role = "base_wall", middle = { col, row }, weight = 1 } },
-                    floors = { { id = "floor", role = "base_floor", atlas = { 3, 1 }, weight = 1 } },
-                    ceilings = { { id = "ceiling", role = "base_ceiling", atlas = { 0, 1 }, weight = 1 } },
-                }, doors = {}, features = features,
+                id = tilesetId, texture = base.texture,
+                tileWidth = base.tileWidth, tileHeight = base.tileHeight,
+                base = base.base, doors = {},
+                features = displaced
+                    and { { id = "preview", role = "wall_feature", geometry = assetPath } }
+                    or {},
             }
-                local width, height = 14, 3
-                local grid = {}
-                for y = 1, height do
-                    grid[y] = {}
-                    for x = 1, width do
-                        grid[y][x] = (y == 1 or y == height or x == 1 or x == width) and "#" or "."
-                    end
+            local width, height = 14, 3
+            local grid = {}
+            for y = 1, height do
+                grid[y] = {}
+                for x = 1, width do
+                    grid[y][x] = (y == 1 or y == height or x == 1 or x == width) and "#" or "."
                 end
-                local sessionObj = session.GameSession.new(loader)
-                sessionObj.mapGrid = grid
-                sessionObj.currentMapData = { tileset = tilesetId, ceilingStyle = "solid", events = {} }
-                sessionObj.generatedFeatures = {}
-                if displaced == 1 then
-                    -- Cover both corridor walls so displacement changes the
-                    -- complete side profile instead of one distant panel.
-                    for featureX = 4, width - 2 do
-                        sessionObj.generatedFeatures[#sessionObj.generatedFeatures + 1] =
-                            { x = featureX, y = 0, material = "relief" }
-                        sessionObj.generatedFeatures[#sessionObj.generatedFeatures + 1] =
-                            { x = featureX, y = height - 1, material = "relief" }
-                    end
-                end
-                sessionObj.playerX, sessionObj.playerY, sessionObj.playerDir = 4, 2, "E"
-                local canvas = love.graphics.newCanvas(256, 144)
-                love.graphics.setCanvas({ canvas, depth = true, stencil = true })
-                love.graphics.clear(0, 0, 0, 1, true, true)
-                viewport_3d.draw(sessionObj)
-                love.graphics.setCanvas()
-                local fileData = canvas:newImageData():encode("png")
-                payload.captures[#payload.captures + 1] = {
-                    displaced = displaced == 1, index = index + 1,
-                    image = love.data.encode("string", "base64", fileData),
-                }
-                viewport_3d.invalidateStructure(sessionObj)
-                loader.tilesets[tilesetId] = nil
             end
+            local previewSession = session.GameSession.new(loader)
+            previewSession.mapGrid = grid
+            previewSession.currentMapData = {
+                tileset = tilesetId, ceilingStyle = "solid", events = {},
+            }
+            previewSession.generatedFeatures = {}
+            if displaced then
+                -- Cover both corridor walls so displacement changes the whole
+                -- side profile rather than one distant panel.
+                for featureX = 4, width - 2 do
+                    previewSession.generatedFeatures[#previewSession.generatedFeatures + 1] =
+                        { x = featureX, y = 0, material = "preview" }
+                    previewSession.generatedFeatures[#previewSession.generatedFeatures + 1] =
+                        { x = featureX, y = height - 1, material = "preview" }
+                end
+            end
+            previewSession.playerX, previewSession.playerY, previewSession.playerDir = 4, 2, "E"
+            local canvas = love.graphics.newCanvas(payload.width, payload.height)
+            love.graphics.setCanvas({ canvas, depth = true, stencil = true })
+            love.graphics.clear(0, 0, 0, 1, true, true)
+            viewport_3d.draw(previewSession)
+            love.graphics.setCanvas()
+            payload.captures[#payload.captures + 1] = {
+                displaced = displaced,
+                image = love.data.encode("string", "base64",
+                    canvas:newImageData():encode("png")),
+            }
+            viewport_3d.invalidateStructure(previewSession)
+            loader.tilesets[tilesetId] = nil
         end
     end)
+    loader.tilesets["geometry_preview_true"] = nil
+    loader.tilesets["geometry_preview_false"] = nil
     love.graphics.setCanvas()
     if not ok then payload = { error = tostring(err) } end
-    print("RELIEF ATLAS PREVIEW BEGIN")
+    print("GEOMETRY PREVIEW BEGIN")
     print(json.encode(payload))
-    print("RELIEF ATLAS PREVIEW END")
+    print("GEOMETRY PREVIEW END")
 end
 
 -- Deterministic headless 3D renderer profile. `flush` makes each sample include

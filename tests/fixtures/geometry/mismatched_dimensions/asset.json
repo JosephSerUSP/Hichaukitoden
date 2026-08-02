@@ -1,0 +1,10 @@
+{
+  "id": "fixture_mismatch",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "add",
+  "heightScale": 0.05,
+  "meshColumns": 4,
+  "meshRows": 4
+}
