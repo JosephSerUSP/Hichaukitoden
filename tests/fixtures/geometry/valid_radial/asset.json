@@ -1,0 +1,12 @@
+{
+  "id": "fixture_radial",
+  "role": "objectFixture",
+  "topology": "radial",
+  "baseRadius": 0.12,
+  "height": 1.2,
+  "heightScale": 0.2,
+  "angularSegments": 8,
+  "verticalSegments": 10,
+  "capTop": true,
+  "capBottom": true
+}

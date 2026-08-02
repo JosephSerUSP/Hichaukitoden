@@ -1,0 +1,13 @@
+{
+  "id": "fluted_pillar",
+  "role": "objectFixture",
+  "topology": "radial",
+  "baseRadius": 0.12,
+  "height": 1.4,
+  "heightScale": 0.26,
+  "angularSegments": 12,
+  "verticalSegments": 16,
+  "capTop": true,
+  "capBottom": true,
+  "blocksMovement": true
+}

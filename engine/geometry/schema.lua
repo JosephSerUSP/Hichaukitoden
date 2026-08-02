@@ -146,6 +146,28 @@ function schema.parse(assetPath)
         if parsed.albedoMode == "frontBack" and parsed.layout == "single" then
             error(label .. ": albedoMode 'frontBack' needs a front/back atlas layout", 0)
         end
+    elseif topology.id == "radial" then
+        parsed.baseRadius = number(meta, "baseRadius", label, nil, 0, 0.5)
+        parsed.height = number(meta, "height", label, nil, 0, 4)
+        parsed.radiusScale = number(meta, "heightScale", label, nil, 0, 0.5)
+        parsed.angularSegments = integer(meta, "angularSegments", label, nil, 3, 64)
+        parsed.verticalSegments = integer(meta, "verticalSegments", label, nil, 1, 64)
+        parsed.capTop = meta.capTop == true
+        parsed.capBottom = meta.capBottom == true
+        -- Signed radius reads 128 as the base radius so a profile can cut
+        -- inward as well as bulge out; unsigned only ever adds.
+        parsed.signedRadius = meta.signedRadius == true
+        local symmetry = meta.symmetry or {}
+        if type(symmetry) ~= "table" then
+            error(label .. ": 'symmetry' must be an object", 0)
+        end
+        parsed.symmetry = { angular = symmetry.angular == true }
+        if parsed.baseRadius + parsed.radiusScale > 0.5 then
+            -- A radial fixture wider than its cell pokes through the walls
+            -- around it, and nothing downstream would report that.
+            error(label .. ": baseRadius plus heightScale exceeds half a cell,"
+                .. " so the object would intersect its own walls", 0)
+        end
     else
         error(label .. ": topology '" .. topology.id .. "' is declared but not yet compiled", 0)
     end

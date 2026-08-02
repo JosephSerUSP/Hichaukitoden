@@ -16,6 +16,7 @@ local schema = require("engine.geometry.schema")
 local images = require("engine.geometry.images")
 local plane = require("engine.geometry.plane")
 local shell = require("engine.geometry.shell")
+local radial = require("engine.geometry.radial")
 local mesh = require("presentation.mesh")
 
 local geometry = {}
@@ -91,6 +92,8 @@ function geometry.load(assetPath)
     local model
     if spec.topology == "shell" then
         model = shell.build(spec, images.data(spec.heightPath))
+    elseif spec.topology == "radial" then
+        model = radial.build(spec, images.data(spec.heightPath))
     else
         -- One layer for now: the asset's own field. Composing a surface fixture
         -- onto a base wall adds entries here, which is why sampleField already

@@ -205,7 +205,84 @@ def sacred_idol():
     }
 
 
-ASSETS = {"limestone_wall": limestone_wall, "sacred_idol": sacred_idol}
+def fluted_pillar():
+    """Radial: a fluted civic pillar with a base and a capital.
+
+    Horizontal is angle, vertical is height, grayscale is radius offset about
+    the declared base radius. 128 is that base radius, so flutes cut inward
+    while the base and capital swell outward.
+    """
+    width, height_px = 96, 128
+    albedo = Image.new("RGBA", (width, height_px))
+    height = Image.new("RGBA", (width, height_px))
+    apx, hpx = [], []
+    flutes = 12
+
+    for y in range(height_px):
+        v = y / (height_px - 1)          # 0 at the top of the pillar
+        for x in range(width):
+            u = x / width                # full turn; wraps at the seam
+
+            # Vertical profile: a capital at the top, a plinth at the bottom,
+            # and a very slight entasis through the shaft between them.
+            if v < 0.09:
+                profile = 0.62                      # capital abacus
+            elif v < 0.15:
+                profile = 0.62 - 0.42 * ((v - 0.09) / 0.06)
+            elif v > 0.91:
+                profile = 0.62                      # plinth
+            elif v > 0.85:
+                profile = 0.20 + 0.42 * ((v - 0.85) / 0.06)
+            else:
+                shaft = (v - 0.15) / 0.70
+                profile = 0.20 + 0.06 * math.sin(shaft * math.pi)
+
+            # Flutes: shallow vertical grooves, suppressed on capital/plinth so
+            # those read as solid mouldings rather than gear teeth.
+            groove = math.cos(u * math.pi * 2 * flutes)
+            fluting = 0.0 if (v < 0.16 or v > 0.84) else -0.16 * max(0.0, groove)
+
+            weather = smooth_noise(x, y, 23, 12.0)
+            radius = profile + fluting + 0.03 * (weather - 0.5)
+            radius = max(0.0, min(1.0, radius))
+
+            # Light catches the outer face of each flute ridge.
+            tone = 0.60 + 0.22 * max(0.0, groove) + 0.10 * (weather - 0.5)
+            if v < 0.15 or v > 0.85:
+                tone = 0.66 + 0.10 * (weather - 0.5)
+            tone = max(0.0, min(1.0, tone))
+
+            apx.append((
+                int(255 * tone * 0.99),
+                int(255 * tone * 0.95),
+                int(255 * tone * 0.80),
+                255,
+            ))
+            level = int(round(radius * 255))
+            hpx.append((level, level, level, 255))
+
+    albedo.putdata(apx)
+    height.putdata(hpx)
+    return albedo, height, {
+        "id": "fluted_pillar",
+        "role": "objectFixture",
+        "topology": "radial",
+        "baseRadius": 0.12,
+        "height": 1.40,
+        "heightScale": 0.26,
+        "angularSegments": 12,
+        "verticalSegments": 16,
+        "capTop": True,
+        "capBottom": True,
+        "blocksMovement": True,
+    }
+
+
+ASSETS = {
+    "limestone_wall": limestone_wall,
+    "sacred_idol": sacred_idol,
+    "fluted_pillar": fluted_pillar,
+}
 
 
 def main():

@@ -1,0 +1,12 @@
+{
+  "id": "fixture_oversized",
+  "role": "objectFixture",
+  "topology": "radial",
+  "baseRadius": 0.4,
+  "height": 1.2,
+  "heightScale": 0.3,
+  "angularSegments": 8,
+  "verticalSegments": 10,
+  "capTop": true,
+  "capBottom": true
+}

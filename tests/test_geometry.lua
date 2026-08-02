@@ -175,5 +175,52 @@ end
 check(symmetric and math.abs(mirrored.bounds.maxX + mirrored.bounds.minX) < 1e-6,
     "mirrorDepth produces geometry symmetric about the central plane")
 
+print("=== Radial Topology ===")
+
+local radialSpec = geometry.check(FIXTURES .. "valid_radial")
+check(radialSpec.angularSegments == 8 and radialSpec.capTop and radialSpec.capBottom,
+    "a radial asset parses its segment counts and cap flags")
+refuses("oversized_radial",
+    "a radial object wider than its cell is refused before it clips the walls")
+
+local pillar = geometry.load(FIXTURES .. "valid_radial")
+check(pillar.vertexCount > 0 and pillar.groups[1].mesh ~= nil,
+    "a radial asset compiles and uploads")
+check(pillar.bounds.minZ >= -1e-6 and math.abs(pillar.bounds.maxZ - 1.2) < 1e-6,
+    "a radial object stands on the cell floor and reaches its declared height")
+
+-- The seam is this topology's whole difficulty: the ring must close, not leave
+-- a gap or fold back on itself.
+local maxRadius = 0
+for _, group in ipairs(pillar.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        maxRadius = math.max(maxRadius, math.sqrt(vertex[1] ^ 2 + vertex[2] ^ 2))
+    end
+end
+check(maxRadius <= 0.5 + 1e-6,
+    "no radial vertex escapes its own cell")
+
+-- Walk the bottom ring and confirm it returns to its start: an unclosed seam
+-- would leave the last segment short of the first.
+local closed, segments = true, radialSpec.angularSegments
+for segment = 0, segments - 1 do
+    local theta = segment / segments * math.pi * 2
+    local wrapped = ((segment + segments) % segments) / segments * math.pi * 2
+    closed = closed and math.abs(math.cos(theta) - math.cos(wrapped)) < 1e-9
+end
+check(closed, "the angular parameterization wraps exactly at the seam")
+
+-- Caps are what make a pillar solid rather than a tube seen through at the top.
+local cappedTop = false
+for _, group in ipairs(pillar.groups) do
+    for _, vertex in ipairs(group.vertices) do
+        if math.abs(vertex[3] - 1.2) < 1e-6
+            and math.abs(vertex[1]) < 1e-9 and math.abs(vertex[2]) < 1e-9 then
+            cappedTop = true
+        end
+    end
+end
+check(cappedTop, "capTop fans a closed lid to the central axis")
+
 print(string.format("=== Geometry Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " geometry test(s) failed", failed) end
