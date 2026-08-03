@@ -38,6 +38,60 @@ validator.run = function(loader)
         validTraitCodes[tc.code] = true
         traitCodeDefs[tc.code] = tc
     end
+    -- Every registered trait/effect must carry the compact display vocabulary
+    -- the item panes read (presentation/item_presentation.lua). Without it a
+    -- new trait silently falls back to its editor label, which is the sentence
+    -- form that wrapped to three lines in the info pane -- exactly the drift
+    -- this registry exists to prevent.
+    local VALID_VALUE_FORMATS = { signed = true, percent = true, percentSigned = true,
+        multiplier = true, multiplierSigned = true, subject = true, none = true }
+    local VALID_POLARITY = { higher = true, lower = true, none = true }
+    local VALID_SUBJECT = { param = true, state = true, stateCategory = true,
+        element = true, skill = true, actor = true }
+
+    local function checkDisplay(desc, def, requireValue)
+        local d = def.display
+        if not check(type(d) == "table", desc .. " has no display block") then return end
+        check(type(d.short) == "string" and d.short ~= "",
+            desc .. ".display.short must be a non-empty string")
+        check(VALID_POLARITY[d.polarity],
+            desc .. ".display.polarity '" .. tostring(d.polarity) .. "' is not higher/lower/none")
+        if requireValue or d.value ~= nil then
+            check(VALID_VALUE_FORMATS[d.value],
+                desc .. ".display.value '" .. tostring(d.value) .. "' is not a known format")
+        end
+        if d.subject ~= nil then
+            check(VALID_SUBJECT[d.subject],
+                desc .. ".display.subject '" .. tostring(d.subject) .. "' is not a known subject kind")
+        end
+        -- A {d} slot with nothing to fill it prints a half-sentence.
+        if d.short and d.short:find("{d}", 1, true) then
+            check(d.subject ~= nil, desc .. ".display.short uses {d} but declares no subject")
+        end
+        check(d.icon == nil or (type(d.icon) == "number" and d.icon > 0),
+            desc .. ".display.icon must be a positive iconset index")
+    end
+
+    for _, et in ipairs((loader.engine and loader.engine.effectTypes) or {}) do
+        checkDisplay("effectType '" .. tostring(et.id) .. "'", et, false)
+        if et.display and et.display.subjectParam then
+            local named = false
+            for _, key in ipairs(et.params or {}) do
+                if key == et.display.subjectParam then named = true end
+            end
+            check(named, "effectType '" .. tostring(et.id) .. "'.display.subjectParam '"
+                .. tostring(et.display.subjectParam) .. "' is not one of its params")
+        end
+    end
+    for _, tc in ipairs((loader.engine and loader.engine.traitCodes) or {}) do
+        checkDisplay("traitCode '" .. tostring(tc.code) .. "'", tc, true)
+        -- A trait whose value column IS its dataId must actually have one.
+        if tc.display and (tc.display.value == "subject" or (tc.display.short or ""):find("{d}", 1, true)) then
+            check(tc.usesDataId == true, "traitCode '" .. tostring(tc.code)
+                .. "' displays a subject but usesDataId is not true")
+        end
+    end
+
     local validFoodTags = {}
     for _, tag in ipairs((loader.engine and loader.engine.foodTags) or {}) do
         validFoodTags[tag.tag] = true

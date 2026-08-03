@@ -1386,6 +1386,56 @@ that actually has pixels. After the iconset was pruned of redundant recolours,
 Re-authoring those onto surviving base icons plus a palette is content work; a
 bounds-and-emptiness check in G1 is the insurance.
 
+### 1.22 The trait/effect readout is a vocabulary, not a sentence (03.08.2026)
+
+Item panes state what a thing does as **two columns**: a short noun on the
+left, its one number right-aligned against the pane's inner edge, coloured by
+whether the number helps or hurts the holder.
+
+```
+Heal                190
+Savor
+ Dmg Taken          90%
+```
+
+The readout used to be assembled from the editor's own labels, which are
+authoring names, not player words. That produced `Parameter +: Atk + 23`,
+`HP Restore: Value 60`, and an `Armor Penetration: 45%` that wrapped across
+**three lines** in the 14-tile info pane. The registry label was doing two
+jobs — naming a code for the author and describing an effect to the player —
+and the second job is the one it was bad at.
+
+**The vocabulary is data.** Every `traitCodes[]` and `effectTypes[]` entry in
+`engine.json` carries a `display` block beside its authoring `label`:
+
+| Field | Meaning |
+|---|---|
+| `short` | The player's word. `{d}` interpolates the subject (`{d} Risk` → "Sleep Risk") |
+| `value` | How the number formats: `signed`, `percent`, `percentSigned`, `multiplier`, `multiplierSigned`, `subject`, `none` |
+| `polarity` | Does more of this help (`higher`), hurt (`lower`), or neither (`none`) |
+| `subject` | What `dataId` names: `param`, `state`, `stateCategory`, `element`, `skill`, `actor` |
+| `icon` | Optional iconset index, drawn ahead of the label by `ui.drawIcon` |
+
+**Tone is derived, never authored.** `polarity` plus the value's own sign
+against the format's neutral point (1 for the multiplicative rates, 0 for
+everything else) yields good / bad / neutral, which
+`ui.toneColors` paints. This is why `DAMAGE_RATE 82%` reads green while
+`STATE_RATE 150%` reads red though both numbers moved the same direction —
+the author states which way the trait points, once, and every surface agrees.
+Hand-colouring per item would have been 190 chances to disagree.
+
+**Labels are budgeted at 11 characters** and truncate rather than wrap.
+`tests/test_item_display.lua` enforces the budget, because a label that
+overflows is not a cosmetic problem in a pane this narrow: it eats the value,
+which is the column the player is actually scanning. The same suite pins the
+tone rules and renders every registered code, and G1 rejects a registry entry
+with a missing or malformed `display` block — a new trait cannot ship without
+its player-facing word.
+
+None of this is visible to G2 (battle logs), G3 (UI events) or G4. Only G5
+sees it, and only for the frames a golden script happens to land on. The unit
+suite is the real gate.
+
 ## 2. Design rules (from the BIBLE — enforced by review)
 
 ### 2.1 Code sharing and reuse (CRITICAL)

@@ -22,18 +22,13 @@ local config = require("engine.config")
 
 local progress = {}
 
--- Display labels for the growing parameters. Growth's PARAMS list stays the
--- single source of WHICH parameters exist; this only names them.
-local PARAM_LABELS = {
-    maxHp = "HP",
-    atk = "ATK",
-    def = "DEF",
-    mat = "MAT",
-    mdf = "MDF",
-}
-
+-- Growth's PARAMS list stays the single source of WHICH parameters exist;
+-- engine.json -> paramLabels names them, shared with the item/trait readouts
+-- (presentation/item_presentation.lua) so "ATK" is one word in one place.
 local function paramLabel(param)
-    return PARAM_LABELS[param] or param:upper()
+    local loader = require("data.loader")
+    local labels = (loader and loader.engine and loader.engine.paramLabels) or {}
+    return labels[param] or param:upper()
 end
 
 local function skillIds(battler)

@@ -145,6 +145,47 @@
             };
         }
 
+        // The player-facing readout (SPEC 1.22) lives in a `display` sub-object
+        // rather than beside `label`, because `label` names the code for the
+        // AUTHOR and `display.short` names it for the player -- collapsing the
+        // two is what produced "Parameter +: Atk + 23" in the shop pane.
+        // G1 rejects an entry missing these, so the row editors expose them and
+        // the "+ Add" factories seed them.
+        function displayTextField(key, placeholder, width) {
+            return (entry) => {
+                entry.display = entry.display || {};
+                const input = document.createElement('input');
+                input.className = 'win98-input';
+                input.placeholder = placeholder;
+                input.title = placeholder;
+                if (width) { input.style.width = width; } else { input.style.flex = '1'; }
+                input.value = entry.display[key] || '';
+                input.oninput = () => { entry.display[key] = input.value; setDirty(true); };
+                return input;
+            };
+        }
+
+        function displaySelectField(key, options, width) {
+            return (entry) => {
+                entry.display = entry.display || {};
+                const sel = makeSelect(options, entry.display[key] || options[0], v => {
+                    // "--" is the absent state: an optional field written as ""
+                    // would fail G1's enum check instead of being skipped.
+                    if (v === '--') { delete entry.display[key]; } else { entry.display[key] = v; }
+                });
+                sel.style.width = width || '80px';
+                sel.style.height = '19px';
+                sel.style.fontSize = '11px';
+                return sel;
+            };
+        }
+
+        const DISPLAY_VALUE_FORMATS = ['signed', 'percent', 'percentSigned',
+            'multiplier', 'multiplierSigned', 'subject', 'none'];
+        const DISPLAY_POLARITIES = ['higher', 'lower', 'none'];
+        const DISPLAY_SUBJECTS = ['--', 'param', 'state', 'stateCategory',
+            'element', 'skill', 'actor'];
+
         function buildEffectTypeRegistryEditor(panel) {
             dbPayload.engine.effectTypes = dbPayload.engine.effectTypes || [];
             const list = dbPayload.engine.effectTypes;
@@ -158,8 +199,11 @@
                 registryTextField('id', 'id (Lua handler)', '110px'),
                 registryTextField('label', 'Label', '110px'),
                 registryCsvField('params', 'params (csv)', '120px'),
+                displayTextField('short', 'player word', '100px'),
+                displaySelectField('polarity', DISPLAY_POLARITIES, '70px'),
                 registryTextField('description', 'Description', null),
-            ], () => ({ id: 'new_effect', label: 'New Effect', params: ['value'], description: '' }), '+ Add Effect Type');
+            ], () => ({ id: 'new_effect', label: 'New Effect', params: ['value'],
+                display: { short: 'New Effect', polarity: 'none' }, description: '' }), '+ Add Effect Type');
             panel.appendChild(box);
         }
 
@@ -176,8 +220,14 @@
                 registryTextField('code', 'CODE', '150px'),
                 registryTextField('label', 'Label', '110px'),
                 registryCheckboxField('usesDataId', 'dataId'),
+                displayTextField('short', 'player word ({d} = subject)', '130px'),
+                displaySelectField('value', DISPLAY_VALUE_FORMATS, '110px'),
+                displaySelectField('polarity', DISPLAY_POLARITIES, '70px'),
+                displaySelectField('subject', DISPLAY_SUBJECTS, '95px'),
                 registryTextField('description', 'Description', null),
-            ], () => ({ code: 'NEW_CODE', label: 'New Trait', usesDataId: false, description: '' }), '+ Add Trait Code');
+            ], () => ({ code: 'NEW_CODE', label: 'New Trait', usesDataId: false,
+                display: { short: 'New Trait', value: 'signed', polarity: 'higher' },
+                description: '' }), '+ Add Trait Code');
             panel.appendChild(box);
         }
 

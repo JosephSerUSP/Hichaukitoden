@@ -543,6 +543,50 @@ local function drawTextLines(text, env, x, y, lineSpacing, limit, align, revealE
     end
 end
 
+-- An item's mechanics as a two-column readout: the noun on the left, its one
+-- number right-aligned against the pane's inner edge, coloured by whether it
+-- helps or hurts the holder (presentation/item_presentation.rows supplies both
+-- the vocabulary and the tone).
+--
+-- Right-aligning the value is the whole trick: the numbers line up in a column
+-- the eye can run down, and the label gets whatever width is left instead of
+-- pushing the value onto a second line. The old single-string form wrapped
+-- "Armor Penetration: 45%" across three lines in this 14-tile pane.
+--
+-- Rows never wrap. A label too long for its share is truncated, because a
+-- readout the player scans is worth more than a phrase they can read in full
+-- -- and the vocabulary is authored short enough that truncation is the
+-- exception, not the layout.
+local function drawItemRows(rows, x, y, w, h, lineSpacing)
+    local gap = ui.toPx(0.5)
+    local maxRows = math.max(1, math.floor(h / lineSpacing))
+    for i, row in ipairs(rows) do
+        if i > maxRows then break end
+        local rowY = y + (i - 1) * lineSpacing
+        local tone = ui.toneColors[row.tone] or ui.toneColors.neutral
+        local valueW = 0
+        if row.value then
+            valueW = ui.measureText(row.value)
+            ui.drawString(row.value, x + w - valueW, rowY, tone)
+        end
+
+        local label = row.label
+        local labelX = x + (row.indent and ui.toPx(0.5) or 0)
+        if row.icon then
+            ui.drawIcon(row.icon, labelX, rowY + math.floor((ui.lineHeight - ui.iconSize) / 2) - 1,
+                { palette = row.iconPalette })
+            labelX = labelX + ui.iconSize + ui.toPx(0.25)
+        end
+        local labelLimit = w - (labelX - x) - (valueW > 0 and (valueW + gap) or 0)
+        -- A flag trait ("Rear Guard") has no number, so the LABEL carries the
+        -- tone -- otherwise the one row that is purely good would read grey.
+        -- A heading is not a trait and never claims a tone.
+        local labelColor = ui.toneColors.label
+        if not row.value and not row.heading then labelColor = tone end
+        ui.drawString(ui.fitText(label, labelLimit), labelX, rowY, labelColor)
+    end
+end
+
 -- Shared cost/gain preview binding for any authored gauge (Summoner
 -- rework: MP/EXP/gold previews on hover for spells, ritual, shops, items
 -- alike — one authoring surface, ui.drawBar does the actual drawing).
@@ -1644,8 +1688,14 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     elseif style == "itemInfo" then
         local cached = listCache[id]
         local row = cached and cached.rows[cached.cursor]
-        local text = row and row.gameplayText or "No item selected."
-        drawTextLines(text, env, contentX, contentY, lineSpacing, w - ui.toPx(2))
+        local rows = row and row.gameplayRows
+        if rows then
+            drawItemRows(rows, contentX, contentY,
+                w - (contentX - x) - ui.toPx(1), h - (contentY - y), lineSpacing)
+        else
+            drawTextLines("No item selected.", env, contentX, contentY,
+                lineSpacing, w - ui.toPx(2))
+        end
     elseif style == "keyArt" then
         local cached = listCache[id]
         local row = cached and cached.rows[cached.cursor]
