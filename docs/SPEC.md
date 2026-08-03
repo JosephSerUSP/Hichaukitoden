@@ -1534,6 +1534,8 @@ height almost at once and then unrolls sideways.
 | G2 golden battle | `tools/golden/check.ps1` | Battle simulation event log byte-identity, one reference per fixture (`tools/golden/battle_<key>.log`; fixtures authored in `data/goldenBattles.json`). Never regenerate to silence a red diff — regeneration is a reviewed, owner-signed action. |
 | G3 golden UI | `tools/golden/check-ui.ps1` | Per-scene UI trace identity for every scene. |
 | G4 engine state | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches what the engine actually reports (scene inventory + draw modes, registry counts, **registry entries with no implementation**, flow phases, content inventory). |
+| G5 golden screens | `tools/golden/check-screens.ps1` → `SCREENS OK` | Rendered frame byte-identity, per scene and per goldenScript step. The only gate that can see the 3D world view. |
+| G6 golden editor | `tools/golden/check-editor.ps1` → `EDITOR SCREENS OK` | Rendered frame byte-identity for every `tools/editor` tab and modal. The only gate that can see the editor. |
 
 The `[formula] error in 'os.time()'` line during G1 is the sandbox
 negative-test, not a failure. The editor runs G1 automatically after every
@@ -1597,9 +1599,22 @@ taught to the sweep rather than the sweep weakened.
 
 Mechanical-rule enforcement map: registry/context/zero-SCRIPT/dangling-id
 rules → G1; **paired-data coherence → G1; reachability → the advisory
-`reachability` report**; behavioral regressions → G2; scene rendering → G3; the
+`reachability` report**; behavioral regressions → G2; scene UI events → G3;
+what the game actually renders → G5; what the editor actually renders → G6; the
 aesthetic and code-sharing rules (§2) are review-enforced — call them out
 in PR review when violated.
+
+**G5 and G6 are the two pixel gates**, and they exist for the same reason: the
+event- and log-based gates above them are blind to presentation. G5 covers the
+game, G6 covers `tools/editor` — a form that renders no fields or a tab that
+throws before it paints breaks no other gate, because G1 only ever looked at the
+data the editor writes, never at the editor. Both compare pixels on one machine
+and one GPU/browser: a driver, font or Chrome update can legitimately shift them,
+and deciding that is an owner call, never a silent recapture. G6 is read-only by
+construction (no step saves), which matters because the editor writes form edits
+straight through to `data/*.json`; adding an editor tab or modal means adding a
+step to `STEPS` in `tools/golden/editor-screens.py`, and the gate reports an
+unclaimed reference as `ORPHANED`.
 
 ---
 

@@ -30,6 +30,10 @@ tools/golden/screens-actual/
 # G5 gallery output
 tools/golden/gallery/
 
+# G6 diff output: same deal for the editor gate. The tracked artifact is
+# tools/golden/editor-screens/.
+tools/golden/editor-screens-actual/
+
 # Effekseer shim build artifact (6.1MB). Rebuild with tools/effekseer/build.ps1.
 # Nothing here is a fallback: a stale shim is refused at init by name, so if a
 # gate says the DLL is out of date, rebuild rather than hunting for a copy.

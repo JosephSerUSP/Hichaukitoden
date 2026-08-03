@@ -41,6 +41,7 @@ default execution policy. Always run them as
 | G3 | `tools/golden/check-ui.ps1` | Per-scene UI trace identity |
 | G4 | `tools/golden/check-state.ps1` | `docs/ENGINE-STATE.md` matches the live engine |
 | G5 | `tools/golden/check-screens.ps1` → `SCREENS OK` | Rendered frame byte-identity, per scene and per goldenScript step |
+| G6 | `tools/golden/check-editor.ps1` → `EDITOR SCREENS OK` | Rendered frame byte-identity for every `tools/editor` tab and modal |
 | unit | `lovec . unittest` → `ALL UNIT TESTS OK` | Behavior the golden gates can't see |
 | save | `lovec . savetest` → `SAVETEST OK` | Save/load round-trip |
 
@@ -49,7 +50,7 @@ resolves but that nothing can produce or trigger — unsellable shops, items no
 craft yields, creatures no pool grants. See SPEC §3.1 for why that is advisory
 while paired-data coherence is a G1 failure.
 
-- G2/G3/G5 red = a **regression** (behavioral for G2/G3, visual for G5).
+- G2/G3/G5/G6 red = a **regression** (behavioral for G2/G3, visual for G5/G6).
   Investigate. Never regenerate a golden log or recapture screenshots to
   silence a diff; regeneration is an owner-signed action.
 - **G5 is the only gate that can see the world view.** G1 validates data, G2
@@ -59,6 +60,21 @@ while paired-data coherence is a G1 failure.
   against `tools/golden/screens/`. G5 byte-compares pixels, so a GPU or
   driver change can legitimately shift it; that is an owner call, not a
   silent recapture.
+- **G6 is the only gate that can see the editor.** G1 validates the data the
+  editor writes; nothing looked at the editor itself, so a form that renders no
+  fields, a modal that opens empty, or a tab that throws before it paints
+  stayed invisible until a human happened to open that exact tab. G6 boots
+  `tools/editor/server.js` on a port of its own, drives a headless Chrome
+  through every tab and modal listed in `STEPS` (`tools/golden/editor-screens.py`),
+  and byte-compares the frames against `tools/golden/editor-screens/`; differing
+  frames land in `tools/golden/editor-screens-actual/`. It is **read-only** —
+  no step calls `saveData()`, which matters because the editor writes form
+  edits straight through to `data/*.json`. Adding an editor tab or modal means
+  adding a step; the gate reports an unclaimed reference as `ORPHANED`.
+  Needs `node`, `python`, the `websocket-client` package, and Chrome
+  (`CHROME_PATH` overrides the search). Like G5 it is a claim about one machine
+  and one Chrome build: a font or browser update can legitimately shift it, and
+  that is an owner call, not a silent recapture.
 - G4 red = the **doc is stale**, not the engine. Run
   `tools/golden/capture-state.ps1` and commit the result.
 - `[formula] error in 'os.time()'` during G1 is the sandbox negative test, not a

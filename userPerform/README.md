@@ -20,6 +20,7 @@ Run whichever gates a change could affect. Re-run after each merge.
 | `G3-golden-ui.bat` | Per-scene UI traces | Every scene prints `Golden UI log matches` |
 | `G4-engine-state.bat` | Docs match the engine | Prints `Engine state doc matches.` |
 | `G5-golden-screens.bat` | Rendered frame byte-identity | Prints `SCREENS OK` (122/122 match) |
+| `G6-golden-editor.bat` | Editor frame byte-identity | Prints `EDITOR SCREENS OK` (37/37 match) |
 | `editor-check.bat` | Editor console (not numbered) | Editor loads, **zero** console errors, Save round-trips |
 
 Not a gate, but it lives here because it needs a browser and a paid API key:
@@ -46,6 +47,18 @@ Notes:
   can legitimately shift it — that is a judgement call for you, not a silent
   `capture-screens.ps1` run. Needs Python (already required by
   `tools/asset-gen`).
+- **G6 is the only gate that sees the editor**, the way G5 is the only one that
+  sees the world view. It boots its own copy of the editor server on a free
+  port and drives a headless Chrome through every tab and modal, so it does not
+  disturb (or read from) a dev server you already have on 8080. It is
+  **read-only** — no step calls Save, which matters because the editor writes
+  form edits straight through to `data/*.json`. Differing frames land in
+  `tools/golden/editor-screens-actual/` (gitignored); open them next to
+  `tools/golden/editor-screens/`. Same rule as G2/G3/G5: never recapture to
+  clear a red diff. It compares *pixels* in a browser, so a Chrome or font
+  update can legitimately shift it — your judgement call, not a silent
+  `capture-editor.ps1` run. Needs Node, Python with `websocket-client`
+  (`pip install websocket-client`), and Chrome.
 - **editor-check:** needs Node; close the window (Ctrl+C) to stop the server.
   The editor writes straight to `data/*.json` — run `git diff data/` after.
   (This script used to be called `G3-editor.bat`, which collided with SPEC's
