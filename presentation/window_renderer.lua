@@ -598,7 +598,7 @@ local function contentOrigin(layout, title, x, y)
     return ui.panelContentOrigin(x, y, title, layout.contentX or layout.textX, layout.contentY)
 end
 
-local function drawPortrait(layout, env, x, y, title)
+local function drawPortrait(layout, env, x, y, title, winW, winH)
     if not layout.portrait then return end
     local key = formula.eval(layout.portrait, env)
     local img = (type(key) == "string" and key ~= "") and ui.resolvePortraitImage(key) or nil
@@ -606,18 +606,56 @@ local function drawPortrait(layout, env, x, y, title)
     local drawX = x + ui.toPx(layout.portraitX or 1)
     local drawY = layout.portraitY ~= nil and y + ui.toPx(layout.portraitY) or contentY
     local overflow = ui.toPx(layout.portraitOverflow or 0)
-    local portraitX = drawX - overflow
-    local portraitY = drawY - overflow
-    local portraitW = ui.toPx(layout.portraitW or 7.5) + overflow * 2
-    local portraitH = ui.toPx(layout.portraitH or 10) + overflow * 2
     local portraitFrame = layout.portraitFrame and formula.eval(layout.portraitFrame, env) or 1
 
+    -- Determine mode: scaleToFit / clip (Status menu/panels) vs unscaled / grow (Dialogue)
+    local scaleToFit = layout.portraitScale
+    if scaleToFit == nil then
+        if layout.portraitFit ~= nil then scaleToFit = layout.portraitFit
+        elseif layout.portraitMode == "fit" then scaleToFit = true
+        elseif layout.portraitMode == "grow" then scaleToFit = false
+        else scaleToFit = (layout.portraitOverflow == nil) end
+    end
+
+    local clipPortrait = layout.portraitClip
+    if clipPortrait == nil then
+        clipPortrait = scaleToFit
+    end
+
     if img then
+        local imgH = img:getHeight()
+        local portraitW = ui.toPx(layout.portraitW or 7.5) + (scaleToFit and 0 or overflow * 2)
+        local portraitH = ui.toPx(layout.portraitH or 10) + (scaleToFit and 0 or overflow * 2)
+        local portraitX = scaleToFit and drawX or (drawX - overflow)
+        local portraitY
+
+        if scaleToFit then
+            portraitY = drawY
+        else
+            -- Bottom-left anchor for grow mode
+            local boxBottom = y + (winH or ui.toPx(layout.portraitH or 10))
+            if layout.portraitY ~= nil then
+                boxBottom = y + ui.toPx(layout.portraitY) + ui.toPx(layout.portraitH or 10)
+            end
+            portraitY = boxBottom - imgH + overflow
+        end
+
+        local sx, sy, sw, sh
+        if not clipPortrait then
+            -- Unset scissor so taller portraits grow upwards outside window boundaries without clipping
+            sx, sy, sw, sh = love.graphics.getScissor()
+            love.graphics.setScissor()
+        end
+
         love.graphics.setColor(1, 1, 1, 1)
         if layout.portraitW and layout.portraitH then
-            ui.drawSlicedPortrait(img, portraitX, portraitY, portraitW, portraitH, portraitFrame)
+            ui.drawSlicedPortrait(img, portraitX, portraitY, portraitW, portraitH, portraitFrame, scaleToFit)
         else
-            love.graphics.draw(img, drawX, drawY, 0, 1, 1)
+            love.graphics.draw(img, portraitX, portraitY, 0, scaleToFit and (portraitW / img:getWidth()) or 1, scaleToFit and (portraitH / imgH) or 1)
+        end
+
+        if not clipPortrait then
+            if sx then love.graphics.setScissor(sx, sy, sw, sh) else love.graphics.setScissor() end
         end
     elseif layout.portraitPlaceholder then
         local ph = layout.portraitPlaceholder
@@ -643,8 +681,16 @@ local function drawPortrait(layout, env, x, y, title)
             local pw = ui.toPx(layout.portraitW or 7.5)
             local ph = ui.toPx(layout.portraitH or 10)
             local nameH = ui.toPx(2)
+            local nameY = drawY + ph - nameH + 3
+            if not scaleToFit then
+                local boxBottom = y + (winH or ph)
+                if layout.portraitY ~= nil then
+                    boxBottom = y + ui.toPx(layout.portraitY) + ph
+                end
+                nameY = boxBottom - nameH + 3
+            end
             love.graphics.push("all")
-            ui.drawString(tostring(name), drawX + 3, drawY + ph - nameH + 3,
+            ui.drawString(tostring(name), drawX + 3, nameY,
                 {1, 0.94, 0.76, 1}, "center", pw - 6)
             love.graphics.pop()
         end
@@ -1506,7 +1552,7 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
     local contentX, contentY = contentOrigin(layout, title, x, y)
     local lineSpacing = ui.toPx(layout.lineSpacing or 1)
 
-    drawPortrait(layout, env, x, y, title)
+    drawPortrait(layout, env, x, y, title, w, h)
     drawActorStatusCell(layout, env, x, y, title, ctx)
     drawLayoutGauges(layout.gauges, env, x, y)
 
@@ -2107,6 +2153,10 @@ function wr.drawWindowFromData(sceneData, state, ctx, opts)
                 if block.portraitOverflow ~= nil then layout.portraitOverflow = block.portraitOverflow end
                 if block.portraitFrame ~= nil then layout.portraitFrame = block.portraitFrame end
                 if block.portraitName ~= nil then layout.portraitName = block.portraitName end
+                if block.portraitScale ~= nil then layout.portraitScale = block.portraitScale end
+                if block.portraitClip ~= nil then layout.portraitClip = block.portraitClip end
+                if block.portraitMode ~= nil then layout.portraitMode = block.portraitMode end
+                if block.portraitFit ~= nil then layout.portraitFit = block.portraitFit end
             else
                 -- Unknown block types fail soft (extensibility rule).
                 if not warnedBlockTypes[block.type] then

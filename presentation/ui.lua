@@ -90,22 +90,31 @@ function ui.resolveBigBattlerImage(id)
     return resolveKeyedImage(id, "assets/bigBattlers", bigBattlerImageCache)
 end
 
--- Every NPC portrait asset is a 640x192 sheet (5 128x192 expression
--- columns); drawing it unsliced squashes the whole sheet into the target
--- box. Slices the neutral (first) column and scales it to targetW/targetH.
--- Single-image portraits (width <= 128) draw as-is, scaled the same way.
-function ui.drawSlicedPortrait(img, x, y, targetW, targetH, frame)
+-- Draws sliced expression portraits.
+-- Slices multi-expression columns (5-column sheets or w > 128).
+-- If scaleToFit is true, scales frame to targetW x targetH (e.g. status menu panel).
+-- Otherwise (scaleToFit false/nil), renders frame unscaled at 1:1 (e.g. dialogue).
+function ui.drawSlicedPortrait(img, x, y, targetW, targetH, frame, scaleToFit)
     if not img then return end
     local w = img:getWidth()
     local h = img:getHeight()
-    if w > 128 then
-        local fw = 128
+    local fw = w
+    if w >= 250 and w % 5 == 0 then
+        fw = math.floor(w / 5)
+    elseif w > 128 then
+        fw = 128
+    end
+
+    local sx = scaleToFit and (targetW / fw) or 1
+    local sy = scaleToFit and (targetH / h) or 1
+
+    if fw < w then
         local frameCount = math.max(1, math.floor(w / fw))
         local column = math.max(1, math.min(frameCount, math.floor(tonumber(frame) or 1)))
         local quad = love.graphics.newQuad((column - 1) * fw, 0, fw, h, w, h)
-        love.graphics.draw(img, quad, x, y, 0, targetW / fw, targetH / h)
+        love.graphics.draw(img, quad, x, y, 0, sx, sy)
     else
-        love.graphics.draw(img, x, y, 0, targetW / w, targetH / h)
+        love.graphics.draw(img, x, y, 0, sx, sy)
     end
 end
 
