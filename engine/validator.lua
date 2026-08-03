@@ -1142,7 +1142,8 @@ validator.run = function(loader)
         end
     end
 
-    -- Map-level id POOLS. These are read only at runtime, by index, from a
+    -- Map-level id POOLS. These are read only at runtime, by authored map id,
+    -- after the loader resolves that id to its current array index, from a
     -- random roll -- `treasures` by CHANGE_ITEM item="random", `recruits` by
     -- the RECRUIT compile path in main.lua/exploration.lua -- and neither
     -- resolves the id it picked: session:addItem stores whatever it was handed,
@@ -2064,6 +2065,57 @@ elseif paramDef.type == "script" then
     -- Reject malformed weights here rather than letting one bad pool make a
     -- renderer choice disappear or fall through silently.
     for tilesetId, tileset in pairs(loader.tilesets or {}) do
+        local tilesetWhere = "tileset '" .. tostring(tilesetId) .. "'"
+        if tileset.heightMap ~= nil then
+            check(type(tileset.heightMap) == "string" and tileset.heightMap ~= "",
+                tilesetWhere .. ".heightMap must name a PNG")
+            if type(tileset.heightMap) == "string" then
+                check(love.filesystem.getInfo(tileset.heightMap) ~= nil,
+                    tilesetWhere .. ".heightMap is missing (" .. tileset.heightMap .. ")")
+                local okHeight, heightData = pcall(love.image.newImageData, tileset.heightMap)
+                check(okHeight, tilesetWhere .. ".heightMap is unreadable")
+                if okHeight and heightData then
+                    local tileWidth = tileset.tileWidth or 64
+                    local tileHeight = tileset.tileHeight or 64
+                    local texturePath = tileset.texture
+                    local okTexture, textureData = false, nil
+                    if texturePath then
+                        okTexture, textureData = pcall(love.image.newImageData, texturePath)
+                    end
+                    if okTexture and textureData then
+                        local full = heightData:getWidth() == textureData:getWidth()
+                            and heightData:getHeight() == textureData:getHeight()
+                        local tile = heightData:getWidth() == tileWidth
+                            and heightData:getHeight() == tileHeight
+                        check(full or tile, tilesetWhere .. ".heightMap must match its texture atlas"
+                            .. " or one tile (got " .. heightData:getWidth() .. "x"
+                            .. heightData:getHeight() .. ")")
+                    end
+                    check(require("engine.geometry.images").checkGrayscale(heightData, 0),
+                        tilesetWhere .. ".heightMap must be grayscale")
+                end
+            end
+            local scale = tileset.heightMapScale
+            if scale ~= nil and type(scale) ~= "number" and type(scale) ~= "table" then
+                check(false, tilesetWhere .. ".heightMapScale must be numeric or an object")
+            elseif type(scale) == "number" then
+                check(scale >= 0 and scale <= 1, tilesetWhere .. ".heightMapScale must be 0..1")
+            elseif type(scale) == "table" then
+                for surface, value in pairs(scale) do
+                    check(surface == "wall" or surface == "floor"
+                            or surface == "ceiling" or surface == "default",
+                        tilesetWhere .. ".heightMapScale has unknown surface '" .. tostring(surface) .. "'")
+                    check(type(value) == "number" and value >= 0 and value <= 1,
+                        tilesetWhere .. ".heightMapScale." .. tostring(surface) .. " must be 0..1")
+                end
+            end
+            if tileset.heightMapOperation ~= nil then
+                check(tileset.heightMapOperation == "add"
+                        or tileset.heightMapOperation == "replace"
+                        or tileset.heightMapOperation == "none",
+                    tilesetWhere .. ".heightMapOperation must be add, replace or none")
+            end
+        end
         local featureIds = {}
         for _, feature in ipairs(tileset.features or {}) do featureIds[feature.id] = true end
         local prefabIds = {}
@@ -2178,8 +2230,10 @@ elseif paramDef.type == "script" then
                     -- Base walls MAY carry geometry, unlike models: an
                     -- image-authored wall is the surface a fixture composes
                     -- onto, and without it there is nothing to compose into.
-                    check(poolName == "doors" or poolName == "features" or poolName == "walls",
-                        where .. " geometry is supported only for wall, door/opening or fixture variants")
+                    check(poolName == "doors" or poolName == "features"
+                            or poolName == "walls" or poolName == "floors"
+                            or poolName == "ceilings",
+                        where .. " geometry is supported only for wall, floor, ceiling, door/opening or fixture variants")
                     if type(variant.geometry) ~= "string" then
                         check(false, where .. " geometry must name an asset directory")
                     else

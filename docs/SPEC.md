@@ -1037,6 +1037,9 @@ the previous map with `arrival: exit`. Arrival is always on a passable adjacent
 tile facing the relevant stair, never on top of its event.
 
 `LOAD_MAP.arrival` is registry-authored (`entrance`, `exit`, `resume`).
+Its `mapId` is the authored `maps[].id`; the loader resolves that id to the
+current array position, so deleting or reordering map records cannot silently
+retarget a warp. `PORTAL_TO_TOWN` follows the same authored-id rule.
 `PORTAL_TO_TOWN` and `RETURN_TO_PORTAL` are reusable command primitives:
 the first stores map, exact tile and facing before loading safety; the second
 restores that point and closes the seam. Portal resume does not start a new

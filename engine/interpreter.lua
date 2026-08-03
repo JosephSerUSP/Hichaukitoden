@@ -1647,22 +1647,30 @@ handlers.QUEST_GRANT_REWARDS = function(cmd, ctx)
     end
 end
 
--- E10: load a map by index (title New Game, future warps). Same call the
--- legacy title key handler made (exploration.loadMap). Omitting mapId
--- defers to system.spawn.mapId, so "where New Game starts" is data-editable
--- without touching this command.
+-- E10: load a map by its authored maps[].id. The exploration module keeps the
+-- array index as an internal storage detail; event data must not depend on it.
+-- Omitting mapId defers to system.spawn.mapId, so "where New Game starts" is
+-- data-editable without touching this command.
 handlers.LOAD_MAP = function(cmd, ctx)
     local exploration = require("engine.exploration")
     local sys = ctx.session.loader and ctx.session.loader.system
     local spawnMapId = sys and sys.spawn and sys.spawn.mapId
     local mapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx)) or spawnMapId or 1
-    exploration.loadMap(ctx.session, mapId, { arrival = cmd.arrival })
+    local mapIdx = ctx.session.loader.getMapIndex and ctx.session.loader.getMapIndex(mapId)
+    if not mapIdx then
+        error("LOAD_MAP: no map with authored id " .. tostring(mapId))
+    end
+    exploration.loadMap(ctx.session, mapIdx, { arrival = cmd.arrival })
 end
 
 handlers.SET_MAP_PRESENTATION = function(cmd, ctx)
     local session = ctx.session
-    local mapIdx = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx))
+    local mapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx)) or nil
+    local mapIdx = mapId and session.loader.getMapIndex and session.loader.getMapIndex(mapId)
         or session.currentMapIndex
+    if mapId and not mapIdx then
+        error("SET_MAP_PRESENTATION: no map with authored id " .. tostring(mapId))
+    end
     if cmd.tileset and not session.loader.getTileset(cmd.tileset) then
         error("SET_MAP_PRESENTATION: unknown tileset '" .. tostring(cmd.tileset) .. "'")
     end
@@ -1712,7 +1720,11 @@ handlers.PORTAL_TO_TOWN = function(cmd, ctx)
     local sys = session.loader and session.loader.system
     local townMapId = cmd.mapId ~= nil and tonumber(evalFormula(cmd.mapId, ctx))
         or (sys and sys.spawn and sys.spawn.mapId) or 1
-    require("engine.exploration").loadMap(session, townMapId)
+    local mapIdx = session.loader.getMapIndex and session.loader.getMapIndex(townMapId)
+    if not mapIdx then
+        error("PORTAL_TO_TOWN: no map with authored id " .. tostring(townMapId))
+    end
+    require("engine.exploration").loadMap(session, mapIdx)
 end
 
 handlers.RETURN_TO_PORTAL = function(_, ctx)

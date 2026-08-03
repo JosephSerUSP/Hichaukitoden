@@ -739,6 +739,14 @@ check(resolvedFacesAfterMutation ~= resolvedFacesOnce,
 cacheProbe.mapPresentationRevision = (cacheProbe.mapPresentationRevision or 0) + 1
 check(viewport3d.prepareStructure(cacheProbe) ~= preparedAfterMutation,
     "a map presentation revision invalidates cached 3D lookups")
+local geometryQuality = require("engine.geometry.quality")
+local originalDensity = geometryQuality.density()
+local qualityStructure = viewport3d.prepareStructure(cacheProbe)
+geometryQuality.setDensity(originalDensity * 1.5)
+check(viewport3d.prepareStructure(cacheProbe) ~= qualityStructure,
+    "a geometry quality change invalidates cached 3D meshes")
+geometryQuality.setDensity(originalDensity)
+viewport3d.invalidateStructure(cacheProbe)
 
 local townDoorCount, interiorDoorCount, labyrinthGateCount = 0, 0, 0
 for _, ev in ipairs(loader.maps[1].events or {}) do
@@ -832,6 +840,19 @@ check(first ~= nil and nodes[first] ~= nil,
 check(nodes[first] and nodes[first].action == "RUN_IMMEDIATE",
     "and it runs immediately, because a map transfer asks the player nothing")
 
+-- Event transfers address the authored map id, never the array position. Map
+-- 14 is intentionally stored at index 12 because the campaign has gaps in
+-- its ids; deletion/reordering must not invalidate a warp.
+local authoredTransfer = sessionModule.GameSession.new(loader)
+authoredTransfer:initializeStartingParty()
+local authoredCtx = {
+    session = authoredTransfer, loader = loader, events = {}, party = authoredTransfer.party
+}
+interpreter.runImmediate({ { cmd = "LOAD_MAP", mapId = 14 } }, authoredCtx)
+check(loader.getMapIndex(14) == authoredTransfer.currentMapIndex
+        and authoredTransfer.currentMapData.id == 14,
+    "LOAD_MAP resolves an authored map id instead of using the array index")
+
 -- Depth is read off the map, so every transfer keeps it true.
 local sess = sessionModule.GameSession.new(loader)
 sess:initializeStartingParty()
@@ -883,6 +904,8 @@ check(sess.playerX == 8 and sess.playerY == 7 and sess.mapGrid[7][8] == ".",
     "an authored safe-map spawn places the player on its declared open tile")
 check(sess.playerDir == "N",
     "an authored safe-map spawn controls the arrival facing")
+check(#(sess.generatedFeatures or {}) == 0,
+    "the Developer Room does not inject random fixtures or obstacles")
 
 -- Descending from Floor 5 reached Floor 5 again under the old maxFloor=5 clamp,
 -- which made the deepest authored map unreachable.

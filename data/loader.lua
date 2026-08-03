@@ -66,6 +66,14 @@ function loader.init(root)
     loader.elements = J("elements.json")
     loader.items = J("items.json")
     loader.maps = J("maps.json")
+    loader.mapsById = {}
+    for index, map in ipairs(loader.maps) do
+        local key = tostring(map.id)
+        if loader.mapsById[key] then
+            error("duplicate authored map id: " .. key)
+        end
+        loader.mapsById[key] = index
+    end
     loader.lore = J("lore.json")
     loader.quests = J("quests.json")
     loader.shops = J("shops.json")
@@ -121,6 +129,11 @@ function loader.getTileset(id)
     if not loader.tilesets then return nil end
     local key = (id and tostring(id) ~= "") and tostring(id) or "dungeon_default"
     return loader.tilesets[key] or loader.tilesets["dungeon_default"]
+end
+
+function loader.getMapIndex(id)
+    if not loader.mapsById then return nil end
+    return loader.mapsById[tostring(id)]
 end
 
 -- Helpers to find items/skills by ID (O(1) lookups)
