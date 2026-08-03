@@ -283,6 +283,18 @@ ui.costColors = {
     -- cannot act.
     blocked = { 0.45, 0.45, 0.45, 1 },
 }
+
+-- Whether a number is good or bad FOR THE HOLDER (item/skill trait readouts).
+-- Deliberately not the cost colours: those name a resource, these name a
+-- direction, and reusing one for the other would make yellow mean two things.
+-- `label` is the noun beside the number -- dimmer than the number on purpose,
+-- because in a 14-tile pane the value is what the player is scanning for.
+ui.toneColors = {
+    good    = { 0.45, 0.95, 0.50, 1 },
+    bad     = { 1.00, 0.42, 0.42, 1 },
+    neutral = { 0.90, 0.90, 0.90, 1 },
+    label   = { 0.72, 0.72, 0.72, 1 },
+}
 ui.screenHeightTiles = 30   -- 240 / 8
 
 -- Utility to convert tile coordinate to pixels

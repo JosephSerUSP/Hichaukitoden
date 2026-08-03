@@ -2479,6 +2479,29 @@
     "instanceMax": 8192,
     "squareMaxCount": 16384
   },
+  "paramLabels": {
+    "maxHp": "HP",
+    "atk": "ATK",
+    "def": "DEF",
+    "mat": "MAT",
+    "mdf": "MDF",
+    "mpd": "MPD",
+    "mxa": "MXA",
+    "mxp": "MXP"
+  },
+  "magnitudeKeys": [
+    "value",
+    "amount",
+    "potency",
+    "power"
+  ],
+  "hiddenEffectKeys": [
+    "formula",
+    "defense",
+    "provenance",
+    "level",
+    "levelCost"
+  ],
   "effectTypes": [
     {
       "id": "hp_damage",
@@ -2490,7 +2513,11 @@
         "penetration",
         "formula"
       ],
-      "description": "Relative damage when `power` names an attacker stat: potency * power^2 / (power + defense), where `defense` defaults to the stat `power` is paired with (atk vs def, mat vs mdf). Elemental affinity, then criticals, then DAMAGE_RATE apply after, and the result floors at 1. Authoring `formula` INSTEAD of `power` is direct damage: the authored number lands as-is, unreduced -- that is what a trap or a poison tick is."
+      "description": "Relative damage when `power` names an attacker stat: potency * power^2 / (power + defense), where `defense` defaults to the stat `power` is paired with (atk vs def, mat vs mdf). Elemental affinity, then criticals, then DAMAGE_RATE apply after, and the result floors at 1. Authoring `formula` INSTEAD of `power` is direct damage: the authored number lands as-is, unreduced -- that is what a trap or a poison tick is.",
+      "display": {
+        "short": "Damage",
+        "polarity": "none"
+      }
     },
     {
       "id": "hp_heal",
@@ -2498,7 +2525,11 @@
       "params": [
         "formula"
       ],
-      "description": "Restores formula HP, capped at max HP."
+      "description": "Restores formula HP, capped at max HP.",
+      "display": {
+        "short": "Heal",
+        "polarity": "higher"
+      }
     },
     {
       "id": "hp_drain",
@@ -2510,7 +2541,11 @@
         "penetration",
         "formula"
       ],
-      "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt."
+      "description": "Resolves damage exactly as hp_damage does -- one shared implementation, so a drain can never drift from the curve -- and heals the user for what it dealt.",
+      "display": {
+        "short": "Drain",
+        "polarity": "higher"
+      }
     },
     {
       "id": "add_status",
@@ -2520,7 +2555,13 @@
         "chance",
         "duration"
       ],
-      "description": "Applies a state with the given chance and turn duration."
+      "description": "Applies a state with the given chance and turn duration.",
+      "display": {
+        "short": "Inflict {d}",
+        "polarity": "none",
+        "subjectParam": "status",
+        "subject": "state"
+      }
     },
     {
       "id": "hp",
@@ -2529,7 +2570,11 @@
         "value",
         "percent"
       ],
-      "description": "Restores `value` HP plus `percent` of the target's Max HP (0.25 = 25%). Either may stand alone, so one effect covers flat, percentage and hybrid recovery -- a percentage keeps a food relevant to creatures whose Max HP differ by an order of magnitude."
+      "description": "Restores `value` HP plus `percent` of the target's Max HP (0.25 = 25%). Either may stand alone, so one effect covers flat, percentage and hybrid recovery -- a percentage keeps a food relevant to creatures whose Max HP differ by an order of magnitude.",
+      "display": {
+        "short": "Heal",
+        "polarity": "higher"
+      }
     },
     {
       "id": "maxHp",
@@ -2537,7 +2582,11 @@
       "params": [
         "value"
       ],
-      "description": "Permanently raises max HP and heals the difference."
+      "description": "Permanently raises max HP and heals the difference.",
+      "display": {
+        "short": "Max HP",
+        "polarity": "higher"
+      }
     },
     {
       "id": "learn_skill",
@@ -2545,7 +2594,13 @@
       "params": [
         "skill"
       ],
-      "description": "Permanently teaches the target a skill (skillbook items). No-op with a message if already known."
+      "description": "Permanently teaches the target a skill (skillbook items). No-op with a message if already known.",
+      "display": {
+        "short": "Teaches {d}",
+        "polarity": "higher",
+        "subjectParam": "skill",
+        "subject": "skill"
+      }
     },
     {
       "id": "param_plus",
@@ -2554,7 +2609,13 @@
         "param",
         "value"
       ],
-      "description": "Permanently raises the target's param (maxHp/atk/def/mat/mdf) by value. maxHp also heals by the gain."
+      "description": "Permanently raises the target's param (maxHp/atk/def/mat/mdf) by value. maxHp also heals by the gain.",
+      "display": {
+        "short": "{d} Up",
+        "polarity": "higher",
+        "subjectParam": "param",
+        "subject": "param"
+      }
     },
     {
       "id": "xp",
@@ -2562,7 +2623,11 @@
       "params": [
         "value"
       ],
-      "description": "Grants experience points, possibly leveling up."
+      "description": "Grants experience points, possibly leveling up.",
+      "display": {
+        "short": "XP",
+        "polarity": "higher"
+      }
     },
     {
       "id": "mp_heal",
@@ -2571,7 +2636,11 @@
         "value",
         "percent"
       ],
-      "description": "Restores `value` MP plus `percent` of the summoner's Max MP (0.10 = 10%) to the shared pool. The percentage form is what keeps a draught meaningful as Max MP climbs."
+      "description": "Restores `value` MP plus `percent` of the summoner's Max MP (0.10 = 10%) to the shared pool. The percentage form is what keeps a draught meaningful as Max MP climbs.",
+      "display": {
+        "short": "Summoner MP",
+        "polarity": "higher"
+      }
     },
     {
       "id": "max_mp_plus",
@@ -2579,7 +2648,11 @@
       "params": [
         "value"
       ],
-      "description": "Permanently raises the summoner's Max MP by value, clamped to system.summoner.maxMpCap, and restores the same amount. Saved with the session, so it is the item-scale counterpart of the large increases major events grant."
+      "description": "Permanently raises the summoner's Max MP by value, clamped to system.summoner.maxMpCap, and restores the same amount. Saved with the session, so it is the item-scale counterpart of the large increases major events grant.",
+      "display": {
+        "short": "Max Summ. MP",
+        "polarity": "higher"
+      }
     },
     {
       "id": "restore_charges",
@@ -2588,7 +2661,13 @@
         "amount",
         "skill"
       ],
-      "description": "Restores `amount` spell charges to the target creature -- every skill it knows, or just the one named by `skill`. `amount: \"all\"` is a full refill, the same one Rest performs. Charges are per-creature and per-skill and only otherwise come back at Rest, so this is the food/restorative channel into the magic economy."
+      "description": "Restores `amount` spell charges to the target creature -- every skill it knows, or just the one named by `skill`. `amount: \"all\"` is a full refill, the same one Rest performs. Charges are per-creature and per-skill and only otherwise come back at Rest, so this is the food/restorative channel into the magic economy.",
+      "display": {
+        "short": "{d} Charges",
+        "polarity": "higher",
+        "subjectParam": "skill",
+        "subject": "skill"
+      }
     },
     {
       "id": "common_event",
@@ -2596,7 +2675,12 @@
       "params": [
         "value"
       ],
-      "description": "Starts the common event named by `value` (the Forbidden Lamp shape: an item that opens a scripted encounter). Raised as a request rather than executed inline, because CALL_COMMON_EVENT compiles to a dialogue node and immediate mode refuses it; the host starts the graph after the current hook settles. In a headless run the request is simply unclaimed."
+      "description": "Starts the common event named by `value` (the Forbidden Lamp shape: an item that opens a scripted encounter). Raised as a request rather than executed inline, because CALL_COMMON_EVENT compiles to a dialogue node and immediate mode refuses it; the host starts the graph after the current hook settles. In a headless run the request is simply unclaimed.",
+      "display": {
+        "short": "Special Effect",
+        "polarity": "none",
+        "value": "none"
+      }
     },
     {
       "id": "remove_status",
@@ -2604,7 +2688,13 @@
       "params": [
         "value"
       ],
-      "description": "Cures the state named in value."
+      "description": "Cures the state named in value.",
+      "display": {
+        "short": "Cures {d}",
+        "polarity": "higher",
+        "subjectParam": "value",
+        "subject": "state"
+      }
     },
     {
       "id": "recruit_egg",
@@ -2613,13 +2703,23 @@
         "value",
         "level"
       ],
-      "description": "Recruits actor `value` into the party (reserve when the active slots are full); `level` optional. Used by hatching items like the Mystic Egg."
+      "description": "Recruits actor `value` into the party (reserve when the active slots are full); `level` optional. Used by hatching items like the Mystic Egg.",
+      "display": {
+        "short": "Hatches {d}",
+        "polarity": "higher",
+        "subjectParam": "value",
+        "subject": "actor"
+      }
     },
     {
       "id": "escape",
       "label": "Escape Battle",
       "params": [],
-      "description": "Attempts to escape the battle, running the battle.flee_attempt flow (its odds, FLEE_CHANCE_BONUS and gold penalty). Honoured before the round is built, so a creature carrying it escapes the party rather than acting in speed order -- which is why it is declared on a skill rather than resolved in effects.apply."
+      "description": "Attempts to escape the battle, running the battle.flee_attempt flow (its odds, FLEE_CHANCE_BONUS and gold penalty). Honoured before the round is built, so a creature carrying it escapes the party rather than acting in speed order -- which is why it is declared on a skill rather than resolved in effects.apply.",
+      "display": {
+        "short": "Escape Battle",
+        "polarity": "higher"
+      }
     }
   ],
   "traitCodes": [
@@ -2627,85 +2727,157 @@
       "code": "PARAM_PLUS",
       "label": "Parameter +",
       "usesDataId": true,
-      "description": "Adds a flat amount to a parameter."
+      "description": "Adds a flat amount to a parameter.",
+      "display": {
+        "short": "{d}",
+        "value": "signed",
+        "polarity": "higher",
+        "subject": "param"
+      }
     },
     {
       "code": "PARAM_RATE",
       "label": "Parameter %",
       "usesDataId": true,
-      "description": "Multiplies a parameter (1.2 = +20%)."
+      "description": "Multiplies a parameter (1.2 = +20%).",
+      "display": {
+        "short": "{d}",
+        "value": "multiplierSigned",
+        "polarity": "higher",
+        "subject": "param"
+      }
     },
     {
       "code": "HIT",
       "label": "Hit Rate",
       "usesDataId": false,
-      "description": "Modifies hit chance (base 100%)."
+      "description": "Modifies hit chance (base 100%).",
+      "display": {
+        "short": "Accuracy",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "EVA",
       "label": "Evasion",
       "usesDataId": false,
-      "description": "Modifies evade chance (base 0%)."
+      "description": "Modifies evade chance (base 0%).",
+      "display": {
+        "short": "Evade",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "CRI",
       "label": "Critical Rate",
       "usesDataId": false,
-      "description": "Modifies crit chance (base 5%). The effective rate against a given target is CRI minus that target's CEV."
+      "description": "Modifies crit chance (base 5%). The effective rate against a given target is CRI minus that target's CEV.",
+      "display": {
+        "short": "Crit",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "CEV",
       "label": "Critical Evasion",
       "usesDataId": false,
-      "description": "Subtracts from an attacker's CRI against this holder. Worth twice what it looks like: a critical is also the universal status backdoor (it forces the affliction attached to the action past the chance roll), so being hard to crit means less burst damage AND fewer forced states. Deliberately trait-driven only -- gear and passives buy it, no stat derives it, or DEF would become a super-stat on top of mitigation and physical-ailment resistance."
+      "description": "Subtracts from an attacker's CRI against this holder. Worth twice what it looks like: a critical is also the universal status backdoor (it forces the affliction attached to the action past the chance roll), so being hard to crit means less burst damage AND fewer forced states. Deliberately trait-driven only -- gear and passives buy it, no stat derives it, or DEF would become a super-stat on top of mitigation and physical-ailment resistance.",
+      "display": {
+        "short": "Crit Guard",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "HRG",
       "label": "HP Regen",
       "usesDataId": false,
-      "description": "Regenerates a fraction of max HP per turn."
+      "description": "Regenerates a fraction of max HP per turn.",
+      "display": {
+        "short": "Regen",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "POST_BATTLE_HEAL",
       "label": "Post-Battle Heal",
       "usesDataId": false,
-      "description": "Restores HP to the holder after victory."
+      "description": "Restores HP to the holder after victory.",
+      "display": {
+        "short": "Win Heal",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "GOLD_DIGGER",
       "label": "Bonus Gold",
       "usesDataId": false,
-      "description": "Increases gold found."
+      "description": "Increases gold found.",
+      "display": {
+        "short": "Gold Find",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "PARASITE",
       "label": "Parasite",
       "usesDataId": false,
-      "description": "Drains HP from a nearby ally each turn."
+      "description": "Drains HP from a nearby ally each turn.",
+      "display": {
+        "short": "Parasite",
+        "value": "signed",
+        "polarity": "lower"
+      }
     },
     {
       "code": "BATTLE_START_DAMAGE",
       "label": "Ambush Damage",
       "usesDataId": false,
-      "description": "Damages an enemy at battle start."
+      "description": "Damages an enemy at battle start.",
+      "display": {
+        "short": "Ambush",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "MOVE_HEAL",
       "label": "Heal on Move",
       "usesDataId": false,
-      "description": "Restores HP when moving on the map."
+      "description": "Restores HP when moving on the map.",
+      "display": {
+        "short": "Step Heal",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "RECOVERY_XP_BONUS",
       "label": "Recovery XP Bonus",
       "usesDataId": false,
-      "description": "Bonus XP at recovery sites."
+      "description": "Bonus XP at recovery sites.",
+      "display": {
+        "short": "Rest XP",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "FLEE_CHANCE_BONUS",
       "label": "Flee Chance +",
       "usesDataId": false,
-      "description": "Increases the party's flee chance."
+      "description": "Increases the party's flee chance.",
+      "display": {
+        "short": "Escape",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "ON_PERMADEATH",
@@ -2717,157 +2889,295 @@
         "hpFraction",
         "charges",
         "levelCost"
-      ]
+      ],
+      "display": {
+        "short": "Death Ward",
+        "value": "none",
+        "polarity": "higher"
+      }
     },
     {
       "code": "SEE_TRAPS",
       "label": "See Traps",
       "usesDataId": false,
-      "description": "Detects hidden traps (value = level)."
+      "description": "Detects hidden traps (value = level).",
+      "display": {
+        "short": "Trap Sense",
+        "value": "none",
+        "polarity": "higher"
+      }
     },
     {
       "code": "SEE_WALLS",
       "label": "See Secrets",
       "usesDataId": false,
-      "description": "Reveals breakable walls."
+      "description": "Reveals breakable walls.",
+      "display": {
+        "short": "Secret Eye",
+        "value": "none",
+        "polarity": "higher"
+      }
     },
     {
       "code": "SYMBIOSIS",
       "label": "Symbiosis",
       "usesDataId": false,
-      "description": "Heals a neighboring ally each turn."
+      "description": "Heals a neighboring ally each turn.",
+      "display": {
+        "short": "Symbiosis",
+        "value": "signed",
+        "polarity": "higher"
+      }
     },
     {
       "code": "INITIATIVE",
       "label": "Initiative",
       "usesDataId": false,
-      "description": "Chance to act first at battle start."
+      "description": "Chance to act first at battle start.",
+      "display": {
+        "short": "First Move",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "REAR_GUARD",
       "label": "Rear Guard",
       "usesDataId": false,
-      "description": "Negates enemy first strikes."
+      "description": "Negates enemy first strikes.",
+      "display": {
+        "short": "Rear Guard",
+        "value": "none",
+        "polarity": "higher"
+      }
     },
     {
       "code": "ELEMENT_CHANGE",
       "label": "Element Change",
       "usesDataId": true,
-      "description": "Overrides the holder's elements with dataId while active."
+      "description": "Overrides the holder's elements with dataId while active.",
+      "display": {
+        "short": "Element",
+        "value": "subject",
+        "polarity": "none",
+        "subject": "element"
+      }
     },
     {
       "code": "ELEMENT_ADD",
       "label": "Element Add",
       "usesDataId": true,
-      "description": "Appends dataId to the holder's elements while active, deepening an existing alignment or adding a new one. Applied after ELEMENT_CHANGE."
+      "description": "Appends dataId to the holder's elements while active, deepening an existing alignment or adding a new one. Applied after ELEMENT_CHANGE.",
+      "display": {
+        "short": "+ Element",
+        "value": "subject",
+        "polarity": "none",
+        "subject": "element"
+      }
     },
     {
       "code": "XP_RATE",
       "label": "XP Rate +",
       "usesDataId": false,
-      "description": "Multiplies experience gained (0.5 = +50%)."
+      "description": "Multiplies experience gained (0.5 = +50%).",
+      "display": {
+        "short": "XP Gain",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "CRAFT_YIELD_RATE",
       "label": "Craft Yield +",
       "usesDataId": false,
-      "description": "Multiplies Item Creation yield score (0.25 = +25%)."
+      "description": "Multiplies Item Creation yield score (0.25 = +25%).",
+      "display": {
+        "short": "Craft Yield",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "PENETRATION",
       "label": "Armor Penetration",
       "usesDataId": false,
-      "description": "Ignores this share of the target's defending stat before the damage curve (0.3 = 30%). Adds to an effect's own `penetration` and clamps at 1. Applied to the defense rather than the damage on purpose: against a soft target it is worth almost nothing and against a wall it is worth a great deal, which is what separates it from simply hitting harder."
+      "description": "Ignores this share of the target's defending stat before the damage curve (0.3 = 30%). Adds to an effect's own `penetration` and clamps at 1. Applied to the defense rather than the damage on purpose: against a soft target it is worth almost nothing and against a wall it is worth a great deal, which is what separates it from simply hitting harder.",
+      "display": {
+        "short": "Pierce",
+        "value": "percent",
+        "polarity": "higher"
+      }
     },
     {
       "code": "EXECUTION_THRESHOLD",
       "label": "Execution Threshold",
       "usesDataId": false,
-      "description": "After the holder's damage lands, a surviving target at or below this fraction of its Max HP is finished outright (0.2 = a fifth). A finisher rather than a gamble: it is checked after the hit, so it closes a wounded enemy and does nothing to a healthy one."
+      "description": "After the holder's damage lands, a surviving target at or below this fraction of its Max HP is finished outright (0.2 = a fifth). A finisher rather than a gamble: it is checked after the hit, so it closes a wounded enemy and does nothing to a healthy one.",
+      "display": {
+        "short": "Execute",
+        "value": "percent",
+        "polarity": "higher"
+      }
     },
     {
       "code": "EXECUTION_RESIST",
       "label": "Execution Resistance",
       "usesDataId": false,
-      "description": "Subtracts from an attacker's EXECUTION_THRESHOLD against this holder; 1.0 is outright protection (Safety Bit). Deliberately separate from state resistance -- execution is not a state, and it subtracts rather than rolling, so it costs no randomness and partial resistance means something exact."
+      "description": "Subtracts from an attacker's EXECUTION_THRESHOLD against this holder; 1.0 is outright protection (Safety Bit). Deliberately separate from state resistance -- execution is not a state, and it subtracts rather than rolling, so it costs no randomness and partial resistance means something exact.",
+      "display": {
+        "short": "Exec Guard",
+        "value": "percent",
+        "polarity": "higher"
+      }
     },
     {
       "code": "FORCE_ACTION",
       "label": "Forced Action",
       "usesDataId": true,
-      "description": "The holder can only take the skill named by dataId, whatever it or the player chose. Applied where the turn queue is built, so it constrains an AI enemy and a player creature by the same rule -- Berserk forcing a basic Attack is one authored state, not a branch in the battle code. Target is picked by the forced skill's own targeting spec."
+      "description": "The holder can only take the skill named by dataId, whatever it or the player chose. Applied where the turn queue is built, so it constrains an AI enemy and a player creature by the same rule -- Berserk forcing a basic Attack is one authored state, not a branch in the battle code. Target is picked by the forced skill's own targeting spec.",
+      "display": {
+        "short": "Forced",
+        "value": "subject",
+        "polarity": "lower",
+        "subject": "skill"
+      }
     },
     {
       "code": "INVERT_TARGETING",
       "label": "Invert Targeting",
       "usesDataId": false,
-      "description": "Inverts targeting groups for the holder while active (`enemy` side targets allies, `ally` side targets enemies). Used by Charm and confusion effects."
+      "description": "Inverts targeting groups for the holder while active (`enemy` side targets allies, `ally` side targets enemies). Used by Charm and confusion effects.",
+      "display": {
+        "short": "Confused",
+        "value": "none",
+        "polarity": "lower"
+      }
     },
     {
       "code": "STATE_RATE",
       "label": "State Susceptibility %",
       "usesDataId": true,
-      "description": "Multiplies the chance of the state named by dataId landing on the holder (0.5 = half as likely, 1.5 = half again). A rate is a SLOPE, not a switch: driving it to 0 makes the state vanishingly unlikely on the ordinary path, but a critical hit still forces it. For 'never, not even on a crit', use STATE_IMMUNITY -- and G1 rejects a rate of 0 outright, because anyone authoring that almost certainly means immunity."
+      "description": "Multiplies the chance of the state named by dataId landing on the holder (0.5 = half as likely, 1.5 = half again). A rate is a SLOPE, not a switch: driving it to 0 makes the state vanishingly unlikely on the ordinary path, but a critical hit still forces it. For 'never, not even on a crit', use STATE_IMMUNITY -- and G1 rejects a rate of 0 outright, because anyone authoring that almost certainly means immunity.",
+      "display": {
+        "short": "{d} Risk",
+        "value": "multiplier",
+        "polarity": "lower",
+        "subject": "state"
+      }
     },
     {
       "code": "STATE_IMMUNITY",
       "label": "State Immunity",
       "usesDataId": true,
-      "description": "Absolute immunity to the state named by dataId: it never lands, including from a critical hit. Immunity is its own trait rather than a rate of zero (RPG Maker MZ's shape) so that rates can stay a slope all the way down -- a very high VIT creature is functionally unpoisonable without ever becoming categorically immune by accident -- and so 'never' is something an author states outright."
+      "description": "Absolute immunity to the state named by dataId: it never lands, including from a critical hit. Immunity is its own trait rather than a rate of zero (RPG Maker MZ's shape) so that rates can stay a slope all the way down -- a very high VIT creature is functionally unpoisonable without ever becoming categorically immune by accident -- and so 'never' is something an author states outright.",
+      "display": {
+        "short": "Immune",
+        "value": "subject",
+        "polarity": "higher",
+        "subject": "state"
+      }
     },
     {
       "code": "STATE_CATEGORY_IMMUNITY",
       "label": "State Category Immunity",
       "usesDataId": true,
-      "description": "As STATE_IMMUNITY, but for every state carrying the category named by dataId. This is a Ribbon's actual spelling (`common`), replacing the old STATE_CATEGORY_RATE-of-0 idiom."
+      "description": "As STATE_IMMUNITY, but for every state carrying the category named by dataId. This is a Ribbon's actual spelling (`common`), replacing the old STATE_CATEGORY_RATE-of-0 idiom.",
+      "display": {
+        "short": "Immune",
+        "value": "subject",
+        "polarity": "higher",
+        "subject": "stateCategory"
+      }
     },
     {
       "code": "STATE_CATEGORY_RATE",
       "label": "State Category %",
       "usesDataId": true,
-      "description": "As STATE_RATE, but for every state carrying the category named by dataId (see engine.stateCategories). One trait covers a whole family, which is how a Ribbon blocks ordinary negative states without listing them -- and why `unique` exists, so death and authored curses sit outside such a blanket. Multiplies with STATE_RATE rather than replacing it."
+      "description": "As STATE_RATE, but for every state carrying the category named by dataId (see engine.stateCategories). One trait covers a whole family, which is how a Ribbon blocks ordinary negative states without listing them -- and why `unique` exists, so death and authored curses sit outside such a blanket. Multiplies with STATE_RATE rather than replacing it.",
+      "display": {
+        "short": "{d} Risk",
+        "value": "multiplier",
+        "polarity": "lower",
+        "subject": "stateCategory"
+      }
     },
     {
       "code": "STATUS_SUCCESS",
       "label": "Status Success +",
       "usesDataId": false,
-      "description": "Multiplies the holder's chance of inflicting states (0.25 = +25%). The attacker's half of the infliction chain, which is what lets a control specialist be better at landing conditions without every one of its skills authoring a higher chance."
+      "description": "Multiplies the holder's chance of inflicting states (0.25 = +25%). The attacker's half of the infliction chain, which is what lets a control specialist be better at landing conditions without every one of its skills authoring a higher chance.",
+      "display": {
+        "short": "Status Hit",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "DAMAGE_RATE",
       "label": "Damage Taken %",
       "usesDataId": false,
-      "description": "Multiplies direct HP damage taken by the holder (0.5 = half). Multiplicative across sources, unlike the additive rate traits, because two independent protections should compound rather than sum past zero. Serves Defend, barriers, protective equipment and vulnerability states alike; it does not reduce authored indirect damage such as poison ticks."
+      "description": "Multiplies direct HP damage taken by the holder (0.5 = half). Multiplicative across sources, unlike the additive rate traits, because two independent protections should compound rather than sum past zero. Serves Defend, barriers, protective equipment and vulnerability states alike; it does not reduce authored indirect damage such as poison ticks.",
+      "display": {
+        "short": "Dmg Taken",
+        "value": "multiplier",
+        "polarity": "lower"
+      }
     },
     {
       "code": "ITEM_EFFECT_RATE",
       "label": "Item Effect +",
       "usesDataId": false,
-      "description": "Multiplies the magnitude of items used by the holder (0.5 = +50%), RPG Maker Pharmacology-style. In battle the acting creature is the user; in the field the best living party carrier supplies the rate because field item use has no separate user selection."
+      "description": "Multiplies the magnitude of items used by the holder (0.5 = +50%), RPG Maker Pharmacology-style. In battle the acting creature is the user; in the field the best living party carrier supplies the rate because field item use has no separate user selection.",
+      "display": {
+        "short": "Item Power",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "HEAL_RATE",
       "label": "Healing Skill +",
       "usesDataId": false,
-      "description": "Adds to HP healing performed by the holder's skills (0.25 = +25%). Does not amplify items or permanent gains."
+      "description": "Adds to HP healing performed by the holder's skills (0.25 = +25%). Does not amplify items or permanent gains.",
+      "display": {
+        "short": "Heal Power",
+        "value": "percentSigned",
+        "polarity": "higher"
+      }
     },
     {
       "code": "TARGET_RATE",
       "label": "Target Rate +",
       "usesDataId": false,
-      "description": "Adds to the holder's weight when enemy AI randomly selects an opposing target. Base weight is 1; positive values implement Provoke."
+      "description": "Adds to the holder's weight when enemy AI randomly selects an opposing target. Base weight is 1; positive values implement Provoke.",
+      "display": {
+        "short": "Aggro",
+        "value": "signed",
+        "polarity": "none"
+      }
     },
     {
       "code": "ELEMENT_RATE",
       "label": "Element Damage Taken %",
       "usesDataId": true,
-      "description": "Multiplies damage received from the element named by dataId (0.5 = half, 1.5 = half again). Applied after identity affinity and multiplicative across sources."
+      "description": "Multiplies damage received from the element named by dataId (0.5 = half, 1.5 = half again). Applied after identity affinity and multiplicative across sources.",
+      "display": {
+        "short": "{d} Dmg",
+        "value": "multiplier",
+        "polarity": "lower",
+        "subject": "element"
+      }
     },
     {
       "code": "KILL_MP_RESTORE",
       "label": "Summoner MP on Kill",
       "usesDataId": false,
-      "description": "Restores this flat amount of Summoner MP when the holder personally lands a killing blow, including an Execution."
+      "description": "Restores this flat amount of Summoner MP when the holder personally lands a killing blow, including an Execution.",
+      "display": {
+        "short": "MP on Kill",
+        "value": "signed",
+        "polarity": "higher"
+      }
     }
   ],
   "windowLayout": {

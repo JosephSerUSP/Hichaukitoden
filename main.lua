@@ -374,7 +374,7 @@ function love.load(arg)
             "test_growth", "test_progress", "test_promotion", "test_transform",
             "test_developer_mode", "test_map_transfer", "test_battle_commands",
             "test_troops", "test_early_balance", "test_datalog", "test_dock",
-            "test_geometry", "test_icons",
+            "test_geometry", "test_icons", "test_item_display",
         }) do
             local ok, err = pcall(dofile, "tests/" .. suite .. ".lua")
             if not ok then failFast.crashed(suite, err) end
