@@ -1310,6 +1310,79 @@ creature's feet. Same rule the stat-derived affliction resistance follows
 (§1.12): **base stats say who a creature is, final stats say how hard it is to
 hurt right now.**
 
+### 1.21 Icons: one renderer, palettes as data (02.08.2026)
+
+**Every icon in the game is drawn by `ui.drawIcon`.** Presentation modules
+decide *which* icon, *where*, at what scale, whether it is shadowed, disabled
+or tinted. They do not compute iconset coordinates, build quads, cache quads,
+touch `iconset.png`, configure the palette shader, resolve palette or profile
+data, or restore graphics state afterwards. That list is the whole point: it
+used to be scattered, and every future icon feature — rarity borders, cooldown
+overlays, stack counts, pulsing selection — is a change in one file instead of
+a migration across every caller. No module outside `presentation/ui.lua` may
+draw from the iconset.
+
+**A recolour is authored as two plain fields.** `icon` stays an integer forever
+and never becomes a number-or-object union; the palette rides alongside it:
+
+```json
+{ "icon": 51 }
+{ "icon": 51, "iconPalette": "sapphire" }
+```
+
+The first renders in the icon's original colours; the second recolours it.
+
+Absent or empty palette means original colours, so all pre-existing content is
+already valid and no migration was needed. Two registries back it:
+
+| File | Holds | Scope |
+|---|---|---|
+| `data/iconPalettes.json` | Named 4-colour ramps | Chosen per item/skill |
+| `data/iconKeyProfiles.json` | Which pixels of a source icon are recolourable | **Shared by every use of that icon** |
+
+That split is the design. Choosing ruby over sapphire is a per-item decision an
+author makes constantly; deciding which pixels of icon 51 are its recolourable
+region is a property *of icon 51*, calibrated once and inherited by every item
+that uses it. A profile omitting a field inherits it from `default`.
+
+**The four palette entries are control points at 0, 1/3, 2/3, 1 — not four
+buckets.** The ramp is interpolated piecewise in sRGB (the space the hexes were
+picked in). Quantizing was tried first and was wrong for this art: the source
+icons are already colour-limited, so rounding each pixel to one of four stops
+discarded most of the shading that was already in them, and with a 0.10–0.95
+lightness window over four equal bands the highlight stop essentially never
+fired. Interpolating preserves the source's own gradation.
+
+**The lightness window is the calibration knob**, and it is what an author
+reaches for when a recolour looks flat. It maps onto the ramp, so a window far
+wider than an icon's actual shading range confines that icon to part of the
+ramp. Narrowing `minimumLightness`/`maximumLightness` to the icon's real range
+brings the whole ramp, highlight included, into play — one profile edit, felt
+by every item using that icon.
+
+**Resolution reads the registries through `require("data.loader")`, and there
+is no hardcoded fallback copy anywhere.** Both rules are scar tissue. The
+runtime originally reached for a non-existent `loader` global and the editor
+for `window.dbPayload` (a `let`, so never on `window`); both silently resolved
+nothing, so *no icon was ever recoloured* on either side while 190 items
+authored palettes. The editor papered over its version with an inline palette
+table that had already drifted from the data file. A second copy of a registry
+is not a fallback, it is a slow-motion bug.
+
+Gated by `tests/test_icons.lua`: reference resolution, palette lookup, profile
+inheritance, and the ramp itself rendered through the **real compiled shader**
+to a canvas and read back. The shader compiles on every gate run, because a
+swallowed GLSL error would disable recolouring game-wide while looking exactly
+like "no palette was set". G1 additionally rejects malformed palettes, inverted
+lightness windows, unregistered `iconPalette` references, and a palette on a
+non-positive icon.
+
+**Known gap (03.08.2026):** nothing validates that an `icon` points at a cell
+that actually has pixels. After the iconset was pruned of redundant recolours,
+39 items pointed at deleted or out-of-range cells and rendered blank silently.
+Re-authoring those onto surviving base icons plus a palette is content work; a
+bounds-and-emptiness check in G1 is the insurance.
+
 ## 2. Design rules (from the BIBLE — enforced by review)
 
 ### 2.1 Code sharing and reuse (CRITICAL)
@@ -1486,7 +1559,8 @@ in PR review when violated.
   tab should be a schema entry, not a bespoke panel. Complex editors
   (animation timeline, event commands, map painter) are custom by design.
 - Previews go through the REAL engine (`lovec . preview-*`) — the editor
-  never approximates rendering in the browser.
+  never approximates rendering in the browser. **One deliberate exception:
+  the icon picker** (§4.3), which recolours on a canvas in JS.
 - Validation goes through the real engine too (`lovec . validate` via
   `GET /validate`) — no duplicated schema in JS.
 
@@ -1566,6 +1640,37 @@ troop pool, so one can be pasted into the other, per §4.1.
 The rule this is an instance of: **before adding a per-thing copy of a
 definition, check whether the thing already owns the part that actually
 varies.** Usually only the data differs and the shape does not.
+
+### 4.3 The icon picker recolours in the browser, on purpose (02.08.2026)
+
+This is the one place the editor approximates engine rendering rather than
+round-tripping through `lovec` (§4), and it needs to stay the only one.
+
+**Why it earns the exception:** calibrating an icon means dragging a hue or
+lightness handle and watching the keyed region change under your hand. That is
+a sub-second feedback loop over a single 8×8 sprite. Shipping each drag frame
+to LOVE and back would make the one control that needs to feel continuous feel
+like a form submission — and calibration is precisely the task that is
+impossible to do blind.
+
+**What limits the damage:** `tools/editor/js/icon-renderer.js` is the single
+editor-side implementation — the picker, the database field swatch and any
+future preview all delegate to it, so there is one JS copy, not one per caller.
+Its `rampColor` and keying predicate are written to mirror the GLSL in
+`presentation/ui.lua`, and the GPU-readback test in `tests/test_icons.lua` pins
+the runtime half to specific numbers, so the thing being mirrored cannot move
+unnoticed.
+
+**Be clear about what is *not* covered.** There is no JS test runner in this
+repo, so nothing gates the mirror itself: edit `rampColor` and no gate turns
+red. The pairing is held by the pinned runtime numbers and by review, not by
+automation. This is two implementations of one formula, which §2.1 otherwise
+forbids, and it is accepted **only** because the alternative is an unusable
+calibration UI. Whenever the shader's keying or ramp changes, the mirror is
+part of that change, not a follow-up. Closing the gap properly means a JS
+harness asserting `rampColor` against the same control points the Lua test
+pins. Any *other* editor preview wanting this latitude should be refused —
+use the real engine.
 
 ---
 

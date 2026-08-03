@@ -137,7 +137,14 @@ it. Practical consequences an agent must internalize:
   `engine/scenes/battle.lua` are never made autonomously.
 - **No copy-pasted logic or coordinate math.** Layout/geometry lives in shared
   helpers; editor form fields come from the schema layer
-  (`tools/editor/js/entity-forms.js`), not hand-written DOM.
+  (`tools/editor/js/entity-forms.js`), not hand-written DOM. The one sanctioned
+  exception is the icon picker's JS mirror of the palette shader (SPEC §4.3) —
+  it is deliberate and ungated; do not "clean it up", do not cite it as
+  precedent, and update it in the same change as the shader.
+- **Every icon is drawn by `ui.drawIcon`.** Nothing outside
+  `presentation/ui.lua` computes iconset coordinates, builds icon quads or
+  touches `iconset.png`. New icon presentation (borders, overlays, stack
+  counts) goes in the one renderer, not the caller. SPEC §1.21.
 - **The engine never requires presentation.** Use the
   `interpreter.bindPresentation` seam. (`engine/validator.lua` and
   `engine/cli_tools.lua` are the deliberate exceptions: they are build tools
