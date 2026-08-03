@@ -1140,7 +1140,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local refMax = battle_layout.get(session, "partyMpGaugeReferenceMax") or 9999
     local partyMaxMp = math.max(0, math.floor(session.maxMp or 0))
     local share = 1
-    if refMax > 0 then share = math.max(0, math.min(1, partyMaxMp / refMax)) end
+    if refMax > 0 then share = util.clamp01(partyMaxMp / refMax) end
     local gaugeW = math.max(4, math.floor(availW * share))
 
     -- The value is pinned to the RIGHT of the row, not trailing the gauge's

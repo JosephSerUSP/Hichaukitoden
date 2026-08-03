@@ -908,7 +908,18 @@
         };
 
         // Hook names expected on custom scenes (from engine/scene_host.lua).
+        // Unioned with whatever's actually present, same as flowPhasesForScene
+        // below -- title/game_over (on_exit) and controls (on_raw_key) are
+        // engine-read hooks outside this common set.
         const SCENE_HOOK_NAMES = ['on_enter', 'on_select', 'on_cancel', 'on_up', 'on_down', 'on_left', 'on_right', 'on_page', 'on_frame'];
+
+        function sceneHookNames(scene) {
+            const existing = Object.keys((scene && scene.hooks) || {});
+            const seen = {};
+            const out = [];
+            SCENE_HOOK_NAMES.concat(existing).forEach(h => { if (!seen[h]) { seen[h] = true; out.push(h); } });
+            return out;
+        }
 
         function flowPhasesForScene(scene) {
             const known = KNOWN_PHASES_BY_SCENE[scene] || [];
@@ -1431,7 +1442,7 @@
             renderScenePreviewPanel(container, scene, () => renderUnifiedFlowsEditor(container.parentElement.parentElement, header));
 
             // --- Hook tabs ---
-            const hookNames = SCENE_HOOK_NAMES;
+            const hookNames = sceneHookNames(scene);
             if (!activeUnifiedPhase || !hookNames.includes(activeUnifiedPhase)) {
                 activeUnifiedPhase = hookNames[0];
             }
