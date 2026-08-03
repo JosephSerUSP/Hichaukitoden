@@ -654,8 +654,33 @@
                 const container = containerFor(spec);
 
                 if (spec.kind === 'icon') {
-                    createIconField(container, spec.label, readValue(spec) || 0,
-                        val => writeValue(spec, parseInt(val) || 0), true);
+                    const rawVal = (typeof spec.get === 'function') ? spec.get(data, item) : (data[spec.key] !== undefined ? data[spec.key] : 0);
+                    const iconVal = parseInt(rawVal) || 0;
+                    const paletteVal = data.iconPalette || data.palette || null;
+                    const specObj = { id: iconVal, palette: paletteVal };
+
+                    createIconField(container, spec.label, specObj, (newId, newPalette) => {
+                        const parsedId = parseInt(newId) || 0;
+                        if (typeof spec.set === 'function') {
+                            spec.set(data, parsedId, item);
+                        } else {
+                            data[spec.key] = parsedId;
+                        }
+
+                        if (newPalette) {
+                            data.iconPalette = newPalette;
+                        } else {
+                            delete data.iconPalette;
+                            delete data.palette;
+                        }
+
+                        setDirty(true);
+                        if (spec.rerender) {
+                            if (typeof loadFormForItem === 'function') loadFormForItem(item);
+                        } else if (spec.refreshList) {
+                            if (typeof initDatabaseEditor === 'function') initDatabaseEditor(true);
+                        }
+                    }, true);
 
                 } else if (spec.kind === 'text') {
                     createFormField(container, spec.label, readValue(spec) || '', val => {

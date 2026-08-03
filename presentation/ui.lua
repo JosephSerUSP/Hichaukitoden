@@ -760,43 +760,229 @@ function ui.drawBar(x, y, w, h, current, maxVal, color1, color2, preview)
     end
 end
 
--- Draw icons from system/iconset.png
-function ui.drawIcon(iconId, x, y)
-    if not iconset or not iconId or iconId <= 0 then return end
-    
-    local quad = iconQuads[iconId]
+local iconColumns = 10
+local discreteHslPaletteShader
+local cachedPalettes = {}
+
+local function parseHexColor(hex)
+    if type(hex) == "table" then return hex end
+    if type(hex) ~= "string" then return {1, 1, 1, 1} end
+    hex = hex:gsub("#", "")
+    local r = (tonumber(hex:sub(1, 2), 16) or 255) / 255
+    local g = (tonumber(hex:sub(3, 4), 16) or 255) / 255
+    local b = (tonumber(hex:sub(5, 6), 16) or 255) / 255
+    return { r, g, b, 1 }
+end
+
+local function initIconShader()
+    if discreteHslPaletteShader then return end
+    local code = [[
+        uniform vec4 u_palette[4];
+        uniform float u_targetHue;
+        uniform float u_hueTolerance;
+        uniform float u_minimumSaturation;
+        uniform float u_minimumLightness;
+        uniform float u_maximumLightness;
+
+        vec3 rgb2hsl(vec3 c) {
+            float maxC = max(c.r, max(c.g, c.b));
+            float minC = min(c.r, min(c.g, c.b));
+            float lightness = (maxC + minC) * 0.5;
+            if (maxC == minC) {
+                return vec3(0.0, 0.0, lightness);
+            }
+            float delta = maxC - minC;
+            float saturation = lightness > 0.5 ? delta / (2.0 - maxC - minC) : delta / (maxC + minC);
+            float hue;
+            if (maxC == c.r) {
+                hue = (c.g - c.b) / delta + (c.g < c.b ? 6.0 : 0.0);
+            } else if (maxC == c.g) {
+                hue = (c.b - c.r) / delta + 2.0;
+            } else {
+                hue = (c.r - c.g) / delta + 4.0;
+            }
+            return vec3(hue / 6.0, saturation, lightness);
+        }
+
+        vec4 effect(vec4 color, Image texture, vec2 textureCoords, vec2 screenCoords) {
+            vec4 source = Texel(texture, textureCoords);
+            if (source.a < 0.01) {
+                return vec4(0.0);
+            }
+            vec3 hsl = rgb2hsl(source.rgb);
+            float hueDistance = abs(hsl.x - u_targetHue);
+            hueDistance = min(hueDistance, 1.0 - hueDistance);
+
+            bool keyed = (hueDistance <= u_hueTolerance &&
+                          hsl.y >= u_minimumSaturation &&
+                          hsl.z >= u_minimumLightness &&
+                          hsl.z <= u_maximumLightness);
+
+            if (!keyed) {
+                return source * color;
+            }
+
+            float normalizedLightness = clamp(
+                (hsl.z - u_minimumLightness) / max(0.0001, u_maximumLightness - u_minimumLightness),
+                0.0, 1.0
+            );
+
+            int rampIndex = int(floor(normalizedLightness * 4.0));
+            if (rampIndex > 3) rampIndex = 3;
+
+            vec3 mapped = u_palette[rampIndex].rgb;
+            return vec4(mapped * color.rgb, source.a * color.a);
+        }
+    ]]
+    local ok, shader = pcall(love.graphics.newShader, code)
+    if ok then
+        discreteHslPaletteShader = shader
+    end
+end
+
+local function resolveIconQuad(id)
+    if not id or id <= 0 or not iconset then return nil end
+    local quad = iconQuads[id]
     if not quad then
-        local col = (iconId - 1) % 10
-        local row = math.floor((iconId - 1) / 10)
+        local col = (id - 1) % iconColumns
+        local row = math.floor((id - 1) / iconColumns)
         quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
-        iconQuads[iconId] = quad
+        iconQuads[id] = quad
+    end
+    return quad
+end
+
+function ui.resolveIcon(iconSource, paletteOverride)
+    if iconSource == nil then
+        return { id = 0, palette = nil }
+    end
+    
+    local resolvedId = 0
+    local resolvedPalette = paletteOverride
+
+    if type(iconSource) == "number" then
+        resolvedId = math.floor(iconSource)
+    elseif type(iconSource) == "table" then
+        if type(iconSource.icon) == "table" then
+            resolvedId = tonumber(iconSource.icon.id) or 0
+            resolvedPalette = resolvedPalette or iconSource.icon.palette or iconSource.icon.iconPalette
+        else
+            resolvedId = tonumber(iconSource.icon or iconSource.id) or 0
+            resolvedPalette = resolvedPalette or iconSource.iconPalette or iconSource.palette
+        end
+    end
+
+    if resolvedPalette == "" then resolvedPalette = nil end
+    return {
+        id = resolvedId,
+        palette = resolvedPalette
+    }
+end
+
+local function resolveIconPalette(paletteId)
+    if not paletteId then return nil end
+    if cachedPalettes[paletteId] then return cachedPalettes[paletteId] end
+    
+    local loader = require("data.loader")
+    local palettes = (loader and loader.iconPalettes) or {}
+    local entry = palettes[paletteId]
+    if not entry or not entry.colors then return nil end
+    
+    local colors = {}
+    for i = 1, 4 do
+        table.insert(colors, parseHexColor(entry.colors[i]))
+    end
+    cachedPalettes[paletteId] = colors
+    return colors
+end
+
+local function resolveIconKeyProfile(iconId)
+    local loader = require("data.loader")
+    local profiles = (loader and loader.iconKeyProfiles) or {}
+    local defaultProf = profiles["default"] or {
+        targetHue = 0.0,
+        hueTolerance = 0.08,
+        minimumSaturation = 0.25,
+        minimumLightness = 0.10,
+        maximumLightness = 0.95
+    }
+    local customProf = profiles[tostring(iconId)]
+    if not customProf then return defaultProf end
+    
+    return {
+        targetHue = customProf.targetHue or defaultProf.targetHue,
+        hueTolerance = customProf.hueTolerance or defaultProf.hueTolerance,
+        minimumSaturation = customProf.minimumSaturation or defaultProf.minimumSaturation,
+        minimumLightness = customProf.minimumLightness or defaultProf.minimumLightness,
+        maximumLightness = customProf.maximumLightness or defaultProf.maximumLightness,
+    }
+end
+
+-- Exposed so the resolution rules can be tested without a draw: everything
+-- below this point needs a graphics context, everything above is pure data.
+ui.resolveIconPalette = resolveIconPalette
+ui.resolveIconKeyProfile = resolveIconKeyProfile
+
+-- Centralized icon renderer
+function ui.drawIcon(iconSource, x, y, options)
+    if not iconset then return end
+    options = options or {}
+    local icon = ui.resolveIcon(iconSource, options.palette)
+    if not icon or icon.id <= 0 then return end
+    
+    local quad = resolveIconQuad(icon.id)
+    if not quad then return end
+    
+    local scale = options.scale or 1.0
+    local drawColor = options.color or { 1, 1, 1, 1 }
+    if options.disabled then
+        drawColor = { drawColor[1] * 0.5, drawColor[2] * 0.5, drawColor[3] * 0.5, (drawColor[4] or 1) * 0.5 }
     end
     
     love.graphics.push("all")
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.draw(iconset, quad, x + 1, y + 1)
     
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(iconset, quad, x, y)
+    -- Drop shadow pass
+    if options.shadow then
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.draw(iconset, quad, x + scale, y + scale, 0, scale, scale)
+    end
+    
+    -- Palette shader pass
+    local shaderActive = false
+    if icon.palette then
+        initIconShader()
+        local paletteData = resolveIconPalette(icon.palette)
+        local profileData = resolveIconKeyProfile(icon.id)
+        if paletteData and discreteHslPaletteShader then
+            shaderActive = true
+            love.graphics.setShader(discreteHslPaletteShader)
+            discreteHslPaletteShader:send("u_palette", unpack(paletteData))
+            discreteHslPaletteShader:send("u_targetHue", profileData.targetHue or 0.0)
+            discreteHslPaletteShader:send("u_hueTolerance", profileData.hueTolerance or 0.08)
+            discreteHslPaletteShader:send("u_minimumSaturation", profileData.minimumSaturation or 0.25)
+            discreteHslPaletteShader:send("u_minimumLightness", profileData.minimumLightness or 0.10)
+            discreteHslPaletteShader:send("u_maximumLightness", profileData.maximumLightness or 0.95)
+        end
+    end
+    
+    love.graphics.setColor(drawColor[1], drawColor[2], drawColor[3], drawColor[4] or 1)
+    love.graphics.draw(iconset, quad, x, y, 0, scale, scale)
+    
+    if shaderActive then
+        love.graphics.setShader()
+    end
+    
     love.graphics.pop()
 end
 
--- Draws "[icon] text" as one unit — the icon immediately in front of the
--- name it belongs to, with the gap sized off the REAL icon footprint
--- (iconSize) rather than a constant some caller has to keep in sync by
--- hand. This is the one place that convention lives; anywhere rows pair
--- an icon with a name (inventory, equipment, equip slots, ...) should
--- call this instead of re-deriving the icon/gap math per caller.
--- Returns the x position immediately after the drawn text (for callers
--- that need to continue laying content out on the same line).
--- nil means ordinary text with no icon block; 0 deliberately reserves the
--- empty icon cell used by items and skills with no authored icon.
-function ui.drawIconText(iconId, text, x, y, color)
+-- Draws "[icon] text" as one unit
+function ui.drawIconText(iconSource, text, x, y, color, options)
+    local icon = ui.resolveIcon(iconSource)
     local textX = x
-    if iconId ~= nil then
-        if iconId > 0 then
+    if iconSource ~= nil then
+        if icon.id > 0 then
             local iconY = y + math.floor((ui.lineHeight - iconSize) / 2) - 1
-            ui.drawIcon(iconId, textX + ui.toPx(0.25), iconY)
+            ui.drawIcon(iconSource, textX + ui.toPx(0.25), iconY, options)
         end
         textX = textX + ui.toPx(0.25) + iconSize + ui.toPx(0.25)
     end
@@ -804,25 +990,11 @@ function ui.drawIconText(iconId, text, x, y, color)
     return textX + ui.measureText(text)
 end
 
--- Draw icons from system/iconset.png with uniform scale factor
-function ui.drawIconScaled(iconId, x, y, scale)
-    if not iconset or not iconId or iconId <= 0 then return end
-    scale = scale or 1.0
-
-    local quad = iconQuads[iconId]
-    if not quad then
-        local col = (iconId - 1) % 10
-        local row = math.floor((iconId - 1) / 10)
-        quad = love.graphics.newQuad(col * iconSize, row * iconSize, iconSize, iconSize, iconset:getDimensions())
-        iconQuads[iconId] = quad
-    end
-
-    love.graphics.push("all")
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.draw(iconset, quad, x + scale, y + scale, 0, scale, scale)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(iconset, quad, x, y, 0, scale, scale)
-    love.graphics.pop()
+-- Draw icons from system/iconset.png with uniform scale factor wrapper
+function ui.drawIconScaled(iconSource, x, y, scale, options)
+    options = options or {}
+    options.scale = scale or 1.0
+    return ui.drawIcon(iconSource, x, y, options)
 end
 
 function ui.loadFont(name, size)

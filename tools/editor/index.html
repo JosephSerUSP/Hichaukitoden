@@ -2115,20 +2115,62 @@
 
     <!-- --- ICON PICKER MODAL --- -->
     <div id="icon-picker-modal" class="modal-overlay" style="z-index: 1350;">
-        <div class="window outset-bevel" style="width: 320px;">
+        <div class="window outset-bevel" style="width: 580px;">
             <div class="title-bar">
-                <div class="title-bar-text">Pick an Icon</div>
+                <div class="title-bar-text">Pick an Icon & Palette</div>
                 <div class="title-bar-controls">
                     <button class="win-btn-small outset-bevel" onclick="closeIconPicker()">×</button>
                 </div>
             </div>
-            <div class="window-body inset-bevel" style="padding: 10px; background: #fff; height: 350px; overflow-y: auto;">
-                <div id="icon-picker-grid" style="display: flex; flex-wrap: wrap; gap: 2px; width: 280px; margin: 0 auto;">
+            <div class="window-body" style="padding: 10px; background: #f0f0f0; display: flex; gap: 10px; height: 380px;">
+                <!-- Left Pane: Icon Grid -->
+                <div class="inset-bevel" style="padding: 6px; background: #fff; width: 280px; height: 100%; overflow-y: auto; flex-shrink: 0;">
+                    <div id="icon-picker-grid" style="display: flex; flex-wrap: wrap; gap: 2px;">
+                    </div>
+                </div>
+                <!-- Right Pane: Appearance & Palettes -->
+                <div class="inset-bevel" style="padding: 10px; background: #fff; flex: 1; height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 48px; height: 48px; border: 1px solid #999; background: #1e1e24; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="icon-picker-preview-canvas" width="48" height="48" style="width: 48px; height: 48px; image-rendering: pixelated;"></canvas>
+                        </div>
+                        <div>
+                            <div id="icon-picker-selected-id" style="font-weight: bold; font-size: 13px;">Icon #0</div>
+                            <div id="icon-picker-selected-palette" style="font-size: 11px; color: #666;">Palette: Original</div>
+                        </div>
+                    </div>
+                    
+                    <div style="font-weight: bold; font-size: 11px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">Palette Variants</div>
+                    <div id="icon-picker-palette-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 140px; overflow-y: auto;">
+                    </div>
+
+                    <details style="margin-top: 4px; font-size: 11px;">
+                        <summary style="cursor: pointer; font-weight: bold;">Advanced: Source Key Profile</summary>
+                        <div style="padding: 6px; background: #f8f8f8; border: 1px solid #ddd; margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                            <div>
+                                <label style="display: flex; justify-content: space-between;">Target Hue: <span id="pk-hue-val">0.00</span></label>
+                                <input type="range" id="pk-hue" min="0" max="1" step="0.01" value="0" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="display: flex; justify-content: space-between;">Hue Tolerance: <span id="pk-tol-val">0.08</span></label>
+                                <input type="range" id="pk-tol" min="0.01" max="0.5" step="0.01" value="0.08" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="display: flex; justify-content: space-between;">Min Saturation: <span id="pk-sat-val">0.25</span></label>
+                                <input type="range" id="pk-sat" min="0" max="1" step="0.01" value="0.25" style="width: 100%;">
+                            </div>
+                            <div style="display: flex; gap: 4px; margin-top: 4px;">
+                                <button class="win-btn outset-bevel" style="font-size: 10px; flex: 1;" onclick="saveIconKeyProfile()">Save Profile</button>
+                                <button class="win-btn outset-bevel" style="font-size: 10px; flex: 1;" onclick="resetIconKeyProfile()">Reset Default</button>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
             <div class="window-footer" style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <span id="icon-picker-hover-info">Icon: 0</span>
-                <div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="win-btn outset-bevel" style="font-weight: bold;" onclick="applyIconPickerSelection()">Apply</button>
                     <button class="win-btn outset-bevel" onclick="closeIconPicker()">Cancel</button>
                 </div>
             </div>
@@ -2322,6 +2364,7 @@
     <script src="js/window-geom.js"></script>
     <script src="js/scene-canvas.js"></script>
     <script src="js/window-editor.js"></script>
+    <script src="js/icon-renderer.js"></script>
     <script src="js/icon-picker.js"></script>
     <script src="js/icon-field.js"></script>
     <script src="js/studio.js"></script>

@@ -7,7 +7,7 @@
     "animation": "item.heal_tonic",
     "description": "Restores 60 HP to one member.",
     "keyArt": "assets/keyArt/item-001-hp-tonic.png",
-    "icon": 52,
+    "icon": 51,
     "meta": {
       "disciplines": [
         "alchemy",
@@ -19,7 +19,8 @@
         "type": "hp",
         "value": 60
       }
-    ]
+    ],
+    "iconPalette": "emerald"
   },
   {
     "id": 2,
@@ -34,7 +35,8 @@
         "type": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "iconPalette": "void"
   },
   {
     "id": 3,
@@ -43,13 +45,14 @@
     "cost": 64,
     "description": "+6 XP to one member.",
     "keyArt": "assets/keyArt/item-003-whispered-lessons.png",
-    "icon": 64,
+    "icon": 51,
     "effects": [
       {
         "type": "xp",
         "value": 6
       }
-    ]
+    ],
+    "iconPalette": "ruby"
   },
   {
     "id": 4,
@@ -59,14 +62,15 @@
     "animation": "skill.divine_favor",
     "description": "Grant a small amount of XP to the party.",
     "keyArt": "assets/keyArt/item-004-elixir-of-insight.png",
-    "icon": 65,
+    "icon": 51,
     "effects": [
       {
         "type": "xp",
         "value": 50
       }
     ],
-    "target": "party"
+    "target": "party",
+    "iconPalette": "ruby"
   },
   {
     "id": 5,
@@ -74,7 +78,7 @@
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 25,
-    "icon": 180,
+    "icon": 31,
     "description": "Sharpened steel blade.",
     "keyArt": "assets/keyArt/item-005-silver-blade.png",
     "traits": [
@@ -87,7 +91,8 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 6,
@@ -95,7 +100,7 @@
     "type": "equipment",
     "equipType": "Armor",
     "cost": 25,
-    "icon": 172,
+    "icon": 41,
     "description": "Sturdy bone harness.",
     "keyArt": "assets/keyArt/item-006-bone-plate.png",
     "traits": [
@@ -104,7 +109,8 @@
         "dataId": "maxHp",
         "value": 3
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 7,
@@ -126,7 +132,8 @@
         "dataId": "maxHp",
         "value": 1
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 8,
@@ -143,7 +150,8 @@
         "dataId": "maxHp",
         "value": 2
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 9,
@@ -165,7 +173,8 @@
         "tinkering",
         "blacksmithing"
       ]
-    }
+    },
+    "iconPalette": "gold"
   },
   {
     "id": 10,
@@ -173,7 +182,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 200,
-    "icon": 6,
+    "icon": 41,
     "description": "Reflective glass. Prevents sneak attacks if in back row.",
     "keyArt": "assets/keyArt/item-010-rear-mirror.png",
     "traits": [
@@ -187,7 +196,8 @@
         "tinkering",
         "blacksmithing"
       ]
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "id": 11,
@@ -204,7 +214,8 @@
         "provenance": "random"
       }
     ],
-    "target": "none"
+    "target": "none",
+    "iconPalette": "gold"
   },
   {
     "id": 12,
@@ -223,7 +234,8 @@
     ],
     "meta": {
       "intensityGrade": "mundane"
-    }
+    },
+    "iconPalette": "gold"
   },
   {
     "id": 13,
@@ -240,7 +252,8 @@
         "dataId": "maxHp",
         "value": 1.1
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 14,
@@ -257,7 +270,8 @@
         "dataId": "maxHp",
         "value": 1.2
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 15,
@@ -274,7 +288,8 @@
         "dataId": "maxHp",
         "value": 1.3
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 16,
@@ -299,7 +314,8 @@
         "code": "CRI",
         "value": 0.2
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 17,
@@ -324,7 +340,8 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "iconPalette": "sapphire"
   },
   {
     "id": 18,
@@ -349,7 +366,8 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "iconPalette": "sapphire"
   },
   {
     "id": 19,
@@ -374,7 +392,8 @@
         "code": "CRI",
         "value": 0.15
       }
-    ]
+    ],
+    "iconPalette": "holy"
   },
   {
     "id": 20,
@@ -399,7 +418,8 @@
         "code": "CRI",
         "value": 0.1
       }
-    ]
+    ],
+    "iconPalette": "amethyst"
   },
   {
     "id": 21,
@@ -415,7 +435,8 @@
         "code": "ELEMENT_CHANGE",
         "dataId": "Red"
       }
-    ]
+    ],
+    "iconPalette": "ruby"
   },
   {
     "id": 22,
@@ -423,7 +444,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 1260,
-    "icon": 83,
+    "icon": 81,
     "description": "Ornate and delicate, its blue sheen is comforting.",
     "keyArt": "assets/keyArt/item-022-mercury-crest.png",
     "traits": [
@@ -435,7 +456,8 @@
         "code": "ELEMENT_CHANGE",
         "dataId": "Blue"
       }
-    ]
+    ],
+    "iconPalette": "ruby"
   },
   {
     "id": 23,
@@ -456,7 +478,8 @@
         "code": "ELEMENT_CHANGE",
         "dataId": "Green"
       }
-    ]
+    ],
+    "iconPalette": "emerald"
   },
   {
     "id": 24,
@@ -500,7 +523,7 @@
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 4000,
-    "icon": 180,
+    "icon": 31,
     "description": "A masterwork blade reforged from ancient scraps. It hums with latent energy.",
     "keyArt": "assets/keyArt/item-027-shattered-edge.png",
     "traits": [
@@ -513,7 +536,8 @@
         "code": "CRI",
         "value": 0.25
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 28,
@@ -521,7 +545,7 @@
     "type": "equipment",
     "equipType": "Armor",
     "cost": 3500,
-    "icon": 172,
+    "icon": 41,
     "description": "Heavy armor forged from star-metal. Incredibly dense.",
     "keyArt": "assets/keyArt/item-028-meteorite-plate.png",
     "traits": [
@@ -535,7 +559,8 @@
         "dataId": "def",
         "value": 2
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 29,
@@ -551,7 +576,9 @@
         "value": 10
       }
     ],
-    "target": "none"
+    "target": "none",
+    "icon": 163,
+    "iconPalette": "leather"
   },
   {
     "id": 30,
@@ -567,7 +594,9 @@
         "value": 25
       }
     ],
-    "target": "none"
+    "target": "none",
+    "icon": 163,
+    "iconPalette": "leather"
   },
   {
     "id": 31,
@@ -592,14 +621,16 @@
         "cooking",
         "alchemy"
       ]
-    }
+    },
+    "icon": 163,
+    "iconPalette": "leather"
   },
   {
     "id": 32,
     "name": "Scrap Plating",
     "type": "equipment",
     "cost": 4,
-    "icon": 180,
+    "icon": 31,
     "description": "Barely shaped offcuts, lashed together. It is not nothing.",
     "keyArt": "assets/keyArt/item-032-scrap-plating.png",
     "equipType": "Armor",
@@ -609,14 +640,15 @@
         "dataId": "def",
         "value": 1
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 33,
     "name": "Sludge",
     "type": "consumable",
     "cost": 3,
-    "icon": 55,
+    "icon": 163,
     "description": "A thin, bitter draught. Drink it quickly.",
     "keyArt": "assets/keyArt/item-033-sludge.png",
     "effects": [
@@ -624,7 +656,8 @@
         "type": "hp",
         "value": 5
       }
-    ]
+    ],
+    "iconPalette": "leather"
   },
   {
     "id": 34,
@@ -646,7 +679,7 @@
     "name": "Broken Spring",
     "type": "equipment",
     "cost": 4,
-    "icon": 174,
+    "icon": 41,
     "description": "It still has some tension in it. Some.",
     "keyArt": "assets/keyArt/item-035-broken-spring.png",
     "effects": [],
@@ -657,7 +690,8 @@
         "dataId": "mdf",
         "value": 1
       }
-    ]
+    ],
+    "iconPalette": "steel"
   },
   {
     "id": 36,
@@ -698,7 +732,8 @@
         "type": "xp",
         "value": 1000
       }
-    ]
+    ],
+    "iconPalette": "ruby"
   },
   {
     "id": 38,
@@ -706,7 +741,7 @@
     "type": "quest",
     "cost": 0,
     "animation": "skill.divine_favor",
-    "icon": 65,
+    "icon": 174,
     "description": "A gilded sigil that unlocks a creature's next evolution. Consumed on promotion.",
     "keyArt": "assets/keyArt/item-038-chrysalis-sigil.png",
     "category": "promotion_key",
@@ -721,7 +756,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 15,
-    "icon": 180,
+    "icon": 41,
     "description": "A sharp shard of dark volcanic glass that grants a trace of defense.",
     "keyArt": "assets/keyArt/item-039-obsidian-shard.png",
     "traits": [
@@ -737,7 +772,8 @@
       ],
       "intensityGrade": "precious",
       "craftable": false
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "id": 40,
@@ -745,7 +781,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 5,
-    "icon": 220,
+    "icon": 41,
     "description": "A glob of warm wax that slightly resists Red damage.",
     "keyArt": "assets/keyArt/item-040-melted-wax.png",
     "traits": [
@@ -761,7 +797,8 @@
       ],
       "intensityGrade": "precious",
       "craftable": false
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "id": 41,
@@ -769,7 +806,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 12,
-    "icon": 55,
+    "icon": 41,
     "description": "Shimmering spirit matter that grants a trace of magic.",
     "keyArt": "assets/keyArt/item-041-ectoplasm.png",
     "traits": [
@@ -785,7 +822,8 @@
       ],
       "intensityGrade": "precious",
       "craftable": false
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "id": 42,
@@ -793,7 +831,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 400,
-    "icon": 150,
+    "icon": 174,
     "description": "Shatters to keep its bearer from passing away. Once.",
     "keyArt": "assets/keyArt/item-042-warding-charm.png",
     "traits": [
@@ -803,7 +841,8 @@
         "mode": "ward",
         "hpFraction": 0.1
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 43,
@@ -811,7 +850,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 650,
-    "icon": 151,
+    "icon": 174,
     "description": "Draws the fallen back once the dust settles, then runs dry.",
     "keyArt": "assets/keyArt/item-043-vial-of-second-breath.png",
     "traits": [
@@ -827,7 +866,8 @@
         "alchemy",
         "tinkering"
       ]
-    }
+    },
+    "iconPalette": "gold"
   },
   {
     "id": 44,
@@ -835,7 +875,7 @@
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 1200,
-    "icon": 152,
+    "icon": 174,
     "description": "Three prayers answered, then only glass.",
     "keyArt": "assets/keyArt/item-044-thrice-blessed-bead.png",
     "traits": [
@@ -846,14 +886,15 @@
         "charges": 3,
         "hpFraction": 0.2
       }
-    ]
+    ],
+    "iconPalette": "gold"
   },
   {
     "id": 45,
     "name": "Tome: Wind Blade",
     "type": "consumable",
     "cost": 300,
-    "icon": 103,
+    "icon": 66,
     "description": "Teaches Wind Blade to one creature.",
     "keyArt": "assets/keyArt/item-045-tome-wind-blade.png",
     "effects": [
@@ -863,14 +904,15 @@
       }
     ],
     "scope": "field",
-    "target": "ally"
+    "target": "ally",
+    "iconPalette": "sapphire"
   },
   {
     "id": 46,
     "name": "Whetstone Draught",
     "type": "consumable",
     "cost": 250,
-    "icon": 104,
+    "icon": 65,
     "description": "Permanently sharpens a creature's attack.",
     "keyArt": "assets/keyArt/item-046-whetstone-draught.png",
     "effects": [
@@ -887,7 +929,8 @@
       ]
     },
     "scope": "field",
-    "target": "ally"
+    "target": "ally",
+    "iconPalette": "steel"
   },
   {
     "id": 47,
@@ -895,13 +938,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 1800,
-    "icon": 103,
+    "icon": 114,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-047-black-hinge.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "amethyst"
   },
   {
     "id": 48,
@@ -909,13 +953,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 2050,
-    "icon": 103,
+    "icon": 113,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-048-ember-bit.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "ruby"
   },
   {
     "id": 49,
@@ -923,13 +968,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 2300,
-    "icon": 103,
+    "icon": 117,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-049-qilin-bell.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "gold"
   },
   {
     "id": 50,
@@ -937,13 +983,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 2550,
-    "icon": 103,
+    "icon": 113,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-050-cinder-ruby.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "ruby"
   },
   {
     "id": 51,
@@ -951,13 +998,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 2800,
-    "icon": 103,
+    "icon": 120,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-051-abyssal-pearl.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "sapphire"
   },
   {
     "id": 52,
@@ -965,13 +1013,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 3050,
-    "icon": 103,
+    "icon": 121,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-052-verdigris-coin.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "emerald"
   },
   {
     "id": 53,
@@ -979,13 +1028,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 3300,
-    "icon": 103,
+    "icon": 184,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-053-celestial-fossil.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "id": 54,
@@ -993,13 +1043,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 3550,
-    "icon": 103,
+    "icon": 167,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-054-blackroot.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "poison"
   },
   {
     "id": 55,
@@ -1007,13 +1058,14 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 3800,
-    "icon": 103,
+    "icon": 114,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-055-molten-manacle.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "ruby"
   },
   {
     "id": 56,
@@ -1021,20 +1073,21 @@
     "type": "quest",
     "category": "promotion_key",
     "cost": 4050,
-    "icon": 103,
+    "icon": 113,
     "description": "A rare object that unlocks a particular transformation.",
     "keyArt": "assets/keyArt/item-056-adamant-weight.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "iconPalette": "steel"
   },
   {
     "name": "Iron Knife",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 30,
-    "icon": 103,
+    "icon": 31,
     "description": "Iron Knife.",
     "keyArt": "assets/keyArt/item-057-iron-knife.png",
     "traits": [
@@ -1050,14 +1103,15 @@
         "blacksmithing"
       ]
     },
-    "id": 57
+    "id": 57,
+    "iconPalette": "steel"
   },
   {
     "name": "Steel Sword",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 120,
-    "icon": 103,
+    "icon": 31,
     "description": "Steel Sword.",
     "keyArt": "assets/keyArt/item-058-steel-sword.png",
     "traits": [
@@ -1073,14 +1127,15 @@
         "blacksmithing"
       ]
     },
-    "id": 58
+    "id": 58,
+    "iconPalette": "steel"
   },
   {
     "name": "Knight Sword",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 380,
-    "icon": 103,
+    "icon": 31,
     "description": "Knight Sword.",
     "keyArt": "assets/keyArt/item-059-knight-sword.png",
     "traits": [
@@ -1096,14 +1151,15 @@
         "blacksmithing"
       ]
     },
-    "id": 59
+    "id": 59,
+    "iconPalette": "gold"
   },
   {
     "name": "Greatsword",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 1200,
-    "icon": 103,
+    "icon": 31,
     "description": "Greatsword.",
     "keyArt": "assets/keyArt/item-060-greatsword.png",
     "traits": [
@@ -1119,14 +1175,15 @@
         "blacksmithing"
       ]
     },
-    "id": 60
+    "id": 60,
+    "iconPalette": "steel"
   },
   {
     "name": "Adamant Blade",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 5000,
-    "icon": 103,
+    "icon": 31,
     "description": "Adamant Blade.",
     "keyArt": "assets/keyArt/item-061-adamant-blade.png",
     "traits": [
@@ -1142,14 +1199,15 @@
         "blacksmithing"
       ]
     },
-    "id": 61
+    "id": 61,
+    "iconPalette": "gold"
   },
   {
     "name": "Hazel Wand",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 30,
-    "icon": 103,
+    "icon": 73,
     "description": "Hazel Wand.",
     "keyArt": "assets/keyArt/item-062-hazel-wand.png",
     "traits": [
@@ -1165,14 +1223,15 @@
         "alchemy"
       ]
     },
-    "id": 62
+    "id": 62,
+    "iconPalette": "leather"
   },
   {
     "name": "Silver Rod",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 120,
-    "icon": 103,
+    "icon": 73,
     "description": "Silver Rod.",
     "keyArt": "assets/keyArt/item-063-silver-rod.png",
     "traits": [
@@ -1188,14 +1247,15 @@
         "alchemy"
       ]
     },
-    "id": 63
+    "id": 63,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Mage Staff",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 380,
-    "icon": 103,
+    "icon": 73,
     "description": "Mage Staff.",
     "keyArt": "assets/keyArt/item-064-mage-staff.png",
     "traits": [
@@ -1211,14 +1271,15 @@
         "alchemy"
       ]
     },
-    "id": 64
+    "id": 64,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Sage Staff",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 1200,
-    "icon": 103,
+    "icon": 77,
     "description": "Sage Staff.",
     "keyArt": "assets/keyArt/item-065-sage-staff.png",
     "traits": [
@@ -1234,14 +1295,15 @@
         "alchemy"
       ]
     },
-    "id": 65
+    "id": 65,
+    "iconPalette": "holy"
   },
   {
     "name": "Ether Staff",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 5000,
-    "icon": 103,
+    "icon": 75,
     "description": "Ether Staff.",
     "keyArt": "assets/keyArt/item-066-ether-staff.png",
     "traits": [
@@ -1257,14 +1319,15 @@
         "alchemy"
       ]
     },
-    "id": 66
+    "id": 66,
+    "iconPalette": "amethyst"
   },
   {
     "name": "War Staff",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 40,
-    "icon": 103,
+    "icon": 73,
     "description": "War Staff.",
     "keyArt": "assets/keyArt/item-067-war-staff.png",
     "traits": [
@@ -1285,14 +1348,15 @@
         "blacksmithing"
       ]
     },
-    "id": 67
+    "id": 67,
+    "iconPalette": "leather"
   },
   {
     "name": "Rune Knife",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 140,
-    "icon": 103,
+    "icon": 72,
     "description": "Rune Knife.",
     "keyArt": "assets/keyArt/item-068-rune-knife.png",
     "traits": [
@@ -1313,14 +1377,15 @@
         "blacksmithing"
       ]
     },
-    "id": 68
+    "id": 68,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Spell Sword",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 420,
-    "icon": 103,
+    "icon": 31,
     "description": "Spell Sword.",
     "keyArt": "assets/keyArt/item-069-spell-sword.png",
     "traits": [
@@ -1341,14 +1406,15 @@
         "blacksmithing"
       ]
     },
-    "id": 69
+    "id": 69,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Glass Blade",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 1350,
-    "icon": 103,
+    "icon": 31,
     "description": "Glass Blade.",
     "keyArt": "assets/keyArt/item-070-glass-blade.png",
     "traits": [
@@ -1369,14 +1435,15 @@
         "blacksmithing"
       ]
     },
-    "id": 70
+    "id": 70,
+    "iconPalette": "holy"
   },
   {
     "name": "Comet Edge",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 5500,
-    "icon": 103,
+    "icon": 31,
     "description": "Comet Edge.",
     "keyArt": "assets/keyArt/item-071-comet-edge.png",
     "traits": [
@@ -1397,14 +1464,15 @@
         "blacksmithing"
       ]
     },
-    "id": 71
+    "id": 71,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Flame Saber",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 650,
-    "icon": 103,
+    "icon": 31,
     "description": "Flame Saber.",
     "keyArt": "assets/keyArt/item-072-flame-saber.png",
     "traits": [
@@ -1424,14 +1492,15 @@
         "blacksmithing"
       ]
     },
-    "id": 72
+    "id": 72,
+    "iconPalette": "ruby"
   },
   {
     "name": "Coral Sword",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 650,
-    "icon": 103,
+    "icon": 31,
     "description": "Coral Sword.",
     "keyArt": "assets/keyArt/item-073-coral-sword.png",
     "traits": [
@@ -1451,14 +1520,15 @@
         "blacksmithing"
       ]
     },
-    "id": 73
+    "id": 73,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Air Knife",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 650,
-    "icon": 103,
+    "icon": 72,
     "description": "Air Knife.",
     "keyArt": "assets/keyArt/item-074-air-knife.png",
     "traits": [
@@ -1478,14 +1548,15 @@
         "blacksmithing"
       ]
     },
-    "id": 74
+    "id": 74,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Healing Staff",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 650,
-    "icon": 103,
+    "icon": 77,
     "description": "Healing Staff.",
     "keyArt": "assets/keyArt/item-075-healing-staff.png",
     "traits": [
@@ -1505,14 +1576,15 @@
         "blacksmithing"
       ]
     },
-    "id": 75
+    "id": 75,
+    "iconPalette": "holy"
   },
   {
     "name": "Death Sickle",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 650,
-    "icon": 103,
+    "icon": 76,
     "description": "Death Sickle.",
     "keyArt": "assets/keyArt/item-076-death-sickle.png",
     "traits": [
@@ -1532,14 +1604,15 @@
         "blacksmithing"
       ]
     },
-    "id": 76
+    "id": 76,
+    "iconPalette": "steel"
   },
   {
     "name": "Venom Knife",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 480,
-    "icon": 103,
+    "icon": 72,
     "description": "Venom Knife.",
     "keyArt": "assets/keyArt/item-077-venom-knife.png",
     "traits": [
@@ -1559,14 +1632,15 @@
         "blacksmithing"
       ]
     },
-    "id": 77
+    "id": 77,
+    "iconPalette": "emerald"
   },
   {
     "name": "Sleep Blade",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 520,
-    "icon": 103,
+    "icon": 31,
     "description": "Sleep Blade.",
     "keyArt": "assets/keyArt/item-078-sleep-blade.png",
     "traits": [
@@ -1586,14 +1660,15 @@
         "blacksmithing"
       ]
     },
-    "id": 78
+    "id": 78,
+    "iconPalette": "emerald"
   },
   {
     "name": "Barbed Spear",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 600,
-    "icon": 103,
+    "icon": 79,
     "description": "Barbed Spear.",
     "keyArt": "assets/keyArt/item-079-barbed-spear.png",
     "traits": [
@@ -1613,14 +1688,15 @@
         "blacksmithing"
       ]
     },
-    "id": 79
+    "id": 79,
+    "iconPalette": "steel"
   },
   {
     "name": "Executioner",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 1800,
-    "icon": 103,
+    "icon": 76,
     "description": "Executioner.",
     "keyArt": "assets/keyArt/item-080-executioner.png",
     "traits": [
@@ -1640,14 +1716,15 @@
         "blacksmithing"
       ]
     },
-    "id": 80
+    "id": 80,
+    "iconPalette": "steel"
   },
   {
     "name": "Pile Bunker",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 1700,
-    "icon": 103,
+    "icon": 81,
     "description": "Pile Bunker.",
     "keyArt": "assets/keyArt/item-081-pile-bunker.png",
     "traits": [
@@ -1667,14 +1744,15 @@
         "tinkering"
       ]
     },
-    "id": 81
+    "id": 81,
+    "iconPalette": "steel"
   },
   {
     "name": "Broken Cleaver",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 20,
-    "icon": 103,
+    "icon": 76,
     "description": "Broken Cleaver.",
     "keyArt": "assets/keyArt/item-082-broken-cleaver.png",
     "traits": [
@@ -1691,14 +1769,15 @@
       ],
       "craftable": false
     },
-    "id": 82
+    "id": 82,
+    "iconPalette": "steel"
   },
   {
     "name": "Bone Club",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 45,
-    "icon": 103,
+    "icon": 76,
     "description": "Bone Club.",
     "keyArt": "assets/keyArt/item-083-bone-club.png",
     "traits": [
@@ -1715,14 +1794,15 @@
       ],
       "craftable": false
     },
-    "id": 83
+    "id": 83,
+    "iconPalette": "steel"
   },
   {
     "name": "Cerberus Fang",
     "type": "equipment",
     "equipType": "Weapon",
     "cost": 260,
-    "icon": 103,
+    "icon": 76,
     "description": "Cerberus Fang.",
     "keyArt": "assets/keyArt/item-084-cerberus-fang.png",
     "traits": [
@@ -1743,14 +1823,15 @@
       ],
       "craftable": false
     },
-    "id": 84
+    "id": 84,
+    "iconPalette": "steel"
   },
   {
     "name": "Leather Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 35,
-    "icon": 103,
+    "icon": 41,
     "description": "Leather Armor.",
     "keyArt": "assets/keyArt/item-085-leather-armor.png",
     "traits": [
@@ -1771,14 +1852,15 @@
         "blacksmithing"
       ]
     },
-    "id": 85
+    "id": 85,
+    "iconPalette": "leather"
   },
   {
     "name": "Ring Mail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 130,
-    "icon": 103,
+    "icon": 41,
     "description": "Ring Mail.",
     "keyArt": "assets/keyArt/item-086-ring-mail.png",
     "traits": [
@@ -1799,14 +1881,15 @@
         "blacksmithing"
       ]
     },
-    "id": 86
+    "id": 86,
+    "iconPalette": "steel"
   },
   {
     "name": "Chainmail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 400,
-    "icon": 103,
+    "icon": 41,
     "description": "Chainmail.",
     "keyArt": "assets/keyArt/item-087-chainmail.png",
     "traits": [
@@ -1827,14 +1910,15 @@
         "blacksmithing"
       ]
     },
-    "id": 87
+    "id": 87,
+    "iconPalette": "steel"
   },
   {
     "name": "Plate Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 1300,
-    "icon": 103,
+    "icon": 41,
     "description": "Plate Armor.",
     "keyArt": "assets/keyArt/item-088-plate-armor.png",
     "traits": [
@@ -1855,14 +1939,15 @@
         "blacksmithing"
       ]
     },
-    "id": 88
+    "id": 88,
+    "iconPalette": "steel"
   },
   {
     "name": "Adamant Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 5200,
-    "icon": 103,
+    "icon": 41,
     "description": "Adamant Armor.",
     "keyArt": "assets/keyArt/item-089-adamant-armor.png",
     "traits": [
@@ -1883,14 +1968,15 @@
         "blacksmithing"
       ]
     },
-    "id": 89
+    "id": 89,
+    "iconPalette": "gold"
   },
   {
     "name": "Cotton Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 35,
-    "icon": 103,
+    "icon": 124,
     "description": "Cotton Robe.",
     "keyArt": "assets/keyArt/item-090-cotton-robe.png",
     "traits": [
@@ -1911,14 +1997,15 @@
         "alchemy"
       ]
     },
-    "id": 90
+    "id": 90,
+    "iconPalette": "leather"
   },
   {
     "name": "Silk Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 130,
-    "icon": 103,
+    "icon": 125,
     "description": "Silk Robe.",
     "keyArt": "assets/keyArt/item-091-silk-robe.png",
     "traits": [
@@ -1939,14 +2026,15 @@
         "alchemy"
       ]
     },
-    "id": 91
+    "id": 91,
+    "iconPalette": "holy"
   },
   {
     "name": "Mage Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 400,
-    "icon": 103,
+    "icon": 124,
     "description": "Mage Robe.",
     "keyArt": "assets/keyArt/item-092-mage-robe.png",
     "traits": [
@@ -1967,14 +2055,15 @@
         "alchemy"
       ]
     },
-    "id": 92
+    "id": 92,
+    "iconPalette": "leather"
   },
   {
     "name": "Sage Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 1300,
-    "icon": 103,
+    "icon": 124,
     "description": "Sage Robe.",
     "keyArt": "assets/keyArt/item-093-sage-robe.png",
     "traits": [
@@ -1995,14 +2084,15 @@
         "alchemy"
       ]
     },
-    "id": 93
+    "id": 93,
+    "iconPalette": "leather"
   },
   {
     "name": "Ether Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 5200,
-    "icon": 103,
+    "icon": 125,
     "description": "Ether Robe.",
     "keyArt": "assets/keyArt/item-094-ether-robe.png",
     "traits": [
@@ -2023,14 +2113,15 @@
         "alchemy"
       ]
     },
-    "id": 94
+    "id": 94,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Traveler Coat",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 40,
-    "icon": 103,
+    "icon": 124,
     "description": "Traveler Coat.",
     "keyArt": "assets/keyArt/item-095-traveler-coat.png",
     "traits": [
@@ -2056,14 +2147,15 @@
         "blacksmithing"
       ]
     },
-    "id": 95
+    "id": 95,
+    "iconPalette": "leather"
   },
   {
     "name": "Brigandine",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 145,
-    "icon": 103,
+    "icon": 41,
     "description": "Brigandine.",
     "keyArt": "assets/keyArt/item-096-brigandine.png",
     "traits": [
@@ -2089,14 +2181,15 @@
         "blacksmithing"
       ]
     },
-    "id": 96
+    "id": 96,
+    "iconPalette": "steel"
   },
   {
     "name": "Scale Mail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 440,
-    "icon": 103,
+    "icon": 41,
     "description": "Scale Mail.",
     "keyArt": "assets/keyArt/item-097-scale-mail.png",
     "traits": [
@@ -2122,14 +2215,15 @@
         "blacksmithing"
       ]
     },
-    "id": 97
+    "id": 97,
+    "iconPalette": "steel"
   },
   {
     "name": "Dragon Mail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 1450,
-    "icon": 103,
+    "icon": 41,
     "description": "Dragon Mail.",
     "keyArt": "assets/keyArt/item-098-dragon-mail.png",
     "traits": [
@@ -2155,14 +2249,15 @@
         "blacksmithing"
       ]
     },
-    "id": 98
+    "id": 98,
+    "iconPalette": "steel"
   },
   {
     "name": "Hero Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 5800,
-    "icon": 103,
+    "icon": 41,
     "description": "Hero Armor.",
     "keyArt": "assets/keyArt/item-099-hero-armor.png",
     "traits": [
@@ -2188,14 +2283,15 @@
         "blacksmithing"
       ]
     },
-    "id": 99
+    "id": 99,
+    "iconPalette": "gold"
   },
   {
     "name": "Flame Mail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 700,
-    "icon": 103,
+    "icon": 41,
     "description": "Flame Mail.",
     "keyArt": "assets/keyArt/item-100-flame-mail.png",
     "traits": [
@@ -2216,14 +2312,15 @@
         "alchemy"
       ]
     },
-    "id": 100
+    "id": 100,
+    "iconPalette": "ruby"
   },
   {
     "name": "Coral Mail",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 700,
-    "icon": 103,
+    "icon": 41,
     "description": "Coral Mail.",
     "keyArt": "assets/keyArt/item-101-coral-mail.png",
     "traits": [
@@ -2244,14 +2341,15 @@
         "alchemy"
       ]
     },
-    "id": 101
+    "id": 101,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Wind Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 700,
-    "icon": 103,
+    "icon": 125,
     "description": "Wind Robe.",
     "keyArt": "assets/keyArt/item-102-wind-robe.png",
     "traits": [
@@ -2272,14 +2370,15 @@
         "alchemy"
       ]
     },
-    "id": 102
+    "id": 102,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Holy Vestment",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 700,
-    "icon": 103,
+    "icon": 125,
     "description": "Holy Vestment.",
     "keyArt": "assets/keyArt/item-103-holy-vestment.png",
     "traits": [
@@ -2300,14 +2399,15 @@
         "alchemy"
       ]
     },
-    "id": 103
+    "id": 103,
+    "iconPalette": "holy"
   },
   {
     "name": "Black Robe",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 700,
-    "icon": 103,
+    "icon": 175,
     "description": "Black Robe.",
     "keyArt": "assets/keyArt/item-104-black-robe.png",
     "traits": [
@@ -2328,14 +2428,15 @@
         "alchemy"
       ]
     },
-    "id": 104
+    "id": 104,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Gas Mask",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 450,
-    "icon": 103,
+    "icon": 41,
     "description": "Gas Mask.",
     "keyArt": "assets/keyArt/item-105-gas-mask.png",
     "traits": [
@@ -2351,14 +2452,15 @@
         "tinkering"
       ]
     },
-    "id": 105
+    "id": 105,
+    "iconPalette": "steel"
   },
   {
     "name": "Moth Cloak",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 520,
-    "icon": 103,
+    "icon": 175,
     "description": "Moth Cloak.",
     "keyArt": "assets/keyArt/item-106-moth-cloak.png",
     "traits": [
@@ -2373,14 +2475,15 @@
         "tinkering"
       ]
     },
-    "id": 106
+    "id": 106,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Quarantine Coat",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 950,
-    "icon": 103,
+    "icon": 124,
     "description": "Quarantine Coat.",
     "keyArt": "assets/keyArt/item-107-quarantine-coat.png",
     "traits": [
@@ -2396,14 +2499,15 @@
         "tinkering"
       ]
     },
-    "id": 107
+    "id": 107,
+    "iconPalette": "leather"
   },
   {
     "name": "Mirror Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 1500,
-    "icon": 103,
+    "icon": 41,
     "description": "Mirror Armor.",
     "keyArt": "assets/keyArt/item-108-mirror-armor.png",
     "traits": [
@@ -2424,14 +2528,15 @@
         "tinkering"
       ]
     },
-    "id": 108
+    "id": 108,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Fortress Plate",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 1800,
-    "icon": 103,
+    "icon": 41,
     "description": "Fortress Plate.",
     "keyArt": "assets/keyArt/item-109-fortress-plate.png",
     "traits": [
@@ -2455,14 +2560,15 @@
         "blacksmithing"
       ]
     },
-    "id": 109
+    "id": 109,
+    "iconPalette": "steel"
   },
   {
     "name": "Tin Armor",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 25,
-    "icon": 103,
+    "icon": 41,
     "description": "Tin Armor.",
     "keyArt": "assets/keyArt/item-110-tin-armor.png",
     "traits": [
@@ -2484,14 +2590,15 @@
       ],
       "craftable": false
     },
-    "id": 110
+    "id": 110,
+    "iconPalette": "steel"
   },
   {
     "name": "Cocoon Husk",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 70,
-    "icon": 103,
+    "icon": 124,
     "description": "Cocoon Husk.",
     "keyArt": "assets/keyArt/item-111-cocoon-husk.png",
     "traits": [
@@ -2513,14 +2620,15 @@
       ],
       "craftable": false
     },
-    "id": 111
+    "id": 111,
+    "iconPalette": "leather"
   },
   {
     "name": "Slime Coat",
     "type": "equipment",
     "equipType": "Armor",
     "cost": 90,
-    "icon": 103,
+    "icon": 124,
     "description": "Slime Coat.",
     "keyArt": "assets/keyArt/item-112-slime-coat.png",
     "traits": [
@@ -2542,14 +2650,15 @@
       ],
       "craftable": false
     },
-    "id": 112
+    "id": 112,
+    "iconPalette": "leather"
   },
   {
     "name": "Rock",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 10,
-    "icon": 103,
+    "icon": 113,
     "description": "Rock.",
     "keyArt": "assets/keyArt/item-113-rock.png",
     "traits": [
@@ -2565,14 +2674,15 @@
         "tinkering"
       ]
     },
-    "id": 113
+    "id": 113,
+    "iconPalette": "steel"
   },
   {
     "name": "Glass Bead",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 10,
-    "icon": 103,
+    "icon": 114,
     "description": "Glass Bead.",
     "keyArt": "assets/keyArt/item-114-glass-bead.png",
     "traits": [
@@ -2588,14 +2698,15 @@
         "tinkering"
       ]
     },
-    "id": 114
+    "id": 114,
+    "iconPalette": "holy"
   },
   {
     "name": "Copper Coin",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 10,
-    "icon": 103,
+    "icon": 121,
     "description": "Copper Coin.",
     "keyArt": "assets/keyArt/item-115-copper-coin.png",
     "traits": [
@@ -2616,14 +2727,15 @@
         "tinkering"
       ]
     },
-    "id": 115
+    "id": 115,
+    "iconPalette": "gold"
   },
   {
     "name": "Iron Nail",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 10,
-    "icon": 103,
+    "icon": 116,
     "description": "Iron Nail.",
     "keyArt": "assets/keyArt/item-116-iron-nail.png",
     "traits": [
@@ -2639,14 +2751,15 @@
         "tinkering"
       ]
     },
-    "id": 116
+    "id": 116,
+    "iconPalette": "steel"
   },
   {
     "name": "Old Bell",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 10,
-    "icon": 103,
+    "icon": 117,
     "description": "Old Bell.",
     "keyArt": "assets/keyArt/item-117-old-bell.png",
     "traits": [
@@ -2662,14 +2775,15 @@
         "tinkering"
       ]
     },
-    "id": 117
+    "id": 117,
+    "iconPalette": "gold"
   },
   {
     "name": "Ruby Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 126,
     "description": "Ruby Ring.",
     "keyArt": "assets/keyArt/item-118-ruby-ring.png",
     "traits": [
@@ -2689,14 +2803,15 @@
         "alchemy"
       ]
     },
-    "id": 118
+    "id": 118,
+    "iconPalette": "ruby"
   },
   {
     "name": "Sapphire Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 112,
     "description": "Sapphire Ring.",
     "keyArt": "assets/keyArt/item-119-sapphire-ring.png",
     "traits": [
@@ -2716,14 +2831,15 @@
         "alchemy"
       ]
     },
-    "id": 119
+    "id": 119,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Emerald Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 112,
     "description": "Emerald Ring.",
     "keyArt": "assets/keyArt/item-120-emerald-ring.png",
     "traits": [
@@ -2743,14 +2859,15 @@
         "alchemy"
       ]
     },
-    "id": 120
+    "id": 120,
+    "iconPalette": "emerald"
   },
   {
     "name": "Pearl Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 120,
     "description": "Pearl Ring.",
     "keyArt": "assets/keyArt/item-121-pearl-ring.png",
     "traits": [
@@ -2770,14 +2887,15 @@
         "alchemy"
       ]
     },
-    "id": 121
+    "id": 121,
+    "iconPalette": "holy"
   },
   {
     "name": "Onyx Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 114,
     "description": "Onyx Ring.",
     "keyArt": "assets/keyArt/item-122-onyx-ring.png",
     "traits": [
@@ -2797,14 +2915,15 @@
         "alchemy"
       ]
     },
-    "id": 122
+    "id": 122,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Star Pendant",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 180,
-    "icon": 103,
+    "icon": 123,
     "description": "Star Pendant.",
     "keyArt": "assets/keyArt/item-123-star-pendant.png",
     "traits": [
@@ -2820,14 +2939,15 @@
         "alchemy"
       ]
     },
-    "id": 123
+    "id": 123,
+    "iconPalette": "amber"
   },
   {
     "name": "Silver Glasses",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 180,
-    "icon": 103,
+    "icon": 124,
     "description": "Silver Glasses.",
     "keyArt": "assets/keyArt/item-124-silver-glasses.png",
     "traits": [
@@ -2842,14 +2962,15 @@
         "tinkering"
       ]
     },
-    "id": 124
+    "id": 124,
+    "iconPalette": "steel"
   },
   {
     "name": "White Cape",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 240,
-    "icon": 103,
+    "icon": 125,
     "description": "White Cape.",
     "keyArt": "assets/keyArt/item-125-white-cape.png",
     "traits": [
@@ -2865,14 +2986,15 @@
         "cooking"
       ]
     },
-    "id": 125
+    "id": 125,
+    "iconPalette": "holy"
   },
   {
     "name": "Peace Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 300,
-    "icon": 103,
+    "icon": 120,
     "description": "Peace Ring.",
     "keyArt": "assets/keyArt/item-126-peace-ring.png",
     "traits": [
@@ -2887,14 +3009,15 @@
         "alchemy"
       ]
     },
-    "id": 126
+    "id": 126,
+    "iconPalette": "holy"
   },
   {
     "name": "Earplugs",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 160,
-    "icon": 103,
+    "icon": 124,
     "description": "Earplugs.",
     "keyArt": "assets/keyArt/item-127-earplugs.png",
     "traits": [
@@ -2910,14 +3033,15 @@
         "tinkering"
       ]
     },
-    "id": 127
+    "id": 127,
+    "iconPalette": "steel"
   },
   {
     "name": "Safety Bit",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 1200,
-    "icon": 103,
+    "icon": 41,
     "description": "Safety Bit.",
     "keyArt": "assets/keyArt/item-128-safety-bit.png",
     "traits": [
@@ -2932,14 +3056,15 @@
         "tinkering"
       ]
     },
-    "id": 128
+    "id": 128,
+    "iconPalette": "steel"
   },
   {
     "name": "Ribbon",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 6500,
-    "icon": 103,
+    "icon": 41,
     "description": "Ribbon.",
     "keyArt": "assets/keyArt/item-129-ribbon.png",
     "traits": [
@@ -2954,14 +3079,15 @@
         "tinkering"
       ]
     },
-    "id": 129
+    "id": 129,
+    "iconPalette": "steel"
   },
   {
     "name": "Compass",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 200,
-    "icon": 103,
+    "icon": 41,
     "description": "Compass.",
     "keyArt": "assets/keyArt/item-130-compass.png",
     "traits": [
@@ -2976,14 +3102,15 @@
         "tinkering"
       ]
     },
-    "id": 130
+    "id": 130,
+    "iconPalette": "steel"
   },
   {
     "name": "Lantern",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 320,
-    "icon": 103,
+    "icon": 41,
     "description": "Lantern.",
     "keyArt": "assets/keyArt/item-131-lantern.png",
     "traits": [
@@ -2998,14 +3125,15 @@
         "tinkering"
       ]
     },
-    "id": 131
+    "id": 131,
+    "iconPalette": "steel"
   },
   {
     "name": "Thief Glove",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 480,
-    "icon": 103,
+    "icon": 41,
     "description": "Thief Glove.",
     "keyArt": "assets/keyArt/item-132-thief-glove.png",
     "traits": [
@@ -3020,14 +3148,15 @@
         "tinkering"
       ]
     },
-    "id": 132
+    "id": 132,
+    "iconPalette": "steel"
   },
   {
     "name": "Sprint Shoes",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 520,
-    "icon": 103,
+    "icon": 82,
     "description": "Sprint Shoes.",
     "keyArt": "assets/keyArt/item-133-sprint-shoes.png",
     "traits": [
@@ -3042,14 +3171,15 @@
         "tinkering"
       ]
     },
-    "id": 133
+    "id": 133,
+    "iconPalette": "emerald"
   },
   {
     "name": "Moa Saddle",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 1800,
-    "icon": 103,
+    "icon": 41,
     "description": "Moa Saddle.",
     "keyArt": "assets/keyArt/item-134-moa-saddle.png",
     "traits": [
@@ -3065,14 +3195,15 @@
         "tinkering"
       ]
     },
-    "id": 134
+    "id": 134,
+    "iconPalette": "steel"
   },
   {
     "name": "Chef Hat",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 420,
-    "icon": 103,
+    "icon": 41,
     "description": "Chef Hat.",
     "keyArt": "assets/keyArt/item-135-chef-hat.png",
     "traits": [
@@ -3087,14 +3218,15 @@
         "cooking"
       ]
     },
-    "id": 135
+    "id": 135,
+    "iconPalette": "steel"
   },
   {
     "name": "Apron",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 650,
-    "icon": 103,
+    "icon": 41,
     "description": "Apron.",
     "keyArt": "assets/keyArt/item-136-apron.png",
     "traits": [
@@ -3109,14 +3241,15 @@
         "cooking"
       ]
     },
-    "id": 136
+    "id": 136,
+    "iconPalette": "steel"
   },
   {
     "name": "Medicine Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 900,
-    "icon": 103,
+    "icon": 112,
     "description": "Medicine Ring.",
     "keyArt": "assets/keyArt/item-137-medicine-ring.png",
     "traits": [
@@ -3131,14 +3264,15 @@
         "alchemy"
       ]
     },
-    "id": 137
+    "id": 137,
+    "iconPalette": "emerald"
   },
   {
     "name": "Mimic Tongue",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 350,
-    "icon": 103,
+    "icon": 41,
     "description": "Mimic Tongue.",
     "keyArt": "assets/keyArt/item-138-mimic-tongue.png",
     "traits": [
@@ -3154,14 +3288,15 @@
       ],
       "craftable": false
     },
-    "id": 138
+    "id": 138,
+    "iconPalette": "steel"
   },
   {
     "name": "Sniper Eye",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 700,
-    "icon": 103,
+    "icon": 124,
     "description": "Sniper Eye.",
     "keyArt": "assets/keyArt/item-139-sniper-eye.png",
     "traits": [
@@ -3176,14 +3311,15 @@
         "tinkering"
       ]
     },
-    "id": 139
+    "id": 139,
+    "iconPalette": "steel"
   },
   {
     "name": "Black Belt",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 700,
-    "icon": 103,
+    "icon": 41,
     "description": "Black Belt.",
     "keyArt": "assets/keyArt/item-140-black-belt.png",
     "traits": [
@@ -3198,14 +3334,15 @@
         "blacksmithing"
       ]
     },
-    "id": 140
+    "id": 140,
+    "iconPalette": "steel"
   },
   {
     "name": "Provoke Badge",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 500,
-    "icon": 103,
+    "icon": 41,
     "description": "Provoke Badge.",
     "keyArt": "assets/keyArt/item-141-provoke-badge.png",
     "traits": [
@@ -3220,14 +3357,15 @@
         "tinkering"
       ]
     },
-    "id": 141
+    "id": 141,
+    "iconPalette": "steel"
   },
   {
     "name": "Cat Bell",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 650,
-    "icon": 103,
+    "icon": 117,
     "description": "Cat Bell.",
     "keyArt": "assets/keyArt/item-142-cat-bell.png",
     "traits": [
@@ -3242,14 +3380,15 @@
         "tinkering"
       ]
     },
-    "id": 142
+    "id": 142,
+    "iconPalette": "gold"
   },
   {
     "name": "Golem Shard",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 120,
-    "icon": 103,
+    "icon": 113,
     "description": "Golem Shard.",
     "keyArt": "assets/keyArt/item-143-golem-shard.png",
     "traits": [
@@ -3271,14 +3410,15 @@
       ],
       "craftable": false
     },
-    "id": 143
+    "id": 143,
+    "iconPalette": "steel"
   },
   {
     "name": "Moth Scale",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 140,
-    "icon": 103,
+    "icon": 144,
     "description": "Moth Scale.",
     "keyArt": "assets/keyArt/item-144-moth-scale.png",
     "traits": [
@@ -3295,14 +3435,15 @@
       ],
       "craftable": false
     },
-    "id": 144
+    "id": 144,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Slime Core",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 160,
-    "icon": 103,
+    "icon": 145,
     "description": "Slime Core.",
     "keyArt": "assets/keyArt/item-145-slime-core.png",
     "traits": [
@@ -3324,14 +3465,15 @@
       ],
       "craftable": false
     },
-    "id": 145
+    "id": 145,
+    "iconPalette": "emerald"
   },
   {
     "name": "Protect Ring",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 1600,
-    "icon": 103,
+    "icon": 126,
     "description": "Protect Ring.",
     "keyArt": "assets/keyArt/item-146-protect-ring.png",
     "traits": [
@@ -3346,14 +3488,15 @@
         "alchemy"
       ]
     },
-    "id": 146
+    "id": 146,
+    "iconPalette": "gold"
   },
   {
     "name": "Angel Feather",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 2200,
-    "icon": 103,
+    "icon": 147,
     "description": "Angel Feather.",
     "keyArt": "assets/keyArt/item-147-angel-feather.png",
     "traits": [
@@ -3370,14 +3513,15 @@
         "tinkering"
       ]
     },
-    "id": 147
+    "id": 147,
+    "iconPalette": "holy"
   },
   {
     "name": "Phoenix Pinion",
     "type": "equipment",
     "equipType": "Accessory",
     "cost": 6000,
-    "icon": 103,
+    "icon": 148,
     "description": "Phoenix Pinion.",
     "keyArt": "assets/keyArt/item-148-phoenix-pinion.png",
     "traits": [
@@ -3395,13 +3539,14 @@
         "tinkering"
       ]
     },
-    "id": 148
+    "id": 148,
+    "iconPalette": "ruby"
   },
   {
     "name": "Potion",
     "type": "consumable",
     "cost": 35,
-    "icon": 104,
+    "icon": 51,
     "description": "Potion.",
     "keyArt": "assets/keyArt/item-149-potion.png",
     "effects": [
@@ -3413,13 +3558,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 149
+    "id": 149,
+    "iconPalette": "ruby"
   },
   {
     "name": "Hi-Potion",
     "type": "consumable",
     "cost": 120,
-    "icon": 104,
+    "icon": 51,
     "description": "Hi-Potion.",
     "keyArt": "assets/keyArt/item-150-hi-potion.png",
     "effects": [
@@ -3431,13 +3577,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 150
+    "id": 150,
+    "iconPalette": "ruby"
   },
   {
     "name": "X-Potion",
     "type": "consumable",
     "cost": 380,
-    "icon": 104,
+    "icon": 51,
     "description": "X-Potion.",
     "keyArt": "assets/keyArt/item-151-x-potion.png",
     "effects": [
@@ -3449,13 +3596,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 151
+    "id": 151,
+    "iconPalette": "ruby"
   },
   {
     "name": "Mega-Potion",
     "type": "consumable",
     "cost": 900,
-    "icon": 104,
+    "icon": 51,
     "description": "Mega-Potion.",
     "keyArt": "assets/keyArt/item-152-mega-potion.png",
     "effects": [
@@ -3467,13 +3615,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 152
+    "id": 152,
+    "iconPalette": "gold"
   },
   {
     "name": "Healing Water",
     "type": "consumable",
     "cost": 550,
-    "icon": 104,
+    "icon": 53,
     "description": "Healing Water.",
     "keyArt": "assets/keyArt/item-153-healing-water.png",
     "effects": [
@@ -3485,13 +3634,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 153
+    "id": 153,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Soma",
     "type": "consumable",
     "cost": 1800,
-    "icon": 104,
+    "icon": 53,
     "description": "Soma.",
     "keyArt": "assets/keyArt/item-154-soma.png",
     "effects": [
@@ -3503,13 +3653,14 @@
     ],
     "scope": "always",
     "target": "party",
-    "id": 154
+    "id": 154,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Elixir",
     "type": "consumable",
     "cost": 5000,
-    "icon": 104,
+    "icon": 149,
     "description": "Elixir.",
     "keyArt": "assets/keyArt/item-155-elixir.png",
     "effects": [
@@ -3521,13 +3672,14 @@
     ],
     "scope": "always",
     "target": "party",
-    "id": 155
+    "id": 155,
+    "iconPalette": "holy"
   },
   {
     "name": "Ether",
     "type": "consumable",
     "cost": 60,
-    "icon": 104,
+    "icon": 53,
     "description": "Ether.",
     "keyArt": "assets/keyArt/item-156-ether.png",
     "effects": [
@@ -3539,13 +3691,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 156
+    "id": 156,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Hi-Ether",
     "type": "consumable",
     "cost": 180,
-    "icon": 104,
+    "icon": 53,
     "description": "Hi-Ether.",
     "keyArt": "assets/keyArt/item-157-hi-ether.png",
     "effects": [
@@ -3557,13 +3710,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 157
+    "id": 157,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Dry Ether",
     "type": "consumable",
     "cost": 420,
-    "icon": 104,
+    "icon": 53,
     "description": "Dry Ether.",
     "keyArt": "assets/keyArt/item-158-dry-ether.png",
     "effects": [
@@ -3575,13 +3729,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 158
+    "id": 158,
+    "iconPalette": "gold"
   },
   {
     "name": "Turbo Ether",
     "type": "consumable",
     "cost": 900,
-    "icon": 104,
+    "icon": 53,
     "description": "Turbo Ether.",
     "keyArt": "assets/keyArt/item-159-turbo-ether.png",
     "effects": [
@@ -3593,13 +3748,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 159
+    "id": 159,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Ether Drop",
     "type": "consumable",
     "cost": 220,
-    "icon": 104,
+    "icon": 187,
     "description": "Ether Drop.",
     "keyArt": "assets/keyArt/item-160-ether-drop.png",
     "effects": [
@@ -3611,13 +3767,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 160
+    "id": 160,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Ether Flask",
     "type": "consumable",
     "cost": 650,
-    "icon": 104,
+    "icon": 190,
     "description": "Ether Flask.",
     "keyArt": "assets/keyArt/item-161-ether-flask.png",
     "effects": [
@@ -3629,13 +3786,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 161
+    "id": 161,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Soma Drop",
     "type": "consumable",
     "cost": 2200,
-    "icon": 104,
+    "icon": 187,
     "description": "Soma Drop.",
     "keyArt": "assets/keyArt/item-162-soma-drop.png",
     "effects": [
@@ -3647,13 +3805,14 @@
     ],
     "scope": "always",
     "target": "none",
-    "id": 162
+    "id": 162,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Antidote",
     "type": "consumable",
     "cost": 40,
-    "icon": 104,
+    "icon": 52,
     "description": "Antidote.",
     "keyArt": "assets/keyArt/item-163-antidote.png",
     "effects": [
@@ -3664,13 +3823,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 163
+    "id": 163,
+    "iconPalette": "emerald"
   },
   {
     "name": "Eye Drops",
     "type": "consumable",
     "cost": 40,
-    "icon": 104,
+    "icon": 164,
     "description": "Eye Drops.",
     "keyArt": "assets/keyArt/item-164-eye-drops.png",
     "effects": [
@@ -3687,7 +3847,7 @@
     "name": "Echo Herbs",
     "type": "consumable",
     "cost": 40,
-    "icon": 104,
+    "icon": 167,
     "description": "Echo Herbs.",
     "keyArt": "assets/keyArt/item-165-echo-herbs.png",
     "effects": [
@@ -3698,13 +3858,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 165
+    "id": 165,
+    "iconPalette": "emerald"
   },
   {
     "name": "Alarm Clock",
     "type": "consumable",
     "cost": 50,
-    "icon": 104,
+    "icon": 117,
     "description": "Alarm Clock.",
     "keyArt": "assets/keyArt/item-166-alarm-clock.png",
     "effects": [
@@ -3715,13 +3876,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 166
+    "id": 166,
+    "iconPalette": "gold"
   },
   {
     "name": "Remedy",
     "type": "consumable",
     "cost": 250,
-    "icon": 104,
+    "icon": 54,
     "description": "Remedy.",
     "keyArt": "assets/keyArt/item-167-remedy.png",
     "effects": [
@@ -3748,13 +3910,14 @@
     ],
     "scope": "always",
     "target": "ally",
-    "id": 167
+    "id": 167,
+    "iconPalette": "holy"
   },
   {
     "name": "Smoke Bomb",
     "type": "consumable",
     "cost": 100,
-    "icon": 104,
+    "icon": 168,
     "description": "Smoke Bomb.",
     "keyArt": "assets/keyArt/item-168-smoke-bomb.png",
     "effects": [],
@@ -3766,7 +3929,7 @@
     "name": "Hero Drink",
     "type": "consumable",
     "cost": 280,
-    "icon": 104,
+    "icon": 163,
     "description": "Hero Drink.",
     "keyArt": "assets/keyArt/item-169-hero-drink.png",
     "effects": [
@@ -3779,13 +3942,14 @@
     ],
     "scope": "battle",
     "target": "ally",
-    "id": 169
+    "id": 169,
+    "iconPalette": "ruby"
   },
   {
     "name": "Bacchus Wine",
     "type": "consumable",
     "cost": 180,
-    "icon": 104,
+    "icon": 163,
     "description": "Bacchus Wine.",
     "keyArt": "assets/keyArt/item-170-bacchus-wine.png",
     "effects": [
@@ -3798,13 +3962,14 @@
     ],
     "scope": "battle",
     "target": "ally",
-    "id": 170
+    "id": 170,
+    "iconPalette": "amethyst"
   },
   {
     "name": "Pão de Queijo",
     "type": "consumable",
     "cost": 90,
-    "icon": 104,
+    "icon": 161,
     "description": "Pão de Queijo.",
     "keyArt": "assets/keyArt/item-171-p-o-de-queijo.png",
     "effects": [
@@ -3835,13 +4000,14 @@
         "cooking"
       ]
     },
-    "id": 171
+    "id": 171,
+    "iconPalette": "gold"
   },
   {
     "name": "Coxinha",
     "type": "consumable",
     "cost": 70,
-    "icon": 104,
+    "icon": 161,
     "description": "Coxinha.",
     "keyArt": "assets/keyArt/item-172-coxinha.png",
     "effects": [
@@ -3871,13 +4037,14 @@
         "cooking"
       ]
     },
-    "id": 172
+    "id": 172,
+    "iconPalette": "gold"
   },
   {
     "name": "Feijoada",
     "type": "consumable",
     "cost": 260,
-    "icon": 104,
+    "icon": 162,
     "description": "Feijoada.",
     "keyArt": "assets/keyArt/item-173-feijoada.png",
     "effects": [
@@ -3907,13 +4074,14 @@
         "cooking"
       ]
     },
-    "id": 173
+    "id": 173,
+    "iconPalette": "ruby"
   },
   {
     "name": "Moonfish Moqueca",
     "type": "consumable",
     "cost": 420,
-    "icon": 104,
+    "icon": 162,
     "description": "Moonfish Moqueca.",
     "keyArt": "assets/keyArt/item-174-moonfish-moqueca.png",
     "effects": [
@@ -3948,13 +4116,14 @@
         "cooking"
       ]
     },
-    "id": 174
+    "id": 174,
+    "iconPalette": "ruby"
   },
   {
     "name": "Mana Congee",
     "type": "consumable",
     "cost": 300,
-    "icon": 104,
+    "icon": 162,
     "description": "Mana Congee.",
     "keyArt": "assets/keyArt/item-175-mana-congee.png",
     "effects": [
@@ -3988,13 +4157,14 @@
         "cooking"
       ]
     },
-    "id": 175
+    "id": 175,
+    "iconPalette": "ruby"
   },
   {
     "name": "Onigiri",
     "type": "consumable",
     "cost": 65,
-    "icon": 104,
+    "icon": 161,
     "description": "Onigiri.",
     "keyArt": "assets/keyArt/item-176-onigiri.png",
     "effects": [
@@ -4024,13 +4194,14 @@
         "cooking"
       ]
     },
-    "id": 176
+    "id": 176,
+    "iconPalette": "gold"
   },
   {
     "name": "Moa Tamagoyaki",
     "type": "consumable",
     "cost": 280,
-    "icon": 104,
+    "icon": 162,
     "description": "Moa Tamagoyaki.",
     "keyArt": "assets/keyArt/item-177-moa-tamagoyaki.png",
     "effects": [
@@ -4064,13 +4235,14 @@
         "cooking"
       ]
     },
-    "id": 177
+    "id": 177,
+    "iconPalette": "ruby"
   },
   {
     "name": "Slime Natto",
     "type": "consumable",
     "cost": 220,
-    "icon": 104,
+    "icon": 162,
     "description": "Slime Natto.",
     "keyArt": "assets/keyArt/item-178-slime-natto.png",
     "effects": [
@@ -4105,13 +4277,14 @@
         "cooking"
       ]
     },
-    "id": 178
+    "id": 178,
+    "iconPalette": "ruby"
   },
   {
     "name": "Mooncake",
     "type": "consumable",
     "cost": 120,
-    "icon": 104,
+    "icon": 161,
     "description": "Mooncake.",
     "keyArt": "assets/keyArt/item-179-mooncake.png",
     "effects": [
@@ -4144,13 +4317,14 @@
         "cooking"
       ]
     },
-    "id": 179
+    "id": 179,
+    "iconPalette": "gold"
   },
   {
     "name": "Mochi",
     "type": "consumable",
     "cost": 75,
-    "icon": 104,
+    "icon": 161,
     "description": "Mochi.",
     "keyArt": "assets/keyArt/item-180-mochi.png",
     "effects": [
@@ -4183,13 +4357,14 @@
         "cooking"
       ]
     },
-    "id": 180
+    "id": 180,
+    "iconPalette": "gold"
   },
   {
     "name": "Daifuku",
     "type": "consumable",
     "cost": 110,
-    "icon": 104,
+    "icon": 161,
     "description": "Daifuku.",
     "keyArt": "assets/keyArt/item-181-daifuku.png",
     "effects": [
@@ -4223,13 +4398,14 @@
         "cooking"
       ]
     },
-    "id": 181
+    "id": 181,
+    "iconPalette": "gold"
   },
   {
     "name": "Curry",
     "type": "consumable",
     "cost": 240,
-    "icon": 104,
+    "icon": 162,
     "description": "Curry.",
     "keyArt": "assets/keyArt/item-182-curry.png",
     "effects": [
@@ -4264,13 +4440,14 @@
         "cooking"
       ]
     },
-    "id": 182
+    "id": 182,
+    "iconPalette": "ruby"
   },
   {
     "name": "Stew",
     "type": "consumable",
     "cost": 180,
-    "icon": 104,
+    "icon": 162,
     "description": "Stew.",
     "keyArt": "assets/keyArt/item-183-stew.png",
     "effects": [
@@ -4301,13 +4478,14 @@
         "cooking"
       ]
     },
-    "id": 183
+    "id": 183,
+    "iconPalette": "ruby"
   },
   {
     "name": "Sushi",
     "type": "consumable",
     "cost": 230,
-    "icon": 104,
+    "icon": 162,
     "description": "Sushi.",
     "keyArt": "assets/keyArt/item-184-sushi.png",
     "effects": [
@@ -4341,13 +4519,14 @@
         "cooking"
       ]
     },
-    "id": 184
+    "id": 184,
+    "iconPalette": "ruby"
   },
   {
     "name": "Ramen",
     "type": "consumable",
     "cost": 260,
-    "icon": 104,
+    "icon": 162,
     "description": "Ramen.",
     "keyArt": "assets/keyArt/item-185-ramen.png",
     "effects": [
@@ -4381,13 +4560,14 @@
         "cooking"
       ]
     },
-    "id": 185
+    "id": 185,
+    "iconPalette": "ruby"
   },
   {
     "name": "Pizza",
     "type": "consumable",
     "cost": 280,
-    "icon": 104,
+    "icon": 161,
     "description": "Pizza.",
     "keyArt": "assets/keyArt/item-186-pizza.png",
     "effects": [
@@ -4418,13 +4598,14 @@
         "cooking"
       ]
     },
-    "id": 186
+    "id": 186,
+    "iconPalette": "gold"
   },
   {
     "name": "Risotto",
     "type": "consumable",
     "cost": 210,
-    "icon": 104,
+    "icon": 162,
     "description": "Risotto.",
     "keyArt": "assets/keyArt/item-187-risotto.png",
     "effects": [
@@ -4458,13 +4639,14 @@
         "cooking"
       ]
     },
-    "id": 187
+    "id": 187,
+    "iconPalette": "ruby"
   },
   {
     "name": "Tempura",
     "type": "consumable",
     "cost": 190,
-    "icon": 104,
+    "icon": 161,
     "description": "Tempura.",
     "keyArt": "assets/keyArt/item-188-tempura.png",
     "effects": [
@@ -4494,13 +4676,14 @@
         "cooking"
       ]
     },
-    "id": 188
+    "id": 188,
+    "iconPalette": "gold"
   },
   {
     "name": "Kimchi",
     "type": "consumable",
     "cost": 90,
-    "icon": 104,
+    "icon": 162,
     "description": "Kimchi.",
     "keyArt": "assets/keyArt/item-189-kimchi.png",
     "effects": [
@@ -4530,13 +4713,14 @@
         "cooking"
       ]
     },
-    "id": 189
+    "id": 189,
+    "iconPalette": "ruby"
   },
   {
     "name": "Mandrake Tempura",
     "type": "consumable",
     "cost": 320,
-    "icon": 104,
+    "icon": 161,
     "description": "Mandrake Tempura.",
     "keyArt": "assets/keyArt/item-190-mandrake-tempura.png",
     "effects": [
@@ -4570,13 +4754,14 @@
         "cooking"
       ]
     },
-    "id": 190
+    "id": 190,
+    "iconPalette": "gold"
   },
   {
     "name": "Power Incense",
     "type": "consumable",
     "cost": 700,
-    "icon": 104,
+    "icon": 165,
     "description": "Power Incense.",
     "keyArt": "assets/keyArt/item-191-power-incense.png",
     "effects": [
@@ -4588,13 +4773,14 @@
     ],
     "scope": "field",
     "target": "ally",
-    "id": 191
+    "id": 191,
+    "iconPalette": "ruby"
   },
   {
     "name": "Guard Incense",
     "type": "consumable",
     "cost": 700,
-    "icon": 104,
+    "icon": 165,
     "description": "Guard Incense.",
     "keyArt": "assets/keyArt/item-192-guard-incense.png",
     "effects": [
@@ -4606,13 +4792,14 @@
     ],
     "scope": "field",
     "target": "ally",
-    "id": 192
+    "id": 192,
+    "iconPalette": "emerald"
   },
   {
     "name": "Magic Incense",
     "type": "consumable",
     "cost": 700,
-    "icon": 104,
+    "icon": 165,
     "description": "Magic Incense.",
     "keyArt": "assets/keyArt/item-193-magic-incense.png",
     "effects": [
@@ -4624,13 +4811,14 @@
     ],
     "scope": "field",
     "target": "ally",
-    "id": 193
+    "id": 193,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Spirit Incense",
     "type": "consumable",
     "cost": 700,
-    "icon": 104,
+    "icon": 165,
     "description": "Spirit Incense.",
     "keyArt": "assets/keyArt/item-194-spirit-incense.png",
     "effects": [
@@ -4642,13 +4830,14 @@
     ],
     "scope": "field",
     "target": "ally",
-    "id": 194
+    "id": 194,
+    "iconPalette": "gold"
   },
   {
     "name": "Ether Seed",
     "type": "consumable",
     "cost": 2200,
-    "icon": 104,
+    "icon": 146,
     "description": "Ether Seed.",
     "keyArt": "assets/keyArt/item-195-ether-seed.png",
     "effects": [
@@ -4659,13 +4848,14 @@
     ],
     "scope": "field",
     "target": "none",
-    "id": 195
+    "id": 195,
+    "iconPalette": "sapphire"
   },
   {
     "name": "Forbidden Lamp",
     "type": "consumable",
     "cost": 5000,
-    "icon": 104,
+    "icon": 178,
     "description": "A sealed lamp. Its fixed Diablos challenge awaits encounter-continuation support.",
     "keyArt": "assets/keyArt/item-196-forbidden-lamp.png",
     "effects": [],
@@ -4675,13 +4865,14 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "id": 196
+    "id": 196,
+    "iconPalette": "void"
   },
   {
     "name": "Town Portal",
     "type": "consumable",
     "cost": 1200,
-    "icon": 103,
+    "icon": 178,
     "description": "Returns temporarily to St. Maria. The open seam leads back to the exact place it was used.",
     "keyArt": "assets/keyArt/item-197-town-portal.png",
     "effects": [
@@ -4697,19 +4888,21 @@
       "craftIngredient": false,
       "dungeonOnly": true
     },
-    "id": 197
+    "id": 197,
+    "iconPalette": "holy"
   },
   {
     "name": "Crossing Writ",
     "type": "quest",
     "cost": 0,
-    "icon": 75,
+    "icon": 178,
     "description": "A narrow stamped writ authorizing one Summoner to cross St. Maria's Labyrinth gate.",
     "keyArt": "assets/keyArt/item-198-crossing-writ.png",
     "meta": {
       "craftable": false,
       "craftIngredient": false
     },
-    "id": 198
+    "id": 198,
+    "iconPalette": "gold"
   }
 ]

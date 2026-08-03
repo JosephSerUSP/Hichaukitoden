@@ -486,6 +486,41 @@ validator.run = function(loader)
         print("[validator] items outside Item Creation entirely (neither ingredient nor output): " .. craftInert)
     end
 
+    -- Validate iconPalettes.json and iconKeyProfiles.json
+    local validPalettes = {}
+    for paletteId, entry in pairs(loader.iconPalettes or {}) do
+        validPalettes[paletteId] = true
+        check(type(entry) == "table", "icon palette '" .. tostring(paletteId) .. "' must be an object")
+        if type(entry) == "table" then
+            check(type(entry.colors) == "table" and #entry.colors == 4, "icon palette '" .. tostring(paletteId) .. "' must have exactly 4 hex colors")
+        end
+    end
+
+    for iconKey, prof in pairs(loader.iconKeyProfiles or {}) do
+        check(iconKey == "default" or tonumber(iconKey) ~= nil, "icon key profile '" .. tostring(iconKey) .. "' must be 'default' or a numeric icon ID")
+        if type(prof) == "table" then
+            if prof.minimumLightness and prof.maximumLightness then
+                check(prof.minimumLightness <= prof.maximumLightness, "icon key profile '" .. tostring(iconKey) .. "' minimumLightness exceeds maximumLightness")
+            end
+        end
+    end
+
+    -- Validate items and skills icon palette references
+    local function validateEntityIcon(entity, collectionName)
+        local iconId = tonumber(entity.icon)
+        if entity.iconPalette and entity.iconPalette ~= "" then
+            check(validPalettes[entity.iconPalette] == true, collectionName .. " '" .. tostring(entity.id or entity.name) .. "' iconPalette '" .. tostring(entity.iconPalette) .. "' is not registered in iconPalettes.json")
+            check(iconId and iconId > 0, collectionName .. " '" .. tostring(entity.id or entity.name) .. "' specifies iconPalette without a positive icon ID")
+        end
+    end
+
+    for _, item in ipairs(loader.items or {}) do
+        validateEntityIcon(item, "item")
+    end
+    for _, skill in ipairs(loader.skills or {}) do
+        validateEntityIcon(skill, "skill")
+    end
+
     local undeclaredWarnings = 0
     local function validateMeta(metaObj, collName, entryId)
         if not metaObj then return end

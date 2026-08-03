@@ -1,0 +1,101 @@
+{
+  "ruby": {
+    "label": "Ruby",
+    "colors": [
+      "#20050b",
+      "#a01828",
+      "#ff3850",
+      "#ffffff"
+    ]
+  },
+  "sapphire": {
+    "label": "Sapphire",
+    "colors": [
+      "#051428",
+      "#1860c0",
+      "#50b4ff",
+      "#ffffff"
+    ]
+  },
+  "emerald": {
+    "label": "Emerald",
+    "colors": [
+      "#05280f",
+      "#18a03c",
+      "#50ff78",
+      "#ffffff"
+    ]
+  },
+  "amethyst": {
+    "label": "Amethyst",
+    "colors": [
+      "#190528",
+      "#8018c0",
+      "#c850ff",
+      "#ffffff"
+    ]
+  },
+  "gold": {
+    "label": "Gold",
+    "colors": [
+      "#281905",
+      "#c08c18",
+      "#ffd750",
+      "#ffffff"
+    ]
+  },
+  "amber": {
+    "label": "Amber",
+    "colors": [
+      "#2b1800",
+      "#c8781e",
+      "#ffbe6b",
+      "#ffffff"
+    ]
+  },
+  "steel": {
+    "label": "Steel",
+    "colors": [
+      "#14181c",
+      "#5c6b73",
+      "#a8b5bd",
+      "#ffffff"
+    ]
+  },
+  "leather": {
+    "label": "Leather",
+    "colors": [
+      "#1f1209",
+      "#7a4b2a",
+      "#c4936e",
+      "#ffffff"
+    ]
+  },
+  "poison": {
+    "label": "Poison",
+    "colors": [
+      "#122000",
+      "#6bc81e",
+      "#b5ff6b",
+      "#ffffff"
+    ]
+  },
+  "holy": {
+    "label": "Holy",
+    "colors": [
+      "#1a202c",
+      "#64b5f6",
+      "#e3f2fd",
+      "#ffffff"
+    ]
+  },
+  "void": {
+    "label": "Void",
+    "colors": [
+      "#0f0519",
+      "#3c145a",
+      "#8c3cc8",
+      "#ffffff"
+    ]
+  }
+}

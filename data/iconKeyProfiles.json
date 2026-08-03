@@ -1,0 +1,9 @@
+{
+  "default": {
+    "targetHue": 0.0,
+    "hueTolerance": 0.08,
+    "minimumSaturation": 0.25,
+    "minimumLightness": 0.10,
+    "maximumLightness": 0.95
+  }
+}

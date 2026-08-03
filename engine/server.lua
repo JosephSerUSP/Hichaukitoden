@@ -12,7 +12,7 @@ local DATA_FILES = {
     "actors", "elements", "items", "maps", "lore", "quests", "shops",
     "sounds", "terms", "actionSequences", "system", "commonEvents",
     "skills", "passives", "states", "roles", "engine", "flows", "scenes",
-    "troops"
+    "troops", "iconPalettes", "iconKeyProfiles"
 }
 
 function server.start()

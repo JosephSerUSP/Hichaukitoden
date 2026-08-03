@@ -96,6 +96,10 @@ function loader.init(root)
     -- Decoupled tilesets data registry
     loader.tilesets = J("tilesets.json")
 
+    -- Icon palettes and key profiles
+    loader.iconPalettes = J("iconPalettes.json")
+    loader.iconKeyProfiles = J("iconKeyProfiles.json")
+
     -- Create lookup indices for scalability
     loader.actorsById = {}
     for _, actor in ipairs(loader.actors) do
