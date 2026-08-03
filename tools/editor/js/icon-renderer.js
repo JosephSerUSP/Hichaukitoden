@@ -104,6 +104,27 @@ function resolveIconKeyProfile(iconId) {
     return Object.assign({}, defaultProf, customProf || {});
 }
 
+// Must stay in lockstep with the GLSL ramp in presentation/ui.lua -- the two
+// exist so the editor preview predicts the runtime draw, and they are only
+// useful while they agree. The four palette entries are CONTROL POINTS at
+// 0, 1/3, 2/3, 1, not four buckets: source icons are already colour-limited,
+// so quantizing threw away the shading that was there and the top bucket
+// almost never fired. sRGB blend, matching the space the hexes were picked in.
+function rampColor(stops, t) {
+    const position = Math.max(0, Math.min(1, t)) * 3;
+    let low = Math.floor(position);
+    if (low < 0) low = 0;
+    if (low > 2) low = 2;
+    const blend = Math.max(0, Math.min(1, position - low));
+
+    const a = stops[low], b = stops[low + 1];
+    return [
+        Math.round(a[0] + (b[0] - a[0]) * blend),
+        Math.round(a[1] + (b[1] - a[1]) * blend),
+        Math.round(a[2] + (b[2] - a[2]) * blend)
+    ];
+}
+
 function rgbToHsl(r, g, b) {
     r /= 255; g /= 255; b /= 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -177,10 +198,7 @@ function renderIconPreview(canvas, iconSpec) {
                 const isKeyed = (dh <= hueTol && s >= minSat && l >= minLum && l <= maxLum);
                 if (isKeyed) {
                     const normLum = Math.max(0, Math.min(1, (l - minLum) / Math.max(0.0001, maxLum - minLum)));
-                    let rampIdx = Math.floor(normLum * 4);
-                    if (rampIdx > 3) rampIdx = 3;
-
-                    const mappedRGB = paletteColors[rampIdx];
+                    const mappedRGB = rampColor(paletteColors, normLum);
                     data[i] = mappedRGB[0];
                     data[i + 1] = mappedRGB[1];
                     data[i + 2] = mappedRGB[2];
@@ -237,6 +255,7 @@ function renderIconSwatch(element, iconSpec) {
 
 window.getIconsetPath = getIconsetPath;
 window.iconPaletteRegistry = iconPaletteRegistry;
+window.rampColor = rampColor;
 window.iconDb = iconDb;
 window.iconGridPos = iconGridPos;
 window.resolveIconPalette = resolveIconPalette;

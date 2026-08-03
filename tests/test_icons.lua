@@ -157,6 +157,164 @@ check(approx(ui.resolveIconKeyProfile("84").targetHue, 0.94),
 
 loader.iconKeyProfiles = savedProfiles
 
+-- === Palette shader ===
+print("=== Palette Shader ===")
+
+-- The recolor is GLSL, so the ramp maths cannot be asserted from Lua. What CAN
+-- be asserted is that the shader compiles on this driver at all -- it used to
+-- be pcall'd with the failure swallowed, which would have disabled recoloring
+-- for the entire game while looking identical to "no palette was set".
+local shaderOk, shaderErr = pcall(ui.initIconShader)
+check(shaderOk, "the icon palette shader compiles"
+    .. (shaderOk and "" or (": " .. tostring(shaderErr))))
+
+if shaderOk then
+    local shader = ui.initIconShader()
+    check(shader ~= nil, "compiling the shader yields a shader object")
+    -- Every uniform drawIcon feeds must actually exist, or a rename would
+    -- silently stop reaching the GPU.
+    local sendOk = pcall(function()
+        shader:send("u_palette", { 0, 0, 0, 1 }, { 0.3, 0, 0, 1 }, { 0.6, 0, 0, 1 }, { 1, 1, 1, 1 })
+        shader:send("u_targetHue", 0.0)
+        shader:send("u_hueTolerance", 0.08)
+        shader:send("u_minimumSaturation", 0.25)
+        shader:send("u_minimumLightness", 0.10)
+        shader:send("u_maximumLightness", 0.95)
+    end)
+    check(sendOk, "every uniform drawIcon sends is declared by the shader")
+end
+
+-- === Ramp output through the real shader ===
+print("=== Ramp Output (GPU) ===")
+
+-- The ramp lives in GLSL, and the editor keeps a JS copy so its preview can
+-- predict the runtime draw. Two implementations of one formula drift unless
+-- something checks. This renders known source pixels through the ACTUAL
+-- shader and reads them back, so the numbers below are the GPU's, not a Lua
+-- re-implementation of what the GPU was supposed to do.
+--
+-- The four palette entries are control points at 0, 1/3, 2/3, 1 -- not four
+-- buckets. Quantizing was discarding most of the shading in icons that are
+-- already colour-limited, and with a 0.10-0.95 window the top bucket never
+-- fired at all.
+if shaderOk then
+    local shader = ui.initIconShader()
+
+    -- Four pure-red sources at rising lightness, chosen to land on the ramp's
+    -- control points given the window below: L = 0.10, 0.383, 0.667, 0.95.
+    local window = { min = 0.10, max = 0.95 }
+    local sourceLightness = { 0.10, 0.10 + 0.85 / 3, 0.10 + 0.85 * 2 / 3, 0.95 }
+
+    -- Fully-saturated red at a given lightness (hue 0, S = 1).
+    local function redAt(l)
+        local c = (1 - math.abs(2 * l - 1))
+        local m = l - c / 2
+        return math.min(1, c + m), math.max(0, m), math.max(0, m)
+    end
+
+    local src = love.image.newImageData(#sourceLightness, 1)
+    for i, l in ipairs(sourceLightness) do
+        local r, g, b = redAt(l)
+        src:setPixel(i - 1, 0, r, g, b, 1)
+    end
+
+    local image = love.graphics.newImage(src)
+    image:setFilter("nearest", "nearest")
+
+    local canvas = love.graphics.newCanvas(#sourceLightness, 1)
+    local palette = {
+        { 0.0, 0.0, 0.0, 1 },   -- stop 0: black
+        { 1.0, 0.0, 0.0, 1 },   -- stop 1: red
+        { 0.0, 1.0, 0.0, 1 },   -- stop 2: green
+        { 0.0, 0.0, 1.0, 1 },   -- stop 3: blue
+    }
+
+    love.graphics.push("all")
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setBlendMode("replace")
+    love.graphics.setShader(shader)
+    shader:send("u_palette", palette[1], palette[2], palette[3], palette[4])
+    shader:send("u_targetHue", 0.0)
+    shader:send("u_hueTolerance", 0.08)
+    shader:send("u_minimumSaturation", 0.25)
+    shader:send("u_minimumLightness", window.min)
+    shader:send("u_maximumLightness", window.max)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(image, 0, 0)
+    love.graphics.setShader()
+    love.graphics.setCanvas()
+    love.graphics.pop()
+
+    local out = canvas:newImageData()
+    local function channels(i)
+        local r, g, b = out:getPixel(i, 0)
+        return r, g, b
+    end
+
+    -- At each control point the output must BE that stop, exactly.
+    local tol = 0.02
+    local function near(a, b) return math.abs(a - b) <= tol end
+
+    for i = 1, 4 do
+        local r, g, b = channels(i - 1)
+        local want = palette[i]
+        check(near(r, want[1]) and near(g, want[2]) and near(b, want[3]),
+            ("control point %d renders as its own palette stop (got %.2f,%.2f,%.2f)")
+                :format(i, r, g, b))
+    end
+
+    -- And between them it must actually blend, not snap. Midway between the
+    -- red and green stops the output has to carry BOTH channels -- which is
+    -- exactly what the old four-bucket version could never produce.
+    local midSrc = love.image.newImageData(1, 1)
+    local midL = 0.10 + 0.85 * 0.5
+    local r0, g0, b0 = redAt(midL)
+    midSrc:setPixel(0, 0, r0, g0, b0, 1)
+    local midImage = love.graphics.newImage(midSrc)
+    midImage:setFilter("nearest", "nearest")
+    local midCanvas = love.graphics.newCanvas(1, 1)
+
+    love.graphics.push("all")
+    love.graphics.setCanvas(midCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setBlendMode("replace")
+    love.graphics.setShader(shader)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(midImage, 0, 0)
+    love.graphics.setShader()
+    love.graphics.setCanvas()
+    love.graphics.pop()
+
+    local mr, mg, mb = midCanvas:newImageData():getPixel(0, 0)
+    check(mr > 0.1 and mg > 0.1,
+        ("between two stops the ramp blends rather than snapping (got %.2f,%.2f,%.2f)")
+            :format(mr, mg, mb))
+    check(mb < 0.1, "a mid-ramp blend does not pull in a stop it sits nowhere near")
+
+    -- A pixel outside the hue key must survive untouched.
+    local keepSrc = love.image.newImageData(1, 1)
+    keepSrc:setPixel(0, 0, 0.2, 0.8, 0.3, 1)  -- green: nowhere near hue 0
+    local keepImage = love.graphics.newImage(keepSrc)
+    keepImage:setFilter("nearest", "nearest")
+    local keepCanvas = love.graphics.newCanvas(1, 1)
+
+    love.graphics.push("all")
+    love.graphics.setCanvas(keepCanvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setBlendMode("replace")
+    love.graphics.setShader(shader)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(keepImage, 0, 0)
+    love.graphics.setShader()
+    love.graphics.setCanvas()
+    love.graphics.pop()
+
+    local kr, kg, kb = keepCanvas:newImageData():getPixel(0, 0)
+    check(near(kr, 0.2) and near(kg, 0.8) and near(kb, 0.3),
+        ("an unkeyed pixel passes through untouched (got %.2f,%.2f,%.2f)"):format(kr, kg, kb))
+end
+
 -- === Authored data ===
 print("=== Authored Data ===")
 

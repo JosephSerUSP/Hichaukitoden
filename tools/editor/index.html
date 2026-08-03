@@ -2159,6 +2159,18 @@
                                 <label style="display: flex; justify-content: space-between;">Min Saturation: <span id="pk-sat-val">0.25</span></label>
                                 <input type="range" id="pk-sat" min="0" max="1" step="0.01" value="0.25" style="width: 100%;">
                             </div>
+                            <div>
+                                <label style="display: flex; justify-content: space-between;">Min Lightness: <span id="pk-lmin-val">0.10</span></label>
+                                <input type="range" id="pk-lmin" min="0" max="1" step="0.01" value="0.10" style="width: 100%;">
+                            </div>
+                            <div>
+                                <label style="display: flex; justify-content: space-between;">Max Lightness: <span id="pk-lmax-val">0.95</span></label>
+                                <input type="range" id="pk-lmax" min="0" max="1" step="0.01" value="0.95" style="width: 100%;">
+                            </div>
+                            <div style="font-size: 10px; color: #666; line-height: 1.3;">
+                                The lightness window is what maps onto the ramp. Narrow it to the
+                                icon's own shading range to bring the whole ramp into play.
+                            </div>
                             <div style="display: flex; gap: 4px; margin-top: 4px;">
                                 <button class="win-btn outset-bevel" style="font-size: 10px; flex: 1;" onclick="saveIconKeyProfile()">Save Profile</button>
                                 <button class="win-btn outset-bevel" style="font-size: 10px; flex: 1;" onclick="resetIconKeyProfile()">Reset Default</button>

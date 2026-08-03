@@ -775,7 +775,7 @@ local function parseHexColor(hex)
 end
 
 local function initIconShader()
-    if discreteHslPaletteShader then return end
+    if discreteHslPaletteShader then return discreteHslPaletteShader end
     local code = [[
         uniform vec4 u_palette[4];
         uniform float u_targetHue;
@@ -827,18 +827,39 @@ local function initIconShader()
                 0.0, 1.0
             );
 
-            int rampIndex = int(floor(normalizedLightness * 4.0));
-            if (rampIndex > 3) rampIndex = 3;
+            // The four palette entries are CONTROL POINTS at 0, 1/3, 2/3, 1 --
+            // not four buckets. Source icons are already colour-limited (a
+            // typical 8x8 keys 3-6 distinct tones), so quantizing to four
+            // steps discarded most of the shading that was there, and with a
+            // 0.10-0.95 window the top bucket almost never fired. Interpolating
+            // preserves the source's own gradation and lets the highlight
+            // contribute in proportion. Blend is in sRGB, which is the space
+            // the palette hexes were picked in.
+            float rampPosition = normalizedLightness * 3.0;
+            int lowStop = int(floor(rampPosition));
+            if (lowStop < 0) lowStop = 0;
+            if (lowStop > 2) lowStop = 2;
+            float blend = clamp(rampPosition - float(lowStop), 0.0, 1.0);
 
-            vec3 mapped = u_palette[rampIndex].rgb;
+            vec3 mapped = mix(u_palette[lowStop].rgb, u_palette[lowStop + 1].rgb, blend);
             return vec4(mapped * color.rgb, source.a * color.a);
         }
     ]]
-    local ok, shader = pcall(love.graphics.newShader, code)
-    if ok then
-        discreteHslPaletteShader = shader
+    -- A swallowed compile error here would silently disable recoloring for the
+    -- whole game and look exactly like "the palette wasn't set" -- the same
+    -- silent-failure shape as the loader/dbPayload bugs. Raise instead, and let
+    -- tests/test_icons.lua compile it on every run so a shader typo fails the
+    -- gate rather than the frame.
+    local ok, shaderOrErr = pcall(love.graphics.newShader, code)
+    if not ok then
+        error("icon palette shader failed to compile: " .. tostring(shaderOrErr), 0)
     end
+    discreteHslPaletteShader = shaderOrErr
+    return discreteHslPaletteShader
 end
+
+-- Exposed purely so the gate can prove the shader compiles on this driver.
+ui.initIconShader = initIconShader
 
 local function resolveIconQuad(id)
     if not id or id <= 0 or not iconset then return nil end

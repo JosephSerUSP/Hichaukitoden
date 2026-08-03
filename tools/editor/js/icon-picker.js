@@ -140,43 +140,55 @@ function updatePickerPreview() {
     }
 }
 
+// All five keying fields the runtime profile carries, in panel order.
+const PROFILE_SLIDERS = [
+    { el: 'pk-hue',  out: 'pk-hue-val',  field: 'targetHue',         fallback: 0.0  },
+    { el: 'pk-tol',  out: 'pk-tol-val',  field: 'hueTolerance',      fallback: 0.08 },
+    { el: 'pk-sat',  out: 'pk-sat-val',  field: 'minimumSaturation', fallback: 0.25 },
+    { el: 'pk-lmin', out: 'pk-lmin-val', field: 'minimumLightness',  fallback: 0.10 },
+    { el: 'pk-lmax', out: 'pk-lmax-val', field: 'maximumLightness',  fallback: 0.95 },
+];
+
 function initProfileControls() {
     const prof = window.resolveIconKeyProfile ? window.resolveIconKeyProfile(activeIconSelection.id) : {};
     activeCustomProfile = Object.assign({}, prof);
 
-    const hueEl = document.getElementById('pk-hue');
-    const tolEl = document.getElementById('pk-tol');
-    const satEl = document.getElementById('pk-sat');
-
     // `||` would discard a legitimately-saved 0 and snap back to the default.
     const fieldOr = (v, fallback) => (typeof v === 'number' && !isNaN(v)) ? v : fallback;
 
-    if (hueEl) {
-        hueEl.value = fieldOr(activeCustomProfile.targetHue, 0);
-        document.getElementById('pk-hue-val').textContent = parseFloat(hueEl.value).toFixed(2);
-        hueEl.oninput = () => {
-            activeCustomProfile.targetHue = parseFloat(hueEl.value);
-            document.getElementById('pk-hue-val').textContent = activeCustomProfile.targetHue.toFixed(2);
+    PROFILE_SLIDERS.forEach(spec => {
+        const el = document.getElementById(spec.el);
+        const out = document.getElementById(spec.out);
+        if (!el) return;
+
+        el.value = fieldOr(activeCustomProfile[spec.field], spec.fallback);
+        if (out) out.textContent = parseFloat(el.value).toFixed(2);
+
+        el.oninput = () => {
+            activeCustomProfile[spec.field] = parseFloat(el.value);
+            // G1 rejects a profile whose window is inverted, so keep the two
+            // lightness handles from crossing rather than letting the author
+            // save something the validator will refuse.
+            clampLightnessWindow(spec.field);
+            PROFILE_SLIDERS.forEach(s => {
+                const e = document.getElementById(s.el);
+                const o = document.getElementById(s.out);
+                if (e) e.value = activeCustomProfile[s.field];
+                if (o) o.textContent = parseFloat(activeCustomProfile[s.field]).toFixed(2);
+            });
             updatePickerPreview();
         };
-    }
-    if (tolEl) {
-        tolEl.value = fieldOr(activeCustomProfile.hueTolerance, 0.08);
-        document.getElementById('pk-tol-val').textContent = parseFloat(tolEl.value).toFixed(2);
-        tolEl.oninput = () => {
-            activeCustomProfile.hueTolerance = parseFloat(tolEl.value);
-            document.getElementById('pk-tol-val').textContent = activeCustomProfile.hueTolerance.toFixed(2);
-            updatePickerPreview();
-        };
-    }
-    if (satEl) {
-        satEl.value = fieldOr(activeCustomProfile.minimumSaturation, 0.25);
-        document.getElementById('pk-sat-val').textContent = parseFloat(satEl.value).toFixed(2);
-        satEl.oninput = () => {
-            activeCustomProfile.minimumSaturation = parseFloat(satEl.value);
-            document.getElementById('pk-sat-val').textContent = activeCustomProfile.minimumSaturation.toFixed(2);
-            updatePickerPreview();
-        };
+    });
+}
+
+function clampLightnessWindow(movedField) {
+    const lo = activeCustomProfile.minimumLightness;
+    const hi = activeCustomProfile.maximumLightness;
+    if (typeof lo !== 'number' || typeof hi !== 'number' || lo <= hi) return;
+    if (movedField === 'minimumLightness') {
+        activeCustomProfile.maximumLightness = lo;
+    } else if (movedField === 'maximumLightness') {
+        activeCustomProfile.minimumLightness = hi;
     }
 }
 
