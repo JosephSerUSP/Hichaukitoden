@@ -29,7 +29,7 @@ import math
 
 import numpy as np
 from PIL import Image
-from scipy.ndimage import distance_transform_edt
+from scipy.ndimage import distance_transform_edt, gaussian_filter
 
 # Cross-section profiles, as a function of normalized distance from the edge
 # (0 at the contour, 1 at the deepest point of the form).
@@ -80,6 +80,32 @@ def write_height(path, field, mask=None, size=None):
         image = image.resize(size, Image.Resampling.NEAREST)
     image.save(path)
     return image
+
+
+def signed_texture_relief(image, strength=0.18, blur=1.5):
+    """Turn seamless local albedo contrast into a signed plane height field.
+
+    This is deliberately a bounded authoring aid, not monocular depth
+    inference: the wrapped Gaussian low-pass and wrapped neighbourhood make
+    the generated height tile at the same borders as the source texture.
+    0.5 is the neutral plane; bright local detail projects and dark detail
+    recedes. The output remains opaque because a plane surface covers a cell.
+    """
+    grey = np.asarray(image.convert("L"), dtype=np.float64) / 255.0
+    low = gaussian_filter(grey, sigma=max(0.1, blur), mode="wrap")
+    detail = grey - low
+    scale = float(np.percentile(np.abs(detail), 99.0))
+    if scale <= 1e-8:
+        scale = 1.0
+    normalized = np.clip(detail / scale, -1.0, 1.0)
+    return np.clip(0.5 + normalized * strength, 0.0, 1.0)
+
+
+def write_plane_height(path, image, strength=0.18, blur=1.5):
+    field = signed_texture_relief(image, strength, blur)
+    grey = np.clip(np.rint(field * 255.0), 0, 255).astype(np.uint8)
+    alpha = np.full(grey.shape, 255, dtype=np.uint8)
+    Image.fromarray(np.dstack([grey, grey, grey, alpha]), mode="RGBA").save(path)
 
 
 def mask_from_image(path, threshold=0.5, key=None, tolerance=0.04):
@@ -304,6 +330,15 @@ def main():
     from_depth.add_argument("--model",
                             default="depth-anything/Depth-Anything-V2-Small-hf")
 
+    from_texture = sub.add_parser("from-texture",
+                                  help="make tile-safe signed plane relief from albedo contrast")
+    from_texture.add_argument("source")
+    from_texture.add_argument("output")
+    from_texture.add_argument("--strength", type=float, default=0.18,
+                              help="signed displacement around neutral 128 (0..0.5)")
+    from_texture.add_argument("--blur", type=float, default=1.5,
+                              help="wrapped Gaussian radius for local contrast")
+
     args = parser.parse_args()
     if args.command == "from-depth":
         mask = mask_from_image(args.source, key=args.key_color,
@@ -321,6 +356,15 @@ def main():
             field = thickness_from_depth(image, mask, args.radius, args.profile,
                                          args.strength, args.model)
         write_height(args.output, field, mask)
+        print(args.output)
+        return
+
+    if args.command == "from-texture":
+        if not 0 <= args.strength <= 0.5:
+            raise SystemExit("heightgen: --strength must be between 0 and 0.5")
+        if args.blur <= 0:
+            raise SystemExit("heightgen: --blur must be positive")
+        write_plane_height(args.output, Image.open(args.source), args.strength, args.blur)
         print(args.output)
         return
 

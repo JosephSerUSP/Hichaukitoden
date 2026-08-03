@@ -1,0 +1,11 @@
+{
+  "id": "sd_ffxii_alunardream_wall",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "wall",
+  "heightOperation": "add",
+  "heightScale": 0.13,
+  "meshColumns": 16,
+  "meshRows": 16,
+  "offset": 0.004
+}

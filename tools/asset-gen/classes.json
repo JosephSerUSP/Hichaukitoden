@@ -27,7 +27,7 @@
     "than a picture of some. Detail in the source becomes legible texture after",
     "the squash; mush in the source becomes mush."
   ],
-  "styleTags": "masterpiece, best quality, highly detailed, sharp focus, 4k, substance designer material, pbr albedo map, uniform detail, no focal point",
+  "styleTags": "masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
   "styleBible": "Retro JRPG pixel art in the RPG Maker 2003 / late-90s SNES-to-PS1 tradition. Chunky legible pixels, hand-placed dithering rather than smooth gradients, a tight limited palette, strong silhouette readability at small size. Dark low-fantasy dungeon-crawler mood: grimy stone, muted earths and desaturated jewel tones, torch-warm highlights against cold shadow. NEVER: modern vector art, cel-shaded anime line art, watercolour, 3D renders, drop shadows, text, labels, watermarks, signatures, UI frames, or borders.",
 
   "classes": {
@@ -61,9 +61,11 @@
       "label": "Portrait (expression sheet)",
       "dir": "assets/portraits",
       "promptFile": "portrait.md",
+      "promptFileTags": "portrait.tags.md",
       "filename": "{Name}.png",
       "geometry": { "size": [640, 192], "cell": [128, 192], "frames": 5, "transparent": false },
       "request": { "size": "1024x1024", "gridHint": [5, 1] },
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
       "post": ["slice_grid", "pixel_fit", "quantize"],
       "quantizeColors": 64,
       "expressions": ["neutral", "happy", "angry", "sad", "surprised"],
@@ -86,12 +88,67 @@
       "label": "Tileset texture page",
       "dir": "assets/tilesets",
       "promptFile": "tileset.md",
+      "promptFileTags": "tileset.tags.md",
       "filename": "{name}.png",
       "geometry": { "size": [256, 256], "cell": [64, 64], "frames": 16, "transparent": false },
       "request": { "size": "1024x1024", "gridHint": [4, 4] },
       "post": ["slice_grid", "pixel_fit", "quantize"],
       "quantizeColors": 64,
       "note": "16 seamlessly-tiling 64x64 surface textures, row-major. Wall/floor/ceiling textures sampled by the raycaster: flat head-on, no perspective, no baked lighting."
+    },
+
+    "texturePiece": {
+      "label": "Single tileset texture piece",
+      "dir": "assets/tilesetPieces",
+      "promptFile": "surface.md",
+      "promptFileTags": "texturepiece.tags.md",
+      "filename": "{name}.png",
+      "tiles": true,
+      "tileAxes": "xy",
+      "geometry": { "size": [64, 64], "cell": [64, 64], "frames": 1, "transparent": false },
+      "request": { "size": "512x512" },
+      "post": ["pixel_fit", "quantize", "tile_score"],
+      "quantizeColors": 48,
+      "note": "Generate one coherent floor/ceiling/trim material at a time. Use wallPiece for walls, then assemble selected pieces into a 4x4 tileset atlas with assemble_atlas.py."
+    },
+
+    "wallPiece": {
+      "label": "Single horizontally tileable wall texture piece",
+      "dir": "assets/tilesetPieces",
+      "promptFile": "wall.md",
+      "promptFileTags": "wall.tags.md",
+      "filename": "{name}.png",
+      "tiles": true,
+      "tileAxes": "x",
+      "geometry": { "size": [64, 64], "cell": [64, 64], "frames": 1, "transparent": false },
+      "request": { "size": "512x512" },
+      "post": ["pixel_fit", "quantize", "tile_score"],
+      "quantizeColors": 48,
+        "contextPreview": {
+          "base": "assets/tilesets/dungeon_001.png",
+          "cell": [1, 1],
+          "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
+          "heightMapScale": { "wall": 0.10, "floor": 0, "ceiling": 0 },
+          "qualityDensity": 4.0,
+          "heightMapSampleColumns": 24,
+          "heightMapSampleRows": 24,
+          "label": "two-tile corridor; shared wall height map; 4.0x geometry density; floor and ceiling unchanged"
+        },
+      "note": "Generate one wall material at a time. Only the left and right edges are joined; the top and bottom remain authored, so baseboards and lower wall courses stay at the bottom. Assemble selected pieces into a tileset atlas with assemble_atlas.py."
+    },
+
+    "portraitPiece": {
+      "label": "Single character portrait piece",
+      "dir": "assets/portraitPieces",
+      "promptFile": "portrait.md",
+      "promptFileTags": "portraitpiece.tags.md",
+      "filename": "{name}.png",
+      "geometry": { "size": [128, 192], "cell": [128, 192], "frames": 1, "transparent": false },
+      "request": { "size": "512x768" },
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
+      "post": ["pixel_fit", "quantize"],
+      "quantizeColors": 64,
+      "note": "Generate one fixed-framing character portrait at a time. Assemble five selected expression pieces into the engine's 640x192 sheet with assemble_atlas.py."
     },
 
     "surface": {

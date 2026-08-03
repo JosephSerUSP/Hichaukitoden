@@ -90,6 +90,47 @@ def slice_grid(img, ctx):
     return sheet
 
 
+def _tile_axes(value):
+    """Return the image axes that are allowed to wrap.
+
+    ``True`` is kept as the legacy spelling for two-axis tiles.  Wall pieces
+    use ``"x"``: their left and right edges meet, but their top and bottom
+    edges remain real artwork (a baseboard must stay at the bottom).
+    """
+    if value is True:
+        return {"x", "y"}
+    if not value:
+        return set()
+    if isinstance(value, str):
+        return {axis for axis in value.lower() if axis in "xy"}
+    return {axis for axis in value if axis in ("x", "y")}
+
+
+def _wrapped_padding(img, pad_x, pad_y, axes):
+    """Pad with wrapped or clamped samples independently per axis."""
+    width, height = img.size
+    padded = Image.new(img.mode, (width + 2 * pad_x, height + 2 * pad_y))
+    # This is deliberately sample-based rather than a 3x3 paste.  A clamped
+    # vertical axis is not the same as wrapping it: it repeats the edge row,
+    # preserving a bottom trim/baseboard through the reduction pass.
+    source = img.load()
+    target = padded.load()
+    for y in range(padded.height):
+        source_y = y - pad_y
+        if "y" in axes:
+            source_y %= height
+        else:
+            source_y = max(0, min(height - 1, source_y))
+        for x in range(padded.width):
+            source_x = x - pad_x
+            if "x" in axes:
+                source_x %= width
+            else:
+                source_x = max(0, min(width - 1, source_x))
+            target[x, y] = source[source_x, source_y]
+    return padded
+
+
 def _downscale(img, size, wrap=False):
     """Shrink to pixel-art scale without the mush a plain LANCZOS pass leaves.
 
@@ -105,7 +146,8 @@ def _downscale(img, size, wrap=False):
     """
     if img.size == tuple(size):
         return img
-    if not wrap:
+    axes = _tile_axes(wrap)
+    if not axes:
         if img.size[0] > size[0] * 2:
             img = img.filter(ImageFilter.SHARPEN)
         return img.resize(tuple(size), Image.LANCZOS)
@@ -115,10 +157,7 @@ def _downscale(img, size, wrap=False):
     # boundary and no half-pixel shift creeps in.
     margin = 4
     pad_x, pad_y = margin * width // size[0], margin * height // size[1]
-    padded = Image.new(img.mode, (width + 2 * pad_x, height + 2 * pad_y))
-    for column in (-1, 0, 1):
-        for row in (-1, 0, 1):
-            padded.paste(img, (pad_x + column * width, pad_y + row * height))
+    padded = _wrapped_padding(img, pad_x, pad_y, axes)
     if width > size[0] * 2:
         padded = padded.filter(ImageFilter.SHARPEN)
     padded = padded.resize((size[0] + 2 * margin, size[1] + 2 * margin), Image.LANCZOS)
@@ -126,7 +165,9 @@ def _downscale(img, size, wrap=False):
 
 
 def pixel_fit(img, ctx):
-    return _downscale(img, ctx["size"], wrap=ctx["classDef"].get("tiles", False))
+    class_def = ctx["classDef"]
+    axes = class_def.get("tileAxes", class_def.get("tiles", False))
+    return _downscale(img, ctx["size"], wrap=axes)
 
 
 def quantize(img, ctx):
@@ -186,7 +227,7 @@ def _step_scale(steps):
     return max(float(numpy.percentile(steps, 95)), 0.5)
 
 
-def tile_seam_score(img):
+def tile_seam_score(img, axes="xy"):
     """How visible is the wrap seam, relative to this texture's own busyness?
 
     A RATIO, not a difference. The absolute gap between the first and last
@@ -230,8 +271,13 @@ def tile_seam_score(img):
     if pixels.shape[0] < 3 or pixels.shape[1] < 3:
         return {"x": None, "y": None, "note": "too small to score"}
 
-    result = {}
+    active_axes = _tile_axes(axes)
+    result = {axis: None for axis in ("x", "y") if axis not in active_axes}
+    if result:
+        result["note"] = "vertical edges intentionally preserved; not scored. "
     for axis in ("x", "y"):
+        if axis not in active_axes:
+            continue
         if axis == "x":
             near, far = pixels[:, 0, :], pixels[:, -1, :]
             near_a, far_a = alpha[:, 0], alpha[:, -1]
@@ -264,6 +310,8 @@ def tile_seam_score(img):
     # its mortar, and a metric that punished those would be useless on the very
     # material this project is mostly made of.
     for axis, step_axis in (("x", 1), ("y", 0)):
+        if axis not in active_axes:
+            continue
         steps = numpy.abs(numpy.diff(pixels, axis=step_axis)).mean(
             axis=tuple(index for index in (0, 1, 2) if index != step_axis))
         typical = _step_scale(steps)
@@ -277,16 +325,22 @@ def tile_seam_score(img):
 
 def tile_score(img, ctx):
     """Measure the wrap seam and record it in ctx. Does not touch the pixels."""
-    ctx["tileScore"] = tile_seam_score(img)
+    class_def = ctx["classDef"]
+    axes = class_def.get("tileAxes", class_def.get("tiles", False))
+    ctx["tileScore"] = tile_seam_score(img, axes)
+    ctx["tileAxes"] = "".join(sorted(_tile_axes(axes))) or "none"
     return img
 
 
-def tiled_sheet(path, repeat=3, scale=2):
-    """The texture laid out `repeat` times each way -- what the seam looks like."""
+def tiled_sheet(path, repeat=3, scale=2, axes="xy"):
+    """The texture laid out along its declared wrap axes."""
     tile = Image.open(path).convert("RGBA")
-    sheet = Image.new("RGBA", (tile.width * repeat, tile.height * repeat))
-    for row in range(repeat):
-        for column in range(repeat):
+    active_axes = _tile_axes(axes)
+    columns = repeat if "x" in active_axes else 1
+    rows = repeat if "y" in active_axes else 1
+    sheet = Image.new("RGBA", (tile.width * columns, tile.height * rows))
+    for row in range(rows):
+        for column in range(columns):
             sheet.paste(tile, (column * tile.width, row * tile.height))
     return sheet.resize((sheet.width * scale, sheet.height * scale), Image.NEAREST)
 

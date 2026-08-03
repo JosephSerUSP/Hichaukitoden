@@ -19,7 +19,7 @@ import os
 
 from PIL import Image
 
-from . import postprocess
+from . import postprocess, raw_quality
 
 
 def _embed(image, scale=1):
@@ -55,6 +55,8 @@ pre { background:var(--card); border:1px solid var(--line); border-radius:8px;
 .card img { width:100%; height:auto; display:block; border-radius:6px;
   image-rendering:pixelated; background:#0000; }
 .pair { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+.trio { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+.context { margin-top:.65rem; max-width:520px; }
 .tag { display:inline-block; font-size:.72rem; padding:.1rem .45rem; border-radius:999px;
   border:1px solid var(--line); color:var(--dim); margin-right:.3rem; }
 .scores { font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; margin-top:.5rem; }
@@ -84,17 +86,37 @@ def _score_block(score):
             f'y {_verdict(score.get("centre_y"))}</div>')
 
 
-def variant_card(run_path, variant, best=False, repeat=3):
+def variant_card(run_path, variant, best=False, repeat=3, axes="xy"):
     path = os.path.join(run_path, variant["file"])
     tile = Image.open(path)
-    score = variant.get("tileScore") or postprocess.tile_seam_score(tile)
-    sheet = postprocess.tiled_sheet(path, repeat, scale=1)
+    score = variant.get("tileScore") or postprocess.tile_seam_score(tile, axes)
+    sheet = postprocess.tiled_sheet(path, repeat, scale=1, axes=axes)
+    raw_path = os.path.join(run_path, variant.get("raw", f"raw-{variant['index']}.png"))
+    raw = Image.open(raw_path).convert("RGBA") if os.path.isfile(raw_path) else None
+    context_name = variant.get("context")
+    context_path = os.path.join(run_path, context_name) if context_name else ""
+    context = (Image.open(context_path).convert("RGBA")
+               if context_name and os.path.isfile(context_path) else None)
+    # Re-score on every report run so the metric can be corrected without
+    # leaving old manifests with stale verdicts.
+    raw_score = raw and raw_quality.analyze(raw)
+    raw_label = "raw source"
+    if raw_score:
+        raw_label += (f" — {raw_score['verdict']}, chroma {raw_score['highChromaRatio']}"
+                      f", outliers {raw_score['chromaOutlierRatio']}")
+    if raw_score:
+        raw_label = (f"raw source — {raw_score['verdict']}, "
+                     f"chroma {raw_score['highChromaRatio']}, "
+                     f"outliers {raw_score['chromaOutlierRatio']}")
     return f"""
     <div class="card{' best' if best else ''}">
-      <div class="pair">
+      <div class="trio">
         <div><div class="label">tile</div><img src="{_embed(tile, 3)}" alt=""></div>
-        <div><div class="label">{repeat}x{repeat}</div><img src="{_embed(sheet)}" alt=""></div>
+        <div><div class="label">{repeat}x along {'horizontal' if axes == 'x' else 'both axes'}</div><img src="{_embed(sheet)}" alt=""></div>
+        {f'<div><div class="label">{html.escape(raw_label)}</div><img src="{_embed(raw)}" alt=""></div>' if raw else ''}
       </div>
+      {f'<div class="context"><div class="label">{html.escape(variant.get("contextLabel", "in-engine context"))}</div><img src="{_embed(context)}" alt=""></div>' if context else ''}
+      {f'<div class="scores warn">context preview unavailable: {html.escape(variant.get("contextError"))}</div>' if variant.get("contextError") else ''}
       <div class="label">variant {variant['index']}{' &mdash; best' if best else ''}</div>
       {_score_block(score)}
     </div>"""
@@ -147,7 +169,12 @@ def run_section(run_path, manifest, rank=None):
     if prov.get("heightControl"):
         tags.append("controlnet depth")
 
-    cards = "\n".join(variant_card(run_path, v, v.get("index") == best_index)
+    negative_prompt = sampling.get("negativePrompt")
+    negative_block = (f'<div class="label">negative prompt as sent</div><pre>{html.escape(negative_prompt)}</pre>'
+                      if negative_prompt else '')
+
+    axes = manifest.get("tileAxes", "xy")
+    cards = "\n".join(variant_card(run_path, v, v.get("index") == best_index, axes=axes)
                       for v in variants)
     return f"""
     <h2>{html.escape(str(manifest.get('name')))}
@@ -156,6 +183,7 @@ def run_section(run_path, manifest, rank=None):
                                for t in tags if t)}</div>
     <div class="label">prompt as sent</div>
     <pre>{html.escape(prompt_text)}</pre>
+    {negative_block}
     <div class="grid">{cards}</div>"""
 
 

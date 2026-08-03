@@ -103,6 +103,25 @@ check(model.groups[1].mesh ~= nil and model.groups[1].texture ~= nil,
 check(geometry.load(FIXTURES .. "valid_plane") == model,
     "an identical composition is compiled once and reused")
 
+local sharedHeightSpec = {
+    id = "shared_tileset_height",
+    label = "shared tileset height fixture",
+    topology = "plane", role = "surfaceFixture", surface = "wall",
+    heightOperation = "add", heightScale = 0.08,
+    meshColumns = 4, meshRows = 4, sampleColumns = 8, sampleRows = 8,
+    triangleBudget = 32, offset = 0.004,
+}
+local sharedAtlasImage = love.graphics.newImage(FIXTURES .. "valid_plane/albedo.png")
+local sharedAtlasModel = geometry.loadAtlasSurface(
+    "tests-shared-height-atlas", sharedHeightSpec, neutral, sharedAtlasImage,
+    function(u, v) return u, v end)
+check(sharedAtlasModel.groups[1].texture == sharedAtlasImage,
+    "a tileset-level height surface keeps the shared atlas texture")
+check(geometry.loadAtlasSurface(
+    "tests-shared-height-atlas", sharedHeightSpec, neutral, sharedAtlasImage,
+    function(u, v) return u, v end) == sharedAtlasModel,
+    "an identical tileset-level height surface is cached")
+
 -- The wall frame the renderer places into: +X depth, +Y along the wall, +Z up.
 local bounds = model.bounds
 check(math.abs(bounds.minY + 0.5) < 1e-6 and math.abs(bounds.maxY - 0.5) < 1e-6,

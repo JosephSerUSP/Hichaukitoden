@@ -309,6 +309,181 @@
             }
         ]
     },
+    "dungeon_ffxii_depth_explore": {
+        "id": "dungeon_ffxii_depth_explore",
+        "name": "FFXII Depth Explore (3x3)",
+        "texture": "assets/tilesets/dungeon_ffxii_depth_explore_3x3.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "ffxii_homosimile_wall",
+                    "role": "base_wall",
+                    "middle": [0, 0],
+                    "leftEdge": [0, 0, 0],
+                    "rightEdge": [0, 0, 32],
+                    "geometry": "assets/geometry/sd_ffxii_homosimile_wall",
+                    "weight": 25
+                },
+                {
+                    "id": "ffxii_alunardream_wall",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 0, 0],
+                    "rightEdge": [1, 0, 32],
+                    "geometry": "assets/geometry/sd_ffxii_alunardream_wall",
+                    "weight": 25
+                },
+                {
+                    "id": "ffxii_lyriel_wall",
+                    "role": "base_wall",
+                    "middle": [2, 0],
+                    "leftEdge": [2, 0, 0],
+                    "rightEdge": [2, 0, 32],
+                    "geometry": "assets/geometry/sd_ffxii_lyriel_wall",
+                    "weight": 25
+                },
+                {
+                    "id": "ffxii_dreamshaper_wall",
+                    "role": "base_wall",
+                    "middle": [2, 0],
+                    "leftEdge": [2, 0, 0],
+                    "rightEdge": [2, 0, 32],
+                    "geometry": "assets/geometry/sd_ffxii_dreamshaper_wall",
+                    "weight": 25
+                }
+            ],
+            "floors": [
+                {
+                    "id": "ffxii_sd15_floor",
+                    "role": "base_floor",
+                    "atlas": [0, 1],
+                    "geometry": "assets/geometry/sd_ffxii_floor_sd15",
+                    "weight": 50,
+                    "heightOffset": 0
+                },
+                {
+                    "id": "ffxii_retro_floor",
+                    "role": "base_floor",
+                    "atlas": [1, 1],
+                    "geometry": "assets/geometry/sd_ffxii_floor_retro",
+                    "weight": 50,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "ffxii_retro_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [0, 2],
+                    "geometry": "assets/geometry/sd_ffxii_ceiling_retro",
+                    "weight": 50
+                },
+                {
+                    "id": "ffxii_sd15_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [1, 2],
+                    "geometry": "assets/geometry/sd_ffxii_ceiling_sd15",
+                    "weight": 50
+                }
+            ]
+        },
+        "doors": [],
+        "features": []
+    },
+    "dungeon_ffxii_wall_recess_compare": {
+        "id": "dungeon_ffxii_wall_recess_compare",
+        "name": "FFXII Wall + Shrine Recess Compare",
+        "texture": "assets/tilesets/dungeon_001.png",
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "ffxii_regular_wall",
+                    "role": "base_wall",
+                    "middle": [1, 1],
+                    "geometry": "assets/geometry/sd_ffxii_regular_wall",
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "ffxii_compare_floor",
+                    "role": "base_floor",
+                    "atlas": [0, 1],
+                    "weight": 100,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "ffxii_compare_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [0, 2],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [],
+        "features": [
+            {
+                "id": "ffxii_shrine_recess",
+                "role": "wall_feature",
+                "geometry": "assets/geometry/shrine_recess",
+                "injectProbability": 1.0,
+                "where": {
+                    "zone": "shrine"
+                }
+            }
+        ]
+    },
+    "dungeon_hand_authored_height_compare": {
+        "id": "dungeon_hand_authored_height_compare",
+        "name": "Hand-authored Tileset Height Compare",
+        "texture": "assets/tilesets/dungeon_001.png",
+        "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
+        "heightMapScale": {
+            "wall": 0.10,
+            "floor": 0,
+            "ceiling": 0
+        },
+        "heightMapMeshColumns": 16,
+        "heightMapMeshRows": 16,
+        "heightMapTriangleBudget": 96,
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "hand_authored_wall",
+                    "role": "base_wall",
+                    "middle": [1, 1],
+                    "weight": 100
+                }
+            ],
+            "floors": [
+                {
+                    "id": "hand_authored_floor",
+                    "role": "base_floor",
+                    "atlas": [0, 1],
+                    "weight": 100,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "hand_authored_ceiling",
+                    "role": "base_ceiling",
+                    "atlas": [0, 0],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [],
+        "features": []
+    },
     "town_001": {
         "id": "town_001",
         "name": "Town 001",

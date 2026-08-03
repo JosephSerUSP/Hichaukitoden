@@ -16,9 +16,11 @@ paying for another render.
 """
 
 import argparse
+import base64
 import io
 import json
 import os
+import subprocess
 import sys
 import time
 
@@ -30,7 +32,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib import classes, postprocess, provider, report, staging  # noqa: E402
+from lib import classes, postprocess, provider, raw_quality, report, staging  # noqa: E402
 
 
 def _config():
@@ -183,13 +185,19 @@ def _process_variant(raw_bytes, ctx, run_path, index, verbose=True):
     out = postprocess.run(img, ctx, verbose=verbose)
     out_name = f"variant-{index}.png"
     out.save(os.path.join(run_path, out_name))
-    row = {"index": index, "raw": raw_name, "file": out_name}
+    row = {"index": index, "raw": raw_name, "file": out_name,
+           "rawQuality": raw_quality.analyze(img)}
+    if verbose:
+        quality = row["rawQuality"]
+        print(f"  raw: {quality['verdict']} high-chroma={quality['highChromaRatio']}"
+              f" outliers={quality['chromaOutlierRatio']}")
     # Left behind by the tile_score post step, for classes that declare it.
     score = ctx.pop("tileScore", None)
     if score:
         row["tileScore"] = score
         if verbose:
-            print(f"  seam: wrap x={score.get('x')} y={score.get('y')}"
+            print(f"  seam ({ctx.get('classDef', {}).get('tileAxes', 'xy')}): "
+                  f"wrap x={score.get('x')} y={score.get('y')}"
                   f"  centre x={score.get('centre_x')} y={score.get('centre_y')}"
                   + (f"  ({score['note'].strip()})" if score.get("note") else ""))
     return row
@@ -248,6 +256,11 @@ def _sampling_overrides(args):
     return override
 
 
+def _class_tile_axes(class_id):
+    definition = classes.registry()["classes"].get(class_id) or {}
+    return definition.get("tileAxes", definition.get("tiles", False))
+
+
 def _control_from_height(cfg, args):
     """Build the ControlNet unit for --height, or None."""
     path = getattr(args, "height", None)
@@ -262,8 +275,9 @@ def _control_from_height(cfg, args):
     # limestone wall -- whose height map has a hard join -- conditioning took the
     # seam from ~1.0 to ~3.8. Say so, rather than hand back a worse texture with
     # no explanation.
-    if getattr(args, "asset_class", None) == "surface":
-        score = postprocess.tile_seam_score(Image.open(full))
+    if _class_tile_axes(getattr(args, "asset_class", None)):
+        axes = _class_tile_axes(args.asset_class)
+        score = postprocess.tile_seam_score(Image.open(full), axes)
         worst = max((v for v in (score.get("x"), score.get("y"))
                      if isinstance(v, (int, float))), default=0)
         if worst > SEAM_GOOD:
@@ -335,6 +349,16 @@ def cmd_generate(args):
             raise SystemExit(f"reference image not found: {ref}")
 
     sampling = _sampling_overrides(args)
+    # The local provider's seamless pass is an offset/inpaint operation. It is
+    # correct for a material tile, but it destroys non-tile art such as a
+    # portrait by repainting a cross through the subject.
+    if not ctx["classDef"].get("tiles"):
+        sampling["tiling"] = False
+    else:
+        sampling["tilingAxes"] = ctx["classDef"].get(
+            "tileAxes", ctx["classDef"].get("tiles", True))
+    if ctx["classDef"].get("negativePrompt"):
+        sampling["negativePrompt"] = ctx["classDef"]["negativePrompt"]
     control, control_source = _control_from_height(cfg, args)
 
     variants = args.variants or cfg["generate"]["variants"]
@@ -354,6 +378,8 @@ def cmd_generate(args):
         "refs": [os.path.relpath(r, classes.ROOT).replace("\\", "/") for r in refs],
         "targetFile": classes.filename(ctx, args.name, tokens),
         "targetDir": ctx["dir"],
+        "tileAxes": ctx["classDef"].get(
+            "tileAxes", ctx["classDef"].get("tiles", False)),
         "variants": [],
     }
     with open(os.path.join(run_path, "prompt.txt"), "w", encoding="utf-8") as handle:
@@ -433,16 +459,18 @@ def cmd_tilecheck(args):
     rows = []
     for variant in manifest["variants"]:
         path = os.path.join(run_path, variant["file"])
-        score = postprocess.tile_seam_score(Image.open(path))
+        axes = _class_tile_axes(manifest.get("class"))
+        score = postprocess.tile_seam_score(Image.open(path), axes)
         variant["tileScore"] = score
         sheet_name = f"tiled-{variant['index']}.png"
-        postprocess.tiled_sheet(path, args.repeat).save(os.path.join(run_path, sheet_name))
+        postprocess.tiled_sheet(path, args.repeat, axes=axes).save(
+            os.path.join(run_path, sheet_name))
         rows.append((variant["index"], score, sheet_name))
 
     staging.write_manifest(run_path, manifest)
     print(f"{os.path.basename(run_path)}  [{manifest['class']}] {manifest['name']}")
     print(f"  ratios: 1.0 = as smooth as the interior, over {SEAM_GOOD} = visible join.")
-    print("  wrap = the tile edge; centre = the join the seamless pass relocates inward")
+    print("  wrap = the declared tile edge; centre = the join the seamless pass relocates inward")
     ranked = sorted(rows, key=lambda row: seam_rank({"tileScore": row[1]}))
     for position, (index, score, sheet) in enumerate(ranked):
         parts = [f"{axis}={score.get(axis) if score.get(axis) is not None else 'unmeasurable'}"
@@ -452,6 +480,63 @@ def cmd_tilecheck(args):
         if score.get("note"):
             print(f"      {score['note'].strip()}")
     return 0
+
+
+def _context_preview(run_path, manifest, variant):
+    """Render one staged tile through the real engine for report evidence."""
+    class_def = classes.registry()["classes"].get(manifest.get("class"), {})
+    context = class_def.get("contextPreview")
+    if not context:
+        return
+    try:
+        base_path = os.path.join(classes.ROOT, context["base"])
+        candidate_path = os.path.join(run_path, variant["file"])
+        atlas_path = os.path.join(run_path, f"context-atlas-{variant['index']}.png")
+        atlas = Image.open(base_path).convert("RGBA")
+        tile = Image.open(candidate_path).convert("RGBA")
+        cell_x, cell_y = context.get("cell", [1, 1])
+        cell_w, cell_h = atlas.width // 4, atlas.height // 4
+        tile = tile.resize((cell_w, cell_h), Image.Resampling.NEAREST)
+        atlas.paste(tile, (cell_x * cell_w, cell_y * cell_h))
+        atlas.save(atlas_path)
+
+        love = os.environ.get("LOVE_BIN", r"C:\Program Files\LOVE\lovec.exe")
+        rel_atlas = os.path.relpath(atlas_path, classes.ROOT).replace("\\", "/")
+        preview_command = [love, ".", "preview-texture", rel_atlas]
+        if context.get("heightMap"):
+            preview_command.extend(["--height-map", context["heightMap"]])
+        preview_command.extend([
+            "--quality-density", str(context.get("qualityDensity", 4.0)),
+            "--height-scale", json.dumps(context.get("heightMapScale", {})),
+            "--height-columns", str(context.get("heightMapMeshColumns", 16)),
+            "--height-rows", str(context.get("heightMapMeshRows", 16)),
+            "--height-samples-x", str(context.get("heightMapSampleColumns", 24)),
+            "--height-samples-y", str(context.get("heightMapSampleRows", 24)),
+            "--height-budget", str(context.get("heightMapTriangleBudget", 96)),
+        ])
+        proc = subprocess.run(
+            preview_command,
+            cwd=classes.ROOT, capture_output=True, text=True, timeout=120,
+        )
+        output = proc.stdout
+        start, end = output.find("PREVIEW BEGIN"), output.find("PREVIEW END")
+        if proc.returncode != 0 or start < 0 or end < 0:
+            raise RuntimeError((proc.stderr or output or "lovec preview failed").strip())
+        payload = json.loads(output[start + len("PREVIEW BEGIN"):end].strip())
+        if payload.get("error"):
+            raise RuntimeError(payload["error"])
+        context_name = f"context-{variant['index']}.png"
+        with open(os.path.join(run_path, context_name), "wb") as handle:
+            handle.write(base64.b64decode(payload["image"]))
+        variant["context"] = context_name
+        variant["contextLabel"] = context.get("label", "in-engine context")
+    except Exception as err:
+        variant["contextError"] = str(err)
+
+
+def _add_context_previews(run_path, manifest):
+    for variant in manifest.get("variants", []):
+        _context_preview(run_path, manifest, variant)
 
 
 def cmd_audit(args):
@@ -527,12 +612,14 @@ def cmd_report(args):
     for ref in refs:
         run_path = staging.resolve_run(_staging_root(cfg), ref)
         manifest = staging.read_manifest(run_path)
+        _add_context_previews(run_path, manifest)
         # Always re-score rather than trusting the manifest. The metric has been
         # corrected twice; a page mixing numbers from different versions of it
         # would be worse than no page.
         for variant in manifest.get("variants", []):
+            axes = manifest.get("tileAxes", _class_tile_axes(manifest.get("class")))
             variant["tileScore"] = postprocess.tile_seam_score(
-                Image.open(os.path.join(run_path, variant["file"])))
+                Image.open(os.path.join(run_path, variant["file"])), axes)
         sections.append(report.run_section(run_path, manifest, rank=seam_rank))
 
     out = args.out or os.path.join(_staging_root(cfg), "report.html")
@@ -559,9 +646,10 @@ def cmd_batch(args):
         print(f"\n=== [{position}/{len(jobs)}] {job.get('class')} '{job.get('name')}' ===")
         argv = [job.get("class", args.default_class), job["name"], job.get("description", "")]
         for flag in ("provider", "variants", "extra", "height", "steps", "cfg",
-                     "sampler", "seed", "cell", "model"):
+                     "sampler", "seed", "cell", "model", "requestSize"):
             if job.get(flag) is not None:
-                argv += [f"--{flag}", str(job[flag])]
+                cli_flag = "request-size" if flag == "requestSize" else flag
+                argv += [f"--{cli_flag}", str(job[flag])]
         if job.get("promote", args.promote):
             argv.append("--promote")
         if args.force_dirty:

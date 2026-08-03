@@ -1,0 +1,1 @@
+{{DESCRIPTION}}, single fantasy character, head and shoulders portrait, fixed camera and framing, same character across five expression columns, neutral happy angry sad surprised, consistent clothing and hair, clean readable face, dark flat background, classic fantasy game portrait, crisp linework, muted low fantasy palette, {{STYLE_TAGS}}

@@ -19,6 +19,12 @@ it running for a batch and stop it when the work is done. `forge.py models`
 lists the installed checkpoints and LoRAs -- read it rather than guessing a
 name, because an unknown one silently falls back.
 
+On this 4 GB GTX 1650, `v1-5-pruned-emaonly` is the current quality baseline.
+The provider explicitly selects `vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors`
+for SD1.5 requests. Do not restore the Forge SDXL additional module: it caused
+liquid/wave decodes and isolated high-chroma specks in otherwise plausible
+images. Ask before downloading anything that would take the session over 3 GB.
+
 ## Generate
 
 ```bash
@@ -37,6 +43,20 @@ python tools/asset-gen/gen.py generate surface mossy_limestone \
 - `--seed N` makes a run reproducible; variants walk upward from it.
 - `--promote` takes the best-scoring variant automatically.
 
+For tilesets, do not ask SD for a whole 4x4 page. Generate one piece at a time
+with several variants, then assemble the reviewed pieces with
+`tools/asset-gen/assemble_atlas.py`. Use `wallPiece` for walls: it wraps only
+horizontally, so bottom-anchored baseboards and lower courses stay at the
+bottom. Use `texturePiece` for floors and ceilings, where both axes wrap. For
+portraits, generate one `portraitPiece` at a time and assemble five selected
+expression pieces into the engine sheet.
+
+Ordinary atlas surfaces can use a tileset-level `heightMap` instead of a
+separate `assets/geometry/<tile>/` directory. The map may be a full atlas or a
+single tile-sized guide reused across the atlas; use `heightMapScale` to keep
+wall, floor and ceiling relief separate. Keep directory-backed geometry for
+fixtures and exceptional composed surfaces such as `shrine_recess`.
+
 ## Always hand back a page, not a paragraph
 
 ```bash
@@ -49,7 +69,18 @@ exact prompt and sampler settings. Pass several run names to compare them.
 art cannot be reviewed from numbers, and every failure so far has been a
 flawless tile of the wrong material.
 
+For wall classes, report also asks the real engine for a temporary context
+capture. It uses a two-tile-wide corridor and two side positions, with the
+candidate pasted into a temporary atlas. The capture may specify a shared
+authored height map and geometry density 4.0; it leaves floor and ceiling on
+their reference material and labels that explicitly. Review this context image
+before promoting even a visually interesting throwaway candidate.
+
 `gen.py audit --out audit.html` does the same for art already on disk.
+
+The report also shows each raw `raw-N.png` beside the processed result. Inspect
+raw images before judging the tiny output: high-chroma specks and liquid/wave
+artifacts can disappear during downsampling and quantization.
 
 ## Never ask the model for pixel art
 
@@ -75,23 +106,28 @@ declare `promptStyle: "tags"` -- but if you touch a prompt template, keep to it:
   `config.json`.
 - Keep it under ~75 tokens. The prose template measured ~400 and did not reach
   the material until token 100, which is why early tiles ignored the request.
+- Describe visible material and render format only. Do not write phrases such as
+  “following the supplied depth guide”, “with one ... along the left edge”, or
+  other placement instructions: the depth/control image carries shape and
+  position, while those words add unpredictable visual content to SD's prompt.
 
 Steps: 20-30 for ordinary checkpoints, **4-8 for the LCM ones** (they are
 distilled for it; more does not help). `--steps` overrides.
 
 ## Judge by the numbers, then confirm by eye
 
-Every run prints four ratios, and `tilecheck` re-prints them ranked with a 3x3
-layout of each variant:
+Every run prints ratios for its declared wrap axes, and `tilecheck` re-prints
+them ranked with a repeated layout of each variant:
 
 ```bash
 python tools/asset-gen/gen.py tilecheck
 ```
 
-- `x` / `y` -- the wrap at the tile edge.
+- `x` / `y` -- the declared wrap at the tile edge (`wallPiece` intentionally
+  leaves `y` unmeasured).
 - `centre_x` / `centre_y` -- the middle, where the seamless pass relocates the
-  join. **Both matter.** A texture can wrap perfectly and still have a hard line
-  down its centre.
+  join. **The active axes matter.** A texture can wrap perfectly and still have
+  a hard line down its centre.
 - 1.0 is "as smooth as the rest of the texture". Over 2.0 is visible once the
   texture repeats down a corridor.
 
@@ -120,8 +156,9 @@ seed?, height?}`. Runs sequentially -- 4 GB of VRAM holds one model.
   intended geometry. Depth estimation on this project's art was measured
   useless. `--height <png>` runs the relationship the other way: it conditions
   the albedo on relief that already exists.
-- **A height map that does not tile cannot yield an albedo that does.** Score it
-  first; `generate` warns, and the warning is not advisory.
+- **A height map that does not tile on an active axis cannot yield an albedo that
+  does.** Wall guides need only horizontal continuity; their vertical
+  composition is intentionally preserved.
 - **The `tiling` flag in the Forge API does nothing** on this build. The wrap
   comes from a second pass in `lib/provider.py`. Do not "simplify" it away.
 

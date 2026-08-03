@@ -895,6 +895,111 @@ function cli.runPreviewMap(mapId, x, y, dir, loader)
     print("PREVIEW END")
 end
 
+-- Temporary atlas context preview for asset reports. The candidate atlas is
+-- installed only in memory and rendered through the same raycaster as the
+-- game. Floors and ceilings remain the atlas base material, so a wall-only
+-- generation report can explicitly show those surfaces as unchanged rather
+-- than pretending they were generated with the wall.
+function cli.runPreviewTexture(atlasPath, loader, options)
+    local json = require("data.json")
+    options = options or {}
+    local viewWidth, viewHeight = 256, 144
+    local payload = {
+        width = viewWidth * 2, height = viewHeight,
+        floorCeiling = "unchanged",
+        corridor = "two tiles wide",
+        heightMap = options.heightMap,
+        qualityDensity = options.qualityDensity,
+    }
+    local previewId = "asset_texture_preview"
+    local ok, err = pcall(function()
+        local viewport_3d = require("presentation.viewport_3d")
+        local geometryQuality = require("engine.geometry.quality")
+        local base = assert(loader.tilesets.dungeon_default, "dungeon_default tileset missing")
+        local image = love.graphics.newImage(atlasPath)
+        image:setFilter("nearest", "nearest")
+        loader.tilesets[previewId] = {
+            id = previewId,
+            texture = atlasPath,
+            textureImage = image,
+            tileWidth = 64,
+            tileHeight = 64,
+            heightMap = options.heightMap,
+            heightMapScale = options.heightMapScale,
+            heightMapMeshColumns = options.heightMapMeshColumns or 16,
+            heightMapMeshRows = options.heightMapMeshRows or 16,
+            heightMapSampleColumns = options.heightMapSampleColumns or 24,
+            heightMapSampleRows = options.heightMapSampleRows or 24,
+            heightMapTriangleBudget = options.heightMapTriangleBudget or 96,
+            base = {
+                walls = { {
+                    id = "asset_preview_wall", role = "base_wall",
+                    middle = { 1, 1 }, weight = 100,
+                } },
+                floors = base.base and base.base.floors or {},
+                ceilings = base.base and base.base.ceilings or {},
+            },
+            doors = {}, features = {}, fixturePrefabs = {},
+        }
+
+        local grid = {}
+        local rows = {
+            "######",
+            "##..##",
+            "##..##",
+            "##..##",
+            "##..##",
+            "##..##",
+            "######",
+        }
+        for y, row in ipairs(rows) do
+            grid[y] = {}
+            for x = 1, #row do grid[y][x] = row:sub(x, x) end
+        end
+        local previewSession = session.GameSession.new(loader)
+        previewSession.mapGrid = grid
+        previewSession.currentMapData = {
+            id = "asset_texture_preview_map", tileset = previewId,
+            ceilingStyle = "solid", safe = true, events = {},
+        }
+        previewSession.generatedFeatures = {}
+        previewSession.generatedLightObjects = {}
+        if options.qualityDensity then
+            geometryQuality.setDensity(options.qualityDensity)
+            geometryQuality.setMaxError(0)
+        end
+
+        viewport_3d.init()
+        local views = {}
+        for _, playerX in ipairs({ 3, 4 }) do
+            previewSession.playerX, previewSession.playerY, previewSession.playerDir = playerX, 4, "N"
+            local view = love.graphics.newCanvas(viewWidth, viewHeight)
+            love.graphics.setCanvas({ view, depth = true, stencil = true })
+            love.graphics.clear(0, 0, 0, 1, true, true)
+            viewport_3d.draw(previewSession)
+            love.graphics.setCanvas()
+            views[#views + 1] = view
+        end
+        local canvas = love.graphics.newCanvas(payload.width, payload.height)
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 1)
+        for index, view in ipairs(views) do
+            love.graphics.draw(view, (index - 1) * viewWidth, 0)
+        end
+        love.graphics.setCanvas()
+        payload.image = love.data.encode("string", "base64",
+            canvas:newImageData():encode("png"))
+    end)
+    loader.tilesets[previewId] = nil
+    if not ok then
+        payload = { error = tostring(err) }
+        love.graphics.setCanvas()
+    end
+    print("PREVIEW BEGIN")
+    print(json.encode(payload))
+    print("PREVIEW END")
+end
+
 -- Image-authored geometry contact sheet. The asset is installed only in a
 -- temporary in-memory tileset, so a preview can never change campaign data,
 -- procedural placement or golden captures.

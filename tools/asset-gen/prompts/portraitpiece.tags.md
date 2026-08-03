@@ -1,0 +1,1 @@
+{{DESCRIPTION}}, single fantasy game character portrait, head and shoulders, fixed 2:3 framing, centered readable face, stable shoulders and clothing, dark flat background, crisp linework, muted low fantasy palette, detailed painted source, {{STYLE_TAGS}}{{EXTRA}}

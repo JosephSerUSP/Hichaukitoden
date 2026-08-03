@@ -191,10 +191,10 @@ def _openai_chat_image(api_key, base_url, model, prompt, refs, size, timeout):
 def _sdapi(base, model, prompt, refs, size, timeout, options, control=None):
     """Local txt2img. `options` is the provider's `sampling` block from config.
 
-    `tiling` is the one that matters here and has no cloud equivalent: it swaps
-    the model's convolutions to circular padding, so the result wraps instead of
-    merely looking repetitive. Post-hoc seam blending cannot produce this -- it
-    only hides the discontinuity in a band along the edge.
+    `tiling` selects the local seam pass. `tilingAxes` controls its topology:
+    floors use both axes, while walls use only x so vertical trims stay put.
+    Forge's native circular-padding flag is currently unavailable, so the
+    fallback pass is axis-aware rather than pretending every texture is square.
 
     Reference images become an img2img-style prompt only in the sense that
     ControlNet takes them; a plain `refs` list is not supported and is reported
@@ -235,6 +235,12 @@ def _sdapi(base, model, prompt, refs, size, timeout, options, control=None):
         # sabotages someone else's work in the same application.
         "override_settings_restore_afterwards": True,
     }
+    if options.get("vae"):
+        # The Forge install has an SDXL VAE listed as an additional module.
+        # Explicitly selecting the SD1.5 VAE keeps an SD1.5 checkpoint from
+        # being decoded through the wrong latent scale, which presents as
+        # high-chroma liquid/wave artifacts in the raw PNG.
+        body["override_settings"]["sd_vae"] = options["vae"]
     if options.get("clipSkip"):
         body["override_settings"]["CLIP_stop_at_last_layers"] = options["clipSkip"]
     if control:
@@ -262,19 +268,27 @@ def _png_bytes(image):
     return buffer.getvalue()
 
 
-def _roll_half(image):
-    """Shift an image by half its size both ways, wrapping around.
+def _tile_axes(value):
+    if value is True:
+        return {"x", "y"}
+    if not value:
+        return set()
+    if isinstance(value, str):
+        return {axis for axis in value.lower() if axis in "xy"}
+    return {axis for axis in value if axis in ("x", "y")}
 
-    Four quadrants swapped diagonally; PIL has no roll and this is one.
-    """
+
+def _roll_half(image, axes="xy"):
+    """Shift by half-size on the declared wrapping axes only."""
+    from PIL import ImageChops
+
+    active_axes = _tile_axes(axes)
     width, height = image.size
-    half_x, half_y = width // 2, height // 2
-    rolled = Image.new(image.mode, (width, height))
-    rolled.paste(image.crop((half_x, half_y, width, height)), (0, 0))
-    rolled.paste(image.crop((0, half_y, half_x, height)), (width - half_x, 0))
-    rolled.paste(image.crop((half_x, 0, width, half_y)), (0, height - half_y))
-    rolled.paste(image.crop((0, 0, half_x, half_y)), (width - half_x, height - half_y))
-    return rolled
+    return ImageChops.offset(
+        image,
+        width // 2 if "x" in active_axes else 0,
+        height // 2 if "y" in active_axes else 0,
+    )
 
 
 def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, control=None):
@@ -289,28 +303,31 @@ def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, con
 
     So the wrap is built here instead, by the standard offset trick:
 
-      1. take the picture, and ROLL it by half its width and height. Whatever
-         was at the four borders is now a cross through the middle -- and the
-         new border is what used to be interior, which by definition already
-         continues into itself.
-      2. inpaint that cross, and only that cross. The outer edge is masked off
-         and never repainted, so the wrap the roll created survives untouched.
+      1. take the picture, and ROLL it by half its size on each wrapping axis.
+         Whatever was at those borders is now a join through the middle, while
+         non-wrapping axes retain their original top/bottom composition.
+      2. inpaint only the joins for those axes. The outer edge is masked off and
+         never repainted, so the declared wrap survives untouched.
+      3. roll the repaired result back to the source coordinates. This keeps
+         an authored ControlNet/height guide aligned with the final albedo.
 
     The result tiles exactly, whatever the model does with its convolutions.
     The cost is one extra pass -- seconds, on an LCM checkpoint.
     """
     image = Image.open(io.BytesIO(first_pass)).convert("RGB")
+    axes = _tile_axes(options.get("tilingAxes", "xy"))
     width, height = image.size
     half_x, half_y = width // 2, height // 2
-    rolled = _roll_half(image)
+    rolled = _roll_half(image, axes)
 
-    # A white cross over the two joins the roll created: a vertical stripe down
-    # the new middle, and a horizontal one across it. Everything else stays
-    # black and is never repainted, which is what preserves the wrap.
+    # A white stripe over each declared join. A wall gets only the vertical
+    # stripe; its top and bottom remain outside the seam pass.
     band = max(8, int(width * options.get("seamBand", 0.16)))
     mask = Image.new("L", (width, height), 0)
-    mask.paste(Image.new("L", (band, height), 255), (half_x - band // 2, 0))
-    mask.paste(Image.new("L", (width, band), 255), (0, half_y - band // 2))
+    if "x" in axes:
+        mask.paste(Image.new("L", (band, height), 255), (half_x - band // 2, 0))
+    if "y" in axes:
+        mask.paste(Image.new("L", (width, band), 255), (0, half_y - band // 2))
 
     body = {
         "init_images": [base64.b64encode(_png_bytes(rolled)).decode("ascii")],
@@ -348,13 +365,15 @@ def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, con
         # sabotages someone else's work in the same application.
         "override_settings_restore_afterwards": True,
     }
+    if options.get("vae"):
+        body["override_settings"]["sd_vae"] = options["vae"]
     if control:
         # The control map has to travel with the picture. Conditioning a ROLLED
         # image against an unrolled depth map asks the model to paint the seam
         # to match structure that is now half a texture away, and it obliges --
         # measured as the centre join getting five times worse.
         rolled_control = _roll_half(
-            Image.open(io.BytesIO(base64.b64decode(control["image"]))))
+            Image.open(io.BytesIO(base64.b64decode(control["image"]))), axes)
         body["alwayson_scripts"] = {"controlnet": {"args": [
             dict(control, image=base64.b64encode(_png_bytes(rolled_control)).decode("ascii"))
         ]}}
@@ -378,6 +397,12 @@ def _offset_inpaint(base, model, prompt, size, timeout, options, first_pass, con
     for box in ((0, 0, width, ring), (0, height - ring, width, height),
                 (0, 0, ring, height), (width - ring, 0, width, height)):
         painted.paste(rolled.crop(box), (box[0], box[1]))
+    # The offset pass is an editing coordinate system, not the asset's final
+    # coordinate system. Restore the half-width roll before returning so an
+    # authored ControlNet/height guide still lines up with the albedo. Without
+    # this inverse roll, the seam is fixed but every horizontal feature is
+    # displaced by half a wall tile relative to its relief.
+    painted = _roll_half(painted, axes)
     return _png_bytes(painted)
 
 

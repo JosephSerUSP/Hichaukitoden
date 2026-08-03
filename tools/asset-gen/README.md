@@ -73,6 +73,8 @@ engine's `[key=value]` tokens), and the ordered post-processing pipeline.
 | `portrait` | 640x192 | 5 x 128x192 expression columns; `ui.lua` slices column 0 |
 | `sprite` | 48x64 | Single billboard for the 3D view — never a sheet |
 | `tileset` | 256x256 | 16 seamless 64x64 textures, flat and unlit |
+| `texturePiece` | 64x64 | One floor/ceiling material; wraps on both axes |
+| `wallPiece` | 64x64 | One wall material; wraps horizontally only |
 | `panorama` | 256x256 | Wraps horizontally; the seam is cross-faded |
 | `locationArt` | 192x256 | Region establishing shot |
 | `eventArt` | 496x208 | Wide cutscene banner |
@@ -144,23 +146,27 @@ Extra `generate` flags, local only: `--steps`, `--cfg`, `--sampler`, `--seed`
 Forge accepts `tiling` in its payload and **silently ignores it** --
 `modules_forge/utils.py:apply_circular_forge` has its body commented out and
 prints "Tiling is currently under maintenance". So a tiling class gets its wrap
-from a second pass instead: the picture is rolled by half its size, which puts
-the four borders in the middle and makes the new border former-interior, and
-then only that middle cross is inpainted. The outer edge is masked off and
-restored afterwards, so the wrap is exact by construction.
+from an axis-aware second pass instead: the picture is rolled by half its size
+on each declared wrapping axis, then only those middle joins are inpainted.
+wallPiece declares x only, so the vertical edges are never rolled or joined.
+The outer edge is masked off and restored afterwards, then the repaired image
+is rolled back to its original coordinates. That last inverse roll is
+important when --height is used: the seamless pass must not move the albedo
+away from the authored height map.
 
 Measured on limestone: seam ratio 6.9 before, 0.5-1.0 after.
 
 ### Reading the numbers
 
-`tilecheck` and every `generate` print four ratios. 1.0 means "as smooth as the
+`tilecheck` and every `generate` print ratios for the active axes. 1.0 means "as smooth as the
 rest of the texture"; over 2.0 is a join you will see once the texture repeats
 down a corridor.
 
-- `x` / `y` -- the wrap, at the tile edge.
-- `centre_x` / `centre_y` -- the middle, where the seamless pass *relocates* the
-  discontinuity. Judging on the wrap alone systematically prefers the variants
-  where that went worst, so both are ranked together.
+- `x` / `y` -- the declared wrap at the tile edge. `wallPiece` intentionally
+  leaves y unmeasured.
+- `centre_x` / `centre_y` -- the middle, where the seamless pass relocates the
+  active join. Judging on the wrap alone systematically prefers the variants
+  where that went worst, so the active wrap and centre are ranked together.
 
 An axis reads `unmeasurable` when the edges are transparent: that is a cut-out,
 not a tile, and it scores last rather than perfect.
@@ -226,10 +232,30 @@ python tools/asset-gen/gen.py audit --out audit.html
 ```
 
 `report` writes one self-contained page -- images inlined as base64, no external
-anything -- with each variant's tile, its 3x3 layout, its scores and the exact
-prompt and sampler settings that made it. Pass several run names to compare them
-side by side. The scores cannot tell you whether the picture is the material you
-asked for; the page can.
+anything -- with each variant's tile, its repeated layout, its scores and the
+exact prompt and sampler settings that made it. Pass several run names to
+compare them side by side. The scores cannot tell you whether the picture is the
+material you asked for; the page can. Classes with contextPreview also get a
+real-engine screenshot: wall candidates are pasted into a temporary atlas and
+rendered in a two-tile-wide corridor from both side positions. The preview can
+use a shared authored height map and an explicit geometry density, so relief,
+side continuity and in-game lighting are reviewed before promotion. The
+generated material remains staged; the context atlas is never campaign data.
+
+Use `wallPiece` for walls and `texturePiece` for floors or ceilings. A
+`wallPiece` wraps only horizontally, so a bottom-anchored baseboard or lower
+course remains at the bottom of the tile; `texturePiece` wraps on both axes.
+Generate one material piece at a time and assemble the reviewed pieces into an
+atlas. Prompt descriptions should contain visible material and map style only:
+the depth/control image supplies relief and placement, so avoid phrases such as
+"following the supplied depth guide" or "along the left edge".
+
+For walls, prefer prompts that name the material and albedo intent directly:
+unlit albedo, diffuse base color only, flat material colour, soft diffuse
+lighting, gentle ambient fill, broad low-contrast shading. Put hard/deep/black
+shadows, baked or directional lighting, torchlight, ambient occlusion and
+dramatic lighting in the negative prompt. The report prints the exact negative
+prompt sent to Forge beside each comparison.
 
 `audit` scores art that already exists. Both the albedo and the height map of a
 plane asset have to tile, and a height map that does not is the worse failure:
@@ -244,11 +270,10 @@ Direction matters -- height is authored by `heightgen.py` and the *picture* is
 made to agree with it. Height is never estimated from art; that was measured
 useless on this project's pixel work.
 
-**A height map that does not tile cannot produce an albedo that does.** The
-conditioning re-imposes its own border discontinuity and the seamless pass then
-fights it: on `limestone_wall`, whose height map scores 20.1, conditioning took
-the albedo's seam from ~1.0 to ~3.8. `generate` warns when it sees this. Fix the
-height map first.
+**A height map that does not tile on an active axis cannot produce an albedo
+that does.** Wall guides need only horizontal continuity; their vertical
+composition is intentionally preserved. Floor and ceiling guides still need
+both axes.
 
 ### Batches
 
@@ -267,6 +292,25 @@ checkpoint -- and prints a pass/fail summary.
 threshold or if the destination has **uncommitted changes**: art gets
 hand-corrected between runs, and overwriting an edit that exists nowhere else
 has already cost real work here. `--force-dirty` overrides.
+
+### Reusable checkpoint sweeps
+
+For a deliberately non-agentic overnight comparison of the installed
+SD1.5-family checkpoints, use the persistent wrapper. It runs one checkpoint at
+a time, saves raw and processed output under `tools/asset-gen/out`, writes an
+HTML matrix for each prompt family, and resumes completed runs after a stop.
+It never promotes or overwrites game assets.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\asset-gen\start_checkpoint_sweep.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\asset-gen\status_checkpoint_sweep.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\asset-gen\stop_checkpoint_sweep.ps1
+```
+
+The worker log is `tools/asset-gen/out/overnight-wall-checkpoint-sweep.log`.
+The sweep intentionally excludes SDXL checkpoints because this Forge profile
+uses the SD1.5 material/ControlNet path; those need a separate XL-compatible
+test profile to produce meaningful comparisons.
 
 ### Models and what they cost
 

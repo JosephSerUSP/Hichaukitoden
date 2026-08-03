@@ -1,0 +1,11 @@
+{
+  "id": "sd_ffxii_ceiling_sd15",
+  "role": "surfaceFixture",
+  "topology": "plane",
+  "surface": "ceiling",
+  "heightOperation": "add",
+  "heightScale": 0.10,
+  "meshColumns": 12,
+  "meshRows": 12,
+  "offset": 0.002
+}

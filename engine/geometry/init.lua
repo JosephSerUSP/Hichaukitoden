@@ -230,6 +230,38 @@ function geometry.load(assetPaths)
     return model
 end
 
+-- Compile one tile from a tileset-level height map. Unlike geometry.load this
+-- deliberately takes the atlas texture and the cropped height field in memory:
+-- ordinary atlas materials should not need an albedo/height/asset.json folder
+-- for every tile. `uv` maps the tile-local mesh coordinates back into the
+-- shared albedo atlas.
+function geometry.loadAtlasSurface(cacheKey, spec, heightData, texture, uv)
+    if type(spec) ~= "table" or spec.topology ~= "plane" then
+        error("tileset height surface must describe a plane", 0)
+    end
+    if not heightData or not texture or type(uv) ~= "function" then
+        error("tileset height surface needs height data, texture and UV mapping", 0)
+    end
+    local key = "atlas:" .. tostring(cacheKey) .. "|" ..
+        require("engine.geometry.quality").key()
+    if compiled[key] then return compiled[key] end
+    local layers = { {
+        data = heightData,
+        scale = spec.heightScale,
+        operation = spec.heightOperation,
+    } }
+    local model = plane.build(spec, layers, uv)
+    mesh.finalize(model, {
+        [spec.id] = { color = { 1, 1, 1, 1 }, image = texture },
+    }, "")
+    model.spec = spec
+    model.specs = { spec }
+    model.assetPath = cacheKey
+    model.assetPaths = { cacheKey }
+    compiled[key] = model
+    return model
+end
+
 -- The design document's most important diagnostic: the exact albedo and the
 -- exact heightfield being handed to the builder, side by side. Seeing both at
 -- once localizes a problem to source art, registration, composition, meshing

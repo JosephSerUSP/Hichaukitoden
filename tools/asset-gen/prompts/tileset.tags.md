@@ -1,0 +1,1 @@
+{{DESCRIPTION}}, 4x4 grid of sixteen distinct square texture cells, flat head-on orthographic material swatches, seamless edges, edge-to-edge atlas, uniform detail, unlit albedo, substance designer material, pbr albedo map, {{STYLE_TAGS}}

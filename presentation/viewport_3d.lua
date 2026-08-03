@@ -27,6 +27,9 @@ local DIR_ANGLES = {
 -- question instead of testing two fields. Pure and exported so it is gated.
 function viewport_3d.meshSource(spec)
     if type(spec) ~= "table" then return nil end
+    if spec.runtimeSurface then
+        return "height:" .. tostring(spec.runtimeSurface.cacheKey)
+    end
     if type(spec.geometry) == "table" then
         -- A composed surface: base first, then its fixtures in order. Order is
         -- part of the identity, since height operations do not commute.
@@ -236,13 +239,46 @@ local DEFAULT_TILESET = "dungeon_001"
 -- assets/tilesets/<name>.png) lazily loaded and cached here. A map without a
 -- `tileset` field uses DEFAULT_TILESET.
 local atlasCache = {}
+
+local function cropHeightTile(source, x, y, width, height)
+    if source:getWidth() == width and source:getHeight() == height then return source end
+    local tile = love.image.newImageData(width, height)
+    for row = 0, height - 1 do
+        for column = 0, width - 1 do
+            tile:setPixel(column, row, source:getPixel(x + column, y + row))
+        end
+    end
+    return tile
+end
+
 local function getAtlasByDef(id, tilesetDef)
     if not tilesetDef then return nil end
     if atlasCache[id] ~= nil then return atlasCache[id] or nil end
     local path = tilesetDef.texture or ("assets/tilesets/" .. id .. ".png")
-    if love.filesystem.getInfo(path) then
-        local img = love.graphics.newImage(path)
+    local img = tilesetDef.textureImage
+    if img or love.filesystem.getInfo(path) then
+        img = img or love.graphics.newImage(path)
         img:setFilter("nearest", "nearest")
+        local tileWidth = tilesetDef.tileWidth or ATLAS_TILE
+        local tileHeight = tilesetDef.tileHeight or ATLAS_TILE
+        local heightData, heightMode
+        if tilesetDef.heightMap then
+            local heightPath = tilesetDef.heightMap
+            if not love.filesystem.getInfo(heightPath) then
+                error("tileset height map missing: " .. tostring(heightPath), 0)
+            end
+            local ok, data = pcall(love.image.newImageData, heightPath)
+            if not ok then error("tileset height map unreadable: " .. tostring(heightPath), 0) end
+            if data:getWidth() == img:getWidth() and data:getHeight() == img:getHeight() then
+                heightMode = "atlas"
+            elseif data:getWidth() == tileWidth and data:getHeight() == tileHeight then
+                heightMode = "tile"
+            else
+                error("tileset height map must match the texture atlas or one tile: "
+                    .. data:getWidth() .. "x" .. data:getHeight() .. "", 0)
+            end
+            heightData = data
+        end
         -- `features[]` is the single source of truth for feature/material ids
         -- (SPEC 1.8); the redundant `tiles{}` mirror was purged 24.07.2026.
         local tiles = {}
@@ -341,6 +377,17 @@ local function getAtlasByDef(id, tilesetDef)
 
         local entry = {
             img = img, w = img:getWidth(), h = img:getHeight(),
+            tileWidth = tileWidth, tileHeight = tileHeight,
+            heightData = heightData, heightMode = heightMode,
+            heightMapPath = tilesetDef.heightMap,
+            heightMapScale = tilesetDef.heightMapScale,
+            heightMapOperation = tilesetDef.heightMapOperation or "add",
+            heightMapMeshColumns = tilesetDef.heightMapMeshColumns or 16,
+            heightMapMeshRows = tilesetDef.heightMapMeshRows or 16,
+            heightMapSampleColumns = tilesetDef.heightMapSampleColumns,
+            heightMapSampleRows = tilesetDef.heightMapSampleRows,
+            heightMapTriangleBudget = tilesetDef.heightMapTriangleBudget or 64,
+            heightMapOffset = tilesetDef.heightMapOffset or 0.004,
             wallRows = wallRows,
             wallVariants = #wallRows * ATLAS_WALL_COLS,
             doorRow = doorRow,
@@ -360,6 +407,59 @@ local function getAtlasByDef(id, tilesetDef)
     end
     atlasCache[id] = false
     return nil
+end
+
+local function heightScaleFor(atlas, surface)
+    local scale = atlas.heightMapScale
+    if type(scale) == "table" then
+        scale = scale[surface] or scale.default
+    end
+    return tonumber(scale or 0.08) or 0
+end
+
+-- Turn one tile in the shared height atlas into the same runtime model shape
+-- used by directory-backed geometry assets. A tile-sized height map is also
+-- accepted and is reused for every atlas cell, which is convenient while
+-- hand-authoring a common material guide.
+local function atlasHeightSurface(atlas, surface, variant, originX, originY, flipU)
+    if not atlas or not atlas.heightData or not variant then return nil end
+    local scale = heightScaleFor(atlas, surface)
+    if scale <= 0 then return nil end
+    local width, height = atlas.tileWidth, atlas.tileHeight
+    atlas.heightTileCache = atlas.heightTileCache or {}
+    local tileKey = originX .. "," .. originY
+    local data = atlas.heightTileCache[tileKey]
+    if not data then
+        data = atlas.heightMode == "atlas"
+            and cropHeightTile(atlas.heightData, originX, originY, width, height)
+            or atlas.heightData
+        atlas.heightTileCache[tileKey] = data
+    end
+    local baseKey = tostring(atlas.heightMapPath) .. ":" .. surface .. ":"
+        .. originX .. "," .. originY .. ":" .. tostring(flipU == true)
+    local spec = {
+        id = "tileset_height_" .. surface .. "_" .. originX .. "_" .. originY,
+        label = "tileset height map '" .. tostring(atlas.heightMapPath) .. "' " .. surface,
+        topology = "plane", role = "surfaceFixture", surface = surface,
+        heightOperation = atlas.heightMapOperation, heightScale = scale,
+        meshColumns = atlas.heightMapMeshColumns, meshRows = atlas.heightMapMeshRows,
+        sampleColumns = atlas.heightMapSampleColumns or math.min(48, atlas.heightMapMeshColumns * 4),
+        sampleRows = atlas.heightMapSampleRows or math.min(48, atlas.heightMapMeshRows * 4),
+        triangleBudget = atlas.heightMapTriangleBudget, offset = atlas.heightMapOffset,
+    }
+    local function uv(u, v)
+        local px = originX + 0.5 + u * (width - 1)
+        local py = originY + 0.5 + v * (height - 1)
+        if flipU then px = originX + width - 0.5 - u * (width - 1) end
+        return px / atlas.w, py / atlas.h
+    end
+    return {
+        runtimeSurface = {
+            cacheKey = baseKey, spec = spec, heightData = data,
+            texture = atlas.img, uv = uv,
+        },
+        coversFace = true,
+    }
 end
 
 local sliceQuad = nil        -- 1px-wide column slice, reused for walls and doors
@@ -684,9 +784,11 @@ function viewport_3d.prepareStructure(session)
     local structureRevision = session.mapStructureRevision or 0
     local presentationRevision = session.mapPresentationRevision or 0
     local cached = structuralCache[session]
+    local geometryQualityKey = require("engine.geometry.quality").key()
     if cached and cached.grid == grid and cached.mapData == mapData
             and cached.structureRevision == structureRevision
-            and cached.presentationRevision == presentationRevision then
+            and cached.presentationRevision == presentationRevision
+            and cached.geometryQualityKey == geometryQualityKey then
         cached.hits = cached.hits + 1
         return cached
     end
@@ -697,6 +799,7 @@ function viewport_3d.prepareStructure(session)
         mapData = mapData,
         structureRevision = structureRevision,
         presentationRevision = presentationRevision,
+        geometryQualityKey = geometryQualityKey,
         floorCells = {}, wallCells = {}, openingCells = {},
         doorLookup = buildWallEventLookup(session),
         materialLookup = buildMaterialLookup(session),
@@ -994,7 +1097,10 @@ local function prepareResolvedWallFaces(structure, atlas)
             -- the spec to compile either mesh source from it.
             meshSpec = (event and doorSpec and viewport_3d.meshSource(doorSpec) and doorSpec)
                 or viewport_3d.composedWallSpec(baseWall, featureOverlay)
-                or (viewport_3d.meshSource(featureOverlay) and featureOverlay) or nil,
+                or (viewport_3d.meshSource(featureOverlay) and featureOverlay)
+                or (not featureOverlay and (not baseWall or not baseWall.geometry)
+                    and atlasHeightSurface(atlas, "wall", baseWall, originX, originY,
+                        kind == "west" or kind == "south")) or nil,
             mapX = mapX, mapY = mapY,
         })
     end
@@ -1108,6 +1214,7 @@ local function drawWorldSpace(session)
     local cameraZ = 0.5
     local surfaces = {}
     local pendingFloorModels = {}
+    local pendingCeilingModels = {}
     local dynamicGroups = {}
     local persistentBatchDraws, dynamicMeshDraws, modelDraws = 0, 0, 0
     local dynamicByCategory = {}
@@ -1442,19 +1549,42 @@ local function drawWorldSpace(session)
                     floorSpec.atlas[1] * ATLAS_TILE, ATLAS_TILE, ATLAS_TILE,
                     atlas.w, atlas.h, false) }
             end
-            cell.floorSurface = {
-                a = { x = x, y = y, z = 0 }, b = { x = x + 1, y = y, z = 0 },
-                c = { x = x + 1, y = y + 1, z = 0 }, d = { x = x, y = y + 1, z = 0 },
-                uv = cellFloorUV,
-                colors = { colorAt(x, y, 0, false), colorAt(x + 1, y, 0, false),
-                    colorAt(x + 1, y + 1, 0, false), colorAt(x, y + 1, 0, false) },
-            }
+            local floorHeightSpec = floorSpec and not floorSpec.geometry
+                and atlasHeightSurface(atlas, "floor", floorSpec,
+                    floorSpec.atlas and floorSpec.atlas[2] * ATLAS_TILE or 0,
+                    floorSpec.atlas and floorSpec.atlas[1] * ATLAS_TILE or 0, false) or nil
+            if floorHeightSpec then
+                pendingFloorModels[#pendingFloorModels + 1] = {
+                    spec = floorHeightSpec, x = x + 0.5, y = y + 0.5,
+                    key = "floor-height:" .. x .. "," .. y .. ":"
+                        .. viewport_3d.meshSource(floorHeightSpec),
+                }
+            elseif floorSpec and floorSpec.geometry then
+                -- Base floors may use the same image-authored plane path as
+                -- walls. The compiled plane replaces the atlas quad, while
+                -- logical collision remains the map grid.
+                pendingFloorModels[#pendingFloorModels + 1] = {
+                    spec = { geometry = floorSpec.geometry, coversFace = true },
+                    x = x + 0.5, y = y + 0.5,
+                    key = "floor-base:" .. x .. "," .. y .. ":" .. floorSpec.geometry,
+                }
+            else
+                cell.floorSurface = {
+                    a = { x = x, y = y, z = 0 }, b = { x = x + 1, y = y, z = 0 },
+                    c = { x = x + 1, y = y + 1, z = 0 }, d = { x = x, y = y + 1, z = 0 },
+                    uv = cellFloorUV,
+                    colors = { colorAt(x, y, 0, false), colorAt(x + 1, y, 0, false),
+                        colorAt(x + 1, y + 1, 0, false), colorAt(x, y + 1, 0, false) },
+                }
+            end
         end
         local floor = cell.floorSurface
-        if queueMeshNodes(ensureSurfaceMeshTree(floor, floorTexture,
-                floor.a, floor.b, floor.c, floor.d, floor.uv, floor.colors)) == false then
-            addVisibleWorldQuad(group(floorTexture), floor.a, floor.b, floor.c, floor.d,
-                floor.uv, floor.colors, nil, "floor_clip")
+        if floor then
+            if queueMeshNodes(ensureSurfaceMeshTree(floor, floorTexture,
+                    floor.a, floor.b, floor.c, floor.d, floor.uv, floor.colors)) == false then
+                addVisibleWorldQuad(group(floorTexture), floor.a, floor.b, floor.c, floor.d,
+                    floor.uv, floor.colors, nil, "floor_clip")
+            end
         end
         local floorFeature = atlas and atlas.tiles[structure.materialLookup[x .. "," .. y] or ""]
         local floorMesh = floorFeature and floorFeature.role == "floor_feature"
@@ -1494,20 +1624,43 @@ local function drawWorldSpace(session)
                         ceilingSpec.atlas[1] * ATLAS_TILE, ATLAS_TILE, ATLAS_TILE,
                         atlas.w, atlas.h, false) }
                 end
-                cell.ceilingSurface = {
-                    a = { x = x, y = y + 1, z = 1 }, b = { x = x + 1, y = y + 1, z = 1 },
-                    c = { x = x + 1, y = y, z = 1 }, d = { x = x, y = y, z = 1 },
-                    uv = cellCeilingUV,
-                    colors = { colorAt(x, y + 1, 1, false), colorAt(x + 1, y + 1, 1, false),
-                        colorAt(x + 1, y, 1, false), colorAt(x, y, 1, false) },
-                }
+                local ceilingHeightSpec = ceilingSpec and not ceilingSpec.geometry
+                    and atlasHeightSurface(atlas, "ceiling", ceilingSpec,
+                        ceilingSpec.atlas and ceilingSpec.atlas[2] * ATLAS_TILE or 0,
+                        ceilingSpec.atlas and ceilingSpec.atlas[1] * ATLAS_TILE or 0, false) or nil
+                if ceilingHeightSpec then
+                    pendingCeilingModels[#pendingCeilingModels + 1] = {
+                        spec = ceilingHeightSpec, x = x + 0.5, y = y + 0.5,
+                        key = "ceiling-height:" .. x .. "," .. y .. ":"
+                            .. viewport_3d.meshSource(ceilingHeightSpec),
+                    }
+                elseif ceilingSpec and ceilingSpec.geometry then
+                    -- Ceilings use the same image-authored plane compiler as
+                    -- floors, but the plane's normal points downward. Keep
+                    -- the atlas fallback for variants without geometry.
+                    pendingCeilingModels[#pendingCeilingModels + 1] = {
+                        spec = { geometry = ceilingSpec.geometry, coversFace = true },
+                        x = x + 0.5, y = y + 0.5,
+                        key = "ceiling-base:" .. x .. "," .. y .. ":" .. ceilingSpec.geometry,
+                    }
+                else
+                    cell.ceilingSurface = {
+                        a = { x = x, y = y + 1, z = 1 }, b = { x = x + 1, y = y + 1, z = 1 },
+                        c = { x = x + 1, y = y, z = 1 }, d = { x = x, y = y, z = 1 },
+                        uv = cellCeilingUV,
+                        colors = { colorAt(x, y + 1, 1, false), colorAt(x + 1, y + 1, 1, false),
+                            colorAt(x + 1, y, 1, false), colorAt(x, y, 1, false) },
+                    }
+                end
             end
             local ceiling = cell.ceilingSurface
-            if queueMeshNodes(ensureSurfaceMeshTree(ceiling, ceilingTexture,
-                    ceiling.a, ceiling.b, ceiling.c, ceiling.d, ceiling.uv, ceiling.colors)) == false then
-                addVisibleWorldQuad(group(ceilingTexture),
-                    ceiling.a, ceiling.b, ceiling.c, ceiling.d, ceiling.uv, ceiling.colors,
-                    nil, "ceiling_clip")
+            if ceiling then
+                if queueMeshNodes(ensureSurfaceMeshTree(ceiling, ceilingTexture,
+                        ceiling.a, ceiling.b, ceiling.c, ceiling.d, ceiling.uv, ceiling.colors)) == false then
+                    addVisibleWorldQuad(group(ceilingTexture),
+                        ceiling.a, ceiling.b, ceiling.c, ceiling.d, ceiling.uv, ceiling.colors,
+                        nil, "ceiling_clip")
+                end
             end
         end
     end
@@ -1519,9 +1672,17 @@ local function drawWorldSpace(session)
         -- A variant names either a hand-modelled OBJ or an image-authored
         -- geometry asset. Both compile to the same representation, so this is
         -- the only place the world renderer knows the difference.
-        local model = spec.geometry
-            and require("engine.geometry").load(spec.geometry)
-            or objModel.load(spec.model)
+        local model
+        if spec.runtimeSurface then
+            local runtime = spec.runtimeSurface
+            model = require("engine.geometry").loadAtlasSurface(
+                runtime.cacheKey, runtime.spec, runtime.heightData,
+                runtime.texture, runtime.uv)
+        elseif spec.geometry then
+            model = require("engine.geometry").load(spec.geometry)
+        else
+            model = objModel.load(spec.model)
+        end
         local placed = {}
         for _, modelGroup in ipairs(model.groups) do
             local vertices = {}
@@ -1570,6 +1731,11 @@ local function drawWorldSpace(session)
     end
 
     for _, placement in ipairs(pendingFloorModels) do
+        queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
+            placement.x, placement.y, "x"))
+    end
+
+    for _, placement in ipairs(pendingCeilingModels) do
         queuePlacedModels(ensurePlacedModel(placement.spec, placement.key,
             placement.x, placement.y, "x"))
     end

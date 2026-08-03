@@ -1,0 +1,1 @@
+{{DESCRIPTION}}, dungeon wall material, horizontal seamless material texture, flat head-on orthographic albedo map, uniform detail, unlit albedo, diffuse base color only, flat material colour, soft diffuse lighting, gentle ambient fill, broad low-contrast shading, no baked directional light, detailed sharp painted source, {{STYLE_TAGS}}{{EXTRA}}

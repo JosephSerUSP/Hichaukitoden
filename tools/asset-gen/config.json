@@ -82,8 +82,9 @@
         "steps": 6,
         "cfgScale": 2.0,
         "sampler": "LCM",
+        "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
         "tiling": true,
-        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, deep shadow, black shadow, baked lighting, directional lighting, torchlight, ambient occlusion, specular highlight, glossy reflection, vignette, lighting gradient, smooth gradient, strong contrast, dramatic lighting, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 4-8 steps; fast to explore, poor at obeying",
@@ -101,25 +102,40 @@
       "local": true,
       "promptStyle": "tags",
       "type": "sdapi",
-      "model": "perfectWorld_v3Baked",
+      "model": "v1-5-pruned-emaonly",
       "sampling": {
         "steps": 26,
         "cfgScale": 7.0,
         "sampler": "DPM++ 2M",
+        "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
         "tiling": true,
-        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, deep shadow, black shadow, baked lighting, directional lighting, torchlight, ambient occlusion, specular highlight, glossy reflection, vignette, lighting gradient, smooth gradient, strong contrast, dramatic lighting, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "perfectWorld_v3Baked", "label": "Perfect World -- detailed, even materials",
-          "default": true, "prices": null, "note": "Local: no cost, no key." },
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
         { "id": "lyriel_v16", "label": "Lyriel -- painterly fantasy surfaces",
-          "prices": null, "note": "Local: no cost, no key." },
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
+        { "id": "goofballMix_v3Baked", "label": "Goofball Mix -- stylized aesthetic probe",
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
+        { "id": "aLunarDreamBeta_aLunarDreamV1", "label": "aLunarDream -- atmospheric fantasy probe",
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
+        { "id": "ohmenOrigins_ohmenOriginsV3", "label": "Ohmen Origins -- expressive illustration probe",
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
+        { "id": "abyssorangemix2NSFW_abyssorangemix2Nsfw", "label": "AbyssOrangeMix -- high-aesthetic SD1.5 probe",
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
+        { "id": "homosimile_v40", "label": "Homosimile -- warm high-aesthetic material probe",
+          "prices": null, "note": "Local: no cost, no key; raw-probe before use." },
         { "id": "chilloutmix_NiPrunedFp32Fix", "label": "Chillout -- photographic materials",
           "prices": null, "note": "Local: no cost, no key." },
-        { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- plainest response to LoRAs",
-          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "v1-5-pruned-emaonly", "label": "SD 1.5 base -- coherent baseline",
+          "default": true, "prices": null, "note": "Local: no cost, no key." },
+        { "id": "newERANewEstheticRetro_retroV60VAE", "label": "NewEra Retro -- warmer, ornate fantasy material probe",
+          "prices": null, "note": "Local: no cost, no key; keep only outputs that pass raw inspection." },
         { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM",
-          "prices": null, "note": "Local: no cost, no key." }
+          "prices": null, "note": "Local: no cost, no key." },
+        { "id": "DreamShaper_8_pruned", "label": "DreamShaper 8 full -- downloaded fantasy/art probe",
+          "prices": null, "note": "Local: 2.13GB, verified SHA-256; raw-probe before use." }
       ]
     },
     "openrouter": {

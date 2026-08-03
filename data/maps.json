@@ -5960,6 +5960,17 @@
     "safe": true,
     "music": "town1",
     "image": "TownAlencar.png",
+    "tilesetOverride": {
+      "features": [
+        { "id": "wall_torch", "remove": true },
+        { "id": "dungeon_column", "remove": true },
+        { "id": "dungeon_chest", "remove": true },
+        { "id": "ruins_crystal", "remove": true }
+      ],
+      "fixturePrefabs": [
+        { "id": "wall_beside_floor", "remove": true }
+      ]
+    },
     "layout": [
       "###############",
       "#.............#",
@@ -6092,6 +6103,33 @@
                   {
                     "cmd": "LOAD_MAP",
                     "mapId": 9
+                  }
+                ]
+              },
+              {
+                "label": "FFXII Depth Explore Room",
+                "commands": [
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 12
+                  }
+                ]
+              },
+              {
+                "label": "FFXII Wall + Shrine Recess Compare",
+                "commands": [
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 13
+                  }
+                ]
+              },
+              {
+                "label": "Hand-authored Heightmap Compare",
+                "commands": [
+                  {
+                    "cmd": "LOAD_MAP",
+                    "mapId": 14
                   }
                 ]
               },
@@ -6258,6 +6296,155 @@
     "spawn": {
       "x": 6,
       "y": 8,
+      "dir": "N"
+    }
+  }
+  ,{
+    "id": 12,
+    "title": "FFXII Depth Explore Room",
+    "intro": "An exploratory room mixing expressive checkpoints and authored depth fields. Some materials are deliberately strange.",
+    "depth": 1,
+    "tileset": "dungeon_ffxii_depth_explore",
+    "ceilingStyle": "solid",
+    "music": "dungeon1",
+    "layout": [
+      "#############",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#############"
+    ],
+    "generation": "Fixed",
+    "category": "developer",
+    "safe": true,
+    "encounterSteps": 0,
+    "events": [
+      {
+        "id": 1,
+        "name": "Return to Developer Room",
+        "x": 6,
+        "y": 1,
+        "trigger": "interact",
+        "commands": [
+          {
+            "cmd": "LOAD_MAP",
+            "mapId": 8
+          }
+        ]
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "spawn": {
+      "x": 6,
+      "y": 4,
+      "dir": "N"
+    }
+  },
+  {
+    "id": 13,
+    "title": "FFXII Wall + Shrine Recess Compare",
+    "intro": "A restrained regular wall surrounds a separate three-piece shrine recess fixture test.",
+    "depth": 1,
+    "tileset": "dungeon_ffxii_wall_recess_compare",
+    "ceilingStyle": "solid",
+    "music": "dungeon1",
+    "layout": [
+      "###############",
+      "#.............#",
+      "#.............#",
+      "#....###......#",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "#.............#",
+      "###############"
+    ],
+    "generation": "Fixed",
+    "category": "developer",
+    "safe": true,
+    "encounterSteps": 0,
+    "zones": [
+      {
+        "id": "shrine",
+        "cells": [
+          { "x": 4, "y": 3 },
+          { "x": 5, "y": 3 },
+          { "x": 6, "y": 3 }
+        ]
+      }
+    ],
+    "events": [
+      {
+        "id": 1,
+        "name": "Return to Developer Room",
+        "x": 7,
+        "y": 1,
+        "trigger": "interact",
+        "commands": [
+          {
+            "cmd": "LOAD_MAP",
+            "mapId": 8
+          }
+        ]
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "spawn": {
+      "x": 7,
+      "y": 6,
+      "dir": "N"
+    }
+  },
+  {
+    "id": 14,
+    "title": "Hand-authored Tileset Height Compare",
+    "intro": "The entire atlas uses one shared hand-authored wall height field rather than per-tile geometry folders.",
+    "depth": 1,
+    "tileset": "dungeon_hand_authored_height_compare",
+    "ceilingStyle": "solid",
+    "music": "dungeon1",
+    "layout": [
+      "#############",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#...........#",
+      "#############"
+    ],
+    "generation": "Fixed",
+    "category": "developer",
+    "safe": true,
+    "encounterSteps": 0,
+    "events": [
+      {
+        "id": 1,
+        "name": "Return to Developer Room",
+        "x": 6,
+        "y": 1,
+        "trigger": "interact",
+        "commands": [
+          {
+            "cmd": "LOAD_MAP",
+            "mapId": 8
+          }
+        ]
+      }
+    ],
+    "treasures": [],
+    "encounters": [],
+    "recruits": [],
+    "spawn": {
+      "x": 6,
+      "y": 4,
       "dir": "N"
     }
   }

@@ -88,6 +88,21 @@ third visual map.
 Opacity stays in the albedo so stained or translucent materials can remain
 visually transparent while still possessing geometry.
 
+### Tileset-level height maps
+
+Ordinary atlas materials may declare an optional `heightMap` on the tileset
+instead of becoming one geometry directory per tile. The map may be either the
+same dimensions as the complete albedo atlas, or one `tileWidth` x
+`tileHeight` field that is reused for every atlas cell. The renderer crops the
+relevant field at load time, keeps the atlas albedo as the mesh texture, and
+compiles the displaced plane through the same plane topology as a directory
+asset. `heightMapScale` may be a number or a `{wall, floor, ceiling}` object.
+
+This is the normal path for broad atlas materials and hand-authored tile
+guides. Directory-backed geometry remains appropriate for exceptional
+fixtures, composed shrine recesses, shells, radials, and any surface whose
+albedo does not live in the tileset atlas.
+
 ### Height conventions by topology
 
 | Topology | Grayscale | Alpha |

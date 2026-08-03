@@ -85,6 +85,9 @@ local previewMapId = nil
 local previewMapX = nil
 local previewMapY = nil
 local previewMapDir = nil
+local isPreviewTextureMode = false
+local previewTextureAtlas = nil
+local previewTextureOptions = {}
 local isPreviewGeometryMode = false
 local previewGeometryAsset = nil
 local previewGeometryOverlay = nil
@@ -295,6 +298,40 @@ function love.load(arg)
                 if isPositional(arg[i + 2]) then previewMapY = arg[i + 2]; i = i + 1 end
                 if isPositional(arg[i + 2]) then previewMapDir = arg[i + 2]; i = i + 1 end
                 i = i + 1
+            elseif val == "preview-texture" then
+                isPreviewTextureMode = true
+                previewTextureAtlas = arg[i + 1]
+                i = i + 1
+                while arg[i + 1] do
+                    local option = arg[i + 1]
+                    if option == "--height-map" then
+                        previewTextureOptions.heightMap = arg[i + 2]
+                        i = i + 2
+                    elseif option == "--quality-density" then
+                        previewTextureOptions.qualityDensity = tonumber(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-scale" then
+                        previewTextureOptions.heightMapScale = require("data.json").decode(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-columns" then
+                        previewTextureOptions.heightMapMeshColumns = tonumber(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-rows" then
+                        previewTextureOptions.heightMapMeshRows = tonumber(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-samples-x" then
+                        previewTextureOptions.heightMapSampleColumns = tonumber(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-samples-y" then
+                        previewTextureOptions.heightMapSampleRows = tonumber(arg[i + 2])
+                        i = i + 2
+                    elseif option == "--height-budget" then
+                        previewTextureOptions.heightMapTriangleBudget = tonumber(arg[i + 2])
+                        i = i + 2
+                    else
+                        break
+                    end
+                end
             elseif val == "preview-geometry" then
                 isPreviewGeometryMode = true
                 previewGeometryAsset = arg[i + 1]
@@ -427,6 +464,14 @@ function love.load(arg)
     if isPreviewMapMode then
         loader.init(cliCampaignRoot)
         cli_tools.runPreviewMap(previewMapId, previewMapX, previewMapY, previewMapDir, loader)
+        love.event.quit(0)
+        return
+    end
+
+    -- Temporary in-memory tileset context preview for asset-gen reports.
+    if isPreviewTextureMode then
+        loader.init(cliCampaignRoot)
+        cli_tools.runPreviewTexture(previewTextureAtlas, loader, previewTextureOptions)
         love.event.quit(0)
         return
     end
