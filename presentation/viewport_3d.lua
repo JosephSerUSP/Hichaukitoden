@@ -111,20 +111,6 @@ local lerpAngle = ui.lerpAngle
 -- path each instead of branching per feature.
 local FOG_DEFAULTS = { color = { 0, 0, 0 }, startDist = 0.0, distance = 8.0, sharpness = 1.0, minFactor = 0.12, panorama = nil }
 
-local function calcFogAlpha(dist, fog)
-    local dStart = fog.startDist or FOG_DEFAULTS.startDist
-    local dRange = fog.distance or FOG_DEFAULTS.distance
-    if dRange <= 0 then dRange = 0.001 end
-    local norm = (dist - dStart) / dRange
-    if norm < 0 then norm = 0 elseif norm > 1 then norm = 1 end
-    local sharpness = fog.sharpness or FOG_DEFAULTS.sharpness
-    if sharpness ~= 1.0 then
-        norm = norm ^ sharpness
-    end
-    local minFactor = fog.minFactor or FOG_DEFAULTS.minFactor
-    return 1.0 - norm * (1.0 - minFactor)
-end
-
 local function getFogConfig(session, mapData)
     local fog = mapData and mapData.fog
     if not fog then return FOG_DEFAULTS, false end
