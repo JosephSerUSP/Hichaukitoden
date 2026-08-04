@@ -3,6 +3,7 @@ local ui = require("presentation.ui")
 local exploration = require("engine.exploration")
 local tilesetResolver = require("engine.tileset_resolver")
 local config = require("engine.config")
+local geometryImages = require("engine.geometry.images")
 local small_battlers = require("presentation.small_battlers")
 
 -- Direction vectors (matching exploration.lua)
@@ -427,12 +428,16 @@ local function atlasHeightSurface(atlas, surface, variant, originX, originY, fli
     if scale <= 0 then return nil end
     local width, height = atlas.tileWidth, atlas.tileHeight
     atlas.heightTileCache = atlas.heightTileCache or {}
-    local tileKey = originX .. "," .. originY
+    local tileKey = originX .. "," .. originY .. ":" .. tostring(flipU == true)
     local data = atlas.heightTileCache[tileKey]
     if not data then
         data = atlas.heightMode == "atlas"
             and cropHeightTile(atlas.heightData, originX, originY, width, height)
             or atlas.heightData
+        -- West/south faces reverse the albedo's U coordinate. Mirror the
+        -- displacement source as well: texture UVs alone do not alter the
+        -- geometry builder's independent 0..1 height-field sampling.
+        if flipU then data = geometryImages.flipX(data) end
         atlas.heightTileCache[tileKey] = data
     end
     local baseKey = tostring(atlas.heightMapPath) .. ":" .. surface .. ":"

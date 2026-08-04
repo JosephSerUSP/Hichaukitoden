@@ -1,0 +1,85 @@
+/* Rating view. Same dense RM2003 chrome as the generate page, but the image
+   gets the room: judging a 64px tile from a thumbnail is judging the thumbnail. */
+
+body.rating main { flex-direction: column; gap: 10px; }
+header .corner { margin-left: auto; color: #8d87a4; text-decoration: none; }
+header .corner:hover { color: #d7d3e0; }
+
+.stage, .verdict, .board {
+  border: 1px solid #453f5e; background: #1d1b28; padding: 8px; width: 100%;
+}
+
+.panes { display: flex; gap: 10px; flex-wrap: wrap; }
+.panes figure { margin: 0; }
+.panes figcaption {
+  color: #8d87a4; text-transform: uppercase; font-size: 10px;
+  letter-spacing: .8px; margin-bottom: 3px;
+}
+.panes img, .tiled {
+  display: block; border: 1px solid #322d47; background: #0d0c11;
+  image-rendering: pixelated;
+}
+#tile { width: 256px; height: 256px; }
+.tiled { width: 256px; height: 256px; background-size: 85.33px 85.33px; }
+.tiled.axis-x { background-size: 85.33px 256px; }
+#context { width: 320px; height: auto; }
+#raw { width: 160px; height: 160px; }
+
+.facets {
+  margin: 0 0 6px; color: #b8aee0; font-family: Consolas, monospace;
+  font-size: 12px;
+}
+.facets span { color: #8d87a4; }
+.facets b { color: #e9e4ff; font-weight: 600; }
+
+.scores { display: flex; gap: 6px; }
+.scores button {
+  flex: 0 0 92px; display: flex; flex-direction: column; align-items: center;
+  gap: 1px; padding: 5px 0; cursor: pointer;
+  background: #252235; color: #d7d3e0; border: 1px solid #453f5e;
+}
+.scores button:hover { background: #322d47; border-color: #6d5fa8; }
+.scores button b { font-size: 15px; color: #e9e4ff; }
+.scores button span { color: #8d87a4; font-size: 10px; }
+.scores button.was { border-color: #7ec98f; }
+
+.hint { color: #8d87a4; margin: 6px 0 4px; }
+kbd {
+  background: #322d47; border: 1px solid #554d78; border-radius: 2px;
+  padding: 0 3px; font: 11px Consolas, monospace; color: #d7d3e0;
+}
+
+.tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tags button {
+  padding: 2px 7px; cursor: pointer; background: #201e2c; color: #a49dbd;
+  border: 1px solid #453f5e;
+}
+.tags button:hover { border-color: #6d5fa8; }
+.tags button.on { background: #4a3c2a; border-color: #c9a35e; color: #f0dfbc; }
+
+.nav { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.nav button {
+  padding: 2px 8px; background: #252235; color: #d7d3e0;
+  border: 1px solid #453f5e; cursor: pointer;
+}
+.nav .progress { color: #8d87a4; font-family: Consolas, monospace; }
+.nav .inline { margin-left: auto; }
+
+.board h2 {
+  margin: 0 0 2px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .8px; color: #b8aee0;
+}
+.board .note { color: #8d87a4; margin: 0 0 6px; }
+.board table { border-collapse: collapse; font-size: 12px; margin: 0 14px 10px 0; }
+.board caption {
+  text-align: left; color: #b8aee0; font-weight: 600; padding-bottom: 2px;
+}
+.board th, .board td {
+  border-bottom: 1px solid #2b2740; padding: 1px 8px 1px 0; text-align: left;
+}
+.board th { color: #8d87a4; font-weight: 400; }
+.board td.num { font-family: Consolas, monospace; }
+.board .tally { color: #8d87a4; }
+.boards { display: flex; flex-wrap: wrap; }
+
+.empty { color: #8d87a4; padding: 20px 0; }

@@ -168,6 +168,8 @@ def run_section(run_path, manifest, rank=None):
         tags += [f"lora {l['name']}@{l.get('weight')}" for l in sampling["loras"]]
     if prov.get("heightControl"):
         tags.append("controlnet depth")
+    if prov.get("heightControlWeight") is not None:
+        tags.append(f"depth weight {prov['heightControlWeight']}")
 
     negative_prompt = sampling.get("negativePrompt")
     negative_block = (f'<div class="label">negative prompt as sent</div><pre>{html.escape(negative_prompt)}</pre>'

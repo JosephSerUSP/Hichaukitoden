@@ -21,11 +21,11 @@ import sys
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gen as cli                                    # noqa: E402
-from lib import classes, staging                     # noqa: E402
+from lib import classes, ratings, staging            # noqa: E402
 
 UI_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui")
 PORT = int(os.environ.get("ASSET_GEN_PORT", "7801"))
@@ -256,6 +256,23 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"runs": _runs_payload()})
         if path == "/api/job":
             return self._send(200, dict(_job))
+        if path in ("/rate", "/rate.html"):
+            return self._static("rate.html")
+        if path == "/api/rate/queue":
+            query = parse_qs(urlparse(self.path).query)
+            return self._send(200, {
+                "tags": [{"id": tag, "help": help_} for tag, help_ in ratings.TAGS],
+                "items": ratings.queue(_staging_root(),
+                                       (query.get("prefix") or [""])[0],
+                                       (query.get("rated") or ["0"])[0] == "1"),
+            })
+        if path == "/api/rate/leaderboard":
+            query = parse_qs(urlparse(self.path).query)
+            return self._send(200, {
+                facet: ratings.leaderboard(_staging_root(),
+                                           (query.get("prefix") or [""])[0], facet)
+                for facet in ("model", "lora", "depthWeight", "heightMap", "class")
+            })
         return self._static(path)
 
     def do_POST(self):
@@ -296,6 +313,14 @@ class Handler(BaseHTTPRequestHandler):
                 argv.append("--force")
             code, output = _run_cli(argv)
             return self._send(200, {"ok": code == 0, "log": output})
+
+        if path == "/api/rate":
+            try:
+                ratings.record(body["run"], body["variant"],
+                               body.get("score"), body.get("tags"))
+            except (KeyError, ValueError) as err:
+                return self._send(400, {"error": str(err)})
+            return self._send(200, {"ok": True})
 
         return self._send(404, {"error": "no such endpoint"})
 

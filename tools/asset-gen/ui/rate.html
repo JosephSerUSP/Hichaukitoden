@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>asset-gen &mdash; rate</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/rate.css">
+</head>
+<body class="rating">
+
+<header>
+  <h1>rate</h1>
+  <span class="sub">Your eye, on the record. Scores land in
+    <code>out/ratings.json</code> as you press the key &mdash; nothing to save or export.</span>
+  <a class="corner" href="/">&larr; generate</a>
+</header>
+
+<main id="rate">
+
+  <section class="stage">
+    <div class="panes">
+      <figure>
+        <figcaption>tile</figcaption>
+        <img id="tile" alt="">
+      </figure>
+      <figure>
+        <figcaption id="tiledLabel">tiled</figcaption>
+        <!-- CSS repeats the same file the tile pane shows, so the seam on
+             display is the real one and not a re-encoded copy of it. -->
+        <div id="tiled" class="tiled"></div>
+      </figure>
+      <figure id="contextFigure" hidden>
+        <figcaption>in engine</figcaption>
+        <img id="context" alt="">
+      </figure>
+      <figure id="rawFigure">
+        <figcaption>raw source</figcaption>
+        <img id="raw" alt="">
+      </figure>
+    </div>
+  </section>
+
+  <section class="verdict">
+    <p class="facets" id="facets"></p>
+
+    <div class="scores" id="scores">
+      <button data-score="1"><b>1</b><span>reject</span></button>
+      <button data-score="2"><b>2</b><span>weak</span></button>
+      <button data-score="3"><b>3</b><span>usable</span></button>
+      <button data-score="4"><b>4</b><span>good</span></button>
+      <button data-score="5"><b>5</b><span>want it</span></button>
+    </div>
+
+    <p class="hint">Press <kbd>1</kbd>&ndash;<kbd>5</kbd> to score and advance.
+      Tag first if the reason matters &mdash; tags stick to the next score only.</p>
+
+    <div class="tags" id="tags"></div>
+
+    <div class="nav">
+      <button id="back">&larr; back</button>
+      <button id="skip">skip <kbd>space</kbd></button>
+      <span class="progress" id="progress"></span>
+      <label class="inline">only runs matching
+        <input id="prefix" size="14" spellcheck="false" placeholder="e.g. kit_"></label>
+      <label><input type="checkbox" id="showRated"> include already rated</label>
+    </div>
+  </section>
+
+  <section class="board">
+    <h2>What your scores say so far</h2>
+    <p class="note">Mean of your stars beside the median seam ratio. Agreement is
+      easy; the rows where they disagree are the ones worth reading.</p>
+    <div id="board"></div>
+  </section>
+
+</main>
+
+<script src="/rate.js"></script>
+</body>
+</html>

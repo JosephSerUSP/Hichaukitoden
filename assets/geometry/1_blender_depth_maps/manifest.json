@@ -1,0 +1,107 @@
+{
+  "source": "tools/asset-gen/blender/scenes.py",
+  "method": "orthographic first-hit raycast against evaluated geometry",
+  "convention": "opaque RGBA, 128 = dominant surface, +-112 relief",
+  "maps": [
+    {
+      "preset": "wall_pilasters",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.0,
+      "reliefMax": 0.144,
+      "wrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_niche",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.005,
+      "reliefMax": 0.09,
+      "wrapError": {
+        "x": 0.001
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_flagstones",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.0,
+      "reliefMax": 0.032,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_inlay",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.02,
+      "reliefMax": 0.08,
+      "wrapError": {
+        "x": 0.002,
+        "y": 0.002
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_coffers",
+      "surface": "ceiling",
+      "view": "below",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_coffers.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_coffers.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": -0.105,
+      "reliefMax": 0.028,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_vault",
+      "surface": "ceiling",
+      "view": "below",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_vault.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_vault.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": -0.13999,
+      "reliefMax": 0.05194,
+      "wrapError": {
+        "x": 0.001,
+        "y": 0.001
+      },
+      "wrapOk": true
+    }
+  ]
+}

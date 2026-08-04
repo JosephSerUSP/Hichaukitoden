@@ -51,6 +51,21 @@ function images.dimensionsMatch(a, b)
     return a:getWidth() == b:getWidth() and a:getHeight() == b:getHeight()
 end
 
+-- Mirror image-authored geometry in the same direction as a mirrored albedo
+-- UV. Wall faces on opposite sides of a cell reverse U so architectural marks
+-- read consistently from the corridor; their displacement field must undergo
+-- the identical transform or relief and paint register on only two directions.
+function images.flipX(data)
+    local width, height = data:getWidth(), data:getHeight()
+    local flipped = love.image.newImageData(width, height)
+    for y = 0, height - 1 do
+        for x = 0, width - 1 do
+            flipped:setPixel(x, y, data:getPixel(width - 1 - x, y))
+        end
+    end
+    return flipped
+end
+
 -- Warning-level check: a height map whose RGB channels disagree was probably
 -- painted in colour by mistake, and only its red channel would be read.
 function images.checkGrayscale(data, limit)

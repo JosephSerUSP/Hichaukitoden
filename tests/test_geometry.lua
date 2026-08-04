@@ -87,6 +87,19 @@ local ignored = plane.sampleField({ base,
 check(math.abs(ignored - baseValue) < 1e-9,
     "the none operation contributes albedo only and leaves height untouched")
 
+local asymmetric = love.image.newImageData(3, 1)
+asymmetric:setPixel(0, 0, 0.1, 0.2, 0.3, 1)
+asymmetric:setPixel(1, 0, 0.4, 0.5, 0.6, 1)
+asymmetric:setPixel(2, 0, 0.7, 0.8, 0.9, 1)
+local mirrored = images.flipX(asymmetric)
+local leftR, leftG, leftB = mirrored:getPixel(0, 0)
+local rightR, rightG, rightB = mirrored:getPixel(2, 0)
+check(math.abs(leftR - 0.7) < 1 / 255 and math.abs(leftG - 0.8) < 1 / 255
+        and math.abs(leftB - 0.9) < 1 / 255
+        and math.abs(rightR - 0.1) < 1 / 255 and math.abs(rightG - 0.2) < 1 / 255
+        and math.abs(rightB - 0.3) < 1 / 255,
+    "mirrored wall height fields reverse X exactly like mirrored albedo UVs")
+
 print("=== Plane Meshing ===")
 
 local model = geometry.load(FIXTURES .. "valid_plane")

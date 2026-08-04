@@ -1,5 +1,7 @@
 param(
-    [int]$Variants = 2
+    [int]$Variants = 2,
+    [ValidateSet('checkpoint', 'style-depth', 'surface-kit')]
+    [string]$Experiment = 'checkpoint'
 )
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -23,11 +25,11 @@ if (Test-Path -LiteralPath $processIdPath) {
 }
 
 $process = Start-Process -FilePath $python `
-    -ArgumentList @('tools/asset-gen/run_checkpoint_sweep.py', '--variants', $Variants) `
+    -ArgumentList @('tools/asset-gen/run_checkpoint_sweep.py', '--experiment', $Experiment, '--variants', $Variants) `
     -WorkingDirectory $root -WindowStyle Hidden `
     -RedirectStandardOutput $logPath -RedirectStandardError $errorLogPath -PassThru
 
 Set-Content -LiteralPath $processIdPath -Value $process.Id -Encoding ascii
-Write-Output "Started checkpoint sweep (PID $($process.Id))."
+Write-Output "Started $Experiment asset sweep (PID $($process.Id))."
 Write-Output "Log: $logPath"
 Write-Output "Stop: powershell -NoProfile -ExecutionPolicy Bypass -File tools\asset-gen\stop_checkpoint_sweep.ps1"

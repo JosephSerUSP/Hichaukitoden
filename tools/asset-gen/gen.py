@@ -32,7 +32,8 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib import classes, postprocess, provider, raw_quality, report, staging  # noqa: E402
+from lib import (classes, postprocess, provider, ratings, raw_quality,  # noqa: E402
+                 report, staging)
 
 
 def _config():
@@ -253,6 +254,22 @@ def _sampling_overrides(args):
             override[key] = value
     if getattr(args, "no_tiling", False):
         override["tiling"] = False
+    loras = []
+    for item in getattr(args, "lora", None) or []:
+        name, separator, weight_text = item.rpartition(":")
+        if not separator:
+            name, weight = item, 0.8
+        else:
+            try:
+                weight = float(weight_text)
+            except ValueError:
+                raise SystemExit(f"--lora wants NAME or NAME:WEIGHT (got '{item}')")
+        name = name.strip()
+        if not name:
+            raise SystemExit(f"--lora wants NAME or NAME:WEIGHT (got '{item}')")
+        loras.append({ "name": name, "weight": weight })
+    if loras:
+        override["loras"] = loras
     return override
 
 
@@ -285,9 +302,12 @@ def _control_from_height(cfg, args):
                   "will push that seam into the albedo; the height map has to wrap first.")
 
     local = cfg.get("local", {})
+    depth_weight = getattr(args, "depth_weight", None)
+    if depth_weight is None:
+        depth_weight = local.get("depthWeight", 0.6)
     unit = provider.controlnet_depth(
         _provider(cfg, args.provider, args.model).get("baseUrl", ""),
-        full, local.get("controlnetDepthModel"), local.get("depthWeight", 0.6))
+        full, local.get("controlnetDepthModel"), depth_weight)
     return unit, os.path.relpath(full, classes.ROOT).replace("\\", "/")
 
 
@@ -372,7 +392,8 @@ def cmd_generate(args):
         "provider": {"id": prov["id"], "model": prov["model"],
                      "quality": prov.get("quality"),
                      "sampling": dict(prov.get("sampling") or {}, **sampling) or None,
-                     "heightControl": control_source},
+                     "heightControl": control_source,
+                     "heightControlWeight": control and control.get("weight")},
         "estimatedCostUsd": (lambda unit: unit and round(unit * variants, 4))(
             price_per_image(cfg, prov, ctx["requestSize"])[0]),
         "refs": [os.path.relpath(r, classes.ROOT).replace("\\", "/") for r in refs],
@@ -630,6 +651,35 @@ def cmd_report(args):
     return 0
 
 
+def cmd_ratings(args):
+    """Report what the owner's scores say, per knob, beside what the metrics say.
+
+    The rating itself is done in the browser; this is the read-out, so a sweep's
+    conclusion can be quoted from a terminal and pasted into a commit message
+    without a screenshot.
+    """
+    root = _staging_root(_config())
+    store = ratings.load()
+    scored = sum(1 for entry in store.values() if entry.get("score") is not None)
+    print(f"{scored} scored variant(s) in {ratings.STORE}")
+    if args.prefix:
+        print(f"filtered to runs containing '{args.prefix}'")
+    for facet in (args.facet or ("model", "lora", "depthWeight", "heightMap", "class")):
+        rows = ratings.leaderboard(root, args.prefix, facet)
+        if not rows:
+            continue
+        print(f"\n== by {facet}")
+        print(f"{'':28}{'stars':>7}{'n':>5}{'seam':>7}   why not")
+        for row in rows:
+            seam = "-" if row["seamRatio"] is None else f"{row['seamRatio']:.2f}"
+            why = " ".join(f"{tag}x{count}" for tag, count in row["tags"].items())
+            print(f"{row['value'][:27]:28}{row['score']:>7.2f}{row['n']:>5}"
+                  f"{seam:>7}   {why}")
+    if not scored:
+        print("\nNothing scored yet. Run the server and open /rate.")
+    return 0
+
+
 def cmd_batch(args):
     """Run many assets from one job file, into one staging run each.
 
@@ -646,10 +696,15 @@ def cmd_batch(args):
         print(f"\n=== [{position}/{len(jobs)}] {job.get('class')} '{job.get('name')}' ===")
         argv = [job.get("class", args.default_class), job["name"], job.get("description", "")]
         for flag in ("provider", "variants", "extra", "height", "steps", "cfg",
-                     "sampler", "seed", "cell", "model", "requestSize"):
+                     "sampler", "seed", "cell", "model", "requestSize", "depthWeight"):
             if job.get(flag) is not None:
-                cli_flag = "request-size" if flag == "requestSize" else flag
+                cli_flag = ({"requestSize": "request-size", "depthWeight": "depth-weight"}
+                            .get(flag, flag))
                 argv += [f"--{cli_flag}", str(job[flag])]
+        for lora in job.get("loras") or []:
+            if isinstance(lora, dict):
+                lora = f"{lora['name']}:{lora.get('weight', 0.8)}"
+            argv += ["--lora", str(lora)]
         if job.get("promote", args.promote):
             argv.append("--promote")
         if args.force_dirty:
@@ -717,6 +772,10 @@ def main(argv=None):
                      help="[local] disable circular padding (tiles are seamless by default)")
     gen.add_argument("--height", help="[local] condition on an authored height map "
                                       "via ControlNet depth, e.g. assets/geometry/x/height.png")
+    gen.add_argument("--depth-weight", type=float,
+                     help="[local] ControlNet depth weight (default from config)")
+    gen.add_argument("--lora", action="append",
+                     help="[local] LoRA as NAME or NAME:WEIGHT; repeatable")
     gen.add_argument("--promote", action="store_true",
                      help="promote the best-scoring variant automatically")
     gen.add_argument("--force-dirty", action="store_true",
@@ -746,6 +805,12 @@ def main(argv=None):
     rep_html.add_argument("--out", help="output path (default out/report.html)")
     rep_html.add_argument("--title", help="page title")
 
+    rat = sub.add_parser("ratings", help="report owner scores per model/lora/geometry")
+    rat.add_argument("--prefix", default="", help="only runs whose name contains this")
+    rat.add_argument("--facet", action="append",
+                     choices=("model", "lora", "depthWeight", "heightMap", "class"),
+                     help="repeatable; default is every facet")
+
     bat = sub.add_parser("batch", help="generate many assets from a job file")
     bat.add_argument("jobs", help="JSON list of {class, name, description, ...}")
     bat.add_argument("--default-class", default="surface",
@@ -759,7 +824,7 @@ def main(argv=None):
     handler = {
         "classes": cmd_classes, "models": cmd_models, "runs": cmd_runs,
         "generate": cmd_generate, "reprocess": cmd_reprocess, "promote": cmd_promote,
-        "tilecheck": cmd_tilecheck, "batch": cmd_batch, "report": cmd_report, "audit": cmd_audit,
+        "tilecheck": cmd_tilecheck, "batch": cmd_batch, "ratings": cmd_ratings, "report": cmd_report, "audit": cmd_audit,
     }[args.command]
     try:
         return handler(args)
