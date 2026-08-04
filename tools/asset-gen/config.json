@@ -84,7 +84,7 @@
         "sampler": "LCM",
         "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
         "tiling": true,
-        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, deep shadow, black shadow, baked lighting, directional lighting, torchlight, ambient occlusion, specular highlight, glossy reflection, vignette, lighting gradient, smooth gradient, strong contrast, dramatic lighting, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "dreamshaper_8LCM", "label": "DreamShaper 8 LCM -- 4-8 steps; fast to explore, poor at obeying",
@@ -109,7 +109,7 @@
         "sampler": "DPM++ 2M",
         "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
         "tiling": true,
-        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, deep shadow, black shadow, baked lighting, directional lighting, torchlight, ambient occlusion, specular highlight, glossy reflection, vignette, lighting gradient, smooth gradient, strong contrast, dramatic lighting, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
+        "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour"
       },
       "models": [
         { "id": "perfectWorld_v3Baked", "label": "Perfect World -- detailed, even materials",

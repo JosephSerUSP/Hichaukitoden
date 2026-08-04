@@ -129,14 +129,25 @@ DEPTH_WEIGHTS = [0.35, 0.60, 0.85]
 # whether a configuration tuned on a single flat wall survives an arched niche,
 # a groin vault and a floor.
 KIT_MAPS_DIR = "assets/geometry/1_blender_depth_maps"
-KIT_MAPS = [
-    ("wall_pilasters", "wall"),
-    ("wall_niche", "wall"),
-    ("floor_flagstones", "floor"),
-    ("floor_inlay", "floor"),
-    ("ceiling_coffers", "ceiling"),
-    ("ceiling_vault", "ceiling"),
-]
+
+
+def kit_maps():
+    """Every Blender height map, read from the library's own manifest.
+
+    Not a list kept in step by hand: adding a preset to scenes.py and rendering
+    it should be enough to put it in the next batch, and a map that failed its
+    wrap check should never reach one. Re-running the experiment is safe --
+    already-staged jobs are detected and skipped, so a new preset costs only its
+    own renders.
+    """
+    path = ROOT / KIT_MAPS_DIR / "manifest.json"
+    try:
+        records = json.loads(path.read_text(encoding="utf-8"))["maps"]
+    except (OSError, KeyError, json.JSONDecodeError) as err:
+        raise SystemExit(f"no usable height-map manifest at {path}: {err}\n"
+                         f"run: python tools/asset-gen/blendergeom.py")
+    return [(record["preset"], record["surface"]) for record in records
+            if record.get("wrapOk", True)]
 
 # The control is carried deliberately. A LoRA earns its place on the geometry
 # it will actually be used with, and neither of these was chosen on a vault.
@@ -156,7 +167,27 @@ KIT_PROMPTS = {
     "ceiling": "ancient dungeon ceiling masonry seen from below, broad fitted stone courses, soot-stained mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate",
 }
 
-KIT_SUFFIX = "unlit albedo material, diffuse base color only, flat material color, soft ambient fill"
+# Two material vocabularies, run as an A/B rather than a replacement.
+#
+# "flat" is what the first kit batch used, and it is now believed to be wrong:
+# it asks for an albedo with no occlusion at all. The engine lights a scene at
+# runtime but does NOT bake ambient occlusion on top of a texture, so a
+# perfectly unlit albedo arrives in game with no depth in its joints and reads
+# as plastic. The owner was scoring such textures down for obeying the prompt.
+#
+# "ao" asks for the occlusion to be painted in while still refusing DIRECT
+# light, which is the part the engine really does own -- torches, direct
+# shadows and their direction have to stay the renderer's job or the texture
+# fights the lighting it is lit by.
+#
+# Both are kept because "the prompt was wrong" is a hypothesis until the same
+# geometry, models and seeds have been judged under each.
+KIT_SUFFIXES = {
+    "flat": "unlit albedo material, diffuse base color only, flat material color, soft ambient fill",
+    "ao": ("diffuse albedo with baked ambient occlusion, soft contact shadows in every joint "
+           "and recess, gentle self-shadowing, deep crevices darker than raised faces, "
+           "ambient fill only, no directional light, no cast shadows"),
+}
 
 KIT_DEPTH_WEIGHT = 0.60
 
@@ -235,20 +266,28 @@ def style_depth_groups(variants):
     return groups
 
 
-def surface_kit_groups(variants):
-    """One report per surface type, every Blender map against every style."""
+def surface_kit_groups(variants, material="flat"):
+    """One report per surface type, every Blender map against every style.
+
+    `material` selects the vocabulary and is carried in the job name. That is
+    what keeps the A/B honest: a re-run under a new prompt with the OLD names
+    would be seen as already staged and silently skipped, so the comparison
+    would quietly never happen.
+    """
     groups = []
+    available = kit_maps()
+    tag = "" if material == "flat" else f"{material}_"
     for surface in ("wall", "floor", "ceiling"):
-        maps = [name for name, kind in KIT_MAPS if kind == surface]
+        maps = [name for name, kind in available if kind == surface]
         jobs = []
         for map_index, map_name in enumerate(maps):
             for style_key, model, lora in KIT_STYLES:
                 job = {
-                    "name": f"kit_{map_name}_{style_key}",
+                    "name": f"kit_{tag}{map_name}_{style_key}",
                     "class": KIT_CLASS[surface],
                     "provider": "forge-quality",
                     "model": model,
-                    "description": f"{KIT_PROMPTS[surface]}, {KIT_SUFFIX}",
+                    "description": f"{KIT_PROMPTS[surface]}, {KIT_SUFFIXES[material]}",
                     "height": f"{KIT_MAPS_DIR}/{map_name}.png",
                     "depthWeight": KIT_DEPTH_WEIGHT,
                     "variants": variants,
@@ -264,12 +303,144 @@ def surface_kit_groups(variants):
                     job["loras"] = [{"name": lora, "weight": 0.55}]
                 jobs.append(job)
         groups.append({
-            "id": surface,
-            "label": (f"blender geometry kit: {surface}; "
+            "id": f"{tag}{surface}",
+            "label": (f"blender geometry kit: {surface}; {material} material; "
                       f"ControlNet depth weight {KIT_DEPTH_WEIGHT:.2f}"),
             "jobs": jobs,
         })
     return groups
+
+
+# A fourth experiment, and the first whose verdict needs no eye at all.
+#
+# The negative prompt gained face/figure and margin/blank terms on 03.08 after
+# the owner reported hallucinated faces in rock and dead white strips. Whether
+# that WORKS is measurable: `lib.raw_quality.blank_bands` counts dead margins,
+# and a Haar cascade counts face-like structure. So this re-runs an existing
+# slice with the same models, LoRAs and seeds, changing only the negative
+# prompt, and the two sets are compared mechanically.
+#
+# The slice is the style-depth ornament matrix at depth 0.60 -- ornament because
+# carved relief is where faces appear, and these four LoRAs because they hold
+# the worst measured margin rates (Ogre Battle 33%, PS1 12%, FFIX 7%, control 8%).
+NEG_LORAS = [
+    ("control", None),
+    ("ffix", "FFIX-10"),
+    ("ogrebattle", "Ogre_Battle_SNES64"),
+    ("ps1", "Hideous_PS1_Game"),
+]
+
+
+def negprompt_groups(variants):
+    prompt_id, description = STYLE_PROMPTS[1]          # "ornament"
+    # Identical to the seed the original slice used, so each new image is the
+    # PAIR of an existing one and any difference is the negative prompt alone.
+    seed = 860000 + 2 * 100
+    jobs = []
+    for model_key, model in STYLE_MODELS:
+        for lora_key, lora in NEG_LORAS:
+            job = {
+                "name": f"neg_{prompt_id}_d60_{model_key}_{lora_key}",
+                "class": "wallPiece",
+                "provider": "forge-quality",
+                "model": model,
+                "description": description,
+                "height": HEIGHT,
+                "depthWeight": 0.60,
+                "variants": variants,
+                "steps": 20,
+                "cfg": 6.5,
+                "seed": seed,
+                "requestSize": "256x256",
+            }
+            if lora:
+                job["loras"] = [{"name": lora, "weight": 0.55}]
+            jobs.append(job)
+    return [{
+        "id": "negprompt",
+        "label": ("negative-prompt A/B: ornament at depth 0.60, "
+                  "paired by seed against the 03.08 style-depth slice"),
+        "jobs": jobs,
+    }]
+
+
+# A fifth experiment: the first models in this project actually TRAINED for the
+# job. Everything swept so far is a portrait or figure checkpoint doing masonry
+# under protest, and the installed LoRA library contained no texture or
+# architecture LoRA at all -- the retro ones (FF8BG, PS1, Ogre Battle) impart a
+# rendering aesthetic and know nothing about tileable material.
+#
+# Downloaded 03.08 after that inventory:
+#   DiffuseTexture_v11  SD1.5 LoRA, trained on 386 PolyHaven material textures
+#   artius15_v20VAE     SD1.5 checkpoint whose author lists textures/game assets
+#
+# Seeds and geometry match the `kit_ao_` runs exactly, so each result has a
+# direct counterpart among the current best and the comparison needs no new
+# baseline. `newera` and `mature` are carried so the LoRA can be judged against
+# the same checkpoints without it.
+NEW_STYLES = [
+    ("artius_diffuse", "artius15_v20VAE", "DiffuseTexture_v11"),
+    ("artius_control", "artius15_v20VAE", None),
+    ("newera_diffuse", "newERANewEstheticRetro_retroV60VAE", "DiffuseTexture_v11"),
+    ("mature_diffuse", "maturemalemix_v13", "DiffuseTexture_v11"),
+]
+
+# A spread of surfaces rather than every map: enough to see whether a texture
+# model generalises across wall/floor/ceiling without spending an hour on it.
+NEW_MAPS = ["wall_pilasters", "wall_rubble", "floor_cobbles", "ceiling_coffers"]
+
+
+def kit_seed(map_name):
+    """The seed surface_kit_groups gives this map, rederived the same way.
+
+    Its map index is per SURFACE, not global, so it cannot be guessed from a
+    position in NEW_MAPS -- and a wrong seed here would quietly turn a paired
+    comparison into an unpaired one that still looks like a table.
+    """
+    available = kit_maps()
+    surface = dict(available).get(map_name)
+    ordered = [name for name, kind in available if kind == surface]
+    return 910000 + ordered.index(map_name) * 100
+
+
+def newmodels_groups(variants):
+    surface_of = dict(kit_maps())
+    jobs = []
+    for map_name in NEW_MAPS:
+        surface = surface_of.get(map_name)
+        if not surface:
+            continue
+        for style_key, model, lora in NEW_STYLES:
+            job = {
+                "name": f"new_{map_name}_{style_key}",
+                "class": KIT_CLASS[surface],
+                "provider": "forge-quality",
+                "model": model,
+                # The trained-in trigger. A material LoRA that is never invoked
+                # is just a small perturbation of the base model, and the whole
+                # question here is what it does when it IS invoked.
+                "description": (f"diffuse texture, {KIT_PROMPTS[surface]}, "
+                                f"{KIT_SUFFIXES['ao']}") if lora else
+                               f"{KIT_PROMPTS[surface]}, {KIT_SUFFIXES['ao']}",
+                "height": f"{KIT_MAPS_DIR}/{map_name}.png",
+                "depthWeight": KIT_DEPTH_WEIGHT,
+                "variants": variants,
+                "steps": 20,
+                "cfg": 6.5,
+                # Matches surface_kit_groups' seed for this map, so a result is
+                # the paired counterpart of an existing kit_ao_ image.
+                "seed": kit_seed(map_name),
+                "requestSize": "256x256",
+            }
+            if lora:
+                job["loras"] = [{"name": lora, "weight": 0.7}]
+            jobs.append(job)
+    return [{
+        "id": "newmodels",
+        "label": ("purpose-trained models: Artius checkpoint and the PolyHaven "
+                  "DiffuseTexture LoRA, seed-paired against the kit_ao runs"),
+        "jobs": jobs,
+    }]
 
 
 def run(command):
@@ -310,7 +481,10 @@ def write_report(group_id, group_label, runs, experiment):
         print(f"No completed runs found for {group_id}; skipping report.")
         return 1
     prefix = {"style-depth": "sixhour-wall",
-              "surface-kit": "surface-kit"}.get(experiment, "overnight-wall")
+              "surface-kit": "surface-kit",
+              "surface-kit-ao": "surface-kit",
+              "negprompt": "negprompt",
+              "newmodels": "newmodels"}.get(experiment, "overnight-wall")
     report_path = OUT / f"{prefix}-{group_id}-matrix.html"
     command = [sys.executable, str(GEN), "report"]
     command.extend(str(path) for path in runs)
@@ -329,7 +503,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variants", type=int, default=2)
     parser.add_argument("--experiment",
-                        choices=("checkpoint", "style-depth", "surface-kit"),
+                        choices=("checkpoint", "style-depth", "surface-kit", "surface-kit-ao",
+                                 "negprompt", "newmodels"),
                         default="checkpoint")
     parser.add_argument("--only", nargs="*", help="report group ids, for a smaller rerun")
     args = parser.parse_args()
@@ -340,6 +515,9 @@ def main():
     groups = {
         "style-depth": style_depth_groups,
         "surface-kit": surface_kit_groups,
+        "surface-kit-ao": lambda n: surface_kit_groups(n, "ao"),
+        "negprompt": negprompt_groups,
+        "newmodels": newmodels_groups,
         "checkpoint": checkpoint_groups,
     }[args.experiment](args.variants)
     selected = [group for group in groups if not args.only or group["id"] in args.only]

@@ -4,72 +4,6 @@
   "convention": "opaque RGBA, 128 = dominant surface, +-112 relief",
   "maps": [
     {
-      "preset": "wall_pilasters",
-      "surface": "wall",
-      "view": "above",
-      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.png",
-      "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.blend",
-      "tileAxes": "x",
-      "contrast": 1.0,
-      "reliefMin": 0.0,
-      "reliefMax": 0.144,
-      "wrapError": {
-        "x": 0.0
-      },
-      "wrapOk": true
-    },
-    {
-      "preset": "wall_niche",
-      "surface": "wall",
-      "view": "above",
-      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.png",
-      "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.blend",
-      "tileAxes": "x",
-      "contrast": 1.0,
-      "reliefMin": 0.005,
-      "reliefMax": 0.09,
-      "wrapError": {
-        "x": 0.001
-      },
-      "wrapOk": true
-    },
-    {
-      "preset": "floor_flagstones",
-      "surface": "floor",
-      "view": "above",
-      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.png",
-      "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.blend",
-      "tileAxes": "xy",
-      "contrast": 1.0,
-      "reliefMin": 0.0,
-      "reliefMax": 0.032,
-      "wrapError": {
-        "x": 0.0,
-        "y": 0.0
-      },
-      "wrapOk": true
-    },
-    {
-      "preset": "floor_inlay",
-      "surface": "floor",
-      "view": "above",
-      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.png",
-      "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.blend",
-      "tileAxes": "xy",
-      "contrast": 1.0,
-      "reliefMin": 0.02,
-      "reliefMax": 0.08,
-      "wrapError": {
-        "x": 0.002,
-        "y": 0.002
-      },
-      "wrapOk": true
-    },
-    {
       "preset": "ceiling_coffers",
       "surface": "ceiling",
       "view": "below",
@@ -81,8 +15,60 @@
       "reliefMin": -0.105,
       "reliefMax": 0.028,
       "wrapError": {
-        "x": 0.0,
-        "y": 0.0
+        "x": {
+          "ratio": 0.0,
+          "step": 0.0
+        },
+        "y": {
+          "ratio": 0.0,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_dripstone",
+      "surface": "ceiling",
+      "view": "below",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_dripstone.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_dripstone.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": -0.0,
+      "reliefMax": 0.31633,
+      "wrapError": {
+        "x": {
+          "ratio": 1.611,
+          "step": 0.0066
+        },
+        "y": {
+          "ratio": 0.793,
+          "step": 0.0031
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_dripstone_rough",
+      "surface": "ceiling",
+      "view": "below",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_dripstone_rough.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/ceiling_dripstone_rough.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": -0.0293,
+      "reliefMax": 0.33239,
+      "wrapError": {
+        "x": {
+          "ratio": 1.633,
+          "step": 0.0065
+        },
+        "y": {
+          "ratio": 1.321,
+          "step": 0.0055
+        }
       },
       "wrapOk": true
     },
@@ -98,8 +84,243 @@
       "reliefMin": -0.13999,
       "reliefMax": 0.05194,
       "wrapError": {
-        "x": 0.001,
-        "y": 0.001
+        "x": {
+          "ratio": 0.001,
+          "step": 0.0
+        },
+        "y": {
+          "ratio": 0.001,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_cobbles",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.085,
+      "reliefMax": 0.23889,
+      "wrapError": {
+        "x": {
+          "ratio": 1.866,
+          "step": 0.0161
+        },
+        "y": {
+          "ratio": 1.532,
+          "step": 0.0126
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_cobbles_rough",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles_rough.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles_rough.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.085,
+      "reliefMax": 0.24147,
+      "wrapError": {
+        "x": {
+          "ratio": 1.414,
+          "step": 0.0116
+        },
+        "y": {
+          "ratio": 1.473,
+          "step": 0.0118
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_flagstones",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.0,
+      "reliefMax": 0.032,
+      "wrapError": {
+        "x": {
+          "ratio": 0.0,
+          "step": 0.0
+        },
+        "y": {
+          "ratio": 0.0,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_inlay",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_inlay.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.02,
+      "reliefMax": 0.08,
+      "wrapError": {
+        "x": {
+          "ratio": 0.002,
+          "step": 0.0
+        },
+        "y": {
+          "ratio": 0.002,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_slabs_varied",
+      "surface": "floor",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_slabs_varied.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_slabs_varied.blend",
+      "tileAxes": "xy",
+      "contrast": 1.0,
+      "reliefMin": 0.0,
+      "reliefMax": 0.25804,
+      "wrapError": {
+        "x": {
+          "ratio": 0.0,
+          "step": 0.0
+        },
+        "y": {
+          "ratio": 0.0,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_boulders_rough",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_boulders_rough.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_boulders_rough.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.1,
+      "reliefMax": 0.33365,
+      "wrapError": {
+        "x": {
+          "ratio": 1.609,
+          "step": 0.0086
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_cave",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_cave.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_cave.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.15,
+      "reliefMax": 0.34031,
+      "wrapError": {
+        "x": {
+          "ratio": 1.956,
+          "step": 0.0071
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_eroded",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_eroded.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_eroded.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": -0.08763,
+      "reliefMax": 0.09214,
+      "wrapError": {
+        "x": {
+          "ratio": 0.866,
+          "step": 0.0035
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_niche",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_niche.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.005,
+      "reliefMax": 0.09,
+      "wrapError": {
+        "x": {
+          "ratio": 0.001,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_pilasters",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_pilasters.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.0,
+      "reliefMax": 0.144,
+      "wrapError": {
+        "x": {
+          "ratio": 0.0,
+          "step": 0.0
+        }
+      },
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_rubble",
+      "surface": "wall",
+      "view": "above",
+      "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_rubble.png",
+      "size": 512,
+      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_rubble.blend",
+      "tileAxes": "x",
+      "contrast": 1.0,
+      "reliefMin": 0.1,
+      "reliefMax": 0.29693,
+      "wrapError": {
+        "x": {
+          "ratio": 1.635,
+          "step": 0.0102
+        }
       },
       "wrapOk": true
     }

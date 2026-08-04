@@ -139,8 +139,15 @@ check(geometry.loadAtlasSurface(
 local bounds = model.bounds
 check(math.abs(bounds.minY + 0.5) < 1e-6 and math.abs(bounds.maxY - 0.5) < 1e-6,
     "a wall plane spans exactly one cell across")
-check(bounds.minZ >= -1e-6 and bounds.maxZ <= 1 + 1e-6,
-    "a wall plane spans floor to ceiling and no further")
+-- A wall now spans floor to ceiling AND PAST BOTH, by exactly the skirt. The
+-- old invariant was "no further", which held only while floors and ceilings
+-- were flat: a displaced floor sits at z = lift and a displaced ceiling at
+-- 1 - lift, so either can retreat from a wall that stops dead at the cell and
+-- open a hole out of the room. The apron is what closes it.
+check(bounds.minZ >= -plane.SKIRT - 1e-6 and bounds.maxZ <= 1 + plane.SKIRT + 1e-6,
+    "a wall plane reaches no further than its skirt allows")
+check(bounds.minZ <= 1e-6 and bounds.maxZ >= 1 - 1e-6,
+    "a wall plane still covers the whole cell floor to ceiling")
 check(bounds.minX > 0,
     "a wall plane stands off its structural surface rather than z-fighting it")
 
@@ -359,8 +366,13 @@ for _, group in ipairs(flat.groups) do
 end
 check(math.abs(minY + 0.5) < 1e-6 and math.abs(maxY - 0.5) < 1e-6,
     "decimation preserves the cell seam across the wall")
-check(math.abs(minZ) < 1e-6 and math.abs(maxZ - 1) < 1e-6,
+-- Contact, not coincidence: the wall must still REACH the floor and the
+-- ceiling after decimation, but it is now allowed to overshoot into the skirt.
+-- Asserting equality here is what would quietly forbid the apron.
+check(minZ <= 1e-6 and maxZ >= 1 - 1e-6,
     "decimation preserves floor and ceiling contact")
+check(minZ >= -plane.SKIRT - 1e-6 and maxZ <= 1 + plane.SKIRT + 1e-6,
+    "decimation keeps the skirt within its declared reach")
 
 -- The tiling invariant. A wall mesh is instanced once per cell, so its own
 -- y = -0.5 border sits against a copy of its own y = +0.5 border. Decimated
@@ -397,6 +409,46 @@ end
 check(matched,
     "the two tiling seams of a wall decimate identically, so tile meets tile")
 
+-- ACROSS two meshes, which is the case the mirror machinery does not cover.
+--
+-- The renderer mirrors a wall's height field for west and south faces (`flipU`
+-- in viewport_3d), so a flipped tile stands beside an unflipped one constantly.
+-- flipX(h)(u,v) == h(1-u,v), so the flipped tile's near seam samples exactly
+-- the points the unflipped tile's far seam does: the two profiles are the same
+-- set of points BEFORE decimation, and the surfaces can only meet if they are
+-- still the same set afterwards.
+--
+-- Nothing in the decimator guarantees that. Quadrics accumulate from every
+-- incident face including interior ones, and `orient` breaks ties on vertex
+-- INDEX -- neither of which is invariant under mirroring.
+local flipSpec = geometry.check(FIXTURES .. "valid_plane")
+local heightData = images.data(FIXTURES .. "valid_plane/height.png")
+local function buildWith(data)
+    return plane.build(flipSpec,
+        { { data = data, scale = flipSpec.heightScale,
+            operation = flipSpec.heightOperation } },
+        function(u, v) return u, v end)
+end
+local plain = buildWith(heightData)
+local mirrored = buildWith(images.flipX(heightData))
+-- A wall's local +Y runs along the face, so y=+0.5 is one seam and y=-0.5 the
+-- other; the mirrored tile presents the opposite one to the same neighbour.
+local plainRight = borderProfile(plain, 0.5)
+local mirroredLeft = borderProfile(mirrored, -0.5)
+local joins = #plainRight > 0 and #plainRight == #mirroredLeft
+if joins then
+    for index, point in ipairs(plainRight) do
+        if math.abs(point[1] - mirroredLeft[index][1]) > 1e-9
+            or math.abs(point[2] - mirroredLeft[index][2]) > 1e-9 then
+            joins = false
+        end
+    end
+end
+check(joins,
+    "a mirrored tile's seam decimates to the same points as the tile beside it")
+print(string.format("      (plain seam %d points, mirrored seam %d points)",
+    #plainRight, #mirroredLeft))
+
 -- Determinism matters more here than anywhere else: the golden gates
 -- byte-compare frames rendered from these meshes.
 geometry.forget()
@@ -417,6 +469,63 @@ check(identical, "decimation is deterministic across a fresh compile")
 -- Sampling resolution is independent of the budget, which is the point.
 check(spec.sampleColumns > spec.meshColumns and spec.sampleRows > spec.meshRows,
     "an asset samples its field more finely than its triangle budget")
+
+-- A displaced surface must be WATERTIGHT. Owner-reported: a cobble floor shows
+-- the background through the valleys between stones. A height field cannot have
+-- holes by construction, so any interior boundary edge -- an edge belonging to
+-- exactly one triangle, away from the outer rim -- is a hole the builder or the
+-- decimator opened.
+local steepPath = "assets/geometry/1_blender_depth_maps/floor_cobbles.png"
+if love.filesystem.getInfo(steepPath) then
+    local steepSpec = {
+        id = "steep_floor", label = "steep cobble floor",
+        topology = "plane", role = "surfaceFixture", surface = "floor",
+        heightOperation = "add", heightScale = 0.1,
+        meshColumns = 16, meshRows = 16, sampleColumns = 48, sampleRows = 48,
+        triangleBudget = 64, offset = 0.004,
+    }
+    local steep = plane.build(steepSpec,
+        { { data = images.data(steepPath), scale = steepSpec.heightScale,
+            operation = steepSpec.heightOperation } },
+        function(u, v) return u, v end)
+
+    local function key(vertex)
+        return string.format("%.7f,%.7f,%.7f", vertex[1], vertex[2], vertex[3])
+    end
+    local edges = {}
+    local triangles = 0
+    for _, group in ipairs(steep.groups) do
+        for index = 1, #group.vertices - 2, 3 do
+            triangles = triangles + 1
+            local corner = { group.vertices[index], group.vertices[index + 1],
+                group.vertices[index + 2] }
+            for side = 1, 3 do
+                local a, b = key(corner[side]), key(corner[side % 3 + 1])
+                if a > b then a, b = b, a end
+                edges[a .. "|" .. b] = (edges[a .. "|" .. b] or 0) + 1
+            end
+        end
+    end
+    -- The outer rim of a floor is the four cell edges; every other boundary
+    -- edge is a tear. Counted rather than located, because one is already too
+    -- many and the count says how bad it is.
+    local rim, interior = 0, 0
+    for pair, count in pairs(edges) do
+        if count == 1 then
+            local ax, ay = pair:match("^(-?[%d%.]+),(-?[%d%.]+)")
+            local bx, by = pair:match("|(-?[%d%.]+),(-?[%d%.]+)")
+            local function onRim(x, y)
+                return math.abs(math.abs(tonumber(x)) - 0.5) < 1e-6
+                    or math.abs(math.abs(tonumber(y)) - 0.5) < 1e-6
+            end
+            if onRim(ax, ay) and onRim(bx, by) then rim = rim + 1
+            else interior = interior + 1 end
+        end
+    end
+    check(interior == 0, string.format(
+        "a steep displaced floor is watertight (%d triangles, %d rim edges, %d interior tears)",
+        triangles, rim, interior))
+end
 
 print(string.format("=== Geometry Tests: %d passed, %d failed ===", passed, failed))
 if failed > 0 then require("tests.fail_fast")(failed .. " geometry test(s) failed", failed) end

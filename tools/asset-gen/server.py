@@ -344,7 +344,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 ratings.record(body["run"], body["variant"],
                                body.get("score"), body.get("tags"),
-                               body.get("note"))
+                               body.get("note"), _staging_root())
             except (KeyError, ValueError) as err:
                 return self._send(400, {"error": str(err)})
             return self._send(200, {"ok": True})

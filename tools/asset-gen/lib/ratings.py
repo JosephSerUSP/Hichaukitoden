@@ -16,7 +16,9 @@ resumed from without reconciliation.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
+import shutil
 import statistics
 import threading
 import time
@@ -35,7 +37,9 @@ from . import classes
 # that way twice before anyone noticed the file was sitting in the bin.
 #
 # So: tracked, committed, and outside the sweep's reach.
-STORE = os.path.join(classes.ROOT, "tools", "asset-gen", "ratings.json")
+REVIEWS_ROOT = os.path.join(classes.ROOT, "tools", "asset-gen", "reviews")
+STORE = os.path.join(REVIEWS_ROOT, "ratings.json")
+ROOT_STORE = os.path.join(classes.ROOT, "tools", "asset-gen", "ratings.json")
 
 # Where it used to live. Read on load and merged, never written, so a store
 # left behind by an older checkout (or one mid-rating when this landed) still
@@ -175,6 +179,7 @@ def load():
     re-rating recorded since the move is by definition the newer opinion.
     """
     store = _read(LEGACY_STORE)
+    store.update(_read(ROOT_STORE))
     store.update(_read(STORE))
     return store
 
@@ -202,7 +207,38 @@ SCORE_MIN, SCORE_MAX = 0, 6
 SCORE_LABELS = {0: "catastrophe", 6: "love it"}
 
 
-def record(run_name, variant_index, score, tags=None, note=None):
+def _snapshot(run_name, variant_index, score, note, staging_root):
+    """Preserve the evidence needed to interpret a judgement after out/ is swept."""
+    if not staging_root:
+        return None
+    run_path = os.path.join(staging_root, run_name)
+    manifest_path = os.path.join(run_path, "manifest.json")
+    variant_path = None
+    manifest = _read(manifest_path)
+    for variant in manifest.get("variants", []):
+        if variant.get("index") == variant_index:
+            variant_path = os.path.join(run_path, variant.get("file", ""))
+            break
+    if not os.path.isfile(manifest_path) or not os.path.isfile(variant_path or ""):
+        return None
+    os.makedirs(os.path.join(REVIEWS_ROOT, "manifests"), exist_ok=True)
+    os.makedirs(os.path.join(REVIEWS_ROOT, "exemplars"), exist_ok=True)
+    manifest_copy = os.path.join(REVIEWS_ROOT, "manifests", f"{run_name}.json")
+    if not os.path.exists(manifest_copy):
+        shutil.copy2(manifest_path, manifest_copy)
+    digest = hashlib.sha256()
+    with open(variant_path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    text = (note or "").strip()
+    if (score is not None and int(score) >= 5) or text:
+        exemplar = os.path.join(REVIEWS_ROOT, "exemplars", f"{run_name}#{variant_index}.png")
+        if not os.path.exists(exemplar):
+            shutil.copy2(variant_path, exemplar)
+    return {"sha256": digest.hexdigest(), "manifest": f"manifests/{run_name}.json"}
+
+
+def record(run_name, variant_index, score, tags=None, note=None, staging_root=None):
     """Write one judgement. Re-rating the same variant replaces the old one.
 
     `note` is free text and deliberately unconstrained. The tags are a closed
@@ -219,6 +255,7 @@ def record(run_name, variant_index, score, tags=None, note=None):
     # one operation or the last request can overwrite its sibling's rating.
     with _STORE_LOCK:
         store = load()
+        evidence = _snapshot(run_name, variant_index, score, note, staging_root)
         judgement = {
             "score": None if score is None else int(score),
             "tags": sorted(set(tags or [])),
@@ -230,6 +267,8 @@ def record(run_name, variant_index, score, tags=None, note=None):
         text = (note or "").strip()
         if text:
             judgement["note"] = text
+        if evidence:
+            judgement["evidence"] = evidence
         store[key(run_name, variant_index)] = judgement
         save(store)
         return store

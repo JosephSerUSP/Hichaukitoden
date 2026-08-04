@@ -20,6 +20,23 @@ local quality = require("engine.geometry.quality")
 
 local plane = {}
 
+-- PROVISIONAL. How far a wall's apron reaches past the cell in each direction.
+--
+-- This is a riser with a hardcoded height and no data behind it, and it is a
+-- placeholder for the rim-height rule in docs/design/surface-junctions.md --
+-- delete it when that lands rather than extending it. Two things it does not
+-- do, both measured: it does not fire when heightMapScale.wall is 0, because
+-- then the wall is a plain quad and not a plane mesh at all, which is exactly
+-- the case that motivated it; and it closes nothing between two adjacent
+-- floors, because the crack there is a rim-height disagreement rather than a
+-- wall that stops short.
+--
+-- It is kept because a wall meeting a displaced floor is a real void and this
+-- closes it, and because it is harmless: the apron sits behind the floor and
+-- ceiling, so over-reaching costs two triangles and hides nothing visible.
+local SKIRT = 0.15
+plane.SKIRT = SKIRT
+
 -- Where the undisplaced surface sits, which way displacement points, and
 -- whether the natural grid order winds away from the viewer. `flip` is not
 -- cosmetic: a back-facing relief is invisible, and the renderer applies no
@@ -82,18 +99,45 @@ function plane.build(spec, layers, uv)
     local builder = mesh.newBuilder(spec.label)
     builder:setMaterial(spec.id)
 
+    -- A wall gets a SKIRT: one extra row of geometry past each end, continuing
+    -- the edge profile beyond z=0 and z=1.
+    --
+    -- A wall spans exactly one cell in Z and its top and bottom edges are dead
+    -- straight, but a displaced floor is z = lift and a displaced ceiling is
+    -- 1 - lift, and displacement is signed around neutral. So any joint darker
+    -- than neutral drops the floor below the wall's foot and any ceiling recess
+    -- lifts it above the wall's head, and the gap between them is a hole
+    -- straight out of the room. This is not intermittent -- it is guaranteed
+    -- the moment floor or ceiling displacement is non-zero.
+    --
+    -- The skirt is part of the SAME grid rather than a strip welded on
+    -- afterwards, because a separately built strip meets a decimated edge whose
+    -- vertices it cannot predict, which trades the hole for a crack.
+    local skirt = (spec.surface == "wall") and (spec.skirt or SKIRT) or 0
+
+    -- Rows as (sample position, surface position) pairs. They differ only on
+    -- the skirt rows, which reuse the edge's height so the apron continues the
+    -- profile instead of stepping away from it.
+    local along = {}
+    if skirt > 0 then along[#along + 1] = { 0, -skirt } end
+    for row = 0, rows do along[#along + 1] = { row / rows, row / rows } end
+    if skirt > 0 then along[#along + 1] = { 1, 1 + skirt } end
+    rows = #along - 1
+
     -- Sample once per intersection rather than per triangle corner: adjacent
     -- quads must agree exactly or the surface develops seams.
     local grid, deepest = {}, math.huge
     for row = 0, rows do
         grid[row] = {}
-        local v = row / rows
+        local sample, place = along[row + 1][1], along[row + 1][2]
         for column = 0, columns do
             local u = column / columns
-            local lift = plane.sampleField(layers, u, v) + spec.offset
+            local lift = plane.sampleField(layers, u, sample) + spec.offset
             if lift < deepest then deepest = lift end
-            local x, y, z = position(spec.surface, u, v, lift)
-            local tu, tv = uv(u, v)
+            local x, y, z = position(spec.surface, u, place, lift)
+            -- UVs clamp to the edge, so the apron wears the wall's own bottom
+            -- pixels rather than sampling outside the tile into its neighbour.
+            local tu, tv = uv(u, sample)
             grid[row][column] = { x, y, z, tu, tv }
         end
     end

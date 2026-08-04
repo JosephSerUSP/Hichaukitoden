@@ -18,6 +18,14 @@ header {
 }
 header h1 { margin: 0; font-size: 14px; letter-spacing: .5px; color: #e9e4ff; }
 header .sub { color: #8d87a4; }
+/* Cross-link between the two pages. Lives here, not in rate.css, because the
+   generate page does not load rate.css -- which is exactly how the rating view
+   ended up reachable only by typing its URL. */
+header .corner {
+  margin-left: auto; color: #b8aee0; text-decoration: none;
+  border: 1px solid #453f5e; background: #252235; padding: 2px 8px;
+}
+header .corner:hover { color: #e9e4ff; border-color: #6d5fa8; }
 
 main { display: flex; gap: 10px; padding: 10px; align-items: flex-start; }
 .col { flex: 0 0 320px; display: flex; flex-direction: column; gap: 8px; }

@@ -72,18 +72,28 @@ def sample(size, view="above"):
 
 
 def wrap_error(field, axes):
-    """Seam discontinuity across the tile edge, relative to interior detail.
+    """Seam discontinuity across the tile edge, measured two ways.
 
-    Reported as a ratio because the absolute step means nothing on its own: a
-    0.002 jump is invisible on a rough vault and glaring on a flat pavement.
-    Against the interior gradient it is comparable between presets.
+    RATIO is the seam step against the mean interior step. On a correctly
+    periodic tile the first and last columns are just another adjacent pair, so
+    a ratio near 1.0 is the CORRECT answer, not a failure -- a genuine break
+    reads far higher (an unwrapped groove measured 11.7 here). An earlier
+    version of this gate accepted only ratios under 0.25, which happened to hold
+    for flat architecture because the seam landed in a flat region, and would
+    have rejected every one of the organic presets for tiling properly.
+
+    STEP is the same seam against the map's own relief range, which is what
+    decides whether a human sees it. The two together separate "smooth field
+    with an ordinary seam" from "small field with a real break".
     """
+    span = max(float(field.max() - field.min()), 1e-9)
     report = {}
     for axis in axes:
         array = field if axis == "x" else field.T
         seam = float(numpy.abs(array[:, 0] - array[:, -1]).mean())
         interior = float(numpy.abs(numpy.diff(array, axis=1)).mean())
-        report[axis] = round(seam / max(interior, 1e-9), 3)
+        report[axis] = {"ratio": round(seam / max(interior, 1e-9), 3),
+                        "step": round(seam / span, 4)}
     return report
 
 

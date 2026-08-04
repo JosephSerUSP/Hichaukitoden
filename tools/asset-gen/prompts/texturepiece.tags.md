@@ -1,1 +1,1 @@
-{{DESCRIPTION}}, single seamless tileable material texture, flat head-on orthographic albedo map, uniform detail, detailed sharp painted source, {{STYLE_TAGS}}{{EXTRA}}
+{{DESCRIPTION}}, single seamless tileable material texture, flat head-on orthographic albedo map, uniform detail, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, detailed sharp painted source, {{STYLE_TAGS}}{{EXTRA}}

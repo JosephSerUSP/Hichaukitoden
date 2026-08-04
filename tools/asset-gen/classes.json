@@ -9,7 +9,6 @@
     "model's output into that grid. 'post' names steps in lib/postprocess.py, applied",
     "in order."
   ],
-
   "_styleTagsComment": [
     "Tags for local Stable Diffusion 1.5, and deliberately NOT the retro pixel",
     "style the prose bible describes.",
@@ -29,74 +28,177 @@
   ],
   "styleTags": "masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
   "styleBible": "Retro JRPG pixel art in the RPG Maker 2003 / late-90s SNES-to-PS1 tradition. Chunky legible pixels, hand-placed dithering rather than smooth gradients, a tight limited palette, strong silhouette readability at small size. Dark low-fantasy dungeon-crawler mood: grimy stone, muted earths and desaturated jewel tones, torch-warm highlights against cold shadow. NEVER: modern vector art, cel-shaded anime line art, watercolour, 3D renders, drop shadows, text, labels, watermarks, signatures, UI frames, or borders.",
-
   "classes": {
     "smallBattler": {
       "label": "Small battler",
       "dir": "assets/smallBattlers",
       "promptFile": "smallbattler.md",
       "filename": "{Name}[fps={fps}].png",
-      "tokenDefaults": { "fps": 15 },
-      "geometry": { "size": [72, 24], "cell": [24, 24], "frames": 3, "transparent": true },
-      "request": { "size": "1024x1024", "gridHint": [3, 1] },
-      "post": ["key_background", "slice_grid", "pixel_fit", "quantize", "harden_alpha"],
+      "tokenDefaults": {
+        "fps": 15
+      },
+      "geometry": {
+        "size": [
+          72,
+          24
+        ],
+        "cell": [
+          24,
+          24
+        ],
+        "frames": 3,
+        "transparent": true
+      },
+      "request": {
+        "size": "1024x1024",
+        "gridHint": [
+          3,
+          1
+        ]
+      },
+      "post": [
+        "key_background",
+        "slice_grid",
+        "pixel_fit",
+        "quantize",
+        "harden_alpha"
+      ],
       "quantizeColors": 24,
       "note": "Idle animation strip drawn in the party grid and status rows. presentation/small_battlers.lua reads the [fps=N] token from the FILENAME."
     },
-
     "bigBattler": {
       "label": "Big battler",
       "dir": "assets/bigBattlers",
       "promptFile": "bigbattler.md",
       "filename": "{Name}.png",
-      "geometry": { "size": [128, 128], "cell": [128, 128], "frames": 1, "transparent": true },
-      "request": { "size": "1024x1024" },
-      "post": ["key_background", "pixel_fit", "quantize", "harden_alpha"],
+      "geometry": {
+        "size": [
+          128,
+          128
+        ],
+        "cell": [
+          128,
+          128
+        ],
+        "frames": 1,
+        "transparent": true
+      },
+      "request": {
+        "size": "1024x1024"
+      },
+      "post": [
+        "key_background",
+        "pixel_fit",
+        "quantize",
+        "harden_alpha"
+      ],
       "quantizeColors": 48,
       "engineWired": false,
       "note": "NEW CLASS: the full-size enemy/creature battle sprite, split out from the double-duty 'spriteKey' portrait lookup. Generates and promotes today; the engine does not read assets/bigBattlers yet (see README 'Pending engine wiring')."
     },
-
     "portrait": {
       "label": "Portrait (expression sheet)",
       "dir": "assets/portraits",
       "promptFile": "portrait.md",
       "promptFileTags": "portrait.tags.md",
       "filename": "{Name}.png",
-      "geometry": { "size": [640, 192], "cell": [128, 192], "frames": 5, "transparent": false },
-      "request": { "size": "1024x1024", "gridHint": [5, 1] },
+      "geometry": {
+        "size": [
+          640,
+          192
+        ],
+        "cell": [
+          128,
+          192
+        ],
+        "frames": 5,
+        "transparent": false
+      },
+      "request": {
+        "size": "1024x1024",
+        "gridHint": [
+          5,
+          1
+        ]
+      },
       "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
-      "post": ["slice_grid", "pixel_fit", "quantize"],
+      "post": [
+        "slice_grid",
+        "pixel_fit",
+        "quantize"
+      ],
       "quantizeColors": 64,
-      "expressions": ["neutral", "happy", "angry", "sad", "surprised"],
+      "expressions": [
+        "neutral",
+        "happy",
+        "angry",
+        "sad",
+        "surprised"
+      ],
       "note": "presentation/ui.lua slices column 0 as the neutral face; the sheet is 5 x 128x192 columns. NPC files conventionally carry the NPC_ prefix."
     },
-
     "sprite": {
       "label": "World sprite (3D billboard)",
       "dir": "assets/sprites",
       "promptFile": "sprite.md",
       "filename": "{Name}.png",
-      "geometry": { "size": [48, 64], "cell": [48, 64], "frames": 1, "transparent": true },
-      "request": { "size": "1024x1024" },
-      "post": ["key_background", "pixel_fit", "quantize", "harden_alpha"],
+      "geometry": {
+        "size": [
+          48,
+          64
+        ],
+        "cell": [
+          48,
+          64
+        ],
+        "frames": 1,
+        "transparent": true
+      },
+      "request": {
+        "size": "1024x1024"
+      },
+      "post": [
+        "key_background",
+        "pixel_fit",
+        "quantize",
+        "harden_alpha"
+      ],
       "quantizeColors": 32,
       "note": "Drawn as a whole billboard in the raycast viewport (presentation/viewport_3d.lua slices it by column, so it must NOT be a multi-frame sheet). Faces the camera; feet at the bottom edge."
     },
-
     "tileset": {
       "label": "Tileset texture page",
       "dir": "assets/tilesets",
       "promptFile": "tileset.md",
       "promptFileTags": "tileset.tags.md",
       "filename": "{name}.png",
-      "geometry": { "size": [256, 256], "cell": [64, 64], "frames": 16, "transparent": false },
-      "request": { "size": "1024x1024", "gridHint": [4, 4] },
-      "post": ["slice_grid", "pixel_fit", "quantize"],
+      "geometry": {
+        "size": [
+          256,
+          256
+        ],
+        "cell": [
+          64,
+          64
+        ],
+        "frames": 16,
+        "transparent": false
+      },
+      "request": {
+        "size": "1024x1024",
+        "gridHint": [
+          4,
+          4
+        ]
+      },
+      "post": [
+        "slice_grid",
+        "pixel_fit",
+        "quantize"
+      ],
       "quantizeColors": 64,
       "note": "16 seamlessly-tiling 64x64 surface textures, row-major. Wall/floor/ceiling textures sampled by the raycaster: flat head-on, no perspective, no baked lighting."
     },
-
     "texturePiece": {
       "label": "Single tileset texture piece",
       "dir": "assets/tilesetPieces",
@@ -105,13 +207,77 @@
       "filename": "{name}.png",
       "tiles": true,
       "tileAxes": "xy",
-      "geometry": { "size": [64, 64], "cell": [64, 64], "frames": 1, "transparent": false },
-      "request": { "size": "512x512" },
-      "post": ["pixel_fit", "quantize", "tile_score"],
+      "geometry": {
+        "size": [
+          64,
+          64
+        ],
+        "cell": [
+          64,
+          64
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "512x512"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize",
+        "tile_score"
+      ],
       "quantizeColors": 48,
-      "note": "Generate one coherent floor/ceiling/trim material at a time. Use wallPiece for walls, then assemble selected pieces into a 4x4 tileset atlas with assemble_atlas.py."
+      "note": "Generate one coherent floor/ceiling/trim material at a time. Use wallPiece for walls, then assemble selected pieces into a 4x4 tileset atlas with assemble_atlas.py.",
+      "contextPreview": {
+        "base": "assets/tilesets/dungeon_001.png",
+        "qualityDensity": 4.0,
+        "heightMapSampleColumns": 24,
+        "heightMapSampleRows": 24,
+        "bySurface": {
+          "wall": {
+            "cell": [
+              1,
+              1
+            ],
+            "heightMapScale": {
+              "wall": 0.1,
+              "floor": 0,
+              "ceiling": 0
+            },
+            "label": "two-tile corridor; this wall's own height map; floor and ceiling unchanged"
+          },
+          "floor": {
+            "cell": [
+              3,
+              0
+            ],
+            "heightMapScale": {
+              "wall": 0,
+              "floor": 0.1,
+              "ceiling": 0
+            },
+            "label": "two-tile corridor; this floor's own height map; walls and ceiling unchanged"
+          },
+          "ceiling": {
+            "cell": [
+              0,
+              0
+            ],
+            "heightMapScale": {
+              "wall": 0,
+              "floor": 0,
+              "ceiling": 0.1
+            },
+            "label": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged"
+          }
+        },
+        "defaultSurface": "floor",
+        "heightMap": "assets/geometry/1_blender_depth_maps/floor_flagstones.png",
+        "tileset": "dungeon_default",
+        "neutral": "#3a3a3a"
+      }
     },
-
     "wallPiece": {
       "label": "Single horizontally tileable wall texture piece",
       "dir": "assets/tilesetPieces",
@@ -120,37 +286,116 @@
       "filename": "{name}.png",
       "tiles": true,
       "tileAxes": "x",
-      "geometry": { "size": [64, 64], "cell": [64, 64], "frames": 1, "transparent": false },
-      "request": { "size": "512x512" },
-      "post": ["pixel_fit", "quantize", "tile_score"],
+      "geometry": {
+        "size": [
+          64,
+          64
+        ],
+        "cell": [
+          64,
+          64
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "512x512"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize",
+        "tile_score"
+      ],
       "quantizeColors": 48,
-        "contextPreview": {
-          "base": "assets/tilesets/dungeon_001.png",
-          "cell": [1, 1],
-          "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
-          "heightMapScale": { "wall": 0.10, "floor": 0, "ceiling": 0 },
-          "qualityDensity": 4.0,
-          "heightMapSampleColumns": 24,
-          "heightMapSampleRows": 24,
-          "label": "two-tile corridor; shared wall height map; 4.0x geometry density; floor and ceiling unchanged"
+      "contextPreview": {
+        "base": "assets/tilesets/dungeon_001.png",
+        "cell": [
+          1,
+          1
+        ],
+        "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
+        "heightMapScale": {
+          "wall": 0.1,
+          "floor": 0,
+          "ceiling": 0
         },
+        "qualityDensity": 4.0,
+        "heightMapSampleColumns": 24,
+        "heightMapSampleRows": 24,
+        "label": "two-tile corridor; shared wall height map; 4.0x geometry density; floor and ceiling unchanged",
+        "bySurface": {
+          "wall": {
+            "cell": [
+              1,
+              1
+            ],
+            "heightMapScale": {
+              "wall": 0.1,
+              "floor": 0,
+              "ceiling": 0
+            },
+            "label": "two-tile corridor; this wall's own height map; floor and ceiling unchanged"
+          },
+          "floor": {
+            "cell": [
+              3,
+              0
+            ],
+            "heightMapScale": {
+              "wall": 0,
+              "floor": 0.1,
+              "ceiling": 0
+            },
+            "label": "two-tile corridor; this floor's own height map; walls and ceiling unchanged"
+          },
+          "ceiling": {
+            "cell": [
+              0,
+              0
+            ],
+            "heightMapScale": {
+              "wall": 0,
+              "floor": 0,
+              "ceiling": 0.1
+            },
+            "label": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged"
+          }
+        },
+        "defaultSurface": "wall",
+        "tileset": "dungeon_default",
+        "neutral": "#3a3a3a"
+      },
       "note": "Generate one wall material at a time. Only the left and right edges are joined; the top and bottom remain authored, so baseboards and lower wall courses stay at the bottom. Assemble selected pieces into a tileset atlas with assemble_atlas.py."
     },
-
     "portraitPiece": {
       "label": "Single character portrait piece",
       "dir": "assets/portraitPieces",
       "promptFile": "portrait.md",
       "promptFileTags": "portraitpiece.tags.md",
       "filename": "{name}.png",
-      "geometry": { "size": [128, 192], "cell": [128, 192], "frames": 1, "transparent": false },
-      "request": { "size": "512x768" },
+      "geometry": {
+        "size": [
+          128,
+          192
+        ],
+        "cell": [
+          128,
+          192
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "512x768"
+      },
       "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
-      "post": ["pixel_fit", "quantize"],
+      "post": [
+        "pixel_fit",
+        "quantize"
+      ],
       "quantizeColors": 64,
       "note": "Generate one fixed-framing character portrait at a time. Assemble five selected expression pieces into the engine's 640x192 sheet with assemble_atlas.py."
     },
-
     "surface": {
       "label": "Image-authored geometry surface (albedo)",
       "dir": "assets/geometry",
@@ -158,57 +403,139 @@
       "promptFileTags": "surface.tags.md",
       "filename": "{name}/albedo.png",
       "tiles": true,
-      "geometry": { "size": [128, 128], "cell": [128, 128], "frames": 1, "transparent": false },
-      "request": { "size": "512x512" },
-      "post": ["pixel_fit", "quantize", "tile_score"],
+      "geometry": {
+        "size": [
+          128,
+          128
+        ],
+        "cell": [
+          128,
+          128
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "512x512"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize",
+        "tile_score"
+      ],
       "quantizeColors": 48,
       "note": "The albedo half of an engine/geometry asset -- one seamless material, rendered at 512 and downsampled 4x. Registration is a hard rule: the albedo must match its sibling height.png pixel for pixel, so pass --cell WxH when re-skinning an asset whose height map is not 128x128."
     },
-
     "panorama": {
       "label": "Panorama / skybox",
       "dir": "assets/panorama",
       "promptFile": "panorama.md",
       "filename": "{name}.png",
-      "geometry": { "size": [256, 256], "cell": [256, 256], "frames": 1, "transparent": false },
-      "request": { "size": "1024x1024" },
-      "post": ["pixel_fit", "quantize", "seam_blend_x"],
+      "geometry": {
+        "size": [
+          256,
+          256
+        ],
+        "cell": [
+          256,
+          256
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "1024x1024"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize",
+        "seam_blend_x"
+      ],
       "quantizeColors": 48,
       "note": "Scrolled horizontally behind the dungeon view, so it must wrap left-to-right; seam_blend_x cross-fades the wrap edge."
     },
-
     "locationArt": {
       "label": "Location art",
       "dir": "assets/locationArt",
       "promptFile": "locationart.md",
       "filename": "{Name}.png",
-      "geometry": { "size": [192, 256], "cell": [192, 256], "frames": 1, "transparent": false },
-      "request": { "size": "1024x1024" },
-      "post": ["pixel_fit", "quantize"],
+      "geometry": {
+        "size": [
+          192,
+          256
+        ],
+        "cell": [
+          192,
+          256
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "1024x1024"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize"
+      ],
       "quantizeColors": 64,
       "note": "Establishing illustration for a town or dungeon region."
     },
-
     "eventArt": {
       "label": "Event art",
       "dir": "assets/eventArt",
       "promptFile": "eventart.md",
       "filename": "{name}.png",
-      "geometry": { "size": [496, 208], "cell": [496, 208], "frames": 1, "transparent": false },
-      "request": { "size": "1536x1024" },
-      "post": ["pixel_fit", "quantize"],
+      "geometry": {
+        "size": [
+          496,
+          208
+        ],
+        "cell": [
+          496,
+          208
+        ],
+        "frames": 1,
+        "transparent": false
+      },
+      "request": {
+        "size": "1536x1024"
+      },
+      "post": [
+        "pixel_fit",
+        "quantize"
+      ],
       "quantizeColors": 64,
       "note": "Wide cutscene banner shown above dialogue."
     },
-
     "animation": {
       "label": "Particle / animation sheet",
       "dir": "assets/animation",
       "promptFile": "animation.md",
       "filename": "{Name}[{cw}x{ch}][{frames}f].png",
-      "geometry": { "size": null, "cell": [32, 32], "frames": 8, "transparent": true },
-      "request": { "size": "1024x1024", "gridHint": [8, 1] },
-      "post": ["key_background", "slice_grid", "pixel_fit", "greyscale", "harden_alpha"],
+      "geometry": {
+        "size": null,
+        "cell": [
+          32,
+          32
+        ],
+        "frames": 8,
+        "transparent": true
+      },
+      "request": {
+        "size": "1024x1024",
+        "gridHint": [
+          8,
+          1
+        ]
+      },
+      "post": [
+        "key_background",
+        "slice_grid",
+        "pixel_fit",
+        "greyscale",
+        "harden_alpha"
+      ],
       "note": "Flipbook strip, cells left-to-right, read row-major by the animation player. Tinted at runtime by the track's colour-over-lifetime, so the art is drawn WHITE/GREYSCALE. Final size is cell*frames wide; --cell and --frames override the defaults and are written into the filename tokens."
     }
   }

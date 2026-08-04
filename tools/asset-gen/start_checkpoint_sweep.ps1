@@ -1,6 +1,6 @@
 param(
     [int]$Variants = 2,
-    [ValidateSet('checkpoint', 'style-depth', 'surface-kit')]
+    [ValidateSet('checkpoint', 'style-depth', 'surface-kit', 'surface-kit-ao', 'negprompt', 'newmodels')]
     [string]$Experiment = 'checkpoint'
 )
 
