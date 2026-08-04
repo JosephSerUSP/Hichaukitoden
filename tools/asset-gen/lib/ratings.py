@@ -73,6 +73,17 @@ TAGS = [
     # no apparent depth are one observation, not two. Two words for one thing is
     # what made choosing between them feel wrong.
     ("harsh", "h", "light", "harsh direct light, cast shadow or a visible light direction"),
+    # Distinct from `harsh`, and the distinction is the CAUSE rather than the
+    # symptom. `harsh` says a hard direction exists. This says the model built
+    # the wrong kind of space: it imagined the structure unroofed and lit it
+    # accordingly, from above and at an angle, the way an exterior wall is lit.
+    # The shadow direction is the tell, not the fault -- the fault is that a
+    # sealed underground room was rendered as something with sky over it, and
+    # no lighting tweak fixes that. It is a brief-level miss wearing a lighting
+    # symptom, which is why it earns a tag instead of more `harsh`.
+    ("outdoor", "o", "light", "lit as though the structure had no ceiling -- light "
+                              "from above and outside, an exterior wall under sky "
+                              "rather than an enclosed interior"),
     ("flat", "f", "light", "does not look like it has depth -- recesses are not "
                            "darker than raised faces, so it reads as a flat sheet"),
     # Did it build what was asked for? All of these are "missed the brief".
