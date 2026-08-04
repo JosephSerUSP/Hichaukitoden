@@ -24,7 +24,7 @@ import subprocess
 import sys
 import time
 
-from PIL import Image
+from PIL import Image, ImageColor
 
 # Prompts and manifests are ASCII, but a description passed on the command line
 # need not be, and the Windows console's default codepage is not UTF-8.
@@ -503,22 +503,169 @@ def cmd_tilecheck(args):
     return 0
 
 
+HEIGHT_MAP_MANIFESTS = [
+    "assets/geometry/1_blender_depth_maps/manifest.json",
+]
+
+TILESET_DATA = "data/tilesets.json"
+SURFACE_KEY = {"wall": "walls", "floor": "floors", "ceiling": "ceilings"}
+
+
+def _surface_cells(tileset_id, surface):
+    """Atlas cells a surface draws from, as (col, row), from tilesets.json.
+
+    Two things this gets right that a hand-written cell in classes.json did not.
+
+    The ORDER: the engine reads `atlas[1]` as the row and `atlas[2]` as the
+    column (viewport_3d.lua). The old preview treated the pair as (x, y), which
+    is the same thing for the wall at [1,1] and the ceiling at [0,0] and wrong
+    for the floor at [3,0] -- so floors previewed with the stock dungeon texture
+    under the new height map, looking like the geometry had applied and the
+    material had not.
+
+    The COUNT: a surface usually has several weighted variants, so painting one
+    cell leaves the others stock and the preview mixes the candidate with the
+    old texture at random. Every variant of the surface gets the candidate.
+    """
+    if not tileset_id:
+        return []
+    try:
+        with open(os.path.join(classes.ROOT, TILESET_DATA), "r", encoding="utf-8") as handle:
+            tilesets = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return []
+    entry = tilesets.get(tileset_id) or {}
+    cells = []
+    for variant in (entry.get("base") or {}).get(SURFACE_KEY.get(surface, ""), []):
+        coord = variant.get("atlas") or variant.get("middle")
+        if coord and len(coord) >= 2:
+            cells.append((coord[1], coord[0]))
+    return cells
+
+
+def _height_map_surface(height_path):
+    """Which surface a height map was authored for, from its own manifest.
+
+    Read from data rather than guessed from the filename: blendergeom.py already
+    records `surface` per map, and a preview that puts a ceiling vault on the
+    floor is worse than no preview because it looks like a result.
+    """
+    if not height_path:
+        return None
+    want = os.path.splitext(os.path.basename(height_path))[0]
+    for rel in HEIGHT_MAP_MANIFESTS:
+        try:
+            with open(os.path.join(classes.ROOT, rel), "r", encoding="utf-8") as handle:
+                for record in json.load(handle).get("maps") or []:
+                    if record.get("preset") == want:
+                        return record.get("surface")
+        except (OSError, json.JSONDecodeError):
+            continue
+    # Legacy staged experiments predate the Blender height-map manifest and
+    # kept their authored guides under tools/asset-gen/out. They still carry
+    # the exact guide path in each run manifest, so classify those guides here
+    # instead of silently falling back to the class default (the wall column,
+    # or the floor for texturePiece). This affects preview surface/cell choice;
+    # it does not pretend to change what the model was conditioned on.
+    legacy = {
+        "wall_relief": "wall",
+        "recessed_holes": "wall",
+        "broken_flagstones": "floor",
+        "stalactite_ceiling": "ceiling",
+    }
+    return legacy.get(want)
+
+
+def _tile_sized_height(run_path, height_rel, class_def):
+    """A copy of the height map at the size the engine's preview accepts.
+
+    Generation wants the map large -- ControlNet reads a 512 map far better than
+    a 64 one -- but the tileset preview requires it to match the atlas or a
+    single tile. Rather than shrink the authored map and lose the guidance,
+    a downsampled copy is staged next to the run that used it.
+    """
+    cell = (class_def.get("geometry") or {}).get("cell") or [64, 64]
+    source = os.path.join(classes.ROOT, height_rel)
+    image = Image.open(source)
+    if image.size == tuple(cell):
+        return height_rel
+    scaled = os.path.join(run_path, "context-height.png")
+    # BOX, not NEAREST: the map is a continuous field, and point-sampling an 8x
+    # reduction would drop whole mortar joints between samples.
+    image.convert("RGBA").resize(tuple(cell), Image.Resampling.BOX).save(scaled)
+    return os.path.relpath(scaled, classes.ROOT).replace("\\", "/")
+
+
+def _preview_surface(manifest, context):
+    """Which surface this run's preview should paint, one answer in one place.
+
+    Both the builder and the cache check have to agree on this or a stale
+    preview can never be spotted, so neither computes it for itself.
+    """
+    run_height = (manifest.get("provider") or {}).get("heightControl")
+    return _height_map_surface(run_height) or context.get("defaultSurface")
+
+
+def _preview_is_stale(variant, want):
+    """Whether a cached preview provably painted the wrong surface.
+
+    Deliberately conservative: it re-renders only what it can PROVE is wrong,
+    never merely what it cannot vouch for. Previews predating `contextSurface`
+    are the overwhelming majority and nearly all of them are correct, so
+    treating "unstamped" as "suspect" would rebuild thousands of good previews
+    through the engine to fix sixteen bad ones.
+
+    For those, the surface is recovered from the label the preview already
+    carries -- each surface words it distinctly -- and only a genuine
+    disagreement counts.
+    """
+    if not want:
+        return False
+    recorded = variant.get("contextSurface")
+    if recorded is not None:
+        return recorded != want
+    label = (variant.get("contextLabel") or "").lower()
+    for surface in ("wall", "floor", "ceiling"):
+        if f"this {surface}'s own" in label:
+            return surface != want
+    return False
+
+
 def _context_preview(run_path, manifest, variant):
     """Render one staged tile through the real engine for report evidence."""
     class_def = classes.registry()["classes"].get(manifest.get("class"), {})
     context = class_def.get("contextPreview")
     if not context:
         return
+    # The height map the TEXTURE was conditioned on, not the class default.
+    # Previewing a wall generated against an arched niche on the old flat
+    # column map shows a room that was never asked for, and the mismatch is
+    # invisible unless you already know both maps.
+    run_height = (manifest.get("provider") or {}).get("heightControl")
+    surface = _preview_surface(manifest, context)
+    context = dict(context, **(context.get("bySurface", {}).get(surface) or {}))
     try:
+        if run_height:
+            context["heightMap"] = _tile_sized_height(run_path, run_height, class_def)
         base_path = os.path.join(classes.ROOT, context["base"])
         candidate_path = os.path.join(run_path, variant["file"])
         atlas_path = os.path.join(run_path, f"context-atlas-{variant['index']}.png")
-        atlas = Image.open(base_path).convert("RGBA")
+        source = Image.open(base_path).convert("RGBA")
+        # Everything that is NOT under test is painted flat. The stock dungeon
+        # tileset is a busy, high-contrast material, and surrounding a candidate
+        # with it makes the candidate hard to read and easy to misjudge -- the
+        # eye compares it to the neighbour instead of assessing it. A dead grey
+        # surround puts the only detail in the frame on the thing being rated.
+        neutral = context.get("neutral")
+        atlas = (Image.new("RGBA", source.size, ImageColor.getrgb(neutral))
+                 if neutral else source)
         tile = Image.open(candidate_path).convert("RGBA")
-        cell_x, cell_y = context.get("cell", [1, 1])
-        cell_w, cell_h = atlas.width // 4, atlas.height // 4
+        cell_w, cell_h = source.width // 4, source.height // 4
         tile = tile.resize((cell_w, cell_h), Image.Resampling.NEAREST)
-        atlas.paste(tile, (cell_x * cell_w, cell_y * cell_h))
+        cells = (_surface_cells(context.get("tileset"), surface)
+                 or [tuple(context.get("cell", [1, 1]))])
+        for cell_x, cell_y in cells:
+            atlas.paste(tile, (cell_x * cell_w, cell_y * cell_h))
         atlas.save(atlas_path)
 
         love = os.environ.get("LOVE_BIN", r"C:\Program Files\LOVE\lovec.exe")
@@ -550,14 +697,58 @@ def _context_preview(run_path, manifest, variant):
         with open(os.path.join(run_path, context_name), "wb") as handle:
             handle.write(base64.b64decode(payload["image"]))
         variant["context"] = context_name
-        variant["contextLabel"] = context.get("label", "in-engine context")
+        # The height map is named in the label because a preview cannot show
+        # which one it used, and getting that wrong is invisible: a correct
+        # albedo displaced by the wrong geometry looks like a plausible room.
+        # Both directions of that mistake shipped before this line existed.
+        # Names the AUTHORED map, not the downscaled copy staged beside the run
+        # -- every run's copy is called context-height.png, which would make the
+        # label identical everywhere and useless for spotting a mismatch.
+        shown = run_height or context.get("heightMap") or "none"
+        variant["contextLabel"] = (
+            f"{context.get('label', 'in-engine context')} "
+            f"[geometry: {os.path.splitext(os.path.basename(shown))[0]}]")
+        # Recorded so the cache can be INVALIDATED rather than merely populated.
+        # A preview is only reusable if the surface it was painted on is still
+        # the surface this run resolves to; see _add_context_previews.
+        variant["contextSurface"] = surface
     except Exception as err:
         variant["contextError"] = str(err)
 
 
-def _add_context_previews(run_path, manifest):
+def _add_context_previews(run_path, manifest, persist=True):
+    """Build any missing room previews and remember them in the manifest.
+
+    Previously these were rendered into the run directory but only ever held in
+    the report's in-memory copy of the manifest, so the PNG existed on disk and
+    nothing recorded that it did. Anything else wanting the preview -- the
+    rating queue, most of all -- had no way to find it.
+
+    A cached preview is also RE-CHECKED, not just reused. The surface logic has
+    been wrong before: runs staged before height maps declared their own surface
+    painted every texturePiece on the floor, so wall relief and ceiling
+    stalactites were rated as if they were pavement. Those previews were built
+    once and, because the only test was whether a preview existed, were kept
+    forever -- the owner met them again months later while re-rating, and a
+    preview that is confidently wrong is worse than none, because it looks like
+    a result. A preview whose recorded surface no longer matches this run's is
+    now rebuilt.
+    """
+    built = False
+    class_def = classes.registry()["classes"].get(manifest.get("class"), {})
+    context = class_def.get("contextPreview") or {}
+    want = _preview_surface(manifest, context) if context else None
     for variant in manifest.get("variants", []):
+        if variant.get("context") and not _preview_is_stale(variant, want):
+            # Correct, or not provably wrong: stamp it so the next reader gets a
+            # cheap comparison instead of re-deriving it from prose.
+            variant.setdefault("contextSurface", want)
+            continue
         _context_preview(run_path, manifest, variant)
+        built = built or bool(variant.get("context"))
+    if built and persist:
+        staging.write_manifest(run_path, manifest)
+    return built
 
 
 def cmd_audit(args):
