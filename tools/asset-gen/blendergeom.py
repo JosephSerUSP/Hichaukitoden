@@ -36,11 +36,26 @@ SCRIPT = Path(__file__).resolve().parent / "blender" / "render_depth.py"
 DEFAULT_OUT = ROOT / "assets" / "geometry" / "1_blender_depth_maps"
 
 PRESETS = ["wall_pilasters", "wall_niche", "floor_flagstones", "floor_inlay",
-           "ceiling_coffers", "ceiling_vault"]
+           "ceiling_coffers", "ceiling_vault",
+           # Organic set, added 03.08: rounder, steeper, per-stone height.
+           "wall_rubble", "wall_cave", "floor_cobbles", "floor_slabs_varied",
+           "ceiling_dripstone",
+           # Displaced set, added 03.08: noise-broken surfaces on the same forms.
+           "wall_boulders_rough", "wall_eroded", "floor_cobbles_rough",
+           "ceiling_dripstone_rough",
+           # Architectural set, added 04.08. The presets above vary how stone is
+           # cut and stacked; these vary what the room IS -- an arcade, a fan
+           # vault, a floor with a void under it -- which is the axis the owner
+           # found missing.
+           "wall_blind_arcade", "ceiling_fan_vault", "floor_hypocaust"]
 
-# A seam step this size relative to ordinary interior detail is invisible once
-# the map has been through ControlNet. Exact periodicity should give ~0.
-WRAP_TOLERANCE = 0.25
+# A tile is accepted when the seam is either an ordinary interior step (ratio)
+# or negligible against the relief the map expresses (step). Both are generous
+# because a real break is not marginal: the one genuine failure seen so far
+# scored 11.7 on ratio and 0.30 on step, while every correct map -- flat
+# architecture and organic alike -- came in under 2 and under 0.02.
+WRAP_RATIO_TOLERANCE = 3.0
+WRAP_STEP_TOLERANCE = 0.03
 
 SEARCH = [
     os.environ.get("BLENDER"),
@@ -76,11 +91,15 @@ def render(executable, preset, out_dir, size, contrast, blend=True):
     for line in result.stdout.splitlines():
         if line.startswith("HEIGHTMAP "):
             record = json.loads(line[len("HEIGHTMAP "):])
-            worst = max(record["wrapError"].values(), default=0.0)
-            record["wrapOk"] = worst <= WRAP_TOLERANCE
+            record["wrapOk"] = all(
+                seam["ratio"] <= WRAP_RATIO_TOLERANCE
+                or seam["step"] <= WRAP_STEP_TOLERANCE
+                for seam in record["wrapError"].values())
+            seams = " ".join(f"{axis} {seam['ratio']:.2f}/{seam['step']:.3f}"
+                             for axis, seam in record["wrapError"].items())
             print(f" {record['surface']:8} tiles {record['tileAxes']:2} "
                   f" relief {record['reliefMin']:+.3f}..{record['reliefMax']:+.3f}"
-                  f"  wrap {record['wrapError']}"
+                  f"  seam {seams}"
                   f"  {'ok' if record['wrapOk'] else 'FAILS TO TILE'}")
             return record
     print(" FAILED")
@@ -114,11 +133,25 @@ def main():
         if record:
             records.append(record)
 
-    (out_dir / "manifest.json").write_text(json.dumps({
+    # Merged, not replaced. A selective `--preset` run would otherwise drop
+    # every map it did not render from the manifest, and the room previews read
+    # this file to learn which surface a map is for -- so re-rendering one
+    # ceiling would silently cost the other ten maps their previews.
+    manifest_path = out_dir / "manifest.json"
+    merged = {}
+    try:
+        for record in json.loads(manifest_path.read_text(encoding="utf-8"))["maps"]:
+            if (out_dir / f"{record['preset']}.png").is_file():
+                merged[record["preset"]] = record
+    except (OSError, KeyError, json.JSONDecodeError):
+        pass
+    for record in records:
+        merged[record["preset"]] = record
+    manifest_path.write_text(json.dumps({
         "source": "tools/asset-gen/blender/scenes.py",
         "method": "orthographic first-hit raycast against evaluated geometry",
         "convention": "opaque RGBA, 128 = dominant surface, +-112 relief",
-        "maps": records,
+        "maps": [merged[name] for name in sorted(merged)],
     }, indent=2) + "\n", encoding="utf-8")
 
     print(f"\n{len(records)} map(s) written, {failures} problem(s).")

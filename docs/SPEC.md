@@ -1436,6 +1436,48 @@ None of this is visible to G2 (battle logs), G3 (UI events) or G4. Only G5
 sees it, and only for the frames a golden script happens to land on. The unit
 suite is the real gate.
 
+### 1.23 One map cell is 2.5 metres (04.08.2026)
+
+**A map cell is 2.5 metres on every axis.** A wall is one cell high, a floor
+tile is one cell square, and everything drawn on them is sized against that.
+
+The engine does not know this and does not need to. `engine/geometry/plane.lua`
+works in map cells and says so — scale there is "ABSOLUTE (in map cells)" — and
+no metre appears anywhere in the code. The number is a *content* constant, and
+until now it was never written down, so every texture and height map was
+authored against whatever scale its author happened to imagine.
+
+The constraint that fixes it is the wall. A wall is exactly one cell tall, and a
+corridor a party walks down cannot have a one-metre ceiling; the moment a preset
+contains architecture rather than texture — `wall_blind_arcade`, whose bays would
+be 25 cm wide at one metre — the small readings become absurd. 2.5 m is the
+smallest value at which the arcade, the hypocaust pilae and the flagstones are
+all simultaneously plausible.
+
+Why it matters for generation: **the eye reads scale from the feature, not from
+the tile.** A square of pavement rendered with four huge slabs does not read as a
+big tile, it reads as a small sample of a coarse floor, and the whole corridor
+shrinks around it. Feature counts are therefore a correctness question, not a
+taste one:
+
+| feature | at 2.5 m | plausible | |
+|---|---|---|---|
+| flagstone (6×5 bond) | 50 cm | 40–60 cm | ok |
+| cobble / sett (7×7) | 36 cm | 10–20 cm | **too coarse** |
+| slab, `floor_slabs_varied` | 80 cm | 40–70 cm | **too coarse** |
+| rubble boulder | 70 cm | 20–50 cm | **too coarse** |
+| ashlar block, pilasters | 59 cm | 30–60 cm | ok |
+| arcade bay | 62 cm | 60–120 cm | ok |
+| hypocaust pila | 24 cm | 20–30 cm | ok |
+
+The three marked rows are known-wrong as of this writing and deliberately left
+alone; they are re-authored when next touched, not in a sweep. A new preset has
+no such excuse — check its feature size against this table before rendering it.
+
+The same number belongs in prompts. "Broad fitted blocks" means one thing across
+a metre and another across two and a half, and a model given no scale cue picks
+its own.
+
 ## 2. Design rules (from the BIBLE — enforced by review)
 
 ### 2.1 Code sharing and reuse (CRITICAL)
