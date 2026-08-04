@@ -26,10 +26,11 @@ body.rating main { flex-direction: column; gap: 10px; }
 .tiled.axis-x { height: 85.33px; }
 /* The raw is the ONE pane showing what the model actually returned, before the
    pixel-fit and quantise passes -- so it is where `burned` is decided, and 128px
-   was too small to decide it. Shown at 512 (2x a 256px render) and left
-   `pixelated` with the others: smoothing a blown highlight is exactly the
-   evidence being looked for. */
-#raw { width: 512px; height: 512px; }
+   was too small to decide it. Matched to #tile's 256 so the two sit side by side
+   and can be read against each other at the same scale, which is the comparison
+   actually being made. Left `pixelated` with the others: smoothing a blown
+   highlight is exactly the evidence being looked for. */
+#raw { width: 256px; height: 256px; }
 .building { color: #8d87a4; font-style: italic; padding: 6px 0; }
 
 /* The room, doubled and split. 12px of background between the halves is the
