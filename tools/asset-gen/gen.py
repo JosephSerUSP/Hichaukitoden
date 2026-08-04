@@ -379,6 +379,26 @@ def cmd_generate(args):
             "tileAxes", ctx["classDef"].get("tiles", True))
     if ctx["classDef"].get("negativePrompt"):
         sampling["negativePrompt"] = ctx["classDef"]["negativePrompt"]
+    # APPENDED, never replacing. The base negative prompt is a long list of
+    # things this project learned the hard way to refuse, and an experiment that
+    # wants to refuse one more thing should not have to restate all of them --
+    # nor be able to drop them by forgetting.
+    #
+    # This exists because refusal only works HERE. CLIP has no negation: "no
+    # sky" in a positive prompt contributes `sky`, so a refusal written there
+    # argues for the thing it means to forbid. Before this flag there was
+    # nowhere else for a per-experiment refusal to go.
+    if getattr(args, "negative_extra", None):
+        # `sampling` is an OVERRIDE dict -- the provider does
+        # `dict(provider["sampling"]) | sampling` -- so writing a bare key here
+        # REPLACES the config's negative prompt rather than adding to it. Read
+        # the effective base first (class override if there is one, else the
+        # provider's) or this silently discards every refusal the project has
+        # accumulated, which is exactly what the first version of this did.
+        base = (sampling.get("negativePrompt")
+                or (prov.get("sampling") or {}).get("negativePrompt", ""))
+        sampling["negativePrompt"] = (f"{base}, {args.negative_extra}" if base
+                                      else args.negative_extra)
     control, control_source = _control_from_height(cfg, args)
 
     variants = args.variants or cfg["generate"]["variants"]
@@ -900,9 +920,11 @@ def cmd_batch(args):
         print(f"\n=== [{position}/{len(jobs)}] {job.get('class')} '{job.get('name')}' ===")
         argv = [job.get("class", args.default_class), job["name"], job.get("description", "")]
         for flag in ("provider", "variants", "extra", "height", "steps", "cfg",
-                     "sampler", "seed", "cell", "model", "requestSize", "depthWeight"):
+                     "sampler", "seed", "cell", "model", "requestSize", "depthWeight",
+                     "negativeExtra"):
             if job.get(flag) is not None:
-                cli_flag = ({"requestSize": "request-size", "depthWeight": "depth-weight"}
+                cli_flag = ({"requestSize": "request-size", "depthWeight": "depth-weight",
+                             "negativeExtra": "negative-extra"}
                             .get(flag, flag))
                 argv += [f"--{cli_flag}", str(job[flag])]
         for lora in job.get("loras") or []:
@@ -964,6 +986,9 @@ def main(argv=None):
     gen.add_argument("--token", action="append",
                      help="filename token, e.g. --token fps=12; repeatable")
     gen.add_argument("--extra", default="", help="extra prompt direction")
+    gen.add_argument("--negative-extra", default="",
+                     help="[local] appended to the negative prompt; the only place "
+                          "a refusal works (CLIP reads 'no sky' as 'sky')")
     gen.add_argument("--dry-run", action="store_true", help="print the prompt, call nothing")
     # Local-model knobs. Ignored by the cloud providers, which have no equivalent.
     gen.add_argument("--steps", type=int, help="[local] denoising steps")
