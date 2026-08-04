@@ -1,0 +1,81 @@
+{
+  "class": "texturePiece",
+  "name": "deep_floor_flagstones_newera_quake_d85",
+  "description": "texture, quake, old school, worn dungeon floor pavement, broad fitted flagstones, scuffed mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, no cast shadows",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "newERANewEstheticRetro_retroV60VAE",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 940600,
+      "loras": [
+        {
+          "name": "Quake_Texture_v1",
+          "weight": 0.7
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_flagstones.png",
+    "heightControlWeight": 0.85
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "deep_floor_flagstones_newera_quake_d85.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.294,
+        "y": 1.804,
+        "centre_x": 1.192,
+        "centre_y": 0.166
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_flagstones]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.522,
+        "y": 1.419,
+        "centre_x": 0.403,
+        "centre_y": 0.174
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_flagstones]",
+      "contextSurface": "floor"
+    }
+  ]
+}

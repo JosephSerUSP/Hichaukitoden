@@ -1,0 +1,79 @@
+{
+  "class": "texturePiece",
+  "name": "kit_ceiling_vault_mature_resevil",
+  "description": "ancient dungeon ceiling masonry seen from below, broad fitted stone courses, soot-stained mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate, unlit albedo material, diffuse base color only, flat material color, soft ambient fill",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "maturemalemix_v13",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, deep shadow, black shadow, baked lighting, directional lighting, torchlight, ambient occlusion, specular highlight, glossy reflection, vignette, lighting gradient, smooth gradient, strong contrast, dramatic lighting, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 910100,
+      "loras": [
+        {
+          "name": "resevil",
+          "weight": 0.55
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/ceiling_vault.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "kit_ceiling_vault_mature_resevil.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 0.141,
+        "y": 0.872,
+        "centre_x": 0.553,
+        "centre_y": 0.54
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_vault]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 0.149,
+        "y": 1.508,
+        "centre_x": 1.176,
+        "centre_y": 1.0
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_vault]"
+    }
+  ]
+}

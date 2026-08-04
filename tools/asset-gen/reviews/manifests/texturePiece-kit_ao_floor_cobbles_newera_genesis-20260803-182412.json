@@ -1,0 +1,79 @@
+{
+  "class": "texturePiece",
+  "name": "kit_ao_floor_cobbles_newera_genesis",
+  "description": "worn dungeon floor pavement, broad fitted flagstones, scuffed mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, no cast shadows",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "newERANewEstheticRetro_retroV60VAE",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 910000,
+      "loras": [
+        {
+          "name": "GenesisGameplayV1",
+          "weight": 0.55
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_cobbles.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "kit_ao_floor_cobbles_newera_genesis.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 1.358,
+        "y": 0.645,
+        "centre_x": 0.769,
+        "centre_y": 0.525
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_cobbles]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.078903,
+        "chromaOutlierRatio": 1.5e-05,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 1.318,
+        "y": 0.986,
+        "centre_x": 0.427,
+        "centre_y": 0.402
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_cobbles]"
+    }
+  ]
+}

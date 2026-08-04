@@ -1,0 +1,79 @@
+{
+  "class": "texturePiece",
+  "name": "kit_ao_ceiling_coffers_newera_genesis",
+  "description": "ancient dungeon ceiling masonry seen from below, broad fitted stone courses, soot-stained mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, no cast shadows",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "newERANewEstheticRetro_retroV60VAE",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 910000,
+      "loras": [
+        {
+          "name": "GenesisGameplayV1",
+          "weight": 0.55
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/ceiling_coffers.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "kit_ao_ceiling_coffers_newera_genesis.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.003738,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 1.679,
+        "y": 0.321,
+        "centre_x": 1.365,
+        "centre_y": 1.359
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_coffers]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 2.295,
+        "y": 0.157,
+        "centre_x": 1.593,
+        "centre_y": 0.61
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_coffers]"
+    }
+  ]
+}

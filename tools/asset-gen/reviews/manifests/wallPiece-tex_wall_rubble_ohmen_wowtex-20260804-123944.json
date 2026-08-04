@@ -1,0 +1,81 @@
+{
+  "class": "wallPiece",
+  "name": "tex_wall_rubble_ohmen_wowtex",
+  "description": "wowtexture of, muted limestone dungeon wall masonry, broad fitted blocks, weathered mineral variation, quiet low-fantasy architecture, restrained ochre and cool slate, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, no cast shadows",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 941400,
+      "loras": [
+        {
+          "name": "SXZ_WowTexture_v2",
+          "weight": 0.7
+        }
+      ],
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_rubble.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "tex_wall_rubble_ohmen_wowtex.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000443,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.318,
+        "centre_x": 0.387
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.002533,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.814,
+        "centre_x": 1.638
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]",
+      "contextSurface": "wall"
+    }
+  ]
+}

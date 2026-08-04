@@ -1,0 +1,70 @@
+{
+  "class": "texturePiece",
+  "name": "expressive_abyss_floor_flagstones",
+  "description": "high-aesthetic fantasy broken flagstone floor, irregular chipped polygonal stones, deep seams and dust, ochre sandstone and cool slate, late-2000s console JRPG environment material, no scene",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "abyssorangemix2NSFW_abyssorangemix2Nsfw",
+    "quality": null,
+    "sampling": {
+      "steps": 18,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 844801
+    },
+    "heightControl": "tools/asset-gen/out/depth-height-patterns/broken_flagstones.png"
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "expressive_abyss_floor_flagstones.png",
+  "targetDir": "assets/tilesetPieces",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 0.578,
+        "y": 0.276,
+        "centre_x": 0.793,
+        "centre_y": 0.978
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: broken_flagstones]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 0.658,
+        "y": 0.291,
+        "centre_x": 1.076,
+        "centre_y": 1.004
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: broken_flagstones]"
+    }
+  ]
+}

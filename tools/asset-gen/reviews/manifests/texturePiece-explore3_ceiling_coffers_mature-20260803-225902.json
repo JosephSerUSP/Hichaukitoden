@@ -1,0 +1,99 @@
+{
+  "class": "texturePiece",
+  "name": "explore3_ceiling_coffers_mature",
+  "description": "ancient dungeon ceiling seen from below, broad coffers and fitted limestone ribs, soot-stained mineral variation, restrained ochre and slate, diffuse albedo with baked ambient occlusion, soft contact shadows, ambient fill only, no directional light",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "maturemalemix_v13",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 960600,
+      "loras": [
+        {
+          "name": "DiffuseTexture_v11",
+          "weight": 0.7
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/ceiling_coffers.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "explore3_ceiling_coffers_mature.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.234,
+        "y": 0.511,
+        "centre_x": 1.729,
+        "centre_y": 1.632
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_coffers]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.751,
+        "y": 2.536,
+        "centre_x": 0.941,
+        "centre_y": 1.719
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_coffers]"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000168,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.571,
+        "y": 2.588,
+        "centre_x": 1.852,
+        "centre_y": 2.07
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_coffers]"
+    }
+  ]
+}

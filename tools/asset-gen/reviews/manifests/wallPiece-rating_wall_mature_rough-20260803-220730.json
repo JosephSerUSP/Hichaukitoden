@@ -1,0 +1,99 @@
+{
+  "class": "wallPiece",
+  "name": "rating_wall_mature_rough",
+  "description": "rough natural limestone dungeon wall, irregular interlocking rubble, chipped edges, deep narrow joints, damp mineral stains, muted grey and umber, diffuse albedo with baked ambient occlusion, soft contact shadows, ambient fill only, no directional light",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "maturemalemix_v13",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 940400,
+      "loras": [
+        {
+          "name": "DiffuseTexture_v11",
+          "weight": 0.7
+        }
+      ],
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_rubble.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "rating_wall_mature_rough.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.00621,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.601,
+        "centre_x": 0.348
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.016739,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.703,
+        "centre_x": 0.245
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000443,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.873,
+        "centre_x": 0.284
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]"
+    }
+  ]
+}

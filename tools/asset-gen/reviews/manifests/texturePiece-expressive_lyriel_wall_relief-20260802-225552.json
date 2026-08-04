@@ -1,0 +1,72 @@
+{
+  "class": "texturePiece",
+  "name": "expressive_lyriel_wall_relief",
+  "description": "painterly high-fantasy limestone wall relief, repeated carved masonry blocks, deep mortar grooves, ochre sandstone and cool slate, late-2000s console JRPG environment material, no scene",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "lyriel_v16",
+    "quality": null,
+    "sampling": {
+      "steps": 18,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 844601
+    },
+    "heightControl": "tools/asset-gen/out/depth-height-patterns/wall_relief.png"
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "expressive_lyriel_wall_relief.png",
+  "targetDir": "assets/tilesetPieces",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 0.497,
+        "y": 0.531,
+        "centre_x": 2.28,
+        "centre_y": 1.888
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_relief]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "verdict": "pass",
+        "blankEdgeFraction": 0.0,
+        "blank": false
+      },
+      "tileScore": {
+        "x": 1.394,
+        "y": 1.187,
+        "centre_x": 2.025,
+        "centre_y": 1.267
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_relief]",
+      "contextSurface": "wall"
+    }
+  ]
+}

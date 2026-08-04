@@ -1,0 +1,99 @@
+{
+  "class": "texturePiece",
+  "name": "explore3_floor_slabs_homosimile",
+  "description": "varied ancient dungeon floor slabs, large interlocking polygonal stones, worn edges, restrained mineral colour, readable broad forms, diffuse albedo with baked ambient occlusion, soft contact shadows, ambient fill only, no directional light",
+  "options": {
+    "requestSize": "256x256"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "homosimile_v40",
+    "quality": null,
+    "sampling": {
+      "steps": 20,
+      "cfgScale": 6.5,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 960500,
+      "loras": [
+        {
+          "name": "GenesisGameplayV1",
+          "weight": 0.55
+        }
+      ],
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_slabs_varied.png",
+    "heightControlWeight": 0.85
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "explore3_floor_slabs_homosimile.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0009,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.477,
+        "y": 1.229,
+        "centre_x": 0.381,
+        "centre_y": 0.419
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied]"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.018875,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.952,
+        "y": 0.761,
+        "centre_x": 0.622,
+        "centre_y": 0.641
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied]"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.338,
+        "y": 1.264,
+        "centre_x": 0.734,
+        "centre_y": 0.509
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_slabs_varied]"
+    }
+  ]
+}
