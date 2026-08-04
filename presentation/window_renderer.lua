@@ -1060,10 +1060,10 @@ end
 -- actor_status.draw cell per row, wrapped into a grid (layout.gridColumns,
 -- default 2 — reproduces the battle/map HUD's 2x2 for a 4-member party).
 -- Rows come from the SAME 'party' list source as the old sprite+gauge list
--- rows, but here each one draws through the exact function
--- renderer.drawPartyGrid uses, via row.battlerRef (the real battler object
--- partyRows keeps a reference to) — so a party member's status is one
--- single thing, not a re-implementation per screen.
+-- rows, but here each one draws through actor_status.draw via
+-- row.battlerRef (the real battler object partyRows keeps a reference
+-- to) — so a party member's status is one single thing, not a
+-- re-implementation per screen.
 -- F2 (overhaul-6): shared MP readout — a thin gauge on the sliver UNDER the 2x2
 -- actor grid (same thickness as the party HP bars), with the current MP value
 -- shown numerically to its right. gaugeW is the gauge's pixel width; the number
@@ -1140,7 +1140,7 @@ local function drawPartyGridStyle(layout, rows, cursor, env, x, y, session, titl
     local refMax = battle_layout.get(session, "partyMpGaugeReferenceMax") or 9999
     local partyMaxMp = math.max(0, math.floor(session.maxMp or 0))
     local share = 1
-    if refMax > 0 then share = math.max(0, math.min(1, partyMaxMp / refMax)) end
+    if refMax > 0 then share = util.clamp01(partyMaxMp / refMax) end
     local gaugeW = math.max(4, math.floor(availW * share))
 
     -- The value is pinned to the RIGHT of the row, not trailing the gauge's

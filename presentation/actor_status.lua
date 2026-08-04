@@ -1,15 +1,13 @@
 -- The ONE "actor status" cell: sprite + element icons + name + HP text +
 -- HP bar, on a windowskin-backed panel, at a fixed size taken from
--- battle_layout (partyGridColWidth/RowHeight). Extracted verbatim from
--- renderer.drawPartyGrid's per-slot code (owner direction 11.07.2026: a
--- party member's status must be a single reusable thing, called once per
+-- battle_layout (partyGridColWidth/RowHeight) (owner direction 11.07.2026:
+-- a party member's status must be a single reusable thing, called once per
 -- member wherever a party is shown — battle/map HUD, and any scene's
 -- party list — not a bespoke look per screen).
 --
--- renderer.lua's drawPartyGrid calls actor_status.draw() once per grid
--- slot; window_renderer.lua's "partyGrid" window style calls it once per
--- row, arranged in a wrapping grid, using the row's battlerRef (the real
--- battler object partyRows already keeps a reference to).
+-- window_renderer.lua's "partyGrid" window style calls actor_status.draw()
+-- once per row, arranged in a wrapping grid, using the row's battlerRef
+-- (the real battler object partyRows already keeps a reference to).
 --
 -- No dependency on renderer.lua (battle_layout.lua carries the shared
 -- layout accessor) — avoids a require cycle since renderer.lua requires

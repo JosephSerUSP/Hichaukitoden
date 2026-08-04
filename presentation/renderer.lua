@@ -696,25 +696,6 @@ function renderer.dialogueRevealElapsed()
     return dialogueReveal.elapsed
 end
 
--- The 2x2 party grid is now a thin arrangement loop: every party member's
--- cell content (sprite, icons, name, HP text, HP bar, windowskin panel) is
--- drawn by actor_status.draw — the SAME function any scene's party list
--- uses (owner direction 11.07.2026: one actor-status thing, called once
--- per member, everywhere a party is shown).
-function renderer.drawPartyGrid(x, y, selectedIdx, session, showCursor)
-    for i = 1, 4 do
-        local c = session.party[i]
-        local slotX, slotY = actor_status.gridSlot(x, y, i, session)
-        local isSel = (showCursor and i == selectedIdx)
-        if c then
-            actor_status.draw(c, slotX, slotY, isSel, session)
-        else
-            actor_status.drawEmpty(slotX, slotY, isSel, session)
-        end
-    end
-end
-
-
 -- The "party" window's grid origin (px, tiles->px converted) + column count
 -- live in battler_geometry, the one battler-placement authority.
 
@@ -1105,7 +1086,7 @@ function renderer.drawLevelUpStatsWindow(rows, x, y, w, h, title)
         local delta = tonumber(row.delta) or (to - from)
         local value, valueColor = from, {1, 1, 1, 1}
         if localTime >= hold then
-            local t = math.min(1, math.max(0, (localTime - hold) / roll))
+            local t = util.clamp01((localTime - hold) / roll)
             value = math.floor(from + (to - from) * t + 0.5)
             if delta > 0 then valueColor = {0.3, 0.8, 0.3, 1} end
         end

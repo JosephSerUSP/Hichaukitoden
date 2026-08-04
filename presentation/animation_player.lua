@@ -140,16 +140,6 @@ function animation_player.getEntry(entryId)
     return entries[entryId]
 end
 
--- The anchor spec an entry attaches to its target with (data/animations.json
--- `anchor`), or nil when it authors none -- the drawer then falls back to
--- engine.json battleLayout.animationAnchorPoint. Pure data: resolving the spec
--- against a battler's rect is battler_geometry.anchor's job, which is why this
--- module never needs to know about screen geometry.
-function animation_player.getAnchor(entryId)
-    local entry = entries[entryId]
-    return entry and entry.anchor or nil
-end
-
 -- Start an animation on a target. `target` can be any object used as a key
 -- (enemy battler, party member, etc.). Returns true if the animation was
 -- found and started, false if entryId is unknown. Optionally delays start by delayMs.
@@ -911,27 +901,6 @@ function animation_player.drawParticles(target, rect, battlerDrawFn, layerFilter
         love.graphics.setBlendMode("alpha")
         end
     end
-end
-
----------------------------------------------------------------------------
--- Debug / introspection
----------------------------------------------------------------------------
-
-function animation_player.getActiveCount()
-    local count = 0
-    for _, list in pairs(instances) do
-        count = count + #list
-    end
-    return count
-end
-
-function animation_player.getEntryIds()
-    local ids = {}
-    for id, _ in pairs(entries) do
-        table.insert(ids, id)
-    end
-    table.sort(ids)
-    return ids
 end
 
 return animation_player

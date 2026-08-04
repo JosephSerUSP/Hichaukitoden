@@ -1092,10 +1092,6 @@ function ui.loadPopupFont(name, size)
     popupFont = ui.loadFont(name, size)
 end
 
-function ui.getPopupFont()
-    return popupFont
-end
-
 function ui.getPopupNumberFont()
     return popupNumberFont or popupFont
 end
@@ -1163,30 +1159,12 @@ function ui.utf8Prefix(text, byteCount)
     return text:sub(1, byteCount)
 end
 
--- Engine-level pre-calculated text reveal.
--- Wrap points are decided ONCE against the FULL text, so no word can migrate
--- to the next line as later characters appear. `options.limit`/`options.width`
--- supplies the wrap width; omit it for text that is already hard-wrapped.
--- Callers that draw with printf must pass the SAME limit printf gets, or the
--- pre-wrap is meaningless.
---
--- This returns left-aligned-safe text only. Centred and right-aligned reveals
--- must NOT go through printf at all -- printf re-derives each line's origin
--- from the width of what is currently visible, so the line slides as it types.
--- Use ui.revealedLines for those; padding with spaces cannot fix it, because
--- the padding counts toward printf's own wrap limit and pushes the line over.
-function ui.revealedText(text, elapsed, options)
-    text = tostring(text or "")
-    options = options or {}
-    local limit = options.limit or options.width
-    local fullWrapped = (limit and limit > 0)
-        and ui.wrapText(text, limit, options.font) or text
-    return ui.utf8Prefix(fullWrapped, ui.revealedCount(fullWrapped, elapsed))
-end
-
--- Pre-calculated reveal LAYOUT: the companion to ui.revealedText for text that
--- is centred or right-aligned, where position must be fixed before the first
--- character shows.
+-- Pre-calculated reveal LAYOUT, for text that is centred or right-aligned,
+-- where position must be fixed before the first character shows. Wrap points
+-- are decided ONCE against the FULL text, so no word can migrate to the next
+-- line as later characters appear -- printf re-derives each line's origin
+-- from the width of what is currently visible, so the line would slide as it
+-- types if drawn through printf instead.
 --
 -- Every line's x origin is measured from that line's FINAL, fully-revealed
 -- width, then handed back alongside only the characters visible so far. Draw

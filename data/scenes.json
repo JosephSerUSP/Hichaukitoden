@@ -5687,14 +5687,6 @@
     "windows": [
       {
         "id": "help",
-        "rect": {
-          "x": 0,
-          "y": 0,
-          "w": 32,
-          "h": 4
-        },
-        "style": "frame",
-        "title": null,
         "content": [
           {
             "type": "text",
@@ -5917,14 +5909,6 @@
     "windows": [
       {
         "id": "help",
-        "rect": {
-          "x": 0,
-          "y": 0,
-          "w": 32,
-          "h": 4
-        },
-        "style": "frame",
-        "title": null,
         "content": [
           {
             "type": "text",
