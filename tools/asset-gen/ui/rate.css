@@ -2,8 +2,6 @@
    gets the room: judging a 64px tile from a thumbnail is judging the thumbnail. */
 
 body.rating main { flex-direction: column; gap: 10px; }
-header .corner { margin-left: auto; color: #8d87a4; text-decoration: none; }
-header .corner:hover { color: #d7d3e0; }
 
 .stage, .verdict, .board {
   border: 1px solid #453f5e; background: #1d1b28; padding: 8px; width: 100%;
@@ -20,10 +18,39 @@ header .corner:hover { color: #d7d3e0; }
   image-rendering: pixelated;
 }
 #tile { width: 256px; height: 256px; }
+/* Square cells in BOTH modes. A wall that joins only left-to-right still has
+   square tiles; stretching one to fill the pane's height invented vertical
+   distortion that is not in the texture and is not what the engine draws. The
+   pane shrinks to one row instead. */
 .tiled { width: 256px; height: 256px; background-size: 85.33px 85.33px; }
-.tiled.axis-x { background-size: 85.33px 256px; }
-#context { width: 320px; height: auto; }
-#raw { width: 160px; height: 160px; }
+.tiled.axis-x { height: 85.33px; }
+/* The raw is the ONE pane showing what the model actually returned, before the
+   pixel-fit and quantise passes -- so it is where `burned` is decided, and 128px
+   was too small to decide it. Shown at 512 (2x a 256px render) and left
+   `pixelated` with the others: smoothing a blown highlight is exactly the
+   evidence being looked for. */
+#raw { width: 512px; height: 512px; }
+.building { color: #8d87a4; font-style: italic; padding: 6px 0; }
+
+/* The room, doubled and split. 12px of background between the halves is the
+   whole point -- butted together they read as one continuous space with a
+   crease down the middle, which is the thing that made them hard to judge. */
+.rooms { display: flex; gap: 12px; margin-top: 10px; overflow-x: auto; }
+.rooms figure { margin: 0; }
+.rooms figcaption {
+  color: #8d87a4; text-transform: uppercase; font-size: 10px;
+  letter-spacing: .8px; margin-bottom: 3px;
+}
+.room {
+  width: 512px; height: 288px; flex: none;
+  border: 1px solid #322d47; background-color: #0d0c11;
+  background-repeat: no-repeat;
+  /* Natural size is 512x144 for the pair; 1024x288 is exactly 2x. */
+  background-size: 1024px 288px;
+  image-rendering: pixelated;
+}
+#roomLeft { background-position: 0 0; }
+#roomRight { background-position: -512px 0; }
 
 .facets {
   margin: 0 0 6px; color: #b8aee0; font-family: Consolas, monospace;
@@ -31,6 +58,9 @@ header .corner:hover { color: #d7d3e0; }
 }
 .facets span { color: #8d87a4; }
 .facets b { color: #e9e4ff; font-weight: 600; }
+/* A fault the checker already found. Called out so it is not re-discovered by
+   eye and folded into the score as if it were the material's fault. */
+.facets b.flagged { color: #f0dfbc; background: #4a3c2a; padding: 0 5px; }
 
 .scores { display: flex; gap: 6px; }
 .scores button {
@@ -83,3 +113,24 @@ kbd {
 .boards { display: flex; flex-wrap: wrap; }
 
 .empty { color: #8d87a4; padding: 20px 0; }
+
+/* Batch picker. The free-text filter stays -- it is faster once you know the
+   string -- but nothing on the page used to say which strings existed. */
+.batches { display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  border: 1px solid #453f5e; background: #1d1b28; padding: 6px 8px; width: 100%; }
+.batches .label { color: #8d87a4; text-transform: uppercase; font-size: 10px;
+  letter-spacing: .8px; }
+.batches #families { display: flex; gap: 5px; flex-wrap: wrap; }
+.batches button { padding: 2px 8px; cursor: pointer; background: #252235;
+  color: #d7d3e0; border: 1px solid #453f5e; font-family: Consolas, monospace; }
+.batches button b { color: #f0dfbc; }
+.batches button.done { color: #6f6a80; }
+.batches button.done b { color: #6f6a80; }
+.batches button:hover { border-color: #6d5fa8; }
+.batches button.on { background: #4a3c2a; border-color: #c9a35e; color: #f0dfbc; }
+
+/* Tag groups: several tags answer one question, so they sit together. */
+.tags { flex-direction: column; align-items: flex-start; gap: 3px; }
+.taggroup { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.grouplabel { color: #8d87a4; text-transform: uppercase; font-size: 10px;
+  letter-spacing: .8px; width: 46px; flex: none; }

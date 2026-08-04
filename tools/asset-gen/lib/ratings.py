@@ -90,6 +90,17 @@ TAGS = [
     ("perspective", "v", "brief", "implies a receding surface or camera perspective "
                                   "when the material should be flat, aerial or head-on"),
     ("face", "a", "brief", "a face or figure hallucinated in the rock"),
+    # Whose fault is it? Everything in `brief` blames the MODEL for missing what
+    # was asked. This one says the asking was wrong: the render is a faithful
+    # execution of a brief that requested the wrong thing, so no checkpoint or
+    # LoRA can fix it and none should be scored down for it.
+    #
+    # Coined for a scale failure the owner hit on 04.08: "rubble" returns a heap
+    # of little stones rather than a wall, or a square metre of floor -- the
+    # picture is good and obeys the word, and the word was the wrong word.
+    ("prompt", "w", "authoring", "the picture obeys the brief and the BRIEF was "
+                                 "wrong -- wrong scale, wrong word, our fault not "
+                                 "the model's"),
     # Is the image itself broken? These are faults, not judgements, and the
     # first two are already measured -- tag them so a checkpoint is not scored
     # down for something a prompt or a reroll fixes.
@@ -101,7 +112,7 @@ TAGS = [
     ("busy", "b", "taste", "too detailed or noisy for the tile"),
 ]
 
-GROUP_ORDER = ["tiling", "light", "brief", "broken", "taste"]
+GROUP_ORDER = ["tiling", "light", "brief", "authoring", "broken", "taste"]
 
 # `lit` used to mean "baked lighting or cast shadow" and covered both of the
 # first two tags at once. That conflation is exactly the thing the owner caught:
