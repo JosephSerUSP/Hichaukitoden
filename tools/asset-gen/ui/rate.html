@@ -17,6 +17,13 @@
 
 <main id="rate">
 
+  <!-- What is on disk, so choosing a batch is picking from a list rather than
+       guessing a string. -->
+  <section class="batches">
+    <span class="label">batch</span>
+    <div id="families"></div>
+  </section>
+
   <section class="stage">
     <div class="panes">
       <figure>
@@ -29,32 +36,58 @@
              display is the real one and not a re-encoded copy of it. -->
         <div id="tiled" class="tiled"></div>
       </figure>
-      <figure id="contextFigure" hidden>
-        <figcaption>in engine</figcaption>
-        <img id="context" alt="">
-      </figure>
       <figure id="rawFigure">
         <figcaption>raw source</figcaption>
         <img id="raw" alt="">
       </figure>
     </div>
+
+    <!-- The engine returns the two corridor tiles fused into one 512px strip,
+         and the join in the middle reads as a fold in geometry that is not
+         there. Split apart and doubled, each half is a room you can actually
+         judge. -->
+    <div class="rooms" id="rooms" hidden>
+      <figure>
+        <figcaption id="contextLabel">in the room &mdash; left tile</figcaption>
+        <div class="room" id="roomLeft"></div>
+      </figure>
+      <figure>
+        <figcaption>right tile</figcaption>
+        <div class="room" id="roomRight"></div>
+      </figure>
+    </div>
+    <p class="building" id="contextNote"></p>
   </section>
 
   <section class="verdict">
     <p class="facets" id="facets"></p>
 
     <div class="scores" id="scores">
+      <!-- 0 and 6 are set apart because they are not more of the 1-5 scale:
+           0 flags a catastrophe that wants a person to look, 6 marks the few
+           worth finding again. Styled as ends, not as extra rungs. -->
+      <button data-score="0" class="edge low"><b>0</b><span>catastrophe</span></button>
       <button data-score="1"><b>1</b><span>reject</span></button>
       <button data-score="2"><b>2</b><span>weak</span></button>
       <button data-score="3"><b>3</b><span>usable</span></button>
       <button data-score="4"><b>4</b><span>good</span></button>
       <button data-score="5"><b>5</b><span>want it</span></button>
+      <button data-score="6" class="edge high"><b>6</b><span>love it</span></button>
     </div>
 
-    <p class="hint">Press <kbd>1</kbd>&ndash;<kbd>5</kbd> to score and advance.
+    <p class="hint">Press <kbd>0</kbd>&ndash;<kbd>6</kbd> to score and advance.
+      <kbd>0</kbd> is a catastrophe worth looking at, <kbd>6</kbd> is one to keep.
       Tag first if the reason matters &mdash; tags stick to the next score only.</p>
 
     <div class="tags" id="tags"></div>
+
+    <!-- Free text, for the fault no tag can name yet. Sits under the tags
+         because it is the same act: saying WHY. Number keys are ignored while
+         it has focus, so a note can contain digits without scoring the tile. -->
+    <label class="ratingnote"><span>note</span>
+      <input id="note" spellcheck="true" autocomplete="off"
+             placeholder="optional &mdash; e.g. the lighting on these walls reads outdoors">
+    </label>
 
     <div class="nav">
       <button id="back">&larr; back</button>

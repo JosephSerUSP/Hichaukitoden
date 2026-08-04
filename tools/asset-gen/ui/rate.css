@@ -73,6 +73,16 @@ body.rating main { flex-direction: column; gap: 10px; }
 .scores button b { font-size: 15px; color: #e9e4ff; }
 .scores button span { color: #8d87a4; font-size: 10px; }
 .scores button.was { border-color: #7ec98f; }
+/* The ends are not rungs of the same ladder, so they do not look like rungs.
+   A gap sets them apart from the 1-5 run and the colour says which direction
+   is meant before the label is read -- these get pressed at speed. */
+.scores button.edge { flex-basis: 78px; }
+.scores button.edge.low { background: #2e1f22; border-color: #7a3f47; margin-right: 10px; }
+.scores button.edge.low:hover { background: #43272c; border-color: #b2606b; }
+.scores button.edge.low b { color: #ffb3ba; }
+.scores button.edge.high { background: #1f2b25; border-color: #3f7a55; margin-left: 10px; }
+.scores button.edge.high:hover { background: #274036; border-color: #60b283; }
+.scores button.edge.high b { color: #b6f0cd; }
 
 .hint { color: #8d87a4; margin: 6px 0 4px; }
 kbd {
@@ -87,6 +97,22 @@ kbd {
 }
 .tags button:hover { border-color: #6d5fa8; }
 .tags button.on { background: #4a3c2a; border-color: #c9a35e; color: #f0dfbc; }
+
+/* NOT `.note` -- that class already means a small grey caption, in style.css and
+   on the leaderboard paragraph below. Reusing it made each silently restyle the
+   other. */
+.ratingnote {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px; width: 100%;
+}
+.ratingnote span {
+  color: #8d87a4; text-transform: uppercase; font-size: 10px;
+  letter-spacing: .8px; width: 46px; flex: none;
+}
+.ratingnote input {
+  flex: 1 1 auto; min-width: 0; background: #201e2c; color: #d7d3e0;
+  border: 1px solid #453f5e; padding: 3px 6px; font: inherit;
+}
+.ratingnote input:focus { outline: none; border-color: #c9a35e; background: #262232; }
 
 .nav { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .nav button {

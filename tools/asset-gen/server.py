@@ -261,7 +261,10 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/rate/queue":
             query = parse_qs(urlparse(self.path).query)
             return self._send(200, {
-                "tags": [{"id": tag, "help": help_} for tag, help_ in ratings.TAGS],
+                "tags": [{"id": tag, "key": key, "group": group, "help": help_}
+                         for tag, key, group, help_ in ratings.TAGS],
+                "groups": ratings.GROUP_ORDER,
+                "families": ratings.families(_staging_root()),
                 "items": ratings.queue(_staging_root(),
                                        (query.get("prefix") or [""])[0],
                                        (query.get("rated") or ["0"])[0] == "1"),
@@ -314,10 +317,34 @@ class Handler(BaseHTTPRequestHandler):
             code, output = _run_cli(argv)
             return self._send(200, {"ok": code == 0, "log": output})
 
+        if path == "/api/rate/context":
+            # Built on demand so the rater is never blocked waiting for a
+            # batch-wide report pass to reach the run in front of them. It
+            # shells out to the engine, so it is slow; the page asks once per
+            # item and shows the tile meanwhile.
+            run_path = os.path.join(_staging_root(), body.get("run") or "")
+            if not os.path.isdir(run_path):
+                return self._send(404, {"error": "no such run"})
+            manifest = staging.read_manifest(run_path)
+            cli._add_context_previews(run_path, manifest)
+            variant = next((v for v in manifest.get("variants") or []
+                            if v.get("index") == body.get("variant")), None)
+            if not variant or not variant.get("context"):
+                return self._send(200, {
+                    "ok": False,
+                    "error": (variant or {}).get("contextError", "preview unavailable"),
+                })
+            return self._send(200, {
+                "ok": True,
+                "context": f"/out/{body['run']}/{variant['context']}",
+                "label": variant.get("contextLabel", "in engine"),
+            })
+
         if path == "/api/rate":
             try:
                 ratings.record(body["run"], body["variant"],
-                               body.get("score"), body.get("tags"))
+                               body.get("score"), body.get("tags"),
+                               body.get("note"))
             except (KeyError, ValueError) as err:
                 return self._send(400, {"error": str(err)})
             return self._send(200, {"ok": True})

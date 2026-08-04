@@ -866,6 +866,19 @@ def cmd_ratings(args):
             why = " ".join(f"{tag}x{count}" for tag, count in row["tags"].items())
             print(f"{row['value'][:27]:28}{row['score']:>7.2f}{row['n']:>5}"
                   f"{seam:>7}   {why}")
+    # Notes last, and never truncated. They are written sparingly and by hand,
+    # so each one costs more to produce than every number above it and is the
+    # only place a fault with no tag can be described at all. A note nobody
+    # reads back is a diary, not an instrument.
+    rows = [row for row in ratings.notes(store)
+            if not args.prefix or args.prefix in row[0]]
+    if rows:
+        print(f"\n== notes ({len(rows)})")
+        for entry_key, when, score, tags, text in rows:
+            label = ratings.SCORE_LABELS.get(score, score)
+            suffix = f"  [{' '.join(tags)}]" if tags else ""
+            print(f"  {when[:16]}  {str(label):>11}  {entry_key.split('-', 1)[-1][:46]}{suffix}")
+            print(f"      {text}")
     if not scored:
         print("\nNothing scored yet. Run the server and open /rate.")
     return 0

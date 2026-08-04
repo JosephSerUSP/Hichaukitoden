@@ -177,22 +177,65 @@ def save(store):
     return STORE
 
 
-def record(run_name, variant_index, score, tags=None):
-    """Write one judgement. Re-rating the same variant replaces the old one."""
-    if score is not None and not 1 <= int(score) <= 5:
-        raise ValueError("score must be 1-5")
+SCORE_MIN, SCORE_MAX = 0, 6
+
+# 1-5 is the ordinary scale and the two ends are deliberately not more of it.
+#
+# 0 is not "worse than 1". It is a flag: something failed catastrophically and
+# wants a person to look at it, not a star to be averaged into a column. 6 is
+# its mirror -- not "better than 5" but "I actually really like this", the
+# handful worth finding again later.
+#
+# Both are rare by construction, so a mean over a column containing one moves
+# further than the judgement intends. Read them as counts as well as values.
+SCORE_LABELS = {0: "catastrophe", 6: "love it"}
+
+
+def record(run_name, variant_index, score, tags=None, note=None):
+    """Write one judgement. Re-rating the same variant replaces the old one.
+
+    `note` is free text and deliberately unconstrained. The tags are a closed
+    vocabulary because they have to aggregate; a note is for the thing no tag
+    can say yet -- "the lighting on these walls reads OUTDOORS" is a real,
+    repeating fault with no tag to its name, and the note is where such a
+    pattern gets recorded before anyone knows what to call it. Several notes
+    saying the same thing is the evidence that a tag should exist.
+    """
+    if score is not None and not SCORE_MIN <= int(score) <= SCORE_MAX:
+        raise ValueError(f"score must be {SCORE_MIN}-{SCORE_MAX}")
     # The HTTP server is threaded and the rater can submit adjacent scores
     # faster than the filesystem round-trip. Keep the read-modify-write as
     # one operation or the last request can overwrite its sibling's rating.
     with _STORE_LOCK:
         store = load()
-        store[key(run_name, variant_index)] = {
+        judgement = {
             "score": None if score is None else int(score),
             "tags": sorted(set(tags or [])),
             "at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
+        # Absent rather than empty: the store is read by eye often enough that
+        # a blank field on 400 judgements is noise, and `note in judgement` is
+        # the natural way to ask for the ones that have something to say.
+        text = (note or "").strip()
+        if text:
+            judgement["note"] = text
+        store[key(run_name, variant_index)] = judgement
         save(store)
         return store
+
+
+def notes(store=None):
+    """Every note on record, newest first, as (key, when, score, tags, text).
+
+    Notes exist to be re-read -- a note nobody ever sees again is a diary, not
+    an instrument -- so reading them back is a first-class operation and not
+    something to be reconstructed from the raw JSON each time.
+    """
+    store = load() if store is None else store
+    rows = [(k, v.get("at") or "", v.get("score"), v.get("tags") or [], v["note"])
+            for k, v in store.items() if (v.get("note") or "").strip()]
+    rows.sort(key=lambda row: row[1], reverse=True)
+    return rows
 
 
 def facets(manifest, variant):
