@@ -119,47 +119,55 @@ check(math.abs(wAspectW - sHorizRad / 0.81) < 1e-4, "Wide viewport (aspect 2.0) 
 local _, nAspectW, nAspectH = item_model_view.calculateFit(swordBounds, 100, 200, 0.81, tilt) -- aspect 0.5
 check(math.abs(nAspectH - (sHorizRad / 0.5) / 0.81) < 1e-4, "Narrow viewport (aspect 0.5) fits tilted horizontal radius across height")
 
--------------------------------------------------- 5. Model path validation --
+local validator = require("engine.validator")
 
-local testProblems = {}
-local function testCheck(cond, msg)
-    if not cond then table.insert(testProblems, msg) end
+-------------------------------------------------- 5. Real validator tests --
+
+local function validateWithItems(itemsList)
+    local mockLoader = {}
+    for k, v in pairs(loader) do mockLoader[k] = v end
+    mockLoader.items = itemsList
+    return pcall(validator.run, mockLoader)
 end
 
-local function validateItemModel(item)
-    if item.model ~= nil then
-        testCheck(type(item.model) == "string" and item.model ~= "",
-            "item " .. tostring(item.id) .. " model must be a non-empty asset path")
-        testCheck(love.filesystem.getInfo(item.model) ~= nil,
-            "item " .. tostring(item.id) .. " model resolves to no asset: "
-                .. tostring(item.model))
-    end
-end
+-- Valid model
+local okValid, errValid = validateWithItems({ { id = "valid_item", model = "assets/models/items/silver_blade.obj" } })
+check(okValid == true, "Real validator: valid item model path passes validation")
 
-validateItemModel({ id = "valid_item", model = "assets/models/items/silver_blade.obj" })
-check(#testProblems == 0, "Valid item model path passes validation")
+-- Optional model field (missing model key)
+local okNoModel, errNoModel = validateWithItems({ { id = "no_model_item" } })
+check(okNoModel == true, "Real validator: item without model field passes validation")
 
-testProblems = {}
-validateItemModel({ id = "no_model_item" })
-check(#testProblems == 0, "Item without model field passes validation")
+-- Missing file
+local okMissing, errMissing = validateWithItems({ { id = "missing_model_item", model = "assets/models/items/definitely_missing.obj" } })
+check(okMissing == false and tostring(errMissing):find("resolves to no asset"),
+    "Real validator: missing model asset yields 'resolves to no asset' problem")
 
-testProblems = {}
-validateItemModel({ id = "invalid_item", model = "assets/models/items/non_existent.obj" })
-check(#testProblems == 1 and testProblems[1]:find("resolves to no asset"),
-    "Deliberately invalid item model path is rejected by validation")
+-- Empty string
+local okEmpty, errEmpty = validateWithItems({ { id = "empty_model_item", model = "" } })
+check(okEmpty == false and tostring(errEmpty):find("must be a non-empty asset path", 1, true) ~= nil,
+    "Real validator: empty model path string yields 'must be a non-empty asset path' problem")
 
--------------------------------------------------- 6. Graphics state protection & GPU smoke test --
+-- Wrong type (number, boolean)
+local okNum, errNum = validateWithItems({ { id = "numeric_model_item", model = 42 } })
+check(okNum == false and tostring(errNum):find("must be a non-empty asset path", 1, true) ~= nil,
+    "Real validator: numeric model path yields 'must be a non-empty asset path' problem without crashing")
+
+local okBool, errBool = validateWithItems({ { id = "bool_model_item", model = true } })
+check(okBool == false and tostring(errBool):find("must be a non-empty asset path", 1, true) ~= nil,
+    "Real validator: boolean model path yields 'must be a non-empty asset path' problem without crashing")
+
+-------------------------------------------------- 6. Graphics state protection & offset scissor regression test --
 
 if love.graphics and love.graphics.isCreated() then
     love.graphics.setColor(0.8, 0.4, 0.2, 0.5)
-    love.graphics.setScissor(5, 5, 50, 50)
+    love.graphics.setScissor(150, 40, 80, 100)
 
-    local colorCanvas = love.graphics.newCanvas(100, 100)
-    local depthCanvas = love.graphics.newCanvas(100, 100, { format = "depth24stencil8" })
-    love.graphics.setCanvas({ colorCanvas, depthstencil = depthCanvas })
-    love.graphics.clear(0, 0, 0, 0, 0, 1)
+    local screenCanvas = love.graphics.newCanvas(300, 300)
+    love.graphics.setCanvas(screenCanvas)
+    love.graphics.clear(0, 0, 0, 0)
 
-    item_model_view.draw(0, 0, 100, 100, "assets/models/items/silver_blade.obj", "test_win", "test_sel", 0)
+    item_model_view.draw(150, 40, 80, 100, "assets/models/items/silver_blade.obj", "scissor_test_window", "scissor_test_item", 0)
 
     love.graphics.setCanvas()
 
@@ -168,18 +176,18 @@ if love.graphics and love.graphics.isCreated() then
 
     check(math.abs(r - 0.8) < 1e-4 and math.abs(g - 0.4) < 1e-4 and math.abs(b - 0.2) < 1e-4 and math.abs(a - 0.5) < 1e-4,
         "Caller graphics color is restored after item_model_view.draw")
-    check(sx == 5 and sy == 5 and sw == 50 and sh == 50,
-        "Caller scissor is restored after item_model_view.draw")
+    check(sx == 150 and sy == 40 and sw == 80 and sh == 100,
+        "Caller offset scissor is restored after item_model_view.draw")
 
-    local imgData = colorCanvas:newImageData()
+    local imgData = screenCanvas:newImageData()
     local nonZeroAlpha = 0
-    for py = 0, 99 do
-        for px = 0, 99 do
+    for py = 40, 139 do
+        for px = 150, 229 do
             local _, _, _, alpha = imgData:getPixel(px, py)
             if alpha > 0 then nonZeroAlpha = nonZeroAlpha + 1 end
         end
     end
-    check(nonZeroAlpha > 0, "GPU smoke test: item model view renders non-zero alpha pixels (" .. nonZeroAlpha .. " px)")
+    check(nonZeroAlpha > 0, "Offset scissor regression test: model renders into offscreen canvas and composite pixels appear in destination region (" .. nonZeroAlpha .. " px)")
 end
 
 print("Item model view tests completed: " .. passed .. " passed, " .. failed .. " failed")

@@ -1005,18 +1005,24 @@ validator.run = function(loader)
 
     for _, item in ipairs(loader.items) do
         if item.keyArt ~= nil then
-            check(type(item.keyArt) == "string" and item.keyArt ~= "",
+            local validKeyArt = type(item.keyArt) == "string" and item.keyArt ~= ""
+            check(validKeyArt,
                 "item " .. tostring(item.id) .. " keyArt must be a non-empty asset path")
-            check(love.filesystem.getInfo(item.keyArt) ~= nil,
-                "item " .. tostring(item.id) .. " keyArt resolves to no asset: "
-                    .. tostring(item.keyArt))
+            if validKeyArt then
+                check(love.filesystem.getInfo(item.keyArt) ~= nil,
+                    "item " .. tostring(item.id) .. " keyArt resolves to no asset: "
+                        .. tostring(item.keyArt))
+            end
         end
         if item.model ~= nil then
-            check(type(item.model) == "string" and item.model ~= "",
+            local validModelPath = type(item.model) == "string" and item.model ~= ""
+            check(validModelPath,
                 "item " .. tostring(item.id) .. " model must be a non-empty asset path")
-            check(love.filesystem.getInfo(item.model) ~= nil,
-                "item " .. tostring(item.id) .. " model resolves to no asset: "
-                    .. tostring(item.model))
+            if validModelPath then
+                check(love.filesystem.getInfo(item.model) ~= nil,
+                    "item " .. tostring(item.id) .. " model resolves to no asset: "
+                        .. tostring(item.model))
+            end
         end
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))

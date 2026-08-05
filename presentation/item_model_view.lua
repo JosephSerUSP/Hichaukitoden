@@ -202,10 +202,13 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
     local llen = math.sqrt(lx*lx + ly*ly + lz*lz)
     lx, ly, lz = lx / llen, ly / llen, lz / llen
 
+    local sx, sy, sw, sh = love.graphics.getScissor()
+
     love.graphics.push("all")
 
     local prevCanvas = love.graphics.getCanvas()
     love.graphics.setCanvas({ buffers.color, depthstencil = buffers.depth })
+    love.graphics.setScissor()
     love.graphics.clear(0, 0, 0, 0, 0, 1)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setDepthMode("less", true)
@@ -237,6 +240,12 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
     love.graphics.setShader()
     love.graphics.setDepthMode()
     love.graphics.setCanvas(prevCanvas)
+
+    if sx ~= nil then
+        love.graphics.setScissor(sx, sy, sw, sh)
+    else
+        love.graphics.setScissor()
+    end
 
     -- Composite canvas to UI panel using white color
     love.graphics.setColor(1, 1, 1, 1)
