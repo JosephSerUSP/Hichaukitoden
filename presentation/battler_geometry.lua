@@ -60,18 +60,31 @@ local function makeRect(x, y, w, h, frameX, frameY, frameW, frameH, side, index)
     }
 end
 
--- Horizontal slot arithmetic for the enemy row, shared by the rect and the
+-- Horizontal slot arithmetic for the enemy formation grid, shared by the rect and the
 -- info block so a wider row can never move one without the other.
 function battler_geometry.enemySlot(session, index, count)
-    local spacing = layoutVal(session, "enemyRowWidth") / math.max(1, count)
-    local slotX = layoutVal(session, "enemyStartX") + (index - 1) * spacing
-    return slotX + spacing / 2, spacing
+    count = count or 4
+    local formation = require("engine.formation")
+    if formation.isValidSlot(index) then
+        local col = formation.colOf(index)
+        local row = formation.rowOf(index)
+        local totalCols = 2
+        local spacing = layoutVal(session, "enemyRowWidth") / totalCols
+        local startX = layoutVal(session, "enemyStartX")
+        local slotX = startX + (col - 1) * spacing + spacing / 2
+        local rowYOffset = (row == "back") and -12 or 8
+        return slotX, spacing, rowYOffset
+    else
+        local spacing = layoutVal(session, "enemyRowWidth") / math.max(1, count)
+        local slotX = layoutVal(session, "enemyStartX") + (index - 1) * spacing
+        return slotX + spacing / 2, spacing, 0
+    end
 end
 
 -- `image` is the resolved bigBattler (nil falls back to the authored square).
 function battler_geometry.enemyRect(session, index, count, image)
-    local centerX = battler_geometry.enemySlot(session, index, count)
-    local feetY = layoutVal(session, "enemyY") + layoutVal(session, "enemySpriteSize")
+    local centerX, spacing, rowYOffset = battler_geometry.enemySlot(session, index, count)
+    local feetY = layoutVal(session, "enemyY") + layoutVal(session, "enemySpriteSize") + (rowYOffset or 0)
     local fallback = layoutVal(session, "enemyFallbackSize")
     local w = image and image:getWidth() or fallback
     local h = image and image:getHeight() or fallback

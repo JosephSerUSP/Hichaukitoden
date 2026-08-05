@@ -736,15 +736,40 @@ local function getHoveredTargets(bv, combatState, selectedIndex, skillSelect, it
         local candidates = targeting.getCandidates(monster, spec, bv.battle, pending.skill or pending.item)
         if #candidates == 0 then return {} end
         
-        if exp.count == "all" then
-            return candidates
-        else
-            local idx = bv.targetIndex or 1
-            if idx < 1 then idx = 1 end
-            if idx > #candidates then idx = #candidates end
-            bv.targetIndex = idx
-            return { candidates[idx] }
+        local idx = bv.targetIndex or 1
+        if idx < 1 then idx = 1 end
+        if idx > #candidates then idx = #candidates end
+        bv.targetIndex = idx
+        local chosenAnchor = candidates[idx]
+
+        local targets = targeting.resolve(monster, spec, bv.battle, chosenAnchor, pending.skill or pending.item)
+        
+        -- Cover prediction preview
+        if exp.shape == "single" and exp.cover == "respect" and #targets > 0 then
+            local formation = require("engine.formation")
+            local traits = require("engine.traits")
+            local origTarget = targets[1]
+            local actorIsEnemy = false
+            for slot = 1, 4 do
+                if bv.battle and bv.battle.enemies and bv.battle.enemies[slot] == monster then
+                    actorIsEnemy = true
+                    break
+                end
+            end
+            local targetGroup = actorIsEnemy and (bv.battle and bv.battle.allies) or (bv.battle and bv.battle.enemies)
+            local targetSlot = targetGroup and formation.slotOf(targetGroup, origTarget)
+            if targetSlot and formation.rowOf(targetSlot) == "back" then
+                local frontSlot = formation.alignedFrontSlot(targetSlot)
+                local protector = targetGroup[frontSlot]
+                if protector and not protector:isDead() and not (protector.isRestricted and protector:isRestricted()) then
+                    if #traits.findAllSources(protector, "COVER_ALIGNED_BACK", session) > 0 then
+                        targets = { protector }
+                    end
+                end
+            end
         end
+
+        return targets
     end
 
     return {}

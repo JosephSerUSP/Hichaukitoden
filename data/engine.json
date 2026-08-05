@@ -2724,6 +2724,17 @@
   ],
   "traitCodes": [
     {
+      "code": "COVER_ALIGNED_BACK",
+      "label": "Cover Aligned Back",
+      "usesDataId": false,
+      "description": "A living, unrestricted front-row holder of this trait protects the living back-row creature in the same column from single-target coverable attacks.",
+      "display": {
+        "short": "Cover Back",
+        "value": "none",
+        "polarity": "higher"
+      }
+    },
+    {
       "code": "PARAM_PLUS",
       "label": "Parameter +",
       "usesDataId": true,

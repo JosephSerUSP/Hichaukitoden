@@ -131,6 +131,9 @@
       {
         "code": "DAMAGE_RATE",
         "value": 0.5
+      },
+      {
+        "code": "COVER_ALIGNED_BACK"
       }
     ]
   },

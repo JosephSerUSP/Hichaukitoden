@@ -263,6 +263,7 @@
     "icon": 6,
     "description": "[Self] Brace for impact, reducing incoming damage this round.",
     "speed": 50,
+    "priority": 100,
     "effects": [
       {
         "type": "add_status",

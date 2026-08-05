@@ -1,5 +1,6 @@
 local formula = require("engine.formula")
 local traits = require("engine.traits")
+local formation = require("engine.formation")
 
 local targeting = {}
 
@@ -29,6 +30,8 @@ end
 local VALID_SIDES  = { enemy = true, ally = true, self = true, any = true, none = true }
 local VALID_MODES  = { choose = true, random = true }
 local VALID_STATES = { alive = true, dead = true, any = true }
+local VALID_SHAPES = { single = true, row = true, column = true, all = true }
+local VALID_COVERS = { respect = true, bypass = true }
 
 -- Expand target shorthand specifications to standard schema table
 function targeting.expand(spec)
@@ -41,21 +44,21 @@ function targeting.expand(spec)
             end
             -- countPart: a number, or a formula string evaluated at resolve time
             local countVal = tonumber(countPart) or countPart
-            return { side = sidePart, count = countVal, mode = "random", state = "alive" }
+            return { side = sidePart, count = countVal, mode = "random", state = "alive", shape = "single", cover = "respect" }
         end
 
         if spec == "enemy" or spec == "enemy-any" then
-            return { side = "enemy", count = 1, mode = "choose", state = "alive" }
+            return { side = "enemy", count = 1, mode = "choose", state = "alive", shape = "single", cover = "respect" }
         elseif spec == "ally-any" or spec == "ally" then
-            return { side = "ally", count = 1, mode = "choose", state = "alive" }
+            return { side = "ally", count = 1, mode = "choose", state = "alive", shape = "single", cover = "respect" }
         elseif spec == "self" then
-            return { side = "self", count = 1, mode = "choose", state = "alive" }
+            return { side = "self", count = 1, mode = "choose", state = "alive", shape = "single", cover = "respect" }
         elseif spec == "party" or spec == "ally-all" then
-            return { side = "ally", count = "all", mode = "choose", state = "alive" }
+            return { side = "ally", count = "all", mode = "choose", state = "alive", shape = "all", cover = "respect" }
         elseif spec == "enemy-all" then
-            return { side = "enemy", count = "all", mode = "choose", state = "alive" }
+            return { side = "enemy", count = "all", mode = "choose", state = "alive", shape = "all", cover = "respect" }
         elseif spec == "none" then
-            return { side = "none", count = 0, mode = "choose", state = "any" }
+            return { side = "none", count = 0, mode = "choose", state = "any", shape = "single", cover = "respect" }
         else
             error("targeting: unknown target spec '" .. spec .. "'", 2)
         end
@@ -70,6 +73,12 @@ function targeting.expand(spec)
         if spec.state ~= nil and not VALID_STATES[spec.state] then
             error("targeting: invalid state '" .. tostring(spec.state) .. "' in target spec table", 2)
         end
+        if spec.shape ~= nil and not VALID_SHAPES[spec.shape] then
+            error("targeting: invalid shape '" .. tostring(spec.shape) .. "' in target spec table", 2)
+        end
+        if spec.cover ~= nil and not VALID_COVERS[spec.cover] then
+            error("targeting: invalid cover '" .. tostring(spec.cover) .. "' in target spec table", 2)
+        end
         local c = spec.count
         if c ~= nil and c ~= "all" and type(c) ~= "string"
             and not (type(c) == "number" and c >= 1) then
@@ -79,7 +88,9 @@ function targeting.expand(spec)
             side = spec.side or "enemy",
             count = spec.count or 1,
             mode = spec.mode or "choose",
-            state = spec.state or "alive"
+            state = spec.state or "alive",
+            shape = spec.shape or (spec.count == "all" and "all" or "single"),
+            cover = spec.cover or "respect"
         }
     else
         error("targeting: target spec must be a string or table, got " .. type(spec), 2)
@@ -217,31 +228,63 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
     end
     
     if mode == "choose" then
+        local anchor = nil
         if chosenTarget then
             for _, b in ipairs(legal) do
                 if b == chosenTarget then
-                    -- If count > 1, duplicate selection of chosenTarget
-                    local picked = {}
-                    for i = 1, count do
-                        table.insert(picked, chosenTarget)
-                    end
-                    return picked
+                    anchor = chosenTarget
+                    break
                 end
             end
         end
-        -- Fallback
-        if #legal > 0 then
+        if not anchor and #legal > 0 then
+            anchor = legal[1]
+        end
+
+        if not anchor then return {} end
+
+        if exp.shape == "row" then
+            local anchorSlot = formation.slotOf(candidates, anchor)
+            local rowName = formation.rowOf(anchorSlot)
+            local res = {}
+            for slot = 1, formation.SLOT_COUNT do
+                local b = candidates[slot]
+                if b and formation.rowOf(slot) == rowName then
+                    for _, leg in ipairs(legal) do
+                        if leg == b then table.insert(res, b) break end
+                    end
+                end
+            end
+            return #res > 0 and res or { anchor }
+        elseif exp.shape == "column" then
+            local anchorSlot = formation.slotOf(candidates, anchor)
+            local colIdx = formation.colOf(anchorSlot)
+            local res = {}
+            for slot = 1, formation.SLOT_COUNT do
+                local b = candidates[slot]
+                if b and formation.colOf(slot) == colIdx then
+                    for _, leg in ipairs(legal) do
+                        if leg == b then table.insert(res, b) break end
+                    end
+                end
+            end
+            return #res > 0 and res or { anchor }
+        elseif exp.shape == "all" or exp.count == "all" then
+            return legal
+        else
+            -- Single target (with optional count duplication)
             local picked = {}
             for i = 1, count do
-                table.insert(picked, legal[1])
+                table.insert(picked, anchor)
             end
             return picked
-        else
-            return {}
         end
     elseif mode == "random" then
         if #legal == 0 then
             return {}
+        end
+        if exp.shape == "all" or exp.count == "all" then
+            return legal
         end
         local picked = {}
         for i = 1, count do

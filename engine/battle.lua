@@ -6,6 +6,7 @@ local interpreter = require("engine.interpreter")
 local compareIds = require("engine.inventory").compareIds
 local usability = require("engine.usability")
 local skill_cost = require("engine.skill_cost")
+local formation = require("engine.formation")
 
 local battle = {}
 
@@ -60,26 +61,27 @@ Battle.__index = Battle
 function Battle.new(session, enemies)
     local self = setmetatable({}, Battle)
     self.session = session
-    self.enemies = enemies
-    self.allies = session:getActiveParty() -- the 4 active creatures; no summoner (overhaul-6 F1)
+    self.enemies = formation.autoPack(enemies, 4)
+    self.allies = session.party
     self.round = 1
     self.log = {}
     -- Wave casualties awaiting the battle-end REAP_FALLEN sweep (Summoner
     -- rework §3): spirits replaced by an emergency reserve wave leave the
     -- party immediately but only convert to banked EXP when the battle ends.
     self.fallen = {}
-    -- Front/back row state (Summoner rework §4): engine-accessible only for
-    -- now — no combat math consumes it. Default by fielded slot: 1-2 front,
-    -- 3-4 back. Spirits keep an explicitly assigned row across battles.
-    for i, ally in ipairs(self.allies) do
-        ally.row = ally.row or ((i <= 2) and "front" or "back")
-    end
+
     -- Skill cooldowns/warmups are battle-scoped: cleared here, armed here, and
     -- never carried out of the fight they were spent in. Charges are the
     -- opposite -- creature state that persists until Rest -- and are
     -- deliberately untouched by this.
-    for _, b in ipairs(self.allies) do skill_cost.beginBattle(b, session.loader) end
-    for _, b in ipairs(enemies) do skill_cost.beginBattle(b, session.loader) end
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local b = self.allies[slot]
+        if b then skill_cost.beginBattle(b, session.loader) end
+    end
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local b = self.enemies[slot]
+        if b then skill_cost.beginBattle(b, session.loader) end
+    end
     return self
 end
 
@@ -257,6 +259,7 @@ end
 function Battle:buildTurnQueue(collectedActions)
     -- 2. Build the turn queue for all creatures
     local queue = {}
+    local targeting = require("engine.targeting")
 
     -- Ally creatures
     for i = 1, config.MAX_PARTY_SIZE do
@@ -272,7 +275,6 @@ function Battle:buildTurnQueue(collectedActions)
                 -- Whatever was chosen is discarded, including an item: a
                 -- creature that cannot control itself cannot rummage in a bag.
                 skill = compelled
-                local targeting = require("engine.targeting")
                 target = targeting.resolve(ally, compelled.target, self)[1]
             elseif chosenAct then
                 if chosenAct.type == "skill" then
@@ -283,7 +285,7 @@ function Battle:buildTurnQueue(collectedActions)
                     -- speed/effects are editable like any other skill
                     local defendId = config.combat and config.combat.defendSkillId or "defend"
                     skill = self.session.loader.getSkill(defendId)
-                        or { name = "Defend", speed = 50, effects = {} }
+                        or { name = "Defend", speed = 50, priority = 100, effects = {} }
                     target = ally
                 elseif chosenAct.type == "item" then
                     -- F7: Item joins the creature's command list. The item is
@@ -297,7 +299,6 @@ function Battle:buildTurnQueue(collectedActions)
                 end
             else
                 skill = getAttackSkill(self.session)
-                local targeting = require("engine.targeting")
                 local targets = targeting.resolve(ally, skill.target, self)
                 target = targets[1]
             end
@@ -306,37 +307,49 @@ function Battle:buildTurnQueue(collectedActions)
                 local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + ally.level * (config.combat and config.combat.speedPerLevel or 0.5)
                 local actSpeed = skill and (skill.speed or 0) or (config.combat and config.combat.battleItemSpeed or 50)
                 local totalSpeed = baseSpeed + actSpeed
+                local priority = (skill and skill.priority) or (itemAct and itemAct.priority) or 0
                 table.insert(queue, {
                     actor = ally,
                     skill = skill,
                     target = target,
                     speed = totalSpeed,
+                    priority = priority,
                     item = itemAct,
+                    order = #queue + 1,
                 })
             end
         end
     end
     
     -- Enemies
-    for _, enemy in ipairs(self.enemies) do
-        if not enemy:isDead() then
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local enemy = self.enemies[slot]
+        if enemy and not enemy:isDead() then
             local action = self:getAIAction(enemy)
             if action then
                 local baseSpeed = (config.combat and config.combat.baseSpeed or 10) + enemy.level * (config.combat and config.combat.speedPerLevel or 0.5)
-                local actSpeed = action.skill.speed or 0
-                local totalSpeed = baseSpeed + actSpeed
-                action.speed = totalSpeed
+                local actSpeed = action.skill and (action.skill.speed or 0) or 0
+                action.speed = baseSpeed + actSpeed
+                action.priority = (action.skill and action.skill.priority) or 0
+                action.order = #queue + 1
                 table.insert(queue, action)
             end
         end
     end
     
-    -- Sort queue by Speed descending
-    table.sort(queue, function(a, b)
-        return a.speed > b.speed
-    end)
-
     self:applyFirstStrikes(queue)
+
+    -- Sort queue by Priority -> First Strike -> Speed -> Order
+    table.sort(queue, function(a, b)
+        local pA = a.priority or 0
+        local pB = b.priority or 0
+        if pA ~= pB then return pA > pB end
+        if (a.firstStrike or false) ~= (b.firstStrike or false) then
+            return a.firstStrike == true
+        end
+        if a.speed ~= b.speed then return a.speed > b.speed end
+        return (a.order or 0) < (b.order or 0)
+    end)
 
     return queue
 end
@@ -358,7 +371,8 @@ function Battle:applyFirstStrikes(queue)
 
     local function guardOf(list)
         local sum = 0
-        for _, b in ipairs(list or {}) do
+        for slot = 1, config.MAX_PARTY_SIZE do
+            local b = list and list[slot]
             if b and not b:isDead() then
                 sum = sum + traits.getRate(b, "REAR_GUARD", session)
             end
@@ -367,7 +381,10 @@ function Battle:applyFirstStrikes(queue)
     end
 
     local allyIndex = {}
-    for _, a in ipairs(self.allies or {}) do allyIndex[a] = true end
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local a = self.allies and self.allies[slot]
+        if a then allyIndex[a] = true end
+    end
     local allyGuard, enemyGuard = guardOf(self.allies), guardOf(self.enemies)
 
     -- Collect eligible carriers first: no carrier means no roll at all.
@@ -383,24 +400,11 @@ function Battle:applyFirstStrikes(queue)
     end
     if #eligible == 0 then return end
 
-    local anyWon = false
     for _, cand in ipairs(eligible) do
         if math.random() < cand.rate then
             cand.turn.firstStrike = true
-            anyWon = true
         end
     end
-    if not anyWon then return end
-
-    -- Stable partition: winners move ahead of everyone, each group keeping the
-    -- speed order already established above.
-    local front, back = {}, {}
-    for _, turn in ipairs(queue) do
-        table.insert(turn.firstStrike and front or back, turn)
-    end
-    for i = #queue, 1, -1 do queue[i] = nil end
-    for _, turn in ipairs(front) do table.insert(queue, turn) end
-    for _, turn in ipairs(back) do table.insert(queue, turn) end
 end
 
 function Battle:executeTurn(turn, roundEvents)
@@ -466,15 +470,41 @@ function Battle:executeTurn(turn, roundEvents)
             end
         else
             local loader = self.session.loader
-            local targets = targeting.resolve(turn.actor, turn.skill.target, self, turn.target, turn.skill)
+            local spec = turn.skill.target
+            local targets = targeting.resolve(turn.actor, spec, self, turn.target, turn.skill)
+            local expanded = targeting.expand(spec)
+
+            -- Execution-time cover evaluation for single-target coverable attacks on back-row
+            if expanded.shape == "single" and expanded.cover == "respect" and #targets > 0 then
+                local origTarget = targets[1]
+                local actorIsEnemy = false
+                for slot = 1, config.MAX_PARTY_SIZE do
+                    if self.enemies[slot] == turn.actor then actorIsEnemy = true break end
+                end
+                local targetGroup = actorIsEnemy and self.allies or self.enemies
+                local targetSlot = formation.slotOf(targetGroup, origTarget)
+                if targetSlot and formation.rowOf(targetSlot) == "back" then
+                    local frontSlot = formation.alignedFrontSlot(targetSlot)
+                    local protector = targetGroup[frontSlot]
+                    if protector and not protector:isDead() and not (protector.isRestricted and protector:isRestricted()) then
+                        if #traits.findAllSources(protector, "COVER_ALIGNED_BACK", self.session) > 0 then
+                            targets = { protector }
+                            table.insert(roundEvents, {
+                                type = "text",
+                                text = loader.formatTerm("battle.cover_intercept", "- {0} steps in to protect {1}!", protector.name, origTarget.name)
+                            })
+                        end
+                    end
+                end
+            end
 
             -- Pay for the casting HERE -- the one place a skill actually
             -- resolves -- so the charge path and the Overcast path cannot
             -- drift apart, and so a skill that never resolves (actor died,
             -- target gone) is never charged for.
             local isEnemy = false
-            for _, e in ipairs(self.enemies or {}) do
-                if e == turn.actor then isEnemy = true break end
+            for slot = 1, config.MAX_PARTY_SIZE do
+                if self.enemies[slot] == turn.actor then isEnemy = true break end
             end
             local paid = skill_cost.spend(turn.skill, turn.actor, self.session, isEnemy)
             skill_cost.startCooldown(turn.skill, turn.actor)
@@ -494,7 +524,7 @@ function Battle:executeTurn(turn, roundEvents)
                 type = "action",
                 actor = turn.actor,
                 skill = turn.skill,
-                target = turn.target or (targets[1] or turn.actor),
+                target = targets[1] or turn.target or turn.actor,
                 animation = turn.skill and turn.skill.animation or nil,
             })
             
@@ -513,7 +543,7 @@ function Battle:executeTurn(turn, roundEvents)
             
             local seqCtx = {
                 a = turn.actor,
-                target = turn.target or (targets[1] or turn.actor),
+                target = targets[1] or turn.target or turn.actor,
                 targets = targets,
                 skill = turn.skill,
                 battle = self,
@@ -696,8 +726,9 @@ function Battle:applyItem(action, actor, target)
 end
 
 function Battle:isVictory()
-    for _, enemy in ipairs(self.enemies) do
-        if not enemy:isDead() then return false end
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local enemy = self.enemies[slot]
+        if enemy and not enemy:isDead() then return false end
     end
     return true
 end
@@ -716,11 +747,8 @@ function Battle:isDefeat()
 end
 
 function Battle:getAllActiveBattlers()
-    local list = {}
-    for i = 1, config.MAX_PARTY_SIZE do
-        if self.allies[i] then table.insert(list, self.allies[i]) end
-    end
-    for _, enemy in ipairs(self.enemies) do
+    local list = formation.denseMembers(self.allies)
+    for _, enemy in ipairs(formation.denseMembers(self.enemies)) do
         table.insert(list, enemy)
     end
     return list
