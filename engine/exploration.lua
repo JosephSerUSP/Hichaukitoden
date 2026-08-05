@@ -1075,7 +1075,13 @@ local function tryMove(session, dx, dy)
     local row = session.mapGrid[targetY]
     local ov = session.overrideIndex and session.overrideIndex[targetX .. "," .. targetY]
     local passable
-    if ov and ov.passable ~= nil then
+    if session.developerMode == true and session.phaseMode == true and session.phaseHeld == true then
+        -- Developer sessions get RPG-Maker-style phase movement: the map
+        -- bounds still contain the cursor, but walls and solid fixtures do
+        -- not block inspection. Ordinary campaign sessions never take this
+        -- branch, even on maps tagged developer.
+        passable = row and row[targetX] ~= nil
+    elseif ov and ov.passable ~= nil then
         passable = ov.passable -- illusory wall (true) / one-way wall (false) override the char
     else
         passable = row and row[targetX] and row[targetX] ~= "#"
@@ -1085,7 +1091,7 @@ local function tryMove(session, dx, dy)
     -- (see injectTilesetFeatures), so refusing the step here is safe. An
     -- override wins: an authored `passable` is a deliberate statement about
     -- this exact cell and outranks a decoration that happened to land on it.
-    if passable and not (ov and ov.passable ~= nil)
+    if session.developerMode ~= true and passable and not (ov and ov.passable ~= nil)
             and exploration.fixtureBlocksAt(session, targetX - 1, targetY - 1) then
         passable = false
     end

@@ -1364,6 +1364,7 @@ handleKeyPressed = function(key)
         -- so it can't move the party while the cursor/command overlay
         -- (v.mode ~= 0) is open.
         local mapState = scene_host.getCurrentState()
+        activeSession.phaseHeld = love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl")
         if (key == "q" or key == "e") and mapState and mapState.v.mode and mapState.v.mode ~= 0 then
             return
         end

@@ -99,6 +99,67 @@
   "score": 1,
   "tags": []
  },
+ "texturePiece-champ_b_ceiling_coffers_ohmen-20260804-201430#1": {
+  "at": "2026-08-04T20:21:36",
+  "score": 4,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "texturePiece-champ_b_ceiling_coffers_ohmen-20260804-201430#2": {
+  "at": "2026-08-04T20:21:39",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-champ_b_floor_cobbles_rough_ohmen-20260804-201141#1": {
+  "at": "2026-08-04T20:21:47",
+  "score": 6,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "texturePiece-champ_b_floor_cobbles_rough_ohmen-20260804-201141#2": {
+  "at": "2026-08-04T20:21:53",
+  "score": 5,
+  "tags": [
+   "harsh",
+   "repeat"
+  ]
+ },
+ "texturePiece-champ_b_floor_flagstones_ohmen-20260804-200848#1": {
+  "at": "2026-08-04T20:21:59",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-champ_b_floor_flagstones_ohmen-20260804-200848#2": {
+  "at": "2026-08-04T20:22:02",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-champ_c_floor_flagstones_abyss-20260804-202542#1": {
+  "at": "2026-08-04T20:30:43",
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-champ_c_floor_flagstones_abyss-20260804-202542#2": {
+  "at": "2026-08-04T20:30:45",
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-champ_c_floor_flagstones_newera-20260804-203138#1": {
+  "at": "2026-08-04T20:35:43",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-champ_c_floor_flagstones_newera-20260804-203138#2": {
+  "at": "2026-08-04T20:35:49",
+  "score": 5,
+  "tags": []
+ },
  "texturePiece-deep_floor_flagstones_mature_diffuse_d85-20260804-115808#1": {
   "at": "2026-08-04T12:41:19",
   "score": 4,
@@ -150,6 +211,23 @@
  "texturePiece-deep_floor_flagstones_newera_quake_d85-20260804-122014#2": {
   "at": "2026-08-04T12:36:53",
   "score": 5,
+  "tags": []
+ },
+ "texturePiece-depth_floor_flagstones_ohmen_followup-20260804-132449#1": {
+  "at": "2026-08-04T13:42:00",
+  "score": 3,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "texturePiece-depth_floor_flagstones_ohmen_followup-20260804-132449#2": {
+  "at": "2026-08-04T13:42:03",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-depth_floor_flagstones_ohmen_followup-20260804-132449#3": {
+  "at": "2026-08-04T13:42:05",
+  "score": 4,
   "tags": []
  },
  "texturePiece-dungeon_ceiling_clean-20260802-210943#1": {
@@ -426,6 +504,210 @@
    "burned",
    "repeat"
   ]
+ },
+ "texturePiece-fantasy_coffers_newera-20260804-163901#1": {
+  "at": "2026-08-04T19:42:18",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_newera-20260804-163901#2": {
+  "at": "2026-08-04T19:42:19",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_newera-20260804-163901#3": {
+  "at": "2026-08-04T19:42:20",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_newera-20260804-163901#4": {
+  "at": "2026-08-04T19:42:25",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_newera-20260804-163901#5": {
+  "at": "2026-08-04T19:42:27",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_ohmen-20260804-164550#1": {
+  "at": "2026-08-04T19:42:03",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_ohmen-20260804-164550#2": {
+  "at": "2026-08-04T19:42:04",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_ohmen-20260804-164550#3": {
+  "at": "2026-08-04T19:42:07",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_ohmen-20260804-164550#4": {
+  "at": "2026-08-04T19:42:09",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_coffers_ohmen-20260804-164550#5": {
+  "at": "2026-08-04T19:42:10",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_newera-20260804-161147#1": {
+  "at": "2026-08-04T19:43:04",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_newera-20260804-161147#2": {
+  "at": "2026-08-04T19:43:09",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_newera-20260804-161147#3": {
+  "at": "2026-08-04T19:43:11",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_newera-20260804-161147#4": {
+  "at": "2026-08-04T19:43:13",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_newera-20260804-161147#5": {
+  "at": "2026-08-04T19:43:16",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_ohmen-20260804-161835#1": {
+  "at": "2026-08-04T19:42:55",
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_ohmen-20260804-161835#2": {
+  "at": "2026-08-04T19:47:38",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_ohmen-20260804-161835#3": {
+  "at": "2026-08-04T19:42:59",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_ohmen-20260804-161835#4": {
+  "at": "2026-08-04T19:43:01",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_flagstones_ohmen-20260804-161835#5": {
+  "at": "2026-08-04T19:43:02",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_newera-20260804-162528#1": {
+  "at": "2026-08-04T19:42:44",
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_newera-20260804-162528#2": {
+  "at": "2026-08-04T19:42:45",
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_newera-20260804-162528#3": {
+  "at": "2026-08-04T19:42:47",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_newera-20260804-162528#4": {
+  "at": "2026-08-04T19:42:48",
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_newera-20260804-162528#5": {
+  "at": "2026-08-04T19:42:50",
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_ohmen-20260804-163208#1": {
+  "at": "2026-08-04T19:42:37",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_ohmen-20260804-163208#2": {
+  "at": "2026-08-04T19:42:38",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_ohmen-20260804-163208#3": {
+  "at": "2026-08-04T19:42:38",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_ohmen-20260804-163208#4": {
+  "at": "2026-08-04T19:42:41",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_inlay_ohmen-20260804-163208#5": {
+  "at": "2026-08-04T19:42:42",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_newera-20260804-165243#1": {
+  "at": "2026-08-04T19:41:38",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_newera-20260804-165243#2": {
+  "at": "2026-08-04T19:41:40",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_newera-20260804-165243#3": {
+  "at": "2026-08-04T19:41:46",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_newera-20260804-165243#4": {
+  "at": "2026-08-04T19:41:50",
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_newera-20260804-165243#5": {
+  "at": "2026-08-04T19:41:51",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_ohmen-20260804-165933#1": {
+  "at": "2026-08-04T19:29:25",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_ohmen-20260804-165933#2": {
+  "at": "2026-08-04T19:30:36",
+  "score": 4,
+  "tags": [
+   "burned"
+  ]
+ },
+ "texturePiece-fantasy_vault_ohmen-20260804-165933#3": {
+  "at": "2026-08-04T19:30:44",
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "texturePiece-fantasy_vault_ohmen-20260804-165933#4": {
+  "at": "2026-08-04T19:30:55",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-fantasy_vault_ohmen-20260804-165933#5": {
+  "at": "2026-08-04T19:30:58",
+  "score": 4,
+  "tags": []
  },
  "texturePiece-ffxii_depth_ceiling_stalactites_retro-20260802-221852#1": {
   "at": "2026-08-03T23:47:35",
@@ -1095,6 +1377,82 @@
    "repeat"
   ]
  },
+ "texturePiece-large_ceiling_coffers_ohmen_d85_25m-20260804-144509#1": {
+  "at": "2026-08-04T15:01:54",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-large_ceiling_coffers_ohmen_d85_25m-20260804-144509#2": {
+  "at": "2026-08-04T15:01:55",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-large_ceiling_dripstone_newera_d85_25m-20260804-145044#1": {
+  "at": "2026-08-04T15:01:41",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_ceiling_dripstone_newera_d85_25m-20260804-145044#2": {
+  "at": "2026-08-04T15:01:46",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_ceiling_vault_ohmen_d60_25m-20260804-144756#1": {
+  "at": "2026-08-04T15:01:50",
+  "score": 4,
+  "tags": [
+   "repeat"
+  ]
+ },
+ "texturePiece-large_ceiling_vault_ohmen_d60_25m-20260804-144756#2": {
+  "at": "2026-08-04T15:01:52",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_floor_cobbles_newera_d85_25m-20260804-143933#1": {
+  "at": "2026-08-04T15:02:03",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_floor_cobbles_newera_d85_25m-20260804-143933#2": {
+  "at": "2026-08-04T15:02:05",
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-large_floor_flagstones_newera_d85_25m-20260804-143357#1": {
+  "at": "2026-08-04T14:38:37",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_floor_flagstones_newera_d85_25m-20260804-143357#2": {
+  "at": "2026-08-04T14:38:38",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_floor_inlay_ohmen_d60_25m-20260804-143645#1": {
+  "at": "2026-08-04T14:42:02",
+  "score": 5,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "texturePiece-large_floor_inlay_ohmen_d60_25m-20260804-143645#2": {
+  "at": "2026-08-04T14:42:06",
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-large_floor_slabs_ohmen_d60_25m-20260804-144221#1": {
+  "at": "2026-08-04T15:01:57",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-large_floor_slabs_ohmen_d60_25m-20260804-144221#2": {
+  "at": "2026-08-04T15:01:57",
+  "score": 4,
+  "tags": []
+ },
  "texturePiece-new_ceiling_coffers_artius_control-20260803-204546#1": {
   "at": "2026-08-04T10:12:43",
   "score": 4,
@@ -1205,6 +1563,42 @@
   "score": 4,
   "tags": [
    "repeat"
+  ]
+ },
+ "texturePiece-newdepth_ceiling_coffers_ohmen_25m-20260804-135915#1": {
+  "at": "2026-08-04T14:05:51",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-newdepth_ceiling_coffers_ohmen_25m-20260804-135915#2": {
+  "at": "2026-08-04T14:05:52",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-newdepth_floor_cobbles_newera_25m-20260804-135635#1": {
+  "at": "2026-08-04T14:05:58",
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-newdepth_floor_cobbles_newera_25m-20260804-135635#2": {
+  "at": "2026-08-04T14:05:59",
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-newdepth_floor_inlay_newera_25m-20260804-135349#1": {
+  "at": "2026-08-04T14:06:03",
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-newdepth_floor_inlay_newera_25m-20260804-135349#2": {
+  "at": "2026-08-04T14:06:06",
+  "score": 3,
+  "tags": [
+   "flat"
   ]
  },
  "texturePiece-probe_base-20260802-203247#1": {
@@ -1561,6 +1955,163 @@
   "score": 3,
   "tags": []
  },
+ "wallPiece-champ_a_pilasters_d060-20260804-195607#1": {
+  "at": "2026-08-04T20:06:47",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d060-20260804-195607#2": {
+  "at": "2026-08-04T20:06:48",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d060-20260804-195607#3": {
+  "at": "2026-08-04T20:06:49",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d085-20260804-200019#1": {
+  "at": "2026-08-04T20:06:34",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d085-20260804-200019#2": {
+  "at": "2026-08-04T20:06:35",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d085-20260804-200019#3": {
+  "at": "2026-08-04T20:06:37",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d100-20260804-200432#1": {
+  "at": "2026-08-04T20:11:15",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d100-20260804-200432#2": {
+  "at": "2026-08-04T20:11:15",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_a_pilasters_d100-20260804-200432#3": {
+  "at": "2026-08-04T20:11:15",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_b_wall_eroded_ohmen-20260804-202001#1": {
+  "at": "2026-08-04T20:31:01",
+  "score": 2,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-champ_b_wall_eroded_ohmen-20260804-202001#2": {
+  "at": "2026-08-04T20:31:07",
+  "score": 3,
+  "tags": [
+   "harsh",
+   "perspective",
+   "picture",
+   "repeat"
+  ]
+ },
+ "wallPiece-champ_b_wall_rubble_ohmen-20260804-201716#1": {
+  "at": "2026-08-04T20:21:29",
+  "score": 5,
+  "tags": [
+   "harsh",
+   "repeat"
+  ]
+ },
+ "wallPiece-champ_b_wall_rubble_ohmen-20260804-201716#2": {
+  "at": "2026-08-04T20:21:33",
+  "score": 3,
+  "tags": [
+   "harsh",
+   "repeat"
+  ]
+ },
+ "wallPiece-champ_c_wall_pilasters_abyss-20260804-202246#1": {
+  "at": "2026-08-04T20:30:50",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_c_wall_pilasters_abyss-20260804-202246#2": {
+  "at": "2026-08-04T20:30:53",
+  "score": 4,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-champ_c_wall_pilasters_newera-20260804-202832#1": {
+  "at": "2026-08-04T20:32:13",
+  "score": 5,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-champ_c_wall_pilasters_newera-20260804-202832#2": {
+  "at": "2026-08-04T20:32:16",
+  "score": 5,
+  "tags": [
+   "flat"
+  ]
+ },
+ "wallPiece-champ_d_wall_pilasters_quake-20260804-203424#1": {
+  "at": "2026-08-04T20:38:59",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_pilasters_quake-20260804-203424#2": {
+  "at": "2026-08-04T20:39:01",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_pilasters_wowtex-20260804-204015#1": {
+  "at": "2026-08-04T20:43:34",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_pilasters_wowtex-20260804-204015#2": {
+  "at": "2026-08-04T20:43:35",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_rubble_quake-20260804-203724#1": {
+  "at": "2026-08-04T20:43:43",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_rubble_quake-20260804-203724#2": {
+  "at": "2026-08-04T20:43:45",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_rubble_wowtex-20260804-204312#1": {
+  "at": "2026-08-04T20:51:36",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_d_wall_rubble_wowtex-20260804-204312#2": {
+  "at": "2026-08-04T20:51:37",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-champ_e_wall_rubble_indoor-20260804-204606#1": {
+  "at": "2026-08-04T20:51:28",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-champ_e_wall_rubble_indoor-20260804-204606#2": {
+  "at": "2026-08-04T20:51:33",
+  "score": 4,
+  "tags": [
+   "repeat"
+  ]
+ },
  "wallPiece-deep_wall_rubble_mature_diffuse_d85-20260804-115707#1": {
   "at": "2026-08-04T11:59:20",
   "score": 4,
@@ -1772,6 +2323,288 @@
   "tags": [
    "harsh"
   ]
+ },
+ "wallPiece-fantasy_cave_newera-20260804-154434#1": {
+  "at": "2026-08-04T19:44:51",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_newera-20260804-154434#2": {
+  "at": "2026-08-04T19:44:55",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_newera-20260804-154434#3": {
+  "at": "2026-08-04T19:44:58",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_newera-20260804-154434#4": {
+  "at": "2026-08-04T19:45:01",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_newera-20260804-154434#5": {
+  "at": "2026-08-04T19:45:03",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_ohmen-20260804-155117#1": {
+  "at": "2026-08-04T19:44:37",
+  "score": 1,
+  "tags": [
+   "face"
+  ]
+ },
+ "wallPiece-fantasy_cave_ohmen-20260804-155117#2": {
+  "at": "2026-08-04T19:44:40",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_ohmen-20260804-155117#3": {
+  "at": "2026-08-04T19:44:41",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_ohmen-20260804-155117#4": {
+  "at": "2026-08-04T19:44:48",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_cave_ohmen-20260804-155117#5": {
+  "at": "2026-08-04T19:44:49",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-fantasy_eroded_newera-20260804-155803#1": {
+  "at": "2026-08-04T19:44:08",
+  "score": 5,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_newera-20260804-155803#2": {
+  "at": "2026-08-04T19:44:12",
+  "score": 5,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_newera-20260804-155803#3": {
+  "at": "2026-08-04T19:44:15",
+  "score": 4,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_newera-20260804-155803#4": {
+  "at": "2026-08-04T19:44:24",
+  "score": 4,
+  "tags": [
+   "burned",
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_newera-20260804-155803#5": {
+  "at": "2026-08-04T19:44:26",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_eroded_ohmen-20260804-160454#1": {
+  "at": "2026-08-04T19:43:33",
+  "score": 3,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_ohmen-20260804-160454#2": {
+  "at": "2026-08-04T19:43:37",
+  "score": 3,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_ohmen-20260804-160454#3": {
+  "at": "2026-08-04T19:43:47",
+  "score": 5,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_ohmen-20260804-160454#4": {
+  "at": "2026-08-04T19:43:53",
+  "score": 5,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_eroded_ohmen-20260804-160454#5": {
+  "at": "2026-08-04T19:43:58",
+  "score": 5,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "wallPiece-fantasy_niche_newera-20260804-150355#1": {
+  "at": "2026-08-04T19:48:04",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_newera-20260804-150355#2": {
+  "at": "2026-08-04T19:48:06",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_newera-20260804-150355#3": {
+  "at": "2026-08-04T19:48:08",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_newera-20260804-150355#4": {
+  "at": "2026-08-04T19:48:11",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_newera-20260804-150355#5": {
+  "at": "2026-08-04T19:48:14",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_ohmen-20260804-151041#1": {
+  "at": "2026-08-04T19:47:47",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_ohmen-20260804-151041#2": {
+  "at": "2026-08-04T19:47:50",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_ohmen-20260804-151041#3": {
+  "at": "2026-08-04T19:47:52",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_ohmen-20260804-151041#4": {
+  "at": "2026-08-04T19:47:54",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-fantasy_niche_ohmen-20260804-151041#5": {
+  "at": "2026-08-04T19:47:55",
+  "score": 6,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_newera-20260804-151732#1": {
+  "at": "2026-08-04T19:47:25",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_newera-20260804-151732#2": {
+  "at": "2026-08-04T19:47:26",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_newera-20260804-151732#3": {
+  "at": "2026-08-04T19:47:28",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_newera-20260804-151732#4": {
+  "at": "2026-08-04T19:47:33",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_newera-20260804-151732#5": {
+  "at": "2026-08-04T19:47:35",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_ohmen-20260804-152411#1": {
+  "at": "2026-08-04T19:47:12",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_ohmen-20260804-152411#2": {
+  "at": "2026-08-04T19:47:13",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_ohmen-20260804-152411#3": {
+  "at": "2026-08-04T19:47:14",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_ohmen-20260804-152411#4": {
+  "at": "2026-08-04T19:47:15",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_pilasters_ohmen-20260804-152411#5": {
+  "at": "2026-08-04T19:47:16",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_newera-20260804-153057#1": {
+  "at": "2026-08-04T19:45:34",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_newera-20260804-153057#2": {
+  "at": "2026-08-04T19:45:37",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_newera-20260804-153057#3": {
+  "at": "2026-08-04T19:45:41",
+  "score": 2,
+  "tags": [
+   "burned"
+  ]
+ },
+ "wallPiece-fantasy_rubble_newera-20260804-153057#4": {
+  "at": "2026-08-04T19:46:14",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_newera-20260804-153057#5": {
+  "at": "2026-08-04T19:46:15",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_ohmen-20260804-153744#1": {
+  "at": "2026-08-04T19:45:13",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_ohmen-20260804-153744#2": {
+  "at": "2026-08-04T19:45:15",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_ohmen-20260804-153744#3": {
+  "at": "2026-08-04T19:45:17",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_ohmen-20260804-153744#4": {
+  "at": "2026-08-04T19:45:18",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-fantasy_rubble_ohmen-20260804-153744#5": {
+  "at": "2026-08-04T19:45:21",
+  "score": 5,
+  "tags": []
  },
  "wallPiece-followup_wall_pilasters_ohmen-20260804-130543#1": {
   "at": "2026-08-04T13:14:47",
@@ -5220,6 +6053,70 @@
    "repeat"
   ]
  },
+ "wallPiece-large_wall_boulders_newera_d60_25m-20260804-142820#1": {
+  "at": "2026-08-04T14:34:35",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-large_wall_boulders_newera_d60_25m-20260804-142820#2": {
+  "at": "2026-08-04T14:34:37",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-large_wall_cave_ohmen_d85_25m-20260804-143109#1": {
+  "at": "2026-08-04T14:34:30",
+  "score": 2,
+  "tags": []
+ },
+ "wallPiece-large_wall_cave_ohmen_d85_25m-20260804-143109#2": {
+  "at": "2026-08-04T14:34:32",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-large_wall_eroded_newera_d85_25m-20260804-141711#1": {
+  "at": "2026-08-04T14:21:06",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-large_wall_eroded_newera_d85_25m-20260804-141711#2": {
+  "at": "2026-08-04T14:21:08",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-large_wall_niche_ohmen_d85_25m-20260804-141959#1": {
+  "at": "2026-08-04T14:24:48",
+  "note": "instead of a white strip at the bottom - which would also be bad-  it added perspective",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-large_wall_niche_ohmen_d85_25m-20260804-141959#2": {
+  "at": "2026-08-04T14:24:51",
+  "note": "instead of a white strip at the bottom - which would also be bad-  it added perspective",
+  "score": 4,
+  "tags": [
+   "perspective"
+  ]
+ },
+ "wallPiece-large_wall_pilasters_ohmen_d60_25m-20260804-142247#1": {
+  "at": "2026-08-04T14:34:52",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-large_wall_pilasters_ohmen_d60_25m-20260804-142247#2": {
+  "at": "2026-08-04T14:34:54",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-large_wall_rubble_ohmen_d85_25m-20260804-142534#1": {
+  "at": "2026-08-04T14:34:45",
+  "score": 5,
+  "tags": []
+ },
+ "wallPiece-large_wall_rubble_ohmen_d85_25m-20260804-142534#2": {
+  "at": "2026-08-04T14:34:47",
+  "score": 5,
+  "tags": []
+ },
  "wallPiece-neg_ornament_d60_homosimile_control-20260803-195355#1": {
   "at": "2026-08-04T10:57:44",
   "score": 2,
@@ -5551,6 +6448,36 @@
   "tags": [
    "flat"
   ]
+ },
+ "wallPiece-newdepth_wall_cave_ohmen_25m-20260804-135105#1": {
+  "at": "2026-08-04T13:55:07",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-newdepth_wall_cave_ohmen_25m-20260804-135105#2": {
+  "at": "2026-08-04T13:55:10",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-newdepth_wall_eroded_newera_25m-20260804-134515#1": {
+  "at": "2026-08-04T13:55:25",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-newdepth_wall_eroded_newera_25m-20260804-134515#2": {
+  "at": "2026-08-04T13:55:31",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-newdepth_wall_niche_ohmen_25m-20260804-134818#1": {
+  "at": "2026-08-04T13:55:15",
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-newdepth_wall_niche_ohmen_25m-20260804-134818#2": {
+  "at": "2026-08-04T13:55:17",
+  "score": 4,
+  "tags": []
  },
  "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260803-022822#1": {
   "at": "2026-08-04T11:44:34",

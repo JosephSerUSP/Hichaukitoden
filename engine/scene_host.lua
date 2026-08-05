@@ -71,6 +71,11 @@ function scene_host.getCurrentState()
     return sceneStack[#sceneStack]
 end
 
+function scene_host.getPreviousState()
+    if #sceneStack < 2 then return nil end
+    return sceneStack[#sceneStack - 1]
+end
+
 -- Register window definitions for a scene kind.
 -- Called by scene modules (e.g. battle.registerKindWindows) during push.
 -- Stored defs are merged into the scene state's windows table on push.

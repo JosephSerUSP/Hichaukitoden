@@ -1,0 +1,96 @@
+{
+  "class": "texturePiece",
+  "name": "bellroot_ceiling_dripstone",
+  "description": "Bellroot Vigil chapel crypt ceiling, damp limestone vault and shallow dripstone, dark slate seams, old blue tile fragments caught in the masonry, fine hanging roots, restrained cyan mineral traces, cold subterranean devotional ruin, flat head-on diffuse albedo",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, open air, bright fantasy colors, firelight gradient, dramatic spotlight, stalactite landscape, text, letters",
+      "seed": 984600,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/ceiling_dripstone_rough.png",
+    "heightControlWeight": 0.85
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "bellroot_ceiling_dripstone.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.007229,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.649,
+        "y": 0.897,
+        "centre_x": 0.667,
+        "centre_y": 1.093
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_dripstone_rough]",
+      "contextSurface": "ceiling"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.002575,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.608,
+        "y": 0.853,
+        "centre_x": 0.939,
+        "centre_y": 0.839
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_dripstone_rough]",
+      "contextSurface": "ceiling"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.009361,
+        "chromaOutlierRatio": 4e-06,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.706,
+        "y": 1.023,
+        "centre_x": 0.672,
+        "centre_y": 1.059
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor seen from inside; this ceiling's own height map; walls and floor unchanged [geometry: ceiling_dripstone_rough]",
+      "contextSurface": "ceiling"
+    }
+  ]
+}

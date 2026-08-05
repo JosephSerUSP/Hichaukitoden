@@ -157,6 +157,102 @@
             }
         ]
     },
+    "stillnight_bellroot_vigil": {
+        "id": "stillnight_bellroot_vigil",
+        "name": "Stillnight — Bellroot Vigil",
+        "texture": "assets/textures/Stillnight_BellrootVigil.png",
+        "heightMap": "assets/textures/Stillnight_BellrootVigil_heightmap.png",
+        "heightMapScale": {
+            "wall": 0.14,
+            "floor": 0.09,
+            "ceiling": 0.08
+        },
+        "heightMapMeshColumns": 24,
+        "heightMapMeshRows": 24,
+        "heightMapTriangleBudget": 384,
+        "tileWidth": 64,
+        "tileHeight": 64,
+        "base": {
+            "walls": [
+                {
+                    "id": "bellroot_wall_pilaster",
+                    "role": "base_wall",
+                    "middle": [1, 1],
+                    "leftEdge": [1, 1, 0],
+                    "rightEdge": [1, 1, 32],
+                    "weight": 60
+                },
+                {
+                    "id": "bellroot_wall_rubble",
+                    "role": "base_wall",
+                    "middle": [1, 0],
+                    "leftEdge": [1, 0, 0],
+                    "rightEdge": [1, 0, 32],
+                    "weight": 40
+                }
+            ],
+            "floors": [
+                {
+                    "id": "bellroot_floor_flagstone",
+                    "role": "base_floor",
+                    "atlas": [0, 3],
+                    "weight": 70,
+                    "heightOffset": 0
+                },
+                {
+                    "id": "bellroot_floor_inlay",
+                    "role": "base_floor",
+                    "atlas": [3, 1],
+                    "weight": 30,
+                    "heightOffset": 0
+                }
+            ],
+            "ceilings": [
+                {
+                    "id": "bellroot_ceiling_dripstone",
+                    "role": "base_ceiling",
+                    "atlas": [0, 0],
+                    "weight": 100
+                }
+            ]
+        },
+        "doors": [],
+        "fixturePrefabs": [
+            {
+                "id": "bellroot_wall_beside_floor",
+                "name": "Bellroot wall beside floor",
+                "where": { "adjacent": "floor" },
+                "probability": { "min": 0.1, "max": 0.5, "default": 0.28 }
+            }
+        ],
+        "features": [
+            {
+                "id": "bellroot_lantern",
+                "role": "wall_feature",
+                "atlas": [1, 0],
+                "model": "assets/models/dungeon/dungeon_torch_bracket.obj",
+                "injectProbability": 0.22,
+                "prefab": "bellroot_wall_beside_floor",
+                "emitsLight": { "color": [1, 0.48, 0.16], "radius": 3.5, "falloff": 3.5 }
+            },
+            {
+                "id": "bellroot_crystal",
+                "role": "floor_feature",
+                "model": "assets/models/ruins/ruins_crystal_cluster.obj",
+                "injectProbability": 0.1,
+                "emitsLight": { "color": [0.12, 0.65, 0.95], "radius": 3.2, "falloff": 3.0 },
+                "blocksMovement": true
+            },
+            {
+                "id": "bellroot_shrine_recess",
+                "role": "wall_feature",
+                "geometry": "assets/geometry/shrine_recess",
+                "atlas": [1, 2],
+                "injectProbability": 0.08,
+                "where": { "zone": "shrine" }
+            }
+        ]
+    },
     "town_default": {
         "id": "town_default",
         "name": "Town Exterior",

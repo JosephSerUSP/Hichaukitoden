@@ -2525,6 +2525,41 @@ local function buildScriptApi(ctx)
     function api.getWireframe()
         return require("presentation.viewport_3d").wireframe == true
     end
+    function api.setPhaseMode(val)
+        if session.developerMode == true then session.phaseMode = val and true or false end
+    end
+    function api.getPhaseMode()
+        return session.developerMode == true and session.phaseMode == true
+    end
+    function api.recoverParty()
+        if session.developerMode == true and ctx.recoverParty then ctx.recoverParty() end
+    end
+    function api.recoverMp()
+        if session.developerMode == true then session.mp = session.maxMp or session.mp end
+    end
+    function api.giveAllItems()
+        if session.developerMode ~= true then return end
+        for id, item in pairs(session.loader.items or {}) do
+            local itemId = item and item.id or id
+            if itemId then session:addItem(itemId, 99) end
+        end
+    end
+    function api.forceWinBattle()
+        if session.developerMode ~= true then return false end
+        local host = require("engine.scene_host")
+        local current = host.getCurrentState()
+        local battleState = current and current.id == "battle" and current
+            or host.getPreviousState()
+        if not battleState or battleState.id ~= "battle" or not battleState.v.battle then return false end
+        for _, enemy in ipairs(battleState.v.battle.enemies or {}) do enemy.hp = 0 end
+        if current and current.id ~= "battle" then host.pop() end
+        local battleScene = require("engine.scenes.battle")
+        local state = battleScene.getState()
+        state.combatState = "log"
+        state.eventsQueue = {}
+        state.eventQueueIndex = 1
+        return battleScene.handleTransition("select")
+    end
     -- The hot-reload server had F9 as its only binding; it moved into the
     -- developer menu when F9 became that menu, so it needs a scriptable toggle.
     function api.toggleDeveloperServer()

@@ -20,6 +20,15 @@ local quality = require("engine.geometry.quality")
 
 local plane = {}
 
+-- Height fields tile periodically. The terminal mesh vertex is placed at 1 so
+-- the cell still spans its full world-space width, but samples height at 0 so
+-- it is exactly identical to the neighbouring cell's first vertex. Albedo UVs
+-- remain at 1 and continue to address the texture's far edge normally.
+function plane.periodicSampleCoordinate(value)
+    if math.abs(value - 1) < 1e-9 then return 0 end
+    return value
+end
+
 -- PROVISIONAL. How far a wall's apron reaches past the cell in each direction.
 --
 -- This is a riser with a hardcoded height and no data behind it, and it is a
@@ -132,7 +141,10 @@ function plane.build(spec, layers, uv)
         local sample, place = along[row + 1][1], along[row + 1][2]
         for column = 0, columns do
             local u = column / columns
-            local lift = plane.sampleField(layers, u, sample) + spec.offset
+            local sampleU = plane.periodicSampleCoordinate(u)
+            local sampleV = spec.surface == "wall"
+                and sample or plane.periodicSampleCoordinate(sample)
+            local lift = plane.sampleField(layers, sampleU, sampleV) + spec.offset
             if lift < deepest then deepest = lift end
             local x, y, z = position(spec.surface, u, place, lift)
             -- UVs clamp to the edge, so the apron wears the wall's own bottom
@@ -227,6 +239,78 @@ function plane.build(spec, layers, uv)
     for _, face in ipairs(reduced.faces) do
         local p, q, r = reduced.vertices[face[1]], reduced.vertices[face[2]], reduced.vertices[face[3]]
         if flip then builder:triangle(p, r, q) else builder:triangle(p, q, r) end
+    end
+
+    -- A displaced atlas tile replaces its structural quad. Close its exposed
+    -- perimeter back into the solid cell volume so independently displaced
+    -- neighbours cannot reveal the fog/background between them. These are
+    -- genuine side faces, not a screen-space patch: depth, lighting and camera
+    -- clipping treat them exactly like the relief itself.
+    if spec.sealPerimeter then
+        local function copyAt(vertex, x, y, z)
+            return { x or vertex[1], y or vertex[2], z or vertex[3], vertex[4], vertex[5] }
+        end
+        local function curtain(points, backing)
+            table.sort(points, backing.sort)
+            for i = 1, #points - 1 do
+                local a, b = points[i], points[i + 1]
+                local c, d = backing.vertex(b), backing.vertex(a)
+                builder:triangle(a, b, c)
+                builder:triangle(a, c, d)
+            end
+        end
+        local function boundary(predicate)
+            local points = {}
+            for _, vertex in ipairs(reduced.vertices) do
+                if predicate(vertex) then points[#points + 1] = vertex end
+            end
+            return points
+        end
+        local eps = 1e-6
+        local edgeMin, edgeMax = -0.5, 0.5
+        if spec.surface == "floor" or spec.surface == "ceiling" then
+            -- Continue horizontal surfaces a half-cell into the solid shell as
+            -- well. This overlaps the wall closure volume at feet and crowns,
+            -- eliminating sub-pixel T-junction pinholes after projection.
+            local backingZ = spec.surface == "floor" and -0.51 or 1.51
+            local byY = function(a, b) return a[2] < b[2] end
+            local byX = function(a, b) return a[1] < b[1] end
+            for _, x in ipairs({ edgeMin, edgeMax }) do
+                curtain(boundary(function(v) return math.abs(v[1] - x) < eps end), {
+                    sort = byY, vertex = function(v) return copyAt(v, x, nil, backingZ) end,
+                })
+            end
+            for _, y in ipairs({ edgeMin, edgeMax }) do
+                curtain(boundary(function(v) return math.abs(v[2] - y) < eps end), {
+                    sort = byX, vertex = function(v) return copyAt(v, nil, y, backingZ) end,
+                })
+            end
+            local u0, v0 = uv(0, 0)
+            local u1, v1 = uv(1, 1)
+            local a, b = { edgeMin, edgeMin, backingZ, u0, v0 }, { edgeMax, edgeMin, backingZ, u1, v0 }
+            local c, d = { edgeMax, edgeMax, backingZ, u1, v1 }, { edgeMin, edgeMax, backingZ, u0, v1 }
+            builder:triangle(a, b, c)
+            builder:triangle(a, c, d)
+        else
+            -- A wall cell is solid through its half-cell depth. Closing only
+            -- by the relief amplitude leaves a wedge between two orthogonal
+            -- faces at a corner; carrying both curtains to the cell centre
+            -- makes them overlap inside solid volume and resolves the corner
+            -- once, regardless of either face's height profile.
+            local backingX = -0.51
+            local byZ = function(a, b) return a[3] < b[3] end
+            for _, y in ipairs({ edgeMin, edgeMax }) do
+                curtain(boundary(function(v) return math.abs(v[2] - y) < eps end), {
+                    sort = byZ, vertex = function(v) return copyAt(v, backingX, y, nil) end,
+                })
+            end
+            local u0, v0 = uv(0, 0)
+            local u1, v1 = uv(1, 1)
+            local a, b = { backingX, edgeMin, -0.51, u0, v1 }, { backingX, edgeMax, -0.51, u1, v1 }
+            local c, d = { backingX, edgeMax, 1.51, u1, v0 }, { backingX, edgeMin, 1.51, u0, v0 }
+            builder:triangle(a, b, c)
+            builder:triangle(a, c, d)
+        end
     end
     return builder:build()
 end

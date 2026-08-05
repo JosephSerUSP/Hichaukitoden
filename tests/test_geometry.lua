@@ -9,6 +9,7 @@ local loader = require("data.loader")
 local geometry = require("engine.geometry")
 local plane = require("engine.geometry.plane")
 local images = require("engine.geometry.images")
+local viewport3d = require("presentation.viewport_3d")
 
 loader.init()
 
@@ -48,6 +49,32 @@ check(#colourWarnings > 0,
     "a non-grayscale height map warns, since only its red channel is read")
 
 print("=== Height Field Composition ===")
+
+check(plane.periodicSampleCoordinate(1) == 0,
+    "a tiling height field reuses its first sample at the terminal edge")
+check(plane.periodicSampleCoordinate(0.75) == 0.75,
+    "periodic sampling leaves interior coordinates unchanged")
+
+print("=== Model Near-Plane Clipping ===")
+
+local function modelVertex(x, y)
+    return { x, y, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 }
+end
+local crossing = viewport3d.clipTrianglesToNear({
+    modelVertex(-1, -1), modelVertex(1, -1), modelVertex(1, 1),
+}, 0, 0, 1, 0, 0.05)
+check(#crossing == 6, "a model triangle crossing the near plane is clipped into two triangles")
+local allInFront = true
+for _, vertex in ipairs(crossing) do allInFront = allInFront and vertex[1] >= 0.05 - 1e-9 end
+check(allInFront, "clipped model vertices never remain behind the near plane")
+local visible = viewport3d.clipTrianglesToNear({
+    modelVertex(1, -1), modelVertex(2, -1), modelVertex(1, 1),
+}, 0, 0, 1, 0, 0.05)
+check(#visible == 3, "a model triangle wholly in front of the near plane is preserved")
+local hidden = viewport3d.clipTrianglesToNear({
+    modelVertex(-2, -1), modelVertex(-1, -1), modelVertex(-1, 1),
+}, 0, 0, 1, 0, 0.05)
+check(#hidden == 0, "a model triangle wholly behind the near plane is discarded")
 
 -- 128 is the neutral plane; the fixtures are painted flat neutral, so a base
 -- layer alone must contribute exactly zero displacement.

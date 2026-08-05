@@ -101,19 +101,19 @@
       "view": "above",
       "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles.png",
       "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles.blend",
+      "blend": null,
       "tileAxes": "xy",
       "contrast": 1.0,
-      "reliefMin": 0.085,
-      "reliefMax": 0.23889,
+      "reliefMin": 0.04453,
+      "reliefMax": 0.15597,
       "wrapError": {
         "x": {
-          "ratio": 1.866,
-          "step": 0.0161
+          "ratio": 1.603,
+          "step": 0.0233
         },
         "y": {
-          "ratio": 1.532,
-          "step": 0.0126
+          "ratio": 1.434,
+          "step": 0.0209
         }
       },
       "wrapOk": true
@@ -124,19 +124,19 @@
       "view": "above",
       "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles_rough.png",
       "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_cobbles_rough.blend",
+      "blend": null,
       "tileAxes": "xy",
       "contrast": 1.0,
-      "reliefMin": 0.085,
-      "reliefMax": 0.24147,
+      "reliefMin": 0.04453,
+      "reliefMax": 0.15758,
       "wrapError": {
         "x": {
-          "ratio": 1.414,
-          "step": 0.0116
+          "ratio": 1.575,
+          "step": 0.0223
         },
         "y": {
-          "ratio": 1.473,
-          "step": 0.0118
+          "ratio": 1.084,
+          "step": 0.0154
         }
       },
       "wrapOk": true
@@ -147,15 +147,15 @@
       "view": "above",
       "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.png",
       "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_flagstones.blend",
+      "blend": null,
       "tileAxes": "xy",
       "contrast": 1.0,
-      "reliefMin": 0.0,
-      "reliefMax": 0.032,
+      "reliefMin": 0.07,
+      "reliefMax": 0.1987,
       "wrapError": {
         "x": {
-          "ratio": 0.0,
-          "step": 0.0
+          "ratio": 0.034,
+          "step": 0.0004
         },
         "y": {
           "ratio": 0.0,
@@ -193,14 +193,14 @@
       "view": "above",
       "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_slabs_varied.png",
       "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/floor_slabs_varied.blend",
+      "blend": null,
       "tileAxes": "xy",
       "contrast": 1.0,
       "reliefMin": 0.0,
-      "reliefMax": 0.25804,
+      "reliefMax": 0.24678,
       "wrapError": {
         "x": {
-          "ratio": 0.0,
+          "ratio": 0.002,
           "step": 0.0
         },
         "y": {
@@ -311,15 +311,15 @@
       "view": "above",
       "path": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_rubble.png",
       "size": 512,
-      "blend": "D:/Antigravity/Hichaukitoden/assets/geometry/1_blender_depth_maps/wall_rubble.blend",
+      "blend": null,
       "tileAxes": "x",
       "contrast": 1.0,
       "reliefMin": 0.1,
-      "reliefMax": 0.29693,
+      "reliefMax": 0.25807,
       "wrapError": {
         "x": {
-          "ratio": 1.635,
-          "step": 0.0102
+          "ratio": 1.653,
+          "step": 0.0144
         }
       },
       "wrapOk": true

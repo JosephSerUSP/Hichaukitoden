@@ -437,6 +437,10 @@ local function atlasHeightSurface(atlas, surface, variant, originX, originY, fli
         sampleColumns = atlas.heightMapSampleColumns or math.min(48, atlas.heightMapMeshColumns * 4),
         sampleRows = atlas.heightMapSampleRows or math.min(48, atlas.heightMapMeshRows * 4),
         triangleBudget = atlas.heightMapTriangleBudget, offset = atlas.heightMapOffset,
+        -- Atlas relief replaces the structural quad, so its perimeter must
+        -- close back into the solid cell shell rather than exposing fog where
+        -- independently displaced floor, ceiling, and wall meshes meet.
+        sealPerimeter = true,
     }
     local function uv(u, v)
         local px = originX + 0.5 + u * (width - 1)
@@ -872,6 +876,49 @@ local WORLD_MESH_FORMAT = {
     { "FogVisibility", "float", 1 },
     { "WorldHeight", "float", 1 },
 }
+
+-- Clip triangle soup in world space before perspective projection. The GPU
+-- cannot safely project a triangle with vertices on both sides of the camera:
+-- its negative-depth vertices invert and stretch the primitive across the
+-- viewport. Vertex arrays use WORLD_MESH_FORMAT order, so every interpolated
+-- field (UV, colour, lighting, fog, and height) remains continuous.
+function viewport_3d.clipTrianglesToNear(vertices, cameraX, cameraY, dirX, dirY, nearPlane)
+    nearPlane = nearPlane or 0.05
+    local function depth(vertex)
+        return (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
+    end
+    local function intersection(from, to, fromDepth, toDepth)
+        local t = (nearPlane - fromDepth) / (toDepth - fromDepth)
+        local vertex = {}
+        for i = 1, #from do vertex[i] = from[i] + (to[i] - from[i]) * t end
+        return vertex
+    end
+    local output = {}
+    for triangle = 1, #vertices, 3 do
+        local polygon = { vertices[triangle], vertices[triangle + 1], vertices[triangle + 2] }
+        local clipped = {}
+        local previous = polygon[#polygon]
+        local previousDepth = depth(previous)
+        for _, current in ipairs(polygon) do
+            local currentDepth = depth(current)
+            local previousInside = previousDepth >= nearPlane
+            local currentInside = currentDepth >= nearPlane
+            if previousInside ~= currentInside then
+                clipped[#clipped + 1] = intersection(previous, current, previousDepth, currentDepth)
+            end
+            if currentInside then clipped[#clipped + 1] = current end
+            previous, previousDepth = current, currentDepth
+        end
+        if #clipped >= 3 then
+            for i = 2, #clipped - 1 do
+                output[#output + 1] = clipped[1]
+                output[#output + 1] = clipped[i]
+                output[#output + 1] = clipped[i + 1]
+            end
+        end
+    end
+    return output
+end
 
 local WORLD_SHADER_SOURCE = [[
     #ifdef VERTEX
@@ -1705,7 +1752,8 @@ local function drawWorldSpace(session)
             local mesh = love.graphics.newMesh(WORLD_MESH_FORMAT, vertices, "triangles", "static")
             if modelGroup.texture then mesh:setTexture(modelGroup.texture) end
             placed[#placed + 1] = {
-                mesh = mesh, model = true,
+                mesh = mesh, model = true, vertices = vertices,
+                texture = modelGroup.texture,
                 centerX = originX, centerY = originY, centerZ = 0.5,
             }
         end
@@ -1713,11 +1761,44 @@ local function drawWorldSpace(session)
         return placed
     end
     local function queuePlacedModels(placedGroups)
+        -- Keep projection depth positive on the CPU, but leave the final cut
+        -- to the GPU's 0.05 near plane. Cutting triangle soup exactly at the
+        -- hardware plane produced one-pixel cracks between independently
+        -- clipped neighbours as the camera moved along a wall.
+        local cpuClipPlane = 0.005
         for _, placed in ipairs(placedGroups) do
-            placed.depth = (placed.centerX - cameraX) * dirX
-                + (placed.centerY - cameraY) * dirY
-            placed.sequence = #surfaces + 1
-            surfaces[#surfaces + 1] = placed
+            local anyInFront, anyBehind = false, false
+            for _, vertex in ipairs(placed.vertices) do
+                local vertexDepth = (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
+                if vertexDepth >= cpuClipPlane then anyInFront = true else anyBehind = true end
+            end
+            if anyInFront then
+                local drawable = placed
+                if anyBehind then
+                    local clipped = viewport_3d.clipTrianglesToNear(
+                        placed.vertices, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+                    local needed = #clipped
+                    if not placed.clippedMesh or placed.clippedCapacity < needed then
+                        if placed.clippedMesh and placed.clippedMesh.release then placed.clippedMesh:release() end
+                        local capacity = 6
+                        while capacity < needed do capacity = capacity * 2 end
+                        placed.clippedMesh = love.graphics.newMesh(
+                            WORLD_MESH_FORMAT, capacity, "triangles", "stream")
+                        if placed.texture then placed.clippedMesh:setTexture(placed.texture) end
+                        placed.clippedCapacity = capacity
+                    end
+                    placed.clippedMesh:setVertices(clipped, 1, needed)
+                    placed.clippedMesh:setDrawRange(1, needed)
+                    drawable = {
+                        mesh = placed.clippedMesh, model = true,
+                        centerX = placed.centerX, centerY = placed.centerY, centerZ = placed.centerZ,
+                    }
+                end
+                drawable.depth = (placed.centerX - cameraX) * dirX
+                    + (placed.centerY - cameraY) * dirY
+                drawable.sequence = #surfaces + 1
+                surfaces[#surfaces + 1] = drawable
+            end
         end
     end
 

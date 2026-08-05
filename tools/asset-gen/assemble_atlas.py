@@ -11,7 +11,8 @@ Examples:
   #   --height-out assets/tilesets/dungeon-height.png \
   #   --height-cell 0,0=assets/geometry/hand-authored/wall.png
 
-The same command assembles a five-column portrait expression sheet with
+Coordinates are always ``ROW,COLUMN``, matching ``data/tilesets.json`` atlas
+coordinates. The same command assembles a five-column portrait expression sheet with
 ``--cols 5 --rows 1 --cell-size 128x192``. Inputs must already be processed,
 reviewed PNGs from staged runs. The script never promotes into assets/.
 """
@@ -39,13 +40,13 @@ def parse_size(value):
 def parse_cell(value):
     try:
         key, path = value.split("=", 1)
-        col, row = (int(part) for part in key.split(","))
-        if col < 0 or row < 0 or not path:
+        row, col = (int(part) for part in key.split(","))
+        if row < 0 or col < 0 or not path:
             raise ValueError
-        return col, row, path
+        return row, col, path
     except ValueError as exc:
         raise argparse.ArgumentTypeError(
-            "cell must be COL,ROW=path/to/processed.png") from exc
+            "cell must be ROW,COL=path/to/processed.png") from exc
 
 
 def embed(image, scale=1):
@@ -62,11 +63,11 @@ def write_report(path, title, atlas, sources, cols, rows, cell_size, base_path=N
         for col in range(3):
             repeated.alpha_composite(atlas, (col * atlas.width, row * atlas.height))
     cards = []
-    for (col, row), source in sorted(sources.items(), key=lambda item: (item[0][1], item[0][0])):
+    for (row, col), source in sorted(sources.items()):
         image = Image.open(source).convert("RGBA")
         cards.append(
-            f"<figure><figcaption>cell {col},{row} — {html.escape(str(source))}</figcaption>"
-            f"<img src='{embed(image, 3)}' alt='cell {col},{row}'></figure>"
+            f"<figure><figcaption>cell [{row},{col}] — {html.escape(str(source))}</figcaption>"
+            f"<img src='{embed(image, 3)}' alt='cell [{row},{col}]'></figure>"
         )
     body = f"""<!doctype html>
 <html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
@@ -104,17 +105,17 @@ def main(argv=None):
     parser.add_argument("--height-out", help="optional atlas-sized grayscale height output")
     parser.add_argument("--height-base", help="existing height atlas used for unspecified height cells")
     parser.add_argument("--height-cell", action="append", type=parse_cell,
-                        help="HEIGHT cell mapping, e.g. COL,ROW=height.png")
+                        help="HEIGHT cell mapping, e.g. ROW,COL=height.png")
     args = parser.parse_args(argv)
     if args.cols <= 0 or args.rows <= 0:
         parser.error("cols and rows must be positive")
 
     sources = {}
-    for col, row, raw_path in args.cell:
-        if col >= args.cols or row >= args.rows:
-            parser.error(f"cell {col},{row} is outside {args.cols}x{args.rows}")
-        if (col, row) in sources:
-            parser.error(f"cell {col},{row} was supplied twice")
+    for row, col, raw_path in args.cell:
+        if row >= args.rows or col >= args.cols:
+            parser.error(f"cell [{row},{col}] is outside {args.rows}x{args.cols}")
+        if (row, col) in sources:
+            parser.error(f"cell [{row},{col}] was supplied twice")
         path = Path(raw_path)
         if not path.is_file():
             parser.error(f"source not found: {path}")
@@ -122,7 +123,7 @@ def main(argv=None):
         if image.size != args.cell_size:
             parser.error(f"{path} is {image.size[0]}x{image.size[1]}, expected "
                          f"{args.cell_size[0]}x{args.cell_size[1]}")
-        sources[(col, row)] = path
+        sources[(row, col)] = path
     atlas_size = (args.cols * args.cell_size[0], args.rows * args.cell_size[1])
     if args.base:
         base = Path(args.base)
@@ -137,18 +138,18 @@ def main(argv=None):
         if len(sources) != expected:
             parser.error(f"expected {expected} cells, received {len(sources)}")
         atlas = Image.new("RGBA", atlas_size)
-    for (col, row), path in sources.items():
+    for (row, col), path in sources.items():
         atlas.alpha_composite(Image.open(path).convert("RGBA"),
                               (col * args.cell_size[0], row * args.cell_size[1]))
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     atlas.save(args.out)
     if args.height_out:
         height_sources = {}
-        for col, row, raw_path in args.height_cell or []:
-            if col >= args.cols or row >= args.rows:
-                parser.error(f"height cell {col},{row} is outside {args.cols}x{args.rows}")
-            if (col, row) in height_sources:
-                parser.error(f"height cell {col},{row} was supplied twice")
+        for row, col, raw_path in args.height_cell or []:
+            if row >= args.rows or col >= args.cols:
+                parser.error(f"height cell [{row},{col}] is outside {args.rows}x{args.cols}")
+            if (row, col) in height_sources:
+                parser.error(f"height cell [{row},{col}] was supplied twice")
             path = Path(raw_path)
             if not path.is_file():
                 parser.error(f"height source not found: {path}")
@@ -156,7 +157,7 @@ def main(argv=None):
             if image.size != args.cell_size:
                 parser.error(f"height source {path} is {image.width}x{image.height}, expected "
                              f"{args.cell_size[0]}x{args.cell_size[1]}")
-            height_sources[(col, row)] = path
+            height_sources[(row, col)] = path
         height_size = atlas_size
         if args.height_base:
             height_base = Path(args.height_base)
@@ -170,7 +171,7 @@ def main(argv=None):
             if len(height_sources) != args.cols * args.rows:
                 parser.error("without --height-base, --height-cell must cover every cell")
             height_atlas = Image.new("RGBA", height_size, (128, 128, 128, 255))
-        for (col, row), path in height_sources.items():
+        for (row, col), path in height_sources.items():
             height_atlas.paste(Image.open(path).convert("RGBA"),
                                (col * args.cell_size[0], row * args.cell_size[1]))
         Path(args.height_out).parent.mkdir(parents=True, exist_ok=True)

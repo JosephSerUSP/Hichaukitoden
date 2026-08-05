@@ -210,6 +210,37 @@ def backplane(z=BASE_Z, margin=2.0, facing="up"):
                 (1.0 + margin * 2, 1.0 + margin * 2, 1.0))
 
 
+# ------------------------------------------------------------------- scale
+#
+# SPEC 1.23 fixes one map cell at 2.5 metres on every axis. That number was
+# written down but never reached this file, so each preset went on carrying a
+# normalised feature size somebody had guessed, and three of them are recorded
+# in the spec as known-too-coarse. Sizing THROUGH the constant instead means a
+# preset states the real-world size it wants and cannot silently drift.
+
+CELL_METRES = 2.5
+
+
+def across(size_m):
+    """How many features of this real-world size span one tile."""
+    return max(1, round(CELL_METRES / size_m))
+
+
+def as_metres(fraction):
+    """The real size of a normalised extent. For sanity-checking a preset."""
+    return fraction * CELL_METRES
+
+
+# Mortar is the strongest scale cue in the library, and the spec's feature-size
+# table missed it. A bedding joint is 1-3 cm whatever the size of the stone it
+# beds, which makes it the one feature in a masonry texture whose real size the
+# eye already knows -- so it calibrates the tile against the JOINT and sizes the
+# stones from there. An over-wide joint therefore shrinks the whole corridor no
+# matter how carefully the stones were counted, which is exactly the fault the
+# baked flagstone map shows: its joints are 12% of the tile, or 30 cm of mortar.
+JOINT = 0.025 / CELL_METRES          # 2.5 cm
+
+
 # ---------------------------------------------------------------- walls (x)
 
 def wall_pilasters():
@@ -413,14 +444,12 @@ def floor_flagstones():
     # again, and the jitter is seeded so the floor is still identical run to run.
     rows, cols = 6, 5
     slabs = []
-    for row in range(rows):
+    for row, (y, h) in enumerate(_divisions(rng, rows, 0.14)):
         stagger = (0.5 if row % 2 else 0.0) / cols
-        for col in range(cols):
-            width = (1.0 / cols) * rng.uniform(0.86, 1.0)
-            height = (1.0 / rows) * rng.uniform(0.84, 1.0)
-            slabs.append(((col / cols + stagger) % 1.0, row / rows, width, height))
+        for x, w in _divisions(rng, cols, 0.14):
+            slabs.append(((x + stagger) % 1.0, y, w, h))
 
-    joint = 0.013
+    joint = JOINT
     for index, (x, y, w, h) in enumerate(slabs):
         height = rng.uniform(0.105, 0.190)
         stone = slab(f"flag_{index}", (x + w / 2.0, y + h / 2.0, height / 2.0),
@@ -776,6 +805,28 @@ def noise_plane(name, amplitude, field, resolution=96, z=0.0):
     return _mesh_from_bmesh(name, bm)
 
 
+def _divisions(rng, count, variation):
+    """Cut one unit span into `count` pieces of varying width, with no gaps.
+
+    The obvious way to vary a stone -- multiply its width by uniform(0.8, 1.0)
+    -- is wrong, and it is the bug that survived two rewrites of the floors. It
+    shrinks each stone away from a fixed lattice, so the leftover shows up as
+    extra gap and the gap reads as MORTAR. At 26% jitter on a 50 cm slab that
+    is a 13 cm mortar joint, and since a joint is the one feature whose real
+    size the eye knows (see JOINT), the tile then reads at a fifth of its size
+    no matter how carefully the stones were counted.
+
+    Varying the cut POSITIONS instead keeps the pieces edge to edge, so the
+    only gap left in the preset is the joint the preset asked for.
+    """
+    edges = [0.0]
+    widths = [1.0 + rng.uniform(-variation, variation) for _ in range(count)]
+    total = sum(widths)
+    for width in widths:
+        edges.append(edges[-1] + width / total)
+    return [(edges[i], edges[i + 1] - edges[i]) for i in range(count)]
+
+
 def _scatter(rng, rows, cols, jitter):
     """Jittered lattice: irregular, but with no gaps and no pile-ups.
 
@@ -798,19 +849,39 @@ def floor_cobbles():
     first-pass flagstone map could not express.
     """
     rng = _rng()
-    # The bed sits just BELOW the lowest crown, not at the bottom of the range.
+    # 15 cm setts: SPEC 1.23 records the old 7x7 as too coarse, because seven
+    # across 2.5 m is a 36 cm "cobble" -- a boulder, not something laid by hand.
+    # A sett is 10-20 cm because that is what one person can bed in one motion.
+    lattice = across(0.15)
+    pitch = 1.0 / lattice
+    crown_of = lambda radius: radius * rng.uniform(1.55, 2.90)
+    # The bed sits just BELOW the lowest crown a stone can reach, and that has
+    # to be derived rather than written down. Leaving it at the absolute height
+    # the 7x7 version used is what produced the first re-bake of this preset:
+    # the stones shrank with the lattice, the bed did not, and it swallowed
+    # every sett except the tallest -- a floor of isolated white caps floating
+    # on a dark void, which is precisely the failure the note below warns about.
+    min_crown = pitch * 0.66 * 1.55
+    bed_top = min_crown * 0.74
+    bed_thickness = pitch * 1.85
     # With a deep bed the gaps between stones fall to the floor of the tonal
     # range and the map reads as loose bubbles over a void; a shallow bed makes
     # them what they are, which is mortar between stones that touch.
-    objects = [backplane(z=0.085),
-               slab("bed", (0.5, 0.5, 0.020), (4.0, 4.0, 0.130))]
-    for index, (x, y) in enumerate(_scatter(rng, 7, 7, 0.28)):
-        # Radius against a 1/7 lattice pitch, so neighbours meet rather than
-        # float. Below about 0.07 they separate and the packing is lost.
-        radius = rng.uniform(0.095, 0.125)
+    objects = [backplane(z=bed_top),
+               slab("bed", (0.5, 0.5, bed_top - bed_thickness / 2.0),
+                    (4.0, 4.0, bed_thickness))]
+    for index, (x, y) in enumerate(_scatter(rng, lattice, lattice, 0.28)):
+        # Radius against the lattice pitch, so neighbours meet rather than
+        # float. Below about half the pitch they separate and packing is lost.
+        radius = pitch * rng.uniform(0.66, 0.87)
         # The stone's crown, independent per stone: some sit proud, some are
-        # trodden almost flush into the bed.
-        crown = rng.uniform(0.115, 0.215)
+        # trodden almost flush into the bed. Expressed against the radius, not
+        # as an absolute: the renderer renormalises Z to the observed range, so
+        # a spread left constant while the stones got smaller would come back
+        # as the same violent unevenness over stones a third the size -- a
+        # floor nobody could stand on. A sett sits proud of its neighbour by a
+        # fraction of its own width, at any size.
+        crown = crown_of(radius)
         objects.append(ellipsoid(
             f"cobble_{index}", (x, y, crown - radius * 1.15),
             (radius, radius * rng.uniform(0.80, 1.25), radius * 1.35)))
@@ -825,17 +896,23 @@ def floor_slabs_varied():
     """
     rng = _rng()
     objects = [backplane()]
-    slabs = [
-        (0.00, 0.00, 0.34, 0.26), (0.36, 0.00, 0.30, 0.26),
-        (0.68, 0.00, 0.32, 0.26),
-        (0.00, 0.28, 0.22, 0.30), (0.24, 0.28, 0.40, 0.30),
-        (0.66, 0.28, 0.34, 0.30),
-        (0.00, 0.60, 0.38, 0.18), (0.40, 0.60, 0.26, 0.18),
-        (0.68, 0.60, 0.32, 0.18),
-        (0.00, 0.80, 0.28, 0.20), (0.30, 0.80, 0.34, 0.20),
-        (0.66, 0.80, 0.34, 0.20),
-    ]
-    joint = 0.020
+    # SPEC 1.23 records the old hand table as too coarse: three slabs across
+    # 2.5 m is an 80 cm paving stone, which is a quarter-tonne of limestone and
+    # not something a mason lays by hand. 50 cm is the top of the plausible
+    # band and still reads as heavy flooring.
+    #
+    # Generated rather than tabled, for the reason floor_flagstones gives: a
+    # hand-written list of twenty-five entries is a list nobody will ever
+    # adjust again. The size jitter is wider than the flagstone bond's, since
+    # that variation IS this preset -- but it varies around a correct size now
+    # instead of around a wrong one.
+    cols = rows = across(0.50)
+    slabs = []
+    for row, (y, h) in enumerate(_divisions(rng, rows, 0.26)):
+        stagger = (0.5 if row % 2 else 0.0) / cols
+        for x, w in _divisions(rng, cols, 0.26):
+            slabs.append(((x + stagger) % 1.0, y, w, h))
+    joint = JOINT
     for index, (x, y, w, h) in enumerate(slabs):
         height = rng.uniform(0.090, 0.260)
         stone = slab(f"slab_{index}", (x + w / 2.0, y + h / 2.0, height / 2.0),
@@ -854,11 +931,22 @@ def wall_rubble():
     rng = _rng()
     objects = [backplane(z=0.100),
                slab("bed", (0.5, 0.5, 0.030), (4.0, 4.0, 0.140))]
-    for index, (x, y) in enumerate(_scatter(rng, 6, 5, 0.32)):
-        # Lattice pitch is 1/5 across and 1/6 up; radii are sized to overlap it
-        # so the boulders bear on each other the way undressed walling does.
-        radius = rng.uniform(0.115, 0.160)
-        proud = rng.uniform(0.150, 0.290)
+    # 35 cm boulders. SPEC 1.23 records the old 6x5 as too coarse: with radii
+    # sized to overlap the lattice those stones ran to 70-80 cm, which is a
+    # megalith rather than fieldstone. 20-50 cm is what two hands can lift onto
+    # a wall, and lifting it is how rubble walling gets built.
+    cols, rows = across(0.35), across(0.35)
+    pitch = 1.0 / cols
+    for index, (x, y) in enumerate(_scatter(rng, rows, cols, 0.32)):
+        # Radii are sized to overlap the pitch so the boulders bear on each
+        # other the way undressed walling does -- but only just. This is a
+        # RADIUS, so at 0.72-1.00 of the pitch each boulder spans one and a
+        # half to two lattice cells, its neighbours are swallowed inside it,
+        # and the wall comes back reading at the old too-coarse size however
+        # many stones were nominally placed. Touching wants a radius near half
+        # the pitch, not near the whole of it.
+        radius = pitch * rng.uniform(0.55, 0.72)
+        proud = radius * rng.uniform(1.30, 2.50)
         objects.append(ellipsoid(
             f"boulder_{index}", (x, y, proud - radius * 1.25),
             (radius * rng.uniform(0.85, 1.30), radius, radius * 1.30)))
@@ -965,16 +1053,31 @@ def floor_cobbles_rough():
     rng = _rng()
     coarse = noise_field(rng, terms=10, max_frequency=4)
     fine = noise_field(rng, terms=20, max_frequency=11)
-    objects = [backplane(z=0.085),
-               displace(slab("bed", (0.5, 0.5, 0.020), (4.0, 4.0, 0.130)),
-                        fine, 0.012, cuts=0, along="z")]
-    for index, (x, y) in enumerate(_scatter(rng, 7, 7, 0.28)):
-        radius = rng.uniform(0.095, 0.125)
-        crown = rng.uniform(0.115, 0.215)
+    # Same 15 cm sett as floor_cobbles, for the same reason. This preset was
+    # also the blurriest map in the library, and the coarseness was why: seven
+    # smooth domes across a tile is mostly dome, so almost every pixel sits on
+    # a gentle gradient and nothing anywhere is an edge.
+    lattice = across(0.15)
+    pitch = 1.0 / lattice
+    # Bed derived from the lattice, not absolute -- see floor_cobbles.
+    bed_top = pitch * 0.66 * 1.55 * 0.74
+    bed_thickness = pitch * 1.85
+    objects = [backplane(z=bed_top),
+               displace(slab("bed", (0.5, 0.5, bed_top - bed_thickness / 2.0),
+                             (4.0, 4.0, bed_thickness)),
+                        fine, pitch * 0.17, cuts=0, along="z")]
+    # Segments and subdivision are per-stone costs, and this preset now carries
+    # six times the stones it was written for. Detail that was worth four
+    # subdivisions on a 36 cm boulder is invisible on a 15 cm sett a third of
+    # its width, so the sphere is coarser and the fine pass no longer
+    # subdivides -- the first re-bake of this preset died here.
+    for index, (x, y) in enumerate(_scatter(rng, lattice, lattice, 0.28)):
+        radius = pitch * rng.uniform(0.66, 0.87)
+        crown = radius * rng.uniform(1.55, 2.90)
         stone = ellipsoid(f"cobble_{index}", (x, y, crown - radius * 1.15),
                           (radius, radius * rng.uniform(0.80, 1.25),
-                           radius * 1.35), segments=28)
-        displace(stone, coarse, radius * 0.22, cuts=1)
+                           radius * 1.35), segments=16)
+        displace(stone, coarse, radius * 0.22, cuts=0)
         displace(stone, fine, radius * 0.09, cuts=0)
         objects.append(stone)
     return objects, "xy"
