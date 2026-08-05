@@ -11,7 +11,7 @@
 |---|---|---|---|
 | **Carriage & Threshold Opening Sequence** | `data/commonEvents.json` (Common Event 42) — 91 commands playing cinematic plates (`arrival_ride.png`, `arrival_bell.png`, `arrival_room.png`, etc.) | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Passage House Room 3 Start** | `data/commonEvents.json` CE 42 transfers player to Passage House Room 3 text | `PLAYABLE_AND_VERIFIED` | Authored Content |
-| **Saban Starter Moa (Actor 61)** | `data/actors.json` (Actor 61 Moa); `commonEvents.json` CE 42 text names Saban. **Note:** `data/system.json` party is null; Saban must be manually added to party | `PARTLY_IMPLEMENTED` | Authored Content |
+| **Saban Starter Moa (Actor 61)** | `data/actors.json` (Actor 61 Moa); `data/system.json` `newGame.party.fixedMembers` specifies actor 61 at level 3 named Saban, consumed by `engine/newgame.lua` `rollMembers` | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Registration & Crossing Writ** | `data/items.json` Item 198 (`Crossing Writ`); `commonEvents.json` CE 33/34 checks `hasItem:198` before dungeon entry | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Town Shops (Alicia, Laura, Tankard)** | `data/shops.json` Shops 1 (Bakery), 2 (Forge), 5 (Tankard); `commonEvents.json` CE 37, 38, 39 | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Laura's Lunch Delivery** | `data/commonEvents.json` CE 38 sets `laura_lunch_carried`; CE 39 receives lunch, pays 25G, sets `laura_lunch_delivered` | `PLAYABLE_AND_VERIFIED` | Authored Content |
@@ -22,7 +22,7 @@
 | **Thestra Unclaimed Lantern** | `data/commonEvents.json` CE 35 inspects lantern with card `THESTRA` in protagonist's handwriting | `PLAYABLE_AND_VERIFIED` | Authored Content |
 | **Room 3 Inspection Flags (Feed Bowl, Picture)** | Mentioned in walkthrough 01-arrival; no interactive events in Map 1/4 | `DESIRED_MEMORY_ONLY` | Authored Content |
 | **Salt Table Reliquary Trap (Floor 2)** | `data/items.json` Item 207 (`Sealed Reliquary`); `data/maps.json` Map 5 Event 5 (`Misfiled Reliquary`); CE 39 appraises for 800G | `PLAYABLE_AND_VERIFIED` | Authored Content |
-| **Saban Absence / Death Reactions in Town** | Walkthrough 02-first-three-incursions describes Alicia asking about unused feed; currently CE 38 lacks individual Saban death state branch | `DESIRED_MEMORY_ONLY` | Authored Content |
+| **Saban Absence / Death Reactions in Town** | Walkthrough 02-first-three-incursions describes Alicia asking about unused feed. **BLOCKED:** Alicia's response requires durable identity/death-history data. Active-party absence is insufficient because Saban may be in reserve or temporarily removed | `DESIRED_MEMORY_ONLY` | Authored Content |
 
 ---
 
@@ -76,7 +76,7 @@ The slice boundary encompasses:
 * **Where does a new player begin?**  
   In Passage House Room 3 after `CommonEvent 42` cinematic cutscene.
 * **Is Saban definitely present, named, and persistent?**  
-  Saban is named in narrative text (`CommonEvent 42`) and is Actor 61 (Moa). Currently, `data/system.json` party is null; adding Saban directly to initial party array in `system.json` or `CE 42` ensures he starts in party.
+  Yes. Saban is Actor 61 (Moa), authored in `data/system.json` under `newGame.party.fixedMembers` at level 3 with individual name "Saban". `engine/newgame.lua` `rollMembers()` consumes `fixedMembers` on new game.
 * **Is registration mandatory and reliably communicated?**  
   Yes. `Crossing Writ` (Item 198) is required by Gate Guard (`CommonEvent 34`).
 * **Can the player shop, prepare, enter the dungeon, return, save, and resume?**  
@@ -90,19 +90,18 @@ The slice boundary encompasses:
 * **Earliest point at which content visibly stops?**  
   After the Chapel Vigil ceremony (`CommonEvent 35`) and inspection of the `THESTRA` lantern.
 * **Which missing pieces create greatest increase in player attachment per implementation hour?**  
-  1. Auto-adding Saban (Actor 61) to party in `CE 42`.  
-  2. Adding interactive Room 3 feed bowl event.  
-  3. Adding Saban death/absence conditional dialogue at Alicia's bakery.
+  1. Adding interactive Room 3 feed bowl event.  
+  2. Adding durable Saban death-history tracking for Alicia's feed inquiry.  
+  3. Adding Cerberus 6 MPD traversal cost warning in dialogue.
 
 ---
 
 ## 5. Prioritized 5–10 Backlog Tasks
 
-1. **Auto-grant Saban on New Game:** Add `ADD_PARTY_MEMBER` (actorId 61) to `CommonEvent 42` so Saban is physically in party from step 1. *(Low risk / High value)*
-2. **Room 3 Inspection Events:** Add 2 interactive inspection events to Map 4 (Borrowed Room) for feed bowl and coat hook. *(Low risk / High value)*
-3. **Saban Absence Dialogue Branch:** Add conditional branch in `CommonEvent 38` checking if Actor 61 is dead or absent from party to trigger Alicia's feed inquiry. *(Low risk / High value)*
-4. **Cerberus Traversal Cost UI Warning:** Add explicit dialogue line in Map 2 Event 12 warning of Cerberus 6 MPD traversal drain before contract confirmation. *(Low risk / Medium value)*
-5. **Ines Blue Line Visual Marker:** Add a distinct floor tile / decal for the Ines mark on Map 2 Event 11. *(Low risk / Medium value)*
+1. **Room 3 Inspection Events:** Add 2 interactive inspection events to Map 4 (Borrowed Room) for feed bowl and coat hook. *(Low risk / High value)*
+2. **Saban Death Reaction Data (BLOCKED):** Alicia's feed inquiry in `CommonEvent 38` requires durable individual death-history state rather than active-party checking, as active-party absence is insufficient when Saban is in reserve or temporarily unassigned. *(Medium risk / High value)*
+3. **Cerberus Traversal Cost UI Warning:** Add explicit dialogue line in Map 2 Event 12 warning of Cerberus 6 MPD traversal drain before contract confirmation. *(Low risk / Medium value)*
+4. **Ines Blue Line Visual Marker:** Add a distinct floor tile / decal for the Ines mark on Map 2 Event 11. *(Low risk / Medium value)*
 
 ---
 

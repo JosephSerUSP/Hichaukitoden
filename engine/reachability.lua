@@ -47,6 +47,56 @@ local function walkAll(loader, visit)
     end
 end
 
+function reachability.collectActorSources(loader)
+    local actorSources = {}
+    local function addActor(id, src)
+        if id == nil then return end
+        id = tostring(id)
+        actorSources[id] = actorSources[id] or {}
+        actorSources[id][src] = true
+    end
+
+    walkAll(loader, function(node)
+        if node.cmd == "COMMENT" then return end
+        if node.actorId ~= nil then addActor(node.actorId, "event") end
+    end)
+
+    for _, map in ipairs(loader.maps or {}) do
+        for _, id in ipairs(map.recruits or {}) do addActor(id, "recruit pool") end
+        for _, enc in ipairs(map.encounters or {}) do
+            if type(enc) == "table" then addActor(enc.id, "encounter") end
+        end
+    end
+
+    local sys = loader.system or {}
+    local ng = sys.newGame or {}
+    local partyRules = ng.party or {}
+    if partyRules.fixedMembers ~= nil then
+        for _, member in ipairs(partyRules.fixedMembers or {}) do
+            if member.id and (not loader.getActor or loader.getActor(member.id)) then
+                addActor(member.id, "initial party (fixed)")
+            end
+        end
+    end
+
+    for _, actor in ipairs(loader.actors or {}) do
+        if actor.unlocked then addActor(actor.id, "summon pool") end
+        if actor.initialParty then addActor(actor.id, "initial party") end
+        if actor.role == "Summoner" then addActor(actor.id, "role Summoner") end
+        for _, evo in ipairs(actor.evolutions or {}) do addActor(evo.evolvesTo, "promotion") end
+    end
+
+    for _, item in ipairs(loader.items or {}) do
+        for _, eff in ipairs(item.effects or {}) do
+            if eff.type == "recruit_egg" then
+                addActor(eff.value or eff.actorId, "item " .. tostring(item.id))
+            end
+        end
+    end
+
+    return actorSources
+end
+
 function reachability.build(loader)
     local lines = {}
     local function line(s) table.insert(lines, s or "") end
@@ -58,19 +108,15 @@ function reachability.build(loader)
     -- into the node; main.openShop takes it from there), so a shop no
     -- OPEN_SHOP names is a shop with no door -- and its exclusive stock is
     -- unbuyable even though G1 is happy with every id in it.
-    local openedShops, itemSources, actorSources, calledEvents = {}, {}, {}, {}
+    local openedShops, itemSources, calledEvents = {}, {}, {}
     local function addItem(id, src)
         if id == nil then return end
         id = tostring(id)
         itemSources[id] = itemSources[id] or {}
         itemSources[id][src] = true
     end
-    local function addActor(id, src)
-        if id == nil then return end
-        id = tostring(id)
-        actorSources[id] = actorSources[id] or {}
-        actorSources[id][src] = true
-    end
+
+    local actorSources = reachability.collectActorSources(loader)
 
     walkAll(loader, function(node)
         local cmd = node.cmd
@@ -86,7 +132,6 @@ function reachability.build(loader)
             and node.item ~= "random" and (type(node.count) ~= "number" or node.count > 0) then
             addItem(node.item, "event")
         end
-        if node.actorId ~= nil then addActor(node.actorId, "event") end
     end)
 
     for shopId, shop in pairs(loader.shops or {}) do
@@ -101,19 +146,13 @@ function reachability.build(loader)
             addItem(rew.id, "quest " .. tostring(qid))
         end
     end
-    -- Map pools: chests roll `treasures` (CHANGE_ITEM item="random"), recruit
-    -- events roll `recruits`. Both are indexed at runtime, so nothing static
-    -- names the ids they hand out.
+    -- Map pools: chests roll `treasures` (CHANGE_ITEM item="random").
     for _, map in ipairs(loader.maps or {}) do
         for _, id in ipairs(map.treasures or {}) do addItem(id, "chest") end
-        for _, id in ipairs(map.recruits or {}) do addActor(id, "recruit pool") end
-        for _, enc in ipairs(map.encounters or {}) do
-            if type(enc) == "table" then addActor(enc.id, "encounter") end
-        end
     end
     -- Sacrifice materials (interpreter.sacrificeRewardTable), the summon pool
-    -- (`unlocked`), the starting party (`initialParty`), promotion targets, and
-    -- the recruit_egg effect are all producers no static id reference shows.
+    -- (`unlocked`), the starting party (`actor.initialParty` or `system.newGame.party.fixedMembers`),
+    -- promotion targets, and the recruit_egg effect are all producers no static id reference shows.
     local sys = loader.system or {}
     for _, rew in ipairs(((sys.summoner or {}).defaultSacrificeRewards) or {}) do
         addItem(rew.itemId, "sacrifice (default)")
@@ -121,20 +160,6 @@ function reachability.build(loader)
     for _, actor in ipairs(loader.actors or {}) do
         for _, rew in ipairs(actor.sacrificeRewards or {}) do
             addItem(rew.itemId, "sacrifice")
-        end
-        if actor.unlocked then addActor(actor.id, "summon pool") end
-        if actor.initialParty then addActor(actor.id, "initial party") end
-        -- Only "Summoner" is a role the engine LOOKS UP (session.lua calls
-        -- getActorByRole("Summoner") to build the player). Every other role is
-        -- descriptive, so it is not a way to obtain the creature.
-        if actor.role == "Summoner" then addActor(actor.id, "role Summoner") end
-        for _, evo in ipairs(actor.evolutions or {}) do addActor(evo.evolvesTo, "promotion") end
-    end
-    for _, item in ipairs(loader.items or {}) do
-        for _, eff in ipairs(item.effects or {}) do
-            if eff.type == "recruit_egg" then
-                addActor(eff.value or eff.actorId, "item " .. tostring(item.id))
-            end
         end
     end
 
@@ -221,9 +246,9 @@ function reachability.build(loader)
     if n == 0 then line("- (none)") end
 
     section("Creatures nothing can obtain")
-    line("Sources counted: `initialParty`, `unlocked` (summon pool), map")
-    line("`encounters` and `recruits` pools, promotion targets, `recruit_egg`")
-    line("items, an actor `role` the engine looks up, explicit actorId.")
+    line("Sources counted: starting party (`actor.initialParty` or `system.newGame.party.fixedMembers`),")
+    line("`unlocked` (summon pool), map `encounters` and `recruits` pools, promotion targets,")
+    line("`recruit_egg` items, an actor `role` the engine looks up, explicit actorId.")
     line()
     n = 0
     for _, actor in ipairs(loader.actors or {}) do

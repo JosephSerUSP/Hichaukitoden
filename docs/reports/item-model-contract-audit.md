@@ -42,8 +42,8 @@ Only **one** shared model representation exists across the assigned roster:
   - `[9]` **Alert Charm** (equipment)
 
 ### Classification
-* **Category:** *Deliberate shared representation*.
-* **Rationale:** Early-tier trinkets/charms sharing a common amulet mesh with palette/color shader differentiation.
+* **Category:** *Shared representation*.
+* **Rationale:** Items 7, 8, and 9 currently share the same OBJ/MTL appearance. `iconPalette` affects 2D icon presentation and is not consumed by `item_model_view.lua`; no item-specific 3D palette differentiation was found. Any shared authorial intent remains a hypothesis.
 * **Suspicious/Accidental duplications:** 0 found.
 
 ---
@@ -78,13 +78,13 @@ The directory contains 3 unreferenced OBJ files:
 | **Tier 3** | 38 | 0 | 37 | 0 |
 | **Tier 4** | 16 | 0 | 16 | 0 |
 | **Tier 5** | 8 | 0 | 8 | 0 |
-| **Untiered (IDs 1–52)** | 52 | 52 | 50 | 50 |
+| **Untiered (IDs 1–52)** | 52 | 52 | 52 | 52 |
 | **Untiered (IDs 53–114)** | 62 | 0 | 56 | 0 |
 
 ### Key Art vs. Model Cross-Coverage
 
 * **Items with Key Art but NO Model:** 146 items (e.g. Celestial Fossil `[53]`, Blackroot `[54]`, Iron Knife `[57]`, Steel Sword `[58]`).
-* **Items with Model but NO Key Art:** 0 items (every item with a 3D model also has 2D key art, except items 29 and 30 which omit `keyArt`).
+* **Items with Model but NO Key Art:** 0 items (every item with a 3D model also defines 2D key art).
 
 ---
 
