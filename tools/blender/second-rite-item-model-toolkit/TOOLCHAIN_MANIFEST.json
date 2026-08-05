@@ -1,0 +1,76 @@
+{
+  "toolkit": "Second Rite Item Model Toolkit",
+  "version": "1.0",
+  "created": "2026-08-05",
+  "validated_blender": "5.0.1",
+  "baseline_export_roots": 49,
+  "baseline_obj_outputs": 53,
+  "source_project": "JosephSerUSP/Hichaukitoden",
+  "files": [
+    {
+      "path": "BUILD_LIBRARY_WINDOWS.bat",
+      "bytes": 255,
+      "sha256": "e94fb4f64c15920d64e0a0cee06f03ab937ddc7052164e12797eba9aba05875d"
+    },
+    {
+      "path": "LICENSE_NOTES.md",
+      "bytes": 634,
+      "sha256": "3d56ab7f830d3a08858fd201910faf9ee3c87ab69217475c3954aae3ad060378"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4886,
+      "sha256": "a72d796fe02089c8f4f4fb8226bcfe958a12406002af63464ee3f243e50fb018"
+    },
+    {
+      "path": "REPRODUCTION_NOTES.md",
+      "bytes": 1945,
+      "sha256": "31e1d5992ac7e7af103d5bd95e848f8c8a1e84398cc3ece5980207576952f4e7"
+    },
+    {
+      "path": "TOOLCHAIN_CONTEXT.md",
+      "bytes": 3453,
+      "sha256": "0dc735b2736850450024a2e269dce6fca496d3bf236c1bfa1cbf302d5366ad6e"
+    },
+    {
+      "path": "build_expanded_item_library.py",
+      "bytes": 50935,
+      "sha256": "5b919cd6848028599dfc29daead099717cd6ff789e0ee16aef00e855327faed8"
+    },
+    {
+      "path": "github-actions/build-expanded-item-library-original.yml",
+      "bytes": 4488,
+      "sha256": "e7ec4dda488ca2d8215da18607e3ff5b59784cc87edfe34a765ef453e85fd9a4"
+    },
+    {
+      "path": "github-actions/build-expanded-item-library-portable.yml",
+      "bytes": 2423,
+      "sha256": "fb6d055969f7d83fc470c58f6b2d18c7cdada4c19e1f232dbe492dda2a17da3e"
+    },
+    {
+      "path": "reference/ITEM_MODEL_MANIFEST.md",
+      "bytes": 3887,
+      "sha256": "bce8a94d7978eed0b981d8ea2adc68808a1902230d9f0bba1d6d1904c8dbaaf0"
+    },
+    {
+      "path": "scripts/build_library_linux.sh",
+      "bytes": 1366,
+      "sha256": "a0ff80c29f9fe500e968431070c8488eaa81b0672f105754657ba860ca166421"
+    },
+    {
+      "path": "scripts/build_library_windows.ps1",
+      "bytes": 3130,
+      "sha256": "a7817261710bb71677cb661a196161d5fd9c8842ca2917f3ccccba50b2e041f5"
+    },
+    {
+      "path": "scripts/inspect_library.py",
+      "bytes": 1326,
+      "sha256": "4847e47ff5b80f9ca3451b6856547e936da4fd1c56da7ef09640ec5ee95c0565"
+    },
+    {
+      "path": "second_rite_item_exporter.py",
+      "bytes": 14241,
+      "sha256": "2d72a50f90a3860e182afffee97339612a6986051a5649e31db6e9c5008bbc62"
+    }
+  ]
+}

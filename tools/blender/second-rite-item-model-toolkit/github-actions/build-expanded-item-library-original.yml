@@ -1,0 +1,101 @@
+name: Build expanded Second Rite item library
+
+on:
+  push:
+    branches:
+      - artifact/expanded-item-model-library-20260805
+    paths:
+      - .github/workflows/build-expanded-item-library.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore build scripts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/second-rite-build
+          cat .artifact-build/gen.part.* | base64 --decode | gzip --decompress > /tmp/second-rite-build/build_expanded_item_library.py
+          cat .artifact-build/exp.part.* | base64 --decode | gzip --decompress > /tmp/second-rite-build/second_rite_item_exporter.py
+          python - <<'PYCODE'
+          from pathlib import Path
+          path = Path('/tmp/second-rite-build/build_expanded_item_library.py')
+          text = path.read_text()
+          text = text.replace(
+              "scene.render.engine='BLENDER_EEVEE_NEXT'",
+              "scene.render.engine='BLENDER_WORKBENCH'\n"
+              "scene.display.shading.light='STUDIO'\n"
+              "scene.display.shading.color_type='MATERIAL'\n"
+              "scene.display.shading.show_shadows=True\n"
+              "scene.display.shading.show_cavity=True\n"
+              "scene.display.shading.cavity_type='WORLD'"
+          )
+          text = text.replace('scene.render.resolution_percentage=100', 'scene.render.resolution_percentage=70')
+          path.write_text(text)
+          PYCODE
+          python -m py_compile /tmp/second-rite-build/*.py
+
+      - name: Install headless graphics libraries
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri libgbm1 xvfb xauth
+
+      - name: Download Blender 5.0.1
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd /tmp
+          URL_RELEASE="https://download.blender.org/release/Blender5.0/blender-5.0.1-linux-x64.tar.xz"
+          URL_BUILDER="https://cdn.builder.blender.org/download/daily/blender-5.0.1-stable%2Bv50.a3db93c5b259-linux.x86_64-release.tar.xz"
+          curl -fL --retry 3 "$URL_RELEASE" -o blender.tar.xz || curl -fL --retry 3 "$URL_BUILDER" -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER_BIN=$(find /tmp/blender-* -maxdepth 2 -type f -name blender -perm -111 2>/dev/null | head -1)
+          test -n "$BLENDER_BIN"
+          echo "BLENDER_BIN=$BLENDER_BIN" >> "$GITHUB_ENV"
+          "$BLENDER_BIN" --version
+
+      - name: Build, export, render and validate
+        shell: bash
+        env:
+          SECOND_RITE_OUT: /tmp/second-rite-output
+        run: |
+          set -euxo pipefail
+          xvfb-run -a "$BLENDER_BIN" --background --python /tmp/second-rite-build/build_expanded_item_library.py
+          test -s /tmp/second-rite-output/second_rite_item_model_library_expanded.blend
+          test -s /tmp/second-rite-output/second_rite_item_model_library_expanded_preview.png
+          test "$(find /tmp/second-rite-output/exports -name '*.obj' | wc -l)" -eq 53
+          cp /tmp/second-rite-build/build_expanded_item_library.py /tmp/second-rite-output/
+          cp /tmp/second-rite-build/second_rite_item_exporter.py /tmp/second-rite-output/
+          cd /tmp/second-rite-output
+          sha256sum second_rite_item_model_library_expanded.blend second_rite_item_model_library_expanded_preview.png > SHA256SUMS.txt
+          zip -r second-rite-expanded-item-model-library.zip \
+            second_rite_item_model_library_expanded.blend \
+            second_rite_item_model_library_expanded_preview.png \
+            ITEM_MODEL_MANIFEST.md \
+            SHA256SUMS.txt \
+            build_expanded_item_library.py \
+            second_rite_item_exporter.py \
+            exports
+
+      - name: Upload expanded item library
+        uses: actions/upload-artifact@v4
+        with:
+          name: second-rite-expanded-item-model-library
+          path: |
+            /tmp/second-rite-output/second-rite-expanded-item-model-library.zip
+            /tmp/second-rite-output/second_rite_item_model_library_expanded.blend
+            /tmp/second-rite-output/second_rite_item_model_library_expanded_preview.png
+            /tmp/second-rite-output/ITEM_MODEL_MANIFEST.md
+            /tmp/second-rite-output/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 3

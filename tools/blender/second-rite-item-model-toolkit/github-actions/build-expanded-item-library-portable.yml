@@ -1,0 +1,64 @@
+name: Build expanded Second Rite item library
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tools/blender/item-library/**
+      - .github/workflows/build-expanded-item-library.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install headless graphics libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1-mesa-dri libgbm1 xvfb xauth zip
+
+      - name: Download Blender 5.0.1
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd /tmp
+          curl -fL --retry 3 \
+            https://download.blender.org/release/Blender5.0/blender-5.0.1-linux-x64.tar.xz \
+            -o blender.tar.xz
+          tar -xf blender.tar.xz
+          BLENDER_BIN=$(find /tmp/blender-* -maxdepth 2 -type f -name blender -perm -111 2>/dev/null | head -1)
+          test -n "$BLENDER_BIN"
+          echo "BLENDER_BIN=$BLENDER_BIN" >> "$GITHUB_ENV"
+
+      - name: Build and validate
+        shell: bash
+        env:
+          SECOND_RITE_OUT: /tmp/second-rite-output
+        run: |
+          set -euxo pipefail
+          cd tools/blender/item-library
+          xvfb-run -a "$BLENDER_BIN" --background --python build_expanded_item_library.py
+          test -s "$SECOND_RITE_OUT/second_rite_item_model_library_expanded.blend"
+          test -s "$SECOND_RITE_OUT/second_rite_item_model_library_expanded_preview.png"
+          test "$(find "$SECOND_RITE_OUT/exports" -name '*.obj' | wc -l)" -eq 53
+          cp build_expanded_item_library.py second_rite_item_exporter.py "$SECOND_RITE_OUT/"
+          cd "$SECOND_RITE_OUT"
+          sha256sum second_rite_item_model_library_expanded.blend \
+                    second_rite_item_model_library_expanded_preview.png \
+                    ITEM_MODEL_MANIFEST.md > SHA256SUMS.txt
+          zip -r second-rite-expanded-item-model-library.zip \
+            second_rite_item_model_library_expanded.blend \
+            second_rite_item_model_library_expanded_preview.png \
+            ITEM_MODEL_MANIFEST.md SHA256SUMS.txt \
+            build_expanded_item_library.py second_rite_item_exporter.py exports
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: second-rite-expanded-item-model-library
+          path: /tmp/second-rite-output/
+          if-no-files-found: error

@@ -1,0 +1,116 @@
+# Second Rite Expanded Item Model Library
+
+Generated with Blender 5.0.1.
+
+- Export roots: **49**
+- Static OBJ outputs: **53**
+- Pivot export mode: **root pivot to 0,0,0**
+- Bottle Family variants: **basis, tall, round, angular, molten**
+
+## Models
+
+- `bottle_family` — Bottle Family (Consumables)
+- `silver_blade` — Silver Blade (Weapons)
+- `wind_charm` — Wind Charm (Accessories)
+- `crystal` — Crystal Cluster (Relics)
+- `placeholder_question` — Question Mark (Placeholder)
+- `bone_plate` — Bone Plate (Armor)
+- `rear_mirror` — Rear Mirror (Accessories)
+- `mystic_egg` — Mystic Egg (Relics)
+- `golden_egg` — Golden Egg (Relics)
+- `vitality_seal_1` — Vitality Seal I (Accessories)
+- `vitality_seal_2` — Vitality Seal II (Accessories)
+- `vitality_seal_3` — Vitality Seal III (Accessories)
+- `radiant_blade_flavio` — Radiant Blade Flavio (Weapons)
+- `wind_dancer` — Wind Dancer (Weapons)
+- `water_scepter` — Water Scepter (Weapons)
+- `holy_sword_gram` — Holy Sword Gram (Weapons)
+- `dark_scepter_lucille` — Dark Scepter Lucille (Weapons)
+- `mars_emblem` — Mars Emblem (Accessories)
+- `mercury_crest` — Mercury Crest (Accessories)
+- `hermes_boots` — Hermes' Boots (Accessories)
+- `glittering_teardrop` — Glittering Teardrop (Quest)
+- `untarnished_signet` — Untarnished Signet (Quest)
+- `shattered_blade` — Shattered Blade (Quest)
+- `shattered_edge` — Shattered Edge (Weapons)
+- `meteorite_plate` — Meteorite Plate (Armor)
+- `mug_of_ale` — Mug of Ale (Consumables)
+- `pint_of_stout` — Pint of Stout (Consumables)
+- `glass_of_wine` — Glass of Wine (Consumables)
+- `scrap_plating` — Scrap Plating (Armor)
+- `sludge` — Sludge (Consumables)
+- `burnt_slop` — Burnt Slop (Consumables)
+- `broken_spring` — Broken Spring (Accessories)
+- `ambrosia` — Ambrosia (Consumables)
+- `philosophers_stone` — Philosopher's Stone (Relics)
+- `chrysalis_sigil` — Chrysalis Sigil (Quest)
+- `obsidian_shard` — Obsidian Shard (Materials)
+- `melted_wax` — Melted Wax (Materials)
+- `ectoplasm` — Ectoplasm (Materials)
+- `warding_charm` — Warding Charm (Accessories)
+- `vial_of_second_breath` — Vial of Second Breath (Accessories)
+- `thrice_blessed_bead` — Thrice-Blessed Bead (Accessories)
+- `tome_wind_blade` — Tome: Wind Blade (Consumables)
+- `whetstone_draught` — Whetstone Draught (Consumables)
+- `black_hinge` — Black Hinge (Promotion Keys)
+- `ember_bit` — Ember Bit (Promotion Keys)
+- `qilin_bell` — Qilin Bell (Promotion Keys)
+- `cinder_ruby` — Cinder Ruby (Promotion Keys)
+- `abyssal_pearl` — Abyssal Pearl (Promotion Keys)
+- `verdigris_coin` — Verdigris Coin (Promotion Keys)
+
+## Exported files
+
+- `abyssal_pearl.obj`
+- `ambrosia.obj`
+- `black_hinge.obj`
+- `bone_plate.obj`
+- `bottle_family__angular.obj`
+- `bottle_family__basis.obj`
+- `bottle_family__molten.obj`
+- `bottle_family__round.obj`
+- `bottle_family__tall.obj`
+- `broken_spring.obj`
+- `burnt_slop.obj`
+- `chrysalis_sigil.obj`
+- `cinder_ruby.obj`
+- `crystal.obj`
+- `dark_scepter_lucille.obj`
+- `ectoplasm.obj`
+- `ember_bit.obj`
+- `glass_of_wine.obj`
+- `glittering_teardrop.obj`
+- `golden_egg.obj`
+- `hermes_boots.obj`
+- `holy_sword_gram.obj`
+- `mars_emblem.obj`
+- `melted_wax.obj`
+- `mercury_crest.obj`
+- `meteorite_plate.obj`
+- `mug_of_ale.obj`
+- `mystic_egg.obj`
+- `obsidian_shard.obj`
+- `philosophers_stone.obj`
+- `pint_of_stout.obj`
+- `placeholder_question.obj`
+- `qilin_bell.obj`
+- `radiant_blade_flavio.obj`
+- `rear_mirror.obj`
+- `scrap_plating.obj`
+- `shattered_blade.obj`
+- `shattered_edge.obj`
+- `silver_blade.obj`
+- `sludge.obj`
+- `thrice_blessed_bead.obj`
+- `tome_wind_blade.obj`
+- `untarnished_signet.obj`
+- `verdigris_coin.obj`
+- `vial_of_second_breath.obj`
+- `vitality_seal_1.obj`
+- `vitality_seal_2.obj`
+- `vitality_seal_3.obj`
+- `warding_charm.obj`
+- `water_scepter.obj`
+- `whetstone_draught.obj`
+- `wind_charm.obj`
+- `wind_dancer.obj`
