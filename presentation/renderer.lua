@@ -134,10 +134,14 @@ end
 local ENEMY_ENTRY_STAGGER_MS = 120
 
 function renderer.initBattleAnims(enemies)
+    local formation = require("engine.formation")
     animation_player.reset()
     deadEnemyFlags = {}
-    for i, enemy in ipairs(enemies) do
-        animation_player.play("system.enemy_slide_in", enemy, (i - 1) * ENEMY_ENTRY_STAGGER_MS)
+    for i = 1, formation.SLOT_COUNT do
+        local enemy = enemies and enemies[i]
+        if enemy then
+            animation_player.play("system.enemy_slide_in", enemy, (i - 1) * ENEMY_ENTRY_STAGGER_MS)
+        end
     end
 end
 
@@ -200,8 +204,9 @@ function renderer.update(dt)
     -- Smoothly interpolate party HP and the shared party MP pool
     local session = renderer.session
     if session then
+        local formation = require("engine.formation")
         if renderer.activeBattle then
-            for _, enemy in ipairs(renderer.activeBattle.enemies) do
+            for _, enemy in ipairs(formation.denseMembers(renderer.activeBattle.enemies)) do
                 if not enemy.displayedHp then enemy.displayedHp = enemy.hp end
                 enemy.displayedHp = enemy.displayedHp + (enemy.hp - enemy.displayedHp) * 8 * dt
                 if math.abs(enemy.hp - enemy.displayedHp) < 0.1 then enemy.displayedHp = enemy.hp end
@@ -209,7 +214,7 @@ function renderer.update(dt)
         end
         
         if session.party then
-            for _, c in ipairs(session.party) do
+            for _, c in ipairs(formation.denseMembers(session.party)) do
                 if not c.displayedHp then c.displayedHp = c.hp end
                 c.displayedHp = c.displayedHp + (c.hp - c.displayedHp) * 8 * dt
                 if math.abs(c.hp - c.displayedHp) < 0.1 then c.displayedHp = c.hp end
@@ -807,107 +812,101 @@ function renderer.drawEnemyRowWindow(battleState)
     if not battleState then return end
     renderer.activeBattle = battleState
 
-    -- Render full-body enemy battlers in viewport with animations driven by the
-    -- animation player (overhaul-7 A1): slide-in, damage/action flash,
-    -- death effect — all from data/animations.json entries.
-    for idx, enemy in ipairs(battleState.enemies) do
-        local bigBattler = getBigBattler(enemy)
-        
-        -- Query animation player for current transform, tint, blend, gradient
-        local xf    = animation_player.getTransform(enemy)
-        local tint  = animation_player.getTint(enemy)
-        local blend = animation_player.getBlendMode(enemy)
-        local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
-        local isDead = deadEnemyFlags[enemy]
+    for idx = 1, 4 do
+        local enemy = battleState.enemies and battleState.enemies[idx]
+        if enemy then
+            local bigBattler = getBigBattler(enemy)
+            
+            -- Query animation player for current transform, tint, blend, gradient
+            local xf    = animation_player.getTransform(enemy)
+            local tint  = animation_player.getTint(enemy)
+            local blend = animation_player.getBlendMode(enemy)
+            local isDeathPlaying = animation_player.isPlaying(enemy, "system.death")
+            local isDead = deadEnemyFlags[enemy]
 
-        -- Source pixels are screen pixels. Positioning owns only the
-        -- bottom-centre anchor; authored size, overlap and clipping are kept.
-        local rect = battler_geometry.enemyRect(
-            renderer.session, idx, #battleState.enemies, bigBattler)
-        local _, slotWidth = battler_geometry.enemySlot(
-            renderer.session, idx, #battleState.enemies)
-        local anchorX, anchorY = rect.x + rect.w / 2, rect.y + rect.h
+            -- Source pixels are screen pixels. Positioning owns only the
+            -- bottom-centre anchor; authored size, overlap and clipping are kept.
+            local rect = battler_geometry.enemyRect(
+                renderer.session, idx, 4, bigBattler)
+            local _, slotWidth = battler_geometry.enemySlot(
+                renderer.session, idx, 4)
+            local anchorX, anchorY = rect.x + rect.w / 2, rect.y + rect.h
 
-        -- Query shake offset and apply it along with transform offsets
-        local shakeOff = animation_player.getShakeOffset(enemy)
-        local drawX = anchorX + xf.offsetX + shakeOff
-        local drawY = anchorY + xf.offsetY
+            -- Query shake offset and apply it along with transform offsets
+            local shakeOff = animation_player.getShakeOffset(enemy)
+            local drawX = anchorX + xf.offsetX + shakeOff
+            local drawY = anchorY + xf.offsetY
 
-        -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
-        local function drawEnemySprite()
-            if bigBattler then
-                love.graphics.draw(bigBattler, drawX, drawY, 0, xf.scaleX, xf.scaleY,
-                    bigBattler:getWidth() / 2, bigBattler:getHeight())
-            else
-                local fw = layoutVal("enemyFallbackSize")
-                love.graphics.rectangle("fill",
-                    drawX - fw * xf.scaleX / 2,
-                    drawY - fw * xf.scaleY,
-                    fw * xf.scaleX, fw * xf.scaleY)
+            -- drawEnemySprite draws around (drawX, drawY) as bottom-center origin.
+            local function drawEnemySprite()
+                if bigBattler then
+                    love.graphics.draw(bigBattler, drawX, drawY, 0, xf.scaleX, xf.scaleY,
+                        bigBattler:getWidth() / 2, bigBattler:getHeight())
+                else
+                    local fbSize = layoutVal(renderer.session, "enemyFallbackSize")
+                    love.graphics.rectangle("line", drawX - fbSize / 2, drawY - fbSize, fbSize, fbSize)
+                end
             end
-        end
 
-        if not isDead then
-            love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(enemy, rect, drawEnemySprite, "back", renderer.session)
-            -- Native Effekseer tracks spawn here because this is where the
-            -- rect exists; Effekseer then owns the effect's lifetime and
-            -- draws it itself, once per frame, from frame_renderer.
-            require("presentation.effekseer").spawnFor(enemy, rect)
-        end
-
-        if isDeathPlaying then
-            -- Death animation: tint/blend/transform/gradient from animation player
-            if blend then love.graphics.setBlendMode(blend) end
-            if tint then
-                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
-            else
-                love.graphics.setColor(0.6, 0, 0.9, 1)
+            if not isDead then
+                love.graphics.setColor(1, 1, 1, 1)
+                animation_player.drawParticles(enemy, rect, drawEnemySprite, "back", renderer.session)
+                require("presentation.effekseer").spawnFor(enemy, rect)
             end
-            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
-            love.graphics.setBlendMode("alpha")
-        elseif not isDead then
-            -- Normal draw with gradient map
-            love.graphics.setColor(1, 1, 1, 1)
-            gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
 
-            -- Tint flash overlay
-            if tint and blend then
-                love.graphics.setBlendMode(blend)
-                love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
-                drawEnemySprite()
+            if isDeathPlaying then
+                -- Death dissolve animation
+                local progress = animation_player.getAnimProgress(enemy, "system.death")
+                love.graphics.setBlendMode("add")
+                if isDead then
+                    love.graphics.setColor(0, 0, 0, 1 - progress)
+                else
+                    love.graphics.setColor(0.6, 0, 0.9, 1)
+                end
+                gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
                 love.graphics.setBlendMode("alpha")
+            elseif not isDead then
+                -- Normal draw with gradient map
                 love.graphics.setColor(1, 1, 1, 1)
-            end
+                gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
 
-            love.graphics.setColor(1, 1, 1, 1)
-            animation_player.drawParticles(enemy, rect, drawEnemySprite, "front", renderer.session)
+                -- Tint flash overlay
+                if tint and blend then
+                    love.graphics.setBlendMode(blend)
+                    love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
+                    drawEnemySprite()
+                    love.graphics.setBlendMode("alpha")
+                    love.graphics.setColor(1, 1, 1, 1)
+                end
 
-            -- Enemy info block: element icons + name + HP gauge. Geometry and
-            -- every on/off switch come from engine.json battleLayout
-            -- (enemyInfo*), anchored to this creature's feet rather than an
-            -- absolute row, so it tracks the sprite instead of drifting from it.
-            local info = battler_geometry.enemyInfo(renderer.session, rect, slotWidth)
-            if info then
-                local maxHp = enemy:getMaxHp(renderer.session)
                 love.graphics.setColor(1, 1, 1, 1)
-                local enemyIconW = 0
-                if info.showElements then
-                    enemyIconW = actor_status.drawElementIcons(
-                        traits.getElements(enemy, renderer.session),
-                        info.x, info.nameY - 4, renderer.session)
-                end
-                if info.showName then
-                    ui.drawString(enemy.name, info.x + enemyIconW, info.nameY, {1, 1, 1, 1})
-                end
-                if info.showHpBar then
-                    ui.drawBar(info.x, info.barY, info.width, ui.gaugeHeight,
-                        enemy.displayedHp or enemy.hp, maxHp,
-                        ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
+                animation_player.drawParticles(enemy, rect, drawEnemySprite, "front", renderer.session)
+
+                -- Enemy info block: element icons + name + HP gauge. Geometry and
+                -- every on/off switch come from engine.json battleLayout
+                -- (enemyInfo*), anchored to this creature's feet rather than an
+                -- absolute row, so it tracks the sprite instead of drifting from it.
+                local info = battler_geometry.enemyInfo(renderer.session, rect, slotWidth)
+                if info then
+                    local maxHp = enemy:getMaxHp(renderer.session)
+                    love.graphics.setColor(1, 1, 1, 1)
+                    local enemyIconW = 0
+                    if info.showElements then
+                        enemyIconW = actor_status.drawElementIcons(
+                            traits.getElements(enemy, renderer.session),
+                            info.x, info.nameY - 4, renderer.session)
+                    end
+                    if info.showName then
+                        ui.drawString(enemy.name, info.x + enemyIconW, info.nameY, {1, 1, 1, 1})
+                    end
+                    if info.showHpBar then
+                        ui.drawBar(info.x, info.barY, info.width, ui.gaugeHeight,
+                            enemy.displayedHp or enemy.hp, maxHp,
+                            ui.gaugeColors.hp.dark, ui.gaugeColors.hp.light)
+                    end
                 end
             end
         end
-        -- isDead without isDeathPlaying: enemy has fully faded, don't draw anything
     end
 end
 

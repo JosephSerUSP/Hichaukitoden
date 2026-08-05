@@ -144,14 +144,17 @@ function battler_geometry.rect(battleState, session, target, resolveImage)
     if not target then return nil end
     if battleState then
         local enemies = battleState.enemies or {}
-        for idx, enemy in ipairs(enemies) do
+        for idx = 1, 4 do
+            local enemy = enemies[idx]
             if enemy == target then
                 return battler_geometry.enemyRect(
-                    session, idx, #enemies, resolveImage and resolveImage(enemy) or nil)
+                    session, idx, 4, resolveImage and resolveImage(enemy) or nil)
             end
         end
     end
-    for idx, member in ipairs(session and session.party or {}) do
+    local party = session and session.party or {}
+    for idx = 1, 4 do
+        local member = party[idx]
         if member == target then
             return battler_geometry.partyRect(session, idx)
         end

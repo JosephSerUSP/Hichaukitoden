@@ -249,15 +249,17 @@ function formula.sessionView(session)
         -- theirs, instead of a SCRIPT walking session.party by hand.
         skillCount = (function()
             local counts = {}
-            for i, m in ipairs(session.party or {}) do
-                counts[i] = (m.actorData and m.actorData.skills and #m.actorData.skills) or 0
+            for i = 1, 4 do
+                local m = session and session.party and session.party[i]
+                counts[i] = (m and m.actorData and m.actorData.skills and #m.actorData.skills) or 0
             end
             return counts
         end)(),
         passiveCount = (function()
             local counts = {}
-            for i, m in ipairs(session.party or {}) do
-                counts[i] = (m.actorData and m.actorData.passives and #m.actorData.passives) or 0
+            for i = 1, 4 do
+                local m = session and session.party and session.party[i]
+                counts[i] = (m and m.actorData and m.actorData.passives and #m.actorData.passives) or 0
             end
             return counts
         end)(),

@@ -1063,7 +1063,8 @@ handlers.RECRUIT_ACTOR = function(cmd, ctx)
     local level = cmd.level
     if not actorId then return end
 
-    local battler, slotType = session:recruitActor(actorId, level)
+    local preferredSlot = cmd.slot or cmd.preferredSlot
+    local battler, slotType = session:recruitActor(actorId, level, preferredSlot)
     if battler then
         if cmd.name and cmd.name ~= "" then battler.name = tostring(cmd.name) end
         local msg

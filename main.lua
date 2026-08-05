@@ -1,3 +1,4 @@
+if io and io.stdout and io.stdout.setvbuf then io.stdout:setvbuf("no") end
 local loader = require("data.loader")
 local session = require("engine.session")
 local exploration = require("engine.exploration")
@@ -390,7 +391,9 @@ function love.load(arg)
         assert(scene == "map", "scene mismatch: " .. tostring(scene))
         savegame.delete("savetest")
         print("SAVETEST OK")
+        if io and io.stdout and io.stdout.flush then io.stdout:flush() end
         love.event.quit(0)
+        os.exit(0)
         return
     end
 
@@ -512,7 +515,9 @@ function love.load(arg)
         else
             print("ENGINE STATE FAIL: " .. tostring(report))
         end
+        if io and io.stdout and io.stdout.flush then io.stdout:flush() end
         love.event.quit(ok and 0 or 1)
+        os.exit(ok and 0 or 1)
         return
     end
 
@@ -527,7 +532,9 @@ function love.load(arg)
         else
             print("REACHABILITY FAIL: " .. tostring(report))
         end
+        if io and io.stdout and io.stdout.flush then io.stdout:flush() end
         love.event.quit(ok and 0 or 1)
+        os.exit(ok and 0 or 1)
         return
     end
 
@@ -549,7 +556,9 @@ function love.load(arg)
         elseif not ok then
             print("VALIDATE FAIL:\n" .. tostring(err))
         end
+        if io and io.stdout and io.stdout.flush then io.stdout:flush() end
         love.event.quit(ok and 0 or 1)
+        os.exit(ok and 0 or 1)
         return
     end
     

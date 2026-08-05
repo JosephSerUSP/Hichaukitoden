@@ -107,50 +107,52 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
 
     -- Check if actor is an enemy
     local actorIsEnemy = false
-    for _, e in ipairs(enemies) do
-        if e == actor then
+    for slot = 1, formation.SLOT_COUNT do
+        if enemies[slot] == actor then
             actorIsEnemy = true
             break
         end
     end
 
-    -- NOTE: the friendly group INCLUDES the caster (here and in
-    -- getCandidates) — a deliberate T1 semantic change from the pre-T1 code,
-    -- whose ally-any branch excluded self. Owner-sanctioned 17.07.2026 (SPEC
-    -- S9 amendment): self-healing is a legitimate pick, and the heal-lowest
-    -- block below keeps the AI from the degenerate full-HP-self choice this
-    -- widening would otherwise allow.
     local friendlyGroup = actorIsEnemy and enemies or allies
     local opposingGroup = actorIsEnemy and allies or enemies
     if battleState and battleState.session and traits.getRate(actor, "INVERT_TARGETING", battleState.session) > 0 then
         friendlyGroup, opposingGroup = opposingGroup, friendlyGroup
     end
     
-    local candidates = {}
+    local targetGroup = nil
     if exp.side == "enemy" then
-        candidates = opposingGroup
+        targetGroup = opposingGroup
     elseif exp.side == "ally" then
-        candidates = friendlyGroup
+        targetGroup = friendlyGroup
     elseif exp.side == "self" then
-        candidates = { actor }
+        targetGroup = { actor }
     elseif exp.side == "any" then
-        for _, b in ipairs(allies) do table.insert(candidates, b) end
-        for _, b in ipairs(enemies) do table.insert(candidates, b) end
+        targetGroup = {}
+        for slot = 1, formation.SLOT_COUNT do
+            if allies[slot] then table.insert(targetGroup, allies[slot]) end
+        end
+        for slot = 1, formation.SLOT_COUNT do
+            if enemies[slot] then table.insert(targetGroup, enemies[slot]) end
+        end
     end
     
     -- Filter by state (alive, dead, or any)
     local legal = {}
-    for _, b in ipairs(candidates) do
-        local match = false
-        if exp.state == "alive" then
-            match = not b:isDead()
-        elseif exp.state == "dead" then
-            match = b:isDead()
-        elseif exp.state == "any" then
-            match = true
-        end
-        if match then
-            table.insert(legal, b)
+    for slot = 1, (targetGroup == allies or targetGroup == enemies) and formation.SLOT_COUNT or #targetGroup do
+        local b = targetGroup[slot]
+        if b then
+            local match = false
+            if exp.state == "alive" then
+                match = not b:isDead()
+            elseif exp.state == "dead" then
+                match = b:isDead()
+            elseif exp.state == "any" then
+                match = true
+            end
+            if match then
+                table.insert(legal, b)
+            end
         end
     end
     
@@ -173,12 +175,7 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
         mode = "random"
     end
     
-    -- AI heal-lowest: wounded allies sorted by HP%, lowest first. Shipped in
-    -- violation of SPEC S9's original "no AI targeting intelligence" line;
-    -- owner-sanctioned retroactively 17.07.2026 (see the S9 amendment) after
-    -- measuring the revert — without this, an AI healer randomly picks its
-    -- own full-HP self and heals for 0. Baked into the T1 golden battle.log:
-    -- removing or reordering this block shifts RNG and breaks G2.
+    -- AI heal-lowest: wounded allies sorted by HP%, lowest first.
     if isAI and exp.side == "ally" and actionContext and actionContext.effects then
         local isHealAction = false
         for _, eff in ipairs(actionContext.effects) do
@@ -202,7 +199,6 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
                 for i = 1, math.min(count, #wounded) do
                     table.insert(picked, wounded[i].battler)
                 end
-                -- If we still need more targets to satisfy count, pad with random survivors
                 if #picked < count then
                     local temp = {}
                     for _, b in ipairs(legal) do
@@ -215,9 +211,7 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
                     while #picked < count and #temp > 0 do
                         local idx = math.random(#temp)
                         table.insert(picked, temp[idx])
-                        -- Allow duplicates if user wants, but choose distinct ones first
                     end
-                    -- If we still need more, duplicate selection of the wounded
                     while #picked < count do
                         table.insert(picked, picked[math.random(#picked)])
                     end
@@ -244,11 +238,11 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
         if not anchor then return {} end
 
         if exp.shape == "row" then
-            local anchorSlot = formation.slotOf(candidates, anchor)
+            local anchorSlot = formation.slotOf(targetGroup, anchor)
             local rowName = formation.rowOf(anchorSlot)
             local res = {}
             for slot = 1, formation.SLOT_COUNT do
-                local b = candidates[slot]
+                local b = targetGroup[slot]
                 if b and formation.rowOf(slot) == rowName then
                     for _, leg in ipairs(legal) do
                         if leg == b then table.insert(res, b) break end
@@ -257,11 +251,11 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
             end
             return #res > 0 and res or { anchor }
         elseif exp.shape == "column" then
-            local anchorSlot = formation.slotOf(candidates, anchor)
+            local anchorSlot = formation.slotOf(targetGroup, anchor)
             local colIdx = formation.colOf(anchorSlot)
             local res = {}
             for slot = 1, formation.SLOT_COUNT do
-                local b = candidates[slot]
+                local b = targetGroup[slot]
                 if b and formation.colOf(slot) == colIdx then
                     for _, leg in ipairs(legal) do
                         if leg == b then table.insert(res, b) break end
@@ -286,6 +280,24 @@ function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext
         if exp.shape == "all" or exp.count == "all" then
             return legal
         end
+        if exp.shape == "row" or exp.shape == "column" then
+            local anchor = legal[math.random(#legal)]
+            local anchorSlot = formation.slotOf(targetGroup, anchor)
+            local rowOrCol = (exp.shape == "row") and formation.rowOf(anchorSlot) or formation.colOf(anchorSlot)
+            local res = {}
+            for slot = 1, formation.SLOT_COUNT do
+                local b = targetGroup[slot]
+                if b then
+                    local matches = (exp.shape == "row") and (formation.rowOf(slot) == rowOrCol) or (formation.colOf(slot) == rowOrCol)
+                    if matches then
+                        for _, leg in ipairs(legal) do
+                            if leg == b then table.insert(res, b) break end
+                        end
+                    end
+                end
+            end
+            return #res > 0 and res or { anchor }
+        end
         local picked = {}
         for i = 1, count do
             if isAI and exp.side == "enemy" then
@@ -307,8 +319,8 @@ function targeting.getCandidates(actor, spec, battleState, actionContext)
     local enemies = battleState.enemies or {}
     
     local actorIsEnemy = false
-    for _, e in ipairs(enemies) do
-        if e == actor then
+    for slot = 1, formation.SLOT_COUNT do
+        if enemies[slot] == actor then
             actorIsEnemy = true
             break
         end
@@ -320,31 +332,39 @@ function targeting.getCandidates(actor, spec, battleState, actionContext)
         friendlyGroup, opposingGroup = opposingGroup, friendlyGroup
     end
     
-    local candidates = {}
+    local targetGroup = nil
     if exp.side == "enemy" then
-        candidates = opposingGroup
+        targetGroup = opposingGroup
     elseif exp.side == "ally" then
-        candidates = friendlyGroup
+        targetGroup = friendlyGroup
     elseif exp.side == "self" then
-        candidates = { actor }
+        targetGroup = { actor }
     elseif exp.side == "any" then
-        for _, b in ipairs(allies) do table.insert(candidates, b) end
-        for _, b in ipairs(enemies) do table.insert(candidates, b) end
+        targetGroup = {}
+        for slot = 1, formation.SLOT_COUNT do
+            if allies[slot] then table.insert(targetGroup, allies[slot]) end
+        end
+        for slot = 1, formation.SLOT_COUNT do
+            if enemies[slot] then table.insert(targetGroup, enemies[slot]) end
+        end
     end
     
     local legal = {}
-    for _, b in ipairs(candidates) do
-        local match = false
-        if exp.state == "alive" then
-            match = not b:isDead()
-        elseif exp.state == "dead" then
-            match = b:isDead()
-        elseif exp.state == "any" then
-            match = true
-        end
-        
-        if match then
-            table.insert(legal, b)
+    for slot = 1, (targetGroup == allies or targetGroup == enemies) and formation.SLOT_COUNT or #targetGroup do
+        local b = targetGroup[slot]
+        if b then
+            local match = false
+            if exp.state == "alive" then
+                match = not b:isDead()
+            elseif exp.state == "dead" then
+                match = b:isDead()
+            elseif exp.state == "any" then
+                match = true
+            end
+            
+            if match then
+                table.insert(legal, b)
+            end
         end
     end
     

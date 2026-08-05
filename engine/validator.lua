@@ -1208,6 +1208,14 @@ validator.run = function(loader)
     for i, opt in ipairs((sys.town and sys.town.options) or {}) do
         check(opt.label and opt.action, "town option #" .. i .. " is missing label/action")
     end
+    local newGameParty = (sys.newGame and sys.newGame.party) or {}
+    for i, m in ipairs(newGameParty.fixedMembers or {}) do
+        check(loader.getActor(m.id), "fixedMember #" .. i .. " references missing actor '" .. tostring(m.id) .. "'")
+        if m.slot ~= nil then
+            check(type(m.slot) == "number" and m.slot >= 1 and m.slot <= 4,
+                "fixedMember #" .. i .. " slot must be a number 1..4, got " .. tostring(m.slot))
+        end
+    end
 
     -- Shop stock must reference existing items. Entries must be {id, ...}
     -- objects -- generated data sometimes emits bare item-id numbers, which

@@ -1186,10 +1186,17 @@ prerendered opening.
 ### 1.18 Opening expedition roster and floor ramp (28.07.2026)
 
 The opening party is authored through `system.newGame.party.fixedMembers` and
-currently contains Saban (actor 61, level 3). A fixed member may carry an
-instance name; new-game construction preserves it rather than assigning a
-random ally name. Narratively, Saban predates the arrival: he is the player's
+currently contains Saban (actor 61, level 3) in slot 1 (front-left). A fixed member may carry an
+instance name and preferred `slot` (1--4); new-game construction preserves them rather than assigning a
+random ally name or repacking. Narratively, Saban predates the arrival: he is the player's
 mount, travelling companion, and sole opening summon.
+
+### 1.19 2x2 Formation System, targeting shapes and Defend cover (05.08.2026)
+
+- **Single Canonical Slot Array**: `session.party[1..4]` is the single authoritative source of truth for player party formation. Front row: slots 1 (left) and 2 (right); Back row: slots 3 (left) and 4 (right). Holes are valid (e.g. Saban in slot 1, slot 2 empty, Pixie in slot 3). `Battler.row` is a derived property.
+- **Persistence & Version 2 Save Format**: Save payloads use `version = 2`, serializing `party` as `[p1 or false, p2 or false, p3 or false, p4 or false]` to preserve array positions in JSON. Version 1 saves automatically migrate into slot positions.
+- **Targeting Vocabulary & Execution-Time Cover**: Target specs support `shape` (`single`, `row`, `column`, `all`) and `cover` (`respect`, `bypass`). Immediately before action execution, a hostile `single + respect` attack against a living back-row creature is intercepted by an active, living, unrestricted front-row protector with `COVER_ALIGNED_BACK` trait (e.g. from `defending` state with `defend` skill priority 100), redirecting the attack to the protector and emitting a `battle.cover_intercept` text event.
+- **Recruitment & Interpreter Command**: `RECRUIT_ACTOR` accepts an optional `slot` parameter (1--4) in command schema and interpreter (`handlers.RECRUIT_ACTOR`), placing the recruit into their preferred slot if free or falling back to the first available slot.
 
 The field Reserve scene is now an **Expedition Reserve**: four party slots plus
 four reserve slots are the creatures physically committed to the trip.

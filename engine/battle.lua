@@ -70,6 +70,8 @@ function Battle.new(session, enemies)
     -- party immediately but only convert to banked EXP when the battle ends.
     self.fallen = {}
 
+    battle.activeBattle = self
+
     -- Skill cooldowns/warmups are battle-scoped: cleared here, armed here, and
     -- never carried out of the fight they were spent in. Charges are the
     -- opposite -- creature state that persists until Rest -- and are
@@ -113,7 +115,7 @@ function Battle:tryDeployWave(roundEvents)
     for _, d in ipairs(deployed) do
         d.outgoing = outgoingBySlot[d.slot]
     end
-    self.allies = session:getActiveParty()
+    self.allies = session.party
 
     -- `deployed` rides on the event ({battler, slot, reserveKey, outgoing}
     -- per entry) so the presentation layer can play the swap as a proper
@@ -347,8 +349,7 @@ function Battle:buildTurnQueue(collectedActions)
         if (a.firstStrike or false) ~= (b.firstStrike or false) then
             return a.firstStrike == true
         end
-        if a.speed ~= b.speed then return a.speed > b.speed end
-        return (a.order or 0) < (b.order or 0)
+        return a.speed > b.speed
     end)
 
     return queue

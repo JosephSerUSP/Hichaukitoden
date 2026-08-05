@@ -2281,6 +2281,11 @@
           "key": "name",
           "type": "text",
           "optional": true
+        },
+        {
+          "key": "slot",
+          "type": "number",
+          "optional": true
         }
       ],
       "contexts": [
@@ -4515,7 +4520,7 @@
       }
     ],
     "quality": {
-      "densityScale": 1.0,
+      "densityScale": 1,
       "maxError": 0.0001
     }
   }

@@ -53,13 +53,15 @@ function usability.canUseItem(item, target, context)
                 if (session.maxMp or 0) < (sys.maxMpCap or 9999) then canAffect = true
                 else unavailableReason = "Maximum MP is already at its limit" end
             elseif eff.type == "recruit_egg" and session then
-                local partyFull = (#(session.party or {}) >= 4)
-                local reserveFull = (#(session.reserve or {}) >= 16)
+                local formation = require("engine.formation")
+                local partyFull = (#formation.denseMembers(session.party) >= 4)
+                local reserveFull = (#formation.denseMembers(session.reserve) >= 16)
                 if not (partyFull and reserveFull) then canAffect = true
                 else unavailableReason = "Party and reserve are full" end
             elseif (eff.type == "hp" or eff.type == "hp_heal") and session then
-                for _, member in ipairs(session.party or {}) do
-                    if not member:isDead() and member.hp < member:getMaxHp(session) then
+                for slot = 1, 4 do
+                    local member = session.party and session.party[slot]
+                    if member and not member:isDead() and member.hp < member:getMaxHp(session) then
                         canAffect = true
                         break
                     end

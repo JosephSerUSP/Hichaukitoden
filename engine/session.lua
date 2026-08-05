@@ -33,11 +33,18 @@ local Battler = {}
 local BattlerMT = {
     __index = function(t, k)
         if k == "row" then
-            local sess = session.activeSession
-            if sess and sess.party then
-                local slot = formation.slotOf(sess.party, t)
-                if slot then return formation.rowOf(slot) end
+            local slot = rawget(t, "slot") or rawget(t, "_slot")
+            if not slot and session.activeSession and session.activeSession.party then
+                slot = formation.slotOf(session.activeSession.party, t)
             end
+            if not slot then
+                local bMod = package.loaded["engine.battle"]
+                local bState = bMod and bMod.activeBattle
+                if bState then
+                    slot = formation.slotOf(bState.allies, t) or formation.slotOf(bState.enemies, t)
+                end
+            end
+            if slot then return formation.rowOf(slot) end
             return "front"
         end
         return Battler[k]
