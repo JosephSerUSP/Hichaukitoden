@@ -177,17 +177,39 @@
                 {
                     "id": "bellroot_wall_pilaster",
                     "role": "base_wall",
-                    "middle": [1, 1],
-                    "leftEdge": [1, 1, 0],
-                    "rightEdge": [1, 1, 32],
+                    "middle": [
+                        1,
+                        1
+                    ],
+                    "leftEdge": [
+                        1,
+                        1,
+                        0
+                    ],
+                    "rightEdge": [
+                        1,
+                        1,
+                        32
+                    ],
                     "weight": 60
                 },
                 {
                     "id": "bellroot_wall_rubble",
                     "role": "base_wall",
-                    "middle": [1, 0],
-                    "leftEdge": [1, 0, 0],
-                    "rightEdge": [1, 0, 32],
+                    "middle": [
+                        1,
+                        0
+                    ],
+                    "leftEdge": [
+                        1,
+                        0,
+                        0
+                    ],
+                    "rightEdge": [
+                        1,
+                        0,
+                        32
+                    ],
                     "weight": 40
                 }
             ],
@@ -195,14 +217,20 @@
                 {
                     "id": "bellroot_floor_flagstone",
                     "role": "base_floor",
-                    "atlas": [0, 3],
+                    "atlas": [
+                        0,
+                        3
+                    ],
                     "weight": 70,
                     "heightOffset": 0
                 },
                 {
                     "id": "bellroot_floor_inlay",
                     "role": "base_floor",
-                    "atlas": [3, 1],
+                    "atlas": [
+                        3,
+                        1
+                    ],
                     "weight": 30,
                     "heightOffset": 0
                 }
@@ -211,7 +239,10 @@
                 {
                     "id": "bellroot_ceiling_dripstone",
                     "role": "base_ceiling",
-                    "atlas": [0, 0],
+                    "atlas": [
+                        0,
+                        0
+                    ],
                     "weight": 100
                 }
             ]
@@ -221,35 +252,65 @@
             {
                 "id": "bellroot_wall_beside_floor",
                 "name": "Bellroot wall beside floor",
-                "where": { "adjacent": "floor" },
-                "probability": { "min": 0.1, "max": 0.5, "default": 0.28 }
+                "where": {
+                    "adjacent": "floor"
+                },
+                "probability": {
+                    "min": 0.1,
+                    "max": 0.5,
+                    "default": 0.28
+                }
             }
         ],
         "features": [
             {
                 "id": "bellroot_lantern",
                 "role": "wall_feature",
-                "atlas": [1, 0],
+                "atlas": [
+                    1,
+                    0
+                ],
                 "model": "assets/models/dungeon/dungeon_torch_bracket.obj",
                 "injectProbability": 0.22,
                 "prefab": "bellroot_wall_beside_floor",
-                "emitsLight": { "color": [1, 0.48, 0.16], "radius": 3.5, "falloff": 3.5 }
+                "emitsLight": {
+                    "color": [
+                        1,
+                        0.48,
+                        0.16
+                    ],
+                    "radius": 3.5,
+                    "falloff": 3.5
+                }
             },
             {
                 "id": "bellroot_crystal",
                 "role": "floor_feature",
                 "model": "assets/models/ruins/ruins_crystal_cluster.obj",
                 "injectProbability": 0.1,
-                "emitsLight": { "color": [0.12, 0.65, 0.95], "radius": 3.2, "falloff": 3.0 },
+                "emitsLight": {
+                    "color": [
+                        0.12,
+                        0.65,
+                        0.95
+                    ],
+                    "radius": 3.2,
+                    "falloff": 3
+                },
                 "blocksMovement": true
             },
             {
                 "id": "bellroot_shrine_recess",
                 "role": "wall_feature",
                 "geometry": "assets/geometry/shrine_recess",
-                "atlas": [1, 2],
+                "atlas": [
+                    1,
+                    2
+                ],
                 "injectProbability": 0.08,
-                "where": { "zone": "shrine" }
+                "where": {
+                    "zone": "shrine"
+                }
             }
         ]
     },
@@ -393,17 +454,16 @@
                     ],
                     "radius": 5,
                     "falloff": 3
-                },
-                "blocksMovement": true
+                }
             },
             {
                 "id": "town_barrel_stack",
                 "role": "floor_feature",
                 "model": "assets/models/town/town_barrel_stack.obj",
-                "injectProbability": 0.12,
-                "blocksMovement": true
+                "injectProbability": 0.12
             }
-        ]
+        ],
+        "fixturePrefabs": []
     },
     "dungeon_ffxii_depth_explore": {
         "id": "dungeon_ffxii_depth_explore",
@@ -416,36 +476,80 @@
                 {
                     "id": "ffxii_homosimile_wall",
                     "role": "base_wall",
-                    "middle": [0, 0],
-                    "leftEdge": [0, 0, 0],
-                    "rightEdge": [0, 0, 32],
+                    "middle": [
+                        0,
+                        0
+                    ],
+                    "leftEdge": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "rightEdge": [
+                        0,
+                        0,
+                        32
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_homosimile_wall",
                     "weight": 25
                 },
                 {
                     "id": "ffxii_alunardream_wall",
                     "role": "base_wall",
-                    "middle": [1, 0],
-                    "leftEdge": [1, 0, 0],
-                    "rightEdge": [1, 0, 32],
+                    "middle": [
+                        1,
+                        0
+                    ],
+                    "leftEdge": [
+                        1,
+                        0,
+                        0
+                    ],
+                    "rightEdge": [
+                        1,
+                        0,
+                        32
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_alunardream_wall",
                     "weight": 25
                 },
                 {
                     "id": "ffxii_lyriel_wall",
                     "role": "base_wall",
-                    "middle": [2, 0],
-                    "leftEdge": [2, 0, 0],
-                    "rightEdge": [2, 0, 32],
+                    "middle": [
+                        2,
+                        0
+                    ],
+                    "leftEdge": [
+                        2,
+                        0,
+                        0
+                    ],
+                    "rightEdge": [
+                        2,
+                        0,
+                        32
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_lyriel_wall",
                     "weight": 25
                 },
                 {
                     "id": "ffxii_dreamshaper_wall",
                     "role": "base_wall",
-                    "middle": [2, 0],
-                    "leftEdge": [2, 0, 0],
-                    "rightEdge": [2, 0, 32],
+                    "middle": [
+                        2,
+                        0
+                    ],
+                    "leftEdge": [
+                        2,
+                        0,
+                        0
+                    ],
+                    "rightEdge": [
+                        2,
+                        0,
+                        32
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_dreamshaper_wall",
                     "weight": 25
                 }
@@ -454,7 +558,10 @@
                 {
                     "id": "ffxii_sd15_floor",
                     "role": "base_floor",
-                    "atlas": [0, 1],
+                    "atlas": [
+                        0,
+                        1
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_floor_sd15",
                     "weight": 50,
                     "heightOffset": 0
@@ -462,7 +569,10 @@
                 {
                     "id": "ffxii_retro_floor",
                     "role": "base_floor",
-                    "atlas": [1, 1],
+                    "atlas": [
+                        1,
+                        1
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_floor_retro",
                     "weight": 50,
                     "heightOffset": 0
@@ -472,14 +582,20 @@
                 {
                     "id": "ffxii_retro_ceiling",
                     "role": "base_ceiling",
-                    "atlas": [0, 2],
+                    "atlas": [
+                        0,
+                        2
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_ceiling_retro",
                     "weight": 50
                 },
                 {
                     "id": "ffxii_sd15_ceiling",
                     "role": "base_ceiling",
-                    "atlas": [1, 2],
+                    "atlas": [
+                        1,
+                        2
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_ceiling_sd15",
                     "weight": 50
                 }
@@ -499,7 +615,10 @@
                 {
                     "id": "ffxii_regular_wall",
                     "role": "base_wall",
-                    "middle": [1, 1],
+                    "middle": [
+                        1,
+                        1
+                    ],
                     "geometry": "assets/geometry/sd_ffxii_regular_wall",
                     "weight": 100
                 }
@@ -508,7 +627,10 @@
                 {
                     "id": "ffxii_compare_floor",
                     "role": "base_floor",
-                    "atlas": [0, 1],
+                    "atlas": [
+                        0,
+                        1
+                    ],
                     "weight": 100,
                     "heightOffset": 0
                 }
@@ -517,7 +639,10 @@
                 {
                     "id": "ffxii_compare_ceiling",
                     "role": "base_ceiling",
-                    "atlas": [0, 2],
+                    "atlas": [
+                        0,
+                        2
+                    ],
                     "weight": 100
                 }
             ]
@@ -528,7 +653,7 @@
                 "id": "ffxii_shrine_recess",
                 "role": "wall_feature",
                 "geometry": "assets/geometry/shrine_recess",
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "where": {
                     "zone": "shrine"
                 }
@@ -541,7 +666,7 @@
         "texture": "assets/tilesets/dungeon_001.png",
         "heightMap": "assets/geometry/0_hand_authored_depth_maps/tiled_wall_with_column.png",
         "heightMapScale": {
-            "wall": 0.10,
+            "wall": 0.1,
             "floor": 0,
             "ceiling": 0
         },
@@ -555,7 +680,10 @@
                 {
                     "id": "hand_authored_wall",
                     "role": "base_wall",
-                    "middle": [1, 1],
+                    "middle": [
+                        1,
+                        1
+                    ],
                     "weight": 100
                 }
             ],
@@ -563,7 +691,10 @@
                 {
                     "id": "hand_authored_floor",
                     "role": "base_floor",
-                    "atlas": [0, 1],
+                    "atlas": [
+                        0,
+                        1
+                    ],
                     "weight": 100,
                     "heightOffset": 0
                 }
@@ -572,7 +703,10 @@
                 {
                     "id": "hand_authored_ceiling",
                     "role": "base_ceiling",
-                    "atlas": [0, 0],
+                    "atlas": [
+                        0,
+                        0
+                    ],
                     "weight": 100
                 }
             ]
@@ -1105,8 +1239,8 @@
                     "adjacent": "floor"
                 },
                 "probability": {
-                    "min": 0.0,
-                    "max": 1.0,
+                    "min": 0,
+                    "max": 1,
                     "default": 0.5
                 }
             }
@@ -1116,7 +1250,7 @@
                 "id": "thestra_shrine_recess",
                 "role": "wall_feature",
                 "geometry": "assets/geometry/shrine_recess",
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "where": {
                     "zone": "shrine"
                 }
@@ -1125,7 +1259,7 @@
                 "id": "thestra_idol",
                 "role": "floor_feature",
                 "geometry": "assets/geometry/sacred_idol",
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "blocksMovement": true,
                 "where": {
                     "zone": "dais"
@@ -1135,7 +1269,7 @@
                 "id": "thestra_pillar",
                 "role": "floor_feature",
                 "geometry": "assets/geometry/fluted_pillar",
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "blocksMovement": true,
                 "where": {
                     "zone": "colonnade"
@@ -1145,7 +1279,7 @@
                 "id": "thestra_chest",
                 "role": "floor_feature",
                 "model": "assets/models/dungeon/dungeon_chest.obj",
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "where": {
                     "zone": "prop"
                 }
@@ -1157,7 +1291,7 @@
                 "where": {
                     "zone": "gallery"
                 },
-                "injectProbability": 1.0,
+                "injectProbability": 1,
                 "blocksMovement": true
             }
         ]
