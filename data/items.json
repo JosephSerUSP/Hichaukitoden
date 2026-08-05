@@ -115,7 +115,8 @@
         "value": 3
       }
     ],
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/bone_plate.obj"
   },
   {
     "id": 7,
@@ -205,7 +206,8 @@
         "blacksmithing"
       ]
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/rear_mirror.obj"
   },
   {
     "id": 11,
@@ -223,7 +225,8 @@
       }
     ],
     "target": "none",
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/mystic_egg.obj"
   },
   {
     "id": 12,
@@ -243,7 +246,8 @@
     "meta": {
       "intensityGrade": "mundane"
     },
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/golden_egg.obj"
   },
   {
     "id": 13,
@@ -261,7 +265,8 @@
         "value": 1.1
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/vitality_seal_1.obj"
   },
   {
     "id": 14,
@@ -279,7 +284,8 @@
         "value": 1.2
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/vitality_seal_2.obj"
   },
   {
     "id": 15,
@@ -297,7 +303,8 @@
         "value": 1.3
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/vitality_seal_3.obj"
   },
   {
     "id": 16,
@@ -323,7 +330,8 @@
         "value": 0.2
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/radiant_blade_flavio.obj"
   },
   {
     "id": 17,
@@ -349,7 +357,8 @@
         "value": 0.15
       }
     ],
-    "iconPalette": "sapphire"
+    "iconPalette": "sapphire",
+    "model": "assets/models/items/wind_dancer.obj"
   },
   {
     "id": 18,
@@ -375,7 +384,8 @@
         "value": 0.15
       }
     ],
-    "iconPalette": "sapphire"
+    "iconPalette": "sapphire",
+    "model": "assets/models/items/water_scepter.obj"
   },
   {
     "id": 19,
@@ -401,7 +411,8 @@
         "value": 0.15
       }
     ],
-    "iconPalette": "holy"
+    "iconPalette": "holy",
+    "model": "assets/models/items/holy_sword_gram.obj"
   },
   {
     "id": 20,
@@ -427,7 +438,8 @@
         "value": 0.1
       }
     ],
-    "iconPalette": "amethyst"
+    "iconPalette": "amethyst",
+    "model": "assets/models/items/dark_scepter_lucille.obj"
   },
   {
     "id": 21,
@@ -444,7 +456,8 @@
         "dataId": "Red"
       }
     ],
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/mars_emblem.obj"
   },
   {
     "id": 22,
@@ -465,7 +478,8 @@
         "dataId": "Blue"
       }
     ],
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/mercury_crest.obj"
   },
   {
     "id": 23,
@@ -487,7 +501,8 @@
         "dataId": "Green"
       }
     ],
-    "iconPalette": "emerald"
+    "iconPalette": "emerald",
+    "model": "assets/models/items/hermes_boots.obj"
   },
   {
     "id": 24,
@@ -499,7 +514,8 @@
     "keyArt": "assets/keyArt/item-024-glittering-teardrop.png",
     "meta": {
       "craftable": false
-    }
+    },
+    "model": "assets/models/items/glittering_teardrop.obj"
   },
   {
     "id": 25,
@@ -511,7 +527,8 @@
     "keyArt": "assets/keyArt/item-025-untarnished-signet.png",
     "meta": {
       "craftable": false
-    }
+    },
+    "model": "assets/models/items/untarnished_signet.obj"
   },
   {
     "id": 26,
@@ -523,7 +540,8 @@
     "keyArt": "assets/keyArt/item-026-shattered-blade.png",
     "meta": {
       "craftable": false
-    }
+    },
+    "model": "assets/models/items/shattered_blade.obj"
   },
   {
     "id": 27,
@@ -545,7 +563,8 @@
         "value": 0.25
       }
     ],
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/shattered_edge.obj"
   },
   {
     "id": 28,
@@ -568,7 +587,8 @@
         "value": 2
       }
     ],
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/meteorite_plate.obj"
   },
   {
     "id": 29,
@@ -586,7 +606,8 @@
     ],
     "target": "none",
     "icon": 163,
-    "iconPalette": "leather"
+    "iconPalette": "leather",
+    "model": "assets/models/items/mug_of_ale.obj"
   },
   {
     "id": 30,
@@ -604,7 +625,8 @@
     ],
     "target": "none",
     "icon": 163,
-    "iconPalette": "leather"
+    "iconPalette": "leather",
+    "model": "assets/models/items/pint_of_stout.obj"
   },
   {
     "id": 31,
@@ -631,7 +653,8 @@
       ]
     },
     "icon": 163,
-    "iconPalette": "leather"
+    "iconPalette": "leather",
+    "model": "assets/models/items/glass_of_wine.obj"
   },
   {
     "id": 32,
@@ -649,7 +672,8 @@
         "value": 1
       }
     ],
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/scrap_plating.obj"
   },
   {
     "id": 33,
@@ -665,7 +689,8 @@
         "value": 5
       }
     ],
-    "iconPalette": "leather"
+    "iconPalette": "leather",
+    "model": "assets/models/items/sludge.obj"
   },
   {
     "id": 34,
@@ -680,7 +705,8 @@
         "type": "mp_heal",
         "value": 1
       }
-    ]
+    ],
+    "model": "assets/models/items/burnt_slop.obj"
   },
   {
     "id": 35,
@@ -699,7 +725,8 @@
         "value": 1
       }
     ],
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/broken_spring.obj"
   },
   {
     "id": 36,
@@ -725,7 +752,8 @@
         "cooking",
         "alchemy"
       ]
-    }
+    },
+    "model": "assets/models/items/ambrosia.obj"
   },
   {
     "id": 37,
@@ -741,7 +769,8 @@
         "value": 1000
       }
     ],
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/philosophers_stone.obj"
   },
   {
     "id": 38,
@@ -756,7 +785,8 @@
     "meta": {
       "craftable": false,
       "craftIngredient": false
-    }
+    },
+    "model": "assets/models/items/chrysalis_sigil.obj"
   },
   {
     "id": 39,
@@ -781,7 +811,8 @@
       "intensityGrade": "precious",
       "craftable": false
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/obsidian_shard.obj"
   },
   {
     "id": 40,
@@ -806,7 +837,8 @@
       "intensityGrade": "precious",
       "craftable": false
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/melted_wax.obj"
   },
   {
     "id": 41,
@@ -831,7 +863,8 @@
       "intensityGrade": "precious",
       "craftable": false
     },
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/ectoplasm.obj"
   },
   {
     "id": 42,
@@ -850,7 +883,8 @@
         "hpFraction": 0.1
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/warding_charm.obj"
   },
   {
     "id": 43,
@@ -875,7 +909,8 @@
         "tinkering"
       ]
     },
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/vial_of_second_breath.obj"
   },
   {
     "id": 44,
@@ -895,7 +930,8 @@
         "hpFraction": 0.2
       }
     ],
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/thrice_blessed_bead.obj"
   },
   {
     "id": 45,
@@ -913,7 +949,8 @@
     ],
     "scope": "field",
     "target": "ally",
-    "iconPalette": "sapphire"
+    "iconPalette": "sapphire",
+    "model": "assets/models/items/tome_wind_blade.obj"
   },
   {
     "id": 46,
@@ -938,7 +975,8 @@
     },
     "scope": "field",
     "target": "ally",
-    "iconPalette": "steel"
+    "iconPalette": "steel",
+    "model": "assets/models/items/whetstone_draught.obj"
   },
   {
     "id": 47,
@@ -953,7 +991,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "amethyst"
+    "iconPalette": "amethyst",
+    "model": "assets/models/items/black_hinge.obj"
   },
   {
     "id": 48,
@@ -968,7 +1007,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/ember_bit.obj"
   },
   {
     "id": 49,
@@ -983,7 +1023,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "gold"
+    "iconPalette": "gold",
+    "model": "assets/models/items/qilin_bell.obj"
   },
   {
     "id": 50,
@@ -998,7 +1039,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "ruby"
+    "iconPalette": "ruby",
+    "model": "assets/models/items/cinder_ruby.obj"
   },
   {
     "id": 51,
@@ -1013,7 +1055,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "sapphire"
+    "iconPalette": "sapphire",
+    "model": "assets/models/items/abyssal_pearl.obj"
   },
   {
     "id": 52,
@@ -1028,7 +1071,8 @@
       "craftable": false,
       "craftIngredient": false
     },
-    "iconPalette": "emerald"
+    "iconPalette": "emerald",
+    "model": "assets/models/items/verdigris_coin.obj"
   },
   {
     "id": 53,

@@ -28,10 +28,10 @@ local hpRow = item_presentation.enrich({ id = hpTonic.id, name = hpTonic.name },
 check(hpRow.model == "assets/models/items/bottle_family__basis.obj",
     "Item scene: valid model path 'bottle_family__basis.obj' enriched on HP Tonic row")
 
-local bonePlate = loader.getItem(6) -- Bone Plate (no model field)
-local boneRow = item_presentation.enrich({ id = bonePlate.id, name = bonePlate.name }, bonePlate, loader)
-check(boneRow.model == "",
-    "Missing-model fallback: Bone Plate has empty model field on enriched row")
+local celestialFossil = loader.getItem(53) -- Celestial Fossil (no model field)
+local cfRow = item_presentation.enrich({ id = celestialFossil.id, name = celestialFossil.name }, celestialFossil, loader)
+check(cfRow.model == "",
+    "Missing-model fallback: Celestial Fossil has empty model field on enriched row")
 
 -------------------------------------------------- 2. Fallback resolution tests --
 
