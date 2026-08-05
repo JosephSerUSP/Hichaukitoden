@@ -46,6 +46,7 @@ local subtractive_fade = require("presentation.subtractive_fade")
 -- does not require window_renderer).
 local renderer = require("presentation.renderer")
 local item_presentation = require("presentation.item_presentation")
+local itemModelView = require("presentation.item_model_view")
 
 local wr = {}
 
@@ -1696,30 +1697,17 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             drawTextLines("No item selected.", env, contentX, contentY,
                 lineSpacing, w - ui.toPx(2))
         end
-    elseif style == "keyArt" then
+    elseif style == "itemModel" or style == "keyArt" then
         local cached = listCache[id]
-        local row = cached and cached.rows[cached.cursor]
-        local path = row and row.keyArt
-        if path and path ~= "" and love.filesystem.getInfo(path) then
-            win._keyArtCache = win._keyArtCache or {}
-            local image = win._keyArtCache[path]
-            if not image then
-                image = love.graphics.newImage(path)
-                -- Showcase sources are Lanczos-downsampled to their native UI
-                -- size. Preserve those antialiased edges if a layout applies a
-                -- small fractional scale instead of snapping back to nearest.
-                image:setFilter("linear", "linear")
-                win._keyArtCache[path] = image
+        local row = cached and cached.cursor and cached.rows and cached.rows[cached.cursor]
+        if row then
+            local modelPath = row.model
+            if (not modelPath or modelPath == "") and row.id then
+                local loader = ctx and (ctx.loader or (ctx.session and ctx.session.loader))
+                local item = loader and loader.getItem and loader.getItem(row.id)
+                if item then modelPath = item.model end
             end
-            local pad = ui.toPx(1)
-            local aw, ah = w - pad * 2, h - pad * 2
-            local scale = math.min(aw / image:getWidth(), ah / image:getHeight())
-            local dw, dh = image:getWidth() * scale, image:getHeight() * scale
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(image, x + (w - dw) / 2, y + (h - dh) / 2, 0, scale, scale)
-        else
-            ui.drawString("NO KEY ART", contentX, y + h / 2 - ui.lineHeight / 2,
-                COLOR_DIM, "center", w - ui.toPx(2))
+            itemModelView.draw(x, y, w, h, modelPath or "", id, ctx and ctx.dt)
         end
     else -- "panel", "frame" and any unknown style: text content
         if text then

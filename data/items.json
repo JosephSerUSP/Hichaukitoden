@@ -7,6 +7,7 @@
     "animation": "item.heal_tonic",
     "description": "Restores 60 HP to one member.",
     "keyArt": "assets/keyArt/item-001-hp-tonic.png",
+    "model": "assets/models/items/bottle_family__basis.obj",
     "icon": 51,
     "meta": {
       "disciplines": [
@@ -29,6 +30,7 @@
     "cost": 20,
     "description": "+2 max HP to one member.",
     "keyArt": "assets/keyArt/item-002-sigil-ink.png",
+    "model": "assets/models/items/bottle_family__angular.obj",
     "icon": 55,
     "effects": [
       {
@@ -45,6 +47,7 @@
     "cost": 64,
     "description": "+6 XP to one member.",
     "keyArt": "assets/keyArt/item-003-whispered-lessons.png",
+    "model": "assets/models/items/crystal.obj",
     "icon": 51,
     "effects": [
       {
@@ -62,6 +65,7 @@
     "animation": "skill.divine_favor",
     "description": "Grant a small amount of XP to the party.",
     "keyArt": "assets/keyArt/item-004-elixir-of-insight.png",
+    "model": "assets/models/items/bottle_family__tall.obj",
     "icon": 51,
     "effects": [
       {
@@ -81,6 +85,7 @@
     "icon": 31,
     "description": "Sharpened steel blade.",
     "keyArt": "assets/keyArt/item-005-silver-blade.png",
+    "model": "assets/models/items/silver_blade.obj",
     "traits": [
       {
         "code": "PARAM_PLUS",
@@ -121,6 +126,7 @@
     "icon": 174,
     "description": "A charm of rushing air.",
     "keyArt": "assets/keyArt/item-007-wind-charm.png",
+    "model": "assets/models/items/wind_charm.obj",
     "traits": [
       {
         "code": "PARAM_PLUS",
@@ -144,6 +150,7 @@
     "icon": 174,
     "description": "Glowing amulet.",
     "keyArt": "assets/keyArt/item-008-light-amulet.png",
+    "model": "assets/models/items/wind_charm.obj",
     "traits": [
       {
         "code": "PARAM_PLUS",
@@ -162,6 +169,7 @@
     "icon": 174,
     "description": "Humming chime.",
     "keyArt": "assets/keyArt/item-009-alert-charm.png",
+    "model": "assets/models/items/wind_charm.obj",
     "traits": [
       {
         "code": "INITIATIVE",

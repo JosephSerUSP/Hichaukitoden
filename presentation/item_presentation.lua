@@ -266,7 +266,7 @@ end
 
 function item_presentation.enrich(row, item, loader)
     row.description = item.description or ""
-    row.keyArt = item.keyArt or ""
+    row.model = item.model or ""
     row.gameplayRows = item_presentation.rows(item, loader)
     row.gameplayText = item_presentation.gameplayText(item, loader)
     return row

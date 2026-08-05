@@ -2935,7 +2935,7 @@
           "h": 13
         },
         "visible": "v.state == 1 or v.state == 2 or v.state == 3",
-        "style": "keyArt",
+        "style": "itemModel",
         "title": null,
         "content": [
           {
@@ -4194,7 +4194,7 @@
           "w": 11,
           "h": 13
         },
-        "style": "keyArt",
+        "style": "itemModel",
         "title": null,
         "visible": "v.state == 1 or v.state == 2",
         "content": [
