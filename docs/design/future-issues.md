@@ -50,7 +50,7 @@ defaults, same output).
 ---
 
 ## 4. ~~`reserve`/`ritual`/`quest_log` scenes haven't fully adopted the §1.4
-context-help-bar convention~~ FIXED (30.07.2026), pending owner-signed G3 regen
+context-help-bar convention~~ FIXED (30.07.2026), merged to main (05.08.2026)
 
 `reserve`'s separate `reserve_title` + `reserve_help` windows are gone,
 replaced by one top `help` window (`windowLayout.help`, no scene-owned
@@ -74,12 +74,9 @@ matching the `datalog_help` precedent, instead of always claiming
 "select quest" even against an empty list.
 
 All three visually verified via `lovec . screenshots` (deterministic
-capture, no wall-clock waits, no overlap/clipping). G1/unit/G2 stay green;
-**G3 is red for `reserve` only** (`quest_log`/`ritual` are invisible to the
-trace — declarative content, not imperative window commands) — the two
-`reserve_help|set_text` lines the old imperative path emitted are gone by
-design. Per AGENTS.md this is a behavioral-change gate diff and needs an
-owner-signed `capture-ui.ps1` regen before merge, not silent regeneration.
+capture, no wall-clock waits, no overlap/clipping). G1/G2/G3/unit all
+green post-merge — the `reserve` UI trace was already owner-signed and
+re-recorded in `8a0e011`/`36754ab` ahead of this code landing.
 
 ---
 
