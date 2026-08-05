@@ -4904,5 +4904,178 @@
     },
     "id": 198,
     "iconPalette": "gold"
+  },
+  {
+    "id": 199,
+    "name": "Hook Spear",
+    "type": "equipment",
+    "equipSlot": 1,
+    "cost": 220,
+    "icon": 10,
+    "description": "Long polearm with Reach. Enables full physical damage from the back row.",
+    "params": {
+      "atk": 14
+    },
+    "meta": {
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "traits": [
+      {
+        "code": "REAR_GUARD",
+        "value": 1
+      }
+    ],
+    "iconPalette": "steel"
+  },
+  {
+    "id": 200,
+    "name": "Passage Buckler",
+    "type": "equipment",
+    "equipSlot": 2,
+    "cost": 180,
+    "icon": 20,
+    "description": "Sturdy buckler that reinforces Guard and physical interception.",
+    "params": {
+      "def": 8
+    },
+    "meta": {
+      "disciplines": [
+        "blacksmithing"
+      ]
+    },
+    "iconPalette": "amber"
+  },
+  {
+    "id": 201,
+    "name": "Moa Harness",
+    "type": "equipment",
+    "equipSlot": 3,
+    "cost": 200,
+    "icon": 30,
+    "description": "Light harness for Saban, enhancing movement speed and evasion.",
+    "params": {
+      "def": 4
+    },
+    "meta": {
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "traits": [
+      {
+        "code": "EVA",
+        "value": 0.1
+      },
+      {
+        "code": "FLEE_CHANCE_BONUS",
+        "value": 0.15
+      }
+    ],
+    "iconPalette": "emerald"
+  },
+  {
+    "id": 202,
+    "name": "Charge Nut",
+    "type": "consumable",
+    "cost": 150,
+    "icon": 52,
+    "description": "Restores 2 charges to every charged skill of the target member.",
+    "effects": [
+      {
+        "type": "restore_charges",
+        "value": 2
+      }
+    ],
+    "scope": "always",
+    "target": "ally",
+    "iconPalette": "gold"
+  },
+  {
+    "id": 203,
+    "name": "Smoke Bell",
+    "type": "consumable",
+    "cost": 80,
+    "icon": 60,
+    "description": "Creates a dense cloud of distracting smoke to guarantee escape from battle.",
+    "effects": [
+      {
+        "type": "escape",
+        "value": 1
+      }
+    ],
+    "scope": "battle",
+    "target": "none",
+    "iconPalette": "void"
+  },
+  {
+    "id": 204,
+    "name": "Mourning Ribbon",
+    "type": "equipment",
+    "equipSlot": 4,
+    "cost": 250,
+    "icon": 40,
+    "description": "Dark ribbon tied in memory of fallen companions. Grants MDF and mental resistance.",
+    "params": {
+      "mdf": 12
+    },
+    "meta": {
+      "disciplines": [
+        "tinkering"
+      ]
+    },
+    "traits": [
+      {
+        "code": "STATE_CATEGORY_RATE",
+        "dataId": "common",
+        "value": 0.7
+      }
+    ],
+    "iconPalette": "ruby"
+  },
+  {
+    "id": 205,
+    "name": "First Scale",
+    "type": "quest",
+    "cost": 2500,
+    "icon": 80,
+    "description": "An enormous crimson scale taken from the defeated Red Dragon. Radiates ancient heat.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": true,
+      "tier": 3
+    },
+    "iconPalette": "ruby"
+  },
+  {
+    "id": 206,
+    "name": "Bell Salt",
+    "type": "consumable",
+    "cost": 300,
+    "icon": 53,
+    "description": "Mineral salt gathered from the Bellroot font. Restores 2 skill charges to all party members.",
+    "effects": [
+      {
+        "type": "restore_charges",
+        "value": 2
+      }
+    ],
+    "scope": "always",
+    "target": "party",
+    "iconPalette": "sapphire"
+  },
+  {
+    "id": 207,
+    "name": "Sealed Reliquary",
+    "type": "quest",
+    "cost": 800,
+    "icon": 70,
+    "description": "A heavy, sealed chapel reliquary. Valued highly by St. Maria appraisers.",
+    "meta": {
+      "craftable": false,
+      "craftIngredient": false
+    },
+    "iconPalette": "gold"
   }
 ]

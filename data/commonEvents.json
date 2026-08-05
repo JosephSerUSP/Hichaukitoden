@@ -1313,7 +1313,7 @@
         ],
         "elseCommands": [
           {
-            "condition": "flag:first_return",
+            "condition": "flag:vigil_active or flag:milestone_return_1 or flag:milestone_return_2 or flag:first_return",
             "commands": [
               {
                 "condition": "flag:vigil_ready",
@@ -1571,6 +1571,36 @@
                 "speaker": "Laura",
                 "expression": 5,
                 "cmd": "TEXT"
+              },
+              {
+                "label": "laura_vigil_hub",
+                "cmd": "JUMP_TO_LABEL"
+              }
+            ]
+          },
+          {
+            "label": "Appraise Sealed Reliquary",
+            "condition": "flag:carried_reliquary",
+            "commands": [
+              {
+                "text": "Laura examines the sealed reliquary carefully. \"Old St. Maria craftsmanship. I'll take it off your hands for 800G.\"",
+                "speaker": "Laura",
+                "expression": 2,
+                "cmd": "TEXT"
+              },
+              {
+                "cmd": "CHANGE_ITEM",
+                "item": 207,
+                "count": -1
+              },
+              {
+                "cmd": "GAIN_GOLD",
+                "amount": "800"
+              },
+              {
+                "cmd": "SET_FLAG",
+                "flag": "carried_reliquary",
+                "value": false
               },
               {
                 "label": "laura_vigil_hub",

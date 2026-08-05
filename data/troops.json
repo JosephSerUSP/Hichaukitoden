@@ -247,27 +247,38 @@
         ]
       },
       {
-        "id": "strain_pressure",
+        "id": "strain_warn_5",
         "at": "round_start",
-        "when": "battle.round >= 6",
+        "once": true,
+        "when": "battle.round == 5",
         "commands": [
           {
             "cmd": "EMIT_TEXT",
-            "fallback": "The cavern trembles as the dragon draws deeper breath!"
-          },
+            "fallback": "The summoning begins to strain. Prolonged rounds will consume MP."
+          }
+        ]
+      },
+      {
+        "id": "strain_warn_6",
+        "at": "round_start",
+        "once": true,
+        "when": "battle.round == 6",
+        "commands": [
           {
-            "cmd": "FOR_EACH",
-            "scope": "living_allies",
-            "as": "ally",
-            "do": [
-              {
-                "cmd": "DAMAGE",
-                "target": "ally",
-                "amount": "max(1, floor(ally.maxHp * 0.05))",
-                "pierce": true,
-                "minHp": 1
-              }
-            ]
+            "cmd": "EMIT_TEXT",
+            "fallback": "Strain next round: 4 × party MPD"
+          }
+        ]
+      },
+      {
+        "id": "strain_warn_10",
+        "at": "round_start",
+        "once": true,
+        "when": "battle.round == 10",
+        "commands": [
+          {
+            "cmd": "EMIT_TEXT",
+            "fallback": "Strain intensifies: 8 × party MPD"
           }
         ]
       },

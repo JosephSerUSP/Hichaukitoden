@@ -15,7 +15,7 @@ retracing stairs or using Town Portal.
 ## Completion checklist
 
 - [ ] Complete three returns through the Floor 1 entrance.
-- [ ] Contract the guaranteed Cornered Pixie on Floor 1.
+- [ ] Contract the optional Cerberus on Floor 1.
 - [ ] Find the Ines mark on Floor 1.
 - [ ] Inspect the salt table on Floor 2.
 - [ ] Reach the Rusted Choir and borrowed room on Floor 3.
@@ -26,34 +26,31 @@ retracing stairs or using Town Portal.
 
 | Floor | Generated envelope | Recruitment | Physical return |
 |---|---:|---|---|
-| 1 | 17x17; 3--4 rooms | Guaranteed Cornered Pixie | Floor 1 |
+| 1 | 17x17; 3--4 rooms | Optional Cerberus | Floor 1 |
 | 2 | 23x23; 5--7 rooms | Ordinary floor pool | Floors 2 to 1 |
 | 3 | 27x27; 7--9 rooms | Ordinary floor pool | Floors 3 to 2 to 1 |
 
 ## Floor 1: the first contract
 
-Floor 1 has no random recruitment nodes. Its Cornered Pixie is an authored,
-guaranteed event, so every playthrough encounters the same first recruitment
-question without requiring the entire map to be fixed.
+Floor 1 has no random recruitment nodes. Its Cerberus is an authored,
+optional event, presenting the player with high starting combat power versus an enormous MPD 6 traversal cost.
 
 | Choice | Result | Guide note |
 |---|---|---|
-| Offer a contract | Recruit Pixie, level 1; set `first_recruit_complete` | Party now contains two individuals |
-| Leave it space | No recruitment; event remains available | Return before going deeper |
+| Offer a contract | Recruit Cerberus (MPD 6); set `first_recruit_complete` | Traversal drain increases 6x for Cerberus |
+| Leave him space | No recruitment; event remains available | Preserves Saban-only high efficiency return |
 
-Saban scratches at the floor while the Pixie asks whether summons are
-companions or equipment. The game does not answer for the player. It places an
-inherited contract beside a voluntary one.
+Saban scratches at the floor while Cerberus stands in the chamber, explicitly warning of his 6 MPD drain per step. The player sees their safe distance home collapse if they contract him.
 
 If all eight expedition slots are occupied, use **Dismiss** from a creature's
 context menu before accepting a new contract. Dismiss sends the existing
 instance to the first free town-storage slot; it does not kill or erase the
 creature. The command cannot remove the final active party member.
 
-> **Player commentary:** This is where the party screen finally clicked. Saban
-> was somebody else's decision; the Pixie was mine. Learning that I could not
-> resummon either below made the extra portrait feel like a commitment, not a
-> collectible unlock.
+> **Player commentary:** This is where logistics finally clicked. Saban
+> was efficient and dependable; Cerberus was intoxicatingly powerful but consumed
+> six times as much traversal MP. Contracting Cerberus made adequacy feel weak,
+> but his drain made efficiency feel valuable again.
 
 The production version adds exhaustive enemy rows—HP, MP, attributes, skills,
 recruitment, EXP, gold and drop rates—and every treasure with quantity,

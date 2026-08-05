@@ -5031,11 +5031,16 @@
               {
                 "options": [
                   {
-                    "label": "Break the bread.",
+                    "label": "Gather Bell Salt",
                     "commands": [
                       {
-                        "text": "The crust collapses without a sound. There is only wet salt inside.",
+                        "text": "The crust collapses without a sound. You gather the Bell Salt into an emergency pouch.",
                         "cmd": "TEXT"
+                      },
+                      {
+                        "cmd": "CHANGE_ITEM",
+                        "item": 206,
+                        "count": 1
                       },
                       {
                         "flag": "found_salt_table",
@@ -5045,7 +5050,31 @@
                     ]
                   },
                   {
-                    "label": "Do not touch it.",
+                    "label": "Take Sealed Reliquary",
+                    "commands": [
+                      {
+                        "text": "You take the heavy chapel reliquary resting beside the salt table.",
+                        "cmd": "TEXT"
+                      },
+                      {
+                        "cmd": "CHANGE_ITEM",
+                        "item": 207,
+                        "count": 1
+                      },
+                      {
+                        "flag": "carried_reliquary",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      },
+                      {
+                        "flag": "found_salt_table",
+                        "value": true,
+                        "cmd": "SET_FLAG"
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Leave it undisturbed",
                     "commands": []
                   }
                 ],
@@ -5094,7 +5123,7 @@
               },
               {
                 "cmd": "TEXT",
-                "text": "Cerberus's manifestation drain is 6 — the heaviest you have encountered. Every step with him will cost six more MP than it does now. The power is real; so is the distance it will take from you."
+                "text": "Cerberus's manifestation drain is 6 — the heaviest you have encountered. Every step with him will cost six times as much traversal MP. Current route home: 230 MP. With Cerberus: 1,610 MP. The power is real; so is the safe distance it will take from you."
               },
               {
                 "cmd": "CHOICE",
@@ -5289,11 +5318,41 @@
               {
                 "options": [
                   {
-                    "label": "Open the case.",
+                    "label": "Inspect the room.",
                     "commands": [
                       {
-                        "text": "It contains a neatly folded change of clothes in your size. They are still warm.",
+                        "text": "It contains a change of clothes in your size, still warm. On the washstand sits your room's chipped bowl.",
                         "cmd": "TEXT"
+                      },
+                      {
+                        "cmd": "CONDITIONAL_BRANCH",
+                        "condition": "flag:found_cerberus",
+                        "commands": [
+                          {
+                            "text": "Coiled beside the bed is a heavy iron collar link, matching Cerberus's heavy chain.",
+                            "cmd": "TEXT"
+                          }
+                        ]
+                      },
+                      {
+                        "cmd": "CONDITIONAL_BRANCH",
+                        "condition": "flag:found_salt_table",
+                        "commands": [
+                          {
+                            "text": "A faint ring of wet salt marks the corner of the small nightstand.",
+                            "cmd": "TEXT"
+                          }
+                        ]
+                      },
+                      {
+                        "cmd": "CONDITIONAL_BRANCH",
+                        "condition": "flag:laura_lunch_delivered",
+                        "commands": [
+                          {
+                            "text": "A cloth napkin, folded into a precise square, rests on the wooden ledge.",
+                            "cmd": "TEXT"
+                          }
+                        ]
                       },
                       {
                         "flag": "found_borrowed_room",
@@ -5364,8 +5423,13 @@
                             "value": true
                           },
                           {
+                            "cmd": "CHANGE_ITEM",
+                            "item": 205,
+                            "count": 1
+                          },
+                          {
                             "cmd": "TEXT",
-                            "text": "With a final roaring collapse, the Red Dragon falls! The archway to the deeper vault is now clear."
+                            "text": "With a final roaring collapse, the Red Dragon falls! You obtain an enormous First Scale. The archway to the deeper vault is now clear."
                           },
                           {
                             "cmd": "ERASE_EVENT"
@@ -6177,6 +6241,87 @@
             "onVictory": [
               {
                 "cmd": "RECOVER_PARTY"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "name": "Campaign State Presets",
+        "x": 8,
+        "y": 5,
+        "trigger": "interact",
+        "sprite": "assets/sprites/NPC02.png",
+        "commands": [
+          {
+            "cmd": "CHOICE",
+            "options": [
+              {
+                "label": "1. Arrival (St. Maria)",
+                "commands": [
+                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                ]
+              },
+              {
+                "label": "2. Before Cerberus (Floor 1)",
+                "commands": [
+                  { "cmd": "LOAD_MAP", "mapId": 2 }
+                ]
+              },
+              {
+                "label": "3. Return I (Town Post-F1)",
+                "commands": [
+                  { "cmd": "SET_VAR", "name": "return_count", "value": 1 },
+                  { "cmd": "SET_FLAG", "flag": "milestone_return_1", "value": true },
+                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                ]
+              },
+              {
+                "label": "4. Bellroot (Floor 2)",
+                "commands": [
+                  { "cmd": "LOAD_MAP", "mapId": 15 }
+                ]
+              },
+              {
+                "label": "5. Return II (Town Post-F2)",
+                "commands": [
+                  { "cmd": "SET_VAR", "name": "return_count", "value": 2 },
+                  { "cmd": "SET_FLAG", "flag": "milestone_return_2", "value": true },
+                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                ]
+              },
+              {
+                "label": "6. Borrowed Room (Floor 3)",
+                "commands": [
+                  { "cmd": "LOAD_MAP", "mapId": 4 }
+                ]
+              },
+              {
+                "label": "7. Vigil (Changed Town)",
+                "commands": [
+                  { "cmd": "SET_FLAG", "flag": "vigil_active", "value": true },
+                  { "cmd": "LOAD_MAP", "mapId": 1 }
+                ]
+              },
+              {
+                "label": "8. Pre-Dragon (Floor 3 Boss)",
+                "commands": [
+                  { "cmd": "LOAD_MAP", "mapId": 4 }
+                ]
+              },
+              {
+                "label": "9. Dragon Phase II",
+                "commands": [
+                  { "cmd": "BATTLE", "troop": "boss_red_dragon" }
+                ]
+              },
+              {
+                "label": "10. Low-MP Retreat (<200 MP)",
+                "commands": [
+                  { "cmd": "CHANGE_MP", "amount": -2800 },
+                  { "cmd": "LOAD_MAP", "mapId": 2 }
+                ]
               }
             ]
           }
