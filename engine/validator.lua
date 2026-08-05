@@ -7,6 +7,7 @@ local effects = require("engine.effects")
 local interpreter = require("engine.interpreter")
 local flow = require("engine.flow")
 local config = require("engine.config")
+local itemModelView = require("presentation.item_model_view")
 
 validator.run = function(loader)
     local problems = {}
@@ -998,6 +999,10 @@ validator.run = function(loader)
     for id, state in pairs(loader.states) do
         checkTraits(state.traits, "state '" .. tostring(id) .. "'")
     end
+    check(love.filesystem.getInfo(itemModelView.FALLBACK_PATH) ~= nil,
+        "item_model_view FALLBACK_PATH resolves to no asset: "
+            .. tostring(itemModelView.FALLBACK_PATH))
+
     for _, item in ipairs(loader.items) do
         if item.keyArt ~= nil then
             check(type(item.keyArt) == "string" and item.keyArt ~= "",
@@ -1005,6 +1010,13 @@ validator.run = function(loader)
             check(love.filesystem.getInfo(item.keyArt) ~= nil,
                 "item " .. tostring(item.id) .. " keyArt resolves to no asset: "
                     .. tostring(item.keyArt))
+        end
+        if item.model ~= nil then
+            check(type(item.model) == "string" and item.model ~= "",
+                "item " .. tostring(item.id) .. " model must be a non-empty asset path")
+            check(love.filesystem.getInfo(item.model) ~= nil,
+                "item " .. tostring(item.id) .. " model resolves to no asset: "
+                    .. tostring(item.model))
         end
         checkTraits(item.traits, "item " .. tostring(item.id))
         checkEffects(item.effects, "item " .. tostring(item.id))

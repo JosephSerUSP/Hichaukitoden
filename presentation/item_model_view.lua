@@ -4,19 +4,31 @@
 
 local obj_model = require("presentation.obj_model")
 local retro_mesh_shader = require("presentation.retro_mesh_shader")
-local ui = require("presentation.ui")
 
 local item_model_view = {}
 
 local FALLBACK_PATH = "assets/models/items/placeholder_question.obj"
+local ITEM_PRESENTATION_TILT = math.rad(10)
+
+item_model_view.FALLBACK_PATH = FALLBACK_PATH
+item_model_view.ITEM_PRESENTATION_TILT = ITEM_PRESENTATION_TILT
 
 local itemShader = nil
 local itemShaderError = nil
 
-local canvasCache = {}    -- Keyed by "w,h" -> { colorCanvas, depthCanvas }
-local warnCache = {}      -- Keeps track of paths warned about once
-local errorCache = {}     -- Keeps track of severe errors logged once
-local rotationStates = {} -- Keyed by stateKey, stores { selKey, angle }
+local canvasCache = {}        -- Keyed by "w,h" -> { color, depth }
+local warnCache = {}          -- Keeps track of paths warned about once
+local errorCache = {}         -- Keeps track of severe errors logged once
+local rotationStates = {}     -- Keyed by stateKey, stores { selKey, angle }
+local resolvedModelCache = {} -- Keyed by requestedPathKey -> { model, resolvedPath, usedFallback }
+
+function item_model_view.clearCache()
+    canvasCache = {}
+    warnCache = {}
+    errorCache = {}
+    rotationStates = {}
+    resolvedModelCache = {}
+end
 
 local function ensureItemShader()
     if itemShader ~= nil then return itemShader or nil end
@@ -69,34 +81,58 @@ function item_model_view.resetState(stateKey)
     if stateKey then rotationStates[stateKey] = nil end
 end
 
-local function resolveModel(modelPath)
-    if not modelPath or modelPath == "" then return nil end
+function item_model_view.resolveModel(modelPath)
+    local isFallbackRequest = not modelPath or type(modelPath) ~= "string" or modelPath == ""
+    local requestedKey = isFallbackRequest and "<fallback>" or modelPath
+
+    if resolvedModelCache[requestedKey] ~= nil then
+        local entry = resolvedModelCache[requestedKey]
+        return entry.model, entry.resolvedPath, entry.usedFallback
+    end
 
     local model = nil
-    if love.filesystem.getInfo(modelPath) then
-        local ok, result = pcall(obj_model.load, modelPath)
-        if ok and result then
-            model = result
+    local actualPath = nil
+
+    if not isFallbackRequest then
+        if love.filesystem.getInfo(modelPath) then
+            local ok, result = pcall(obj_model.load, modelPath)
+            if ok and result then
+                model = result
+                actualPath = modelPath
+            else
+                if not warnCache[modelPath] then
+                    print("[item_model_view] warning: failed to load OBJ model '" .. tostring(modelPath) .. "': " .. tostring(result))
+                    warnCache[modelPath] = true
+                end
+            end
         else
             if not warnCache[modelPath] then
-                print("[item_model_view] warning: failed to load OBJ model '" .. tostring(modelPath) .. "': " .. tostring(result))
+                print("[item_model_view] warning: model file not found '" .. tostring(modelPath) .. "'")
                 warnCache[modelPath] = true
             end
         end
-    else
-        if not warnCache[modelPath] then
-            print("[item_model_view] warning: model file not found '" .. tostring(modelPath) .. "'")
-            warnCache[modelPath] = true
-        end
     end
 
-    if model then return model end
+    if model then
+        local entry = { model = model, resolvedPath = actualPath, usedFallback = false }
+        resolvedModelCache[requestedKey] = entry
+        return entry.model, entry.resolvedPath, entry.usedFallback
+    end
 
     -- Fallback to placeholder question mark
+    if resolvedModelCache[FALLBACK_PATH] ~= nil then
+        local fbEntry = resolvedModelCache[FALLBACK_PATH]
+        resolvedModelCache[requestedKey] = fbEntry
+        return fbEntry.model, fbEntry.resolvedPath, fbEntry.usedFallback
+    end
+
     if love.filesystem.getInfo(FALLBACK_PATH) then
         local ok, fallback = pcall(obj_model.load, FALLBACK_PATH)
         if ok and fallback then
-            return fallback
+            local fbEntry = { model = fallback, resolvedPath = FALLBACK_PATH, usedFallback = true }
+            resolvedModelCache[FALLBACK_PATH] = fbEntry
+            resolvedModelCache[requestedKey] = fbEntry
+            return fbEntry.model, fbEntry.resolvedPath, fbEntry.usedFallback
         else
             if not errorCache[FALLBACK_PATH] then
                 print("[item_model_view] error: fallback model failed to load '" .. FALLBACK_PATH .. "': " .. tostring(fallback))
@@ -110,11 +146,16 @@ local function resolveModel(modelPath)
         end
     end
 
-    return nil
+    local failEntry = { model = nil, resolvedPath = nil, usedFallback = true }
+    resolvedModelCache[FALLBACK_PATH] = failEntry
+    resolvedModelCache[requestedKey] = failEntry
+    return nil, nil, true
 end
 
-function item_model_view.calculateFit(bounds, width, height, fillRatio)
+function item_model_view.calculateFit(bounds, width, height, fillRatio, tiltRadians)
     fillRatio = fillRatio or 0.81
+    tiltRadians = tiltRadians or ITEM_PRESENTATION_TILT
+
     local minX, minY, minZ = bounds.minX or 0, bounds.minY or 0, bounds.minZ or 0
     local maxX, maxY, maxZ = bounds.maxX or 0, bounds.maxY or 0, bounds.maxZ or 0
 
@@ -126,8 +167,15 @@ function item_model_view.calculateFit(bounds, width, height, fillRatio)
     local ry = math.max(math.abs(minY - cy), math.abs(maxY - cy))
     local rz = math.max(math.abs(minZ - cz), math.abs(maxZ - cz))
 
-    local horizontalRadius = math.max(1e-5, math.sqrt(rx * rx + ry * ry))
-    local verticalRadius = math.max(1e-5, rz)
+    local cosT = math.abs(math.cos(tiltRadians))
+    local sinT = math.abs(math.sin(tiltRadians))
+
+    local tiltedX = rx * cosT + rz * sinT
+    local tiltedY = ry
+    local tiltedZ = rx * sinT + rz * cosT
+
+    local horizontalRadius = math.max(1e-5, math.sqrt(tiltedX * tiltedX + tiltedY * tiltedY))
+    local verticalRadius = math.max(1e-5, tiltedZ)
 
     local aspect = (width > 0 and height > 0) and (width / height) or 1.0
     local halfHeight = math.max(verticalRadius, horizontalRadius / aspect) / fillRatio
@@ -136,11 +184,8 @@ function item_model_view.calculateFit(bounds, width, height, fillRatio)
     return { cx, cy, cz }, halfWidth, halfHeight
 end
 
-function item_model_view.draw(x, y, w, h, modelPath, stateKey, dt)
-    -- Rule 5: No model at all when no item selected
-    if not modelPath or modelPath == "" then return end
-
-    local model = resolveModel(modelPath)
+function item_model_view.draw(x, y, w, h, modelPath, stateKey, selKey, dt)
+    local model = item_model_view.resolveModel(modelPath)
     if not model then return end
 
     local shader = ensureItemShader()
@@ -149,23 +194,25 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, dt)
     local buffers = getCanvasBuffers(w, h)
     if not buffers then return end
 
-    local angle = item_model_view.getRotationState(stateKey, modelPath, dt)
-    local center, halfWidth, halfHeight = item_model_view.calculateFit(model.bounds, w, h, 0.81)
+    local angle = item_model_view.getRotationState(stateKey, selKey, dt)
+    local center, halfWidth, halfHeight = item_model_view.calculateFit(model.bounds, w, h, 0.81, ITEM_PRESENTATION_TILT)
 
     -- Fixed light direction from upper-front-left in view space
     local lx, ly, lz = 0.4, -0.6, 0.7
     local llen = math.sqrt(lx*lx + ly*ly + lz*lz)
     lx, ly, lz = lx / llen, ly / llen, lz / llen
 
-    local prevCanvas = love.graphics.getCanvas()
     love.graphics.push("all")
 
+    local prevCanvas = love.graphics.getCanvas()
     love.graphics.setCanvas({ buffers.color, depthstencil = buffers.depth })
     love.graphics.clear(0, 0, 0, 0, 0, 1)
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setDepthMode("less", true)
     love.graphics.setShader(shader)
 
     shader:send("modelCenter", center)
+    shader:send("modelTilt", ITEM_PRESENTATION_TILT)
     shader:send("modelAngle", angle)
     shader:send("halfWidth", halfWidth)
     shader:send("halfHeight", halfHeight)
@@ -190,11 +237,13 @@ function item_model_view.draw(x, y, w, h, modelPath, stateKey, dt)
     love.graphics.setShader()
     love.graphics.setDepthMode()
     love.graphics.setCanvas(prevCanvas)
-    love.graphics.pop()
 
-    -- Composite canvas to UI panel using nearest filter
+    -- Composite canvas to UI panel using white color
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(buffers.color, x, y)
+
+    love.graphics.pop()
 end
 
 return item_model_view
+

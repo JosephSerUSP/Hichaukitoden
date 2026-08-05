@@ -1697,17 +1697,20 @@ local function drawWindowContent(id, win, layout, style, title, x, y, w, h, env,
             drawTextLines("No item selected.", env, contentX, contentY,
                 lineSpacing, w - ui.toPx(2))
         end
-    elseif style == "itemModel" or style == "keyArt" then
+    elseif style == "itemModel" then
         local cached = listCache[id]
         local row = cached and cached.cursor and cached.rows and cached.rows[cached.cursor]
-        if row then
+        if not row then
+            itemModelView.resetState(id)
+        else
             local modelPath = row.model
             if (not modelPath or modelPath == "") and row.id then
                 local loader = ctx and (ctx.loader or (ctx.session and ctx.session.loader))
                 local item = loader and loader.getItem and loader.getItem(row.id)
                 if item then modelPath = item.model end
             end
-            itemModelView.draw(x, y, w, h, modelPath or "", id, ctx and ctx.dt)
+            local selectionKey = tostring(row.id or row.index or "") .. ":" .. tostring(modelPath or "")
+            itemModelView.draw(x, y, w, h, modelPath, id, selectionKey, ctx and ctx.dt)
         end
     else -- "panel", "frame" and any unknown style: text content
         if text then

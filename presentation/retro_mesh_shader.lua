@@ -135,6 +135,7 @@ function retro_mesh_shader.buildItemShader()
     varying vec4 worldColor;
 
     uniform vec3 modelCenter;
+    uniform float modelTilt;
     uniform float modelAngle;
     uniform float halfWidth;
     uniform float halfHeight;
@@ -149,18 +150,37 @@ function retro_mesh_shader.buildItemShader()
         vec3 pos = VertexPosition.xyz - modelCenter;
         vec3 norm = VertexNormal.xyz;
 
+        float cosT = cos(modelTilt);
+        float sinT = sin(modelTilt);
+
+        // 1. local-Y tilt
+        float tiltX = pos.x * cosT + pos.z * sinT;
+        float tiltY = pos.y;
+        float tiltZ = -pos.x * sinT + pos.z * cosT;
+
+        float tiltNormX = norm.x * cosT + norm.z * sinT;
+        float tiltNormY = norm.y;
+        float tiltNormZ = -norm.x * sinT + norm.z * cosT;
+
+        // 2. Z-axis turntable yaw
         float cosA = cos(modelAngle);
         float sinA = sin(modelAngle);
 
-        float rotX = pos.x * cosA - pos.y * sinA;
-        float rotY = pos.x * sinA + pos.y * cosA;
-        float rotZ = pos.z;
+        float rotX = tiltX * cosA - tiltY * sinA;
+        float rotY = tiltX * sinA + tiltY * cosA;
+        float rotZ = tiltZ;
 
-        float normX = norm.x * cosA - norm.y * sinA;
-        float normY = norm.x * sinA + norm.y * cosA;
-        float normZ = norm.z;
+        float normX = tiltNormX * cosA - tiltNormY * sinA;
+        float normY = tiltNormX * sinA + tiltNormY * cosA;
+        float normZ = tiltNormZ;
 
-        float NdotL = max(0.0, dot(vec3(normX, normY, normZ), lightDir));
+        vec3 N = vec3(normX, normY, normZ);
+        float nLen = length(N);
+        if (nLen > 0.0) {
+            N = N / nLen;
+        }
+
+        float NdotL = max(0.0, dot(N, lightDir));
         float ambient = 0.35;
         float lightIntensity = ambient + (1.0 - ambient) * NdotL;
 
