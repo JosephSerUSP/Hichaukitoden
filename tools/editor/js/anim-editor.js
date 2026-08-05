@@ -526,7 +526,7 @@
                 } else if (tr.type === 'particles') {
                     const ex = STAGE_ORIGIN.x + getPreviewNum(tr.x || 0);
                     const ey = STAGE_ORIGIN.y + getPreviewNum(tr.y || 0);
-                    const speed = getPreviewNum(tr.speed !== undefined ? tr.speed : (tr.velocity || 50));
+                    const speed = getPreviewNum(tr.speed !== undefined ? tr.speed : 50);
                     const len = Math.max(8, Math.min(110, speed * 0.35));
                     const dir = getPreviewNum(tr.direction || 0);
                     const half = getPreviewNum(tr.spread || 0) / 2;
@@ -544,7 +544,6 @@
                         if (deg < 0) deg += 360;
                         tr.direction = deg;
                         tr.speed = Math.max(1, Math.round(Math.hypot(ddx, ddy) / 0.35));
-                        delete tr.velocity; // canvas authors the new Speed field
                         drawOverlayHandles();
                     }, done);
                     mkSvgHandle(ex, ey, '#33cc33', 'emitter', (mx, my) => {
@@ -1312,9 +1311,7 @@
                     const emit = section(inspectorCol, 'Emission');
                     numCell(emit, 'Direction °', tr, 'direction', 270, { int: true, handles: true });
                     numCell(emit, 'Spread °', tr, 'spread', 45, { int: true, handles: true });
-                    // Display falls back to the legacy `velocity` key so old
-                    // data reads truthfully (the runtime prefers speed→velocity).
-                    numCell(emit, 'Speed', tr, 'speed', tr.velocity !== undefined ? tr.velocity : 50, { handles: true });
+                    numCell(emit, 'Speed', tr, 'speed', 50, { handles: true });
                     numCell(emit, 'Speed max', tr, 'speedMax', 0, { blankable: true });
                     numCell(emit, 'Rate /s', tr, 'rate', 20);
                     numCell(emit, 'Lifetime s', tr, 'lifetime', 0.6, { step: '0.1' });

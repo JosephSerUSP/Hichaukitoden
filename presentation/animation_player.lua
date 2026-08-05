@@ -710,7 +710,7 @@ local function createSinglePS(texture, track, entry, singleCellIdx)
     local life = track.lifetime or 0.5
     ps:setParticleLifetime(life, life * (track.lifetimeVariation or 1.5))
     ps:setSpread(math.rad(evalNum(track.spread or 45)))
-    local speed = evalNum(track.speed or track.velocity or 50)
+    local speed = evalNum(track.speed or 50)
     ps:setSpeed(speed, evalNum(track.speedMax or speed * 1.5))
 
     -- Emission Area / Spawn shape
@@ -830,7 +830,7 @@ function animation_player.updateParticles(dt)
                             if track.direction then
                                 ps:setDirection(math.rad(evalNum(track.direction)))
                             end
-                            local speed = evalNum(track.speed or track.velocity or 50)
+                            local speed = evalNum(track.speed or 50)
                             ps:setSpeed(speed, evalNum(track.speedMax or speed * 1.5))
                             if track.spread then
                                 ps:setSpread(math.rad(evalNum(track.spread)))

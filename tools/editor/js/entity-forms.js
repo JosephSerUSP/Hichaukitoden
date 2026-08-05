@@ -4,7 +4,7 @@
         // a list of field specs interpreted by buildEntityForm; adding a
         // field to a tab (or a whole new simple tab) means adding a spec
         // here, not hand-writing DOM. Complex tabs (actors, commonEvents,
-        // shops, animations, quests, themes) still build custom panels in
+        // animations, quests, themes) still build custom panels in
         // loadFormForItem and can migrate here incrementally.
         //
         // Field spec keys:

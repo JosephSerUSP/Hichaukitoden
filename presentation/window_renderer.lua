@@ -7,8 +7,8 @@
 -- templates and cursor formulas, all evaluated at draw time so windows stay
 -- live as scene variables change.
 --
--- A scene opts in with "draw": "windows" in scenes.json; scenes without the
--- flag keep their legacy Lua drawing (SPEC S2 fallback rule).
+-- A scene opts in with "draw": "windows" in scenes.json; every scene now
+-- declares an explicit draw mode (scene_host errors on anything else).
 --
 -- List sources (SET_LIST listId):
 --   "inventory"        session inventory (fields: id, name, icon, qty, meta)

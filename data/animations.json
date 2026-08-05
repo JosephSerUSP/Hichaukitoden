@@ -274,7 +274,7 @@
         "rate": 20,
         "lifetime": 0.8,
         "spread": 80,
-        "velocity": 60,
+        "speed": 60,
         "gravity": 40,
         "colorOverLife": [
           [
@@ -1157,7 +1157,7 @@
         "rate": 25,
         "lifetime": 0.8,
         "spread": 80,
-        "velocity": 60,
+        "speed": 60,
         "gravity": 40,
         "colorOverLife": [
           [

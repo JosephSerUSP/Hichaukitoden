@@ -199,7 +199,7 @@ function saveIconKeyProfile() {
     db.iconKeyProfiles = db.iconKeyProfiles || {};
     db.iconKeyProfiles[String(activeIconSelection.id)] = Object.assign({}, activeCustomProfile);
     if (typeof setDirty === 'function') setDirty(true);
-    alert(`Saved key profile calibration for Icon #${activeIconSelection.id}`);
+    showToast(`Saved key profile calibration for Icon #${activeIconSelection.id}`);
 }
 
 function resetIconKeyProfile() {
