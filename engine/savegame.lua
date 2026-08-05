@@ -37,7 +37,6 @@ local function serializeBattler(b)
         level = b.level,
         exp = b.exp,
         hp = b.hp,
-        row = b.row,
         equipment = { b.equipment[1], b.equipment[2], b.equipment[3] },
         states = states,
         passives = passives,
@@ -81,7 +80,6 @@ local function deserializeBattler(data, loader)
     b.name = data.name or b.name
     b.exp = data.exp or 0
     b.hp = data.hp or b.hp
-    b.row = data.row
     b.equipment = { data.equipment and data.equipment[1] or nil,
                     data.equipment and data.equipment[2] or nil,
                     data.equipment and data.equipment[3] or nil }
@@ -178,10 +176,15 @@ function savegame.serialize(sessionObj, loader, sceneName)
     end
     local party = {}
     for i = 1, config.MAX_PARTY_SIZE do
-        party[i] = serializeBattler(sessionObj.party[i])
+        local b = sessionObj.party[i]
+        if b then
+            party[i] = serializeBattler(b)
+        else
+            party[i] = false
+        end
     end
     return {
-        version = 1,
+        version = 2,
         savedAt = os.time(),
         campaignRoot = loader.root,
         scene = sceneName,
@@ -240,8 +243,24 @@ function savegame.deserialize(data, loader)
     if summoner then sess.summoner = summoner end
 
     sess.party = {}
-    for i = 1, config.MAX_PARTY_SIZE do
-        sess.party[i] = deserializeBattler(data.party and data.party[i], loader)
+    if data.version == 2 then
+        for i = 1, config.MAX_PARTY_SIZE do
+            local bdata = data.party and data.party[i]
+            if type(bdata) == "table" then
+                sess.party[i] = deserializeBattler(bdata, loader)
+            end
+        end
+    else
+        -- Version 1 migration (dense party array without slot / false placeholders)
+        local formation = require("engine.formation")
+        local legacyParty = {}
+        for i = 1, config.MAX_PARTY_SIZE do
+            local bdata = data.party and data.party[i]
+            if type(bdata) == "table" then
+                table.insert(legacyParty, deserializeBattler(bdata, loader))
+            end
+        end
+        sess.party = formation.autoPack(legacyParty, config.MAX_PARTY_SIZE)
     end
 
     sess.reserve = {}

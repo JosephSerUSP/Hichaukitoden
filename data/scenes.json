@@ -4525,8 +4525,8 @@
     "kind": "menu",
     "config": {
       "terms": {
-        "title": "Expedition Reserve",
-        "help": "Choose the four creatures carried in expedition reserve.  Arrows: move  ESC: back"
+        "title": "Expedition Reserve & Formation",
+        "help": "Choose expedition party slots (1-2 Front, 3-4 Back) & reserve.  Arrows: move  ESC: back"
       }
     },
     "hooks": {

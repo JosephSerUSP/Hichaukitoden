@@ -179,7 +179,8 @@
         {
           "id": 61,
           "level": 3,
-          "name": "Saban"
+          "name": "Saban",
+          "slot": 1
         }
       ]
     }

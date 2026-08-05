@@ -82,6 +82,7 @@ function newgame.rollMembers(loader)
                     id = member.id,
                     level = member.level or 1,
                     name = member.name,
+                    slot = member.slot,
                 })
             end
         end

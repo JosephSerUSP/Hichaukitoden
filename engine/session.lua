@@ -2,6 +2,7 @@ local traits = require("engine.traits")
 local config = require("engine.config")
 local growthMod = require("engine.growth")
 local newgame = require("engine.newgame")
+local formation = require("engine.formation")
 
 local session = {}
 
@@ -29,10 +30,22 @@ session.randomAllyName = randomAllyName
 
 -- Game_Battler definition
 local Battler = {}
-Battler.__index = Battler
+local BattlerMT = {
+    __index = function(t, k)
+        if k == "row" then
+            local sess = session.activeSession
+            if sess and sess.party then
+                local slot = formation.slotOf(sess.party, t)
+                if slot then return formation.rowOf(slot) end
+            end
+            return "front"
+        end
+        return Battler[k]
+    end
+}
 
 function Battler.new(actorData, level, growthSeed)
-    local self = setmetatable({}, Battler)
+    local self = setmetatable({}, BattlerMT)
     self.actorData = actorData
     self.id = actorData.id
     self.name = actorData.name
@@ -269,6 +282,7 @@ function GameSession.new(loader)
     -- Town storage is deliberately separate from the expedition reserve.
     self.storage = {}
     
+    session.activeSession = self
     return self
 end
 
@@ -288,7 +302,20 @@ function GameSession:initializeStartingParty()
             local battler = Battler.new(actorData, m.level)
             battler.name = m.name or randomAllyName(actorData)
             battler.hp = battler:getMaxHp(self)
-            table.insert(self.party, battler)
+            
+            local targetSlot = m.slot
+            if not formation.isValidSlot(targetSlot) or self.party[targetSlot] then
+                targetSlot = nil
+                for slot = 1, config.MAX_PARTY_SIZE do
+                    if not self.party[slot] then
+                        targetSlot = slot
+                        break
+                    end
+                end
+            end
+            if targetSlot then
+                self.party[targetSlot] = battler
+            end
         end
     end
 end
@@ -356,7 +383,7 @@ function GameSession:remember(battler, cause)
     return record
 end
 
-function GameSession:recruitActor(actorId, level)
+function GameSession:recruitActor(actorId, level, preferredSlot)
     local actorData = self.loader.getActor(actorId)
     if not actorData then
         return nil, "Actor not found"
@@ -371,10 +398,15 @@ function GameSession:recruitActor(actorId, level)
     battler.name = randomAllyName(actorData)
     battler.hp = battler:getMaxHp(self)
 
-    -- Check active party slots (1-4)
+    -- Check preferred active party slot first
+    if formation.isValidSlot(preferredSlot) and not self.party[preferredSlot] then
+        self.party[preferredSlot] = battler
+        return battler, "party"
+    end
+
+    -- Fallback to first available active party slot (1-4)
     for i = 1, config.MAX_PARTY_SIZE do
         if not self.party[i] then
-            battler.row = (i <= 2) and "front" or "back"
             self.party[i] = battler
             return battler, "party"
         end
@@ -433,9 +465,12 @@ end
 function GameSession:rest()
     local skill_cost = require("engine.skill_cost")
     self.mp = self.maxMp or self.mp
-    for _, actor in ipairs(self.party) do
-        actor.hp = actor:getMaxHp(self)
-        actor:removeState("dead")
+    for slot = 1, config.MAX_PARTY_SIZE do
+        local actor = self.party[slot]
+        if actor then
+            actor.hp = actor:getMaxHp(self)
+            actor:removeState("dead")
+        end
     end
     if self.summoner then
         self.summoner.hp = self.summoner:getMaxHp(self)
@@ -479,7 +514,6 @@ function GameSession:fillEmptySlotsFromReserve()
             local key = keys[ki]
             local b = self.reserve[key]
             self.reserve[key] = nil
-            b.row = (i <= 2) and "front" or "back"
             self.party[i] = b
             table.insert(deployed, { battler = b, slot = i, reserveKey = key })
             ki = ki + 1
@@ -502,13 +536,7 @@ function GameSession:getActiveParty()
     -- is not a battle participant (overhaul-6 F1) -- they keep a Battler
     -- object for their name/level/equipment/MP-adjacent data, used outside
     -- battle (shop level-gates, RECOVER_PARTY, etc.), but never fights.
-    local active = {}
-    for i = 1, config.MAX_PARTY_SIZE do
-        if self.party[i] then
-            table.insert(active, self.party[i])
-        end
-    end
-    return active
+    return formation.denseMembers(self.party)
 end
 
 session.GameSession = GameSession
