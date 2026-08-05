@@ -1015,13 +1015,23 @@ validator.run = function(loader)
             end
         end
         if item.model ~= nil then
-            local validModelPath = type(item.model) == "string" and item.model ~= ""
+            local validModelPath = type(item.model) == "string" and item.model ~= "" and item.model:match("%.obj$") ~= nil
             check(validModelPath,
-                "item " .. tostring(item.id) .. " model must be a non-empty asset path")
+                "item " .. tostring(item.id) .. " model must be a non-empty asset path ending in .obj")
             if validModelPath then
                 check(love.filesystem.getInfo(item.model) ~= nil,
                     "item " .. tostring(item.id) .. " model resolves to no asset: "
                         .. tostring(item.model))
+                local text = love.filesystem.read(item.model)
+                if text then
+                    local mtlName = text:match("^mtllib%s+(%S+)") or text:match("\nmtllib%s+(%S+)")
+                    if mtlName then
+                        local baseDir = item.model:match("^(.*[/\\])") or ""
+                        local mtlPath = baseDir .. mtlName
+                        check(love.filesystem.getInfo(mtlPath) ~= nil,
+                            "item " .. tostring(item.id) .. " model MTL resolves to no asset: " .. mtlPath)
+                    end
+                end
             end
         end
         checkTraits(item.traits, "item " .. tostring(item.id))
