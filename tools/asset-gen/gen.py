@@ -244,6 +244,14 @@ def _finish(run_path, manifest):
           f"{os.path.basename(run_path)} --variant {manifest['variants'][0]['index']}")
 
 
+def _upgrade_run_manifest(manifest):
+    """Add the explicit run identity when reprocessing a legacy manifest."""
+    upgraded = dict(manifest)
+    upgraded.setdefault("manifestKind", staging.RUN_KIND)
+    upgraded.setdefault("manifestVersion", staging.RUN_VERSION)
+    return upgraded
+
+
 def _sampling_overrides(args):
     """CLI knobs that only the local sdapi provider understands."""
     override = {}
@@ -469,7 +477,7 @@ def cmd_reprocess(args):
     """Re-run the pixel pipeline over staged raw output -- no API call, no cost."""
     cfg = _config()
     run_path = staging.resolve_run(_staging_root(cfg), args.run)
-    manifest = staging.read_run_manifest(run_path)
+    manifest = _upgrade_run_manifest(staging.read_run_manifest(run_path))
     ctx = classes.resolve(manifest["class"], manifest.get("options", {}))
 
     rows = []

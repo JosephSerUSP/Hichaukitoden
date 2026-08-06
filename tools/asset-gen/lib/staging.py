@@ -62,6 +62,8 @@ def scan_runs(staging_root):
 
 def read_run_manifest(path):
     manifest_path=os.path.join(path, "manifest.json")
+    if not os.path.isfile(manifest_path):
+        raise FileNotFoundError(f"run manifest missing: {manifest_path}")
     try: data=read_manifest(path)
     except Exception as e: raise RuntimeError(f"malformed run manifest {manifest_path}: {e}")
     kind, detail=classify_manifest(data)

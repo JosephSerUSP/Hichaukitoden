@@ -64,7 +64,10 @@ nothing).
 
 `reprocess` is the important one: tuning `classes.json` geometry or a
 post-processing step costs nothing, because the expensive part is already on
-disk.
+disk. When it writes a complete legacy run manifest back, it adds
+`manifestKind: "asset_gen_run"` and `manifestVersion: 1` while preserving the
+legacy fields. A direct path must resolve to a validated run; pattern-set and
+other manifest directories are rejected before processing or context preview.
 
 ## Asset classes
 

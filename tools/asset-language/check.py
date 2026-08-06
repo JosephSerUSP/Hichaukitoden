@@ -4,6 +4,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from lib.validation import validate_contract, validate_record, load, ROOT
 from lib.regression import snapshot, compare
 
+def print_diagnostics(items):
+    for item in items:
+        print(json.dumps(item, sort_keys=True) if isinstance(item, dict) else item)
+
 def main(argv=None):
     p=argparse.ArgumentParser(prog="asset-check"); sub=p.add_subparsers(dest="cmd")
     sub.add_parser("contract"); r=sub.add_parser("record"); r.add_argument("files",nargs="+"); sub.add_parser("regression"); sub.add_parser("all"); s=sub.add_parser("snapshot"); s.add_argument("--output",required=True); s.add_argument("--force",action="store_true")
@@ -29,7 +33,7 @@ def main(argv=None):
     base=ROOT/"docs/asset-pipeline/baseline/asset-regression.json"
     try: ds=compare(ROOT,json.loads(base.read_text(encoding="utf-8")))
     except Exception as e: print(f"ASSET REGRESSION FAIL\n{e}"); return 1
-    if ds: print("ASSET REGRESSION FAIL\n"+"\n".join(ds)); return 1
+    if ds: print("ASSET REGRESSION FAIL"); print_diagnostics(ds); return 1
     print("ASSET REGRESSION OK")
     if a.cmd=="all": print("ASSET LANGUAGE OK")
     return 0

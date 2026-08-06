@@ -120,6 +120,12 @@ def _job_worker(argv):
     _job_lock.release()
 
 
+def validated_context_run(staging_root, ref):
+    """Resolve and validate a run before any engine context work is invoked."""
+    run_path = staging.resolve_run(staging_root, ref)
+    return run_path, staging.read_run_manifest(run_path)
+
+
 def _start_job(argv):
     if not _job_lock.acquire(blocking=False):
         return {"busy": True}
@@ -322,10 +328,11 @@ class Handler(BaseHTTPRequestHandler):
             # batch-wide report pass to reach the run in front of them. It
             # shells out to the engine, so it is slow; the page asks once per
             # item and shows the tile meanwhile.
-            run_path = os.path.join(_staging_root(), body.get("run") or "")
-            if not os.path.isdir(run_path):
-                return self._send(404, {"error": "no such run"})
-            manifest = staging.read_run_manifest(run_path)
+            try:
+                run_path, manifest = validated_context_run(
+                    _staging_root(), body.get("run") or "latest")
+            except (FileNotFoundError, RuntimeError) as err:
+                return self._send(404, {"error": str(err)})
             cli._add_context_previews(run_path, manifest)
             variant = next((v for v in manifest.get("variants") or []
                             if v.get("index") == body.get("variant")), None)
