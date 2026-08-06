@@ -1,0 +1,196 @@
+{
+  "manifestKind": "second_rite_asset_set",
+  "manifestVersion": 1,
+  "contractVersion": 1,
+  "id": "first_stratum",
+  "displayName": "First Stratum Production Set",
+  "description": "Production identities for the first coherent First Stratum surface and world-prop generation pass.",
+  "assets": [
+    {
+      "id": "first_stratum_wall_ritual_pilasters",
+      "kind": "surface",
+      "displayName": "First Stratum Ritual Pilaster Wall",
+      "description": "Head-on old limestone dungeon wall with broad low-relief ritual pilasters, Portuguese-colonial chapel proportions distorted into funerary geometry, damp mineral discoloration, restrained erosion, muted grey-beige stone and no baked lighting or perspective.",
+      "representation": "plane",
+      "role": "surface_material",
+      "authoringSpace": "depth_tile",
+      "placementFrame": "surface_domain",
+      "materials": ["old_limestone", "wet_residue"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "generation": {
+        "assetClass": "wallPiece",
+        "name": "first_stratum_wall_ritual_pilasters",
+        "height": "assets/geometry/2_procedural_surface_baselines/wall_ritual_pilasters/depth_guide.png",
+        "heightMetric": "assets/geometry/2_procedural_surface_baselines/wall_ritual_pilasters/height_metric.png",
+        "depthWeight": 0.65,
+        "promptStyle": "tags",
+        "candidates": 4
+      },
+      "products": {
+        "albedo": "assets/tilesetPieces/first_stratum_wall_ritual_pilasters.png"
+      }
+    },
+    {
+      "id": "first_stratum_floor_broken_flagstones",
+      "kind": "surface",
+      "displayName": "First Stratum Broken Flagstone Floor",
+      "description": "Top-down seamless old limestone floor of broad irregular flagstones, shallow settled fractures, dark damp joints and sparse mineral staining; ancient deliberate masonry rather than random rubble, flat albedo with no objects, perspective or baked illumination.",
+      "representation": "plane",
+      "role": "surface_material",
+      "authoringSpace": "depth_tile",
+      "placementFrame": "surface_domain",
+      "materials": ["rough_limestone", "wet_residue"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "generation": {
+        "assetClass": "texturePiece",
+        "name": "first_stratum_floor_broken_flagstones",
+        "height": "assets/geometry/2_procedural_surface_baselines/floor_broken_flagstones/depth_guide.png",
+        "heightMetric": "assets/geometry/2_procedural_surface_baselines/floor_broken_flagstones/height_metric.png",
+        "depthWeight": 0.58,
+        "promptStyle": "tags",
+        "candidates": 4
+      },
+      "products": {
+        "albedo": "assets/tilesetPieces/first_stratum_floor_broken_flagstones.png"
+      }
+    },
+    {
+      "id": "first_stratum_ceiling_shallow_coffers",
+      "kind": "surface",
+      "displayName": "First Stratum Shallow Coffered Ceiling",
+      "description": "Seamless shallow coffered limestone ceiling viewed orthographically, worn square recesses joined by heavy ribs and restrained ritual bosses, soot-darkened cavities and pale chipped edges; oppressive old sacred architecture without perspective, lamps or baked light.",
+      "representation": "plane",
+      "role": "surface_material",
+      "authoringSpace": "depth_tile",
+      "placementFrame": "surface_domain",
+      "materials": ["old_limestone", "rough_limestone"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "generation": {
+        "assetClass": "texturePiece",
+        "name": "first_stratum_ceiling_shallow_coffers",
+        "height": "assets/geometry/2_procedural_surface_baselines/ceiling_shallow_coffers/depth_guide.png",
+        "heightMetric": "assets/geometry/2_procedural_surface_baselines/ceiling_shallow_coffers/height_metric.png",
+        "depthWeight": 0.6,
+        "promptStyle": "tags",
+        "candidates": 4
+      },
+      "products": {
+        "albedo": "assets/tilesetPieces/first_stratum_ceiling_shallow_coffers.png"
+      }
+    },
+    {
+      "id": "first_stratum_wall_ossuary_boulders",
+      "kind": "surface",
+      "displayName": "First Stratum Ossuary Boulder Wall",
+      "description": "Head-on horizontally seamless wall of large fitted funerary stones, rounded but intentionally coursed, deep black joints, subtle bone-colored mineral inclusions and damp green-grey residue; primeval ossuary masonry, no loose objects, perspective or directional light.",
+      "representation": "plane",
+      "role": "surface_material",
+      "authoringSpace": "depth_tile",
+      "placementFrame": "surface_domain",
+      "materials": ["rough_limestone", "bone", "wet_residue"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "generation": {
+        "assetClass": "wallPiece",
+        "name": "first_stratum_wall_ossuary_boulders",
+        "height": "assets/geometry/2_procedural_surface_baselines/wall_ossuary_boulders/depth_guide.png",
+        "heightMetric": "assets/geometry/2_procedural_surface_baselines/wall_ossuary_boulders/height_metric.png",
+        "depthWeight": 0.65,
+        "promptStyle": "tags",
+        "candidates": 4
+      },
+      "products": {
+        "albedo": "assets/tilesetPieces/first_stratum_wall_ossuary_boulders.png"
+      }
+    },
+    {
+      "id": "first_stratum_treasure_chest",
+      "kind": "world_prop",
+      "displayName": "First Stratum Treasure Chest",
+      "description": "Low, broad ritual storage chest in dark worn wood with oxidized bronze bands and a restrained gold seal. Closed and open exports share one deterministic recipe, floor pivot and footprint.",
+      "representation": "full_model",
+      "role": "event_prop",
+      "authoringSpace": "world_cell",
+      "placementFrame": "floor_center",
+      "materials": ["dark_wood", "oxidized_bronze", "ritual_gold"],
+      "states": ["closed", "open"],
+      "defaultState": "closed",
+      "variants": [],
+      "recipe": "recipes.first_stratum.treasure_chest",
+      "parameters": {
+        "width": 0.56,
+        "depth": 0.34,
+        "baseHeight": 0.25,
+        "lidHeight": 0.13,
+        "openAngleDegrees": 105,
+        "bevel": 0.012
+      },
+      "products": {
+        "outputRoot": "assets/models/first_stratum/treasure_chest",
+        "states": {
+          "closed": "assets/models/first_stratum/treasure_chest/first_stratum_treasure_chest_closed.obj",
+          "open": "assets/models/first_stratum/treasure_chest/first_stratum_treasure_chest_open.obj"
+        }
+      }
+    },
+    {
+      "id": "first_stratum_ritual_dais",
+      "kind": "world_prop",
+      "displayName": "First Stratum Ritual Dais",
+      "description": "Three-tier low limestone dais with an inset muted-gold ritual plate, sized as a readable one-cell landmark rather than monumental architecture.",
+      "representation": "full_model",
+      "role": "object_fixture",
+      "authoringSpace": "world_cell",
+      "placementFrame": "floor_center",
+      "materials": ["old_limestone", "rough_limestone", "ritual_gold"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "recipe": "recipes.first_stratum.ritual_platform",
+      "parameters": {
+        "tiers": [[0.82, 0.82, 0.08], [0.64, 0.64, 0.075], [0.46, 0.46, 0.065]],
+        "topInlay": [0.24, 0.24, 0.012],
+        "bevel": 0.01
+      },
+      "products": {
+        "outputRoot": "assets/models/first_stratum/ritual_dais",
+        "states": {
+          "default": "assets/models/first_stratum/ritual_dais/first_stratum_ritual_dais.obj"
+        }
+      }
+    },
+    {
+      "id": "first_stratum_offering_pedestal",
+      "kind": "world_prop",
+      "displayName": "First Stratum Offering Pedestal",
+      "description": "Compact waist-high limestone offering pedestal with a dark structural middle course and a shallow ritual-gold receiving plate.",
+      "representation": "full_model",
+      "role": "event_prop",
+      "authoringSpace": "world_cell",
+      "placementFrame": "floor_center",
+      "materials": ["old_limestone", "rough_limestone", "ritual_gold"],
+      "states": ["default"],
+      "defaultState": "default",
+      "variants": [],
+      "recipe": "recipes.first_stratum.ritual_platform",
+      "parameters": {
+        "tiers": [[0.38, 0.38, 0.08], [0.25, 0.25, 0.32], [0.34, 0.34, 0.065]],
+        "topInlay": [0.2, 0.2, 0.012],
+        "bevel": 0.009
+      },
+      "products": {
+        "outputRoot": "assets/models/first_stratum/offering_pedestal",
+        "states": {
+          "default": "assets/models/first_stratum/offering_pedestal/first_stratum_offering_pedestal.obj"
+        }
+      }
+    }
+  ]
+}
