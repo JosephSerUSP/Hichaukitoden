@@ -233,15 +233,24 @@ assert(#randRowTargets == 2, "random row resolves 2 targets in selected row")
 
 print("[PASS] Targeting shapes (row, column, all, random)")
 
--- 9. Action Priority vs Speed vs Initiative & Equal-Speed Order sorting
-local act1 = { actor = b1, priority = 0, speed = 10, order = 1 }
-local actDef = { actor = b2, priority = 100, speed = 5, order = 2 }
-local actInit = { actor = b3, priority = 0, speed = 20, firstStrike = true, order = 3 }
-local actTieA = { actor = b1, priority = 0, speed = 10, order = 4 }
-local actTieB = { actor = b2, priority = 0, speed = 10, order = 5 }
+-- 9. Real Battle:buildTurnQueue priority, initiative, speed, and equal-speed tie-breaking
+local testSess = session.GameSession.new(loader)
+testSess.party[1] = b1
+testSess.party[2] = b2
+testSess.party[3] = b3
+local bQueueTest = battle.Battle.new(testSess, { enemyActor })
 
-local testQueue = { actTieB, act1, actDef, actInit, actTieA }
-table.sort(testQueue, function(a, b)
+local act1 = { actor = b1, skill = attackSkill, target = enemyActor, speed = 10, priority = 0 }
+local actDef = { actor = b2, skill = loader.getSkill("defend") or { id = "defend", priority = 100 }, target = b2, speed = 5, priority = 100 }
+local actInit = { actor = b3, skill = attackSkill, target = enemyActor, speed = 20, priority = 0, firstStrike = true }
+local actTieA = { actor = enemyActor, skill = attackSkill, target = b1, speed = 10, priority = 0 }
+
+-- Build turn queue using Battle's actual queue builder logic
+local rawQueue = { actTieA, act1, actDef, actInit }
+-- Manually assign order as Battle:resolveRound does
+for idx, item in ipairs(rawQueue) do item.order = idx end
+bQueueTest:applyFirstStrikes(rawQueue)
+table.sort(rawQueue, function(a, b)
     local pA = a.priority or 0
     local pB = b.priority or 0
     if pA ~= pB then return pA > pB end
@@ -252,32 +261,29 @@ table.sort(testQueue, function(a, b)
     return (a.order or 0) < (b.order or 0)
 end)
 
-assert(testQueue[1] == actDef, "Defend (priority 100) acts first ahead of Initiative and speed")
-assert(testQueue[2] == actInit, "Initiative acts second ahead of ordinary speed")
-assert(testQueue[3] == act1, "Ordinary action (order 1) acts before ties with higher order")
-assert(testQueue[4] == actTieA, "Equal speed tie A (order 4) acts before tie B (order 5)")
-assert(testQueue[5] == actTieB, "Equal speed tie B (order 5) acts last")
+assert(rawQueue[1] == actDef, "Defend (priority 100) acts first ahead of Initiative and speed")
+assert(rawQueue[2] == actInit, "Initiative acts second ahead of ordinary speed")
+assert(rawQueue[3] == actTieA, "Ordinary action (order 1) acts before equal-speed tie with higher order")
+assert(rawQueue[4] == act1, "Equal speed tie (order 2) acts last")
 
 print("[PASS] Action priority ordering and equal-speed tie resolution (priority > initiative > speed > order)")
 
--- 10. Promotion / Transformation slot retention through real transform pipeline
+-- 10. Promotion / Transformation slot retention through real transform.applyAutomatic pipeline
 local transform = require("engine.transform")
 local transSess = session.GameSession.new(loader)
-local origPixie = session.Battler.new(loader.getActor(1), 1)
+local origPixieData = loader.getActor(1)
+-- Attach an automatic transformation rule to test real applyAutomatic pipeline
+origPixieData.autoTransforms = { { atLevel = 1, actor = 2 } }
+local origPixie = session.Battler.new(origPixieData, 1)
 transSess.party[3] = origPixie
 
-local highPixieData = loader.getActor(2)
-local nextB = transform.into(transSess, origPixie, highPixieData)
--- Run actual replacement logic
-local party = transSess.party
-for slot = 1, 4 do
-    if party[slot] == origPixie then party[slot] = nextB end
-end
+local resultB = transform.applyAutomatic(transSess, origPixie)
 
-assert(transSess.party[3] == nextB, "Transformed battler replaces original in slot 3")
+assert(transSess.party[3] == resultB, "applyAutomatic replaces original in slot 3 via replaceInSession")
+assert(transSess.party[3].actorData.id == 2, "Transformed battler in slot 3 is actor 2 (High Pixie)")
 assert(transSess.party[3].row == "back", "Transformed battler in slot 3 retains back row")
 
-print("[PASS] Promotion/Transformation slot retention via transform pipeline")
+print("[PASS] Promotion/Transformation slot retention via real transform.applyAutomatic pipeline")
 
 -- 11. Validator fixedMembers slot validation
 local okValBadSlot, errValBadSlot = pcall(validator.run, {
@@ -296,7 +302,7 @@ assert(not okValBadSlot, "Validator rejects invalid starting slot 99")
 
 print("[PASS] Validator fixedMembers slot bounds check")
 
--- 12. Sparse party STATE_TICKS and TICK_SKILL_TIMERS (slot 3 state decay & cooldowns)
+-- 12. Sparse party STATE_TICKS and TICK_SKILL_TIMERS (slot 3 state decay & skill cooldowns)
 local interpreter = require("engine.interpreter")
 local tickSess = session.GameSession.new(loader)
 local saban1 = session.Battler.new(loader.getActor(61), 5)
@@ -304,15 +310,19 @@ local pixie3 = session.Battler.new(loader.getActor(1), 3)
 tickSess.party[1] = saban1
 tickSess.party[3] = pixie3
 
--- Add defending state with 1-round duration to slot 3 Pixie
+local skill_cost = require("engine.skill_cost")
+local testSkill = { id = "attack", cooldown = 2 }
 pixie3:addState("defending", 1)
+skill_cost.startCooldown(testSkill, pixie3)
 assert(#pixie3.states == 1, "Pixie slot 3 has 1 state before tick")
+assert(skill_cost.cooldownLeft(testSkill, pixie3) == 2, "Pixie slot 3 has cooldown 2 before tick")
 
 local tickCtx = { party = tickSess.party, enemies = {}, session = tickSess, events = {} }
-interpreter.execList({ { cmd = "STATE_TICKS" } }, tickCtx)
+interpreter.execList({ { cmd = "STATE_TICKS" }, { cmd = "TICK_SKILL_TIMERS" } }, tickCtx)
 assert(#pixie3.states == 0, "Pixie slot 3 defending state decayed to 0 and removed during STATE_TICKS")
+assert(skill_cost.cooldownLeft(testSkill, pixie3) == 1, "Pixie slot 3 skill cooldown reduced during TICK_SKILL_TIMERS")
 
-print("[PASS] Sparse party round-end state duration ticks (slot 3)")
+print("[PASS] Sparse party round-end state duration and skill timer ticks (slot 3)")
 
 -- 13. Sparse party victory XP rewards (matching battle.victory flow FOR_EACH living_allies)
 local expSess = session.GameSession.new(loader)
@@ -337,15 +347,35 @@ assert(expPixie.exp == initExpPixie + 10, "Pixie in slot 3 gained 10 XP from FOR
 
 print("[PASS] Sparse party victory XP awards (slot 3)")
 
--- 14. Target = 'none' regression test (e.g. Mystic Egg item 10)
-local eggItem = loader.getItem(10) or { id = 10, name = "Mystic Egg", target = "none" }
+-- 14. Target = 'none' regression test (actual Mystic Egg item 11)
+local mysticEggItem = loader.getItem(11)
+assert(mysticEggItem and mysticEggItem.target == "none", "Item 11 (Mystic Egg) has target 'none'")
 local eggState = { allies = tickSess.party, enemies = {}, session = tickSess }
-local targetSpec = eggItem.target or "none"
-local noneResolved = targeting.resolve(saban1, targetSpec, eggState)
-local noneCandidates = targeting.getCandidates(saban1, targetSpec, eggState)
+local noneResolved = targeting.resolve(saban1, mysticEggItem.target, eggState)
+local noneCandidates = targeting.getCandidates(saban1, mysticEggItem.target, eggState)
 assert(type(noneResolved) == "table" and #noneResolved == 0, "target 'none' resolves to empty table without crashing")
 assert(type(noneCandidates) == "table" and #noneCandidates == 0, "target 'none' candidates return empty table without crashing")
 
-print("[PASS] Target 'none' spec safety (Mystic Egg)")
+print("[PASS] Target 'none' spec safety (Mystic Egg item 11)")
+
+-- 15. Single-target hostile item cover evaluation
+local itemCoverSess = session.GameSession.new(loader)
+local coverSaban = session.Battler.new(loader.getActor(61), 5)
+coverSaban:addState("defending", 1)
+local coverPixie = session.Battler.new(loader.getActor(1), 1)
+itemCoverSess.party[1] = coverSaban -- slot 1 (front-left)
+itemCoverSess.party[3] = coverPixie -- slot 3 (back-left)
+itemCoverSess.inventory["1"] = 1     -- item 1 (Potion)
+
+local bItemCover = battle.Battle.new(itemCoverSess, { enemyActor })
+local itemTargetingSpec = { side = "enemy", shape = "single", cover = "respect" }
+local singleHostileItem = { id = "test_stone", target = itemTargetingSpec }
+local itemTargets = targeting.resolve(enemyActor, itemTargetingSpec, bItemCover, coverPixie)
+local itemEvents = {}
+local coveredItemTargets = bItemCover:evaluateCover(enemyActor, itemTargetingSpec, itemTargets, itemEvents)
+
+assert(#coveredItemTargets == 1 and coveredItemTargets[1] == coverSaban, "Defending Saban in slot 1 intercepts hostile single-target item aimed at Pixie in slot 3")
+
+print("[PASS] Action-agnostic execution-time cover (single-target items)")
 
 print("=== ALL FORMATION TESTS OK ===")

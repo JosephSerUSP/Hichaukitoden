@@ -474,31 +474,7 @@ function Battle:executeTurn(turn, roundEvents)
             local loader = self.session.loader
             local spec = turn.skill.target
             local targets = targeting.resolve(turn.actor, spec, self, turn.target, turn.skill)
-            local expanded = targeting.expand(spec)
-
-            -- Execution-time cover evaluation for single-target coverable attacks on back-row
-            if expanded.shape == "single" and expanded.cover == "respect" and #targets > 0 then
-                local origTarget = targets[1]
-                local actorIsEnemy = false
-                for slot = 1, config.MAX_PARTY_SIZE do
-                    if self.enemies[slot] == turn.actor then actorIsEnemy = true break end
-                end
-                local targetGroup = actorIsEnemy and self.allies or self.enemies
-                local targetSlot = formation.slotOf(targetGroup, origTarget)
-                if targetSlot and formation.rowOf(targetSlot) == "back" then
-                    local frontSlot = formation.alignedFrontSlot(targetSlot)
-                    local protector = targetGroup[frontSlot]
-                    if protector and not protector:isDead() and not (protector.isRestricted and protector:isRestricted()) then
-                        if #traits.findAllSources(protector, "COVER_ALIGNED_BACK", self.session) > 0 then
-                            targets = { protector }
-                            table.insert(roundEvents, {
-                                type = "text",
-                                text = loader.formatTerm("battle.cover_intercept", "- {0} steps in to protect {1}!", protector.name, origTarget.name)
-                            })
-                        end
-                    end
-                end
-            end
+            targets = self:evaluateCover(turn.actor, spec, targets, roundEvents)
 
             -- Pay for the casting HERE -- the one place a skill actually
             -- resolves -- so the charge path and the Overcast path cannot
@@ -688,7 +664,9 @@ function Battle:applyItem(action, actor, target)
     })
 
     local targeting = require("engine.targeting")
-    local targets = targeting.resolve(actor, item.target or "ally", self, target, item)
+    local itemSpec = item.target or "ally"
+    local targets = targeting.resolve(actor, itemSpec, self, target, item)
+    targets = self:evaluateCover(actor, itemSpec, targets, events)
     
     local seq = nil
     if item.actionSequence then
@@ -725,6 +703,40 @@ function Battle:applyItem(action, actor, target)
     -- hp/state/mp backup/restore the scene host does around resolveRound.
     session:addItem(item.id, -1)
     return events
+end
+
+function Battle:evaluateCover(actor, spec, targets, roundEvents)
+    if not spec or not targets or #targets == 0 then return targets end
+    local targeting = require("engine.targeting")
+    local traits = require("engine.traits")
+    local config = require("engine.config")
+
+    local expanded = targeting.expand(spec)
+    if expanded.shape == "single" and expanded.cover == "respect" then
+        local origTarget = targets[1]
+        local actorIsEnemy = false
+        for slot = 1, config.MAX_PARTY_SIZE do
+            if self.enemies[slot] == actor then actorIsEnemy = true break end
+        end
+        local targetGroup = actorIsEnemy and self.allies or self.enemies
+        local targetSlot = formation.slotOf(targetGroup, origTarget)
+        if targetSlot and formation.rowOf(targetSlot) == "back" then
+            local frontSlot = formation.alignedFrontSlot(targetSlot)
+            local protector = targetGroup[frontSlot]
+            if protector and not protector:isDead() and not (protector.isRestricted and protector:isRestricted()) then
+                if #traits.findAllSources(protector, "COVER_ALIGNED_BACK", self.session) > 0 then
+                    targets = { protector }
+                    if roundEvents and self.session and self.session.loader then
+                        table.insert(roundEvents, {
+                            type = "text",
+                            text = self.session.loader.formatTerm("battle.cover_intercept", "- {0} steps in to protect {1}!", protector.name, origTarget.name)
+                        })
+                    end
+                end
+            end
+        end
+    end
+    return targets
 end
 
 function Battle:isVictory()
