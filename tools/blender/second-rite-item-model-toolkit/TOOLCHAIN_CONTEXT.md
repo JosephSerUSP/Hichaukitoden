@@ -14,6 +14,10 @@ Create many small, fully modeled, low-poly item assets for Second Rite. They are
 4. Generated `.blend` — editable working library and embedded copies of exporter, core, contract, and materials.
 5. Generated OBJ/MTL — runtime assets consumed by Hichaukitoden.
 
+The exporter adapter is safe to execute from an embedded Blender Text block:
+it only resolves a sibling `vendor/` directory when `__file__` identifies a
+real file, then falls back to the embedded core Text block as one stable module.
+
 ## Modeling language
 
 - Blender Z-up.

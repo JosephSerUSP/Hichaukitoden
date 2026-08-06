@@ -27,24 +27,29 @@ def _load_shared_core():
         import second_rite_asset_core
         return second_rite_asset_core
     except ImportError:
-        vendor = Path(__file__).resolve().parent / "vendor"
-        if vendor.is_dir() and str(vendor) not in sys.path:
-            sys.path.insert(0, str(vendor))
-        try:
-            import second_rite_asset_core
-            return second_rite_asset_core
-        except ImportError:
-            text = bpy.data.texts.get("second_rite_asset_core.py")
-            if text is None:
-                raise RuntimeError(
-                    "second_rite_asset_core.py is not importable and is absent "
-                    "from the generated Blender Text blocks"
-                )
-            module = types.ModuleType("second_rite_asset_core")
-            module.__file__ = "<Blender Text: second_rite_asset_core.py>"
-            sys.modules["second_rite_asset_core"] = module
-            exec(compile(text.as_string(), module.__file__, "exec"), module.__dict__)
-            return module
+        module_file = globals().get("__file__")
+        if module_file:
+            source_path = Path(module_file)
+            if source_path.is_file():
+                vendor = source_path.resolve().parent / "vendor"
+                if vendor.is_dir() and str(vendor) not in sys.path:
+                    sys.path.insert(0, str(vendor))
+                try:
+                    import second_rite_asset_core
+                    return second_rite_asset_core
+                except ImportError:
+                    pass
+        text = bpy.data.texts.get("second_rite_asset_core.py")
+        if text is None:
+            raise RuntimeError(
+                "second_rite_asset_core.py is not importable and is absent "
+                "from the generated Blender Text blocks"
+            )
+        module = types.ModuleType("second_rite_asset_core")
+        module.__file__ = "<Blender Text: second_rite_asset_core.py>"
+        sys.modules["second_rite_asset_core"] = module
+        exec(compile(text.as_string(), module.__file__, "exec"), module.__dict__)
+        return module
 
 
 asset_core = _load_shared_core()

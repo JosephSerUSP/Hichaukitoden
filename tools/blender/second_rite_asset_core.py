@@ -60,15 +60,14 @@ def _text_json(name):
 
 
 def _load_registry(explicit_path, canonical_path, vendor_path, text_name, label):
-    if explicit_path is not None:
-        return _read_json_file(explicit_path)
-
     canonical = Path(canonical_path)
     vendor = Path(vendor_path)
     canonical_data = _read_json_file(canonical) if canonical.is_file() else None
     vendor_data = _read_json_file(vendor) if vendor.is_file() else None
     if canonical_data is not None and vendor_data is not None and canonical_data != vendor_data:
         raise RuntimeError(f"canonical and vendor {label} disagree: {canonical} vs {vendor}")
+    if explicit_path is not None:
+        return _read_json_file(explicit_path)
     if canonical_data is not None:
         return canonical_data
     if vendor_data is not None:
@@ -99,7 +98,7 @@ def load_contract(path=None):
     return data
 
 
-def load_material_registry(path=None):
+def load_material_registry(path=None, contract_path=None):
     """Load the semantic material registry with the same fallback order."""
     data = _load_registry(
         path,
@@ -110,6 +109,18 @@ def load_material_registry(path=None):
     )
     if not isinstance(data.get("materials"), list):
         raise RuntimeError("material registry must contain a materials array")
+    contract = load_contract(contract_path)
+    registry_version = data.get("version")
+    contract_version = contract.get("materialRegistry", {}).get("version")
+    if registry_version != 1:
+        raise RuntimeError(
+            f"unsupported material registry version {registry_version!r}; core supports 1"
+        )
+    if registry_version != contract_version:
+        raise RuntimeError(
+            "material registry version disagrees with contract: "
+            f"registry={registry_version!r}, contract={contract_version!r}"
+        )
     return data
 
 

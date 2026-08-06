@@ -28,6 +28,7 @@ import sys
 import bpy
 import numpy
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import scenes                                        # noqa: E402
@@ -36,6 +37,57 @@ import scenes                                        # noqa: E402
 # High enough to clear the tallest relief, low enough to keep float precision
 # in the returned hit coordinates comfortable.
 CAMERA_Z = 8.0
+
+
+def _evaluated_bvhs(depsgraph):
+    """Build stable per-object BVHs from the evaluated scene geometry."""
+    trees = []
+    for obj in sorted(depsgraph.objects, key=lambda item: item.name):
+        if obj.type != "MESH" or obj.hide_render:
+            continue
+        evaluated = obj.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        mesh.calc_loop_triangles()
+        vertices = [evaluated.matrix_world @ vertex.co
+                    for vertex in mesh.vertices]
+        triangles = [tuple(triangle.vertices)
+                     for triangle in mesh.loop_triangles]
+        polygon_keys = [triangle.polygon_index
+                        for triangle in mesh.loop_triangles]
+        tree = BVHTree.FromPolygons(vertices, triangles, all_triangles=True)
+        evaluated.to_mesh_clear()
+        if tree is not None:
+            corners = [obj.matrix_world @ Vector(corner) for corner in obj.bound_box]
+            trees.append((
+                obj.name, tree, polygon_keys,
+                min(point.x for point in corners), max(point.x for point in corners),
+                min(point.y for point in corners), max(point.y for point in corners),
+            ))
+    if not trees:
+        raise SystemExit("depth sampling found no evaluated mesh objects")
+    return trees
+
+
+def _first_hit(bvhs, origin, direction):
+    """Return the nearest deterministic evaluated-mesh hit along a ray."""
+    best = None
+    for (object_name, tree, polygon_keys,
+         min_x, max_x, min_y, max_y) in bvhs:
+        if origin.x < min_x or origin.x > max_x or origin.y < min_y or origin.y > max_y:
+            continue
+        location, _, triangle_index, _ = tree.ray_cast(
+            origin, direction, 1.0e6)
+        if location is None:
+            continue
+        distance = (location - origin).dot(direction)
+        if distance < 0.0:
+            continue
+        candidate_key = (object_name, polygon_keys[triangle_index])
+        if (best is None or distance < best[0] - 1.0e-9 or
+                (abs(distance - best[0]) <= 1.0e-9 and
+                 candidate_key < best[1])):
+            best = (distance, candidate_key, location)
+    return None if best is None else best[2]
 
 
 def sample(size, view="above"):
@@ -47,10 +99,10 @@ def sample(size, view="above"):
     mean by the time ControlNet reads the PNG.
     """
     depsgraph = bpy.context.evaluated_depsgraph_get()
-    scene = bpy.context.scene
     toward = -1.0 if view == "above" else 1.0
     origin_z = CAMERA_Z * -toward
     down = Vector((0.0, 0.0, toward))
+    bvhs = _evaluated_bvhs(depsgraph)
     heights = numpy.full((size, size), numpy.nan, dtype=numpy.float64)
     # Pixel centres, so the sampled period is exactly [0,1) and column 0 is one
     # step past column size-1 -- the condition for the wrap check to mean what
@@ -59,9 +111,9 @@ def sample(size, view="above"):
     for row in range(size):
         y = float(coordinates[row])
         for col in range(size):
-            hit, location, _, _, _, _ = scene.ray_cast(
-                depsgraph, Vector((float(coordinates[col]), y, origin_z)), down)
-            if hit:
+            location = _first_hit(
+                bvhs, Vector((float(coordinates[col]), y, origin_z)), down)
+            if location is not None:
                 heights[row, col] = location.z
     if numpy.isnan(heights).any():
         # The backplane is meant to make this impossible; if it happens the

@@ -63,9 +63,22 @@ selection, and active-object state in a `finally` block. Shape-key variants
 remain static OBJ outputs with their existing names.
 
 The add-on first uses an importable canonical or vendored core, then a sibling
-vendor copy, then a stable module loaded from the embedded
-`second_rite_asset_core.py` Text block. Contract and material Text blocks use
-the names `second_rite_contract.json` and `second_rite_materials.json`.
+vendor copy when its own source file is available, then a stable module loaded
+from the embedded `second_rite_asset_core.py` Text block. The fallback is safe
+when the exporter is executed from a Blender Text block without `__file__`.
+Contract and material Text blocks use the names `second_rite_contract.json` and
+`second_rite_materials.json`. The smoke test executes the embedded exporter,
+registers it, exports a marked root, and unregisters it again.
+
+The core requires material registry version 1 to agree with
+`contract.materialRegistry.version`. Canonical and vendor registries must also
+agree before either can be used.
+
+Depth sampling builds one evaluated BVH per mesh, orders objects by stable name,
+selects the nearest world-space hit, and resolves effectively equal hits by
+object name and polygon index. This preserves evaluated modifiers and booleans,
+the existing viewer direction, pixel centres, and encoding while removing the
+non-deterministic global `scene.ray_cast` traversal.
 
 ## Calibration and boundaries
 
@@ -75,13 +88,13 @@ Run the host driver for temporary-only smoke/build/calibration checks:
 python tools/blender/check_blender_core.py
 ```
 
-It reports standalone 49-root/53-OBJ output, structural OBJ equivalence, and
-pixel calibration for the four selected depth presets. Three current presets
-are byte-identical to their production PNGs. `wall_boulders_rough` has a
-documented one-grey-level, few-dozen-pixel variance across repeated unchanged
-Blender BVH raycasts; the driver isolates that existing baseline variance and
-fails on any larger or differently valued delta. It never calls a provider or
-writes production assets. Phase 4 intentionally does not migrate metric
+It reports standalone 49-root/53-OBJ output, vendor-core origin, structural OBJ
+equivalence, ordered `usemtl` equivalence, full MTL semantic equivalence, and
+requires exact decoded-pixel equality for `wall_pilasters`, `floor_flagstones`,
+`ceiling_coffers`, and `wall_boulders_rough`. A changed pixel fails the driver;
+the installed Blender build currently cannot reproduce the tracked rough
+fixture exactly, so that calibration remains a blocking finding. It never calls
+a provider or writes production assets. Phase 4 intentionally does not migrate metric
 depth, regenerate tracked assets, alter runtime loaders or data assignments,
 author world props, add sockets/collision metadata, or change the unified
 contract. Future world-prop builders should consume the core infrastructure,

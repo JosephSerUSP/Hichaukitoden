@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from PIL import Image
@@ -44,9 +45,14 @@ def run(command, *, cwd=ROOT, env=None):
     return result
 
 
-def run_smoke(blender, output):
-    result = run([blender, "--background", "--factory-startup",
-                  "--python", str(SMOKE), "--", "--out", str(output)])
+def run_smoke(blender, output, blend_path=None):
+    command = [blender, "--background"]
+    if blend_path is None:
+        command.append("--factory-startup")
+    else:
+        command.append(str(blend_path))
+    command.extend(["--python", str(SMOKE), "--", "--out", str(output)])
+    result = run(command)
     lines = [line for line in result.stdout.splitlines()
              if line.startswith("BLENDER_CORE_SMOKE ")]
     if len(lines) != 1:
@@ -58,11 +64,20 @@ def run_smoke(blender, output):
         "itemMetadataValid": True, "materialMetadataValid": True,
         "depthProduct": "depth_guide", "metricDepthDeferred": True,
         "textFallback": True, "productionWrites": 0,
+        "textFallbackExporterLoaded": True,
+        "textFallbackExporterExported": True,
+        "textFallbackSingleModule": True,
+        "registryVersionsAgree": True,
     }
     for key, value in required.items():
         if record.get(key) != value:
             raise RuntimeError(f"smoke result mismatch for {key}: {record}")
+    if not record["textFallbackCoreOrigin"].startswith("<Blender Text:"):
+        raise RuntimeError(f"smoke core did not come from an embedded Text block: {record}")
     print("shared core smoke: passed")
+    print("embedded exporter fallback: passed")
+    print("registry version agreement: passed")
+    return record
 
 
 def inspect_blend(blender, blend_path, script_path):
@@ -88,9 +103,25 @@ def standalone_build(blender, temp_root):
     output.mkdir()
     env = os.environ.copy()
     env["SECOND_RITE_OUT"] = str(output)
-    run([blender, "--background", "--factory-startup",
-         "--python", str(toolkit_copy / "build_expanded_item_library.py")],
-        cwd=toolkit_copy, env=env)
+    wrapper = temp_root / "standalone_build.py"
+    wrapper.write_text(
+        "import runpy, sys\n"
+        "builder = sys.argv[sys.argv.index('--') + 1]\n"
+        "runpy.run_path(builder, run_name='__main__')\n"
+        "module = sys.modules['second_rite_asset_core']\n"
+        "print('STANDALONE_CORE_ORIGIN ' + str(module.__file__))\n",
+        encoding="utf-8",
+    )
+    result = run([blender, "--background", "--factory-startup",
+                  "--python", str(wrapper), "--",
+                  str(toolkit_copy / "build_expanded_item_library.py")],
+                 cwd=toolkit_copy, env=env)
+    origins = [line.split(" ", 1)[1] for line in result.stdout.splitlines()
+               if line.startswith("STANDALONE_CORE_ORIGIN ")]
+    expected_origin = (toolkit_copy / "vendor" / "second_rite_asset_core.py").resolve()
+    if len(origins) != 1 or Path(origins[0]).resolve() != expected_origin:
+        raise RuntimeError(f"standalone build imported unexpected core: {origins}")
+    print("standalone core origin: vendor copy")
     blend = output / "second_rite_item_model_library_expanded.blend"
     preview = output / "second_rite_item_model_library_expanded_preview.png"
     manifest = output / "ITEM_MODEL_MANIFEST.md"
@@ -104,6 +135,12 @@ def standalone_build(blender, temp_root):
         raise RuntimeError("standalone toolkit manifest does not record 49 export roots")
     inspect_blend(blender, blend, temp_root / "inspect_blend.py")
     print("standalone toolkit build: 49 roots / 53 OBJ")
+    vendor_hidden = toolkit_copy / "vendor.hidden"
+    (toolkit_copy / "vendor").rename(vendor_hidden)
+    try:
+        run_smoke(blender, temp_root / "embedded-smoke", blend_path=blend)
+    finally:
+        vendor_hidden.rename(toolkit_copy / "vendor")
     return output, obj_files
 
 
@@ -123,6 +160,72 @@ def structural_equivalence(output, obj_files):
             if generated_metrics[field] != production_metrics[field]:
                 raise RuntimeError(f"item structural mismatch {generated.name}: {field}")
     print("item structural equivalence: passed")
+
+
+def _obj_materials(path):
+    mtllib = []
+    usemtl = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = line.split()
+        if fields[0] == "mtllib":
+            mtllib.append(" ".join(fields[1:]))
+        elif fields[0] == "usemtl":
+            usemtl.append(" ".join(fields[1:]))
+    return mtllib, usemtl
+
+
+def _semantic_token(token):
+    try:
+        return Decimal(token)
+    except InvalidOperation:
+        return token
+
+
+def _mtl_records(path):
+    records = {}
+    current = None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = line.split()
+        directive = fields[0]
+        if directive == "newmtl":
+            current = " ".join(fields[1:])
+            records[current] = []
+            continue
+        if current is None:
+            raise RuntimeError(f"MTL directive precedes newmtl in {path}: {line}")
+        records[current].append((directive, tuple(_semantic_token(token)
+                                                   for token in fields[1:])))
+    return records
+
+
+def material_equivalence(output, obj_files):
+    for generated in obj_files:
+        production = ROOT / "assets" / "models" / "items" / generated.name
+        generated_mtllib, generated_usemtl = _obj_materials(generated)
+        production_mtllib, production_usemtl = _obj_materials(production)
+        if generated_mtllib != production_mtllib:
+            raise RuntimeError(f"item material mismatch {generated.name}: mtllib")
+        if generated_usemtl != production_usemtl:
+            raise RuntimeError(f"item material mismatch {generated.name}: ordered usemtl")
+        if set(generated_usemtl) != set(production_usemtl):
+            raise RuntimeError(f"item material mismatch {generated.name}: material names")
+        generated_mtl = generated.with_name(generated_mtllib[0])
+        production_mtl = production.with_name(production_mtllib[0])
+        generated_records = _mtl_records(generated_mtl)
+        production_records = _mtl_records(production_mtl)
+        if set(generated_usemtl) - set(generated_records):
+            raise RuntimeError(f"generated OBJ references missing MTL material: {generated.name}")
+        if set(production_usemtl) - set(production_records):
+            raise RuntimeError(f"production OBJ references missing MTL material: {production.name}")
+        if generated_records != production_records:
+            raise RuntimeError(f"item material mismatch {generated.name}: MTL semantics")
+    print("item material equivalence: passed")
 
 
 def depth_calibration(blender, output):
@@ -153,19 +256,18 @@ def depth_calibration(blender, output):
                 before_pixels = list(before.getdata())
                 after_pixels = list(after.getdata())
                 if before_pixels != after_pixels:
-                    changed = sum(old != new for old, new in zip(before_pixels, after_pixels))
-                    delta = max(max(abs(int(old_channel) - int(new_channel))
-                                   for old_channel, new_channel in zip(old, new))
-                                for old, new in zip(before_pixels, after_pixels))
-                    # Blender's evaluated BVH raycast is not bit-stable for the
-                    # heavily displaced organic fixture: repeated runs of the
-                    # unchanged source vary at a few dozen pixels by one grey
-                    # level. Keep this explicit, narrow allowance until the
-                    # depth pipeline gets a deterministic sampler in Phase 6.
-                    if preset != "wall_boulders_rough" or changed > 64 or delta > 1:
-                        raise RuntimeError(f"depth pixel mismatch {preset}: {changed} pixels, max delta {delta}")
-                    print(f"depth baseline variance isolated: {preset} ({changed} pixels, max delta {delta})")
-    print("depth calibration pixels: passed (three exact; one known baseline variance)")
+                    differences = []
+                    for index, (old_pixel, new_pixel) in enumerate(
+                            zip(before_pixels, after_pixels)):
+                        if old_pixel != new_pixel:
+                            x = index % before.width
+                            y = index // before.width
+                            differences.append((x, y, old_pixel, new_pixel))
+                            if len(differences) == 10:
+                                break
+                    raise RuntimeError(
+                        f"depth pixel mismatch {preset}; first differences: {differences}")
+    print("depth calibration pixels: passed")
 
 
 def verify_vendor_sync():
@@ -185,6 +287,7 @@ def main():
         run_smoke(blender, temp_root / "smoke")
         output, obj_files = standalone_build(blender, temp_root)
         structural_equivalence(output, obj_files)
+        material_equivalence(output, obj_files)
         depth_calibration(blender, temp_root)
     print("vendor synchronization: passed")
     print("provider calls: 0")

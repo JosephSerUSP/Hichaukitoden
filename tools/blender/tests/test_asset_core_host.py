@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 import re
@@ -79,19 +80,87 @@ class AssetCoreHostTests(unittest.TestCase):
         builder = (TOOLKIT / "build_expanded_item_library.py").read_text(encoding="utf-8")
         scenes = (ROOT / "tools/asset-gen/blender/scenes.py").read_text(encoding="utf-8")
         exporter = (TOOLKIT / "second_rite_item_exporter.py").read_text(encoding="utf-8")
+        def top_level_functions(source):
+            tree = ast.parse(source)
+            return {node.name for node in tree.body
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+
         for name in ("clear_scene", "ensure_collection", "move_to_collection", "make_material", "assign_material", "flat_shade", "add_bevel", "parent_local"):
-            self.assertNotRegex(builder, rf"^def {name}\(", name)
+            self.assertNotIn(name, top_level_functions(builder), name)
         for name in ("_mesh_from_bmesh", "_rotation_matrix"):
-            self.assertNotRegex(scenes, rf"^def {name}\(", name)
+            self.assertNotIn(name, top_level_functions(scenes), name)
         for name in ("_duplicate_hierarchy", "_operator_kwargs", "_export_obj"):
-            self.assertNotRegex(exporter, rf"^def {name}\(", name)
+            self.assertNotIn(name, top_level_functions(exporter), name)
 
     def test_contract_and_material_loaders_work_on_host(self):
         import second_rite_asset_core as core
         self.assertEqual(core.CORE_VERSION, 1)
         self.assertEqual(core.load_contract()["contractVersion"], 1)
+        self.assertEqual(core.load_contract()["materialRegistry"]["version"], 1)
+        self.assertEqual(core.load_material_registry()["version"], 1)
         self.assertEqual(len(core.load_material_registry()["materials"]), 12)
         self.assertEqual(core.material_definition("bone")["id"], "bone")
+
+    def test_material_registry_version_agreement(self):
+        import second_rite_asset_core as core
+        contract = json.loads((ROOT / "tools/asset-language/contract.json").read_text(encoding="utf-8"))
+        registry = json.loads((ROOT / "tools/asset-language/materials.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            contract_path = directory / "contract.json"
+            registry_path = directory / "materials.json"
+            contract_path.write_text(json.dumps(contract), encoding="utf-8")
+            registry_path.write_text(json.dumps(registry), encoding="utf-8")
+            self.assertEqual(
+                core.load_material_registry(registry_path, contract_path)["version"], 1)
+
+    def test_material_registry_rejects_unsupported_version(self):
+        import second_rite_asset_core as core
+        registry = {"version": 2, "materials": []}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "materials.json"
+            path.write_text(json.dumps(registry), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "unsupported material registry version"):
+                core.load_material_registry(path)
+
+    def test_material_registry_rejects_contract_mismatch(self):
+        import second_rite_asset_core as core
+        contract = json.loads((ROOT / "tools/asset-language/contract.json").read_text(encoding="utf-8"))
+        contract["materialRegistry"]["version"] = 2
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "contract.json"
+            path.write_text(json.dumps(contract), encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "disagrees with contract"):
+                core.load_material_registry(contract_path=path)
+
+    def test_material_registry_rejects_malformed_json(self):
+        import second_rite_asset_core as core
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "materials.json"
+            path.write_text("{", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "malformed JSON"):
+                core.load_material_registry(path)
+
+    def test_exporter_handles_missing_file(self):
+        exporter = (TOOLKIT / "second_rite_item_exporter.py").read_text(encoding="utf-8")
+        self.assertIn('globals().get("__file__")', exporter)
+        self.assertNotIn("Path(__file__)", exporter)
+        self.assertIn("<Blender Text: second_rite_asset_core.py>", exporter)
+
+    def test_calibration_has_exact_pixels_and_material_semantics(self):
+        driver = (BLENDER_TOOLS / "check_blender_core.py").read_text(encoding="utf-8")
+        self.assertIn("before_pixels != after_pixels", driver)
+        self.assertNotIn("changed > 64", driver)
+        self.assertNotIn("max delta", driver)
+        self.assertIn("ordered usemtl", driver)
+        self.assertIn("mtllib", driver)
+        self.assertIn("Decimal", driver)
+        self.assertIn("newmtl", driver)
+
+    def test_standalone_core_origin_is_enforced(self):
+        driver = (BLENDER_TOOLS / "check_blender_core.py").read_text(encoding="utf-8")
+        self.assertIn("STANDALONE_CORE_ORIGIN", driver)
+        self.assertIn("/ \"vendor\" / \"second_rite_asset_core.py\"", driver)
 
     def test_no_production_asset_path_is_test_output(self):
         with tempfile.TemporaryDirectory() as directory:

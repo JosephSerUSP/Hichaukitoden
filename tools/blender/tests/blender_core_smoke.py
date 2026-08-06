@@ -26,14 +26,26 @@ def parse_output():
 
 
 def text_fallback_check():
-    bpy.data.texts.new("second_rite_contract.json").write(
-        (ROOT / "tools/asset-language/contract.json").read_text(encoding="utf-8"))
-    bpy.data.texts.new("second_rite_materials.json").write(
-        (ROOT / "tools/asset-language/materials.json").read_text(encoding="utf-8"))
-    bpy.data.texts.new("second_rite_asset_core.py").write(
-        (ROOT / "tools/blender/second_rite_asset_core.py").read_text(encoding="utf-8"))
+    def ensure_text(name, content):
+        text = bpy.data.texts.get(name)
+        if text is None:
+            text = bpy.data.texts.new(name)
+            text.write(content)
+        return text
+
+    exporter_text = ensure_text(
+        "second_rite_item_exporter.py",
+        (ROOT / "tools/blender/second-rite-item-model-toolkit/"
+         "second_rite_item_exporter.py").read_text(encoding="utf-8"))
+    ensure_text("second_rite_contract.json",
+                (ROOT / "tools/asset-language/contract.json").read_text(encoding="utf-8"))
+    ensure_text("second_rite_materials.json",
+                (ROOT / "tools/asset-language/materials.json").read_text(encoding="utf-8"))
+    ensure_text("second_rite_asset_core.py",
+                (ROOT / "tools/blender/second_rite_asset_core.py").read_text(encoding="utf-8"))
 
     original_import = builtins.__import__
+    original_path = sys.path[:]
 
     def blocked_import(name, *args, **kwargs):
         if name == "second_rite_asset_core":
@@ -41,21 +53,71 @@ def text_fallback_check():
         return original_import(name, *args, **kwargs)
 
     sys.modules.pop("second_rite_asset_core", None)
-    original_path = sys.path[:]
+    sys.modules.pop("second_rite_item_exporter", None)
     try:
-        sys.path[:] = [entry for entry in sys.path if "tools\\blender" not in entry.lower() and "tools/blender" not in entry.lower()]
+        blocked_paths = {
+            str((ROOT / "tools/blender").resolve()).lower(),
+            str((ROOT / "tools/blender/second-rite-item-model-toolkit/vendor").resolve()).lower(),
+        }
+        sys.path[:] = [entry for entry in sys.path
+                       if str(Path(entry or ".").resolve()).lower() not in blocked_paths]
         builtins.__import__ = blocked_import
-        module = types.ModuleType("second_rite_asset_core")
-        module.__file__ = "<Blender Text: second_rite_asset_core.py>"
-        sys.modules["second_rite_asset_core"] = module
-        text = bpy.data.texts["second_rite_asset_core.py"]
-        exec(compile(text.as_string(), module.__file__, "exec"), module.__dict__)
-        assert module.CORE_VERSION == 1
-        assert module.load_contract()["contractVersion"] == 1
-        return True
+        exporter = types.ModuleType("second_rite_item_exporter")
+        exporter.__dict__.pop("__file__", None)
+        sys.modules["second_rite_item_exporter"] = exporter
+        exec(compile(exporter_text.as_string(),
+                     "<Blender Text: second_rite_item_exporter.py>", "exec"),
+             exporter.__dict__)
+        fallback_core = sys.modules.get("second_rite_asset_core")
+        assert fallback_core is exporter.asset_core
+        assert fallback_core is not None
+        assert fallback_core.__file__ == "<Blender Text: second_rite_asset_core.py>"
+        assert list(module for module in sys.modules.values()
+                     if module is fallback_core).count(fallback_core) == 1
+        assert fallback_core.CORE_VERSION == 1
+        assert fallback_core.load_contract()["contractVersion"] == 1
+        assert fallback_core.load_material_registry()["version"] == 1
+
+        fallback_core.reset_scene(factory=True)
+        exporter.register()
+        root = bpy.data.objects.new("FallbackItem", None)
+        root["item_export"] = True
+        root["item_export_name"] = "fallback_item"
+        bpy.context.collection.objects.link(root)
+        fallback_core.tag_asset_target(
+            root,
+            asset_id="fallback_item",
+            representation="full_model",
+            role="item_display",
+            authoring_space="item_display",
+            placement_frame="item_viewport",
+            states=["default"], variants=[],
+        )
+        bpy.ops.mesh.primitive_cube_add(size=0.5)
+        child = bpy.context.object
+        fallback_core.parent_local(child, root)
+        fallback_core.assign_material(
+            child, fallback_core.make_material(
+                "FallbackBone", semantic_id="bone",
+                color=(0.72, 0.67, 0.53), metallic=0.05, roughness=0.75))
+        export_dir = Path(sys.argv[sys.argv.index("--") + 2]) / "text-fallback"
+        outputs = exporter.export_item_root(
+            bpy.context, root, export_dir, center_mode="PIVOT")
+        assert len(outputs) == 1
+        obj_path = Path(outputs[0])
+        assert obj_path.is_file() and obj_path.with_suffix(".mtl").is_file()
+        exporter.unregister()
+        return {
+            "textFallbackExporterLoaded": True,
+            "textFallbackExporterExported": True,
+            "textFallbackCoreOrigin": fallback_core.__file__,
+            "textFallbackSingleModule": True,
+            "registryVersionsAgree": True,
+        }
     finally:
         builtins.__import__ = original_import
         sys.path[:] = original_path
+        sys.modules.pop("second_rite_item_exporter", None)
 
 
 def main():
@@ -64,7 +126,7 @@ def main():
     core.load_material_registry()
     assert core.CORE_VERSION == 1
 
-    core.reset_scene(factory=True)
+    core.reset_scene(factory=bpy.data.texts.get("second_rite_asset_core.py") is None)
     scene = bpy.context.scene
     root = bpy.data.objects.new("SmokeItem", None)
     root.location = (2.0, 3.0, 4.0)
@@ -106,7 +168,7 @@ def main():
     assert bpy.data.collections.get("__SECOND_RITE_ITEM_EXPORT_TEMP__") is None
     assert material["sr_material_id"] == "bone"
 
-    core.reset_scene(factory=True)
+    core.reset_scene(factory=False)
     scene = bpy.context.scene
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=0.5)
@@ -129,6 +191,8 @@ def main():
     )
     assert scene["sr_depth_product"] == "depth_guide"
     assert scene["sr_metric_depth_deferred"] is True
+    depth_product = scene["sr_depth_product"]
+    metric_depth_deferred = scene["sr_metric_depth_deferred"]
     fallback = text_fallback_check()
 
     print("BLENDER_CORE_SMOKE " + json.dumps({
@@ -142,9 +206,10 @@ def main():
         "objAxisSettingsAccepted": True,
         "itemMetadataValid": True,
         "materialMetadataValid": True,
-        "depthProduct": scene["sr_depth_product"],
-        "metricDepthDeferred": scene["sr_metric_depth_deferred"],
-        "textFallback": fallback,
+        "depthProduct": depth_product,
+        "metricDepthDeferred": metric_depth_deferred,
+        "textFallback": True,
+        **fallback,
         "productionWrites": 0,
     }, sort_keys=True))
 

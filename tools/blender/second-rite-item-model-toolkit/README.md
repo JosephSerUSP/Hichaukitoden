@@ -82,6 +82,10 @@ The generated `.blend` contains the exporter as a Text block. It can also be loa
 - Roots also carry version-1 `sr_` item-display metadata. The generated scene
   embeds the exporter, shared core, contract, materials, and readme as Text
   blocks, so standalone copies do not need the repository at export time.
+- The exporter first tries normal and real-file sibling-vendor imports. When it
+  is executed from a Blender Text block, where `__file__` is absent or not a
+  filesystem path, it loads one shared core from the embedded Text block and
+  keeps that module in `sys.modules`.
 
 ## Editing the library
 
