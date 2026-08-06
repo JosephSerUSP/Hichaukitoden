@@ -11,7 +11,8 @@ Captured 2026-08-06 on Windows 11 Pro 64-bit, branch `feat/unified-asset-pipelin
 - Python: 3.10.9
 - Node: v24.18.0
 - LÖVE: `C:\Program Files\LOVE\lovec.exe`
-- Blender: not found on `PATH` or the standard Blender installation locations; the toolkit script nevertheless completed using its own discovery path during the baseline run.
+- Blender: `C:\Program Files\Blender Foundation\Blender 5.1\blender.exe`
+- Blender version: Blender 5.1.2 (build `ec6e62d40fa9`)
 
 ## Existing systems and paths
 
@@ -28,24 +29,24 @@ Captured 2026-08-06 on Windows 11 Pro 64-bit, branch `feat/unified-asset-pipelin
 | Command | Result |
 |---|---|
 | Item library PowerShell build | Passed: 49 roots / 53 OBJ outputs; preview, manifest, blend, and package were produced. |
-| `blendergeom.py` representative presets | Not completed within the 120-second baseline window; no source changes made. |
+| Blender executable `--version` | Passed: Blender 5.1.2 at the path above. |
+| `blendergeom.py` representative presets | Passed separately at `--size 512 --no-blend` into a temporary directory outside production assets; all four `wrapOk`. |
 | `python tools/asset-gen/gen.py classes` | Passed; registry printed successfully. |
 | `python tools/asset-gen/gen.py runs` | Failed with `error: 'class'` (exit 1). |
 | `python tools/asset-gen/gen.py generate wallPiece pipeline_probe ... --dry-run` | Passed; dry-run only, no provider call. |
 | `lovec . validate` | Passed: `VALIDATE OK`. |
-| `lovec . unittest` | Passed: `ALL UNIT TESTS OK`. |
+| `lovec . unittest` | Passed: `ALL UNIT TESTS OK`; includes registered `tests/test_geometry.lua`, with plane, shell, and radial fixture load/compile coverage. |
 | `lovec . savetest` | Passed: `SAVETEST OK`. |
 
 The validator emitted its expected sandbox negative-test formula warning for `os.time()` and reported 59 SCRIPT usages. These are baseline observations, not Phase 0 changes.
 
 ## Known warnings and assumptions
 
-- The toolkit's own Blender discovery succeeded even though the executable was not visible to the initial `Get-Command` probes. Direct Blender version capture is still needed.
-- Depth preset metrics and output manifests remain unmeasured because the representative generation run did not finish in the baseline window.
-- `gen.py runs` has an existing CLI/data error involving the `class` key and must be investigated before Phase 7 integration.
+- `gen.py runs` has an existing CLI/data error because these local staged manifests are pattern manifests, not generation-run manifests: `tools/asset-gen/out/depth-height-patterns/manifest.json`, `tools/asset-gen/out/depth-height-patterns-64/manifest.json`, and `tools/asset-gen/out/depth-height-patterns-v2/manifest.json`. They lack `class`, `name`, and `variants`. No manifest was edited.
+- The depth baseline was written only to `%TEMP%\hichaukitoden-phase0-depth`; production PNGs and the tracked production manifest were restored unchanged.
 - Existing generated binaries were not modified by this phase.
 - Runtime geometry loading was smoke-tested indirectly through the passing validator, unit suite, and save suite; a dedicated per-topology loader command still needs to be identified.
 
 ## Phase 0 conclusion
 
-The repository is protected on a dedicated branch, existing work is preserved, and the current health/failure baseline is recorded. Phase 0 remains blocked until the plan's representative Blender depth measurements and direct per-topology geometry smoke path can be completed.
+The repository is protected on a dedicated branch, existing work is preserved, and the current health/failure baseline is recorded. Phase 0 exit conditions are satisfied; Phase 1 has not begun.

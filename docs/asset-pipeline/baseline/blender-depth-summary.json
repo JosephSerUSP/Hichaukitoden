@@ -1,7 +1,20 @@
 {
-  "status": "blocked",
-  "reason": "Representative blendergeom.py run did not complete within 120 seconds",
+  "status": "passed",
+  "reason": null,
+  "blender": {
+    "path": "C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe",
+    "version": "Blender 5.1.2",
+    "hash": "ec6e62d40fa9"
+  },
+  "outputDirectory": "%TEMP%/hichaukitoden-phase0-depth",
+  "size": 512,
+  "noBlend": true,
   "presetsRequested": ["wall_pilasters", "floor_flagstones", "ceiling_coffers", "wall_boulders_rough"],
-  "metrics": [],
-  "blenderAvailable": false
+  "metrics": [
+    {"preset":"wall_pilasters","surface":"wall","view":"above","tileAxes":"x","reliefMin":0.0,"reliefMax":0.144,"wrapError":{"x":{"ratio":0.0,"step":0.0}},"wrapOk":true,"dimensions":[512,512]},
+    {"preset":"floor_flagstones","surface":"floor","view":"above","tileAxes":"xy","reliefMin":0.07,"reliefMax":0.1987,"wrapError":{"x":{"ratio":0.034,"step":0.0004},"y":{"ratio":0.0,"step":0.0}},"wrapOk":true,"dimensions":[512,512]},
+    {"preset":"ceiling_coffers","surface":"ceiling","view":"below","tileAxes":"xy","reliefMin":-0.105,"reliefMax":0.028,"wrapError":{"x":{"ratio":0.0,"step":0.0},"y":{"ratio":0.0,"step":0.0}},"wrapOk":true,"dimensions":[512,512]},
+    {"preset":"wall_boulders_rough","surface":"wall","view":"above","tileAxes":"x","reliefMin":0.1,"reliefMax":0.33365,"wrapError":{"x":{"ratio":1.609,"step":0.0086}},"wrapOk":true,"dimensions":[512,512]}
+  ],
+  "blenderAvailable": true
 }
