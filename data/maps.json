@@ -4421,7 +4421,7 @@
                     "label": "Offer a contract.",
                     "commands": [
                       {
-                        "cmd": "RECRUIT_ACTOR",
+                        "cmd": "OPEN_RECRUIT",
                         "actorId": 1,
                         "level": 1
                       },
@@ -5132,7 +5132,7 @@
                     "label": "Offer contract to Cerberus",
                     "commands": [
                       {
-                        "cmd": "RECRUIT_ACTOR",
+                        "cmd": "OPEN_RECRUIT",
                         "actorId": 32,
                         "level": 1
                       },

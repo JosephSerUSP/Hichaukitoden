@@ -79,7 +79,8 @@ local INTERACTIVE_COMPILE_IDS = {
     TEXT = true, CHOICE = true, CONDITIONAL_BRANCH = true, RECOVER_PARTY = true,
     BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
-    LABEL = true, JUMP_TO_LABEL = true, WAIT = true,
+    LABEL = true, JUMP_TO_LABEL = true, WAIT = true, OPEN_RECRUIT = true,
+    RESUME_RECRUIT = true,
 }
 
 -- Every id above must also have a branch in interpreter.compile below: an id
@@ -217,6 +218,78 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                 level = cmd.level,
                 victoryNode = winFirst or nextId,
                 defeatNode = loseFirst or nextId,
+                next = nextId,
+            }
+        elseif id == "OPEN_RECRUIT" then
+            -- RESUME_RECRUIT is only meaningful inside this command's
+            -- challenge branch. Compile the ordinary outcome branches first
+            -- with no inherited resume scope, then expose their destinations
+            -- while compiling onRequirement (including nested BATTLE outcomes).
+            local outerRecruitResume = ctx.recruitResume
+            ctx.recruitResume = nil
+            local comFirst = interpreter.compile(nodes, cmd.onCommitted, nodeId .. "_commit", nextId, ctx)
+            local decFirst = interpreter.compile(nodes, cmd.onDeclined, nodeId .. "_decline", nextId, ctx)
+            local canFirst = interpreter.compile(nodes, cmd.onCancelled, nodeId .. "_cancel", nextId, ctx)
+            ctx.recruitResume = {
+                actorId = cmd.actorId,
+                level = cmd.level,
+                sourceKey = cmd.sourceKey,
+                suggestedSlot = cmd.suggestedSlot,
+                equipmentRules = cmd.equipmentRules,
+                hpFraction = cmd.hpFraction,
+                states = cmd.states,
+                requirementType = cmd.requirement and cmd.requirement.type,
+                committedNode = comFirst or nextId,
+                declinedNode = decFirst or nextId,
+                cancelledNode = canFirst or nextId,
+            }
+            local reqFirst = interpreter.compile(nodes, cmd.onRequirement, nodeId .. "_req", nextId, ctx)
+            ctx.recruitResume = outerRecruitResume
+            nodes[nodeId] = {
+                type = "ACTION",
+                action = "OPEN_RECRUIT",
+                cmd = cmd,
+                actorId = cmd.actorId,
+                level = cmd.level,
+                sourceKey = cmd.sourceKey,
+                suggestedSlot = cmd.suggestedSlot,
+                requirement = cmd.requirement,
+                equipmentRules = cmd.equipmentRules,
+                hpFraction = cmd.hpFraction,
+                states = cmd.states,
+                requirementNode = reqFirst or nextId,
+                committedNode = comFirst or nextId,
+                declinedNode = decFirst or nextId,
+                cancelledNode = canFirst or nextId,
+                next = nextId,
+            }
+        elseif id == "RESUME_RECRUIT" then
+            local resume = ctx.recruitResume
+            if not resume then
+                error("RESUME_RECRUIT must be nested inside OPEN_RECRUIT.onRequirement", 0)
+            end
+            if resume.requirementType ~= "challenge" then
+                error("RESUME_RECRUIT requires an OPEN_RECRUIT challenge requirement", 0)
+            end
+            -- Re-enter through the existing OPEN_RECRUIT host action instead
+            -- of relying on the host's already-consumed transient continuation.
+            -- The internal `resume` requirement marks the persistent node's
+            -- challenge satisfied without creating or rerolling a candidate.
+            nodes[nodeId] = {
+                type = "ACTION",
+                action = "OPEN_RECRUIT",
+                actorId = resume.actorId,
+                level = resume.level,
+                sourceKey = resume.sourceKey,
+                suggestedSlot = resume.suggestedSlot,
+                requirement = { type = "resume" },
+                equipmentRules = resume.equipmentRules,
+                hpFraction = resume.hpFraction,
+                states = resume.states,
+                requirementNode = nextId,
+                committedNode = resume.committedNode,
+                declinedNode = resume.declinedNode,
+                cancelledNode = resume.cancelledNode,
                 next = nextId,
             }
         elseif id == "CALL_COMMON_EVENT" then
@@ -1075,32 +1148,51 @@ handlers.EQUIP_ITEM = function(cmd, ctx)
     ctx.session:addItem(item.id, -1)
 end
 
-handlers.RECRUIT_ACTOR = function(cmd, ctx)
+handlers.RESUME_RECRUIT = function(cmd, ctx)
     local session = ctx.session
     if not session then return end
-    local actorId = cmd.actorId
-    local level = cmd.level
-    if not actorId then return end
-
-    local preferredSlot = cmd.slot or cmd.preferredSlot
-    if preferredSlot ~= nil and (type(preferredSlot) ~= "number" or preferredSlot < 1 or preferredSlot > config.MAX_PARTY_SIZE) then
-        preferredSlot = nil
-    end
-    local battler, slotType = session:recruitActor(actorId, level, preferredSlot)
-    if battler then
-        if cmd.name and cmd.name ~= "" then battler.name = tostring(cmd.name) end
-        local msg
-        if slotType == "party" then
-            msg = session.loader.formatTerm("recruit.recruited", "{0} recruited to party!", battler.name)
-        else
-            msg = session.loader.formatTerm("recruit.reserve", "{0} sent to reserve roster!", battler.name)
+    local sourceKey = (ctx.v and ctx.v.sourceKey) or (ctx.pendingRecruitResume and ctx.pendingRecruitResume.sourceKey)
+    if sourceKey and session.recruitNodes and session.recruitNodes[sourceKey] then
+        local node = session.recruitNodes[sourceKey]
+        if cmd.result == "requirement_satisfied" or cmd.result == nil then
+            node.requirementSatisfied = true
         end
-        table.insert(ctx.events, { type = "text", text = msg })
-    else
-        table.insert(ctx.events, { type = "text", text = "Your party and reserve are full!" })
     end
 end
-handlers.RECRUIT = handlers.RECRUIT_ACTOR
+
+handlers.RECRUIT = function(cmd, ctx)
+    local actorId = cmd.actorId or (ctx.event and ctx.event.actorId)
+    if not actorId and ctx.session and ctx.session.currentMapData and ctx.session.currentMapData.recruits then
+        local recruits = ctx.session.currentMapData.recruits
+        if #recruits > 0 then
+            actorId = recruits[math.random(#recruits)]
+        end
+    end
+    actorId = actorId or 1
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+    local actorData = loader and loader.getActor(actorId)
+    if actorData and actorData.recruitEvent then
+        interpreter.run(actorData.recruitEvent, ctx)
+    end
+end
+
+handlers.OPEN_RECRUIT = function(cmd, ctx)
+    local session = ctx.session
+    if not session then return end
+    local recruitment = require("engine.recruitment")
+    local loader = ctx.loader or session.loader
+    local sourceKey = cmd.sourceKey or "test:open_recruit"
+    local node = recruitment.getOrCreateRecruitNode(session, loader, sourceKey, cmd.actorId, cmd.level, {
+        requirement = cmd.requirement,
+        equipmentRules = cmd.equipmentRules,
+        hpFraction = cmd.hpFraction,
+        states = cmd.states,
+        suggestedSlot = cmd.suggestedSlot or cmd.slot,
+    })
+    if not node.completed then
+        recruitment.commitRecruitNode(session, loader, sourceKey)
+    end
+end
 
 handlers.ERASE_EVENT = function(cmd, ctx)
     local session = ctx.session

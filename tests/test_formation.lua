@@ -73,17 +73,17 @@ assert(sess.party[2] == wolf or sess.party[4] == wolf, "recruited to first empty
 
 print("[PASS] Recruitment preferred slot & fallback")
 
--- 5. RECRUIT_ACTOR Interpreter Command with slot parameter
+-- 5. OPEN_RECRUIT Interpreter Command with suggestedSlot parameter
 local interpSess = session.GameSession.new(loader)
 interpSess:initializeStartingParty() -- Saban in slot 1
 local interpCtx = { session = interpSess, events = {} }
 interpreter.runImmediate({
-    { cmd = "RECRUIT_ACTOR", actorId = 1, level = 1, slot = 3 }
+    { cmd = "OPEN_RECRUIT", actorId = 1, level = 1, suggestedSlot = 3 }
 }, interpCtx)
 
-assert(interpSess.party[3] ~= nil and interpSess.party[3].id == 1, "RECRUIT_ACTOR cmd placed Pixie directly into slot 3")
+assert(interpSess.party[3] ~= nil and interpSess.party[3].actorData.id == 1, "OPEN_RECRUIT cmd placed Pixie directly into slot 3")
 assert(interpSess.party[2] == nil, "Slot 2 remains empty")
-print("[PASS] Interpreter RECRUIT_ACTOR cmd.slot parameter wiring")
+print("[PASS] Interpreter OPEN_RECRUIT cmd.suggestedSlot parameter wiring")
 
 -- 6. Saban (Slot 1), Slot 2 Empty, Pixie (Slot 3) Sparse Formation End-to-End
 local sparseSess = session.GameSession.new(loader)

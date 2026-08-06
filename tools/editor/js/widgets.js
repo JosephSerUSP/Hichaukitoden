@@ -1930,7 +1930,7 @@
                                 { cmd: 'TEXT', text: 'A wandering ' + (item.name || 'creature') + ' offers to join!' },
                                 { cmd: 'CHOICE', options: [
                                     { label: 'Recruit ' + (item.name || 'creature'), commands: [
-                                        { cmd: 'RECRUIT_ACTOR', actorId: item.id },
+                                        { cmd: 'OPEN_RECRUIT', actorId: item.id },
                                         { cmd: 'ERASE_EVENT' }
                                     ] },
                                     { label: 'Decline', commands: [] }

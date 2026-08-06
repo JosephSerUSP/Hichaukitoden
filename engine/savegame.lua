@@ -46,6 +46,7 @@ local function serializeBattler(b)
         -- creature's individuality, and the accumulated record is its history.
         -- Saving only the level and re-deriving would let a reload reroll a
         -- level-up, which the design forbids outright.
+        instanceId = b.instanceId,
         growthSeed = b.growthSeed,
         growth = b.growth,
         -- Per-instance identity that survives every change of form: where the
@@ -76,7 +77,7 @@ local function deserializeBattler(data, loader)
     local session = require("engine.session")
     local actorData = loader.getActor(data.id)
     if not actorData then return nil end
-    local b = session.Battler.new(actorData, data.level)
+    local b = session.Battler.new(actorData, data.level, data.growthSeed, data.instanceId)
     b.name = data.name or b.name
     b.exp = data.exp or 0
     b.hp = data.hp or b.hp
@@ -183,6 +184,17 @@ function savegame.serialize(sessionObj, loader, sceneName)
             party[i] = false
         end
     end
+    local recruitNodes = {}
+    for k, node in pairs(sessionObj.recruitNodes or {}) do
+        recruitNodes[tostring(k)] = {
+            completed = node.completed,
+            recruitedInstanceId = node.recruitedInstanceId,
+            requirementSatisfied = node.requirementSatisfied,
+            requirement = node.requirement,
+            suggestedSlot = node.suggestedSlot,
+            candidate = serializeBattler(node.candidate),
+        }
+    end
     return {
         version = 2,
         savedAt = os.time(),
@@ -200,6 +212,10 @@ function savegame.serialize(sessionObj, loader, sceneName)
         mp = sessionObj.mp,
         maxMp = sessionObj.maxMp,
         expBank = sessionObj.expBank,
+        nextCreatureInstanceId = sessionObj.nextCreatureInstanceId or 1,
+        firstRecruitInstanceId = sessionObj.firstRecruitInstanceId,
+        firstRecruitOriginalActorId = sessionObj.firstRecruitOriginalActorId,
+        recruitNodes = recruitNodes,
         -- The graveyard outlives every creature in it, so it must persist.
         memorial = sessionObj.memorial,
         autoRedirect = sessionObj.autoRedirect,
@@ -236,6 +252,9 @@ function savegame.deserialize(data, loader)
     sess.mp = data.mp or sess.mp
     sess.maxMp = data.maxMp or sess.maxMp
     sess.expBank = data.expBank or 0
+    sess.nextCreatureInstanceId = data.nextCreatureInstanceId or 1
+    sess.firstRecruitInstanceId = data.firstRecruitInstanceId
+    sess.firstRecruitOriginalActorId = data.firstRecruitOriginalActorId
     sess.memorial = data.memorial or {}
     if data.autoRedirect ~= nil then sess.autoRedirect = data.autoRedirect end
 
@@ -273,6 +292,40 @@ function savegame.deserialize(data, loader)
     for k, bdata in pairs(data.storage or {}) do
         local key = tonumber(k) or k
         sess.storage[key] = deserializeBattler(bdata, loader)
+    end
+
+    sess.recruitNodes = {}
+    for k, nData in pairs(data.recruitNodes or {}) do
+        sess.recruitNodes[k] = {
+            completed = nData.completed,
+            recruitedInstanceId = nData.recruitedInstanceId,
+            requirementSatisfied = nData.requirementSatisfied,
+            requirement = nData.requirement,
+            suggestedSlot = nData.suggestedSlot,
+            candidate = deserializeBattler(nData.candidate, loader),
+        }
+    end
+
+    -- Validate nextCreatureInstanceId strictly exceeds all existing instance IDs
+    local maxInstanceNum = 0
+    local function checkBattlerInst(b)
+        if b and b.instanceId then
+            local num = tonumber(tostring(b.instanceId):match("creature:(%d+)"))
+            if num and num > maxInstanceNum then maxInstanceNum = num end
+        end
+    end
+    for _, b in pairs(sess.party) do checkBattlerInst(b) end
+    for _, b in pairs(sess.reserve) do checkBattlerInst(b) end
+    for _, b in pairs(sess.storage) do checkBattlerInst(b) end
+    for _, n in pairs(sess.recruitNodes) do
+        checkBattlerInst(n.candidate)
+        if n.recruitedInstanceId then
+            local num = tonumber(tostring(n.recruitedInstanceId):match("creature:(%d+)"))
+            if num and num > maxInstanceNum then maxInstanceNum = num end
+        end
+    end
+    if maxInstanceNum >= sess.nextCreatureInstanceId then
+        sess.nextCreatureInstanceId = maxInstanceNum + 1
     end
 
     restoreMap(sess, data.map, loader)
