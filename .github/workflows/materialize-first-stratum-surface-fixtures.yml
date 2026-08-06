@@ -1,3 +1,4 @@
+# Triggered after workflow registration so the materialization runs on main.
 name: Materialize first-stratum surface fixtures
 
 on:
