@@ -2085,13 +2085,56 @@ elseif paramDef.type == "script" then
                             check(loader.getState(sId) ~= nil, ownerDesc .. " OPEN_RECRUIT state #" .. si .. " references missing state '" .. tostring(sId) .. "'")
                         end
                     end
-                    if cmd.requirement and type(cmd.requirement) == "table" then
+                    if cmd.requirement ~= nil then
                         local req = cmd.requirement
-                        if req.type == "item" and req.itemRequired then
-                            check(loader.getItem(req.itemRequired) ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing item '" .. tostring(req.itemRequired) .. "'")
-                        elseif req.type == "challenge" and req.troop then
-                            check(loader.troops and loader.troops[req.troop] ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing troop '" .. tostring(req.troop) .. "'")
+                        check(type(req) == "table", ownerDesc .. " OPEN_RECRUIT requirement must be an object")
+                        if type(req) == "table" then
+                            local validRequirementTypes = { free=true, item=true, gold=true, challenge=true }
+                            check(validRequirementTypes[req.type or "free"] == true,
+                                ownerDesc .. " OPEN_RECRUIT requirement has unknown type '" .. tostring(req.type) .. "'")
+                            if req.type == "item" then
+                                check(req.itemRequired ~= nil, ownerDesc .. " OPEN_RECRUIT item requirement is missing itemRequired")
+                                if req.itemRequired ~= nil then
+                                    check(loader.getItem(req.itemRequired) ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing item '" .. tostring(req.itemRequired) .. "'")
+                                end
+                                check(req.amountRequired == nil and req.itemAmount == nil,
+                                    ownerDesc .. " OPEN_RECRUIT item requirement must use quantity field 'amount'")
+                                local amount = req.amount or 1
+                                check(type(amount) == "number" and amount >= 1 and amount == math.floor(amount),
+                                    ownerDesc .. " OPEN_RECRUIT item requirement amount must be a positive integer")
+                            elseif req.type == "gold" then
+                                check(type(req.goldCost) == "number" and req.goldCost >= 1
+                                        and req.goldCost == math.floor(req.goldCost),
+                                    ownerDesc .. " OPEN_RECRUIT goldCost must be a positive integer")
+                            elseif req.type == "challenge" and req.troop then
+                                check(loader.troops and loader.troops[req.troop] ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing troop '" .. tostring(req.troop) .. "'")
+                            end
                         end
+                    end
+
+                    local function containsResumeRecruit(cmds)
+                        for _, nested in ipairs(cmds or {}) do
+                            if nested.cmd == "RESUME_RECRUIT" then return true end
+                            for _, opt in ipairs(nested.options or {}) do
+                                if containsResumeRecruit(opt.commands) then return true end
+                            end
+                            for key, value in pairs(nested) do
+                                if key ~= "options" and type(value) == "table"
+                                    and type(value[1]) == "table" and value[1].cmd
+                                    and containsResumeRecruit(value) then
+                                    return true
+                                end
+                            end
+                        end
+                        return false
+                    end
+                    local hasResume = containsResumeRecruit(cmd.onRequirement)
+                    if cmd.requirement and cmd.requirement.type == "challenge" then
+                        check(type(cmd.onRequirement) == "table" and #cmd.onRequirement > 0,
+                            ownerDesc .. " OPEN_RECRUIT challenge requires onRequirement commands")
+                        check(hasResume, ownerDesc .. " OPEN_RECRUIT challenge onRequirement must reach RESUME_RECRUIT")
+                    else
+                        check(not hasResume, ownerDesc .. " RESUME_RECRUIT is only valid for a challenge requirement")
                     end
                 end
 

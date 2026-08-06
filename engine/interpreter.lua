@@ -80,6 +80,7 @@ local INTERACTIVE_COMPILE_IDS = {
     BATTLE = true, CALL_COMMON_EVENT = true,
     COMMENT = true, OPEN_SHOP = true, QUEST_OFFER = true, QUEST_COMPLETE = true,
     LABEL = true, JUMP_TO_LABEL = true, WAIT = true, OPEN_RECRUIT = true,
+    RESUME_RECRUIT = true,
 }
 
 -- Every id above must also have a branch in interpreter.compile below: an id
@@ -220,10 +221,30 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                 next = nextId,
             }
         elseif id == "OPEN_RECRUIT" then
-            local reqFirst = interpreter.compile(nodes, cmd.onRequirement, nodeId .. "_req", nextId, ctx)
+            -- RESUME_RECRUIT is only meaningful inside this command's
+            -- challenge branch. Compile the ordinary outcome branches first
+            -- with no inherited resume scope, then expose their destinations
+            -- while compiling onRequirement (including nested BATTLE outcomes).
+            local outerRecruitResume = ctx.recruitResume
+            ctx.recruitResume = nil
             local comFirst = interpreter.compile(nodes, cmd.onCommitted, nodeId .. "_commit", nextId, ctx)
             local decFirst = interpreter.compile(nodes, cmd.onDeclined, nodeId .. "_decline", nextId, ctx)
             local canFirst = interpreter.compile(nodes, cmd.onCancelled, nodeId .. "_cancel", nextId, ctx)
+            ctx.recruitResume = {
+                actorId = cmd.actorId,
+                level = cmd.level,
+                sourceKey = cmd.sourceKey,
+                suggestedSlot = cmd.suggestedSlot,
+                equipmentRules = cmd.equipmentRules,
+                hpFraction = cmd.hpFraction,
+                states = cmd.states,
+                requirementType = cmd.requirement and cmd.requirement.type,
+                committedNode = comFirst or nextId,
+                declinedNode = decFirst or nextId,
+                cancelledNode = canFirst or nextId,
+            }
+            local reqFirst = interpreter.compile(nodes, cmd.onRequirement, nodeId .. "_req", nextId, ctx)
+            ctx.recruitResume = outerRecruitResume
             nodes[nodeId] = {
                 type = "ACTION",
                 action = "OPEN_RECRUIT",
@@ -243,10 +264,32 @@ function interpreter.compile(nodes, commands, prefix, tailNodeId, ctx)
                 next = nextId,
             }
         elseif id == "RESUME_RECRUIT" then
+            local resume = ctx.recruitResume
+            if not resume then
+                error("RESUME_RECRUIT must be nested inside OPEN_RECRUIT.onRequirement", 0)
+            end
+            if resume.requirementType ~= "challenge" then
+                error("RESUME_RECRUIT requires an OPEN_RECRUIT challenge requirement", 0)
+            end
+            -- Re-enter through the existing OPEN_RECRUIT host action instead
+            -- of relying on the host's already-consumed transient continuation.
+            -- The internal `resume` requirement marks the persistent node's
+            -- challenge satisfied without creating or rerolling a candidate.
             nodes[nodeId] = {
                 type = "ACTION",
-                action = "RESUME_RECRUIT",
-                result = cmd.result or "requirement_satisfied",
+                action = "OPEN_RECRUIT",
+                actorId = resume.actorId,
+                level = resume.level,
+                sourceKey = resume.sourceKey,
+                suggestedSlot = resume.suggestedSlot,
+                requirement = { type = "resume" },
+                equipmentRules = resume.equipmentRules,
+                hpFraction = resume.hpFraction,
+                states = resume.states,
+                requirementNode = nextId,
+                committedNode = resume.committedNode,
+                declinedNode = resume.declinedNode,
+                cancelledNode = resume.cancelledNode,
                 next = nextId,
             }
         elseif id == "CALL_COMMON_EVENT" then

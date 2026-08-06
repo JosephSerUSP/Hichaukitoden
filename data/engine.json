@@ -2352,8 +2352,8 @@
         "map",
         "common"
       ],
-      "interactive": false,
-      "description": "Resumes recruitment flow after a challenge requirement."
+      "interactive": true,
+      "description": "Reopens the same persistent recruitment candidate after a challenge requirement succeeds. Valid only inside OPEN_RECRUIT onRequirement commands."
     },
     {
       "id": "TRANSFORM_ACTOR",

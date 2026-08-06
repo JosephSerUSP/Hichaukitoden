@@ -11,6 +11,64 @@ local formation = require("engine.formation")
 
 local recruitment = {}
 
+local VALID_REQUIREMENT_TYPES = {
+    free = true, item = true, gold = true, challenge = true,
+    -- Internal compile-time continuation marker. It is never valid on a new
+    -- recruit node or in authored data.
+    resume = true,
+}
+
+local function positiveInteger(value, description)
+    if type(value) ~= "number" or value < 1 or value ~= math.floor(value) then
+        error(description .. " must be a positive integer", 0)
+    end
+    return value
+end
+
+local function validateRequirement(requirement, allowResume)
+    if requirement == nil then return { type = "free" } end
+    if type(requirement) ~= "table" then
+        error("OPEN_RECRUIT requirement must be an object", 0)
+    end
+
+    local kind = requirement.type or "free"
+    if not VALID_REQUIREMENT_TYPES[kind] then
+        error("OPEN_RECRUIT requirement has unknown type '" .. tostring(kind) .. "'", 0)
+    end
+    if kind == "resume" then
+        if not allowResume then
+            error("OPEN_RECRUIT internal resume requirement cannot create a recruit node", 0)
+        end
+        return requirement
+    end
+
+    if kind == "item" then
+        if requirement.itemRequired == nil then
+            error("OPEN_RECRUIT item requirement is missing itemRequired", 0)
+        end
+        if requirement.amountRequired ~= nil or requirement.itemAmount ~= nil then
+            error("OPEN_RECRUIT item requirement uses obsolete quantity field; use 'amount'", 0)
+        end
+        positiveInteger(requirement.amount or 1, "OPEN_RECRUIT item requirement amount")
+    elseif kind == "gold" then
+        positiveInteger(requirement.goldCost, "OPEN_RECRUIT gold requirement goldCost")
+    end
+
+    return requirement
+end
+
+local function requirementAmount(requirement)
+    return positiveInteger((requirement and requirement.amount) or 1,
+        "OPEN_RECRUIT item requirement amount")
+end
+
+local function containsBattler(roster, battler)
+    for _, member in pairs(roster or {}) do
+        if member == battler then return true end
+    end
+    return false
+end
+
 -- ---------------------------------------------------------------------------
 -- Equipment Resolution
 -- ---------------------------------------------------------------------------
@@ -86,9 +144,29 @@ function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, actorId,
     end
 
     session.recruitNodes = session.recruitNodes or {}
+    options = options or {}
+    local requestedRequirement = validateRequirement(options.requirement, true)
 
-    if session.recruitNodes[sourceKey] then
-        return session.recruitNodes[sourceKey]
+    local existing = session.recruitNodes[sourceKey]
+    if existing then
+        if requestedRequirement.type == "resume" then
+            if not existing.requirement or existing.requirement.type ~= "challenge" then
+                error("RESUME_RECRUIT source '" .. tostring(sourceKey)
+                    .. "' does not refer to a challenge recruitment", 0)
+            end
+            existing.requirementSatisfied = true
+        elseif options.requirement ~= nil
+            and existing.requirement
+            and requestedRequirement.type ~= existing.requirement.type then
+            error("OPEN_RECRUIT source '" .. tostring(sourceKey)
+                .. "' attempted to redefine its persistent requirement", 0)
+        end
+        return existing
+    end
+
+    if requestedRequirement.type == "resume" then
+        error("RESUME_RECRUIT source '" .. tostring(sourceKey)
+            .. "' has no persistent recruit node", 0)
     end
 
     local actorData = loader.getActor(actorId)
@@ -96,7 +174,6 @@ function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, actorId,
         error("Actor " .. tostring(actorId) .. " not found for recruitment")
     end
 
-    options = options or {}
     level = level or options.level or actorData.level or 1
 
     -- Create persistent battler with monotonically allocated instanceId
@@ -127,7 +204,7 @@ function recruitment.getOrCreateRecruitNode(session, loader, sourceKey, actorId,
     -- Equipment spawning
     battler.equipment = recruitment.resolveCandidateEquipment(actorData, options.equipmentRules, battler.growthSeed)
 
-    local requirement = options.requirement or { type = "free" }
+    local requirement = requestedRequirement
 
     local node = {
         candidate = battler,
@@ -198,7 +275,7 @@ function recruitment.buildCommitPlan(session, node, choice)
             plan.costs.gold = req.goldCost
         elseif req.type == "item" and req.itemRequired then
             plan.costs.item = req.itemRequired
-            plan.costs.itemAmount = req.itemAmount or 1
+            plan.costs.itemAmount = requirementAmount(req)
         end
     end
 
@@ -225,54 +302,97 @@ function recruitment.validateCommitPlan(session, plan)
     if not node.candidate then
         return false, "No candidate creature"
     end
+    if not node.requirementSatisfied then
+        return false, "Recruitment requirement has not been satisfied"
+    end
+    if containsBattler(session.party, node.candidate)
+        or containsBattler(session.reserve, node.candidate)
+        or containsBattler(session.storage, node.candidate) then
+        return false, "Candidate is already present in a roster"
+    end
 
-    -- 1. Validate costs
-    if plan.costs.gold and (session.gold or 0) < plan.costs.gold then
-        return false, "Insufficient gold (" .. tostring(session.gold) .. " / " .. tostring(plan.costs.gold) .. ")"
+    -- Costs are rechecked at the final commit. Requirement/profile screens
+    -- never consume resources, so every validation failure remains lossless.
+    if plan.costs.gold then
+        if type(plan.costs.gold) ~= "number" or plan.costs.gold < 1
+            or plan.costs.gold ~= math.floor(plan.costs.gold) then
+            return false, "Invalid gold recruitment cost"
+        end
+        if (session.gold or 0) < plan.costs.gold then
+            return false, "Insufficient gold (" .. tostring(session.gold)
+                .. " / " .. tostring(plan.costs.gold) .. ")"
+        end
     end
     if plan.costs.item then
-        if not session:hasItem(plan.costs.item, plan.costs.itemAmount or 1) then
+        local amount = plan.costs.itemAmount or 1
+        if type(amount) ~= "number" or amount < 1 or amount ~= math.floor(amount) then
+            return false, "Invalid item recruitment cost"
+        end
+        if not session:hasItem(plan.costs.item, amount) then
             return false, "Missing required item"
         end
     end
 
-    -- 2. Validate destination slot
-    if plan.isReserve then
-        if plan.slot < 1 or plan.slot > config.MAX_RESERVE_SIZE then
-            return false, "Invalid reserve slot"
-        end
-    else
-        if plan.slot < 1 or plan.slot > config.MAX_PARTY_SIZE then
-            return false, "Invalid party slot"
-        end
+    local limit = plan.isReserve and config.MAX_RESERVE_SIZE or config.MAX_PARTY_SIZE
+    if type(plan.slot) ~= "number" or plan.slot ~= math.floor(plan.slot)
+        or plan.slot < 1 or plan.slot > limit then
+        return false, plan.isReserve and "Invalid reserve slot" or "Invalid party slot"
     end
 
-    -- 3. Validate dismissal to town storage if requested
-    if plan.dismissIndex then
-        local storageSlot = recruitment.findEmptyStorageSlot(session)
-        if not storageSlot then
-            return false, "Town storage is full!"
-        end
-        plan.storageSlot = storageSlot
+    local destination = plan.isReserve and session.reserve or session.party
+    local occupant = destination[plan.slot]
+    local hasSubstitution = plan.substituteSlot ~= nil
+    local hasDismissal = plan.dismissIndex ~= nil
+
+    if plan.isReserve and hasSubstitution then
+        return false, "Reserve recruitment cannot substitute into reserve"
+    end
+    if hasSubstitution and hasDismissal then
+        return false, "Recruitment plan cannot both substitute and dismiss"
     end
 
-    -- 4. Active party invariant check (resulting active party must have >= 1 member)
-    local simPartyCount = 0
-    for i = 1, config.MAX_PARTY_SIZE do
-        if i == plan.slot and not plan.isReserve then
-            simPartyCount = simPartyCount + 1 -- candidate becomes active
-        elseif session.party[i] then
-            if plan.dismissIndex and not plan.dismissIsReserve and plan.dismissIndex == i then
-                -- creature dismissed to storage
-            elseif plan.substituteSlot and not plan.isReserve and plan.slot == i then
-                -- creature displaced
-            else
-                simPartyCount = simPartyCount + 1
+    if occupant then
+        if not hasSubstitution and not hasDismissal then
+            return false, "Destination slot is occupied"
+        end
+        if hasSubstitution then
+            if plan.isReserve then
+                return false, "Reserve recruitment cannot substitute"
             end
+            if type(plan.substituteSlot) ~= "number"
+                or plan.substituteSlot ~= math.floor(plan.substituteSlot)
+                or plan.substituteSlot < 1
+                or plan.substituteSlot > config.MAX_RESERVE_SIZE then
+                return false, "Invalid substitution reserve slot"
+            end
+            if session.reserve[plan.substituteSlot] then
+                return false, "Substitution reserve slot is occupied"
+            end
+        else
+            if plan.dismissIndex ~= plan.slot
+                or (plan.dismissIsReserve == true) ~= (plan.isReserve == true) then
+                return false, "Dismissal must target the occupied destination slot"
+            end
+            local storageSlot = recruitment.findEmptyStorageSlot(session)
+            if not storageSlot then
+                return false, "Town storage is full!"
+            end
+            plan.storageSlot = storageSlot
         end
+    elseif hasSubstitution or hasDismissal then
+        return false, "Recruitment plan moves a creature from an empty destination"
     end
 
-    if simPartyCount < 1 then
+    -- A reserve placement cannot change the active count. An active placement
+    -- always inserts the candidate, including when it replaces the last member.
+    local activeCount = 0
+    for i = 1, config.MAX_PARTY_SIZE do
+        if session.party[i] then activeCount = activeCount + 1 end
+    end
+    if not plan.isReserve and not session.party[plan.slot] then
+        activeCount = activeCount + 1
+    end
+    if activeCount < 1 then
         return false, "Active party cannot be left empty!"
     end
 
@@ -285,8 +405,22 @@ function recruitment.applyCommitPlan(session, plan)
 
     local node = plan.node
     local candidate = node.candidate
+    local destination = plan.isReserve and session.reserve or session.party
 
-    -- 1. Deduct costs
+    -- Complete every roster movement before charging. All possible placement
+    -- failures were checked above, so a rejected or malformed plan loses no
+    -- gold or items and cannot overwrite another creature.
+    if plan.dismissIndex then
+        local dismissed = destination[plan.dismissIndex]
+        session.storage[plan.storageSlot] = dismissed
+        destination[plan.dismissIndex] = nil
+    elseif plan.substituteSlot then
+        session.reserve[plan.substituteSlot] = session.party[plan.slot]
+        session.party[plan.slot] = nil
+    end
+
+    destination[plan.slot] = candidate
+
     if plan.costs.gold then
         session.gold = session.gold - plan.costs.gold
     end
@@ -294,36 +428,11 @@ function recruitment.applyCommitPlan(session, plan)
         session:addItem(plan.costs.item, -(plan.costs.itemAmount or 1))
     end
 
-    -- 2. Handle dismissal of existing expedition creature to town storage if requested
-    if plan.dismissIndex and plan.storageSlot then
-        local roster = plan.dismissIsReserve and session.reserve or session.party
-        local dismissedBattler = roster[plan.dismissIndex]
-        if dismissedBattler then
-            session.storage[plan.storageSlot] = dismissedBattler
-            roster[plan.dismissIndex] = nil
-        end
-    end
-
-    -- 3. Handle active/reserve substitution if candidate displaces an active creature into reserve
-    if not plan.isReserve and plan.substituteSlot and session.party[plan.slot] then
-        local displaced = session.party[plan.slot]
-        session.reserve[plan.substituteSlot] = displaced
-        session.party[plan.slot] = nil
-    end
-
-    -- 4. Insert candidate into chosen destination slot
-    if plan.isReserve then
-        session.reserve[plan.slot] = candidate
-    else
-        session.party[plan.slot] = candidate
-    end
-
-    -- 5. Mark node completed and relinquish candidate ownership on node
     node.completed = true
     node.recruitedInstanceId = candidate.instanceId
     node.candidate = nil
 
-    -- 6. First-recruit bookkeeping
+    session.flags = session.flags or {}
     if not session.flags.first_recruit_complete then
         session.flags.first_recruit_complete = true
         session.firstRecruitInstanceId = candidate.instanceId
@@ -434,14 +543,17 @@ function recruitment.onSelectRecruitScene(ctx)
         if not node.requirementSatisfied then
             local req = node.requirement
             if req.type == "item" then
-                if session:hasItem(req.itemRequired, req.amountRequired or 1) then
-                    session:addItem(req.itemRequired, -(req.amountRequired or 1))
+                local amount = requirementAmount(req)
+                if session:hasItem(req.itemRequired, amount) then
+                    -- Affordability is only acknowledged here. The canonical
+                    -- commit transaction consumes the item exactly once after
+                    -- the destination has fully validated.
                     node.requirementSatisfied = true
                     v.mode = 2
                 else
                     local itemDef = loader.getItem(req.itemRequired)
                     local itemName = (itemDef and itemDef.name) or req.itemRequired
-                    v.errorText = "Missing item: " .. itemName .. " x" .. tostring(req.amountRequired or 1)
+                    v.errorText = "Missing item: " .. itemName .. " x" .. tostring(amount)
                 end
             elseif req.type == "gold" then
                 if (session.gold or 0) >= (req.goldCost or 0) then
