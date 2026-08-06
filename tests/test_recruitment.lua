@@ -60,7 +60,7 @@ for _, actorData in ipairs(realLoader.actors) do
         local found = false
         local function scan(cmds)
             for _, c in ipairs(cmds or {}) do
-                if c.cmd == "RECRUIT_ACTOR" then found = true end
+                if c.cmd == "OPEN_RECRUIT" or c.cmd == "RECRUIT" then found = true end
                 for _, opt in ipairs(c.options or {}) do scan(opt.commands) end
                 scan(c.commands); scan(c.onVictory); scan(c.onDefeat)
                 scan(c["then"]); scan(c["else"]); scan(c.elseCommands)
@@ -68,7 +68,7 @@ for _, actorData in ipairs(realLoader.actors) do
         end
         scan(ev)
         assert(found, "actor " .. tostring(actorData.id)
-            .. " recruitEvent never reaches RECRUIT_ACTOR")
+            .. " recruitEvent never reaches OPEN_RECRUIT or RECRUIT")
 
         -- A challenge recruit fights the creature itself and continues on
         -- victory. Before BATTLE could carry a troop or resume, it fought the
@@ -159,18 +159,18 @@ assert(refused == nil and refusedReason == "Cannot dismiss the last active creat
     "Dismiss must never leave the active party empty")
 print("  [PASS] Dungeon dismissal transfers instances and protects the last active creature")
 
--- Test 3: Interpreter command handlers (RECRUIT_ACTOR, ERASE_EVENT, CHANGE_ITEM)
+-- Test 3: Interpreter command handlers (OPEN_RECRUIT, ERASE_EVENT, CHANGE_ITEM)
 sess.inventory[1] = 5
 local ctx = { session = sess, events = {} }
 
 interpreter.runImmediate({
     { cmd = "CHANGE_ITEM", item = 1, count = -2 },
-    { cmd = "RECRUIT_ACTOR", actorId = 4, level = 2 }
+    { cmd = "OPEN_RECRUIT", actorId = 4, level = 2 }
 }, ctx)
 
 assert(sess.inventory[1] == 3, "CHANGE_ITEM did not deduct items correctly")
-assert(sess.reserve[2] ~= nil and sess.reserve[2].id == 4, "RECRUIT_ACTOR did not add Angel to reserve")
-print("  [PASS] Interpreter commands CHANGE_ITEM and RECRUIT_ACTOR executed cleanly")
+assert(sess.reserve[2] ~= nil and sess.reserve[2].actorData.id == 4, "OPEN_RECRUIT did not add Angel to reserve")
+print("  [PASS] Interpreter commands CHANGE_ITEM and OPEN_RECRUIT executed cleanly")
 
 -- Test 4: ERASE_EVENT removes map event
 sess.currentMapData = {

@@ -27,6 +27,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 | `map` | map | world | map | 0 | 7 |
 | `options` | menu | windows | - | 3 | 5 |
 | `quest_log` | menu | windows | - | 3 | 4 |
+| `recruit` | menu | windows | - | 10 | 8 |
 | `reserve` | menu | windows | - | 4 | 8 |
 | `ritual` | menu | windows | - | 14 | 8 |
 | `save_menu` | menu | windows | - | 3 | 5 |
@@ -36,7 +37,7 @@ Every scene must declare a draw mode (SPEC Sec.1.2); G1 enforces it.
 
 ## Registry (data/engine.json)
 
-- commands: **89**
+- commands: **90**
 - effect types: **16**
 - trait codes: **41**
 - meta keys: **8** (tier, disciplines, intensityGrade, craftable, craftIngredient, dungeonOnly, detect, detectLevel)

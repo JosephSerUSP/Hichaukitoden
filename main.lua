@@ -120,6 +120,9 @@ local eventSkipLabel = nil
 -- the battle scene's outcome hook to resume the event at its onVictory or
 -- onDefeat branch. Nil for a battle the player simply walked into.
 local pendingBattleResume
+-- Set when OPEN_RECRUIT pushes the recruit scene; consumed when the scene
+-- pops to resume the event at the correct branch (committed/declined/cancelled/requirement).
+local pendingRecruitResume
 
 -- Menu State
 
@@ -1131,6 +1134,55 @@ handleDialogueAction = function()
                 activeWalker:goToNode(targetNode)
                 handleDialogueAction()
             end
+        elseif node.action == "OPEN_RECRUIT" then
+            local recruitment = require("engine.recruitment")
+            local activeEv = activeSession and activeSession.activeEvent
+            local sourceKey = node.sourceKey
+            if not sourceKey or sourceKey == "" then
+                if activeSession and activeSession.dungeonFloor and activeEv and activeEv.id then
+                    sourceKey = "map:" .. tostring(activeSession.dungeonFloor) .. ":event:" .. tostring(activeEv.id)
+                else
+                    error("OPEN_RECRUIT missing stable sourceKey")
+                end
+            end
+
+            local recruitNode = recruitment.getOrCreateRecruitNode(activeSession, loader, sourceKey, node.actorId, node.level, {
+                requirement = node.requirement,
+                equipmentRules = node.equipmentRules,
+                hpFraction = node.hpFraction,
+                states = node.states,
+                suggestedSlot = node.suggestedSlot,
+            })
+
+            if recruitNode.completed then
+                activeWalker:goToNode(node.committedNode or node.next)
+                handleDialogueAction()
+            else
+                pendingRecruitResume = {
+                    sourceKey = sourceKey,
+                    committedNode = node.committedNode or node.next,
+                    declinedNode = node.declinedNode or node.next,
+                    cancelledNode = node.cancelledNode or node.next,
+                    requirementNode = node.requirementNode or node.next,
+                }
+                scene_host.push("recruit", { session = activeSession, loader = loader }, {
+                    sourceKey = sourceKey,
+                    suggestedSlot = node.suggestedSlot,
+                })
+            end
+        elseif node.action == "RESUME_RECRUIT" then
+            local sourceKey = (pendingRecruitResume and pendingRecruitResume.sourceKey)
+            if sourceKey and activeSession.recruitNodes and activeSession.recruitNodes[sourceKey] then
+                local recruitNode = activeSession.recruitNodes[sourceKey]
+                recruitNode.requirementSatisfied = true
+                scene_host.push("recruit", { session = activeSession, loader = loader }, {
+                    sourceKey = sourceKey,
+                    mode = 2,
+                })
+            else
+                activeWalker:advance()
+                handleDialogueAction()
+            end
         elseif node.action == "START_BATTLE" then
             -- Where to pick the event back up once the fight resolves. Held
             -- here rather than in the battle scene because the walker is the
@@ -1187,7 +1239,7 @@ local function runEventCommands(eventTarget, commands)
 
     -- If this is a RECRUIT event, compile the actor's recruitment script
     local cType = commands and #commands == 1 and (commands[1].type or commands[1].cmd)
-    if cType and (cType == "RECRUIT" or cType == "recruit" or cType == "RECRUIT_ACTOR") then
+    if cType and cType == "RECRUIT" then
         local actorId = (activeEv and activeEv.actorId) or (commands[1] and commands[1].actorId)
         if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
             local recruits = activeSession.currentMapData.recruits
@@ -1288,6 +1340,31 @@ require("engine.scenes.battle").onResolved = function(outcome)
     pendingBattleResume = nil
     if not resume or not activeWalker then return end
     local target = (outcome == "victory") and resume.victoryNode or resume.defeatNode
+    if not target or not activeWalker.graph or not activeWalker.graph.nodes[target] then
+        return
+    end
+    activeWalker:goToNode(target)
+    handleDialogueAction()
+end
+
+-- Resume an event that opened a recruit scene. The outcome maps directly to
+-- the authored branch: committed (creature joined), declined (player backed
+-- out from the profile), cancelled (should not normally reach here but is
+-- the safety default), or requirement (need a challenge battle first).
+require("engine.recruitment").onResolved = function(outcome)
+    local resume = pendingRecruitResume
+    pendingRecruitResume = nil
+    if not resume or not activeWalker then return end
+    local target
+    if outcome == "commit" then
+        target = resume.committedNode
+    elseif outcome == "declined" then
+        target = resume.declinedNode
+    elseif outcome == "requirement" then
+        target = resume.requirementNode
+    else
+        target = resume.cancelledNode
+    end
     if not target or not activeWalker.graph or not activeWalker.graph.nodes[target] then
         return
     end

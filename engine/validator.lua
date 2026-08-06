@@ -2052,6 +2052,49 @@ elseif paramDef.type == "script" then
                     end
                 end
 
+                if id == "OPEN_RECRUIT" then
+                    if cmd.equipmentRules and type(cmd.equipmentRules) == "table" then
+                        local slotTypes = { [1] = "Weapon", [2] = "Armor", [3] = "Accessory" }
+                        for slot = 1, 3 do
+                            local rule = cmd.equipmentRules[slot]
+                            if rule then
+                                local expectedType = slotTypes[slot]
+                                local function checkEquipItem(itemId, slotDesc)
+                                    if itemId == nil then return end
+                                    local itemData = loader.getItem(itemId)
+                                    check(itemData ~= nil, ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " references missing item '" .. tostring(itemId) .. "'")
+                                    if itemData then
+                                        check(itemData.type == "equipment", ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " item '" .. tostring(itemId) .. "' is not type 'equipment'")
+                                        check(itemData.equipType == expectedType, ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " item '" .. tostring(itemId) .. "' equipType '" .. tostring(itemData.equipType) .. "' does not match slot " .. expectedType)
+                                    end
+                                end
+                                if rule.item ~= nil then
+                                    checkEquipItem(rule.item, "slot " .. slot)
+                                end
+                                if rule.choices and type(rule.choices) == "table" then
+                                    for ci, c in ipairs(rule.choices) do
+                                        checkEquipItem(c.item, "slot " .. slot .. " choice " .. ci)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if cmd.states and type(cmd.states) == "table" then
+                        for si, sDef in ipairs(cmd.states) do
+                            local sId = type(sDef) == "table" and sDef.id or sDef
+                            check(loader.getState(sId) ~= nil, ownerDesc .. " OPEN_RECRUIT state #" .. si .. " references missing state '" .. tostring(sId) .. "'")
+                        end
+                    end
+                    if cmd.requirement and type(cmd.requirement) == "table" then
+                        local req = cmd.requirement
+                        if req.type == "item" and req.itemRequired then
+                            check(loader.getItem(req.itemRequired) ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing item '" .. tostring(req.itemRequired) .. "'")
+                        elseif req.type == "challenge" and req.troop then
+                            check(loader.troops and loader.troops[req.troop] ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing troop '" .. tostring(req.troop) .. "'")
+                        end
+                    end
+                end
+
                 if id == "SET_MAP_PRESENTATION" then
                     if cmd.tileset ~= nil then
                         check(loader.getTileset(cmd.tileset) ~= nil,

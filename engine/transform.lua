@@ -95,7 +95,7 @@ function transform.into(session, battler, actorData, opts)
     opts = opts or {}
     local sessionMod = require("engine.session")
 
-    local newB = sessionMod.Battler.new(actorData, battler.level, battler.growthSeed)
+    local newB = sessionMod.Battler.new(actorData, battler.level, battler.growthSeed, battler.instanceId)
     newB.name = battler.name
     newB.exp = battler.exp
     newB.states = battler.states or {}
