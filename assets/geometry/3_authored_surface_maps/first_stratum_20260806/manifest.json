@@ -1,0 +1,373 @@
+{
+  "manifestKind": "authored_height_batch",
+  "manifestVersion": 1,
+  "batchId": "first_stratum_surface_fixture_20260806",
+  "source": "tools/asset-gen/build_surface_fixture_batch_20260806.py",
+  "method": "deterministic analytic fields, periodic Voronoi, distance-transform fixture masks",
+  "convention": "RGBA grayscale; 128 neutral; alpha is geometric influence",
+  "maps": [
+    {
+      "preset": "floor_flagstones_broad_irregular",
+      "surface": "floor",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.1,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/floor_flagstones_broad_irregular.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.42946,
+      "signedMax": 0.35206,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Broad irregular fitted flagstones; restrained joints and low-frequency slab variation."
+    },
+    {
+      "preset": "floor_slabs_varied_restrained",
+      "surface": "floor",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.1,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/floor_slabs_varied_restrained.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.48068,
+      "signedMax": 0.31306,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Large nonuniform slabs with restrained wear; avoids the failed small-cobble repetition."
+    },
+    {
+      "preset": "wall_broad_ashlar_courses",
+      "surface": "wall",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.08,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/wall_broad_ashlar_courses.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.77651,
+      "signedMax": 0.35023,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Broad masonry courses with resolvable mortar and no scene-like erosion language."
+    },
+    {
+      "preset": "wall_limewash_broad_undulation",
+      "surface": "wall",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.055,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/wall_limewash_broad_undulation.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.1551,
+      "signedMax": 0.09809,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Subtle limewash undulation and broad plaster loss, kept at material scale."
+    },
+    {
+      "preset": "ceiling_shallow_cross_ribs",
+      "surface": "ceiling",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.09,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/ceiling_shallow_cross_ribs.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.17344,
+      "signedMax": 0.30599,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Shallow broad crossing ribs over quiet ceiling bays."
+    },
+    {
+      "preset": "ceiling_wide_coffers",
+      "surface": "ceiling",
+      "role": "baseSurface",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.085,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/ceiling_wide_coffers.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "opaque base coverage",
+      "signedMin": -0.22477,
+      "signedMax": 0.2815,
+      "alphaCoverage": 1.0,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Two-by-two wide coffers with shallow recesses and broad rims."
+    },
+    {
+      "preset": "fixture_wall_votive_relief",
+      "surface": "wall",
+      "role": "surfaceFixture",
+      "heightOperation": "add",
+      "recommendedHeightScale": 0.055,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_votive_relief.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": 0.0,
+      "signedMax": 0.76,
+      "alphaCoverage": 0.14651,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Localized votive relief; transparent height alpha outside the carved footprint."
+    },
+    {
+      "preset": "fixture_wall_reliquary_niche",
+      "surface": "wall",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.14,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_reliquary_niche.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.82,
+      "signedMax": 0.09231,
+      "alphaCoverage": 0.17712,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Arched reliquary niche; alpha selects where base relief is replaced by the cavity."
+    },
+    {
+      "preset": "fixture_wall_breach_socket",
+      "surface": "wall",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.18,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_breach_socket.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.88,
+      "signedMax": 0.11627,
+      "alphaCoverage": 0.07336,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Irregular deep wall socket with broken rim; remains safely shallower than half a cell."
+    },
+    {
+      "preset": "fixture_wall_drain_runnel",
+      "surface": "wall",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.095,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_wall_drain_runnel.png",
+      "size": 512,
+      "tileAxes": "x",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.73,
+      "signedMax": 0.0,
+      "alphaCoverage": 0.06581,
+      "wrapError": {
+        "x": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0
+      },
+      "wrapOk": true,
+      "description": "Localized branching drain runnel cut into masonry."
+    },
+    {
+      "preset": "fixture_floor_shallow_puddle",
+      "surface": "floor",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.045,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_floor_shallow_puddle.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.48,
+      "signedMax": 0.01728,
+      "alphaCoverage": 0.17711,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Shallow irregular puddle basin with soft merge and a very low rim."
+    },
+    {
+      "preset": "fixture_floor_collapsed_socket",
+      "surface": "floor",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.11,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_floor_collapsed_socket.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.72,
+      "signedMax": 0.24319,
+      "alphaCoverage": 0.14209,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Localized collapsed floor socket with a few broad surviving slab shoulders."
+    },
+    {
+      "preset": "fixture_floor_bronze_rite_inlay",
+      "surface": "floor",
+      "role": "surfaceFixture",
+      "heightOperation": "add",
+      "recommendedHeightScale": 0.025,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_floor_bronze_rite_inlay.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": 0.0,
+      "signedMax": 0.44,
+      "alphaCoverage": 0.09589,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Thin ritual bronze inlay; geometry alpha follows only the metal lines."
+    },
+    {
+      "preset": "fixture_ceiling_root_fissure",
+      "surface": "ceiling",
+      "role": "surfaceFixture",
+      "heightOperation": "replace",
+      "recommendedHeightScale": 0.06,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_ceiling_root_fissure.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": -0.66092,
+      "signedMax": 0.0,
+      "alphaCoverage": 0.05186,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Localized branching ceiling fissure; transparent outside its crack network."
+    },
+    {
+      "preset": "fixture_ceiling_drip_boss",
+      "surface": "ceiling",
+      "role": "surfaceFixture",
+      "heightOperation": "add",
+      "recommendedHeightScale": 0.085,
+      "path": "assets/geometry/3_authored_surface_maps/first_stratum_20260806/height/fixture_ceiling_drip_boss.png",
+      "size": 512,
+      "tileAxes": "xy",
+      "neutral": 128,
+      "alphaSemantic": "geometric influence; 0 ignores base, 1 merges/replaces according to heightOperation",
+      "signedMin": 0.0,
+      "signedMax": 0.76307,
+      "alphaCoverage": 0.10458,
+      "wrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "alphaWrapError": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "wrapOk": true,
+      "description": "Clustered mineral drip boss with a soft transparent merge."
+    }
+  ]
+}
