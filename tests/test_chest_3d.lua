@@ -96,6 +96,55 @@ end)
 check(not okUpdate and string.find(tostring(errUpdate), "Simulated event failure"), "Focus update re-throws callback error loud")
 check(not world_focus.isActive(), "Focus state resets after callback error")
 
+
+-- 4b. Focus operation ownership, validation and cancellation.
+check(world_focus.hasPreset("low_prop"), "Known focus preset is discoverable")
+check(not world_focus.hasPreset("missing"), "Unknown focus preset is not discoverable")
+
+local badCallbackOk, badCallbackErr = pcall(function()
+    world_focus.begin("low_prop", { x = 1, y = 1 }, mockSession, "not a callback")
+end)
+check(not badCallbackOk and string.find(tostring(badCallbackErr), "callback must be"),
+    "Non-function focus callback fails loud")
+
+local badTargetOk, badTargetErr = pcall(function()
+    world_focus.begin("low_prop", { x = "1", y = 1 }, mockSession, nil)
+end)
+check(not badTargetOk and string.find(tostring(badTargetErr), "targetCoords"),
+    "Malformed focus coordinates fail loud")
+
+local firstOp
+local replacementOp
+firstOp = world_focus.begin("low_prop", { x = 1, y = 1 }, mockSession, function()
+    replacementOp = world_focus.begin("low_prop", { x = 2, y = 2 }, mockSession, nil)
+end)
+world_focus.update(0.3)
+check(replacementOp and replacementOp ~= firstOp,
+    "Callback-created focus receives a distinct operation token")
+check(world_focus.getOperationId() == replacementOp and world_focus.isActive(),
+    "Completed old focus does not release callback-created replacement")
+check(not world_focus.cancel(firstOp), "Stale operation cannot cancel current focus")
+check(world_focus.cancel(replacementOp) and not world_focus.isActive(),
+    "Current operation token cancels focus")
+
+local mapSession = { currentMapIndex = 0 }
+world_focus.begin("low_prop", { x = 1, y = 1 }, mapSession, nil)
+mapSession.currentMapIndex = 1
+world_focus.update(0.01)
+check(not world_focus.isActive(), "Map change cancels focus even from map index zero")
+
+local errorReplacement
+world_focus.begin("low_prop", { x = 1, y = 1 }, mockSession, function()
+    errorReplacement = world_focus.begin("low_prop", { x = 3, y = 3 }, mockSession, nil)
+    error("replacement owner failure", 0)
+end)
+local replacementErrorOk, replacementError = pcall(function() world_focus.update(0.3) end)
+check(not replacementErrorOk and string.find(tostring(replacementError), "replacement owner failure"),
+    "Reentrant callback error remains fail-loud")
+check(world_focus.getOperationId() == errorReplacement and world_focus.isActive(),
+    "Old callback error does not reset replacement focus")
+world_focus.cancel(errorReplacement)
+
 -- 5. Exact emptyCtx Assertion for CHANGE_ITEM random
 local emptyMapSession = {
     currentMapData = { id = "empty_map", treasures = {} },

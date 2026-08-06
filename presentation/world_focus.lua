@@ -28,17 +28,35 @@ local function smoothstep(t)
     return t * t * (3 - 2 * t)
 end
 
+function world_focus.hasPreset(presetKey)
+    return type(presetKey) == "string" and PRESETS[presetKey] ~= nil
+end
+
 function world_focus.getPreset(presetKey)
-    if not presetKey or not PRESETS[presetKey] then
+    if not world_focus.hasPreset(presetKey) then
         error("unknown focus preset: " .. tostring(presetKey), 0)
     end
-    return PRESETS[presetKey]
+    local preset = PRESETS[presetKey]
+    if type(preset.duration) ~= "number" or preset.duration <= 0 then
+        error("focus preset '" .. presetKey .. "' has invalid duration", 0)
+    end
+    return preset
 end
 
 function world_focus.begin(spec, targetCoords, session, onFocusedCallback)
     local presetKey = type(spec) == "table" and spec.kind or spec
     local preset = world_focus.getPreset(presetKey)
+    if onFocusedCallback ~= nil and type(onFocusedCallback) ~= "function" then
+        error("focus callback must be a function or nil", 0)
+    end
+    if targetCoords ~= nil and (type(targetCoords) ~= "table"
+        or type(targetCoords.x) ~= "number" or type(targetCoords.y) ~= "number") then
+        error("focus targetCoords must contain numeric x and y", 0)
+    end
 
+    -- Beginning a focus supersedes any prior operation. The monotonically
+    -- increasing token lets callbacks safely start a replacement operation
+    -- without the old update frame releasing or resetting the new one.
     currentOpId = currentOpId + 1
     state.opId = currentOpId
     state.phase = "focus_in"
@@ -63,6 +81,17 @@ function world_focus.reset()
     state.mapIndex = nil
     state.callback = nil
     state.opId = 0
+end
+
+function world_focus.cancel(opId)
+    if opId ~= nil and opId ~= state.opId then return false end
+    if state.phase == "idle" then return false end
+    world_focus.reset()
+    return true
+end
+
+function world_focus.getOperationId()
+    return state.opId ~= 0 and state.opId or nil
 end
 
 function world_focus.isActive()
@@ -109,7 +138,8 @@ function world_focus.update(dt)
     if state.phase == "idle" or not state.preset then return end
 
     -- Monotonic cancellation check: session or map changed
-    if state.session and state.mapIndex and state.session.currentMapIndex ~= state.mapIndex then
+    if state.session and state.mapIndex ~= nil
+        and state.session.currentMapIndex ~= state.mapIndex then
         world_focus.reset()
         return
     end
@@ -125,8 +155,15 @@ function world_focus.update(dt)
             if cb then
                 local ok, err = xpcall(cb, debug.traceback)
                 if not ok then
-                    world_focus.reset()
+                    -- Do not clobber a replacement focus that the callback
+                    -- deliberately started before raising. Ownership belongs
+                    -- to the operation token, not to whichever update frame
+                    -- happens to be unwinding.
+                    if state.opId == thisOpId then world_focus.reset() end
                     error(err, 0)
+                end
+                if state.opId ~= thisOpId then
+                    return
                 end
             end
         end
