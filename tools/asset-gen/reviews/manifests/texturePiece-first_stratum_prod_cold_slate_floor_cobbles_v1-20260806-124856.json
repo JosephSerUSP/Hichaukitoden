@@ -1,0 +1,190 @@
+{
+  "class": "texturePiece",
+  "name": "first_stratum_prod_cold_slate_floor_cobbles_v1",
+  "description": "Cold slate and mineral dread, floor material, defensive galleries, austere vaults and sound-dampened paving, cold, dense, desiccated and darkened by mineral bloom, cool slate, blue-grey limestone, near-black deposits and small ochre flecks, authored floor cobbles geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+      "seed": 260306,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_cobbles.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_prod_cold_slate_floor_cobbles_v1.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.002739,
+        "chromaOutlierRatio": 9.2e-05,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.141,
+        "y": 1.008,
+        "centre_x": 0.841,
+        "centre_y": 0.996
+      },
+      "candidateId": "prod_cold_slate_floor_cobbles_v1#v1",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/raw-1.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/variant-1.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_cobbles]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 6.5e-05,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.979,
+        "y": 0.858,
+        "centre_x": 1.015,
+        "centre_y": 0.951
+      },
+      "candidateId": "prod_cold_slate_floor_cobbles_v1#v2",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/raw-2.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/variant-2.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_cobbles]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.92,
+        "y": 0.916,
+        "centre_x": 0.955,
+        "centre_y": 0.857
+      },
+      "candidateId": "prod_cold_slate_floor_cobbles_v1#v3",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/raw-3.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_cold_slate_floor_cobbles_v1-20260806-124856/variant-3.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_cobbles]",
+      "contextSurface": "floor"
+    }
+  ],
+  "overnight": {
+    "jobId": "prod_cold_slate_floor_cobbles_v1",
+    "candidateIdBase": "prod_cold_slate_floor_cobbles_v1",
+    "surfaceType": "floor",
+    "assetClass": "texturePiece",
+    "geometryPreset": "floor_cobbles",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_cobbles.png",
+    "materialFamily": "cold_slate",
+    "materialFamilyLabel": "Cold slate and mineral dread",
+    "architecturalRole": "defensive galleries, austere vaults and sound-dampened paving",
+    "environmentalState": "cold, dense, desiccated and darkened by mineral bloom",
+    "paletteBias": "cool slate, blue-grey limestone, near-black deposits and small ochre flecks",
+    "promptFamilyId": "cold_slate",
+    "exactPositivePrompt": "Cold slate and mineral dread, floor material, defensive galleries, austere vaults and sound-dampened paving, cold, dense, desiccated and darkened by mineral bloom, cool slate, blue-grey limestone, near-black deposits and small ochre flecks, authored floor cobbles geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation, single seamless tileable material texture, flat head-on orthographic albedo map, uniform detail, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, detailed sharp painted source, masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
+    "exactNegativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "loras": [],
+    "sampler": "DPM++ 2M",
+    "steps": 26,
+    "cfg": 7.0,
+    "seed": 260306,
+    "depthWeight": 0.6,
+    "activeWrapAxes": "xy",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": "",
+      "tags": []
+    },
+    "updatedAt": "2026-08-06T12:53:40"
+  },
+  "overnightJob": {
+    "jobId": "prod_cold_slate_floor_cobbles_v1",
+    "name": "first_stratum_prod_cold_slate_floor_cobbles_v1",
+    "class": "texturePiece",
+    "surface": "floor",
+    "geometryPreset": "floor_cobbles",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_cobbles.png",
+    "materialFamily": "cold_slate",
+    "materialFamilyLabel": "Cold slate and mineral dread",
+    "architecturalRole": "defensive galleries, austere vaults and sound-dampened paving",
+    "environmentalState": "cold, dense, desiccated and darkened by mineral bloom",
+    "paletteBias": "cool slate, blue-grey limestone, near-black deposits and small ochre flecks",
+    "promptFamilyId": "cold_slate",
+    "description": "Cold slate and mineral dread, floor material, defensive galleries, austere vaults and sound-dampened paving, cold, dense, desiccated and darkened by mineral bloom, cool slate, blue-grey limestone, near-black deposits and small ochre flecks, authored floor cobbles geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+    "provider": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "variants": 3,
+    "steps": 26,
+    "cfg": 7.0,
+    "sampler": "DPM++ 2M",
+    "seed": 260306,
+    "depthWeight": 0.6,
+    "requestSize": "512x512",
+    "negativeExtra": "sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "variation": 1
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "class": "wallPiece",
+  "name": "first_stratum_prod_stressed_masonry_wall_rubble_v1",
+  "description": "Chipped and structurally stressed masonry, wall material, cracked courses, displaced blocks and failing supports, chipped, fractured and under structural stress but still legible, chalky limestone, cool slate chips, dry brown mortar, authored wall rubble geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+      "seed": 220221,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_rubble.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_prod_stressed_masonry_wall_rubble_v1.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000191,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.256,
+        "centre_x": 0.703
+      },
+      "candidateId": "prod_stressed_masonry_wall_rubble_v1#v1",
+      "rawImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/raw-1.png",
+      "processedImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/variant-1.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000641,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.956,
+        "centre_x": 0.836
+      },
+      "candidateId": "prod_stressed_masonry_wall_rubble_v1#v2",
+      "rawImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/raw-2.png",
+      "processedImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/variant-2.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.00016,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.893,
+        "centre_x": 0.682
+      },
+      "candidateId": "prod_stressed_masonry_wall_rubble_v1#v3",
+      "rawImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/raw-3.png",
+      "processedImagePath": "tools/asset-gen/out/wallPiece-first_stratum_prod_stressed_masonry_wall_rubble_v1-20260806-062640/variant-3.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_rubble]",
+      "contextSurface": "wall"
+    }
+  ],
+  "overnight": {
+    "jobId": "prod_stressed_masonry_wall_rubble_v1",
+    "candidateIdBase": "prod_stressed_masonry_wall_rubble_v1",
+    "surfaceType": "wall",
+    "assetClass": "wallPiece",
+    "geometryPreset": "wall_rubble",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/wall_rubble.png",
+    "materialFamily": "stressed_masonry",
+    "materialFamilyLabel": "Chipped and structurally stressed masonry",
+    "architecturalRole": "cracked courses, displaced blocks and failing supports",
+    "environmentalState": "chipped, fractured and under structural stress but still legible",
+    "paletteBias": "chalky limestone, cool slate chips, dry brown mortar",
+    "promptFamilyId": "stressed_masonry",
+    "exactPositivePrompt": "Chipped and structurally stressed masonry, wall material, cracked courses, displaced blocks and failing supports, chipped, fractured and under structural stress but still legible, chalky limestone, cool slate chips, dry brown mortar, authored wall rubble geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation, dungeon wall material, horizontal seamless material texture, flat head-on orthographic albedo map, uniform detail, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, detailed sharp painted source, masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
+    "exactNegativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "loras": [],
+    "sampler": "DPM++ 2M",
+    "steps": 26,
+    "cfg": 7.0,
+    "seed": 220221,
+    "depthWeight": 0.6,
+    "activeWrapAxes": "x",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": "",
+      "tags": []
+    },
+    "updatedAt": "2026-08-06T06:30:53"
+  },
+  "overnightJob": {
+    "jobId": "prod_stressed_masonry_wall_rubble_v1",
+    "name": "first_stratum_prod_stressed_masonry_wall_rubble_v1",
+    "class": "wallPiece",
+    "surface": "wall",
+    "geometryPreset": "wall_rubble",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/wall_rubble.png",
+    "materialFamily": "stressed_masonry",
+    "materialFamilyLabel": "Chipped and structurally stressed masonry",
+    "architecturalRole": "cracked courses, displaced blocks and failing supports",
+    "environmentalState": "chipped, fractured and under structural stress but still legible",
+    "paletteBias": "chalky limestone, cool slate chips, dry brown mortar",
+    "promptFamilyId": "stressed_masonry",
+    "description": "Chipped and structurally stressed masonry, wall material, cracked courses, displaced blocks and failing supports, chipped, fractured and under structural stress but still legible, chalky limestone, cool slate chips, dry brown mortar, authored wall rubble geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+    "provider": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "variants": 3,
+    "steps": 26,
+    "cfg": 7.0,
+    "sampler": "DPM++ 2M",
+    "seed": 220221,
+    "depthWeight": 0.6,
+    "requestSize": "512x512",
+    "negativeExtra": "sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "variation": 1
+  }
+}
