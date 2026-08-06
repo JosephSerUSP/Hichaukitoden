@@ -90,6 +90,19 @@ function world_focus.cancel(opId)
     return true
 end
 
+function world_focus.release(opId)
+    if opId ~= nil and opId ~= state.opId then return false end
+    if state.phase == "focus_in" or state.phase == "holding" then
+        state.phase = "focus_out"
+        return true
+    end
+    return false
+end
+
+function world_focus.getPhase()
+    return state.phase
+end
+
 function world_focus.getOperationId()
     return state.opId ~= 0 and state.opId or nil
 end
@@ -147,7 +160,7 @@ function world_focus.update(dt)
     if state.phase == "focus_in" then
         state.progress = math.min(1.0, state.progress + (dt / state.preset.duration))
         if state.progress >= 1.0 then
-            state.phase = "focus_out" -- Transition immediately to release phase
+            state.phase = "holding"
             local cb = state.callback
             local thisOpId = state.opId
             state.callback = nil
@@ -167,6 +180,8 @@ function world_focus.update(dt)
                 end
             end
         end
+    elseif state.phase == "holding" then
+        state.progress = 1.0
     elseif state.phase == "focus_out" then
         state.progress = math.max(0.0, state.progress - (dt / state.preset.duration))
         if state.progress <= 0.0 then

@@ -6326,9 +6326,21 @@
             ]
           }
         ]
+      },
+      {
+        "id": 8,
+        "name": "Dev Chest",
+        "scriptId": 12,
+        "x": 3,
+        "y": 4,
+        "trigger": "interact",
+        "sprite": "assets/sprites/OBJ_TreasureChest_001.png"
       }
     ],
-    "treasures": [],
+    "treasures": [
+      1,
+      2
+    ],
     "encounters": [],
     "recruits": []
   },

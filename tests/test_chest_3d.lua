@@ -145,6 +145,19 @@ check(world_focus.getOperationId() == errorReplacement and world_focus.isActive(
     "Old callback error does not reset replacement focus")
 world_focus.cancel(errorReplacement)
 
+-- 4c. Holding Phase & Release Lifecycle
+local holdOp = world_focus.begin("low_prop", { x = 1, y = 1 }, mockSession, nil)
+world_focus.update(0.3)
+check(world_focus.getPhase() == "holding", "Focus enters holding phase after focus_in finishes")
+check(world_focus.getCameraOverride().pitch > 0, "Camera maintains pitch during holding phase")
+world_focus.update(1.0)
+check(world_focus.getPhase() == "holding", "Focus remains in holding phase indefinitely until released")
+
+check(world_focus.release(holdOp), "world_focus.release transitions holding to focus_out")
+check(world_focus.getPhase() == "focus_out", "Phase is focus_out after release")
+world_focus.update(0.3)
+check(not world_focus.isActive(), "Focus resets to idle after focus_out completes")
+
 -- 5. Exact emptyCtx Assertion for CHANGE_ITEM random
 local emptyMapSession = {
     currentMapData = { id = "empty_map", treasures = {} },

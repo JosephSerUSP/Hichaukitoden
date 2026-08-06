@@ -616,6 +616,7 @@ end
 -- isDialogueRevealing/finishDialogueReveal use); the message window's text
 -- widget does the wrapping and slicing, since only it knows the real width.
 local function finishDialogueToMap()
+    require("presentation.world_focus").release()
     local function returnToMap()
         activeSession.locationArt = nil
         require("presentation.location_renderer").clear()
@@ -735,6 +736,7 @@ function love.update(dt)
     require("presentation.image_picture_renderer").update(dt)
     require("presentation.subtractive_transition").update(dt)
     door_transition.update(dt)
+    require("presentation.world_focus").update(dt)
     server.update(dt)
     if server.configReloaded then
         server.configReloaded = false
@@ -1237,41 +1239,49 @@ local function runEventCommands(eventTarget, commands)
         ictx.eventId = activeEv.id
     end
 
-    -- If this is a RECRUIT event, compile the actor's recruitment script
-    local cType = commands and #commands == 1 and (commands[1].type or commands[1].cmd)
-    if cType and cType == "RECRUIT" then
-        local actorId = (activeEv and activeEv.actorId) or (commands[1] and commands[1].actorId)
-        if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
-            local recruits = activeSession.currentMapData.recruits
-            if #recruits > 0 then
-                actorId = recruits[math.random(#recruits)]
+    local function executeCommands()
+        -- If this is a RECRUIT event, compile the actor's recruitment script
+        local cType = commands and #commands == 1 and (commands[1].type or commands[1].cmd)
+        if cType and cType == "RECRUIT" then
+            local actorId = (activeEv and activeEv.actorId) or (commands[1] and commands[1].actorId)
+            if not actorId and activeSession and activeSession.currentMapData and activeSession.currentMapData.recruits then
+                local recruits = activeSession.currentMapData.recruits
+                if #recruits > 0 then
+                    actorId = recruits[math.random(#recruits)]
+                end
+            end
+            actorId = actorId or 1
+            local actorData = loader.getActor(actorId)
+            if actorData then
+                commands = actorData.recruitEvent
+                if not commands then
+                    error("actor " .. tostring(actorId) .. " ('" .. tostring(actorData.name)
+                        .. "') is recruitable but authors no recruitEvent")
+                end
             end
         end
-        actorId = actorId or 1
-        local actorData = loader.getActor(actorId)
-        if actorData then
-            -- The actor's recruit event IS an event: an ordinary command list,
-            -- authored and editable like every other. engine/recruitment.lua
-            -- used to BUILD one here from six preset types with the dialogue
-            -- baked into Lua string concatenation -- a content template living
-            -- in the engine, and the reason hostile recruitment never worked.
-            commands = actorData.recruitEvent
-            if not commands then
-                error("actor " .. tostring(actorId) .. " ('" .. tostring(actorData.name)
-                    .. "') is recruitable but authors no recruitEvent")
-            end
+
+        local eventTitle = (type(eventTarget) == "table" and (eventTarget.name or "Event")) or tostring(eventTarget or "Event")
+        local graph = interpreter.runInteractive(commands, ictx)
+        if not graph then
+            require("presentation.world_focus").release()
+            return
         end
+        graph.name = eventTitle
+
+        activeWalker = director.GraphWalker.new(activeSession, graph)
+        activeWalker.eventName = eventTitle
+        scene_host.goto_scene((activeEv and activeEv.scene) or "dialogue")
+        handleDialogueAction()
     end
 
-    local eventTitle = (type(eventTarget) == "table" and (eventTarget.name or "Event")) or tostring(eventTarget or "Event")
-    local graph = interpreter.runInteractive(commands, ictx)
-    if not graph then return end
-    graph.name = eventTitle
-
-    activeWalker = director.GraphWalker.new(activeSession, graph)
-    activeWalker.eventName = eventTitle
-    scene_host.goto_scene((activeEv and activeEv.scene) or "dialogue")
-    handleDialogueAction()
+    local pres = activeEv and viewport_3d.resolveEventPresentation(activeEv, activeSession)
+    if pres and pres.interactionFocus then
+        local targetCoords = (activeEv.x and activeEv.y) and { x = activeEv.x, y = activeEv.y } or nil
+        require("presentation.world_focus").begin(pres.interactionFocus, targetCoords, activeSession, executeCommands)
+    else
+        executeCommands()
+    end
 end
 runEventCommandsRef = runEventCommands
 
@@ -1439,6 +1449,7 @@ handleKeyPressed = function(key)
     -- E10: title input is fully handled by the title scene's data hooks
     -- (scene_host.keypressed above), so no legacy title branch remains.
     if scene_host.getCurrent() == "map" then
+        if require("presentation.world_focus").isActive() then return end
         -- MOVEMENT (forward/backward/strafe) is blocked while any transition
         -- animation is playing, preventing a disorienting mismatch between
         -- the grid state and the mid-animation camera.  TURNS are exempt so
