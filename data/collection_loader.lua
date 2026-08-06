@@ -67,6 +67,28 @@ local function appendFragment(out, value, path)
     end
 end
 
+local function validateCollection(entries, stem, source)
+    if type(entries) ~= "table" or #entries == 0 then
+        error("JSON collection '" .. stem .. "' is not a non-empty array: " .. source)
+    end
+    local ids = {}
+    for index, entry in ipairs(entries) do
+        if type(entry) ~= "table" or entry.id == nil then
+            error("JSON collection '" .. stem .. "' entry " .. tostring(index)
+                .. " has no id: " .. source)
+        end
+        -- Runtime lookups stringify authored map and scene ids, so numeric 1
+        -- and string "1" are the same identity and must not coexist.
+        local key = tostring(entry.id)
+        if ids[key] then
+            error("JSON collection '" .. stem .. "' has duplicate id '"
+                .. key .. "' in " .. source)
+        end
+        ids[key] = true
+    end
+    return entries
+end
+
 -- Load an ordered JSON collection from either:
 --   <root>/<stem>.json                  legacy monolith
 --   <root>/<stem>/index.json + files    split collection
@@ -79,7 +101,7 @@ end
 function collection_loader.load(root, stem)
     local monolith = root .. "/" .. stem .. ".json"
     if love.filesystem.getInfo(monolith) then
-        return readJson(monolith), "monolith"
+        return validateCollection(readJson(monolith), stem, monolith), "monolith"
     end
 
     local directory = root .. "/" .. stem
@@ -101,7 +123,7 @@ function collection_loader.load(root, stem)
         end
         appendFragment(out, readJson(path), path)
     end
-    return out, "fragments"
+    return validateCollection(out, stem, indexPath), "fragments"
 end
 
 return collection_loader
