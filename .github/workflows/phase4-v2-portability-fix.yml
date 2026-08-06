@@ -14,30 +14,25 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out branch
-        uses: actions/checkout@v4
-        with:
-          ref: agent/phase-4-baseline-v2
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install inspection dependency
-        run: python -m pip install --disable-pip-version-check pillow
-
-      - name: Apply and validate fix
-        run: python tools/blender/apply_phase4_v2_portability_fix.py
-
-      - name: Remove temporary migration files
+      - name: Clone branch without marketplace actions
+        env:
+          REPOSITORY_TOKEN: ${{ github.token }}
         run: |
+          git clone --branch agent/phase-4-baseline-v2 --single-branch \
+            "https://x-access-token:${REPOSITORY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" work
+
+      - name: Apply, validate, and publish fix
+        env:
+          REPOSITORY_TOKEN: ${{ github.token }}
+        run: |
+          cd work
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --disable-pip-version-check pillow
+          python tools/blender/apply_phase4_v2_portability_fix.py
           rm tools/blender/apply_phase4_v2_portability_fix.py
           rm .github/workflows/phase4-v2-portability-fix.yml
-
-      - name: Commit validated result
-        run: |
+          rm -rf .venv
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
