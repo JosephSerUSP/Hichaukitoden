@@ -235,9 +235,10 @@ print("[PASS] Targeting shapes (row, column, all, random)")
 
 -- 9. Real Battle:buildTurnQueue priority, initiative, speed, and equal-speed tie-breaking
 local testSess = session.GameSession.new(loader)
+local fastActor = session.Battler.new(loader.getActor(1), 20)
 testSess.party[1] = b1
 testSess.party[2] = b2
-testSess.party[3] = b3
+testSess.party[3] = fastActor
 local bQueueTest = battle.Battle.new(testSess, { enemyActor })
 
 local collectedActions = {
@@ -249,10 +250,17 @@ local collectedActions = {
 -- Invoke Battle's actual buildTurnQueue method directly
 local realQueue = bQueueTest:buildTurnQueue(collectedActions)
 
--- Verify Defend (priority 100) acts first, then enemies/allies sorted deterministically
+-- Verify Defend (priority 100) acts first, then Initiative/Speed, then Order ties
 assert(realQueue[1].actor == b2, "Defend (priority 100) acts first in Battle:buildTurnQueue")
 assert(realQueue[1].priority == 100, "Defend action carries priority 100")
-assert(#realQueue >= 4, "Turn queue contains all active participants")
+assert(realQueue[2].actor == fastActor, "Higher speed actor (level 20) acts second ahead of lower speed actors")
+-- Assert insertion order tie resolution between b1 and enemyActor
+local b1Pos, enemyPos = 0, 0
+for idx, act in ipairs(realQueue) do
+    if act.actor == b1 then b1Pos = idx end
+    if act.actor == enemyActor then enemyPos = idx end
+end
+assert(b1Pos < enemyPos, "Insertion order resolves speed ties deterministically (ally slot 1 before enemy)")
 
 print("[PASS] Action priority ordering and equal-speed tie resolution via real Battle:buildTurnQueue")
 
@@ -345,40 +353,56 @@ assert(type(noneCandidates) == "table" and #noneCandidates == 0, "target 'none' 
 
 print("[PASS] Target 'none' spec safety (Mystic Egg item 11)")
 
--- 15. Single-target hostile item cover evaluation & pipeline
+-- 15. Real UI item action shape & cover selectivity (hostile vs support actions)
 local itemCoverSess = session.GameSession.new(loader)
 local coverSaban = session.Battler.new(loader.getActor(61), 5)
 coverSaban:addState("defending", 1)
 local coverPixie = session.Battler.new(loader.getActor(1), 1)
+coverPixie.hp = 5 -- Wounded Pixie
 itemCoverSess.party[1] = coverSaban -- slot 1 (front-left)
 itemCoverSess.party[3] = coverPixie -- slot 3 (back-left)
-
-local itemSpec = { side = "enemy", shape = "single", cover = "respect" }
-local singleHostileItem = { id = 1, target = itemSpec, name = "HP Tonic" }
-itemCoverSess.inventory[1] = 1
+itemCoverSess.inventory[1] = 5     -- Item ID 1 (HP Tonic)
 
 local bItemCover = battle.Battle.new(itemCoverSess, { enemyActor })
-local itemEvents = bItemCover:applyItem(singleHostileItem, enemyActor, coverPixie)
 
-local coverInterceptFound = false
-for _, ev in ipairs(itemEvents) do
+-- A. Real UI Potion-on-Ally action shape (action.target is the selected Battler object)
+local realPotionAction = { type = "item", id = 1, itemIndex = 1, target = coverPixie }
+local potionEvents = bItemCover:applyItem(realPotionAction, coverSaban, coverPixie)
+
+assert(coverPixie.hp > 5, "Real UI Potion-on-Ally action heals target Pixie directly")
+
+local potionIntercepted = false
+for _, ev in ipairs(potionEvents) do
     if ev.type == "text" and ev.text and ev.text:find("steps in to protect") then
-        coverInterceptFound = true
+        potionIntercepted = true
         break
     end
 end
-assert(coverInterceptFound, "applyItem() pipeline triggers cover intercept text event when hostile item targets back-row Pixie")
+assert(not potionIntercepted, "Friendly Potion on back-row Pixie is NOT intercepted by Defending Saban")
 
--- Verify Charmed ally cover interception
+-- B. Support skill ("ally-any") targeting back-row Pixie
+local supportSpec = { side = "ally", count = 1, mode = "choose", state = "alive", shape = "single", cover = "respect" }
+local supportTargets = targeting.resolve(coverSaban, supportSpec, bItemCover, coverPixie)
+local coveredSupportTargets = bItemCover:evaluateCover(coverSaban, supportSpec, supportTargets, {})
+assert(#coveredSupportTargets == 1 and coveredSupportTargets[1] == coverPixie, "Support skill ('ally-any') aimed at back-row Pixie is NOT intercepted by Defending Saban")
+
+-- C. Hostile single-target attack on back-row Pixie
+local hostileSpec = { side = "enemy", shape = "single", cover = "respect" }
+local hostileTargets = targeting.resolve(enemyActor, hostileSpec, bItemCover, coverPixie)
+local hostileEvents = {}
+local coveredHostileTargets = bItemCover:evaluateCover(enemyActor, hostileSpec, hostileTargets, hostileEvents)
+assert(#coveredHostileTargets == 1 and coveredHostileTargets[1] == coverSaban, "Hostile single-target attack on back-row Pixie IS intercepted by Defending Saban")
+
+-- D. Charmed ally hostile action cover interception
 local charmedAlly = session.Battler.new(loader.getActor(61), 5)
 charmedAlly:addState("charm", 1)
 charmedAlly.isRestricted = function() return false end
 itemCoverSess.party[2] = charmedAlly -- slot 2 (front-right ally)
-local charmedItemTargets = targeting.resolve(charmedAlly, itemSpec, bItemCover, coverPixie)
+local charmedItemTargets = targeting.resolve(charmedAlly, hostileSpec, bItemCover, coverPixie)
 local charmedCoverEvents = {}
-local coveredCharmedTargets = bItemCover:evaluateCover(charmedAlly, itemSpec, charmedItemTargets, charmedCoverEvents)
+local coveredCharmedTargets = bItemCover:evaluateCover(charmedAlly, hostileSpec, charmedItemTargets, charmedCoverEvents)
 assert(#coveredCharmedTargets == 1 and coveredCharmedTargets[1] == coverSaban, "Charmed attacker targeting back-row Pixie has cover intercepted by front-row Saban")
 
-print("[PASS] Action-agnostic execution-time cover (single-target items, applyItem pipeline & Charm support)")
+print("[PASS] Action-agnostic execution-time cover (real UI Potion-on-Ally, non-intercepted support, & Charmed cover)")
 
 print("=== ALL FORMATION TESTS OK ===")

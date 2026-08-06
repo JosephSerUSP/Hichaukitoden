@@ -657,7 +657,7 @@ function Battle:applyItem(action, actor, target)
     end
 
     local targeting = require("engine.targeting")
-    local itemSpec = (action and type(action.target) == "table" and action.target) or item.target or "ally"
+    local itemSpec = (action and action.targetSpec) or item.target or "ally"
     local targets = targeting.resolve(actor, itemSpec, self, target, item)
     targets = self:evaluateCover(actor, itemSpec, targets, events)
     local effectiveTarget = targets[1] or target or actor
@@ -713,7 +713,7 @@ function Battle:evaluateCover(actor, spec, targets, roundEvents)
     local config = require("engine.config")
 
     local expanded = targeting.expand(spec)
-    if expanded.shape == "single" and expanded.cover == "respect" then
+    if expanded.side == "enemy" and expanded.shape == "single" and expanded.cover == "respect" then
         local origTarget = targets[1]
         local targetGroup, targetSlot
         targetSlot = formation.slotOf(self.allies, origTarget)
