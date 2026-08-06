@@ -163,15 +163,15 @@ def cmd_models(args):
 
 def cmd_runs(args):
     cfg = _config()
-    runs = staging.list_runs(_staging_root(cfg))
+    runs, ignored = staging.scan_runs(_staging_root(cfg))
     if not runs:
         print("no staged runs")
-        return 0
     for name, manifest in runs:
         promoted = manifest.get("promoted") or []
         mark = f"  promoted-> {promoted[-1]['dest']}" if promoted else ""
         print(f"{name}  [{manifest['class']}] {manifest['name']}  "
               f"{len(manifest['variants'])} variant(s){mark}")
+    if ignored: print(f"note: ignored {ignored} non-run manifest(s) in the staging root")
     return 0
 
 
@@ -404,6 +404,7 @@ def cmd_generate(args):
     variants = args.variants or cfg["generate"]["variants"]
     run_path = staging.run_dir(_staging_root(cfg), args.asset_class, args.name)
     manifest = {
+        "manifestKind": "asset_gen_run", "manifestVersion": 1,
         "class": args.asset_class,
         "name": args.name,
         "description": args.description,

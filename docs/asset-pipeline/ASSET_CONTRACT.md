@@ -45,7 +45,7 @@ Every future version-1 record declares one frame. Full models preserve an author
 
 Fields use lowerCamelCase. Stable IDs and filenames use ASCII lower_snake_case: lowercase initial letter, then lowercase letters, digits, and underscores. Paths are repository-relative with `/`; absolute machine paths and spaces are forbidden. Display names are separate and may change without changing IDs.
 
-States are semantic conditions, with reserved IDs `default`, `inactive`, `active`, `closed`, `open`, `sealed`, `unsealed`, `locked`, `unlocked`, `intact`, `damaged`, `broken`, `empty`, `filled`, and `spent`. `default` is the fallback and must be listed. Variants are parallel visual alternatives; state and variant namespaces are distinct, and provider candidate indices are not authored states.
+States are semantic conditions, with reserved IDs `default`, `inactive`, `active`, `closed`, `open`, `sealed`, `unsealed`, `locked`, `unlocked`, `intact`, `damaged`, `broken`, `empty`, `filled`, and `spent`. `defaultState` is the authoritative fallback and must appear in `states`. The reserved ID `default` is available when no more meaningful semantic fallback exists; it is not mandatory when another explicit semantic state such as `inactive` is selected. Variants are parallel visual alternatives; state and variant namespaces are distinct, and provider candidate indices are not authored states.
 
 Socket kinds are `interaction`, `actor`, `camera_focus`, `vfx`, `loot`, `hinge`, `light`, `audio`, and `attachment`. A socket has `id`, `kind`, and root-local `position`, with optional `rotationDegrees`, normalized `forward`/`up`, `state`, and `metadata`. Socket metadata alone creates no gameplay; runtime support is deferred and Blender objects are not automatically authoritative.
 
@@ -68,7 +68,7 @@ The normative future record contains `contractVersion`, `id`, `displayName`, `re
 Documentation-only example — not a production asset:
 
 ```json
-{"contractVersion":1,"id":"example_shrine_recess","displayName":"Example Shrine Recess","representation":"plane","role":"surface_fixture","authoringSpace":"depth_tile","placementFrame":"surface_domain","materials":["old_limestone","ritual_gold"],"states":["inactive","active"],"defaultState":"inactive","variants":[],"sockets":[]}
+{"contractVersion":1,"id":"example_shrine_recess","displayName":"Example Shrine Recess","representation":"plane","role":"surface_fixture","authoringSpace":"depth_tile","placementFrame":"surface_domain","materials":["old_limestone","ritual_gold"],"states":["inactive","active"],"defaultState":"inactive","variants":[],"sockets":[],"sources":{"metadataSource":"docs/asset-pipeline/ASSET_CONTRACT.md"},"products":{},"provenance":{"generator":"documentation","generatorVersion":"1","sourceCommit":"documentation-only","command":"none","inputs":[],"outputs":[]}}
 ```
 
 ## Preview and validation expectations

@@ -35,6 +35,13 @@ Nothing reaches `assets/` until you `promote`. Generation writes to
 variant, a `contact-sheet.png` upscaled 4x so you can actually judge the pixels,
 and a `manifest.json` recording the prompt, provider, model and target path.
 
+New generation manifests contain `manifestKind: "asset_gen_run"` and
+`manifestVersion: 1`. The height-pattern tool writes
+`manifestKind: "height_pattern_set"`; these are not runs. Complete legacy run
+manifests without a kind remain accepted when they contain `class`, `name`, and
+`variants`. `gen.py runs` ignores non-run manifests and reports a concise note;
+direct run operations reject non-run folders.
+
 ## Commands
 
 | Command | What it does |

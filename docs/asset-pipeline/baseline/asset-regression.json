@@ -1,0 +1,2041 @@
+{
+  "snapshotVersion": 1,
+  "sourceCommit": "d9a7409867a4d527f188c4b2c50cb82d2dae42d2",
+  "contractVersion": 1,
+  "itemModelReferences": [
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[0].model",
+      "model": "assets/models/items/bottle_family__basis.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[10].model",
+      "model": "assets/models/items/mystic_egg.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[11].model",
+      "model": "assets/models/items/golden_egg.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[12].model",
+      "model": "assets/models/items/vitality_seal_1.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[13].model",
+      "model": "assets/models/items/vitality_seal_2.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[14].model",
+      "model": "assets/models/items/vitality_seal_3.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[15].model",
+      "model": "assets/models/items/radiant_blade_flavio.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[16].model",
+      "model": "assets/models/items/wind_dancer.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[17].model",
+      "model": "assets/models/items/water_scepter.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[18].model",
+      "model": "assets/models/items/holy_sword_gram.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[19].model",
+      "model": "assets/models/items/dark_scepter_lucille.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[1].model",
+      "model": "assets/models/items/bottle_family__angular.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[20].model",
+      "model": "assets/models/items/mars_emblem.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[21].model",
+      "model": "assets/models/items/mercury_crest.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[22].model",
+      "model": "assets/models/items/hermes_boots.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[23].model",
+      "model": "assets/models/items/glittering_teardrop.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[24].model",
+      "model": "assets/models/items/untarnished_signet.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[25].model",
+      "model": "assets/models/items/shattered_blade.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[26].model",
+      "model": "assets/models/items/shattered_edge.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[27].model",
+      "model": "assets/models/items/meteorite_plate.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[28].model",
+      "model": "assets/models/items/mug_of_ale.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[29].model",
+      "model": "assets/models/items/pint_of_stout.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[2].model",
+      "model": "assets/models/items/crystal.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[30].model",
+      "model": "assets/models/items/glass_of_wine.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[31].model",
+      "model": "assets/models/items/scrap_plating.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[32].model",
+      "model": "assets/models/items/sludge.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[33].model",
+      "model": "assets/models/items/burnt_slop.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[34].model",
+      "model": "assets/models/items/broken_spring.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[35].model",
+      "model": "assets/models/items/ambrosia.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[36].model",
+      "model": "assets/models/items/philosophers_stone.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[37].model",
+      "model": "assets/models/items/chrysalis_sigil.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[38].model",
+      "model": "assets/models/items/obsidian_shard.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[39].model",
+      "model": "assets/models/items/melted_wax.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[3].model",
+      "model": "assets/models/items/bottle_family__tall.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[40].model",
+      "model": "assets/models/items/ectoplasm.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[41].model",
+      "model": "assets/models/items/warding_charm.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[42].model",
+      "model": "assets/models/items/vial_of_second_breath.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[43].model",
+      "model": "assets/models/items/thrice_blessed_bead.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[44].model",
+      "model": "assets/models/items/tome_wind_blade.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[45].model",
+      "model": "assets/models/items/whetstone_draught.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[46].model",
+      "model": "assets/models/items/black_hinge.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[47].model",
+      "model": "assets/models/items/ember_bit.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[48].model",
+      "model": "assets/models/items/qilin_bell.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[49].model",
+      "model": "assets/models/items/cinder_ruby.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[4].model",
+      "model": "assets/models/items/silver_blade.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[50].model",
+      "model": "assets/models/items/abyssal_pearl.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[51].model",
+      "model": "assets/models/items/verdigris_coin.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[5].model",
+      "model": "assets/models/items/bone_plate.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[6].model",
+      "model": "assets/models/items/wind_charm.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[7].model",
+      "model": "assets/models/items/wind_charm.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[8].model",
+      "model": "assets/models/items/wind_charm.obj"
+    },
+    {
+      "source": "data/items.json",
+      "jsonPath": "$[9].model",
+      "model": "assets/models/items/rear_mirror.obj"
+    }
+  ],
+  "worldModelReferences": [
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.dungeon_default.features[0].model",
+      "model": "assets/models/dungeon/dungeon_torch_bracket.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.dungeon_default.features[1].model",
+      "model": "assets/models/dungeon/dungeon_column.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.dungeon_default.features[2].model",
+      "model": "assets/models/dungeon/dungeon_chest.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.dungeon_default.features[3].model",
+      "model": "assets/models/ruins/ruins_crystal_cluster.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.showcase_thestra.features[3].model",
+      "model": "assets/models/dungeon/dungeon_chest.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.stillnight_bellroot_vigil.features[0].model",
+      "model": "assets/models/dungeon/dungeon_torch_bracket.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.stillnight_bellroot_vigil.features[1].model",
+      "model": "assets/models/ruins/ruins_crystal_cluster.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.town_default.features[4].model",
+      "model": "assets/models/town/town_street_lamp.obj"
+    },
+    {
+      "source": "data/tilesets.json",
+      "jsonPath": "$.town_default.features[5].model",
+      "model": "assets/models/town/town_barrel_stack.obj"
+    }
+  ],
+  "geometryAssets": [
+    {
+      "assetJson": "assets/geometry/fluted_pillar/asset.json",
+      "id": "fluted_pillar",
+      "topology": "radial",
+      "role": "objectFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 96,
+          "height": 128,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 96,
+          "height": 128,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/limestone_wall/asset.json",
+      "id": "limestone_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/muse/asset.json",
+      "id": "muse",
+      "topology": "shell",
+      "role": "objectFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 128,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 128,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sacred_idol/asset.json",
+      "id": "sacred_idol",
+      "topology": "shell",
+      "role": "objectFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 128,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 128,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_alunardream_wall/asset.json",
+      "id": "sd_ffxii_alunardream_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_ceiling_retro/asset.json",
+      "id": "sd_ffxii_ceiling_retro",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_ceiling_sd15/asset.json",
+      "id": "sd_ffxii_ceiling_sd15",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_dreamshaper_wall/asset.json",
+      "id": "sd_ffxii_dreamshaper_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_floor_retro/asset.json",
+      "id": "sd_ffxii_floor_retro",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_floor_sd15/asset.json",
+      "id": "sd_ffxii_floor_sd15",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_homosimile_wall/asset.json",
+      "id": "sd_ffxii_homosimile_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_lyriel_wall/asset.json",
+      "id": "sd_ffxii_lyriel_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_ffxii_regular_wall/asset.json",
+      "id": "sd_ffxii_regular_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_test_height_floor/asset.json",
+      "id": "sd_test_height_floor",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/sd_test_height_wall/asset.json",
+      "id": "sd_test_height_wall",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 64,
+          "height": 64,
+          "mode": "RGBA"
+        }
+      ]
+    },
+    {
+      "assetJson": "assets/geometry/shrine_recess/asset.json",
+      "id": "shrine_recess",
+      "topology": "plane",
+      "role": "surfaceFixture",
+      "requiredImages": [
+        {
+          "path": "albedo.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        },
+        {
+          "path": "height.png",
+          "width": 128,
+          "height": 128,
+          "mode": "RGBA"
+        }
+      ]
+    }
+  ],
+  "depthPresets": [
+    {
+      "preset": "ceiling_coffers",
+      "surface": "ceiling",
+      "view": "below",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_dripstone",
+      "surface": "ceiling",
+      "view": "below",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_dripstone_rough",
+      "surface": "ceiling",
+      "view": "below",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "ceiling_vault",
+      "surface": "ceiling",
+      "view": "below",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_cobbles",
+      "surface": "floor",
+      "view": "above",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_cobbles_rough",
+      "surface": "floor",
+      "view": "above",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_flagstones",
+      "surface": "floor",
+      "view": "above",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_inlay",
+      "surface": "floor",
+      "view": "above",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "floor_slabs_varied",
+      "surface": "floor",
+      "view": "above",
+      "tileAxes": "xy",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_boulders_rough",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_cave",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_eroded",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_niche",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_pilasters",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    },
+    {
+      "preset": "wall_rubble",
+      "surface": "wall",
+      "view": "above",
+      "tileAxes": "x",
+      "size": 512,
+      "wrapOk": true
+    }
+  ],
+  "referencedModels": [
+    {
+      "path": "assets/models/dungeon/dungeon_chest.obj",
+      "vertexCount": 74,
+      "uvCount": 3,
+      "normalCount": 74,
+      "faceCount": 124,
+      "materialUseCount": 3,
+      "mtllib": "dungeon_chest.mtl",
+      "bounds": {
+        "min": [
+          -0.3,
+          -0.01,
+          -0.21
+        ],
+        "max": [
+          0.3,
+          0.5,
+          0.23
+        ]
+      }
+    },
+    {
+      "path": "assets/models/dungeon/dungeon_chest.obj",
+      "vertexCount": 74,
+      "uvCount": 3,
+      "normalCount": 74,
+      "faceCount": 124,
+      "materialUseCount": 3,
+      "mtllib": "dungeon_chest.mtl",
+      "bounds": {
+        "min": [
+          -0.3,
+          -0.01,
+          -0.21
+        ],
+        "max": [
+          0.3,
+          0.5,
+          0.23
+        ]
+      }
+    },
+    {
+      "path": "assets/models/dungeon/dungeon_column.obj",
+      "vertexCount": 92,
+      "uvCount": 3,
+      "normalCount": 92,
+      "faceCount": 164,
+      "materialUseCount": 3,
+      "mtllib": "dungeon_column.mtl",
+      "bounds": {
+        "min": [
+          -0.35,
+          0.0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          1.0,
+          0.35
+        ]
+      }
+    },
+    {
+      "path": "assets/models/dungeon/dungeon_torch_bracket.obj",
+      "vertexCount": 102,
+      "uvCount": 4,
+      "normalCount": 102,
+      "faceCount": 184,
+      "materialUseCount": 4,
+      "mtllib": "dungeon_torch_bracket.mtl",
+      "bounds": {
+        "min": [
+          -0.15,
+          0.305,
+          0.12
+        ],
+        "max": [
+          0.15,
+          0.85,
+          0.48
+        ]
+      }
+    },
+    {
+      "path": "assets/models/dungeon/dungeon_torch_bracket.obj",
+      "vertexCount": 102,
+      "uvCount": 4,
+      "normalCount": 102,
+      "faceCount": 184,
+      "materialUseCount": 4,
+      "mtllib": "dungeon_torch_bracket.mtl",
+      "bounds": {
+        "min": [
+          -0.15,
+          0.305,
+          0.12
+        ],
+        "max": [
+          0.15,
+          0.85,
+          0.48
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/abyssal_pearl.obj",
+      "vertexCount": 154,
+      "uvCount": 148,
+      "normalCount": 180,
+      "faceCount": 296,
+      "materialUseCount": 4,
+      "mtllib": "abyssal_pearl.mtl",
+      "bounds": {
+        "min": [
+          -1.232693,
+          -1.075,
+          -0.62
+        ],
+        "max": [
+          1.232693,
+          1.075,
+          0.62
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/ambrosia.obj",
+      "vertexCount": 246,
+      "uvCount": 369,
+      "normalCount": 276,
+      "faceCount": 448,
+      "materialUseCount": 12,
+      "mtllib": "ambrosia.mtl",
+      "bounds": {
+        "min": [
+          -0.86752,
+          -0.68,
+          -0.88983
+        ],
+        "max": [
+          0.86752,
+          1.000151,
+          0.88983
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/black_hinge.obj",
+      "vertexCount": 180,
+      "uvCount": 300,
+      "normalCount": 234,
+      "faceCount": 324,
+      "materialUseCount": 9,
+      "mtllib": "black_hinge.mtl",
+      "bounds": {
+        "min": [
+          -1.13,
+          -1.34,
+          -0.187141
+        ],
+        "max": [
+          1.13,
+          1.34,
+          0.271038
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/bone_plate.obj",
+      "vertexCount": 618,
+      "uvCount": 842,
+      "normalCount": 686,
+      "faceCount": 1176,
+      "materialUseCount": 15,
+      "mtllib": "bone_plate.mtl",
+      "bounds": {
+        "min": [
+          -1.613044,
+          -1.316475,
+          -0.15
+        ],
+        "max": [
+          1.613044,
+          1.226639,
+          0.372077
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/bottle_family__angular.obj",
+      "vertexCount": 400,
+      "uvCount": 263,
+      "normalCount": 258,
+      "faceCount": 784,
+      "materialUseCount": 5,
+      "mtllib": "bottle_family__angular.mtl",
+      "bounds": {
+        "min": [
+          -0.766462,
+          -1.35,
+          -0.766462
+        ],
+        "max": [
+          0.766462,
+          1.77,
+          0.828051
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/bottle_family__basis.obj",
+      "vertexCount": 276,
+      "uvCount": 263,
+      "normalCount": 242,
+      "faceCount": 536,
+      "materialUseCount": 5,
+      "mtllib": "bottle_family__basis.mtl",
+      "bounds": {
+        "min": [
+          -0.78,
+          -1.35,
+          -0.78
+        ],
+        "max": [
+          0.78,
+          1.77,
+          0.828051
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/bottle_family__tall.obj",
+      "vertexCount": 276,
+      "uvCount": 263,
+      "normalCount": 242,
+      "faceCount": 536,
+      "materialUseCount": 5,
+      "mtllib": "bottle_family__tall.mtl",
+      "bounds": {
+        "min": [
+          -0.6084,
+          -1.6875,
+          -0.6084
+        ],
+        "max": [
+          0.6084,
+          1.775,
+          0.828051
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/broken_spring.obj",
+      "vertexCount": 1008,
+      "uvCount": 1736,
+      "normalCount": 1065,
+      "faceCount": 1904,
+      "materialUseCount": 28,
+      "mtllib": "broken_spring.mtl",
+      "bounds": {
+        "min": [
+          -0.697406,
+          -1.256737,
+          -0.694529
+        ],
+        "max": [
+          0.696738,
+          1.256737,
+          0.697406
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/burnt_slop.obj",
+      "vertexCount": 138,
+      "uvCount": 234,
+      "normalCount": 163,
+      "faceCount": 252,
+      "materialUseCount": 6,
+      "mtllib": "burnt_slop.mtl",
+      "bounds": {
+        "min": [
+          -0.826061,
+          -0.65,
+          -0.826061
+        ],
+        "max": [
+          0.835687,
+          0.786396,
+          0.826061
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/chrysalis_sigil.obj",
+      "vertexCount": 180,
+      "uvCount": 117,
+      "normalCount": 178,
+      "faceCount": 344,
+      "materialUseCount": 5,
+      "mtllib": "chrysalis_sigil.mtl",
+      "bounds": {
+        "min": [
+          -1.01,
+          -1.10461,
+          -0.12
+        ],
+        "max": [
+          1.01,
+          1.043159,
+          0.285064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/cinder_ruby.obj",
+      "vertexCount": 312,
+      "uvCount": 510,
+      "normalCount": 348,
+      "faceCount": 596,
+      "materialUseCount": 8,
+      "mtllib": "cinder_ruby.mtl",
+      "bounds": {
+        "min": [
+          -0.608677,
+          -0.84,
+          -0.524538
+        ],
+        "max": [
+          0.608677,
+          0.84,
+          0.636558
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/crystal.obj",
+      "vertexCount": 312,
+      "uvCount": 512,
+      "normalCount": 346,
+      "faceCount": 580,
+      "materialUseCount": 11,
+      "mtllib": "crystal.mtl",
+      "bounds": {
+        "min": [
+          -0.86998,
+          -1.4,
+          -0.527397
+        ],
+        "max": [
+          0.88805,
+          1.682416,
+          0.527397
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/dark_scepter_lucille.obj",
+      "vertexCount": 500,
+      "uvCount": 795,
+      "normalCount": 563,
+      "faceCount": 952,
+      "materialUseCount": 13,
+      "mtllib": "dark_scepter_lucille.mtl",
+      "bounds": {
+        "min": [
+          -0.694485,
+          -1.9,
+          -0.740281
+        ],
+        "max": [
+          0.776863,
+          2.216346,
+          0.740669
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/ectoplasm.obj",
+      "vertexCount": 224,
+      "uvCount": 355,
+      "normalCount": 224,
+      "faceCount": 416,
+      "materialUseCount": 9,
+      "mtllib": "ectoplasm.mtl",
+      "bounds": {
+        "min": [
+          -0.76,
+          -0.875,
+          -0.740945
+        ],
+        "max": [
+          0.76,
+          1.03,
+          0.740945
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/ember_bit.obj",
+      "vertexCount": 322,
+      "uvCount": 501,
+      "normalCount": 312,
+      "faceCount": 624,
+      "materialUseCount": 7,
+      "mtllib": "ember_bit.mtl",
+      "bounds": {
+        "min": [
+          -0.589656,
+          -0.72,
+          -0.555709
+        ],
+        "max": [
+          0.589656,
+          0.72,
+          0.555709
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/glass_of_wine.obj",
+      "vertexCount": 248,
+      "uvCount": 379,
+      "normalCount": 192,
+      "faceCount": 480,
+      "materialUseCount": 5,
+      "mtllib": "glass_of_wine.mtl",
+      "bounds": {
+        "min": [
+          -0.536434,
+          -1.07,
+          -0.536434
+        ],
+        "max": [
+          0.536434,
+          0.855,
+          0.536434
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/glittering_teardrop.obj",
+      "vertexCount": 136,
+      "uvCount": 211,
+      "normalCount": 122,
+      "faceCount": 260,
+      "materialUseCount": 4,
+      "mtllib": "glittering_teardrop.mtl",
+      "bounds": {
+        "min": [
+          -0.825,
+          -0.825,
+          -0.610109
+        ],
+        "max": [
+          0.825,
+          1.34,
+          0.610109
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/golden_egg.obj",
+      "vertexCount": 442,
+      "uvCount": 679,
+      "normalCount": 408,
+      "faceCount": 852,
+      "materialUseCount": 10,
+      "mtllib": "golden_egg.mtl",
+      "bounds": {
+        "min": [
+          -0.78,
+          -1.18,
+          -0.765
+        ],
+        "max": [
+          0.78,
+          1.32,
+          0.765
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/hermes_boots.obj",
+      "vertexCount": 444,
+      "uvCount": 372,
+      "normalCount": 500,
+      "faceCount": 824,
+      "materialUseCount": 16,
+      "mtllib": "hermes_boots.mtl",
+      "bounds": {
+        "min": [
+          -1.32849,
+          -1.03,
+          -0.279952
+        ],
+        "max": [
+          1.32849,
+          0.952836,
+          0.270311
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/holy_sword_gram.obj",
+      "vertexCount": 298,
+      "uvCount": 306,
+      "normalCount": 280,
+      "faceCount": 568,
+      "materialUseCount": 11,
+      "mtllib": "holy_sword_gram.mtl",
+      "bounds": {
+        "min": [
+          -1.098539,
+          -1.82,
+          -0.195
+        ],
+        "max": [
+          1.098539,
+          3.377322,
+          0.226558
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/mars_emblem.obj",
+      "vertexCount": 204,
+      "uvCount": 277,
+      "normalCount": 156,
+      "faceCount": 396,
+      "materialUseCount": 4,
+      "mtllib": "mars_emblem.mtl",
+      "bounds": {
+        "min": [
+          -0.85,
+          -0.837087,
+          -0.221429
+        ],
+        "max": [
+          1.271429,
+          1.327988,
+          0.221429
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/melted_wax.obj",
+      "vertexCount": 164,
+      "uvCount": 282,
+      "normalCount": 216,
+      "faceCount": 296,
+      "materialUseCount": 8,
+      "mtllib": "melted_wax.mtl",
+      "bounds": {
+        "min": [
+          -0.934544,
+          -0.92,
+          -0.620256
+        ],
+        "max": [
+          0.976098,
+          0.904656,
+          0.54532
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/mercury_crest.obj",
+      "vertexCount": 328,
+      "uvCount": 434,
+      "normalCount": 252,
+      "faceCount": 636,
+      "materialUseCount": 7,
+      "mtllib": "mercury_crest.mtl",
+      "bounds": {
+        "min": [
+          -1.002304,
+          -1.1,
+          -0.09
+        ],
+        "max": [
+          1.002304,
+          1.08,
+          0.09
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/meteorite_plate.obj",
+      "vertexCount": 244,
+      "uvCount": 242,
+      "normalCount": 350,
+      "faceCount": 436,
+      "materialUseCount": 13,
+      "mtllib": "meteorite_plate.mtl",
+      "bounds": {
+        "min": [
+          -1.08,
+          -1.386186,
+          -0.17
+        ],
+        "max": [
+          1.08,
+          1.247204,
+          0.385064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/mug_of_ale.obj",
+      "vertexCount": 356,
+      "uvCount": 591,
+      "normalCount": 362,
+      "faceCount": 680,
+      "materialUseCount": 9,
+      "mtllib": "mug_of_ale.mtl",
+      "bounds": {
+        "min": [
+          -0.72,
+          -0.8,
+          -0.701948
+        ],
+        "max": [
+          1.24426,
+          1.076,
+          0.701948
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/mystic_egg.obj",
+      "vertexCount": 274,
+      "uvCount": 395,
+      "normalCount": 260,
+      "faceCount": 524,
+      "materialUseCount": 8,
+      "mtllib": "mystic_egg.mtl",
+      "bounds": {
+        "min": [
+          -0.78,
+          -1.18,
+          -0.765
+        ],
+        "max": [
+          0.78,
+          1.18,
+          0.768051
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/obsidian_shard.obj",
+      "vertexCount": 72,
+      "uvCount": 22,
+      "normalCount": 100,
+      "faceCount": 132,
+      "materialUseCount": 3,
+      "mtllib": "obsidian_shard.mtl",
+      "bounds": {
+        "min": [
+          -0.57113,
+          -1.29,
+          -0.289218
+        ],
+        "max": [
+          0.531666,
+          1.404,
+          0.289218
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/philosophers_stone.obj",
+      "vertexCount": 306,
+      "uvCount": 436,
+      "normalCount": 268,
+      "faceCount": 592,
+      "materialUseCount": 8,
+      "mtllib": "philosophers_stone.mtl",
+      "bounds": {
+        "min": [
+          -1.087331,
+          -1.1,
+          -1.034048
+        ],
+        "max": [
+          1.087331,
+          1.1,
+          1.034048
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/pint_of_stout.obj",
+      "vertexCount": 380,
+      "uvCount": 635,
+      "normalCount": 402,
+      "faceCount": 720,
+      "materialUseCount": 11,
+      "mtllib": "pint_of_stout.mtl",
+      "bounds": {
+        "min": [
+          -0.64,
+          -0.95,
+          -0.623954
+        ],
+        "max": [
+          1.16426,
+          1.244,
+          0.623954
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/qilin_bell.obj",
+      "vertexCount": 250,
+      "uvCount": 318,
+      "normalCount": 198,
+      "faceCount": 480,
+      "materialUseCount": 7,
+      "mtllib": "qilin_bell.mtl",
+      "bounds": {
+        "min": [
+          -1.085238,
+          -1.4,
+          -0.779942
+        ],
+        "max": [
+          1.085238,
+          1.144094,
+          0.779942
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/radiant_blade_flavio.obj",
+      "vertexCount": 610,
+      "uvCount": 900,
+      "normalCount": 566,
+      "faceCount": 1164,
+      "materialUseCount": 19,
+      "mtllib": "radiant_blade_flavio.mtl",
+      "bounds": {
+        "min": [
+          -0.775,
+          -1.82,
+          -0.195
+        ],
+        "max": [
+          0.775,
+          3.07705,
+          0.226558
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/rear_mirror.obj",
+      "vertexCount": 308,
+      "uvCount": 483,
+      "normalCount": 392,
+      "faceCount": 572,
+      "materialUseCount": 12,
+      "mtllib": "rear_mirror.mtl",
+      "bounds": {
+        "min": [
+          -0.9,
+          -1.64,
+          -0.161622
+        ],
+        "max": [
+          0.9,
+          1.29,
+          0.161622
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/scrap_plating.obj",
+      "vertexCount": 192,
+      "uvCount": 297,
+      "normalCount": 250,
+      "faceCount": 340,
+      "materialUseCount": 11,
+      "mtllib": "scrap_plating.mtl",
+      "bounds": {
+        "min": [
+          -1.311522,
+          -0.98,
+          -0.302781
+        ],
+        "max": [
+          1.093285,
+          0.85,
+          0.619819
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/shattered_blade.obj",
+      "vertexCount": 290,
+      "uvCount": 317,
+      "normalCount": 255,
+      "faceCount": 556,
+      "materialUseCount": 10,
+      "mtllib": "shattered_blade.mtl",
+      "bounds": {
+        "min": [
+          -0.701653,
+          -1.82,
+          -0.195
+        ],
+        "max": [
+          0.917337,
+          2.084732,
+          0.195
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/shattered_edge.obj",
+      "vertexCount": 372,
+      "uvCount": 339,
+      "normalCount": 362,
+      "faceCount": 704,
+      "materialUseCount": 14,
+      "mtllib": "shattered_edge.mtl",
+      "bounds": {
+        "min": [
+          -0.683963,
+          -1.82,
+          -0.206198
+        ],
+        "max": [
+          0.683963,
+          3.031024,
+          0.226558
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/silver_blade.obj",
+      "vertexCount": 274,
+      "uvCount": 339,
+      "normalCount": 238,
+      "faceCount": 524,
+      "materialUseCount": 10,
+      "mtllib": "silver_blade.mtl",
+      "bounds": {
+        "min": [
+          -0.65,
+          -1.82,
+          -0.195
+        ],
+        "max": [
+          0.65,
+          2.676418,
+          0.226558
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/sludge.obj",
+      "vertexCount": 108,
+      "uvCount": 184,
+      "normalCount": 138,
+      "faceCount": 192,
+      "materialUseCount": 6,
+      "mtllib": "sludge.mtl",
+      "bounds": {
+        "min": [
+          -0.826061,
+          -0.65,
+          -0.826061
+        ],
+        "max": [
+          0.826061,
+          0.536,
+          0.826061
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/thrice_blessed_bead.obj",
+      "vertexCount": 504,
+      "uvCount": 819,
+      "normalCount": 474,
+      "faceCount": 960,
+      "materialUseCount": 15,
+      "mtllib": "thrice_blessed_bead.mtl",
+      "bounds": {
+        "min": [
+          -0.790855,
+          -1.387808,
+          -0.153115
+        ],
+        "max": [
+          0.799616,
+          1.215,
+          0.153115
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/tome_wind_blade.obj",
+      "vertexCount": 244,
+      "uvCount": 273,
+      "normalCount": 239,
+      "faceCount": 460,
+      "materialUseCount": 8,
+      "mtllib": "tome_wind_blade.mtl",
+      "bounds": {
+        "min": [
+          -1.04,
+          -1.24,
+          -0.42
+        ],
+        "max": [
+          0.98,
+          1.24,
+          0.6
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/untarnished_signet.obj",
+      "vertexCount": 162,
+      "uvCount": 119,
+      "normalCount": 116,
+      "faceCount": 316,
+      "materialUseCount": 3,
+      "mtllib": "untarnished_signet.mtl",
+      "bounds": {
+        "min": [
+          -0.76,
+          -1.01,
+          -0.138564
+        ],
+        "max": [
+          0.76,
+          0.96,
+          0.355
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/verdigris_coin.obj",
+      "vertexCount": 276,
+      "uvCount": 290,
+      "normalCount": 213,
+      "faceCount": 540,
+      "materialUseCount": 5,
+      "mtllib": "verdigris_coin.mtl",
+      "bounds": {
+        "min": [
+          -0.906023,
+          -0.92,
+          -0.11
+        ],
+        "max": [
+          0.906023,
+          0.92,
+          0.361057
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/vial_of_second_breath.obj",
+      "vertexCount": 1220,
+      "uvCount": 2067,
+      "normalCount": 1238,
+      "faceCount": 2316,
+      "materialUseCount": 32,
+      "mtllib": "vial_of_second_breath.mtl",
+      "bounds": {
+        "min": [
+          -0.47566,
+          -0.975,
+          -0.47566
+        ],
+        "max": [
+          0.47566,
+          1.0,
+          0.47566
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/vitality_seal_1.obj",
+      "vertexCount": 454,
+      "uvCount": 703,
+      "normalCount": 426,
+      "faceCount": 876,
+      "materialUseCount": 10,
+      "mtllib": "vitality_seal_1.mtl",
+      "bounds": {
+        "min": [
+          -1.06,
+          -0.931827,
+          -0.095106
+        ],
+        "max": [
+          1.06,
+          0.931827,
+          0.265064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/vitality_seal_2.obj",
+      "vertexCount": 590,
+      "uvCount": 912,
+      "normalCount": 534,
+      "faceCount": 1140,
+      "materialUseCount": 13,
+      "mtllib": "vitality_seal_2.mtl",
+      "bounds": {
+        "min": [
+          -1.06,
+          -1.06,
+          -0.095106
+        ],
+        "max": [
+          1.06,
+          1.06,
+          0.265064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/vitality_seal_3.obj",
+      "vertexCount": 726,
+      "uvCount": 1121,
+      "normalCount": 642,
+      "faceCount": 1404,
+      "materialUseCount": 16,
+      "mtllib": "vitality_seal_3.mtl",
+      "bounds": {
+        "min": [
+          -1.06,
+          -1.016674,
+          -0.095106
+        ],
+        "max": [
+          1.06,
+          1.016674,
+          0.265064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/warding_charm.obj",
+      "vertexCount": 128,
+      "uvCount": 87,
+      "normalCount": 130,
+      "faceCount": 244,
+      "materialUseCount": 4,
+      "mtllib": "warding_charm.mtl",
+      "bounds": {
+        "min": [
+          -0.771468,
+          -1.087681,
+          -0.11
+        ],
+        "max": [
+          0.771468,
+          1.445,
+          0.305064
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/water_scepter.obj",
+      "vertexCount": 228,
+      "uvCount": 281,
+      "normalCount": 280,
+      "faceCount": 436,
+      "materialUseCount": 6,
+      "mtllib": "water_scepter.mtl",
+      "bounds": {
+        "min": [
+          -1.199812,
+          -2.28,
+          -0.42
+        ],
+        "max": [
+          1.199812,
+          2.565871,
+          0.42
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/whetstone_draught.obj",
+      "vertexCount": 238,
+      "uvCount": 362,
+      "normalCount": 228,
+      "faceCount": 460,
+      "materialUseCount": 5,
+      "mtllib": "whetstone_draught.mtl",
+      "bounds": {
+        "min": [
+          -0.75,
+          -1.04,
+          -0.554922
+        ],
+        "max": [
+          0.774662,
+          1.02,
+          0.554922
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/wind_charm.obj",
+      "vertexCount": 376,
+      "uvCount": 518,
+      "normalCount": 423,
+      "faceCount": 712,
+      "materialUseCount": 11,
+      "mtllib": "wind_charm.mtl",
+      "bounds": {
+        "min": [
+          -0.839648,
+          -0.956778,
+          -0.102077
+        ],
+        "max": [
+          0.839648,
+          1.33,
+          0.195
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/wind_charm.obj",
+      "vertexCount": 376,
+      "uvCount": 518,
+      "normalCount": 423,
+      "faceCount": 712,
+      "materialUseCount": 11,
+      "mtllib": "wind_charm.mtl",
+      "bounds": {
+        "min": [
+          -0.839648,
+          -0.956778,
+          -0.102077
+        ],
+        "max": [
+          0.839648,
+          1.33,
+          0.195
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/wind_charm.obj",
+      "vertexCount": 376,
+      "uvCount": 518,
+      "normalCount": 423,
+      "faceCount": 712,
+      "materialUseCount": 11,
+      "mtllib": "wind_charm.mtl",
+      "bounds": {
+        "min": [
+          -0.839648,
+          -0.956778,
+          -0.102077
+        ],
+        "max": [
+          0.839648,
+          1.33,
+          0.195
+        ]
+      }
+    },
+    {
+      "path": "assets/models/items/wind_dancer.obj",
+      "vertexCount": 320,
+      "uvCount": 424,
+      "normalCount": 365,
+      "faceCount": 592,
+      "materialUseCount": 12,
+      "mtllib": "wind_dancer.mtl",
+      "bounds": {
+        "min": [
+          -0.931171,
+          -1.728964,
+          -0.229945
+        ],
+        "max": [
+          0.931171,
+          1.8045,
+          0.229945
+        ]
+      }
+    },
+    {
+      "path": "assets/models/ruins/ruins_crystal_cluster.obj",
+      "vertexCount": 72,
+      "uvCount": 3,
+      "normalCount": 72,
+      "faceCount": 124,
+      "materialUseCount": 3,
+      "mtllib": "ruins_crystal_cluster.mtl",
+      "bounds": {
+        "min": [
+          -0.342368,
+          0.0,
+          -0.370473
+        ],
+        "max": [
+          0.38,
+          0.756731,
+          0.370473
+        ]
+      }
+    },
+    {
+      "path": "assets/models/ruins/ruins_crystal_cluster.obj",
+      "vertexCount": 72,
+      "uvCount": 3,
+      "normalCount": 72,
+      "faceCount": 124,
+      "materialUseCount": 3,
+      "mtllib": "ruins_crystal_cluster.mtl",
+      "bounds": {
+        "min": [
+          -0.342368,
+          0.0,
+          -0.370473
+        ],
+        "max": [
+          0.38,
+          0.756731,
+          0.370473
+        ]
+      }
+    },
+    {
+      "path": "assets/models/town/town_barrel_stack.obj",
+      "vertexCount": 306,
+      "uvCount": 1,
+      "normalCount": 42,
+      "faceCount": 576,
+      "materialUseCount": 2,
+      "mtllib": "town_barrel_stack.mtl",
+      "bounds": {
+        "min": [
+          0.347128,
+          -0.0,
+          -0.544663
+        ],
+        "max": [
+          0.652872,
+          0.384,
+          -0.255337
+        ]
+      }
+    },
+    {
+      "path": "assets/models/town/town_street_lamp.obj",
+      "vertexCount": 162,
+      "uvCount": 54,
+      "normalCount": 96,
+      "faceCount": 246,
+      "materialUseCount": 2,
+      "mtllib": "town_street_lamp.mtl",
+      "bounds": {
+        "min": [
+          -0.4125,
+          0.0,
+          -0.4125
+        ],
+        "max": [
+          -0.1875,
+          1.07087,
+          -0.1875
+        ]
+      }
+    }
+  ]
+}

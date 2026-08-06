@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"asset-record.schema.json",
+  "title":"Unified Asset Record",
+  "type":"object",
+  "additionalProperties":true,
+  "required":["contractVersion","id","displayName","representation","role","authoringSpace","placementFrame","materials","states","defaultState","variants","sockets","sources","products","provenance"],
+  "properties":{
+    "contractVersion":{"const":1},"id":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"displayName":{"type":"string"},
+    "representation":{"enum":["plane","shell","radial","full_model"]},"role":{"enum":["surface_material","surface_fixture","object_fixture","item_display","structural_opening","event_prop","overlay","preview_only"]},
+    "authoringSpace":{"enum":["world_cell","item_display","depth_tile","preview"]},"placementFrame":{"enum":["floor_center","wall_center","ceiling_center","opening_center","item_viewport","surface_domain","preview_frame"]},
+    "materials":{"type":"array","items":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"uniqueItems":true},"states":{"type":"array","items":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"uniqueItems":true},"defaultState":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"variants":{"type":"array","items":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"uniqueItems":true},
+    "sockets":{"type":"array","uniqueItems":true,"items":{"type":"object","additionalProperties":true,"required":["id","kind","position"],"properties":{"id":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"kind":{"enum":["interaction","actor","camera_focus","vfx","loot","hinge","light","audio","attachment"]},"position":{"type":"array","prefixItems":[{"type":"number"},{"type":"number"},{"type":"number"}],"items":false,"minItems":3,"maxItems":3},"rotationDegrees":{"type":"array","items":{"type":"number"},"minItems":3,"maxItems":3},"forward":{"type":"array","items":{"type":"number"},"minItems":3,"maxItems":3},"up":{"type":"array","items":{"type":"number"},"minItems":3,"maxItems":3},"state":{"type":"string","pattern":"^[a-z][a-z0-9_]*$"},"metadata":{}}}},
+    "sources":{"type":"object","additionalProperties":true},"products":{"type":"object","additionalProperties":true,"properties":{"heightMetric":{"type":"object","required":["path","rangeCells"],"properties":{"path":{"type":"string"},"rangeCells":{"type":"number","exclusiveMinimum":0}}},"depthGuide":{"type":"string"},"legacyHeight":{"type":"string"}}},
+    "provenance":{"type":"object","additionalProperties":true,"required":["generator","generatorVersion","sourceCommit","command","inputs","outputs"],"properties":{"generator":{"type":"string"},"generatorVersion":{"type":"string"},"sourceCommit":{"type":"string"},"command":{"type":"string"},"inputs":{"type":"array","items":{"$ref":"#/$defs/provenanceFile"}},"outputs":{"type":"array","items":{"$ref":"#/$defs/provenanceFile"}}}}
+  },
+  "$defs":{"provenanceFile":{"type":"object","required":["path"],"additionalProperties":true,"properties":{"path":{"type":"string"},"sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"}}}}
+}
