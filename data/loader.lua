@@ -11,6 +11,37 @@ local function load_json(path)
     return json.decode(contents)
 end
 
+-- A campaign may replace a complete scene without copying or reserializing the
+-- monolithic scene registry. Replacements remain ordinary declarative scene
+-- objects; the loader merely swaps them by stable scene id before indexing.
+local function applySceneOverrides()
+    local path = loader.root .. "/scene_overrides.json"
+    if not love.filesystem.getInfo(path) then return end
+
+    local data = load_json(path)
+    local replacements = data and data.sceneReplacements
+    if type(replacements) ~= "table" then
+        error("scene_overrides.json must contain a sceneReplacements array")
+    end
+
+    local indexById = {}
+    for index, scene in ipairs(loader.scenes or {}) do
+        indexById[scene.id] = index
+    end
+
+    for _, scene in ipairs(replacements) do
+        if type(scene) ~= "table" or scene.id == nil then
+            error("scene_overrides.json contains a replacement without an id")
+        end
+        local index = indexById[scene.id]
+        if not index then
+            error("scene_overrides.json cannot replace unknown scene '"
+                .. tostring(scene.id) .. "'")
+        end
+        loader.scenes[index] = scene
+    end
+end
+
 -- Campaign roots (no-move design, owner decision 18.07.2026): data/ IS the
 -- default campaign; campaigns/<name>/ directories are drop-in alternates
 -- with the same file set. Which one drives this run resolves as:
@@ -93,8 +124,10 @@ function loader.init(root)
     -- Troops: what a battle is made of (member slots, rigid or pooled) and its
     -- battle events. `base` is inherited by all of them.
     loader.troops = J("troops.json")
-    -- Scenes configuration
+    -- Scenes configuration. Optional replacements are applied before the
+    -- lookup registry is built, so every consumer sees one canonical scene.
     loader.scenes = J("scenes.json")
+    applySceneOverrides()
 
     -- overhaul-7 A1: animations data loaded from JSON
     loader.animations = J("animations.json")
