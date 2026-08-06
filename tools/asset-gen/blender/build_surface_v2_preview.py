@@ -95,7 +95,7 @@ def aim_at(obj, target: Vector) -> None:
 
 def configure_scene(obj, metadata: dict, output_dir: Path, render_size: int) -> None:
     scene = bpy.context.scene
-    scene.render.engine = "BLENDER_EEVEE_NEXT"
+    scene.render.engine = "BLENDER_EEVEE"
     scene.render.resolution_x = render_size
     scene.render.resolution_y = render_size
     scene.render.resolution_percentage = 100
