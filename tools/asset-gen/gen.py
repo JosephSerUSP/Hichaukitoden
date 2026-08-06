@@ -163,15 +163,15 @@ def cmd_models(args):
 
 def cmd_runs(args):
     cfg = _config()
-    runs = staging.list_runs(_staging_root(cfg))
+    runs, ignored = staging.scan_runs(_staging_root(cfg))
     if not runs:
         print("no staged runs")
-        return 0
     for name, manifest in runs:
         promoted = manifest.get("promoted") or []
         mark = f"  promoted-> {promoted[-1]['dest']}" if promoted else ""
         print(f"{name}  [{manifest['class']}] {manifest['name']}  "
               f"{len(manifest['variants'])} variant(s){mark}")
+    if ignored: print(f"note: ignored {ignored} non-run manifest(s) in the staging root")
     return 0
 
 
@@ -242,6 +242,14 @@ def _finish(run_path, manifest):
     print(f"  preview: {os.path.join(run_path, 'contact-sheet.png')}")
     print(f"  promote: python tools/asset-gen/gen.py promote "
           f"{os.path.basename(run_path)} --variant {manifest['variants'][0]['index']}")
+
+
+def _upgrade_run_manifest(manifest):
+    """Add the explicit run identity when reprocessing a legacy manifest."""
+    upgraded = dict(manifest)
+    upgraded.setdefault("manifestKind", staging.RUN_KIND)
+    upgraded.setdefault("manifestVersion", staging.RUN_VERSION)
+    return upgraded
 
 
 def _sampling_overrides(args):
@@ -404,6 +412,7 @@ def cmd_generate(args):
     variants = args.variants or cfg["generate"]["variants"]
     run_path = staging.run_dir(_staging_root(cfg), args.asset_class, args.name)
     manifest = {
+        "manifestKind": "asset_gen_run", "manifestVersion": 1,
         "class": args.asset_class,
         "name": args.name,
         "description": args.description,
@@ -468,7 +477,7 @@ def cmd_reprocess(args):
     """Re-run the pixel pipeline over staged raw output -- no API call, no cost."""
     cfg = _config()
     run_path = staging.resolve_run(_staging_root(cfg), args.run)
-    manifest = staging.read_manifest(run_path)
+    manifest = _upgrade_run_manifest(staging.read_run_manifest(run_path))
     ctx = classes.resolve(manifest["class"], manifest.get("options", {}))
 
     rows = []
@@ -496,7 +505,7 @@ def cmd_tilecheck(args):
     """
     cfg = _config()
     run_path = staging.resolve_run(_staging_root(cfg), args.run)
-    manifest = staging.read_manifest(run_path)
+    manifest = staging.read_run_manifest(run_path)
     rows = []
     for variant in manifest["variants"]:
         path = os.path.join(run_path, variant["file"])
@@ -843,7 +852,7 @@ def cmd_report(args):
     sections = []
     for ref in refs:
         run_path = staging.resolve_run(_staging_root(cfg), ref)
-        manifest = staging.read_manifest(run_path)
+        manifest = staging.read_run_manifest(run_path)
         _add_context_previews(run_path, manifest)
         # Always re-score rather than trusting the manifest. The metric has been
         # corrected twice; a page mixing numbers from different versions of it

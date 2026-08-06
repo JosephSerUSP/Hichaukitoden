@@ -175,6 +175,7 @@ def main():
         paths.append(path)
     matrix(paths, out / "heightmap-matrix.png")
     (out / "manifest.json").write_text(json.dumps({
+        "manifestKind": "height_pattern_set", "manifestVersion": 1,
         "size": args.size, "seed": args.seed,
         "patterns": list(PATTERNS),
         "note": "All patterns use periodic coordinates and are authored depth guides, not inferred depth."

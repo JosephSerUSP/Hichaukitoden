@@ -9,9 +9,14 @@ Create many small, fully modeled, low-poly item assets for Second Rite. They are
 ## Source-of-truth hierarchy
 
 1. `build_expanded_item_library.py` — procedural model definitions and gallery composition.
-2. `second_rite_item_exporter.py` — reusable export behavior.
-3. Generated `.blend` — editable working library and embedded copy of the exporter.
-4. Generated OBJ/MTL — runtime assets consumed by Hichaukitoden.
+2. `tools/blender/second_rite_asset_core.py` — canonical shared Blender infrastructure.
+3. `second_rite_item_exporter.py` — thin add-on adapter around the shared export behavior.
+4. Generated `.blend` — editable working library and embedded copies of exporter, core, contract, and materials.
+5. Generated OBJ/MTL — runtime assets consumed by Hichaukitoden.
+
+The exporter adapter is safe to execute from an embedded Blender Text block:
+it only resolves a sibling `vendor/` directory when `__file__` identifies a
+real file, then falls back to the embedded core Text block as one stable module.
 
 ## Modeling language
 
@@ -35,6 +40,13 @@ root["item_display_name"] = "Human Name"
 root["item_category"] = "Category"
 root["item_description"] = "Optional description"
 ```
+
+The shared core adds `sr_contract_version`, `sr_asset_id`,
+`sr_representation`, `sr_role`, `sr_authoring_space`, `sr_placement_frame`,
+`sr_default_state`, `sr_states_json`, and `sr_variants_json`. Item roots use
+`full_model` / `item_display` / `item_viewport`; depth scenes use
+`plane` / `surface_material` / `depth_tile` / `surface_domain` and explicitly
+declare `sr_depth_product = "depth_guide"` with metric depth deferred.
 
 ## Export semantics
 

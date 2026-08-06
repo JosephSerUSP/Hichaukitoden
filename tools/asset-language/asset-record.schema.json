@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset-record.schema.json",
+  "title": "Unified Asset Record",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "contractVersion", "id", "displayName", "representation", "role",
+    "authoringSpace", "placementFrame", "materials", "states",
+    "defaultState", "variants", "sockets", "sources", "products",
+    "provenance"
+  ],
+  "properties": {
+    "contractVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "displayName": { "type": "string", "minLength": 1 },
+    "representation": { "enum": ["plane", "shell", "radial", "full_model"] },
+    "role": {
+      "enum": [
+        "surface_material", "surface_fixture", "object_fixture",
+        "item_display", "structural_opening", "event_prop", "overlay",
+        "preview_only"
+      ]
+    },
+    "authoringSpace": {
+      "enum": ["world_cell", "item_display", "depth_tile", "preview"]
+    },
+    "placementFrame": {
+      "enum": [
+        "floor_center", "wall_center", "ceiling_center", "opening_center",
+        "item_viewport", "surface_domain", "preview_frame"
+      ]
+    },
+    "materials": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "states": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "defaultState": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "variants": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true
+    },
+    "sockets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "kind", "position"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "kind": {
+            "enum": [
+              "interaction", "actor", "camera_focus", "vfx", "loot",
+              "hinge", "light", "audio", "attachment"
+            ]
+          },
+          "position": { "$ref": "#/$defs/vector3" },
+          "rotationDegrees": { "$ref": "#/$defs/vector3" },
+          "forward": { "$ref": "#/$defs/vector3" },
+          "up": { "$ref": "#/$defs/vector3" },
+          "state": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "metadata": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "blenderScript": { "$ref": "#/$defs/repositoryPath" },
+        "blendInspection": { "$ref": "#/$defs/repositoryPath" },
+        "sourceImages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/repositoryPath" },
+          "uniqueItems": true
+        },
+        "prompt": { "$ref": "#/$defs/repositoryPath" },
+        "referenceImages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/repositoryPath" },
+          "uniqueItems": true
+        },
+        "metadataSource": { "$ref": "#/$defs/repositoryPath" }
+      }
+    },
+    "products": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "model": { "$ref": "#/$defs/repositoryPath" },
+        "materialLibrary": { "$ref": "#/$defs/repositoryPath" },
+        "albedo": { "$ref": "#/$defs/repositoryPath" },
+        "heightMetric": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["path", "rangeCells"],
+          "properties": {
+            "path": { "$ref": "#/$defs/repositoryPath" },
+            "rangeCells": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "depthGuide": { "$ref": "#/$defs/repositoryPath" },
+        "legacyHeight": { "$ref": "#/$defs/repositoryPath" },
+        "runtimeMetadata": { "$ref": "#/$defs/repositoryPath" },
+        "preview": { "$ref": "#/$defs/repositoryPath" },
+        "report": { "$ref": "#/$defs/repositoryPath" },
+        "manifest": { "$ref": "#/$defs/repositoryPath" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "generator", "generatorVersion", "sourceCommit", "command",
+        "inputs", "outputs"
+      ],
+      "properties": {
+        "generator": { "type": "string", "minLength": 1 },
+        "generatorVersion": { "type": "string", "minLength": 1 },
+        "sourceCommit": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/provenanceFile" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/provenanceFile" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "vector3": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" }, { "type": "number" }, { "type": "number" }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "provenanceFile": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/repositoryPath" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

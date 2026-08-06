@@ -8,6 +8,7 @@ This bundle preserves the tools that generated `second_rite_item_model_library_e
 
 - `build_expanded_item_library.py` — procedural authoring source. Builds 49 marked item roots, materials, gallery layout, embedded exporter/readme, preview, manifest, and 53 OBJ results.
 - `second_rite_item_exporter.py` — Blender add-on/script. Exports selected or marked top-level roots as individual origin-centered OBJ files without moving the authored scene objects.
+- `vendor/` — byte-synchronized standalone copies of the shared core, unified contract, and semantic material registry. Never edit these files manually.
 - `BUILD_LIBRARY_WINDOWS.bat` — double-click entry point for Windows.
 - `scripts/build_library_windows.ps1` — Windows build, validation, and ZIP packaging.
 - `scripts/build_library_linux.sh` — Linux/macOS-style headless build and validation.
@@ -18,6 +19,11 @@ This bundle preserves the tools that generated `second_rite_item_model_library_e
 - `REPRODUCTION_NOTES.md` — build failures encountered and their fixes.
 - `reference/ITEM_MODEL_MANIFEST.md` — catalog from the validated expanded library.
 - `TOOLCHAIN_MANIFEST.json` and `SHA256SUMS.txt` — provenance and integrity information.
+
+The canonical infrastructure lives at `tools/blender/second_rite_asset_core.py`.
+From the repository root, synchronize or check the toolkit copy with
+`python tools/blender/sync_asset_core.py` and
+`python tools/blender/sync_asset_core.py --check`.
 
 ## Requirements
 
@@ -73,6 +79,13 @@ The generated `.blend` contains the exporter as a Text block. It can also be loa
 - Bounds-center mode is also available.
 - Shape keys can be baked into separate static files: `__basis`, `__tall`, `__round`, and so on.
 - Materials remain simple OBJ/MTL-compatible diffuse groups for the current LÖVE loader.
+- Roots also carry version-1 `sr_` item-display metadata. The generated scene
+  embeds the exporter, shared core, contract, materials, and readme as Text
+  blocks, so standalone copies do not need the repository at export time.
+- The exporter first tries normal and real-file sibling-vendor imports. When it
+  is executed from a Blender Text block, where `__file__` is absent or not a
+  filesystem path, it loads one shared core from the embedded Text block and
+  keeps that module in `sys.modules`.
 
 ## Editing the library
 

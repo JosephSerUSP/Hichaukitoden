@@ -1,0 +1,18 @@
+{
+  "branch": "agent/phase-4-baseline-v2-integration",
+  "startingCommit": "f351fb0",
+  "pythonVersion": "3.10.9",
+  "blenderExecutable": "C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe",
+  "blenderVersion": "5.1.2 (ec6e62d40fa9)",
+  "hostVerification": {"threeRunExact": true, "testsPassed": 19, "testsFailed": 0},
+  "canonicalAssetsModified": true,
+  "canonicalRaycastingAbsent": true,
+  "assets": {
+    "wall_ritual_pilasters": {"fieldHashVerified": true, "meshCreated": true, "blendCreated": true, "previewCreated": true, "previewPatchTiles": 3, "visualReviewPassed": true},
+    "floor_broken_flagstones": {"fieldHashVerified": true, "meshCreated": true, "blendCreated": true, "previewCreated": true, "previewPatchTiles": 3, "visualReviewPassed": true},
+    "ceiling_shallow_coffers": {"fieldHashVerified": true, "meshCreated": true, "blendCreated": true, "previewCreated": true, "previewPatchTiles": 3, "visualReviewPassed": true},
+    "wall_ossuary_boulders": {"fieldHashVerified": true, "meshCreated": true, "blendCreated": true, "previewCreated": true, "previewPatchTiles": 3, "visualReviewPassed": true}
+  },
+  "phase4V2PreviewGatePassed": true,
+  "safeToIntegrate": true
+}

@@ -21,9 +21,15 @@ than cosmetic:
 """
 
 import math
+import sys
+from pathlib import Path
 
 import bmesh
 import bpy
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(_REPO_ROOT / "tools" / "blender"))
+import second_rite_asset_core as asset_core  # noqa: E402
 
 
 # Geometry sits between these two planes. The base surface is the wall/floor
@@ -32,17 +38,11 @@ BASE_Z = 0.0
 DEPTH_RANGE = 0.25
 
 
-def _clear():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-
-
-def _mesh_from_bmesh(name, bm):
-    mesh = bpy.data.meshes.new(name)
-    bm.to_mesh(mesh)
-    bm.free()
-    obj = bpy.data.objects.new(name, mesh)
-    bpy.context.collection.objects.link(obj)
-    return obj
+_clear = lambda: asset_core.reset_scene(factory=True)
+_mesh_from_bmesh = asset_core.mesh_object_from_bmesh
+_rotation_matrix = asset_core.rotation_matrix
+bevel = lambda obj, width, segments=3: asset_core.add_bevel_modifier(
+    obj, width, segments, name="bevel", angle_degrees=30.0)
 
 
 def slab(name, centre, size, spin=0.0):
@@ -100,33 +100,20 @@ def sphere(name, centre, radius, segments=32):
     return _mesh_from_bmesh(name, bm)
 
 
-def _rotation_matrix(axis, angle):
-    from mathutils import Matrix
-    return Matrix.Rotation(angle, 4, axis)
-
-
-def bevel(obj, width, segments=3):
-    """Round an edge so depth-to-image reads it as stone, not as a cut."""
-    modifier = obj.modifiers.new(name="bevel", type="BEVEL")
-    modifier.width = width
-    modifier.segments = segments
-    modifier.limit_method = "ANGLE"
-    modifier.angle_limit = math.radians(30)
-    return obj
-
-
-def boolean(target, cutter, operation="DIFFERENCE"):
-    """Carve `cutter` out of `target` and hide the cutter from sampling."""
-    modifier = target.modifiers.new(name="bool", type="BOOLEAN")
-    modifier.operation = operation
-    modifier.object = cutter
-    modifier.solver = "EXACT"
+def mark_cutter(cutter, target, operation):
+    """Keep depth-specific cutter bookkeeping beside the depth recipes."""
     # Deliberately left visible: a hidden object drops out of the depsgraph and
     # the boolean has nothing to evaluate against. `_bake_modifiers` deletes
     # cutters after baking, which is what keeps them out of the depth raycast.
     cutter["is_cutter"] = True
     cutter["cut_target"] = target.name
     cutter["cut_operation"] = operation
+    return cutter
+
+
+def boolean(target, cutter, operation="DIFFERENCE"):
+    target = asset_core.add_boolean_modifier(target, cutter, operation)
+    mark_cutter(cutter, target, operation)
     return target
 
 
@@ -1214,4 +1201,23 @@ def build(preset):
     _, axes = PRESETS[preset]()
     _wrap_cutters(axes)
     wrap_copies(_bake_modifiers(), axes)
+    asset_core.tag_asset_target(
+        bpy.context.scene,
+        asset_id=preset,
+        representation="plane",
+        role="surface_material",
+        authoring_space="depth_tile",
+        placement_frame="surface_domain",
+        states=["default"],
+        default_state="default",
+        variants=[],
+        extra={
+            "sr_surface": SURFACE[preset],
+            "sr_view": VIEW[preset],
+            "sr_tile_axes": axes,
+            "sr_depth_product": "depth_guide",
+            "sr_metric_depth_deferred": True,
+            "sr_default_metric_range_cells": 0.25,
+        },
+    )
     return axes
