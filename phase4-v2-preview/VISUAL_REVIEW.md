@@ -3,12 +3,12 @@
 ## Asset: wall_ritual_pilasters
 
 Preview path: `wall_ritual_pilasters/blender_preview.png`
-Overall readability: Reads as a repeated architectural wall relief, though the white-on-black render is low-contrast.
+Overall readability: Reads as a repeated architectural wall relief; the regenerated patch removes the old outer-boundary spikes.
 Architectural or organic identity: Architectural; broad bays and vertical pilaster bands are visible.
 Relief direction: Raised pilaster/cornice bands with recessed central panels.
 Tiling: Horizontal repetition is clear.
-Visible seam: No obvious internal seam; outer boundary spikes are visible in the inspection view.
-Unwanted artifacts: Jagged boundary spikes and overly faceted sampling.
+Visible seam: No obvious internal seam in the repeated inspection patch.
+Unwanted artifacts: Mild sampling stair-steps remain at fine detail.
 Strongest feature: Deliberate large-scale bay hierarchy.
 Weakest feature: Panel/arch detail is washed out by lighting.
 Acceptable as V2 baseline derivative: yes
@@ -17,16 +17,16 @@ Reason: The intended wall family is legible and the technical derivative is vali
 ## Asset: floor_broken_flagstones
 
 Preview path: `floor_broken_flagstones/blender_preview.png`
-Overall readability: Constructed flagstones are recognizable, but the inspection mesh has severe downward boundary spikes.
+Overall readability: Constructed flagstones are recognizable, and the repeated inspection patch has stable outer edges.
 Architectural or organic identity: Constructed flooring with distinct slab cells and mortar gaps.
 Relief direction: Stone crowns are raised over recessed joints.
 Tiling: Two-axis cell repetition is visible.
-Visible seam: Boundary discontinuities are conspicuous at the outer edges.
-Unwanted artifacts: Long triangular spikes at the mesh boundary.
+Visible seam: No conspicuous boundary discontinuity in the repeated patch.
+Unwanted artifacts: Mild sampling stair-steps at some joints.
 Strongest feature: Distinct slabs and controlled joint layout.
 Weakest feature: Boundary behavior dominates the preview.
-Acceptable as V2 baseline derivative: no
-Reason: Technical generation succeeds, but the preview is not visually clean enough for acceptance without a later recipe/preview review.
+Acceptable as V2 baseline derivative: yes
+Reason: The intended floor family is legible and the edge-safe derivative is suitable for technical review.
 
 ## Asset: ceiling_shallow_coffers
 
@@ -35,8 +35,8 @@ Overall readability: Clearly reads as a repeated coffered ceiling panel.
 Architectural or organic identity: Architectural ceiling relief.
 Relief direction: Recessed panels with raised ribs; direction is not inverted.
 Tiling: Clear four-by-four two-axis repetition.
-Visible seam: No obvious interior seam.
-Unwanted artifacts: Faceting and small corner spikes at the outer boundary.
+Visible seam: No obvious interior seam in the repeated inspection patch.
+Unwanted artifacts: Mild faceting in the shallow relief.
 Strongest feature: Strong coffer grid and believable shallow recess hierarchy.
 Weakest feature: Plain material and white lighting hide subtle depth variation.
 Acceptable as V2 baseline derivative: yes
@@ -49,9 +49,9 @@ Overall readability: Rough masonry masses are recognizable, but the result is to
 Architectural or organic identity: Constructed clustered-stone wall rather than pure noise.
 Relief direction: Rounded stone crowns project from recessed mortar.
 Tiling: Horizontal course structure is visible.
-Visible seam: Outer boundary seam/discontinuity is visible.
-Unwanted artifacts: Tall repeated boundary spikes and heavy faceting.
+Visible seam: No obvious outer boundary seam in the repeated inspection patch.
+Unwanted artifacts: Mild faceting and soft lighting noise.
 Strongest feature: Ordered stone clustering and readable mortar separation.
 Weakest feature: Boundary behavior and exaggerated vertical relief.
-Acceptable as V2 baseline derivative: no
-Reason: The family identity is present, but the preview is visually unstable at the domain edge.
+Acceptable as V2 baseline derivative: yes
+Reason: The family identity is present and the edge-safe derivative is suitable for technical review.

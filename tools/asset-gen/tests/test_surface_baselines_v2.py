@@ -84,12 +84,34 @@ class SurfaceBaselinesV2Tests(unittest.TestCase):
                 self.assertEqual(first_metadata["authoringSpace"], "depth_tile")
                 self.assertEqual(first_metadata["placementFrame"], "surface_domain")
 
+    def test_canonical_png_encoder_round_trips(self):
+        from io import BytesIO
+        from PIL import Image
+        eight = [0, 1, 127, 255]
+        with Image.open(BytesIO(surface.png_bytes(eight, 2, "L"))) as image:
+            self.assertEqual([int(value) for value in image.getdata()], eight)
+        sixteen = [1, 32768, 40000, 65535]
+        with Image.open(BytesIO(surface.png_bytes(sixteen, 2, "I;16"))) as image:
+            self.assertEqual([int(value) for value in image.getdata()], sixteen)
+
+    def test_canonical_png_encoder_has_fixed_structure(self):
+        data = surface.png_bytes([0, 1, 2, 3], 2, "L")
+        self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertTrue(data.endswith(b"IEND\xaeB`\x82"))
+        idat = data.index(b"IDAT") + 4
+        self.assertEqual(data[idat:idat + 2], b"\x78\x01")
+
+    def test_source_hash_normalizes_line_endings(self):
+        self.assertEqual(surface.normalized_source_bytes(b"one\r\ntwo\rthree\n"), b"one\ntwo\nthree\n")
+        self.assertEqual(surface.sha256(surface.normalized_source_bytes(b"a\r\nb\r\n")), surface.sha256(surface.normalized_source_bytes(b"a\nb\n")))
+
     def test_write_and_verify_complete_set(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             surface.write_baselines(root, sorted(surface.RECIPES), 65, 3)
             manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(len(manifest["baselines"]), 4)
+            self.assertEqual(manifest["pngSerializer"], surface.PNG_SERIALIZER)
             with tempfile.TemporaryDirectory() as second_directory:
                 second = Path(second_directory)
                 surface.write_baselines(second, sorted(surface.RECIPES), 65, 3)
@@ -122,6 +144,9 @@ class SurfaceBaselinesV2Tests(unittest.TestCase):
         source = preview_path.read_text(encoding="utf-8")
         self.assertIn('"canonical": False', source)
         self.assertIn("fieldQ15LeSha256", source)
+        self.assertIn("PATCH_TILES = 3", source)
+        self.assertIn("_sample_axis", source)
+        self.assertNotIn("flat_shade", source)
         self.assertNotIn("ray_cast", source)
         self.assertNotIn("BVHTree", source)
 

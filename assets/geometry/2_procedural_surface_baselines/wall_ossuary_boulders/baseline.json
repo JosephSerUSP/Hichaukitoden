@@ -12,27 +12,29 @@
   },
   "description": "Deterministic courses of irregular elliptical stones with deep mortar, chipped crowns, and fissures.",
   "displayName": "Ossuary Boulder Wall",
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "guideEncoding": {
     "contrast": 112,
     "file": "depth_guide.png",
     "medianQ15": 3353,
     "mode": "L",
     "neutral": 128,
-    "p99AbsoluteDeviationQ15": 13153
+    "p99AbsoluteDeviationQ15": 13153,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "hashes": {
-    "depthGuidePngSha256": "702b7b528c33fd3b666a4b79b048c185d3cb2b05d39176a3a450f32c26b4f6bc",
+    "depthGuidePngSha256": "23ba32aca4f7c32b8a166e5566969f435d97a15d66b5b1f41eb6a1b742a63571",
     "fieldQ15LeSha256": "bf7b661fbb419c3732e24033c6a4c964136749900117b248f2ef291dcae36037",
-    "generatorSourceSha256": "a8847d30f6fc04ffe29457cd95d383a9736414ee39d37b8a1e4a94c2e191e7c0",
-    "heightMetricPngSha256": "3d58c02bd6247c78ace950a7a15240d59f6a3652084d863c1ae1a10c23e77d0a"
+    "generatorSourceSha256": "6b61753f99347a3756e163769d6541e38d8775d3443dcc7bc9f49edc16c6021e",
+    "heightMetricPngSha256": "633cec25baae34be4dc2753df2cc1572fb4df43d439f0c236dc02f8af373f7bb"
   },
   "materialId": "rough_limestone",
   "metricEncoding": {
     "file": "height_metric.png",
     "formula": "round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)",
     "mode": "I;16",
-    "neutral": 32768
+    "neutral": 32768,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "placementFrame": "surface_domain",
   "rangeCells": 0.25,

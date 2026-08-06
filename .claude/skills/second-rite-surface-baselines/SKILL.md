@@ -69,6 +69,10 @@ Use intentional forms before noise:
 
 Do not use noise as the design.
 
+## Canonical serialization
+
+Use only the repository-owned fixed PNG encoder in `surface_baselines_v2.py`. Do not replace it with Pillow, libpng, or Blender image saving. Normalize source line endings before provenance hashing.
+
 ## Encodings
 
 ### Metric product

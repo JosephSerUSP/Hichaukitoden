@@ -32,6 +32,9 @@ if str(CORE_DIR) not in sys.path:
 import second_rite_asset_core as asset_core  # noqa: E402
 
 
+PATCH_TILES = 3
+
+
 def load_generator():
     spec = importlib.util.spec_from_file_location("second_rite_surface_v2", GENERATOR_PATH)
     if spec is None or spec.loader is None:
@@ -61,28 +64,44 @@ def sample_indices(source_size: int, mesh_size: int) -> list[int]:
             for index in range(mesh_size)]
 
 
+def _sample_axis(global_index: int, period: int, tileable: bool) -> int:
+    if tileable:
+        return global_index % period
+    return min(period, max(0, global_index))
+
+
 def make_mesh(name: str, field: list[int], source_size: int, mesh_size: int,
-              range_cells: float):
+              range_cells: float, tile_axes: str):
     indices = sample_indices(source_size, mesh_size)
+    period = mesh_size - 1
+    start = -period
+    stop = period * 2
+    grid_size = stop - start + 1
     vertices = []
     faces = []
-    for row, source_y in enumerate(indices):
-        y = row / (mesh_size - 1) - 0.5
-        for column, source_x in enumerate(indices):
-            x = column / (mesh_size - 1) - 0.5
+    for global_row in range(start, stop + 1):
+        local_row = _sample_axis(global_row, period, "y" in tile_axes)
+        source_y = indices[local_row]
+        y = global_row / period - 0.5
+        for global_column in range(start, stop + 1):
+            local_column = _sample_axis(global_column, period, "x" in tile_axes)
+            source_x = indices[local_column]
+            x = global_column / period - 0.5
             value = field[source_y * source_size + source_x]
             z = value / 32767.0 * range_cells
             vertices.append((x, y, z))
-    for row in range(mesh_size - 1):
-        for column in range(mesh_size - 1):
-            a = row * mesh_size + column
+    for row in range(grid_size - 1):
+        for column in range(grid_size - 1):
+            a = row * grid_size + column
             b = a + 1
-            c = a + mesh_size + 1
-            d = a + mesh_size
+            c = a + grid_size + 1
+            d = a + grid_size
             faces.append((a, b, c, d))
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     return obj
@@ -114,12 +133,10 @@ def configure_scene(obj, metadata: dict, output_dir: Path, render_size: int) -> 
     material = asset_core.make_material(
         "SurfacePreviewMaterial",
         semantic_id=metadata["materialId"],
-        roughness=0.92,
+        roughness=0.88,
         metallic=0.0,
     )
     asset_core.assign_material(obj, material)
-    asset_core.flat_shade(obj)
-
     bpy.ops.object.light_add(type="AREA", location=(-1.5, -1.8, 2.6))
     key = bpy.context.object
     key.name = "PreviewKey"
@@ -135,11 +152,11 @@ def configure_scene(obj, metadata: dict, output_dir: Path, render_size: int) -> 
     fill.data.size = 2.8
     aim_at(fill, Vector((0.0, 0.0, 0.0)))
 
-    bpy.ops.object.camera_add(location=(1.35, -1.55, 1.25))
+    bpy.ops.object.camera_add(location=(0.0, -0.28, 2.45))
     camera = bpy.context.object
     camera.name = "PreviewCamera"
     camera.data.type = "ORTHO"
-    camera.data.ortho_scale = 1.42
+    camera.data.ortho_scale = 1.08
     aim_at(camera, Vector((0.0, 0.0, 0.0)))
     scene.camera = camera
 
@@ -169,6 +186,7 @@ def main() -> None:
         metadata["size"],
         min(args.mesh_size, metadata["size"]),
         metadata["rangeCells"],
+        metadata["tileAxes"],
     )
     asset_core.tag_asset_target(
         obj,
@@ -186,6 +204,7 @@ def main() -> None:
             "sr_recipe_version": metadata["recipeVersion"],
             "sr_field_q15_sha256": expected_hash,
             "sr_range_cells": metadata["rangeCells"],
+            "sr_preview_patch_tiles": PATCH_TILES,
             "sr_preview_only": True,
         },
     )
@@ -200,6 +219,7 @@ def main() -> None:
         "fieldQ15LeSha256": expected_hash,
         "meshVertices": len(obj.data.vertices),
         "meshFaces": len(obj.data.polygons),
+        "previewPatchTiles": PATCH_TILES,
         "canonical": False,
     }, sort_keys=True))
 

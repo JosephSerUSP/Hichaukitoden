@@ -12,27 +12,29 @@
   },
   "description": "Periodic irregular flagstone cells with mortar joints, crowns, chips, and varied course height.",
   "displayName": "Broken Flagstone Floor",
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "guideEncoding": {
     "contrast": 112,
     "file": "depth_guide.png",
     "medianQ15": 5204,
     "mode": "L",
     "neutral": 128,
-    "p99AbsoluteDeviationQ15": 13804
+    "p99AbsoluteDeviationQ15": 13804,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "hashes": {
-    "depthGuidePngSha256": "534ccc703fcddb0c65131f5442c8655c20901d1c0eb08b21e0dbd8be1184701a",
+    "depthGuidePngSha256": "d2e1273154d4a550d19d00abcdb1c7322f3db928ca90c35ca0e446541a4ff728",
     "fieldQ15LeSha256": "522edf75718059c420c2e116f78b69ffa2433b8e8d716e89c30532791e38c669",
-    "generatorSourceSha256": "a8847d30f6fc04ffe29457cd95d383a9736414ee39d37b8a1e4a94c2e191e7c0",
-    "heightMetricPngSha256": "de737f7703c383e21ba5a363edb01ae01266e3973b3c6ceacdbe5967e62683c9"
+    "generatorSourceSha256": "6b61753f99347a3756e163769d6541e38d8775d3443dcc7bc9f49edc16c6021e",
+    "heightMetricPngSha256": "54447ccea0bf5a75dde5bd4151aa6667a7eaea6e159621f990e9ed5384552b28"
   },
   "materialId": "rough_limestone",
   "metricEncoding": {
     "file": "height_metric.png",
     "formula": "round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)",
     "mode": "I;16",
-    "neutral": 32768
+    "neutral": 32768,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "placementFrame": "surface_domain",
   "rangeCells": 0.25,

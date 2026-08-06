@@ -12,27 +12,29 @@
   },
   "description": "Four-by-four coffer grid with raised ribs, bevelled recesses, and restrained central bosses.",
   "displayName": "Shallow Coffered Ceiling",
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "guideEncoding": {
     "contrast": 112,
     "file": "depth_guide.png",
     "medianQ15": 5259,
     "mode": "L",
     "neutral": 128,
-    "p99AbsoluteDeviationQ15": 12541
+    "p99AbsoluteDeviationQ15": 12541,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "hashes": {
-    "depthGuidePngSha256": "7f2bdcf0083a948094b92cdd476b10318e2d1562da1c00a730bf0cc282f6378c",
+    "depthGuidePngSha256": "4cf22716c6f36c82025fc77eb16c911f8b9d748e4bfc179337f1cc42fd720e5e",
     "fieldQ15LeSha256": "12f15ad4179bed3f475726b6f3893deb44971e063d9ea1e6c682b348b40271ba",
-    "generatorSourceSha256": "a8847d30f6fc04ffe29457cd95d383a9736414ee39d37b8a1e4a94c2e191e7c0",
-    "heightMetricPngSha256": "4b5e4f3e511a9ba514348e6097df1ddc81a029ac937ec7b6631d5031c0d72380"
+    "generatorSourceSha256": "6b61753f99347a3756e163769d6541e38d8775d3443dcc7bc9f49edc16c6021e",
+    "heightMetricPngSha256": "c473434592538f122862537e34f849d26b47fb0ea95ce3cf35dd7d10457e8449"
   },
   "materialId": "old_limestone",
   "metricEncoding": {
     "file": "height_metric.png",
     "formula": "round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)",
     "mode": "I;16",
-    "neutral": 32768
+    "neutral": 32768,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "placementFrame": "surface_domain",
   "rangeCells": 0.25,

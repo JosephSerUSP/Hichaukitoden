@@ -65,10 +65,7 @@ tools/asset-gen/surface_baselines_v2.py
 assets/geometry/2_procedural_surface_baselines/
 ```
 
-Canonical V2 outputs are fixed-point scalar fields serialized as
-`height_metric.png` and `depth_guide.png`. Blender creates preview meshes and
-renders only after checking the recorded field hash. It never ray-casts the
-preview back into canonical pixels.
+Canonical V2 outputs are fixed-point scalar fields serialized as `height_metric.png` and `depth_guide.png` by a repository-owned fixed PNG encoder. Source provenance normalizes line endings. Blender creates a 3×3 repeated or edge-padded preview patch only after checking the recorded field hash, and never ray-casts it back into canonical pixels.
 
 See `docs/asset-pipeline/SURFACE_BASELINES_V2.md` for recipes, encodings,
 commands, assets, and validation gates.

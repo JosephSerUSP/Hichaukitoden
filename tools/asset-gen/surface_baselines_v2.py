@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import math
+import struct
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,7 +29,8 @@ METRIC_NEUTRAL = 32768
 GUIDE_NEUTRAL = 128
 GUIDE_CONTRAST = 112
 SCHEMA_VERSION = 1
-GENERATOR_VERSION = 1
+GENERATOR_VERSION = 2
+PNG_SERIALIZER = "second_rite_png_v1_filter0_stored_deflate"
 
 
 @dataclass(frozen=True)
@@ -386,19 +388,78 @@ def guide_values(field: list[int]) -> tuple[list[int], int, int]:
     return guide, median, scale
 
 
-def png_bytes(values: list[int], size: int, mode: str) -> bytes:
-    from io import BytesIO
-    from PIL import Image
+def _crc32(data: bytes) -> int:
+    crc = 0xFFFFFFFF
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            crc = (crc >> 1) ^ (0xEDB88320 if crc & 1 else 0)
+    return crc ^ 0xFFFFFFFF
 
-    image = Image.new(mode, (size, size))
-    image.putdata(values)
-    stream = BytesIO()
-    image.save(stream, format="PNG", compress_level=9, optimize=False)
-    return stream.getvalue()
+
+def _adler32(data: bytes) -> int:
+    a = 1
+    b = 0
+    modulus = 65521
+    for start in range(0, len(data), 5552):
+        for byte in data[start:start + 5552]:
+            a += byte
+            b += a
+        a %= modulus
+        b %= modulus
+    return (b << 16) | a
+
+
+def _stored_zlib(data: bytes) -> bytes:
+    output = bytearray(b"\x78\x01")
+    if not data:
+        output.extend(b"\x01\x00\x00\xff\xff")
+    for start in range(0, len(data), 65535):
+        block = data[start:start + 65535]
+        final = start + len(block) >= len(data)
+        output.append(1 if final else 0)
+        length = len(block)
+        output.extend(struct.pack("<HH", length, length ^ 0xFFFF))
+        output.extend(block)
+    output.extend(struct.pack(">I", _adler32(data)))
+    return bytes(output)
+
+
+def _png_chunk(chunk_type: bytes, payload: bytes) -> bytes:
+    framed = chunk_type + payload
+    return struct.pack(">I", len(payload)) + framed + struct.pack(">I", _crc32(framed))
+
+
+def png_bytes(values: list[int], size: int, mode: str) -> bytes:
+    if len(values) != size * size:
+        raise ValueError(f"PNG values have {len(values)} samples; expected {size * size}")
+    if mode == "L":
+        bit_depth = 8
+        row_bytes = size
+        sample_bytes = bytes(clamp(value, 0, 255) for value in values)
+    elif mode == "I;16":
+        bit_depth = 16
+        row_bytes = size * 2
+        sample_bytes = b"".join(struct.pack(">H", clamp(value, 0, 65535)) for value in values)
+    else:
+        raise ValueError(f"unsupported canonical PNG mode: {mode}")
+    scanlines = bytearray()
+    for row in range(size):
+        scanlines.append(0)
+        start = row * row_bytes
+        scanlines.extend(sample_bytes[start:start + row_bytes])
+    ihdr = struct.pack(">IIBBBBB", size, size, bit_depth, 0, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + _png_chunk(b"IHDR", ihdr) + _png_chunk(b"IDAT", _stored_zlib(bytes(scanlines))) + _png_chunk(b"IEND", b"")
+
+
+def normalized_source_bytes(data: bytes | None = None) -> bytes:
+    raw = Path(__file__).read_bytes() if data is None else data
+    text = raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    return text.encode("utf-8")
 
 
 def source_hash() -> str:
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    return hashlib.sha256(normalized_source_bytes()).hexdigest()
 
 
 def sha256(data: bytes) -> str:
@@ -446,6 +507,7 @@ def baseline_artifacts(asset_id: str, size: int = DEFAULT_SIZE) -> tuple[dict[st
             "mode": "I;16",
             "neutral": METRIC_NEUTRAL,
             "formula": "round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)",
+            "serializer": PNG_SERIALIZER,
         },
         "guideEncoding": {
             "file": "depth_guide.png",
@@ -454,6 +516,7 @@ def baseline_artifacts(asset_id: str, size: int = DEFAULT_SIZE) -> tuple[dict[st
             "contrast": GUIDE_CONTRAST,
             "medianQ15": guide_median,
             "p99AbsoluteDeviationQ15": guide_scale,
+            "serializer": PNG_SERIALIZER,
         },
         "reliefCells": {"min": round(relief_min, 8), "max": round(relief_max, 8)},
         "hashes": {
@@ -506,13 +569,23 @@ def write_baselines(out_dir: Path, asset_ids: Iterable[str], size: int, runs: in
         "schemaVersion": SCHEMA_VERSION,
         "generatorVersion": GENERATOR_VERSION,
         "generatorSourceSha256": source_hash(),
+        "pngSerializer": PNG_SERIALIZER,
         "size": size,
         "rangeCells": DEFAULT_RANGE_CELLS,
         "baselines": sorted(entries, key=lambda item: item["assetId"]),
     }
     (out_dir / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     return manifest
+
+
+def _png_decoded_values(path: Path) -> list[int] | None:
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    with Image.open(path) as image:
+        return [int(value) for value in image.getdata()]
 
 
 def compare_directories(expected: Path, actual: Path) -> list[str]:
@@ -522,8 +595,30 @@ def compare_directories(expected: Path, actual: Path) -> list[str]:
     if expected_files != actual_files:
         problems.append(f"file set differs: expected={expected_files}, actual={actual_files}")
     for relative in sorted(set(expected_files) & set(actual_files)):
-        if (expected / relative).read_bytes() != (actual / relative).read_bytes():
-            problems.append(f"content differs: {relative.as_posix()}")
+        expected_path = expected / relative
+        actual_path = actual / relative
+        expected_bytes = expected_path.read_bytes()
+        actual_bytes = actual_path.read_bytes()
+        if expected_bytes == actual_bytes:
+            continue
+        if relative.suffix.lower() == ".png":
+            expected_values = _png_decoded_values(expected_path)
+            actual_values = _png_decoded_values(actual_path)
+            if expected_values is not None and actual_values is not None:
+                if expected_values == actual_values:
+                    problems.append(f"container differs but decoded pixels match: {relative.as_posix()}")
+                    continue
+                changed = sum(a != b for a, b in zip(expected_values, actual_values))
+                problems.append(f"decoded pixels differ ({changed} samples): {relative.as_posix()}")
+                continue
+        if relative.suffix.lower() == ".json":
+            try:
+                if json.loads(expected_bytes) == json.loads(actual_bytes):
+                    problems.append(f"JSON formatting differs but values match: {relative.as_posix()}")
+                    continue
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                pass
+        problems.append(f"content differs: {relative.as_posix()}")
     return problems
 
 

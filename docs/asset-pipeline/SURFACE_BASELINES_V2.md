@@ -55,7 +55,7 @@ It uses only deterministic integer operations for canonical geometry:
 - explicit copying of declared periodic edges;
 - deterministic median and p99 guide normalization.
 
-Pillow is used only to serialize already-determined integer samples to PNG.
+Canonical PNGs use a repository-owned fixed encoder with filter-0 scanlines and uncompressed DEFLATE stored blocks. Source provenance normalizes line endings before hashing, so Windows and Linux checkouts produce identical canonical bytes.
 
 Generate the complete baseline set:
 
@@ -147,9 +147,11 @@ The script:
 1. loads the recipe directly;
 2. regenerates the Q15 field;
 3. compares it with `baseline.json`'s field hash;
-4. creates a mesh with `mesh.from_pydata`;
-5. assigns shared contract and material metadata;
-6. saves a `.blend` and render in the requested temporary directory.
+4. creates a 3×3 inspection patch with the canonical tile in the centre;
+5. wraps declared tile axes and edge-pads undeclared axes;
+6. keeps every open mesh boundary outside a near-normal camera;
+7. assigns shared contract and material metadata;
+8. saves a `.blend` and render in the requested temporary directory.
 
 The `.blend` and render are inspection derivatives and must not be used to
 reconstruct the canonical PNGs.

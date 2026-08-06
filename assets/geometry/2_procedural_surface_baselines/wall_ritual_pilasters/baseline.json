@@ -12,27 +12,29 @@
   },
   "description": "Repeated pilaster bays, recessed ritual panels, arch moulding, cornice, and base course.",
   "displayName": "Ritual Pilaster Wall",
-  "generatorVersion": 1,
+  "generatorVersion": 2,
   "guideEncoding": {
     "contrast": 112,
     "file": "depth_guide.png",
     "medianQ15": -6321,
     "mode": "L",
     "neutral": 128,
-    "p99AbsoluteDeviationQ15": 12476
+    "p99AbsoluteDeviationQ15": 12476,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "hashes": {
-    "depthGuidePngSha256": "b333d3747a9d47de82533e7392b686f2c8676a69a2205036b8582cc4a585515e",
+    "depthGuidePngSha256": "c0dd683a2db5ac98a361f3faa79f58598bd3283f981d80efbaa2f0d9ae1778d7",
     "fieldQ15LeSha256": "0f9fddfeb2f0665988e1c6510108c24d5e430b1d6293a18f78a3e53b8886b344",
-    "generatorSourceSha256": "a8847d30f6fc04ffe29457cd95d383a9736414ee39d37b8a1e4a94c2e191e7c0",
-    "heightMetricPngSha256": "c7cb59bfa8e0b98f76d45c53480e9d0f59dec621f14bfc69fe1bfc1759a91dd3"
+    "generatorSourceSha256": "6b61753f99347a3756e163769d6541e38d8775d3443dcc7bc9f49edc16c6021e",
+    "heightMetricPngSha256": "6a1f3717312049a2f7cdd3c0bff07eaa7f1c553bfac22d0e9a66de31ea8879cc"
   },
   "materialId": "old_limestone",
   "metricEncoding": {
     "file": "height_metric.png",
     "formula": "round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)",
     "mode": "I;16",
-    "neutral": 32768
+    "neutral": 32768,
+    "serializer": "second_rite_png_v1_filter0_stored_deflate"
   },
   "placementFrame": "surface_domain",
   "rangeCells": 0.25,
