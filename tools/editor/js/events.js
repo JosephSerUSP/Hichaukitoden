@@ -213,19 +213,67 @@
                 pageMode || !document.getElementById('event-prop-color-enabled').checked;
         }
 
+        function getPresentationFormState() {
+            const mMode = document.getElementById('event-prop-model-mode').value;
+            const mPath = document.getElementById('event-prop-model-path').value.trim();
+            const fMode = document.getElementById('event-prop-focus-mode').value;
+            const fPreset = document.getElementById('event-prop-focus-preset').value;
+            return {
+                modelMode: mMode,
+                modelValue: mMode === 'override' ? mPath : (mMode === 'suppress' ? false : undefined),
+                focusMode: fMode,
+                focusValue: fMode === 'override' ? { kind: fPreset } : (fMode === 'suppress' ? false : undefined)
+            };
+        }
+
+        function setPresentationFormUI(target) {
+            target = target || {};
+            const mVal = target.model;
+            const fVal = target.interactionFocus;
+
+            let mMode = 'inherit';
+            let mPath = '';
+            if (mVal === false) {
+                mMode = 'suppress';
+            } else if (typeof mVal === 'string' && mVal !== '') {
+                mMode = 'override';
+                mPath = mVal;
+            }
+            document.getElementById('event-prop-model-mode').value = mMode;
+            document.getElementById('event-prop-model-path').value = mPath;
+
+            let fMode = 'inherit';
+            let fPreset = 'low_prop';
+            if (fVal === false) {
+                fMode = 'suppress';
+            } else if (fVal && typeof fVal === 'object' && fVal.kind) {
+                fMode = 'override';
+                fPreset = fVal.kind;
+            } else if (typeof fVal === 'string' && fVal !== '') {
+                fMode = 'override';
+                fPreset = fVal;
+            }
+            document.getElementById('event-prop-focus-mode').value = fMode;
+            document.getElementById('event-prop-focus-preset').value = fPreset;
+            if (typeof window.updateEventPresentationControls === 'function') {
+                window.updateEventPresentationControls();
+            }
+        }
+
         // Write the currently displayed tab's inputs back into the working
         // model. On a page, an EMPTY field is OMITTED from the page object
         // (absent = inherit from base — resolvePage overlays any present key).
         function commitEventPageFields() {
+            const formState = getPresentationFormState();
             if (activeEventPageIdx === -1) {
-                eventBaseFieldStash = {
-                    name: document.getElementById('event-prop-name').value,
-                    label: document.getElementById('event-prop-label').value,
-                    trigger: document.getElementById('event-prop-trigger').value,
-                    sprite: window.activeEventSpritePath || '',
-                    logicCommon: document.getElementById('event-logic-common').checked,
-                    scriptId: document.getElementById('event-prop-script-id').value
-                };
+                eventBaseFieldStash = eventBaseFieldStash || {};
+                eventBaseFieldStash.name = document.getElementById('event-prop-name').value;
+                eventBaseFieldStash.label = document.getElementById('event-prop-label').value;
+                eventBaseFieldStash.trigger = document.getElementById('event-prop-trigger').value;
+                eventBaseFieldStash.sprite = window.activeEventSpritePath || '';
+                eventBaseFieldStash.logicCommon = document.getElementById('event-logic-common').checked;
+                eventBaseFieldStash.scriptId = document.getElementById('event-prop-script-id').value;
+                EventPresentation.serializeEventPresentation(formState, eventBaseFieldStash);
                 return;
             }
             const page = activeEventPages[activeEventPageIdx];
@@ -236,6 +284,7 @@
             setOrOmit('condition', document.getElementById('event-prop-page-condition').value.trim());
             setOrOmit('sprite', window.activeEventSpritePath || '');
             setOrOmit('trigger', document.getElementById('event-prop-trigger').value);
+            EventPresentation.serializeEventPresentation(formState, page);
             if (document.getElementById('event-logic-inherit').checked) {
                 delete page.commands;
                 delete page.scriptId;
@@ -258,6 +307,7 @@
                 document.getElementById('event-prop-label').value = s.label || '';
                 document.getElementById('event-prop-trigger').value = s.trigger || 'interact';
                 updateEventGraphicPreview(s.sprite || '');
+                setPresentationFormUI(s);
                 document.getElementById(s.logicCommon ? 'event-logic-common' : 'event-logic-custom').checked = true;
                 if (s.scriptId !== undefined && s.scriptId !== '') {
                     document.getElementById('event-prop-script-id').value = s.scriptId;
@@ -271,6 +321,7 @@
                 }
                 document.getElementById('event-prop-trigger').value = p.trigger !== undefined ? p.trigger : '';
                 updateEventGraphicPreview(p.sprite || '');
+                setPresentationFormUI(p);
                 if (p.scriptId !== undefined) {
                     document.getElementById('event-logic-common').checked = true;
                     document.getElementById('event-prop-script-id').value = String(p.scriptId);
@@ -355,6 +406,29 @@
                 eventModalDirty = true;
             });
         }
+
+        window.updateEventPresentationControls = function() {
+            const mEl = document.getElementById('event-prop-model-mode');
+            const mRow = document.getElementById('event-prop-model-path-row');
+            if (mEl && mRow) {
+                mRow.style.display = mEl.value === 'override' ? 'flex' : 'none';
+            }
+
+            const fEl = document.getElementById('event-prop-focus-mode');
+            const fSel = document.getElementById('event-prop-focus-preset');
+            if (fEl && fSel) {
+                fSel.style.display = fEl.value === 'override' ? 'block' : 'none';
+            }
+        };
+
+        window.openAssetPickerForEventModel = function() {
+            openAssetPicker('models', (filepath) => {
+                filepath = filepath.replace(/\\/g, '/');
+                const pathInput = document.getElementById('event-prop-model-path');
+                if (pathInput) pathInput.value = filepath;
+                eventModalDirty = true;
+            });
+        };
 
         function toggleEventLogicType() {
             const isCommon = document.getElementById('event-logic-common').checked;
@@ -445,6 +519,17 @@
             } else {
                 delete eventData.scriptId;
                 eventData.commands = activeEventCommands;
+            }
+
+            if (eventBaseFieldStash && Object.prototype.hasOwnProperty.call(eventBaseFieldStash, 'model')) {
+                eventData.model = eventBaseFieldStash.model;
+            } else {
+                delete eventData.model;
+            }
+            if (eventBaseFieldStash && Object.prototype.hasOwnProperty.call(eventBaseFieldStash, 'interactionFocus')) {
+                eventData.interactionFocus = eventBaseFieldStash.interactionFocus;
+            } else {
+                delete eventData.interactionFocus;
             }
 
             // Pages: only written when non-empty; deleting the last page

@@ -99,6 +99,10 @@
   "12": {
     "name": "Treasure Chest Loot",
     "label": "Treasure Chest",
+    "model": "assets/models/dungeon/dungeon_chest.obj",
+    "interactionFocus": {
+      "kind": "low_prop"
+    },
     "sprite": "assets/sprites/OBJ_TreasureChest_001.png",
     "minimapColor": [
       0.8,
@@ -109,7 +113,11 @@
       {
         "cmd": "CHANGE_ITEM",
         "item": "random",
-        "count": 1
+        "count": 1,
+        "announce": true
+      },
+      {
+        "cmd": "ERASE_EVENT"
       }
     ]
   },

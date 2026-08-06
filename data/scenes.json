@@ -3549,6 +3549,167 @@
     ]
   },
   {
+    "id": "recruit",
+    "name": "Creature Recruitment",
+    "kind": "menu",
+    "draw": "windows",
+    "backdrop": "map",
+    "hooks": {
+      "on_enter": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onEnterRecruitScene(ctx)"
+        }
+      ],
+      "on_up": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'up')"
+        }
+      ],
+      "on_down": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'down')"
+        }
+      ],
+      "on_left": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'left')"
+        }
+      ],
+      "on_right": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'right')"
+        }
+      ],
+      "on_select": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onSelectRecruitScene(ctx)"
+        }
+      ],
+      "on_cancel": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onCancelRecruitScene(ctx)"
+        }
+      ],
+      "on_exit": [
+        {
+          "cmd": "SCRIPT",
+          "code": "require('engine.recruitment').onExitRecruitScene(ctx)"
+        }
+      ]
+    },
+    "windows": [
+      {
+        "id": "recruit_header",
+        "content": [
+          {
+            "type": "text",
+            "text": "Creature Recruitment Contract"
+          }
+        ]
+      },
+      {
+        "id": "recruit_onboarding",
+        "visible": "v.showOnboarding",
+        "content": [
+          {
+            "type": "text",
+            "text": "Inspect candidate stats and equipment before recruiting. Recruited creatures join Active Party or Reserve Roster."
+          }
+        ]
+      },
+      {
+        "id": "recruit_profile",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "text",
+            "text": "Lv.{v.candidateLevel or 1} {v.candidateName or ''}"
+          }
+        ]
+      },
+      {
+        "id": "recruit_stats",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "text",
+            "text": "HP: {v.candidateHp}/{v.candidateMaxHp}  ATK:{v.atk} DEF:{v.def} MAT:{v.mat} MDF:{v.mdf}"
+          }
+        ]
+      },
+      {
+        "id": "recruit_skills",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:candidateSkills",
+            "format": "{name}"
+          }
+        ]
+      },
+      {
+        "id": "recruit_passives",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:candidatePassives",
+            "format": "{name}"
+          }
+        ]
+      },
+      {
+        "id": "recruit_equipment",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "list",
+            "listId": "v:candidateEquipment",
+            "format": "{name}"
+          }
+        ]
+      },
+      {
+        "id": "recruit_requirement",
+        "visible": "not v.showOnboarding and (v.mode or 1) == 1",
+        "content": [
+          {
+            "type": "text",
+            "text": "Press [Confirm] to offer contract. Press [Cancel] to leave."
+          }
+        ]
+      },
+      {
+        "id": "recruit_formation",
+        "visible": "not v.showOnboarding and v.mode == 2",
+        "content": [
+          {
+            "type": "text",
+            "text": "Select Formation Destination Slot (1-4 Active, 5-8 Reserve)"
+          }
+        ]
+      },
+      {
+        "id": "recruit_confirm",
+        "visible": "not v.showOnboarding and v.mode == 3",
+        "content": [
+          {
+            "type": "text",
+            "text": "Finalize Recruitment Contract? [Confirm] Yes  [Cancel] Back"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "battle",
     "name": "Battle",
     "kind": "battle",

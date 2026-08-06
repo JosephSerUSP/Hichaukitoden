@@ -622,24 +622,106 @@ local function sampleLight(light, x, y, fx, fy)
     return r + (r2 - r) * fy, g + (g2 - g) * fy, b + (b2 - b) * fy
 end
 
-local spriteImageCache = {}
-function viewport_3d.resolveEventSpritePath(ev, session)
-    if not ev then return nil end
-    ev = exploration.resolvePage(ev, session)
-    -- Sprite precedence: the map event's own sprite, else the default sprite
-    -- of the common event it links to (template-style inheritance).
-    local path = ev.sprite
-    if (not path or path == "") and ev.scriptId and session and session.loader and session.loader.commonEvents then
-        local ce = session.loader.commonEvents[tostring(ev.scriptId)]
-        path = ce and ce.sprite or nil
+function viewport_3d.cameraSpaceDepth(wx, wy, wz, cameraX, cameraY, cameraZ, dirX, dirY, cameraPitch)
+    local horizDepth = (wx - cameraX) * dirX + (wy - cameraY) * dirY
+    if not cameraPitch or cameraPitch == 0 then
+        return horizDepth
     end
-    if not path or path == "" then return nil end
-
-    if love.filesystem.getInfo(path) then return path end
-    local resolved = small_battlers.resolveFile(path)
-    return resolved and resolved.path or nil
+    local vert = (wz or 0) - cameraZ
+    return horizDepth * math.cos(cameraPitch) - vert * math.sin(cameraPitch)
 end
 
+function viewport_3d.resolveEventPresentation(ev, session)
+    if not ev then return { visual = nil } end
+    ev = exploration.resolvePage(ev, session)
+
+    local ce = nil
+    if ev.scriptId and session and session.loader and session.loader.commonEvents then
+        ce = session.loader.commonEvents[tostring(ev.scriptId)]
+    end
+
+    local function getField(key)
+        if ev[key] ~= nil then
+            if ev[key] == false or ev[key] == "" then return false end
+            return ev[key]
+        elseif ce and ce[key] ~= nil then
+            if ce[key] == false or ce[key] == "" then return false end
+            return ce[key]
+        end
+        return nil
+    end
+
+    local rawModel = getField("model")
+    local rawSprite = getField("sprite")
+    local rawFocus = getField("interactionFocus")
+
+    local modelPath = (type(rawModel) == "string" and rawModel ~= "") and rawModel or nil
+    local spritePath = nil
+    if type(rawSprite) == "string" and rawSprite ~= "" then
+        if love.filesystem.getInfo(rawSprite) then
+            spritePath = rawSprite
+        else
+            local resolved = small_battlers.resolveFile(rawSprite)
+            spritePath = resolved and resolved.path or nil
+        end
+    end
+
+    local interactionFocus = nil
+    if type(rawFocus) == "table" then
+        interactionFocus = rawFocus
+    elseif type(rawFocus) == "string" and rawFocus ~= "" then
+        interactionFocus = { kind = rawFocus }
+    end
+
+    local visual = nil
+    local finalModel = nil
+    local finalSprite = nil
+
+    if modelPath then
+        visual = "model"
+        finalModel = modelPath
+    elseif spritePath then
+        visual = "sprite"
+        finalSprite = spritePath
+    end
+
+    return {
+        model = finalModel,
+        sprite = finalSprite,
+        interactionFocus = interactionFocus,
+        visual = visual,
+        page = ev,
+    }
+end
+
+function viewport_3d.resolveEventSpritePath(ev, session)
+    local pres = viewport_3d.resolveEventPresentation(ev, session)
+    return pres.sprite
+end
+
+function viewport_3d.collectEventModelPlacements(session)
+    local placements = {}
+    local mapData = session and session.currentMapData
+    if mapData and mapData.events then
+        for _, rawEv in ipairs(mapData.events) do
+            if not rawEv.wallEvent then
+                local pres = viewport_3d.resolveEventPresentation(rawEv, session)
+                if pres.visual == "model" and pres.model then
+                    table.insert(placements, {
+                        model = pres.model,
+                        x = rawEv.x + 1.5,
+                        y = rawEv.y + 1.5,
+                        event = rawEv,
+                        presentation = pres
+                    })
+                end
+            end
+        end
+    end
+    return placements
+end
+
+local spriteImageCache = {}
 local function getEventSprite(ev, session)
     local path = viewport_3d.resolveEventSpritePath(ev, session)
     if not path then return nil end
@@ -1135,8 +1217,15 @@ local function drawWorldSpace(session)
     if doorProgress > 0 then
         cx, cy = cx + dirX * doorProgress * 0.22, cy + dirY * doorProgress * 0.22
     end
+    local focusCam = require("presentation.world_focus").getCameraOverride()
+    if focusCam and (focusCam.dollyX ~= 0 or focusCam.dollyY ~= 0) then
+        cx = cx + (focusCam.dollyX or 0)
+        cy = cy + (focusCam.dollyY or 0)
+    end
     local cameraX, cameraY = cx + 1, cy + 1
     local cameraZ = 0.5
+    local pitchVal = (focusCam and focusCam.pitch) or 0.0
+
     local surfaces = {}
     local pendingFloorModels = {}
     local pendingCeilingModels = {}
@@ -1147,7 +1236,7 @@ local function drawWorldSpace(session)
     local function quadVisible(a, b, c, d)
         local minDepth, maxDepth = math.huge, -math.huge
         for _, point in ipairs({ a, b, c, d }) do
-            local depth = (point.x - cameraX) * dirX + (point.y - cameraY) * dirY
+            local depth = viewport_3d.cameraSpaceDepth(point.x, point.y, point.z or 0, cameraX, cameraY, cameraZ, dirX, dirY, pitchVal)
             minDepth = math.min(minDepth, depth)
             maxDepth = math.max(maxDepth, depth)
         end
@@ -1815,10 +1904,17 @@ local function drawWorldSpace(session)
             nil, "billboard")
     end
     if mapData and mapData.events then
-        for _, ev in ipairs(mapData.events) do
-            if not ev.wallEvent then
-                local image = getEventSprite(ev, session)
-                if image then addBillboard(image, ev.x, ev.y) end
+        for _, rawEv in ipairs(mapData.events) do
+            if not rawEv.wallEvent then
+                local presentation = viewport_3d.resolveEventPresentation(rawEv, session)
+                if presentation.visual == "model" and presentation.model then
+                    local modelSpec = { model = presentation.model }
+                    local cacheKey = "event-model:" .. (rawEv.id or "ev") .. ":" .. presentation.model .. ":" .. rawEv.x .. "," .. rawEv.y
+                    queuePlacedModels(ensurePlacedModel(modelSpec, cacheKey, rawEv.x + 1.5, rawEv.y + 1.5, "x"))
+                elseif presentation.visual == "sprite" then
+                    local image = getEventSprite(rawEv, session)
+                    if image then addBillboard(image, rawEv.x, rawEv.y) end
+                end
             end
         end
     end
@@ -1853,12 +1949,14 @@ local function drawWorldSpace(session)
     if mapData and mapData.ceilingStyle == "sky" then
         drawSkyBackdrop(atlas, viewportWidth, viewportHeight, cAngle)
     end
+    local fovScale = (focusCam and focusCam.fovScale) or 1.0
     love.graphics.setShader(shader)
     shader:send("cameraPosition", { cameraX, cameraY, cameraZ })
     shader:send("cameraForward", { dirX, dirY })
     shader:send("cameraRight", { rightX, rightY })
-    shader:send("fovHalfX", 0.75)
-    shader:send("fovHalfY", 0.421875)
+    shader:send("cameraPitch", pitchVal)
+    shader:send("fovHalfX", 0.75 * fovScale)
+    shader:send("fovHalfY", 0.421875 * fovScale)
     shader:send("nearPlane", 0.05)
     shader:send("farPlane", 32.0)
     shader:send("baseViewportWidth", baseViewportWidth)

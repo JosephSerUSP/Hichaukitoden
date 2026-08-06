@@ -51,10 +51,11 @@ local BattlerMT = {
     end
 }
 
-function Battler.new(actorData, level, growthSeed)
+function Battler.new(actorData, level, growthSeed, instanceId)
     local self = setmetatable({}, BattlerMT)
     self.actorData = actorData
     self.id = actorData.id
+    self.instanceId = instanceId
     self.name = actorData.name
     self.meta = actorData.meta or {}
     self.level = level or actorData.level or 1
@@ -82,7 +83,7 @@ function Battler.new(actorData, level, growthSeed)
     -- must not be able to re-roll a level-up.
     --
     -- Without an explicit seed the actor's own stable seed is used, so enemies,
-    -- previews and the golden harness stay reproducible; session:recruitActor
+    -- previews and the golden harness stay reproducible; session:createPersistentBattler
     -- supplies a real per-instance seed for creatures the player keeps.
     self.growthSeed = growthSeed or growthMod.defaultSeed(actorData)
     -- Accumulated permanent growth, replayed from the seed for a creature that
@@ -289,8 +290,29 @@ function GameSession.new(loader)
     -- Town storage is deliberately separate from the expedition reserve.
     self.storage = {}
     
+    -- Monotonic creature instance ID counter for persistent player-owned creatures
+    self.nextCreatureInstanceId = 1
+    -- Persistent recruit nodes keyed by sourceKey
+    self.recruitNodes = {}
+    
     session.activeSession = self
     return self
+end
+
+function GameSession:allocateCreatureInstanceId()
+    local id = self.nextCreatureInstanceId or 1
+    self.nextCreatureInstanceId = id + 1
+    return "creature:" .. tostring(id)
+end
+
+function GameSession:createPersistentBattler(actorData, level, options)
+    options = options or {}
+    local instId = options.instanceId or self:allocateCreatureInstanceId()
+    local seed = options.growthSeed or math.random(1, 2147483646)
+    local battler = Battler.new(actorData, level, seed, instId)
+    battler.name = options.name or randomAllyName(actorData)
+    battler.hp = battler:getMaxHp(self)
+    return battler
 end
 
 function GameSession:initializeStartingParty()
@@ -306,9 +328,7 @@ function GameSession:initializeStartingParty()
     for i, m in ipairs(members) do
         local actorData = self.loader.getActor(m.id)
         if actorData then
-            local battler = Battler.new(actorData, m.level)
-            battler.name = m.name or randomAllyName(actorData)
-            battler.hp = battler:getMaxHp(self)
+            local battler = self:createPersistentBattler(actorData, m.level, { name = m.name })
             
             local targetSlot = m.slot
             if not formation.isValidSlot(targetSlot) or self.party[targetSlot] then
@@ -396,14 +416,7 @@ function GameSession:recruitActor(actorId, level, preferredSlot)
         return nil, "Actor not found"
     end
     level = level or actorData.level or 1
-    -- A creature the player KEEPS gets a genuine per-instance growth seed, so
-    -- two Pixies recruited from the same pool grow into different creatures.
-    -- Enemies and previews keep the actor's stable default (Battler.new), which
-    -- is what holds the golden harness reproducible: this draw happens only on
-    -- recruitment, a path the fixtures never take.
-    local battler = Battler.new(actorData, level, math.random(1, 2147483646))
-    battler.name = randomAllyName(actorData)
-    battler.hp = battler:getMaxHp(self)
+    local battler = self:createPersistentBattler(actorData, level)
 
     -- Check preferred active party slot first
     if formation.isValidSlot(preferredSlot) and not self.party[preferredSlot] then

@@ -489,8 +489,10 @@ check(fixtureModelsOk and fixtureModelDraws >= 2,
     "model-backed wall and floor fixtures share the live world model path"
         .. (fixtureModelsOk and (" (draws=" .. fixtureModelDraws .. ")")
             or (": " .. tostring(fixtureModelsError))))
-check(fixtureModelsOk and (viewport3d.getLastFrameStats().worldEffectHandles or 0) == 1,
-    "an authored fixture effect spawns in the world camera pass")
+if require("presentation.effekseer").available() then
+    check(fixtureModelsOk and (viewport3d.getLastFrameStats().worldEffectHandles or 0) == 1,
+        "an authored fixture effect spawns in the world camera pass")
+end
 -- World effects need a view with RECEDING DEPTH to be observable at all. The
 -- 3x3 fixture above faces a wall one cell away, so the depth buffer rejects
 -- particles behind it and every effect measures as zero pixels no matter how
@@ -519,6 +521,7 @@ local worldEffectCases = {
 -- already-stopped effect, and measured as one instance emitting nothing. That
 -- is the engine's "loader data is shared and immutable" rule biting a test that
 -- mutated it in place, not a renderer fault.
+if require("presentation.effekseer").available() then
 for caseIndex, case in ipairs(worldEffectCases) do
     local tilesetId = "world_effect_render_test_" .. caseIndex
     loader.tilesets[tilesetId] = {
@@ -599,11 +602,13 @@ for caseIndex, case in ipairs(worldEffectCases) do
     loader.tilesets[tilesetId] = nil
     loader.tilesets[baselineId] = nil
 end
+end
 
 -- Ambient weather is a MAP-level effect, not a cell fixture: one handle for the
 -- whole map, kept at the camera. Anchored to a cell it would stay behind the
 -- player, and one endless placement costs ~1,900 of a 2,000 instance budget, so
 -- a per-cell weather idiom starves every other effect (roadmap 6.5.1g).
+if require("presentation.effekseer").available() then
 loader.tilesets.ambient_render_test = {
     id = "ambient_render_test", texture = baseModelTileset.texture,
     base = baseModelTileset.base, doors = baseModelTileset.doors,
@@ -714,6 +719,7 @@ viewport3d.invalidateStructure(ambientBaselineSession)
 require("presentation.effekseer").reset()
 loader.tilesets.ambient_render_test = nil
 loader.tilesets.model_fixture_render_test = nil
+end
 
 local cacheProbe = {
     mapGrid = eastWestOpening,

@@ -62,7 +62,7 @@
             "label": "Recruit Pixie",
             "commands": [
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 1,
                 "level": 1
               },
@@ -319,7 +319,7 @@
                         "label": "Recruit Skeleton",
                         "commands": [
                           {
-                            "cmd": "RECRUIT_ACTOR",
+                            "cmd": "OPEN_RECRUIT",
                             "actorId": 3,
                             "level": 1
                           },
@@ -483,7 +483,7 @@
                 "text": "Angel accepts the offering. 'May divine light guide our path.'"
               },
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 4,
                 "level": 1
               },
@@ -940,7 +940,7 @@
             "label": "Recruit Nurse",
             "commands": [
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 8,
                 "level": 1
               },
@@ -1084,7 +1084,7 @@
                 "text": "Imp snatches the coins greedily. 'Keke! Deal!'"
               },
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 9,
                 "level": 1
               },
@@ -1219,7 +1219,7 @@
                         "label": "Recruit Golem",
                         "commands": [
                           {
-                            "cmd": "RECRUIT_ACTOR",
+                            "cmd": "OPEN_RECRUIT",
                             "actorId": 10,
                             "level": 2
                           },
@@ -1474,7 +1474,7 @@
                 "text": "The Ooze absorbs the potion and bubbles with delight!"
               },
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 12,
                 "level": 1
               },
@@ -1609,7 +1609,7 @@
             "label": "Recruit Bat",
             "commands": [
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 13,
                 "level": 1
               },
@@ -1759,7 +1759,7 @@
                 "text": "The Wisp absorbs the potion and glows brightly with gratitude!"
               },
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 14,
                 "level": 1
               },
@@ -2390,7 +2390,7 @@
             "label": "Recruit Candle",
             "commands": [
               {
-                "cmd": "RECRUIT_ACTOR",
+                "cmd": "OPEN_RECRUIT",
                 "actorId": 20,
                 "level": 1
               },

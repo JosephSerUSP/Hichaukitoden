@@ -7,6 +7,7 @@ local sessionModule = require("engine.session")
 local interpreter = require("engine.interpreter")
 local config = require("engine.config")
 local savegame = require("engine.savegame")
+local recruitment = require("engine.recruitment")
 local GameSession = sessionModule.GameSession
 
 print("[TEST] Starting creature recruitment system tests...")
@@ -35,7 +36,10 @@ mockLoader = {
         return mockLoader.actors[id]
     end,
     getActorByRole = function(role) return { id = 99, name = "Summoner", role = role } end,
-    getItem = function(self, id) return self.items[id] end,
+    getItem = function(a, b)
+        local id = b ~= nil and b or a
+        return mockLoader.items[id]
+    end,
     getTerm = function(self, key, default) return default end,
     formatTerm = function(self, key, default, p1) return (default:gsub("{0}", tostring(p1))) end,
     system = { combat = { encounterChance = 0.1 } }
@@ -60,7 +64,7 @@ for _, actorData in ipairs(realLoader.actors) do
         local found = false
         local function scan(cmds)
             for _, c in ipairs(cmds or {}) do
-                if c.cmd == "RECRUIT_ACTOR" then found = true end
+                if c.cmd == "OPEN_RECRUIT" or c.cmd == "RECRUIT" then found = true end
                 for _, opt in ipairs(c.options or {}) do scan(opt.commands) end
                 scan(c.commands); scan(c.onVictory); scan(c.onDefeat)
                 scan(c["then"]); scan(c["else"]); scan(c.elseCommands)
@@ -68,7 +72,7 @@ for _, actorData in ipairs(realLoader.actors) do
         end
         scan(ev)
         assert(found, "actor " .. tostring(actorData.id)
-            .. " recruitEvent never reaches RECRUIT_ACTOR")
+            .. " recruitEvent never reaches OPEN_RECRUIT or RECRUIT")
 
         -- A challenge recruit fights the creature itself and continues on
         -- victory. Before BATTLE could carry a troop or resume, it fought the
@@ -159,18 +163,18 @@ assert(refused == nil and refusedReason == "Cannot dismiss the last active creat
     "Dismiss must never leave the active party empty")
 print("  [PASS] Dungeon dismissal transfers instances and protects the last active creature")
 
--- Test 3: Interpreter command handlers (RECRUIT_ACTOR, ERASE_EVENT, CHANGE_ITEM)
+-- Test 3: Interpreter command handlers (OPEN_RECRUIT, ERASE_EVENT, CHANGE_ITEM)
 sess.inventory[1] = 5
 local ctx = { session = sess, events = {} }
 
 interpreter.runImmediate({
     { cmd = "CHANGE_ITEM", item = 1, count = -2 },
-    { cmd = "RECRUIT_ACTOR", actorId = 4, level = 2 }
+    { cmd = "OPEN_RECRUIT", actorId = 4, level = 2 }
 }, ctx)
 
 assert(sess.inventory[1] == 3, "CHANGE_ITEM did not deduct items correctly")
-assert(sess.reserve[2] ~= nil and sess.reserve[2].id == 4, "RECRUIT_ACTOR did not add Angel to reserve")
-print("  [PASS] Interpreter commands CHANGE_ITEM and RECRUIT_ACTOR executed cleanly")
+assert(sess.reserve[2] ~= nil and sess.reserve[2].actorData.id == 4, "OPEN_RECRUIT did not add Angel to reserve")
+print("  [PASS] Interpreter commands CHANGE_ITEM and OPEN_RECRUIT executed cleanly")
 
 -- Test 4: ERASE_EVENT removes map event
 sess.currentMapData = {
@@ -241,6 +245,200 @@ interpreter.runImmediate(angelOptScript, { session = sess, events = {} })
 assert(sess.gold == 0, "Recruiting Angel did not deduct 30 gold")
 assert(#sess.currentMapData.events == 0, "Recruiting Angel did not erase the map event")
 print("  [PASS] End-to-end gold recruitment script executed successfully")
+
+
+-- Test 8: canonical transaction costs are deferred and charged exactly once.
+local itemSess = GameSession.new(mockLoader)
+itemSess.flags.recruit_onboarding_shown = true
+itemSess.inventory[1] = 3
+local itemNode = recruitment.getOrCreateRecruitNode(itemSess, mockLoader,
+    "test:item-cost", 13, 1, {
+        requirement = { type = "item", itemRequired = 1, amount = 2 }
+    })
+local itemCtx = {
+    session = itemSess, loader = mockLoader, events = {},
+    v = { sourceKey = "test:item-cost", mode = 1, slotIdx = 1 },
+}
+recruitment.onSelectRecruitScene(itemCtx)
+assert(itemNode.requirementSatisfied and itemCtx.v.mode == 2,
+    "Affordable item requirement did not advance to placement")
+assert(itemSess.inventory[1] == 3,
+    "Item requirement was consumed before final transaction commit")
+recruitment.onSelectRecruitScene(itemCtx)
+assert(itemCtx.v.mode == 3, "Recruitment did not enter confirmation mode")
+recruitment.onSelectRecruitScene(itemCtx)
+assert(itemSess.inventory[1] == 1, "Item recruitment cost was not charged exactly once")
+assert(itemSess.party[1] and itemSess.party[1].instanceId == itemNode.recruitedInstanceId,
+    "Committed item recruit did not place its persistent candidate")
+print("  [PASS] Item recruitment validates first and charges exactly once")
+
+local goldSess = GameSession.new(mockLoader)
+goldSess.flags.recruit_onboarding_shown = true
+goldSess.gold = 50
+local goldNode = recruitment.getOrCreateRecruitNode(goldSess, mockLoader,
+    "test:gold-cost", 13, 1, {
+        requirement = { type = "gold", goldCost = 30 }
+    })
+local goldCtx = {
+    session = goldSess, loader = mockLoader, events = {},
+    v = { sourceKey = "test:gold-cost", mode = 1, slotIdx = 1 },
+}
+recruitment.onSelectRecruitScene(goldCtx)
+assert(goldNode.requirementSatisfied and goldSess.gold == 50,
+    "Gold requirement must not charge before confirmation")
+recruitment.onSelectRecruitScene(goldCtx)
+recruitment.onSelectRecruitScene(goldCtx)
+assert(goldSess.gold == 20, "Gold recruitment cost was not charged exactly once")
+print("  [PASS] Gold recruitment validates first and charges exactly once")
+
+-- Deprecated quantity aliases are rejected instead of silently disagreeing.
+local badAmountOk, badAmountErr = pcall(function()
+    recruitment.getOrCreateRecruitNode(GameSession.new(mockLoader), mockLoader,
+        "test:obsolete-amount", 13, 1, {
+            requirement = { type = "item", itemRequired = 1, amountRequired = 2 }
+        })
+end)
+assert(not badAmountOk and tostring(badAmountErr):find("use 'amount'", 1, true),
+    "Obsolete item quantity fields must fail loud")
+print("  [PASS] Item requirement has one canonical quantity field")
+
+-- Test 9: failed or malformed placement is lossless and cannot overwrite.
+local blockedSess = GameSession.new(mockLoader)
+blockedSess.inventory[1] = 2
+local existing = assert(blockedSess:recruitActor(13, 1))
+local blockedNode = recruitment.getOrCreateRecruitNode(blockedSess, mockLoader,
+    "test:blocked-placement", 13, 1, {
+        requirement = { type = "item", itemRequired = 1, amount = 2 }
+    })
+blockedNode.requirementSatisfied = true
+local blockedPlan = recruitment.buildCommitPlan(blockedSess, blockedNode,
+    { isReserve = false, slot = 1 })
+local blockedOk, blockedErr = recruitment.applyCommitPlan(blockedSess, blockedPlan)
+assert(not blockedOk and blockedErr == "Destination slot is occupied",
+    "Occupied destination without an explicit move must fail")
+assert(blockedSess.inventory[1] == 2 and blockedSess.party[1] == existing,
+    "Failed placement charged a cost or overwrote its occupant")
+assert(not blockedNode.completed and blockedNode.candidate,
+    "Failed placement destroyed the persistent candidate")
+print("  [PASS] Malformed placement cannot overwrite or charge")
+
+-- Active displacement into reserve keeps the exact existing instance.
+local displacedPlan = recruitment.buildCommitPlan(blockedSess, blockedNode,
+    { isReserve = false, slot = 1, substituteSlot = 1 })
+local displacedOk, displacedErr = recruitment.applyCommitPlan(blockedSess, displacedPlan)
+assert(displacedOk, displacedErr)
+assert(blockedSess.reserve[1] == existing,
+    "Occupied active creature was not moved intact to reserve")
+assert(blockedSess.inventory[1] == nil,
+    "Successful displacement did not charge the item cost exactly once")
+print("  [PASS] Active-slot substitution is atomic")
+
+-- Full town storage rejects a reserve replacement without charging.
+local fullSess = GameSession.new(mockLoader)
+for i = 1, config.MAX_PARTY_SIZE + config.MAX_RESERVE_SIZE do
+    assert(fullSess:recruitActor(13, 1))
+end
+for i = 1, config.MAX_STORAGE_SIZE do
+    fullSess.storage[i] = fullSess:createPersistentBattler(mockLoader.actors[13], 1)
+end
+fullSess.gold = 99
+local fullNode = recruitment.getOrCreateRecruitNode(fullSess, mockLoader,
+    "test:full-storage", 13, 1, {
+        requirement = { type = "gold", goldCost = 40 }
+    })
+fullNode.requirementSatisfied = true
+local fullPlan = recruitment.buildCommitPlan(fullSess, fullNode, {
+    isReserve = true, slot = 1, dismissIndex = 1, dismissIsReserve = true,
+})
+local fullOk, fullErr = recruitment.applyCommitPlan(fullSess, fullPlan)
+assert(not fullOk and fullErr == "Town storage is full!", "Full storage must reject replacement")
+assert(fullSess.gold == 99 and not fullNode.completed and fullNode.candidate,
+    "Full-storage failure charged or destroyed candidate state")
+print("  [PASS] Full expedition and storage failure is lossless")
+
+-- Test 10: challenge resume compiles into a new OPEN_RECRUIT continuation and
+-- reuses the same persistent candidate instead of transient host state.
+local compileSess = GameSession.new(mockLoader)
+local challengeGraph = interpreter.runInteractive({
+    {
+        cmd = "OPEN_RECRUIT", actorId = 13, sourceKey = "test:challenge",
+        requirement = { type = "challenge" },
+        onRequirement = {
+            {
+                cmd = "BATTLE", troop = "test_troop",
+                onVictory = { { cmd = "RESUME_RECRUIT", result = "requirement_satisfied" } },
+                onDefeat = {},
+            },
+        },
+        onCommitted = { { cmd = "TEXT", text = "joined" } },
+        onDeclined = { { cmd = "TEXT", text = "declined" } },
+    },
+}, { session = compileSess, loader = mockLoader, recoverParty = function() end })
+local resumeAction
+for _, graphNode in pairs(challengeGraph.nodes) do
+    if graphNode.action == "OPEN_RECRUIT"
+        and graphNode.requirement and graphNode.requirement.type == "resume" then
+        resumeAction = graphNode
+        break
+    end
+end
+assert(resumeAction, "RESUME_RECRUIT did not compile into a host OPEN_RECRUIT continuation")
+assert(resumeAction.sourceKey == "test:challenge" and resumeAction.committedNode,
+    "Compiled resume lost source identity or outcome continuation")
+
+local challengeNode = recruitment.getOrCreateRecruitNode(compileSess, mockLoader,
+    "test:challenge", 13, 1, { requirement = { type = "challenge" } })
+local challengeInstance = challengeNode.candidate.instanceId
+local resumedNode = recruitment.getOrCreateRecruitNode(compileSess, mockLoader,
+    resumeAction.sourceKey, resumeAction.actorId, resumeAction.level,
+    { requirement = resumeAction.requirement })
+assert(resumedNode == challengeNode and resumedNode.requirementSatisfied,
+    "Challenge resume did not satisfy the original persistent node")
+assert(resumedNode.candidate.instanceId == challengeInstance,
+    "Challenge resume rerolled the candidate instance")
+print("  [PASS] Challenge resume preserves source and candidate identity")
+
+local strayResumeOk, strayResumeErr = pcall(function()
+    interpreter.runInteractive({ { cmd = "RESUME_RECRUIT" } }, {
+        session = compileSess, loader = mockLoader, recoverParty = function() end,
+    })
+end)
+assert(not strayResumeOk and tostring(strayResumeErr):find("must be nested", 1, true),
+    "Stray RESUME_RECRUIT must fail during compilation")
+print("  [PASS] Stray challenge resume fails loud")
+
+-- Test 11: unresolved and completed recruit nodes round-trip without duplication.
+local saveSess = GameSession.new(mockLoader)
+local saveNode = recruitment.getOrCreateRecruitNode(saveSess, mockLoader,
+    "test:save-node", 13, 1, { requirement = { type = "free" } })
+local savedInstance = saveNode.candidate.instanceId
+local savePayload = savegame.serialize(saveSess, mockLoader, "map")
+local loadedSaveSess = savegame.deserialize(savePayload, mockLoader)
+local loadedNode = loadedSaveSess.recruitNodes["test:save-node"]
+assert(loadedNode and loadedNode.candidate
+        and loadedNode.candidate.instanceId == savedInstance,
+    "Unresolved recruit candidate identity did not survive save/load")
+local commitOk, commitErr = recruitment.commitRecruitNode(loadedSaveSess, mockLoader,
+    "test:save-node", { isReserve = false, slot = 1 })
+assert(commitOk, commitErr)
+local secondOk = recruitment.commitRecruitNode(loadedSaveSess, mockLoader,
+    "test:save-node", { isReserve = false, slot = 2 })
+assert(not secondOk, "Completed recruit node committed twice")
+local occurrences = 0
+for _, member in pairs(loadedSaveSess.party) do
+    if member.instanceId == savedInstance then occurrences = occurrences + 1 end
+end
+for _, member in pairs(loadedSaveSess.reserve) do
+    if member.instanceId == savedInstance then occurrences = occurrences + 1 end
+end
+assert(occurrences == 1, "Completed recruit candidate was duplicated")
+local completedPayload = savegame.serialize(loadedSaveSess, mockLoader, "map")
+local completedSess = savegame.deserialize(completedPayload, mockLoader)
+local completedNode = completedSess.recruitNodes["test:save-node"]
+assert(completedNode and completedNode.completed and not completedNode.candidate
+        and completedNode.recruitedInstanceId == savedInstance,
+    "Completed recruit node did not survive save/load")
+print("  [PASS] Persistent recruit nodes save, complete once, and do not duplicate")
 
 print("[TEST] All Creature Recruitment tests passed successfully!")
 

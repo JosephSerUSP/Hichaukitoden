@@ -2052,6 +2052,92 @@ elseif paramDef.type == "script" then
                     end
                 end
 
+                if id == "OPEN_RECRUIT" then
+                    if cmd.equipmentRules and type(cmd.equipmentRules) == "table" then
+                        local slotTypes = { [1] = "Weapon", [2] = "Armor", [3] = "Accessory" }
+                        for slot = 1, 3 do
+                            local rule = cmd.equipmentRules[slot]
+                            if rule then
+                                local expectedType = slotTypes[slot]
+                                local function checkEquipItem(itemId, slotDesc)
+                                    if itemId == nil then return end
+                                    local itemData = loader.getItem(itemId)
+                                    check(itemData ~= nil, ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " references missing item '" .. tostring(itemId) .. "'")
+                                    if itemData then
+                                        check(itemData.type == "equipment", ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " item '" .. tostring(itemId) .. "' is not type 'equipment'")
+                                        check(itemData.equipType == expectedType, ownerDesc .. " OPEN_RECRUIT equipment " .. slotDesc .. " item '" .. tostring(itemId) .. "' equipType '" .. tostring(itemData.equipType) .. "' does not match slot " .. expectedType)
+                                    end
+                                end
+                                if rule.item ~= nil then
+                                    checkEquipItem(rule.item, "slot " .. slot)
+                                end
+                                if rule.choices and type(rule.choices) == "table" then
+                                    for ci, c in ipairs(rule.choices) do
+                                        checkEquipItem(c.item, "slot " .. slot .. " choice " .. ci)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if cmd.states and type(cmd.states) == "table" then
+                        for si, sDef in ipairs(cmd.states) do
+                            local sId = type(sDef) == "table" and sDef.id or sDef
+                            check(loader.getState(sId) ~= nil, ownerDesc .. " OPEN_RECRUIT state #" .. si .. " references missing state '" .. tostring(sId) .. "'")
+                        end
+                    end
+                    if cmd.requirement ~= nil then
+                        local req = cmd.requirement
+                        check(type(req) == "table", ownerDesc .. " OPEN_RECRUIT requirement must be an object")
+                        if type(req) == "table" then
+                            local validRequirementTypes = { free=true, item=true, gold=true, challenge=true }
+                            check(validRequirementTypes[req.type or "free"] == true,
+                                ownerDesc .. " OPEN_RECRUIT requirement has unknown type '" .. tostring(req.type) .. "'")
+                            if req.type == "item" then
+                                check(req.itemRequired ~= nil, ownerDesc .. " OPEN_RECRUIT item requirement is missing itemRequired")
+                                if req.itemRequired ~= nil then
+                                    check(loader.getItem(req.itemRequired) ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing item '" .. tostring(req.itemRequired) .. "'")
+                                end
+                                check(req.amountRequired == nil and req.itemAmount == nil,
+                                    ownerDesc .. " OPEN_RECRUIT item requirement must use quantity field 'amount'")
+                                local amount = req.amount or 1
+                                check(type(amount) == "number" and amount >= 1 and amount == math.floor(amount),
+                                    ownerDesc .. " OPEN_RECRUIT item requirement amount must be a positive integer")
+                            elseif req.type == "gold" then
+                                check(type(req.goldCost) == "number" and req.goldCost >= 1
+                                        and req.goldCost == math.floor(req.goldCost),
+                                    ownerDesc .. " OPEN_RECRUIT goldCost must be a positive integer")
+                            elseif req.type == "challenge" and req.troop then
+                                check(loader.troops and loader.troops[req.troop] ~= nil, ownerDesc .. " OPEN_RECRUIT requirement references missing troop '" .. tostring(req.troop) .. "'")
+                            end
+                        end
+                    end
+
+                    local function containsResumeRecruit(cmds)
+                        for _, nested in ipairs(cmds or {}) do
+                            if nested.cmd == "RESUME_RECRUIT" then return true end
+                            for _, opt in ipairs(nested.options or {}) do
+                                if containsResumeRecruit(opt.commands) then return true end
+                            end
+                            for key, value in pairs(nested) do
+                                if key ~= "options" and type(value) == "table"
+                                    and type(value[1]) == "table" and value[1].cmd
+                                    and containsResumeRecruit(value) then
+                                    return true
+                                end
+                            end
+                        end
+                        return false
+                    end
+                    local hasResume = containsResumeRecruit(cmd.onRequirement)
+                    if cmd.requirement and cmd.requirement.type == "challenge" then
+                        check(type(cmd.onRequirement) == "table" and #cmd.onRequirement > 0,
+                            ownerDesc .. " OPEN_RECRUIT challenge requires onRequirement commands")
+                        check(hasResume, ownerDesc .. " OPEN_RECRUIT challenge onRequirement must reach RESUME_RECRUIT")
+                    else
+                        check(not hasResume, ownerDesc .. " RESUME_RECRUIT is only valid for a challenge requirement")
+                    end
+                end
+
                 if id == "SET_MAP_PRESENTATION" then
                     if cmd.tileset ~= nil then
                         check(loader.getTileset(cmd.tileset) ~= nil,
@@ -2673,9 +2759,163 @@ elseif paramDef.type == "script" then
                 end
             end
         end
+
+        local function validateDenseArray(tbl, desc)
+            check(type(tbl) == "table", desc .. " must be a table")
+            if type(tbl) ~= "table" then return 0 end
+            local count = 0
+            for key in pairs(tbl) do
+                check(type(key) == "number" and key >= 1 and key == math.floor(key),
+                    desc .. " must contain only positive integer indices")
+                count = count + 1
+            end
+            for i = 1, count do
+                check(tbl[i] ~= nil, desc .. " is sparse at index " .. i)
+            end
+            return count
+        end
+
+        -- Map treasures validation
+        if map.treasures ~= nil then
+            local tCount = validateDenseArray(map.treasures, "map '" .. tostring(map.name) .. "'.treasures")
+            for ti = 1, tCount do
+                local itemId = map.treasures[ti]
+                check(loader.getItem(itemId) ~= nil,
+                    "map '" .. tostring(map.name) .. "'.treasures[" .. ti .. "] references unknown item '" .. tostring(itemId) .. "'")
+            end
+        end
+
+        local KNOWN_FOCUS_PRESETS = { low_prop = true }
+        local function validatePresentation(pres, ownerDesc)
+            if pres.model ~= nil and pres.model ~= false then
+                check(type(pres.model) == "string" and pres.model ~= "", ownerDesc .. ".model must be a non-empty string or false")
+                if type(pres.model) == "string" and pres.model ~= "" then
+                    check(pres.model:sub(-4) == ".obj", ownerDesc .. ".model '" .. pres.model .. "' must be a .obj file")
+                    check(love.filesystem.getInfo(pres.model) ~= nil, ownerDesc .. ".model is missing (" .. pres.model .. ")")
+                end
+            end
+            if pres.interactionFocus ~= nil and pres.interactionFocus ~= false then
+                local kind = nil
+                if type(pres.interactionFocus) == "string" then
+                    kind = pres.interactionFocus
+                elseif type(pres.interactionFocus) == "table" then
+                    kind = pres.interactionFocus.kind
+                end
+                check(kind ~= nil and KNOWN_FOCUS_PRESETS[kind] == true,
+                    ownerDesc .. ".interactionFocus specifies unknown preset '" .. tostring(kind) .. "'")
+            end
+        end
+
+        for _, ev in ipairs(map.events or {}) do
+            local desc = "map '" .. tostring(map.name) .. "' event (" .. tostring(ev.x) .. "," .. tostring(ev.y) .. ")"
+            validatePresentation(ev, desc)
+            for pi, page in ipairs(ev.pages or {}) do
+                validatePresentation(page, desc .. " page " .. pi)
+            end
+        end
+
+        -- Registry-driven command scanner for CHANGE_ITEM random loot
+        local cmdDefsById = {}
+        for _, def in ipairs((loader.engine and loader.engine.commands) or {}) do
+            cmdDefsById[def.id] = def
+        end
+
+        local function commandListHasRandomLoot(cmds, visitedCEs)
+            if not cmds or type(cmds) ~= "table" then return false end
+            for _, cmd in ipairs(cmds) do
+                if cmd.cmd == "CHANGE_ITEM" and cmd.item == "random" then return true end
+
+                if cmd.scriptId or cmd.commonEventId or cmd.cmd == "CALL_COMMON_EVENT" then
+                    local ceId = tostring(cmd.commonEventId or cmd.scriptId)
+                    if ceId and not visitedCEs[ceId] then
+                        visitedCEs[ceId] = true
+                        local ce = loader.commonEvents and loader.commonEvents[ceId]
+                        if ce and ce.commands and commandListHasRandomLoot(ce.commands, visitedCEs) then return true end
+                    end
+                end
+
+                local def = cmdDefsById[cmd.cmd]
+                if def and def.params then
+                    for _, pdef in ipairs(def.params) do
+                        if pdef.type == "commands" then
+                            local val = cmd[pdef.key]
+                            if cmd.cmd == "CHOICE" and type(val) == "table" then
+                                for _, opt in ipairs(val) do
+                                    if opt.commands and commandListHasRandomLoot(opt.commands, visitedCEs) then return true end
+                                end
+                            elseif type(val) == "table" then
+                                if commandListHasRandomLoot(val, visitedCEs) then return true end
+                            end
+                        end
+                    end
+                else
+                    for key, val in pairs(cmd) do
+                        if key == "options" and type(val) == "table" then
+                            for _, opt in ipairs(val) do
+                                if opt.commands and commandListHasRandomLoot(opt.commands, visitedCEs) then return true end
+                            end
+                        elseif type(val) == "table" and val[1] and type(val[1]) == "table" and val[1].cmd then
+                            if commandListHasRandomLoot(val, visitedCEs) then return true end
+                        end
+                    end
+                end
+            end
+            return false
+        end
+
+        local function eventHasRandomLoot(ev, visitedCEs)
+            if ev.commands and commandListHasRandomLoot(ev.commands, visitedCEs) then return true end
+            for _, page in ipairs(ev.pages or {}) do
+                if page.commands and commandListHasRandomLoot(page.commands, visitedCEs) then return true end
+                if page.scriptId then
+                    local ceId = tostring(page.scriptId)
+                    if not visitedCEs[ceId] then
+                        visitedCEs[ceId] = true
+                        local ce = loader.commonEvents and loader.commonEvents[ceId]
+                        if ce and ce.commands and commandListHasRandomLoot(ce.commands, visitedCEs) then return true end
+                    end
+                end
+            end
+            if ev.scriptId then
+                local ceId = tostring(ev.scriptId)
+                if not visitedCEs[ceId] then
+                    visitedCEs[ceId] = true
+                    local ce = loader.commonEvents and loader.commonEvents[ceId]
+                    if ce and ce.commands and commandListHasRandomLoot(ce.commands, visitedCEs) then return true end
+                end
+            end
+            return false
+        end
+
+        local mapHasRandomLoot = false
+        for _, ev in ipairs(map.events or {}) do
+            if eventHasRandomLoot(ev, {}) then
+                mapHasRandomLoot = true
+                break
+            end
+        end
+        if mapHasRandomLoot then
+            check(type(map.treasures) == "table" and #map.treasures > 0,
+                "map '" .. tostring(map.name) .. "' uses CHANGE_ITEM item: 'random' but has missing or empty treasures array")
+        end
     end
 
     for ceId, ce in pairs(loader.commonEvents or {}) do
+        local desc = "common event '" .. tostring(ceId) .. "'"
+        if ce.model ~= nil and ce.model ~= false then
+            check(type(ce.model) == "string" and ce.model ~= "", desc .. ".model must be a non-empty string or false")
+            if type(ce.model) == "string" and ce.model ~= "" then
+                check(ce.model:sub(-4) == ".obj", desc .. ".model '" .. ce.model .. "' must be a .obj file")
+                check(love.filesystem.getInfo(ce.model) ~= nil, desc .. ".model is missing (" .. ce.model .. ")")
+            end
+        end
+        if ce.interactionFocus ~= nil and ce.interactionFocus ~= false then
+            local kind = nil
+            if type(ce.interactionFocus) == "string" then kind = ce.interactionFocus
+            elseif type(ce.interactionFocus) == "table" then kind = ce.interactionFocus.kind end
+            check(kind ~= nil and ({ low_prop = true })[kind] == true,
+                desc .. ".interactionFocus specifies unknown preset '" .. tostring(kind) .. "'")
+        end
         if ce.commands then
             validateCommands(ce.commands, "common", false, true, "common event '" .. tostring(ceId) .. "'")
             local labels, skips = {}, {}
