@@ -17,7 +17,7 @@ Navigation and verification commands: `git status --short --branch`, `git rev-pa
 | Blender Python recipes | `build_expanded_item_library.py` | FACT: yes | tracked source | Blender build | yes, as source | `scripts/build_library_windows.ps1` |
 | exporter | `second_rite_item_exporter.py` | FACT: yes | tracked source; embedded copy also generated | Blender OBJ export | source only | same build script |
 | inspection `.blend` | Blender build | no; inspection copy | generated/tracked in some bundles | human inspection | no; overwritten | item build or `blendergeom.py` |
-| OBJ/MTL | `second_rite_item_exporter.py` | runtime OBJ/MTL is authoritative input | generated/tracked | `presentation/item_model_view.lua`, `presentation/viewport_3d.lua`, `presentation/obj_model.lua`, `presentation/mesh.lua` | no | item build or prop-specific build |
+| OBJ/MTL | Blender exporter or prop-specific build pipeline | runtime OBJ/MTL is authoritative input | generated/tracked | `presentation/item_model_view.lua`, `presentation/viewport_3d.lua`, `presentation/obj_model.lua`, `presentation/mesh.lua` | no | item build or prop-specific build |
 | item manifest/preview | builder | no; report | generated | human/tooling | no | item build |
 | Blender depth PNG | `render_depth.py` | generated from `scenes.py` | tracked production input | `gen.py --height`, geometry authoring | no | `python tools/asset-gen/blendergeom.py` |
 | depth manifest | `blendergeom.py` | generated index | tracked | tooling/documentation | no | same |
@@ -35,7 +35,7 @@ Navigation and verification commands: `git status --short --branch`, `git rev-pa
 | context preview | real engine preview path | no | temporary/staging | human review | no | class context preview command |
 | promoted runtime asset | `staging.promote` | production file after owner approval | tracked production | engine | no | `gen.py promote` |
 | atlas image | `assemble_atlas.py` | assembled output, not source pieces | tracked/generated | runtime atlas consumer | no | atlas command |
-| atlas companion metadata | `assemble_atlas.py` emits no machine-readable companion manifest | no | HTML report only | no | SYSTEM-SPECIFIC — KEEP SEPARATE | code inspection |
+| machine-readable atlas companion manifest | none exists | no | absent | no runtime consumer | not applicable | not currently rebuildable |
 
 Generated inspection files are not source scripts; staging files are temporary candidates; runtime meshes are recreated and not persisted.
 
@@ -46,6 +46,8 @@ Path: `build_expanded_item_library.py` recipe functions (`create_root`, `parent_
 `second_rite_item_exporter.py` finds marked top-level roots, duplicates each hierarchy, applies root-pivot export semantics, converts shape-key variants to static meshes, triangulates/normalizes the export copy as required, and writes one OBJ plus MTL per output name. The filename is the root `item_export_name` (family suffixes identify static variants). The builder asserts 49 roots and 53 OBJ outputs. `build_library_windows.ps1` supplies Blender and output paths; the generated `.blend`, preview and manifest are inspection/report outputs.
 
 Runtime assignment is explicit `model` paths in `data/items.json`; `loader.getItem` supplies the path to `presentation/item_model_view.lua`, whose `resolveModel`/`draw` calls `presentation/obj_model.lua:load`. `presentation/obj_model.lua` parses positions, UVs, normals, polygon fans, positive/negative indices, `mtllib`, `usemtl`, MTL `Kd` and `map_Kd`, refuses unsupported directives, caches by path, and converts OBJ coordinates. `presentation/mesh.lua` owns the shared model/group representation, builders, material binding, textures and bounds used by both OBJ models and image-authored geometry. Tests `tests/test_item_model_assignments.lua`, `tests/test_item_model_view.lua`, and `tests/test_item_display.lua` protect assignment, missing/fallback behavior, fit, and drawing.
+
+Compatible OBJ files can be consumed by the existing world OBJ pipeline, but no automatic item-to-world assignment exists. Item-view presentation auto-fits bounds; world presentation uses raw cell-relative coordinates. Each item-toolkit model must be measured for bounds, pivot, orientation, and intended physical dimensions before world reuse. Collision and gameplay role remain separate metadata decisions.
 
 ### Coordinate chain
 
@@ -61,7 +63,7 @@ Arrow contract: recipe functions → Blender scene objects (input: dimensions/ma
 
 **FACT:** coordinates are Blender/LÖVE object coordinates with Y depth and Z up in the authoring helpers; the exporter recentres around the root pivot. The toolkit documents one Blender unit as the toolkit’s item authoring unit, but no repository contract establishes a real-world metre equivalence. Therefore item models are display-scale authored assets, not proven world-scale assets. Final display fit/scale is applied in `presentation/item_model_view.lua` (`calculateFit`/`draw`), not in item data. Pivot convention is root origin; children remain root-local.
 
-The runtime consumes OBJ positions, faces, UVs, `mtllib`/`usemtl`, and MTL diffuse material groups/colors used by the loader. Principled shader graphs and non-exported Blender properties are discarded by the OBJ/MTL interchange. **INFERENCE:** these models are not directly world props without a separate world placement/scale/collision contract; no such assignment was found. Item IDs associate indirectly through `data/items.json`, not through OBJ contents. Export assumptions specific to item display include one marked root per item, origin-centred/root-pivot output, simple diffuse groups, and static variants.
+The runtime consumes OBJ positions, faces, UVs, `mtllib`/`usemtl`, and MTL diffuse material groups/colors used by the loader. Principled shader graphs and non-exported Blender properties are discarded by the OBJ/MTL interchange. Item IDs associate indirectly through `data/items.json`, not through OBJ contents. Export assumptions specific to item display include one marked root per item, origin-centred/root-pivot output, simple diffuse groups, and static variants; compatible OBJ files can also enter the established world path described below, subject to measured bounds and placement suitability.
 
 Invariants: 49 marked roots; 53 named outputs; marked root metadata; root-local children; root-origin export; OBJ/MTL-compatible diffuse groups; explicit item-path assignment; no inference that a display model is world-scale or collision-ready.
 
@@ -119,13 +121,12 @@ Existing demonstrations include `assets/geometry/sd_ffxii_*`, `fluted_pillar`, `
 
 `gen.py` resolves class → prompt → provider. `--dry-run` resolves and prints effective configuration/cost without requesting or staging an image. A real request writes `raw-N.png`, processed variant(s), quality/seam metrics, and a manifest containing class/name, effective context/parameters, variants, promotion state and paths. `cmd_runs` requires `class`, `name`, and `variants`; the three `depth-height-patterns*/manifest.json` files are pattern manifests without those fields, created by `make_height_patterns.py` and located under the same staging root. **FACT:** `gen.py runs` currently fails on them; this is both a schema collision and a directory-boundary problem. It is intentionally not fixed here.
 
-Post-processing distinguishes raw provider bytes from processed files; contact sheets are built in `_finish` through `postprocess.contact_sheet`. Seam axes come from class context. Walls generally join left/right only (`x`); floor/ceiling can tile `xy`. Seam scores measure edge differences; relocated centre seams are separately evaluated by the seam-repair/scoring functions. Variants rank by worst seam score, with raw-quality information retained. Local repair uses offset/inpaint through the local provider path. Manual edits are protected by promotion checks: ordinary promotion refuses dirty destination changes; `--force` bypasses selection/quality safeguards as documented, while `--force-dirty` permits overwriting a destination with local edits. Exact flag semantics are implemented in `lib/staging.py`; no production promotion was run.
+Post-processing distinguishes raw provider bytes from processed files; contact sheets are built in `_finish` through `postprocess.contact_sheet`. Seam axes come from class context. Walls generally join left/right only (`x`); floor/ceiling can tile `xy`. Seam scores measure edge differences; relocated centre seams are separately evaluated by the seam-repair/scoring functions. Variants rank by worst seam score, with raw-quality information retained. Local repair uses offset/inpaint through the local provider path. Promotion semantics are documented in the following paragraph.
 
 Promotion behavior is exact and guarded. `gen.py:cmd_promote` requires an explicit/default variant, resolves class/manifest destination, and copies the selected processed image. Existing destinations require `--force`; an existing destination with uncommitted edits additionally requires `--force-dirty`. `--force-dirty` alone does not permit overwrite. Manual promotion has no automatic seam threshold: it copies the explicitly selected variant. `_auto_promote` considers scored variants, refuses unmeasurable candidates and scores above `SEAM_GOOD`, then calls lower-level promotion with overwrite enabled; dirty overwrite requires `--force-dirty`.
 
 `_control_from_height` records the repository-relative guide in `manifest.provider.heightControl` and weight in `manifest.provider.heightControlWeight`; these remain in the staged manifest. `staging.promote` copies only the chosen processed variant: not the guide, metric field, `asset.json`, or provenance sidecar. For `{name}/albedo.png`, only the albedo destination is created/updated; a runtime geometry directory separately needs compatible `height.png` and `asset.json`. Staged provenance is present; production-side provenance is absent unless retained manually, and automatic albedo/height identity enforcement during promotion is absent. `assemble_atlas.py` supports albedo `--out`, optional height `--height-out`, independent `--cell` and `--height-cell` ROW,COLUMN mappings, optional base albedo and base height atlases, exact cell-dimension validation, and an HTML report containing human-readable source paths. It emits no machine-readable companion manifest; the HTML is evidence, not runtime provenance. Albedo and height mappings are independent, so the script does not prove cell pairing. It explicitly never promotes into `assets/`, though a caller can choose an output path. Real-engine context previews invoke the engine preview path; reports use generated contact sheets/metrics.
 
-Manual promotion has no automatic seam threshold: it copies the explicitly selected variant. Existing destinations require `--force`; dirty overwrites additionally require `--force-dirty`. Auto-promotion alone applies the `SEAM_GOOD` threshold and selects among scored variants.
 
 Local Forge differs at provider request and repair: `forge.py` talks to a locally running Forge/SD server, with no paid API; it still enters the same staging/postprocess/manifest path. Paid calls are possible for configured remote providers only.
 
@@ -196,7 +197,7 @@ Tile periodicity, cutter duplication, sampling/backplanes, item builders, and ru
 | inspection vs source | docs/code say `.blend` overwritten | edits can silently disappear | Phase 2 |
 | absolute paths | tracked depth manifest contains `D:/...` | portability/reproducibility risk | Phase 2 |
 | state/variant naming | exporter suffixes and staging variant indices differ | association requires explicit mapping | Phase 2/5 |
-| pivot consistency | exporter root pivot, runtime fit | world placement not established | Phase 5 |
+| pivot/bounds suitability | world placement is established; item-toolkit suitability is unmeasured | world reuse requires measured bounds, pivot, orientation, and intended dimensions | Phase 2 / Phase 5 |
 | collision metadata | `blocksMovement` only schema role; mesh not collision | render geometry does not imply collision | Phase 2 |
 | structural provenance | staged guide fields are not copied by `staging.promote` | production albedo has no automatic backlink | Phase 7 |
 | atlas pairing | independent `--cell`/`--height-cell`, HTML only | caller can pair wrong cells without machine proof | Phase 7 |
@@ -210,9 +211,7 @@ Item exports are 49 roots/53 outputs with marked root metadata, root-local child
 | Question | Why unresolved | Blocks Phase 2? | Smallest safe action |
 |---|---|---|---|
 | item-unit/world-scale mapping | item view has no metre declaration; world OBJ uses raw cell units | no; Phase 2 must define the unified contract | owner decision plus measured specimen |
-| What exact physical height does 128/±112 represent across runtime scale? | current encoding is known, cross-system contract is not | no | Phase 2 calibration fixture |
-| What exact physical height does 128/±112 represent? | normalization and runtime scale are separate | yes | paired calibration fixture |
+| What metric-height contract should connect Blender relief, encoded guide depth, and runtime displacement? | Current behaviour is known, but no unified contract exists | no; Phase 2 must define it | define encoding and validate with a calibration fixture |
 | Are any item models intended as world props? | no automatic assignment or suitability measurement | no | measure bounds/pivot/orientation before reuse |
-| Are sockets/attachments authoritative anywhere? | no registry/schema evidence | no | search all data and presentation consumers |
 | Are sockets/attachments authoritative anywhere? | no registry/schema evidence | no | search all data and presentation consumers |
 | Exact `--force` versus `--force-dirty` behavior in all promotion branches | implementation has branches beyond summary | no | read-only branch matrix from `staging.py` |
