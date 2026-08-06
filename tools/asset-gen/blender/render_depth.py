@@ -154,9 +154,18 @@ def main():
     field = sample(args.size, view)
     write_height(args.out, field, args.contrast)
     print("HEIGHTMAP " + json.dumps({
+        "coreVersion": scenes.asset_core.CORE_VERSION,
+        "contractVersion": scenes.asset_core.contract_value("contractVersion"),
         "preset": args.preset,
         "surface": scenes.SURFACE[args.preset],
         "view": view,
+        "representation": "plane",
+        "role": "surface_material",
+        "authoringSpace": "depth_tile",
+        "placementFrame": "surface_domain",
+        "depthProduct": "depth_guide",
+        "metricDepthDeferred": True,
+        "defaultMetricRangeCells": 0.25,
         "path": args.out,
         "size": args.size,
         "blend": args.blend,

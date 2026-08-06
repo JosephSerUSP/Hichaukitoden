@@ -11,92 +11,23 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 EXPORT_DIR = OUT_DIR / "exports"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 SCRIPT_DIR = Path(__file__).resolve().parent
+VENDOR_DIR = SCRIPT_DIR / "vendor"
+sys.path.insert(0, str(VENDOR_DIR))
+import second_rite_asset_core as asset_core
 EXPORTER_PATH = SCRIPT_DIR / "second_rite_item_exporter.py"
 BLEND_PATH = OUT_DIR / "second_rite_item_model_library_expanded.blend"
 PREVIEW_PATH = OUT_DIR / "second_rite_item_model_library_expanded_preview.png"
 MANIFEST_PATH = OUT_DIR / "ITEM_MODEL_MANIFEST.md"
 
-# -----------------------------------------------------------------------------
-# Scene and data helpers
-# -----------------------------------------------------------------------------
-
-def clear_scene():
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False)
-    for collection in list(bpy.data.collections):
-        if collection.name != "Collection":
-            bpy.data.collections.remove(collection)
-    for datablocks in (bpy.data.meshes, bpy.data.curves, bpy.data.materials, bpy.data.cameras, bpy.data.lights):
-        for block in list(datablocks):
-            if block.users == 0:
-                datablocks.remove(block)
-
-
-def ensure_collection(name, parent=None):
-    col = bpy.data.collections.get(name)
-    if col is None:
-        col = bpy.data.collections.new(name)
-        (parent or bpy.context.scene.collection).children.link(col)
-    return col
-
-
-def move_to_collection(obj, collection):
-    for col in list(obj.users_collection):
-        col.objects.unlink(obj)
-    collection.objects.link(obj)
-
-
-def make_material(name, color, metallic=0.0, roughness=0.55, emission=None, alpha=1.0):
-    mat = bpy.data.materials.get(name)
-    if mat:
-        return mat
-    mat = bpy.data.materials.new(name)
-    mat.diffuse_color = (*color, alpha)
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    if bsdf:
-        bsdf.inputs["Base Color"].default_value = (*color, alpha)
-        bsdf.inputs["Metallic"].default_value = metallic
-        bsdf.inputs["Roughness"].default_value = roughness
-        if emission is not None:
-            if "Emission Color" in bsdf.inputs:
-                bsdf.inputs["Emission Color"].default_value = (*emission, 1.0)
-                bsdf.inputs["Emission Strength"].default_value = 1.2
-            elif "Emission" in bsdf.inputs:
-                bsdf.inputs["Emission"].default_value = (*emission, 1.0)
-        if "Alpha" in bsdf.inputs:
-            bsdf.inputs["Alpha"].default_value = alpha
-    if alpha < 1.0:
-        mat.surface_render_method = 'DITHERED'
-    return mat
-
-
-def assign_material(obj, material):
-    if obj.data and hasattr(obj.data, "materials"):
-        obj.data.materials.append(material)
-
-
-def flat_shade(obj):
-    if obj.type == 'MESH':
-        for poly in obj.data.polygons:
-            poly.use_smooth = False
-
-
-def add_bevel(obj, width=0.06, segments=1):
-    if width <= 0:
-        return
-    mod = obj.modifiers.new("LowPolyBevel", 'BEVEL')
-    mod.width = width
-    mod.segments = segments
-    mod.limit_method = 'ANGLE'
-
-
-def parent_local(obj, root, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1)):
-    obj.parent = root
-    obj.location = loc
-    obj.rotation_euler = rot
-    obj.scale = scale
-    return obj
+# Low-level scene/material infrastructure comes from the canonical shared core.
+clear_scene = lambda: asset_core.reset_scene(factory=False)
+ensure_collection = asset_core.ensure_collection
+move_to_collection = asset_core.move_to_collection
+make_material = asset_core.make_material
+assign_material = asset_core.assign_material
+flat_shade = asset_core.flat_shade
+add_bevel = asset_core.add_bevel_modifier
+parent_local = asset_core.parent_local
 
 
 def create_root(name, export_name, location, category, description=""):
@@ -109,6 +40,17 @@ def create_root(name, export_name, location, category, description=""):
     root["item_display_name"] = name
     root["item_category"] = category
     root["item_description"] = description
+    asset_core.tag_asset_target(
+        root,
+        asset_id=asset_core.safe_export_name(export_name),
+        representation="full_model",
+        role="item_display",
+        authoring_space="item_display",
+        placement_frame="item_viewport",
+        states=["default"],
+        default_state="default",
+        variants=[],
+    )
     ITEM_COLLECTION.objects.link(root)
     ROOTS.append(root)
     return root
@@ -297,8 +239,32 @@ ITEM_COLLECTION = ensure_collection("Second Rite Items")
 PREVIEW_COLLECTION = ensure_collection("Preview Only")
 
 MAT = {}
+SEMANTIC_BASES = {
+    "Iron": "wrought_iron", "DarkIron": "wrought_iron",
+    "OldGold": "ritual_gold", "BrightGold": "ritual_gold",
+    "Bone": "bone", "Wood": "dark_wood", "Paper": "aged_cloth",
+    "ClothGreen": "aged_cloth", "ClothRed": "aged_cloth",
+    "Ruby": "crystal", "Emerald": "crystal", "Sapphire": "crystal",
+    "Teal": "crystal", "Amethyst": "crystal",
+    "Verdigris": "oxidized_bronze", "Wax": "wax",
+    "GlassRed": "smoked_glass", "GlassBlue": "smoked_glass",
+    "GlassGreen": "smoked_glass", "GlassClear": "smoked_glass",
+    "Sludge": "wet_residue",
+}
+PREVIEW_MATERIALS = {"Backdrop", "Slot", "Text"}
+
+
 def M(key, color, metallic=0.0, roughness=0.55, emission=None, alpha=1.0):
-    MAT[key] = make_material("MAT_" + key, color, metallic, roughness, emission, alpha)
+    MAT[key] = make_material(
+        "MAT_" + key,
+        semantic_id=SEMANTIC_BASES.get(key),
+        color=color,
+        metallic=metallic,
+        roughness=roughness,
+        emission=emission,
+        alpha=alpha,
+        scope="preview_only" if key in PREVIEW_MATERIALS else None,
+    )
 
 M("SilverSteel", (0.58,0.66,0.74), 0.82, 0.28)
 M("Iron", (0.23,0.27,0.30), 0.72, 0.48)
@@ -341,7 +307,7 @@ M("Slot", (0.045,0.055,0.075), 0.0, 0.88)
 M("Text", (0.72,0.76,0.84), 0.0, 0.75)
 
 # -----------------------------------------------------------------------------
-# Item constructors
+# Item constructors (domain-specific; kept unchanged)
 # -----------------------------------------------------------------------------
 
 def bottle_family(root):
@@ -903,12 +869,18 @@ area_light("Preview_Key",(-12,-18,18),2100,12,(1.0,0.88,0.72))
 area_light("Preview_Fill",(14,-12,6),1450,14,(0.54,0.68,1.0))
 area_light("Preview_Rim",(0,6,16),1800,10,(0.42,0.72,1.0))
 
-# Add embedded scripts and readme.
-exporter_text=EXPORTER_PATH.read_text(encoding='utf-8')
-text=bpy.data.texts.get("second_rite_item_exporter.py") or bpy.data.texts.new("second_rite_item_exporter.py")
-text.clear(); text.write(exporter_text)
-readme=bpy.data.texts.get("README_ITEM_MODEL_LIBRARY.md") or bpy.data.texts.new("README_ITEM_MODEL_LIBRARY.md")
-readme.write("""# Second Rite Expanded Item Model Library\n\n"
+# Add embedded scripts, the shared core, and the contract registries.
+def embed_text(name, content):
+    text = bpy.data.texts.get(name) or bpy.data.texts.new(name)
+    text.clear()
+    text.write(content)
+
+
+embed_text("second_rite_item_exporter.py", EXPORTER_PATH.read_text(encoding="utf-8"))
+embed_text("second_rite_asset_core.py", (VENDOR_DIR / "second_rite_asset_core.py").read_text(encoding="utf-8"))
+embed_text("second_rite_contract.json", (VENDOR_DIR / "contract.json").read_text(encoding="utf-8"))
+embed_text("second_rite_materials.json", (VENDOR_DIR / "materials.json").read_text(encoding="utf-8"))
+embed_text("README_ITEM_MODEL_LIBRARY.md", """# Second Rite Expanded Item Model Library\n\n"
 "Blender 5.0+ procedural low-poly item library.\n\n"
 "- 49 top-level export roots\n"
 "- 53 expected static OBJ outputs because Bottle Family exports Basis + 4 shape keys\n"
@@ -926,6 +898,8 @@ scene["item_root_count"]=len(items)
 scene["expected_obj_count"]=53
 scene["blender_minimum_version"]="5.0"
 scene["exporter_text_block"]="second_rite_item_exporter.py"
+scene["second_rite_asset_core_version"] = asset_core.CORE_VERSION
+scene["second_rite_contract_version"] = asset_core.contract_value("contractVersion")
 
 # Save before export so the artifact survives even if validation later fails.
 bpy.ops.wm.save_as_mainfile(filepath=str(BLEND_PATH))
@@ -946,6 +920,8 @@ lines=[
     "# Second Rite Expanded Item Model Library",
     "",
     f"Generated with Blender {bpy.app.version_string}.",
+    f"- Shared core version: **{asset_core.CORE_VERSION}**",
+    f"- Contract version: **{asset_core.contract_value('contractVersion')}**",
     "",
     f"- Export roots: **{len(items)}**",
     f"- Static OBJ outputs: **{len(outputs)}**",
@@ -954,6 +930,12 @@ lines=[
     "",
     "## Models",
     "",
+]
+material_report = asset_core.material_binding_report(list(MAT.values()))
+lines += [
+    f"- Semantic materials bound: **{material_report['boundCount']}**",
+    f"- Semantic materials unbound: **{material_report['unboundCount']}**",
+    f"- Root metadata coverage: **{sum(1 for item in items if asset_core.validate_asset_metadata(item[3]))}/{len(items)}**",
 ]
 for display, export_name, category, root in items:
     lines.append(f"- `{export_name}` — {display} ({category})")

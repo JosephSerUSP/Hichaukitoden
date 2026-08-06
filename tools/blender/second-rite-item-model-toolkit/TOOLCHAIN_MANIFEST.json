@@ -19,8 +19,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4886,
-      "sha256": "a72d796fe02089c8f4f4fb8226bcfe958a12406002af63464ee3f243e50fb018"
+      "bytes": 5517,
+      "sha256": "9f9b0de72a104584a729bac0e17ad2c58f385f0dc07b6f4a01c5f29c381e8442"
     },
     {
       "path": "REPRODUCTION_NOTES.md",
@@ -29,13 +29,13 @@
     },
     {
       "path": "TOOLCHAIN_CONTEXT.md",
-      "bytes": 3453,
-      "sha256": "0dc735b2736850450024a2e269dce6fca496d3bf236c1bfa1cbf302d5366ad6e"
+      "bytes": 4029,
+      "sha256": "16a56a95b378002149da16c0204d3127116f938de996d7ba8c4d81fe5e10f5a4"
     },
     {
       "path": "build_expanded_item_library.py",
-      "bytes": 50935,
-      "sha256": "5b919cd6848028599dfc29daead099717cd6ff789e0ee16aef00e855327faed8"
+      "bytes": 50892,
+      "sha256": "dc713fb71a727e926c72289717e1ff6fcfa13a794991cf3ec2a91118fe160324"
     },
     {
       "path": "github-actions/build-expanded-item-library-original.yml",
@@ -54,13 +54,13 @@
     },
     {
       "path": "scripts/build_library_linux.sh",
-      "bytes": 1366,
-      "sha256": "a0ff80c29f9fe500e968431070c8488eaa81b0672f105754657ba860ca166421"
+      "bytes": 1583,
+      "sha256": "c17908982a1e43b2502b7100899ed6c3ac18de20876068b2f8cb8fdbae6c8523"
     },
     {
       "path": "scripts/build_library_windows.ps1",
-      "bytes": 3130,
-      "sha256": "a7817261710bb71677cb661a196161d5fd9c8842ca2917f3ccccba50b2e041f5"
+      "bytes": 3262,
+      "sha256": "8c252202590f91a04501ef1a1f648dab76b5546c7e917769daa07da0205e23fa"
     },
     {
       "path": "scripts/inspect_library.py",
@@ -69,8 +69,23 @@
     },
     {
       "path": "second_rite_item_exporter.py",
-      "bytes": 14241,
-      "sha256": "2d72a50f90a3860e182afffee97339612a6986051a5649e31db6e9c5008bbc62"
+      "bytes": 7532,
+      "sha256": "5681ecdfa8198f87fe0087eaed88a0f49ffea7b87cbc535254235d9d1766b628"
+    },
+    {
+      "path": "vendor/second_rite_asset_core.py",
+      "bytes": 22836,
+      "sha256": "ffe654fd1235996830740fc0c5977000c1063d2cf228d9f7a850e221b882ca69"
+    },
+    {
+      "path": "vendor/contract.json",
+      "bytes": 4608,
+      "sha256": "689b248db10f93a72cc3a955c9f181bbc76919aa716cc49e83dea308e15b0c89"
+    },
+    {
+      "path": "vendor/materials.json",
+      "bytes": 3543,
+      "sha256": "fda5b551c9051c74b5194a5edc4a5a41c61deb2ad2f211782053ed7823c5d643"
     }
   ]
 }
