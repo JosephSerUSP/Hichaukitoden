@@ -91,19 +91,15 @@ function ui.resolveBigBattlerImage(id)
 end
 
 -- Draws sliced expression portraits.
--- Slices multi-expression columns (5-column sheets or w > 128).
+-- Slices horizontal multi-expression sheets (w > h, default 5 columns).
 -- If scaleToFit is true, scales frame to targetW x targetH (e.g. status menu panel).
 -- Otherwise (scaleToFit false/nil), renders frame unscaled at 1:1 (e.g. dialogue).
 function ui.drawSlicedPortrait(img, x, y, targetW, targetH, frame, scaleToFit)
     if not img then return end
     local w = img:getWidth()
     local h = img:getHeight()
-    local fw = w
-    if w >= 250 and w % 5 == 0 then
-        fw = math.floor(w / 5)
-    elseif w > 128 then
-        fw = 128
-    end
+    local cols = 5
+    local fw = (w > h and w >= cols) and math.floor(w / cols) or w
 
     local sx = scaleToFit and (targetW / fw) or 1
     local sy = scaleToFit and (targetH / h) or 1

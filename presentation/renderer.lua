@@ -854,23 +854,11 @@ function renderer.drawEnemyRowWindow(battleState)
                 require("presentation.effekseer").spawnFor(enemy, rect)
             end
 
-            if isDeathPlaying then
-                -- Death dissolve animation
-                local progress = animation_player.getAnimProgress(enemy, "system.death")
-                love.graphics.setBlendMode("add")
-                if isDead then
-                    love.graphics.setColor(0, 0, 0, 1 - progress)
-                else
-                    love.graphics.setColor(0.6, 0, 0.9, 1)
-                end
-                gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
-                love.graphics.setBlendMode("alpha")
-            elseif not isDead then
-                -- Normal draw with gradient map
+            if not isDead or isDeathPlaying then
                 love.graphics.setColor(1, 1, 1, 1)
                 gradient_shader.drawWithGradient(enemy, drawEnemySprite, animation_player)
 
-                -- Tint flash overlay
+                -- Tint & blend mode overlay (driven by animation_player tracks)
                 if tint and blend then
                     love.graphics.setBlendMode(blend)
                     love.graphics.setColor(tint.color[1], tint.color[2], tint.color[3], tint.alpha)
@@ -879,14 +867,15 @@ function renderer.drawEnemyRowWindow(battleState)
                     love.graphics.setColor(1, 1, 1, 1)
                 end
 
-                love.graphics.setColor(1, 1, 1, 1)
-                animation_player.drawParticles(enemy, rect, drawEnemySprite, "front", renderer.session)
+                if not isDead then
+                    love.graphics.setColor(1, 1, 1, 1)
+                    animation_player.drawParticles(enemy, rect, drawEnemySprite, "front", renderer.session)
 
-                -- Enemy info block: element icons + name + HP gauge. Geometry and
-                -- every on/off switch come from engine.json battleLayout
-                -- (enemyInfo*), anchored to this creature's feet rather than an
-                -- absolute row, so it tracks the sprite instead of drifting from it.
-                local info = battler_geometry.enemyInfo(renderer.session, rect, slotWidth)
+                    -- Enemy info block: element icons + name + HP gauge. Geometry and
+                    -- every on/off switch come from engine.json battleLayout
+                    -- (enemyInfo*), anchored to this creature's feet rather than an
+                    -- absolute row, so it tracks the sprite instead of drifting from it.
+                    local info = battler_geometry.enemyInfo(renderer.session, rect, slotWidth)
                 if info then
                     local maxHp = enemy:getMaxHp(renderer.session)
                     love.graphics.setColor(1, 1, 1, 1)
@@ -908,6 +897,7 @@ function renderer.drawEnemyRowWindow(battleState)
             end
         end
     end
+end
 end
 
 -- Battle log: slim 2-line reveal panel (previous line dimmed above the
