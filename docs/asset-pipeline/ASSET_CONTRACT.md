@@ -17,6 +17,16 @@ The canonical design scale is `CELL_METRES = 2.5`.
 
 These spaces are never interchangeable. Adapters may convert them later; no implicit conversion exists. Positive `depth_tile` relief points toward traversable/visible space: wall outward, floor upward, ceiling downward.
 
+## Coordinate-system and interchange chain
+
+Blender procedural model authoring is Z-up. Blender local coordinates remain distinct from engine world coordinates. Item-toolkit roots define exported pivots and children remain root-local.
+
+The existing OBJ exporter requests forward axis `-Z` and up axis `Y`; the resulting OBJ interchange representation is Y-up. OBJ is an interchange coordinate system, not the engine coordinate system. The current loader converts `OBJ (x, y, z) -> engine (x, -z, y)`, and the engine representation is Z-up.
+
+After conversion, world full-model coordinates use `world_cell`: +X is east/increasing map X, +Y is south/increasing map Y, and +Z is up. Model coordinates are added directly to cell-relative placement origins; no implicit model-scale multiplier exists. `item_display` models pass through the same OBJ conversion, after which item presentation auto-fits model bounds. Viewport fitting does not create a metre or world-scale contract.
+
+No tool may treat Blender, OBJ, engine, `world_cell`, or `item_display` coordinates as interchangeable without an explicit adapter.
+
 ## Representations and roles
 
 Version 1 representations are exactly `plane`, `shell`, `radial`, and `full_model`. They describe visible geometry and remain orthogonal to roles.
@@ -41,7 +51,7 @@ Socket kinds are `interaction`, `actor`, `camera_focus`, `vfx`, `loot`, `hinge`,
 
 ## Depth products
 
-`height_metric.png` is geometric truth: 16-bit grayscale, neutral 32768, explicit `rangeCells` (current Blender-depth default 0.25), with `0=-rangeCells`, neutral `0`, and `65535=+rangeCells`. Encode `round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)` and decode `((encoded - 32768) / 32767) * rangeCells`. It has no median, percentile, or per-image normalization; clipping is reported and seam checks use raw/decoded metric relief.
+`height_metric.png` is geometric truth: 16-bit grayscale, neutral 32768, and an explicit per-asset or per-preset `rangeCells`, with `0=-rangeCells`, neutral `0`, and `65535=+rangeCells`. The current Blender-depth family uses `defaultRangeCells = 0.25`; this is not a universal immutable range. Encode `round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)` and decode `((encoded - 32768) / 32767) * rangeCells`. It has no median, percentile, or per-image normalization; clipping is reported and seam checks use raw/decoded metric relief.
 
 `depth_guide.png` is separate 8-bit-compatible generation guidance: neutral 128, usable contrast ±112, made by median subtraction, p99 absolute-deviation normalization, and clipping to [0,255]. It is non-metric and never decoded as displacement. ControlNet receives the guide unless a future adapter explicitly converts another product.
 

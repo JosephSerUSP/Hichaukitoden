@@ -214,4 +214,3 @@ Item exports are 49 roots/53 outputs with marked root metadata, root-local child
 | What metric-height contract should connect Blender relief, encoded guide depth, and runtime displacement? | Current behaviour is known, but no unified contract exists | no; Phase 2 must define it | define encoding and validate with a calibration fixture |
 | Are any item models intended as world props? | no automatic assignment or suitability measurement | no | measure bounds/pivot/orientation before reuse |
 | Are sockets/attachments authoritative anywhere? | no registry/schema evidence | no | search all data and presentation consumers |
-| Exact `--force` versus `--force-dirty` behavior in all promotion branches | implementation has branches beyond summary | no | read-only branch matrix from `staging.py` |
