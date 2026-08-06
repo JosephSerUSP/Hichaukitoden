@@ -1,0 +1,7 @@
+{
+  "status": "blocked",
+  "reason": "Representative blendergeom.py run did not complete within 120 seconds",
+  "presetsRequested": ["wall_pilasters", "floor_flagstones", "ceiling_coffers", "wall_boulders_rough"],
+  "metrics": [],
+  "blenderAvailable": false
+}

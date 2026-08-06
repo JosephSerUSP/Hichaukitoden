@@ -1,0 +1,9 @@
+{
+  "status": "partial",
+  "assetDirectory": "assets/geometry",
+  "assetJsonCount": 16,
+  "topologiesObserved": ["plane", "shell", "radial"],
+  "rolesObserved": ["surfaceFixture", "objectFixture"],
+  "directLoaderSmokeTest": "not identified",
+  "engineValidation": "passed via lovec . validate"
+}
