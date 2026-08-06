@@ -325,7 +325,7 @@ class Handler(BaseHTTPRequestHandler):
             run_path = os.path.join(_staging_root(), body.get("run") or "")
             if not os.path.isdir(run_path):
                 return self._send(404, {"error": "no such run"})
-            manifest = staging.read_manifest(run_path)
+            manifest = staging.read_run_manifest(run_path)
             cli._add_context_previews(run_path, manifest)
             variant = next((v for v in manifest.get("variants") or []
                             if v.get("index") == body.get("variant")), None)

@@ -63,7 +63,8 @@ def validate_record(record, path="<record>", root=ROOT):
         if k not in record: ds.append(diag("missing_field",path,f"$.{k}","required"))
     if record.get("contractVersion")!=1: ds.append(diag("contract_version",path,"$.contractVersion","must be 1"))
     if not isinstance(record.get("id"),str) or not ID.fullmatch(record.get("id","")): ds.append(diag("invalid_id",path,"$.id","must be lower snake case"))
-    for k in ("materials","states","variants"): ds+=ids(record.get(k,[]),path,f"$.{k}")
+    for k in ("materials","states","variants"):
+        ds+=ids(record.get(k,[]),path,f"$.{k}")
     if record.get("defaultState") not in record.get("states",[]): ds.append(diag("default_state",path,"$.defaultState","must appear in states"))
     if set(record.get("states",[])) & set(record.get("variants",[])): ds.append(diag("state_variant_overlap",path,"$.variants","states and variants must be distinct"))
     if record.get("representation") not in REPS: ds.append(diag("vocabulary",path,"$.representation","unknown representation"))
@@ -81,8 +82,12 @@ def validate_record(record, path="<record>", root=ROOT):
     if m: mids={x.get("id") for x in m.get("materials",[])}
     for i,x in enumerate(record.get("materials",[])):
         if x not in mids: ds.append(diag("unknown_material",path,f"$.materials[{i}]",x))
-    sockets=record.get("sockets",[]); seen=set(); states=set(record.get("states",[]))
+    sockets=record.get("sockets",[]); seen=set(); states=set(record.get("states",[])) if isinstance(record.get("states",[]),list) else set()
+    if not isinstance(record.get("sockets"),list):
+        ds.append(diag("not_array",path,"$.sockets","must be an array")); sockets=[]
     for i,x in enumerate(sockets):
+        if not isinstance(x,dict):
+            ds.append(diag("socket_type",path,f"$.sockets[{i}]","must be an object")); continue
         if x.get("id") in seen: ds.append(diag("duplicate_socket",path,f"$.sockets[{i}].id","duplicate"))
         seen.add(x.get("id"));
         if x.get("kind") not in SOCKETS: ds.append(diag("socket_kind",path,f"$.sockets[{i}].kind","unknown"))
@@ -102,11 +107,15 @@ def validate_record(record, path="<record>", root=ROOT):
         elif isinstance(v,list): vals=v
         else: return [diag("path_type",path,field,"must be path or path array")]
         return [diag("invalid_path",path,f"{field}[{i}]", "must be repository-relative") for i,x in enumerate(vals) if not valid_path(x)]
+    sources=record.get("sources",{})
+    if not isinstance(sources,dict): ds.append(diag("object_type",path,"$.sources","must be an object")); sources={}
     for k in ("blenderScript","blendInspection","prompt","metadataSource"):
-        if k in record.get("sources",{}): ds+=paths(record["sources"][k],f"$.sources.{k}")
+        if k in sources: ds+=paths(sources[k],f"$.sources.{k}")
     for k in ("sourceImages","referenceImages"):
-        if k in record.get("sources",{}): ds+=paths(record["sources"][k],f"$.sources.{k}")
-    prod=record.get("products",{}); metric=prod.get("heightMetric")
+        if k in sources: ds+=paths(sources[k],f"$.sources.{k}")
+    prod=record.get("products",{})
+    if not isinstance(prod,dict): ds.append(diag("object_type",path,"$.products","must be an object")); prod={}
+    metric=prod.get("heightMetric")
     if metric:
         if not valid_path(metric.get("path")): ds.append(diag("invalid_path",path,"$.products.heightMetric.path","invalid"))
         if not isinstance(metric.get("rangeCells"),(int,float)) or not math.isfinite(metric.get("rangeCells",0)) or metric.get("rangeCells",0)<=0: ds.append(diag("range_cells",path,"$.products.heightMetric.rangeCells","must be positive finite"))
@@ -114,9 +123,16 @@ def validate_record(record, path="<record>", root=ROOT):
         if k in prod and isinstance(prod[k],str) and not valid_path(prod[k]): ds.append(diag("invalid_path",path,f"$.products.{k}","invalid"))
     if metric and prod.get("depthGuide")==metric.get("path"): ds.append(diag("path_collision",path,"$.products","metric and guide paths must differ"))
     if "legacyHeight" in prod and "depthGuide" in prod and prod.get("legacyHeight")==prod.get("depthGuide"): ds.append(diag("path_collision",path,"$.products","legacy and guide paths must differ"))
-    prov=record.get("provenance",{}); seen=set()
+    prov=record.get("provenance",{})
+    if not isinstance(prov,dict): ds.append(diag("object_type",path,"$.provenance","must be an object")); prov={}
+    for k in ("generator","generatorVersion","sourceCommit","command"):
+        if not isinstance(prov.get(k),str) or not prov.get(k).strip(): ds.append(diag("provenance_field",path,f"$.provenance.{k}","must be a non-empty string"))
+    seen=set()
     for group in ("inputs","outputs"):
-        for i,x in enumerate(prov.get(group,[])):
+        entries=prov.get(group,[])
+        if not isinstance(entries,list): ds.append(diag("provenance_type",path,f"$.provenance.{group}","must be an array")); entries=[]
+        for i,x in enumerate(entries):
+            if not isinstance(x,dict): ds.append(diag("provenance_entry",path,f"$.provenance.{group}[{i}]","must be an object")); continue
             if not valid_path(x.get("path")): ds.append(diag("invalid_path",path,f"$.provenance.{group}[{i}].path","invalid"))
             if x.get("path") in seen: ds.append(diag("duplicate_provenance_path",path,f"$.provenance.{group}[{i}].path","duplicate"))
             seen.add(x.get("path"));

@@ -16,12 +16,16 @@ def walk_models(data, source, node=None, path='$'):
 def obj_metrics(root, ref):
     p=root/ref; vs=[]; uvs=[]; ns=[]; faces=uses=0; lib=None
     for line in p.read_text(encoding='utf-8').splitlines():
-        if line.startswith('v '): vs.append([float(x) for x in line.split()[1:4]])
+        if line.startswith('v '):
+            values=line.split()[1:4]
+            if len(values)!=3: raise ValueError(f'{ref}: malformed vertex')
+            vs.append([float(x) for x in values])
         elif line.startswith('vt '): uvs.append(line)
         elif line.startswith('vn '): ns.append(line)
         elif line.startswith('f '): faces+=1
         elif line.startswith('usemtl '): uses+=1
         elif line.startswith('mtllib '): lib=line.split(None,1)[1].strip()
+    if lib and not (p.parent/lib).is_file(): raise FileNotFoundError(f'{ref}: missing MTL {lib}')
     return {'path':str(ref).replace('\\','/'),'vertexCount':len(vs),'uvCount':len(uvs),'normalCount':len(ns),'faceCount':faces,'materialUseCount':uses,'mtllib':lib,'bounds':{'min':[round(min(v[i] for v in vs),6) for i in range(3)] if vs else [0,0,0],'max':[round(max(v[i] for v in vs),6) for i in range(3)] if vs else [0,0,0]}}
 def snapshot(root=ROOT):
     def read(rel): return json.loads((root/rel).read_text(encoding='utf-8'))
@@ -49,7 +53,9 @@ def compare(root, baseline):
         if key in ('itemModelReferences','worldModelReferences'):
             cm={(x['source'],x['jsonPath']):x['model'] for x in c}
             for x in b:
-                if cm.get((x['source'],x['jsonPath']))!=x['model']: ds.append(f'{key}: changed {x}')
+                location=(x['source'],x['jsonPath'])
+                if location not in cm: ds.append(f'{key}: missing baseline reference {location}')
+                elif cm[location]!=x['model']: ds.append(f'{key}: changed model path {location}')
             for x in c:
                 if not (root/x['model']).is_file(): ds.append(f'{key}: missing model {x["model"]}')
         else:
@@ -57,13 +63,16 @@ def compare(root, baseline):
             if key=='geometryAssets':
                 for x in b:
                     match=next((y for y in c if y['assetJson']==x['assetJson']),None)
-                    if match and match!=x: ds.append(f'{key}: changed {x["assetJson"]}')
+                    if match is None: ds.append(f'{key}: missing baseline asset {x["assetJson"]}')
+                    elif match!=x: ds.append(f'{key}: changed {x["assetJson"]}')
             elif key=='depthPresets':
                 for x in b:
                     match=next((y for y in c if y['preset']==x['preset']),None)
-                    if match and match!=x: ds.append(f'{key}: changed {x["preset"]}')
+                    if match is None: ds.append(f'{key}: missing baseline preset {x["preset"]}')
+                    elif match!=x or match.get('wrapOk') is not True: ds.append(f'{key}: changed {x["preset"]}')
             else:
                 for x in b:
                     match=next((y for y in c if y['path']==x['path']),None)
-                    if match and match!=x: ds.append(f'{key}: changed {x["path"]}')
+                    if match is None: ds.append(f'{key}: missing baseline model {x["path"]}')
+                    elif match!=x: ds.append(f'{key}: changed {x["path"]}')
     return sorted(ds)

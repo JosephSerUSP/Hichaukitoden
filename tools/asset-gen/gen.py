@@ -469,7 +469,7 @@ def cmd_reprocess(args):
     """Re-run the pixel pipeline over staged raw output -- no API call, no cost."""
     cfg = _config()
     run_path = staging.resolve_run(_staging_root(cfg), args.run)
-    manifest = staging.read_manifest(run_path)
+    manifest = staging.read_run_manifest(run_path)
     ctx = classes.resolve(manifest["class"], manifest.get("options", {}))
 
     rows = []
@@ -497,7 +497,7 @@ def cmd_tilecheck(args):
     """
     cfg = _config()
     run_path = staging.resolve_run(_staging_root(cfg), args.run)
-    manifest = staging.read_manifest(run_path)
+    manifest = staging.read_run_manifest(run_path)
     rows = []
     for variant in manifest["variants"]:
         path = os.path.join(run_path, variant["file"])
@@ -844,7 +844,7 @@ def cmd_report(args):
     sections = []
     for ref in refs:
         run_path = staging.resolve_run(_staging_root(cfg), ref)
-        manifest = staging.read_manifest(run_path)
+        manifest = staging.read_run_manifest(run_path)
         _add_context_previews(run_path, manifest)
         # Always re-score rather than trusting the manifest. The metric has been
         # corrected twice; a page mixing numbers from different versions of it

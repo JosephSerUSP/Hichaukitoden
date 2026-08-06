@@ -37,6 +37,8 @@ RUN_KIND, RUN_VERSION = "asset_gen_run", 1
 def classify_manifest(data):
     if not isinstance(data, dict): return "other", ["manifest is not an object"]
     if data.get("manifestKind") == RUN_KIND:
+        if data.get("manifestVersion") != RUN_VERSION:
+            return "invalid_run", ["manifestVersion"]
         missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and not isinstance(data[k],str)) or (k == "variants" and not isinstance(data[k],list))]
         return ("invalid_run",missing) if missing else ("run",[])
     if data.get("manifestKind"): return "other",[]
@@ -57,6 +59,15 @@ def scan_runs(staging_root):
         elif kind=="invalid_run": raise RuntimeError(f"invalid asset-generation manifest {mp}; missing {', '.join(detail)}")
         else: ignored+=1
     return runs,ignored
+
+def read_run_manifest(path):
+    manifest_path=os.path.join(path, "manifest.json")
+    try: data=read_manifest(path)
+    except Exception as e: raise RuntimeError(f"malformed run manifest {manifest_path}: {e}")
+    kind, detail=classify_manifest(data)
+    if kind=="other": raise RuntimeError(f"non-run manifest {manifest_path}")
+    if kind=="invalid_run": raise RuntimeError(f"invalid run manifest {manifest_path}; missing or invalid {', '.join(detail)}")
+    return data
 
 
 def read_manifest(path):
@@ -79,13 +90,11 @@ def resolve_run(staging_root, ref):
         newest = max(runs, key=lambda r: os.path.getmtime(os.path.join(staging_root, r[0])))
         return os.path.join(staging_root, newest[0])
     if os.path.isdir(ref):
-        kind, _ = classify_manifest(read_manifest(ref))
-        if kind != "run": raise RuntimeError(f"not an asset-generation run: {ref}")
+        read_run_manifest(ref)
         return ref
     candidate = os.path.join(staging_root, ref)
     if os.path.isdir(candidate):
-        kind, _ = classify_manifest(read_manifest(candidate))
-        if kind != "run": raise RuntimeError(f"not an asset-generation run: {candidate}")
+        read_run_manifest(candidate)
         return candidate
     raise FileNotFoundError(f"no staged run '{ref}'")
 
