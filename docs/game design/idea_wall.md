@@ -1,0 +1,1 @@
+MAJI must be a character. Inspired by the word Magi, but it's cuter and odder, and we can have a play on words "Maji de?!"
