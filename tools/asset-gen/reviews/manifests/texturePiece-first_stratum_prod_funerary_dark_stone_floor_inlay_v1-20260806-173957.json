@@ -1,0 +1,192 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "first_stratum_prod_funerary_dark_stone_floor_inlay_v1",
+  "description": "Funerary dark polished basalt, floor material, sepulchral vaults, tomb walls, grave slab paving and shrine alcoves, dark polished stone, smooth surface with subtle edge chipping, charcoal basalt, smoke black, silver-grey highlights, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+      "seed": 220068,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "heightControlWeight": 0.6
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "first_stratum_prod_funerary_dark_stone_floor_inlay_v1.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.367,
+        "y": 0.533,
+        "centre_x": 0.748,
+        "centre_y": 1.415
+      },
+      "candidateId": "prod_funerary_dark_stone_floor_inlay_v1#v1",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/raw-1.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/variant-1.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.477,
+        "y": 0.316,
+        "centre_x": 1.017,
+        "centre_y": 0.508
+      },
+      "candidateId": "prod_funerary_dark_stone_floor_inlay_v1#v2",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/raw-2.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/variant-2.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.411,
+        "y": 1.872,
+        "centre_x": 1.02,
+        "centre_y": 1.033
+      },
+      "candidateId": "prod_funerary_dark_stone_floor_inlay_v1#v3",
+      "rawImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/raw-3.png",
+      "processedImagePath": "tools/asset-gen/out/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957/variant-3.png",
+      "contextPreviewPaths": [],
+      "curation": {
+        "decision": "unset",
+        "notes": "",
+        "tags": []
+      },
+      "generationStatus": "success",
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this floor's own height map; walls and ceiling unchanged [geometry: floor_inlay]",
+      "contextSurface": "floor"
+    }
+  ],
+  "overnight": {
+    "jobId": "prod_funerary_dark_stone_floor_inlay_v1",
+    "candidateIdBase": "prod_funerary_dark_stone_floor_inlay_v1",
+    "surfaceType": "floor",
+    "assetClass": "texturePiece",
+    "geometryPreset": "floor_inlay",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "materialFamily": "funerary_dark_stone",
+    "materialFamilyLabel": "Funerary dark polished basalt",
+    "architecturalRole": "sepulchral vaults, tomb walls, grave slab paving and shrine alcoves",
+    "environmentalState": "dark polished stone, smooth surface with subtle edge chipping",
+    "paletteBias": "charcoal basalt, smoke black, silver-grey highlights",
+    "promptFamilyId": "funerary_dark_stone",
+    "exactPositivePrompt": "Funerary dark polished basalt, floor material, sepulchral vaults, tomb walls, grave slab paving and shrine alcoves, dark polished stone, smooth surface with subtle edge chipping, charcoal basalt, smoke black, silver-grey highlights, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation, single seamless tileable material texture, flat head-on orthographic albedo map, uniform detail, diffuse albedo with baked ambient occlusion, soft contact shadows in every joint and recess, gentle self-shadowing, deep crevices darker than raised faces, ambient fill only, no directional light, detailed sharp painted source, masterpiece, best quality, highly detailed, sharp focus, 4k, detailed painted source",
+    "exactNegativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "loras": [],
+    "sampler": "DPM++ 2M",
+    "steps": 26,
+    "cfg": 7.0,
+    "seed": 220068,
+    "depthWeight": 0.6,
+    "activeWrapAxes": "xy",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": "",
+      "tags": []
+    },
+    "updatedAt": "2026-08-06T17:44:36"
+  },
+  "overnightJob": {
+    "jobId": "prod_funerary_dark_stone_floor_inlay_v1",
+    "name": "first_stratum_prod_funerary_dark_stone_floor_inlay_v1",
+    "class": "texturePiece",
+    "surface": "floor",
+    "geometryPreset": "floor_inlay",
+    "geometryMapPath": "assets/geometry/1_blender_depth_maps/floor_inlay.png",
+    "materialFamily": "funerary_dark_stone",
+    "materialFamilyLabel": "Funerary dark polished basalt",
+    "architecturalRole": "sepulchral vaults, tomb walls, grave slab paving and shrine alcoves",
+    "environmentalState": "dark polished stone, smooth surface with subtle edge chipping",
+    "paletteBias": "charcoal basalt, smoke black, silver-grey highlights",
+    "promptFamilyId": "funerary_dark_stone",
+    "description": "Funerary dark polished basalt, floor material, sepulchral vaults, tomb walls, grave slab paving and shrine alcoves, dark polished stone, smooth surface with subtle edge chipping, charcoal basalt, smoke black, silver-grey highlights, authored floor inlay geometry, flat head-on diffuse albedo, quiet sacred undercroft, sharp detailed source texture, subtle localized mineral variation",
+    "provider": "forge-quality",
+    "model": "ohmenOrigins_ohmenOriginsV3",
+    "variants": 3,
+    "steps": 26,
+    "cfg": 7.0,
+    "sampler": "DPM++ 2M",
+    "seed": 220068,
+    "depthWeight": 0.6,
+    "requestSize": "512x512",
+    "negativeExtra": "sky, daylight, sunlight, sunbeam, open air, outdoors, exterior, courtyard, roofless, overgrown, clouds, horizon, light from above, text, letters, watermark, border, frame, blank margin, white margin",
+    "pairId": null,
+    "pairSide": null,
+    "pairVariable": null,
+    "variation": 1
+  }
+}

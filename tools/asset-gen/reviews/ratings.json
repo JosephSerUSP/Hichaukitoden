@@ -1075,6 +1075,62 @@
   "score": 5,
   "tags": []
  },
+ "texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441#1": {
+  "at": "2026-08-06T17:50:12",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441.json",
+   "sha256": "df72537de4c20cd85eb9d63f018a2cc0f59b487b94b6a69888024342708368ef"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441#2": {
+  "at": "2026-08-06T17:50:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441.json",
+   "sha256": "4eee34ab6b51cd755eef0bb4c928d9af8dc4b02000f885f20868c4b1a427a2da"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441#3": {
+  "at": "2026-08-06T17:50:18",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_azulejo_remnants_floor_inlay_v1-20260806-174441.json",
+   "sha256": "0c3edb28596f9573b90c63f244e35fd7ad769363c1f9b528998dc49c6b85f3a0"
+  },
+  "score": 4,
+  "tags": [
+   "harsh"
+  ]
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505#1": {
+  "at": "2026-08-06T17:50:38",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505.json",
+   "sha256": "aad01cdda1781e3191510957e40fa49abd197b7d85b1fdcfb6d8a41eaf0f909a"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505#2": {
+  "at": "2026-08-06T17:50:39",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505.json",
+   "sha256": "dad3ad5e897f57dbd8471b6fe5aae652fe257fd28d3f2458a9f98a0f28b302ac"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505#3": {
+  "at": "2026-08-06T17:50:41",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_bronze_inlay_floor_inlay_v1-20260806-173505.json",
+   "sha256": "8245e0b46a128781fd4fec249ae05d661740d5232d85d3c09bcbf094654d741c"
+  },
+  "score": 5,
+  "tags": []
+ },
  "texturePiece-first_stratum_prod_bronze_inlays_floor_inlay_v1-20260806-122107#1": {
   "at": "2026-08-06T12:27:33",
   "evidence": {
@@ -1767,6 +1823,39 @@
    "flat"
   ]
  },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957#1": {
+  "at": "2026-08-06T17:50:25",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957.json",
+   "sha256": "b6a6471bb206c8a95d18741b6013279543d67cf715996340bdf248cdfbdd20ba"
+  },
+  "score": 4,
+  "tags": [
+   "seam"
+  ]
+ },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957#2": {
+  "at": "2026-08-06T17:50:28",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957.json",
+   "sha256": "539490928074815a27e573328e9d3fea7300d085977994a0e83cdd455a94e79c"
+  },
+  "score": 4,
+  "tags": [
+   "seam"
+  ]
+ },
+ "texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957#3": {
+  "at": "2026-08-06T17:50:31",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_funerary_dark_stone_floor_inlay_v1-20260806-173957.json",
+   "sha256": "61cd97c8b486a96a075df36d07e0cfe817e428167c14238f3ba35ca55ea8f313"
+  },
+  "score": 4,
+  "tags": [
+   "seam"
+  ]
+ },
  "texturePiece-first_stratum_prod_root_incursion_floor_cobbles_v1-20260806-120158#1": {
   "at": "2026-08-06T12:13:23",
   "evidence": {
@@ -2018,6 +2107,77 @@
   },
   "score": 4,
   "tags": []
+ },
+ "texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510#1": {
+  "at": "2026-08-06T17:51:07",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510.json",
+   "sha256": "57829f8036563ccd3db4ba33a8411776fc9579b5e130fc08c381083799472456"
+  },
+  "score": 2,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510#2": {
+  "at": "2026-08-06T17:51:11",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510.json",
+   "sha256": "9e72ced5146f9620152cf4232114708ec9c752d5f94101c0ed6752ebb66823bd"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510#3": {
+  "at": "2026-08-06T17:51:15",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_sandstone_civic_floor_slabs_varied_v1-20260806-172510.json",
+   "sha256": "51b76b9fd79ab028678dfec6e5547dfe889aa09343b70e926687f36ecfff09ff"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011#1": {
+  "at": "2026-08-06T17:50:47",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011.json",
+   "sha256": "cda1e5325132ca767b18f27d1f33c2a90b29febe619cae90d24c55391065dc89"
+  },
+  "score": 2,
+  "tags": [
+   "fragment"
+  ]
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011#2": {
+  "at": "2026-08-06T17:50:50",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011.json",
+   "sha256": "e1fedc759cd1a7e87e11797419550250145fc42674cf8d57609ea7346eeda971"
+  },
+  "score": 2,
+  "tags": [
+   "fragment"
+  ]
+ },
+ "texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011#3": {
+  "at": "2026-08-06T17:50:59",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_slate_vaulting_floor_slabs_varied_v1-20260806-173011.json",
+   "sha256": "a4ed14afa88da8dec946c319a03979e67bcd02283e00573d01ffd30b78f47e93"
+  },
+  "score": 2,
+  "tags": [
+   "busy",
+   "repeat",
+   "seam"
+  ]
  },
  "texturePiece-first_stratum_prod_soot_memory_floor_flagstones_v1-20260806-122540#1": {
   "at": "2026-08-06T12:42:20",
