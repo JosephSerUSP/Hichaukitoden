@@ -39,11 +39,11 @@ def classify_manifest(data):
     if data.get("manifestKind") == RUN_KIND:
         if data.get("manifestVersion") != RUN_VERSION:
             return "invalid_run", ["manifestVersion"]
-        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and not isinstance(data[k],str)) or (k == "variants" and not isinstance(data[k],list))]
+        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and (not isinstance(data[k],str) or not data[k].strip())) or (k == "variants" and not isinstance(data[k],list))]
         return ("invalid_run",missing) if missing else ("run",[])
     if data.get("manifestKind"): return "other",[]
     if any(k in data for k in ("class","name","variants")):
-        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and not isinstance(data[k],str)) or (k == "variants" and not isinstance(data[k],list))]
+        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and (not isinstance(data[k],str) or not data[k].strip())) or (k == "variants" and not isinstance(data[k],list))]
         return ("invalid_run",missing) if missing else ("run",[])
     return "other",[]
 def scan_runs(staging_root):
