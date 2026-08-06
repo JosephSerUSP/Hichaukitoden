@@ -1,0 +1,83 @@
+name: Build Second Rite model census
+
+on:
+  push:
+    branches:
+      - agent/second-rite-100-model-census
+    paths:
+      - ".census-bootstrap/**"
+      - ".github/workflows/build-model-census.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies
+        run: python -m pip install --disable-pip-version-check numpy pillow
+
+      - name: Expand authored source bundle
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import io
+          import shutil
+          import tarfile
+          from pathlib import Path
+
+          bootstrap = Path(".census-bootstrap")
+          encoded = "".join(
+              path.read_text(encoding="ascii")
+              for path in sorted(bootstrap.glob("chunk-*.b64"))
+          )
+          payload = base64.b64decode(encoded)
+          root = Path(".").resolve()
+          with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as archive:
+              for member in archive.getmembers():
+                  target = (root / member.name).resolve()
+                  if target != root and root not in target.parents:
+                      raise RuntimeError(f"archive member escapes repository: {member.name}")
+              archive.extractall(root)
+          shutil.rmtree(bootstrap)
+          PY
+
+      - name: Compile and test census tools
+        run: |
+          python -m py_compile \
+            tools/asset-production/mesh_recipe.py \
+            tools/asset-production/build_model_census.py \
+            tools/asset-production/tests/test_model_census.py
+          python -m unittest discover \
+            -s tools/asset-production/tests \
+            -p "test_*.py" -v
+
+      - name: Generate models and reports
+        run: python tools/asset-production/build_model_census.py
+
+      - name: Commit reproducible census
+        shell: bash
+        run: |
+          git config user.name "Second Rite Census Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Census already matches generated output."
+            exit 0
+          fi
+          git commit -m "Generate Second Rite 100-model census"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
