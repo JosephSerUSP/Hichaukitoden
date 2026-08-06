@@ -1,0 +1,38 @@
+{
+  "baselines": [
+    {
+      "assetId": "ceiling_shallow_coffers",
+      "depthGuidePngSha256": "4cf22716c6f36c82025fc77eb16c911f8b9d748e4bfc179337f1cc42fd720e5e",
+      "fieldQ15LeSha256": "12f15ad4179bed3f475726b6f3893deb44971e063d9ea1e6c682b348b40271ba",
+      "heightMetricPngSha256": "c473434592538f122862537e34f849d26b47fb0ea95ce3cf35dd7d10457e8449",
+      "path": "ceiling_shallow_coffers"
+    },
+    {
+      "assetId": "floor_broken_flagstones",
+      "depthGuidePngSha256": "d2e1273154d4a550d19d00abcdb1c7322f3db928ca90c35ca0e446541a4ff728",
+      "fieldQ15LeSha256": "522edf75718059c420c2e116f78b69ffa2433b8e8d716e89c30532791e38c669",
+      "heightMetricPngSha256": "54447ccea0bf5a75dde5bd4151aa6667a7eaea6e159621f990e9ed5384552b28",
+      "path": "floor_broken_flagstones"
+    },
+    {
+      "assetId": "wall_ossuary_boulders",
+      "depthGuidePngSha256": "23ba32aca4f7c32b8a166e5566969f435d97a15d66b5b1f41eb6a1b742a63571",
+      "fieldQ15LeSha256": "bf7b661fbb419c3732e24033c6a4c964136749900117b248f2ef291dcae36037",
+      "heightMetricPngSha256": "633cec25baae34be4dc2753df2cc1572fb4df43d439f0c236dc02f8af373f7bb",
+      "path": "wall_ossuary_boulders"
+    },
+    {
+      "assetId": "wall_ritual_pilasters",
+      "depthGuidePngSha256": "c0dd683a2db5ac98a361f3faa79f58598bd3283f981d80efbaa2f0d9ae1778d7",
+      "fieldQ15LeSha256": "0f9fddfeb2f0665988e1c6510108c24d5e430b1d6293a18f78a3e53b8886b344",
+      "heightMetricPngSha256": "6a1f3717312049a2f7cdd3c0bff07eaa7f1c553bfac22d0e9a66de31ea8879cc",
+      "path": "wall_ritual_pilasters"
+    }
+  ],
+  "generatorSourceSha256": "6b61753f99347a3756e163769d6541e38d8775d3443dcc7bc9f49edc16c6021e",
+  "generatorVersion": 2,
+  "pngSerializer": "second_rite_png_v1_filter0_stored_deflate",
+  "rangeCells": 0.25,
+  "schemaVersion": 1,
+  "size": 128
+}

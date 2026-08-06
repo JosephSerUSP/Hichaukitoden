@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "assetDirectory": "assets/geometry",
+  "assetJsonCount": 16,
+  "topologiesObserved": ["plane", "shell", "radial"],
+  "rolesObserved": ["surfaceFixture", "objectFixture"],
+  "directLoaderSmokeTest": "passed via tests/test_geometry.lua registered by main.lua; plane, shell, and radial fixtures load and compile",
+  "engineValidation": "passed via lovec . validate"
+}

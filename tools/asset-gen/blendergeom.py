@@ -34,6 +34,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = Path(__file__).resolve().parent / "blender" / "render_depth.py"
 DEFAULT_OUT = ROOT / "assets" / "geometry" / "1_blender_depth_maps"
+sys.path.insert(0, str(ROOT / "tools" / "blender"))
+import second_rite_asset_core as asset_core  # noqa: E402
 
 PRESETS = ["wall_pilasters", "wall_niche", "floor_flagstones", "floor_inlay",
            "ceiling_coffers", "ceiling_vault",
@@ -138,6 +140,7 @@ def main():
     # this file to learn which surface a map is for -- so re-rendering one
     # ceiling would silently cost the other ten maps their previews.
     manifest_path = out_dir / "manifest.json"
+    new_manifest = not manifest_path.exists()
     merged = {}
     try:
         for record in json.loads(manifest_path.read_text(encoding="utf-8"))["maps"]:
@@ -147,12 +150,25 @@ def main():
         pass
     for record in records:
         merged[record["preset"]] = record
-    manifest_path.write_text(json.dumps({
+    manifest = {
         "source": "tools/asset-gen/blender/scenes.py",
         "method": "orthographic first-hit raycast against evaluated geometry",
         "convention": "opaque RGBA, 128 = dominant surface, +-112 relief",
         "maps": [merged[name] for name in sorted(merged)],
-    }, indent=2) + "\n", encoding="utf-8")
+    }
+    if new_manifest:
+        manifest.update({
+            "coreVersion": asset_core.CORE_VERSION,
+            "contractVersion": asset_core.contract_value("contractVersion"),
+            "representation": "plane",
+            "role": "surface_material",
+            "authoringSpace": "depth_tile",
+            "placementFrame": "surface_domain",
+            "depthProduct": "depth_guide",
+            "metricDepthDeferred": True,
+            "defaultMetricRangeCells": 0.25,
+        })
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
     print(f"\n{len(records)} map(s) written, {failures} problem(s).")
     return 1 if failures else 0

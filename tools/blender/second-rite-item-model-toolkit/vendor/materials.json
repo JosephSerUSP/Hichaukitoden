@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "materials": [
+    {"id":"old_limestone","displayName":"Old Limestone","family":"stone","baseColorSrgb":[143,137,119],"metallicHint":0,"roughnessHint":0.9,"opacityMode":"opaque","generationTags":["warm grey-beige limestone","weathered stone"],"legacyMtl":{"kd":[0.561,0.537,0.467]},"notes":"Warm, aged masonry."},
+    {"id":"rough_limestone","displayName":"Rough Limestone","family":"stone","baseColorSrgb":[126,119,101],"metallicHint":0,"roughnessHint":0.96,"opacityMode":"opaque","generationTags":["rough limestone","coarse chipped stone"],"legacyMtl":{"kd":[0.494,0.467,0.396]},"notes":"Dark rough structural stone."},
+    {"id":"ritual_gold","displayName":"Ritual Gold","family":"metal","baseColorSrgb":[145,119,60],"metallicHint":0.75,"roughnessHint":0.48,"opacityMode":"opaque","generationTags":["aged muted gold","ritual metal"],"legacyMtl":{"kd":[0.569,0.467,0.235]},"notes":"Muted, tarnished gold."},
+    {"id":"oxidized_bronze","displayName":"Oxidized Bronze","family":"metal","baseColorSrgb":[86,86,68],"metallicHint":0.7,"roughnessHint":0.72,"opacityMode":"opaque","generationTags":["oxidized bronze","green patina"],"legacyMtl":{"kd":[0.337,0.337,0.267]},"notes":"Bronze with visible oxidation."},
+    {"id":"wrought_iron","displayName":"Wrought Iron","family":"metal","baseColorSrgb":[40,40,38],"metallicHint":0.8,"roughnessHint":0.86,"opacityMode":"opaque","generationTags":["dark rough iron","wrought metal"],"legacyMtl":{"kd":[0.157,0.157,0.149]},"notes":"Dark and worn."},
+    {"id":"dark_wood","displayName":"Dark Wood","family":"wood","baseColorSrgb":[70,48,34],"metallicHint":0,"roughnessHint":0.88,"opacityMode":"opaque","generationTags":["dark worn wood","aged timber"],"legacyMtl":{"kd":[0.275,0.188,0.133]},"notes":"Worn dungeon timber."},
+    {"id":"aged_cloth","displayName":"Aged Cloth","family":"cloth","baseColorSrgb":[112,90,70],"metallicHint":0,"roughnessHint":0.94,"opacityMode":"opaque","generationTags":["faded earthy cloth","old fabric"],"legacyMtl":{"kd":[0.439,0.353,0.275]},"notes":"Faded, earthy textile."},
+    {"id":"smoked_glass","displayName":"Smoked Glass","family":"glass","baseColorSrgb":[50,61,60],"metallicHint":0,"roughnessHint":0.25,"opacityMode":"blend","generationTags":["dark smoked glass","low saturation translucent glass"],"legacyMtl":{"kd":[0.196,0.239,0.235]},"notes":"Semantic hint only; not current PBR support."},
+    {"id":"wet_residue","displayName":"Wet Residue","family":"organic","baseColorSrgb":[50,70,50],"metallicHint":0,"roughnessHint":0.5,"opacityMode":"blend","generationTags":["dark organic green-grey residue","wet grime"],"legacyMtl":{"kd":[0.196,0.275,0.196]},"notes":"Dark organic surface residue."},
+    {"id":"bone","displayName":"Bone","family":"organic","baseColorSrgb":[190,178,145],"metallicHint":0,"roughnessHint":0.82,"opacityMode":"opaque","generationTags":["aged ivory bone","dry bone"],"legacyMtl":{"kd":[0.745,0.698,0.569]},"notes":"Aged ivory."},
+    {"id":"wax","displayName":"Wax","family":"organic","baseColorSrgb":[155,126,70],"metallicHint":0,"roughnessHint":0.58,"opacityMode":"opaque","generationTags":["muted ochre wax","soft candle wax"],"legacyMtl":{"kd":[0.608,0.494,0.275]},"notes":"Muted ochre."},
+    {"id":"crystal","displayName":"Crystal","family":"mineral","baseColorSrgb":[90,130,150],"metallicHint":0,"roughnessHint":0.2,"opacityMode":"blend","generationTags":["cold subdued crystal","dim mineral translucency"],"legacyMtl":{"kd":[0.353,0.510,0.588]},"notes":"Cold and subdued, not neon."}
+  ]
+}

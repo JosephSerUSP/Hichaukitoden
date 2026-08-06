@@ -33,6 +33,44 @@ def write_manifest(path, data):
         json.dump(data, handle, indent=2)
         handle.write("\n")
 
+RUN_KIND, RUN_VERSION = "asset_gen_run", 1
+def classify_manifest(data):
+    if not isinstance(data, dict): return "other", ["manifest is not an object"]
+    if data.get("manifestKind") == RUN_KIND:
+        if data.get("manifestVersion") != RUN_VERSION:
+            return "invalid_run", ["manifestVersion"]
+        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and (not isinstance(data[k],str) or not data[k].strip())) or (k == "variants" and not isinstance(data[k],list))]
+        return ("invalid_run",missing) if missing else ("run",[])
+    if data.get("manifestKind"): return "other",[]
+    if any(k in data for k in ("class","name","variants")):
+        missing=[k for k in ("class","name","variants") if k not in data or (k != "variants" and (not isinstance(data[k],str) or not data[k].strip())) or (k == "variants" and not isinstance(data[k],list))]
+        return ("invalid_run",missing) if missing else ("run",[])
+    return "other",[]
+def scan_runs(staging_root):
+    runs=[]; ignored=0
+    if not os.path.isdir(staging_root): return runs,ignored
+    for entry in sorted(os.listdir(staging_root)):
+        full=os.path.join(staging_root,entry); mp=os.path.join(full,"manifest.json")
+        if not os.path.isfile(mp): continue
+        try: data=read_manifest(full)
+        except Exception as e: raise RuntimeError(f"malformed manifest {mp}: {e}")
+        kind, detail=classify_manifest(data)
+        if kind=="run": runs.append((entry,data))
+        elif kind=="invalid_run": raise RuntimeError(f"invalid asset-generation manifest {mp}; missing {', '.join(detail)}")
+        else: ignored+=1
+    return runs,ignored
+
+def read_run_manifest(path):
+    manifest_path=os.path.join(path, "manifest.json")
+    if not os.path.isfile(manifest_path):
+        raise FileNotFoundError(f"run manifest missing: {manifest_path}")
+    try: data=read_manifest(path)
+    except Exception as e: raise RuntimeError(f"malformed run manifest {manifest_path}: {e}")
+    kind, detail=classify_manifest(data)
+    if kind=="other": raise RuntimeError(f"non-run manifest {manifest_path}")
+    if kind=="invalid_run": raise RuntimeError(f"invalid run manifest {manifest_path}; missing or invalid {', '.join(detail)}")
+    return data
+
 
 def read_manifest(path):
     with open(os.path.join(path, "manifest.json"), "r", encoding="utf-8") as handle:
@@ -40,14 +78,7 @@ def read_manifest(path):
 
 
 def list_runs(staging_root):
-    if not os.path.isdir(staging_root):
-        return []
-    runs = []
-    for entry in sorted(os.listdir(staging_root)):
-        full = os.path.join(staging_root, entry)
-        if os.path.isfile(os.path.join(full, "manifest.json")):
-            runs.append((entry, read_manifest(full)))
-    return runs
+    return scan_runs(staging_root)[0]
 
 
 def resolve_run(staging_root, ref):
@@ -61,9 +92,11 @@ def resolve_run(staging_root, ref):
         newest = max(runs, key=lambda r: os.path.getmtime(os.path.join(staging_root, r[0])))
         return os.path.join(staging_root, newest[0])
     if os.path.isdir(ref):
+        read_run_manifest(ref)
         return ref
     candidate = os.path.join(staging_root, ref)
     if os.path.isdir(candidate):
+        read_run_manifest(candidate)
         return candidate
     raise FileNotFoundError(f"no staged run '{ref}'")
 

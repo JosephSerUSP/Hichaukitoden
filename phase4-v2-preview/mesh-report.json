@@ -1,0 +1,48 @@
+{
+  "assets": {
+    "wall_ritual_pilasters": {
+      "objPath": null,
+      "vertexCount": 37249,
+      "uvCount": 0,
+      "normalCount": 0,
+      "faceCount": 36864,
+      "bounds": {"min": [-1.5, -1.5, -0.0645466447], "max": [1.5, 1.5, 0.0805307180]},
+      "finiteValues": true,
+      "canonicalFieldHashVerified": true,
+      "note": "Builder creates an in-memory Blender mesh and .blend; no OBJ/MTL exporter is present."
+    },
+    "floor_broken_flagstones": {
+      "objPath": null,
+      "vertexCount": 37249,
+      "uvCount": 0,
+      "normalCount": 0,
+      "faceCount": 36864,
+      "bounds": {"min": [-1.5, -1.5, -0.0656147972], "max": [1.5, 1.5, 0.0737479776]},
+      "finiteValues": true,
+      "canonicalFieldHashVerified": true,
+      "note": "Builder creates an in-memory Blender mesh and .blend; no OBJ/MTL exporter is present."
+    },
+    "ceiling_shallow_coffers": {
+      "objPath": null,
+      "vertexCount": 37249,
+      "uvCount": 0,
+      "normalCount": 0,
+      "faceCount": 36864,
+      "bounds": {"min": [-1.5, -1.5, -0.0556886494], "max": [1.5, 1.5, 0.0632343516]},
+      "finiteValues": true,
+      "canonicalFieldHashVerified": true,
+      "note": "Builder creates an in-memory Blender mesh and .blend; no OBJ/MTL exporter is present."
+    },
+    "wall_ossuary_boulders": {
+      "objPath": null,
+      "vertexCount": 37249,
+      "uvCount": 0,
+      "normalCount": 0,
+      "faceCount": 36864,
+      "bounds": {"min": [-1.5, -1.5, -0.0747703463], "max": [1.5, 1.5, 0.1001998931]},
+      "finiteValues": true,
+      "canonicalFieldHashVerified": true,
+      "note": "Builder creates an in-memory Blender mesh and .blend; no OBJ/MTL exporter is present."
+    }
+  }
+}

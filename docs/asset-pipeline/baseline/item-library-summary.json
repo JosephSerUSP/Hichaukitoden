@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "reason": null,
+  "expectedHistoricalRoots": 49,
+  "expectedHistoricalObjOutputs": 53,
+  "measuredRoots": 49,
+  "measuredObjOutputs": 53,
+  "existingAssetsObjCount": 69,
+  "existingAssetsMtlCount": 69,
+  "existingAssetsPngCount": 559,
+  "blenderAvailable": true,
+  "previewRendered": true,
+  "manifestWritten": true,
+  "packageWritten": true
+}
