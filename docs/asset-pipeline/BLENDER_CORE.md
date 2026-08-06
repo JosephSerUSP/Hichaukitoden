@@ -1,16 +1,15 @@
 # Shared Blender Asset Core
 
-Phase 4 establishes `tools/blender/second_rite_asset_core.py` as the one
-canonical low-level Blender infrastructure module. It owns scene reset and
-datablock cleanup, collections, selection preservation, parent-local transforms,
-materials, shading, modifiers, evaluated bounds, contract metadata, bmesh
-object creation, and the item OBJ export mechanics. Item recipes and depth
-preset recipes remain in their own pipelines.
+Phase 4 establishes `tools/blender/second_rite_asset_core.py` as the canonical
+low-level Blender infrastructure module. It owns scene reset and cleanup,
+collections, selection preservation, parent-local transforms, materials,
+shading, modifiers, evaluated bounds, contract metadata, bmesh object creation,
+and item OBJ export mechanics. Item recipes and depth preset recipes remain in
+their own pipelines.
 
-## Canonical and vendored files
+## Canonical, vendored, and embedded sources
 
-The canonical core is accompanied by the authoritative contract and semantic
-material registry:
+The canonical sources are:
 
 ```text
 tools/blender/second_rite_asset_core.py
@@ -18,84 +17,157 @@ tools/asset-language/contract.json
 tools/asset-language/materials.json
 ```
 
-The self-contained item toolkit contains byte-identical copies under
-`tools/blender/second-rite-item-model-toolkit/vendor/`. Never edit those copies
-independently. Synchronize and verify them with:
+The standalone item toolkit contains byte-identical copies under
+`tools/blender/second-rite-item-model-toolkit/vendor/`. Synchronize and verify
+them with:
 
 ```text
 python tools/blender/sync_asset_core.py
 python tools/blender/sync_asset_core.py --check
 ```
 
-The toolkit package includes the vendor directory. The generated library also
-embeds the exporter, core, contract, materials, and toolkit readme as Blender
-Text blocks so a copied `.blend` can still load its authoring infrastructure.
+Generated item-library `.blend` files embed the exporter, shared core, contract,
+material registry, and toolkit readme as Blender Text blocks.
 
-## Contract metadata
+A filesystem module resolves registries from its real source location. An
+embedded Text-block module has no real filesystem source path and therefore does
+not search the repository, toolkit, or current working directory. It loads the
+contract and material registry directly from the embedded Text blocks.
 
-`tag_asset_target` writes validated `sr_` custom properties for version 1:
-asset ID, representation, role, authoring space, placement frame, states,
-default state, and variants. Item roots retain their legacy `item_*` export
-properties and additionally declare `full_model` / `item_display` /
-`item_viewport` metadata. Depth scenes declare `plane` / `surface_material` /
-`depth_tile` / `surface_domain`, their surface and sampling view, and
-`sr_depth_product=depth_guide`. Current depth output remains non-metric;
-`sr_metric_depth_deferred=true` records that metric depth is not emitted in
-this phase.
+The core exposes registry-origin diagnostics:
 
-## Materials
+```python
+contract_origin()
+material_registry_origin()
+registry_origins()
+```
+
+Origins are reported as `canonical:<path>`, `vendor:<path>`,
+`explicit:<path>`, or `blender_text:<name>`.
+
+## Hermetic `.blend` fallback
+
+The Phase 4 smoke driver builds the standalone 49-root/53-OBJ library, copies
+the resulting `.blend` and smoke script into an isolated temporary directory,
+hides the entire copied toolkit, removes repository and toolkit paths from
+`sys.path`, and blocks filesystem imports of the exporter and core.
+
+The embedded test then:
+
+1. executes `second_rite_item_exporter.py` from the `.blend` Text block;
+2. loads one stable `second_rite_asset_core` module from its Text block;
+3. loads contract and material data from their Text blocks;
+4. registers the exporter;
+5. creates and exports a marked item root;
+6. verifies OBJ and MTL output;
+7. unregisters cleanly.
+
+The test requires Text-block origins for the core, contract, and material
+registry and exactly one active core and exporter module object.
+
+## Contract metadata and materials
+
+`tag_asset_target` writes validated version-1 `sr_` custom properties for asset
+ID, representation, role, authoring space, placement frame, states, default
+state, and variants.
+
+Item roots retain their legacy `item_*` export properties and also declare
+`full_model`, `item_display`, and `item_viewport` metadata. Depth scenes declare
+`plane`, `surface_material`, `depth_tile`, and `surface_domain`, plus
+`sr_depth_product=depth_guide`. Metric depth remains deferred in Phase 4.
 
 `make_material` validates semantic IDs against the registry, uses registry
 values only when a value was not explicitly supplied, and records
-`sr_material_id` and `sr_material_registry_version`. Existing item material
-colors, metallic/roughness, emission, and alpha values remain explicit
-overrides, preserving the OBJ/MTL appearance contract. Defensible legacy
-bindings are metadata; unbound legacy-derived and preview-only materials are
-reported rather than guessed.
+`sr_material_id` and `sr_material_registry_version`. The registry version must
+be 1 and must agree with `contract.materialRegistry.version`.
 
-## OBJ and standalone behavior
+## OBJ equivalence
 
-The exporter keeps selected-geometry-only OBJ output, UVs, normals, material
+The exporter preserves selected-geometry-only output, UVs, normals, material
 groups, applied modifiers, triangulation, and Blender's `-Z` forward / `Y` up
-axis settings. Root-pivot export duplicates a hierarchy temporarily, translates
-the duplicate root to the origin, exports it, and restores authored transforms,
-selection, and active-object state in a `finally` block. Shape-key variants
-remain static OBJ outputs with their existing names.
+axis settings. Export duplicates authored hierarchies temporarily and restores
+transforms, selection, and active-object state in a `finally` block.
 
-The add-on first uses an importable canonical or vendored core, then a sibling
-vendor copy when its own source file is available, then a stable module loaded
-from the embedded `second_rite_asset_core.py` Text block. The fallback is safe
-when the exporter is executed from a Blender Text block without `__file__`.
-Contract and material Text blocks use the names `second_rite_contract.json` and
-`second_rite_materials.json`. The smoke test executes the embedded exporter,
-registers it, exports a marked root, and unregisters it again.
+The calibration driver verifies:
 
-The core requires material registry version 1 to agree with
-`contract.materialRegistry.version`. Canonical and vendor registries must also
-agree before either can be used.
+- 49 item roots and 53 OBJ outputs;
+- structural OBJ metrics and bounds;
+- ordered `usemtl` declarations;
+- material names and `mtllib` declarations;
+- parsed MTL directive semantics;
+- vendor byte synchronization;
+- no provider calls.
 
-Depth sampling builds one evaluated BVH per mesh, orders objects by stable name,
-selects the nearest world-space hit, and resolves effectively equal hits by
-object name and polygon index. This preserves evaluated modifiers and booleans,
-the existing viewer direction, pixel centres, and encoding while removing the
-non-deterministic global `scene.ray_cast` traversal.
+## Depth repeatability and baseline migration
 
-## Calibration and boundaries
+The previous Phase 4 gate incorrectly conflated two questions:
 
-Run the host driver for temporary-only smoke/build/calibration checks:
+1. Does the current sampler produce the same output repeatedly?
+2. Does it reproduce a historical PNG generated by an older Blender/BVH state?
+
+The driver now renders these presets three times at 512×512:
 
 ```text
-python tools/blender/check_blender_core.py
+wall_pilasters
+floor_flagstones
+ceiling_coffers
+wall_boulders_rough
 ```
 
-It reports standalone 49-root/53-OBJ output, vendor-core origin, structural OBJ
-equivalence, ordered `usemtl` equivalence, full MTL semantic equivalence, and
-requires exact decoded-pixel equality for `wall_pilasters`, `floor_flagstones`,
-`ceiling_coffers`, and `wall_boulders_rough`. A changed pixel fails the driver;
-the installed Blender build currently cannot reproduce the tracked rough
-fixture exactly, so that calibration remains a blocking finding. It never calls
-a provider or writes production assets. Phase 4 intentionally does not migrate metric
-depth, regenerate tracked assets, alter runtime loaders or data assignments,
-author world props, add sockets/collision metadata, or change the unified
-contract. Future world-prop builders should consume the core infrastructure,
-then declare their own recipes and world-cell metadata explicitly.
+Every decoded pixel and the semantic metadata projection must match across all
+three runs. Any repeatability difference is a hard failure.
+
+After repeatability passes, the first deterministic run is compared with the
+tracked PNGs. Differences produce a persistent diagnostic package containing:
+
+- tracked and generated SHA-256 hashes;
+- changed-pixel counts and maximum channel deltas;
+- the first twenty exact coordinate/value differences;
+- candidate PNGs;
+- amplified difference images;
+- Blender version;
+- hashes of `render_depth.py` and `scenes.py`.
+
+This prevents a historical, possibly nondeterministic boundary pixel from being
+silently treated as an algorithmic contract while still making baseline changes
+explicit and reviewable.
+
+### Report mode
+
+```text
+python tools/blender/check_blender_core.py --baseline-mode report
+```
+
+Report mode is the default. It requires exact three-run repeatability, performs
+all shared-core/item/standalone checks, writes diagnostics to the operating
+system temporary directory (or `--diagnostics-dir`), and never modifies tracked
+assets.
+
+### Verify mode
+
+```text
+python tools/blender/check_blender_core.py --baseline-mode verify
+```
+
+Verify mode additionally requires exact equality with the currently tracked
+PNGs. It is the steady-state gate after any approved migration.
+
+### Explicit adoption
+
+After reviewing `report.json`, candidate PNGs, and difference images, an
+intentional one-time migration can be performed with:
+
+```text
+python tools/blender/check_blender_core.py \
+  --baseline-mode adopt \
+  --diagnostics-dir <reviewed-directory> \
+  --confirm-production-write UPDATE_TRACKED_DEPTH_BASELINE
+```
+
+Adopt mode rerenders all three runs, requires exact repeatability again, and
+updates only mismatching tracked PNGs plus their selected manifest metadata.
+The resulting working-tree diff must be reviewed and committed separately.
+Rerun verify mode before declaring the baseline canonical.
+
+No preset-specific tolerance, pixel mask, correction table, or production-PNG
+feedback is used during rendering.
