@@ -1,0 +1,13 @@
+# Material library for dungeon_altar.obj
+
+newmtl stone_base
+Kd 0.3200 0.3200 0.3400
+
+newmtl stone_carved
+Kd 0.4200 0.4000 0.3800
+
+newmtl stone_slab
+Kd 0.4800 0.4600 0.4400
+
+newmtl brass_accent
+Kd 0.7500 0.6000 0.2500

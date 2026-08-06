@@ -1,0 +1,7 @@
+# Material library for column_fragment.obj
+
+newmtl fluted_marble
+Kd 0.5500 0.5300 0.5000
+
+newmtl rubble_stone
+Kd 0.4500 0.4300 0.4000

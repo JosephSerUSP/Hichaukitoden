@@ -1,0 +1,7 @@
+# Material library for niche_fixture.obj
+
+newmtl niche_frame
+Kd 0.3600 0.3500 0.3400
+
+newmtl bronze_lamp
+Kd 0.6500 0.4800 0.2000

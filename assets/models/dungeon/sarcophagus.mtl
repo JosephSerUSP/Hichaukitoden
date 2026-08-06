@@ -1,0 +1,7 @@
+# Material library for sarcophagus.obj
+
+newmtl tomb_stone
+Kd 0.3800 0.3700 0.3600
+
+newmtl bronze_inlay
+Kd 0.6500 0.5200 0.2500

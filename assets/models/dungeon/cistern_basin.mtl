@@ -1,0 +1,10 @@
+# Material library for cistern_basin.obj
+
+newmtl basin_stone
+Kd 0.3400 0.3500 0.3600
+
+newmtl water_surface
+Kd 0.2000 0.4500 0.5500
+
+newmtl bronze_spout
+Kd 0.5500 0.4200 0.2200
