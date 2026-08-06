@@ -19,11 +19,16 @@ fi
 test -s "$OUTPUT_DIR/second_rite_item_model_library_expanded.blend"
 test -s "$OUTPUT_DIR/second_rite_item_model_library_expanded_preview.png"
 test -s "$OUTPUT_DIR/ITEM_MODEL_MANIFEST.md"
+test -s "$TOOLKIT_ROOT/vendor/second_rite_asset_core.py"
+test -s "$TOOLKIT_ROOT/vendor/contract.json"
+test -s "$TOOLKIT_ROOT/vendor/materials.json"
 OBJ_COUNT="$(find "$OUTPUT_DIR/exports" -maxdepth 1 -type f -name '*.obj' | wc -l | tr -d ' ')"
 test "$OBJ_COUNT" -eq 53
 
 (
   cd "$OUTPUT_DIR"
+  rm -rf vendor
+  cp -R "$TOOLKIT_ROOT/vendor" vendor
   sha256sum second_rite_item_model_library_expanded.blend \
             second_rite_item_model_library_expanded_preview.png \
             ITEM_MODEL_MANIFEST.md > SHA256SUMS.txt
@@ -31,7 +36,7 @@ test "$OBJ_COUNT" -eq 53
   zip -r second-rite-expanded-item-model-library-local.zip \
     second_rite_item_model_library_expanded.blend \
     second_rite_item_model_library_expanded_preview.png \
-    ITEM_MODEL_MANIFEST.md SHA256SUMS.txt exports
+            ITEM_MODEL_MANIFEST.md SHA256SUMS.txt exports vendor
 )
 
 echo "Validated 49 roots / 53 OBJ outputs."

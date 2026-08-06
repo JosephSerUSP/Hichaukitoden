@@ -43,9 +43,11 @@ function Find-Blender {
 $Blender = Find-Blender $BlenderExe
 $Generator = Join-Path $ToolkitRoot "build_expanded_item_library.py"
 $Exporter = Join-Path $ToolkitRoot "second_rite_item_exporter.py"
+$Vendor = Join-Path $ToolkitRoot "vendor"
 
 if (-not (Test-Path $Generator)) { throw "Missing generator: $Generator" }
 if (-not (Test-Path $Exporter)) { throw "Missing exporter: $Exporter" }
+if (-not (Test-Path $Vendor)) { throw "Missing vendor core directory: $Vendor" }
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 $env:SECOND_RITE_OUT = $OutputDir
@@ -76,7 +78,7 @@ if ($SmallObj) {
 
 $Package = Join-Path $OutputDir "second-rite-expanded-item-model-library-local.zip"
 if (Test-Path $Package) { Remove-Item $Package -Force }
-Compress-Archive -Path $Blend, $Preview, $Manifest, $ExportDir, $Generator, $Exporter -DestinationPath $Package -CompressionLevel Optimal
+Compress-Archive -Path $Blend, $Preview, $Manifest, $ExportDir, $Generator, $Exporter, $Vendor -DestinationPath $Package -CompressionLevel Optimal
 
 Write-Host "Validated 49 roots / 53 OBJ outputs."
 Write-Host "Package: $Package"

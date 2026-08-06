@@ -1,0 +1,41 @@
+name: Phase 4 V2 portability fix
+
+on:
+  push:
+    branches:
+      - agent/phase-4-baseline-v2
+    paths:
+      - .github/workflows/phase4-v2-portability-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone branch without marketplace actions
+        env:
+          REPOSITORY_TOKEN: ${{ github.token }}
+        run: |
+          git clone --branch agent/phase-4-baseline-v2 --single-branch \
+            "https://x-access-token:${REPOSITORY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" work
+
+      - name: Apply, validate, and publish fix
+        env:
+          REPOSITORY_TOKEN: ${{ github.token }}
+        run: |
+          cd work
+          python3 -m venv .venv
+          . .venv/bin/activate
+          python -m pip install --disable-pip-version-check pillow
+          python tools/blender/apply_phase4_v2_portability_fix.py
+          rm tools/blender/apply_phase4_v2_portability_fix.py
+          rm .github/workflows/phase4-v2-portability-fix.yml
+          rm -rf .venv
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "tools: make V2 baselines portable and previews edge-free"
+          git push origin HEAD:agent/phase-4-baseline-v2
