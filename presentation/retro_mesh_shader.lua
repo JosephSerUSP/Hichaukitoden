@@ -35,6 +35,7 @@ function retro_mesh_shader.buildWorldShader()
     uniform vec3 cameraPosition;
     uniform vec2 cameraForward;
     uniform vec2 cameraRight;
+    uniform float cameraPitch;
     uniform float fovHalfX;
     uniform float fovHalfY;
     uniform float nearPlane;
@@ -59,6 +60,18 @@ function retro_mesh_shader.buildWorldShader()
     {
         vec3 relative = vec3(VertexPosition.xy, WorldHeight) - cameraPosition;
         float depth = dot(relative.xy, cameraForward);
+        float horizontal = dot(relative.xy, cameraRight);
+        float vertical = relative.z;
+
+        if (cameraPitch != 0.0) {
+            float cosP = cos(cameraPitch);
+            float sinP = sin(cameraPitch);
+            float pitchedDepth = depth * cosP - vertical * sinP;
+            float pitchedVertical = vertical * cosP + depth * sinP;
+            depth = pitchedDepth;
+            vertical = pitchedVertical;
+        }
+
         float safeDepth = depth;
         worldUV = mix(VertexTexCoord.xy, VertexTexCoord.xy * safeDepth, affineTextures);
         affineScale = mix(1.0, safeDepth, affineTextures);
@@ -78,8 +91,6 @@ function retro_mesh_shader.buildWorldShader()
         if (fogBands > 1.0) {
             fogVisibility = floor(fogVisibility * fogBands + 0.5) / fogBands;
         }
-        float horizontal = dot(relative.xy, cameraRight);
-        float vertical = relative.z;
         float ndcDepth = (farPlane + nearPlane) / (farPlane - nearPlane)
             - (2.0 * farPlane * nearPlane)
                 / ((farPlane - nearPlane) * safeDepth);

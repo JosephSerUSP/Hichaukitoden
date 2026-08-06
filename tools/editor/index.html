@@ -1607,6 +1607,33 @@
                             </select>
                         </fieldset>
 
+                        <!-- 3D Model Presentation (Three-State) -->
+                        <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+                            <legend>3D Model (.obj)</legend>
+                            <select id="event-prop-model-mode" class="win98-select" style="width: 100%; font-size: 10px;" onchange="updateEventPresentationControls()">
+                                <option value="inherit">Inherit (from Common Event)</option>
+                                <option value="override">Use 3D Model Path</option>
+                                <option value="suppress">No Model (Suppress Inherited)</option>
+                            </select>
+                            <div id="event-prop-model-path-row" style="display: flex; gap: 2px;">
+                                <input type="text" id="event-prop-model-path" class="win98-input" style="flex: 1; font-size: 10px;" placeholder="assets/models/..." />
+                                <button class="win98-btn" style="font-size: 10px; padding: 1px 4px;" onclick="openAssetPickerForEventModel()">...</button>
+                            </div>
+                        </fieldset>
+
+                        <!-- Interaction Focus Preset (Three-State) -->
+                        <fieldset style="padding: 6px; display: flex; flex-direction: column; gap: 4px;">
+                            <legend>Interaction Focus</legend>
+                            <select id="event-prop-focus-mode" class="win98-select" style="width: 100%; font-size: 10px;" onchange="updateEventPresentationControls()">
+                                <option value="inherit">Inherit (from Common Event)</option>
+                                <option value="override">Use Focus Preset</option>
+                                <option value="suppress">No Focus Motion</option>
+                            </select>
+                            <select id="event-prop-focus-preset" class="win98-select" style="width: 100%; font-size: 10px;">
+                                <option value="low_prop">low_prop (Chest / Ground Item)</option>
+                            </select>
+                        </fieldset>
+
                         <!-- Priority -->
                         <fieldset style="padding: 6px;">
                             <legend>Priority</legend>
@@ -2366,6 +2393,7 @@
 
     <script src="js/state.js"></script>
     <script src="js/net.js"></script>
+    <script src="js/event_presentation.js"></script>
     <script src="js/widgets.js"></script>
     <script src="js/entity-forms.js"></script>
     <script src="js/anim-editor.js"></script>
