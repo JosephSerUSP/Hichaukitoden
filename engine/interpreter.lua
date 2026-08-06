@@ -833,28 +833,39 @@ end
 
 handlers.CHANGE_ITEM = function(cmd, ctx)
     local count = math.floor(evalFormula(cmd.count or 1, ctx))
-    local itemId = cmd.item
-    if itemId == "random" then
-        local loot = "1"
-        local mapData = ctx.session.currentMapData
-        if mapData and mapData.treasures and #mapData.treasures > 0 then
-            loot = mapData.treasures[math.random(#mapData.treasures)]
+    local rawItem = cmd.item
+    local itemId = rawItem
+    local loader = ctx.loader or (ctx.session and ctx.session.loader)
+
+    if rawItem == "random" then
+        local mapData = ctx.session and ctx.session.currentMapData
+        if not (mapData and mapData.treasures and #mapData.treasures > 0) then
+            error("CHANGE_ITEM item 'random' invoked on map '" .. tostring(mapData and mapData.id)
+                .. "' with missing or empty treasures array", 0)
         end
-        if count < 0 then
-            if ctx.session:hasItem(loot, 1) then ctx.session:addItem(loot, count) end
-        else
-            ctx.session:addItem(loot, count)
+        local loot = mapData.treasures[math.random(#mapData.treasures)]
+        local itemData = loader and loader.getItem(loot)
+        if not itemData then
+            error("CHANGE_ITEM random treasure ID '" .. tostring(loot) .. "' does not resolve to a valid item", 0)
         end
+        itemId = loot
     else
-        local loader = ctx.loader or (ctx.session and ctx.session.loader)
         if type(itemId) == "string" and loader and not loader.getItem(itemId) then
             local evalId = evalFormula(itemId, ctx)
             if evalId and evalId ~= 0 then itemId = tostring(evalId) end
         end
-        if count < 0 then
-            if ctx.session:hasItem(itemId, 1) then ctx.session:addItem(itemId, count) end
-        else
-            ctx.session:addItem(itemId, count)
+    end
+
+    if count < 0 then
+        if ctx.session:hasItem(itemId, 1) then ctx.session:addItem(itemId, count) end
+    else
+        ctx.session:addItem(itemId, count)
+        if cmd.announce == true and count > 0 then
+            local itemData = loader and loader.getItem(itemId)
+            local itemName = itemData and itemData.name or tostring(itemId)
+            local msg = loader and loader.formatTerm("events.found_item", "Found {0} x{1}!", itemName, count)
+                or ("Found " .. itemName .. " x" .. count .. "!")
+            table.insert(ctx.events, { type = "text", text = msg })
         end
     end
 end

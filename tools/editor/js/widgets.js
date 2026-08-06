@@ -1806,6 +1806,29 @@
                     setDirty(true);
                 });
 
+                // Default 3D Model (.obj path)
+                createFormField(formPanel, 'Default 3D Model (.obj)', eventData.model || '', (path) => {
+                    path = path.trim();
+                    EventPresentation.serializeCommonEventPresentation({
+                        modelValue: path,
+                        focusValue: eventData.interactionFocus
+                    }, eventData);
+                    setDirty(true);
+                });
+
+                // Default Focus Preset
+                const focusKind = (eventData.interactionFocus && typeof eventData.interactionFocus === 'object')
+                    ? eventData.interactionFocus.kind
+                    : (typeof eventData.interactionFocus === 'string' ? eventData.interactionFocus : '');
+                createFormField(formPanel, 'Default Focus Preset (e.g. low_prop)', focusKind || '', (val) => {
+                    val = val.trim();
+                    EventPresentation.serializeCommonEventPresentation({
+                        modelValue: eventData.model,
+                        focusValue: val ? { kind: val } : null
+                    }, eventData);
+                    setDirty(true);
+                });
+
                 // Default minimap marker color: map events linked to this
                 // common event use it unless they set their own.
                 const colorRow = document.createElement('div');

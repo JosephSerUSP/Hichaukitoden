@@ -71,7 +71,7 @@
   },
   "events": {
     "recover_party": "Your party has been fully recovered!",
-    "found_item": "Found a {0}!"
+    "found_item": "Found {0} x{1}!"
   },
   "formation": {
     "title": "Formation – Stillnight",
