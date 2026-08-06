@@ -7,6 +7,12 @@ on:
     paths:
       - ".census-bootstrap/**"
       - ".github/workflows/build-model-census.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".census-bootstrap/**"
+      - ".github/workflows/build-model-census.yml"
   workflow_dispatch:
 
 permissions:
@@ -15,11 +21,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Check out branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.TARGET_BRANCH }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -80,4 +88,4 @@ jobs:
             exit 0
           fi
           git commit -m "Generate Second Rite 100-model census"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${TARGET_BRANCH}"
