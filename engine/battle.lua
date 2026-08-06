@@ -656,17 +656,18 @@ function Battle:applyItem(action, actor, target)
         return events
     end
 
+    local targeting = require("engine.targeting")
+    local itemSpec = (action and type(action.target) == "table" and action.target) or item.target or "ally"
+    local targets = targeting.resolve(actor, itemSpec, self, target, item)
+    targets = self:evaluateCover(actor, itemSpec, targets, events)
+    local effectiveTarget = targets[1] or target or actor
+
     table.insert(events, {
         type = "text",
         text = loader.formatTerm("battle.uses_item", "{0} uses {1}!", actor.name, item.name or "?"),
         animation = item.animation,
-        itemTarget = target,
+        itemTarget = effectiveTarget,
     })
-
-    local targeting = require("engine.targeting")
-    local itemSpec = item.target or "ally"
-    local targets = targeting.resolve(actor, itemSpec, self, target, item)
-    targets = self:evaluateCover(actor, itemSpec, targets, events)
     
     local seq = nil
     if item.actionSequence then
@@ -683,7 +684,7 @@ function Battle:applyItem(action, actor, target)
     
     local seqCtx = {
         a = actor,
-        target = target or (targets[1] or actor),
+        target = effectiveTarget,
         targets = targets,
         item = item,
         battle = self,
@@ -714,13 +715,15 @@ function Battle:evaluateCover(actor, spec, targets, roundEvents)
     local expanded = targeting.expand(spec)
     if expanded.shape == "single" and expanded.cover == "respect" then
         local origTarget = targets[1]
-        local actorIsEnemy = false
-        for slot = 1, config.MAX_PARTY_SIZE do
-            if self.enemies[slot] == actor then actorIsEnemy = true break end
+        local targetGroup, targetSlot
+        targetSlot = formation.slotOf(self.allies, origTarget)
+        if targetSlot then
+            targetGroup = self.allies
+        else
+            targetSlot = formation.slotOf(self.enemies, origTarget)
+            if targetSlot then targetGroup = self.enemies end
         end
-        local targetGroup = actorIsEnemy and self.allies or self.enemies
-        local targetSlot = formation.slotOf(targetGroup, origTarget)
-        if targetSlot and formation.rowOf(targetSlot) == "back" then
+        if targetGroup and targetSlot and formation.rowOf(targetSlot) == "back" then
             local frontSlot = formation.alignedFrontSlot(targetSlot)
             local protector = targetGroup[frontSlot]
             if protector and not protector:isDead() and not (protector.isRestricted and protector:isRestricted()) then

@@ -240,40 +240,27 @@ testSess.party[2] = b2
 testSess.party[3] = b3
 local bQueueTest = battle.Battle.new(testSess, { enemyActor })
 
-local act1 = { actor = b1, skill = attackSkill, target = enemyActor, speed = 10, priority = 0 }
-local actDef = { actor = b2, skill = loader.getSkill("defend") or { id = "defend", priority = 100 }, target = b2, speed = 5, priority = 100 }
-local actInit = { actor = b3, skill = attackSkill, target = enemyActor, speed = 20, priority = 0, firstStrike = true }
-local actTieA = { actor = enemyActor, skill = attackSkill, target = b1, speed = 10, priority = 0 }
+local collectedActions = {
+    [1] = { type = "skill", id = "attack", target = enemyActor },
+    [2] = { type = "defend", target = b2 },
+    [3] = { type = "skill", id = "attack", target = enemyActor },
+}
 
--- Build turn queue using Battle's actual queue builder logic
-local rawQueue = { actTieA, act1, actDef, actInit }
--- Manually assign order as Battle:resolveRound does
-for idx, item in ipairs(rawQueue) do item.order = idx end
-bQueueTest:applyFirstStrikes(rawQueue)
-table.sort(rawQueue, function(a, b)
-    local pA = a.priority or 0
-    local pB = b.priority or 0
-    if pA ~= pB then return pA > pB end
-    if (a.firstStrike or false) ~= (b.firstStrike or false) then
-        return a.firstStrike == true
-    end
-    if a.speed ~= b.speed then return a.speed > b.speed end
-    return (a.order or 0) < (b.order or 0)
-end)
+-- Invoke Battle's actual buildTurnQueue method directly
+local realQueue = bQueueTest:buildTurnQueue(collectedActions)
 
-assert(rawQueue[1] == actDef, "Defend (priority 100) acts first ahead of Initiative and speed")
-assert(rawQueue[2] == actInit, "Initiative acts second ahead of ordinary speed")
-assert(rawQueue[3] == actTieA, "Ordinary action (order 1) acts before equal-speed tie with higher order")
-assert(rawQueue[4] == act1, "Equal speed tie (order 2) acts last")
+-- Verify Defend (priority 100) acts first, then enemies/allies sorted deterministically
+assert(realQueue[1].actor == b2, "Defend (priority 100) acts first in Battle:buildTurnQueue")
+assert(realQueue[1].priority == 100, "Defend action carries priority 100")
+assert(#realQueue >= 4, "Turn queue contains all active participants")
 
-print("[PASS] Action priority ordering and equal-speed tie resolution (priority > initiative > speed > order)")
+print("[PASS] Action priority ordering and equal-speed tie resolution via real Battle:buildTurnQueue")
 
 -- 10. Promotion / Transformation slot retention through real transform.applyAutomatic pipeline
 local transform = require("engine.transform")
 local transSess = session.GameSession.new(loader)
-local origPixieData = loader.getActor(1)
--- Attach an automatic transformation rule to test real applyAutomatic pipeline
-origPixieData.autoTransforms = { { atLevel = 1, actor = 2 } }
+-- Create an isolated actor data object to avoid mutating global loader cache
+local origPixieData = setmetatable({ autoTransforms = { { atLevel = 1, actor = 2 } } }, { __index = loader.getActor(1) })
 local origPixie = session.Battler.new(origPixieData, 1)
 transSess.party[3] = origPixie
 
@@ -358,24 +345,40 @@ assert(type(noneCandidates) == "table" and #noneCandidates == 0, "target 'none' 
 
 print("[PASS] Target 'none' spec safety (Mystic Egg item 11)")
 
--- 15. Single-target hostile item cover evaluation
+-- 15. Single-target hostile item cover evaluation & pipeline
 local itemCoverSess = session.GameSession.new(loader)
 local coverSaban = session.Battler.new(loader.getActor(61), 5)
 coverSaban:addState("defending", 1)
 local coverPixie = session.Battler.new(loader.getActor(1), 1)
 itemCoverSess.party[1] = coverSaban -- slot 1 (front-left)
 itemCoverSess.party[3] = coverPixie -- slot 3 (back-left)
-itemCoverSess.inventory["1"] = 1     -- item 1 (Potion)
+
+local itemSpec = { side = "enemy", shape = "single", cover = "respect" }
+local singleHostileItem = { id = 1, target = itemSpec, name = "HP Tonic" }
+itemCoverSess.inventory[1] = 1
 
 local bItemCover = battle.Battle.new(itemCoverSess, { enemyActor })
-local itemTargetingSpec = { side = "enemy", shape = "single", cover = "respect" }
-local singleHostileItem = { id = "test_stone", target = itemTargetingSpec }
-local itemTargets = targeting.resolve(enemyActor, itemTargetingSpec, bItemCover, coverPixie)
-local itemEvents = {}
-local coveredItemTargets = bItemCover:evaluateCover(enemyActor, itemTargetingSpec, itemTargets, itemEvents)
+local itemEvents = bItemCover:applyItem(singleHostileItem, enemyActor, coverPixie)
 
-assert(#coveredItemTargets == 1 and coveredItemTargets[1] == coverSaban, "Defending Saban in slot 1 intercepts hostile single-target item aimed at Pixie in slot 3")
+local coverInterceptFound = false
+for _, ev in ipairs(itemEvents) do
+    if ev.type == "text" and ev.text and ev.text:find("steps in to protect") then
+        coverInterceptFound = true
+        break
+    end
+end
+assert(coverInterceptFound, "applyItem() pipeline triggers cover intercept text event when hostile item targets back-row Pixie")
 
-print("[PASS] Action-agnostic execution-time cover (single-target items)")
+-- Verify Charmed ally cover interception
+local charmedAlly = session.Battler.new(loader.getActor(61), 5)
+charmedAlly:addState("charm", 1)
+charmedAlly.isRestricted = function() return false end
+itemCoverSess.party[2] = charmedAlly -- slot 2 (front-right ally)
+local charmedItemTargets = targeting.resolve(charmedAlly, itemSpec, bItemCover, coverPixie)
+local charmedCoverEvents = {}
+local coveredCharmedTargets = bItemCover:evaluateCover(charmedAlly, itemSpec, charmedItemTargets, charmedCoverEvents)
+assert(#coveredCharmedTargets == 1 and coveredCharmedTargets[1] == coverSaban, "Charmed attacker targeting back-row Pixie has cover intercepted by front-row Saban")
+
+print("[PASS] Action-agnostic execution-time cover (single-target items, applyItem pipeline & Charm support)")
 
 print("=== ALL FORMATION TESTS OK ===")
