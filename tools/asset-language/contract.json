@@ -1,0 +1,34 @@
+{
+  "contractVersion": 1,
+  "cellMetres": 2.5,
+  "engineWorld": {"axes": {"x":"east / increasing map X","y":"south / increasing map Y","z":"up"},"unit":"world_cell"},
+  "authoringSpaces": {
+    "world_cell":{"description":"One engine map-cell coordinate unit; 2.5 metres design scale."},
+    "item_display":{"description":"Dimensionless local item coordinates; viewport auto-fit and no metre guarantee."},
+    "depth_tile":{"description":"Unit XY surface domain for one 2.5m by 2.5m cell; Z is signed relief in cell units."},
+    "preview":{"description":"Presentation-only coordinates with no gameplay or placement authority."}
+  },
+  "representations": {
+    "plane":"Two-dimensional field displaced along a surface normal.",
+    "shell":"Image-derived front/back or silhouette closed object.",
+    "radial":"Cylindrical or rotational image-displaced profile.",
+    "full_model":"Explicit polygon geometry exchanged as OBJ/MTL."
+  },
+  "roles": {
+    "surface_material":"Complete wall, floor, or ceiling surface.","surface_fixture":"Surface-bound addition or detail.","object_fixture":"Persistent environment object; collision is separate.","item_display":"Inventory or item viewport model with no world-scale guarantee.","structural_opening":"Model associated with a passable or conditional opening; visual geometry does not define passability.","event_prop":"Interactive or scripted world object.","overlay":"Non-structural visual layer.","preview_only":"Inspection/documentation asset never promoted to production."
+  },
+  "placementFrames": {
+    "floor_center":"world_cell origin at owning floor cell centre; +Z up.","wall_center":"world_cell origin at visible wall-face centre; +X outward, +Y tangent, +Z up.","ceiling_center":"world_cell ceiling-cell centre; hanging geometry normally extends negative local Z.","opening_center":"world_cell opening centre at floor level; local Z vertical.","item_viewport":"item_display root-origin frame fitted by viewport bounds.","surface_domain":"depth_tile XY domain spanning one surface cell.","preview_frame":"preview-only frame with no runtime placement authority."
+  },
+  "naming": {"fieldCase":"lowerCamelCase","idCase":"lower_snake_case","asciiOnly":true,"filenameCase":"lower_snake_case","repositoryPaths":"relative with / separators","absolutePaths":false},
+  "states": ["default","inactive","active","closed","open","sealed","unsealed","locked","unlocked","intact","damaged","broken","empty","filled","spent"],
+  "variants": {"description":"Parallel visual alternatives, distinct from semantic states; transient provider candidates may be numeric."},
+  "socketKinds": {"interaction":"activation point","actor":"actor placement/facing point","camera_focus":"inspection or cutscene focus","vfx":"effect attachment","loot":"item spawn/reveal point","hinge":"rotation pivot","light":"authored light origin","audio":"positional audio origin","attachment":"generic child attachment"},
+  "depthProducts": {
+    "height_metric":{"purpose":"Geometric truth and deterministic conversion input.","encoding":"16-bit grayscale","neutral":32768,"rangeCells":0.25,"formulaEncode":"round(32768 + clamp(reliefCells / rangeCells, -1, 1) * 32767)","formulaDecode":"((encoded - 32768) / 32767) * rangeCells","normalization":"none","positiveRelief":"toward traversable/visible space"},
+    "depth_guide":{"purpose":"ControlNet and human depth guidance.","encoding":"8-bit grayscale-compatible","neutral":128,"contrast":112,"normalization":"median subtract, p99 absolute-deviation normalize, clip","metric":false},
+    "legacy_height":{"purpose":"Existing runtime compatibility product.","encoding":"current height.png behavior","metric":"ambiguous","migration":"unchanged in Phase 2"}
+  },
+  "materialRegistry": {"path":"tools/asset-language/materials.json","version":1},
+  "compatibility": {"runtimeSchemasUnchanged":true,"runtimeConsumesContract":false,"runtimeConsumesMaterials":false,"legacyAssetsMayOmitContractVersion":true,"adaptersDeferred":true}
+}

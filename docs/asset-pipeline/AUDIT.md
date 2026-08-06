@@ -4,7 +4,7 @@
 
 Branch: `feat/unified-asset-pipeline`. Starting commit: `d290e96320bf2514ab30d51e193710d9752fa5b6`.
 
-Inspected source and generated state included `AGENTS.md`, `docs/asset-pipeline/BASELINE.md`, `tools/blender/second-rite-item-model-toolkit/{README.md,TOOLCHAIN_CONTEXT.md,build_expanded_item_library.py,second_rite_item_exporter.py,scripts/build_library_windows.ps1}`, `tools/asset-gen/{gen.py,classes.json,config.json,authorgeom.py,blendergeom.py,blender/{render_depth.py,scenes.py},lib/*.py,assemble_atlas.py,README.md}`, `engine/geometry/*.lua`, `presentation/{item_model_view.lua,viewport_3d.lua,mesh.lua}`, item data/tests, `data/engine.json`, representative `assets/geometry/**`, and the baseline manifests/summaries.
+Inspected source and generated state included `AGENTS.md`, `docs/asset-pipeline/BASELINE.md`, `tools/blender/second-rite-item-model-toolkit/{README.md,TOOLCHAIN_CONTEXT.md,build_expanded_item_library.py,second_rite_item_exporter.py,scripts/build_library_windows.ps1}`, `tools/asset-gen/{gen.py,classes.json,config.json,authorgeom.py,blendergeom.py,blender/{render_depth.py,scenes.py},lib/*.py,assemble_atlas.py,README.md}`, `engine/geometry/*.lua`, `presentation/{item_model_view.lua,obj_model.lua,viewport_3d.lua,mesh.lua}`, `engine/tileset_resolver.lua`, `data/{engine.json,tilesets.json}`, item data/tests, representative `assets/geometry/**`, and the baseline manifests/summaries.
 
 Navigation and verification commands: `git status --short --branch`, `git rev-parse HEAD`, `rg --files`, `rg -n`, PowerShell `Get-Content`, and the validation commands recorded in the baseline. No Blender generation, provider call, editor save, asset promotion, schema change, or production-source edit was performed.
 
@@ -146,7 +146,7 @@ Command safety:
 | Blender depth | scenes/Blender | PNG/manifest, optional inspection `.blend` | no | yes if pointed at production path |
 | local Forge | config/local server | staged raw/variants | no | no |
 
-## 7. Four End-to-End Pipeline Diagrams
+## 7. End-to-End Pipeline Diagrams
 
 1. `tools/blender/second-rite-item-model-toolkit/build_expanded_item_library.py:create_root` → Blender child objects via `parent_local` → marked roots (`item_export`) → `second_rite_item_exporter.py` duplicate/shape-key static conversion → `assets/models/items/*.obj` + `.mtl` → `data/items.json:model` → `presentation/item_model_view.lua` → `presentation/obj_model.lua:load` → `presentation/mesh.lua` model groups → item viewport auto-fit/draw.
 
