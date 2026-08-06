@@ -3558,49 +3558,49 @@
       "on_enter": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onEnterRecruitScene(ctx)"
+          "code": "api.recruitment.onEnterRecruitScene(ctx)"
         }
       ],
       "on_up": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'up')"
+          "code": "api.recruitment.onNavRecruitScene(ctx, 'up')"
         }
       ],
       "on_down": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'down')"
+          "code": "api.recruitment.onNavRecruitScene(ctx, 'down')"
         }
       ],
       "on_left": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'left')"
+          "code": "api.recruitment.onNavRecruitScene(ctx, 'left')"
         }
       ],
       "on_right": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onNavRecruitScene(ctx, 'right')"
+          "code": "api.recruitment.onNavRecruitScene(ctx, 'right')"
         }
       ],
       "on_select": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onSelectRecruitScene(ctx)"
+          "code": "api.recruitment.onSelectRecruitScene(ctx)"
         }
       ],
       "on_cancel": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onCancelRecruitScene(ctx)"
+          "code": "api.recruitment.onCancelRecruitScene(ctx)"
         }
       ],
       "on_exit": [
         {
           "cmd": "SCRIPT",
-          "code": "require('engine.recruitment').onExitRecruitScene(ctx)"
+          "code": "api.recruitment.onExitRecruitScene(ctx)"
         }
       ]
     },

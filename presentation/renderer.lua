@@ -1245,6 +1245,7 @@ end
 
 function renderer.drawScreenFlashOverlay(battleState)
     if not battleState then return end
+    local formation = require("engine.formation")
     local flash
     for _, e in ipairs(formation.denseMembers(battleState.enemies or {})) do
         flash = animation_player.getScreenFlash(e)

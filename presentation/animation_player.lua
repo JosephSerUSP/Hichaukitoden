@@ -341,6 +341,23 @@ function animation_player.isPlaying(target, entryId)
     return false
 end
 
+-- Returns normalized progress (0.0 to 1.0) of an active animation on target.
+-- If entryId is supplied, queries that specific entryId.
+-- Returns 0 if no matching animation is active or duration is non-positive.
+function animation_player.getAnimProgress(target, entryId)
+    local list = instances[target]
+    if not list then return 0 end
+    for _, inst in ipairs(list) do
+        if not entryId or inst.entryId == entryId then
+            local durSec = (inst.entry.duration or 0) / 1000
+            if durSec <= 0 then return 0 end
+            local elapsed = math.max(0, inst.elapsed)
+            return math.min(1, elapsed / durSec)
+        end
+    end
+    return 0
+end
+
 -- Returns true if `target` has ANY active animation.
 function animation_player.isAnyActive(target)
     local list = instances[target]

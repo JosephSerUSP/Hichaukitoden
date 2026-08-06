@@ -2142,6 +2142,7 @@ local SCRIPT_API_PROTOTYPE = {
     end,
     systemConfig = require("engine.config"),
     targeting = require("engine.targeting"),
+    recruitment = require("engine.recruitment"),
     battle = {
         commitAction = function(index, action)
             require("engine.scenes.battle").commitAction(index, action)
@@ -2221,6 +2222,24 @@ local function buildScriptApi(ctx)
     end
     function api.setFlag(flag, val) session.flags[flag] = val and true or nil end
     function api.emit(event) table.insert(ctx.events, event) end
+    local recMod = require("engine.recruitment")
+    api.recruitment = setmetatable({
+        onEnterRecruitScene = function(sCtx)
+            recMod.onEnterRecruitScene({ session = session, loader = ctx.loader or (session and session.loader), v = (sCtx and sCtx.v) or ctx.v, events = ctx.events, scene = ctx.scene })
+        end,
+        onNavRecruitScene = function(sCtx, dir)
+            recMod.onNavRecruitScene({ session = session, loader = ctx.loader or (session and session.loader), v = (sCtx and sCtx.v) or ctx.v, events = ctx.events, scene = ctx.scene }, dir)
+        end,
+        onSelectRecruitScene = function(sCtx)
+            recMod.onSelectRecruitScene({ session = session, loader = ctx.loader or (session and session.loader), v = (sCtx and sCtx.v) or ctx.v, events = ctx.events, scene = ctx.scene })
+        end,
+        onCancelRecruitScene = function(sCtx)
+            recMod.onCancelRecruitScene({ session = session, loader = ctx.loader or (session and session.loader), v = (sCtx and sCtx.v) or ctx.v, events = ctx.events, scene = ctx.scene })
+        end,
+        onExitRecruitScene = function(sCtx)
+            recMod.onExitRecruitScene({ session = session, loader = ctx.loader or (session and session.loader), v = (sCtx and sCtx.v) or ctx.v, events = ctx.events, scene = ctx.scene })
+        end,
+    }, { __index = recMod })
     -- Generic read helpers (D13): formula evaluation and data queries, so
     -- extra scenes can compute in SCRIPT without bespoke engine commands.
     function api.items()
