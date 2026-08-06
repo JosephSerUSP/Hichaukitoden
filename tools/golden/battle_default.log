@@ -2,37 +2,35 @@ GOLDEN BEGIN
 battle|default|name|Three-round party fight, then a victory resolution
 action|High Pixie|Pixie||
 damage||Pixie|4|
-action|Pixie|High Pixie||
-damage||High Pixie|7|
-action|Pixie|High Pixie||
-damage||High Pixie|7|
-action|Angel|Pixie||
-damage||Pixie|2|
 action|Skeleton|Pixie||
 damage||Pixie|9|
 death||Pixie||
+text||||
+action|Pixie|High Pixie||
+damage||High Pixie|7|
 action|Pixie|Angel||
 damage||Angel|9|
 heal||Angel|2|
 action|Skeleton|Skeleton||
 state_add||Skeleton||defending
 action|High Pixie|High Pixie||
-heal||High Pixie|14|
+heal||High Pixie|7|
+action|Angel|Pixie||
+damage||Pixie|2|
+action|Pixie|High Pixie||
+damage||High Pixie|7|
 action|Pixie|High Pixie||
 damage||High Pixie|11|
 critical||High Pixie||
-action|Angel|Pixie||
-damage||Pixie|4|
-critical||Pixie||
-action|Pixie|High Pixie||
-damage||High Pixie|7|
 state_remove||Skeleton||defending
 heal||Angel|2|
 action|Skeleton|Pixie||
 damage||Pixie|9|
+action|Angel|Pixie||
+damage||Pixie|2|
 death||Pixie||
-text||||
-text||||
+action|Pixie|Skeleton||
+damage||Skeleton|11|
 heal||Angel|2|
 action|High Pixie|Pixie||
 damage||Pixie|4|

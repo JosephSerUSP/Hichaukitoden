@@ -349,7 +349,8 @@ function Battle:buildTurnQueue(collectedActions)
         if (a.firstStrike or false) ~= (b.firstStrike or false) then
             return a.firstStrike == true
         end
-        return a.speed > b.speed
+        if a.speed ~= b.speed then return a.speed > b.speed end
+        return (a.order or 0) < (b.order or 0)
     end)
 
     return queue

@@ -100,6 +100,7 @@ end
 -- Resolve targeting to concrete target list
 function targeting.resolve(actor, spec, battleState, chosenTarget, actionContext)
     local exp = targeting.expand(spec)
+    if exp.side == "none" then return {} end
 
     -- Determine target side groups
     local allies = battleState.allies or {}
@@ -314,6 +315,7 @@ end
 -- Return the raw list of legal selection candidates for manual target picking (no fallback, no count limits, no random selections)
 function targeting.getCandidates(actor, spec, battleState, actionContext)
     local exp = targeting.expand(spec)
+    if exp.side == "none" then return {} end
     
     local allies = battleState.allies or {}
     local enemies = battleState.enemies or {}

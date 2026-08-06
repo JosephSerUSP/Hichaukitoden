@@ -2285,7 +2285,9 @@
         {
           "key": "slot",
           "type": "number",
-          "optional": true
+          "optional": true,
+          "min": 1,
+          "max": 4
         }
       ],
       "contexts": [

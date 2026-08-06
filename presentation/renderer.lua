@@ -1246,12 +1246,12 @@ end
 function renderer.drawScreenFlashOverlay(battleState)
     if not battleState then return end
     local flash
-    for _, e in ipairs(battleState.enemies) do
+    for _, e in ipairs(formation.denseMembers(battleState.enemies or {})) do
         flash = animation_player.getScreenFlash(e)
         if flash then break end
     end
     if not flash then
-        for _, a in ipairs(battleState.allies or {}) do
+        for _, a in ipairs(formation.denseMembers(battleState.allies or {})) do
             flash = animation_player.getScreenFlash(a)
             if flash then break end
         end

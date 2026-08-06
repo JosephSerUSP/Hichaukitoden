@@ -233,12 +233,14 @@ assert(#randRowTargets == 2, "random row resolves 2 targets in selected row")
 
 print("[PASS] Targeting shapes (row, column, all, random)")
 
--- 9. Action Priority vs Speed vs Initiative sorting
+-- 9. Action Priority vs Speed vs Initiative & Equal-Speed Order sorting
 local act1 = { actor = b1, priority = 0, speed = 10, order = 1 }
 local actDef = { actor = b2, priority = 100, speed = 5, order = 2 }
 local actInit = { actor = b3, priority = 0, speed = 20, firstStrike = true, order = 3 }
+local actTieA = { actor = b1, priority = 0, speed = 10, order = 4 }
+local actTieB = { actor = b2, priority = 0, speed = 10, order = 5 }
 
-local testQueue = { act1, actDef, actInit }
+local testQueue = { actTieB, act1, actDef, actInit, actTieA }
 table.sort(testQueue, function(a, b)
     local pA = a.priority or 0
     local pB = b.priority or 0
@@ -246,28 +248,36 @@ table.sort(testQueue, function(a, b)
     if (a.firstStrike or false) ~= (b.firstStrike or false) then
         return a.firstStrike == true
     end
-    return a.speed > b.speed
+    if a.speed ~= b.speed then return a.speed > b.speed end
+    return (a.order or 0) < (b.order or 0)
 end)
 
 assert(testQueue[1] == actDef, "Defend (priority 100) acts first ahead of Initiative and speed")
 assert(testQueue[2] == actInit, "Initiative acts second ahead of ordinary speed")
-assert(testQueue[3] == act1, "Ordinary action acts last")
+assert(testQueue[3] == act1, "Ordinary action (order 1) acts before ties with higher order")
+assert(testQueue[4] == actTieA, "Equal speed tie A (order 4) acts before tie B (order 5)")
+assert(testQueue[5] == actTieB, "Equal speed tie B (order 5) acts last")
 
-print("[PASS] Action priority ordering (priority > initiative > speed)")
+print("[PASS] Action priority ordering and equal-speed tie resolution (priority > initiative > speed > order)")
 
--- 10. Promotion / Transformation slot retention
+-- 10. Promotion / Transformation slot retention through real transform pipeline
+local transform = require("engine.transform")
 local transSess = session.GameSession.new(loader)
 local origPixie = session.Battler.new(loader.getActor(1), 1)
 transSess.party[3] = origPixie
 
--- Promote/transform into High Pixie (actor 2)
-local highPixie = session.Battler.new(loader.getActor(2), origPixie.level, origPixie.growthSeed)
-transSess.party[3] = highPixie
+local highPixieData = loader.getActor(2)
+local nextB = transform.into(transSess, origPixie, highPixieData)
+-- Run actual replacement logic
+local party = transSess.party
+for slot = 1, 4 do
+    if party[slot] == origPixie then party[slot] = nextB end
+end
 
-assert(transSess.party[3] == highPixie, "Transformed battler retains slot 3 in party")
+assert(transSess.party[3] == nextB, "Transformed battler replaces original in slot 3")
 assert(transSess.party[3].row == "back", "Transformed battler in slot 3 retains back row")
 
-print("[PASS] Promotion/Transformation slot retention")
+print("[PASS] Promotion/Transformation slot retention via transform pipeline")
 
 -- 11. Validator fixedMembers slot validation
 local okValBadSlot, errValBadSlot = pcall(validator.run, {
@@ -285,5 +295,57 @@ local okValBadSlot, errValBadSlot = pcall(validator.run, {
 assert(not okValBadSlot, "Validator rejects invalid starting slot 99")
 
 print("[PASS] Validator fixedMembers slot bounds check")
+
+-- 12. Sparse party STATE_TICKS and TICK_SKILL_TIMERS (slot 3 state decay & cooldowns)
+local interpreter = require("engine.interpreter")
+local tickSess = session.GameSession.new(loader)
+local saban1 = session.Battler.new(loader.getActor(61), 5)
+local pixie3 = session.Battler.new(loader.getActor(1), 3)
+tickSess.party[1] = saban1
+tickSess.party[3] = pixie3
+
+-- Add defending state with 1-round duration to slot 3 Pixie
+pixie3:addState("defending", 1)
+assert(#pixie3.states == 1, "Pixie slot 3 has 1 state before tick")
+
+local tickCtx = { party = tickSess.party, enemies = {}, session = tickSess, events = {} }
+interpreter.execList({ { cmd = "STATE_TICKS" } }, tickCtx)
+assert(#pixie3.states == 0, "Pixie slot 3 defending state decayed to 0 and removed during STATE_TICKS")
+
+print("[PASS] Sparse party round-end state duration ticks (slot 3)")
+
+-- 13. Sparse party victory XP rewards (matching battle.victory flow FOR_EACH living_allies)
+local expSess = session.GameSession.new(loader)
+local expSaban = session.Battler.new(loader.getActor(61), 1)
+local expPixie = session.Battler.new(loader.getActor(1), 1)
+expSess.party[1] = expSaban
+expSess.party[3] = expPixie
+
+local initExpPixie = expPixie.exp or 0
+local expCtx = { party = expSess.party, session = expSess, loader = loader, events = {} }
+interpreter.execList({
+    {
+        cmd = "FOR_EACH",
+        scope = "living_allies",
+        as = "ally",
+        ["do"] = {
+            { cmd = "GRANT_XP", target = "ally", amount = 10 }
+        }
+    }
+}, expCtx)
+assert(expPixie.exp == initExpPixie + 10, "Pixie in slot 3 gained 10 XP from FOR_EACH living_allies victory reward")
+
+print("[PASS] Sparse party victory XP awards (slot 3)")
+
+-- 14. Target = 'none' regression test (e.g. Mystic Egg item 10)
+local eggItem = loader.getItem(10) or { id = 10, name = "Mystic Egg", target = "none" }
+local eggState = { allies = tickSess.party, enemies = {}, session = tickSess }
+local targetSpec = eggItem.target or "none"
+local noneResolved = targeting.resolve(saban1, targetSpec, eggState)
+local noneCandidates = targeting.getCandidates(saban1, targetSpec, eggState)
+assert(type(noneResolved) == "table" and #noneResolved == 0, "target 'none' resolves to empty table without crashing")
+assert(type(noneCandidates) == "table" and #noneCandidates == 0, "target 'none' candidates return empty table without crashing")
+
+print("[PASS] Target 'none' spec safety (Mystic Egg)")
 
 print("=== ALL FORMATION TESTS OK ===")

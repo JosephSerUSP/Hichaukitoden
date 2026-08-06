@@ -473,7 +473,9 @@ local function scopeList(scope, ctx)
     end
     if scope == "living_allies" or scope == "living_enemies" then
         local living = {}
-        for _, b in ipairs(base) do
+        local maxCount = (scope == "living_allies") and config.MAX_PARTY_SIZE or #base
+        for slot = 1, maxCount do
+            local b = base[slot]
             if b and not (b.isDead and b:isDead()) then table.insert(living, b) end
         end
         return living
@@ -489,7 +491,7 @@ end
 local function slotNeighbor(list, index)
     for _, step in ipairs({ 1, -1 }) do
         local j = index + step
-        while j >= 1 and j <= #list do
+        while j >= 1 and j <= config.MAX_PARTY_SIZE do
             local other = list[j]
             if other and not (other.isDead and other:isDead()) then return other end
             j = j + step
@@ -506,7 +508,10 @@ handlers.FOR_EACH = function(cmd, ctx)
     -- `neighbor` is scoped to this loop and restored afterwards, exactly like
     -- the iteration variable, so nested FOR_EACHes can't leak it.
     local prevNeighbor = ctx.refs.neighbor
-    for i, battler in ipairs(list) do
+    local isPartyScope = (cmd.scope == "party" or cmd.scope == "allies" or cmd.scope == "living_allies")
+    local maxCount = isPartyScope and config.MAX_PARTY_SIZE or #list
+    for i = 1, maxCount do
+        local battler = list[i]
         if battler then
             ctx.refs[varName] = battler
             ctx.refs.neighbor = slotNeighbor(list, i)
@@ -747,18 +752,20 @@ end
 -- a new step should be a line of data.
 handlers.TICK_SKILL_TIMERS = function(cmd, ctx)
     local skill_cost = require("engine.skill_cost")
-    for _, b in ipairs(ctx.party or {}) do
-        if b then skill_cost.tick(b) end
+    local formationMod = require("engine.formation")
+    for _, b in ipairs(formationMod.denseMembers(ctx.party)) do
+        skill_cost.tick(b)
     end
-    for _, b in ipairs(ctx.enemies or {}) do
-        if b then skill_cost.tick(b) end
+    for _, b in ipairs(formationMod.denseMembers(ctx.enemies)) do
+        skill_cost.tick(b)
     end
 end
 
 handlers.STATE_TICKS = function(cmd, ctx)
+    local formationMod = require("engine.formation")
     local battlers = {}
-    for _, b in ipairs(ctx.party or {}) do table.insert(battlers, b) end
-    for _, b in ipairs(ctx.enemies or {}) do table.insert(battlers, b) end
+    for _, b in ipairs(formationMod.denseMembers(ctx.party)) do table.insert(battlers, b) end
+    for _, b in ipairs(formationMod.denseMembers(ctx.enemies)) do table.insert(battlers, b) end
     for _, battler in ipairs(battlers) do
         if battler and not battler:isDead() then
             -- Per-round HP drift, driven by the HRG trait summed across every
@@ -944,7 +951,8 @@ handlers.USE_ITEM = function(cmd, ctx)
     }
     local sharedApplied = {}
     if item.target == "party" then
-        for _, member in ipairs(ctx.session.party) do
+        local formationMod = require("engine.formation")
+        for _, member in ipairs(formationMod.denseMembers(ctx.session.party)) do
             table.insert(fedTargets, member)
             local prevHp = member.hp or 0
             for _, eff in ipairs(item.effects or {}) do
@@ -1064,6 +1072,9 @@ handlers.RECRUIT_ACTOR = function(cmd, ctx)
     if not actorId then return end
 
     local preferredSlot = cmd.slot or cmd.preferredSlot
+    if preferredSlot ~= nil and (type(preferredSlot) ~= "number" or preferredSlot < 1 or preferredSlot > config.MAX_PARTY_SIZE) then
+        preferredSlot = nil
+    end
     local battler, slotType = session:recruitActor(actorId, level, preferredSlot)
     if battler then
         if cmd.name and cmd.name ~= "" then battler.name = tostring(cmd.name) end
@@ -1616,7 +1627,7 @@ handlers.QUEST_TAKE_REQUIREMENTS = function(cmd, ctx)
 end
 
 handlers.QUEST_GRANT_REWARDS = function(cmd, ctx)
-    local quest = ctx.quest
+    local quest = cmd.quest or ctx.quest
     if not quest then return end
     
     local rewards = quest.rewards or {}
@@ -1627,7 +1638,8 @@ handlers.QUEST_GRANT_REWARDS = function(cmd, ctx)
     end
     
     if rewards.xp and rewards.xp > 0 then
-        for _, member in ipairs(ctx.session.party or {}) do
+        local formationMod = require("engine.formation")
+        for _, member in ipairs(formationMod.denseMembers(ctx.session.party)) do
             member:gainExp(rewards.xp, ctx.session)
         end
         table.insert(ctx.events, { type = "text", text = "Party gained " .. tostring(rewards.xp) .. " XP." })

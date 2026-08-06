@@ -162,10 +162,13 @@ function transform.into(session, battler, actorData, opts)
 end
 
 local function replaceInSession(session, old, new)
-    for _, collection in ipairs({ session.party or {}, session.reserve or {} }) do
-        for i, member in ipairs(collection) do
-            if member == old then collection[i] = new end
-        end
+    local party = session.party or {}
+    for slot = 1, 4 do
+        if party[slot] == old then party[slot] = new end
+    end
+    local reserve = session.reserve or {}
+    for slot = 1, 16 do
+        if reserve[slot] == old then reserve[slot] = new end
     end
     if session.summoner == old then session.summoner = new end
 end
