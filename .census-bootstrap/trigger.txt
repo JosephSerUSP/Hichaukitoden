@@ -1,1 +1,1 @@
-Trigger census generation after workflow registration.
+Trigger census generation through the GitHub Contents API.
