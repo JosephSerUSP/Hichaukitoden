@@ -1,7 +1,7 @@
 # Blender 5.1.2
 # www.blender.org
-mtllib dungeon_chest.mtl
-o dungeon_chest
+mtllib dungeon_chest_variant_b.mtl
+o dungeon_chest_variant_b
 v -0.310000 0.060000 0.210000
 v -0.310000 0.300000 0.210000
 v -0.310000 0.060000 -0.210000
