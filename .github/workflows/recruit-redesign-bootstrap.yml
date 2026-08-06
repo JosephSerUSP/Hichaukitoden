@@ -1,0 +1,53 @@
+name: Bootstrap recruit redesign
+
+on:
+  pull_request_target:
+    types: [reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/recruit-scene-presentation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/recruit-scene-presentation
+          fetch-depth: 0
+
+      - name: Apply recruit presentation migration
+        run: python .github/scripts/apply_recruit_redesign.py
+
+      - name: Validate generated data and diff
+        shell: bash
+        run: |
+          python -m json.tool data/scenes.json >/dev/null
+          python -m json.tool data/engine.json >/dev/null
+          git diff --check
+          git diff --stat
+
+      - name: Install LÖVE test runtime
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y love xvfb
+
+      - name: Run structural and behavioral gates
+        shell: bash
+        run: |
+          xvfb-run -a love . validate
+          xvfb-run -a love . unittest
+          xvfb-run -a love . savetest
+
+      - name: Commit validated redesign
+        shell: bash
+        run: |
+          git config user.name "Second Rite UI Agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/scenes.json data/engine.json engine/recruitment.lua presentation/window_renderer.lua tests/test_recruitment.lua
+          git commit -m "Redesign recruit placement presentation"
+          git push origin HEAD:agent/recruit-scene-presentation
