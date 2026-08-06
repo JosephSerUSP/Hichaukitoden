@@ -1,4 +1,5 @@
 local json = require("data.json")
+local collection_loader = require("data.collection_loader")
 
 local loader = {}
 
@@ -96,7 +97,7 @@ function loader.init(root)
     loader.actors = J("actors.json")
     loader.elements = J("elements.json")
     loader.items = J("items.json")
-    loader.maps = J("maps.json")
+    loader.maps, loader.mapsStorage = collection_loader.load(loader.root, "maps")
     loader.mapsById = {}
     for index, map in ipairs(loader.maps) do
         local key = tostring(map.id)
@@ -126,7 +127,7 @@ function loader.init(root)
     loader.troops = J("troops.json")
     -- Scenes configuration. Optional replacements are applied before the
     -- lookup registry is built, so every consumer sees one canonical scene.
-    loader.scenes = J("scenes.json")
+    loader.scenes, loader.scenesStorage = collection_loader.load(loader.root, "scenes")
     applySceneOverrides()
 
     -- overhaul-7 A1: animations data loaded from JSON
