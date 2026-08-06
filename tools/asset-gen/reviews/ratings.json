@@ -1856,6 +1856,46 @@
    "seam"
   ]
  },
+ "texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925#1": {
+  "at": "2026-08-06T17:56:07",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925.json",
+   "sha256": "a5cc04e3af756ce4b658bd4c3b06a2b7f4824aa3c113608f932d2f613488d61b"
+  },
+  "score": 1,
+  "tags": [
+   "harsh",
+   "repeat",
+   "seam"
+  ]
+ },
+ "texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925#2": {
+  "at": "2026-08-06T17:56:11",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925.json",
+   "sha256": "d28d572a471393b2de5b8ff5ca02d9ee6aa4d37b274f1eb0c8d559733456001e"
+  },
+  "score": 2,
+  "tags": [
+   "flat",
+   "harsh",
+   "repeat",
+   "seam"
+  ]
+ },
+ "texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925#3": {
+  "at": "2026-08-06T17:56:17",
+  "evidence": {
+   "manifest": "manifests/texturePiece-first_stratum_prod_limewash_plaster_floor_cobbles_v1-20260806-174925.json",
+   "sha256": "1cd6730d5c1ab97a10d822e386b01756d6491eb19ac024f1200a2f00db41b101"
+  },
+  "score": 1,
+  "tags": [
+   "harsh",
+   "repeat",
+   "seam"
+  ]
+ },
  "texturePiece-first_stratum_prod_root_incursion_floor_cobbles_v1-20260806-120158#1": {
   "at": "2026-08-06T12:13:23",
   "evidence": {
