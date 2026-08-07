@@ -211,13 +211,30 @@ do
 
     skill_cost.startCooldown(skill, fighter)
     check(skill_cost.blockedReason(skill, fighter, sess, false) == "Cooling down (2)",
-        "using it starts the cooldown, with a reason to show the player")
+        "using it starts the authored cooldown, with a truthful displayed count")
 
+    -- The round that contained the action is closing here. It must NOT count as
+    -- one of the subsequent rounds the cooldown promises to block.
     skill_cost.tick(fighter)
-    check(skill_cost.cooldownLeft(skill, fighter) == 1, "a round elapses one turn")
+    check(skill_cost.cooldownLeft(skill, fighter) == 2,
+        "the arming round-end does not consume a cooldown turn")
+    skill_cost.tick(fighter)
+    check(skill_cost.cooldownLeft(skill, fighter) == 1,
+        "the first subsequent round consumes one cooldown turn")
     skill_cost.tick(fighter)
     check(skill_cost.blockedReason(skill, fighter, sess, false) == nil,
-        "and it comes back when the cooldown runs out")
+        "and it comes back after two subsequent rounds have elapsed")
+
+    -- Darting Peck's shape: cooldown 1 must actually skip the next command
+    -- phase rather than arming and disappearing at the same round-end.
+    local peck = { id = "peck", cooldown = 1 }
+    skill_cost.startCooldown(peck, fighter)
+    skill_cost.tick(fighter)
+    check(skill_cost.cooldownLeft(peck, fighter) == 1,
+        "cooldown:1 survives the round-end that armed it")
+    skill_cost.tick(fighter)
+    check(skill_cost.cooldownLeft(peck, fighter) == 0,
+        "cooldown:1 returns only after one later round")
 end
 
 do
