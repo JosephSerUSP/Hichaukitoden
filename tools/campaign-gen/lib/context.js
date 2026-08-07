@@ -44,7 +44,12 @@ function ruleset() {
         elements: Object.keys(elements),
         states: Object.keys(states),
         passives: Object.keys(passives),
-        skills: Object.entries(skills).map(([id, s]) => ({ id, name: s.name, target: s.target })),
+        skills: Object.entries(skills).map(([id, s]) => ({
+            id,
+            name: s.name,
+            target: s.target,
+            scope: s.scope,
+        })),
     };
 }
 
@@ -108,4 +113,3 @@ function resolveLovecPath(configuredPath) {
 }
 
 module.exports = { REPO, CONTENT_FILES, readJson, commandRegistry, ruleset, samples, manifest, resolveLovecPath };
-
