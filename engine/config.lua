@@ -2,10 +2,21 @@ local json = require("data.json")
 
 local config = {}
 
--- Party/reserve size bounds (used engine-wide instead of magic numbers)
-config.MAX_PARTY_SIZE = 4
-config.MAX_RESERVE_SIZE = 4
-config.MAX_STORAGE_SIZE = 99
+-- Engine-wide capacity defaults. system.json may override them, but they are
+-- structural limits rather than ordinary optional presentation settings, so a
+-- config reload must never make them disappear when the active campaign omits
+-- an override.
+local LIMIT_DEFAULTS = {
+    MAX_PARTY_SIZE = 4,
+    MAX_RESERVE_SIZE = 4,
+    MAX_STORAGE_SIZE = 99,
+}
+
+local function applyLimitDefaults()
+    for key, value in pairs(LIMIT_DEFAULTS) do
+        if config[key] == nil then config[key] = value end
+    end
+end
 
 function config.load()
     -- Follows the active campaign root (see data/loader.lua resolveRoot):
@@ -37,14 +48,14 @@ function config.load()
             end
         end
     end
+
+    -- The old fallback lived only after the module's initial config.load(), so
+    -- later reloads (save loading / campaign switching) cleared MAX_* forever.
+    -- Restore missing structural limits on every load while still honoring an
+    -- authored system.json override when one exists.
+    applyLimitDefaults()
 end
 
 config.load()
-
--- Party/reserve size bounds — engine-wide constants replacing magic numbers.
--- system.json may override these; these are fallback defaults.
-if not config.MAX_PARTY_SIZE then config.MAX_PARTY_SIZE = 4 end
-if not config.MAX_RESERVE_SIZE then config.MAX_RESERVE_SIZE = 4 end
-if not config.MAX_STORAGE_SIZE then config.MAX_STORAGE_SIZE = 99 end
 
 return config
