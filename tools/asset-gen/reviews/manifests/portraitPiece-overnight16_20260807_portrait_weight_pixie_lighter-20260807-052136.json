@@ -1,0 +1,95 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "portraitPiece",
+  "name": "overnight16_20260807_portrait_weight_pixie_lighter",
+  "description": "Pixie summon creature, head and shoulders portrait, luminous small fae features, moss-green accents, fixed centered framing",
+  "options": {
+    "requestSize": "512x768"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
+      "seed": 411407,
+      "loras": [
+        {
+          "name": "FF8BG",
+          "weight": 0.35
+        }
+      ]
+    },
+    "heightControl": null,
+    "heightControlWeight": null
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16_20260807_portrait_weight_pixie_lighter.png",
+  "targetDir": "assets/portraitPieces",
+  "tileAxes": false,
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.33902,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16_20260807_portrait_weight_pixie_lighter#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.002797,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16_20260807_portrait_weight_pixie_lighter#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16_20260807_",
+    "jobId": "overnight16_20260807_portrait_weight_pixie_lighter",
+    "studyId": "portrait_weight_pixie",
+    "category": "portrait",
+    "subjectId": "Pixie",
+    "subjectSource": [
+      "data/actors.json",
+      "docs/game design/"
+    ],
+    "question": "What style-LoRA weight preserves a small nonhuman identity in portrait framing?",
+    "variable": "loraWeight",
+    "armId": "lighter",
+    "control": true,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

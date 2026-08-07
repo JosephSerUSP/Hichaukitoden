@@ -1,4 +1,166 @@
 {
+ "bigBattler-overnight16_20260807_creature_silhouette_cerberus_anatomy-20260807-053645#1": {
+  "at": "2026-08-07T11:54:57",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_cerberus_anatomy-20260807-053645.json",
+   "sha256": "75ef042e771724868bd7e4deb5882d6cd5143af5c104e848efa241858fd1a45d"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_cerberus_anatomy-20260807-053645#2": {
+  "at": "2026-08-07T11:54:57",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_cerberus_anatomy-20260807-053645.json",
+   "sha256": "57348c050e60ceb1a0388a1dbf8396296a7a8a35766fa2d492406795fc5c6cc0"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_cerberus_control-20260807-053053#1": {
+  "at": "2026-08-07T11:54:58",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_cerberus_control-20260807-053053.json",
+   "sha256": "9c060bd0da9bbfdc7b820e1169a001b3e23b340e6ae7c11ecefd0fbe899e1360"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_cerberus_control-20260807-053053#2": {
+  "at": "2026-08-07T11:54:59",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_cerberus_control-20260807-053053.json",
+   "sha256": "0b258e7fe25585cb02588dd7db4ea38f10df1c64afc3c8cf530bacc9d425bf7b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_ooze_control-20260807-054232#1": {
+  "at": "2026-08-07T11:54:54",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_ooze_control-20260807-054232.json",
+   "sha256": "e67bfa018d229d0cea94677794d44201d8decfb9a1ac24e5f0f8e3aa0a63ae6f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_ooze_control-20260807-054232#2": {
+  "at": "2026-08-07T11:54:56",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_ooze_control-20260807-054232.json",
+   "sha256": "2fbc04f12a0e89fc8720ff8fe48254037db296b773ff3431269b149c68948f9a"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_ooze_crystal-20260807-055436#1": {
+  "at": "2026-08-07T11:54:52",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_ooze_crystal-20260807-055436.json",
+   "sha256": "6caf8c54b6e3553ec3e63419cabdf2989845b7090e31c605c60836682f797044"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_silhouette_ooze_crystal-20260807-055436#2": {
+  "at": "2026-08-07T11:54:53",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_silhouette_ooze_crystal-20260807-055436.json",
+   "sha256": "ef764fd87fff8fbffbbe28f6d670137d862007b1456c106fbdcbe2007cb6631f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_golem_control-20260807-060031#1": {
+  "at": "2026-08-07T11:54:51",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_golem_control-20260807-060031.json",
+   "sha256": "c70e203d5dd1c0d2450ffefb402ce75e73e32460b6be5db07aeb7d4c3819a70b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_golem_control-20260807-060031#2": {
+  "at": "2026-08-07T11:54:51",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_golem_control-20260807-060031.json",
+   "sha256": "8c3ca53b2c7e959624729826f2523d0ecf6896e1ff09e84427f501055e8721ad"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_golem_retro-20260807-060622#1": {
+  "at": "2026-08-07T11:54:50",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_golem_retro-20260807-060622.json",
+   "sha256": "410b1653f766b857b3a42c823d510414356262b0e2c82f07024c3b2f05a80601"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_golem_retro-20260807-061832#2": {
+  "at": "2026-08-07T11:54:49",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_golem_retro-20260807-061832.json",
+   "sha256": "71e7125b898f1d3e9d6aa90d91a0cebc15a1f97119b2ea1c54f41677df381b1f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_lamia_control-20260807-063355#1": {
+  "at": "2026-08-07T11:54:45",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_lamia_control-20260807-063355.json",
+   "sha256": "96018ae6f1823c268081457bd6235eb0c5de6aed382c7199528a52a07fb44a36"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_lamia_control-20260807-063355#2": {
+  "at": "2026-08-07T11:54:46",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_lamia_control-20260807-063355.json",
+   "sha256": "faea259ed3cadac3620b4d2153905feb4218d51e650cee4197e05a0720718c3f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_lamia_retro-20260807-063942#1": {
+  "at": "2026-08-07T11:54:32",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_lamia_retro-20260807-063942.json",
+   "sha256": "f5fcdc887389efc1fb0e9a9485a30e449d45882101ebc083b3a33331f949a2ee"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "bigBattler-overnight16_20260807_creature_style_lamia_retro-20260807-063942#2": {
+  "at": "2026-08-07T11:54:37",
+  "evidence": {
+   "manifest": "manifests/bigBattler-overnight16_20260807_creature_style_lamia_retro-20260807-063942.json",
+   "sha256": "851687b42970323587971afcb5bc24a6adb49fc9f2b730834057e67ab88667ff"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "locationArt-overnight16_20260807_env_st_maria_density_control-20260807-064526#1": {
+  "at": "2026-08-07T11:54:25",
+  "evidence": {
+   "manifest": "manifests/locationArt-overnight16_20260807_env_st_maria_density_control-20260807-064526.json",
+   "sha256": "f5d1aaeafdd3f32cb61acc644e235f6b5f68e6cb879caea4f4a4b78405d7fd87"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "locationArt-overnight16_20260807_env_st_maria_density_control-20260807-064526#2": {
+  "at": "2026-08-07T11:54:26",
+  "evidence": {
+   "manifest": "manifests/locationArt-overnight16_20260807_env_st_maria_density_control-20260807-064526.json",
+   "sha256": "7d0569e60bef903e41e11bf5217ee227a5bfabb2279839ff9ca94a9e91309af0"
+  },
+  "score": 0,
+  "tags": []
+ },
  "portraitPiece-NPC_Scribe_clean-20260802-211454#1": {
   "at": "2026-08-04T11:55:28",
   "score": 0,
@@ -52,6 +214,640 @@
  "portraitPiece-matrix_v15_euler-20260802-205449#1": {
   "at": "2026-08-04T11:55:35",
   "score": 0,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_expression_warden_concerned-20260807-052920#1": {
+  "at": "2026-08-07T11:55:09",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_expression_warden_concerned-20260807-052920.json",
+   "sha256": "b72a4cad59b4f9893130908b3b7a6052a9aedc18f721d2466a8c7a755a1d2e74"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_expression_warden_concerned-20260807-052920#2": {
+  "at": "2026-08-07T11:55:13",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_expression_warden_concerned-20260807-052920.json",
+   "sha256": "99f2cf7f302a0ed818efff921cb55eac72d96cb075b2c76c6d50c81223cc1263"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_expression_warden_control-20260807-052747#1": {
+  "at": "2026-08-07T11:55:15",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_expression_warden_control-20260807-052747.json",
+   "sha256": "e59582370bb92c3c8e5b34321235405f2255b31f72755115844b92d8ee1253d0"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_expression_warden_control-20260807-052747#2": {
+  "at": "2026-08-07T11:55:18",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_expression_warden_control-20260807-052747.json",
+   "sha256": "58d151a008756b60116b9e1cb4b7fba5c39bc319145b93fd6fd51c88a364e9ad"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_pose_alex_control-20260807-052443#1": {
+  "at": "2026-08-07T11:55:29",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_pose_alex_control-20260807-052443.json",
+   "sha256": "506922a848c0031a869413b4a7f3eb59eae960eae0834550f6fd1ffb622705a2"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_pose_alex_control-20260807-052443#2": {
+  "at": "2026-08-07T11:55:31",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_pose_alex_control-20260807-052443.json",
+   "sha256": "c8cf72a0eb5d449efa21d0240a0a7e75a9c4d90b66ab012210e18ef80afb19f9"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_pose_alex_protective-20260807-052615#1": {
+  "at": "2026-08-07T11:55:21",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_pose_alex_protective-20260807-052615.json",
+   "sha256": "947f91cc26f30b8d01086dc8e91b93116e0948eb39d55295991c160d0327c5ed"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_pose_alex_protective-20260807-052615#2": {
+  "at": "2026-08-07T11:55:27",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_pose_alex_protective-20260807-052615.json",
+   "sha256": "f523d5502e98750a97d1d5a69869345e9e7e4ca70c5b7ddd93147262248ebaa1"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_scribe_control-20260807-051830#1": {
+  "at": "2026-08-07T11:55:53",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_scribe_control-20260807-051830.json",
+   "sha256": "759bf1f9893e033d381cee2f40c636b5f983832993e64142817b594a4a2007f2"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_scribe_control-20260807-051830#2": {
+  "at": "2026-08-07T11:55:54",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_scribe_control-20260807-051830.json",
+   "sha256": "83ca2ffdca7594eb367daac81203b1c44ff8dc00a72e3cf0cb8c119ecfc01720"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_scribe_retro-20260807-052002#1": {
+  "at": "2026-08-07T11:55:48",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_scribe_retro-20260807-052002.json",
+   "sha256": "8f98cc5f0a806acdabe2dbb926dd4b96dbd7f22b5bd7555c6ca45554ff01916e"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_scribe_retro-20260807-052002#2": {
+  "at": "2026-08-07T11:55:50",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_scribe_retro-20260807-052002.json",
+   "sha256": "acf07c5ea4670ddd532d77dfe92babb8c2b9c4b546402b69dcc6258f40980494"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-044832#1": {
+  "at": "2026-08-07T11:58:22",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-044832.json",
+   "sha256": "c250b3f8852ef13add67a9a2606a35436e00784eb457d3b1eeb0c19e5c291075"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-051519#1": {
+  "at": "2026-08-07T11:55:59",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-051519.json",
+   "sha256": "34f32db18701f62707821c6faf066993a1e086536e571dd966a4cb17d0604e4d"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-051519#2": {
+  "at": "2026-08-07T11:56:01",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_warden_control-20260807-051519.json",
+   "sha256": "f6c16ef3f91f8aef520aeaae596690de2df3ea2e0d5c8f19882f2403041abb88"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_warden_retro-20260807-051656#1": {
+  "at": "2026-08-07T11:55:56",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_warden_retro-20260807-051656.json",
+   "sha256": "e46b778120caedba90fd4339f21243e82299300c777cba83ef09470ea1595d56"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_style_warden_retro-20260807-051656#2": {
+  "at": "2026-08-07T11:55:56",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_style_warden_retro-20260807-051656.json",
+   "sha256": "c5f299541b92c01927d9cd7c0338b067188308b47394fe647b2d9190f98c1641"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_weight_pixie_lighter-20260807-052136#1": {
+  "at": "2026-08-07T11:55:38",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_weight_pixie_lighter-20260807-052136.json",
+   "sha256": "dc4cc3d1d313eb813078e063b60cad92c41fc5a5df31d844554b40207ea8a608"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_weight_pixie_lighter-20260807-052136#2": {
+  "at": "2026-08-07T11:55:46",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_weight_pixie_lighter-20260807-052136.json",
+   "sha256": "cc7888f1163904904852821536f55ea0fbf4a5534ac6db204652cfe9e4f3883f"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_weight_pixie_stronger-20260807-052309#1": {
+  "at": "2026-08-07T11:55:34",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_weight_pixie_stronger-20260807-052309.json",
+   "sha256": "cf5e9e50c999c707d7ad8dea7f5ed27e0817441d8f144069fa15405a838a5302"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16_20260807_portrait_weight_pixie_stronger-20260807-052309#2": {
+  "at": "2026-08-07T11:55:35",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16_20260807_portrait_weight_pixie_stronger-20260807-052309.json",
+   "sha256": "9515af25be6399e99dc283fcb2760191e81cecf2e7776ac7f84cb01111011069"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129#1": {
+  "at": "2026-08-07T12:46:08",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129.json",
+   "sha256": "3f1c946743be134293ddeb47a574a59eecf31825b0d5df082959abb1b3aa4e81"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129#2": {
+  "at": "2026-08-07T12:46:09",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129.json",
+   "sha256": "5cb80632cfec923dfd517fb015709889453167b78aace6598a750dd61eae1d0b"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129#3": {
+  "at": "2026-08-07T12:46:11",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_control-20260807-122129.json",
+   "sha256": "26b96d7ba5b480bdfe63b68086baf63e432f2c00bd23c889fb42e9ded9b59003"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356#1": {
+  "at": "2026-08-07T12:46:00",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356.json",
+   "sha256": "ac7d03c80beb58f11e3e10cf81b2d52c89d552a7a976ab9b500c3150547ab326"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356#2": {
+  "at": "2026-08-07T12:46:02",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356.json",
+   "sha256": "a6758d5ee6083c23550c5924bf48a9cb04fcf5866787640ff325023139645b08"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356#3": {
+  "at": "2026-08-07T12:46:06",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_alex_protective_generalize_protective-20260807-122356.json",
+   "sha256": "fbd414ddff9747b663f7beb70a43e0907b211584710fbe7e2f899889365799fe"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520#1": {
+  "at": "2026-08-07T17:25:01",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520.json",
+   "sha256": "92ccf9a4a46b451b4e634053ecd9cac541a836b7930a3c8d7cd642c6b650d1a5"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520#2": {
+  "at": "2026-08-07T17:25:03",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520.json",
+   "sha256": "78a5ad94c5ed185aee0a4c0208e120b4519664f3ed6fb33e024d61dd73059bde"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520#3": {
+  "at": "2026-08-07T17:25:04",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_control-20260807-124520.json",
+   "sha256": "9d455e7bbb8a41c987b2822a4d1892a84f6cdb683afc9de4332a2b7058560c42"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852#1": {
+  "at": "2026-08-07T17:24:55",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852.json",
+   "sha256": "ec4e3daf1f78a90c2501ebc2d53ab64f64b7ef943d5fc68a4ed4ac91329895a5"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852#2": {
+  "at": "2026-08-07T17:24:58",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852.json",
+   "sha256": "f5eb6d603c2eae7f6ffc6d9b2f6fa34f8c94efb3a2122f3ae53fb0919cf69685"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852#3": {
+  "at": "2026-08-07T17:24:59",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_angel_style_retro-20260807-124852.json",
+   "sha256": "2c75832a12f6eb68d10a7d4aa520e3e704d3bdb245fbdd2010c4daec94c62cfa"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614#1": {
+  "at": "2026-08-07T12:45:52",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614.json",
+   "sha256": "4a3f1570beaf7fd389853de9f1a60df6334613f9371a6301084b2fb554dc156e"
+  },
+  "note": "im pretty sure the word \"portrait\" and the prompt are pushing it towards classical art",
+  "score": 2,
+  "tags": [
+   "prompt"
+  ]
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614#2": {
+  "at": "2026-08-07T12:45:55",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614.json",
+   "sha256": "cb7e3ac987d247be3163da5a39b966ed328c632cb333438d068f425973e51b11"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614#3": {
+  "at": "2026-08-07T12:45:57",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_control-20260807-122614.json",
+   "sha256": "50a962f4375cc121504659c8bcc7513551c65b49a1cf8c1e969ef4bb6dbd522c"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830#1": {
+  "at": "2026-08-07T12:45:28",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830.json",
+   "sha256": "d330e085002d67bf74c66276e0ed1a533cd63b8e6c2d41b623e7451c31c7b7eb"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830#2": {
+  "at": "2026-08-07T12:45:29",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830.json",
+   "sha256": "a4a27a8d552c795aad15966d9d719162ae42f3608ab85167cc6facefd51f3780"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830#3": {
+  "at": "2026-08-07T12:45:29",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_nurse_style_retro-20260807-122830.json",
+   "sha256": "a03eb374ef8b1c28cffd4a73d378fa751b17e98add56f7441e874953be9da412"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052#1": {
+  "at": "2026-08-07T12:45:24",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052.json",
+   "sha256": "598f5572ff0b3ade1d46a2eeeebe05bb2d5ea3a1affeb003a3c58cd502b90e22"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052#2": {
+  "at": "2026-08-07T12:45:25",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052.json",
+   "sha256": "3a114b125ab725e88dcb0cd58a58e94ff99d3fde181c6b7e928aa50513bb8e38"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052#3": {
+  "at": "2026-08-07T12:45:26",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_control-20260807-123052.json",
+   "sha256": "ae69e41276c72adedb87f15e7687a3ec678394336b1a1f78192c3c3e30a127f2"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314#1": {
+  "at": "2026-08-07T12:45:19",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314.json",
+   "sha256": "ba5aa9024f400c56acb8d26aae915988ac508ca03fd91109578c3530d3edb994"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314#2": {
+  "at": "2026-08-07T12:45:20",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314.json",
+   "sha256": "4106639d487e7653f8ca05eb3aab22db64734507903e14e216ea831db1e52e03"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314#3": {
+  "at": "2026-08-07T12:45:22",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_pixie_pose_curious-20260807-123314.json",
+   "sha256": "d34f9c2183ddb971679c26d27838b9f5d5362f4ec95126a87afc646166985821"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-120933#1": {
+  "at": "2026-08-07T12:46:40",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-120933.json",
+   "sha256": "9f6a71b7d2368b77b0f199a1d5511daa35bb7fd96f271ded2fe2f2dd5072a8cc"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112#1": {
+  "at": "2026-08-07T12:46:36",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112.json",
+   "sha256": "fe3cf5476bfc7f17abfbe29383c09a7893fc1712df67890bf55f5f4de57e120a"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112#2": {
+  "at": "2026-08-07T12:46:37",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112.json",
+   "sha256": "2c07364698af81dc0f0049190299535c70770c863323cb36348d5cdf786f4efc"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112#3": {
+  "at": "2026-08-07T12:46:38",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_control-20260807-121112.json",
+   "sha256": "e23749819726585c1afe9426ac06496e9d0540a077b8825c9ed70491ec2312fa"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350#1": {
+  "at": "2026-08-07T12:46:29",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350.json",
+   "sha256": "c3c52117726b59a74f810fb85499dcc429f48d9b845ccc827f958ed1d39d0976"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350#2": {
+  "at": "2026-08-07T12:46:30",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350.json",
+   "sha256": "539a68da95877312a907966d6707dcffed00f3235b204f7bd17375d0e8264828"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350#3": {
+  "at": "2026-08-07T12:46:34",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_model_newera-20260807-121350.json",
+   "sha256": "6988e8fb9934bdfc9af7e2757ea1c3768a05fd6aeee4a29f5ac717f0f4951b7d"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021#1": {
+  "at": "2026-08-07T12:45:02",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021.json",
+   "sha256": "02470b5196b184b4341ffe73aa4f38f77596275e11a9752bfcabf1730113d0c7"
+  },
+  "note": "malformed, bad anatomy but interesting artstyle",
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021#2": {
+  "at": "2026-08-07T12:45:05",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021.json",
+   "sha256": "cc43ab095064b2cb09866d3bd8e4156619e5c004aa4ff88d0b1b9fc3d49a90ef"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021#3": {
+  "at": "2026-08-07T12:45:06",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_lighter-20260807-124021.json",
+   "sha256": "4ae2fd3c6bfffc1b834873e3c0179e214c67a8178786b223d68725e396a59b64"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248#1": {
+  "at": "2026-08-07T17:25:05",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248.json",
+   "sha256": "73326e6fab8b404b06a81e663eaf08ada893a9a63b3781bb0017e8539c080802"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248#2": {
+  "at": "2026-08-07T17:25:06",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248.json",
+   "sha256": "9162bcddf9a86743c918f44956631379cf3e582ead5e4ae7555e758923c1627c"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248#3": {
+  "at": "2026-08-07T17:25:11",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_scribe_weight_stronger-20260807-124248.json",
+   "sha256": "ef3a196d9879ecfaf54eff1a1ec3d711d60ec6b02fd90c584f3bec1388a87e5e"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539#1": {
+  "at": "2026-08-07T12:45:14",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539.json",
+   "sha256": "cc2ee0cdbc48ae5e8e2f1bd14601183dc2b1b0071f26a6ff224c9a68191e54d0"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539#2": {
+  "at": "2026-08-07T12:45:16",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539.json",
+   "sha256": "f758b9fa9452f9d07e8803adc4adecfeec228c0a60c073360f9a93b614d8c499"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539#3": {
+  "at": "2026-08-07T12:45:17",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_control-20260807-123539.json",
+   "sha256": "1d7f53a6711d885cb320f131ff3c73db6adb7fc5a94e6f0c770fc9b1c00b9bca"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759#1": {
+  "at": "2026-08-07T12:45:09",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759.json",
+   "sha256": "13a7b7a75882f4d17c8f770ca1ddd28f9959e4fac59b67cdb89bcb0d298a5b1f"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759#2": {
+  "at": "2026-08-07T12:45:11",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759.json",
+   "sha256": "7c41a12ef21fe7b43994066c7c43ccb4d5a957e1602e40f842312b6c09b5b539"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759#3": {
+  "at": "2026-08-07T12:45:12",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_skeleton_identity_retro-20260807-123759.json",
+   "sha256": "60f40e83160c62b51e74717ee2f18fac0e54a3cdcfaae42404acff37c389299f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633#1": {
+  "at": "2026-08-07T12:46:22",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633.json",
+   "sha256": "36210768a3bbbfe4948e564766b8928564e93517aa7c3b5e125430b266281780"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633#2": {
+  "at": "2026-08-07T12:46:24",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633.json",
+   "sha256": "72e99089e5104c1e2205d3b0663765770dfcf8fe5b5ed408c57e376c11b68b65"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633#3": {
+  "at": "2026-08-07T12:46:26",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_control-20260807-121633.json",
+   "sha256": "7b041be103918f0d561652571376acc5aecf50ce8928585549cc0ad348b51675"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908#1": {
+  "at": "2026-08-07T12:46:13",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908.json",
+   "sha256": "59b86a0aab937e2e362758a4a991c90918e458d19e829e4191d9b3279c87eda4"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908#2": {
+  "at": "2026-08-07T12:46:18",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908.json",
+   "sha256": "400040e75e797b9c7b0e794d82859e3690517aae851f686b06b038caa3d8a8a3"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908#3": {
+  "at": "2026-08-07T12:46:20",
+  "evidence": {
+   "manifest": "manifests/portraitPiece-overnight16r_20260807_portrait_warden_retro_generalize_retro-20260807-121908.json",
+   "sha256": "d57bebd60106b5c97a9602f153d48accd4c3b8a712625c5857efcacd1a1b56f5"
+  },
+  "score": 1,
   "tags": []
  },
  "portraitPiece-probe_portrait_base-20260802-203558#1": {
@@ -3919,6 +4715,433 @@
   "score": 3,
   "tags": [
    "flat"
+  ]
+ },
+ "texturePiece-overnight16_20260807_tex_bronze_state_control-20260807-045545#1": {
+  "at": "2026-08-07T11:57:51",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_bronze_state_control-20260807-045545.json",
+   "sha256": "26ab5ecb4e53a9931ce873c82def36f57d3d095b7b3b8dec038450bca8701d5b"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_bronze_state_control-20260807-045545#2": {
+  "at": "2026-08-07T11:57:54",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_bronze_state_control-20260807-045545.json",
+   "sha256": "34f05977e767f35ac86430986cac0add8b446939dd5ffac475996b85870abf21"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_bronze_state_restrained-20260807-045902#1": {
+  "at": "2026-08-07T11:57:28",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_bronze_state_restrained-20260807-045902.json",
+   "sha256": "068ef91b8732737c6ff4fecf4d470145608e2e7df5a06d7ea9603470bb1c0447"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_bronze_state_restrained-20260807-045902#2": {
+  "at": "2026-08-07T11:57:40",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_bronze_state_restrained-20260807-045902.json",
+   "sha256": "ce72cf48ffe17758d3bb06af9084a23d7a9807f6d474c732690d0cdd842667cb"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16_20260807_tex_sacred_mosaic_state_control-20260807-050850#1": {
+  "at": "2026-08-07T11:56:45",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_sacred_mosaic_state_control-20260807-050850.json",
+   "sha256": "9011f9c4d67439bb14d578e41eb9ab1e7728705130b3073a4173ed5559a72bcb"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_sacred_mosaic_state_control-20260807-050850#2": {
+  "at": "2026-08-07T11:57:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_sacred_mosaic_state_control-20260807-050850.json",
+   "sha256": "8d181111b8ddd12866ce3c4ca2f8aacf652b0b2d27f6e39a9a16d8b23ab07066"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_sacred_mosaic_state_worn-20260807-051206#1": {
+  "at": "2026-08-07T11:56:24",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_sacred_mosaic_state_worn-20260807-051206.json",
+   "sha256": "6f29e5a7a8c56df75a0066cdedbce274093632916eda68d164fa5d6a7488c555"
+  },
+  "note": "preview makes no sense",
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_sacred_mosaic_state_worn-20260807-051206#2": {
+  "at": "2026-08-07T11:56:35",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_sacred_mosaic_state_worn-20260807-051206.json",
+   "sha256": "4029203b86e9970b004b64e293e36bcb5b743ac39e22eff32b7fa4239e49574e"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044733#1": {
+  "at": "2026-08-07T11:58:30",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044733.json",
+   "sha256": "5528faa961fc329838b550ce5f153f8889e9b4c7a2875291e85e4d57b914ca8c"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044901#1": {
+  "at": "2026-08-07T11:58:06",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044901.json",
+   "sha256": "bd4a823710203f3c209ebd178ebce323a1633eb9279d9726bccec65fc9fc0dba"
+  },
+  "score": 2,
+  "tags": [
+   "flat",
+   "repeat",
+   "seam"
+  ]
+ },
+ "texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044901#2": {
+  "at": "2026-08-07T11:58:17",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_slab_density_control-20260807-044901.json",
+   "sha256": "0ab210d2ae859533bc78060babd20c2e87bfbffb7c3781cafde9fe3ba0689a99"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "texturePiece-overnight16_20260807_tex_slab_density_denser-20260807-045231#1": {
+  "at": "2026-08-07T11:57:59",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_slab_density_denser-20260807-045231.json",
+   "sha256": "ae5bfb6a16b8fb4a67618968d735f14f787e5de59cdfd7d688ceb3b339be56fe"
+  },
+  "score": 3,
+  "tags": [
+   "flat",
+   "repeat"
+  ]
+ },
+ "texturePiece-overnight16_20260807_tex_slab_density_denser-20260807-045231#2": {
+  "at": "2026-08-07T11:58:02",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16_20260807_tex_slab_density_denser-20260807-045231.json",
+   "sha256": "cfbf1b50cd8b739895cb52a10156c00a048fa6dedc358a64967b6d78fd716ddf"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823#1": {
+  "at": "2026-08-07T17:23:55",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823.json",
+   "sha256": "a1ff3ab44dbad41de7697dbc89ebe461420d8f6a5f71c83ebfc0236622119db6"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823#2": {
+  "at": "2026-08-07T17:23:57",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823.json",
+   "sha256": "66e840666de6333ffeb65df46e6f742910ff3adb10cd8ee1570cb861167638e7"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823#3": {
+  "at": "2026-08-07T17:23:58",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_control-20260807-131823.json",
+   "sha256": "3995404521c91543bac7784816fc831673eb71d5f534cf82bbaed68f296286d9"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642#1": {
+  "at": "2026-08-07T17:23:45",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642.json",
+   "sha256": "07eb28ae014d0e1579c261e7b3e30e93e625a4f4f271fe23ff0754154bca5bf0"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642#2": {
+  "at": "2026-08-07T17:23:49",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642.json",
+   "sha256": "25aec158b49f341c81b6fadd1bd05851aa8dd300bbe4f52d05551dd48caecece"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642#3": {
+  "at": "2026-08-07T17:23:50",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_bronze_recipe_generalize_threshold-20260807-132642.json",
+   "sha256": "fde4eb69c90e1de3cecee50e6ddb97ccf8fdedfbb3d37122df53518c313fa899"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028#1": {
+  "at": "2026-08-07T17:22:29",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028.json",
+   "sha256": "dc4fc05e646d0b1f7a0e549c9de8818645fb47da2ef3db80d44a6476a76c3dbf"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028#2": {
+  "at": "2026-08-07T17:22:37",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028.json",
+   "sha256": "b5ac18250c7d860bf7b4b70518e6894ac76921c1f6d563d81e413bd936a982a5"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028#3": {
+  "at": "2026-08-07T17:22:39",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_algae-20260807-135028.json",
+   "sha256": "9af60ff62b7b2200b8a1cd8f3fb2961af1c01080d466d28cc212d81257d7f280"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305#1": {
+  "at": "2026-08-07T17:22:41",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305.json",
+   "sha256": "24286754236cfcff882a75ed3be2c7014ec84ef1fe4840b62487883c8d0f5136"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305#2": {
+  "at": "2026-08-07T17:23:00",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305.json",
+   "sha256": "5022b3108460ffb738264698239448a2a875bedc55f341c633f1949c950fbf42"
+  },
+  "score": 0,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305#3": {
+  "at": "2026-08-07T17:24:17",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_cistern_cobbles_control-20260807-134305.json",
+   "sha256": "4a4e7a27a0b228a343ea495fa6a57c71db2fd201a0f52bfa0ff7e1c1573fb4e8"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056#1": {
+  "at": "2026-08-07T17:24:03",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056.json",
+   "sha256": "2781b4ef1d1f2a67333ab0018ef4899360bd6f30018f5502147c3c36cb3cd083"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056#2": {
+  "at": "2026-08-07T17:24:09",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056.json",
+   "sha256": "d664925c2489df61fc7083f52d7012a81432ccacec2053d313a2490c327ed940"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056#3": {
+  "at": "2026-08-07T17:24:14",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_blue-20260807-131056.json",
+   "sha256": "8961f9a333611615f174373f03f7dc5e1e2134f1e8ead03a58bcd2a1956fbfa7"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344#1": {
+  "at": "2026-08-07T17:24:21",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344.json",
+   "sha256": "f1cbc1aca826d9efb041d08c8fe00595ff9041bdc367fd7cb5dc7421b1830e5d"
+  },
+  "score": 6,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344#2": {
+  "at": "2026-08-07T17:24:25",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344.json",
+   "sha256": "63c13d02f03b0fe437a2c9051aaddd9f5345f2d88ecf5f3e03a0ee627bf84548"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344#3": {
+  "at": "2026-08-07T17:24:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_mosaic_control_generalize_control-20260807-130344.json",
+   "sha256": "8c550225ccd9b434dc049959ad64ce38b1799f435b69c2bb2689e1ef11f765cb"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-121016#1": {
+  "at": "2026-08-07T12:46:41",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-121016.json",
+   "sha256": "dfffc4eaff23b90b4530882e02a88d9d894bf03c637eb6b1bbb0a17823e42f0d"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117#1": {
+  "at": "2026-08-07T17:24:45",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117.json",
+   "sha256": "9b97c990afa8004be7e406c1ecb202da037862feb342ef8c1eab4f20eda33f69"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117#2": {
+  "at": "2026-08-07T17:24:49",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117.json",
+   "sha256": "b546d40f3e63818c4c7ef07bb84bee7fd1b5d0399e644ea01ea3e3827e5c9040"
+  },
+  "score": 1,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117#3": {
+  "at": "2026-08-07T17:24:53",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_control-20260807-125117.json",
+   "sha256": "63b6405b6f308db659ace008731674c0dfbfff8bbc07834250a3d86730c3d2bf"
+  },
+  "score": 1,
+  "tags": [
+   "perspective",
+   "picture"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622#1": {
+  "at": "2026-08-07T17:24:31",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622.json",
+   "sha256": "08bc607add82c8ea4dec5b702395c7c8ccddb206fd449b84b92aab1d3aeb02ef"
+  },
+  "score": 3,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622#2": {
+  "at": "2026-08-07T17:24:35",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622.json",
+   "sha256": "50ba94e69c1e49494099ea97be64fe2f73e1bb4efa9e7aaff470eecb495bbc28"
+  },
+  "score": 2,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622#3": {
+  "at": "2026-08-07T17:24:39",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slab_recipe_generalize_slate-20260807-125622.json",
+   "sha256": "be46796396578d2101ed59b56f9b6414a70cd41e079a7a50c9963a8801b242fc"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201#1": {
+  "at": "2026-08-07T17:21:37",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201.json",
+   "sha256": "55438bd8f30ee00a01927c9d30cd85312779f907ecde618e9b045bd6b4ca4e03"
+  },
+  "score": 2,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201#2": {
+  "at": "2026-08-07T17:21:48",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201.json",
+   "sha256": "199c511768a10ad86fbbe7c3a421dc02e8ff87efccb22a0fff7ef516ac022628"
+  },
+  "score": 5,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201#3": {
+  "at": "2026-08-07T17:21:52",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_control-20260807-141201.json",
+   "sha256": "1052705454acd8e8656a9bc38643ec80ec1e85d585f331b8c051a677f4129da0"
+  },
+  "score": 3,
+  "tags": [
+   "flat",
+   "repeat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212#1": {
+  "at": "2026-08-07T17:21:26",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212.json",
+   "sha256": "a9601990abb701b17755933359ffe23f47ad3f259862930bf0e556ebc821759d"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212#2": {
+  "at": "2026-08-07T17:21:29",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212.json",
+   "sha256": "d1c7b42b96abf39da4153847d6d24b056ae6b8aa47c4894042a6846a2998ad83"
+  },
+  "score": 5,
+  "tags": [
+   "flat"
+  ]
+ },
+ "texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212#3": {
+  "at": "2026-08-07T17:21:33",
+  "evidence": {
+   "manifest": "manifests/texturePiece-overnight16r_20260807_tex_slate_vault_generalize_teal-20260807-142212.json",
+   "sha256": "1293839df7d4da7650330bd6075f9cff162141d51f42e85d64d315fd4911e9d4"
+  },
+  "score": 3,
+  "tags": [
+   "flat",
+   "repeat"
   ]
  },
  "texturePiece-probe_base-20260802-203247#1": {
@@ -12152,6 +13375,168 @@
   "at": "2026-08-04T13:55:17",
   "score": 4,
   "tags": []
+ },
+ "wallPiece-overnight16_20260807_tex_azulejo_density_control-20260807-050221#1": {
+  "at": "2026-08-07T11:57:25",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16_20260807_tex_azulejo_density_control-20260807-050221.json",
+   "sha256": "2339a4f0c1ffb390b742865c39a7ec6f008330cc5048456900a48ce9f95383f3"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight16_20260807_tex_azulejo_density_control-20260807-050221#2": {
+  "at": "2026-08-07T12:46:46",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16_20260807_tex_azulejo_density_control-20260807-050221.json",
+   "sha256": "29486b33fbda2081f48cf993acdb34367ef6761e2b680c8b5392b6a76e333da9"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight16_20260807_tex_azulejo_density_dense-20260807-050536#1": {
+  "at": "2026-08-07T11:57:21",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16_20260807_tex_azulejo_density_dense-20260807-050536.json",
+   "sha256": "c5656a7877789b90b064dc7ffef857276a3a37cb91832f0d2d904ac4f6aaeb30"
+  },
+  "note": "heightmap and texture are mismatched across this run in general",
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight16_20260807_tex_azulejo_density_dense-20260807-050536#2": {
+  "at": "2026-08-07T11:57:23",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16_20260807_tex_azulejo_density_dense-20260807-050536.json",
+   "sha256": "07f005b7e604030d76cf18b558920301fb39289f82aadd43ca61d6a307261399"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554#1": {
+  "at": "2026-08-07T17:22:20",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554.json",
+   "sha256": "69ac1b9bdbc7305721518e722e4cc027989c6b5767edc7d1e5836b2aeef32bc8"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554#2": {
+  "at": "2026-08-07T17:22:24",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554.json",
+   "sha256": "b93e4ad13264d5bd45377dee9d2b745ba9ba4de07ac41f42a6c0ba1107807e09"
+  },
+  "score": 4,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554#3": {
+  "at": "2026-08-07T17:22:26",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_control-20260807-135554.json",
+   "sha256": "9f882d9f6165c30798461bb50cc6bf0b27bd749586c47a17ea1e6ec51816f165"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418#1": {
+  "at": "2026-08-07T17:22:03",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418.json",
+   "sha256": "baf870873b4570fe29501e0935d43d901899a5130826ad76daab02a13d7ddd28"
+  },
+  "score": 1,
+  "tags": [
+   "harsh",
+   "outdoor",
+   "repeat",
+   "seam"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418#2": {
+  "at": "2026-08-07T17:22:12",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418.json",
+   "sha256": "73391c4a4fe07a77c58b0bac1a7dbb85e92f4fa4a30458fc3d135ef0385be8ac"
+  },
+  "score": 3,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418#3": {
+  "at": "2026-08-07T17:22:15",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_limewash_wall_worn-20260807-140418.json",
+   "sha256": "5b72fb62e1028f3198550a525c4c17eb60594327792063fdafadc1fd48d94b2f"
+  },
+  "score": 1,
+  "tags": []
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023#1": {
+  "at": "2026-08-07T17:21:10",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023.json",
+   "sha256": "98a7a523211fbb056e8f0cd1a4779bad8de32c9057b6eff623c04740f1379a09"
+  },
+  "score": 2,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023#2": {
+  "at": "2026-08-07T17:21:14",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023.json",
+   "sha256": "709cbc4e0cc6414641db7f07483e57bec3abf6d65a2dc9df11ae2ab7c4d32d3e"
+  },
+  "score": 3,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023#3": {
+  "at": "2026-08-07T17:21:19",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_control-20260807-143023.json",
+   "sha256": "f78e87f53faf5d17c600d901105f48f8952289e0c0c1f24ad425a781ac0fc977"
+  },
+  "score": 2,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650#1": {
+  "at": "2026-08-07T17:20:54",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650.json",
+   "sha256": "7a6744da2a1a637c1b29f6ace9b0d43187c2b81ee1927d275ecef8b3c8ab59b0"
+  },
+  "score": 2,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650#2": {
+  "at": "2026-08-07T17:21:02",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650.json",
+   "sha256": "a9fc9af29fba9e7037ffffbd24aa90ccd54fc9dcaf31e2fd43b2c9cc0e5324d0"
+  },
+  "score": 2,
+  "tags": [
+   "unguided"
+  ]
+ },
+ "wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650#3": {
+  "at": "2026-08-07T17:21:08",
+  "evidence": {
+   "manifest": "manifests/wallPiece-overnight16r_20260807_tex_wall_pilaster_density_ornate-20260807-143650.json",
+   "sha256": "9a34a90c48a6bd039840408ee1f3311b87d26c61182908be5a62751f357c162b"
+  },
+  "score": 3,
+  "tags": [
+   "unguided"
+  ]
  },
  "wallPiece-overnight_basalt_DreamShaper_8_pruned-20260803-022822#1": {
   "at": "2026-08-04T11:44:34",

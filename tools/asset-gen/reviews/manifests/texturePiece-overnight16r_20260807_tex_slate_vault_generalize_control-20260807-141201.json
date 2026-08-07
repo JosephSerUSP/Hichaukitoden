@@ -1,0 +1,125 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "overnight16r_20260807_tex_slate_vault_generalize_control",
+  "description": "cool blue-grey slate vaulting, flat head-on diffuse albedo, dense fitted stone, quiet sacred undercroft, cool blue-grey slate, charcoal shadow",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 412013,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/ceiling_vault.png",
+    "heightControlWeight": 0.1
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16r_20260807_tex_slate_vault_generalize_control.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 3.176,
+        "y": 0.513,
+        "centre_x": 0.905,
+        "centre_y": 0.756
+      },
+      "candidateId": "overnight16r_20260807_tex_slate_vault_generalize_control#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.78,
+        "y": 0.774,
+        "centre_x": 0.858,
+        "centre_y": 1.355
+      },
+      "candidateId": "overnight16r_20260807_tex_slate_vault_generalize_control#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 1.059,
+        "y": 2.549,
+        "centre_x": 0.772,
+        "centre_y": 0.769
+      },
+      "candidateId": "overnight16r_20260807_tex_slate_vault_generalize_control#v3",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16r_20260807_",
+    "jobId": "overnight16r_20260807_tex_slate_vault_generalize_control",
+    "studyId": "tex_slate_vault_generalize",
+    "category": "texture",
+    "subjectId": "slate_vault_ceiling",
+    "subjectSource": [
+      "tools/asset-gen/first_stratum_materials.json",
+      "assets/geometry/1_blender_depth_maps/ceiling_vault.png"
+    ],
+    "question": "Does the dense slab recipe carry into a cool vaulting material?",
+    "variable": "paletteBias",
+    "armId": "control",
+    "control": true,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

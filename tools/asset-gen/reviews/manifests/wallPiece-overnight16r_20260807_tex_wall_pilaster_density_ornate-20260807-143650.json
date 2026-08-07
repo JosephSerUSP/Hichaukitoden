@@ -1,0 +1,134 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "overnight16r_20260807_tex_wall_pilaster_density_ornate",
+  "description": "ritual pilaster wall masonry, flat head-on diffuse albedo, horizontally tileable, no perspective, slightly denser carved bands and worn geometric relief",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 412131,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_pilasters.png",
+    "heightControlWeight": 0.1
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16r_20260807_tex_wall_pilaster_density_ornate.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.007484,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.679,
+        "centre_x": 0.813
+      },
+      "candidateId": "overnight16r_20260807_tex_wall_pilaster_density_ornate#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_pilasters]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000122,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.051,
+        "centre_x": 0.055
+      },
+      "candidateId": "overnight16r_20260807_tex_wall_pilaster_density_ornate#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_pilasters]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.988,
+        "centre_x": 1.0
+      },
+      "candidateId": "overnight16r_20260807_tex_wall_pilaster_density_ornate#v3",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_pilasters]",
+      "contextSurface": "wall"
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16r_20260807_",
+    "jobId": "overnight16r_20260807_tex_wall_pilaster_density_ornate",
+    "studyId": "tex_wall_pilaster_density",
+    "category": "texture",
+    "subjectId": "ritual_pilaster_wall",
+    "subjectSource": [
+      "tools/asset-gen/first_stratum_materials.json",
+      "assets/geometry/1_blender_depth_maps/wall_pilasters.png"
+    ],
+    "question": "What ornament density keeps ritual pilasters readable as a wall material?",
+    "variable": "ornamentDensity",
+    "armId": "ornate",
+    "control": false,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

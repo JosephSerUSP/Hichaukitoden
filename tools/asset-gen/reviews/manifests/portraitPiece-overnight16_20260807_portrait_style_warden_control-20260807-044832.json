@@ -1,0 +1,72 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "portraitPiece",
+  "name": "overnight16_20260807_portrait_style_warden_control",
+  "description": "stern middle-aged dungeon warden NPC, head and shoulders, weathered dark uniform, direct calm gaze, fixed centered framing",
+  "options": {
+    "requestSize": "512x768"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-lcm",
+    "model": "dreamshaper_8LCM",
+    "quality": null,
+    "sampling": {
+      "steps": 6,
+      "cfgScale": 2.0,
+      "sampler": "LCM",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
+      "seed": 411205
+    },
+    "heightControl": null,
+    "heightControlWeight": null
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16_20260807_portrait_style_warden_control.png",
+  "targetDir": "assets/portraitPieces",
+  "tileAxes": false,
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.118767,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16_20260807_portrait_style_warden_control#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16_20260807_",
+    "jobId": "overnight16_20260807_portrait_style_warden_control",
+    "studyId": "portrait_style_warden",
+    "category": "portrait",
+    "subjectId": "NPC_Warden",
+    "subjectSource": [
+      "tools/asset-gen/reviews/manifests/portraitPiece-NPC_Warden_clean-20260802-211241.json",
+      "docs/design/"
+    ],
+    "question": "Does the ornate retro LoRA improve a canon warden portrait without losing identity?",
+    "variable": "lora",
+    "armId": "control",
+    "control": true,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

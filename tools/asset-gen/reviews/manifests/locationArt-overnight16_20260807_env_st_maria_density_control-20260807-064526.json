@@ -1,0 +1,89 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "locationArt",
+  "name": "overnight16_20260807_env_st_maria_density_control",
+  "description": "St. Maria museum foundations, underground Portuguese-colonial adjacent sacred hall, limestone columns and shrine recess, establishing location illustration, restrained ornament, open readable hall",
+  "options": {
+    "requestSize": "1024x1024"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 412114
+    },
+    "heightControl": null,
+    "heightControlWeight": null
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "Overnight16_20260807_env_st_maria_density_control.png",
+  "targetDir": "assets/locationArt",
+  "tileAxes": false,
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16_20260807_env_st_maria_density_control#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.001263,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16_20260807_env_st_maria_density_control#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16_20260807_",
+    "jobId": "overnight16_20260807_env_st_maria_density_control",
+    "studyId": "env_st_maria_density",
+    "category": "environment",
+    "subjectId": "St_Maria_Foundations",
+    "subjectSource": [
+      "data/maps.json",
+      "docs/game design/"
+    ],
+    "question": "How much architectural density makes the museum foundations feel sacred rather than generic?",
+    "variable": "ornamentDensity",
+    "armId": "control",
+    "control": true,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

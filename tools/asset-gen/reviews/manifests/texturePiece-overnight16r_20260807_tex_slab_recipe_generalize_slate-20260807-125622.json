@@ -1,0 +1,126 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "texturePiece",
+  "name": "overnight16r_20260807_tex_slab_recipe_generalize_slate",
+  "description": "damp fitted limestone floor slabs, dense small-scale joints, quiet sacred undercroft, flat head-on diffuse albedo, sharp detailed source texture, cool blue-grey slate with the same dense slab geometry",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 411525,
+      "tilingAxes": "xy"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/floor_flagstones.png",
+    "heightControlWeight": 0.1
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16r_20260807_tex_slab_recipe_generalize_slate.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "xy",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.403,
+        "y": 1.394,
+        "centre_x": 1.288,
+        "centre_y": 1.104
+      },
+      "candidateId": "overnight16r_20260807_tex_slab_recipe_generalize_slate#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 2.292,
+        "y": 1.558,
+        "centre_x": 1.219,
+        "centre_y": 1.074
+      },
+      "candidateId": "overnight16r_20260807_tex_slab_recipe_generalize_slate#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000122,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "x": 0.45,
+        "y": 0.47,
+        "centre_x": 0.36,
+        "centre_y": 1.046
+      },
+      "candidateId": "overnight16r_20260807_tex_slab_recipe_generalize_slate#v3",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16r_20260807_",
+    "jobId": "overnight16r_20260807_tex_slab_recipe_generalize_slate",
+    "studyId": "tex_slab_recipe_generalize",
+    "category": "texture",
+    "subjectId": "dense_floor_slabs_generalization",
+    "subjectSource": [
+      "tools/asset-gen/reviews/manifests/texturePiece-overnight16_20260807_tex_slab_density_denser-20260807-045231.json",
+      "tools/asset-gen/batches/first_stratum_surface_fixture_followup_20260807.md",
+      "assets/geometry/1_blender_depth_maps/floor_flagstones.png"
+    ],
+    "question": "Does the reviewed denser slab language generalize to a broad flagstone field?",
+    "variable": "materialFamily",
+    "armId": "slate",
+    "control": false,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

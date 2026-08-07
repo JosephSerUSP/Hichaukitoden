@@ -1,0 +1,6 @@
+param([double]$Hours=16)
+$ErrorActionPreference='Stop'; $root=(Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path; $out=Join-Path $root 'tools\asset-gen\out\art-overnight-20260807'; New-Item -ItemType Directory -Force -Path $out | Out-Null
+$python=(Get-Command python -ErrorAction Stop).Source; $pidPath=Join-Path $out 'run.pid'; $log=Join-Path $out 'runner.log'
+if(Test-Path $pidPath){$old=[int](Get-Content $pidPath -Raw); if(Get-Process -Id $old -ErrorAction SilentlyContinue){Write-Output "Already running PID $old"; exit 0}; Remove-Item $pidPath -Force}
+if(-not (Test-Path 'D:\AI\webui_forge_cu121_torch231')){throw 'Expected local Forge installation is missing.'}
+Push-Location $root; try { & $python tools/asset-gen/forge.py status *> $null; if($LASTEXITCODE -ne 0){ & $python tools/asset-gen/forge.py start }; & $python -m py_compile tools/asset-gen/run_art_overnight.py; if($LASTEXITCODE -ne 0){throw 'runner syntax failed'}; $p=Start-Process -FilePath $python -ArgumentList @('-u','tools/asset-gen/run_art_overnight.py','--hours',$Hours) -WorkingDirectory $root -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError (Join-Path $out 'runner.err.log') -PassThru; Set-Content $pidPath $p.Id -Encoding ascii; Write-Output "Started PID $($p.Id)" } finally {Pop-Location}

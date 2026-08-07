@@ -1,0 +1,134 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "overnight16r_20260807_tex_limewash_wall_worn",
+  "description": "limewashed ceremonial masonry wall, flat head-on diffuse albedo, edge-to-edge horizontally tileable material texture, heavier flaking and dark moisture at the lower course, no objects",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 411929,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_eroded.png",
+    "heightControlWeight": 0.1
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16r_20260807_tex_limewash_wall_worn.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 8e-06,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.298,
+        "centre_x": 0.377
+      },
+      "candidateId": "overnight16r_20260807_tex_limewash_wall_worn#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-1.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_eroded]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.011044,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.014,
+        "centre_x": 0.984
+      },
+      "candidateId": "overnight16r_20260807_tex_limewash_wall_worn#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-2.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_eroded]",
+      "contextSurface": "wall"
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.087646,
+        "chromaOutlierRatio": 1.9e-05,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 0.279,
+        "centre_x": 0.29
+      },
+      "candidateId": "overnight16r_20260807_tex_limewash_wall_worn#v3",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      },
+      "context": "context-3.png",
+      "contextLabel": "two-tile corridor; this wall's own height map; floor and ceiling unchanged [geometry: wall_eroded]",
+      "contextSurface": "wall"
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16r_20260807_",
+    "jobId": "overnight16r_20260807_tex_limewash_wall_worn",
+    "studyId": "tex_limewash_wall",
+    "category": "texture",
+    "subjectId": "limewash_ceremonial_wall",
+    "subjectSource": [
+      "tools/asset-gen/first_stratum_materials.json",
+      "assets/geometry/1_blender_depth_maps/wall_eroded.png"
+    ],
+    "question": "Can limewash establish a distinct wall role without becoming a noisy scene?",
+    "variable": "wearDensity",
+    "armId": "worn",
+    "control": false,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

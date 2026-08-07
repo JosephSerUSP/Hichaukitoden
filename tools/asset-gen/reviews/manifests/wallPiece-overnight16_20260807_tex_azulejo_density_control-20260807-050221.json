@@ -1,0 +1,102 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "wallPiece",
+  "name": "overnight16_20260807_tex_azulejo_density_control",
+  "description": "Portuguese-colonial adjacent shrine niche wall, weathered ivory plaster, cobalt ceramic azulejo fragments, flat head-on diffuse albedo, sparse broken tile fragments",
+  "options": {
+    "requestSize": "512x512"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": true,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 411003,
+      "tilingAxes": "x"
+    },
+    "heightControl": "assets/geometry/1_blender_depth_maps/wall_niche.png",
+    "heightControlWeight": 0.1
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16_20260807_tex_azulejo_density_control.png",
+  "targetDir": "assets/tilesetPieces",
+  "tileAxes": "x",
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.003586,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 2.939,
+        "centre_x": 0.541
+      },
+      "candidateId": "overnight16_20260807_tex_azulejo_density_control#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.0,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "tileScore": {
+        "y": null,
+        "note": "vertical edges intentionally preserved; not scored. ",
+        "x": 1.171,
+        "centre_x": 1.655
+      },
+      "candidateId": "overnight16_20260807_tex_azulejo_density_control#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16_20260807_",
+    "jobId": "overnight16_20260807_tex_azulejo_density_control",
+    "studyId": "tex_azulejo_density",
+    "category": "texture",
+    "subjectId": "azulejo_shrine_wall",
+    "subjectSource": [
+      "tools/asset-gen/first_stratum_materials.json",
+      "data/maps.json"
+    ],
+    "question": "What azulejo coverage remains legible after game-scale reduction?",
+    "variable": "promptSuffix",
+    "armId": "control",
+    "control": true,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}

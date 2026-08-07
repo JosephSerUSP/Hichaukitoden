@@ -1,0 +1,52 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "bigBattler",
+  "name": "overnight16_20260807_creature_style_golem_retro",
+  "description": "Golem, full-size battle creature, ancient carved stone body, broad heavy stance, front three-quarter view, nonhuman guardian",
+  "options": {
+    "requestSize": "1024x1024"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, character, face, human face, portrait, eyes, mouth, nose, head, skull, figure, humanoid, body, anatomy, creature, animal, drop shadow, cast shadow, hard shadow, harsh shadow, black shadow, directional lighting, sunlight, light source, torchlight, specular highlight, glossy reflection, vignette, dramatic lighting, blown highlights, flat unshaded, uniformly lit, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, margin, blank area, empty space, white background, plain background, letterbox, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour",
+      "seed": 411929,
+      "loras": [
+        {
+          "name": "FF8BG",
+          "weight": 0.45
+        }
+      ]
+    },
+    "heightControl": null,
+    "heightControlWeight": null
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "Overnight16_20260807_creature_style_golem_retro.png",
+  "targetDir": "assets/bigBattlers",
+  "tileAxes": false,
+  "variants": [
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.00089,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0078,
+        "blank": false,
+        "verdict": "pass"
+      }
+    }
+  ]
+}

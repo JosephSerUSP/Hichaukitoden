@@ -1,0 +1,106 @@
+{
+  "manifestKind": "asset_gen_run",
+  "manifestVersion": 1,
+  "class": "portraitPiece",
+  "name": "overnight16r_20260807_portrait_alex_protective_generalize_protective",
+  "description": "Alex, human summoner protagonist, head and shoulders, practical dark expedition clothing, fixed centered portrait framing, one hand raised protectively, alert stance",
+  "options": {
+    "requestSize": "512x768"
+  },
+  "tokens": {},
+  "provider": {
+    "id": "forge-quality",
+    "model": "v1-5-pruned-emaonly",
+    "quality": null,
+    "sampling": {
+      "steps": 26,
+      "cfgScale": 7.0,
+      "sampler": "DPM++ 2M",
+      "vae": "vaeFtMse840000EmaPruned_vaeFtMse840k.safetensors",
+      "tiling": false,
+      "negativePrompt": "pixel art, pixelated, low resolution, jpeg artifacts, perspective, vanishing point, horizon, 3d render, photograph, photorealistic, scene, landscape, objects, furniture, drop shadow, cast shadow, vignette, lighting gradient, smooth gradient, blurry, depth of field, bokeh, border, frame, picture frame, grid lines, text, letters, watermark, signature, vector art, cel shaded, anime lineart, watercolour, multiple people, crowd, extra limbs, malformed face",
+      "seed": 410919
+    },
+    "heightControl": null,
+    "heightControlWeight": null
+  },
+  "estimatedCostUsd": null,
+  "refs": [],
+  "targetFile": "overnight16r_20260807_portrait_alex_protective_generalize_protective.png",
+  "targetDir": "assets/portraitPieces",
+  "tileAxes": false,
+  "variants": [
+    {
+      "index": 1,
+      "raw": "raw-1.png",
+      "file": "variant-1.png",
+      "rawQuality": {
+        "highChromaRatio": 0.046356,
+        "chromaOutlierRatio": 0.000936,
+        "blankEdgeFraction": 0.0781,
+        "blank": true,
+        "verdict": "review"
+      },
+      "candidateId": "overnight16r_20260807_portrait_alex_protective_generalize_protective#v1",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 2,
+      "raw": "raw-2.png",
+      "file": "variant-2.png",
+      "rawQuality": {
+        "highChromaRatio": 0.000659,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16r_20260807_portrait_alex_protective_generalize_protective#v2",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    },
+    {
+      "index": 3,
+      "raw": "raw-3.png",
+      "file": "variant-3.png",
+      "rawQuality": {
+        "highChromaRatio": 0.384153,
+        "chromaOutlierRatio": 0.0,
+        "blankEdgeFraction": 0.0,
+        "blank": false,
+        "verdict": "pass"
+      },
+      "candidateId": "overnight16r_20260807_portrait_alex_protective_generalize_protective#v3",
+      "curation": {
+        "decision": "unset",
+        "notes": ""
+      }
+    }
+  ],
+  "campaign": {
+    "campaignId": "overnight16r_20260807_",
+    "jobId": "overnight16r_20260807_portrait_alex_protective_generalize_protective",
+    "studyId": "portrait_alex_protective_generalize",
+    "category": "portrait",
+    "subjectId": "Alex",
+    "subjectSource": [
+      "data/actors.json",
+      "docs/game design/"
+    ],
+    "question": "Can the reviewed protective gesture remain useful with a fixed portrait recipe?",
+    "variable": "pose",
+    "armId": "protective",
+    "control": false,
+    "generationStatus": "success",
+    "error": null,
+    "curation": {
+      "decision": "unset",
+      "notes": ""
+    }
+  }
+}
