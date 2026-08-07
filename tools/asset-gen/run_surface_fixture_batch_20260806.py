@@ -28,7 +28,9 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from scipy.ndimage import distance_transform_edt
+
+from lib.fixture_preview import (PREVIEW_VERSION, contact_sheet, fixture_preview,
+                                 normalize_height, prepare_fixture_albedo)
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "asset-gen"
@@ -109,84 +111,68 @@ def forge_ready(url: str = "http://127.0.0.1:7860") -> bool:
         return False
 
 
-def bleed_rgb(rgb: np.ndarray, alpha: np.ndarray) -> np.ndarray:
-    """Extend fixture colour under transparent texels to prevent edge fringes."""
-    inside = alpha > 0
-    if not inside.any():
-        raise ValueError("fixture alpha contains no covered pixels")
-    outside = ~inside
-    if not outside.any():
-        return rgb
-    _, indices = distance_transform_edt(outside, return_indices=True)
-    filled = rgb.copy()
-    filled[outside] = rgb[indices[0][outside], indices[1][outside]]
-    return filled
-
-
-def fixture_contact_sheet(paths: list[Path], output: Path) -> None:
-    images = [Image.open(path).convert("RGBA") for path in paths]
-    if not images:
-        return
-    scale = 4
-    cards = []
-    for image in images:
-        background = Image.new("RGBA", image.size, (42, 42, 46, 255))
-        background.alpha_composite(image)
-        cards.append(background.convert("RGB").resize(
-            (image.width * scale, image.height * scale), Image.Resampling.NEAREST))
-    gap = 8
-    width = sum(card.width for card in cards) + gap * (len(cards) - 1)
-    height = max(card.height for card in cards)
-    sheet = Image.new("RGB", (width, height), (18, 18, 20))
-    x = 0
-    for card in cards:
-        sheet.paste(card, (x, 0))
-        x += card.width + gap
-    sheet.save(output, optimize=True)
-
-
 def prepare_fixture(job: dict, run_path: Path) -> None:
+    """Prepare authoritative fixture pairs and a truthful neutral-base preview."""
     manifest_path = run_path / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     source_path = ROOT / job["height"]
     source = Image.open(source_path).convert("RGBA")
-    prepared = []
+    previews = []
 
     for row in manifest.get("variants") or []:
         index = int(row["index"])
         variant_path = run_path / row["file"]
         albedo = Image.open(variant_path).convert("RGBA")
-        height = source.resize(albedo.size, Image.Resampling.LANCZOS)
-        height_data = np.asarray(height, dtype=np.uint8).copy()
-        # Preserve grayscale registration after filtering.
-        grey = height_data[..., 0]
-        height_data[..., 1] = grey
-        height_data[..., 2] = grey
-        alpha = height_data[..., 3]
-
-        albedo_data = np.asarray(albedo, dtype=np.uint8).copy()
-        albedo_data[..., :3] = bleed_rgb(albedo_data[..., :3], alpha)
-        albedo_data[..., 3] = alpha
+        height = normalize_height(source, albedo.size)
+        prepared_albedo = prepare_fixture_albedo(albedo, height)
+        review, composed_height = fixture_preview(
+            prepared_albedo, height, job["heightOperation"],
+            float(job["recommendedHeightScale"]), job["surface"])
 
         fixture_name = f"fixture-{index}.png"
         fixture_height_name = f"fixture-height-{index}.png"
-        Image.fromarray(albedo_data, mode="RGBA").save(run_path / fixture_name, optimize=True)
-        Image.fromarray(height_data, mode="RGBA").save(run_path / fixture_height_name, optimize=True)
+        composite_height_name = f"fixture-composite-height-{index}.png"
+        preview_name = f"fixture-preview-{index}.png"
+        prepared_albedo.save(run_path / fixture_name, optimize=True)
+        height.save(run_path / fixture_height_name, optimize=True)
+        composed_height.save(run_path / composite_height_name, optimize=True)
+        review.save(run_path / preview_name, optimize=True)
+
+        alpha = np.asarray(height, dtype=np.uint8)[..., 3]
+        grey = np.asarray(height, dtype=np.uint8)[..., 0].astype(np.int16)
+        active = alpha > 0
         row["fixtureFile"] = fixture_name
         row["fixtureHeight"] = fixture_height_name
-        row["fixtureAlphaCoverage"] = round(float(np.mean(alpha > 0)), 5)
-        prepared.append(run_path / fixture_name)
+        row["fixtureCompositeHeight"] = composite_height_name
+        row["fixturePreview"] = preview_name
+        row["fixtureAlphaCoverage"] = round(float(np.mean(active)), 5)
+        row["fixtureSignedMin"] = int(grey[active].min()) - 128
+        row["fixtureSignedMax"] = int(grey[active].max()) - 128
+        # gen.py/report and the browser rater already understand `context`.
+        # Stamping this exact alpha-aware diagnostic prevents the old opaque
+        # room preview from being silently reused.
+        row["context"] = preview_name
+        row["contextSurface"] = job["surface"]
+        row["contextPreviewVersion"] = PREVIEW_VERSION
+        row["contextLabel"] = (
+            f"alpha-composited fixture over neutral grey and neutral height; "
+            f"operation={job['heightOperation']}; "
+            f"recommended scale={job['recommendedHeightScale']}"
+        )
+        previews.append(run_path / preview_name)
 
     manifest["surfaceFixturePreparation"] = {
         "preparedAt": dt.datetime.now().isoformat(timespec="seconds"),
         "heightSource": job["height"],
         "heightOperation": job["heightOperation"],
         "recommendedHeightScale": job["recommendedHeightScale"],
+        "previewVersion": PREVIEW_VERSION,
+        "previewBase": "neutral grey albedo and opaque RGB=128 neutral height",
         "alphaAuthority": "height PNG alpha copied after generation; SD output alpha ignored",
         "originalVariantsPreserved": True,
     }
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    fixture_contact_sheet(prepared, run_path / "fixture-contact-sheet.png")
+    contact_sheet(previews, run_path / "fixture-contact-sheet.png")
 
 
 def select_jobs(jobs: list[dict], only: list[str], group: str | None,
@@ -219,12 +205,15 @@ def main() -> int:
     parser.add_argument("--force", action="store_true", help="regenerate even when a complete run exists")
     parser.add_argument("--dry-run", action="store_true", help="print exact commands without calling Forge")
     parser.add_argument("--skip-forge-check", action="store_true")
+    parser.add_argument("--prepare-only", action="store_true",
+                        help="rebuild authoritative fixture pairs/previews from existing runs; no Forge call")
     args = parser.parse_args()
 
     jobs = select_jobs(load_jobs(args.jobs), args.only, args.group, args.start_at, args.limit)
     if not jobs:
         raise SystemExit("selection contains no jobs")
-    if not args.dry_run and not args.skip_forge_check and not forge_ready():
+    if (not args.dry_run and not args.prepare_only and
+            not args.skip_forge_check and not forge_ready()):
         raise SystemExit("Forge is not responding at http://127.0.0.1:7860; start it with --api first")
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -237,25 +226,39 @@ def main() -> int:
         status = "dry-run"
         run_path = existing
         if not args.dry_run:
-            if existing and not args.force:
-                print(f"  reuse complete run: {existing.relative_to(ROOT)}")
-                status = "reused"
+            if args.prepare_only:
+                if not job.get("alphaFromHeight"):
+                    print("  skip: not an alpha fixture")
+                    status = "skipped-nonfixture"
+                elif existing is None:
+                    results.append({"name": job["name"], "status": "failed",
+                                    "error": "--prepare-only found no complete staged run"})
+                    continue
+                else:
+                    prepare_fixture(job, existing)
+                    run_path = existing
+                    status = "prepared-only+alpha-preview-v2"
+                    print(f"  rebuilt authoritative alpha preview: {existing.relative_to(ROOT)}")
             else:
-                completed = subprocess.run(command, cwd=ROOT, check=False)
-                if completed.returncode != 0:
-                    results.append({"name": job["name"], "status": "failed",
-                                    "returnCode": completed.returncode})
-                    continue
-                run_path = run_path_for(job)
-                if run_path is None:
-                    results.append({"name": job["name"], "status": "failed",
-                                    "error": "generation completed but no staged run was found"})
-                    continue
-                status = "generated"
-            if job.get("alphaFromHeight"):
-                prepare_fixture(job, run_path)
-                status += "+alpha"
-                print(f"  prepared authoritative fixture alpha: {run_path.relative_to(ROOT)}")
+                if existing and not args.force:
+                    print(f"  reuse complete run: {existing.relative_to(ROOT)}")
+                    status = "reused"
+                else:
+                    completed = subprocess.run(command, cwd=ROOT, check=False)
+                    if completed.returncode != 0:
+                        results.append({"name": job["name"], "status": "failed",
+                                        "returnCode": completed.returncode})
+                        continue
+                    run_path = run_path_for(job)
+                    if run_path is None:
+                        results.append({"name": job["name"], "status": "failed",
+                                        "error": "generation completed but no staged run was found"})
+                        continue
+                    status = "generated"
+                if job.get("alphaFromHeight"):
+                    prepare_fixture(job, run_path)
+                    status += "+alpha-preview-v2"
+                    print(f"  prepared authoritative fixture alpha: {run_path.relative_to(ROOT)}")
 
         results.append({
             "name": job["name"],
