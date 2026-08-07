@@ -175,14 +175,22 @@ end
 -- and do not. Different lifetimes, different homes.
 
 local function timers(battler)
-    battler.skillTimers = battler.skillTimers or { cooldown = {}, warmup = {} }
+    battler.skillTimers = battler.skillTimers or {
+        cooldown = {}, cooldownFresh = {}, warmup = {}
+    }
+    -- Saves never carry battle timers, but tests/debug callers can hand us an
+    -- older timer shape. Normalize it here so the arming marker is harmless to
+    -- anything created before this rule existed.
+    battler.skillTimers.cooldown = battler.skillTimers.cooldown or {}
+    battler.skillTimers.cooldownFresh = battler.skillTimers.cooldownFresh or {}
+    battler.skillTimers.warmup = battler.skillTimers.warmup or {}
     return battler.skillTimers
 end
 
 --- Battle start: clear cooldowns, and arm warmups so a skill with
 --- `warmup: 2` is unavailable for the first two rounds of THIS battle.
 function skill_cost.beginBattle(battler, loader)
-    battler.skillTimers = { cooldown = {}, warmup = {} }
+    battler.skillTimers = { cooldown = {}, cooldownFresh = {}, warmup = {} }
     for _, id in ipairs(battler.skills or {}) do
         local skill = loader and loader.getSkill and loader.getSkill(id)
         if skill and (skill.warmup or 0) > 0 then
@@ -200,11 +208,21 @@ end
 --- One round elapsed. Ticked from the `battle.round_end` flow via the
 --- TICK_SKILL_TIMERS command, so the tick is authored data rather than another
 --- hardcoded branch in battle.lua.
+--
+-- A cooldown armed during THIS round ignores this first round-end tick. The
+-- action that started it happened inside the round that is now closing; no
+-- subsequent round has elapsed yet. Without this marker cooldown:1 is armed
+-- and immediately deleted by the same round_end, making it indistinguishable
+-- from no cooldown at all (Darting Peck was the visible case).
 function skill_cost.tick(battler)
     local t = timers(battler)
     for id, turnsLeft in pairs(t.cooldown) do
-        local left = turnsLeft - 1
-        t.cooldown[id] = (left > 0) and left or nil
+        if t.cooldownFresh[id] then
+            t.cooldownFresh[id] = nil
+        else
+            local left = turnsLeft - 1
+            t.cooldown[id] = (left > 0) and left or nil
+        end
     end
     for id, turnsLeft in pairs(t.warmup) do
         local left = turnsLeft - 1
@@ -214,7 +232,9 @@ end
 
 function skill_cost.startCooldown(skill, battler)
     if not skill or not (skill.cooldown and skill.cooldown > 0) then return end
-    timers(battler).cooldown[skill.id] = skill.cooldown
+    local t = timers(battler)
+    t.cooldown[skill.id] = skill.cooldown
+    t.cooldownFresh[skill.id] = true
 end
 
 function skill_cost.cooldownLeft(skill, battler)
