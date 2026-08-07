@@ -960,6 +960,25 @@ local WORLD_MESH_FORMAT = {
     { "WorldHeight", "float", 1 },
 }
 
+-- Classify a conservative world-space XY bound against the CPU clip plane.
+-- Depth is linear in X/Y, so the extrema lie at support corners selected by
+-- the camera direction: two depth evaluations classify the entire mesh.
+-- "intersect" is deliberately conservative; callers may fall back to exact
+-- vertex classification before invoking the existing triangle clipper.
+function viewport_3d.classifyBoundsToNear(bounds, cameraX, cameraY, dirX, dirY, nearPlane)
+    if not bounds then return nil end
+    nearPlane = nearPlane or 0.05
+    local minX = dirX >= 0 and bounds.minX or bounds.maxX
+    local maxX = dirX >= 0 and bounds.maxX or bounds.minX
+    local minY = dirY >= 0 and bounds.minY or bounds.maxY
+    local maxY = dirY >= 0 and bounds.maxY or bounds.minY
+    local minDepth = (minX - cameraX) * dirX + (minY - cameraY) * dirY
+    local maxDepth = (maxX - cameraX) * dirX + (maxY - cameraY) * dirY
+    if maxDepth < nearPlane then return "behind" end
+    if minDepth >= nearPlane then return "front" end
+    return "intersect"
+end
+
 -- Clip triangle soup in world space before perspective projection. The GPU
 -- cannot safely project a triangle with vertices on both sides of the camera:
 -- its negative-depth vertices invert and stretch the primitive across the
@@ -1238,6 +1257,11 @@ local function drawWorldSpace(session)
         meshUploadMs = 0, modelDrawLoopMs = 0, placedModelsVisited = 0,
         modelsNearClipped = 0, inputTrianglesClipped = 0,
         outputVerticesUploaded = 0, clippedMeshResizes = 0,
+        boundsClassifiedSurfaces = 0, boundsFrontSurfaces = 0,
+        boundsBehindSurfaces = 0, boundsIntersectSurfaces = 0,
+        vertexFallbackSurfaces = 0, verticesInspected = 0,
+        heightVerticesInspected = 0, nonHeightVerticesInspected = 0,
+        heightSurfacePlacementsVisited = 0, nonHeightPlacementsVisited = 0,
     }
     local profileVariant = session.profile3dVariant or "current"
     local function quadVisible(a, b, c, d)
@@ -1707,6 +1731,8 @@ local function drawWorldSpace(session)
         local placed = {}
         for _, modelGroup in ipairs(model.groups) do
             local vertices = {}
+            local minX, maxX = math.huge, -math.huge
+            local minY, maxY = math.huge, -math.huge
             for _, vertex in ipairs(modelGroup.vertices) do
                 local lx, ly, lz = vertex[1], vertex[2], vertex[3]
                 local nx, ny, nz = vertex[6], vertex[7], vertex[8]
@@ -1722,6 +1748,8 @@ local function drawWorldSpace(session)
                     nx, ny = -ny, nx
                 end
                 local wx, wy, wz = originX + lx, originY + ly, lz
+                minX, maxX = math.min(minX, wx), math.max(maxX, wx)
+                minY, maxY = math.min(minY, wy), math.max(maxY, wy)
                 local light = colorAt(wx, wy, wz, false)
                 local directional = math.max(0.35,
                     0.55 + 0.45 * (nx * -0.4 + ny * -0.6 + nz * 0.7))
@@ -1739,6 +1767,9 @@ local function drawWorldSpace(session)
                 texture = modelGroup.texture,
                 isHeightSurface = spec.runtimeSurface and true or false,
                 centerX = originX, centerY = originY, centerZ = 0.5,
+                bounds = #vertices > 0 and {
+                    minX = minX, maxX = maxX, minY = minY, maxY = maxY,
+                } or nil,
             }
         end
         structure.modelSurfaces[cacheKey] = placed
@@ -1754,11 +1785,40 @@ local function drawWorldSpace(session)
         for _, placed in ipairs(placedGroups) do
             if not (profileVariant == "no-height" and placed.isHeightSurface) then
             profile.placedModelsVisited = profile.placedModelsVisited + 1
+            if placed.isHeightSurface then
+                profile.heightSurfacePlacementsVisited = profile.heightSurfacePlacementsVisited + 1
+            else
+                profile.nonHeightPlacementsVisited = profile.nonHeightPlacementsVisited + 1
+            end
             local visibilityStarted = love.timer.getTime()
             local anyInFront, anyBehind = false, false
-            for _, vertex in ipairs(placed.vertices) do
-                local vertexDepth = (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
-                if vertexDepth >= cpuClipPlane then anyInFront = true else anyBehind = true end
+            local boundsClass = viewport_3d.classifyBoundsToNear(
+                placed.bounds, cameraX, cameraY, dirX, dirY, cpuClipPlane)
+            if boundsClass then
+                profile.boundsClassifiedSurfaces = profile.boundsClassifiedSurfaces + 1
+                if boundsClass == "front" then
+                    profile.boundsFrontSurfaces = profile.boundsFrontSurfaces + 1
+                    anyInFront = true
+                elseif boundsClass == "behind" then
+                    profile.boundsBehindSurfaces = profile.boundsBehindSurfaces + 1
+                    anyBehind = true
+                else
+                    profile.boundsIntersectSurfaces = profile.boundsIntersectSurfaces + 1
+                end
+            end
+            if not boundsClass or boundsClass == "intersect" then
+                profile.vertexFallbackSurfaces = profile.vertexFallbackSurfaces + 1
+                for _, vertex in ipairs(placed.vertices) do
+                    profile.verticesInspected = profile.verticesInspected + 1
+                    if placed.isHeightSurface then
+                        profile.heightVerticesInspected = profile.heightVerticesInspected + 1
+                    else
+                        profile.nonHeightVerticesInspected = profile.nonHeightVerticesInspected + 1
+                    end
+                    local vertexDepth = (vertex[1] - cameraX) * dirX + (vertex[2] - cameraY) * dirY
+                    if vertexDepth >= cpuClipPlane then anyInFront = true else anyBehind = true end
+                    if anyInFront and anyBehind then break end
+                end
             end
             profile.modelVisibilityMs = profile.modelVisibilityMs
                 + (love.timer.getTime() - visibilityStarted) * 1000
