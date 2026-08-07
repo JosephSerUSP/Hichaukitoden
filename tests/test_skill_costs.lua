@@ -307,7 +307,7 @@ do
     -- so a row the player sees greyed is a row the enemy cannot pick either.
     local sess, caster = rig()
     skill_cost.beginBattle(caster, loader)
-    local spell = { id = "spell", target = "enemy-any", charges = 1 }
+    local spell = { id = "spell", target = "enemy-any", scope = "battle", charges = 1 }
 
     check(usability.canUseSkill(spell, caster, nil, { session = sess }),
         "canUseSkill allows a paid-for skill")
@@ -315,6 +315,38 @@ do
     local ok, reason = usability.canUseSkill(spell, caster, nil, { session = sess })
     check(not ok and reason == "Out of charges",
         "canUseSkill refuses an empty pool, with the reason the menu shows")
+end
+
+do
+    -- #152: occasion is authored data, never inferred from cost/effect shape.
+    local sess, caster = rig()
+    skill_cost.beginBattle(caster, loader)
+    local validScopes = { battle = true, field = true, always = true, none = true }
+    local allCanonicalScopesValid = true
+    for _, skill in pairs(loader.skills or {}) do
+        if not validScopes[skill.scope] then
+            allCanonicalScopesValid = false
+            break
+        end
+    end
+    check(allCanonicalScopesValid,
+        "every canonical skill authors a valid use scope")
+
+    local soothing = loader.getSkill("soothingMote")
+    check(soothing.scope == "always"
+        and usability.canUseSkill(soothing, caster, nil, { session = sess, isField = true }),
+        "charged pure-heal Soothing Mote remains usable in the field by authored scope")
+
+    local surgery = loader.getSkill("fieldSurgery")
+    local surgeryOk, surgeryReason = usability.canUseSkill(
+        surgery, caster, nil, { session = sess, isField = true })
+    check(surgery.scope == "battle" and not surgeryOk and surgeryReason == "Cannot be used in field",
+        "cooldown-only Field Surgery remains battle-only by authored scope")
+
+    local missingOk, missingReason = usability.canUseSkill(
+        { id = "missingScope", target = "self" }, caster, nil, { session = sess })
+    check(not missingOk and missingReason == "Invalid use scope",
+        "runtime refuses a skill with no authored scope instead of deriving one")
 end
 
 do
